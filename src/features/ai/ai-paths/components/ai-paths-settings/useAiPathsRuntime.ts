@@ -28,6 +28,7 @@ import {
   PATH_DEBUG_PREFIX,
   STORAGE_VERSION,
   TRIGGER_EVENTS,
+  inspectGraphIntegrity,
   normalizeNodes,
   sanitizeEdges,
   appendLocalRun,
@@ -57,6 +58,18 @@ const AI_PATHS_ENTITY_STALE_MS = 10_000;
 
 const LOCAL_RUN_STEP_CHUNK = 25;
 const MAX_RUNTIME_EVENTS = 300;
+const NON_SETTLED_RUNTIME_NODE_STATUSES = new Set<string>([
+  'idle',
+  'queued',
+  'completed',
+  'failed',
+  'canceled',
+  'cancelled',
+  'cached',
+  'blocked',
+  'skipped',
+  'timeout',
+]);
 
 type ToastFn = (message: string, options?: Partial<{ variant: 'success' | 'error' | 'info'; duration: number }>) => void;
 
@@ -174,6 +187,7 @@ export function useAiPathsRuntime({
     (): Edge[] => sanitizeEdges(normalizedNodes, edges),
     [edges, normalizedNodes]
   );
+  const graphGuardWarningsRef = useRef<Set<string>>(new Set());
 
   const enqueueAiJobMutation = useMutation({
     mutationFn: async (payload: {
@@ -282,6 +296,32 @@ export function useAiPathsRuntime({
     runtimeNodeStatusesRef.current = next;
     setRuntimeNodeStatuses(next);
   }, []);
+
+  const settleTransientNodeStatuses = useCallback(
+    (terminalStatus: 'completed' | 'failed' | 'canceled'): void => {
+      const currentStatuses = runtimeNodeStatusesRef.current;
+      const currentOutputs = runtimeStateRef.current.outputs ?? {};
+      const nextStatuses: AiPathRuntimeNodeStatusMap = { ...currentStatuses };
+      const candidateNodeIds = new Set<string>([
+        ...Object.keys(currentStatuses),
+        ...Object.keys(currentOutputs),
+      ]);
+      let changed = false;
+      candidateNodeIds.forEach((nodeId: string) => {
+        const outputStatus = ((currentOutputs[nodeId] ?? {}) as Record<string, unknown>).status;
+        const normalizedStatus = normalizeNodeStatus(nextStatuses[nodeId] ?? outputStatus);
+        if (!normalizedStatus) return;
+        if (NON_SETTLED_RUNTIME_NODE_STATUSES.has(normalizedStatus)) return;
+        if (nextStatuses[nodeId] === terminalStatus) return;
+        nextStatuses[nodeId] = terminalStatus;
+        changed = true;
+      });
+      if (!changed) return;
+      runtimeNodeStatusesRef.current = nextStatuses;
+      setRuntimeNodeStatuses(nextStatuses);
+    },
+    [normalizeNodeStatus]
+  );
 
   const setNodeStatus = useCallback(
     (input: {
@@ -653,6 +693,13 @@ export function useAiPathsRuntime({
         runId: run.id ?? null,
       });
     }
+    if (serverStatus === 'completed') {
+      settleTransientNodeStatuses('completed');
+    } else if (serverStatus === 'canceled') {
+      settleTransientNodeStatuses('canceled');
+    } else if (serverStatus === 'failed' || serverStatus === 'dead_lettered') {
+      settleTransientNodeStatuses('failed');
+    }
     if (!run.runtimeState) return;
     const parsed = parseRuntimeState(run.runtimeState);
     const runStartedAt = resolveRunStartedAt(run, parsed) ?? undefined;
@@ -685,6 +732,7 @@ export function useAiPathsRuntime({
     appendRuntimeEvent,
     buildActivePathConfig,
     mergeRuntimeStateSnapshot,
+    settleTransientNodeStatuses,
     setLastRunAt,
     setPathConfigs,
     setRuntimeState,
@@ -848,6 +896,13 @@ export function useAiPathsRuntime({
       try {
         const payload = JSON.parse((event as MessageEvent).data) as { status?: string };
         const status = typeof payload.status === 'string' ? payload.status.trim().toLowerCase() : 'completed';
+        if (status === 'completed') {
+          settleTransientNodeStatuses('completed');
+        } else if (status === 'canceled') {
+          settleTransientNodeStatuses('canceled');
+        } else {
+          settleTransientNodeStatuses('failed');
+        }
         appendRuntimeEvent({
           source: 'server',
           kind:
@@ -863,6 +918,7 @@ export function useAiPathsRuntime({
           message: `Run ${status}.`,
         });
       } catch {
+        settleTransientNodeStatuses('completed');
         appendRuntimeEvent({
           source: 'server',
           kind: 'run_completed',
@@ -888,6 +944,7 @@ export function useAiPathsRuntime({
     appendRuntimeEvent,
     normalizedNodes,
     resetRuntimeNodeStatuses,
+    settleTransientNodeStatuses,
     setNodeStatus,
     setRuntimeState,
     stopServerRunStream,
@@ -909,6 +966,58 @@ export function useAiPathsRuntime({
     resetRuntimeNodeStatuses({});
     setRuntimeEvents([]);
   }, [activePathId, resetRuntimeNodeStatuses]);
+
+  useEffect((): void => {
+    graphGuardWarningsRef.current.clear();
+  }, [activePathId]);
+
+  const emitGraphIntegrityWarnings = useCallback(
+    (source: 'local' | 'server'): void => {
+      const report = inspectGraphIntegrity(normalizedNodes, sanitizedEdges);
+      if (report.invalidEdgeCount > 0) {
+        const warningKey = `${activePathId ?? 'default'}:invalid_edges:${report.invalidEdgeCount}`;
+        if (!graphGuardWarningsRef.current.has(warningKey)) {
+          graphGuardWarningsRef.current.add(warningKey);
+          const message = `Detected ${report.invalidEdgeCount} invalid wire(s). Reconnect and save path to avoid runtime skips.`;
+          appendRuntimeEvent({
+            source,
+            kind: 'log',
+            level: 'warning',
+            message,
+          });
+          toast(message, { variant: 'info' });
+        }
+      }
+
+      if (report.disconnectedProcessingNodes.length > 0) {
+        const disconnectedIds = report.disconnectedProcessingNodes
+          .map((node) => node.nodeId)
+          .sort()
+          .join(',');
+        const warningKey = `${activePathId ?? 'default'}:disconnected:${disconnectedIds}`;
+        if (!graphGuardWarningsRef.current.has(warningKey)) {
+          graphGuardWarningsRef.current.add(warningKey);
+          const preview = report.disconnectedProcessingNodes
+            .slice(0, 3)
+            .map((node) => `${node.nodeTitle} (${node.nodeId})`)
+            .join(', ');
+          const suffix =
+            report.disconnectedProcessingNodes.length > 3
+              ? ` and ${report.disconnectedProcessingNodes.length - 3} more`
+              : '';
+          const message = `Disconnected processing node(s): ${preview}${suffix}. They will not receive runtime data until wired.`;
+          appendRuntimeEvent({
+            source,
+            kind: 'log',
+            level: 'warning',
+            message,
+          });
+          toast(message, { variant: 'info' });
+        }
+      }
+    },
+    [activePathId, appendRuntimeEvent, normalizedNodes, sanitizedEdges, toast]
+  );
 
   const getDomSelector = useCallback((element: Element | null): string | null => {
     if (!element) return null;
@@ -1414,6 +1523,7 @@ export function useAiPathsRuntime({
     ): void => {
       const finishedAt = new Date().toISOString();
       if (outcome.status === 'completed') {
+        settleTransientNodeStatuses('completed');
         appendRuntimeEvent({
           source: 'local',
           kind: 'run_completed',
@@ -1461,6 +1571,7 @@ export function useAiPathsRuntime({
       }
 
       if (outcome.status === 'error') {
+        settleTransientNodeStatuses('failed');
         appendRuntimeEvent({
           source: 'local',
           kind: 'run_failed',
@@ -1501,6 +1612,7 @@ export function useAiPathsRuntime({
       }
 
       if (outcome.status === 'canceled') {
+        settleTransientNodeStatuses('canceled');
         appendRuntimeEvent({
           source: 'local',
           kind: 'run_canceled',
@@ -1534,6 +1646,7 @@ export function useAiPathsRuntime({
       normalizedNodes.length,
       pathName,
       persistDebugSnapshot,
+      settleTransientNodeStatuses,
       setLastRunAt,
       setPathConfigs,
       toast,
@@ -1551,6 +1664,7 @@ export function useAiPathsRuntime({
       toast('This path is deactivated. Activate it to run.', { variant: 'info' });
       return;
     }
+    emitGraphIntegrityWarnings('local');
     if (serverRunActiveRef.current) {
       stopServerRunStream();
     }
@@ -1742,6 +1856,7 @@ export function useAiPathsRuntime({
       }
     }
   }, [
+    emitGraphIntegrityWarnings,
     isPathActive,
     buildTriggerContext,
     normalizedNodes,
@@ -1913,6 +2028,7 @@ export function useAiPathsRuntime({
       updateRunStatus('idle');
       abortControllerRef.current = null;
       pauseRequestedRef.current = false;
+      settleTransientNodeStatuses('canceled');
       appendRuntimeEvent({
         source: 'local',
         kind: 'run_canceled',
@@ -1924,7 +2040,7 @@ export function useAiPathsRuntime({
       toast('Run cancelled.', { variant: 'info' });
       processQueuedRuns();
     }
-  }, [appendRuntimeEvent, processQueuedRuns, toast, updateRunStatus]);
+  }, [appendRuntimeEvent, processQueuedRuns, settleTransientNodeStatuses, toast, updateRunStatus]);
 
   const runPollUpdate = useCallback(
     async (
@@ -2373,6 +2489,7 @@ export function useAiPathsRuntime({
     triggerNode: AiNode,
     event?: React.MouseEvent
   ): Promise<void> => {
+    emitGraphIntegrityWarnings('server');
     toast('Queuing run…', { variant: 'info' });
     appendRuntimeEvent({
       source: 'server',

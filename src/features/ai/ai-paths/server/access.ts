@@ -130,11 +130,15 @@ export const ensureAiPathsPermission = (
   }
 };
 
+export const canAccessGlobalAiPathRuns = (
+  access: AiPathsAccessContext
+): boolean => access.isElevated || access.permissions.includes(AI_PATHS_PERMISSION);
+
 export const assertAiPathRunAccess = (
   access: AiPathsAccessContext,
   run: AiPathRunRecord
 ): void => {
-  if (access.isElevated) return;
+  if (canAccessGlobalAiPathRuns(access)) return;
   if (!run.userId || run.userId !== access.userId) {
     throw forbiddenError('Run access denied.');
   }

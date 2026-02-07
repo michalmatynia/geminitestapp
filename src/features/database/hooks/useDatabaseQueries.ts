@@ -87,7 +87,7 @@ export function useDeleteBackupMutation(): UseMutationResult<
 }
 
 export function useDatabasePreview(input: {
-  backupName?: string;
+  backupName?: string | undefined;
   mode?: DatabasePreviewMode;
   type?: DatabaseType;
   page?: number;

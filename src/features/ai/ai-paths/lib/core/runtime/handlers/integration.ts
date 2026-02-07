@@ -39,6 +39,25 @@ import {
 
 import type { SchemaResponse } from '../../../api/client';
 
+// Module-scoped schema cache to avoid redundant API calls across database nodes
+// within the same run. TTL ensures freshness across separate runs.
+let _schemaCacheResult: ApiResponse<unknown> | null = null;
+let _schemaCacheTs = 0;
+const SCHEMA_CACHE_TTL_MS = 30_000;
+
+const getCachedSchema = async (): Promise<ApiResponse<unknown>> => {
+  const now = Date.now();
+  if (_schemaCacheResult && _schemaCacheResult.ok && now - _schemaCacheTs < SCHEMA_CACHE_TTL_MS) {
+    return _schemaCacheResult;
+  }
+  const result = await dbApi.schema();
+  if (result.ok) {
+    _schemaCacheResult = result;
+    _schemaCacheTs = now;
+  }
+  return result;
+};
+
 interface PromptCandidate {
   edge: Edge;
   fromNode: AiNode | undefined;
@@ -654,7 +673,7 @@ export const handleDatabase: NodeHandler = async ({
     ) {
       schemaData = schemaInput as SchemaResponse;
     } else {
-      const schemaResult = await dbApi.schema();
+      const schemaResult = await getCachedSchema();
       if (schemaResult.ok) {
         schemaData = schemaResult.data as SchemaResponse;
       }
@@ -2106,7 +2125,7 @@ export const handleDbSchema: NodeHandler = async ({
     ...(node.config?.db_schema ?? {}),
   };
 
-  const schemaResult = await dbApi.schema();
+  const schemaResult = await getCachedSchema();
   if (!schemaResult.ok) {
     reportAiPathsError(
       new Error(schemaResult.error),

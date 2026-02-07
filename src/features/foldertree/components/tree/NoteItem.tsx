@@ -3,30 +3,39 @@
 import { FileText, Edit2, Copy, Trash2, FilePlus } from 'lucide-react';
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 
-import type { NoteItemProps } from '@/features/foldertree/types/folder-tree-ui';
-import type { TreeContextMenuItem } from '@/shared/ui';
-import { useToast, Input, TreeContextMenu } from '@/shared/ui';
-import { TreeRow, TreeActionButton, TreeActionSlot } from '@/shared/ui';
+import type { NoteRecord } from '@/shared/types/notes';
+import { TreeRow, TreeActionButton, TreeActionSlot, useToast, Input, TreeContextMenu, type TreeContextMenuItem } from '@/shared/ui';
 import { getNoteDragId, hasDragType, setNoteDragData, DRAG_KEYS } from '@/shared/utils/drag-drop';
 
+import { useFolderTree } from '../../context/FolderTreeContext';
 
 export const NoteItem = React.memo(function NoteItem({
   note,
   level,
-  isSelected,
-  isRenaming,
   folderId,
-  onSelectNote,
-  onCreateNote,
-  onDuplicateNote,
-  onDeleteNote,
-  onRenameNote,
-  onStartRename,
-  onCancelRename,
-  onRelateNotes,
-  draggedNoteId,
-  setDraggedNoteId,
-}: NoteItemProps): React.JSX.Element {
+}: {
+  note: NoteRecord;
+  level: number;
+  folderId: string;
+}): React.JSX.Element {
+  const {
+    onSelectNote,
+    onCreateNote,
+    onDuplicateNote,
+    onDeleteNote,
+    onRenameNote,
+    onStartNoteRename: onStartRename,
+    onCancelNoteRename: onCancelRename,
+    onRelateNotes,
+    draggedNoteId,
+    setDraggedNoteId,
+    selectedNoteId,
+    renamingNoteId,
+  } = useFolderTree();
+
+  const isSelected = selectedNoteId === note.id;
+  const isRenaming = renamingNoteId === note.id;
+
   const { toast } = useToast();
   const renameInputRef = useRef<HTMLInputElement>(null);
   const renameValueRef = useRef(note.title);

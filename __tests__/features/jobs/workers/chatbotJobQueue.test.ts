@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const { mockPollQueue } = vi.hoisted(() => ({
+  mockPollQueue: vi.fn(),
+}));
+
 // Mock the module where pollQueue resides, exporting pollQueue for testing.
-// stopChatbotJobQueue is explicitly exported from the real module, so it's not mocked here.
-const mockPollQueue = vi.fn();
 vi.mock('@/features/jobs/workers/chatbotJobQueue', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/jobs/workers/chatbotJobQueue')>();
   return {

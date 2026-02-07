@@ -73,6 +73,24 @@ type CanvasBoardProps = {
   /** Callback to fire a trigger (TODO: move to context) */
   onFireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
 
+  onRemoveEdge?: (edgeId: string) => void;
+  onDeleteSelectedNode?: (() => void) | undefined;
+  onDisconnectPort?: (direction: 'input' | 'output', nodeId: string, port: string) => void;
+  onReconnectInput?: (event: React.PointerEvent<HTMLButtonElement>, nodeId: string, port: string) => void;
+  onPointerDownNode?: (event: React.PointerEvent<HTMLDivElement>, nodeId: string) => void;
+  onPointerMoveNode?: (event: React.PointerEvent<HTMLDivElement>, nodeId: string) => void;
+  onPointerUpNode?: (event: React.PointerEvent<HTMLDivElement>, nodeId: string) => void;
+  onStartConnection?: (event: React.PointerEvent<HTMLButtonElement>, node: AiNode, port: string) => void;
+  onCompleteConnection?: (event: React.PointerEvent<HTMLButtonElement>, node: AiNode, port: string) => void;
+  onDrop?: (event: React.DragEvent<HTMLDivElement>) => void;
+  onDragOver?: (event: React.DragEvent<HTMLDivElement>) => void;
+  onPanStart?: (event: React.PointerEvent<HTMLDivElement>) => void;
+  onPanMove?: (event: React.PointerEvent<HTMLDivElement>) => void;
+  onPanEnd?: (event: React.PointerEvent<HTMLDivElement>) => void;
+  onZoomTo?: (scale: number) => void;
+  onFitToNodes?: () => void;
+  onResetView?: () => void;
+
   fitToNodes?: () => void;
   resetView?: () => void;
 };
@@ -105,11 +123,37 @@ const runtimeStatusBadgeClassName = (status: string): string => {
   return 'border-border bg-card/60 text-gray-200';
 };
 
+const BLOCKER_PROCESSING_STATUSES = new Set<string>([
+  'running',
+  'polling',
+  'waiting_callback',
+  'advance_pending',
+  'pending',
+  'processing',
+]);
+
 export function CanvasBoard({
   runtimeNodeStatuses,
   runtimeEvents,
   viewportClassName,
   onFireTrigger,
+  onRemoveEdge,
+  onDeleteSelectedNode,
+  onDisconnectPort,
+  onReconnectInput,
+  onPointerDownNode,
+  onPointerMoveNode,
+  onPointerUpNode,
+  onStartConnection,
+  onCompleteConnection,
+  onDrop,
+  onDragOver,
+  onPanStart,
+  onPanMove,
+  onPanEnd,
+  onZoomTo,
+  onFitToNodes,
+  onResetView,
   fitToNodes: fitToNodesProp,
   resetView: resetViewProp,
 }: CanvasBoardProps): React.JSX.Element {
@@ -122,27 +166,43 @@ export function CanvasBoard({
   const { selectEdge, setConfigOpen } = useSelectionActions();
   const {
     edgePaths,
-    handlePointerDownNode,
-    handlePointerMoveNode,
-    handlePointerUpNode,
-    handlePanStart,
-    handlePanMove,
-    handlePanEnd,
-    handleRemoveEdge,
-    handleDisconnectPort,
-    handleStartConnection,
-    handleCompleteConnection,
-    handleReconnectInput,
+    handlePointerDownNode: handlePointerDownNodeCtx,
+    handlePointerMoveNode: handlePointerMoveNodeCtx,
+    handlePointerUpNode: handlePointerUpNodeCtx,
+    handlePanStart: handlePanStartCtx,
+    handlePanMove: handlePanMoveCtx,
+    handlePanEnd: handlePanEndCtx,
+    handleRemoveEdge: handleRemoveEdgeCtx,
+    handleDeleteSelectedNode: handleDeleteSelectedNodeCtx,
+    handleDisconnectPort: handleDisconnectPortCtx,
+    handleStartConnection: handleStartConnectionCtx,
+    handleCompleteConnection: handleCompleteConnectionCtx,
+    handleReconnectInput: handleReconnectInputCtx,
     handleSelectNode,
-    handleDrop,
-    handleDragOver,
-    zoomTo,
+    handleDrop: handleDropCtx,
+    handleDragOver: handleDragOverCtx,
+    zoomTo: zoomToCtx,
     fitToNodes: fitToNodesContext,
     resetView: resetViewContext,
   } = useCanvasInteractions();
 
-  const fitToNodes = fitToNodesProp ?? fitToNodesContext;
-  const resetView = resetViewProp ?? resetViewContext;
+  const handlePointerDownNode = onPointerDownNode ?? handlePointerDownNodeCtx;
+  const handlePointerMoveNode = onPointerMoveNode ?? handlePointerMoveNodeCtx;
+  const handlePointerUpNode = onPointerUpNode ?? handlePointerUpNodeCtx;
+  const handlePanStart = onPanStart ?? handlePanStartCtx;
+  const handlePanMove = onPanMove ?? handlePanMoveCtx;
+  const handlePanEnd = onPanEnd ?? handlePanEndCtx;
+  const handleRemoveEdge = onRemoveEdge ?? handleRemoveEdgeCtx;
+  const handleDeleteSelectedNode = onDeleteSelectedNode ?? handleDeleteSelectedNodeCtx;
+  const handleDisconnectPort = onDisconnectPort ?? handleDisconnectPortCtx;
+  const handleStartConnection = onStartConnection ?? handleStartConnectionCtx;
+  const handleCompleteConnection = onCompleteConnection ?? handleCompleteConnectionCtx;
+  const handleReconnectInput = onReconnectInput ?? handleReconnectInputCtx;
+  const handleDrop = onDrop ?? handleDropCtx;
+  const handleDragOver = onDragOver ?? handleDragOverCtx;
+  const zoomTo = onZoomTo ?? zoomToCtx;
+  const fitToNodes = onFitToNodes ?? fitToNodesProp ?? fitToNodesContext;
+  const resetView = onResetView ?? resetViewProp ?? resetViewContext;
 
   // --- Local State & Refs ---
   const [hoveredConnectorKey, setHoveredConnectorKey] = React.useState<string | null>(null);
@@ -210,6 +270,47 @@ export function CanvasBoard({
     (nodeId: string, port: string): string => `${nodeId}:${port}`,
     []
   );
+
+  const canRemoveSelectedEdge = Boolean(onRemoveEdge);
+  const canDeleteSelectedNode = Boolean(onDeleteSelectedNode);
+
+  React.useEffect((): void | (() => void) => {
+    if (!canRemoveSelectedEdge && !canDeleteSelectedNode) return;
+    const isTypingTarget = (target: EventTarget | null): boolean => {
+      const element = target as HTMLElement | null;
+      if (!element) return false;
+      if (element.isContentEditable) return true;
+      const tag = element.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return true;
+      return Boolean(element.closest('input, textarea, select, [contenteditable="true"]'));
+    };
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if (event.key !== 'Backspace' && event.key !== 'Delete') return;
+      if (isTypingTarget(event.target)) return;
+      if (selectedEdgeId && canRemoveSelectedEdge) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        handleRemoveEdge(selectedEdgeId);
+        return;
+      }
+      if (selectedNodeId && canDeleteSelectedNode) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        handleDeleteSelectedNode();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown, true);
+    return (): void => {
+      window.removeEventListener('keydown', handleKeyDown, true);
+    };
+  }, [
+    canDeleteSelectedNode,
+    canRemoveSelectedEdge,
+    handleDeleteSelectedNode,
+    handleRemoveEdge,
+    selectedEdgeId,
+    selectedNodeId,
+  ]);
 
   const formatConnectorValue = (value: unknown): string => {
     if (value === undefined) return 'No data yet.';
@@ -986,9 +1087,7 @@ export function CanvasBoard({
           const isBlockerProcessing =
             flowEnabled &&
             !!blockerNodeStatus &&
-            !['completed', 'failed', 'canceled', 'timeout', 'cached', 'skipped'].includes(
-              blockerNodeStatus
-            );
+            BLOCKER_PROCESSING_STATUSES.has(blockerNodeStatus);
           const noteConfig = node.config?.notes;
           const noteText = typeof noteConfig?.text === 'string' ? noteConfig.text.trim() : '';
           const noteColor =

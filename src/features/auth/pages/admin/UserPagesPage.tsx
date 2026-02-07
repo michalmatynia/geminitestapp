@@ -9,6 +9,7 @@ import {
   type AuthUserPageSettings,
 } from '@/features/auth/utils/auth-user-pages';
 import { logClientError } from '@/features/observability';
+import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Label, Switch, useToast, SectionHeader, SectionPanel } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -43,7 +44,7 @@ function AuthUserPagesForm({
   refetchSettings,
 }: {
   initialSettings: AuthUserPageSettings;
-  updateSetting: any; // Use proper type if possible
+  updateSetting: ReturnType<typeof useUpdateSetting>;
   refetchSettings: () => Promise<unknown>;
 }): React.JSX.Element {
   const { toast } = useToast();

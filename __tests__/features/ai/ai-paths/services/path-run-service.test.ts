@@ -5,6 +5,7 @@ import {
   enqueuePathRun, 
   resumePathRun, 
   cancelPathRun, 
+  cancelPathRunWithRepository,
   retryPathRunNode 
 } from '@/features/ai/ai-paths/services/path-run-service';
 import prisma from '@/shared/lib/db/prisma';
@@ -111,6 +112,18 @@ describe('PathRunService', () => {
 
       const events = await repo.listRunEvents(run.id);
       expect(events.some((e: any) => e.message === 'Run canceled.')).toBe(true);
+    });
+
+    it('should cancel using an explicit repository instance', async () => {
+      const run = await enqueuePathRun({
+        pathId: 'test-path-explicit-repo',
+        nodes: mockNodes,
+        edges: []
+      });
+
+      const canceled = await cancelPathRunWithRepository(repo, run.id);
+      expect(canceled.status).toBe('canceled');
+      expect(canceled.finishedAt).toBeDefined();
     });
   });
 

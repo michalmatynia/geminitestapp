@@ -1,8 +1,11 @@
 import OpenAI from 'openai';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const { mockPollQueue } = vi.hoisted(() => ({
+  mockPollQueue: vi.fn(),
+}));
+
 // Mock the module where pollQueue resides, exporting pollQueue for testing.
-const mockPollQueue = vi.fn();
 vi.mock('@/features/jobs/workers/productAiQueue', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/jobs/workers/productAiQueue')>();
   return {

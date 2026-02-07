@@ -1,7 +1,7 @@
 'use client';
 
 import { Folder, Plus, ChevronRight, ChevronDown, ChevronLeft, Star, Upload } from 'lucide-react';
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 
 import { useImportFolderMutation } from '@/features/foldertree/hooks/useFolderMutations';
 import type { FolderTreeProps } from '@/features/foldertree/types/folder-tree-ui';
@@ -13,45 +13,38 @@ import { FolderTreePanel } from '@/shared/ui';
 import { getFolderDragId, getNoteDragId } from '@/shared/utils/drag-drop';
 
 import { FolderNode } from './tree/FolderNode';
+import { FolderTreeProvider, useFolderTree } from '../context/FolderTreeContext';
 
 
-function FolderTreeBase({
-  folders,
-  selectedFolderId,
-  selectedNotebookId,
-  onSelectFolder,
-  onCreateFolder,
-  onCreateNote,
-  onDeleteFolder,
-  onRenameFolder,
-  onSelectNote,
-  onDuplicateNote,
-  onDeleteNote,
-  onRenameNote,
-  onRelateNotes,
-  selectedNoteId,
-  onDropNote,
-  onDropFolder,
-  onReorderFolder,
-  draggedNoteId,
-  setDraggedNoteId,
-  onToggleCollapse,
-  isFavoritesActive,
-  onToggleFavorites,
-  canUndo,
-  onUndo,
-  undoHistory,
-  onUndoAtIndex,
-  onRefreshFolders,
-}: FolderTreeProps): React.JSX.Element {
+function FolderTreeContent(): React.JSX.Element {
+  const {
+    folders,
+    selectedFolderId,
+    selectedNotebookId,
+    onSelectFolder,
+    onCreateFolder,
+    onRelateNotes,
+    selectedNoteId,
+    onDropNote,
+    onDropFolder,
+    draggedNoteId,
+    onToggleCollapse,
+    isFavoritesActive,
+    onToggleFavorites,
+    canUndo,
+    onUndo,
+    undoHistory,
+    onUndoAtIndex,
+    onRefreshFolders,
+    setDraggedFolderId,
+    expandedFolderIds,
+    onToggleExpand,
+  } = useFolderTree();
+
   const { toast } = useToast();
   const importFolderMutation = useImportFolderMutation();
   const [isAllNotesDragOver, setIsAllNotesDragOver] = useState(false);
-  const [draggedFolderId, setDraggedFolderId] = useState<string | null>(null);
-  const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
-  const [renamingNoteId, setRenamingNoteId] = useState<string | null>(null);
   const [isHistoryExpanded, setIsHistoryExpanded] = useState(true);
-  const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(new Set());
   const [isDropzoneActive, setIsDropzoneActive] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [showDropzone, setShowDropzone] = useState(false);
@@ -85,53 +78,29 @@ function FolderTreeBase({
     []
   );
 
-  // Track if initial expansion has happened to avoid re-expanding on folder tree refresh
-  const hasInitiallyExpandedRef = React.useRef(false);
-
-  useEffect(() => {
-    if (folders.length === 0) return;
-    if (hasInitiallyExpandedRef.current) return; // Don't re-expand after initial load
-
-    setExpandedFolderIds(new Set(collectFolderIds(folders)));
-    hasInitiallyExpandedRef.current = true;
-  }, [folders, collectFolderIds]);
-
   const handleFolderDragStart = useCallback((folderId: string): void => {
     setDraggedFolderId(folderId);
-  }, []);
+  }, [setDraggedFolderId]);
 
   const handleFolderDragEnd = useCallback((): void => {
     setDraggedFolderId(null);
-  }, []);
-
-  const handleToggleExpand = useCallback((folderId: string): void => {
-    setExpandedFolderIds((prev: Set<string>) => {
-      const next = new Set(prev);
-      if (next.has(folderId)) {
-        next.delete(folderId);
-      } else {
-        next.add(folderId);
-      }
-      return next;
-    });
-  }, []);
+  }, [setDraggedFolderId]);
 
   const handleToggleSelectedCollapse = useCallback((): void => {
     if (!selectedFolderId) return;
     const target = findFolderById(folders, selectedFolderId);
     if (!target) return;
     const targetIds = [target.id, ...collectFolderIds(target.children)];
-    setExpandedFolderIds((prev: Set<string>) => {
-      const next = new Set(prev);
-      const allExpanded = targetIds.every((id: string) => next.has(id));
+    
+    const allExpanded = targetIds.every((id: string) => expandedFolderIds.has(id));
+    targetIds.forEach((id: string) => {
       if (allExpanded) {
-        targetIds.forEach((id: string) => next.delete(id));
+        if (expandedFolderIds.has(id)) onToggleExpand(id);
       } else {
-        targetIds.forEach((id: string) => next.add(id));
+        if (!expandedFolderIds.has(id)) onToggleExpand(id);
       }
-      return next;
     });
-  }, [selectedFolderId, folders, collectFolderIds, findFolderById]);
+  }, [selectedFolderId, folders, collectFolderIds, findFolderById, expandedFolderIds, onToggleExpand]);
 
   const isSelectedSubtreeExpanded = useMemo((): boolean => {
     if (!selectedFolderId) return false;
@@ -216,64 +185,11 @@ function FolderTreeBase({
           key={folder.id}
           folder={folder}
           level={0}
-          selectedFolderId={selectedFolderId}
-          onSelect={onSelectFolder}
-          onCreateSubfolder={onCreateFolder}
-          onCreateNote={onCreateNote}
-          onDelete={onDeleteFolder}
-          onRename={onRenameFolder}
-          onSelectNote={onSelectNote}
-          onDuplicateNote={onDuplicateNote}
-          onDeleteNote={onDeleteNote}
-          onRenameNote={onRenameNote}
-          selectedNoteId={selectedNoteId}
-          onDropNote={onDropNote}
-          onDropFolder={onDropFolder}
-          onReorderFolder={onReorderFolder}
-          onRelateNotes={onRelateNotes}
-          draggedFolderId={draggedFolderId}
-          draggedNoteId={draggedNoteId}
-          setDraggedNoteId={setDraggedNoteId}
           onDragStart={handleFolderDragStart}
           onDragEnd={handleFolderDragEnd}
-          allFolders={folders}
-          renamingFolderId={renamingFolderId}
-          onStartRename={setRenamingFolderId}
-          onCancelRename={(): void => setRenamingFolderId(null)}
-          renamingNoteId={renamingNoteId}
-          onStartNoteRename={setRenamingNoteId}
-          onCancelNoteRename={(): void => setRenamingNoteId(null)}
-          expandedFolderIds={expandedFolderIds}
-          onToggleExpand={handleToggleExpand}
         />
       )),
-    [
-      folders,
-      selectedFolderId,
-      selectedNoteId,
-      onSelectFolder,
-      onCreateFolder,
-      onCreateNote,
-      onDeleteFolder,
-      onRenameFolder,
-      onSelectNote,
-      onDuplicateNote,
-      onDeleteNote,
-      onRenameNote,
-      onDropNote,
-      onDropFolder,
-      onReorderFolder,
-      onRelateNotes,
-      draggedFolderId,
-      draggedNoteId,
-      setDraggedNoteId,
-      handleFolderDragStart,
-      handleFolderDragEnd,
-      renamingFolderId,
-      renamingNoteId,
-      expandedFolderIds,
-      handleToggleExpand,
-    ]
+    [folders, handleFolderDragStart, handleFolderDragEnd]
   );
 
   return (
@@ -505,6 +421,14 @@ function FolderTreeBase({
         )}
       </div>
     </FolderTreePanel>
+  );
+}
+
+function FolderTreeBase(props: FolderTreeProps): React.JSX.Element {
+  return (
+    <FolderTreeProvider {...props}>
+      <FolderTreeContent />
+    </FolderTreeProvider>
   );
 }
 

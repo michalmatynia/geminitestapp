@@ -112,6 +112,17 @@ const buildWarnings = (services: ProviderServiceStatus[]): string[] => {
   return warnings;
 };
 
+const isIntentionalServiceOverride = (
+  appEffective: ProviderValue,
+  configured: ProviderValue | null,
+  configuredSource: ProviderSource | null,
+  effective: ProviderValue
+): boolean => {
+  if (!configured || !configuredSource) return false;
+  if (configuredSource === "default" || configuredSource === "derived") return false;
+  return configured === effective && effective !== appEffective;
+};
+
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const hasDatabaseUrl = Boolean(process.env.DATABASE_URL);
   const hasMongoUri = Boolean(process.env.MONGODB_URI);
@@ -140,6 +151,12 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
       : "default";
   const authResolved = await getAuthDataProvider();
   const authEffective = requireAuthProvider(authResolved);
+  const authIntentionalOverride = isIntentionalServiceOverride(
+    appEffective,
+    authConfigured,
+    authConfiguredSource,
+    authEffective
+  );
 
   const productMongoSetting = normalizeProductProvider(
     await readMongoSetting(PRODUCT_DB_PROVIDER_SETTING_KEY)
@@ -160,6 +177,12 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
           ? "prisma-setting"
           : "derived";
   const productEffective = await getProductDataProvider();
+  const productIntentionalOverride = isIntentionalServiceOverride(
+    appEffective,
+    productConfigured,
+    productConfiguredSource,
+    productEffective
+  );
 
   const integrationsEffective = await getIntegrationDataProvider();
   const cmsEffective = await getCmsDataProvider();
@@ -181,7 +204,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
       configured: authConfigured,
       configuredSource: authConfiguredSource,
       effective: authEffective,
-      driftFromApp: authEffective !== appEffective,
+      driftFromApp: authEffective !== appEffective && !authIntentionalOverride,
       notes:
         authConfigured !== authEffective
           ? ["configured auth provider differs from effective due connection fallback."]
@@ -192,7 +215,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
       configured: productConfigured,
       configuredSource: productConfiguredSource,
       effective: productEffective,
-      driftFromApp: productEffective !== appEffective,
+      driftFromApp: productEffective !== appEffective && !productIntentionalOverride,
       notes:
         productConfigured !== productEffective
           ? ["configured product provider differs from effective due connection fallback."]

@@ -86,6 +86,61 @@ describe('Transform Handlers', () => {
       const result = await handleMapper(ctx);
       expect(result).toEqual({ out1: 'Alice' });
     });
+
+    it('should resolve source-prefixed mappings from result input', async () => {
+      const ctx = createMockContext({
+        node: {
+          id: 'n1',
+          type: 'mapper',
+          outputs: ['result'],
+          config: {
+            mapper: {
+              outputs: ['result'],
+              mappings: { result: 'result.id' }
+            }
+          }
+        } as any,
+        nodeInputs: { result: { id: 'prod-1' } },
+      });
+      const result = await handleMapper(ctx);
+      expect(result).toEqual({ result: 'prod-1' });
+    });
+
+    it('should warn once for unresolved explicit mapping on connected output', async () => {
+      const toast = vi.fn();
+      const ctx = createMockContext({
+        node: {
+          id: 'n1',
+          type: 'mapper',
+          title: 'Mapper',
+          outputs: ['result'],
+          config: {
+            mapper: {
+              outputs: ['result'],
+              mappings: { result: 'result.id' }
+            }
+          }
+        } as any,
+        nodeInputs: { value: { id: 'fallback' } },
+        edges: [
+          {
+            id: 'e1',
+            from: 'n1',
+            to: 'n2',
+            fromPort: 'result',
+            toPort: 'result',
+          } as any
+        ],
+        toast,
+      });
+
+      const first = await handleMapper(ctx);
+      const second = await handleMapper(ctx);
+
+      expect(first).toEqual({});
+      expect(second).toEqual({});
+      expect(toast).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('handleMutator', () => {

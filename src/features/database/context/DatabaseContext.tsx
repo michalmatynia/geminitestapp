@@ -22,7 +22,7 @@ interface DatabaseContextType {
   error: string | null;
   refresh: () => void;
   mode: DatabasePreviewMode;
-  backupName?: string;
+  backupName?: string | undefined;
   groups: DatabasePreviewGroup[];
   tables: DatabasePreviewTable[];
   tableRows: DatabasePreviewRow[];
@@ -41,7 +41,7 @@ export function DatabaseProvider({
   children: React.ReactNode;
   defaultDbType?: DatabaseType;
   mode?: DatabasePreviewMode;
-  backupName?: string;
+  backupName?: string | undefined;
 }): React.JSX.Element {
   const [dbType, setDbType] = useState<DatabaseType>(defaultDbType);
 

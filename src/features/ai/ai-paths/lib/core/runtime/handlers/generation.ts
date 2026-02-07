@@ -249,13 +249,33 @@ export const handleModel: NodeHandler = async ({
     if (abortSignal?.aborted || (error instanceof Error && error.name === 'AbortError')) {
       throw error;
     }
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const normalizedErrorMessage = errorMessage.toLowerCase();
+    const isOllamaConnectionError =
+      normalizedErrorMessage.includes('could not connect to ollama server') ||
+      (normalizedErrorMessage.includes('ollama') &&
+        (normalizedErrorMessage.includes('econnrefused') ||
+          normalizedErrorMessage.includes('fetch failed') ||
+          normalizedErrorMessage.includes('failed to fetch')));
+    const isHardFailure =
+      isOllamaConnectionError ||
+      normalizedErrorMessage.includes('ai job timed out') ||
+      normalizedErrorMessage.includes('connection error after');
     reportAiPathsError(
       error,
       { action: 'graphModel', nodeId: node.id },
       'AI model job failed:'
     );
-    toast('AI model job failed.', { variant: 'error' });
+    toast(
+      isOllamaConnectionError
+        ? errorMessage
+        : 'AI model job failed.',
+      { variant: 'error' }
+    );
     executed.ai.add(node.id);
+    if (isHardFailure) {
+      throw error instanceof Error ? error : new Error(errorMessage);
+    }
     return {
       result: '',
       jobId: enqueuedJobId,

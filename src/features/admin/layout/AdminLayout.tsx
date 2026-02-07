@@ -2,14 +2,14 @@
 
 import { ChevronLeftIcon } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import { SessionProvider } from 'next-auth/react';
+import { SessionProvider, useSession } from 'next-auth/react';
 import { useCallback, useEffect, useRef } from 'react';
 
 import { AiInsightsNotificationsDrawer } from '@/features/admin/components/AiInsightsNotificationsDrawer';
 import Menu from '@/features/admin/components/Menu';
 import { UserNav } from '@/features/admin/components/UserNav';
 import { AdminLayoutProvider, useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
-import { AuthProvider, useAuth } from '@/features/auth';
+import { AuthProvider } from '@/features/auth';
 import { useUserPreferences, useUpdateUserPreferencesMutation } from '@/features/auth/hooks/useUserPreferences';
 import { NoteSettingsProvider } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { QueryProvider } from '@/shared/providers/QueryProvider';
@@ -25,7 +25,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
     isProgrammaticallyCollapsed,
     setIsProgrammaticallyCollapsed,
   } = useAdminLayout();
-  const { session, status } = useAuth();
+  const { data: session, status } = useSession();
   const pathname = usePathname();
   const didUserToggleRef = useRef(false);
   const preferredMenuCollapsedRef = useRef(isMenuCollapsed);

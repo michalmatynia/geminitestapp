@@ -458,11 +458,12 @@ export const pollDatabaseQuery = async (
 
   let lastResult: unknown = null;
   let lastBundle: Record<string, unknown> = {};
+  // Pre-compute query payload since inputs don't change during polling
+  const payload = buildDbQueryPayload(nodeInputs, config.dbQuery);
   for (let attempt = 0; attempt < config.maxAttempts; attempt += 1) {
     if (options?.signal?.aborted) {
       throw createAbortError();
     }
-    const payload = buildDbQueryPayload(nodeInputs, config.dbQuery);
     const queryResult = await dbApi.query<{
       items?: unknown[];
       item?: unknown;
@@ -594,9 +595,9 @@ export const resolveContextPayload = async (
   const baseImages = Array.isArray(baseContext?.images)
     ? (baseContext?.images as unknown[])
     : null;
-  const extractedImages = extractImageUrls(entityForContext ?? rawEntity);
+  // Only extract images from entity when base images aren't already provided
   const resolvedImages =
-    baseImages && baseImages.length ? baseImages : extractedImages;
+    baseImages && baseImages.length ? baseImages : extractImageUrls(entityForContext ?? rawEntity);
   const baseContextRest = baseContext ? { ...baseContext } : {};
   delete (baseContextRest as Record<string, unknown>).entity;
   delete (baseContextRest as Record<string, unknown>).entityJson;

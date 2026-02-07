@@ -587,10 +587,13 @@ vi.mock("next/server.js", () => ({
 
 // Mock next-auth entirely to prevent internal module resolution issues
 vi.mock('next-auth', () => ({
-  // Provide a minimal mock or an empty object to bypass its internal logic
-  // This will prevent next-auth from trying to import next/server
-  Auth: vi.fn(), // Mock Auth function if used
-  // Add other mocks as needed based on next-auth usage
+  default: vi.fn(() => ({
+    handlers: { GET: vi.fn(), POST: vi.fn() },
+    auth: vi.fn(),
+    signIn: vi.fn(),
+    signOut: vi.fn(),
+  })),
+  Auth: vi.fn(),
 }));
 
 vi.mock('next-auth/react', () => ({

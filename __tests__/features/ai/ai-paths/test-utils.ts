@@ -46,6 +46,7 @@ export const createMockContext = (overrides: Partial<NodeHandlerContext> = {}): 
       poll: new Set(),
       ai: new Set(),
       schema: new Set(),
+      mapper: new Set(),
     },
     ...overrides,
   };

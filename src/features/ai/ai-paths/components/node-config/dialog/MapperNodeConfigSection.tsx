@@ -1,8 +1,5 @@
 'use client';
 
-
-
-
 import type { AiNode, NodeConfig, RuntimeState } from '@/features/ai/ai-paths/lib';
 import { createParserMappings, formatRuntimeValue, getValueAtMappingPath, parsePathList } from '@/features/ai/ai-paths/lib';
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
@@ -15,24 +12,69 @@ type MapperNodeConfigSectionProps = {
   updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
 };
 
-const buildLivePreview = (
+type MapperSources = {
+  context: unknown;
+  result: unknown;
+  bundle: unknown;
+  value: unknown;
+};
+
+type MapperPreview = {
+  values: Record<string, unknown>;
+  unresolved: Record<string, string>;
+};
+
+const SOURCE_PATH_PATTERN = /^(context|result|bundle|value)(?:\.|\[|$)/;
+
+const buildMapperSources = (runtimeInputs: Record<string, unknown>): MapperSources => ({
+  context: runtimeInputs.context ?? null,
+  result: runtimeInputs.result ?? null,
+  bundle: runtimeInputs.bundle ?? null,
+  value: runtimeInputs.value ?? null,
+});
+
+const getMapperContextValue = (sources: MapperSources): unknown =>
+  sources.context ?? sources.result ?? sources.bundle ?? sources.value;
+
+const resolveMapperValue = (
+  sources: MapperSources,
   contextValue: unknown,
+  path: string
+): unknown => {
+  if (!path) return undefined;
+  if (SOURCE_PATH_PATTERN.test(path)) {
+    return getValueAtMappingPath(sources, path);
+  }
+  const fromContext = getValueAtMappingPath(contextValue, path);
+  if (fromContext !== undefined) return fromContext;
+  return getValueAtMappingPath(sources, path);
+};
+
+const buildLivePreview = (
+  sources: MapperSources,
   outputs: string[],
   mappings?: Record<string, string>
-): Record<string, unknown> => {
-  if (contextValue === null || contextValue === undefined) return {};
-  return outputs.reduce<Record<string, unknown>>((acc, output: string) => {
+): MapperPreview => {
+  const contextValue = getMapperContextValue(sources);
+  if (contextValue === null || contextValue === undefined) {
+    return { values: {}, unresolved: {} };
+  }
+  const values: Record<string, unknown> = {};
+  const unresolved: Record<string, string> = {};
+  outputs.forEach((output: string): void => {
     const mapping = mappings?.[output]?.trim() ?? '';
     const value = mapping
-      ? getValueAtMappingPath(contextValue, mapping)
+      ? resolveMapperValue(sources, contextValue, mapping)
       : output === 'value'
         ? contextValue
-        : getValueAtMappingPath(contextValue, output);
+        : resolveMapperValue(sources, contextValue, output);
     if (value !== undefined) {
-      acc[output] = value;
+      values[output] = value;
+    } else if (mapping) {
+      unresolved[output] = mapping;
     }
-    return acc;
-  }, {});
+  });
+  return { values, unresolved };
 };
 
 export function MapperNodeConfigSection({
@@ -55,15 +97,12 @@ export function MapperNodeConfigSection({
       ? selectedNode.outputs
       : ['value'];
   const runtimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
-  const contextInput =
-    runtimeInputs.context ??
-    runtimeInputs.result ??
-    runtimeInputs.bundle ??
-    runtimeInputs.value ??
-    null;
-  const livePreview = contextInput !== null
-    ? buildLivePreview(contextInput, outputs, mapperConfig.mappings)
+  const mapperSources = buildMapperSources(runtimeInputs as Record<string, unknown>);
+  const contextInput = getMapperContextValue(mapperSources);
+  const preview = contextInput !== null && contextInput !== undefined
+    ? buildLivePreview(mapperSources, outputs, mapperConfig.mappings)
     : null;
+  const livePreview = preview?.values ?? null;
   const hasLivePreview = livePreview !== null && Object.keys(livePreview).length > 0;
 
   return (
@@ -75,7 +114,7 @@ export function MapperNodeConfigSection({
             <Label className="text-xs text-gray-400">Context Input</Label>
             <Textarea
               className="mt-2 min-h-[110px] w-full rounded-md border border-border bg-card/70 font-mono text-xs text-white"
-              value={contextInput !== null ? formatRuntimeValue(contextInput) : ''}
+              value={contextInput !== null && contextInput !== undefined ? formatRuntimeValue(contextInput) : ''}
               readOnly
               placeholder="Run the path or simulation to see the latest context input."
             />
@@ -87,7 +126,7 @@ export function MapperNodeConfigSection({
               value={hasLivePreview ? formatRuntimeValue(livePreview) : ''}
               readOnly
               placeholder={
-                contextInput === null
+                contextInput === null || contextInput === undefined
                   ? 'Run the path or simulation to see a live preview.'
                   : 'No mapped output yet.'
               }
@@ -145,6 +184,11 @@ export function MapperNodeConfigSection({
               });
             }}
           />
+          {preview?.unresolved[output] ? (
+            <p className="mt-1 text-[11px] text-amber-300">
+              Unresolved for current input: <code>{preview.unresolved[output]}</code>
+            </p>
+          ) : null}
         </div>
       ))}
     </div>

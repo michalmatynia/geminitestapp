@@ -164,31 +164,82 @@ export const handleParser: NodeHandler = ({
   }
 };
 
-export const handleMapper: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
-  const contextValue = coerceInput(
-    nodeInputs.context ?? nodeInputs.result ?? nodeInputs.bundle ?? nodeInputs.value
-  ) as
-    | Record<string, unknown>
-    | undefined;
-  if (!contextValue) {
-    return {};
-  }
+export const handleMapper: NodeHandler = ({
+  node,
+  nodeInputs,
+  edges,
+  executed,
+  runId,
+  toast,
+}: NodeHandlerContext): RuntimePortValues => {
+  const sources = {
+    context: coerceInput(nodeInputs.context),
+    result: coerceInput(nodeInputs.result),
+    bundle: coerceInput(nodeInputs.bundle),
+    value: coerceInput(nodeInputs.value),
+  };
+  const contextValue =
+    sources.context ??
+    sources.result ??
+    sources.bundle ??
+    sources.value;
+  if (contextValue === undefined) return {};
+
+  const sourcePathPattern = /^(context|result|bundle|value)(?:\.|\[|$)/;
+  const resolveMappedValue = (path: string): unknown => {
+    if (!path) return undefined;
+    if (sourcePathPattern.test(path)) {
+      return getValueAtMappingPath(sources, path);
+    }
+    const fromContext = getValueAtMappingPath(contextValue, path);
+    if (fromContext !== undefined) return fromContext;
+    return getValueAtMappingPath(sources, path);
+  };
+
   const mapperConfig = node.config?.mapper ?? {
     outputs: node.outputs,
     mappings: {},
   };
   const mapped: RuntimePortValues = {};
+  const unresolvedMappings: string[] = [];
+  const connectedOutputPorts = new Set<string>(
+    edges
+      .filter((edge) => edge.from === node.id && typeof edge.fromPort === 'string')
+      .map((edge) => edge.fromPort as string)
+  );
+
   mapperConfig.outputs.forEach((output: string): void => {
     const mapping = mapperConfig.mappings?.[output]?.trim() ?? '';
     const value = mapping
-      ? getValueAtMappingPath(contextValue, mapping)
+      ? resolveMappedValue(mapping)
       : output === 'value'
         ? contextValue
-        : getValueAtMappingPath(contextValue, output);
+        : resolveMappedValue(output);
     if (value !== undefined) {
       mapped[output] = value;
+      return;
+    }
+    if (!mapping) return;
+    if (connectedOutputPorts.size > 0 && connectedOutputPorts.has(output)) {
+      unresolvedMappings.push(`${output} <- ${mapping}`);
     }
   });
+
+  if (unresolvedMappings.length > 0) {
+    const key = `${runId}:${node.id}:${unresolvedMappings.join('|')}`;
+    if (!executed.mapper.has(key)) {
+      executed.mapper.add(key);
+      const preview = unresolvedMappings.slice(0, 2).join(', ');
+      const suffix =
+        unresolvedMappings.length > 2
+          ? ` and ${unresolvedMappings.length - 2} more`
+          : '';
+      toast(
+        `JSON Mapper "${node.title ?? node.id}" could not resolve mapping(s): ${preview}${suffix}.`,
+        { variant: 'info' }
+      );
+    }
+  }
   return mapped;
 };
 

@@ -26,6 +26,7 @@ export type CanvasBoardMigratedProps = {
   runtimeEvents?: AiPathRuntimeEvent[] | undefined;
   viewportClassName?: string | undefined;
   onRemoveEdge?: (edgeId: string) => void;
+  onDeleteSelectedNode?: (() => void) | undefined;
   onDisconnectPort?: (direction: 'input' | 'output', nodeId: string, port: string) => void;
   onReconnectInput?: (event: React.PointerEvent<HTMLButtonElement>, nodeId: string, port: string) => void;
   onFireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;

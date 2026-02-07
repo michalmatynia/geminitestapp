@@ -48,6 +48,7 @@ export type NodeHandlerContext = {
     poll: Set<string>;
     ai: Set<string>;
     schema: Set<string>;
+    mapper: Set<string>;
   };
 };
 

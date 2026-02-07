@@ -23,7 +23,10 @@ export type CanvasSidebarWrapperProps = {
   /** Callback to fire a persistent trigger */
   onFireTriggerPersistent?: ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void) | undefined;
   
-  onUpdateSelectedNode?: (node: AiNode, meta: { nodeId: string }) => void;
+  onUpdateSelectedNode?: (
+    patch: Partial<AiNode>,
+    meta: { nodeId: string }
+  ) => void;
   onDeleteSelectedNode?: () => void;
   onRemoveEdge?: (edgeId: string) => void;
   executionMode?: 'local' | 'server';

@@ -1,12 +1,12 @@
 import 'server-only';
 
+import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import {
   generateAnalyticsInsight,
   generateLogsInsight,
   generateRuntimeAnalyticsInsight,
   getScheduleSettings,
 } from '@/features/ai/insights/generator';
-import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { getAiInsightsMeta, setAiInsightsMeta } from '@/features/ai/insights/repository';
 import { AI_INSIGHTS_SETTINGS_KEYS } from '@/features/ai/insights/settings';
 import { listSystemLogs } from '@/features/observability/server';

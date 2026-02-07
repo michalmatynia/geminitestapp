@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { evaluateGraphWithIteratorAutoContinue, normalizeNodes, sanitizeEdges } from '@/features/ai/ai-paths/lib';
+import { evaluateGraphWithIteratorAutoContinue } from '@/features/ai/ai-paths/lib';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import {
   recordRuntimeNodeStatus,
@@ -195,8 +195,10 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     return;
   }
 
-  const nodes = normalizeNodes(graph.nodes);
-  const edges = sanitizeEdges(nodes, graph.edges);
+  // Nodes and edges are already normalized/sanitized at enqueue time
+  // (path-run-service.ts:39-40), so skip redundant re-normalization.
+  const nodes = graph.nodes as AiNode[];
+  const edges = graph.edges as Edge[];
   const triggerNodeId = resolveTriggerNodeId(
     nodes,
     edges,
@@ -222,6 +224,22 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         outputs: accOutputs,
       }),
     });
+  };
+
+  // Throttled variant: at most one intermediate save per second to reduce DB writes.
+  // Flushed before final status update to ensure no state is lost.
+  let lastIntermediateSaveMs = 0;
+  let pendingIntermediateSave = false;
+  const INTERMEDIATE_SAVE_INTERVAL_MS = 1000;
+  const throttledSaveIntermediateState = async (): Promise<void> => {
+    const now = Date.now();
+    if (now - lastIntermediateSaveMs < INTERMEDIATE_SAVE_INTERVAL_MS) {
+      pendingIntermediateSave = true;
+      return;
+    }
+    lastIntermediateSaveMs = now;
+    pendingIntermediateSave = false;
+    await saveIntermediateState();
   };
 
   const historyLimit = Number.parseInt(process.env.AI_PATHS_HISTORY_LIMIT ?? '', 10);
@@ -286,7 +304,9 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         nodeAttemptMap.set(node.id, nextAttempt);
 
         // Track intermediate state so SSE stream can deliver per-node progress
-        accInputs[node.id] = toJsonSafe(nodeInputs) as RuntimePortValues;
+        const safeInputs = toJsonSafe(nodeInputs) as RuntimePortValues;
+        const safePrevOutputs = toJsonSafe(prevOutputs) as RuntimePortValues;
+        accInputs[node.id] = safeInputs;
         accOutputs[node.id] = { ...(accOutputs[node.id] ?? {}), status: 'running' } as RuntimePortValues;
 
         await Promise.all([
@@ -295,8 +315,8 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             nodeTitle: node.title ?? null,
             status: 'running',
             attempt: nextAttempt,
-            inputs: toJsonSafe(nodeInputs) as RuntimePortValues,
-            outputs: toJsonSafe(prevOutputs) as RuntimePortValues,
+            inputs: safeInputs,
+            outputs: safePrevOutputs,
             startedAt: new Date(),
             errorMessage: null,
           }),
@@ -314,7 +334,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
               runStartedAt: cbRunStartedAt,
             },
           }),
-          saveIntermediateState(),
+          throttledSaveIntermediateState(),
         ]);
         await recordRuntimeNodeStatus({
           runId: run.id,
@@ -340,8 +360,10 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         runId: string;
       }) => {
         // Update accumulated state with completed outputs
-        accInputs[node.id] = toJsonSafe(nodeInputs) as RuntimePortValues;
-        accOutputs[node.id] = { ...(toJsonSafe(nextOutputs) as Record<string, unknown>), status: 'completed' } as RuntimePortValues;
+        const safeInputs = toJsonSafe(nodeInputs) as RuntimePortValues;
+        const safeOutputs = toJsonSafe(nextOutputs) as RuntimePortValues;
+        accInputs[node.id] = safeInputs;
+        accOutputs[node.id] = { ...(safeOutputs as Record<string, unknown>), status: 'completed' } as RuntimePortValues;
 
         if (cached) {
           if (iteration === 0) {
@@ -351,8 +373,8 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
                 nodeTitle: node.title ?? null,
                 status: 'completed',
                 attempt: nodeAttemptMap.get(node.id) ?? 0,
-                inputs: toJsonSafe(nodeInputs) as RuntimePortValues,
-                outputs: toJsonSafe(nextOutputs) as RuntimePortValues,
+                inputs: safeInputs,
+                outputs: safeOutputs,
                 finishedAt: new Date(),
                 errorMessage: null,
               }),
@@ -371,7 +393,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
                   runStartedAt: cbRunStartedAt,
                 },
               }),
-              saveIntermediateState(),
+              throttledSaveIntermediateState(),
             ]);
             await recordRuntimeNodeStatus({
               runId: run.id,
@@ -387,8 +409,8 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             nodeTitle: node.title ?? null,
             status: 'completed',
             attempt: nodeAttemptMap.get(node.id) ?? 0,
-            inputs: toJsonSafe(nodeInputs) as RuntimePortValues,
-            outputs: toJsonSafe(nextOutputs) as RuntimePortValues,
+            inputs: safeInputs,
+            outputs: safeOutputs,
             finishedAt: new Date(),
             errorMessage: null,
           }),
@@ -406,7 +428,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
               runStartedAt: cbRunStartedAt,
             },
           }),
-          saveIntermediateState(),
+          throttledSaveIntermediateState(),
         ]);
         await recordRuntimeNodeStatus({
           runId: run.id,
@@ -415,6 +437,8 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         });
       },
       onNodeError: async ({ node, nodeInputs, prevOutputs, error, iteration, runStartedAt: cbRunStartedAt }) => {
+        const safeInputs = toJsonSafe(nodeInputs) as RuntimePortValues;
+        const safePrevOutputs = toJsonSafe(prevOutputs) as RuntimePortValues;
         accOutputs[node.id] = { ...(accOutputs[node.id] ?? {}), status: 'failed' } as RuntimePortValues;
 
         await Promise.all([
@@ -423,8 +447,8 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             nodeTitle: node.title ?? null,
             status: 'failed',
             attempt: nodeAttemptMap.get(node.id) ?? 0,
-            inputs: toJsonSafe(nodeInputs) as RuntimePortValues,
-            outputs: toJsonSafe(prevOutputs) as RuntimePortValues,
+            inputs: safeInputs,
+            outputs: safePrevOutputs,
             finishedAt: new Date(),
             errorMessage: error instanceof Error ? error.message : String(error),
           }),
@@ -487,6 +511,11 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       },
     });
 
+    // Flush any throttled intermediate state before writing final status
+    if (pendingIntermediateSave) {
+      await saveIntermediateState();
+    }
+
     const finishedAt = new Date();
     await repo.updateRun(run.id, {
       status: 'completed',
@@ -516,18 +545,19 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       timestamp: finishedAt,
     });
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     const finishedAt = new Date();
     await repo.updateRun(run.id, {
       status: 'failed',
       finishedAt,
-      errorMessage: error instanceof Error ? error.message : String(error),
+      errorMessage,
     });
     await repo.createRunEvent({
       runId: run.id,
       level: 'error',
-      message: 'Run failed.',
+      message: `Run failed: ${errorMessage}`,
       metadata: {
-        error: error instanceof Error ? error.message : String(error),
+        error: errorMessage,
         runStartedAt,
       },
     });

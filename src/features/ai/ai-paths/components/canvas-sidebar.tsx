@@ -17,7 +17,10 @@ type CanvasSidebarProps = {
   /** Callback to fire a persistent trigger */
   onFireTriggerPersistent?: ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void) | undefined;
   
-  onUpdateSelectedNode?: (node: AiNode, meta: { nodeId: string }) => void;
+  onUpdateSelectedNode?: (
+    patch: Partial<AiNode>,
+    meta: { nodeId: string }
+  ) => void;
   onDeleteSelectedNode?: () => void;
   onRemoveEdge?: (edgeId: string) => void;
   executionMode?: 'local' | 'server';
@@ -38,6 +41,7 @@ export function CanvasSidebar({
   onDragStart,
   onFireTrigger,
   onFireTriggerPersistent,
+  onUpdateSelectedNode,
   onDeleteSelectedNode,
   onRemoveEdge,
   executionMode: executionModeProp,
@@ -253,7 +257,14 @@ export function CanvasSidebar({
                 <Input
                   className="mt-2 w-full rounded-md border bg-card/70 px-3 py-2 text-xs text-white"
                   value={selectedNode.title}
-                  onChange={(event) => updateNode(selectedNode.id, { title: event.target.value })}
+                  onChange={(event) => {
+                    const patch: Partial<AiNode> = { title: event.target.value };
+                    if (onUpdateSelectedNode) {
+                      onUpdateSelectedNode(patch, { nodeId: selectedNode.id });
+                    } else {
+                      updateNode(selectedNode.id, patch);
+                    }
+                  }}
                 />
               </div>
               <div>
@@ -261,9 +272,14 @@ export function CanvasSidebar({
                 <Textarea
                   className="mt-2 min-h-[64px] w-full rounded-md border bg-card/70 text-xs text-white"
                   value={selectedNode.description}
-                  onChange={(event) =>
-                    updateNode(selectedNode.id, { description: event.target.value })
-                  }
+                  onChange={(event) => {
+                    const patch: Partial<AiNode> = { description: event.target.value };
+                    if (onUpdateSelectedNode) {
+                      onUpdateSelectedNode(patch, { nodeId: selectedNode.id });
+                    } else {
+                      updateNode(selectedNode.id, patch);
+                    }
+                  }}
                 />
               </div>
               <SectionPanel variant="subtle-compact" className="bg-card/50 p-3 text-[11px] text-gray-400">

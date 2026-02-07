@@ -5,6 +5,28 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
 export const runtime = "nodejs";
+const CLIENT_ERROR_DEDUP_WINDOW_MS = Number(
+  process.env.CLIENT_ERROR_DEDUP_WINDOW_MS ?? "30000"
+);
+const CLIENT_ERROR_DEDUP_RETENTION_MS = Math.max(
+  60_000,
+  CLIENT_ERROR_DEDUP_WINDOW_MS * 20
+);
+
+type ClientErrorDedupEntry = {
+  firstSeenAt: number;
+  lastSeenAt: number;
+  lastLoggedAt: number;
+  count: number;
+};
+
+const globalWithClientErrorDedup = globalThis as typeof globalThis & {
+  __clientErrorDedupMap__?: Map<string, ClientErrorDedupEntry>;
+};
+
+const clientErrorDedupMap =
+  globalWithClientErrorDedup.__clientErrorDedupMap__ ??
+  (globalWithClientErrorDedup.__clientErrorDedupMap__ = new Map());
 
 const payloadSchema = z.object({
   message: z.string().min(1),
@@ -17,6 +39,46 @@ const payloadSchema = z.object({
   context: z.record(z.string(), z["unknown"]()).nullable().optional(),
   timestamp: z.string().optional(),
 });
+
+const buildDedupKey = (data: {
+  message: string;
+  name?: string | undefined;
+  digest?: string | undefined;
+  url?: string | undefined;
+}): string =>
+  [
+    data.name ?? "error",
+    data.message.trim(),
+    data.digest ?? "",
+    data.url ?? "",
+  ].join("|");
+
+const shouldLogClientError = (key: string, now: number): boolean => {
+  for (const [entryKey, entry] of clientErrorDedupMap.entries()) {
+    if (now - entry.lastSeenAt > CLIENT_ERROR_DEDUP_RETENTION_MS) {
+      clientErrorDedupMap.delete(entryKey);
+    }
+  }
+
+  const existing = clientErrorDedupMap.get(key);
+  if (!existing) {
+    clientErrorDedupMap.set(key, {
+      firstSeenAt: now,
+      lastSeenAt: now,
+      lastLoggedAt: now,
+      count: 1,
+    });
+    return true;
+  }
+
+  existing.lastSeenAt = now;
+  existing.count += 1;
+  if (now - existing.lastLoggedAt >= CLIENT_ERROR_DEDUP_WINDOW_MS) {
+    existing.lastLoggedAt = now;
+    return true;
+  }
+  return false;
+};
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const rawBody = await req.text();
@@ -44,7 +106,13 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
             ? candidate
             : String((candidate as { message?: string })?.message ?? "Unknown client error"),
       };
-  
+
+  const dedupKey = buildDedupKey(data);
+  const now = Date.now();
+  if (!shouldLogClientError(dedupKey, now)) {
+    return NextResponse.json({ ok: true, deduped: true });
+  }
+
   // Log as a client error using the centralized ErrorSystem
   await ErrorSystem.captureException(new Error(data.message), {
     service: "client-error-reporter",

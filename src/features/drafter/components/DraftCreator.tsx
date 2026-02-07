@@ -13,9 +13,27 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 import { useDrafterContext } from '../context/DrafterContext';
 
-export function DraftCreator(): React.JSX.Element {
+export function DraftCreator({
+  draftId: propDraftId,
+  onSaveSuccess: propOnSaveSuccess,
+  onCancel: _propOnCancel,
+}: {
+  draftId?: string | null;
+  onSaveSuccess?: () => void;
+  onCancel?: () => void;
+} = {}): React.JSX.Element {
   const { toast } = useToast();
-  const { editingDraftId: draftId, handleSaveSuccess, formRef } = useDrafterContext();
+  const context = React.useMemo(() => {
+    try {
+      return useDrafterContext();
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const draftId = propDraftId !== undefined ? propDraftId : context?.editingDraftId ?? null;
+  const handleSaveSuccess = propOnSaveSuccess ?? context?.handleSaveSuccess ?? ((): void => {});
+  const formRef = context?.formRef;
 
   // Queries
   const { data: catalogs = [] } = useCatalogs();

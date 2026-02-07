@@ -21,15 +21,15 @@ export function StudioModals(): React.JSX.Element {
     projectId,
     slots,
     setSelectedSlotId,
-  } = useImageStudio() as any;
+  } = useImageStudio();
 
   const handleDriveSelection = async (files: ImageFileSelection[]) => {
     setDriveImportOpen(false);
     if (files.length === 0) return;
     try {
-      await (importFromDriveMutation as any).mutateAsync({ files, folder: selectedFolder });
-    } catch (error: any) {
-      toast(error.message || 'Import failed', { variant: 'error' });
+      await importFromDriveMutation.mutateAsync({ files, folder: selectedFolder });
+    } catch (error: unknown) {
+      toast(error instanceof Error ? error.message : 'Import failed', { variant: 'error' });
     }
   };
 
@@ -37,9 +37,9 @@ export function StudioModals(): React.JSX.Element {
     setSlotCreateOpen(false);
     try {
       const created = await createSlots([{ name: `Slot ${slots.length + 1}`, folderPath: selectedFolder || null }]);
-      if (created?.length > 0) setSelectedSlotId(created[0].id);
-    } catch (error: any) {
-      toast(error.message || 'Failed to create slot', { variant: 'error' });
+      if (created?.length > 0 && created[0]) setSelectedSlotId(created[0].id);
+    } catch (error: unknown) {
+      toast(error instanceof Error ? error.message : 'Failed to create slot', { variant: 'error' });
     }
   };
 

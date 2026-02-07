@@ -13,7 +13,6 @@ import {
   cloneValue,
   coerceInput,
   hashRuntimeValue,
-  stableStringify,
   sanitizeEdges,
   getPortDataTypes,
   isValueCompatibleWithTypes,
@@ -953,11 +952,14 @@ export async function evaluateGraph({
       last.runStartedAt === entry.runStartedAt &&
       last.status === entry.status &&
       last.skipReason === entry.skipReason &&
-      stableStringify(last.inputs) === stableStringify(entry.inputs) &&
-      stableStringify(last.outputs) === stableStringify(entry.outputs)
+      hashRuntimeValue(last.inputs) === hashRuntimeValue(entry.inputs) &&
+      hashRuntimeValue(last.outputs) === hashRuntimeValue(entry.outputs)
     ) {
       return;
     }
+    // Clone inputs/outputs only when actually storing (after dedup check passes)
+    entry.inputs = cloneValue(entry.inputs);
+    entry.outputs = cloneValue(entry.outputs);
     existing.push(entry);
     if (existing.length > historyMax) {
       existing.splice(0, existing.length - historyMax);
@@ -988,8 +990,8 @@ export async function evaluateGraph({
       nodeTitle: node.title ?? null,
       status: options.status,
       iteration: options.iteration,
-      inputs: cloneValue(nodeInputs),
-      outputs: cloneValue(prevOutputs),
+      inputs: nodeInputs,
+      outputs: prevOutputs,
       inputHash: options.inputHash ?? null,
       skipReason: options.reason,
       inputsFrom: buildInputLinks(node.id, nodeInputs),
@@ -1279,6 +1281,7 @@ export async function evaluateGraph({
     poll: new Set<string>(),
     ai: new Set<string>(),
     schema: new Set<string>(),
+    mapper: new Set<string>(),
   };
   let iterationCount = 0;
   ensureNotCancelled();
@@ -1569,8 +1572,8 @@ export async function evaluateGraph({
               nodeTitle: node.title ?? null,
               status: 'failed',
               iteration,
-              inputs: cloneValue(nodeInputs),
-              outputs: cloneValue(prevOutputs),
+              inputs: nodeInputs,
+              outputs: prevOutputs,
               inputHash: historyInputHash ?? null,
               error: error instanceof Error ? error.message : String(error),
               inputsFrom: buildInputLinks(node.id, nodeInputs),
@@ -1624,8 +1627,8 @@ export async function evaluateGraph({
           nodeTitle: node.title ?? null,
           status: node.type === 'delay' ? 'delayed' : 'completed',
           iteration,
-          inputs: cloneValue(nodeInputs),
-          outputs: cloneValue(nextOutputs),
+          inputs: nodeInputs,
+          outputs: nextOutputs,
           inputHash: historyInputHash ?? null,
           inputsFrom: buildInputLinks(node.id, nodeInputs),
           outputsTo: buildOutputLinks(node.id, nextOutputs),
@@ -1639,7 +1642,7 @@ export async function evaluateGraph({
       if (isCacheable && inputHash) {
         inputHashes.set(node.id, inputHash);
       }
-      const didChange = JSON.stringify(prevOutputs) !== JSON.stringify(nextOutputs);
+      const didChange = hashRuntimeValue(prevOutputs) !== hashRuntimeValue(nextOutputs);
       if (didChange) {
         outputs[node.id] = nextOutputs;
         changed = true;

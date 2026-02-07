@@ -33,10 +33,10 @@ export function StudioProjectsList(): React.JSX.Element {
     const id = newProjectId.trim();
     if (!id) return;
     try {
-      await (createProjectMutation as any).mutateAsync(id);
+      await createProjectMutation.mutateAsync(id);
       setNewProjectId('');
-    } catch (error: any) {
-      toast(error.message || 'Failed to create project', { variant: 'error' });
+    } catch (error: unknown) {
+      toast(error instanceof Error ? error.message : 'Failed to create project', { variant: 'error' });
     }
   };
 
@@ -52,7 +52,7 @@ export function StudioProjectsList(): React.JSX.Element {
         <Button
           size="sm"
           onClick={() => void handleCreate()}
-          disabled={!newProjectId.trim() || (createProjectMutation as any).isPending}
+          disabled={!newProjectId.trim() || createProjectMutation.isPending}
         >
           <Plus className="mr-2 size-4" />
           Create

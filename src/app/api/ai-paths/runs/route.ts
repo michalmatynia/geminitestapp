@@ -6,7 +6,11 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";
 import type { AiPathRunStatus } from "@/shared/types/ai-paths";
-import { enforceAiPathsActionRateLimit, requireAiPathsAccess } from "@/features/ai/ai-paths/server";
+import {
+  canAccessGlobalAiPathRuns,
+  enforceAiPathsActionRateLimit,
+  requireAiPathsAccess,
+} from "@/features/ai/ai-paths/server";
 import { removePathRunQueueEntries } from "@/features/jobs/workers/aiPathRunQueue";
 import type { AiPathRunListOptions } from "@/features/ai/ai-paths/types/path-run-repository";
 
@@ -48,8 +52,9 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
   const offset =
     Number.isFinite(offsetRaw) && offsetRaw >= 0 ? offsetRaw : undefined;
   const repo = getPathRunRepository();
+  const hasGlobalRunAccess = canAccessGlobalAiPathRuns(access);
   const result = await repo.listRuns({
-    ...(!access.isElevated ? { userId: access.userId } : {}),
+    ...(!hasGlobalRunAccess ? { userId: access.userId } : {}),
     ...(pathId ? { pathId } : {}),
     ...(query ? { query } : {}),
     ...(source ? { source, sourceMode } : {}),
@@ -72,8 +77,9 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promis
   const sourceMode = sourceModeParam === "exclude" ? "exclude" : "include";
 
   const repo = getPathRunRepository();
+  const hasGlobalRunAccess = canAccessGlobalAiPathRuns(access);
   const listOptions: AiPathRunListOptions = {};
-  if (!access.isElevated) {
+  if (!hasGlobalRunAccess) {
     listOptions.userId = access.userId;
   }
   if (pathId) {

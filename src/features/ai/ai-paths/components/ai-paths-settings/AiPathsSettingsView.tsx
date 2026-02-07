@@ -114,6 +114,22 @@ export function AiPathsSettingsView({
     setNodes,
     palette,
     handleDragStart,
+    handleRemoveEdge,
+    handleDisconnectPort,
+    handleReconnectInput,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    handleStartConnection,
+    handleCompleteConnection,
+    handleDrop,
+    handleDragOver,
+    handlePanStart,
+    handlePanMove,
+    handlePanEnd,
+    zoomTo,
+    fitToNodes,
+    resetView,
     handleFireTrigger,
     handleFireTriggerPersistent,
     handlePauseActiveRun,
@@ -124,6 +140,7 @@ export function AiPathsSettingsView({
     runtimeNodeStatuses,
     runtimeEvents,
     updateSelectedNode,
+    handleDeleteSelectedNode,
     handleClearWires,
     handleClearConnectorData,
     handleClearHistory,
@@ -643,6 +660,9 @@ export function AiPathsSettingsView({
                 onDragStart={(e: React.DragEvent<HTMLDivElement>, node: NodeDefinition) => { void handleDragStart(e, node); }}
                 onFireTrigger={(node: AiNode) => void handleFireTrigger(node)}
                 onFireTriggerPersistent={(node: AiNode) => void handleFireTriggerPersistent(node)}
+                onUpdateSelectedNode={(patch, options) => updateSelectedNode(patch, options)}
+                onDeleteSelectedNode={() => handleDeleteSelectedNode()}
+                onRemoveEdge={(edgeId: string) => handleRemoveEdge(edgeId)}
                 onClearWires={() => void handleClearWires()}
                 runStatus={runtimeRunStatus}
                 onPauseRun={handlePauseActiveRun}
@@ -682,6 +702,31 @@ export function AiPathsSettingsView({
                 runtimeEvents={runtimeEvents}
                 viewportClassName={isFocusMode ? 'h-full min-h-0 rounded-none border-0' : undefined}
                 onFireTrigger={(node) => void handleFireTrigger(node)}
+                onRemoveEdge={(edgeId) => handleRemoveEdge(edgeId)}
+                onDeleteSelectedNode={() => handleDeleteSelectedNode()}
+                onDisconnectPort={(direction, nodeId, port) =>
+                  handleDisconnectPort(direction, nodeId, port)
+                }
+                onReconnectInput={(event, nodeId, port) =>
+                  handleReconnectInput(event, nodeId, port)
+                }
+                onPointerDownNode={(event, nodeId) => handlePointerDown(event, nodeId)}
+                onPointerMoveNode={(event, nodeId) => handlePointerMove(event, nodeId)}
+                onPointerUpNode={(event, nodeId) => handlePointerUp(event, nodeId)}
+                onStartConnection={(event, node, port) =>
+                  handleStartConnection(event, node, port)
+                }
+                onCompleteConnection={(event, node, port) =>
+                  handleCompleteConnection(event, node, port)
+                }
+                onDrop={(event) => handleDrop(event)}
+                onDragOver={(event) => handleDragOver(event)}
+                onPanStart={(event) => handlePanStart(event)}
+                onPanMove={(event) => handlePanMove(event)}
+                onPanEnd={(event) => handlePanEnd(event)}
+                onZoomTo={(scale) => zoomTo(scale)}
+                onFitToNodes={() => fitToNodes()}
+                onResetView={() => resetView()}
               />
             </div>
           </div>

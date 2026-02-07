@@ -6,6 +6,7 @@ import {
   recordRuntimeRunFinished,
   recordRuntimeRunQueued,
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
+import type { AiPathRunRepository } from '@/features/ai/ai-paths/types/path-run-repository';
 import { enqueuePathRunJob } from '@/features/jobs/workers/aiPathRunQueue';
 import type { AiNode, Edge, AiPathRunRecord } from '@/shared/types/ai-paths';
 
@@ -144,7 +145,13 @@ export const retryPathRunNode = async (runId: string, nodeId: string): Promise<A
 };
 
 export const cancelPathRun = async (runId: string): Promise<AiPathRunRecord> => {
-  const repo = getPathRunRepository();
+  return cancelPathRunWithRepository(getPathRunRepository(), runId);
+};
+
+export const cancelPathRunWithRepository = async (
+  repo: AiPathRunRepository,
+  runId: string
+): Promise<AiPathRunRecord> => {
   const run = await repo.findRunById(runId);
   if (!run) throw new Error('Run not found');
   const finishedAt = new Date();

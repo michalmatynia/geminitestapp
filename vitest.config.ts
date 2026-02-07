@@ -23,6 +23,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@/__tests__': path.resolve(__dirname, './__tests__'),
       'server-only': path.resolve(__dirname, './__tests__/mocks/server-only.js'),
     },
   },

@@ -45,6 +45,8 @@ const warnAuthProviderDrift = (
   source: 'mongo-setting' | 'prisma-setting' | 'fallback'
 ): void => {
   if (appProvider === authProvider) return;
+  // Explicit auth provider settings are intentional overrides in mixed-provider deployments.
+  if (source !== 'fallback') return;
   console.warn(
     `[auth-provider] Auth provider "${authProvider}" from ${source} differs from app provider "${appProvider}".`
   );

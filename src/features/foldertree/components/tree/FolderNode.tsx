@@ -3,7 +3,6 @@
 import { Folder, FolderOpen, FilePlus, FolderPlus, Edit2, Trash2 } from 'lucide-react';
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 
-import type { FolderNodeProps } from '@/features/foldertree/types/folder-tree-ui';
 import type { CategoryWithChildren } from '@/shared/types/notes';
 import type { NoteRecord } from '@/shared/types/notes';
 import type { TreeContextMenuItem } from '@/shared/ui';
@@ -12,40 +11,41 @@ import { useToast, Input, TreeContextMenu } from '@/shared/ui';
 import { getFolderDragId, getNoteDragId, hasDragType, resolveVerticalDropPosition, setFolderDragData, DRAG_KEYS } from '@/shared/utils/drag-drop';
 
 import { NoteItem } from './NoteItem';
+import { useFolderTree } from '../../context/FolderTreeContext';
 
 export const FolderNode = React.memo(function FolderNode({
   folder,
   level,
-  selectedFolderId,
-  onSelect,
-  onCreateSubfolder,
-  onCreateNote,
-  onDelete,
-  onRename,
-  onSelectNote,
-  onDuplicateNote,
-  onDeleteNote,
-  onRenameNote,
-  selectedNoteId,
-  onDropNote,
-  onDropFolder,
-  onReorderFolder,
-  onRelateNotes,
-  draggedFolderId,
-  draggedNoteId,
-  setDraggedNoteId,
   onDragStart: onDragStartProp,
   onDragEnd: onDragEndProp,
-  allFolders,
-  renamingFolderId,
-  onStartRename,
-  onCancelRename,
-  renamingNoteId,
-  onStartNoteRename,
-  onCancelNoteRename,
-  expandedFolderIds,
-  onToggleExpand,
-}: FolderNodeProps): React.JSX.Element {
+}: {
+  folder: CategoryWithChildren;
+  level: number;
+  onDragStart: (id: string) => void;
+  onDragEnd: () => void;
+}): React.JSX.Element {
+  const {
+    selectedFolderId,
+    onSelectFolder: onSelect,
+    onCreateFolder: onCreateSubfolder,
+    onCreateNote,
+    onDeleteFolder: onDelete,
+    onRenameFolder: onRename,
+    selectedNoteId,
+    onDropNote,
+    onDropFolder,
+    onReorderFolder,
+    onRelateNotes,
+    draggedFolderId,
+    draggedNoteId,
+    folders: allFolders,
+    renamingFolderId,
+    onStartRename,
+    onCancelRename,
+    expandedFolderIds,
+    onToggleExpand,
+  } = useFolderTree();
+
   const { toast } = useToast();
   const [isDragOver, setIsDragOver] = useState(false);
   const [reorderHover, setReorderHover] = useState<'above' | 'below' | null>(null);
@@ -384,61 +384,18 @@ export const FolderNode = React.memo(function FolderNode({
               key={child.id}
               folder={child}
               level={level + 1}
-              selectedFolderId={selectedFolderId}
-              onSelect={onSelect}
-              onCreateSubfolder={onCreateSubfolder}
-              onCreateNote={onCreateNote}
-              onDelete={onDelete}
-              onRename={onRename}
-              onSelectNote={onSelectNote}
-              onDuplicateNote={onDuplicateNote}
-              onDeleteNote={onDeleteNote}
-              onRenameNote={onRenameNote}
-              selectedNoteId={selectedNoteId}
-              onDropNote={onDropNote}
-              onDropFolder={onDropFolder}
-              onReorderFolder={onReorderFolder}
-              onRelateNotes={onRelateNotes}
-              draggedFolderId={draggedFolderId}
-              draggedNoteId={draggedNoteId}
-              setDraggedNoteId={setDraggedNoteId}
               onDragStart={onDragStartProp}
               onDragEnd={onDragEndProp}
-              allFolders={allFolders}
-              renamingFolderId={renamingFolderId}
-              onStartRename={onStartRename}
-              onCancelRename={onCancelRename}
-              renamingNoteId={renamingNoteId}
-              onStartNoteRename={onStartNoteRename}
-              onCancelNoteRename={onCancelNoteRename}
-              expandedFolderIds={expandedFolderIds}
-              onToggleExpand={onToggleExpand}
             />
           ))}
-          {sortedNotes.map((note: NoteRecord) => {
-            const isNoteSelected = selectedNoteId === note.id;
-            const isNoteRenaming = renamingNoteId === note.id;
-            return (
-              <NoteItem
-                key={note.id}
-                note={note}
-                level={level}
-                isSelected={isNoteSelected}
-                isRenaming={isNoteRenaming}
-                folderId={folder.id}
-                onSelectNote={onSelectNote}
-                onCreateNote={onCreateNote}
-                onDuplicateNote={onDuplicateNote}
-                onDeleteNote={onDeleteNote}
-                onRenameNote={onRenameNote}
-                onStartRename={onStartNoteRename}
-                onCancelRename={onCancelNoteRename}
-                onRelateNotes={onRelateNotes}
-                draggedNoteId={draggedNoteId}
-                setDraggedNoteId={setDraggedNoteId}
-              />
-            );
-          })}
+          {sortedNotes.map((note: NoteRecord) => (
+            <NoteItem
+              key={note.id}
+              note={note}
+              level={level}
+              folderId={folder.id}
+            />
+          ))}
         </div>
       )}
     </div>

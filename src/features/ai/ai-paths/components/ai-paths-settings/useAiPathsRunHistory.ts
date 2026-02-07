@@ -318,7 +318,11 @@ export function useAiPathsRunHistory({
       toast(response.error || 'Failed to cancel run.', { variant: 'error' });
       return;
     }
-    toast('Run canceled.', { variant: 'success' });
+    const payload = (response.data ?? {}) as { canceled?: boolean; message?: string };
+    const wasCanceled = payload.canceled !== false;
+    toast(payload.message || (wasCanceled ? 'Run canceled.' : 'Run already finished or removed.'), {
+      variant: wasCanceled ? 'success' : 'info',
+    });
     void runsQuery.refetch();
   };
 

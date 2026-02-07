@@ -93,7 +93,6 @@ export function ComponentTreePanel(): React.ReactNode {
                 isCollapsed={isCollapsed}
                 onToggleZone={handleToggleZone}
                 zoneSections={zoneSections}
-                selectedNodeId={state.selectedNodeId}
                 currentPage={state.currentPage}
                 clipboard={state.clipboard}
                 showExtractPlaceholder={showExtractPlaceholder}
@@ -117,7 +116,7 @@ interface ZoneGroupProps {
   isCollapsed: boolean;
   onToggleZone: (zone: PageZone) => void;
   zoneSections: SectionInstance[];
-  selectedNodeId: string | null;
+  selectedNodeId?: string | null;
   currentPage: unknown;
   clipboard: { type: 'section' | 'block'; data: unknown } | null;
   showExtractPlaceholder: boolean;
@@ -130,7 +129,6 @@ function ZoneGroup({
   isCollapsed,
   onToggleZone,
   zoneSections,
-  selectedNodeId,
   currentPage,
   clipboard,
   showExtractPlaceholder,
@@ -139,12 +137,7 @@ function ZoneGroup({
   const [isZoneDragOver, setIsZoneDragOver] = useState(false);
   const { state: dragState, endSectionDrag } = useDragState();
   const {
-    selectNode,
-    toggleExpand,
-    expandedIds,
-    blockActions,
     sectionActions,
-    gridActions,
   } = useTreeActions();
 
   const draggedSectionId = dragState.section.id;

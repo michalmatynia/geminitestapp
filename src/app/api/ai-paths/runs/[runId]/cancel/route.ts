@@ -4,14 +4,34 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-import { cancelPathRun } from "@/features/ai/ai-paths/services/path-run-service";
+import {
+  cancelPathRunWithRepository,
+} from "@/features/ai/ai-paths/services/path-run-service";
 import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";
-import { notFoundError } from "@/shared/errors/app-error";
+import { removePathRunQueueEntries } from "@/features/jobs/workers/aiPathRunQueue";
+import { mongoPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository/mongo-path-run-repository";
+import { prismaPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository/prisma-path-run-repository";
 import {
   assertAiPathRunAccess,
   enforceAiPathsActionRateLimit,
   requireAiPathsAccess,
 } from "@/features/ai/ai-paths/server";
+import type { AiPathRunRepository } from "@/features/ai/ai-paths/types/path-run-repository";
+import type { AiPathRunRecord } from "@/shared/types/ai-paths";
+
+const TERMINAL_STATUSES = new Set(["completed", "failed", "canceled", "dead_lettered"]);
+
+const resolveFallbackRepository = (
+  primary: AiPathRunRepository
+): AiPathRunRepository | null => {
+  if (primary === prismaPathRunRepository) {
+    return process.env.MONGODB_URI ? mongoPathRunRepository : null;
+  }
+  if (primary === mongoPathRunRepository) {
+    return process.env.DATABASE_URL ? prismaPathRunRepository : null;
+  }
+  return null;
+};
 
 async function POST_handler(
   _req: NextRequest,
@@ -22,13 +42,40 @@ async function POST_handler(
   enforceAiPathsActionRateLimit(access, "run-cancel");
   const runId: string = params.runId;
   const repo = getPathRunRepository();
-  const existing = await repo.findRunById(runId);
+  let repoForRun: AiPathRunRepository = repo;
+  let existing: AiPathRunRecord | null = await repo.findRunById(runId);
   if (!existing) {
-    throw notFoundError("Run not found", { runId });
+    const fallbackRepo = resolveFallbackRepository(repo);
+    if (fallbackRepo) {
+      const fallbackRun = await fallbackRepo.findRunById(runId);
+      if (fallbackRun) {
+        existing = fallbackRun;
+        repoForRun = fallbackRepo;
+      }
+    }
+  }
+  if (!existing) {
+    await removePathRunQueueEntries([runId]);
+    return NextResponse.json({
+      run: null,
+      canceled: false,
+      runId,
+      message: "Run already missing. Queue entry (if present) has been removed.",
+    });
   }
   assertAiPathRunAccess(access, existing);
-  const run: unknown = await cancelPathRun(runId);
-  return NextResponse.json({ run });
+  if (TERMINAL_STATUSES.has(existing.status)) {
+    await removePathRunQueueEntries([runId]);
+    return NextResponse.json({
+      run: existing,
+      canceled: false,
+      runId,
+      message: `Run is already ${existing.status}.`,
+    });
+  }
+  const run: unknown = await cancelPathRunWithRepository(repoForRun, runId);
+  await removePathRunQueueEntries([runId]);
+  return NextResponse.json({ run, canceled: true, runId });
 }
 
 export const POST = apiHandlerWithParams<{ runId: string }>(POST_handler, {

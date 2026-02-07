@@ -447,14 +447,20 @@ export function JobQueuePanel({
   });
 
   const cancelRunMutation = useMutation({
-    mutationFn: async (runId: string): Promise<void> => {
+    mutationFn: async (
+      runId: string
+    ): Promise<{ canceled?: boolean; message?: string | undefined }> => {
       const response = await runsApi.cancel(runId);
       if (!response.ok) {
         throw new Error(response.error || 'Failed to cancel run.');
       }
+      return (response.data ?? {}) as { canceled?: boolean; message?: string | undefined };
     },
-    onSuccess: () => {
-      toast('Run canceled.', { variant: 'success' });
+    onSuccess: (result: { canceled?: boolean; message?: string | undefined }) => {
+      const wasCanceled = result.canceled !== false;
+      toast(result.message || (wasCanceled ? 'Run canceled.' : 'Run already finished or removed.'), {
+        variant: wasCanceled ? 'success' : 'info',
+      });
       void runsQuery.refetch();
       void queueStatusQuery.refetch();
     },

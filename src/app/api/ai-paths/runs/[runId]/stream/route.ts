@@ -102,15 +102,21 @@ async function GET_handler(
         }
 
         const nodes = await repo.listRunNodes(runId);
-        const maxNodeUpdatedAt = nodes.reduce<string | null>((max: string | null, node: AiPathRunNodeRecord) => {
-          const candidate = toISOStringSafe(node.updatedAt ?? node.createdAt);
-          if (!candidate) return max;
-          if (!max) return candidate;
-          return candidate > max ? candidate : max;
-        }, null);
-        if (maxNodeUpdatedAt && maxNodeUpdatedAt !== lastNodeUpdatedAt) {
-          send("nodes", nodes);
-          lastNodeUpdatedAt = maxNodeUpdatedAt;
+        const changedNodes = nodes.filter((node: AiPathRunNodeRecord) => {
+          const ts = toISOStringSafe(node.updatedAt ?? node.createdAt);
+          if (!ts) return false;
+          const prev = lastNodeUpdatedAt;
+          return !prev || ts > prev;
+        });
+        if (changedNodes.length > 0) {
+          send("nodes", changedNodes);
+          let latestNodeTs: string | null = lastNodeUpdatedAt;
+          for (const node of changedNodes) {
+            const candidate = toISOStringSafe(node.updatedAt ?? node.createdAt);
+            if (!candidate) continue;
+            if (!latestNodeTs || candidate > latestNodeTs) latestNodeTs = candidate;
+          }
+          if (latestNodeTs) lastNodeUpdatedAt = latestNodeTs;
         }
 
         const events = await repo.listRunEvents(runId, {

@@ -55,8 +55,9 @@
 import { useMemo } from 'react';
 
 import type { AiNode, DbQueryPreset, DbNodePreset, NodeConfig } from '@/features/ai/ai-paths/lib';
+import { sanitizeEdges } from '@/features/ai/ai-paths/lib';
 
-import { useGraphState } from '../../context/GraphContext';
+import { useGraphState, useGraphActions } from '../../context/GraphContext';
 import { usePresetsState, usePresetsActions } from '../../context/PresetsContext';
 import { useRuntimeState, useRuntimeActions } from '../../context/RuntimeContext';
 import { useSelectionState, useSelectionActions } from '../../context/SelectionContext';
@@ -126,6 +127,7 @@ export function NodeConfigDialogMigrated({
 }: NodeConfigDialogMigratedProps): React.JSX.Element | null {
   // Read state from GraphContext
   const { nodes, edges, isPathLocked, activePathId } = useGraphState();
+  const { setNodes, setEdges } = useGraphActions();
 
   // Read state from SelectionContext
   const { selectedNodeId, configOpen } = useSelectionState();
@@ -166,6 +168,80 @@ export function NodeConfigDialogMigrated({
     ...(savePathConfig !== undefined && { savePathConfig }),
   };
 
+  const updateSelectedNodeWithContextSync = (
+    patch: Partial<AiNode>,
+    options?: { nodeId?: string }
+  ): void => {
+    const targetNodeId = options?.nodeId ?? selectedNodeId;
+    updateSelectedNode(patch, options);
+    if (!targetNodeId) return;
+
+    const shouldSanitize = Boolean(patch.inputs || patch.outputs);
+    setNodes((prev: AiNode[]): AiNode[] => {
+      let foundTarget = false;
+      const next = prev.map((node: AiNode): AiNode => {
+        if (node.id !== targetNodeId) return node;
+        foundTarget = true;
+        const nextNode: AiNode = { ...node, ...patch };
+        if (patch.config) {
+          const currentConfig = node.config ?? {};
+          const mergedConfig = { ...currentConfig };
+          for (const key of Object.keys(patch.config) as Array<keyof NodeConfig>) {
+            const patchValue = patch.config[key];
+            const currentValue = currentConfig[key];
+            if (
+              patchValue &&
+              typeof patchValue === 'object' &&
+              !Array.isArray(patchValue) &&
+              currentValue &&
+              typeof currentValue === 'object' &&
+              !Array.isArray(currentValue)
+            ) {
+              (mergedConfig as Record<string, unknown>)[key] = {
+                ...(currentValue as object),
+                ...(patchValue as object),
+              };
+            } else {
+              (mergedConfig as Record<string, unknown>)[key] = patchValue as unknown;
+            }
+          }
+          nextNode.config = mergedConfig;
+        }
+        return nextNode;
+      });
+
+      if (!foundTarget) {
+        const isFullNodePatch =
+          patch.id === targetNodeId &&
+          typeof patch.type === 'string' &&
+          typeof patch.title === 'string' &&
+          typeof patch.description === 'string' &&
+          Array.isArray(patch.inputs) &&
+          Array.isArray(patch.outputs) &&
+          typeof patch.position?.x === 'number' &&
+          typeof patch.position?.y === 'number';
+        if (isFullNodePatch) {
+          next.push(patch as AiNode);
+        }
+      }
+
+      if (shouldSanitize) {
+        setEdges((current) => {
+          const sanitized = sanitizeEdges(next, current);
+          const droppedCount = Math.max(0, current.length - sanitized.length);
+          if (droppedCount > 0) {
+            toast(
+              `${droppedCount} wire(s) were disconnected because ports are no longer compatible after this node update.`,
+              { variant: 'warning' }
+            );
+          }
+          return sanitized;
+        });
+      }
+      return next;
+    });
+  };
+
   return (
     <NodeConfigDialog
       // State from SelectionContext
@@ -198,7 +274,7 @@ export function NodeConfigDialogMigrated({
       dbNodePresets={dbNodePresets}
       setDbNodePresets={setDbNodePresets}
       // Callback props passed through
-      updateSelectedNode={updateSelectedNode}
+      updateSelectedNode={updateSelectedNodeWithContextSync}
       updateSelectedNodeConfig={(config: NodeConfig) => updateSelectedNodeConfig(config)}
       handleFetchParserSample={handleFetchParserSample}
       handleFetchUpdaterSample={handleFetchUpdaterSample}

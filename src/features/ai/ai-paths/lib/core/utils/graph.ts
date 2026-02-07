@@ -106,6 +106,101 @@ export const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
   });
 };
 
+type GraphIntegrityIssue =
+  | {
+    kind: 'invalid_edge';
+    count: number;
+  }
+  | {
+    kind: 'disconnected_processing_node';
+    nodeId: string;
+    nodeType: string;
+    nodeTitle: string;
+  };
+
+type GraphIntegrityReport = {
+  issues: GraphIntegrityIssue[];
+  invalidEdgeCount: number;
+  disconnectedProcessingNodes: Array<{
+    nodeId: string;
+    nodeType: string;
+    nodeTitle: string;
+  }>;
+};
+
+const PROCESSING_NODE_TYPES = new Set<string>([
+  'parser',
+  'mapper',
+  'mutator',
+  'string_mutator',
+  'template',
+  'validator',
+  'regex',
+  'math',
+  'compare',
+  'router',
+  'gate',
+  'bundle',
+  'prompt',
+  'model',
+  'agent',
+  'learner_agent',
+  'iterator',
+  'database',
+  'poll',
+  'http',
+]);
+
+export const inspectGraphIntegrity = (nodes: AiNode[], edges: Edge[]): GraphIntegrityReport => {
+  const sanitized = sanitizeEdges(nodes, edges);
+  const invalidEdgeCount = Math.max(0, edges.length - sanitized.length);
+  const nodeStats = new Map<string, { incoming: number; outgoing: number }>();
+  nodes.forEach((node: AiNode) => {
+    nodeStats.set(node.id, { incoming: 0, outgoing: 0 });
+  });
+  sanitized.forEach((edge: Edge) => {
+    const fromStats = nodeStats.get(edge.from);
+    if (fromStats) fromStats.outgoing += 1;
+    const toStats = nodeStats.get(edge.to);
+    if (toStats) toStats.incoming += 1;
+  });
+
+  const disconnectedProcessingNodes = nodes
+    .filter((node: AiNode): boolean => PROCESSING_NODE_TYPES.has(node.type))
+    .filter((node: AiNode): boolean => {
+      const stats = nodeStats.get(node.id);
+      if (!stats) return false;
+      return stats.incoming === 0 && stats.outgoing === 0;
+    })
+    .map((node: AiNode) => ({
+      nodeId: node.id,
+      nodeType: node.type,
+      nodeTitle: node.title ?? node.id,
+    }));
+
+  const issues: GraphIntegrityIssue[] = [];
+  if (invalidEdgeCount > 0) {
+    issues.push({
+      kind: 'invalid_edge',
+      count: invalidEdgeCount,
+    });
+  }
+  disconnectedProcessingNodes.forEach((node) => {
+    issues.push({
+      kind: 'disconnected_processing_node',
+      nodeId: node.nodeId,
+      nodeType: node.nodeType,
+      nodeTitle: node.nodeTitle,
+    });
+  });
+
+  return {
+    issues,
+    invalidEdgeCount,
+    disconnectedProcessingNodes,
+  };
+};
+
 export const ensureUniquePorts = (ports: string[], add: string[]): string[] => {
   const set = new Set(ports.map(normalizePortName));
   add.forEach((port: string) => set.add(normalizePortName(port)));

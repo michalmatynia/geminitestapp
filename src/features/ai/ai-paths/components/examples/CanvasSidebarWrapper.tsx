@@ -49,6 +49,7 @@ export type CanvasSidebarWrapperProps = {
     includeNodeConfig?: boolean | undefined;
     force?: boolean | undefined;
     nodesOverride?: AiNode[] | undefined;
+    nodeOverride?: AiNode | undefined;
   }) => Promise<void>) | undefined;
 };
 

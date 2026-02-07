@@ -6,21 +6,6 @@ import { GET as getLogs } from '@/app/api/chatbot/agent/[runId]/logs/route';
 import { GET as listRuns, POST as createRun } from '@/app/api/chatbot/agent/route';
 import prisma from '@/shared/lib/db/prisma';
 
-vi.mock('@/shared/lib/db/prisma', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/shared/lib/db/prisma')>();
-  return {
-    ...actual,
-    default: {
-      ...actual.default,
-      chatbotAgentRun: {
-        ...actual.default.chatbotAgentRun,
-        findMany: vi.fn(),
-        create: vi.fn(),
-      },
-    },
-  };
-});
-
 describe('Agent API', () => {
   beforeEach(async () => {
     vi.clearAllMocks();

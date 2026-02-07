@@ -141,6 +141,7 @@ type UseAiPathsPersistenceResult = {
     force?: boolean | undefined;
     pathNameOverride?: string | undefined;
     nodesOverride?: AiNode[] | undefined;
+    nodeOverride?: AiNode | undefined;
   }) => Promise<void>;
   persistActivePathPreference: (pathId: string | null) => Promise<void>;
   persistPathSettings: (nextPaths: PathMeta[], configId: string, config: PathConfig) => Promise<void>;
@@ -774,6 +775,7 @@ export function useAiPathsPersistence({
       includeNodeConfig?: boolean | undefined;
       pathNameOverride?: string | undefined;
       nodesOverride?: AiNode[] | undefined;
+      nodeOverride?: AiNode | undefined;
     }): Promise<boolean> => {
       if (!activePathId) return false;
       const silent = options?.silent ?? false;
@@ -801,9 +803,21 @@ export function useAiPathsPersistence({
       try {
         const updatedAt = new Date().toISOString();
         const baseNodes = options?.nodesOverride ?? nodes;
+        const resolvedNodes = options?.nodeOverride
+          ? (() => {
+            const targetNode = options.nodeOverride as AiNode;
+            let replaced = false;
+            const next = baseNodes.map((node: AiNode): AiNode => {
+              if (node.id !== targetNode.id) return node;
+              replaced = true;
+              return targetNode;
+            });
+            return replaced ? next : [...next, targetNode];
+          })()
+          : baseNodes;
         const nodesForSave = includeNodeConfig
-          ? baseNodes
-          : buildNodesForAutoSave(baseNodes);
+          ? resolvedNodes
+          : buildNodesForAutoSave(resolvedNodes);
         const config = buildActivePathConfig(updatedAt, nodesForSave, resolvedName);
         const nextPaths = paths.map((path: PathMeta): PathMeta =>
           path.id === activePathId ? { ...path, name: resolvedName, updatedAt } : path
@@ -861,6 +875,7 @@ export function useAiPathsPersistence({
       force?: boolean | undefined;
       pathNameOverride?: string | undefined;
       nodesOverride?: AiNode[] | undefined;
+      nodeOverride?: AiNode | undefined;
     }): Promise<void> => {
       const silent = options?.silent ?? false;
       if (isPathLocked || !isPathActive) {
@@ -880,6 +895,7 @@ export function useAiPathsPersistence({
         includeNodeConfig: options?.includeNodeConfig,
         pathNameOverride: options?.pathNameOverride,
         nodesOverride: options?.nodesOverride,
+        nodeOverride: options?.nodeOverride,
       });
       if (silent) return;
       if (ok) {

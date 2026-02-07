@@ -23,6 +23,7 @@ import {
   Integration,
   IntegrationConnection,
   TestLogEntry,
+  SessionCookie,
   integrationDefinitions,
 } from '@/features/integrations/types/integrations-ui';
 import { normalizeSteps } from '@/features/integrations/utils/connections';
@@ -78,7 +79,7 @@ interface IntegrationsContextType {
   setShowSessionModal: (open: boolean) => void;
   sessionLoading: boolean;
   sessionError: string | null;
-  sessionCookies: unknown[];
+  sessionCookies: SessionCookie[];
   sessionOrigins: unknown[];
   sessionUpdatedAt: string | null;
   
@@ -109,7 +110,7 @@ interface IntegrationsContextType {
   allegroApiResponse: {
     status: number;
     statusText: string;
-    data: unknown;
+    data?: unknown;
     refreshed?: boolean;
   } | null;
   
@@ -218,7 +219,7 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
     enabled: showSessionModal,
   });
   const sessionPayload = sessionQuery.data;
-  const sessionCookies = (sessionPayload?.cookies as unknown[]) ?? [];
+  const sessionCookies = (sessionPayload?.cookies as SessionCookie[]) ?? [];
   const sessionOrigins = (sessionPayload?.origins as unknown[]) ?? [];
   const sessionUpdatedAt = (sessionPayload?.updatedAt as string) ?? null;
   const sessionError = sessionQuery.isError
@@ -247,7 +248,7 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
   const [allegroApiResponse, setAllegroApiResponse] = useState<{
     status: number;
     statusText: string;
-    data: unknown;
+    data?: unknown;
     refreshed?: boolean;
   } | null>(null);
   const [allegroApiError, setAllegroApiError] = useState<string | null>(null);

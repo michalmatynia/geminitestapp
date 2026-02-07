@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { vi, beforeEach, afterAll, describe, it, expect } from 'vitest';
 
 import { POST } from '@/app/api/auth/register/route';
@@ -16,20 +16,25 @@ const { mockCollection, mockInsertOne, mockFindOne } = vi.hoisted(() => {
 });
 
 // Mock server modules
-vi.mock('@/features/auth/server', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/features/auth/server')>();
-  return {
-    ...actual,
-    getAuthDataProvider: vi.fn().mockResolvedValue('mongodb'),
-    getAuthUserPageSettings: vi.fn().mockResolvedValue({
-      allowSignup: true,
-      requireEmailVerification: false,
-    }),
-    getAuthSecurityPolicy: vi.fn().mockResolvedValue({}),
-    validatePasswordStrength: vi.fn().mockReturnValue({ ok: true, errors: [] }),
-    normalizeAuthEmail: (email: string) => email.toLowerCase().trim(),
-  };
-});
+vi.mock('@/features/auth/server', () => ({
+  getAuthDataProvider: vi.fn().mockResolvedValue('mongodb'),
+  getAuthUserPageSettings: vi.fn().mockResolvedValue({
+    allowSignup: true,
+    requireEmailVerification: false,
+  }),
+  getAuthSecurityPolicy: vi.fn().mockResolvedValue({}),
+  validatePasswordStrength: vi.fn().mockReturnValue({ ok: true, errors: [] }),
+  normalizeAuthEmail: (email: string) => email.toLowerCase().trim(),
+  consumeLoginChallenge: vi.fn(),
+  checkLoginAllowed: vi.fn().mockResolvedValue({ allowed: true }),
+  recordLoginFailure: vi.fn(),
+  recordLoginSuccess: vi.fn(),
+  extractClientIp: vi.fn().mockReturnValue('127.0.0.1'),
+  getAuthSecurityProfile: vi.fn(),
+  updateAuthSecurityProfile: vi.fn(),
+  findAuthUserByEmail: vi.fn(),
+  createLoginChallenge: vi.fn(),
+}));
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: vi.fn().mockResolvedValue({

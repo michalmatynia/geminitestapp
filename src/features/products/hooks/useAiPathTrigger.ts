@@ -5,9 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { appendLocalRun, runsApi } from '@/features/ai/ai-paths/lib';
 import {
   AI_PATHS_UI_STATE_KEY,
-  PATH_CONFIG_PREFIX,
   PATH_DEBUG_PREFIX,
-  PATH_INDEX_KEY,
   TRIGGER_EVENTS,
 } from '@/features/ai/ai-paths/lib/core/constants';
 import {
@@ -159,23 +157,10 @@ function buildTriggerContext(
 async function persistRunResults(
   selectedConfig: PathConfig,
   nodes: AiNode[],
-  edges: Edge[],
   runtimeState: RuntimeState,
   runAt: string,
-  configs: Record<string, PathConfig>,
-  pathOrder: string[],
-  orderedConfigs: PathConfig[],
   uiState: Record<string, unknown> | null,
 ): Promise<void> {
-  const updatedConfig: PathConfig = {
-    ...selectedConfig,
-    nodes,
-    edges,
-    runtimeState,
-    lastRunAt: runAt,
-    updatedAt: runAt,
-  };
-
   const debugEntries: PathDebugEntry[] = nodes
     .filter((node: AiNode) => node.type === 'database')
     .map((node: AiNode): PathDebugEntry | null => {
@@ -194,51 +179,28 @@ async function persistRunResults(
 
   const debugSnapshot: PathDebugSnapshot | null = debugEntries.length
     ? {
-      pathId: updatedConfig.id,
+      pathId: selectedConfig.id,
       runAt,
       entries: debugEntries,
     }
     : null;
 
-  configs[updatedConfig.id] = updatedConfig;
-  const orderedIds: string[] = pathOrder.length
-    ? pathOrder
-    : orderedConfigs.map((config: PathConfig) => config.id);
-
   const csrfHeaders = withCsrfHeaders({ 'Content-Type': 'application/json' });
-  const configValue = safeJsonStringify(updatedConfig);
-  const indexValue = JSON.stringify(orderedIds.map((id: string) => ({ id })));
   const debugValue = debugSnapshot ? safeJsonStringify(debugSnapshot) : '';
   const nextUiState = {
     ...(uiState && typeof uiState === 'object' ? uiState : {}),
-    activePathId: updatedConfig.id,
+    activePathId: selectedConfig.id,
+    lastTriggeredAt: runAt,
   };
 
-  if (configValue) {
-    await fetch('/api/settings', {
-      method: 'POST',
-      headers: csrfHeaders,
-      body: JSON.stringify({
-        key: `${PATH_CONFIG_PREFIX}${updatedConfig.id}`,
-        value: configValue,
-      }),
-    });
-  }
   if (debugValue) {
     await fetch('/api/settings', {
       method: 'POST',
       headers: csrfHeaders,
       body: JSON.stringify({
-        key: `${PATH_DEBUG_PREFIX}${updatedConfig.id}`,
+        key: `${PATH_DEBUG_PREFIX}${selectedConfig.id}`,
         value: debugValue,
       }),
-    });
-  }
-  if (orderedIds.length > 0) {
-    await fetch('/api/settings', {
-      method: 'POST',
-      headers: csrfHeaders,
-      body: JSON.stringify({ key: PATH_INDEX_KEY, value: indexValue }),
     });
   }
   await fetch('/api/settings', {
@@ -285,7 +247,7 @@ export function useAiPathTrigger(): {
     let startedAtMs: number | null = null;
 
     try {
-      const { configs, orderedConfigs, pathOrder, uiState } =
+      const { orderedConfigs, uiState } =
         await fetchPathSettings(queryClient);
 
       const triggerEvent = (TRIGGER_EVENTS[0]?.id as string) ?? 'path_generate_description';
@@ -424,8 +386,11 @@ export function useAiPathTrigger(): {
 
       try {
         await persistRunResults(
-          selectedConfig, nodes, edges, runtimeState, runAt,
-          configs, pathOrder, orderedConfigs, uiState,
+          selectedConfig,
+          nodes,
+          runtimeState,
+          runAt,
+          uiState,
         );
       } catch (error) {
         logClientError(error, { context: { source: 'useAiPathTrigger', action: 'persistRuntimeState', pathId: selectedConfig.id } });

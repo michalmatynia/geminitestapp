@@ -517,6 +517,10 @@ vi.mock("@/shared/lib/db/prisma", () => {
     fileUploadEvent: createMockModel("fileUploadEvent"),
     aiConfiguration: createMockModel("aiConfiguration"),
     productAiJob: createMockModel("productAiJob"),
+    productParameter: createMockModel("productParameter"),
+    productParameterValue: createMockModel("productParameterValue"),
+    productProducer: createMockModel("productProducer"),
+    productVariant: createMockModel("productVariant"),
 
     $resetAll: () => {
       store = new Map<string, any[]>();
@@ -571,17 +575,15 @@ vi.mock("next/link", () => ({
 vi.mock("next/server", () => {
   class MockResponse extends Response {
     static override json(data: any, init?: ResponseInit) {
-      const res = new MockResponse(JSON.stringify(data), {
+      return new MockResponse(JSON.stringify(data), {
         ...init,
         headers: {
           'Content-Type': 'application/json',
           ...(init?.headers || {}),
         },
       });
-      return res;
     }
   }
-
   return {
     NextRequest: class NextRequest extends Request {
       constructor(input: RequestInfo, init?: RequestInit) {
@@ -592,21 +594,18 @@ vi.mock("next/server", () => {
   };
 });
 
-// Mock next/server.js specifically, as suggested by the error message
 vi.mock("next/server.js", () => {
   class MockResponse extends Response {
     static override json(data: any, init?: ResponseInit) {
-      const res = new MockResponse(JSON.stringify(data), {
+      return new MockResponse(JSON.stringify(data), {
         ...init,
         headers: {
           'Content-Type': 'application/json',
           ...(init?.headers || {}),
         },
       });
-      return res;
     }
   }
-
   return {
     NextRequest: class NextRequest extends Request {
       constructor(input: RequestInfo, init?: RequestInit) {
@@ -623,7 +622,8 @@ vi.mock('@/shared/lib/api/api-handler', () => {
   return {
     apiHandler: (handler: any) => async (req: any) => {
       try {
-        const body = req.body && typeof req.json === 'function' ? await req.json().catch(() => ({})) : {};
+        const clonedReq = req.clone ? req.clone() : req;
+        const body = clonedReq.body && typeof clonedReq.json === 'function' ? await clonedReq.json().catch(() => ({})) : {};
         return await handler(req, { requestId: 'global-test-id', body, getElapsedMs: () => 0 });
       } catch (error: any) {
         return NextResponse.json(
@@ -634,7 +634,8 @@ vi.mock('@/shared/lib/api/api-handler', () => {
     },
     apiHandlerWithParams: (handler: any) => async (req: any, ctx: any) => {
       try {
-        const body = req.body && typeof req.json === 'function' ? await req.json().catch(() => ({})) : {};
+        const clonedReq = req.clone ? req.clone() : req;
+        const body = clonedReq.body && typeof clonedReq.json === 'function' ? await clonedReq.json().catch(() => ({})) : {};
         const context = {
           ...ctx,
           requestId: 'global-test-id',
@@ -650,7 +651,7 @@ vi.mock('@/shared/lib/api/api-handler', () => {
         );
       }
     },
-    getQueryParams: (req: any) => new URL(req.url).searchParams,
+    getQueryParams: (req: any) => new URL(req.url, 'http://localhost').searchParams,
     getRequiredParam: (searchParams: URLSearchParams, name: string) => {
       const val = searchParams.get(name);
       if (!val) throw new Error(`Missing required parameter: ${name}`);
@@ -663,6 +664,22 @@ vi.mock('@/shared/lib/api/api-handler', () => {
     }),
   };
 });
+
+vi.mock('next-auth/react', () => ({
+  SessionProvider: ({ children }: any) => children,
+  useSession: vi.fn(() => ({ data: null, status: 'unauthenticated' })),
+  signIn: vi.fn(),
+  signOut: vi.fn(),
+}));
+
+// Polyfill fetch to handle relative URLs in tests
+const originalFetch = global.fetch;
+global.fetch = function (input: RequestInfo | URL, init?: RequestInit) {
+  if (typeof input === 'string' && input.startsWith('/')) {
+    input = `http://localhost${input}`;
+  }
+  return originalFetch(input, init);
+};
 
 vi.mock('next-auth/react', () => ({
   SessionProvider: ({ children }: any) => children,
@@ -705,11 +722,25 @@ if (typeof window !== 'undefined') {
   });
 }
 
+import { http, HttpResponse } from 'msw';
+
 /**
  * MSW Server Setup for Vitest
  * Establishes request mocking for all tests
  */
 beforeAll(() => {
+  server.use(
+    http.get('http://localhost/api/settings/lite', () => {
+      return HttpResponse.json([
+        { key: 'auth_user_pages', value: JSON.stringify({ allowSignup: true, allowSocialLogin: true }) },
+      ]);
+    }),
+    http.get('http://localhost/api/settings', () => {
+      return HttpResponse.json([
+        { key: 'auth_user_pages', value: JSON.stringify({ allowSignup: true, allowSocialLogin: true }) },
+      ]);
+    })
+  );
   // Start the MSW server before all tests
   server.listen({
     onUnhandledRequest: "warn",

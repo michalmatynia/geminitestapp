@@ -53,27 +53,6 @@ export type FireAiPathTriggerEventArgs = {
   }) => void;
 };
 
-const safeJsonStringify = (value: unknown): string => {
-  const seen = new WeakSet();
-  const replacer = (_key: string, val: unknown): unknown => {
-    if (typeof val === 'bigint') return val.toString();
-    if (val instanceof Date) return val.toISOString();
-    if (val instanceof Set) return Array.from(val.values());
-    if (val instanceof Map) return Object.fromEntries(val.entries());
-    if (typeof val === 'function' || typeof val === 'symbol') return undefined;
-    if (val && typeof val === 'object') {
-      if (seen.has(val)) return undefined;
-      seen.add(val);
-    }
-    return val;
-  };
-  try {
-    return JSON.stringify(value, replacer);
-  } catch {
-    return '';
-  }
-};
-
 const loadPathConfigsFromSettings = async (
   settingsData?: Array<{ key: string; value: string }>
 ): Promise<{
@@ -434,40 +413,12 @@ export function useAiPathTriggerEvent(): {
 
       const persistRunSnapshot = async (runAt: string): Promise<void> => {
         try {
-          const updatedConfig: PathConfig = {
-            ...selectedConfig,
-            nodes,
-            edges,
-            lastRunAt: runAt,
-            updatedAt: runAt,
-          };
-
-          configs[updatedConfig.id] = updatedConfig;
-          const orderedIds: string[] = pathOrder.length
-            ? pathOrder
-            : orderedConfigs.map((config: PathConfig) => config.id);
-
           const csrfHeaders = withCsrfHeaders({ 'Content-Type': 'application/json' });
-          const configValue = safeJsonStringify(updatedConfig);
-          const indexValue = JSON.stringify(orderedIds.map((id: string) => ({ id })));
           const nextUiState = {
             ...(uiState && typeof uiState === 'object' ? uiState : {}),
-            activePathId: updatedConfig.id,
+            activePathId: selectedConfig.id,
+            lastTriggeredAt: runAt,
           };
-          if (configValue) {
-            await fetch('/api/settings', {
-              method: 'POST',
-              headers: csrfHeaders,
-              body: JSON.stringify({ key: `${PATH_CONFIG_PREFIX}${updatedConfig.id}`, value: configValue }),
-            });
-          }
-          if (orderedIds.length > 0) {
-            await fetch('/api/settings', {
-              method: 'POST',
-              headers: csrfHeaders,
-              body: JSON.stringify({ key: PATH_INDEX_KEY, value: indexValue }),
-            });
-          }
           await fetch('/api/settings', {
             method: 'POST',
             headers: csrfHeaders,

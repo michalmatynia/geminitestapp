@@ -30,21 +30,20 @@ export function NoteDetailView(): React.JSX.Element | null {
     handleUnlinkRelatedNote,
   } = useNotesAppContext();
 
+  const { toast } = useToast();
+  const [relatedPreviewNotes, setRelatedPreviewNotes] = useState<Record<string, NoteWithRelations>>({});
+
   if (!selectedNote) return null;
 
   const onExpandFolderTree = (): void => setIsFolderTreeCollapsed(false);
   const onToggleFavorite = (note: NoteWithRelations): void => {
     void handleToggleFavorite(note);
   };
-  const onDeleteNote = (): Promise<void> => handleDeleteNote();
-  const onUpdateSuccess = (): void => handleUpdateSuccess();
   const onSelectRelatedNote = (id: string): void => {
     void handleSelectNoteFromTree(id);
   };
   const onUnlinkRelatedNote = (id: string): Promise<void> => handleUnlinkRelatedNote(id);
-  const { toast } = useToast();
-  const [relatedPreviewNotes, setRelatedPreviewNotes] = useState<Record<string, NoteWithRelations>>({});
-
+  
   const relatedNotes = useMemo((): RelatedNote[] => {
     if (!selectedNote) return [];
     if (selectedNote.relations && selectedNote.relations.length > 0) {
@@ -335,7 +334,7 @@ export function NoteDetailView(): React.JSX.Element | null {
             </Button>
             <Button
               type="button"
-              onClick={(): void => { void onDeleteNote(); }}
+              onClick={(): void => { void handleDeleteNote(); }}
               className="min-w-[80px] border border-red-500/20 hover:border-red-500/40 text-red-400"
             >
               Delete
@@ -356,7 +355,7 @@ export function NoteDetailView(): React.JSX.Element | null {
         <div className="flex-1 overflow-y-auto">
           <NoteForm
             note={selectedNote}
-            onSuccess={onUpdateSuccess}
+            onSuccess={handleUpdateSuccess}
           />
         </div>
       ) : (

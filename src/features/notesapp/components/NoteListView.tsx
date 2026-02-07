@@ -45,8 +45,6 @@ export function NoteListView(): React.JSX.Element {
     setFilterArchived,
   } = filters;
 
-  const selectedFolderId = settings.selectedFolderId;
-
   const onExpandFolderTree = (): void => setIsFolderTreeCollapsed(false);
   const onCreateNote = (): void => {
     setIsCreating(true);
@@ -77,8 +75,8 @@ export function NoteListView(): React.JSX.Element {
             <Plus className="size-5" />
           </Button>
           <h1 className="text-3xl font-bold text-white">
-            {selectedFolderId
-              ? buildBreadcrumbPath(selectedFolderId, null, folderTree).slice(-1)[0]?.name
+            {settings.selectedFolderId
+              ? buildBreadcrumbPath(settings.selectedFolderId, null, folderTree).slice(-1)[0]?.name
               : 'Notes'}
           </h1>
           <div className="flex items-center gap-2">
@@ -141,9 +139,9 @@ export function NoteListView(): React.JSX.Element {
       contentClassName="flex min-h-0 flex-1 flex-col overflow-y-auto pr-1"
     >
       {/* Breadcrumb */}
-      {selectedFolderId && (
+      {settings.selectedFolderId && (
         <SectionPanel variant="subtle-compact" className="mb-6 flex items-center gap-2 text-sm text-gray-400 bg-transparent border-none p-0">
-          {buildBreadcrumbPath(selectedFolderId, null, folderTree).map((crumb: BreadcrumbItem, index: number, array: BreadcrumbItem[]) => (
+          {buildBreadcrumbPath(settings.selectedFolderId, null, folderTree).map((crumb: BreadcrumbItem, index: number, array: BreadcrumbItem[]) => (
             <React.Fragment key={index}>
               <Button
                 onClick={(): void => {

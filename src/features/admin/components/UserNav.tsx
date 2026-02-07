@@ -34,6 +34,8 @@ export function UserNav(): React.ReactNode {
 
   const queryPanelEnabled = parseEnabled(settingsStore.get('query_status_panel_enabled'), false);
   const queryPanelOpen = parseEnabled(settingsStore.get('query_status_panel_open'), false);
+  const triggerId = 'admin-user-nav-trigger';
+  const contentId = 'admin-user-nav-content';
 
   const setQueryPanelSetting = (key: string, value: boolean): void => {
     if (key === 'query_status_panel_enabled') {
@@ -59,6 +61,7 @@ export function UserNav(): React.ReactNode {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
+          id={triggerId}
           variant="ghost"
           className="relative h-10 w-10 rounded-full opacity-60 transition-opacity hover:opacity-100"
         >
@@ -68,7 +71,7 @@ export function UserNav(): React.ReactNode {
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end">
+      <DropdownMenuContent id={contentId} className="w-56" align="end">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{session.user?.name}</p>

@@ -284,6 +284,15 @@ const withRetries = async <T>(
       return await task();
     } catch (error) {
       lastError = error;
+      // Bail immediately on non-retryable errors (validation, auth, config)
+      if (
+        error !== null &&
+        typeof error === 'object' &&
+        'retryable' in error &&
+        (error as { retryable?: boolean }).retryable === false
+      ) {
+        break;
+      }
       if (attempt >= maxAttempts) break;
       const delay = backoffMs * Math.pow(2, attempt - 1);
       await sleep(delay);

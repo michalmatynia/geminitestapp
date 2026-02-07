@@ -1,67 +1,29 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQuery, useMutation } from '@tanstack/react-query';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import SystemLogsPage from '@/features/observability/pages/SystemLogsPage';
+import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 
-// Mock react-query
-vi.mock('@tanstack/react-query', () => ({
-  useQuery: vi.fn(),
-  useMutation: vi.fn(),
-  useQueryClient: vi.fn(() => ({
-    invalidateQueries: vi.fn(),
-  })),
-}));
+// ... (keep mocks)
 
-// Mock next/navigation
-vi.mock('next/navigation', () => ({
-  useSearchParams: vi.fn(() => new URLSearchParams()),
-  usePathname: vi.fn(() => '/'),
-  useRouter: vi.fn(() => ({
-    push: vi.fn(),
-    replace: vi.fn(),
-    prefetch: vi.fn(),
-  })),
-}));
-
-// Mock useToast and UI components
-vi.mock('@/shared/ui', async () => {
-  const actual = await vi.importActual<any>('@/shared/ui');
-  return {
-    ...actual,
-    useToast: vi.fn(() => ({ toast: vi.fn() })),
-    Button: ({ children, onClick, disabled, className }: any) => (
-      <button onClick={onClick} disabled={disabled} className={className}>{children}</button>
-    ),
-    Input: ({ value, onChange, placeholder, type }: any) => (
-      <input value={value} onChange={onChange} placeholder={placeholder} type={type} />
-    ),
-    Select: ({ children, value, onValueChange }: any) => (
-      <select value={value} onChange={(e) => onValueChange(e.target.value)}>{children}</select>
-    ),
-    SelectTrigger: ({ children }: any) => <div>{children}</div>,
-    SelectValue: ({ placeholder }: any) => <span>{placeholder}</span>,
-    SelectContent: ({ children }: any) => <>{children}</>,
-    SelectItem: ({ children, value }: any) => <option value={value}>{children}</option>,
-    Label: ({ children }: any) => <label>{children}</label>,
-    SectionHeader: ({ title, description, actions }: any) => (
-      <div>
-        <h1>{title}</h1>
-        <p>{description}</p>
-        <div>{actions}</div>
-      </div>
-    ),
-    SectionPanel: ({ children }: any) => <div>{children}</div>,
-    ListPanel: ({ children, header, filters }: any) => (
-      <div>
-        {header}
-        {filters}
-        {children}
-      </div>
-    ),
-  };
+const createTestQueryClient = () => new QueryClient({
+  defaultOptions: {
+    queries: { retry: false },
+  },
 });
+
+const renderPage = () => {
+  const queryClient = createTestQueryClient();
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <SettingsStoreProvider>
+        <SystemLogsPage />
+      </SettingsStoreProvider>
+    </QueryClientProvider>
+  );
+};
 
 describe('SystemLogsPage', () => {
   const mockToast = vi.fn();
@@ -111,7 +73,7 @@ describe('SystemLogsPage', () => {
   });
 
   it('renders logs list and metrics', () => {
-    render(<SystemLogsPage />);
+    renderPage();
     
     expect(screen.getByText('System Logs')).toBeInTheDocument();
     expect(screen.getByText('Test Error')).toBeInTheDocument();
@@ -123,28 +85,25 @@ describe('SystemLogsPage', () => {
   });
 
   it('filters logs by level', () => {
-    render(<SystemLogsPage />);
+    renderPage();
     
     const levelSelect = screen.getByRole('combobox');
     fireEvent.change(levelSelect, { target: { value: 'error' } });
     
-    // useQuery should be called again with updated level
-    // In this unit test we just check if it renders. 
-    // Real filtering happens in queryFn params.
     expect(levelSelect).toHaveValue('error');
   });
 
   it('calls clear logs mutation when button is clicked', async () => {
     const mockMutate = vi.fn().mockResolvedValue(true);
-    (useMutation as any).mockReturnValue({
-      mutateAsync: mockMutate,
-      isPending: false,
+    (useMutation as any).mockImplementation(({ mutationFn }: any) => {
+      if (mutationFn) return { mutateAsync: mockMutate, isPending: false };
+      return { mutateAsync: vi.fn(), isPending: false };
     });
     
     // Mock confirm
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
-    render(<SystemLogsPage />);
+    renderPage();
     
     const clearButton = screen.getByText('Clear Logs');
     fireEvent.click(clearButton);
@@ -164,9 +123,9 @@ describe('SystemLogsPage', () => {
       configurable: true,
     });
 
-    render(<SystemLogsPage />);
+    renderPage();
     
-    const copyButton = screen.getByText('Copy JSON');
+    const copyButton = screen.getByText('Copy');
     fireEvent.click(copyButton);
     
     expect(mockWriteText).toHaveBeenCalled();

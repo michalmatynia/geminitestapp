@@ -81,6 +81,7 @@ type NodeConfigDialogProps = {
     includeNodeConfig?: boolean | undefined;
     force?: boolean | undefined;
     nodesOverride?: AiNode[] | undefined;
+    nodeOverride?: AiNode | undefined;
   }) => Promise<void>;
 };
 
@@ -222,10 +223,6 @@ export function NodeConfigDialog({
       toast('This path is locked. Unlock it to save node settings.', { variant: 'info' });
       return;
     }
-    const hasDraftNode = nodes.some((node: AiNode): boolean => node.id === draftNode.id);
-    const updatedNodes = hasDraftNode
-      ? nodes.map((node: AiNode): AiNode => (node.id === draftNode.id ? draftNode : node))
-      : [...nodes, draftNode];
     updateSelectedNode(draftNode, { nodeId: draftNode.id });
     setDraftNode(null);
     if (savePathConfig) {
@@ -233,13 +230,13 @@ export function NodeConfigDialog({
         silent: true,
         includeNodeConfig: true,
         force: true,
-        nodesOverride: updatedNodes,
+        nodeOverride: draftNode,
       });
       toast('Node settings saved.', { variant: 'success' });
     } else {
       toast('Node settings updated in canvas. Click "Save Path" to persist.', { variant: 'success' });
     }
-  }, [draftNode, isPathLocked, nodes, toast, updateSelectedNode, savePathConfig]);
+  }, [draftNode, isPathLocked, toast, updateSelectedNode, savePathConfig]);
 
   const handleDiscardChanges = useCallback((): void => {
     if (!hasUnsavedChanges) return;

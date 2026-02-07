@@ -94,6 +94,7 @@ export interface UseAiPathsSettingsStateReturn {
     force?: boolean | undefined;
     pathNameOverride?: string | undefined;
     nodesOverride?: AiNode[] | undefined;
+    nodeOverride?: AiNode | undefined;
   }) => Promise<void>;
   handleReset: () => void;
   handleDeletePath: (pathId?: string) => Promise<void>;
@@ -1780,7 +1781,8 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
   React.useEffect((): void | (() => void) => {
     if (loading || !activePathId) return;
 
-    const runtimeSnapshot = buildPersistedRuntimeState(runtimeState, nodes);
+    const persistedNodes = pathConfigs[activePathId]?.nodes ?? nodes;
+    const runtimeSnapshot = buildPersistedRuntimeState(runtimeState, persistedNodes);
     const snapshotKey = `${activePathId}:${lastRunAt ?? ''}:${runtimeSnapshot}`;
     if (snapshotKey === runtimePersistenceKeyRef.current) return;
 
@@ -1794,8 +1796,6 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
           ...baseConfig,
           id: activePathId,
           updatedAt,
-          nodes,
-          edges,
           runtimeState,
           lastRunAt,
         };
@@ -1814,10 +1814,10 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     return (): void => clearTimeout(timeout);
   }, [
     activePathId,
-    edges,
     lastRunAt,
     loading,
     nodes,
+    pathConfigs,
     paths,
     persistPathSettings,
     runtimeState,

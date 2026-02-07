@@ -41,6 +41,8 @@ describe('Notes Notebooks API', () => {
   describe('POST /api/notes/notebooks', () => {
     it('should create a new notebook', async () => {
       const newNotebook = { name: 'My New Notebook', color: '#3b82f6' };
+      vi.mocked(noteService.createNotebook).mockResolvedValue({ id: 'nb1', name: 'New Notebook', color: '#3b82f6' } as any);
+
       const res = await POST(
         new NextRequest('http://localhost/api/notes/notebooks', {
           method: 'POST',

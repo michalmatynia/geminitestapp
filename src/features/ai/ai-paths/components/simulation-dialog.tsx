@@ -1,5 +1,7 @@
 'use client';
 
+import React from 'react';
+
 import type { AiNode } from '@/features/ai/ai-paths/lib';
 import {
   Button,
@@ -25,6 +27,7 @@ type SimulationDialogProps = {
     includeNodeConfig?: boolean | undefined;
     force?: boolean | undefined;
     nodesOverride?: AiNode[] | undefined;
+    nodeOverride?: AiNode | undefined;
   }) => Promise<void>) | undefined;
 };
 
@@ -45,20 +48,46 @@ export function SimulationDialog({
     simulationConfig.entityId?.trim()
       ? simulationConfig.entityId
       : simulationConfig.productId ?? '';
+  const [draftEntityId, setDraftEntityId] = React.useState<string>(simulationEntityValue);
+
+  React.useEffect((): void => {
+    setDraftEntityId(simulationEntityValue);
+  }, [openNodeId, simulationEntityValue]);
 
   return (
     <Dialog
       open={Boolean(openNodeId)}
       onOpenChange={(open: boolean): void => {
         if (!open) {
-          if (savePathConfig) {
-            void savePathConfig({
-              silent: true,
-              includeNodeConfig: true,
-              force: true,
-              nodesOverride: nodes,
-            });
-          }
+          const entityId = draftEntityId;
+          setNodes((prev: AiNode[]): AiNode[] => {
+            const next = prev.map((node: AiNode): AiNode =>
+              node.id === openNodeId
+                ? {
+                  ...node,
+                  config: {
+                    ...node.config,
+                    simulation: {
+                      ...node.config?.simulation,
+                      productId: entityId,
+                      entityId,
+                      entityType: node.config?.simulation?.entityType ?? 'product',
+                    },
+                  },
+                }
+                : node
+            );
+            const persistedNode = next.find((node: AiNode): boolean => node.id === openNodeId);
+            if (savePathConfig) {
+              void savePathConfig({
+                silent: true,
+                includeNodeConfig: true,
+                force: true,
+                ...(persistedNode ? { nodeOverride: persistedNode } : {}),
+              });
+            }
+            return next;
+          });
           onClose();
         }
       }}
@@ -78,26 +107,9 @@ export function SimulationDialog({
                 <Input
                   className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
                   disabled={isPathLocked}
-                  value={simulationEntityValue}
+                  value={draftEntityId}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                    const value = event.target.value;
-                    setNodes((prev: AiNode[]): AiNode[] =>
-                      prev.map((node: AiNode): AiNode =>
-                        node.id === simulationNode.id
-                          ? {
-                            ...node,
-                            config: {
-                              ...node.config,
-                              simulation: {
-                                productId: value,
-                                entityId: value,
-                                entityType: simulationConfig.entityType ?? 'product',
-                              },
-                            },
-                          }
-                          : node
-                      )
-                    );
+                    setDraftEntityId(event.target.value);
                   }}
                 />
                 {isPathLocked ? (
@@ -113,7 +125,33 @@ export function SimulationDialog({
                 className="w-full rounded-md border border-cyan-500/40 text-sm text-cyan-200 hover:bg-cyan-500/10"
                 type="button"
                 onClick={(): void => {
-                  void onRunSimulation(simulationNode);
+                  const entityId = draftEntityId;
+                  const runNode: AiNode = {
+                    ...simulationNode,
+                    config: {
+                      ...simulationNode.config,
+                      simulation: {
+                        ...simulationNode.config?.simulation,
+                        productId: entityId,
+                        entityId,
+                        entityType: simulationNode.config?.simulation?.entityType ?? 'product',
+                      },
+                    },
+                  };
+                  setNodes((prev: AiNode[]): AiNode[] =>
+                    prev.map((node: AiNode): AiNode =>
+                      node.id === simulationNode.id ? runNode : node
+                    )
+                  );
+                  if (savePathConfig) {
+                    void savePathConfig({
+                      silent: true,
+                      includeNodeConfig: true,
+                      force: true,
+                      nodeOverride: runNode,
+                    });
+                  }
+                  void onRunSimulation(runNode);
                 }}
               >
                 Simulate Trigger

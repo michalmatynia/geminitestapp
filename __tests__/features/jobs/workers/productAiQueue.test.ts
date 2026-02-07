@@ -29,7 +29,7 @@ vi.mock('@/features/products/server', () => ({
 
 vi.mock('@/features/observability/server', () => ({
   logSystemEvent: vi.fn().mockResolvedValue(undefined),
-  logSystemError: vi.fn().mockResolvedValue(undefined),
+  logSystemError: vi.fn().mockResolvedValue(undefined), getErrorFingerprint: vi.fn().mockResolvedValue('test-fingerprint'),
   ErrorSystem: {
     captureException: vi.fn(),
   },

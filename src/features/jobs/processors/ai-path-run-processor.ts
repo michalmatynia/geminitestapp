@@ -8,22 +8,61 @@ import type { AiPathRunRecord } from '@/shared/types/ai-paths';
 const DEFAULT_MAX_ATTEMPTS = Number(process.env.AI_PATHS_RUN_MAX_ATTEMPTS ?? '3');
 const DEFAULT_BACKOFF_MS = Number(process.env.AI_PATHS_RUN_BACKOFF_MS ?? '5000');
 const DEFAULT_BACKOFF_MAX_MS = Number(process.env.AI_PATHS_RUN_BACKOFF_MAX_MS ?? '60000');
-const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
 
 const normalizeNumber = (value: number, fallback: number, min: number = 0): number => {
   if (!Number.isFinite(value)) return fallback;
   return Math.max(min, value);
 };
 
-const isNonRetryableRunError = (message: string): boolean => {
+const NON_RETRYABLE_PATTERNS = [
+  // Ollama connectivity (existing)
+  'could not connect to ollama server',
+  // Validation / schema errors — will never succeed on retry
+  'validation failed',
+  'validation error',
+  'invalid input',
+  'invalid configuration',
+  'schema validation',
+  'missing required',
+  // Auth / permissions — retrying won't fix auth state
+  'unauthorized',
+  'forbidden',
+  'useauth must be used within',
+  'must be used within',
+  // Configuration errors
+  'configuration error',
+  'invalid state',
+  // Bad request payloads
+  'referenced record not found',
+  'record not found',
+] as const;
+
+const isNonRetryableRunError = (error: unknown): boolean => {
+  // Check AppError.retryable property first (authoritative)
+  if (
+    error !== null &&
+    typeof error === 'object' &&
+    'retryable' in error &&
+    (error as { retryable?: boolean }).retryable === false
+  ) {
+    return true;
+  }
+
+  const message =
+    error instanceof Error ? error.message : typeof error === 'string' ? error : '';
   const normalized = message.toLowerCase();
-  return (
-    normalized.includes('could not connect to ollama server') ||
-    (normalized.includes('ollama') &&
-      (normalized.includes('econnrefused') ||
-        normalized.includes('fetch failed') ||
-        normalized.includes('failed to fetch')))
-  );
+
+  // Ollama-specific compound check (existing logic)
+  if (
+    normalized.includes('ollama') &&
+    (normalized.includes('econnrefused') ||
+      normalized.includes('fetch failed') ||
+      normalized.includes('failed to fetch'))
+  ) {
+    return true;
+  }
+
+  return NON_RETRYABLE_PATTERNS.some((pattern) => normalized.includes(pattern));
 };
 
 export const computeBackoffMs = (retryCount: number, meta?: Record<string, unknown>): number => {
@@ -53,7 +92,7 @@ export const processRun = async (run: AiPathRunRecord): Promise<void> => {
       pathRunId: run.id,
       pathId: run.pathId,
     });
-    if (isNonRetryableRunError(message)) {
+    if (isNonRetryableRunError(error)) {
       await (getPathRunRepository()).updateRun(run.id, {
         status: 'failed',
         retryCount: run.retryCount ?? 0,
@@ -63,8 +102,8 @@ export const processRun = async (run: AiPathRunRecord): Promise<void> => {
       await (getPathRunRepository()).createRunEvent({
         runId: run.id,
         level: 'error',
-        message: `Run stopped: Ollama server is unavailable (${OLLAMA_BASE_URL}).`,
-        metadata: { nonRetryable: true, reason: 'ollama_unavailable' },
+        message: `Run stopped: non-retryable error — ${message}`,
+        metadata: { nonRetryable: true, reason: 'non_retryable_error' },
       });
       return;
     }

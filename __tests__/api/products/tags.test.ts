@@ -1,31 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { vi, beforeEach, afterAll } from 'vitest';
 import { describe, it, expect } from 'vitest';
 
 import { GET, POST } from '@/app/api/products/tags/route';
 import prisma from '@/shared/lib/db/prisma';
-
-// Mock the api-handler module
-vi.mock('@/shared/lib/api/api-handler', () => ({
-  apiHandler: (handler: any) => async (req: any) => {
-    try {
-      const body = req.body ? await req.json().catch(() => ({})) : {};
-      return await handler(req, { requestId: 'test', body });
-    } catch (error: any) {
-      return NextResponse.json({ error: error.message }, { status: error.httpStatus || 500 });
-    }
-  },
-  apiHandlerWithParams: (handler: any) => async (req: any, ctx: any) => {
-    try {
-      const body = req.body ? await req.json().catch(() => ({})) : {};
-      const context = { ...ctx, requestId: 'test', body };
-      const resolvedParams = ctx?.params && typeof ctx.params.then === 'function' ? await ctx.params : (ctx?.params ?? {});
-      return await handler(req, context, resolvedParams);
-    } catch (error: any) {
-      return NextResponse.json({ error: error.message }, { status: error.httpStatus || 500 });
-    }
-  },
-}));
 
 // Mock Prisma client
 vi.mock('@/shared/lib/db/prisma', () => ({

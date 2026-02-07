@@ -3,18 +3,8 @@
 
 
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
+import { SessionCookie } from '@/features/integrations/types/integrations-ui';
 import { AppModal, Badge } from '@/shared/ui';
-
-type SessionCookie = {
-  name?: string;
-  value?: string;
-  domain?: string;
-  path?: string;
-  expires?: number;
-  httpOnly?: boolean;
-  secure?: boolean;
-  sameSite?: string;
-};
 
 export function SessionModal(): React.JSX.Element {
   const {

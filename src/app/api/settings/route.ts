@@ -41,6 +41,7 @@ type SettingDocument = {
 };
 
 const SETTINGS_COLLECTION = "settings";
+const AI_PATHS_CONFIG_PREFIX = "ai_paths_config_";
 const HEAVY_PREFIXES = ["ai_paths_", "image_studio_", "base_import_", "base_export_"];
 const HEAVY_KEYS = new Set<string>(["agent_personas"]);
 const HEAVY_PREFIX_REGEX = new RegExp(`^(${HEAVY_PREFIXES.map((p) => p.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")).join("|")})`);
@@ -74,6 +75,106 @@ const isPrismaMissingTableError = (
 ): error is Prisma.PrismaClientKnownRequestError =>
   error instanceof Prisma.PrismaClientKnownRequestError &&
   (error.code === "P2021" || error.code === "P2022");
+
+const parseUpdatedAtMsFromPathConfig = (raw: string): number | null => {
+  try {
+    const parsed = JSON.parse(raw) as { updatedAt?: unknown };
+    if (typeof parsed?.updatedAt !== "string") return null;
+    const ms = Date.parse(parsed.updatedAt);
+    return Number.isFinite(ms) ? ms : null;
+  } catch {
+    return null;
+  }
+};
+
+const parsePathConfigObject = (raw: string): Record<string, unknown> | null => {
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+    return parsed as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+};
+
+const mergeRuntimeOnlyPathConfigWrite = (
+  currentRaw: string,
+  incomingRaw: string
+): string | null => {
+  const current = parsePathConfigObject(currentRaw);
+  const incoming = parsePathConfigObject(incomingRaw);
+  if (!current || !incoming) return null;
+
+  const merged: Record<string, unknown> = {
+    ...current,
+    ...(Object.prototype.hasOwnProperty.call(incoming, "runtimeState")
+      ? { runtimeState: incoming.runtimeState }
+      : {}),
+    ...(Object.prototype.hasOwnProperty.call(incoming, "lastRunAt")
+      ? { lastRunAt: incoming.lastRunAt }
+      : {}),
+    ...(Object.prototype.hasOwnProperty.call(incoming, "updatedAt")
+      ? { updatedAt: incoming.updatedAt }
+      : {}),
+  };
+  return JSON.stringify(merged);
+};
+
+const isRuntimeOnlyPathConfigPayload = (raw: string): boolean => {
+  const parsed = parsePathConfigObject(raw);
+  if (!parsed) return false;
+  const hasRuntimeFields =
+    Object.prototype.hasOwnProperty.call(parsed, "runtimeState") ||
+    Object.prototype.hasOwnProperty.call(parsed, "lastRunAt") ||
+    Object.prototype.hasOwnProperty.call(parsed, "updatedAt");
+  if (!hasRuntimeFields) return false;
+  const hasGraphFields =
+    Object.prototype.hasOwnProperty.call(parsed, "nodes") ||
+    Object.prototype.hasOwnProperty.call(parsed, "edges");
+  return !hasGraphFields;
+};
+
+const readCurrentSettingValue = async (
+  key: string,
+  provider: "prisma" | "mongodb"
+): Promise<string | null> => {
+  const hasMongo = Boolean(process.env.MONGODB_URI);
+  const canUsePrisma = canUsePrismaSettings(provider);
+
+  const readPrisma = async (): Promise<string | null> => {
+    if (!canUsePrisma) return null;
+    try {
+      const record = await prisma.setting.findUnique({
+        where: { key },
+        select: { value: true },
+      });
+      return record?.value ?? null;
+    } catch (error) {
+      if (isPrismaMissingTableError(error)) return null;
+      throw error;
+    }
+  };
+
+  const readMongo = async (): Promise<string | null> => {
+    if (!hasMongo) return null;
+    await ensureSettingsIndexes();
+    const mongo = await getMongoDb();
+    const doc = await mongo
+      .collection<SettingDocument>(SETTINGS_COLLECTION)
+      .findOne({ key }, { projection: { value: 1 } });
+    return typeof doc?.value === "string" ? doc.value : null;
+  };
+
+  if (provider === "mongodb") {
+    const mongoValue = await readMongo();
+    if (mongoValue !== null) return mongoValue;
+    return await readPrisma();
+  }
+
+  const prismaValue = await readPrisma();
+  if (prismaValue !== null) return prismaValue;
+  return await readMongo();
+};
 
 const settingSchema = z.object({
   key: z.string().trim().min(1),
@@ -352,11 +453,32 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   if (!parsed.ok) {
     return parsed.response;
   }
-  const { key, value } = parsed.data;
+  const { key } = parsed.data;
+  let value = parsed.data.value;
   if (shouldLog()) {
     await ErrorSystem.logInfo("[settings] upserting", { service: "api/settings", key, valuePreview: value.slice(0, 40) });
   }
   const provider = await getAppDbProvider();
+  let currentValueForPathConfig: string | null = null;
+  if (key.startsWith(AI_PATHS_CONFIG_PREFIX)) {
+    currentValueForPathConfig = await readCurrentSettingValue(key, provider);
+    if (currentValueForPathConfig && isRuntimeOnlyPathConfigPayload(value)) {
+      const mergedValue = mergeRuntimeOnlyPathConfigWrite(currentValueForPathConfig, value);
+      if (mergedValue) {
+        value = mergedValue;
+      }
+    }
+    const incomingUpdatedAtMs = parseUpdatedAtMsFromPathConfig(value);
+    if (incomingUpdatedAtMs !== null) {
+      const currentValue = currentValueForPathConfig ?? (await readCurrentSettingValue(key, provider));
+      if (currentValue) {
+        const currentUpdatedAtMs = parseUpdatedAtMsFromPathConfig(currentValue);
+        if (currentUpdatedAtMs !== null && currentUpdatedAtMs > incomingUpdatedAtMs) {
+          return NextResponse.json({ key, value: currentValue });
+        }
+      }
+    }
+  }
   const hasMongo = Boolean(process.env.MONGODB_URI);
   const shouldWriteMongo =
     hasMongo &&

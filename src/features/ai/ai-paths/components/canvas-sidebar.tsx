@@ -4,7 +4,7 @@ import type { AiNode, NodeDefinition } from '@/features/ai/ai-paths/lib';
 import { createParserMappings } from '@/features/ai/ai-paths/lib';
 import { Button, Input, Label, Textarea, SectionPanel } from '@/shared/ui';
 
-import { useGraphState, useGraphActions, usePresetsState, usePresetsActions, useSelectionState, useSelectionActions } from '../context';
+import { useGraphState, useGraphActions, usePresetsState, usePresetsActions, useSelectionState, useSelectionActions, useCanvasInteractions } from '../context';
 import { formatPlaceholderLabel, formatPortLabel } from '../utils/ui-utils';
 
 type CanvasSidebarProps = {
@@ -15,7 +15,7 @@ type CanvasSidebarProps = {
   /** Callback to fire a trigger */
   onFireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
   /** Callback to fire a persistent trigger */
-  onFireTriggerPersistent?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
+  onFireTriggerPersistent?: ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void) | undefined;
   
   onUpdateSelectedNode?: (node: AiNode, meta: { nodeId: string }) => void;
   onDeleteSelectedNode?: () => void;
@@ -38,7 +38,6 @@ export function CanvasSidebar({
   onDragStart,
   onFireTrigger,
   onFireTriggerPersistent,
-  onUpdateSelectedNode,
   onDeleteSelectedNode,
   onRemoveEdge,
   executionMode: executionModeProp,
@@ -52,14 +51,13 @@ export function CanvasSidebar({
   // --- Context Hooks ---
   const { nodes, edges, executionMode: executionModeContext } = useGraphState();
   const executionMode = executionModeProp ?? executionModeContext;
-  const { updateNode, removeEdge } = useGraphActions();
+  const { updateNode } = useGraphActions();
   const { paletteCollapsed, expandedPaletteGroups } = usePresetsState();
   const { setPaletteCollapsed, togglePaletteGroup } = usePresetsActions();
   const { selectedNodeId, selectedEdgeId } = useSelectionState();
-  const { selectNode, selectEdge, setConfigOpen, setSimulationOpenNodeId, setNodeConfigDirty, setNodeConfigDraft, clearSelection } = useSelectionActions();
+  const { selectEdge, setConfigOpen, setSimulationOpenNodeId } = useSelectionActions();
   const { handleDeleteSelectedNode: deleteSelectedNodeContext, handleRemoveEdge: removeEdgeContext } = useCanvasInteractions();
 
-  const updateSelectedNode = onUpdateSelectedNode ?? updateSelectedNodeContext;
   const deleteSelectedNode = onDeleteSelectedNode ?? deleteSelectedNodeContext;
   const handleRemoveEdge = onRemoveEdge ?? removeEdgeContext;
 
@@ -349,7 +347,7 @@ export function CanvasSidebar({
               <Button
                 className="w-full rounded-md border border-rose-500/40 text-xs text-rose-200 hover:bg-rose-500/10"
                 type="button"
-                onClick={() => handleDeleteSelectedNode()}
+                onClick={() => deleteSelectedNode()}
               >
                 Remove Node
               </Button>
@@ -492,7 +490,7 @@ export function CanvasSidebar({
                   <Button
                     className="flex-1 rounded-md border border-rose-500/40 text-xs text-rose-200 hover:bg-rose-500/10"
                     type="button"
-                    onClick={() => removeEdge(selectedEdgeId)}
+                    onClick={() => handleRemoveEdge(selectedEdgeId)}
                   >
                     Remove
                   </Button>

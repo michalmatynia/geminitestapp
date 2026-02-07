@@ -3,7 +3,11 @@ import 'server-only';
 import OpenAI from 'openai';
 
 import { runTeachingChat } from '@/features/ai/agentcreator/teaching/server/chat';
-import { recordBrainInsightAnalytics } from '@/features/ai/ai-paths/services/runtime-analytics-service';
+import {
+  getRuntimeAnalyticsSummary,
+  recordBrainInsightAnalytics,
+  resolveRuntimeAnalyticsRangeWindow,
+} from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { getBrainAssignmentForFeature } from '@/features/ai/brain/server';
 import { listAnalyticsEvents, getAnalyticsSummary } from '@/features/analytics/server';
 import { ErrorSystem } from '@/features/observability/server';
@@ -11,6 +15,7 @@ import { listSystemLogs, getSystemLogMetrics } from '@/features/observability/se
 import { getSettingValue } from '@/features/products/services/aiDescriptionService';
 import type { AnalyticsEventDto, AnalyticsSummaryDto } from '@/shared/types';
 import type { AiInsightRecord, AiInsightSource, AiInsightStatus, AiInsightType } from '@/shared/types/ai-insights';
+import type { AiPathRuntimeAnalyticsRange } from '@/shared/types/ai-paths';
 import type { ChatMessage } from '@/shared/types/chatbot';
 import { SystemLogRecord } from '@/shared/types/system-logs';
 
@@ -19,6 +24,7 @@ import {
   AI_INSIGHTS_SETTINGS_KEYS,
   DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
   DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT,
+  DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
 } from './settings';
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
@@ -217,15 +223,16 @@ const OUTPUT_FORMAT_INSTRUCTION =
   'Be concise and actionable. If nothing looks wrong, status should be ok and warnings empty.';
 
 const resolveInsightSystemPrompt = async (type: AiInsightType): Promise<string> => {
-  const key =
-    type === 'analytics'
-      ? AI_INSIGHTS_SETTINGS_KEYS.analyticsPromptSystem
+  const key = type === 'analytics'
+    ? AI_INSIGHTS_SETTINGS_KEYS.analyticsPromptSystem
+    : type === 'runtime_analytics'
+      ? AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsPromptSystem
       : AI_INSIGHTS_SETTINGS_KEYS.logsPromptSystem;
   const configured = (await getSettingValue(key))?.trim();
   if (configured) return configured;
-  return type === 'analytics'
-    ? DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT
-    : DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT;
+  if (type === 'analytics') return DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT;
+  if (type === 'runtime_analytics') return DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT;
+  return DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT;
 };
 
 const buildInsightMessages = async (params: {
@@ -233,7 +240,11 @@ const buildInsightMessages = async (params: {
   payload: Record<string, unknown>;
 }): Promise<ChatMessage[]> => {
   const systemPrompt = await resolveInsightSystemPrompt(params.type);
-  const title = params.type === 'analytics' ? 'Page analytics snapshot' : 'System log snapshot';
+  const title = params.type === 'analytics'
+    ? 'Page analytics snapshot'
+    : params.type === 'runtime_analytics'
+      ? 'Runtime analytics snapshot'
+      : 'System log snapshot';
   return [
     { role: 'system', content: `${systemPrompt}\n\n${OUTPUT_FORMAT_INSTRUCTION}` },
     {
@@ -462,6 +473,78 @@ export const generateLogsInsight = async (params: {
   return insight;
 };
 
+export const generateRuntimeAnalyticsInsight = async (params: {
+  source: AiInsightSource;
+  range?: AiPathRuntimeAnalyticsRange;
+}): Promise<AiInsightRecord> => {
+  const brainAssignment = await getBrainAssignmentForFeature('runtime_analytics');
+  if (!brainAssignment.enabled) {
+    throw new Error('AI Brain is disabled for Runtime Analytics.');
+  }
+  const provider = brainAssignment.provider;
+  const modelId = brainAssignment.modelId || (await getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsModel));
+  const agentId = brainAssignment.agentId || (await getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsAgentId));
+  const range = params.range ?? '24h';
+  const { from, to } = resolveRuntimeAnalyticsRangeWindow(range);
+  const runtimeSummary = await getRuntimeAnalyticsSummary({ from, to, range });
+
+  const payload = {
+    window: {
+      from: runtimeSummary.from,
+      to: runtimeSummary.to,
+      range: runtimeSummary.range,
+      storage: runtimeSummary.storage,
+    },
+    runs: runtimeSummary.runs,
+    nodes: runtimeSummary.nodes,
+    brainReports: runtimeSummary.brain,
+  };
+
+  const messages = await buildInsightMessages({ type: 'runtime_analytics', payload });
+  const raw = await runInsightModel({ provider, modelId, agentId, messages });
+  const parsed = parseInsightPayload(raw);
+
+  const insight = await appendAiInsight('runtime_analytics', {
+    status: parsed.status,
+    summary: parsed.summary,
+    warnings: parsed.warnings,
+    recommendations: parsed.recommendations,
+    source: params.source,
+    model: { provider, modelId, agentId },
+    window: { from: runtimeSummary.from, to: runtimeSummary.to, scope: String(runtimeSummary.range) },
+  });
+
+  await setAiInsightsMeta(
+    AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsLastRunAt,
+    new Date().toISOString()
+  );
+
+  if (parsed.status !== 'ok' || parsed.warnings.length > 0) {
+    await appendAiInsightNotification({
+      type: 'runtime_analytics',
+      status: parsed.status,
+      summary: parsed.summary,
+      warnings: parsed.warnings,
+      source: params.source,
+      model: { provider, modelId, agentId },
+    });
+    await ErrorSystem.logWarning('AI runtime analytics insight reported warnings.', {
+      service: 'ai-insights',
+      context: {
+        type: 'runtime_analytics',
+        warnings: parsed.warnings.slice(0, 5),
+      },
+    });
+  } else {
+    await ErrorSystem.logInfo('AI runtime analytics insight completed.', {
+      service: 'ai-insights',
+      context: { type: 'runtime_analytics' },
+    });
+  }
+
+  return insight;
+};
+
 export const generateLogInterpretation = async (params: {
   source: AiInsightSource;
   log: {
@@ -531,14 +614,26 @@ export const generateLogInterpretation = async (params: {
 export const getScheduleSettings = async (): Promise<{
   analyticsEnabled: boolean;
   analyticsMinutes: number;
+  runtimeAnalyticsEnabled: boolean;
+  runtimeAnalyticsMinutes: number;
   logsEnabled: boolean;
   logsMinutes: number;
   logsAutoOnError: boolean;
 }> => {
-  const [analyticsEnabledRaw, analyticsMinutesRaw, logsEnabledRaw, logsMinutesRaw, logsAutoRaw] =
+  const [
+    analyticsEnabledRaw,
+    analyticsMinutesRaw,
+    runtimeAnalyticsEnabledRaw,
+    runtimeAnalyticsMinutesRaw,
+    logsEnabledRaw,
+    logsMinutesRaw,
+    logsAutoRaw,
+  ] =
     await Promise.all([
       getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleEnabled),
       getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleMinutes),
+      getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleEnabled),
+      getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleMinutes),
       getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsScheduleEnabled),
       getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsScheduleMinutes),
       getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsAutoOnError),
@@ -547,6 +642,8 @@ export const getScheduleSettings = async (): Promise<{
   return {
     analyticsEnabled: parseBooleanSetting(analyticsEnabledRaw, true),
     analyticsMinutes: parseNumberSetting(analyticsMinutesRaw, 30, 5),
+    runtimeAnalyticsEnabled: parseBooleanSetting(runtimeAnalyticsEnabledRaw, true),
+    runtimeAnalyticsMinutes: parseNumberSetting(runtimeAnalyticsMinutesRaw, 30, 5),
     logsEnabled: parseBooleanSetting(logsEnabledRaw, true),
     logsMinutes: parseNumberSetting(logsMinutesRaw, 15, 5),
     logsAutoOnError: parseBooleanSetting(logsAutoRaw, true),

@@ -127,6 +127,8 @@ export function AiPathsSettingsView({
     handleClearWires,
     handleClearConnectorData,
     handleClearHistory,
+    presetDraft,
+    setPresetDraft,
     handlePresetFromSelection,
     handleSavePreset,
     handleApplyPreset,
@@ -135,6 +137,12 @@ export function AiPathsSettingsView({
     lastGraphModelPayload,
     runList,
     runsQuery,
+    runFilter,
+    setRunFilter,
+    expandedRunHistory,
+    setExpandedRunHistory,
+    runHistorySelection,
+    setRunHistorySelection,
     handleOpenRunDetail,
     handleResumeRun,
     handleCancelRun,
@@ -149,6 +157,8 @@ export function AiPathsSettingsView({
     saveDbQueryPresets,
     saveDbNodePresets,
     handleImportPresets,
+    simulationOpenNodeId,
+    setSimulationOpenNodeId,
     reportAiPathsError,
   } = state;
 
@@ -820,7 +830,8 @@ export function AiPathsSettingsView({
           paths={paths}
           pathFlagsById={pathFlagsById}
           onCreatePath={() => { void handleCreatePath(); }}
-          onSaveList={() => { void savePathIndex(paths); }}          onEditPath={(pathId: string): void => {
+          onSaveList={() => { void savePathIndex(paths); }}
+          onEditPath={(pathId: string): void => {
             handleSwitchPath(pathId);
             onTabChange?.('canvas');
           }}
@@ -860,6 +871,7 @@ export function AiPathsSettingsView({
       <NodeConfigDialogMigrated
         modelOptions={modelOptions}
         updateSelectedNode={updateSelectedNode}
+        updateSelectedNodeConfig={updateSelectedNodeConfig}
         handleFetchParserSample={handleFetchParserSample}
         handleFetchUpdaterSample={handleFetchUpdaterSample}
         handleRunSimulation={(node) => void handleRunSimulation(node)}

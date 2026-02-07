@@ -22,6 +22,7 @@ export type ApiResponse<T> = {
 };
 
 export type DbActionPayload = {
+  provider?: 'auto' | 'mongodb' | 'prisma';
   action: string;
   collection: string;
   filter?: unknown;
@@ -33,6 +34,9 @@ export type DbActionPayload = {
   sort?: unknown;
   limit?: number;
   idType?: string;
+  distinctField?: string;
+  upsert?: boolean;
+  returnDocument?: 'before' | 'after';
 };
 
 export type DbQueryPayload = {
@@ -386,8 +390,12 @@ export const entityApi = {
    */
   async createProduct(formData: FormData): Promise<ApiResponse<Record<string, unknown>>> {
     try {
-      const res = await fetch('/api/products', {
+      const resolvedUrl = resolveApiUrl('/api/products');
+      // Use withCsrfHeadersCompat for server-side auth (CSRF + internal token)
+      const headers = await withCsrfHeadersCompat();
+      const res = await fetch(resolvedUrl, {
         method: 'POST',
+        headers,
         body: formData,
       });
       if (!res.ok) {

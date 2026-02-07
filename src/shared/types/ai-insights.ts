@@ -1,4 +1,4 @@
-export type AiInsightType = 'analytics' | 'logs';
+export type AiInsightType = 'analytics' | 'runtime_analytics' | 'logs';
 
 export type AiInsightStatus = 'ok' | 'warning' | 'error';
 

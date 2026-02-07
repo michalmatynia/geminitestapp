@@ -56,7 +56,7 @@ import { useMemo } from 'react';
 
 import type { AiNode, DbQueryPreset, DbNodePreset, NodeConfig } from '@/features/ai/ai-paths/lib';
 
-import { useGraphState } from '../../context/GraphContext';
+import { useGraphState, useGraphActions } from '../../context/GraphContext';
 import { usePresetsState, usePresetsActions } from '../../context/PresetsContext';
 import { useRuntimeState, useRuntimeActions } from '../../context/RuntimeContext';
 import { useSelectionState, useSelectionActions } from '../../context/SelectionContext';
@@ -201,6 +201,7 @@ export function NodeConfigDialogMigrated({
       // Callback props passed through
       updateSelectedNode={updateSelectedNode}
       updateSelectedNodeConfig={(config: NodeConfig) => {
+        updateSelectedNodeConfig(config);
         if (selectedNodeId) updateNode(selectedNodeId, { config });
       }}
       handleFetchParserSample={handleFetchParserSample}

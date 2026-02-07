@@ -135,15 +135,15 @@ const buildRunWhere = (options: AiPathRunListOptions = {}): Prisma.AiPathRunWher
     andFilters.push({ status: options.status });
   }
   if (source) {
-    const aiPathsSources = ['ai_paths_ui', 'trigger_button', 'product_panel'];
+    const aiPathsSources = ['ai_paths_ui', 'ai_paths_direct', 'trigger_button', 'product_panel'];
     const aiPathsTabs = ['product', 'note'];
     if (sourceMode === 'exclude') {
       if (source === 'ai_paths_ui') {
         andFilters.push({
           AND: [
-            { NOT: { meta: { path: ['source'], equals: 'ai_paths_ui' } } },
-            { NOT: { meta: { path: ['source'], equals: 'trigger_button' } } },
-            { NOT: { meta: { path: ['source'], equals: 'product_panel' } } },
+            ...aiPathsSources.map((value) => ({
+              NOT: { meta: { path: ['source'], equals: value } },
+            })),
             ...aiPathsTabs.map((tab) => ({
               NOT: { meta: { path: ['source', 'tab'], equals: tab } },
             })),

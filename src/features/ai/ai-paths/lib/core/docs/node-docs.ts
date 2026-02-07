@@ -607,17 +607,17 @@ const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>> = {
     {
       path: 'database.useMongoActions',
       description:
-        'When true, uses MongoDB native actions (actionCategory/action) instead of simplified operation.',
+        'When true, uses provider action mode (actionCategory/action) instead of simplified operation.',
     },
     {
       path: 'database.actionCategory',
       description:
-        'Mongo action category: create/read/update/delete/aggregate.',
+        'Provider action category: create/read/update/delete/(aggregate for MongoDB).',
     },
     {
       path: 'database.action',
       description:
-        'Mongo action name: find/findOne/updateOne/aggregate/etc.',
+        'Provider action command (MongoDB or Prisma-mapped command labels).',
     },
     {
       path: 'database.distinctField',

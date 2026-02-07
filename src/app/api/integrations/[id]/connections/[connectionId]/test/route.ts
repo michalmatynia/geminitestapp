@@ -936,8 +936,3 @@ export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(
   POST_handler,
   { source: "integrations.[id].connections.[connectionId].test.POST", requireCsrf: false }
 );
-
-export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(
-  POST_handler,
-  { source: "integrations.[id].connections.[connectionId].test.POST", requireCsrf: false }
-);

@@ -17,7 +17,9 @@ const SETTINGS_COLLECTION = 'settings';
 const getHistoryKey = (type: AiInsightType): string =>
   type === 'analytics'
     ? AI_INSIGHTS_SETTINGS_KEYS.analyticsHistory
-    : AI_INSIGHTS_SETTINGS_KEYS.logsHistory;
+    : type === 'runtime_analytics'
+      ? AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsHistory
+      : AI_INSIGHTS_SETTINGS_KEYS.logsHistory;
 
 const canUsePrismaSettings = (): boolean =>
   Boolean(process.env.DATABASE_URL) && 'setting' in prisma;

@@ -2,32 +2,29 @@
 
 import React, { useRef, useEffect } from 'react';
 
-import { ChatMessage } from '@/shared/types/chatbot';
 import { Button, Input } from '@/shared/ui';
 
+import { ChatMessageContent } from './ChatMessageContent';
+import { useChatbot } from '../context/ChatbotContext';
 
-interface ChatInterfaceProps {
-  messages: ChatMessage[];
-  input: string;
-  setInput: (value: string) => void;
-  isSending: boolean;
-  onSend: (e: React.FormEvent) => void;
-  renderFormattedMessage: (content: string) => React.ReactNode;
-}
-
-export function ChatInterface({
-  messages,
-  input,
-  setInput,
-  isSending,
-  onSend,
-  renderFormattedMessage,
-}: ChatInterfaceProps): React.JSX.Element {
+export function ChatInterface(): React.JSX.Element {
+  const {
+    messages,
+    input,
+    setInput,
+    isSending,
+    sendMessage,
+  } = useChatbot();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect((): void => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  const onSend = (e: React.FormEvent): void => {
+    e.preventDefault();
+    void sendMessage();
+  };
 
   return (
     <div className="flex h-full flex-col">
@@ -38,7 +35,7 @@ export function ChatInterface({
           </div>
         ) : (
           <div className="space-y-4">
-            {messages.map((msg: ChatMessage, index: number): React.JSX.Element => (
+            {messages.map((msg, index: number): React.JSX.Element => (
               <div
                 key={index}
                 className={`flex ${
@@ -52,7 +49,7 @@ export function ChatInterface({
                       : 'bg-gray-800 text-gray-200'
                   }`}
                 >
-                  {renderFormattedMessage(msg.content)}
+                  <ChatMessageContent content={msg.content} />
                 </div>
               </div>
             ))}
@@ -81,3 +78,4 @@ export function ChatInterface({
     </div>
   );
 }
+

@@ -39,21 +39,15 @@ I can't fetch the whole product. The database provider is Prisma Postgresql
 React error overlay ? 
 
 Websocket install for my polling operations
-Is redis installed "
 
 use Context refactor !
 
-Duplicate run guards
 
 every element in CMS should have an uption to choose the type of backgroun, for image file background, Background lock is like a semi background later used in multiplanar din parallaxes
 
 Maybe my placeholder matrix is better-Node Schema Matrix for extracting Schemas for prompts
 
 There is a mess in segmenting my runtimes, if I send  a Query from Database Query Node to AI MOdel, whether it's server or Local should depend on PAth Global settings
-
-* Validator Extractor should be 
-
-* Regex grouper PReset (for the whole regex Persona)
    
 * Placeholders in Database Query should be a matrix of placeholders (with a tooltip what they resolve to) Schema placeholders should by synchronisable (resolving to schemas with types).
 

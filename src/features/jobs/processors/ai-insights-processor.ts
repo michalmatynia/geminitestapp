@@ -3,6 +3,7 @@ import 'server-only';
 import {
   generateAnalyticsInsight,
   generateLogsInsight,
+  generateRuntimeAnalyticsInsight,
   getScheduleSettings,
 } from '@/features/ai/insights/generator';
 import { getAiInsightsMeta, setAiInsightsMeta } from '@/features/ai/insights/repository';
@@ -26,12 +27,22 @@ export async function tick(): Promise<void> {
   const analyticsLastRun = parseDate(
     await getAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.analyticsLastRunAt),
   );
+  const runtimeAnalyticsLastRun = parseDate(
+    await getAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsLastRunAt),
+  );
   const logsLastRun = parseDate(
     await getAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.logsLastRunAt),
   );
 
   if (schedule.analyticsEnabled && shouldRun(analyticsLastRun, schedule.analyticsMinutes)) {
     await generateAnalyticsInsight({ source: 'scheduled' });
+  }
+
+  if (
+    schedule.runtimeAnalyticsEnabled &&
+    shouldRun(runtimeAnalyticsLastRun, schedule.runtimeAnalyticsMinutes)
+  ) {
+    await generateRuntimeAnalyticsInsight({ source: 'scheduled', range: '24h' });
   }
 
   if (schedule.logsEnabled && shouldRun(logsLastRun, schedule.logsMinutes)) {

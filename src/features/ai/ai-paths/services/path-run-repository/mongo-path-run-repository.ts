@@ -192,7 +192,7 @@ const buildRunFilter = (options: AiPathRunListOptions = {}): Record<string, unkn
   const source = options.source?.trim();
   const sourceMode = options.sourceMode ?? 'include';
   if (source) {
-    const aiPathsSources = ['ai_paths_ui', 'trigger_button', 'product_panel'];
+    const aiPathsSources = ['ai_paths_ui', 'ai_paths_direct', 'trigger_button', 'product_panel'];
     const aiPathsTabs = ['product', 'note'];
     if (sourceMode === 'exclude') {
       if (source === 'ai_paths_ui') {

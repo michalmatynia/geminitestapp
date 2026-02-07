@@ -64,6 +64,8 @@ const parametersArray = z.preprocess(jsonToValue, z.array(parameterValueSchema).
 
 // Core product schema
 const productBaseSchema = z.object({
+  // Optional custom ID (e.g. from AI Paths modular nodes)
+  id: nullishTrimmedString,
   // Identifiers
   baseProductId: nullishTrimmedString,
   defaultPriceGroupId: nullishTrimmedString,

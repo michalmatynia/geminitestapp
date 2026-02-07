@@ -13,7 +13,7 @@ export async function register() {
           source: 'process.unhandledRejection',
         });
       } catch {
-        console.error('Fatal: Unhandled Rejection (and logging failed)', reason);
+        console.error('Fatal: Unhandled Rejection (and logging failed)', reason); // eslint-disable-line no-console
       }
     });
 
@@ -27,7 +27,7 @@ export async function register() {
           critical: true,
         });
       } catch {
-        console.error('Fatal: Uncaught Exception (and logging failed)', error);
+        console.error('Fatal: Uncaught Exception (and logging failed)', error); // eslint-disable-line no-console
       }
       // Give some time for logging to complete before exiting
       setTimeout(() => process.exit(1), 1000);

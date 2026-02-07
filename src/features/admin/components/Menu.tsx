@@ -690,12 +690,10 @@ export const buildAdminNav = (handlers: {
   {
     id: 'jobs',
     label: 'Jobs',
-    href: '/admin/products/jobs',
+    href: '/admin/ai-paths/queue',
     icon: <WorkflowIcon className="size-4" />,
     keywords: ['queue', 'runner', 'workers', 'background', 'tasks'],
     children: [
-      { id: 'jobs/products', label: 'Product Jobs', href: '/admin/products/jobs' },
-      { id: 'jobs/ai', label: 'AI Jobs', href: '/admin/ai-paths/jobs' },
       { id: 'jobs/queue', label: 'Job Queue', href: '/admin/ai-paths/queue' },
       { id: 'jobs/dead-letter', label: 'Dead Letter', href: '/admin/ai-paths/dead-letter' },
     ],
@@ -734,7 +732,6 @@ export const buildAdminNav = (handlers: {
           { id: 'ai/image-studio/projects', label: 'Projects', href: '/admin/image-studio?tab=projects' },
           { id: 'ai/image-studio/settings', label: 'Settings', href: '/admin/image-studio?tab=settings' },
           { id: 'ai/image-studio/ui-presets', label: 'UI Presets', href: '/admin/image-studio/ui-presets' },
-          { id: 'ai/image-studio/validation-patterns', label: 'Global Validation Patterns', href: '/admin/prompt-engine/validation' },
         ],
       },
       {
@@ -866,7 +863,7 @@ export const buildAdminNav = (handlers: {
         keywords: ['ai insights', 'analytics', 'logs', 'warnings'],
       },
       { id: 'system/logs', label: 'System Logs', href: '/admin/system/logs', icon: <ActivityIcon className="size-4" /> },
-      { id: 'system/uploads', label: 'Upload Events', href: '/admin/system/upload-events', icon: <ActivityIcon className="size-4" /> },
+      { id: 'system/uploads', label: 'Upload Events', href: '/admin/ai-paths/queue?tab=file-uploads', icon: <ActivityIcon className="size-4" /> },
       {
         id: 'system/auth',
         label: 'Auth',

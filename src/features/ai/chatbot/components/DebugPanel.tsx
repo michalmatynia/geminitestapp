@@ -1,6 +1,6 @@
 'use client';
 
-import { ChatbotDebugState } from '@/shared/types/chatbot';
+import { useChatbot } from '../context/ChatbotContext';
 
 interface LogEntry {
   id: string;
@@ -10,14 +10,14 @@ interface LogEntry {
 }
 
 interface DebugPanelProps {
-  debugState: ChatbotDebugState;
-  agentRunLogs: LogEntry[];
+  agentRunLogs?: LogEntry[];
 }
 
 export function DebugPanel({
-  debugState,
-  agentRunLogs,
-}: Omit<DebugPanelProps, '_agentRunAudits'>): React.JSX.Element {
+  agentRunLogs = [],
+}: DebugPanelProps): React.JSX.Element {
+  const { debugState } = useChatbot();
+
   return (
     <div className="h-full overflow-y-auto bg-card p-4 text-xs text-gray-300">
       <h3 className="mb-2 font-semibold text-white">Debug Information</h3>
@@ -61,3 +61,4 @@ export function DebugPanel({
     </div>
   );
 }
+

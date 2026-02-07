@@ -19,6 +19,7 @@ import {
   getPgDumpCommand,
   execFileAsync as pgExecFileAsync,
 } from '@/features/database/utils/postgres';
+import { ErrorSystem } from '@/features/observability/server';
 import { forbiddenError, operationFailedError } from '@/shared/errors/app-error';
 
 export type DatabaseBackupResult = {
@@ -73,6 +74,10 @@ export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
       log: logContent,
     };
   } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: 'database-backup-mongo',
+      databaseName,
+    });
     const message = error instanceof Error ? error.message : 'Unknown error';
     const cause = (error as { cause?: { stdout?: string; stderr?: string } })
       .cause;
@@ -131,6 +136,10 @@ export const createPostgresBackup = async (): Promise<DatabaseBackupResult> => {
       log: logContent,
     };
   } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: 'database-backup-postgres',
+      databaseName,
+    });
     const message = error instanceof Error ? error.message : 'Unknown error';
     const cause = (error as { cause?: { stdout?: string; stderr?: string } })
       .cause;

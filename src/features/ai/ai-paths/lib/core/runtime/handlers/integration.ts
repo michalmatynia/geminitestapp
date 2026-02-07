@@ -24,6 +24,9 @@ import {
   safeStringify,
 } from '../../utils';
 import {
+  getUnsupportedProviderActionMessage,
+} from '../../utils/provider-actions';
+import {
   buildDbQueryPayload,
   buildFallbackEntity,
   buildFormData,
@@ -728,6 +731,25 @@ export const handleDatabase: NodeHandler = async ({
     const action: DatabaseAction = dbConfig.action ?? 'find';
     const inputValue: unknown = templateInputValue;
     const queryPayload = buildDbQueryPayload(templateContext as RuntimePortValues, queryConfig);
+    const actionProvider =
+      queryPayload.provider === 'mongodb' || queryPayload.provider === 'prisma'
+        ? queryPayload.provider
+        : null;
+    const actionSupportError = actionProvider
+      ? getUnsupportedProviderActionMessage(actionProvider, action)
+      : null;
+    if (actionSupportError) {
+      toast(actionSupportError, { variant: 'error' });
+      return {
+        result: null,
+        bundle: {
+          error: 'Unsupported provider action',
+          provider: actionProvider,
+          action,
+        },
+        aiPrompt,
+      };
+    }
     const filter = (queryPayload.query) ?? {};
     const projection = queryPayload.projection;
     const sort = queryPayload.sort;
@@ -824,6 +846,7 @@ export const handleDatabase: NodeHandler = async ({
         };
       }
       const readResult: ApiResponse<DbActionResult> = await dbApi.action<DbActionResult>({ 
+        ...(queryPayload.provider ? { provider: queryPayload.provider as 'auto' | 'mongodb' | 'prisma' } : {}),
         action,
         collection,
         filter,
@@ -831,9 +854,10 @@ export const handleDatabase: NodeHandler = async ({
         ...(sort !== undefined ? { sort } : {}),
         ...(limit !== undefined ? { limit } : {}),
         ...(idType !== undefined ? { idType } : {}),
+        ...(action === 'distinct' && distinctField ? { distinctField } : {}),
       });
       if (!readResult.ok) {
-        toast('Database read failed.', { variant: 'error' });
+        toast(readResult.error || 'Database read failed.', { variant: 'error' });
         return { result: null, bundle: { error: 'Read failed' }, aiPrompt };
       }
       const data: DbActionResult = readResult.data;
@@ -916,7 +940,8 @@ export const handleDatabase: NodeHandler = async ({
           aiPrompt,
         };
       }
-      const insertResult: ApiResponse<unknown> = await dbApi.action({
+      const insertActionPayload = {
+        ...(queryPayload.provider ? { provider: queryPayload.provider as 'auto' | 'mongodb' | 'prisma' } : {}),
         action,
         collection,
         ...(action === 'insertOne' && payloadObject
@@ -925,7 +950,8 @@ export const handleDatabase: NodeHandler = async ({
         ...(action === 'insertMany'
           ? { documents: Array.isArray(payload) ? (payload) : [payload] }
           : {}),
-      });
+      };
+      const insertResult: ApiResponse<unknown> = await dbApi.action(insertActionPayload);
       executed.updater.add(node.id);
       if (!insertResult.ok) {
         reportAiPathsError(
@@ -933,7 +959,7 @@ export const handleDatabase: NodeHandler = async ({
           { action: 'dbInsert', collection, nodeId: node.id },
           'Database insert failed:',
         );
-        toast('Database insert failed.', { variant: 'error' });
+        toast(insertResult.error || 'Database insert failed.', { variant: 'error' });
         return { result: null, bundle: { error: 'Insert failed' }, aiPrompt };
       }
       toast('Insert completed.', { variant: 'success' });
@@ -1237,6 +1263,7 @@ export const handleDatabase: NodeHandler = async ({
         };
       }
       const updateResult: ApiResponse<unknown> = await dbApi.action({
+        ...(queryPayload.provider ? { provider: queryPayload.provider as 'auto' | 'mongodb' | 'prisma' } : {}),
         action,
         collection,
         filter: resolvedFilter,
@@ -1250,7 +1277,7 @@ export const handleDatabase: NodeHandler = async ({
           { action: 'dbUpdate', collection, nodeId: node.id },
           'Database update failed:',
         );
-        toast('Database update failed.', { variant: 'error' });
+        toast(updateResult.error || 'Database update failed.', { variant: 'error' });
         return {
           result: null,
           bundle: { error: 'Update failed' },
@@ -1286,6 +1313,7 @@ export const handleDatabase: NodeHandler = async ({
         };
       }
       const deleteResult: ApiResponse<unknown> = await dbApi.action({
+        ...(queryPayload.provider ? { provider: queryPayload.provider as 'auto' | 'mongodb' | 'prisma' } : {}),
         action,
         collection,
         filter,
@@ -1298,7 +1326,7 @@ export const handleDatabase: NodeHandler = async ({
           { action: 'dbDelete', collection, nodeId: node.id },
           'Database delete failed:',
         );
-        toast('Database delete failed.', { variant: 'error' });
+        toast(deleteResult.error || 'Database delete failed.', { variant: 'error' });
         return { result: null, bundle: { error: 'Delete failed' }, aiPrompt };
       }
       toast('Delete completed.', { variant: 'success' });
@@ -1770,7 +1798,20 @@ export const handleDatabase: NodeHandler = async ({
   if (operation === 'insert') {
     const entityType = (dbConfig.entityType ?? 'product').trim().toLowerCase();
     const writeSource = dbConfig.writeSource ?? 'bundle';
-    const rawPayload = coerceInput(nodeInputs[writeSource]);
+
+    // Resolve queryTemplate first (config-based payload with {{placeholder}} support),
+    // falling back to the writeSource port value.
+    const insertTemplate: string = queryConfig.queryTemplate?.trim() ?? '';
+    const parsedTemplatePayload: unknown = insertTemplate
+      ? parseJsonSafe(
+          renderJsonTemplate(insertTemplate, templateContext, templateInputValue ?? ''),
+        )
+      : null;
+    const templatePayload: unknown =
+      parsedTemplatePayload && typeof parsedTemplatePayload === 'object' && !Array.isArray(parsedTemplatePayload)
+        ? parsedTemplatePayload
+        : null;
+    const rawPayload = templatePayload ?? coerceInput(nodeInputs[writeSource]);
     const callbackInput = coerceInput(nodeInputs.queryCallback);
     
     const coercePayloadObject = (value: unknown): Record<string, unknown> | null => {

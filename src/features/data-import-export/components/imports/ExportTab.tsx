@@ -392,10 +392,10 @@ export function ExportTab({
             <li>
               • Track export jobs in the{' '}
               <Link
-                href="/admin/products/jobs?tab=export"
+                href="/admin/ai-paths/queue?tab=paths-external#export-jobs"
                 className="text-blue-400 underline"
               >
-                Export Jobs
+                Job Queue → External Runs
               </Link>{' '}
               tab
             </li>
@@ -462,9 +462,9 @@ export function ExportTab({
             >
               {savingExportSettings ? 'Saving...' : 'Save Export Settings'}
             </Button>
-            <Link href="/admin/products/jobs?tab=export">
+            <Link href="/admin/ai-paths/queue?tab=paths-external#export-jobs">
               <Button variant="outline" size="sm" className="border">
-                View Listing Jobs
+                View Export Jobs
               </Button>
             </Link>
             <Link href="/admin/products">

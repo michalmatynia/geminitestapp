@@ -20,7 +20,7 @@ const jobActionSchema = z.object({
 
 async function GET_handler(
   _req: NextRequest,
-  ctx: ApiHandlerContext,
+  _ctx: ApiHandlerContext,
   params: { jobId: string }
 ): Promise<Response> {
   const { jobId } = params;

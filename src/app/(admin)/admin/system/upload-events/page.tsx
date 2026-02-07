@@ -1,5 +1,5 @@
-import FileUploadEventsPage from '@/features/files/pages/FileUploadEventsPage';
+import { redirect } from 'next/navigation';
 
-export default function AdminUploadEventsPage(): React.JSX.Element {
-  return <FileUploadEventsPage />;
+export default function AdminUploadEventsPage(): never {
+  redirect('/admin/ai-paths/queue?tab=file-uploads');
 }

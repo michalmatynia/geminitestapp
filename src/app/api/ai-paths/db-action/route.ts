@@ -12,6 +12,7 @@ import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
 import prisma from "@/shared/lib/db/prisma";
 import { badRequestError, internalError } from "@/shared/errors/app-error";
 import { enforceAiPathsActionRateLimit, isCollectionAllowed, requireAiPathsAccessOrInternal } from "@/features/ai/ai-paths/server";
+import { getUnsupportedProviderActionMessage, resolveDbActionProvider } from "@/features/ai/ai-paths/lib/core/utils/provider-actions";
 
 const actionSchema = z.object({
   provider: z.enum(["auto", "mongodb", "prisma"]).optional(),
@@ -194,13 +195,15 @@ const resolvePrismaCollectionKey = (collection: string): string | null => {
 };
 
 type PrismaDelegate = {
+  findMany: (args: Record<string, unknown>) => Promise<unknown[]>;
+  findFirst: (args: Record<string, unknown>) => Promise<unknown>;
+  count: (args: Record<string, unknown>) => Promise<number>;
   create: (args: Record<string, unknown>) => Promise<unknown>;
   createMany: (args: Record<string, unknown>) => Promise<{ count: number }>;
   update: (args: Record<string, unknown>) => Promise<unknown>;
   updateMany: (args: Record<string, unknown>) => Promise<{ count: number }>;
   delete: (args: Record<string, unknown>) => Promise<unknown>;
   deleteMany: (args: Record<string, unknown>) => Promise<{ count: number }>;
-  findFirst: (args: Record<string, unknown>) => Promise<unknown>;
 };
 
 const getPrismaDelegate = (collection: string): PrismaDelegate | null => {
@@ -208,6 +211,37 @@ const getPrismaDelegate = (collection: string): PrismaDelegate | null => {
   if (!delegateName) return null;
   const delegate = (prisma as unknown as Record<string, PrismaDelegate>)[delegateName];
   return delegate ?? null;
+};
+
+const normalizePrismaSelect = (
+  projection?: Record<string, unknown>
+): Record<string, unknown> | undefined => {
+  if (!projection || typeof projection !== "object" || Array.isArray(projection)) return undefined;
+  const hasNested = Object.values(projection).some(
+    (value: unknown) => value !== null && typeof value === "object"
+  );
+  if (hasNested) return projection;
+  const select: Record<string, boolean> = {};
+  for (const [key, value] of Object.entries(projection)) {
+    if (value === 0 || value === false || value === null) continue;
+    select[key] = true;
+  }
+  return Object.keys(select).length > 0 ? select : undefined;
+};
+
+const normalizePrismaOrderBy = (
+  sort?: Record<string, unknown>
+): Record<string, "asc" | "desc"> | undefined => {
+  if (!sort || typeof sort !== "object" || Array.isArray(sort)) return undefined;
+  const orderBy: Record<string, "asc" | "desc"> = {};
+  for (const [key, value] of Object.entries(sort)) {
+    if (value === "desc" || value === -1) {
+      orderBy[key] = "desc";
+    } else if (value === "asc" || value === 1) {
+      orderBy[key] = "asc";
+    }
+  }
+  return Object.keys(orderBy).length > 0 ? orderBy : undefined;
 };
 
 /** Extract flat key-value updates from a MongoDB-style update doc ({$set: {...}} or plain). */
@@ -242,12 +276,10 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     logPrefix: "ai-paths.db-action",
   });
   if (!parsed.ok) return parsed.response;
-  if (!process.env.MONGODB_URI) {
-    throw internalError("MongoDB is not configured");
-  }
 
   const data = parsed.data as z.infer<typeof actionSchema>;
   const {
+    provider: requestedProvider,
     collection,
     action,
     filter,
@@ -268,30 +300,72 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     throw internalError("Collection not allowlisted");
   }
 
-  const appProvider = await getAppDbProvider();
-  const isWriteAction = [
-    "insertOne",
-    "insertMany",
-    "updateOne",
-    "updateMany",
-    "replaceOne",
-    "findOneAndUpdate",
-    "deleteOne",
-    "deleteMany",
-    "findOneAndDelete",
-  ].includes(action);
-
-  // When app DB provider is Prisma, route write actions through Prisma
-  if (appProvider === "prisma" && isWriteAction) {
+  const provider = resolveDbActionProvider(requestedProvider, await getAppDbProvider());
+  const providerActionError = getUnsupportedProviderActionMessage(provider, action);
+  if (providerActionError) {
+    throw badRequestError(providerActionError);
+  }
+  if (provider === "prisma") {
     if (!process.env.DATABASE_URL) {
       throw internalError("Prisma is not configured");
     }
     const resolvedCollection = resolvePrismaCollectionKey(collection);
     const delegate = resolvedCollection ? getPrismaDelegate(resolvedCollection) : null;
     if (!delegate) {
-      throw badRequestError(`Collection "${collection}" is not available for Prisma writes.`);
+      throw badRequestError(`Collection "${collection}" is not available for Prisma.`);
     }
     const where = coerceQuery(filter);
+    const select = normalizePrismaSelect(projection);
+    const orderBy = normalizePrismaOrderBy(sort);
+
+    if (action === "find") {
+      const [items, count] = await Promise.all([
+        delegate.findMany({
+          where,
+          ...(select ? { select } : {}),
+          ...(orderBy ? { orderBy } : {}),
+          take: limit,
+        }),
+        delegate.count({ where }),
+      ]);
+      return NextResponse.json({ items, count });
+    }
+
+    if (action === "findOne") {
+      const item = await delegate.findFirst({
+        where,
+        ...(select ? { select } : {}),
+        ...(orderBy ? { orderBy } : {}),
+      });
+      return NextResponse.json({ item, count: item ? 1 : 0 });
+    }
+
+    if (action === "countDocuments") {
+      const count = await delegate.count({ where });
+      return NextResponse.json({ count });
+    }
+
+    if (action === "distinct") {
+      const field = distinctField?.trim();
+      if (!field) {
+        throw badRequestError("distinctField is required");
+      }
+      const rows = await delegate.findMany({
+        where,
+        distinct: [field],
+        select: { [field]: true },
+      });
+      const values = rows
+        .map((row: unknown) =>
+          row && typeof row === "object" ? (row as Record<string, unknown>)[field] : undefined
+        )
+        .filter((value: unknown) => value !== undefined);
+      return NextResponse.json({ values, count: values.length });
+    }
+
+    if (action === "aggregate") {
+      throw badRequestError("Action \"aggregate\" is not supported for Prisma in DB Action.");
+    }
 
     if (action === "updateOne") {
       const flatUpdates = extractFlatUpdates(update);
@@ -392,6 +466,10 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     }
 
     throw badRequestError(`Action "${action}" is not supported for Prisma.`);
+  }
+
+  if (!process.env.MONGODB_URI) {
+    throw internalError("MongoDB is not configured");
   }
 
   const mongo = await getMongoDb();

@@ -25,6 +25,7 @@ export default function AgentRunsPage(): React.ReactElement {
     agentBrowserLogs,
     agentAuditLogs,
     agentStreamStatus,
+    setAgentStreamStatus,
     isLoadingRuns: loading,
     refetchRuns: loadAgentRuns,
   } = useAgentRunContext();

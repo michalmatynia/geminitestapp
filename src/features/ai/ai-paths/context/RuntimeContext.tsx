@@ -16,6 +16,8 @@ import type {
   UpdaterSampleState,
   PathDebugSnapshot,
   RuntimeHistoryEntry,
+  AiPathRuntimeNodeStatusMap,
+  AiPathRuntimeEvent,
 } from '@/features/ai/ai-paths/lib';
 
 // ---------------------------------------------------------------------------
@@ -31,6 +33,10 @@ export interface LastErrorInfo {
 export interface RuntimeStateData {
   // Core runtime state
   runtimeState: RuntimeState;
+  /** Map of node IDs to their current runtime status */
+  runtimeNodeStatuses: AiPathRuntimeNodeStatusMap;
+  /** List of runtime events (e.g., node started, node finished) */
+  runtimeEvents: AiPathRuntimeEvent[];
 
   // Sample states for testing
   parserSamples: Record<string, ParserSampleState>;
@@ -56,6 +62,13 @@ export interface RuntimeActions {
   updateNodeOutputs: (nodeId: string, outputs: RuntimePortValues) => void;
   clearNodeRuntime: (nodeId: string) => void;
   clearAllRuntime: () => void;
+
+  /** Set the map of node statuses */
+  setRuntimeNodeStatuses: (statuses: AiPathRuntimeNodeStatusMap | ((prev: AiPathRuntimeNodeStatusMap) => AiPathRuntimeNodeStatusMap)) => void;
+  /** Add a new runtime event */
+  addRuntimeEvent: (event: AiPathRuntimeEvent) => void;
+  /** Clear all runtime events */
+  clearRuntimeEvents: () => void;
 
   // History actions
   appendHistory: (nodeId: string, entry: RuntimeHistoryEntry) => void;
@@ -91,6 +104,9 @@ const INITIAL_RUNTIME_STATE: RuntimeState = {
   outputs: {},
 };
 
+// Max number of runtime events to keep in state
+const MAX_RUNTIME_EVENTS = 300;
+
 // ---------------------------------------------------------------------------
 // Contexts (split for re-render optimization)
 // ---------------------------------------------------------------------------
@@ -113,6 +129,8 @@ export function RuntimeProvider({
 }: RuntimeProviderProps): React.ReactNode {
   // Core runtime state
   const [runtimeState, setRuntimeStateInternal] = useState<RuntimeState>(initialRuntimeState);
+  const [runtimeNodeStatuses, setRuntimeNodeStatusesInternal] = useState<AiPathRuntimeNodeStatusMap>({});
+  const [runtimeEvents, setRuntimeEventsInternal] = useState<AiPathRuntimeEvent[]>([]);
 
   // Sample states
   const [parserSamples, setParserSamplesInternal] = useState<Record<string, ParserSampleState>>({});
@@ -164,6 +182,22 @@ export function RuntimeProvider({
 
   const clearAllRuntime = useCallback(() => {
     setRuntimeStateInternal(INITIAL_RUNTIME_STATE);
+    setRuntimeNodeStatusesInternal({});
+    setRuntimeEventsInternal([]);
+  }, []);
+
+  const addRuntimeEvent = useCallback((event: AiPathRuntimeEvent) => {
+    setRuntimeEventsInternal((prev) => {
+      const next = [...prev, event];
+      if (next.length > MAX_RUNTIME_EVENTS) {
+        return next.slice(next.length - MAX_RUNTIME_EVENTS);
+      }
+      return next;
+    });
+  }, []);
+
+  const clearRuntimeEvents = useCallback(() => {
+    setRuntimeEventsInternal([]);
   }, []);
 
   const appendHistory = useCallback((nodeId: string, entry: RuntimeHistoryEntry) => {
@@ -220,6 +254,10 @@ export function RuntimeProvider({
       clearNodeRuntime,
       clearAllRuntime,
 
+      setRuntimeNodeStatuses: setRuntimeNodeStatusesInternal,
+      addRuntimeEvent,
+      clearRuntimeEvents,
+
       // History actions
       appendHistory,
       clearHistory,
@@ -249,6 +287,9 @@ export function RuntimeProvider({
       updateNodeOutputs,
       clearNodeRuntime,
       clearAllRuntime,
+      setRuntimeNodeStatusesInternal,
+      addRuntimeEvent,
+      clearRuntimeEvents,
       appendHistory,
       clearHistory,
       clearNodeHistory,
@@ -261,6 +302,8 @@ export function RuntimeProvider({
   const state = useMemo<RuntimeStateData>(
     () => ({
       runtimeState,
+      runtimeNodeStatuses,
+      runtimeEvents,
       parserSamples,
       updaterSamples,
       pathDebugSnapshots,
@@ -272,6 +315,8 @@ export function RuntimeProvider({
     }),
     [
       runtimeState,
+      runtimeNodeStatuses,
+      runtimeEvents,
       parserSamples,
       updaterSamples,
       pathDebugSnapshots,

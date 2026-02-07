@@ -2,7 +2,6 @@
 
 import {
   BellIcon,
-  SparklesIcon,
   ArrowRightIcon,
   Brain,
   Database,

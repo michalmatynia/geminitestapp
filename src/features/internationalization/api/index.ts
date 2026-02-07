@@ -1,3 +1,5 @@
+import { logClientError } from '@/features/observability';
+
 import type { CurrencyOption, CountryOption, Language } from '../../../shared/types/internationalization';
 
 export async function getCurrencies(): Promise<CurrencyOption[]> {
@@ -5,12 +7,14 @@ export async function getCurrencies(): Promise<CurrencyOption[]> {
     const res = await fetch('/api/currencies');
     if (!res.ok) {
       const payload = (await res.json().catch(() => null)) as { error?: string } | null;
-      console.warn('[currencies] Failed to fetch currencies', payload?.error ?? res.status);
+      logClientError(new Error('Failed to fetch currencies'), {
+        context: { status: res.status, error: payload?.error }
+      });
       return [];
     }
     return (await res.json()) as CurrencyOption[];
   } catch (error) {
-    console.warn('[currencies] Failed to fetch currencies', error);
+    logClientError(error, { context: { source: 'getCurrencies' } });
     return [];
   }
 }
@@ -20,12 +24,14 @@ export async function getCountries(): Promise<CountryOption[]> {
     const res = await fetch('/api/countries');
     if (!res.ok) {
       const payload = (await res.json().catch(() => null)) as { error?: string } | null;
-      console.warn('[countries] Failed to fetch countries', payload?.error ?? res.status);
+      logClientError(new Error('Failed to fetch countries'), {
+        context: { status: res.status, error: payload?.error }
+      });
       return [];
     }
     return (await res.json()) as CountryOption[];
   } catch (error) {
-    console.warn('[countries] Failed to fetch countries', error);
+    logClientError(error, { context: { source: 'getCountries' } });
     return [];
   }
 }
@@ -35,12 +41,14 @@ export async function getLanguages(): Promise<Language[]> {
     const res = await fetch('/api/languages');
     if (!res.ok) {
       const payload = (await res.json().catch(() => null)) as { error?: string } | null;
-      console.warn('[languages] Failed to fetch languages', payload?.error ?? res.status);
+      logClientError(new Error('Failed to fetch languages'), {
+        context: { status: res.status, error: payload?.error }
+      });
       return [];
     }
     return (await res.json()) as Language[];
   } catch (error) {
-    console.warn('[languages] Failed to fetch languages', error);
+    logClientError(error, { context: { source: 'getLanguages' } });
     return [];
   }
 }

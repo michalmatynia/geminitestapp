@@ -200,7 +200,7 @@ function DatabaseSettingsForm({
         const payload = (await res.json()) as { error?: string };
         throw new Error(payload?.error || 'Failed to enqueue database sync.');
       }
-      toast('Database sync job queued. Track progress in AI Jobs.', { variant: 'success' });
+      toast('Database sync job queued. Track progress in Job Queue.', { variant: 'success' });
     } catch (error) {
       logClientError(error, { context: { source: 'DatabaseSettingsPage', action: 'runSync', direction } });
       toast(

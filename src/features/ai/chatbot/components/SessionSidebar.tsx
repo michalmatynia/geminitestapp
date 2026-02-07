@@ -5,21 +5,17 @@ import { Plus, Trash2, MessageSquare } from 'lucide-react';
 import type { ChatSession } from '@/shared/types/chatbot';
 import { Button } from '@/shared/ui';
 
-interface SessionSidebarProps {
-  sessions: ChatSession[];
-  currentSessionId: string | null;
-  onSelectSession: (sessionId: string) => void;
-  onNewSession: () => Promise<void>;
-  onDeleteSession: (sessionId: string) => Promise<void>;
-}
+import { useChatbot } from '../context/ChatbotContext';
 
-export function SessionSidebar({
-  sessions,
-  currentSessionId,
-  onSelectSession,
-  onNewSession,
-  onDeleteSession,
-}: SessionSidebarProps): React.JSX.Element {
+export function SessionSidebar(): React.JSX.Element {
+  const {
+    sessions,
+    currentSessionId,
+    selectSession: onSelectSession,
+    createNewSession: onNewSession,
+    deleteSession: onDeleteSession,
+  } = useChatbot();
+
   return (
     <div className="flex h-full flex-col bg-gray-900 border-r border-border">
       <div className="p-4 border-b border-border">
@@ -76,3 +72,4 @@ export function SessionSidebar({
     </div>
   );
 }
+

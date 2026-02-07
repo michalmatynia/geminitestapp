@@ -1,7 +1,5 @@
-import { JSX } from 'react';
+import { redirect } from 'next/navigation';
 
-import { ProductAiJobsPage } from '@/features/jobs/pages/ProductAiJobsPage';
-
-export default function Page(): JSX.Element {
-  return <ProductAiJobsPage />;
+export default function Page(): never {
+  redirect('/admin/ai-paths/queue?tab=paths-external');
 }

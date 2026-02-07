@@ -1,3 +1,4 @@
+import { logClientError } from '@/features/observability';
 import { ProductWithImages } from '@/features/products/types';
 
 // This function fetches a list of products from the API.
@@ -25,23 +26,31 @@ export async function getProducts(filters: {
   if (filters.catalogId) query.append('catalogId', filters.catalogId);
   if (filters.searchLanguage) query.append('searchLanguage', filters.searchLanguage);
 
-  const res = await fetch(`/api/products?${query.toString()}`);
-  if (!res.ok) {
-    let payload: { error?: string; errorId?: string } | null = null;
-    try {
-      payload = (await res.json()) as { error?: string; errorId?: string };
-    } catch {
-      payload = null;
+  try {
+    const res = await fetch(`/api/products?${query.toString()}`);
+    if (!res.ok) {
+      let payload: { error?: string; errorId?: string } | null = null;
+      try {
+        payload = (await res.json()) as { error?: string; errorId?: string };
+      } catch {
+        payload = null;
+      }
+      const message = payload?.error || 'Failed to fetch products';
+      const errorId = payload?.errorId;
+      const error = new Error(
+        errorId ? `${message} (Error ID: ${errorId})` : message
+      );
+      (error as { errorId?: string | undefined }).errorId = errorId;
+      logClientError(error, { context: { status: res.status, filters } });
+      throw error;
     }
-    const message = payload?.error || 'Failed to fetch products';
-    const errorId = payload?.errorId;
-    const error = new Error(
-      errorId ? `${message} (Error ID: ${errorId})` : message
-    );
-    (error as { errorId?: string | undefined }).errorId = errorId;
+    return res.json() as Promise<ProductWithImages[]>;
+  } catch (error) {
+    if (!(error instanceof Error) || !(error as Error & { errorId?: string }).errorId) {
+      logClientError(error, { context: { source: 'getProducts', filters } });
+    }
     throw error;
   }
-  return res.json() as Promise<ProductWithImages[]>;
 }
 
 export async function countProducts(filters: {
@@ -64,53 +73,81 @@ export async function countProducts(filters: {
   if (filters.catalogId) query.append('catalogId', filters.catalogId);
   if (filters.searchLanguage) query.append('searchLanguage', filters.searchLanguage);
 
-  const res = await fetch(`/api/products/count?${query.toString()}`);
-  if (!res.ok) {
-    const payload = (await res.json().catch(() => null)) as { error?: string } | null;
-    console.warn('[products] Failed to fetch product count', payload?.error ?? res.status);
+  try {
+    const res = await fetch(`/api/products/count?${query.toString()}`);
+    if (!res.ok) {
+      const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+      logClientError(new Error('Failed to fetch product count'), {
+        context: { status: res.status, error: payload?.error, filters }
+      });
+      return 0;
+    }
+    const data = (await res.json()) as { count: number };
+    return data.count ?? 0;
+  } catch (error) {
+    logClientError(error, { context: { source: 'countProducts', filters } });
     return 0;
   }
-  const data = (await res.json()) as { count: number };
-  return data.count ?? 0;
 }
 
 export async function createProduct(formData: FormData): Promise<ProductWithImages> {
-  const res = await fetch('/api/products', {
-    method: 'POST',
-    body: formData,
-  });
-  if (!res.ok) {
-    const errorData = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(errorData.error || 'Failed to create product');
+  try {
+    const res = await fetch('/api/products', {
+      method: 'POST',
+      body: formData,
+    });
+    if (!res.ok) {
+      const errorData = (await res.json().catch(() => ({}))) as { error?: string };
+      const error = new Error(errorData.error || 'Failed to create product');
+      logClientError(error, { context: { status: res.status } });
+      throw error;
+    }
+    return res.json() as Promise<ProductWithImages>;
+  } catch (error) {
+    logClientError(error, { context: { source: 'createProduct' } });
+    throw error;
   }
-  return res.json() as Promise<ProductWithImages>;
 }
 
 export async function updateProduct(id: string, data: Partial<ProductWithImages>): Promise<ProductWithImages> {
-  const res = await fetch(`/api/products/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) {
-    const errorData = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(errorData.error || 'Failed to update product');
+  try {
+    const res = await fetch(`/api/products/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const errorData = (await res.json().catch(() => ({}))) as { error?: string };
+      const error = new Error(errorData.error || 'Failed to update product');
+      logClientError(error, { context: { status: res.status, id } });
+      throw error;
+    }
+    return res.json() as Promise<ProductWithImages>;
+  } catch (error) {
+    logClientError(error, { context: { source: 'updateProduct', id } });
+    throw error;
   }
-  return res.json() as Promise<ProductWithImages>;
 }
 
 export async function deleteProduct(id: string): Promise<{ success: boolean }> {
-  const res = await fetch(`/api/products/${id}`, {
-    method: 'DELETE',
-  });
-  if (!res.ok) {
-    const errorData = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(errorData.error || 'Failed to delete product');
+  try {
+    const res = await fetch(`/api/products/${id}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) {
+      const errorData = (await res.json().catch(() => ({}))) as { error?: string };
+      const error = new Error(errorData.error || 'Failed to delete product');
+      logClientError(error, { context: { status: res.status, id } });
+      throw error;
+    }
+    if (res.status === 204) {
+      return { success: true };
+    }
+    const data = (await res.json().catch(() => null)) as { success?: boolean } | null;
+    if (!data) return { success: true };
+    return { success: data.success !== false };
+  } catch (error) {
+    logClientError(error, { context: { source: 'deleteProduct', id } });
+    throw error;
   }
-  if (res.status === 204) {
-    return { success: true };
-  }
-  const data = (await res.json().catch(() => null)) as { success?: boolean } | null;
-  if (!data) return { success: true };
-  return { success: data.success !== false };
 }

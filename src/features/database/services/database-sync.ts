@@ -25,6 +25,7 @@ import {
 import { ObjectId } from 'mongodb';
 
 import { createFullDatabaseBackup } from '@/features/database/services/database-backup';
+import { ErrorSystem } from '@/features/observability/server';
 import { operationFailedError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
@@ -465,22 +466,31 @@ const requireDatabases = (): void => {
 export async function runDatabaseSync(direction: DatabaseSyncDirection): Promise<DatabaseSyncResult> {
   requireDatabases();
   const startedAt = new Date();
-  const backups = await createFullDatabaseBackup();
-  const collections: DatabaseSyncCollectionResult[] = [];
+  
+  try {
+    const backups = await createFullDatabaseBackup();
+    const collections: DatabaseSyncCollectionResult[] = [];
 
-  if (direction === 'mongo_to_prisma') {
-    await syncMongoToPrisma(collections);
-  } else {
-    await syncPrismaToMongo(collections);
+    if (direction === 'mongo_to_prisma') {
+      await syncMongoToPrisma(collections);
+    } else {
+      await syncPrismaToMongo(collections);
+    }
+
+    return {
+      direction,
+      startedAt: startedAt.toISOString(),
+      finishedAt: new Date().toISOString(),
+      backups,
+      collections,
+    };
+  } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: 'database-sync',
+      direction,
+    });
+    throw error;
   }
-
-  return {
-    direction,
-    startedAt: startedAt.toISOString(),
-    finishedAt: new Date().toISOString(),
-    backups,
-    collections,
-  };
 }
 
 async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promise<void> {

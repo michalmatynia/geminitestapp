@@ -1,14 +1,8 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 
-import { useCanvasState, useCanvasActions, useCanvasRefs } from './useCanvas';
-import { useGraphState, useGraphActions } from './useGraph';
-import { useSelectionState, useSelectionActions } from './useSelection';
-import { useEdgePaths } from './useEdgePaths';
-import { useRuntimeActions } from './useRuntime';
-
-import type { AiNode, Edge, NodeDefinition } from '@/features/ai/ai-paths/lib';
+import type { AiNode, Edge, NodeDefinition, RuntimeState } from '@/features/ai/ai-paths/lib';
 import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
@@ -19,11 +13,16 @@ import {
   clampTranslate,
   getDefaultConfigForType,
   getPortOffsetY,
-  sanitizeEdges,
   validateConnection,
 } from '@/features/ai/ai-paths/lib';
 import { useToast } from '@/shared/ui';
 import { DRAG_KEYS, getFirstDragValue, setDragData } from '@/shared/utils/drag-drop';
+
+import { useCanvasState, useCanvasActions, useCanvasRefs } from './useCanvas';
+import { useEdgePaths } from './useEdgePaths';
+import { useGraphState, useGraphActions } from './useGraph';
+import { useRuntimeActions } from './useRuntime';
+import { useSelectionState, useSelectionActions } from './useSelection';
 
 /**
  * Hook that manages all canvas-related interactions (pan, drag, connect, drop)
@@ -34,16 +33,16 @@ import { DRAG_KEYS, getFirstDragValue, setDragData } from '@/shared/utils/drag-d
  */
 export function useCanvasInteractions() {
   const { toast } = useToast();
-  
+
   // Context: Canvas
   const { view, panState, dragState, connecting, connectingPos, lastDrop } = useCanvasState();
-  const { 
-    updateView, 
-    startPan, 
-    endPan, 
-    startDrag, 
-    endDrag, 
-    startConnection, 
+  const {
+    updateView,
+    startPan,
+    endPan,
+    startDrag,
+    endDrag,
+    startConnection,
     endConnection,
     setConnectingPos,
     setLastDrop
@@ -59,7 +58,7 @@ export function useCanvasInteractions() {
   const { selectNode, selectEdge } = useSelectionActions();
 
   // Context: Runtime
-  const { pruneRuntimeInputs } = useRuntimeActions();
+  const { setRuntimeState } = useRuntimeActions();
 
   // Derived: Edge paths
   const edgePaths = useEdgePaths();
@@ -72,6 +71,45 @@ export function useCanvasInteractions() {
   // ---------------------------------------------------------------------------
   // Utilities
   // ---------------------------------------------------------------------------
+
+  const pruneRuntimeInputsInternal = useCallback(
+    (state: RuntimeState, removedEdges: Edge[], remainingEdges: Edge[]): RuntimeState => {
+      if (removedEdges.length === 0) return state;
+      const remainingTargets = new Set<string>();
+      remainingEdges.forEach((edge: Edge) => {
+        if (!edge.toPort) return;
+        remainingTargets.add(`${edge.to}:${edge.toPort}`);
+      });
+
+      const existingInputs = state.inputs ?? {};
+      let nextInputs: Record<string, Record<string, unknown>> = existingInputs;
+      let changed = false;
+
+      removedEdges.forEach((edge: Edge) => {
+        if (!edge.toPort) return;
+        const targetKey = `${edge.to}:${edge.toPort}`;
+        if (remainingTargets.has(targetKey)) return;
+        const nodeInputs = (nextInputs?.[edge.to] ?? {}) as Record<string, unknown>;
+        if (!(edge.toPort in nodeInputs)) return;
+        if (!changed) {
+          nextInputs = { ...existingInputs };
+          changed = true;
+        }
+        const nextNodeInputs = { ...nodeInputs };
+        delete nextNodeInputs[edge.toPort];
+        if (Object.keys(nextNodeInputs).length === 0) {
+          const { [edge.to]: _, ...restInputs } = nextInputs;
+          nextInputs = restInputs;
+        } else {
+          nextInputs[edge.to] = nextNodeInputs;
+        }
+      });
+
+      if (!changed) return state;
+      return { ...state, inputs: nextInputs };
+    },
+    []
+  );
 
   const notifyLocked = useCallback((): void => {
     const now = Date.now();
@@ -337,12 +375,12 @@ export function useCanvasInteractions() {
     
     // Cleanup runtime inputs for removed edge
     const remaining = edges.filter((e) => e.id !== edgeId);
-    pruneRuntimeInputs([target], remaining);
+    setRuntimeState((prev: RuntimeState) => pruneRuntimeInputsInternal(prev, [target], remaining));
 
     if (selectedEdgeId === edgeId) {
       selectEdge(null);
     }
-  }, [edges, isPathLocked, notifyLocked, removeEdge, pruneRuntimeInputs, selectedEdgeId, selectEdge]);
+  }, [edges, isPathLocked, notifyLocked, removeEdge, setRuntimeState, pruneRuntimeInputsInternal, selectedEdgeId, selectEdge]);
 
   const handleDisconnectPort = useCallback((direction: 'input' | 'output', nodeId: string, port: string): void => {
     if (isPathLocked) {
@@ -358,7 +396,7 @@ export function useCanvasInteractions() {
     const remaining = edges.filter((e) => !shouldRemove(e));
 
     setEdges(remaining);
-    pruneRuntimeInputs(removed, remaining);
+    setRuntimeState((prev: RuntimeState) => pruneRuntimeInputsInternal(prev, removed, remaining));
 
     if (selectedEdgeId) {
       const selectedEdge = edges.find((edge) => edge.id === selectedEdgeId);
@@ -366,7 +404,7 @@ export function useCanvasInteractions() {
         selectEdge(null);
       }
     }
-  }, [edges, isPathLocked, notifyLocked, setEdges, pruneRuntimeInputs, selectedEdgeId, selectEdge]);
+  }, [edges, isPathLocked, notifyLocked, setEdges, setRuntimeState, pruneRuntimeInputsInternal, selectedEdgeId, selectEdge]);
 
   const handleStartConnection = useCallback((
     event: React.PointerEvent<HTMLButtonElement>,
@@ -452,7 +490,7 @@ export function useCanvasInteractions() {
 
     const remaining = edges.filter((e) => e.id !== edgeToMove.id);
     setEdges(remaining);
-    pruneRuntimeInputs([edgeToMove], remaining);
+    setRuntimeState((prev: RuntimeState) => pruneRuntimeInputsInternal(prev, [edgeToMove], remaining));
 
     if (selectedEdgeId === edgeToMove.id) {
       selectEdge(null);
@@ -470,7 +508,8 @@ export function useCanvasInteractions() {
     startConnection,
     setConnectingPos,
     setEdges,
-    pruneRuntimeInputs,
+    setRuntimeState,
+    pruneRuntimeInputsInternal,
     selectedEdgeId,
     selectEdge,
     getPortPosition,
@@ -502,10 +541,10 @@ export function useCanvasInteractions() {
     );
     
     setEdges(remainingEdges);
-    pruneRuntimeInputs(removedEdges, remainingEdges);
+    setRuntimeState((prev: RuntimeState) => pruneRuntimeInputsInternal(prev, removedEdges, remainingEdges));
     
     selectNode(null);
-  }, [selectedNodeId, isPathLocked, nodes, edges, removeNode, setEdges, pruneRuntimeInputs, selectNode, notifyLocked]);
+  }, [selectedNodeId, isPathLocked, nodes, edges, removeNode, setEdges, setRuntimeState, pruneRuntimeInputsInternal, selectNode, notifyLocked]);
 
   const handleSelectNode = useCallback((nodeId: string): void => {
     if (nodeId === selectedNodeId) return;
@@ -566,7 +605,7 @@ export function useCanvasInteractions() {
     let payload: NodeDefinition | null = null;
     try {
       payload = JSON.parse(raw) as NodeDefinition;
-    } catch (error) {
+    } catch (_error) { // eslint-disable-line @typescript-eslint/no-unused-vars
       toast('Failed to add node. Invalid data.', { variant: 'error' });
       return;
     }
@@ -691,5 +730,6 @@ export function useCanvasInteractions() {
     fitToNodes,
     resetView,
     ensureNodeVisible,
+    pruneRuntimeInputs: pruneRuntimeInputsInternal,
   };
 }

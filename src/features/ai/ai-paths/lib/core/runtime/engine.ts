@@ -895,6 +895,10 @@ export async function evaluateGraph({
     }
 
     if (operation === 'insert') {
+      // When a query template is configured, the payload comes from
+      // config (queryTemplate) rather than from an input port.
+      const hasTemplatePayload = Boolean(dbConfig.query?.queryTemplate?.trim());
+      if (hasTemplatePayload) return true;
       const writeSource = dbConfig.writeSource ?? 'bundle';
       const insertPorts = [writeSource, 'queryCallback'];
       const hasPayload = hasAnyValue(insertPorts);

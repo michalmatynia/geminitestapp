@@ -11,6 +11,7 @@ export type AiBrainFeature =
   | 'system_logs'
   | 'error_logs'
   | 'analytics'
+  | 'runtime_analytics'
   | 'image_studio'
   | 'ai_paths'
   | 'prompt_engine';
@@ -70,6 +71,7 @@ const settingsSchema = z.object({
       system_logs: assignmentSchema.optional(),
       error_logs: assignmentSchema.optional(),
       analytics: assignmentSchema.optional(),
+      runtime_analytics: assignmentSchema.optional(),
       image_studio: assignmentSchema.optional(),
       ai_paths: assignmentSchema.optional(),
       prompt_engine: assignmentSchema.optional(),

@@ -12,6 +12,7 @@ import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
 import prisma from "@/shared/lib/db/prisma";
 import { badRequestError, internalError } from "@/shared/errors/app-error";
 import { enforceAiPathsActionRateLimit, isCollectionAllowed, requireAiPathsAccessOrInternal } from "@/features/ai/ai-paths/server";
+import { resolveDbActionProvider } from "@/features/ai/ai-paths/lib/core/utils/provider-actions";
 
 const updateSchema = z.object({
   provider: z.enum(["auto", "mongodb", "prisma"]).optional(),
@@ -189,16 +190,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   if (Object.keys(normalizedUpdates).length === 0) {
     throw badRequestError("No updates provided");
   }
-  const provider =
-    requestedProvider === "prisma"
-      ? "prisma"
-      : requestedProvider === "mongodb"
-        ? "mongodb"
-        : await getAppDbProvider();
-  const appProvider = await getAppDbProvider();
-  if (provider === "mongodb" && appProvider === "prisma") {
-    throw badRequestError("MongoDB writes are disabled when app_db_provider is Prisma.");
-  }
+  const provider = resolveDbActionProvider(requestedProvider, await getAppDbProvider());
 
   if (provider === "prisma") {
     if (!process.env.DATABASE_URL) {

@@ -35,6 +35,16 @@ import {
   toNumber,
 } from '@/features/ai/ai-paths/lib';
 import { dbApi } from '@/features/ai/ai-paths/lib/api';
+import {
+  getDefaultProviderAction,
+  getProviderActionCategoryOptions,
+  getProviderActionOptions,
+  getProviderSpecificActionLabel,
+  getUnsupportedProviderActionMessage,
+  isProviderActionCategorySupported,
+  resolveDbActionProvider,
+  resolveProviderAction,
+} from '@/features/ai/ai-paths/lib/core/utils/provider-actions';
 import { PRODUCT_DB_PROVIDER_SETTING_KEY } from '@/features/products/constants';
 import { PROMPT_ENGINE_SETTINGS_KEY, parsePromptEngineSettings, type PromptValidationRule } from '@/features/prompt-engine/settings';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
@@ -594,56 +604,16 @@ export function DatabaseNodeConfigSection({
     settingsQuery.data?.get(PRODUCT_DB_PROVIDER_SETTING_KEY) === 'prisma'
       ? 'prisma'
       : 'mongodb';
-  const usingMongoActions = Boolean(databaseConfig.useMongoActions);
-  const resolvedProvider: 'mongodb' | 'prisma' =
-    queryConfig.provider === 'mongodb'
-      ? 'mongodb'
-      : queryConfig.provider === 'prisma'
-        ? 'prisma'
-        : appDbProvider;
-  const usingMongoProvider = resolvedProvider === 'mongodb' || usingMongoActions;
-  const usingPrismaProvider = resolvedProvider === 'prisma';
+  const resolvedProvider = resolveDbActionProvider(queryConfig.provider, appDbProvider);
   const isProductCollectionQuery = isProductCollection(queryConfig.collection ?? '');
   const providerWarning =
-    appDbProvider === 'prisma' && usingMongoProvider
-      ? 'MongoDB is not the active app database. This node is configured to run MongoDB queries/actions and may write to Mongo even when Postgres is active.'
-      : appDbProvider === 'mongodb' && usingPrismaProvider
-        ? 'PostgreSQL (Prisma) is not the active app database. This node is configured to run Prisma queries and may return empty results when MongoDB is active.'
-        : null;
+    appDbProvider !== resolvedProvider
+      ? `App database is ${appDbProvider.toUpperCase()}, but this node is pinned to ${resolvedProvider.toUpperCase()}.`
+      : null;
   const productProviderWarning =
     isProductCollectionQuery && productDbProvider !== appDbProvider
       ? `Product data provider is set to ${productDbProvider.toUpperCase()}, so Products/Categories/Tags screens will read from ${productDbProvider.toUpperCase()} even if this node queries ${appDbProvider.toUpperCase()}.`
       : null;
-  React.useEffect(() => {
-    if (appDbProvider !== 'prisma') return;
-    const operation = databaseConfig.operation ?? 'query';
-    if (operation === 'query') return;
-    let changed = false;
-    const nextQuery: DbQueryConfig = { ...queryConfig };
-    const nextDatabase: DatabaseConfig = { ...databaseConfig };
-    if (nextDatabase.useMongoActions) {
-      nextDatabase.useMongoActions = false;
-      nextDatabase.actionCategory = undefined;
-      nextDatabase.action = undefined;
-      changed = true;
-    }
-    if (nextQuery.provider === 'mongodb') {
-      nextQuery.provider = 'prisma';
-      changed = true;
-    }
-    if (!changed) return;
-    updateSelectedNodeConfig({
-      database: {
-        ...nextDatabase,
-        query: nextQuery,
-      },
-    });
-  }, [
-    appDbProvider,
-    databaseConfig,
-    queryConfig,
-    updateSelectedNodeConfig,
-  ]);
   React.useEffect((): void => {
     const currentTemplate = queryConfig.queryTemplate ?? '';
     if (!currentTemplate || currentTemplate.includes('{{')) return;
@@ -723,29 +693,25 @@ export function DatabaseNodeConfigSection({
     const provider = schemaConnection.schemaConfig?.provider ?? queryConfig.provider ?? 'auto';
     schemaSyncMutation.mutate(provider);
   };
-  const deriveActionFromCategory = (category: string, single: boolean): DatabaseAction => {
-    switch (category) {
-      case 'create':
-        return 'insertOne';
-      case 'update':
-        return 'updateOne';
-      case 'delete':
-        return 'deleteOne';
-      case 'aggregate':
-        return 'aggregate';
-      default:
-        return single ? 'findOne' : 'find';
-    }
-  };
   const derivedCategory = deriveCategoryFromOperation(databaseConfig.operation ?? 'query');
-  const actionCategory =
-                  databaseConfig.useMongoActions
-                    ? databaseConfig.actionCategory ?? derivedCategory
-                    : derivedCategory;
-  const action =
-                  databaseConfig.useMongoActions
-                    ? databaseConfig.action ?? deriveActionFromCategory(actionCategory, queryConfig.single ?? false)
-                    : deriveActionFromCategory(actionCategory, queryConfig.single ?? false);
+  const requestedActionCategory =
+    databaseConfig.useMongoActions
+      ? databaseConfig.actionCategory ?? derivedCategory
+      : derivedCategory;
+  const actionCategory = isProviderActionCategorySupported(resolvedProvider, requestedActionCategory)
+    ? requestedActionCategory
+    : 'read';
+  const action = resolveProviderAction(
+    resolvedProvider,
+    actionCategory,
+    databaseConfig.useMongoActions ? databaseConfig.action : null,
+    queryConfig.single ?? false,
+  );
+  const providerActionWarning =
+    databaseConfig.useMongoActions && databaseConfig.action
+      ? getUnsupportedProviderActionMessage(resolvedProvider, databaseConfig.action)
+      : null;
+  const providerActionLabel = getProviderSpecificActionLabel(resolvedProvider, action);
   const operation =
                   actionCategory === 'create'
                     ? 'insert'
@@ -754,6 +720,24 @@ export function DatabaseNodeConfigSection({
                       : actionCategory === 'delete'
                         ? 'delete'
                         : 'query';
+  React.useEffect((): void => {
+    if (!databaseConfig.useMongoActions) return;
+    const hasActionCategoryChanged = databaseConfig.actionCategory !== actionCategory;
+    const hasActionChanged = databaseConfig.action !== action;
+    if (!hasActionCategoryChanged && !hasActionChanged) return;
+    updateSelectedNodeConfig({
+      database: {
+        ...databaseConfig,
+        actionCategory,
+        action,
+      },
+    });
+  }, [
+    action,
+    actionCategory,
+    databaseConfig,
+    updateSelectedNodeConfig,
+  ]);
   const incomingPorts = Array.from(
     new Set(
       incomingEdges
@@ -1400,66 +1384,8 @@ export function DatabaseNodeConfigSection({
     setNewQueryPresetName('');
     setSaveQueryPresetModalOpen(true);
   };
-  const actionCategoryOptions = isPrismaProvider
-    ? ([
-      { value: 'create', label: 'Create' },
-      { value: 'read', label: 'Read' },
-      { value: 'update', label: 'Update' },
-      { value: 'delete', label: 'Delete' },
-    ] as const)
-    : ([
-      { value: 'create', label: 'Create' },
-      { value: 'read', label: 'Read' },
-      { value: 'update', label: 'Update' },
-      { value: 'delete', label: 'Delete' },
-      { value: 'aggregate', label: 'Aggregate' },
-    ] as const);
-  const actionOptionsByCategory = isPrismaProvider
-    ? ({
-      create: [
-        { value: 'insertOne', label: 'insertOne' },
-      ],
-      read: [
-        { value: 'find', label: 'find' },
-        { value: 'findOne', label: 'findOne' },
-      ],
-      update: [
-        { value: 'updateOne', label: 'updateOne' },
-        { value: 'updateMany', label: 'updateMany' },
-      ],
-      delete: [
-        { value: 'deleteOne', label: 'deleteOne' },
-      ],
-      aggregate: [],
-    } as const)
-    : ({
-      create: [
-        { value: 'insertOne', label: 'insertOne' },
-        { value: 'insertMany', label: 'insertMany' },
-      ],
-      read: [
-        { value: 'find', label: 'find' },
-        { value: 'findOne', label: 'findOne' },
-        { value: 'countDocuments', label: 'countDocuments' },
-        { value: 'distinct', label: 'distinct' },
-      ],
-      update: [
-        { value: 'updateOne', label: 'updateOne' },
-        { value: 'updateMany', label: 'updateMany' },
-        { value: 'replaceOne', label: 'replaceOne' },
-        { value: 'findOneAndUpdate', label: 'findOneAndUpdate' },
-      ],
-      delete: [
-        { value: 'deleteOne', label: 'deleteOne' },
-        { value: 'deleteMany', label: 'deleteMany' },
-        { value: 'findOneAndDelete', label: 'findOneAndDelete' },
-      ],
-      aggregate: [{ value: 'aggregate', label: 'aggregate' }],
-    } as const);
-  const actionOptions =
-                  actionOptionsByCategory[
-                    actionCategory as keyof typeof actionOptionsByCategory
-                  ] ?? actionOptionsByCategory.read;
+  const actionCategoryOptions = getProviderActionCategoryOptions(resolvedProvider);
+  const actionOptions = getProviderActionOptions(resolvedProvider, actionCategory);
   const isReadAction = actionCategory === 'read';
   const showFindControls = isReadAction && action === 'find';
   const showFindOneControls = isReadAction && action === 'findOne';
@@ -1524,43 +1450,52 @@ export function DatabaseNodeConfigSection({
     nextCategory: DatabaseActionCategory,
     nextAction: DatabaseAction
   ): void => {
+    const normalizedCategory = isProviderActionCategorySupported(resolvedProvider, nextCategory)
+      ? nextCategory
+      : 'read';
     const nextOperation =
-                    nextCategory === 'create'
+                    normalizedCategory === 'create'
                       ? 'insert'
-                      : nextCategory === 'update'
+                      : normalizedCategory === 'update'
                         ? 'update'
-                        : nextCategory === 'delete'
+                        : normalizedCategory === 'delete'
                           ? 'delete'
                           : 'query';
     const nextQueryPatch: Partial<DbQueryConfig> = {};
-    if (nextCategory === 'read') {
+    if (normalizedCategory === 'read') {
       if (nextAction === 'findOne') {
         nextQueryPatch.single = true;
       } else if (nextAction === 'find') {
         nextQueryPatch.single = false;
       }
     }
-    if (nextCategory === 'aggregate') {
+    if (normalizedCategory === 'aggregate') {
       nextQueryPatch.single = false;
       nextQueryPatch.mode = 'custom';
       if (!queryConfig.queryTemplate?.trim() || queryConfig.mode === 'preset') {
         nextQueryPatch.queryTemplate = '[]';
       }
     }
+    const normalizedAction = resolveProviderAction(
+      resolvedProvider,
+      normalizedCategory,
+      nextAction,
+      (nextQueryPatch.single ?? queryConfig.single) ?? false
+    );
     const nextUpdateStrategy =
-                    nextAction === 'updateMany'
+                    normalizedAction === 'updateMany'
                       ? 'many'
-                      : nextAction === 'updateOne' ||
-                        nextAction === 'replaceOne' ||
-                        nextAction === 'findOneAndUpdate'
+                      : normalizedAction === 'updateOne' ||
+                        normalizedAction === 'replaceOne' ||
+                        normalizedAction === 'findOneAndUpdate'
                         ? 'one'
                         : databaseConfig.updateStrategy ?? 'one';
     updateSelectedNodeConfig({
       database: {
         ...databaseConfig,
-        useMongoActions: !isPrismaProvider,
-        actionCategory: isPrismaProvider ? undefined : nextCategory,
-        action: isPrismaProvider ? undefined : nextAction,
+        useMongoActions: true,
+        actionCategory: normalizedCategory,
+        action: normalizedAction,
         operation: nextOperation,
         updateStrategy: nextUpdateStrategy,
         query: {
@@ -1571,17 +1506,31 @@ export function DatabaseNodeConfigSection({
     });
   };
   const handleActionCategoryChange = (value: DatabaseActionCategory): void => {
-    const defaultAction =
-                    actionOptionsByCategory[value]?.[0]
-                      ?.value ?? 'find';
-    applyActionConfig(value, defaultAction as DatabaseAction);
+    const category = isProviderActionCategorySupported(resolvedProvider, value)
+      ? value
+      : 'read';
+    const defaultAction = getDefaultProviderAction(
+      resolvedProvider,
+      category,
+      queryConfig.single ?? false
+    );
+    applyActionConfig(category, defaultAction);
   };
   const handleActionChange = (value: DatabaseAction): void => {
     applyActionConfig(actionCategory, value);
   };
+  const formatJsonQuery = (value: string): string => {
+    const parsed = safeParseJson(value).value;
+    if (parsed !== null && parsed !== undefined) {
+      return JSON.stringify(parsed, null, 2);
+    }
+    return value.trim();
+  };
   const handleFormatClick = (): void => {
     if (queryFormatterEnabled) {
-      const formatted = formatAndFixMongoQuery(activeQueryValue);
+      const formatted = isPrismaProvider
+        ? formatJsonQuery(activeQueryValue)
+        : formatAndFixMongoQuery(activeQueryValue);
       if (isUpdateAction) {
         updateSelectedNodeConfig({
           database: {
@@ -1665,6 +1614,25 @@ export function DatabaseNodeConfigSection({
         if (runDry) return true;
         return window.confirm(`${summary}\n\nProceed?`);
       };
+      const runProvider = resolveDbActionProvider(queryConfig.provider, appDbProvider);
+      const actionDisplayName = getProviderSpecificActionLabel(runProvider, action);
+      const unsupportedActionMessage = getUnsupportedProviderActionMessage(runProvider, action);
+      if (unsupportedActionMessage) {
+        setTestQueryResult(
+          JSON.stringify(
+            {
+              error: unsupportedActionMessage,
+              provider: runProvider,
+              action,
+            },
+            null,
+            2,
+          ),
+        );
+        toast(unsupportedActionMessage, { variant: 'error' });
+        setTestQueryLoading(false);
+        return;
+      }
       if (actionCategory === 'create') {
         const renderedPayload = renderTemplate(
           activeQueryValue,
@@ -1711,7 +1679,7 @@ export function DatabaseNodeConfigSection({
         }
         const payloadSummary = serializePreview(payloadValue);
         const confirmed = confirmWriteAction(
-          `Run ${action} on ${collectionName}?\n\nPayload:\n${payloadSummary}`
+          `Run ${actionDisplayName} on ${collectionName}?\n\nPayload:\n${payloadSummary}`
         );
         if (!confirmed) {
           toast('Run cancelled.', { variant: 'success' });
@@ -1719,6 +1687,7 @@ export function DatabaseNodeConfigSection({
           return;
         }
         const data = (await dbActionMutation.mutateAsync({
+          provider: (queryConfig.provider ?? 'auto') as 'auto' | 'mongodb' | 'prisma',
           action,
           collection: collectionName,
           document: action === 'insertOne' ? (payloadValue as Record<string, unknown>) : undefined,
@@ -1776,7 +1745,7 @@ export function DatabaseNodeConfigSection({
         }
         const filterSummary = serializePreview(filterValue);
         const confirmed = confirmWriteAction(
-          `Run ${action} on ${collectionName}?\n\nFilter:\n${filterSummary}`
+          `Run ${actionDisplayName} on ${collectionName}?\n\nFilter:\n${filterSummary}`
         );
         if (!confirmed) {
           toast('Run cancelled.', { variant: 'success' });
@@ -1784,6 +1753,7 @@ export function DatabaseNodeConfigSection({
           return;
         }
         const data = (await dbActionMutation.mutateAsync({
+          provider: (queryConfig.provider ?? 'auto') as 'auto' | 'mongodb' | 'prisma',
           action,
           collection: collectionName,
           filter: filterValue,
@@ -1871,7 +1841,7 @@ export function DatabaseNodeConfigSection({
         const filterSummary = serializePreview(filterValue);
         const updateSummary = serializePreview(updateValue);
         const confirmed = confirmWriteAction(
-          `Run ${action} on ${collectionName}?\n\nFilter:\n${filterSummary}\n\nUpdate:\n${updateSummary}`
+          `Run ${actionDisplayName} on ${collectionName}?\n\nFilter:\n${filterSummary}\n\nUpdate:\n${updateSummary}`
         );
         if (!confirmed) {
           toast('Run cancelled.', { variant: 'success' });
@@ -1879,6 +1849,7 @@ export function DatabaseNodeConfigSection({
           return;
         }
         const data = (await dbActionMutation.mutateAsync({
+          provider: (queryConfig.provider ?? 'auto') as 'auto' | 'mongodb' | 'prisma',
           action,
           collection: collectionName,
           filter: filterValue,
@@ -1945,6 +1916,7 @@ export function DatabaseNodeConfigSection({
       const sort =
                       parsedSort && typeof parsedSort === 'object' ? parsedSort : undefined;
       const data = (await dbActionMutation.mutateAsync({
+        provider: (queryConfig.provider ?? 'auto') as 'auto' | 'mongodb' | 'prisma',
         action,
         collection: queryConfig.collection ?? 'products',
         filter: actionCategory === 'aggregate' ? undefined : parsedValue,
@@ -2059,7 +2031,7 @@ export function DatabaseNodeConfigSection({
   // Shared query input controls (used in both Query and Constructor tabs)
   const queryInputControls = (
     <DatabaseQueryInputControls
-      provider={queryConfig.provider ?? 'mongodb'}
+      provider={resolvedProvider}
       actionCategory={actionCategory}
       action={action}
       actionCategoryOptions={[...actionCategoryOptions]}
@@ -2226,13 +2198,34 @@ export function DatabaseNodeConfigSection({
             value={queryConfig.provider ?? 'mongodb'}
             onValueChange={(value: string) => {
               const nextProvider = value as DbQueryConfig['provider'];
-              const prismaProvider = nextProvider === 'prisma';
+              const nextResolvedProvider = resolveDbActionProvider(nextProvider, appDbProvider);
+              const nextCategory = isProviderActionCategorySupported(
+                nextResolvedProvider,
+                requestedActionCategory
+              )
+                ? requestedActionCategory
+                : 'read';
+              const nextAction = resolveProviderAction(
+                nextResolvedProvider,
+                nextCategory,
+                action,
+                queryConfig.single ?? false
+              );
+              const nextOperation =
+                nextCategory === 'create'
+                  ? 'insert'
+                  : nextCategory === 'update'
+                    ? 'update'
+                    : nextCategory === 'delete'
+                      ? 'delete'
+                      : 'query';
               updateSelectedNodeConfig({
                 database: {
                   ...databaseConfig,
-                  useMongoActions: prismaProvider ? false : databaseConfig.useMongoActions,
-                  actionCategory: prismaProvider ? undefined : databaseConfig.actionCategory,
-                  action: prismaProvider ? undefined : databaseConfig.action,
+                  useMongoActions: true,
+                  actionCategory: nextCategory,
+                  action: nextAction,
+                  operation: nextOperation,
                   query: {
                     ...queryConfig,
                     provider: nextProvider,
@@ -2314,8 +2307,9 @@ export function DatabaseNodeConfigSection({
           )}
         </div>
       </div>
-      {(providerWarning || productProviderWarning) && (
+      {(providerWarning || productProviderWarning || providerActionWarning) && (
         <div className="mt-3 space-y-1 rounded-md border border-amber-700/50 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100">
+          {providerActionWarning && <div>{providerActionWarning}</div>}
           {providerWarning && <div>{providerWarning}</div>}
           {productProviderWarning && <div>{productProviderWarning}</div>}
         </div>
@@ -2350,13 +2344,8 @@ export function DatabaseNodeConfigSection({
             <span className="font-mono">{'{ "description_en": "{{result}}" }'}</span>
           </div>
           <div className="mt-2 text-cyan-100/90">
-                          Mongo Actions are MongoDB-only. For Prisma, use Query/Insert/Update/Delete operations.
+                          Active Prisma command: <span className="font-semibold">{providerActionLabel}</span>
           </div>
-          {actionCategory === 'aggregate' && (
-            <div className="mt-2 text-amber-200/90">
-                            Aggregate actions are MongoDB-only in this node.
-            </div>
-          )}
         </div>
       )}
       {showSort && (
@@ -2562,11 +2551,11 @@ export function DatabaseNodeConfigSection({
             }`}
             title={
               databaseConfig.useMongoActions
-                ? 'Mongo Actions enabled (filter + update document)'
+                ? `${resolvedProvider.toUpperCase()} action mode enabled`
                 : 'Legacy update mode (mappings only)'
             }
           >
-                        Mongo Actions: {databaseConfig.useMongoActions ? 'On' : 'Off'}
+                        Action Mode: {databaseConfig.useMongoActions ? 'On' : 'Off'}
           </div>
         </div>
         <div className="rounded-md border border-border bg-card/50 p-3">

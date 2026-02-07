@@ -1,7 +1,5 @@
-import { JSX } from 'react';
+import { redirect } from 'next/navigation';
 
-import { AdminAiPathsJobsPage } from '@/features/ai/ai-paths';
-
-export default function Page(): JSX.Element {
-  return <AdminAiPathsJobsPage />;
+export default function Page(): never {
+  redirect('/admin/ai-paths/queue');
 }

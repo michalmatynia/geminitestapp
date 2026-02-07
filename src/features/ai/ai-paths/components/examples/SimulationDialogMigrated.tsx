@@ -32,7 +32,7 @@
 
 import type { AiNode } from '@/features/ai/ai-paths/lib';
 
-import { useGraphState } from '../../context/GraphContext';
+import { useGraphState, useGraphActions } from '../../context/GraphContext';
 import { useSelectionState, useSelectionActions } from '../../context/SelectionContext';
 import { SimulationDialog } from '../simulation-dialog';
 
@@ -65,7 +65,8 @@ export function SimulationDialogMigrated({
   isPathLocked: isPathLockedProp,
 }: SimulationDialogMigratedProps): React.JSX.Element | null {
   // Read state from GraphContext
-  const { nodes: nodesContext, isPathLocked: isPathLockedContext, setNodes: setNodesContext } = useGraphState();
+  const { nodes: nodesContext, isPathLocked: isPathLockedContext } = useGraphState();
+  const { setNodes: setNodesContext } = useGraphActions();
 
   // Read state from SelectionContext
   const { simulationOpenNodeId } = useSelectionState();

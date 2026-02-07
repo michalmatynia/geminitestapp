@@ -59,7 +59,7 @@ export function useDescriptionGeneration({ productId, onSuccess, onError }: UseD
         }
         attempts++;
       }
-      if (!completed) throw new Error('Generation is taking longer than expected. Check the AI Jobs page.');
+      if (!completed) throw new Error('Generation is taking longer than expected. Check Job Queue.');
     },
     onError: (error: Error) => {
       onError(error.message);

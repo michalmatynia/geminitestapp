@@ -7,29 +7,28 @@ import { AgentCreatorSettingsSection } from '@/features/ai/agentcreator/componen
 import type { PlaywrightPersona } from '@/features/playwright/types';
 import { Button, Label, UnifiedSelect, SectionPanel, Checkbox, useToast } from '@/shared/ui';
 
-import { useChatbotLogic } from '../hooks/useChatbotLogic';
+import { useChatbot } from '../context/ChatbotContext';
 
+export function SettingsTab(): React.JSX.Element {
+  const {
+    model,
+    setModel,
+    modelOptions,
+    webSearchEnabled,
+    setWebSearchEnabled,
+    useGlobalContext,
+    setUseGlobalContext,
+    useLocalContext,
+    setUseLocalContext,
+    searchProvider,
+    setSearchProvider,
+    playwrightPersonaId,
+    setPlaywrightPersonaId,
+    saveChatbotSettings,
+    settingsDirty,
+    settingsSaving,
+  } = useChatbot();
 
-type SettingsTabProps = ReturnType<typeof useChatbotLogic>;
-
-export function SettingsTab({
-  model,
-  setModel,
-  modelOptions,
-  webSearchEnabled,
-  setWebSearchEnabled,
-  useGlobalContext,
-  setUseGlobalContext,
-  useLocalContext,
-  setUseLocalContext,
-  searchProvider,
-  setSearchProvider,
-  playwrightPersonaId,
-  setPlaywrightPersonaId,
-  saveChatbotSettings,
-  settingsDirty,
-  settingsSaving,
-}: SettingsTabProps): React.JSX.Element {
   const { toast } = useToast();
   const {
     agentModeEnabled,
@@ -205,3 +204,4 @@ export function SettingsTab({
     </div>
   );
 }
+

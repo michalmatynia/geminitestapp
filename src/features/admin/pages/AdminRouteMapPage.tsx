@@ -32,7 +32,6 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   '/admin/routes': 'Reference map of admin routes with descriptions.',
   '/admin/ai-paths': 'Design, test, and run AI Paths workflows.',
   '/admin/ai-paths/queue': 'Monitor queued, running, and completed path runs.',
-  '/admin/ai-paths/jobs': 'View AI job history and model execution details.',
   '/admin/ai-paths/dead-letter': 'Inspect failed AI runs and retry or requeue them.',
   '/admin/products': 'Browse and manage all products in the catalog.',
   '/admin/cms/builder': 'Visual page builder for CMS layouts.',

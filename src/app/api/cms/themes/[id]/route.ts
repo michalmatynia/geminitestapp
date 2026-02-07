@@ -7,6 +7,7 @@ import { notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { getCmsRepository } from "@/features/cms/services/cms-repository";
+import type { UpdateCmsThemeDto } from "@/shared/dtos/cms";
 
 const colorsSchema = z.object({
   primary: z.string(),
@@ -62,7 +63,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
   }
 
   const cmsRepository = await getCmsRepository();
-  const updated = await cmsRepository.updateTheme(id, parsed.data);
+  const updated = await cmsRepository.updateTheme(id, parsed.data as Partial<UpdateCmsThemeDto>);
 
   if (!updated) {
     throw notFoundError("Theme not found");

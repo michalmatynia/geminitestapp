@@ -38,4 +38,8 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "products.listings.GET", requireCsrf: false });
+ {
+   source: "products.listings.GET",
+   requireCsrf: false,
+   cacheControl: "no-store",
+ });

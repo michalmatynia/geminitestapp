@@ -38,6 +38,7 @@ interface ThemeDocument {
   typography: CmsThemeTypography;
   spacing: CmsThemeSpacing;
   customCss?: string | null;
+  isDefault: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -347,6 +348,7 @@ export const mongoCmsRepository: CmsRepository = {
       colors: doc.colors,
       typography: doc.typography,
       spacing: doc.spacing,
+      isDefault: doc.isDefault || false,
       ...(doc.customCss && { customCss: doc.customCss }),
       createdAt: doc.createdAt.toISOString(),
       updatedAt: doc.updatedAt.toISOString(),
@@ -363,6 +365,7 @@ export const mongoCmsRepository: CmsRepository = {
       colors: doc.colors,
       typography: doc.typography,
       spacing: doc.spacing,
+      isDefault: doc.isDefault || false,
       ...(doc.customCss && { customCss: doc.customCss }),
       createdAt: doc.createdAt.toISOString(),
       updatedAt: doc.updatedAt.toISOString(),
@@ -379,6 +382,7 @@ export const mongoCmsRepository: CmsRepository = {
       typography: data.typography,
       spacing: data.spacing,
       customCss: data.customCss ?? null,
+      isDefault: data.isDefault || false,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -389,6 +393,7 @@ export const mongoCmsRepository: CmsRepository = {
       colors: doc.colors,
       typography: doc.typography,
       spacing: doc.spacing,
+      isDefault: doc.isDefault || false,
       ...(doc.customCss && { customCss: doc.customCss }),
       createdAt: doc.createdAt.toISOString(),
       updatedAt: doc.updatedAt.toISOString(),
@@ -403,6 +408,7 @@ export const mongoCmsRepository: CmsRepository = {
       typography: data.typography,
       spacing: data.spacing,
       customCss: data.customCss,
+      isDefault: data.isDefault,
       updatedAt: new Date(),
     }) as Partial<ThemeDocument>;
 
@@ -418,6 +424,7 @@ export const mongoCmsRepository: CmsRepository = {
       colors: result.colors,
       typography: result.typography,
       spacing: result.spacing,
+      isDefault: result.isDefault || false,
       ...(result.customCss && { customCss: result.customCss }),
       createdAt: result.createdAt.toISOString(),
       updatedAt: result.updatedAt.toISOString(),
@@ -434,6 +441,7 @@ export const mongoCmsRepository: CmsRepository = {
       colors: doc.colors,
       typography: doc.typography,
       spacing: doc.spacing,
+      isDefault: doc.isDefault || false,
       ...(doc.customCss && { customCss: doc.customCss }),
       createdAt: doc.createdAt.toISOString(),
       updatedAt: doc.updatedAt.toISOString(),

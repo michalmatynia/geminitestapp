@@ -433,10 +433,21 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     const baseIntegration = integrations.find((i) =>
       ["baselinker", "base-com"].includes(i.slug)
     );
+    const baseIntegrationId = baseIntegration?.id ?? connection.integrationId ?? null;
+    if (!baseIntegration && baseIntegrationId) {
+      await ErrorSystem.logWarning(
+        "[export-to-base] Base integration slug not found while resolving listing badge integration; falling back to connection.integrationId.",
+        {
+          productId,
+          connectionId: data.connectionId,
+          fallbackIntegrationId: baseIntegrationId,
+        }
+      );
+    }
     let listingId: string | null = null;
     let listingExternalId: string | null = data.externalListingId ?? null;
     let listingInventoryId: string | null = null;
-    if (baseIntegration) {
+    if (baseIntegrationId) {
       if (imagesOnly) {
         let existingListing: {
           id: string;
@@ -492,7 +503,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
         if (!resolvedByConnection) {
           const newListing = await primaryListingRepo.createListing({
             productId,
-            integrationId: baseIntegration.id,
+            integrationId: baseIntegrationId,
             connectionId: data.connectionId,
             externalListingId: null,
             inventoryId: resolvedInventoryId

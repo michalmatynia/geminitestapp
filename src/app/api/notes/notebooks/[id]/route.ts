@@ -7,6 +7,7 @@ import { notebookUpdateSchema } from "@/features/notesapp";
 import { removeUndefined } from "@/shared/utils";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
+import type { UpdateNotebookDto } from "@/shared/dtos/notesapp";
 
 /**
  * PATCH /api/notes/notebooks/[id]
@@ -21,7 +22,7 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext, params: 
   if (!parsed.ok) {
     return parsed.response;
   }
-  const notebook = await noteService.updateNotebook(id, removeUndefined(parsed.data));
+  const notebook = await noteService.updateNotebook(id, removeUndefined(parsed.data) as Partial<UpdateNotebookDto>);
   return NextResponse.json(notebook);
 }
 

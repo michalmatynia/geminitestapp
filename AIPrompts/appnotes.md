@@ -1,6 +1,9 @@
 
 W drafterze potrzebuje producenta, ikonek wiecej, modal as wide as other Product crete modals, Icon Matrix so that Icons are not spread everywhere, Check If I can Export Product with Producer, when the description is present a little text icon
 
+
+Run the project on newest node
+
 Some things are still connected to MongoDB, that's an issue, they have to respect the Provider
 
 Z Database Query I need an Onsuccess Trigger that will go to my another node and sent notification, and on failure,

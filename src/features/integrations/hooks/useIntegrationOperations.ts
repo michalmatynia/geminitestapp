@@ -34,7 +34,10 @@ export function useIntegrationOperations(): {
   const listingsBadgeQuery = useQuery({
     queryKey: ['integrations', 'product-listings-badges'],
     queryFn: async (): Promise<Record<string, string>> => {
-      const res = await fetch('/api/integrations/product-listings');
+      const res = await fetch('/api/integrations/product-listings', {
+        cache: 'no-store',
+        credentials: 'include',
+      });
       if (!res.ok) return {};
       return (await res.json()) as Record<string, string>;
     },

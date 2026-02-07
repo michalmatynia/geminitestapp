@@ -17,7 +17,7 @@ import type {
   CreateNoteThemeDto,
   UpdateNoteThemeDto,
   NoteEditorType
-} from '../dtos/notesapp';
+} from '../dtos';
 
 export type {
   NoteDto,

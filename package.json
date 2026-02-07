@@ -4,10 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node server.cjs",
+    "predev": "node scripts/runtime/check-node-version.cjs",
+    "dev": "node --max-old-space-size=8192 server.cjs",
+    "dev:heap": "node --max-old-space-size=8192 --heapsnapshot-near-heap-limit=2 --trace-gc server.cjs",
     "postinstall": "prisma generate",
     "build": "prisma generate && next build",
-    "start": "NODE_ENV=production node server.cjs",
+    "start": "NODE_ENV=production node --max-old-space-size=4096 server.cjs",
     "lint": "eslint src __tests__",
     "seed": "node prisma/seed.js",
     "seed:admin": "tsx scripts/db/seed-admin.ts",
@@ -20,6 +22,10 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "test:e2e": "playwright test"
+  },
+  "engines": {
+    "node": ">=20.9 <24",
+    "npm": ">=10"
   },
   "dependencies": {
     "@auth/core": "0.41.1",

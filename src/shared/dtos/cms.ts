@@ -28,7 +28,7 @@ export interface CmsThemeDto extends NamedDto {
   colors: CmsThemeColors;
   typography: CmsThemeTypography;
   spacing: CmsThemeSpacing;
-  customCss?: string;
+  customCss?: string | undefined;
   isDefault: boolean;
 }
 
@@ -76,7 +76,7 @@ export interface CreateCmsThemeDto {
   colors: CmsThemeColors;
   typography: CmsThemeTypography;
   spacing: CmsThemeSpacing;
-  customCss?: string;
+  customCss?: string | undefined;
   isDefault?: boolean;
 }
 

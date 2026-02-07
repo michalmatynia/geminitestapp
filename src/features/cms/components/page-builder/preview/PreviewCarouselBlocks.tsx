@@ -1,7 +1,7 @@
 'use client';
 
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import React, { useState, useCallback, useEffect, useContext } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 
 
 import { normalizeSlideshowAnimationType } from './preview-utils';
@@ -20,19 +20,12 @@ let _PreviewBlockItem: React.ComponentType<PreviewBlockItemProps> | null = null;
 interface PreviewBlockItemProps {
   block: BlockInstance;
   isSelected: boolean;
-  isInspecting?: boolean | undefined;
-  inspectorSettings: InspectorSettings;
-  hoveredNodeId?: string | null | undefined;
-  onSelect: (nodeId: string) => void;
   sectionId: string;
   sectionType?: string | undefined;
   sectionZone?: PageZone | undefined;
   columnId?: string | undefined;
   parentBlockId?: string | undefined;
   contained?: boolean | undefined;
-  selectedNodeId?: string | null | undefined;
-  onHoverNode?: ((nodeId: string | null) => void) | undefined;
-  onOpenMedia?: ((target: MediaReplaceTarget) => void) | undefined;
   mediaStyles?: React.CSSProperties | null | undefined;
   stretch?: boolean | undefined;
 }
@@ -41,6 +34,8 @@ export function registerCarouselPreviewBlockItem(component: React.ComponentType<
   _PreviewBlockItem = component;
 }
 
+
+
 function PreviewBlockItemProxy(props: PreviewBlockItemProps): React.ReactNode {
   if (!_PreviewBlockItem) {
     throw new Error('PreviewBlockItem has not been registered. Call registerCarouselPreviewBlockItem first.');
@@ -48,23 +43,7 @@ function PreviewBlockItemProxy(props: PreviewBlockItemProps): React.ReactNode {
   return <_PreviewBlockItem {...props} />;
 }
 
-// Re-export the context hook usage via a context reference
-type PreviewEditorPreferences = {
-  pauseSlideshowOnHoverInEditor: boolean;
-};
 
-let _PreviewEditorPreferencesContext: React.Context<PreviewEditorPreferences> | null = null;
-
-export function registerPreviewEditorPreferencesContext(ctx: React.Context<PreviewEditorPreferences>): void {
-  _PreviewEditorPreferencesContext = ctx;
-}
-
-function usePreviewEditorPreferences(): PreviewEditorPreferences {
-  if (!_PreviewEditorPreferencesContext) {
-    return { pauseSlideshowOnHoverInEditor: false };
-  }
-  return useContext(_PreviewEditorPreferencesContext);
-}
 
 // ---------------------------------------------------------------------------
 // Carousel preview (inside columns)
@@ -80,20 +59,22 @@ export const parseCarouselBoolSetting = (value: unknown, defaultValue: boolean =
 
 export function PreviewCarouselBlock({
   block,
-  selectedNodeId,
-  isInspecting = false,
-  inspectorSettings,
-  hoveredNodeId,
-  onSelect,
   sectionId,
   sectionType,
   sectionZone,
   columnId,
   stretch = false,
-  onHoverNode,
-  onOpenMedia,
   mediaStyles,
 }: PreviewSectionBlockProps): React.ReactNode {
+  const {
+    selectedNodeId,
+    isInspecting = false,
+    inspectorSettings,
+    hoveredNodeId,
+    onSelect,
+    onHoverNode,
+    onOpenMedia,
+  } = usePreviewEditor();
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const frames = (block.blocks ?? []).filter((b: BlockInstance) => b.type === 'CarouselFrame');
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -213,19 +194,11 @@ export function PreviewCarouselBlock({
                   key={child.id}
                   block={child}
                   isSelected={selectedNodeId === child.id}
-                  isInspecting={isInspecting}
-                  inspectorSettings={inspectorSettings}
-                  hoveredNodeId={hoveredNodeId}
-                  onHoverNode={onHoverNode}
-                  onSelect={onSelect}
-                  contained
-                  selectedNodeId={selectedNodeId}
                   sectionId={sectionId}
                   sectionType={sectionType}
                   sectionZone={sectionZone}
                   columnId={columnId}
                   parentBlockId={frame.id}
-                  onOpenMedia={onOpenMedia}
                   mediaStyles={mediaStyles}
                 />
               ))}
@@ -284,19 +257,23 @@ export function PreviewCarouselBlock({
 
 export function PreviewSlideshowBlock({
   block,
-  selectedNodeId,
-  isInspecting = false,
-  inspectorSettings,
-  hoveredNodeId,
-  onSelect,
   sectionId,
   sectionType,
   sectionZone,
   columnId,
   stretch = false,
-  onHoverNode,
-  onOpenMedia,
+  mediaStyles,
 }: PreviewSectionBlockProps): React.ReactNode {
+  const {
+    selectedNodeId,
+    isInspecting = false,
+    inspectorSettings,
+    hoveredNodeId,
+    onSelect,
+    onHoverNode,
+    onOpenMedia,
+    pauseSlideshowOnHoverInEditor,
+  } = usePreviewEditor();
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const transition = (block.settings['transition'] as string) || 'fade';
   const transitionDuration = (block.settings['transitionDuration'] as number) || 700;
@@ -470,19 +447,11 @@ export function PreviewSlideshowBlock({
                             <PreviewBlockItemProxy
                               block={child}
                               isSelected={selectedNodeId === child.id}
-                              isInspecting={isInspecting}
-                              inspectorSettings={inspectorSettings}
-                              hoveredNodeId={hoveredNodeId}
-                              onHoverNode={onHoverNode}
-                              onSelect={onSelect}
-                              contained
-                              selectedNodeId={selectedNodeId}
                               sectionId={sectionId}
                               sectionType={sectionType}
                               sectionZone={sectionZone}
                               columnId={columnId}
                               parentBlockId={frame.id}
-                              onOpenMedia={onOpenMedia}
                               mediaStyles={null}
                               stretch={shouldFillBlock}
                             />

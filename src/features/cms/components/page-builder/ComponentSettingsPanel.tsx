@@ -16,8 +16,8 @@ import { Button, PanelHeader, Tabs, TabsList, TabsTrigger, TabsContent, Input, C
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 import { AnimationConfigPanel } from './AnimationConfigPanel';
-import { CssAnimationConfigPanel } from './CssAnimationConfigPanel';
 import { InspectorAiProvider } from './context/InspectorAiContext';
+import { CssAnimationConfigPanel } from './CssAnimationConfigPanel';
 import { GRID_TEMPLATE_SETTINGS_KEY, normalizeGridTemplates, type GridTemplateRecord } from './grid-templates';
 import { getSectionDefinition, getBlockDefinition, IMAGE_ELEMENT_BACKGROUND_MODE_SETTINGS, getImageBackgroundTargetOptions, type ImageBackgroundTarget } from './section-registry';
 import { SECTION_TEMPLATE_SETTINGS_KEY, normalizeSectionTemplates, type SectionTemplateRecord } from './section-template-store';

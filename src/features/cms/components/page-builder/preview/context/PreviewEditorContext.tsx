@@ -1,8 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useMemo } from 'react';
 import type { InspectorSettings } from '../../../types/page-builder';
 import type { MediaReplaceTarget } from './preview-utils';
+import React, { createContext, useContext } from 'react';
 
 export interface PreviewEditorContextValue {
   selectedNodeId: string | null;

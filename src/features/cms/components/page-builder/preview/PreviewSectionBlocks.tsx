@@ -2,7 +2,7 @@
 
 import { Image as ImageIcon } from 'lucide-react';
 import NextImage from 'next/image';
-import React from 'react';
+
 
 
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
@@ -19,18 +19,11 @@ import type { BlockInstance, InspectorSettings, PageZone } from '../../../types/
 
 export interface PreviewSectionBlockProps {
   block: BlockInstance;
-  selectedNodeId?: string | null | undefined;
-  isInspecting?: boolean | undefined;
-  inspectorSettings: InspectorSettings;
-  hoveredNodeId?: string | null | undefined;
-  onSelect: (nodeId: string) => void;
   sectionId: string;
   sectionType?: string | undefined;
   sectionZone?: PageZone | undefined;
   columnId?: string | undefined;
   stretch?: boolean | undefined;
-  onHoverNode?: ((nodeId: string | null) => void) | undefined;
-  onOpenMedia?: ((target: MediaReplaceTarget) => void) | undefined;
   mediaStyles?: React.CSSProperties | null | undefined;
 }
 
@@ -43,25 +36,7 @@ export interface PreviewSectionBlockProps {
 // To avoid circular imports, we use a late-binding pattern.
 let _PreviewBlockItem: React.ComponentType<PreviewBlockItemProps> | null = null;
 
-interface PreviewBlockItemProps {
-  block: BlockInstance;
-  isSelected: boolean;
-  isInspecting?: boolean | undefined;
-  inspectorSettings: InspectorSettings;
-  hoveredNodeId?: string | null | undefined;
-  onSelect: (nodeId: string) => void;
-  sectionId: string;
-  sectionType?: string | undefined;
-  sectionZone?: PageZone | undefined;
-  columnId?: string | undefined;
-  parentBlockId?: string | undefined;
-  contained?: boolean | undefined;
-  selectedNodeId?: string | null | undefined;
-  onHoverNode?: ((nodeId: string | null) => void) | undefined;
-  onOpenMedia?: ((target: MediaReplaceTarget) => void) | undefined;
-  mediaStyles?: React.CSSProperties | null | undefined;
-  stretch?: boolean | undefined;
-}
+
 
 export function registerPreviewBlockItem(component: React.ComponentType<PreviewBlockItemProps>): void {
   _PreviewBlockItem = component;
@@ -80,20 +55,22 @@ function PreviewBlockItemProxy(props: PreviewBlockItemProps): React.ReactNode {
 
 export function PreviewImageWithTextBlock({
   block,
-  selectedNodeId,
-  isInspecting = false,
-  inspectorSettings,
-  hoveredNodeId,
-  onSelect,
   sectionId,
   sectionType,
   sectionZone,
   columnId,
   stretch = false,
-  onHoverNode,
-  onOpenMedia,
   mediaStyles,
 }: PreviewSectionBlockProps): React.ReactNode {
+  const {
+    selectedNodeId,
+    isInspecting = false,
+    inspectorSettings,
+    hoveredNodeId,
+    onSelect,
+    onHoverNode,
+    onOpenMedia,
+  } = usePreviewEditor();
   const placement = block.settings['desktopImagePlacement'] as string | undefined;
   const imageFirst = placement !== 'image-second';
   const children = block.blocks ?? [];
@@ -161,20 +138,22 @@ export function PreviewImageWithTextBlock({
 
 export function PreviewHeroBlock({
   block,
-  selectedNodeId,
-  isInspecting = false,
-  inspectorSettings,
-  hoveredNodeId,
-  onSelect,
   sectionId,
   sectionType,
   sectionZone,
   columnId,
   stretch = false,
-  onHoverNode,
-  onOpenMedia,
   mediaStyles,
 }: PreviewSectionBlockProps): React.ReactNode {
+  const {
+    selectedNodeId,
+    isInspecting = false,
+    inspectorSettings,
+    hoveredNodeId,
+    onSelect,
+    onHoverNode,
+    onOpenMedia,
+  } = usePreviewEditor();
   const children = block.blocks ?? [];
   const blockImage = block.settings['image'] as string | undefined;
 

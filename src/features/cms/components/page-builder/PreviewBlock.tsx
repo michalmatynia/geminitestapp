@@ -91,8 +91,9 @@ export function PreviewEditorPreferencesProvider({
 const usePreviewEditorPreferences = (): PreviewEditorPreferences =>
   useContext(PreviewEditorPreferencesContext);
 
-// Register the PreviewEditorPreferencesContext with the carousel module
 registerPreviewEditorPreferencesContext(PreviewEditorPreferencesContext);
+
+
 
 // ---------------------------------------------------------------------------
 // Top-level section preview

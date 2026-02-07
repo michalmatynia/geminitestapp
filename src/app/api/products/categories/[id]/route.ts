@@ -6,7 +6,6 @@ import prisma from "@/shared/lib/db/prisma";
 import { parseJsonBody } from "@/features/products/server";
 import { getProductDataProvider } from "@/features/products/server";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import {
   badRequestError,
   conflictError,
@@ -39,7 +38,7 @@ const productCategoryUpdateSchema = z.object({
  * Fetches a single product category by ID.
  */
 async function GET_handler(
-  req: NextRequest,
+  _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {

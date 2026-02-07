@@ -6,7 +6,6 @@ import { getCatalogRepository } from "@/features/products/server";
 import { getProductDataProvider } from "@/features/products/server";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import prisma from "@/shared/lib/db/prisma";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/shared/lib/api/parse-json";
 import { badRequestError } from "@/shared/errors/app-error";
 import { logSystemEvent } from "@/features/observability/server";
@@ -145,7 +144,7 @@ async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Re
  * POST /api/catalogs
  * Creates a catalog.
  */
-async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, catalogSchema, {
     logPrefix: "catalogs.POST",
   });
@@ -201,5 +200,5 @@ export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
  { source: "catalogs.GET" });
 export const POST = apiHandler(
-  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
+  async (req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, _ctx),
  { source: "catalogs.POST" });

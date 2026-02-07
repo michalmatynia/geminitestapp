@@ -43,7 +43,7 @@ export type DbQueryPayload = {
   sort?: unknown;
   limit?: number;
   single?: boolean;
-  idType?: string;
+  idType?: string | undefined;
 };
 
 export type DbUpdatePayload = {

@@ -10,7 +10,6 @@ import { getInternationalizationProvider } from "@/features/internationalization
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { parseJsonBody } from "@/features/products/server";
 import { conflictError, internalError } from "@/shared/errors/app-error";
-import { logSystemEvent } from "@/features/observability/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import type { CurrencyRecord } from "@/shared/types/internationalization";
@@ -61,7 +60,7 @@ const seedMongoCurrencies = async (db: Awaited<ReturnType<typeof getMongoDb>>): 
  * GET /api/currencies
  * Fetches all currencies (and ensures defaults exist).
  */
-async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const provider = await getInternationalizationProvider();
   if (provider === "mongodb") {
     if (!process.env.MONGODB_URI) {

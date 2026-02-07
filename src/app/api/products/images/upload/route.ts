@@ -3,7 +3,6 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from 'next/server';
 import { withFileUploadSecurity } from '@/features/products/security';
 import { imageOptimizer } from '@/features/products/performance';
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 
 interface UploadedFile {
   file: File;

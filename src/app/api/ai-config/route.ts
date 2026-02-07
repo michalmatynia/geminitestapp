@@ -37,7 +37,7 @@ async function POST_handler(
 }
 
 async function GET_handler(
-  req: NextRequest,
+  _req: NextRequest,
   _ctx: ApiHandlerContext,
 ): Promise<Response> {
   if (!process.env.MONGODB_URI) {
@@ -54,8 +54,8 @@ async function GET_handler(
 }
 
 export const GET = apiHandler(
-  async (_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> =>
-    GET_handler(_req, ctx),
+  async (_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> =>
+    GET_handler(_req, _ctx),
   { source: "ai-config.GET" },
 );
 export const POST = apiHandler(

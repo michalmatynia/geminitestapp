@@ -6,7 +6,6 @@ import { parseJsonBody } from "@/features/products/server";
 import { themeUpdateSchema } from "@/features/notesapp";
 import { removeUndefined } from "@/shared/utils";
 import type { ThemeUpdateInput } from "@/shared/types/notes";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";

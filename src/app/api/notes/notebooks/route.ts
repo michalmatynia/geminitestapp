@@ -6,7 +6,6 @@ import { parseJsonBody } from "@/features/products/server";
 import { notebookCreateSchema } from "@/features/notesapp";
 import { removeUndefined } from "@/shared/utils";
 import type { NotebookCreateInput } from "@/shared/types/notes";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 

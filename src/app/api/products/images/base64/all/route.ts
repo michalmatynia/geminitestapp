@@ -3,11 +3,10 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { enqueueProductAiJob, processSingleJob, startProductAiJobQueue } from "@/features/jobs/server";
 import type { ProductAiJobType } from "@/shared/types/jobs";
 
-async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const job = await enqueueProductAiJob(
     "system",
     "base64_all" as ProductAiJobType,

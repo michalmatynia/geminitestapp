@@ -1,0 +1,2 @@
+src/app/api/ai-config/route.ts(40,3): error TS6133: 'req' is declared but its value is never read.
+src/app/api/catalogs/route.ts(147,47): error TS6133: 'ctx' is declared but its value is never read.

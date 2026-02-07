@@ -5,7 +5,6 @@ import { noteService } from "@/features/notesapp/server";
 import { parseJsonBody } from "@/features/products/server";
 import { notebookUpdateSchema } from "@/features/notesapp";
 import { removeUndefined } from "@/shared/utils";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 

@@ -18,7 +18,7 @@ import type { Prisma } from '@prisma/client';
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === 'true';
 
-async function GET_handler(req: NextRequest,
+async function GET_handler(_req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
 ): Promise<Response> {
   const requestStart = Date.now();

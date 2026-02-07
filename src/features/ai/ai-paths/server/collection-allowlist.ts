@@ -1,32 +1,32 @@
-import "server-only";
+import 'server-only';
 
 const DEFAULT_COLLECTION_ALLOWLIST = [
-  "products",
-  "product_drafts",
-  "product_categories",
-  "product_categories_assignments",
-  "product_tags",
-  "catalogs",
-  "image_files",
-  "product_listings",
-  "product_ai_jobs",
-  "integrations",
-  "integration_connections",
-  "settings",
-  "users",
-  "user_preferences",
-  "languages",
-  "system_logs",
-  "notes",
-  "tags",
-  "categories",
-  "notebooks",
-  "noteFiles",
-  "themes",
-  "chatbot_sessions",
-  "auth_security_attempts",
-  "auth_security_profiles",
-  "auth_login_challenges",
+  'products',
+  'product_drafts',
+  'product_categories',
+  'product_category_assignment',
+  'product_tags',
+  'catalogs',
+  'image_files',
+  'product_listings',
+  'product_ai_jobs',
+  'integrations',
+  'integration_connections',
+  'settings',
+  'users',
+  'user_preferences',
+  'languages',
+  'system_logs',
+  'notes',
+  'tags',
+  'categories',
+  'notebooks',
+  'noteFiles',
+  'themes',
+  'chatbot_sessions',
+  'auth_security_attempts',
+  'auth_security_profiles',
+  'auth_login_challenges',
 ];
 
 const parseAllowlist = (raw: string): string[] =>
@@ -40,22 +40,22 @@ const normalizeCollectionName = (value: string): string =>
 
 const toSnakeCase = (value: string): string =>
   value
-    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
-    .replace(/[\s-]+/g, "_")
-    .replace(/__+/g, "_")
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+    .replace(/[\s-]+/g, '_')
+    .replace(/__+/g, '_')
     .toLowerCase();
 
 const pluralize = (value: string): string => {
   if (!value) return value;
-  if (value.endsWith("s")) return value;
-  if (value.endsWith("y") && !/[aeiou]y$/.test(value)) {
+  if (value.endsWith('s')) return value;
+  if (value.endsWith('y') && !/[aeiou]y$/.test(value)) {
     return `${value.slice(0, -1)}ies`;
   }
   if (
-    value.endsWith("x") ||
-    value.endsWith("ch") ||
-    value.endsWith("sh") ||
-    value.endsWith("z")
+    value.endsWith('x') ||
+    value.endsWith('ch') ||
+    value.endsWith('sh') ||
+    value.endsWith('z')
   ) {
     return `${value}es`;
   }
@@ -64,19 +64,19 @@ const pluralize = (value: string): string => {
 
 const singularize = (value: string): string => {
   if (!value) return value;
-  if (value.endsWith("ies") && value.length > 3) {
+  if (value.endsWith('ies') && value.length > 3) {
     return `${value.slice(0, -3)}y`;
   }
   if (
-    value.endsWith("ses") ||
-    value.endsWith("xes") ||
-    value.endsWith("ches") ||
-    value.endsWith("shes") ||
-    value.endsWith("zes")
+    value.endsWith('ses') ||
+    value.endsWith('xes') ||
+    value.endsWith('ches') ||
+    value.endsWith('shes') ||
+    value.endsWith('zes')
   ) {
     return value.slice(0, -2);
   }
-  if (value.endsWith("s") && value.length > 1) {
+  if (value.endsWith('s') && value.length > 1) {
     return value.slice(0, -1);
   }
   return value;
@@ -114,8 +114,8 @@ const buildAllowlist = (): AllowlistConfig => {
 
   const tokens = parseAllowlist(raw);
   const lowered = tokens.map((token: string) => normalizeCollectionName(token));
-  const allowAll = lowered.includes("*") || lowered.includes("all");
-  const includeDefault = lowered.includes("default");
+  const allowAll = lowered.includes('*') || lowered.includes('all');
+  const includeDefault = lowered.includes('default');
 
   const allowed = new Set<string>();
   if (includeDefault) {
@@ -126,7 +126,7 @@ const buildAllowlist = (): AllowlistConfig => {
 
   tokens.forEach((token: string) => {
     const normalized = normalizeCollectionName(token);
-    if (normalized === "*" || normalized === "all" || normalized === "default")
+    if (normalized === '*' || normalized === 'all' || normalized === 'default')
       return;
     allowed.add(normalized);
   });
@@ -153,6 +153,6 @@ export const isCollectionAllowed = (collection: string): boolean => {
 };
 
 export const getCollectionAllowlist = (): string[] => {
-  if (allowlistConfig.allowAll) return ["*"];
+  if (allowlistConfig.allowAll) return ['*'];
   return Array.from(allowlistConfig.allowed).sort((a, b) => a.localeCompare(b));
 };

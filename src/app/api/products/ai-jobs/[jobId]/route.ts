@@ -3,7 +3,6 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getProductAiJob, cancelProductAiJob, deleteProductAiJob } from "@/features/jobs/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
@@ -13,7 +12,7 @@ const actionSchema = z.object({
   action: z.string().trim().min(1),
 });
 
-async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { jobId: string }): Promise<Response> {
+async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { jobId: string }): Promise<Response> {
   const { jobId } = params;
   if (!jobId) {
     throw badRequestError("Job id is required");
@@ -44,7 +43,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
   throw badRequestError("Invalid action");
 }
 
-async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { jobId: string }): Promise<Response> {
+async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { jobId: string }): Promise<Response> {
   const { jobId } = params;
   if (!jobId) {
     throw badRequestError("Job id is required");

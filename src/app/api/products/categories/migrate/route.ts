@@ -3,7 +3,6 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -12,7 +11,7 @@ import type { ApiHandlerContext } from "@/shared/types/api";
  * POST /api/products/categories/migrate
  * Copies product categories from Postgres (Prisma) to MongoDB.
  */
-async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   if (!process.env.DATABASE_URL) {
     throw badRequestError("Postgres is not configured.");
   }

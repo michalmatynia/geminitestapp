@@ -3,7 +3,6 @@ export const runtime = "nodejs";
 import path from "path";
 import { NextRequest, NextResponse } from "next/server";
 import { Client } from "pg";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, internalError } from "@/shared/errors/app-error";
 import { getMongoClient } from "@/shared/lib/db/mongo-client";
 import { ErrorSystem } from "@/features/observability/server";
@@ -26,7 +25,6 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  let stage = "parse";
   let backupName: string | undefined;
   let previewMode: "backup" | "current" = "backup";
   let previewDbName: string | null = null;
@@ -51,7 +49,6 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     throw badRequestError("Backup name is required");
   }
 
-  stage = "validate";
     if (previewType === "mongodb") {
       if (previewMode === "backup") {
         assertValidMongoBackupName(backupName ?? "");
@@ -80,7 +77,6 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       const offset = (safePage - 1) * safePageSize;
 
       if (previewMode === "backup") {
-        stage = "mongorestore";
         const backupPath = path.join(mongoBackupsDir, backupName ?? "");
         await mongoExecFileAsync(getMongoRestoreCommand(), [
           "--uri",
@@ -102,11 +98,9 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       let tableStats: { name: string; rowEstimate: number }[] = [];
 
       try {
-        stage = "mongo_list_collections";
         const collectionInfos = await db.listCollections().toArray();
         collections = collectionInfos.map((info: { name: string }) => info.name);
 
-        stage = "mongo_fetch_rows";
         const rowsResults = await Promise.all(
           collections.map(async (collectionName: string) => {
             const collection = db.collection(collectionName);
@@ -130,7 +124,6 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         );
       } finally {
         if (previewMode === "backup") {
-          stage = "mongo_cleanup";
           await db.dropDatabase();
         }
       }
@@ -148,7 +141,6 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
     let output = "";
     if (previewMode === "backup") {
-      stage = "pg_restore_list";
       const backupPath = path.join(pgBackupsDir, backupName ?? "");
       let stdout = "";
       let stderr = "";
@@ -243,7 +235,6 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     let databaseSize = "";
 
     try {
-      stage = "connect";
       const previewUrl = new URL(process.env.DATABASE_URL ?? "");
       if (previewMode === "backup") {
         await adminClient?.connect();
@@ -253,7 +244,6 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       previewUrl.searchParams.delete("schema");
 
       if (previewMode === "backup") {
-        stage = "pg_restore_data";
         const backupPath = path.join(pgBackupsDir, backupName ?? "");
         await pgExecFileAsync(getPgRestoreCommand(), [
           "--no-owner",
@@ -265,7 +255,6 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         ]);
       }
 
-      stage = "query";
       previewClient = new Client({ connectionString: previewUrl.toString() });
       await previewClient.connect();
 
@@ -302,7 +291,6 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
       // ── Detailed schema queries ──
 
-      stage = "detail_columns";
       const columnsResult = await previewClient.query<{
         table_name: string;
         column_name: string;
@@ -317,7 +305,6 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
          ORDER BY table_name, ordinal_position`
       );
 
-      stage = "detail_pks";
       const pkResult = await previewClient.query<{
         table_name: string;
         column_name: string;
@@ -334,7 +321,6 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         pkResult.rows.map((r: { table_name: string; column_name: string }) => `${r.table_name}.${r.column_name}`)
       );
 
-      stage = "detail_indexes";
       const indexResult = await previewClient.query<{
         tablename: string;
         indexname: string;
@@ -357,7 +343,6 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         uniqueIndexResult.rows.map((r: { indexname: string; indisunique: boolean }) => [r.indexname, r.indisunique])
       );
 
-      stage = "detail_fks";
       const fkResult = await previewClient.query<{
         constraint_name: string;
         source_table: string;
@@ -390,7 +375,6 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
          ORDER BY tc.table_name, tc.constraint_name`
       );
 
-      stage = "detail_enums";
       const enumResult = await previewClient.query<{
         enum_name: string;
         enum_value: string;
@@ -413,7 +397,6 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       }
       enumTypes = Array.from(enumMap.entries()).map(([name, values]: [string, string[]]) => ({ name, values }));
 
-      stage = "detail_sizes";
       const sizeResult = await previewClient.query<{
         tablename: string;
         size_bytes: string;
@@ -513,7 +496,6 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
       // ── Fetch paginated rows ──
 
-      stage = "query_rows";
       for (const table of tables) {
         const countResult = await previewClient.query<{ total: string }>(
           `SELECT COUNT(*)::bigint AS total FROM "${table}"`

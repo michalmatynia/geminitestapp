@@ -89,6 +89,7 @@ export interface UseAiPathsSettingsStateReturn {
     silent?: boolean | undefined;
     includeNodeConfig?: boolean | undefined;
     force?: boolean | undefined;
+    pathNameOverride?: string | undefined;
     nodesOverride?: AiNode[] | undefined;
   }) => Promise<void>;
   handleReset: () => void;

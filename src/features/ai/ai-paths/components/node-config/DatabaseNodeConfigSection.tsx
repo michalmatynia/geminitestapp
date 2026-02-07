@@ -476,7 +476,7 @@ export function DatabaseNodeConfigSection({
   if (selectedNode.type !== 'database') return null;
 
   const defaultQuery: DbQueryConfig = {
-    provider: 'mongodb',
+    provider: 'auto',
     collection: 'products',
     mode: 'preset',
     preset: 'by_id',
@@ -553,6 +553,8 @@ export function DatabaseNodeConfigSection({
       },
     });
   };
+  const lastTemplateWithPlaceholdersRef = React.useRef<string>('');
+  const lastTemplateNodeIdRef = React.useRef<string>('');
   const handleSelectAllValidationRules = (): void => {
     if (validationPaletteRules.length === 0) return;
     const allIds = validationPaletteRules.map((rule: ValidationPaletteRule) => rule.id);
@@ -570,6 +572,18 @@ export function DatabaseNodeConfigSection({
     return 'read';
   };
   const queryConfig = databaseConfig.query ?? defaultQuery;
+  React.useEffect((): void => {
+    if (lastTemplateNodeIdRef.current !== selectedNode.id) {
+      lastTemplateNodeIdRef.current = selectedNode.id;
+      lastTemplateWithPlaceholdersRef.current = '';
+    }
+  }, [selectedNode.id]);
+  React.useEffect((): void => {
+    const template = queryConfig.queryTemplate ?? '';
+    if (template.includes('{{')) {
+      lastTemplateWithPlaceholdersRef.current = template;
+    }
+  }, [queryConfig.queryTemplate]);
   const schemaSnapshot = databaseConfig.schemaSnapshot ?? null;
   const effectiveSchema: SchemaData | null = fetchedDbSchema ?? schemaSnapshot;
   const schemaMatrix = effectiveSchema ?? null;
@@ -581,8 +595,14 @@ export function DatabaseNodeConfigSection({
       ? 'prisma'
       : 'mongodb';
   const usingMongoActions = Boolean(databaseConfig.useMongoActions);
-  const usingMongoProvider = queryConfig.provider === 'mongodb' || usingMongoActions;
-  const usingPrismaProvider = queryConfig.provider === 'prisma';
+  const resolvedProvider: 'mongodb' | 'prisma' =
+    queryConfig.provider === 'mongodb'
+      ? 'mongodb'
+      : queryConfig.provider === 'prisma'
+        ? 'prisma'
+        : appDbProvider;
+  const usingMongoProvider = resolvedProvider === 'mongodb' || usingMongoActions;
+  const usingPrismaProvider = resolvedProvider === 'prisma';
   const isProductCollectionQuery = isProductCollection(queryConfig.collection ?? '');
   const providerWarning =
     appDbProvider === 'prisma' && usingMongoProvider
@@ -594,6 +614,75 @@ export function DatabaseNodeConfigSection({
     isProductCollectionQuery && productDbProvider !== appDbProvider
       ? `Product data provider is set to ${productDbProvider.toUpperCase()}, so Products/Categories/Tags screens will read from ${productDbProvider.toUpperCase()} even if this node queries ${appDbProvider.toUpperCase()}.`
       : null;
+  React.useEffect(() => {
+    if (appDbProvider !== 'prisma') return;
+    const operation = databaseConfig.operation ?? 'query';
+    if (operation === 'query') return;
+    let changed = false;
+    const nextQuery: DbQueryConfig = { ...queryConfig };
+    const nextDatabase: DatabaseConfig = { ...databaseConfig };
+    if (nextDatabase.useMongoActions) {
+      nextDatabase.useMongoActions = false;
+      nextDatabase.actionCategory = undefined;
+      nextDatabase.action = undefined;
+      changed = true;
+    }
+    if (nextQuery.provider === 'mongodb') {
+      nextQuery.provider = 'prisma';
+      changed = true;
+    }
+    if (!changed) return;
+    updateSelectedNodeConfig({
+      database: {
+        ...nextDatabase,
+        query: nextQuery,
+      },
+    });
+  }, [
+    appDbProvider,
+    databaseConfig,
+    queryConfig,
+    updateSelectedNodeConfig,
+  ]);
+  React.useEffect((): void => {
+    const currentTemplate = queryConfig.queryTemplate ?? '';
+    if (!currentTemplate || currentTemplate.includes('{{')) return;
+    const lastTemplate = lastTemplateWithPlaceholdersRef.current;
+    if (!lastTemplate || !lastTemplate.includes('{{')) return;
+    const runtimeInputs = (runtimeState.inputs[selectedNode.id] ?? {}) as Record<string, unknown>;
+    const runtimeOutputs = (runtimeState.outputs[selectedNode.id] ?? {}) as Record<string, unknown>;
+    const rawValue =
+      runtimeInputs.value ??
+      runtimeInputs.jobId ??
+      runtimeOutputs.value ??
+      runtimeOutputs.jobId;
+    const currentValue = Array.isArray(rawValue) ? rawValue[0] : rawValue;
+    const templateContext = { ...runtimeOutputs, ...runtimeInputs };
+    const rendered = renderTemplate(
+      lastTemplate,
+      templateContext as Record<string, unknown>,
+      currentValue ?? ''
+    );
+    const parsedCurrent = safeParseJson(currentTemplate).value;
+    const parsedRendered = safeParseJson(rendered).value;
+    const normalizedCurrent = parsedCurrent ? JSON.stringify(parsedCurrent) : null;
+    const normalizedRendered = parsedRendered ? JSON.stringify(parsedRendered) : null;
+    const matchesRendered =
+      normalizedCurrent && normalizedRendered
+        ? normalizedCurrent === normalizedRendered
+        : rendered.trim() === currentTemplate.trim();
+    if (!matchesRendered) return;
+    updateSelectedNodeConfig({
+      database: {
+        ...databaseConfig,
+        query: {
+          ...queryConfig,
+          mode: 'custom',
+          queryTemplate: lastTemplate,
+        },
+      },
+    });
+  }, [databaseConfig, queryConfig, runtimeState, selectedNode.id, updateSelectedNodeConfig]);
   const schemaSource: 'connected' | 'snapshot' | 'none' = schemaConnection.hasSchemaConnection
     ? 'connected'
     : schemaSnapshot
@@ -1063,7 +1152,7 @@ export function DatabaseNodeConfigSection({
     if (!effectiveSchema?.collections?.length) return [];
     let collections = normalizeSchemaCollections(effectiveSchema);
     if (effectiveSchema.provider === 'multi') {
-      const preferredProvider = queryConfig.provider === 'prisma' ? 'prisma' : 'mongodb';
+      const preferredProvider = resolvedProvider;
       collections = collections.filter((collection) => collection.provider === preferredProvider);
     }
     return collections
@@ -1072,9 +1161,8 @@ export function DatabaseNodeConfigSection({
         label: formatCollectionLabel(collection, effectiveSchema.provider === 'multi'),
       }))
       .sort((a, b) => a.label.localeCompare(b.label));
-  }, [effectiveSchema, queryConfig.provider]);
+  }, [effectiveSchema, resolvedProvider]);
   const useSchemaCollections = schemaSource !== 'none';
-  const lockCollectionName = schemaConnection.hasSchemaConnection && Boolean(fetchedDbSchema);
   const collectionOptions = useSchemaCollections ? schemaCollectionOptions : DB_COLLECTION_OPTIONS;
   const collectionOption = collectionOptions.some(
     (option: { value: string }) => option.value === queryConfig.collection
@@ -1082,7 +1170,7 @@ export function DatabaseNodeConfigSection({
     ? queryConfig.collection
     : 'custom';
   const normalizePresetValue = (value?: string): string => (value ?? '').trim();
-  const isPrismaProvider = queryConfig.provider === 'prisma';
+  const isPrismaProvider = resolvedProvider === 'prisma';
   const toPrismaSortPresetValue = (value: string): string => {
     try {
       const parsed = JSON.parse(value) as Record<string, unknown>;
@@ -2219,17 +2307,10 @@ export function DatabaseNodeConfigSection({
               className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
               value={queryConfig.collection}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                if (lockCollectionName) return;
                 updateQueryConfig({ collection: event.target.value });
               }}
-              readOnly={lockCollectionName}
               placeholder="collection_name"
             />
-          )}
-          {lockCollectionName && (
-            <p className="mt-1 text-[10px] text-gray-500">
-              Collection name is locked to the connected schema.
-            </p>
           )}
         </div>
       </div>

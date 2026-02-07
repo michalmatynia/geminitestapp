@@ -24,6 +24,14 @@ import type { SystemLogLevel } from '@/shared/types/system-logs';
 import type { ZodSchema } from 'zod';
 
 
+const shouldEnforceRateLimit = (): boolean => {
+  if (process.env.DISABLE_RATE_LIMITS === 'true') return false;
+  if (process.env.NODE_ENV === 'development') {
+    return process.env.ENABLE_RATE_LIMITS === 'true';
+  }
+  return true;
+};
+
 // Local type definitions to avoid importing from features layer
 type LogSystemEventParams = {
   level: SystemLogLevel;
@@ -194,7 +202,7 @@ export function apiHandler(
 
       let rateLimitHeaders: Record<string, string> | undefined;
       const rateKey = options.rateLimitKey === false ? null : (options.rateLimitKey ?? 'api');
-      if (rateKey) {
+      if (rateKey && shouldEnforceRateLimit()) {
         const rateResult = enforceRateLimit(request, rateKey);
         rateLimitHeaders = rateResult.headers;
         context.rateLimitHeaders = rateLimitHeaders;
@@ -297,7 +305,7 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
 
       let rateLimitHeaders: Record<string, string> | undefined;
       const rateKey = options.rateLimitKey === false ? null : (options.rateLimitKey ?? 'api');
-      if (rateKey) {
+      if (rateKey && shouldEnforceRateLimit()) {
         const rateResult = enforceRateLimit(request, rateKey);
         rateLimitHeaders = rateResult.headers;
         handlerContext.rateLimitHeaders = rateLimitHeaders;

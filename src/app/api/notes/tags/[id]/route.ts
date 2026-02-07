@@ -6,7 +6,6 @@ import { parseJsonBody } from "@/features/products/server";
 import { tagUpdateSchema } from "@/features/notesapp";
 import { removeUndefined } from "@/shared/utils";
 import type { TagUpdateInput } from "@/shared/types/notes";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 

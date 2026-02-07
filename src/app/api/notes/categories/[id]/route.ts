@@ -6,7 +6,6 @@ import { parseJsonBody } from "@/features/products/server";
 import { categoryUpdateSchema } from "@/features/notesapp";
 import { removeUndefined } from "@/shared/utils";
 import type { CategoryUpdateInput } from "@/shared/types/notes";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 

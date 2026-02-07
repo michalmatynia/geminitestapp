@@ -10,11 +10,12 @@ import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
+import prisma from "@/shared/lib/db/prisma";
 import { badRequestError, internalError } from "@/shared/errors/app-error";
 import { enforceAiPathsActionRateLimit, isCollectionAllowed, requireAiPathsAccessOrInternal } from "@/features/ai/ai-paths/server";
 
 const actionSchema = z.object({
-  provider: z.enum(["auto", "mongodb"]).optional(),
+  provider: z.enum(["auto", "mongodb", "prisma"]).optional(),
   collection: z.string().trim().min(1),
   action: z.enum([
     "insertOne",
@@ -84,6 +85,144 @@ const normalizeUpdateDoc = (update: unknown): Record<string, unknown> | unknown[
   return null;
 };
 
+const PRISMA_COLLECTION_DELEGATES: Record<string, string> = {
+  products: "product",
+  product_drafts: "productDraft",
+  product_categories: "productCategory",
+  product_category_assignments: "productCategoryAssignment",
+  product_category_assignment: "productCategoryAssignment",
+  product_tags: "productTag",
+  product_tag_assignments: "productTagAssignment",
+  product_tag_assignment: "productTagAssignment",
+  catalogs: "catalog",
+  image_files: "imageFile",
+  product_listings: "productListing",
+  product_ai_jobs: "productAiJob",
+  product_producer_assignments: "productProducerAssignment",
+  product_producer_assignment: "productProducerAssignment",
+  integrations: "integration",
+  integration_connections: "integrationConnection",
+  settings: "setting",
+  users: "user",
+  user_preferences: "userPreferences",
+  languages: "language",
+  system_logs: "systemLog",
+  notes: "note",
+  tags: "tag",
+  categories: "category",
+  notebooks: "notebook",
+  noteFiles: "noteFile",
+  note_files: "noteFile",
+  themes: "theme",
+  chatbot_sessions: "chatbotSession",
+  auth_security_attempts: "authSecurityAttempt",
+  auth_security_profiles: "authSecurityProfile",
+  auth_login_challenges: "authLoginChallenge",
+};
+
+const normalizeCollectionKey = (value: string): string => value.trim().toLowerCase();
+
+const toSnakeCase = (value: string): string =>
+  value
+    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .replace(/[\s-]+/g, "_")
+    .replace(/__+/g, "_")
+    .toLowerCase();
+
+const pluralize = (value: string): string => {
+  if (!value) return value;
+  if (value.endsWith("s")) return value;
+  if (value.endsWith("y") && !/[aeiou]y$/.test(value)) {
+    return `${value.slice(0, -1)}ies`;
+  }
+  if (value.endsWith("x") || value.endsWith("ch") || value.endsWith("sh") || value.endsWith("z")) {
+    return `${value}es`;
+  }
+  return `${value}s`;
+};
+
+const singularize = (value: string): string => {
+  if (!value) return value;
+  if (value.endsWith("ies") && value.length > 3) {
+    return `${value.slice(0, -3)}y`;
+  }
+  if (
+    value.endsWith("ses") ||
+    value.endsWith("xes") ||
+    value.endsWith("ches") ||
+    value.endsWith("shes") ||
+    value.endsWith("zes")
+  ) {
+    return value.slice(0, -2);
+  }
+  if (value.endsWith("s") && value.length > 1) {
+    return value.slice(0, -1);
+  }
+  return value;
+};
+
+const buildCollectionCandidates = (collection: string): string[] => {
+  const trimmed = collection.trim();
+  if (!trimmed) return [];
+  const lower = normalizeCollectionKey(trimmed);
+  const snake = toSnakeCase(trimmed);
+  return Array.from(
+    new Set<string>([
+      trimmed,
+      lower,
+      snake,
+      pluralize(snake),
+      singularize(snake),
+      pluralize(lower),
+      singularize(lower),
+    ])
+  );
+};
+
+const resolvePrismaCollectionKey = (collection: string): string | null => {
+  if (!collection) return null;
+  if (PRISMA_COLLECTION_DELEGATES[collection]) return collection;
+  const normalized = normalizeCollectionKey(collection);
+  if (PRISMA_COLLECTION_DELEGATES[normalized]) return normalized;
+  const candidates = buildCollectionCandidates(collection);
+  for (const candidate of candidates) {
+    if (PRISMA_COLLECTION_DELEGATES[candidate]) return candidate;
+  }
+  const delegateEntry = Object.entries(PRISMA_COLLECTION_DELEGATES).find(
+    ([, delegate]) => delegate.toLowerCase() === normalized
+  );
+  return delegateEntry ? delegateEntry[0] : null;
+};
+
+type PrismaDelegate = {
+  create: (args: Record<string, unknown>) => Promise<unknown>;
+  createMany: (args: Record<string, unknown>) => Promise<{ count: number }>;
+  update: (args: Record<string, unknown>) => Promise<unknown>;
+  updateMany: (args: Record<string, unknown>) => Promise<{ count: number }>;
+  delete: (args: Record<string, unknown>) => Promise<unknown>;
+  deleteMany: (args: Record<string, unknown>) => Promise<{ count: number }>;
+  findFirst: (args: Record<string, unknown>) => Promise<unknown>;
+};
+
+const getPrismaDelegate = (collection: string): PrismaDelegate | null => {
+  const delegateName = PRISMA_COLLECTION_DELEGATES[collection];
+  if (!delegateName) return null;
+  const delegate = (prisma as unknown as Record<string, PrismaDelegate>)[delegateName];
+  return delegate ?? null;
+};
+
+/** Extract flat key-value updates from a MongoDB-style update doc ({$set: {...}} or plain). */
+const extractFlatUpdates = (update: unknown): Record<string, unknown> | null => {
+  if (!update || typeof update !== "object" || Array.isArray(update)) return null;
+  const doc = update as Record<string, unknown>;
+  if (doc.$set && typeof doc.$set === "object" && !Array.isArray(doc.$set)) {
+    return doc.$set as Record<string, unknown>;
+  }
+  const hasOperators = Object.keys(doc).some((key) => key.startsWith("$"));
+  if (hasOperators) return null;
+  return doc;
+};
+
 const normalizeReplaceDoc = (update: unknown): Record<string, unknown> | null => {
   if (update && typeof update === "object" && !Array.isArray(update)) {
     const keys = Object.keys(update as Record<string, unknown>);
@@ -149,13 +288,126 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       "deleteMany",
       "findOneAndDelete",
     ].includes(action);
+
+    // When app DB provider is Prisma, route write actions through Prisma
     if (appProvider === "prisma" && isWriteAction) {
-      return createErrorResponse(
-        badRequestError("MongoDB writes are disabled when app_db_provider is Prisma."),
-        {
+      if (!process.env.DATABASE_URL) {
+        return createErrorResponse(internalError("Prisma is not configured"), {
           request: req,
           source: "ai-paths.db-action",
+        });
+      }
+      const resolvedCollection = resolvePrismaCollectionKey(collection);
+      const delegate = resolvedCollection ? getPrismaDelegate(resolvedCollection) : null;
+      if (!delegate) {
+        return createErrorResponse(
+          badRequestError(`Collection "${collection}" is not available for Prisma writes.`),
+          { request: req, source: "ai-paths.db-action" }
+        );
+      }
+      const where = coerceQuery(filter);
+
+      if (action === "updateOne") {
+        const flatUpdates = extractFlatUpdates(update);
+        if (!flatUpdates || Object.keys(flatUpdates).length === 0) {
+          throw badRequestError("Update data is required (plain object or $set)");
         }
+        if (!where || Object.keys(where).length === 0) {
+          throw badRequestError("Filter is required for updateOne");
+        }
+        const result = await delegate.update({ where, data: flatUpdates });
+        return NextResponse.json({ matchedCount: 1, modifiedCount: 1, value: result });
+      }
+
+      if (action === "updateMany") {
+        const flatUpdates = extractFlatUpdates(update);
+        if (!flatUpdates || Object.keys(flatUpdates).length === 0) {
+          throw badRequestError("Update data is required (plain object or $set)");
+        }
+        const result = await delegate.updateMany({ where, data: flatUpdates });
+        return NextResponse.json({
+          matchedCount: result.count,
+          modifiedCount: result.count,
+        });
+      }
+
+      if (action === "findOneAndUpdate") {
+        const flatUpdates = extractFlatUpdates(update);
+        if (!flatUpdates || Object.keys(flatUpdates).length === 0) {
+          throw badRequestError("Update data is required (plain object or $set)");
+        }
+        if (!where || Object.keys(where).length === 0) {
+          throw badRequestError("Filter is required for findOneAndUpdate");
+        }
+        const result = await delegate.update({ where, data: flatUpdates });
+        return NextResponse.json({ value: result, ok: 1 });
+      }
+
+      if (action === "replaceOne") {
+        const replacement = normalizeReplaceDoc(update);
+        if (!replacement) {
+          throw badRequestError("Replacement document is required");
+        }
+        if (!where || Object.keys(where).length === 0) {
+          throw badRequestError("Filter is required for replaceOne");
+        }
+        const result = await delegate.update({ where, data: replacement });
+        return NextResponse.json({ matchedCount: 1, modifiedCount: 1, value: result });
+      }
+
+      if (action === "insertOne") {
+        const doc =
+          document && typeof document === "object" && !Array.isArray(document)
+            ? (document as Record<string, unknown>)
+            : null;
+        if (!doc) {
+          throw badRequestError("Document is required");
+        }
+        const result = await delegate.create({ data: doc });
+        const insertedId = (result as Record<string, unknown>)?.id ?? null;
+        return NextResponse.json({ insertedId, insertedCount: 1 });
+      }
+
+      if (action === "insertMany") {
+        const docs =
+          documents && Array.isArray(documents)
+            ? documents
+            : Array.isArray(document)
+              ? (document as unknown[])
+              : null;
+        if (!docs || docs.length === 0) {
+          throw badRequestError("Documents array is required");
+        }
+        const result = await delegate.createMany({
+          data: docs as Record<string, unknown>[],
+        });
+        return NextResponse.json({ insertedCount: result.count });
+      }
+
+      if (action === "deleteOne") {
+        if (!where || Object.keys(where).length === 0) {
+          throw badRequestError("Filter is required for deleteOne");
+        }
+        await delegate.delete({ where });
+        return NextResponse.json({ deletedCount: 1 });
+      }
+
+      if (action === "deleteMany") {
+        const result = await delegate.deleteMany({ where });
+        return NextResponse.json({ deletedCount: result.count });
+      }
+
+      if (action === "findOneAndDelete") {
+        if (!where || Object.keys(where).length === 0) {
+          throw badRequestError("Filter is required for findOneAndDelete");
+        }
+        const result = await delegate.delete({ where });
+        return NextResponse.json({ value: result, ok: 1 });
+      }
+
+      return createErrorResponse(
+        badRequestError(`Action "${action}" is not supported for Prisma.`),
+        { request: req, source: "ai-paths.db-action" }
       );
     }
 

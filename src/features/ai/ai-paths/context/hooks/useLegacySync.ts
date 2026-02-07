@@ -199,14 +199,27 @@ export function useLegacySyncGraph({
   const { nodes: contextNodes, edges: contextEdges } = useGraphState();
   const skipNextContextNodesSyncRef = useRef(false);
   const skipNextContextEdgesSyncRef = useRef(false);
+  const lastLegacyNodesHashRef = useRef<string>(stableStringify(nodes));
+  const lastLegacyEdgesHashRef = useRef<string>(stableStringify(edges));
+  const legacyNodesHash = stableStringify(nodes);
+  const legacyEdgesHash = stableStringify(edges);
+
+  // Mark a legacy->context push before layout effects run, so context->legacy
+  // cannot overwrite freshly loaded graph state in the same render cycle.
+  if (lastLegacyNodesHashRef.current !== legacyNodesHash) {
+    lastLegacyNodesHashRef.current = legacyNodesHash;
+    skipNextContextNodesSyncRef.current = true;
+  }
+  if (lastLegacyEdgesHashRef.current !== legacyEdgesHash) {
+    lastLegacyEdgesHashRef.current = legacyEdgesHash;
+    skipNextContextEdgesSyncRef.current = true;
+  }
 
   useEffect(() => {
-    skipNextContextNodesSyncRef.current = true;
     actions.setNodes(nodes);
   }, [nodes, actions]);
 
   useEffect(() => {
-    skipNextContextEdgesSyncRef.current = true;
     actions.setEdges(edges);
   }, [edges, actions]);
 

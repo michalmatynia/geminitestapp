@@ -131,7 +131,7 @@ export function PromptEngineProvider({
   onSaved,
 }: {
   children: React.ReactNode;
-  onSaved?: () => void;
+  onSaved?: (() => void) | undefined;
 }): React.JSX.Element {
   const { toast } = useToast();
   const settingsQuery = useSettingsMap();

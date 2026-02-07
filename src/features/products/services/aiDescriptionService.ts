@@ -248,7 +248,14 @@ export async function generateProductDescription(params: {
         let mimetype: string = 'image/jpeg';
         if (item.startsWith('http')) {
           const res = await fetch(item);
-          if (!res.ok) return null;
+          if (!res.ok) {
+            void ErrorSystem.logWarning(`Failed to fetch image URL: ${item}`, {
+              service: 'ai-description-service',
+              status: res.status,
+              statusText: res.statusText
+            });
+            return null;
+          }
           const buffer = Buffer.from(await res.arrayBuffer());
           base64Image = buffer.toString('base64');
           mimetype = res.headers.get('content-type') || 'image/jpeg';
@@ -263,7 +270,11 @@ export async function generateProductDescription(params: {
           type: 'image_url' as const,
           image_url: { url: `data:${mimetype};base64,${base64Image}` },
         } as ChatCompletionContentPart;
-      } catch {
+      } catch (err) {
+        void ErrorSystem.logWarning(`Failed to process image: ${item}`, {
+          service: 'ai-description-service',
+          error: err
+        });
         return null;
       }
     });

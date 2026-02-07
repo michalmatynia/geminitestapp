@@ -23,8 +23,8 @@ import { ProductListingsSyncPanel } from './product-listings-modal/ProductListin
 type ProductListingsModalProps = {
   product: ProductWithImages;
   onClose: () => void;
-  onStartListing?: (integrationId: string, connectionId: string) => void;
-  filterIntegrationSlug?: string | null;
+  onStartListing?: ((integrationId: string, connectionId: string) => void) | undefined;
+  filterIntegrationSlug?: string | null | undefined;
   onListingsUpdated?: (() => void) | undefined;
 };
 

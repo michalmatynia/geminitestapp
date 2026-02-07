@@ -161,37 +161,69 @@ const normalizeEntityType = (value?: string | null): string | null => {
 const fetchEntityByType = async (entityType: string, entityId: string): Promise<Record<string, unknown> | null> => {
   if (!entityType || !entityId) return null;
   const normalized = normalizeEntityType(entityType);
-  if (normalized === 'product') {
-    const repo = await getProductRepository();
-    return (await repo.getProductById(entityId)) as Record<string, unknown> | null;
-  }
-  if (normalized === 'note') {
-    return (await noteService.getById(entityId)) as Record<string, unknown> | null;
+  try {
+    if (normalized === 'product') {
+      const repo = await getProductRepository();
+      return (await repo.getProductById(entityId)) as Record<string, unknown> | null;
+    }
+    if (normalized === 'note') {
+      return (await noteService.getById(entityId)) as Record<string, unknown> | null;
+    }
+  } catch (error) {
+    void ErrorSystem.logWarning(`Failed to fetch entity ${entityType} ${entityId}`, {
+      service: 'ai-paths-runtime',
+      error,
+      entityType,
+      entityId,
+    });
+    // We return null to indicate the entity couldn't be fetched, but the run might still proceed depending on node logic.
+    return null;
   }
   return null;
 };
 
 export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
-  const repo = getPathRunRepository();
+  let repo;
+  try {
+    repo = getPathRunRepository();
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      service: 'ai-paths-executor',
+      action: 'getRepository',
+      runId: run.id,
+    });
+    throw new Error('Database repository not available');
+  }
+
   const runStartedAt =
     typeof run.startedAt === 'string'
       ? run.startedAt
       : run.startedAt instanceof Date
         ? run.startedAt.toISOString()
         : new Date().toISOString();
+  
   const graph = run.graph;
   if (!graph || !Array.isArray(graph.nodes) || !Array.isArray(graph.edges)) {
-    await repo.updateRun(run.id, {
-      status: 'failed',
-      errorMessage: 'Run graph is missing or invalid.',
-      finishedAt: new Date(),
-    });
-    await repo.createRunEvent({
-      runId: run.id,
-      level: 'error',
-      message: 'Run graph is missing or invalid.',
-      metadata: { runStartedAt },
-    });
+    try {
+      const errorMsg = 'Run graph is missing or invalid. This usually indicates a corrupted path configuration or a breaking change in node definitions.';
+      await repo.updateRun(run.id, {
+        status: 'failed',
+        errorMessage: errorMsg,
+        finishedAt: new Date(),
+      });
+      await repo.createRunEvent({
+        runId: run.id,
+        level: 'error',
+        message: errorMsg,
+        metadata: { runStartedAt, graphPresent: !!graph },
+      });
+    } catch (dbError) {
+      void ErrorSystem.logWarning('Failed to update failed status for invalid graph', {
+        service: 'ai-paths-executor',
+        error: dbError,
+        runId: run.id,
+      });
+    }
     return;
   }
 
@@ -216,14 +248,23 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   let resolvedRunStartedAt = runStartedAt;
 
   const saveIntermediateState = async (): Promise<void> => {
-    await repo.updateRun(run.id, {
-      runtimeState: sanitizeRuntimeState({
-        runId: resolvedRunId,
-        runStartedAt: resolvedRunStartedAt,
-        inputs: accInputs,
-        outputs: accOutputs,
-      }),
-    });
+    try {
+      await repo.updateRun(run.id, {
+        runtimeState: sanitizeRuntimeState({
+          runId: resolvedRunId,
+          runStartedAt: resolvedRunStartedAt,
+          inputs: accInputs,
+          outputs: accOutputs,
+        }),
+      });
+    } catch (error) {
+      void ErrorSystem.logWarning('Failed to save intermediate state', {
+        service: 'ai-paths-executor',
+        error,
+        runId: run.id,
+      });
+      // We don't throw here to avoid stopping the run just because a state sync failed.
+    }
   };
 
   // Throttled variant: at most one intermediate save per second to reduce DB writes.
@@ -298,49 +339,58 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       },
       toast,
       onNodeStart: async ({ node, nodeInputs, prevOutputs, iteration, runStartedAt: cbRunStartedAt }) => {
-        resolvedRunId = run.id;
-        resolvedRunStartedAt = cbRunStartedAt;
-        const nextAttempt = (nodeAttemptMap.get(node.id) ?? 0) + 1;
-        nodeAttemptMap.set(node.id, nextAttempt);
+        try {
+          resolvedRunId = run.id;
+          resolvedRunStartedAt = cbRunStartedAt;
+          const nextAttempt = (nodeAttemptMap.get(node.id) ?? 0) + 1;
+          nodeAttemptMap.set(node.id, nextAttempt);
 
-        // Track intermediate state so SSE stream can deliver per-node progress
-        const safeInputs = toJsonSafe(nodeInputs) as RuntimePortValues;
-        const safePrevOutputs = toJsonSafe(prevOutputs) as RuntimePortValues;
-        accInputs[node.id] = safeInputs;
-        accOutputs[node.id] = { ...(accOutputs[node.id] ?? {}), status: 'running' } as RuntimePortValues;
+          // Track intermediate state so SSE stream can deliver per-node progress
+          const safeInputs = toJsonSafe(nodeInputs) as RuntimePortValues;
+          const safePrevOutputs = toJsonSafe(prevOutputs) as RuntimePortValues;
+          accInputs[node.id] = safeInputs;
+          accOutputs[node.id] = { ...(accOutputs[node.id] ?? {}), status: 'running' } as RuntimePortValues;
 
-        await Promise.all([
-          repo.upsertRunNode(run.id, node.id, {
-            nodeType: node.type,
-            nodeTitle: node.title ?? null,
-            status: 'running',
-            attempt: nextAttempt,
-            inputs: safeInputs,
-            outputs: safePrevOutputs,
-            startedAt: new Date(),
-            errorMessage: null,
-          }),
-          repo.createRunEvent({
-            runId: run.id,
-            level: 'info',
-            message: `Node ${node.title ?? node.id} started.`,
-            metadata: {
-              nodeId: node.id,
+          await Promise.all([
+            repo.upsertRunNode(run.id, node.id, {
               nodeType: node.type,
               nodeTitle: node.title ?? null,
               status: 'running',
               attempt: nextAttempt,
-              iteration,
-              runStartedAt: cbRunStartedAt,
-            },
-          }),
-          throttledSaveIntermediateState(),
-        ]);
-        await recordRuntimeNodeStatus({
-          runId: run.id,
-          nodeId: node.id,
-          status: 'running',
-        });
+              inputs: safeInputs,
+              outputs: safePrevOutputs,
+              startedAt: new Date(),
+              errorMessage: null,
+            }),
+            repo.createRunEvent({
+              runId: run.id,
+              level: 'info',
+              message: `Node ${node.title ?? node.id} started.`,
+              metadata: {
+                nodeId: node.id,
+                nodeType: node.type,
+                nodeTitle: node.title ?? null,
+                status: 'running',
+                attempt: nextAttempt,
+                iteration,
+                runStartedAt: cbRunStartedAt,
+              },
+            }),
+            throttledSaveIntermediateState(),
+          ]);
+          await recordRuntimeNodeStatus({
+            runId: run.id,
+            nodeId: node.id,
+            status: 'running',
+          });
+        } catch (error) {
+          void ErrorSystem.logWarning(`onNodeStart failed for node ${node.id}`, {
+            service: 'ai-paths-executor',
+            error,
+            runId: run.id,
+            nodeId: node.id,
+          });
+        }
       },
       onNodeFinish: async ({
         node,
@@ -359,121 +409,139 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         runStartedAt: string;
         runId: string;
       }) => {
-        // Update accumulated state with completed outputs
-        const safeInputs = toJsonSafe(nodeInputs) as RuntimePortValues;
-        const safeOutputs = toJsonSafe(nextOutputs) as RuntimePortValues;
-        accInputs[node.id] = safeInputs;
-        accOutputs[node.id] = { ...(safeOutputs as Record<string, unknown>), status: 'completed' } as RuntimePortValues;
+        try {
+          // Update accumulated state with completed outputs
+          const safeInputs = toJsonSafe(nodeInputs) as RuntimePortValues;
+          const safeOutputs = toJsonSafe(nextOutputs) as RuntimePortValues;
+          accInputs[node.id] = safeInputs;
+          accOutputs[node.id] = { ...(safeOutputs as Record<string, unknown>), status: 'completed' } as RuntimePortValues;
 
-        if (cached) {
-          if (iteration === 0) {
-            await Promise.all([
-              repo.upsertRunNode(run.id, node.id, {
-                nodeType: node.type,
-                nodeTitle: node.title ?? null,
-                status: 'completed',
-                attempt: nodeAttemptMap.get(node.id) ?? 0,
-                inputs: safeInputs,
-                outputs: safeOutputs,
-                finishedAt: new Date(),
-                errorMessage: null,
-              }),
-              repo.createRunEvent({
-                runId: run.id,
-                level: 'info',
-                message: `Node ${node.title ?? node.id} reused cached outputs.`,
-                metadata: {
-                  nodeId: node.id,
+          if (cached) {
+            if (iteration === 0) {
+              await Promise.all([
+                repo.upsertRunNode(run.id, node.id, {
                   nodeType: node.type,
                   nodeTitle: node.title ?? null,
                   status: 'completed',
-                  cached: true,
                   attempt: nodeAttemptMap.get(node.id) ?? 0,
-                  iteration,
-                  runStartedAt: cbRunStartedAt,
-                },
-              }),
-              throttledSaveIntermediateState(),
-            ]);
-            await recordRuntimeNodeStatus({
-              runId: run.id,
-              nodeId: node.id,
-              status: 'cached',
-            });
+                  inputs: safeInputs,
+                  outputs: safeOutputs,
+                  finishedAt: new Date(),
+                  errorMessage: null,
+                }),
+                repo.createRunEvent({
+                  runId: run.id,
+                  level: 'info',
+                  message: `Node ${node.title ?? node.id} reused cached outputs.`,
+                  metadata: {
+                    nodeId: node.id,
+                    nodeType: node.type,
+                    nodeTitle: node.title ?? null,
+                    status: 'completed',
+                    cached: true,
+                    attempt: nodeAttemptMap.get(node.id) ?? 0,
+                    iteration,
+                    runStartedAt: cbRunStartedAt,
+                  },
+                }),
+                throttledSaveIntermediateState(),
+              ]);
+              await recordRuntimeNodeStatus({
+                runId: run.id,
+                nodeId: node.id,
+                status: 'cached',
+              });
+            }
+            return;
           }
-          return;
-        }
-        await Promise.all([
-          repo.upsertRunNode(run.id, node.id, {
-            nodeType: node.type,
-            nodeTitle: node.title ?? null,
-            status: 'completed',
-            attempt: nodeAttemptMap.get(node.id) ?? 0,
-            inputs: safeInputs,
-            outputs: safeOutputs,
-            finishedAt: new Date(),
-            errorMessage: null,
-          }),
-          repo.createRunEvent({
-            runId: run.id,
-            level: 'info',
-            message: `Node ${node.title ?? node.id} completed.`,
-            metadata: {
-              nodeId: node.id,
+          await Promise.all([
+            repo.upsertRunNode(run.id, node.id, {
               nodeType: node.type,
               nodeTitle: node.title ?? null,
               status: 'completed',
               attempt: nodeAttemptMap.get(node.id) ?? 0,
-              iteration,
-              runStartedAt: cbRunStartedAt,
-            },
-          }),
-          throttledSaveIntermediateState(),
-        ]);
-        await recordRuntimeNodeStatus({
-          runId: run.id,
-          nodeId: node.id,
-          status: 'completed',
-        });
+              inputs: safeInputs,
+              outputs: safeOutputs,
+              finishedAt: new Date(),
+              errorMessage: null,
+            }),
+            repo.createRunEvent({
+              runId: run.id,
+              level: 'info',
+              message: `Node ${node.title ?? node.id} completed.`,
+              metadata: {
+                nodeId: node.id,
+                nodeType: node.type,
+                nodeTitle: node.title ?? null,
+                status: 'completed',
+                attempt: nodeAttemptMap.get(node.id) ?? 0,
+                iteration,
+                runStartedAt: cbRunStartedAt,
+              },
+            }),
+            throttledSaveIntermediateState(),
+          ]);
+          await recordRuntimeNodeStatus({
+            runId: run.id,
+            nodeId: node.id,
+            status: 'completed',
+          });
+        } catch (error) {
+          void ErrorSystem.logWarning(`onNodeFinish failed for node ${node.id}`, {
+            service: 'ai-paths-executor',
+            error,
+            runId: run.id,
+            nodeId: node.id,
+          });
+        }
       },
       onNodeError: async ({ node, nodeInputs, prevOutputs, error, iteration, runStartedAt: cbRunStartedAt }) => {
-        const safeInputs = toJsonSafe(nodeInputs) as RuntimePortValues;
-        const safePrevOutputs = toJsonSafe(prevOutputs) as RuntimePortValues;
-        accOutputs[node.id] = { ...(accOutputs[node.id] ?? {}), status: 'failed' } as RuntimePortValues;
+        try {
+          const safeInputs = toJsonSafe(nodeInputs) as RuntimePortValues;
+          const safePrevOutputs = toJsonSafe(prevOutputs) as RuntimePortValues;
+          accOutputs[node.id] = { ...(accOutputs[node.id] ?? {}), status: 'failed' } as RuntimePortValues;
 
-        await Promise.all([
-          repo.upsertRunNode(run.id, node.id, {
-            nodeType: node.type,
-            nodeTitle: node.title ?? null,
-            status: 'failed',
-            attempt: nodeAttemptMap.get(node.id) ?? 0,
-            inputs: safeInputs,
-            outputs: safePrevOutputs,
-            finishedAt: new Date(),
-            errorMessage: error instanceof Error ? error.message : String(error),
-          }),
-          repo.createRunEvent({
-            runId: run.id,
-            level: 'error',
-            message: `Node ${node.title ?? node.id} failed.`,
-            metadata: {
-              nodeId: node.id,
+          await Promise.all([
+            repo.upsertRunNode(run.id, node.id, {
               nodeType: node.type,
               nodeTitle: node.title ?? null,
               status: 'failed',
               attempt: nodeAttemptMap.get(node.id) ?? 0,
-              error: error instanceof Error ? error.message : String(error),
-              iteration,
-              runStartedAt: cbRunStartedAt,
-            },
-          }),
-          saveIntermediateState(),
-        ]);
-        await recordRuntimeNodeStatus({
-          runId: run.id,
-          nodeId: node.id,
-          status: 'failed',
-        });
+              inputs: safeInputs,
+              outputs: safePrevOutputs,
+              finishedAt: new Date(),
+              errorMessage: error instanceof Error ? error.message : String(error),
+            }),
+            repo.createRunEvent({
+              runId: run.id,
+              level: 'error',
+              message: `Node ${node.title ?? node.id} failed.`,
+              metadata: {
+                nodeId: node.id,
+                nodeType: node.type,
+                nodeTitle: node.title ?? null,
+                status: 'failed',
+                attempt: nodeAttemptMap.get(node.id) ?? 0,
+                error: error instanceof Error ? error.message : String(error),
+                iteration,
+                runStartedAt: cbRunStartedAt,
+              },
+            }),
+            saveIntermediateState(),
+          ]);
+          await recordRuntimeNodeStatus({
+            runId: run.id,
+            nodeId: node.id,
+            status: 'failed',
+          });
+        } catch (dbError) {
+          void ErrorSystem.logWarning(`onNodeError failed for node ${node.id}`, {
+            service: 'ai-paths-executor',
+            error: dbError,
+            runId: run.id,
+            nodeId: node.id,
+          });
+        }
       },
       onIterationEnd: async ({
         runId: cbRunId,
@@ -492,22 +560,30 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         hashes?: Record<string, string> | undefined;
         history?: Record<string, RuntimeHistoryEntry[]> | undefined;
       }) => {
-        // Sync accumulated state with the full engine state
-        Object.assign(accInputs, inputs);
-        Object.assign(accOutputs, outputs);
-        resolvedRunId = cbRunId;
-        resolvedRunStartedAt = cbRunStartedAt;
+        try {
+          // Sync accumulated state with the full engine state
+          Object.assign(accInputs, inputs);
+          Object.assign(accOutputs, outputs);
+          resolvedRunId = cbRunId;
+          resolvedRunStartedAt = cbRunStartedAt;
 
-        await repo.updateRun(run.id, {
-          runtimeState: sanitizeRuntimeState({
-            runId: cbRunId,
-            runStartedAt: cbRunStartedAt,
-            inputs,
-            outputs,
-            hashes,
-            history,
-          }),
-        });
+          await repo.updateRun(run.id, {
+            runtimeState: sanitizeRuntimeState({
+              runId: cbRunId,
+              runStartedAt: cbRunStartedAt,
+              inputs,
+              outputs,
+              hashes,
+              history,
+            }),
+          });
+        } catch (error) {
+          void ErrorSystem.logWarning(`onIterationEnd failed for run ${run.id}`, {
+            service: 'ai-paths-executor',
+            error,
+            runId: run.id,
+          });
+        }
       },
     });
 
@@ -517,60 +593,109 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     }
 
     const finishedAt = new Date();
-    await repo.updateRun(run.id, {
-      status: 'completed',
-      runtimeState: sanitizeRuntimeState(resultState),
-      finishedAt,
-      errorMessage: null,
-      meta: {
-        ...(run.meta ?? {}),
-        resumeMode: 'replay',
-        retryNodeIds: [],
-      },
-    });
-    await repo.createRunEvent({
-      runId: run.id,
-      level: 'info',
-      message: 'Run completed successfully.',
-      metadata: { runStartedAt },
-    });
-    const startedAtMs = Date.parse(runStartedAt);
-    const durationMs = Number.isFinite(startedAtMs)
-      ? Math.max(0, finishedAt.getTime() - startedAtMs)
-      : null;
-    await recordRuntimeRunFinished({
-      runId: run.id,
-      status: 'completed',
-      durationMs,
-      timestamp: finishedAt,
-    });
+    try {
+      await repo.updateRun(run.id, {
+        status: 'completed',
+        runtimeState: sanitizeRuntimeState(resultState),
+        finishedAt,
+        errorMessage: null,
+        meta: {
+          ...(run.meta ?? {}),
+          resumeMode: 'replay',
+          retryNodeIds: [],
+        },
+      });
+      await repo.createRunEvent({
+        runId: run.id,
+        level: 'info',
+        message: 'Run completed successfully.',
+        metadata: { runStartedAt },
+      });
+    } catch (finalDbError) {
+      void ErrorSystem.logWarning('Failed to record run completion in DB', {
+        service: 'ai-paths-executor',
+        error: finalDbError,
+        runId: run.id,
+      });
+    }
+
+    try {
+      const startedAtMs = Date.parse(runStartedAt);
+      const durationMs = Number.isFinite(startedAtMs)
+        ? Math.max(0, finishedAt.getTime() - startedAtMs)
+        : null;
+      await recordRuntimeRunFinished({
+        runId: run.id,
+        status: 'completed',
+        durationMs,
+        timestamp: finishedAt,
+      });
+    } catch (analyticsError) {
+      void ErrorSystem.logWarning('Failed to record completion analytics', {
+        service: 'ai-paths-executor',
+        error: analyticsError,
+        runId: run.id,
+      });
+    }
   } catch (error) {
+    void ErrorSystem.captureException(error, {
+      service: 'ai-paths-executor',
+      action: 'executePathRun',
+      runId: run.id,
+    });
     const errorMessage = error instanceof Error ? error.message : String(error);
     const finishedAt = new Date();
-    await repo.updateRun(run.id, {
-      status: 'failed',
-      finishedAt,
-      errorMessage,
-    });
-    await repo.createRunEvent({
-      runId: run.id,
-      level: 'error',
-      message: `Run failed: ${errorMessage}`,
-      metadata: {
-        error: errorMessage,
-        runStartedAt,
-      },
-    });
-    const startedAtMs = Date.parse(runStartedAt);
-    const durationMs = Number.isFinite(startedAtMs)
-      ? Math.max(0, finishedAt.getTime() - startedAtMs)
-      : null;
-    await recordRuntimeRunFinished({
-      runId: run.id,
-      status: 'failed',
-      durationMs,
-      timestamp: finishedAt,
-    });
+    
+    try {
+      await repo.updateRun(run.id, {
+        status: 'failed',
+        finishedAt,
+        errorMessage,
+      });
+    } catch (dbUpdateError) {
+      void ErrorSystem.logWarning('Failed to update run status to failed in DB', {
+        service: 'ai-paths-executor',
+        error: dbUpdateError,
+        runId: run.id,
+      });
+    }
+
+    try {
+      await repo.createRunEvent({
+        runId: run.id,
+        level: 'error',
+        message: `Run failed: ${errorMessage}`,
+        metadata: {
+          error: errorMessage,
+          runStartedAt,
+        },
+      });
+    } catch (eventError) {
+      void ErrorSystem.logWarning('Failed to create error event for run failure', {
+        service: 'ai-paths-executor',
+        error: eventError,
+        runId: run.id,
+      });
+    }
+
+    try {
+      const startedAtMs = Date.parse(runStartedAt);
+      const durationMs = Number.isFinite(startedAtMs)
+        ? Math.max(0, finishedAt.getTime() - startedAtMs)
+        : null;
+      await recordRuntimeRunFinished({
+        runId: run.id,
+        status: 'failed',
+        durationMs,
+        timestamp: finishedAt,
+      });
+    } catch (analyticsError) {
+      void ErrorSystem.logWarning('Failed to record failure analytics', {
+        service: 'ai-paths-executor',
+        error: analyticsError,
+        runId: run.id,
+      });
+    }
     throw error;
   }
 };

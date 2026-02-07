@@ -2,6 +2,10 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
+import {
+  AI_PATHS_RUN_SOURCE_TABS,
+  AI_PATHS_RUN_SOURCE_VALUES,
+} from '@/features/ai/ai-paths/lib/run-sources';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type {
   AiPathRunEventRecord,
@@ -9,10 +13,6 @@ import type {
   AiPathRunRecord,
 } from '@/shared/types/ai-paths';
 import type { AiNode } from '@/shared/types/ai-paths';
-import {
-  AI_PATHS_RUN_SOURCE_TABS,
-  AI_PATHS_RUN_SOURCE_VALUES,
-} from '@/features/ai/ai-paths/lib/run-sources';
 
 import {
   AiPathRunEventCreateInput,

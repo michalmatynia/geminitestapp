@@ -4,11 +4,22 @@ import { NextRequest, NextResponse } from "next/server";
 import { productService } from "@/features/products/server";
 import { getProductRepository } from "@/features/products/services/product-repository";
 import { z } from "zod";
-import { badRequestError, notFoundError } from "@/shared/errors/app-error";
+import { badRequestError, notFoundError, payloadTooLargeError } from "@/shared/errors/app-error";
 import { parseJsonBody } from "@/features/products/server";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { validateProductUpdateMiddleware } from "@/features/products/validations/middleware";
+
+const isLikelyPayloadTooLarge = (error: unknown): boolean => {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes("exceeded") ||
+    normalized.includes("too large") ||
+    normalized.includes("body limit") ||
+    normalized.includes("request entity too large")
+  );
+};
 
 /**
  * GET /api/products/[id]
@@ -49,6 +60,12 @@ async function PUT_handler(
   try {
     formData = await req.formData();
   } catch (error) {
+    if (isLikelyPayloadTooLarge(error)) {
+      throw payloadTooLargeError(
+        "Upload payload too large. Reduce image sizes/count or increase proxyClientMaxBodySize.",
+        { productId: id }
+      );
+    }
     throw badRequestError("Invalid form data payload", {
       productId: id,
       error,

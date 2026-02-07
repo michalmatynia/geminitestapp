@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { ErrorSystem } from '@/features/observability/server';
 import type { CatalogRecord } from '@/features/products/types';
 import type { ProductMigrationDirection as MigrationDirection, ProductMigrationBatchResult as MigrationBatchResult } from '@/features/products/types';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -218,320 +219,330 @@ export async function migrateProductBatch({
   cursor?: string | null | undefined;
   batchSize?: number | undefined;
 }): Promise<MigrationBatchResult> {
-  if (direction === 'prisma-to-mongo') {
-    const mongo = await getMongoDb();
-    const products = await prisma.product.findMany({
-      ...(cursor && { where: { id: { gt: cursor } } }),
-      orderBy: { id: 'asc' },
-      take: batchSize,
-      include: {
-        images: { include: { imageFile: true } },
-        catalogs: {
-          include: {
-            catalog: {
-              include: { languages: { select: { languageId: true } } },
+  try {
+    if (direction === 'prisma-to-mongo') {
+      const mongo = await getMongoDb();
+      const products = await prisma.product.findMany({
+        ...(cursor && { where: { id: { gt: cursor } } }),
+        orderBy: { id: 'asc' },
+        take: batchSize,
+        include: {
+          images: { include: { imageFile: true } },
+          catalogs: {
+            include: {
+              catalog: {
+                include: { languages: { select: { languageId: true } } },
+              },
             },
           },
         },
-      },
-    });
-    const docs = products.map(buildProductDocument);
-    if (!dryRun) {
-      await mongo.collection<ProductDocument>(PRODUCT_COLLECTION).bulkWrite(
-        docs.map((doc: ProductDocument) => ({
-          replaceOne: {
-            filter: { _id: doc._id },
-            replacement: doc,
-            upsert: true,
-          },
-        })),
-        { ordered: false }
-      );
-    }
-    const nextCursor =
+      });
+      const docs = products.map(buildProductDocument);
+      if (!dryRun) {
+        await mongo.collection<ProductDocument>(PRODUCT_COLLECTION).bulkWrite(
+          docs.map((doc: ProductDocument) => ({
+            replaceOne: {
+              filter: { _id: doc._id },
+              replacement: doc,
+              upsert: true,
+            },
+          })),
+          { ordered: false }
+        );
+      }
+      const nextCursor =
       products.length === batchSize
         ? products[products.length - 1]?.id ?? null
         : null;
-    return {
-      direction,
-      productsProcessed: docs.length,
-      productsUpserted: dryRun ? 0 : docs.length,
-      nextCursor,
-      missingImageFileIds: [],
-      missingCatalogIds: [],
-    };
-  }
+      return {
+        direction,
+        productsProcessed: docs.length,
+        productsUpserted: dryRun ? 0 : docs.length,
+        nextCursor,
+        missingImageFileIds: [],
+        missingCatalogIds: [],
+      };
+    }
 
-  const mongo = await getMongoDb();
-  const mongoDocs: WithId<ProductDocument>[] = await mongo
-    .collection<ProductDocument>(PRODUCT_COLLECTION)
-    .find(cursor ? { _id: { $gt: cursor } } : {})
-    .sort({ _id: 1 })
-    .limit(batchSize)
-    .toArray();
-  const imageFileMap = new Map<string, ImageFileRecord>();
-  const catalogMap = new Map<string, CatalogDocument>();
-  for (const doc of mongoDocs) {
-    const images = Array.isArray(doc.images) ? doc.images : [];
-    for (const image of images) {
-      imageFileMap.set(image.imageFileId, image.imageFile);
-    }
-    const catalogs = Array.isArray(doc.catalogs) ? doc.catalogs : [];
-    for (const catalog of catalogs) {
-      catalogMap.set(catalog.catalogId, catalog.catalog);
-    }
-  }
-
-  if (!dryRun) {
-    for (const [id, imageFile] of Array.from(imageFileMap.entries())) {
-      await prisma.imageFile.upsert({
-        where: { id },
-        update: {
-          filename: imageFile.filename,
-          filepath: imageFile.filepath,
-          mimetype: imageFile.mimetype,
-          size: imageFile.size,
-          width: imageFile.width ?? null,
-          height: imageFile.height ?? null,
-        },
-        create: {
-          id,
-          filename: imageFile.filename,
-          filepath: imageFile.filepath,
-          mimetype: imageFile.mimetype,
-          size: imageFile.size,
-          width: imageFile.width ?? null,
-          height: imageFile.height ?? null,
-        },
-      });
-    }
-    for (const [id, catalog] of Array.from(catalogMap.entries())) {
-      await prisma.catalog.upsert({
-        where: { id },
-        update: {
-          name: catalog.name,
-          description: catalog.description ?? null,
-          isDefault: catalog.isDefault ?? false,
-          defaultLanguageId: catalog.defaultLanguageId ?? null,
-        },
-        create: {
-          id,
-          name: catalog.name,
-          description: catalog.description ?? null,
-          isDefault: catalog.isDefault ?? false,
-          defaultLanguageId: catalog.defaultLanguageId ?? null,
-        },
-      });
-      const languageIds: string[] = [];
-      const rawLanguageIds = catalog.languageIds ?? [];
-      if (Array.isArray(rawLanguageIds)) {
-        for (const languageId of rawLanguageIds) {
-          if (typeof languageId === 'string') {
-            languageIds.push(languageId);
-          }
-        }
+    const mongo = await getMongoDb();
+    const mongoDocs: WithId<ProductDocument>[] = await mongo
+      .collection<ProductDocument>(PRODUCT_COLLECTION)
+      .find(cursor ? { _id: { $gt: cursor } } : {})
+      .sort({ _id: 1 })
+      .limit(batchSize)
+      .toArray();
+    const imageFileMap = new Map<string, ImageFileRecord>();
+    const catalogMap = new Map<string, CatalogDocument>();
+    for (const doc of mongoDocs) {
+      const images = Array.isArray(doc.images) ? doc.images : [];
+      for (const image of images) {
+        imageFileMap.set(image.imageFileId, image.imageFile);
       }
-      if (languageIds.length > 0) {
-        const existingLanguages = await prisma.language.findMany({
-          where: { id: { in: languageIds } },
-          select: { id: true },
+      const catalogs = Array.isArray(doc.catalogs) ? doc.catalogs : [];
+      for (const catalog of catalogs) {
+        catalogMap.set(catalog.catalogId, catalog.catalog);
+      }
+    }
+
+    if (!dryRun) {
+      for (const [id, imageFile] of Array.from(imageFileMap.entries())) {
+        await prisma.imageFile.upsert({
+          where: { id },
+          update: {
+            filename: imageFile.filename,
+            filepath: imageFile.filepath,
+            mimetype: imageFile.mimetype,
+            size: imageFile.size,
+            width: imageFile.width ?? null,
+            height: imageFile.height ?? null,
+          },
+          create: {
+            id,
+            filename: imageFile.filename,
+            filepath: imageFile.filepath,
+            mimetype: imageFile.mimetype,
+            size: imageFile.size,
+            width: imageFile.width ?? null,
+            height: imageFile.height ?? null,
+          },
         });
-        const validLanguageIds = new Set(
-          existingLanguages.map((entry: { id: string }) => entry.id)
-        );
-        await prisma.catalogLanguage.deleteMany({ where: { catalogId: id } });
-        const filteredLanguageIds: string[] = [];
-        for (const languageId of languageIds) {
-          if (validLanguageIds.has(languageId)) {
-            filteredLanguageIds.push(languageId);
+      }
+      for (const [id, catalog] of Array.from(catalogMap.entries())) {
+        await prisma.catalog.upsert({
+          where: { id },
+          update: {
+            name: catalog.name,
+            description: catalog.description ?? null,
+            isDefault: catalog.isDefault ?? false,
+            defaultLanguageId: catalog.defaultLanguageId ?? null,
+          },
+          create: {
+            id,
+            name: catalog.name,
+            description: catalog.description ?? null,
+            isDefault: catalog.isDefault ?? false,
+            defaultLanguageId: catalog.defaultLanguageId ?? null,
+          },
+        });
+        const languageIds: string[] = [];
+        const rawLanguageIds = catalog.languageIds ?? [];
+        if (Array.isArray(rawLanguageIds)) {
+          for (const languageId of rawLanguageIds) {
+            if (typeof languageId === 'string') {
+              languageIds.push(languageId);
+            }
           }
         }
-        if (filteredLanguageIds.length > 0) {
-          await prisma.catalogLanguage.createMany({
-            data: filteredLanguageIds.map((languageId: string) => ({
-              catalogId: id,
-              languageId,
-            })),
-            skipDuplicates: true,
+        if (languageIds.length > 0) {
+          const existingLanguages = await prisma.language.findMany({
+            where: { id: { in: languageIds } },
+            select: { id: true },
           });
-        }
-        const nextDefaultLanguageId =
+          const validLanguageIds = new Set(
+            existingLanguages.map((entry: { id: string }) => entry.id)
+          );
+          await prisma.catalogLanguage.deleteMany({ where: { catalogId: id } });
+          const filteredLanguageIds: string[] = [];
+          for (const languageId of languageIds) {
+            if (validLanguageIds.has(languageId)) {
+              filteredLanguageIds.push(languageId);
+            }
+          }
+          if (filteredLanguageIds.length > 0) {
+            await prisma.catalogLanguage.createMany({
+              data: filteredLanguageIds.map((languageId: string) => ({
+                catalogId: id,
+                languageId,
+              })),
+              skipDuplicates: true,
+            });
+          }
+          const nextDefaultLanguageId =
           catalog.defaultLanguageId &&
           filteredLanguageIds.includes(catalog.defaultLanguageId)
             ? catalog.defaultLanguageId
             : filteredLanguageIds[0] ?? null;
-        await prisma.catalog.update({
-          where: { id },
-          data: { defaultLanguageId: nextDefaultLanguageId },
-        });
-      } else {
-        await prisma.catalog.update({
-          where: { id },
-          data: { defaultLanguageId: null },
-        });
-      }
-    }
-  }
-
-  const imageFileIds = new Set(imageFileMap.keys());
-  const catalogIds = new Set(catalogMap.keys());
-  const existingImages = await prisma.imageFile.findMany({
-    where: { id: { in: Array.from(imageFileIds) } },
-    select: { id: true },
-  });
-  const existingCatalogs = await prisma.catalog.findMany({
-    where: { id: { in: Array.from(catalogIds) } },
-    select: { id: true },
-  });
-  const existingImageIds = new Set(existingImages.map((img: { id: string }) => img.id));
-  const existingCatalogIds = new Set(existingCatalogs.map((cat: { id: string }) => cat.id));
-  const missingImageFileIds = Array.from(imageFileIds).filter(
-    (id: string) => !existingImageIds.has(id)
-  );
-  const missingCatalogIds = Array.from(catalogIds).filter(
-    (id: string) => !existingCatalogIds.has(id)
-  );
-
-  if (!dryRun) {
-    for (const doc of mongoDocs) {
-      await prisma.product.upsert({
-        where: { id: doc.id ?? doc._id },
-        update: {
-          ...(doc.sku !== undefined && { sku: doc.sku }),
-          ...(doc.baseProductId !== undefined && {
-            baseProductId: doc.baseProductId,
-          }),
-          ...(doc.defaultPriceGroupId !== undefined && {
-            defaultPriceGroupId: doc.defaultPriceGroupId,
-          }),
-          ...(doc.ean !== undefined && { ean: doc.ean }),
-          ...(doc.gtin !== undefined && { gtin: doc.gtin }),
-          ...(doc.asin !== undefined && { asin: doc.asin }),
-          ...(doc.name_en !== undefined && { name_en: doc.name_en }),
-          ...(doc.name_pl !== undefined && { name_pl: doc.name_pl }),
-          ...(doc.name_de !== undefined && { name_de: doc.name_de }),
-          ...(doc.description_en !== undefined && {
-            description_en: doc.description_en,
-          }),
-          ...(doc.description_pl !== undefined && {
-            description_pl: doc.description_pl,
-          }),
-          ...(doc.description_de !== undefined && {
-            description_de: doc.description_de,
-          }),
-          ...(doc.supplierName !== undefined && {
-            supplierName: doc.supplierName,
-          }),
-          ...(doc.supplierLink !== undefined && {
-            supplierLink: doc.supplierLink,
-          }),
-          ...(doc.priceComment !== undefined && {
-            priceComment: doc.priceComment,
-          }),
-          ...(doc.stock !== undefined && { stock: doc.stock }),
-          ...(doc.price !== undefined && { price: doc.price }),
-          ...(doc.sizeLength !== undefined && { sizeLength: doc.sizeLength }),
-          ...(doc.sizeWidth !== undefined && { sizeWidth: doc.sizeWidth }),
-          ...(doc.weight !== undefined && { weight: doc.weight }),
-          ...(doc.length !== undefined && { length: doc.length }),
-          imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
-          createdAt: doc.createdAt ?? new Date(),
-          updatedAt: doc.updatedAt ?? new Date(),
-        },
-        create: {
-          id: doc.id ?? doc._id,
-          ...(doc.sku !== undefined && { sku: doc.sku }),
-          ...(doc.baseProductId !== undefined && {
-            baseProductId: doc.baseProductId,
-          }),
-          ...(doc.defaultPriceGroupId !== undefined && {
-            defaultPriceGroupId: doc.defaultPriceGroupId,
-          }),
-          ...(doc.ean !== undefined && { ean: doc.ean }),
-          ...(doc.gtin !== undefined && { gtin: doc.gtin }),
-          ...(doc.asin !== undefined && { asin: doc.asin }),
-          ...(doc.name_en !== undefined && { name_en: doc.name_en }),
-          ...(doc.name_pl !== undefined && { name_pl: doc.name_pl }),
-          ...(doc.name_de !== undefined && { name_de: doc.name_de }),
-          ...(doc.description_en !== undefined && {
-            description_en: doc.description_en,
-          }),
-          ...(doc.description_pl !== undefined && {
-            description_pl: doc.description_pl,
-          }),
-          ...(doc.description_de !== undefined && {
-            description_de: doc.description_de,
-          }),
-          ...(doc.supplierName !== undefined && {
-            supplierName: doc.supplierName,
-          }),
-          ...(doc.supplierLink !== undefined && {
-            supplierLink: doc.supplierLink,
-          }),
-          ...(doc.priceComment !== undefined && {
-            priceComment: doc.priceComment,
-          }),
-          ...(doc.stock !== undefined && { stock: doc.stock }),
-          ...(doc.price !== undefined && { price: doc.price }),
-          ...(doc.sizeLength !== undefined && { sizeLength: doc.sizeLength }),
-          ...(doc.sizeWidth !== undefined && { sizeWidth: doc.sizeWidth }),
-          ...(doc.weight !== undefined && { weight: doc.weight }),
-          ...(doc.length !== undefined && { length: doc.length }),
-          imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
-          createdAt: doc.createdAt ?? new Date(),
-          updatedAt: doc.updatedAt ?? new Date(),
-        },
-      });
-
-      const validImageIds: string[] = [];
-      const images = Array.isArray(doc.images) ? doc.images : [];
-      for (const image of images) {
-        if (existingImageIds.has(image.imageFileId)) {
-          validImageIds.push(image.imageFileId);
+          await prisma.catalog.update({
+            where: { id },
+            data: { defaultLanguageId: nextDefaultLanguageId },
+          });
+        } else {
+          await prisma.catalog.update({
+            where: { id },
+            data: { defaultLanguageId: null },
+          });
         }
       }
-      const validCatalogIds: string[] = [];
-      const catalogs = Array.isArray(doc.catalogs) ? doc.catalogs : [];
-      for (const catalog of catalogs) {
-        if (existingCatalogIds.has(catalog.catalogId)) {
-          validCatalogIds.push(catalog.catalogId);
+    }
+
+    const imageFileIds = new Set(imageFileMap.keys());
+    const catalogIds = new Set(catalogMap.keys());
+    const existingImages = await prisma.imageFile.findMany({
+      where: { id: { in: Array.from(imageFileIds) } },
+      select: { id: true },
+    });
+    const existingCatalogs = await prisma.catalog.findMany({
+      where: { id: { in: Array.from(catalogIds) } },
+      select: { id: true },
+    });
+    const existingImageIds = new Set(existingImages.map((img: { id: string }) => img.id));
+    const existingCatalogIds = new Set(existingCatalogs.map((cat: { id: string }) => cat.id));
+    const missingImageFileIds = Array.from(imageFileIds).filter(
+      (id: string) => !existingImageIds.has(id)
+    );
+    const missingCatalogIds = Array.from(catalogIds).filter(
+      (id: string) => !existingCatalogIds.has(id)
+    );
+
+    if (!dryRun) {
+      for (const doc of mongoDocs) {
+        await prisma.product.upsert({
+          where: { id: doc.id ?? doc._id },
+          update: {
+            ...(doc.sku !== undefined && { sku: doc.sku }),
+            ...(doc.baseProductId !== undefined && {
+              baseProductId: doc.baseProductId,
+            }),
+            ...(doc.defaultPriceGroupId !== undefined && {
+              defaultPriceGroupId: doc.defaultPriceGroupId,
+            }),
+            ...(doc.ean !== undefined && { ean: doc.ean }),
+            ...(doc.gtin !== undefined && { gtin: doc.gtin }),
+            ...(doc.asin !== undefined && { asin: doc.asin }),
+            ...(doc.name_en !== undefined && { name_en: doc.name_en }),
+            ...(doc.name_pl !== undefined && { name_pl: doc.name_pl }),
+            ...(doc.name_de !== undefined && { name_de: doc.name_de }),
+            ...(doc.description_en !== undefined && {
+              description_en: doc.description_en,
+            }),
+            ...(doc.description_pl !== undefined && {
+              description_pl: doc.description_pl,
+            }),
+            ...(doc.description_de !== undefined && {
+              description_de: doc.description_de,
+            }),
+            ...(doc.supplierName !== undefined && {
+              supplierName: doc.supplierName,
+            }),
+            ...(doc.supplierLink !== undefined && {
+              supplierLink: doc.supplierLink,
+            }),
+            ...(doc.priceComment !== undefined && {
+              priceComment: doc.priceComment,
+            }),
+            ...(doc.stock !== undefined && { stock: doc.stock }),
+            ...(doc.price !== undefined && { price: doc.price }),
+            ...(doc.sizeLength !== undefined && { sizeLength: doc.sizeLength }),
+            ...(doc.sizeWidth !== undefined && { sizeWidth: doc.sizeWidth }),
+            ...(doc.weight !== undefined && { weight: doc.weight }),
+            ...(doc.length !== undefined && { length: doc.length }),
+            imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
+            createdAt: doc.createdAt ?? new Date(),
+            updatedAt: doc.updatedAt ?? new Date(),
+          },
+          create: {
+            id: doc.id ?? doc._id,
+            ...(doc.sku !== undefined && { sku: doc.sku }),
+            ...(doc.baseProductId !== undefined && {
+              baseProductId: doc.baseProductId,
+            }),
+            ...(doc.defaultPriceGroupId !== undefined && {
+              defaultPriceGroupId: doc.defaultPriceGroupId,
+            }),
+            ...(doc.ean !== undefined && { ean: doc.ean }),
+            ...(doc.gtin !== undefined && { gtin: doc.gtin }),
+            ...(doc.asin !== undefined && { asin: doc.asin }),
+            ...(doc.name_en !== undefined && { name_en: doc.name_en }),
+            ...(doc.name_pl !== undefined && { name_pl: doc.name_pl }),
+            ...(doc.name_de !== undefined && { name_de: doc.name_de }),
+            ...(doc.description_en !== undefined && {
+              description_en: doc.description_en,
+            }),
+            ...(doc.description_pl !== undefined && {
+              description_pl: doc.description_pl,
+            }),
+            ...(doc.description_de !== undefined && {
+              description_de: doc.description_de,
+            }),
+            ...(doc.supplierName !== undefined && {
+              supplierName: doc.supplierName,
+            }),
+            ...(doc.supplierLink !== undefined && {
+              supplierLink: doc.supplierLink,
+            }),
+            ...(doc.priceComment !== undefined && {
+              priceComment: doc.priceComment,
+            }),
+            ...(doc.stock !== undefined && { stock: doc.stock }),
+            ...(doc.price !== undefined && { price: doc.price }),
+            ...(doc.sizeLength !== undefined && { sizeLength: doc.sizeLength }),
+            ...(doc.sizeWidth !== undefined && { sizeWidth: doc.sizeWidth }),
+            ...(doc.weight !== undefined && { weight: doc.weight }),
+            ...(doc.length !== undefined && { length: doc.length }),
+            imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
+            createdAt: doc.createdAt ?? new Date(),
+            updatedAt: doc.updatedAt ?? new Date(),
+          },
+        });
+
+        const validImageIds: string[] = [];
+        const images = Array.isArray(doc.images) ? doc.images : [];
+        for (const image of images) {
+          if (existingImageIds.has(image.imageFileId)) {
+            validImageIds.push(image.imageFileId);
+          }
+        }
+        const validCatalogIds: string[] = [];
+        const catalogs = Array.isArray(doc.catalogs) ? doc.catalogs : [];
+        for (const catalog of catalogs) {
+          if (existingCatalogIds.has(catalog.catalogId)) {
+            validCatalogIds.push(catalog.catalogId);
+          }
+        }
+
+        await prisma.productImage.deleteMany({ where: { productId: doc.id } });
+        if (validImageIds.length > 0) {
+          await prisma.productImage.createMany({
+            data: validImageIds.map((imageFileId: string) => ({
+              productId: doc.id,
+              imageFileId,
+            })),
+            skipDuplicates: true,
+          });
+        }
+
+        await prisma.productCatalog.deleteMany({ where: { productId: doc.id } });
+        if (validCatalogIds.length > 0) {
+          await prisma.productCatalog.createMany({
+            data: validCatalogIds.map((catalogId: string) => ({
+              productId: doc.id,
+              catalogId,
+            })),
+            skipDuplicates: true,
+          });
         }
       }
-
-      await prisma.productImage.deleteMany({ where: { productId: doc.id } });
-      if (validImageIds.length > 0) {
-        await prisma.productImage.createMany({
-          data: validImageIds.map((imageFileId: string) => ({
-            productId: doc.id,
-            imageFileId,
-          })),
-          skipDuplicates: true,
-        });
-      }
-
-      await prisma.productCatalog.deleteMany({ where: { productId: doc.id } });
-      if (validCatalogIds.length > 0) {
-        await prisma.productCatalog.createMany({
-          data: validCatalogIds.map((catalogId: string) => ({
-            productId: doc.id,
-            catalogId,
-          })),
-          skipDuplicates: true,
-        });
-      }
     }
-  }
 
-  const nextCursor =
+    const nextCursor =
     mongoDocs.length === batchSize
       ? mongoDocs[mongoDocs.length - 1]?._id ?? null
       : null;
-  return {
-    direction,
-    productsProcessed: mongoDocs.length,
-    productsUpserted: dryRun ? 0 : mongoDocs.length,
-    nextCursor,
-    missingImageFileIds,
-    missingCatalogIds,
-  };
+    return {
+      direction,
+      productsProcessed: mongoDocs.length,
+      productsUpserted: dryRun ? 0 : mongoDocs.length,
+      nextCursor,
+      missingImageFileIds,
+      missingCatalogIds,
+    };
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      service: 'product-migration',
+      direction,
+      cursor,
+    });
+    // Re-throw with enriched context for the job runner or API handler
+    throw new Error(`Migration batch failed [${direction}] at cursor ${cursor}: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }

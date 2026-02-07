@@ -3,7 +3,7 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { productService } from "@/features/products/server";
 import { getProductDataProvider } from "@/features/products/server";
-import { badRequestError } from "@/shared/errors/app-error";
+import { badRequestError, payloadTooLargeError } from "@/shared/errors/app-error";
 
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { validateProductCreateMiddleware } from "@/features/products/validations/middleware";
@@ -16,6 +16,17 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
  * Fetches a list of products with caching and performance monitoring.
  */
 const shouldLogTiming = () => process.env.DEBUG_API_TIMING === "true";
+
+const isLikelyPayloadTooLarge = (error: unknown): boolean => {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes("exceeded") ||
+    normalized.includes("too large") ||
+    normalized.includes("body limit") ||
+    normalized.includes("request entity too large")
+  );
+};
 
 const buildServerTiming = (entries: Record<string, number | null | undefined>): string => {
   const parts = Object.entries(entries)
@@ -75,6 +86,11 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   try {
     formData = await req.formData();
   } catch (error) {
+    if (isLikelyPayloadTooLarge(error)) {
+      throw payloadTooLargeError(
+        "Upload payload too large. Reduce image sizes/count or increase proxyClientMaxBodySize."
+      );
+    }
     throw badRequestError("Invalid form data payload", { error });
   }
 

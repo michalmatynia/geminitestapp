@@ -154,7 +154,7 @@ function ProductFormModal({
   onClose, 
   title, 
   submitButtonText,
-  closeOnSubmit = false,
+  closeOnSubmit: _closeOnSubmit = false,
 }: { 
   open: boolean;
   onClose: () => void;
@@ -181,9 +181,6 @@ function ProductFormModal({
         <Button
           onClick={() => {
             void handleSubmit();
-            if (closeOnSubmit) {
-              onClose();
-            }
           }}
           disabled={uploading}
           className="min-w-[100px] border border-white/20 hover:border-white/40"

@@ -25,7 +25,7 @@ export const isAiPathsRunSourceValue = (value: unknown): boolean => {
   return normalized
     ? AI_PATHS_RUN_SOURCE_VALUES.includes(
         normalized as (typeof AI_PATHS_RUN_SOURCE_VALUES)[number]
-      )
+    )
     : false;
 };
 
@@ -34,6 +34,6 @@ export const isAiPathsRunSourceTab = (value: unknown): boolean => {
   return normalized
     ? AI_PATHS_RUN_SOURCE_TABS.includes(
         normalized as (typeof AI_PATHS_RUN_SOURCE_TABS)[number]
-      )
+    )
     : false;
 };

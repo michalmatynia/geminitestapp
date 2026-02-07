@@ -14,10 +14,10 @@ import { cn } from '@/shared/utils';
 import { usePromptEngine } from '../context/PromptEngineContext';
 
 type PromptEngineToolbarProps = {
-  embedded?: boolean;
-  eyebrow?: string;
-  backLinkHref?: string;
-  backLinkLabel?: string;
+  embedded?: boolean | undefined;
+  eyebrow?: string | undefined;
+  backLinkHref?: string | undefined;
+  backLinkLabel?: string | undefined;
 };
 
 export function PromptEngineToolbar({

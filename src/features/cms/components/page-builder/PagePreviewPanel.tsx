@@ -20,7 +20,8 @@ import {
 
 import { MediaLibraryPanel } from './MediaLibraryPanel';
 import { PageSelectorBar } from './PageSelectorBar';
-import { PreviewEditorPreferencesProvider, PreviewSection, type MediaReplaceTarget } from './PreviewBlock';
+import { PreviewEditorProvider } from './preview/context/PreviewEditorContext';
+import { PreviewSection, type MediaReplaceTarget } from './PreviewBlock';
 import { useThemeSettings } from './ThemeSettingsContext';
 import { VectorOverlay } from './VectorOverlay';
 import { useCmsDomainSelection } from '../../hooks/useCmsDomainSelection';
@@ -182,6 +183,45 @@ export function PagePreviewPanel(): React.ReactNode {
   );
 
   const effectiveHoveredNodeId = state.inspectorEnabled ? hoveredNodeId : null;
+
+  const handleOpenMedia = useCallback((target: MediaReplaceTarget): void => {
+    setMediaTarget(target);
+    setMediaOpen(true);
+  }, []);
+
+  const previewEditorValue = useMemo(
+    () => ({
+      selectedNodeId: state.selectedNodeId,
+      isInspecting: state.inspectorEnabled,
+      inspectorSettings: state.inspectorSettings,
+      hoveredNodeId: effectiveHoveredNodeId,
+      onSelect: handleSelectNode,
+      onHoverNode: handleHoverNode,
+      onOpenMedia: handleOpenMedia,
+      onRemoveSection: (sectionId: string) =>
+        dispatch({ type: 'REMOVE_SECTION', sectionId }),
+      onToggleSectionVisibility: (sectionId: string, isHidden: boolean) =>
+        dispatch({
+          type: 'UPDATE_SECTION_SETTINGS',
+          sectionId,
+          settings: { isHidden },
+        }),
+      onRemoveRow: (sectionId: string, rowId: string) =>
+        dispatch({ type: 'REMOVE_GRID_ROW', sectionId, rowId }),
+      pauseSlideshowOnHoverInEditor,
+    }),
+    [
+      state.selectedNodeId,
+      state.inspectorEnabled,
+      state.inspectorSettings,
+      effectiveHoveredNodeId,
+      handleSelectNode,
+      handleHoverNode,
+      handleOpenMedia,
+      dispatch,
+      pauseSlideshowOnHoverInEditor,
+    ],
+  );
   const isVectorOverlayOpen = Boolean(vectorOverlay);
 
   const handleSave = useCallback(async (): Promise<void> => {
@@ -251,11 +291,6 @@ export function PagePreviewPanel(): React.ReactNode {
       toast('Save before preview failed. Try again.', { variant: 'error' });
     }
   }, [handleSave, state.currentPage, toast, previewUrl, previewFallbackUrl, slugsQuery.isLoading, previewDraftsEnabled, previewHostMatches]);
-
-  const handleOpenMedia = useCallback((target: MediaReplaceTarget): void => {
-    setMediaTarget(target);
-    setMediaOpen(true);
-  }, []);
 
   const handleMediaOpenChange = useCallback((open: boolean): void => {
     setMediaOpen(open);
@@ -668,7 +703,7 @@ export function PagePreviewPanel(): React.ReactNode {
                 }}
               >
                 <div style={contentStyle} className={isVectorOverlayOpen ? 'pointer-events-none' : ''}>
-                  <PreviewEditorPreferencesProvider value={{ pauseSlideshowOnHoverInEditor }}>
+                  <PreviewEditorProvider value={previewEditorValue}>
                     {ZONE_ORDER.map((zone: PageZone) => {
                       const zoneSections = sectionsByZone[zone];
                       if (zoneSections.length === 0) return null;
@@ -682,29 +717,15 @@ export function PagePreviewPanel(): React.ReactNode {
                                 key={section.id}
                                 section={section}
                                 layout={{ fullWidth: theme.fullWidth }}
-                                selectedNodeId={state.selectedNodeId}
-                                isInspecting={state.inspectorEnabled}
-                                inspectorSettings={state.inspectorSettings}
-                                hoveredNodeId={effectiveHoveredNodeId}
                                 colorSchemes={colorSchemes || {}}
                                 mediaStyles={mediaStyles}
-                                onSelect={handleSelectNode}
-                                onHoverNode={handleHoverNode}
-                                onOpenMedia={handleOpenMedia}
-                                onRemoveSection={(sectionId: string) => dispatch({ type: 'REMOVE_SECTION', sectionId })}
-                                onToggleSectionVisibility={(sectionId: string, isHidden: boolean) =>
-                                  dispatch({ type: 'UPDATE_SECTION_SETTINGS', sectionId, settings: { isHidden } })
-                                }
-                                onRemoveRow={(sectionId: string, rowId: string) =>
-                                  dispatch({ type: 'REMOVE_GRID_ROW', sectionId, rowId })
-                                }
                               />
                             ))}
                           </div>
                         </div>
                       );
                     })}
-                  </PreviewEditorPreferencesProvider>
+                  </PreviewEditorProvider>
                 </div>
                 {vectorOverlay ? (
                   <VectorOverlay request={vectorOverlay} onClose={closeVectorOverlay} />

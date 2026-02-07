@@ -11,8 +11,9 @@ import { useToast } from '@/shared/ui';
 
 import { usePageBuilder } from '../../hooks/usePageBuilderContext';
 import { extractCssFromResponse, extractJsonFromResponse } from '../utils/ai-helpers';
-import type { CustomCssAiConfig, CustomCssAiProvider } from '../../types/custom-css-ai';
-import type { BlockInstance, SectionInstance } from '../../types/page-builder';
+
+import type { CustomCssAiConfig } from '../../../types/custom-css-ai';
+import type { BlockInstance, SectionInstance } from '../../../types/page-builder';
 
 // ---------------------------------------------------------------------------
 // Context & Types
@@ -300,14 +301,14 @@ export function InspectorAiProvider({
 
   const pageContextPreview = useMemo((): string => {
     if (!contextPreviewOpen) return '';
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+     
     contextPreviewNonce; // subscription
     return buildPageContext(contextPreviewFull ? null : undefined);
   }, [contextPreviewOpen, contextPreviewFull, contextPreviewNonce, buildPageContext]);
 
   const elementContextPreview = useMemo((): string => {
     if (!contextPreviewOpen) return '';
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+     
     contextPreviewNonce; // subscription
     return buildElementContext(contextPreviewFull ? null : undefined);
   }, [contextPreviewOpen, contextPreviewFull, contextPreviewNonce, buildElementContext]);

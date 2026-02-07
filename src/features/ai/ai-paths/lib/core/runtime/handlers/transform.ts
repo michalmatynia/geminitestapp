@@ -1,3 +1,4 @@
+import { ErrorSystem } from '@/features/observability/server';
 import type { RegexConfig, RuntimePortValues, StringMutatorOperation } from '@/shared/types/ai-paths';
 import type { NodeHandler, NodeHandlerContext } from '@/shared/types/ai-paths-runtime';
 
@@ -54,113 +55,123 @@ export const handleParser: NodeHandler = ({
   resolvedEntity,
   fallbackEntityId,
 }: NodeHandlerContext): RuntimePortValues => {
-  const contextInput = coerceInput(nodeInputs.context);
-  const contextEntity =
-    contextInput && typeof contextInput === 'object'
-      ? ((contextInput as Record<string, unknown>).entity as
-          | Record<string, unknown>
-          | undefined) ??
-        ((contextInput as Record<string, unknown>).entityJson as
-          | Record<string, unknown>
-          | undefined) ??
-        ((contextInput as Record<string, unknown>).product as
-          | Record<string, unknown>
-          | undefined)
-      : undefined;
-  const source =
-    (coerceInput(nodeInputs.entityJson) as Record<string, unknown> | undefined) ??
-    contextEntity ??
-    (resolvedEntity ?? undefined) ??
-    (fallbackEntityId ? buildFallbackEntity(fallbackEntityId) : undefined);
+  try {
+    const contextInput = coerceInput(nodeInputs.context);
+    const contextEntity =
+      contextInput && typeof contextInput === 'object'
+        ? ((contextInput as Record<string, unknown>).entity as
+            | Record<string, unknown>
+            | undefined) ??
+          ((contextInput as Record<string, unknown>).entityJson as
+            | Record<string, unknown>
+            | undefined) ??
+          ((contextInput as Record<string, unknown>).product as
+            | Record<string, unknown>
+            | undefined)
+        : undefined;
+    const source =
+      (coerceInput(nodeInputs.entityJson) as Record<string, unknown> | undefined) ??
+      contextEntity ??
+      (resolvedEntity ?? undefined) ??
+      (fallbackEntityId ? buildFallbackEntity(fallbackEntityId) : undefined);
 
-  if (!source) {
-    return {};
-  }
-  const parserConfig = node.config?.parser;
-  const mappings = parserConfig?.mappings ?? {};
-  const outputMode = parserConfig?.outputMode ?? 'individual';
-  const hasMappings = Object.keys(mappings).some((key: string): boolean => !!key.trim());
-  const isEmptyValue = (value: unknown): boolean =>
-    value === undefined ||
-    value === null ||
-    (typeof value === 'string' && value.trim() === '') ||
-    (Array.isArray(value) && value.length === 0);
-  
-  const fallbackForKey = (key: string): unknown => {
-    const normalized = key.trim().toLowerCase();
-    if (normalized === 'title' || normalized === 'name') {
-      return (
-        source['title'] ??
-        source['name'] ??
-        source['name_en'] ??
-        source['name_pl'] ??
-        source['label'] ??
-        source['productName']
-      );
+    if (!source) {
+      return {};
     }
-    if (normalized === 'images' || normalized === 'imageurls') {
-      return (
-        source['images'] ??
-        source['imageLinks'] ??
-        source['media'] ??
-        source['gallery'] ??
-        source['imageFiles'] ??
-        source['photos']
-      );
-    }
-    if (
-      normalized === 'productid' ||
-      normalized === 'entityid' ||
-      normalized === 'id'
-    ) {
-      return (
-        source['id'] ??
-        source['_id'] ??
-        source['productId'] ??
-        source['entityId']
-      );
-    }
-    if (normalized === 'content_en' || normalized === 'description_en') {
-      return (
-        source['content_en'] ??
-        source['description_en'] ??
-        source['description'] ??
-        source['content']
-      );
-    }
-    return undefined;
-  };
-
-  const parsed: RuntimePortValues = {};
-  Object.keys(mappings).forEach((output: string): void => {
-    const key = output.trim();
-    if (!key) return;
-    const mapping = mappings[output]?.trim() ?? '';
-    const value = mapping
-      ? getValueAtMappingPath(source, mapping)
-      : source[key];
-    const resolved =
-      isEmptyValue(value) ? fallbackForKey(key) ?? value : value;
-    if (resolved !== undefined) {
-      parsed[key] = resolved;
-    }
-  });
-
-  if (outputMode === 'bundle') {
-    if (!hasMappings || Object.keys(parsed).length === 0) {
-      const fullBundle =
-        typeof source === 'object' && source !== null ? source : {};
-      return { bundle: fullBundle };
-    }
-    const extraOutputs = node.outputs.reduce<Record<string, unknown>>((acc: Record<string, unknown>, output: string): Record<string, unknown> => {
-      if (output !== 'bundle' && parsed[output] !== undefined) {
-        acc[output] = parsed[output];
+    const parserConfig = node.config?.parser;
+    const mappings = parserConfig?.mappings ?? {};
+    const outputMode = parserConfig?.outputMode ?? 'individual';
+    const hasMappings = Object.keys(mappings).some((key: string): boolean => !!key.trim());
+    const isEmptyValue = (value: unknown): boolean =>
+      value === undefined ||
+      value === null ||
+      (typeof value === 'string' && value.trim() === '') ||
+      (Array.isArray(value) && value.length === 0);
+    
+    const fallbackForKey = (key: string): unknown => {
+      const normalized = key.trim().toLowerCase();
+      if (normalized === 'title' || normalized === 'name') {
+        return (
+          source['title'] ??
+          source['name'] ??
+          source['name_en'] ??
+          source['name_pl'] ??
+          source['label'] ??
+          source['productName']
+        );
       }
-      return acc;
-    }, {});
-    return { bundle: parsed, ...extraOutputs };
-  } else {
-    return parsed;
+      if (normalized === 'images' || normalized === 'imageurls') {
+        return (
+          source['images'] ??
+          source['imageLinks'] ??
+          source['media'] ??
+          source['gallery'] ??
+          source['imageFiles'] ??
+          source['photos']
+        );
+      }
+      if (
+        normalized === 'productid' ||
+        normalized === 'entityid' ||
+        normalized === 'id'
+      ) {
+        return (
+          source['id'] ??
+          source['_id'] ??
+          source['productId'] ??
+          source['entityId']
+        );
+      }
+      if (normalized === 'content_en' || normalized === 'description_en') {
+        return (
+          source['content_en'] ??
+          source['description_en'] ??
+          source['description'] ??
+          source['content']
+        );
+      }
+      return undefined;
+    };
+
+    const parsed: RuntimePortValues = {};
+    Object.keys(mappings).forEach((output: string): void => {
+      const key = output.trim();
+      if (!key) return;
+      const mapping = mappings[output]?.trim() ?? '';
+      const value = mapping
+        ? getValueAtMappingPath(source, mapping)
+        : source[key];
+      const resolved =
+        isEmptyValue(value) ? fallbackForKey(key) ?? value : value;
+      if (resolved !== undefined) {
+        parsed[key] = resolved;
+      }
+    });
+
+    if (outputMode === 'bundle') {
+      if (!hasMappings || Object.keys(parsed).length === 0) {
+        const fullBundle =
+          typeof source === 'object' && source !== null ? source : {};
+        return { bundle: fullBundle };
+      }
+      const extraOutputs = node.outputs.reduce<Record<string, unknown>>((acc: Record<string, unknown>, output: string): Record<string, unknown> => {
+        if (output !== 'bundle' && parsed[output] !== undefined) {
+          acc[output] = parsed[output];
+        }
+        return acc;
+      }, {});
+      return { bundle: parsed, ...extraOutputs };
+    } else {
+      return parsed;
+    }
+  } catch (error) {
+    void ErrorSystem.logWarning(`Node ${node.id} failed`, {
+      service: 'ai-paths-runtime',
+      nodeId: node.id,
+      nodeType: node.type,
+      error: error instanceof Error ? error.message : String(error)
+    });
+    return {};
   }
 };
 
@@ -172,75 +183,85 @@ export const handleMapper: NodeHandler = ({
   runId,
   toast,
 }: NodeHandlerContext): RuntimePortValues => {
-  const sources = {
-    context: coerceInput(nodeInputs.context),
-    result: coerceInput(nodeInputs.result),
-    bundle: coerceInput(nodeInputs.bundle),
-    value: coerceInput(nodeInputs.value),
-  };
-  const contextValue =
-    sources.context ??
-    sources.result ??
-    sources.bundle ??
-    sources.value;
-  if (contextValue === undefined) return {};
+  try {
+    const sources = {
+      context: coerceInput(nodeInputs.context),
+      result: coerceInput(nodeInputs.result),
+      bundle: coerceInput(nodeInputs.bundle),
+      value: coerceInput(nodeInputs.value),
+    };
+    const contextValue =
+      sources.context ??
+      sources.result ??
+      sources.bundle ??
+      sources.value;
+    if (contextValue === undefined) return {};
 
-  const sourcePathPattern = /^(context|result|bundle|value)(?:\.|\[|$)/;
-  const resolveMappedValue = (path: string): unknown => {
-    if (!path) return undefined;
-    if (sourcePathPattern.test(path)) {
+    const sourcePathPattern = /^(context|result|bundle|value)(?:\.|\[|$)/;
+    const resolveMappedValue = (path: string): unknown => {
+      if (!path) return undefined;
+      if (sourcePathPattern.test(path)) {
+        return getValueAtMappingPath(sources, path);
+      }
+      const fromContext = getValueAtMappingPath(contextValue, path);
+      if (fromContext !== undefined) return fromContext;
       return getValueAtMappingPath(sources, path);
-    }
-    const fromContext = getValueAtMappingPath(contextValue, path);
-    if (fromContext !== undefined) return fromContext;
-    return getValueAtMappingPath(sources, path);
-  };
+    };
 
-  const mapperConfig = node.config?.mapper ?? {
-    outputs: node.outputs,
-    mappings: {},
-  };
-  const mapped: RuntimePortValues = {};
-  const unresolvedMappings: string[] = [];
-  const connectedOutputPorts = new Set<string>(
-    edges
-      .filter((edge) => edge.from === node.id && typeof edge.fromPort === 'string')
-      .map((edge) => edge.fromPort as string)
-  );
+    const mapperConfig = node.config?.mapper ?? {
+      outputs: node.outputs,
+      mappings: {},
+    };
+    const mapped: RuntimePortValues = {};
+    const unresolvedMappings: string[] = [];
+    const connectedOutputPorts = new Set<string>(
+      edges
+        .filter((edge) => edge.from === node.id && typeof edge.fromPort === 'string')
+        .map((edge) => edge.fromPort as string)
+    );
 
-  mapperConfig.outputs.forEach((output: string): void => {
-    const mapping = mapperConfig.mappings?.[output]?.trim() ?? '';
-    const value = mapping
-      ? resolveMappedValue(mapping)
-      : output === 'value'
-        ? contextValue
-        : resolveMappedValue(output);
-    if (value !== undefined) {
-      mapped[output] = value;
-      return;
-    }
-    if (!mapping) return;
-    if (connectedOutputPorts.size > 0 && connectedOutputPorts.has(output)) {
-      unresolvedMappings.push(`${output} <- ${mapping}`);
-    }
-  });
+    mapperConfig.outputs.forEach((output: string): void => {
+      const mapping = mapperConfig.mappings?.[output]?.trim() ?? '';
+      const value = mapping
+        ? resolveMappedValue(mapping)
+        : output === 'value'
+          ? contextValue
+          : resolveMappedValue(output);
+      if (value !== undefined) {
+        mapped[output] = value;
+        return;
+      }
+      if (!mapping) return;
+      if (connectedOutputPorts.size > 0 && connectedOutputPorts.has(output)) {
+        unresolvedMappings.push(`${output} <- ${mapping}`);
+      }
+    });
 
-  if (unresolvedMappings.length > 0) {
-    const key = `${runId}:${node.id}:${unresolvedMappings.join('|')}`;
-    if (!executed.mapper.has(key)) {
-      executed.mapper.add(key);
-      const preview = unresolvedMappings.slice(0, 2).join(', ');
-      const suffix =
-        unresolvedMappings.length > 2
-          ? ` and ${unresolvedMappings.length - 2} more`
-          : '';
-      toast(
-        `JSON Mapper "${node.title ?? node.id}" could not resolve mapping(s): ${preview}${suffix}.`,
-        { variant: 'info' }
-      );
+    if (unresolvedMappings.length > 0) {
+      const key = `${runId}:${node.id}:${unresolvedMappings.join('|')}`;
+      if (!executed.mapper.has(key)) {
+        executed.mapper.add(key);
+        const preview = unresolvedMappings.slice(0, 2).join(', ');
+        const suffix =
+          unresolvedMappings.length > 2
+            ? ` and ${unresolvedMappings.length - 2} more`
+            : '';
+        toast(
+          `JSON Mapper "${node.title ?? node.id}" could not resolve mapping(s): ${preview}${suffix}.`,
+          { variant: 'info' }
+        );
+      }
     }
+    return mapped;
+  } catch (error) {
+    void ErrorSystem.logWarning(`Node ${node.id} failed`, {
+      service: 'ai-paths-runtime',
+      nodeId: node.id,
+      nodeType: node.type,
+      error: error instanceof Error ? error.message : String(error)
+    });
+    return {};
   }
-  return mapped;
 };
 
 export const handleMutator: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {

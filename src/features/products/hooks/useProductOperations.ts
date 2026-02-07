@@ -39,16 +39,12 @@ export function useProductOperations(
   const [actionError, setActionError] = useState<string | null>(null);
 
   const handleOpenCreateModal = async (): Promise<void> => {
+    setActionError(null);
     const skuInput = window.prompt('Enter a new unique SKU:');
     if (skuInput === null) return;
     const sku = skuInput.trim().toUpperCase();
-    const skuPattern = /^[A-Z0-9]+$/;
     if (!sku) {
       setActionError('SKU is required.');
-      return;
-    }
-    if (!skuPattern.test(sku)) {
-      setActionError('SKU must use uppercase letters and numbers only.');
       return;
     }
     try {
@@ -70,8 +66,10 @@ export function useProductOperations(
       }
     } catch (error) {
       logClientError(error, { context: { source: 'useProductOperations', action: 'validateSku', sku } });
-      setActionError(error instanceof Error ? error.message : 'Failed to validate SKU. Please try again.');
-      return;
+      toast(
+        'SKU pre-check failed. You can continue; uniqueness will be validated on save.',
+        { variant: 'info' }
+      );
     }
     setInitialSku(sku);
     setIsCreateOpen(true);

@@ -2,6 +2,10 @@ import 'server-only';
 
 import { Prisma } from '@prisma/client';
 
+import {
+  AI_PATHS_RUN_SOURCE_TABS,
+  AI_PATHS_RUN_SOURCE_VALUES,
+} from '@/features/ai/ai-paths/lib/run-sources';
 import type {
   AiPathRunCreateInput,
   AiPathRunEventCreateInput,
@@ -10,10 +14,6 @@ import type {
   AiPathRunUpdate,
   AiPathRunNodeUpdate,
 } from '@/features/ai/ai-paths/types/path-run-repository';
-import {
-  AI_PATHS_RUN_SOURCE_TABS,
-  AI_PATHS_RUN_SOURCE_VALUES,
-} from '@/features/ai/ai-paths/lib/run-sources';
 import prisma from '@/shared/lib/db/prisma';
 import type {
   AiPathRunEventRecord,

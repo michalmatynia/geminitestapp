@@ -13,7 +13,7 @@ import {
 export function ProductListingsStartPanel({ 
   onStartListing 
 }: { 
-  onStartListing?: (integrationId: string, connectionId: string) => void 
+  onStartListing?: ((integrationId: string, connectionId: string) => void) | undefined 
 }): React.JSX.Element {
   const {
     integrations,

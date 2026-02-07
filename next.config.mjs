@@ -17,6 +17,11 @@ const csp = [
 const nextConfig = {
   reactStrictMode: true,
   output: "standalone", // Docker-friendly build output
+  experimental: {
+    // Default proxy body clone limit (~10MB) is too low for multi-image product forms.
+    // Raise it so multipart requests don't fail before route handlers read formData().
+    proxyClientMaxBodySize: "50mb",
+  },
   serverExternalPackages: [
     '@prisma/client',
     'bcrypt',

@@ -6,6 +6,7 @@ import { useCallback, useRef, useState, useEffect } from 'react';
 
 
 
+import { logClientError } from '@/features/observability/utils/client-error-logger';
 import type {
   ProductWithImages,
   ProductFormData,
@@ -175,20 +176,20 @@ export function useProductFormSubmit({
     setUploadError(null);
     setUploadSuccess(false);
 
-    const formData = buildFormData(
-      data,
-      imageSlots,
-      imageLinks,
-      imageBase64s,
-      selectedCatalogIds,
-      selectedCategoryId,
-      selectedTagIds,
-      selectedProducerIds,
-      selectedNoteIds,
-      parameterValues,
-    );
-
     try {
+      const formData = buildFormData(
+        data,
+        imageSlots,
+        imageLinks,
+        imageBase64s,
+        selectedCatalogIds,
+        selectedCategoryId,
+        selectedTagIds,
+        selectedProducerIds,
+        selectedNoteIds,
+        parameterValues,
+      );
+
       const savedProduct = product
         ? await updateMutation.mutateAsync({ id: product.id, data: formData })
         : await createMutation.mutateAsync(formData);
@@ -226,6 +227,13 @@ export function useProductFormSubmit({
         router.refresh();
       }
     } catch (error: unknown) {
+      logClientError(error, {
+        context: {
+          service: 'product-form',
+          action: 'submit',
+          productId: product?.id,
+        },
+      });
       if (error instanceof Error) {
         setUploadError(error.message);
       } else {

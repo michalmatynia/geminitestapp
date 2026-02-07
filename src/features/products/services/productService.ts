@@ -89,10 +89,16 @@ async function getProducts(
                 fsChecks += 1;
                 await fs.access(getDiskPathFromPublicPath(filepath));
                 return image;
-              } catch {
+              } catch (error) {
+                // Log warning but don't fail the request. The image record exists but file is missing.
+                void ErrorSystem.logWarning(`Missing image file: ${filepath}`, {
+                  service: 'productService',
+                  action: 'getProducts',
+                  filepath,
+                  error: error instanceof Error ? error.message : String(error)
+                });
                 return null;
-              }
-            },
+              }            },
           ),
         );
 
@@ -339,60 +345,77 @@ async function unlinkImageFromProduct(
   productId: string,
   imageFileId: string,
 ): Promise<null> {
-  const productRepository = await resolveProductRepository();
-  const imageFileRepository = await resolveImageFileRepository();
-  await productRepository.removeProductImage(productId, imageFileId);
-  const remainingLinks =
-    await productRepository.countProductsByImageFileId(imageFileId);
+  try {
+    const productRepository = await resolveProductRepository();
+    const imageFileRepository = await resolveImageFileRepository();
+    await productRepository.removeProductImage(productId, imageFileId);
+    const remainingLinks =
+      await productRepository.countProductsByImageFileId(imageFileId);
 
-  if (remainingLinks === 0) {
-    const imageFile = await imageFileRepository.getImageFileById(imageFileId);
+    if (remainingLinks === 0) {
+      const imageFile = await imageFileRepository.getImageFileById(imageFileId);
 
-    if (imageFile) {
-      const isExternal = /^https?:\/\//i.test(imageFile.filepath);
-      if (!isExternal) {
-        try {
-          await fs.unlink(getDiskPathFromPublicPath(imageFile.filepath));
-        } catch (error: unknown) {
-          if (
-            error instanceof Error &&
-            (error as NodeJS.ErrnoException).code !== 'ENOENT'
-          ) {
-            throw error;
-          }
-        }
-      }
-
-      await imageFileRepository.deleteImageFile(imageFileId);
-
-      if (!isExternal) {
-        const folderDiskPath = path.dirname(
-          getDiskPathFromPublicPath(imageFile.filepath),
-        );
-        if (
-          folderDiskPath.startsWith(
-            path.join(process.cwd(), 'public', 'uploads', 'products'),
-          )
-        ) {
+      if (imageFile) {
+        const isExternal = /^https?:\/\//i.test(imageFile.filepath);
+        if (!isExternal) {
           try {
-            const folderContents = await fs.readdir(folderDiskPath);
-            if (folderContents.length === 0) {
-              await fs.rmdir(folderDiskPath);
-            }
+            await fs.unlink(getDiskPathFromPublicPath(imageFile.filepath));
           } catch (error: unknown) {
             if (
               error instanceof Error &&
               (error as NodeJS.ErrnoException).code !== 'ENOENT'
             ) {
-              throw error;
+              await ErrorSystem.logWarning('Failed to unlink image file', {
+                filepath: imageFile.filepath,
+                error: error instanceof Error ? error.message : String(error)
+              });
+              // Continue to delete the DB record even if file unlink failed (orphaned file is better than broken DB link)
+            }
+          }
+        }
+
+        await imageFileRepository.deleteImageFile(imageFileId);
+
+        if (!isExternal) {
+          const folderDiskPath = path.dirname(
+            getDiskPathFromPublicPath(imageFile.filepath),
+          );
+          if (
+            folderDiskPath.startsWith(
+              path.join(process.cwd(), 'public', 'uploads', 'products'),
+            )
+          ) {
+            try {
+              const folderContents = await fs.readdir(folderDiskPath);
+              if (folderContents.length === 0) {
+                await fs.rmdir(folderDiskPath);
+              }
+            } catch (error: unknown) {
+              if (
+                error instanceof Error &&
+                (error as NodeJS.ErrnoException).code !== 'ENOENT'
+              ) {
+                await ErrorSystem.logWarning('Failed to remove image folder', {
+                  folderPath: folderDiskPath,
+                  error: error instanceof Error ? error.message : String(error)
+                });
+              }
             }
           }
         }
       }
     }
-  }
 
-  return null;
+    return null;
+  } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: 'productService',
+      action: 'unlinkImageFromProduct',
+      productId,
+      imageFileId,
+    });
+    throw error;
+  }
 }
 
 /**
@@ -557,33 +580,52 @@ async function moveTempImageFilesToSku(
   imageFileIds: string[],
   sku: string,
 ): Promise<void> {
-  const imageFileRepository = await resolveImageFileRepository();
-  const imageFiles =
-    await imageFileRepository.findImageFilesByIds(imageFileIds);
+  try {
+    const imageFileRepository = await resolveImageFileRepository();
+    const imageFiles =
+      await imageFileRepository.findImageFilesByIds(imageFileIds);
 
-  for (const imageFile of imageFiles) {
-    if (!imageFile.filepath.startsWith(tempProductPathPrefix)) {
-      continue;
+    for (const imageFile of imageFiles) {
+      if (!imageFile.filepath.startsWith(tempProductPathPrefix)) {
+        continue;
+      }
+
+      const filename = imageFile.filepath.slice(tempProductPathPrefix.length);
+      const safeSku = sku.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
+      const targetPublicDir = `/uploads/products/${safeSku}`;
+      const targetPublicPath = `${targetPublicDir}/${filename}`;
+
+      try {
+        await fs.mkdir(
+          path.join(process.cwd(), 'public', 'uploads', 'products', safeSku),
+          { recursive: true },
+        );
+        await fs.rename(
+          getDiskPathFromPublicPath(imageFile.filepath),
+          getDiskPathFromPublicPath(targetPublicPath),
+        );
+
+        await imageFileRepository.updateImageFilePath(
+          imageFile.id,
+          targetPublicPath,
+        );
+      } catch (fileError) {
+        await ErrorSystem.logWarning(`Failed to move temp image for SKU ${sku}`, {
+          imageId: imageFile.id,
+          sourcePath: imageFile.filepath,
+          error: fileError instanceof Error ? fileError.message : String(fileError)
+        });
+        // Continue loop to try moving other images
+      }
     }
-
-    const filename = imageFile.filepath.slice(tempProductPathPrefix.length);
-    const safeSku = sku.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
-    const targetPublicDir = `/uploads/products/${safeSku}`;
-    const targetPublicPath = `${targetPublicDir}/${filename}`;
-
-    await fs.mkdir(
-      path.join(process.cwd(), 'public', 'uploads', 'products', safeSku),
-      { recursive: true },
-    );
-    await fs.rename(
-      getDiskPathFromPublicPath(imageFile.filepath),
-      getDiskPathFromPublicPath(targetPublicPath),
-    );
-
-    await imageFileRepository.updateImageFilePath(
-      imageFile.id,
-      targetPublicPath,
-    );
+  } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: 'productService',
+      action: 'moveTempImageFilesToSku',
+      sku,
+      imageFileIdsCount: imageFileIds.length
+    });
+    // Don't throw, just log. This is a maintenance task and shouldn't fail the user request if possible.
   }
 }
 

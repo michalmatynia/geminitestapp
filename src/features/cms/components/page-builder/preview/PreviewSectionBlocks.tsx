@@ -3,29 +3,14 @@
 import { Image as ImageIcon } from 'lucide-react';
 import NextImage from 'next/image';
 
-
-
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
 
+import { usePreviewEditor } from './context/PreviewEditorContext';
 import { getSpacingValue, resolveJustifyContent, resolveAlignItems } from './preview-utils';
 import { getSectionStyles, getTextAlign } from '../../frontend/theme-styles';
 
-import type { MediaReplaceTarget } from './preview-utils';
-import type { BlockInstance, InspectorSettings, PageZone } from '../../../types/page-builder';
-
-// ---------------------------------------------------------------------------
-// Shared props for section-type block renderers
-// ---------------------------------------------------------------------------
-
-export interface PreviewSectionBlockProps {
-  block: BlockInstance;
-  sectionId: string;
-  sectionType?: string | undefined;
-  sectionZone?: PageZone | undefined;
-  columnId?: string | undefined;
-  stretch?: boolean | undefined;
-  mediaStyles?: React.CSSProperties | null | undefined;
-}
+import type { PreviewSectionBlockProps, PreviewBlockItemProps } from './types';
+import type { BlockInstance } from '../../../types/page-builder';
 
 // ---------------------------------------------------------------------------
 // PreviewBlockItem is needed as a dependency - import it lazily to avoid circular deps
@@ -36,17 +21,16 @@ export interface PreviewSectionBlockProps {
 // To avoid circular imports, we use a late-binding pattern.
 let _PreviewBlockItem: React.ComponentType<PreviewBlockItemProps> | null = null;
 
-
-
 export function registerPreviewBlockItem(component: React.ComponentType<PreviewBlockItemProps>): void {
   _PreviewBlockItem = component;
 }
 
-function PreviewBlockItemProxy(props: PreviewBlockItemProps): React.ReactNode {
+function PreviewBlockItemProxy(props: Omit<PreviewBlockItemProps, 'isInspecting' | 'inspectorSettings' | 'hoveredNodeId' | 'onSelect' | 'onHoverNode' | 'onOpenMedia'>): React.ReactNode {
   if (!_PreviewBlockItem) {
     throw new Error('PreviewBlockItem has not been registered. Call registerPreviewBlockItem first.');
   }
-  return <_PreviewBlockItem {...props} />;
+  const { isInspecting, inspectorSettings, hoveredNodeId, onSelect, onHoverNode, onOpenMedia } = usePreviewEditor();
+  return <_PreviewBlockItem {...props} isInspecting={isInspecting} inspectorSettings={inspectorSettings} hoveredNodeId={hoveredNodeId} onSelect={onSelect} onHoverNode={onHoverNode} onOpenMedia={onOpenMedia} />;
 }
 
 // ---------------------------------------------------------------------------
@@ -64,18 +48,13 @@ export function PreviewImageWithTextBlock({
 }: PreviewSectionBlockProps): React.ReactNode {
   const {
     selectedNodeId,
-    isInspecting = false,
     inspectorSettings,
-    hoveredNodeId,
-    onSelect,
-    onHoverNode,
-    onOpenMedia,
   } = usePreviewEditor();
   const placement = block.settings['desktopImagePlacement'] as string | undefined;
   const imageFirst = placement !== 'image-second';
   const children = block.blocks ?? [];
   const blockImage = block.settings['image'] as string | undefined;
-  const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
+  const showEditorChrome = inspectorSettings?.showEditorChrome ?? false;
 
   const stretchClass = stretch ? 'h-full' : '';
   const stretchStyle = stretch ? { height: '100%' } : undefined;
@@ -108,11 +87,6 @@ export function PreviewImageWithTextBlock({
               key={child.id}
               block={child}
               isSelected={selectedNodeId === child.id}
-              isInspecting={isInspecting}
-              inspectorSettings={inspectorSettings}
-              hoveredNodeId={hoveredNodeId}
-              onHoverNode={onHoverNode}
-              onSelect={onSelect}
               contained
               selectedNodeId={selectedNodeId}
               sectionId={sectionId}
@@ -120,7 +94,6 @@ export function PreviewImageWithTextBlock({
               sectionZone={sectionZone}
               columnId={columnId}
               parentBlockId={block.id}
-              onOpenMedia={onOpenMedia}
               mediaStyles={mediaStyles}
             />
           ))
@@ -147,12 +120,6 @@ export function PreviewHeroBlock({
 }: PreviewSectionBlockProps): React.ReactNode {
   const {
     selectedNodeId,
-    isInspecting = false,
-    inspectorSettings,
-    hoveredNodeId,
-    onSelect,
-    onHoverNode,
-    onOpenMedia,
   } = usePreviewEditor();
   const children = block.blocks ?? [];
   const blockImage = block.settings['image'] as string | undefined;
@@ -181,11 +148,6 @@ export function PreviewHeroBlock({
               key={child.id}
               block={child}
               isSelected={selectedNodeId === child.id}
-              isInspecting={isInspecting}
-              inspectorSettings={inspectorSettings}
-              hoveredNodeId={hoveredNodeId}
-              onHoverNode={onHoverNode}
-              onSelect={onSelect}
               contained
               selectedNodeId={selectedNodeId}
               sectionId={sectionId}
@@ -193,7 +155,6 @@ export function PreviewHeroBlock({
               sectionZone={sectionZone}
               columnId={columnId}
               parentBlockId={block.id}
-              onOpenMedia={onOpenMedia}
               mediaStyles={mediaStyles}
             />
           ))
@@ -211,24 +172,18 @@ export function PreviewHeroBlock({
 
 export function PreviewRichTextBlock({
   block,
-  selectedNodeId,
-  isInspecting = false,
-  inspectorSettings,
-  hoveredNodeId,
-  onSelect,
   sectionId,
   sectionType,
   sectionZone,
   columnId,
   stretch = false,
-  onHoverNode,
-  onOpenMedia,
   mediaStyles,
 }: PreviewSectionBlockProps): React.ReactNode {
+  const { selectedNodeId, inspectorSettings } = usePreviewEditor();
   const children = block.blocks ?? [];
   const blockStyles = getSectionStyles(block.settings);
   const stretchStyle = stretch ? { height: '100%' } : undefined;
-  const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
+  const showEditorChrome = inspectorSettings?.showEditorChrome ?? false;
 
   if (children.length === 0 && !showEditorChrome) {
     return null;
@@ -242,11 +197,6 @@ export function PreviewRichTextBlock({
             key={child.id}
             block={child}
             isSelected={selectedNodeId === child.id}
-            isInspecting={isInspecting}
-            inspectorSettings={inspectorSettings}
-            hoveredNodeId={hoveredNodeId}
-            onHoverNode={onHoverNode}
-            onSelect={onSelect}
             contained
             selectedNodeId={selectedNodeId}
             sectionId={sectionId}
@@ -254,7 +204,6 @@ export function PreviewRichTextBlock({
             sectionZone={sectionZone}
             columnId={columnId}
             parentBlockId={block.id}
-            onOpenMedia={onOpenMedia}
             mediaStyles={mediaStyles}
           />
         ))
@@ -271,20 +220,14 @@ export function PreviewRichTextBlock({
 
 export function PreviewBlockSectionBlock({
   block,
-  selectedNodeId,
-  isInspecting = false,
-  inspectorSettings,
-  hoveredNodeId,
-  onSelect,
   sectionId,
   sectionType,
   sectionZone,
   columnId,
   stretch = false,
-  onHoverNode,
-  onOpenMedia,
   mediaStyles,
 }: PreviewSectionBlockProps): React.ReactNode {
+  const { selectedNodeId, inspectorSettings } = usePreviewEditor();
   const children = block.blocks ?? [];
   const blockStyles = {
     ...getSectionStyles(block.settings),
@@ -305,7 +248,7 @@ export function PreviewBlockSectionBlock({
   const shouldStretchChildren = stretch && children.length === 1;
   const blockSelector = getCustomCssSelector(block.id);
   const blockCustomCss = buildScopedCustomCss(block.settings['customCss'], blockSelector);
-  const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
+  const showEditorChrome = inspectorSettings?.showEditorChrome ?? false;
 
   return (
     <div
@@ -327,11 +270,6 @@ export function PreviewBlockSectionBlock({
               key={child.id}
               block={child}
               isSelected={selectedNodeId === child.id}
-              isInspecting={isInspecting}
-              inspectorSettings={inspectorSettings}
-              hoveredNodeId={hoveredNodeId}
-              onHoverNode={onHoverNode}
-              onSelect={onSelect}
               contained
               selectedNodeId={selectedNodeId}
               sectionId={sectionId}
@@ -339,7 +277,6 @@ export function PreviewBlockSectionBlock({
               sectionZone={sectionZone}
               columnId={columnId}
               parentBlockId={block.id}
-              onOpenMedia={onOpenMedia}
               mediaStyles={mediaStyles}
               stretch={shouldStretchChildren}
             />
@@ -356,21 +293,15 @@ export function PreviewBlockSectionBlock({
 
 export function PreviewTextAtomBlock({
   block,
-  selectedNodeId,
-  isInspecting = false,
-  inspectorSettings,
-  hoveredNodeId,
-  onSelect,
   sectionId,
   sectionType,
   sectionZone,
   columnId,
   stretch = false,
-  onHoverNode,
-  onOpenMedia,
   mediaStyles,
 }: PreviewSectionBlockProps): React.ReactNode {
-  const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
+  const { selectedNodeId, inspectorSettings } = usePreviewEditor();
+  const showEditorChrome = inspectorSettings?.showEditorChrome ?? false;
   const text = (block.settings['text'] as string) || '';
   const alignment = (block.settings['alignment'] as string) || 'left';
   const letterGap = (block.settings['letterGap'] as number) || 0;
@@ -413,11 +344,6 @@ export function PreviewTextAtomBlock({
             key={child.id}
             block={child}
             isSelected={selectedNodeId === child.id}
-            isInspecting={isInspecting}
-            inspectorSettings={inspectorSettings}
-            hoveredNodeId={hoveredNodeId}
-            onHoverNode={onHoverNode}
-            onSelect={onSelect}
             contained
             selectedNodeId={selectedNodeId}
             sectionId={sectionId}
@@ -425,7 +351,6 @@ export function PreviewTextAtomBlock({
             sectionZone={sectionZone}
             columnId={columnId}
             parentBlockId={block.id}
-            onOpenMedia={onOpenMedia}
             mediaStyles={mediaStyles}
           />
         ))

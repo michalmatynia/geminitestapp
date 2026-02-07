@@ -24,17 +24,39 @@ connect all API to Error logging and handling system
 
 Consolidate UI Elements
 Connect everything including validators into a centralized error handling and reporting system
-implement Tanstack Query
-Architecture segmentation and restructuring
 
 
 TESTS
 -use msw API mocking - DONE
 
-use Context refactor for each feature, to avoid prop drilling
 
 PRISMA
 npx prisma generate
 npx prisma migrate dev
 npx prisma migrate reset
 npx prisma db push
+
+
+ Scan the Products feature and build logical try and Catch Blocks with error
+   explanantion around potential areas of failur
+
+   consolodate UI
+
+use Context refactor for each feature, to avoid prop drilling
+
+   File Segmentation
+
+   Type centralisation into DTOs
+
+   Tanstack query connection
+    Error handling and logging connection
+
+Architecture segmentation and restructuring
+
+ run npx tsc and address the issues one by one 
+
+  run npx eslint and address the issues one by one 
+
+   run npm build and address the issues one by one 
+
+   run vitest and 

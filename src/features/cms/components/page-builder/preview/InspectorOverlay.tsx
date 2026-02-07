@@ -106,13 +106,13 @@ export const InspectorHover = ({
   className,
 }: {
   enabled: boolean;
-  showTooltip?: boolean;
+  showTooltip?: boolean | undefined;
   nodeId: string;
   onHover?: ((nodeId: string | null) => void) | undefined;
-  fallbackNodeId?: string | null;
-  content?: React.ReactNode;
+  fallbackNodeId?: string | null | undefined;
+  content?: React.ReactNode | undefined;
   children: React.ReactNode;
-  className?: string;
+  className?: string | undefined;
 }): React.ReactNode => {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const [open, setOpen] = useState(false);

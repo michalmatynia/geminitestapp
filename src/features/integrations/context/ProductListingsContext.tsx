@@ -70,7 +70,7 @@ export function ProductListingsProvider({
 }: {
   product: ProductWithImages;
   children: React.ReactNode;
-  onListingsUpdated?: () => void;
+  onListingsUpdated?: (() => void) | undefined;
 }): React.JSX.Element {
   const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);

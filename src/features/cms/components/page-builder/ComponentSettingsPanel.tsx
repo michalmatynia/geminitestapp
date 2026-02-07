@@ -18,7 +18,7 @@ import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json
 import { AnimationConfigPanel } from './AnimationConfigPanel';
 import { InspectorAiProvider } from './context/InspectorAiContext';
 import { CssAnimationConfigPanel } from './CssAnimationConfigPanel';
-import { GRID_TEMPLATE_SETTINGS_KEY, normalizeGridTemplates, type GridTemplateRecord } from './grid-templates';
+import { GRID_TEMPLATE_SETTINGS_KEY, normalizeGridTemplates } from './grid-templates';
 import { getSectionDefinition, getBlockDefinition, IMAGE_ELEMENT_BACKGROUND_MODE_SETTINGS, getImageBackgroundTargetOptions, type ImageBackgroundTarget } from './section-registry';
 import { SECTION_TEMPLATE_SETTINGS_KEY, normalizeSectionTemplates, type SectionTemplateRecord } from './section-template-store';
 import { ConnectionsTab } from './settings/ConnectionsTab';
@@ -29,7 +29,7 @@ import { prependManagementFields, groupSettingsFields, renderFieldGroups } from 
 import { PageSettingsTab } from './settings/PageSettingsTab';
 import { usePageBuilder } from '../../hooks/usePageBuilderContext';
 
-import type { SettingsField, InspectorSettings, BlockInstance, SectionInstance } from '../../types/page-builder';
+import type { SettingsField, InspectorSettings, BlockInstance } from '../../types/page-builder';
 
 export function ComponentSettingsPanel(): React.ReactNode {
   const {
@@ -81,19 +81,6 @@ export function ComponentSettingsPanel(): React.ReactNode {
     if (!selectedParentSection || selectedParentSection.type !== 'Grid' || !selectedParentColumn) return null;
     return selectedParentSection.blocks.find((b: BlockInstance) => b.type === 'Row' && (b.blocks ?? []).some((c: BlockInstance) => c.id === selectedParentColumn.id)) ?? null;
   }, [selectedParentSection, selectedParentColumn]);
-
-  const rowCount = useMemo((): number => {
-    if (!selectedParentSection || selectedParentSection.type !== 'Grid') return 0;
-    return selectedParentSection.blocks.filter((b: BlockInstance) => b.type === 'Row').length;
-  }, [selectedParentSection]);
-
-  const canRemoveRow = rowCount > 1;
-  const rowIndex = useMemo((): number | null => {
-    if (!isRowBlock || !selectedParentSection || !selectedBlock) return null;
-    const rows = selectedParentSection.blocks.filter((b: BlockInstance) => b.type === 'Row');
-    const idx = rows.findIndex((b: BlockInstance) => b.id === selectedBlock.id);
-    return idx >= 0 ? idx + 1 : null;
-  }, [isRowBlock, selectedParentSection, selectedBlock]);
 
   const rowHeightMode = (selectedBlock?.settings?.['heightMode'] as string) || 'inherit';
   const rowSettingsForRender = useMemo(() => (!isRowBlock || !selectedBlock) ? null : (rowHeightMode !== 'inherit' ? selectedBlock.settings : { ...selectedBlock.settings, height: 0 }), [isRowBlock, selectedBlock, rowHeightMode]);

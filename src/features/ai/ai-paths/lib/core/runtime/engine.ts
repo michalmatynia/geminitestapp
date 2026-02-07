@@ -1091,9 +1091,21 @@ export async function evaluateGraph({
     if (!entityType || !entityId) return null;
     const key = `${entityType}:${entityId}`;
     if (entityCache.has(key)) return entityCache.get(key) ?? null;
-    const data = await fetchEntityByType(entityType, entityId);
-    entityCache.set(key, data);
-    return data;
+    try {
+      const data = await fetchEntityByType(entityType, entityId);
+      entityCache.set(key, data);
+      return data;
+    } catch (error) {
+      void ErrorSystem.logWarning(`Runtime failure fetching entity ${entityType} ${entityId}`, {
+        service: 'ai-paths-runtime',
+        error,
+        runId: resolvedRunId,
+        entityType,
+        entityId,
+      });
+      // We don't rethrow here to allow other nodes to potentially still execute if they don't depend on this entity.
+      return null;
+    }
   };
 
   const normalizeEntityType = (value?: string | null): string | null => {
@@ -1324,7 +1336,17 @@ export async function evaluateGraph({
     const iterationStartMs = profileEnabled ? nowMs() : 0;
     const nextInputs: Record<string, RuntimePortValues> = {};
     orderedNodes.forEach((node: AiNode): void => {
-      nextInputs[node.id] = collectNodeInputs(node.id);
+      try {
+        nextInputs[node.id] = collectNodeInputs(node.id);
+      } catch (collectError) {
+        void ErrorSystem.logWarning(`Critical failure collecting inputs for node ${node.id}`, {
+          service: 'ai-paths-runtime',
+          error: collectError,
+          runId: resolvedRunId,
+          nodeId: node.id,
+        });
+        nextInputs[node.id] = {};
+      }
     });
 
     let changed = false;
@@ -1333,7 +1355,17 @@ export async function evaluateGraph({
       const nodeInputsSnapshot = nextInputs[node.id] ?? {};
       let nodeInputs = nodeInputsSnapshot;
       if (node.type === 'database') {
-        nodeInputs = deriveDatabaseInputs(nodeInputs);
+        try {
+          nodeInputs = deriveDatabaseInputs(nodeInputs);
+        } catch (deriveError) {
+          void ErrorSystem.logWarning(`Failed to derive database inputs for node ${node.id}`, {
+            service: 'ai-paths-runtime',
+            error: deriveError,
+            runId: resolvedRunId,
+            nodeId: node.id,
+          });
+          // Fallback to snapshot if derivation fails.
+        }
       }
       const shouldWaitForInputs = node.config?.runtime?.waitForInputs ?? false;
       if (shouldWaitForInputs) {
@@ -1728,15 +1760,23 @@ export async function evaluateGraph({
       });
     }
     if (profileEnabled) {
-      const iterationDurationMs = nowMs() - iterationStartMs;
-      emitProfileEvent({
-        type: 'iteration',
-        runId: resolvedRunId,
-        runStartedAt: resolvedRunStartedAt,
-        iteration,
-        durationMs: iterationDurationMs,
-        changed,
-      });
+      try {
+        const iterationDurationMs = nowMs() - iterationStartMs;
+        emitProfileEvent({
+          type: 'iteration',
+          runId: resolvedRunId,
+          runStartedAt: resolvedRunStartedAt,
+          iteration,
+          durationMs: iterationDurationMs,
+          changed,
+        });
+      } catch (profileError) {
+        void ErrorSystem.logWarning('Profiling event emission failed', {
+          service: 'ai-paths-runtime',
+          error: profileError,
+          runId: resolvedRunId,
+        });
+      }
     }
     iterationCount += 1;
     if (haltReason === 'step_limit') break;
@@ -1757,18 +1797,19 @@ export async function evaluateGraph({
     emitHalt('completed', Math.max(0, iterationCount - 1));
   }
   if (haltReason !== 'step_limit') {
-    if (profile?.onSummary && nodeProfile) {
-      const durationMs = nowMs() - profileRunStartMs;
-      const nodesSummary = Array.from(nodeProfile.values()).map((stats: RuntimeProfileNodeStats) => ({
-        ...stats,
-        avgMs: stats.count > 0 ? stats.totalMs / stats.count : 0,
-        hashAvgMs: stats.hashCount > 0 ? stats.hashTotalMs / stats.hashCount : 0,
-      }));
-      const hottestNodes = nodesSummary
-        .slice()
-        .sort((a, b) => b.totalMs - a.totalMs)
-        .slice(0, Math.min(5, nodesSummary.length));
-      try {
+    try {
+      if (profile?.onSummary && nodeProfile) {
+        const durationMs = nowMs() - profileRunStartMs;
+        const nodesSummary = Array.from(nodeProfile.values()).map((stats: RuntimeProfileNodeStats) => ({
+          ...stats,
+          avgMs: stats.count > 0 ? stats.totalMs / stats.count : 0,
+          hashAvgMs: stats.hashCount > 0 ? stats.hashTotalMs / stats.hashCount : 0,
+        }));
+        const hottestNodes = nodesSummary
+          .slice()
+          .sort((a, b) => b.totalMs - a.totalMs)
+          .slice(0, Math.min(5, nodesSummary.length));
+        
         profile.onSummary({
           runId: resolvedRunId,
           durationMs,
@@ -1778,22 +1819,35 @@ export async function evaluateGraph({
           nodes: nodesSummary,
           hottestNodes,
         });
-      } catch {
-        // Profiling should never break runtime execution.
       }
-    }
-    if (profileEnabled) {
-      const durationMs = nowMs() - profileRunStartMs;
-      emitProfileEvent({
-        type: 'run',
-        phase: 'end',
+    } catch (summaryError) {
+      void ErrorSystem.logWarning('Profiling summary emission failed', {
+        service: 'ai-paths-runtime',
+        error: summaryError,
         runId: resolvedRunId,
-        runStartedAt: resolvedRunStartedAt,
-        nodeCount: nodes.length,
-        edgeCount: sanitizedEdges.length,
-        durationMs,
-        iterationCount,
       });
+    }
+    
+    if (profileEnabled) {
+      try {
+        const durationMs = nowMs() - profileRunStartMs;
+        emitProfileEvent({
+          type: 'run',
+          phase: 'end',
+          runId: resolvedRunId,
+          runStartedAt: resolvedRunStartedAt,
+          nodeCount: nodes.length,
+          edgeCount: sanitizedEdges.length,
+          durationMs,
+          iterationCount,
+        });
+      } catch (finalProfileError) {
+        void ErrorSystem.logWarning('Final profiling event emission failed', {
+          service: 'ai-paths-runtime',
+          error: finalProfileError,
+          runId: resolvedRunId,
+        });
+      }
     }
   }
   return result;
@@ -1833,27 +1887,37 @@ export async function evaluateGraphWithIteratorAutoContinue(options: EvaluateGra
     runId: resolvedRunId,
     runStartedAt: resolvedRunStartedAt,
   };
-  const hasStepLimit =
-    typeof options.control?.stepLimit === 'number' && options.control.stepLimit > 0;
-  if (options.control?.mode === 'step' || hasStepLimit) {
-    return evaluateGraph(baseOptions);
-  }
-  let current = await evaluateGraph(baseOptions);
-  if (!options.nodes.some((node: AiNode): boolean => node.type === 'iterator')) {
-    return current;
-  }
+  
+  try {
+    const hasStepLimit =
+      typeof options.control?.stepLimit === 'number' && options.control.stepLimit > 0;
+    if (options.control?.mode === 'step' || hasStepLimit) {
+      return await evaluateGraph(baseOptions);
+    }
+    let current = await evaluateGraph(baseOptions);
+    if (!options.nodes.some((node: AiNode): boolean => node.type === 'iterator')) {
+      return current;
+    }
 
-  const maxSteps = getIteratorMaxSteps(options.nodes);
-  for (let step = 0; step < maxSteps; step += 1) {
-    if (!hasPendingIteratorAdvance(options.nodes, current)) break;
-    current = await evaluateGraph({
-      ...baseOptions,
-      seedOutputs: current.outputs,
-      seedHashes: current.hashes ?? undefined,
-      seedHistory: current.history ?? undefined,
-      seedRunId: current.runId ?? resolvedRunId,
-      seedRunStartedAt: current.runStartedAt ?? resolvedRunStartedAt,
+    const maxSteps = getIteratorMaxSteps(options.nodes);
+    for (let step = 0; step < maxSteps; step += 1) {
+      if (!hasPendingIteratorAdvance(options.nodes, current)) break;
+      current = await evaluateGraph({
+        ...baseOptions,
+        seedOutputs: current.outputs,
+        seedHashes: current.hashes ?? undefined,
+        seedHistory: current.history ?? undefined,
+        seedRunId: current.runId ?? resolvedRunId,
+        seedRunStartedAt: current.runStartedAt ?? resolvedRunStartedAt,
+      });
+    }
+    return current;
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      service: 'ai-paths-engine',
+      action: 'evaluateWithIterator',
+      runId: resolvedRunId,
     });
+    throw error;
   }
-  return current;
 }

@@ -18,6 +18,7 @@ import {
   SectionPanel,
 } from '@/shared/ui';
 
+import { useDatabase } from '../context/DatabaseContext';
 import { useCrudMutation, useSqlQueryMutation } from '../hooks/useDatabaseQueries';
 
 import type {
@@ -168,14 +169,18 @@ function DeleteConfirmModal({
 /* ─── Main CRUD Panel ─── */
 
 export function CrudPanel({
-  tableDetails,
+  tableDetails: tableDetailsProp,
   defaultTable,
-  dbType = 'postgresql',
+  dbType: dbTypeProp,
 }: {
-  tableDetails: DatabaseTableDetail[];
+  tableDetails?: DatabaseTableDetail[];
   defaultTable?: string;
   dbType?: DatabaseType;
 }): React.JSX.Element {
+  const context = useDatabase();
+  const dbType = dbTypeProp ?? context.dbType;
+  const tableDetails = tableDetailsProp ?? context.tableDetails;
+
   const [selectedTable, setSelectedTable] = useState(defaultTable ?? '');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);

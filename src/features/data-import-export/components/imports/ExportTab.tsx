@@ -27,6 +27,7 @@ export function ExportTab(): React.JSX.Element {
     exportActiveTemplateId,
     setExportActiveTemplateId,
     exportTemplates,
+    loadingExportTemplates,
     applyTemplate,
     exportWarehouseId,
     setExportWarehouseId,
@@ -51,7 +52,6 @@ export function ExportTab(): React.JSX.Element {
     setDebugWarehouses,
   } = useImportExport();
 
-  const loadingExportTemplates = false; // or get from context if added
   const exportStockFallbackLoaded = true;
   const imageRetryPresetsLoaded = true;
   const loadingDebugWarehouses = false;

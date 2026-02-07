@@ -11,15 +11,11 @@ import { useCatalogs } from '@/features/products/hooks/useProductMetadata';
 import { Button, Input, Label, Textarea, Switch, Tabs, TabsContent, TabsList, TabsTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-interface DraftCreatorProps {
-  draftId: string | null;
-  onSaveSuccess: () => void;
-  onCancel: () => void;
-  formRef?: React.RefObject<HTMLFormElement | null>;
-}
+import { useDrafterContext } from '../context/DrafterContext';
 
-export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, formRef }: DraftCreatorProps): React.JSX.Element {
+export function DraftCreator(): React.JSX.Element {
   const { toast } = useToast();
+  const { editingDraftId: draftId, handleSaveSuccess, formRef } = useDrafterContext();
 
   // Queries
   const { data: catalogs = [] } = useCatalogs();
@@ -229,7 +225,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
       toast(draftId ? 'Draft updated successfully' : 'Draft created successfully', {
         variant: 'success',
       });
-      onSaveSuccess();
+      handleSaveSuccess();
     } catch (error) {
       logClientError(error, { context: { source: 'DraftCreator', action: 'saveDraft', draftId } });
       toast('Failed to save draft', { variant: 'error' });

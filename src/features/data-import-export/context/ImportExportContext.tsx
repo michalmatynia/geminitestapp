@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useToast } from '@/shared/ui';
+
 import {
   useTemplates,
   useImportPreference,
@@ -13,6 +13,7 @@ import {
   useImportMutation,
   useSaveExportSettingsMutation,
 } from '@/features/data-import-export/hooks/useImportQueries';
+import type { CatalogRecord } from '@/features/data-import-export/hooks/useImportQueries';
 import type {
   ImportResponse,
   InventoryOption,
@@ -29,10 +30,10 @@ import {
   getDefaultImageRetryPresets,
   normalizeImageRetryPresets,
 } from '@/features/data-import-export/utils/image-retry-presets';
+import type { IntegrationConnectionBasic, IntegrationWithConnections } from '@/features/integrations';
 import { useIntegrationsWithConnections } from '@/features/integrations/hooks/useIntegrationQueries';
 import { useCatalogs } from '@/features/products/hooks/useProductSettingsQueries';
-import type { IntegrationConnectionBasic, IntegrationWithConnections } from '@/features/integrations';
-import type { CatalogRecord } from '@/features/data-import-export/hooks/useImportQueries';
+import { useToast } from '@/shared/ui';
 
 interface ImportExportContextType {
   // State
@@ -109,7 +110,9 @@ interface ImportExportContextType {
   catalogsData: CatalogOption[];
   loadingCatalogs: boolean;
   importTemplates: Template[];
+  loadingImportTemplates: boolean;
   exportTemplates: Template[];
+  loadingExportTemplates: boolean;
   inventories: InventoryOption[];
   isFetchingInventories: boolean;
   warehouses: WarehouseOption[];
@@ -193,8 +196,8 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   const catalogsData = useMemo(() => catalogsQuery.data || [], [catalogsQuery.data]);
   const loadingCatalogs = catalogsQuery.isLoading;
   
-  const { data: importTemplates = [] } = useTemplates('import');
-  const { data: exportTemplates = [] } = useTemplates('export');
+  const { data: importTemplates = [], isLoading: loadingImportTemplates } = useTemplates('import');
+  const { data: exportTemplates = [], isLoading: loadingExportTemplates } = useTemplates('export');
 
   // Sync connections
   useEffect(() => {
@@ -683,7 +686,9 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     catalogsData,
     loadingCatalogs,
     importTemplates,
+    loadingImportTemplates,
     exportTemplates,
+    loadingExportTemplates,
     inventories,
     isFetchingInventories,
     warehouses,

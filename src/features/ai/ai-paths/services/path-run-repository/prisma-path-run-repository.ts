@@ -147,16 +147,12 @@ const buildRunWhere = (options: AiPathRunListOptions = {}): Prisma.AiPathRunWher
             ...aiPathsTabs.map((tab) => ({
               NOT: { meta: { path: ['source', 'tab'], equals: tab } },
             })),
-            { NOT: { meta: { equals: Prisma.DbNull } } },
-            { NOT: { meta: { equals: Prisma.JsonNull } } },
           ],
         });
       } else {
         andFilters.push({
           AND: [
             { NOT: { meta: { path: ['source'], equals: source } } },
-            { NOT: { meta: { equals: Prisma.DbNull } } },
-            { NOT: { meta: { equals: Prisma.JsonNull } } },
           ],
         });
       }
@@ -169,8 +165,6 @@ const buildRunWhere = (options: AiPathRunListOptions = {}): Prisma.AiPathRunWher
           ...aiPathsTabs.map((tab) => ({
             meta: { path: ['source', 'tab'], equals: tab },
           })),
-          { meta: { equals: Prisma.DbNull } },
-          { meta: { equals: Prisma.JsonNull } },
         ],
       });
     } else {

@@ -15,12 +15,10 @@ import type { ProductDraft } from '@/features/products/types/drafts';
 import { Button, ListPanel, useToast, SectionHeader, EmptyState } from '@/shared/ui';
 import { ConfirmDialog } from '@/shared/ui';
 
-interface DraftListProps {
-  onEdit: (id: string) => void;
-  onCreateNew: () => void;
-}
+import { useDrafterContext } from '../context/DrafterContext';
 
-export function DraftList({ onEdit, onCreateNew }: DraftListProps): React.JSX.Element {
+export function DraftList(): React.JSX.Element {
+  const { openCreator } = useDrafterContext();
   const { data: drafts = [], isLoading: loading } = useDrafts();
   const deleteDraftMutation = useDeleteDraft();
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -49,7 +47,7 @@ export function DraftList({ onEdit, onCreateNew }: DraftListProps): React.JSX.El
           title="Your Product Drafts"
           size="sm"
           actions={
-            <Button onClick={onCreateNew} className="flex items-center gap-2">
+            <Button onClick={() => openCreator()} className="flex items-center gap-2">
               <PlusIcon className="h-4 w-4" />
               Create New Draft
             </Button>
@@ -73,7 +71,7 @@ export function DraftList({ onEdit, onCreateNew }: DraftListProps): React.JSX.El
           title="No drafts yet"
           description="Create your first product template to speed up product creation."
           action={
-            <Button onClick={onCreateNew} variant="outline">
+            <Button onClick={() => openCreator()} variant="outline">
               <PlusIcon className="mr-2 h-4 w-4" />
               Create Your First Draft
             </Button>
@@ -153,7 +151,7 @@ export function DraftList({ onEdit, onCreateNew }: DraftListProps): React.JSX.El
                 </div>
                 <div className="flex gap-2">
                   <Button
-                    onClick={() => onEdit(draft.id)}
+                    onClick={() => openCreator(draft.id)}
                     variant="outline"
                     size="sm"
                     className="flex items-center gap-1"

@@ -13,11 +13,12 @@ import {
   FileUploadButton,
   type FileUploadHelpers,
   AdminPageLayout,
-} from '@/shared/ui'; // SectionHeader, Tabs, TabsList, TabsTrigger removed
+} from '@/shared/ui';
 
 import { getDatabaseColumns } from '../components/DatabaseColumns';
 import { LogModal } from '../components/LogModal';
 import { RestoreModal } from '../components/RestoreModal';
+import { DatabaseProvider, useDatabase } from '../context/DatabaseContext';
 import {
   useDatabaseBackups,
   useCreateBackupMutation,
@@ -29,8 +30,8 @@ import {
 import type { DatabaseInfo, DatabaseType } from '../types';
 
 
-export default function DatabasesPage(): React.JSX.Element {
-  const [activeTab, setActiveTab] = useState<DatabaseType>('postgresql');
+function DatabasesContent(): React.JSX.Element {
+  const { dbType: activeTab, setDbType: setActiveTab } = useDatabase();
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [logModalContent, setLogModalContent] = useState('');
   const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
@@ -281,5 +282,13 @@ export default function DatabasesPage(): React.JSX.Element {
         />
       </SectionPanel>
     </AdminPageLayout>
+  );
+}
+
+export default function DatabasesPage(): React.JSX.Element {
+  return (
+    <DatabaseProvider>
+      <DatabasesContent />
+    </DatabaseProvider>
   );
 }

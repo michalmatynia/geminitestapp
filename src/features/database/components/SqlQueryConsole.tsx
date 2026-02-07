@@ -10,6 +10,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Badge, Button, SectionPanel } from '@/shared/ui';
 
+import { useDatabase } from '../context/DatabaseContext';
 import { useSqlQueryMutation } from '../hooks/useDatabaseQueries';
 
 import type { DatabaseType, SqlQueryResult } from '../types';
@@ -41,14 +42,17 @@ function formatCellValue(value: unknown): string {
 }
 
 export function SqlQueryConsole({
-  defaultDbType = 'postgresql',
+  defaultDbType,
   initialSql = '',
 }: {
   defaultDbType?: DatabaseType;
   initialSql?: string;
 }): React.JSX.Element {
+  const context = useDatabase();
+  const dbType = defaultDbType ?? context.dbType;
+  const setDbType = context.setDbType;
+
   const [sql, setSql] = useState(initialSql);
-  const [dbType, setDbType] = useState<DatabaseType>(defaultDbType);
   const [result, setResult] = useState<SqlQueryResult | null>(null);
   const [history, setHistory] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(false);

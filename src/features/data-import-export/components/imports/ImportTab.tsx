@@ -28,6 +28,7 @@ export function ImportTab(): React.JSX.Element {
     importTemplateId,
     setImportTemplateId,
     importTemplates,
+    loadingImportTemplates,
     imageMode,
     setImageMode,
     allowDuplicateSku,

@@ -198,18 +198,14 @@ const buildRunFilter = (options: AiPathRunListOptions = {}): Record<string, unkn
       if (source === 'ai_paths_ui') {
         andFilters.push({ 'meta.source': { $nin: aiPathsSources } });
         andFilters.push({ 'meta.source.tab': { $nin: aiPathsTabs } });
-        andFilters.push({ 'meta.source': { $exists: true } });
       } else {
         andFilters.push({ 'meta.source': { $ne: source } });
-        andFilters.push({ 'meta.source': { $exists: true } });
       }
     } else if (source === 'ai_paths_ui') {
       andFilters.push({
         $or: [
           { 'meta.source': { $in: aiPathsSources } },
           { 'meta.source.tab': { $in: aiPathsTabs } },
-          { meta: { $exists: false } },
-          { meta: null },
         ],
       });
     } else {

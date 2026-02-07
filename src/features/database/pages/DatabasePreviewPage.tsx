@@ -37,7 +37,7 @@ import {
 
 import { CrudPanel } from '../components/CrudPanel';
 import { SqlQueryConsole } from '../components/SqlQueryConsole';
-import { useDatabasePreview } from '../hooks/useDatabaseQueries';
+import { DatabaseProvider, useDatabase } from '../context/DatabaseContext';
 
 import type {
   DatabaseColumnInfo,
@@ -72,20 +72,24 @@ const groupIconMap: Record<string, React.ComponentType<{ className?: string }>> 
 
 function TableDetailCard({
   detail,
-  tableRows,
   page,
   pageSize,
   onQueryTable,
   onManageTable,
 }: {
   detail: DatabaseTableDetail;
-  tableRows: DatabasePreviewRow | undefined;
   page: number;
   pageSize: number;
   onQueryTable?: (tableName: string) => void;
   onManageTable?: (tableName: string) => void;
 }): React.JSX.Element {
   const [expanded, setExpanded] = useState(false);
+  const { tableRows } = useDatabase();
+
+  const tableRow = useMemo(
+    () => tableRows.find((r: DatabasePreviewRow) => r.name === detail.name),
+    [tableRows, detail.name]
+  );
 
   return (
     <div className="rounded-md border border-border bg-card/60">
@@ -163,7 +167,7 @@ function TableDetailCard({
                 Foreign Keys ({detail.foreignKeys.length})
               </TabsTrigger>
               <TabsTrigger value="data" className="text-xs">
-                Data {tableRows ? `(${tableRows.totalRows})` : ''}
+                Data {tableRow ? `(${tableRow.totalRows})` : ''}
               </TabsTrigger>
             </TabsList>
 
@@ -180,7 +184,7 @@ function TableDetailCard({
             </TabsContent>
 
             <TabsContent value="data" className="p-0">
-              <DataTab tableRows={tableRows} page={page} pageSize={pageSize} />
+              <DataTab tableRows={tableRow} page={page} pageSize={pageSize} />
             </TabsContent>
           </Tabs>
         </div>
@@ -363,15 +367,22 @@ function formatCellValue(value: unknown): string {
   return String(value);
 }
 
-/* ─── Main Page ─── */
+/* ─── Main Page Content ─── */
 
-function DatabasePreviewPageInner(): React.JSX.Element {
-  const searchParams = useSearchParams();
-  const backupName = searchParams.get('backup') ?? '';
-  const mode = searchParams.get('mode') ?? 'backup';
-  const previewType = searchParams.get('type') ?? 'postgresql';
-  const previewMode: DatabasePreviewMode =
-    mode === 'current' ? 'current' : 'backup';
+function DatabasePreviewContent(): React.JSX.Element {
+  const {
+    dbType,
+    tableDetails,
+    groups,
+    tables,
+    tableRows,
+    enums,
+    databaseSize,
+    isLoading: loading,
+    error,
+    mode,
+    backupName,
+  } = useDatabase();
 
   const [groupQuery, setGroupQuery] = useState('');
   const [tableQuery, setTableQuery] = useState('');
@@ -391,41 +402,6 @@ function DatabasePreviewPageInner(): React.JSX.Element {
   const scrollToCrud = useCallback(() => {
     setTimeout(() => crudSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   }, []);
-
-  const queryParams: {
-    mode: DatabasePreviewMode;
-    type: DatabaseType;
-    page: number;
-    pageSize: number;
-    backupName?: string;
-  } = {
-    mode: previewMode,
-    type: (previewType === 'mongodb' ? 'mongodb' : 'postgresql') as DatabaseType,
-    page,
-    pageSize,
-  };
-  if (backupName) queryParams.backupName = backupName;
-
-  const { data: payload, isLoading: loading, error: queryError } = useDatabasePreview(queryParams);
-
-  const error = queryError?.message || null;
-  const errorMeta = (queryError as Error & { payload?: { errorId?: string; stage?: string; backupName?: string; mode?: string } })?.payload || null;
-
-  const content = payload?.content ?? '';
-  const groups: DatabasePreviewGroup[] = useMemo(() => payload?.groups ?? [], [payload?.groups]);
-  const tables: DatabasePreviewTable[] = payload?.tables ?? [];
-  const tableRows: DatabasePreviewRow[] = useMemo(() => payload?.tableRows ?? [], [payload?.tableRows]);
-  const tableDetails: DatabaseTableDetail[] = useMemo(() => payload?.tableDetails ?? [], [payload?.tableDetails]);
-  const enums: DatabaseEnumInfo[] = useMemo(() => payload?.enums ?? [], [payload?.enums]);
-  const databaseSize = payload?.databaseSize ?? '';
-
-  const tableRowsByName = useMemo(() => {
-    const map = new Map<string, DatabasePreviewRow>();
-    for (const row of tableRows) {
-      map.set(row.name, row);
-    }
-    return map;
-  }, [tableRows]);
 
   const grouped = useMemo(
     () =>
@@ -503,22 +479,6 @@ function DatabasePreviewPageInner(): React.JSX.Element {
       {error && (
         <SectionPanel className="mb-6 p-5">
           <p className="text-xs text-red-300">{error}</p>
-          {errorMeta?.errorId && (
-            <div className="mt-3 grid gap-2 rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300 md:grid-cols-3">
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500">Error ID</p>
-                <p className="mt-1 break-all text-gray-200">{errorMeta.errorId}</p>
-              </div>
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500">Stage</p>
-                <p className="mt-1 break-all text-gray-200">{errorMeta.stage || '—'}</p>
-              </div>
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500">Source</p>
-                <p className="mt-1 break-all text-gray-200">{errorMeta.backupName || errorMeta.mode || '—'}</p>
-              </div>
-            </div>
-          )}
         </SectionPanel>
       )}
 
@@ -600,7 +560,6 @@ function DatabasePreviewPageInner(): React.JSX.Element {
                   <TableDetailCard
                     key={detail.name}
                     detail={detail}
-                    tableRows={tableRowsByName.get(detail.name)}
                     page={page}
                     pageSize={pageSize}
                     onQueryTable={(name: string): void => {
@@ -715,7 +674,7 @@ function DatabasePreviewPageInner(): React.JSX.Element {
           )}
 
           {/* ── SQL Query Console ── */}
-          {previewType === 'postgresql' && (
+          {dbType === 'postgresql' && (
             <div ref={consoleSectionRef}>
               <SectionPanel className="p-5">
                 <button
@@ -766,34 +725,33 @@ function DatabasePreviewPageInner(): React.JSX.Element {
                 <CrudPanel
                   tableDetails={tableDetails}
                   defaultTable={crudTable}
-                  dbType={(previewType === 'mongodb' ? 'mongodb' : 'postgresql') as DatabaseType}
+                  dbType={dbType}
                 />
               </SectionPanel>
-            </div>
-          )}
-
-          {/* ── Raw Backup List ── */}
-          {content && (
-            <div className="rounded-lg border border-border bg-card p-5">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-white">Raw Backup List</h2>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={(): void => { void navigator.clipboard.writeText(content); }}
-                  className="rounded-md border border-border bg-gray-900 px-3 py-1.5 text-xs text-gray-200 hover:bg-muted/50"
-                >
-                  Copy
-                </Button>
-              </div>
-              <pre className="mt-3 max-h-[60vh] overflow-auto rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300 whitespace-pre-wrap">
-                {content}
-              </pre>
             </div>
           )}
         </div>
       )}
     </div>
+  );
+}
+
+function DatabasePreviewPageInner(): React.JSX.Element {
+  const searchParams = useSearchParams();
+  const backupName = searchParams.get('backup') ?? '';
+  const mode = searchParams.get('mode') ?? 'backup';
+  const previewType = searchParams.get('type') ?? 'postgresql';
+  const previewMode: DatabasePreviewMode =
+    mode === 'current' ? 'current' : 'backup';
+
+  return (
+    <DatabaseProvider
+      defaultDbType={previewType as DatabaseType}
+      mode={previewMode}
+      backupName={backupName || undefined}
+    >
+      <DatabasePreviewContent />
+    </DatabaseProvider>
   );
 }
 

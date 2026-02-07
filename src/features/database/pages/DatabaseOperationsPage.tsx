@@ -2,7 +2,6 @@
 
 import { AlertTriangleIcon } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
 
 import {
   AdminPageLayout,
@@ -16,27 +15,13 @@ import {
 
 import { CrudPanel } from '../components/CrudPanel';
 import { SqlQueryConsole } from '../components/SqlQueryConsole';
-import { useDatabasePreview } from '../hooks/useDatabaseQueries';
+import { DatabaseProvider, useDatabase } from '../context/DatabaseContext';
 
-import type { DatabaseTableDetail, DatabaseType } from '../types';
+import type { DatabaseType } from '../types';
 
-export default function DatabaseOperationsPage(): React.JSX.Element {
-  const [dbType, setDbType] = useState<DatabaseType>('postgresql');
+function DatabaseOperationsContent(): React.JSX.Element {
+  const { dbType, setDbType, tableDetails, isLoading: previewLoading } = useDatabase();
   const isProduction = process.env.NODE_ENV === 'production';
-
-  // Fetch current DB metadata for the CRUD panel (table list + columns)
-  const { data: previewPayload, isLoading: previewLoading } = useDatabasePreview({
-    mode: 'current',
-    type: dbType,
-    page: 1,
-    pageSize: 1,
-    enabled: true,
-  });
-
-  const tableDetails: DatabaseTableDetail[] = useMemo(
-    () => previewPayload?.tableDetails ?? [],
-    [previewPayload?.tableDetails]
-  );
 
   return (
     <AdminPageLayout
@@ -79,7 +64,7 @@ export default function DatabaseOperationsPage(): React.JSX.Element {
 
         <TabsContent value="sql">
           <SectionPanel className="p-5">
-            <SqlQueryConsole defaultDbType={dbType} />
+            <SqlQueryConsole />
           </SectionPanel>
         </TabsContent>
 
@@ -99,10 +84,18 @@ export default function DatabaseOperationsPage(): React.JSX.Element {
             </SectionPanel>
           )}
           {!previewLoading && tableDetails.length > 0 && (
-            <CrudPanel tableDetails={tableDetails} dbType={dbType} />
+            <CrudPanel />
           )}
         </TabsContent>
       </Tabs>
     </AdminPageLayout>
+  );
+}
+
+export default function DatabaseOperationsPage(): React.JSX.Element {
+  return (
+    <DatabaseProvider>
+      <DatabaseOperationsContent />
+    </DatabaseProvider>
   );
 }

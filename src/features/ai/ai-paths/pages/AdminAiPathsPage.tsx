@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
+import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 import { Tabs, TabsList, TabsTrigger, SectionPanel } from '@/shared/ui';
 
 import { AiPathsSettings } from '../components/AiPathsSettings';
@@ -9,6 +10,7 @@ import { AiPathsSettings } from '../components/AiPathsSettings';
 
 
 export function AdminAiPathsPage(): React.JSX.Element {
+  const { isMenuCollapsed } = useAdminLayout();
   const [activeTab, setActiveTab] = useState<'canvas' | 'paths' | 'docs'>(
     'canvas'
   );
@@ -22,7 +24,9 @@ export function AdminAiPathsPage(): React.JSX.Element {
 
   const wrapperClass = isFocusMode
     ? 'h-[calc(100%+2rem)] w-[calc(100%+2rem)] -m-4'
-    : 'container mx-auto py-10';
+    : isMenuCollapsed
+      ? 'w-full py-6'
+      : 'container mx-auto py-10';
 
   return (
     <div className={wrapperClass}>

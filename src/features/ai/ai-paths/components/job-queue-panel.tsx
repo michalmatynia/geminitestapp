@@ -182,7 +182,7 @@ const resolveRunSource = (run: AiPathRunRecord): string | null => {
 
 const resolveRunOrigin = (run: AiPathRunRecord): RunOrigin => {
   const source = resolveRunSource(run);
-  if (!source) return 'node';
+  if (!source) return 'unknown';
   if (source.startsWith('tab:')) {
     const tab = source.slice(4);
     return AI_PATHS_SOURCE_TABS.has(tab) ? 'node' : 'external';
@@ -216,7 +216,7 @@ const resolveExecutionCandidate = (raw: unknown): RunExecutionKind | null => {
 
 const resolveRunExecutionKind = (run: AiPathRunRecord): RunExecutionKind => {
   const meta = readMetaRecord(run.meta);
-  if (!meta) return 'server';
+  if (!meta) return 'unknown';
 
   const runtimeMeta =
     meta.runtime && typeof meta.runtime === 'object' && !Array.isArray(meta.runtime)
@@ -243,7 +243,7 @@ const resolveRunExecutionKind = (run: AiPathRunRecord): RunExecutionKind => {
     if (resolved) return resolved;
   }
 
-  return 'server';
+  return 'unknown';
 };
 
 const getPanelLabel = (

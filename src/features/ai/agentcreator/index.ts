@@ -1,5 +1,7 @@
 export * from './components/AgentCreatorSettingsSection';
 export * from './components/AgentPersonaSettingsForm';
+export * from './context/AgentCreatorSettingsContext';
+export * from './context/AgentRunContext';
 export * from './hooks/useAgentPersonas';
 export * from './hooks/useAgentCreatorSettings';
 export * from './types';

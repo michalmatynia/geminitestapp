@@ -6,7 +6,6 @@ import { z } from "zod";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { parseJsonBody } from "@/features/products/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { retryPathRunNode } from "@/features/ai/ai-paths/services/path-run-service";
 import { startAiPathRunQueue } from "@/features/jobs/server";
 import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";
@@ -26,32 +25,24 @@ async function POST_handler(
   _ctx: ApiHandlerContext,
   params: { runId: string }
 ): Promise<Response> {
-  try {
-    const access = await requireAiPathsAccess();
-    enforceAiPathsActionRateLimit(access, "run-retry");
-    const parsed = await parseJsonBody(req, retrySchema, {
-      logPrefix: "ai-paths.runs.retry-node",
-    });
-    if (!parsed.ok) return parsed.response;
+  const access = await requireAiPathsAccess();
+  enforceAiPathsActionRateLimit(access, "run-retry");
+  const parsed = await parseJsonBody(req, retrySchema, {
+    logPrefix: "ai-paths.runs.retry-node",
+  });
+  if (!parsed.ok) return parsed.response;
 
-    const runId: string = params.runId;
-    const repo = getPathRunRepository();
-    const existing = await repo.findRunById(runId);
-    if (!existing) {
-      throw notFoundError("Run not found", { runId });
-    }
-    assertAiPathRunAccess(access, existing);
-    const { nodeId } = parsed.data;
-    const run: unknown = await retryPathRunNode(runId, nodeId);
-    startAiPathRunQueue();
-    return NextResponse.json({ run });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "ai-paths.runs.retry-node",
-      fallbackMessage: "Failed to retry node",
-    });
+  const runId: string = params.runId;
+  const repo = getPathRunRepository();
+  const existing = await repo.findRunById(runId);
+  if (!existing) {
+    throw notFoundError("Run not found", { runId });
   }
+  assertAiPathRunAccess(access, existing);
+  const { nodeId } = parsed.data;
+  const run: unknown = await retryPathRunNode(runId, nodeId);
+  startAiPathRunQueue();
+  return NextResponse.json({ run });
 }
 
 export const POST = apiHandlerWithParams<{ runId: string }>(POST_handler, {

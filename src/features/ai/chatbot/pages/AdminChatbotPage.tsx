@@ -3,8 +3,8 @@
 import { useSearchParams } from 'next/navigation';
 import React, { Suspense } from 'react';
 
+import { AgentCreatorSettingsProvider } from '@/features/ai/agentcreator';
 import { Tabs, TabsContent, TabsList, TabsTrigger, SectionPanel } from '@/shared/ui';
-
 
 import { ChatInterface } from '../components/ChatInterface';
 import { DebugPanel } from '../components/DebugPanel';
@@ -185,7 +185,9 @@ function ChatbotPageInner(): React.JSX.Element | null {
 export default function ChatbotPage(): React.JSX.Element {
   return (
     <Suspense fallback={<div className="p-8 text-white">Loading...</div>}>
-      <ChatbotPageInner />
+      <AgentCreatorSettingsProvider>
+        <ChatbotPageInner />
+      </AgentCreatorSettingsProvider>
     </Suspense>
   );
 }

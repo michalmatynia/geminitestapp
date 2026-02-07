@@ -7,6 +7,8 @@ interface AdminLayoutContextType {
   setIsMenuCollapsed: (isCollapsed: boolean) => void;
   isProgrammaticallyCollapsed: boolean;
   setIsProgrammaticallyCollapsed: (isProgrammaticallyCollapsed: boolean) => void;
+  aiDrawerOpen: boolean;
+  setAiDrawerOpen: (isOpen: boolean) => void;
 }
 
 const AdminLayoutContext = createContext<AdminLayoutContextType | undefined>(
@@ -22,10 +24,18 @@ export function AdminLayoutProvider({
 }): React.ReactNode {
   const [isMenuCollapsed, setIsMenuCollapsed] = useState(initialMenuCollapsed);
   const [isProgrammaticallyCollapsed, setIsProgrammaticallyCollapsed] = useState(false);
+  const [aiDrawerOpen, setAiDrawerOpen] = useState(false);
 
   return (
     <AdminLayoutContext.Provider
-      value={{ isMenuCollapsed, setIsMenuCollapsed, isProgrammaticallyCollapsed, setIsProgrammaticallyCollapsed }}
+      value={{
+        isMenuCollapsed,
+        setIsMenuCollapsed,
+        isProgrammaticallyCollapsed,
+        setIsProgrammaticallyCollapsed,
+        aiDrawerOpen,
+        setAiDrawerOpen,
+      }}
     >
       {children}
     </AdminLayoutContext.Provider>

@@ -49,7 +49,12 @@
 
 import { useMemo } from 'react';
 
-import type { AiNode, PathFlowIntensity } from '@/features/ai/ai-paths/lib';
+import type {
+  AiNode,
+  AiPathRuntimeEvent,
+  AiPathRuntimeNodeStatusMap,
+  PathFlowIntensity,
+} from '@/features/ai/ai-paths/lib';
 
 import { useCanvasState, useCanvasRefs } from '../../context/CanvasContext';
 import { useGraphState } from '../../context/GraphContext';
@@ -78,6 +83,8 @@ import { CanvasBoard } from '../canvas-board';
  */
 export type CanvasBoardMigratedProps = {
   flowIntensity?: PathFlowIntensity | undefined;
+  runtimeNodeStatuses?: AiPathRuntimeNodeStatusMap | undefined;
+  runtimeEvents?: AiPathRuntimeEvent[] | undefined;
   viewportClassName?: string | undefined;
   // Callbacks - remain as props since they involve orchestration
   onRemoveEdge: (edgeId: string) => void;
@@ -115,6 +122,8 @@ export type CanvasBoardMigratedProps = {
  */
 export function CanvasBoardMigrated({
   flowIntensity,
+  runtimeNodeStatuses,
+  runtimeEvents,
   viewportClassName,
   onRemoveEdge,
   onDisconnectPort,
@@ -156,6 +165,8 @@ export function CanvasBoardMigrated({
   return (
     <CanvasBoard
       flowIntensity={flowIntensity}
+      runtimeNodeStatuses={runtimeNodeStatuses}
+      runtimeEvents={runtimeEvents}
       // Refs from CanvasContext
       viewportRef={viewportRef}
       canvasRef={canvasRef}

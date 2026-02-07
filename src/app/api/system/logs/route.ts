@@ -7,7 +7,6 @@ import {
   createSystemLog,
   listSystemLogs,
 } from "@/features/observability/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -42,73 +41,49 @@ const clearSchema = z.object({
 });
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const url = new URL(req.url);
-    const parsed = listSchema.parse(Object.fromEntries(url.searchParams.entries()));
-    const result = await listSystemLogs({
-      page: parsed.page ?? undefined,
-      pageSize: parsed.pageSize ?? undefined,
-      level: parsed.level ?? undefined,
-      source: parsed.source ?? undefined,
-      query: parsed.query ?? undefined,
-      from: parsed.from ? new Date(parsed.from) : null,
-      to: parsed.to ? new Date(parsed.to) : null,
-    });
-    return NextResponse.json(result);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "system.logs.GET",
-      fallbackMessage: "Failed to list system logs",
-    });
-  }
+  const url = new URL(req.url);
+  const parsed = listSchema.parse(Object.fromEntries(url.searchParams.entries()));
+  const result = await listSystemLogs({
+    page: parsed.page ?? undefined,
+    pageSize: parsed.pageSize ?? undefined,
+    level: parsed.level ?? undefined,
+    source: parsed.source ?? undefined,
+    query: parsed.query ?? undefined,
+    from: parsed.from ? new Date(parsed.from) : null,
+    to: parsed.to ? new Date(parsed.to) : null,
+  });
+  return NextResponse.json(result);
 }
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const parsed = await parseJsonBody(req, createSchema, {
-      logPrefix: "systemLogs.POST",
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const data = parsed.data;
-    const created = await createSystemLog({
-      level: data.level ?? undefined,
-      message: data.message,
-      source: data.source ?? undefined,
-      context: data.context ?? null,
-      stack: data.stack ?? null,
-      path: data.path ?? null,
-      method: data.method ?? null,
-      statusCode: data.statusCode ?? null,
-      requestId: data.requestId ?? null,
-      userId: data.userId ?? null,
-    });
-    return NextResponse.json({ log: created });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "system.logs.POST",
-      fallbackMessage: "Failed to create system log",
-    });
+  const parsed = await parseJsonBody(req, createSchema, {
+    logPrefix: "systemLogs.POST",
+  });
+  if (!parsed.ok) {
+    return parsed.response;
   }
+  const data = parsed.data;
+  const created = await createSystemLog({
+    level: data.level ?? undefined,
+    message: data.message,
+    source: data.source ?? undefined,
+    context: data.context ?? null,
+    stack: data.stack ?? null,
+    path: data.path ?? null,
+    method: data.method ?? null,
+    statusCode: data.statusCode ?? null,
+    requestId: data.requestId ?? null,
+    userId: data.userId ?? null,
+  });
+  return NextResponse.json({ log: created });
 }
 
 async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const url = new URL(req.url);
-    const parsed = clearSchema.parse(Object.fromEntries(url.searchParams.entries()));
-    const before = parsed.before ? new Date(parsed.before) : null;
-    const result = await clearSystemLogs(before);
-    return NextResponse.json({ deleted: result.deleted });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "system.logs.DELETE",
-      fallbackMessage: "Failed to clear system logs",
-    });
-  }
+  const url = new URL(req.url);
+  const parsed = clearSchema.parse(Object.fromEntries(url.searchParams.entries()));
+  const before = parsed.before ? new Date(parsed.before) : null;
+  const result = await clearSystemLogs(before);
+  return NextResponse.json({ deleted: result.deleted });
 }
 
 export const GET = apiHandler(

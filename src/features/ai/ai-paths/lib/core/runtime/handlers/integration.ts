@@ -1323,16 +1323,33 @@ export const handleDatabase: NodeHandler = async ({
     const inputValue: unknown = templateInputValue;
     const entityIdInput: unknown = coerceInput(resolvedInputs.entityId);
     const productIdInput: unknown = coerceInput(resolvedInputs.productId);
+    const parseRenderedQuery = (raw: string): Record<string, unknown> | null => {
+      const parsed: unknown = parseJsonSafe(
+        renderJsonTemplate(
+          raw,
+          templateContext,
+          inputValue ?? '',
+        ),
+      );
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+      return null;
+    };
     const parseQueryInput = (value: unknown): Record<string, unknown> | null => {
       if (!value) return null;
       if (typeof value === 'object' && !Array.isArray(value)) {
-        return value as Record<string, unknown>;
+        try {
+          const serialized: string = JSON.stringify(value);
+          return parseRenderedQuery(serialized) ?? (value as Record<string, unknown>);
+        } catch {
+          return value as Record<string, unknown>;
+        }
       }
       if (typeof value === 'string') {
-        const parsed: unknown = parseJsonSafe(value);
-        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-          return parsed as Record<string, unknown>;
-        }
+        const match: RegExpMatchArray | null = value.match(/```(?:json)?\s*([\s\S]*?)```/);
+        const jsonStr: string = match ? match[1]!.trim() : value.trim();
+        return parseRenderedQuery(jsonStr);
       }
       return null;
     };
@@ -1346,20 +1363,7 @@ export const handleDatabase: NodeHandler = async ({
     if (aiQueryInput !== undefined && aiQueryInput !== null) {
       let parsedAiQuery: Record<string, unknown> | null = null;
 
-      if (typeof aiQueryInput === 'string') {
-        // Try to extract JSON from AI response (may have markdown code blocks)
-        const jsonMatch: RegExpMatchArray | null = (aiQueryInput).match(/```(?:json)?\s*([\s\S]*?)```/);
-        const jsonStr: string = jsonMatch ? jsonMatch[1]!.trim() : (aiQueryInput).trim();
-        parsedAiQuery = parseJsonSafe(jsonStr) as Record<
-          string,
-          unknown
-        > | null;
-      } else if (
-        typeof aiQueryInput === 'object' &&
-        !Array.isArray(aiQueryInput)
-      ) {
-        parsedAiQuery = aiQueryInput as Record<string, unknown>;
-      }
+      parsedAiQuery = parseQueryInput(aiQueryInput);
 
       if (parsedAiQuery && typeof parsedAiQuery === 'object') {
         // Handle nested query structure (AI might return {query: {...}, collection: "..."})

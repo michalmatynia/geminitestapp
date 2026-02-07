@@ -1,36 +1,24 @@
 'use client';
 
+import { useAgentCreatorSettings } from '@/features/ai/agentcreator/hooks/useAgentCreatorSettings';
 import { Input, Label, Checkbox, UnifiedSelect, SectionPanel } from '@/shared/ui';
 
-type AgentCreatorSettingsSectionProps = {
-  agentModeEnabled: boolean;
-  setAgentModeEnabled: (value: boolean) => void;
-  agentBrowser: string;
-  setAgentBrowser: (value: string) => void;
-  agentMaxSteps: number;
-  setAgentMaxSteps: (value: number) => void;
-  agentRunHeadless: boolean;
-  setAgentRunHeadless: (value: boolean) => void;
-  agentIgnoreRobotsTxt: boolean;
-  setAgentIgnoreRobotsTxt: (value: boolean) => void;
-  agentRequireHumanApproval: boolean;
-  setAgentRequireHumanApproval: (value: boolean) => void;
-};
+export function AgentCreatorSettingsSection(): React.ReactElement {
+  const {
+    agentModeEnabled,
+    setAgentModeEnabled,
+    agentBrowser,
+    setAgentBrowser,
+    agentMaxSteps,
+    setAgentMaxSteps,
+    agentRunHeadless,
+    setAgentRunHeadless,
+    agentIgnoreRobotsTxt,
+    setAgentIgnoreRobotsTxt,
+    agentRequireHumanApproval,
+    setAgentRequireHumanApproval,
+  } = useAgentCreatorSettings();
 
-export function AgentCreatorSettingsSection({
-  agentModeEnabled,
-  setAgentModeEnabled,
-  agentBrowser,
-  setAgentBrowser,
-  agentMaxSteps,
-  setAgentMaxSteps,
-  agentRunHeadless,
-  setAgentRunHeadless,
-  agentIgnoreRobotsTxt,
-  setAgentIgnoreRobotsTxt,
-  agentRequireHumanApproval,
-  setAgentRequireHumanApproval,
-}: AgentCreatorSettingsSectionProps): React.ReactElement {
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium text-white">Agent Settings</h3>

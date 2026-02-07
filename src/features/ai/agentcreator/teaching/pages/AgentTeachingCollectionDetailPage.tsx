@@ -8,14 +8,15 @@ import React from 'react';
 import type { AgentTeachingChatSource, AgentTeachingEmbeddingCollectionRecord, AgentTeachingEmbeddingDocumentListItem } from '@/shared/types/agent-teaching';
 import { Button, ConfirmDialog, Input, Label, SectionHeader, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast } from '@/shared/ui';
 
-import { useAddEmbeddingDocumentMutation, useDeleteEmbeddingDocumentMutation, useEmbeddingDocuments, useTeachingCollections } from '../hooks/useAgentTeaching';
+import { useAddEmbeddingDocumentMutation, useDeleteEmbeddingDocumentMutation, useEmbeddingDocuments } from '../hooks/useAgentTeaching';
+import { useAgentTeachingContext } from '../context/AgentTeachingContext';
 
 export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
   const { toast } = useToast();
   const params = useParams<{ collectionId: string }>();
   const collectionId = params?.collectionId ?? null;
 
-  const { data: collections = [], isLoading: loadingCollections } = useTeachingCollections();
+  const { collections, isLoading: loadingCollections } = useAgentTeachingContext();
   const collection: AgentTeachingEmbeddingCollectionRecord | null =
     collectionId
       ? collections.find((c: AgentTeachingEmbeddingCollectionRecord) => c.id === collectionId) ?? null

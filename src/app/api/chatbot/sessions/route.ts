@@ -4,7 +4,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { chatbotSessionRepository } from "@/features/ai/chatbot/server";
 import type { ChatSession, UpdateSessionInput } from "@/shared/types/chatbot";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { notFoundError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
@@ -43,158 +42,120 @@ const deleteSessionSchema = z.object({
 // POST /api/chatbot/sessions - Create new session
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
-  try {
-    const parsed = await parseJsonBody(req, createSessionSchema, {
-      logPrefix: "chatbot.sessions.POST",
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const { title, settings } = parsed.data as CreateSessionBody;
+  const parsed = await parseJsonBody(req, createSessionSchema, {
+    logPrefix: "chatbot.sessions.POST",
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const { title, settings } = parsed.data as CreateSessionBody;
 
-    if (DEBUG_CHATBOT) {
-      console.info("[chatbot][sessions][POST] Request", {
-        titleProvided: Boolean(title?.trim()),
-      });
-    }
-
-    const session = await chatbotSessionRepository.create({
-      title: title?.trim() || `Chat ${new Date().toLocaleString()}`,
-      ...(settings !== undefined ? { settings } : {}),
-    });
-
-    if (DEBUG_CHATBOT) {
-      console.info("[chatbot][sessions][POST] Created", {
-        sessionId: session.id,
-        durationMs: Date.now() - requestStart,
-      });
-    }
-
-    return NextResponse.json({ sessionId: session.id, session }, { status: 201 });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "chatbot.sessions.POST",
-      fallbackMessage: "Failed to create session.",
+  if (DEBUG_CHATBOT) {
+    console.info("[chatbot][sessions][POST] Request", {
+      titleProvided: Boolean(title?.trim()),
     });
   }
+
+  const session = await chatbotSessionRepository.create({
+    title: title?.trim() || `Chat ${new Date().toLocaleString()}`,
+    ...(settings !== undefined ? { settings } : {}),
+  });
+
+  if (DEBUG_CHATBOT) {
+    console.info("[chatbot][sessions][POST] Created", {
+      sessionId: session.id,
+      durationMs: Date.now() - requestStart,
+    });
+  }
+
+  return NextResponse.json({ sessionId: session.id, session }, { status: 201 });
 }
 
 // GET /api/chatbot/sessions - List all sessions
-async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
-  try {
-    const sessions = await chatbotSessionRepository.findAll();
+  const sessions = await chatbotSessionRepository.findAll();
 
-    if (DEBUG_CHATBOT) {
-      console.info("[chatbot][sessions][GET] Listed", {
-        count: sessions.length,
-        durationMs: Date.now() - requestStart,
-      });
-    }
-
-    return NextResponse.json({ sessions });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "chatbot.sessions.GET",
-      fallbackMessage: "Failed to list sessions.",
+  if (DEBUG_CHATBOT) {
+    console.info("[chatbot][sessions][GET] Listed", {
+      count: sessions.length,
+      durationMs: Date.now() - requestStart,
     });
   }
+
+  return NextResponse.json({ sessions });
 }
 
 // PATCH /api/chatbot/sessions - Update session (title)
 async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
-  try {
-    const parsed = await parseJsonBody(req, updateSessionSchema, {
-      logPrefix: "chatbot.sessions.PATCH",
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const { sessionId, title } = parsed.data as UpdateSessionBody;
+  const parsed = await parseJsonBody(req, updateSessionSchema, {
+    logPrefix: "chatbot.sessions.PATCH",
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const { sessionId, title } = parsed.data as UpdateSessionBody;
 
-    if (DEBUG_CHATBOT) {
-      console.info("[chatbot][sessions][PATCH] Request", {
-        sessionId,
-        titleProvided: Boolean(title?.trim()),
-      });
-    }
-
-    const updateData: UpdateSessionInput = {};
-    if (title?.trim()) {
-      updateData.title = title.trim();
-    }
-
-    const updated = await chatbotSessionRepository.update(sessionId, updateData);
-
-    if (!updated) {
-      return createErrorResponse(notFoundError("Session not found.", { sessionId }), {
-        request: req,
-        source: "chatbot.sessions.PATCH",
-      });
-    }
-
-    if (DEBUG_CHATBOT) {
-      console.info("[chatbot][sessions][PATCH] Updated", {
-        sessionId: updated.id,
-        durationMs: Date.now() - requestStart,
-      });
-    }
-
-    return NextResponse.json({ session: updated });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "chatbot.sessions.PATCH",
-      fallbackMessage: "Failed to update session.",
+  if (DEBUG_CHATBOT) {
+    console.info("[chatbot][sessions][PATCH] Request", {
+      sessionId,
+      titleProvided: Boolean(title?.trim()),
     });
   }
+
+  const updateData: UpdateSessionInput = {};
+  if (title?.trim()) {
+    updateData.title = title.trim();
+  }
+
+  const updated = await chatbotSessionRepository.update(sessionId, updateData);
+
+  if (!updated) {
+    throw notFoundError("Session not found.", { sessionId });
+  }
+
+  if (DEBUG_CHATBOT) {
+    console.info("[chatbot][sessions][PATCH] Updated", {
+      sessionId: updated.id,
+      durationMs: Date.now() - requestStart,
+    });
+  }
+
+  return NextResponse.json({ session: updated });
 }
 
 // DELETE /api/chatbot/sessions - Delete session
 async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
-  try {
-    const parsed = await parseJsonBody(req, deleteSessionSchema, {
-      logPrefix: "chatbot.sessions.DELETE",
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const { sessionId } = parsed.data as DeleteSessionBody;
+  const parsed = await parseJsonBody(req, deleteSessionSchema, {
+    logPrefix: "chatbot.sessions.DELETE",
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const { sessionId } = parsed.data as DeleteSessionBody;
 
-    if (DEBUG_CHATBOT) {
-      console.info("[chatbot][sessions][DELETE] Request", {
-        sessionId,
-      });
-    }
-
-    const deleted = await chatbotSessionRepository.delete(sessionId);
-
-    if (!deleted) {
-      return createErrorResponse(notFoundError("Session not found.", { sessionId }), {
-        request: req,
-        source: "chatbot.sessions.DELETE",
-      });
-    }
-
-    if (DEBUG_CHATBOT) {
-      console.info("[chatbot][sessions][DELETE] Deleted", {
-        sessionId,
-        durationMs: Date.now() - requestStart,
-      });
-    }
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "chatbot.sessions.DELETE",
-      fallbackMessage: "Failed to delete session.",
+  if (DEBUG_CHATBOT) {
+    console.info("[chatbot][sessions][DELETE] Request", {
+      sessionId,
     });
   }
+
+  const deleted = await chatbotSessionRepository.delete(sessionId);
+
+  if (!deleted) {
+    throw notFoundError("Session not found.", { sessionId });
+  }
+
+  if (DEBUG_CHATBOT) {
+    console.info("[chatbot][sessions][DELETE] Deleted", {
+      sessionId,
+      durationMs: Date.now() - requestStart,
+    });
+  }
+
+  return NextResponse.json({ success: true });
 }
 
 export const POST = apiHandler(

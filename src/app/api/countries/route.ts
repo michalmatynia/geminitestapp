@@ -12,10 +12,8 @@ import {
 } from "@/features/internationalization/server";
 import { getInternationalizationProvider } from "@/features/internationalization/services/internationalization-provider";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { conflictError, internalError } from "@/shared/errors/app-error";
-import { logSystemEvent } from "@/features/observability/server";
 import type { CountryCode } from "@prisma/client";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -134,68 +132,54 @@ const normalizeCountryResponse = (
  * GET /api/countries
  * Fetches all countries (and ensures defaults exist).
  */
-async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const provider = await getInternationalizationProvider();
-    if (provider === "mongodb") {
-      if (!process.env.MONGODB_URI) {
-        return createErrorResponse(internalError("MongoDB is not configured."), {
-          request: req,
-          source: "countries.GET",
-        });
-      }
-      const db = await getMongoDb();
-      await seedMongoInternationalization(db);
-      const countries = await db
-        .collection<CountryDoc>(COUNTRIES_COLLECTION)
-        .find({})
-        .sort({ name: 1 })
-        .toArray();
-      const currencyIds = Array.from(
-        new Set(countries.flatMap((country: WithId<CountryDoc>) => country.currencyIds ?? []))
-      );
-      const currencies = currencyIds.length
-        ? await db
-            .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
-            .find({ id: { $in: currencyIds } })
-            .toArray()
-        : [];
-      const currencyMap = new Map(
-        currencies.map((currency: WithId<CurrencyDoc>) => [currency.id, currency])
-      );
-      const normalized = countries.map((country: WithId<CountryDoc>) =>
-        normalizeCountryResponse(country, currencyMap)
-      );
-      return NextResponse.json(normalized);
+async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const provider = await getInternationalizationProvider();
+  if (provider === "mongodb") {
+    if (!process.env.MONGODB_URI) {
+      throw internalError("MongoDB is not configured.");
     }
+    const db = await getMongoDb();
+    await seedMongoInternationalization(db);
+    const countries = await db
+      .collection<CountryDoc>(COUNTRIES_COLLECTION)
+      .find({})
+      .sort({ name: 1 })
+      .toArray();
+    const currencyIds = Array.from(
+      new Set(countries.flatMap((country: WithId<CountryDoc>) => country.currencyIds ?? []))
+    );
+    const currencies = currencyIds.length
+      ? await db
+          .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
+          .find({ id: { $in: currencyIds } })
+          .toArray()
+      : [];
+    const currencyMap = new Map(
+      currencies.map((currency: WithId<CurrencyDoc>) => [currency.id, currency])
+    );
+    const normalized = countries.map((country: WithId<CountryDoc>) =>
+      normalizeCountryResponse(country, currencyMap)
+    );
+    return NextResponse.json(normalized);
+  }
 
-    if (!process.env.DATABASE_URL) {
-      return NextResponse.json(fallbackCountries);
-    }
-    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      await ensureInternationalizationDefaults(tx);
-    });
-
-    const countries = await prisma.country.findMany({
-      orderBy: { name: "asc" },
-      include: {
-        currencies: {
-          include: { currency: true },
-        },
-      },
-    });
-
-    return NextResponse.json(countries as unknown as CountryWithCurrencies[]);
-  } catch (error) {
-    void logSystemEvent({
-      level: "error",
-      message: "Failed to fetch countries",
-      source: "countries.GET",
-      error,
-      request: req,
-    });
+  if (!process.env.DATABASE_URL) {
     return NextResponse.json(fallbackCountries);
   }
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    await ensureInternationalizationDefaults(tx);
+  });
+
+  const countries = await prisma.country.findMany({
+    orderBy: { name: "asc" },
+    include: {
+      currencies: {
+        include: { currency: true },
+      },
+    },
+  });
+
+  return NextResponse.json(countries as unknown as CountryWithCurrencies[]);
 }
 
 /**

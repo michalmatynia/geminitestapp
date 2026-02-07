@@ -19,6 +19,8 @@ import type {
   AiPathRunRecord,
   AiPathRunNodeRecord,
   AiPathRunEventRecord,
+  AiPathRuntimeEvent,
+  AiPathRuntimeNodeStatusMap,
   RuntimeHistoryEntry,
   ClusterPreset,
   DbQueryPreset,
@@ -286,6 +288,8 @@ export interface UseAiPathsSettingsStateReturn {
   handleStepActiveRun: (triggerNode?: AiNode) => void;
   handleCancelActiveRun: () => void;
   runtimeRunStatus: 'idle' | 'running' | 'paused' | 'stepping';
+  runtimeNodeStatuses: AiPathRuntimeNodeStatusMap;
+  runtimeEvents: AiPathRuntimeEvent[];
   clearRuntimeForNode: (nodeId: string) => void;
   handleSendToAi: (nodeId: string, prompt: string) => Promise<void>;
   sendingToAi: boolean;
@@ -1022,6 +1026,8 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     handleStepRun: handleStepActiveRun,
     handleCancelRun: handleCancelActiveRun,
     runStatus: runtimeRunStatus,
+    runtimeNodeStatuses,
+    runtimeEvents,
     handleSendToAi,
     sendingToAi,
   } = useAiPathsRuntime({
@@ -1926,6 +1932,8 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     handleStepActiveRun,
     handleCancelActiveRun,
     runtimeRunStatus,
+    runtimeNodeStatuses,
+    runtimeEvents,
     dbQueryPresets,
     setDbQueryPresets,
     saveDbQueryPresets,

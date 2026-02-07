@@ -1,5 +1,6 @@
 'use client';
 
+import { useAgentCreatorSettings } from '@/features/ai/agentcreator/hooks/useAgentCreatorSettings';
 import type { AgentPersonaSettings } from '@/features/ai/agentcreator/types';
 import { Label, UnifiedSelect } from '@/shared/ui';
 
@@ -78,14 +79,13 @@ const MODEL_FIELDS: ModelField[] = [
 type AgentPersonaSettingsFormProps = {
   settings: AgentPersonaSettings;
   onChange: (next: AgentPersonaSettings) => void;
-  modelOptions: string[];
 };
 
 export function AgentPersonaSettingsForm({
   settings,
   onChange,
-  modelOptions,
 }: AgentPersonaSettingsFormProps): React.JSX.Element {
+  const { modelOptions } = useAgentCreatorSettings();
   const mergedOptions =
     modelOptions && modelOptions.length > 0 ? modelOptions : [];
 

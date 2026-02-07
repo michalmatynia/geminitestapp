@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserPreferences, updateUserPreferences, type UserPreferencesData } from "@/features/auth/server";
 import { z } from "zod";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { auth } from "@/features/auth/server";
-import { isAbortError } from "@/features/ai/chatbot/utils";
 
 export const runtime = "nodejs";
 
@@ -36,69 +34,61 @@ const updatePreferencesSchema = z.object({
  * Get current user preferences
  */
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  let userId = DEFAULT_USER_ID;
-  try {
-    const include = _req.nextUrl.searchParams.get("include") ?? "";
-    const includeAdminMenu = include.split(",").map((value: string) => value.trim()).includes("admin-menu");
-    const session = await auth();
-    userId = session?.user?.id ?? DEFAULT_USER_ID;
-    if (!isDatabaseConfigured) {
-      return NextResponse.json({
-        productListNameLocale: "name_en",
-        productListCatalogFilter: "all",
-        productListCurrencyCode: "PLN",
-        productListPageSize: 12,
-        productListThumbnailSource: "file",
-        aiPathsActivePathId: null,
-        adminMenuCollapsed: false,
-        cmsLastPageId: null,
-        cmsActiveDomainId: null,
-        cmsThemeOpenSections: [],
-        cmsThemeLogoWidth: null,
-        cmsThemeLogoUrl: null,
-        cmsPreviewEnabled: false,
-        cmsSlideshowPauseOnHoverInEditor: false,
-        ...(includeAdminMenu
-          ? {
-              adminMenuFavorites: [],
-              adminMenuSectionColors: {},
-              adminMenuCustomEnabled: false,
-              adminMenuCustomNav: [],
-            }
-          : {}),
-      });
-    }
-    const preferences = await getUserPreferences(userId);
+  const include = _req.nextUrl.searchParams.get("include") ?? "";
+  const includeAdminMenu = include.split(",").map((value: string) => value.trim()).includes("admin-menu");
+  const session = await auth();
+  const userId = session?.user?.id ?? DEFAULT_USER_ID;
+  if (!isDatabaseConfigured) {
     return NextResponse.json({
-      productListNameLocale: preferences.productListNameLocale ?? "name_en",
-      productListCatalogFilter: preferences.productListCatalogFilter ?? "all",
-      productListCurrencyCode: preferences.productListCurrencyCode ?? "PLN",
-      productListPageSize: preferences.productListPageSize ?? 12,
-      productListThumbnailSource: preferences.productListThumbnailSource ?? "file",
-      aiPathsActivePathId: preferences.aiPathsActivePathId ?? null,
-      adminMenuCollapsed: preferences.adminMenuCollapsed ?? false,
-      cmsLastPageId: preferences.cmsLastPageId ?? null,
-      cmsActiveDomainId: preferences.cmsActiveDomainId ?? null,
-      cmsThemeOpenSections: preferences.cmsThemeOpenSections ?? [],
-      cmsThemeLogoWidth: preferences.cmsThemeLogoWidth ?? null,
-      cmsThemeLogoUrl: preferences.cmsThemeLogoUrl ?? null,
-      cmsPreviewEnabled: preferences.cmsPreviewEnabled ?? false,
-      cmsSlideshowPauseOnHoverInEditor: preferences.cmsSlideshowPauseOnHoverInEditor ?? false,
+      productListNameLocale: "name_en",
+      productListCatalogFilter: "all",
+      productListCurrencyCode: "PLN",
+      productListPageSize: 12,
+      productListThumbnailSource: "file",
+      aiPathsActivePathId: null,
+      adminMenuCollapsed: false,
+      cmsLastPageId: null,
+      cmsActiveDomainId: null,
+      cmsThemeOpenSections: [],
+      cmsThemeLogoWidth: null,
+      cmsThemeLogoUrl: null,
+      cmsPreviewEnabled: false,
+      cmsSlideshowPauseOnHoverInEditor: false,
       ...(includeAdminMenu
         ? {
-            adminMenuFavorites: preferences.adminMenuFavorites ?? [],
-            adminMenuSectionColors: preferences.adminMenuSectionColors ?? {},
-            adminMenuCustomEnabled: preferences.adminMenuCustomEnabled ?? false,
-            adminMenuCustomNav: preferences.adminMenuCustomNav ?? [],
+            adminMenuFavorites: [],
+            adminMenuSectionColors: {},
+            adminMenuCustomEnabled: false,
+            adminMenuCustomNav: [],
           }
         : {}),
     });
-  } catch (error) {
-    return createErrorResponse(error, {
-      source: "user.preferences.GET",
-      fallbackMessage: "Failed to fetch preferences",
-    });
   }
+  const preferences = await getUserPreferences(userId);
+  return NextResponse.json({
+    productListNameLocale: preferences.productListNameLocale ?? "name_en",
+    productListCatalogFilter: preferences.productListCatalogFilter ?? "all",
+    productListCurrencyCode: preferences.productListCurrencyCode ?? "PLN",
+    productListPageSize: preferences.productListPageSize ?? 12,
+    productListThumbnailSource: preferences.productListThumbnailSource ?? "file",
+    aiPathsActivePathId: preferences.aiPathsActivePathId ?? null,
+    adminMenuCollapsed: preferences.adminMenuCollapsed ?? false,
+    cmsLastPageId: preferences.cmsLastPageId ?? null,
+    cmsActiveDomainId: preferences.cmsActiveDomainId ?? null,
+    cmsThemeOpenSections: preferences.cmsThemeOpenSections ?? [],
+    cmsThemeLogoWidth: preferences.cmsThemeLogoWidth ?? null,
+    cmsThemeLogoUrl: preferences.cmsThemeLogoUrl ?? null,
+    cmsPreviewEnabled: preferences.cmsPreviewEnabled ?? false,
+    cmsSlideshowPauseOnHoverInEditor: preferences.cmsSlideshowPauseOnHoverInEditor ?? false,
+    ...(includeAdminMenu
+      ? {
+          adminMenuFavorites: preferences.adminMenuFavorites ?? [],
+          adminMenuSectionColors: preferences.adminMenuSectionColors ?? {},
+          adminMenuCustomEnabled: preferences.adminMenuCustomEnabled ?? false,
+          adminMenuCustomNav: preferences.adminMenuCustomNav ?? [],
+        }
+      : {}),
+  });
 }
 
 /**
@@ -106,72 +96,55 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
  * Update user preferences
  */
 async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  let data: Partial<UserPreferencesData> = {};
-  let userId = DEFAULT_USER_ID;
-  try {
-    const session = await auth();
-    userId = session?.user?.id ?? DEFAULT_USER_ID;
-    const rawBody = await req.text();
-    let body: unknown = {};
-    if (rawBody) {
-      try {
-        body = JSON.parse(rawBody);
-      } catch (parseError) {
-        if (parseError instanceof SyntaxError) {
-          body = {};
-        } else {
-          throw parseError;
-        }
+  const session = await auth();
+  const userId = session?.user?.id ?? DEFAULT_USER_ID;
+  const rawBody = await req.text();
+  let body: unknown = {};
+  if (rawBody) {
+    try {
+      body = JSON.parse(rawBody);
+    } catch (parseError) {
+      if (parseError instanceof SyntaxError) {
+        body = {};
+      } else {
+        throw parseError;
       }
     }
-    const parsed = updatePreferencesSchema.parse(body);
+  }
+  const parsed = updatePreferencesSchema.parse(body);
 
-    // Type assertion to handle exactOptionalPropertyTypes
-    const partial: Record<string, unknown> = {};
-    if (parsed.productListNameLocale !== undefined) partial.productListNameLocale = parsed.productListNameLocale;
-    if (parsed.productListCatalogFilter !== undefined) partial.productListCatalogFilter = parsed.productListCatalogFilter;
-    if (parsed.productListCurrencyCode !== undefined) partial.productListCurrencyCode = parsed.productListCurrencyCode;
-    if (parsed.productListPageSize !== undefined) partial.productListPageSize = parsed.productListPageSize;
-    if (parsed.productListThumbnailSource !== undefined) partial.productListThumbnailSource = parsed.productListThumbnailSource;
-    if (parsed.aiPathsActivePathId !== undefined) partial.aiPathsActivePathId = parsed.aiPathsActivePathId;
-    if (parsed.adminMenuCollapsed !== undefined) partial.adminMenuCollapsed = parsed.adminMenuCollapsed;
-    if (parsed.cmsLastPageId !== undefined) partial.cmsLastPageId = parsed.cmsLastPageId;
-    if (parsed.cmsActiveDomainId !== undefined) partial.cmsActiveDomainId = parsed.cmsActiveDomainId;
-    if (parsed.cmsThemeOpenSections !== undefined) partial.cmsThemeOpenSections = parsed.cmsThemeOpenSections ?? [];
-    if (parsed.cmsThemeLogoWidth !== undefined) partial.cmsThemeLogoWidth = parsed.cmsThemeLogoWidth;
-    if (parsed.cmsThemeLogoUrl !== undefined) partial.cmsThemeLogoUrl = parsed.cmsThemeLogoUrl;
-    if (parsed.cmsPreviewEnabled !== undefined) partial.cmsPreviewEnabled = parsed.cmsPreviewEnabled;
-    if (parsed.cmsSlideshowPauseOnHoverInEditor !== undefined) {
-      partial.cmsSlideshowPauseOnHoverInEditor = parsed.cmsSlideshowPauseOnHoverInEditor;
-    }
-    data = partial as Partial<UserPreferencesData>;
+  // Type assertion to handle exactOptionalPropertyTypes
+  const partial: Record<string, unknown> = {};
+  if (parsed.productListNameLocale !== undefined) partial.productListNameLocale = parsed.productListNameLocale;
+  if (parsed.productListCatalogFilter !== undefined) partial.productListCatalogFilter = parsed.productListCatalogFilter;
+  if (parsed.productListCurrencyCode !== undefined) partial.productListCurrencyCode = parsed.productListCurrencyCode;
+  if (parsed.productListPageSize !== undefined) partial.productListPageSize = parsed.productListPageSize;
+  if (parsed.productListThumbnailSource !== undefined) partial.productListThumbnailSource = parsed.productListThumbnailSource;
+  if (parsed.aiPathsActivePathId !== undefined) partial.aiPathsActivePathId = parsed.aiPathsActivePathId;
+  if (parsed.adminMenuCollapsed !== undefined) partial.adminMenuCollapsed = parsed.adminMenuCollapsed;
+  if (parsed.cmsLastPageId !== undefined) partial.cmsLastPageId = parsed.cmsLastPageId;
+  if (parsed.cmsActiveDomainId !== undefined) partial.cmsActiveDomainId = parsed.cmsActiveDomainId;
+  if (parsed.cmsThemeOpenSections !== undefined) partial.cmsThemeOpenSections = parsed.cmsThemeOpenSections ?? [];
+  if (parsed.cmsThemeLogoWidth !== undefined) partial.cmsThemeLogoWidth = parsed.cmsThemeLogoWidth;
+  if (parsed.cmsThemeLogoUrl !== undefined) partial.cmsThemeLogoUrl = parsed.cmsThemeLogoUrl;
+  if (parsed.cmsPreviewEnabled !== undefined) partial.cmsPreviewEnabled = parsed.cmsPreviewEnabled;
+  if (parsed.cmsSlideshowPauseOnHoverInEditor !== undefined) {
+    partial.cmsSlideshowPauseOnHoverInEditor = parsed.cmsSlideshowPauseOnHoverInEditor;
+  }
+  const data = partial as Partial<UserPreferencesData>;
 
-    if (!isDatabaseConfigured) {
-      return NextResponse.json({
-        id: "mock",
-        userId,
-        ...data,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-    }
-
-    const updated = await updateUserPreferences(userId, data);
-    return NextResponse.json(updated);
-  } catch (error) {
-    const isAbort =
-      req.signal.aborted ||
-      isAbortError(error) ||
-      (error instanceof Error && (error as { code?: string }).code === "ECONNRESET");
-    if (isAbort) {
-      return new NextResponse(null, { status: 204 });
-    }
-    return createErrorResponse(error, {
-      request: req,
-      source: "user.preferences.PATCH",
-      fallbackMessage: "Failed to update preferences",
+  if (!isDatabaseConfigured) {
+    return NextResponse.json({
+      id: "mock",
+      userId,
+      ...data,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
   }
+
+  const updated = await updateUserPreferences(userId, data);
+  return NextResponse.json(updated);
 }
 
 export const GET = apiHandler(

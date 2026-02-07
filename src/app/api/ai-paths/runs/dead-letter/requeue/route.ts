@@ -6,7 +6,6 @@ import { z } from "zod";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { parseJsonBody } from "@/features/products/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { resumePathRun } from "@/features/ai/ai-paths/services/path-run-service";
 import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";
 import { startAiPathRunQueue } from "@/features/jobs/server";
@@ -25,87 +24,79 @@ const requeueSchema = z.object({
 });
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const access = await requireAiPathsAccess();
-    enforceAiPathsActionRateLimit(access, "run-requeue");
-    const parsed = await parseJsonBody(req, requeueSchema, {
-      logPrefix: "ai-paths.runs.dead-letter.requeue",
+  const access = await requireAiPathsAccess();
+  enforceAiPathsActionRateLimit(access, "run-requeue");
+  const parsed = await parseJsonBody(req, requeueSchema, {
+    logPrefix: "ai-paths.runs.dead-letter.requeue",
+  });
+  if (!parsed.ok) return parsed.response;
+
+  const runIds = Array.isArray(parsed.data?.runIds) ? parsed.data.runIds : [];
+  const pathId = parsed.data?.pathId?.trim() || undefined;
+  const mode = parsed.data?.mode ?? "resume";
+  const query = parsed.data?.query?.trim() || undefined;
+  const limit = parsed.data?.limit ?? undefined;
+
+  const repo = getPathRunRepository();
+  let targetRunIds = runIds;
+
+  if (targetRunIds.length === 0) {
+    const { runs } = await repo.listRuns({
+      ...(!access.isElevated ? { userId: access.userId } : {}),
+      ...(pathId ? { pathId } : {}),
+      ...(query ? { query } : {}),
+      status: "dead_lettered",
+      ...(limit ? { limit } : {}),
     });
-    if (!parsed.ok) return parsed.response;
+    targetRunIds = runs.map((run: { id: string }) => run.id);
+  }
 
-    const runIds = Array.isArray(parsed.data?.runIds) ? parsed.data.runIds : [];
-    const pathId = parsed.data?.pathId?.trim() || undefined;
-    const mode = parsed.data?.mode ?? "resume";
-    const query = parsed.data?.query?.trim() || undefined;
-    const limit = parsed.data?.limit ?? undefined;
+  if (targetRunIds.length === 0) {
+    return NextResponse.json({ requeued: 0, runIds: [], errors: [] });
+  }
 
-    const repo = getPathRunRepository();
-    let targetRunIds = runIds;
+  const requeuedRunIds: string[] = [];
+  const errors: Array<{ runId: string; error: string }> = [];
 
-    if (targetRunIds.length === 0) {
-      const { runs } = await repo.listRuns({
-        ...(!access.isElevated ? { userId: access.userId } : {}),
-        ...(pathId ? { pathId } : {}),
-        ...(query ? { query } : {}),
-        status: "dead_lettered",
-        ...(limit ? { limit } : {}),
-      });
-      targetRunIds = runs.map((run: { id: string }) => run.id);
-    }
-
-    if (targetRunIds.length === 0) {
-      return NextResponse.json({ requeued: 0, runIds: [], errors: [] });
-    }
-
-    const requeuedRunIds: string[] = [];
-    const errors: Array<{ runId: string; error: string }> = [];
-
-    for (const runId of targetRunIds) {
+  for (const runId of targetRunIds) {
+    try {
+      const run = await repo.findRunById(runId);
+      if (!run) {
+        errors.push({ runId, error: "Run not found" });
+        continue;
+      }
       try {
-        const run = await repo.findRunById(runId);
-        if (!run) {
-          errors.push({ runId, error: "Run not found" });
-          continue;
-        }
-        try {
-          assertAiPathRunAccess(access, run);
-        } catch (error) {
-          errors.push({
-            runId,
-            error: error instanceof Error ? error.message : "Run access denied",
-          });
-          continue;
-        }
-        if (run.status !== "dead_lettered") {
-          errors.push({ runId, error: `Run is ${run.status}` });
-          continue;
-        }
-        await resumePathRun(runId, mode);
-        requeuedRunIds.push(runId);
+        assertAiPathRunAccess(access, run);
       } catch (error) {
         errors.push({
           runId,
-          error: error instanceof Error ? error.message : "Failed to requeue run",
+          error: error instanceof Error ? error.message : "Run access denied",
         });
+        continue;
       }
+      if (run.status !== "dead_lettered") {
+        errors.push({ runId, error: `Run is ${run.status}` });
+        continue;
+      }
+      await resumePathRun(runId, mode);
+      requeuedRunIds.push(runId);
+    } catch (error) {
+      errors.push({
+        runId,
+        error: error instanceof Error ? error.message : "Failed to requeue run",
+      });
     }
-
-    if (requeuedRunIds.length > 0) {
-      startAiPathRunQueue();
-    }
-
-    return NextResponse.json({
-      requeued: requeuedRunIds.length,
-      runIds: requeuedRunIds,
-      errors,
-    });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "ai-paths.runs.dead-letter.requeue",
-      fallbackMessage: "Failed to requeue dead-letter runs",
-    });
   }
+
+  if (requeuedRunIds.length > 0) {
+    startAiPathRunQueue();
+  }
+
+  return NextResponse.json({
+    requeued: requeuedRunIds.length,
+    runIds: requeuedRunIds,
+    errors,
+  });
 }
 
 export const POST = apiHandler(

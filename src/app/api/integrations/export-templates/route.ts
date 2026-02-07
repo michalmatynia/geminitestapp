@@ -4,7 +4,6 @@ import {
   createExportTemplate,
   listExportTemplates
 } from "@/features/integrations/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -24,42 +23,26 @@ const templateSchema = z.object({
   exportImagesAsBase64: z.boolean().optional()
 });
 
-async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const templates = await listExportTemplates();
-    return NextResponse.json(templates);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.export-templates.GET",
-      fallbackMessage: "Failed to fetch templates."
-    });
-  }
+async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const templates = await listExportTemplates();
+  return NextResponse.json(templates);
 }
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const parsed = await parseJsonBody(req, templateSchema, {
-      logPrefix: "export-templates.POST"
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const data = parsed.data;
-    const template = await createExportTemplate({
-      name: data.name,
-      description: data.description ?? null,
-      mappings: data.mappings,
-      ...(data.exportImagesAsBase64 !== undefined && { exportImagesAsBase64: data.exportImagesAsBase64 })
-    });
-    return NextResponse.json(template);
-  } catch (error: unknown) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.export-templates.POST",
-      fallbackMessage: "Failed to create template."
-    });
+  const parsed = await parseJsonBody(req, templateSchema, {
+    logPrefix: "export-templates.POST"
+  });
+  if (!parsed.ok) {
+    return parsed.response;
   }
+  const data = parsed.data;
+  const template = await createExportTemplate({
+    name: data.name,
+    description: data.description ?? null,
+    mappings: data.mappings,
+    ...(data.exportImagesAsBase64 !== undefined && { exportImagesAsBase64: data.exportImagesAsBase64 })
+  });
+  return NextResponse.json(template);
 }
 
 export const GET = apiHandler(

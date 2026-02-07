@@ -6,7 +6,6 @@ import { z } from "zod";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { parseJsonBody } from "@/features/products/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError } from "@/shared/errors/app-error";
 import { enqueuePathRun } from "@/features/ai/ai-paths/services/path-run-service";
 import { startAiPathRunQueue } from "@/features/jobs/server";
@@ -30,60 +29,52 @@ const enqueueSchema = z.object({
 });
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const access = await requireAiPathsRunAccess();
-    await enforceAiPathsRunRateLimit(access);
-    const parsed = await parseJsonBody(req, enqueueSchema, {
-      logPrefix: "ai-paths.runs.enqueue",
-    });
-    if (!parsed.ok) return parsed.response;
+  const access = await requireAiPathsRunAccess();
+  await enforceAiPathsRunRateLimit(access);
+  const parsed = await parseJsonBody(req, enqueueSchema, {
+    logPrefix: "ai-paths.runs.enqueue",
+  });
+  if (!parsed.ok) return parsed.response;
 
-    const data = parsed.data;
-    const { nodes, edges, ...rest } = data;
-    let normalizedMeta = rest.meta ?? null;
-    if (normalizedMeta && typeof normalizedMeta === "object") {
-      const metaRecord = normalizedMeta as Record<string, unknown>;
-      const sourceValue = metaRecord.source;
-      if (sourceValue && typeof sourceValue === "object") {
-        const triggerEventId = typeof metaRecord.triggerEventId === "string"
-          ? metaRecord.triggerEventId
-          : null;
-        normalizedMeta = {
-          ...metaRecord,
-          sourceInfo: sourceValue,
-          source: triggerEventId ? "trigger_button" : "ai_paths_ui",
-        };
-      }
+  const data = parsed.data;
+  const { nodes, edges, ...rest } = data;
+  let normalizedMeta = rest.meta ?? null;
+  if (normalizedMeta && typeof normalizedMeta === "object") {
+    const metaRecord = normalizedMeta as Record<string, unknown>;
+    const sourceValue = metaRecord.source;
+    if (sourceValue && typeof sourceValue === "object") {
+      const triggerEventId = typeof metaRecord.triggerEventId === "string"
+        ? metaRecord.triggerEventId
+        : null;
+      normalizedMeta = {
+        ...metaRecord,
+        sourceInfo: sourceValue,
+        source: triggerEventId ? "trigger_button" : "ai_paths_ui",
+      };
     }
-    if (!Array.isArray(nodes) || !Array.isArray(edges)) {
-      throw badRequestError("Nodes and edges are required to enqueue a run.");
-    }
-
-    const run = await enqueuePathRun({
-      userId: access.userId,
-      pathId: rest.pathId,
-      pathName: rest.pathName ?? null,
-      nodes: nodes as AiNode[],
-      edges: edges as Edge[],
-      ...(rest.triggerEvent ? { triggerEvent: rest.triggerEvent } : {}),
-      ...(rest.triggerNodeId ? { triggerNodeId: rest.triggerNodeId } : {}),
-      triggerContext: rest.triggerContext ?? null,
-      entityId: rest.entityId ?? null,
-      entityType: rest.entityType ?? null,
-      ...(rest.maxAttempts !== undefined ? { maxAttempts: rest.maxAttempts } : {}),
-      ...(rest.backoffMs !== undefined ? { backoffMs: rest.backoffMs } : {}),
-      ...(rest.backoffMaxMs !== undefined ? { backoffMaxMs: rest.backoffMaxMs } : {}),
-      meta: normalizedMeta,
-    });
-    startAiPathRunQueue();
-    return NextResponse.json({ run });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "ai-paths.runs.enqueue",
-      fallbackMessage: "Failed to enqueue AI Path run",
-    });
   }
+  if (!Array.isArray(nodes) || !Array.isArray(edges)) {
+    throw badRequestError("Nodes and edges are required to enqueue a run.");
+  }
+
+  const run = await enqueuePathRun({
+    userId: access.userId,
+    pathId: rest.pathId,
+    pathName: rest.pathName ?? null,
+    nodes: nodes as AiNode[],
+    edges: edges as Edge[],
+    ...(rest.triggerEvent ? { triggerEvent: rest.triggerEvent } : {}),
+    ...(rest.triggerNodeId ? { triggerNodeId: rest.triggerNodeId } : {}),
+    triggerContext: rest.triggerContext ?? null,
+    entityId: rest.entityId ?? null,
+    entityType: rest.entityType ?? null,
+    ...(rest.maxAttempts !== undefined ? { maxAttempts: rest.maxAttempts } : {}),
+    ...(rest.backoffMs !== undefined ? { backoffMs: rest.backoffMs } : {}),
+    ...(rest.backoffMaxMs !== undefined ? { backoffMaxMs: rest.backoffMaxMs } : {}),
+    meta: normalizedMeta,
+  });
+  startAiPathRunQueue();
+  return NextResponse.json({ run });
 }
 
 export const POST = apiHandler(

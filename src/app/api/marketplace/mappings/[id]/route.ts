@@ -2,7 +2,6 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import { getCategoryMappingRepository } from "@/features/integrations/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -18,25 +17,17 @@ type Params = { id: string };
  * GET /api/marketplace/mappings/[id]
  * Gets a specific category mapping by ID.
  */
-async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext, params: Params): Promise<Response> {
-  try {
-    const { id } = params;
+async function GET_handler(_request: NextRequest, _ctx: ApiHandlerContext, params: Params): Promise<Response> {
+  const { id } = params;
 
-    const repo = getCategoryMappingRepository();
-    const mapping = await repo.getById(id);
+  const repo = getCategoryMappingRepository();
+  const mapping = await repo.getById(id);
 
-    if (!mapping) {
-      throw notFoundError("Mapping not found");
-    }
-
-    return NextResponse.json(mapping);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request,
-      source: "marketplace.mappings.[id].GET",
-      fallbackMessage: "Failed to fetch category mapping",
-    });
+  if (!mapping) {
+    throw notFoundError("Mapping not found");
   }
+
+  return NextResponse.json(mapping);
 }
 
 /**
@@ -44,61 +35,45 @@ async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext, params
  * Updates a category mapping.
  */
 async function PUT_handler(request: NextRequest, _ctx: ApiHandlerContext, params: Params): Promise<Response> {
-  try {
-    const { id } = params;
-    const body = (await request.json()) as UpdateMappingRequest;
+  const { id } = params;
+  const body = (await request.json()) as UpdateMappingRequest;
 
-    const repo = getCategoryMappingRepository();
+  const repo = getCategoryMappingRepository();
 
-    // Check if mapping exists
-    const existing = await repo.getById(id);
-    if (!existing) {
-      throw notFoundError("Mapping not found");
-    }
-
-    const updated = await repo.update(id, {
-      ...(body.internalCategoryId !== undefined && {
-        internalCategoryId: body.internalCategoryId,
-      }),
-      ...(body.isActive !== undefined && { isActive: body.isActive }),
-    });
-
-    return NextResponse.json(updated);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request,
-      source: "marketplace.mappings.[id].PUT",
-      fallbackMessage: "Failed to update category mapping",
-    });
+  // Check if mapping exists
+  const existing = await repo.getById(id);
+  if (!existing) {
+    throw notFoundError("Mapping not found");
   }
+
+  const updated = await repo.update(id, {
+    ...(body.internalCategoryId !== undefined && {
+      internalCategoryId: body.internalCategoryId,
+    }),
+    ...(body.isActive !== undefined && { isActive: body.isActive }),
+  });
+
+  return NextResponse.json(updated);
 }
 
 /**
  * DELETE /api/marketplace/mappings/[id]
  * Deletes a category mapping.
  */
-async function DELETE_handler(request: NextRequest, _ctx: ApiHandlerContext, params: Params): Promise<Response> {
-  try {
-    const { id } = params;
+async function DELETE_handler(_request: NextRequest, _ctx: ApiHandlerContext, params: Params): Promise<Response> {
+  const { id } = params;
 
-    const repo = getCategoryMappingRepository();
+  const repo = getCategoryMappingRepository();
 
-    // Check if mapping exists
-    const existing = await repo.getById(id);
-    if (!existing) {
-      throw notFoundError("Mapping not found");
-    }
-
-    await repo.delete(id);
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request,
-      source: "marketplace.mappings.[id].DELETE",
-      fallbackMessage: "Failed to delete category mapping",
-    });
+  // Check if mapping exists
+  const existing = await repo.getById(id);
+  if (!existing) {
+    throw notFoundError("Mapping not found");
   }
+
+  await repo.delete(id);
+
+  return NextResponse.json({ success: true });
 }
 
 export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, { source: "marketplace.mappings.[id].GET" });

@@ -3,6 +3,7 @@
 import { LogOut, LogIn, SparklesIcon } from 'lucide-react';
 import { signIn, signOut, useSession } from 'next-auth/react';
 
+import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
@@ -21,8 +22,9 @@ import {
 } from '@/shared/ui';
 
 
-export function UserNav({ onOpenAiWarnings }: { onOpenAiWarnings?: () => void } = {}): React.ReactNode {
+export function UserNav(): React.ReactNode {
   const { data: session } = useSession();
+  const { setAiDrawerOpen } = useAdminLayout();
   const settingsStore = useSettingsStore();
   const updateSettings = useUpdateSettingsBulk();
 
@@ -79,9 +81,8 @@ export function UserNav({ onOpenAiWarnings }: { onOpenAiWarnings?: () => void } 
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onSelect={() => {
-            if (onOpenAiWarnings) onOpenAiWarnings();
+            setAiDrawerOpen(true);
           }}
-          disabled={!onOpenAiWarnings}
         >
           <SparklesIcon className="mr-2 h-4 w-4" />
           <span>AI warnings</span>

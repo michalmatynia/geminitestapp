@@ -8,16 +8,14 @@ import { buildModelProfile } from '@/features/ai/chatbot/utils';
 import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/agent-teaching';
 import { Input, ItemLibrary, Label, UnifiedSelect, Textarea, useToast } from '@/shared/ui';
 
-import { useDeleteTeachingAgentMutation, useTeachingAgents, useTeachingCollections, useUpsertTeachingAgentMutation } from '../hooks/useAgentTeaching';
+import { useDeleteTeachingAgentMutation, useUpsertTeachingAgentMutation } from '../hooks/useAgentTeaching';
+import { useAgentTeachingContext } from '../context/AgentTeachingContext';
 
 const isEmbeddingModel = (model: string): boolean => buildModelProfile(model).isEmbedding;
 
 export function AgentTeachingAgentsPage(): React.JSX.Element {
   const { toast } = useToast();
-
-  const { data: agents = [], isLoading: loadingAgents } = useTeachingAgents();
-  const { data: collections = [], isLoading: loadingCollections } = useTeachingCollections();
-  const { data: modelOptions = [] } = useChatbotModels();
+  const { agents, collections, modelOptions, isLoading: isLoadingContext } = useAgentTeachingContext();
 
   const { mutateAsync: upsert, isPending: saving } = useUpsertTeachingAgentMutation();
   const { mutateAsync: remove } = useDeleteTeachingAgentMutation();
@@ -111,15 +109,13 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
     }
   };
 
-  const isLoading = loadingAgents || loadingCollections;
-
   return (
     <ItemLibrary<AgentTeachingAgentRecord>
       title="Learner Agents"
       description="Agents that answer using connected embedding collections (RAG)."
       entityName="Learner Agent"
       items={agents}
-      isLoading={isLoading}
+      isLoading={isLoadingContext}
       isSaving={saving}
       onSave={handleSave}
       onDelete={handleDelete}

@@ -11,7 +11,6 @@ import {
   setImportSampleInventoryId,
   setImportSampleProductId
 } from "@/features/integrations/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
@@ -68,86 +67,70 @@ const extractFirstProductId = (payload: unknown): string | null => {
   return null;
 };
 
-async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const productId = await getImportSampleProductId();
-    const inventoryId = await getImportSampleInventoryId();
-    return NextResponse.json({ productId, inventoryId });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.imports.base.sample-product.GET",
-      fallbackMessage: "Failed to fetch sample product."
-    });
-  }
+async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const productId = await getImportSampleProductId();
+  const inventoryId = await getImportSampleInventoryId();
+  return NextResponse.json({ productId, inventoryId });
 }
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const parsed = await parseJsonBody(req, requestSchema, {
-      logPrefix: "imports.base.sample-product.POST"
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const data = parsed.data;
+  const parsed = await parseJsonBody(req, requestSchema, {
+    logPrefix: "imports.base.sample-product.POST"
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const data = parsed.data;
 
-    const inventoryId = data.inventoryId?.trim() ?? "";
-    if (data.saveOnly) {
-      if (inventoryId) {
-        await setImportSampleInventoryId(inventoryId);
-      } else {
-        await setImportSampleInventoryId("");
-      }
-      if (data.productId) {
-        await setImportSampleProductId(data.productId);
-      }
-      return NextResponse.json({
-        productId: data.productId ?? null,
-        inventoryId: inventoryId || null
-      });
+  const inventoryId = data.inventoryId?.trim() ?? "";
+  if (data.saveOnly) {
+    if (inventoryId) {
+      await setImportSampleInventoryId(inventoryId);
+    } else {
+      await setImportSampleInventoryId("");
     }
-
-    if (!inventoryId) {
-      throw badRequestError("Inventory ID is required.");
+    if (data.productId) {
+      await setImportSampleProductId(data.productId);
     }
-
-    let productId = data.productId;
-    if (!productId) {
-      const integrationRepo = await getIntegrationRepository();
-      const integrations = await integrationRepo.listIntegrations();
-      const baseIntegration = integrations.find((i) => i.slug === "baselinker");
-      if (!baseIntegration) {
-        throw notFoundError("Base integration not found.");
-      }
-      const connections = await integrationRepo.listConnections(
-        baseIntegration.id
-      );
-      const connection = connections.find((c) => c.baseApiToken);
-      if (!connection?.baseApiToken) {
-        throw badRequestError("No Base API token configured.");
-      }
-      const token = decryptSecret(connection.baseApiToken);
-      const payload = await callBaseApi(token, "getInventoryProductsList", {
-        inventory_id: inventoryId,
-        limit: 1
-      });
-      productId = extractFirstProductId(payload) ?? undefined;
-      if (!productId) {
-        throw notFoundError("No products found in inventory.");
-      }
-    }
-
-    await setImportSampleProductId(productId);
-    await setImportSampleInventoryId(inventoryId);
-    return NextResponse.json({ productId, inventoryId });
-  } catch (error: unknown) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.imports.base.sample-product.POST",
-      fallbackMessage: "Failed to save sample product"
+    return NextResponse.json({
+      productId: data.productId ?? null,
+      inventoryId: inventoryId || null
     });
   }
+
+  if (!inventoryId) {
+    throw badRequestError("Inventory ID is required.");
+  }
+
+  let productId = data.productId;
+  if (!productId) {
+    const integrationRepo = await getIntegrationRepository();
+    const integrations = await integrationRepo.listIntegrations();
+    const baseIntegration = integrations.find((i) => i.slug === "baselinker");
+    if (!baseIntegration) {
+      throw notFoundError("Base integration not found.");
+    }
+    const connections = await integrationRepo.listConnections(
+      baseIntegration.id
+    );
+    const connection = connections.find((c) => c.baseApiToken);
+    if (!connection?.baseApiToken) {
+      throw badRequestError("No Base API token configured.");
+    }
+    const token = decryptSecret(connection.baseApiToken);
+    const payload = await callBaseApi(token, "getInventoryProductsList", {
+      inventory_id: inventoryId,
+      limit: 1
+    });
+    productId = extractFirstProductId(payload) ?? undefined;
+    if (!productId) {
+      throw notFoundError("No products found in inventory.");
+    }
+  }
+
+  await setImportSampleProductId(productId);
+  await setImportSampleInventoryId(inventoryId);
+  return NextResponse.json({ productId, inventoryId });
 }
 
 export const GET = apiHandler(

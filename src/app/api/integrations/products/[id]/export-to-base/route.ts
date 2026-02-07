@@ -168,13 +168,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     const productRepo = await getProductRepository();
     const product = await productRepo.getProductById(productId);
     if (!product) {
-      logCapture.stop();
-      const logs = logCapture.getLogs();
-      return createErrorResponse(notFoundError("Product not found", { productId }), {
-        request: req,
-        source: "export-to-base",
-        extra: { logs }
-      });
+      throw notFoundError("Product not found", { productId });
     }
 
     await ErrorSystem.logInfo("[export-to-base] Product loaded", {
@@ -196,14 +190,9 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       data.connectionId
     );
     if (!connection) {
-      logCapture.stop();
-      const logs = logCapture.getLogs();
-      return createErrorResponse(
-        notFoundError("Connection not found", {
-          connectionId: data.connectionId
-        }),
-        { request: req, source: "export-to-base", extra: { logs } }
-      );
+      throw notFoundError("Connection not found", {
+        connectionId: data.connectionId
+      });
     }
 
     await ErrorSystem.logInfo("[export-to-base] Connection loaded", {
@@ -221,32 +210,22 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
         token = decryptSecret(connection.password);
       }
     } catch (_error) {
-      logCapture.stop();
-      const logs = logCapture.getLogs();
-      return createErrorResponse(
-        badRequestError(
-          "Failed to decrypt Base.com API token. Please re-save the connection token.",
-          {
-            connectionId: data.connectionId,
-            connectionName: connection.name
-          }
-        ),
-        { request: req, source: "export-to-base", extra: { logs } }
+      throw badRequestError(
+        "Failed to decrypt Base.com API token. Please re-save the connection token.",
+        {
+          connectionId: data.connectionId,
+          connectionName: connection.name
+        }
       );
     }
 
     if (!token) {
-      logCapture.stop();
-      const logs = logCapture.getLogs();
-      return createErrorResponse(
-        badRequestError(
-          "Base.com API token not found in connection. Please configure the API token in the connection settings.",
-          {
-            connectionId: data.connectionId,
-            connectionName: connection.name
-          }
-        ),
-        { request: req, source: "export-to-base", extra: { logs } }
+      throw badRequestError(
+        "Base.com API token not found in connection. Please configure the API token in the connection settings.",
+        {
+          connectionId: data.connectionId,
+          connectionName: connection.name
+        }
       );
     }
 
@@ -303,25 +282,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
           sku: product.sku,
           existingProductId: skuCheck.productId
         });
-        logCapture.stop();
-        const logs = logCapture.getLogs();
-        return createErrorResponse(
-          conflictError(
-            `SKU "${product.sku}" already exists in Base.com inventory. Use "Allow duplicate SKUs" option to export anyway.`,
-            {
-              skuExists: true,
-              existingProductId: skuCheck.productId,
-              sku: product.sku
-            }
-          ),
+        throw conflictError(
+          `SKU "${product.sku}" already exists in Base.com inventory. Use "Allow duplicate SKUs" option to export anyway.`,
           {
-            request: req,
-            source: "export-to-base",
-            extra: {
-              skuExists: true,
-              existingProductId: skuCheck.productId,
-              logs
-            }
+            skuExists: true,
+            existingProductId: skuCheck.productId,
+            sku: product.sku
           }
         );
       }
@@ -366,14 +332,9 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
           }
         }
         if (!listingExternalId) {
-          logCapture.stop();
-          const logs = logCapture.getLogs();
-          return createErrorResponse(
-            badRequestError(
-              "Images-only export requires an existing Base.com listing. Export the product first."
-            ),
-            { request: req, source: "export-to-base", extra: { logs } }
-      );
+          throw badRequestError(
+            "Images-only export requires an existing Base.com listing. Export the product first."
+          );
         }
       } else {
         const exists = await listingRepo.listingExists(productId, data.connectionId);
@@ -808,15 +769,10 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
           requestId: requestId ?? null
         });
       }
-      logCapture.stop();
-      const logs = logCapture.getLogs();
-      return createErrorResponse(
-        externalServiceError(result.error || "Failed to export product", {
-          productId,
-          inventoryId: targetInventoryId
-        }),
-        { request: req, source: "export-to-base", extra: { logs } }
-      );
+      throw externalServiceError(result.error || "Failed to export product", {
+        productId,
+        inventoryId: targetInventoryId
+      });
     }
 
     await ErrorSystem.logInfo("[export-to-base] Export successful", {
@@ -853,12 +809,11 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
   } catch (error) {
     logCapture.stop();
     const logs = logCapture.getLogs();
-    return createErrorResponse(error, {
-      request: req,
-      source: "export-to-base",
-      fallbackMessage: "Failed to export product to Base.com",
-      extra: { logs }
-    });
+    // Re-throw with extra logs context
+    if (error instanceof Error && "meta" in error) {
+      (error as any).meta = { ...(error as any).meta, logs };
+    }
+    throw error;
   }
 }
 

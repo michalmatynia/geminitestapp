@@ -4,7 +4,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getDraft, updateDraft, deleteDraft } from "@/features/drafter/server";
 import type { UpdateProductDraftInput } from "@/features/products/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
@@ -55,26 +54,15 @@ const updateDraftSchema = z.object({
  * GET /api/drafts/[id]
  * Get a single draft by ID
  */
-async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
-  try {
-    const { id } = params;
-    const draft = await getDraft(id);
+async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+  const { id } = params;
+  const draft = await getDraft(id);
 
-    if (!draft) {
-      return createErrorResponse(notFoundError("Draft not found", { id }), {
-        request: req,
-        source: "drafts.[id].GET",
-      });
-    }
-
-    return NextResponse.json(draft);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "drafts.[id].GET",
-      fallbackMessage: "Failed to get draft",
-    });
+  if (!draft) {
+    throw notFoundError("Draft not found", { id });
   }
+
+  return NextResponse.json(draft);
 }
 
 /**
@@ -82,62 +70,40 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
  * Update a draft
  */
 async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
-  try {
-    const { id } = params;
-    const parsed = await parseJsonBody(req, updateDraftSchema, {
-      logPrefix: "drafts.byId.PUT",
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const data = parsed.data;
-    const categoryId =
-      (typeof data.categoryId === "string" && data.categoryId.trim()) ||
-      (Array.isArray(data.categoryIds) ? data.categoryIds.find((value: string) => value.trim()) : null) ||
-      null;
-    const draft = await updateDraft(id, { ...data, categoryId } as UpdateProductDraftInput);
-
-    if (!draft) {
-      return createErrorResponse(notFoundError("Draft not found", { id }), {
-        request: req,
-        source: "drafts.[id].PUT",
-      });
-    }
-
-    return NextResponse.json(draft);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "drafts.[id].PUT",
-      fallbackMessage: "Failed to update draft",
-    });
+  const { id } = params;
+  const parsed = await parseJsonBody(req, updateDraftSchema, {
+    logPrefix: "drafts.byId.PUT",
+  });
+  if (!parsed.ok) {
+    return parsed.response;
   }
+  const data = parsed.data;
+  const categoryId =
+    (typeof data.categoryId === "string" && data.categoryId.trim()) ||
+    (Array.isArray(data.categoryIds) ? data.categoryIds.find((value: string) => value.trim()) : null) ||
+    null;
+  const draft = await updateDraft(id, { ...data, categoryId } as UpdateProductDraftInput);
+
+  if (!draft) {
+    throw notFoundError("Draft not found", { id });
+  }
+
+  return NextResponse.json(draft);
 }
 
 /**
  * DELETE /api/drafts/[id]
  * Delete a draft
  */
-async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
-  try {
-    const { id } = params;
-    const success = await deleteDraft(id);
+async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+  const { id } = params;
+  const success = await deleteDraft(id);
 
-    if (!success) {
-      return createErrorResponse(notFoundError("Draft not found", { id }), {
-        request: req,
-        source: "drafts.[id].DELETE",
-      });
-    }
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "drafts.[id].DELETE",
-      fallbackMessage: "Failed to delete draft",
-    });
+  if (!success) {
+    throw notFoundError("Draft not found", { id });
   }
+
+  return NextResponse.json({ success: true });
 }
 
 export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, { source: "drafts.[id].GET" });

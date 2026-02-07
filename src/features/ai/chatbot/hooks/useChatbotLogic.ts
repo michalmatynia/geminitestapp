@@ -10,6 +10,7 @@ import {
 } from 'react';
 
 import { useAgentCreatorSettings } from '@/features/ai/agentcreator';
+import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
 import {
   ChatMessage,
   ChatbotSettingsPayload,
@@ -33,11 +34,9 @@ export interface UseChatbotLogicReturn {
   isSending: boolean;
   setIsSending: React.Dispatch<React.SetStateAction<boolean>>;
   modelOptions: string[];
-  setModelOptions: React.Dispatch<React.SetStateAction<string[]>>;
   model: string;
   setModel: React.Dispatch<React.SetStateAction<string>>;
   modelLoading: boolean;
-  setModelLoading: React.Dispatch<React.SetStateAction<boolean>>;
   webSearchEnabled: boolean;
   setWebSearchEnabled: React.Dispatch<React.SetStateAction<boolean>>;
   useGlobalContext: boolean;
@@ -126,9 +125,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
   const [input, setInput] = useState<string>('');
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isSending, setIsSending] = useState<boolean>(false);
-  const [modelOptions, setModelOptions] = useState<string[]>([]);
   const [model, setModel] = useState<string>('');
-  const [modelLoading, setModelLoading] = useState<boolean>(true);
   const [webSearchEnabled, setWebSearchEnabled] = useState<boolean>(false);
   const [useGlobalContext, setUseGlobalContext] = useState<boolean>(false);
   const [useLocalContext, setUseLocalContext] = useState<boolean>(false);
@@ -181,6 +178,8 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
     setAgentLoopBackoffBaseMs,
     agentLoopBackoffMaxMs,
     setAgentLoopBackoffMaxMs,
+    modelOptions,
+    modelsLoading: modelLoading,
   } = useAgentCreatorSettings();
   const [latestAgentRunId, setLatestAgentRunId] = useState<string | null>(null);
   const [debugState, setDebugState] = useState<ChatbotDebugState>({});
@@ -343,29 +342,6 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
       setMessages([]);
     }
   }, [sessionId, loadSessionMessages]);
-
-  useEffect((): void => {
-    const fetchModels = async (): Promise<void> => {
-      setModelLoading(true);
-      try {
-        const ollamaBaseUrl = process.env.NEXT_PUBLIC_OLLAMA_BASE_URL || 'http://localhost:11434';
-        const models = await chatbotApi.fetchOllamaModels(ollamaBaseUrl);
-        setModelOptions(models);
-
-        // Set first model as default if no model is set
-        if (models.length > 0 && !model) {
-          setModel(models[0]!);
-        }
-      } catch (error: unknown) {
-        logClientError(error, { context: { source: 'useChatbotLogic.fetchModels' } });
-        toast('Failed to load models from Ollama server', { variant: 'error' });
-      } finally {
-        setModelLoading(false);
-      }
-    };
-
-    void fetchModels();
-  }, [model, toast]);
 
   const loadChatbotSettings = useCallback(async (): Promise<void> => {
     try {
@@ -538,11 +514,9 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
     isSending,
     setIsSending,
     modelOptions,
-    setModelOptions,
     model,
     setModel,
     modelLoading,
-    setModelLoading,
     webSearchEnabled,
     setWebSearchEnabled,
     useGlobalContext,

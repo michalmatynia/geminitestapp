@@ -6,7 +6,6 @@ import { chatbotJobRepository } from "@/features/ai/chatbot/services/chatbot-job
 import { chatbotSessionRepository } from "@/features/ai/chatbot/services/chatbot-session-repository";
 import { startChatbotJobQueue } from "@/features/jobs/server";
 import { parseJsonBody } from "@/shared/lib/api/parse-json";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -34,129 +33,94 @@ const enqueueJobSchema = z.object({
   userMessage: z.string().trim().optional(),
 }) as z.ZodSchema<EnqueueJobRequest>;
 
-async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const jobs: ChatbotJob[] = await chatbotJobRepository.findAll(50);
+async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+  const jobs: ChatbotJob[] = await chatbotJobRepository.findAll(50);
 
-    if (DEBUG_CHATBOT) {
-      console.info("[chatbot][jobs][GET] Listed", { 
-        count: jobs.length,
-        requestId: ctx.requestId 
-      });
-    }
-
-    return NextResponse.json({ jobs });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "chatbot.jobs.GET",
-      fallbackMessage: "Failed to list jobs.",
-      requestId: ctx.requestId,
+  if (DEBUG_CHATBOT) {
+    console.info("[chatbot][jobs][GET] Listed", { 
+      count: jobs.length,
+      requestId: ctx.requestId 
     });
   }
+
+  return NextResponse.json({ jobs });
 }
 
 async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const result: JsonParseResult<EnqueueJobRequest> = await parseJsonBody<EnqueueJobRequest>(req, enqueueJobSchema, {
-      logPrefix: "chatbot.jobs.POST",
-    });
-    
-    if (!result.ok) {
-      return result.response;
-    }
+  const result: JsonParseResult<EnqueueJobRequest> = await parseJsonBody<EnqueueJobRequest>(req, enqueueJobSchema, {
+    logPrefix: "chatbot.jobs.POST",
+  });
+  
+  if (!result.ok) {
+    return result.response;
+  }
 
-    const data: EnqueueJobRequest = result.data;
-    const session = await chatbotSessionRepository.findById(data.sessionId);
+  const data: EnqueueJobRequest = result.data;
+  const session = await chatbotSessionRepository.findById(data.sessionId);
 
-    if (!session) {
-      return createErrorResponse(notFoundError("Session not found."), {
-        request: req,
-        source: "chatbot.jobs.POST",
-        requestId: ctx.requestId,
+  if (!session) {
+    throw notFoundError("Session not found.");
+  }
+
+  const trimmedUserMessage: string | undefined = data.userMessage?.trim();
+  if (trimmedUserMessage) {
+    const latest = session.messages[session.messages.length - 1];
+
+    if (
+      !latest ||
+      latest.role !== "user" ||
+      latest.content !== trimmedUserMessage
+    ) {
+      await chatbotSessionRepository.addMessage(session.id, {
+        role: "user",
+        content: trimmedUserMessage,
+        timestamp: new Date().toISOString(),
       });
     }
+  }
 
-    const trimmedUserMessage: string | undefined = data.userMessage?.trim();
-    if (trimmedUserMessage) {
-      const latest = session.messages[session.messages.length - 1];
-
-      if (
-        !latest ||
-        latest.role !== "user" ||
-        latest.content !== trimmedUserMessage
-      ) {
-        await chatbotSessionRepository.addMessage(session.id, {
-          role: "user",
-          content: trimmedUserMessage,
-          timestamp: new Date().toISOString(),
-        });
-      }
-    }
-
-    const job: ChatbotJob = await chatbotJobRepository.create({
-      sessionId: session.id,
+  const job: ChatbotJob = await chatbotJobRepository.create({
+    sessionId: session.id,
+    model: data.model,
+    payload: {
       model: data.model,
-      payload: {
-        model: data.model,
-        messages: data.messages,
-      },
-    });
+      messages: data.messages,
+    },
+  });
 
-    startChatbotJobQueue();
+  startChatbotJobQueue();
 
-    if (DEBUG_CHATBOT) {
-      console.info("[chatbot][jobs][POST] Queued", {
-        jobId: job.id,
-        sessionId: job.sessionId,
-        requestId: ctx.requestId,
-      });
-    }
-
-    const responsePayload = { jobId: job.id, status: job.status };
-    return NextResponse.json(responsePayload);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "chatbot.jobs.POST",
-      fallbackMessage: "Failed to enqueue job.",
+  if (DEBUG_CHATBOT) {
+    console.info("[chatbot][jobs][POST] Queued", {
+      jobId: job.id,
+      sessionId: job.sessionId,
       requestId: ctx.requestId,
     });
   }
+
+  const responsePayload = { jobId: job.id, status: job.status };
+  return NextResponse.json(responsePayload);
 }
 
 async function DELETE_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const scope = req.nextUrl.searchParams.get("scope") ?? "terminal";
+  const scope = req.nextUrl.searchParams.get("scope") ?? "terminal";
 
-    const terminalStatuses: ChatbotJobStatus[] = ["completed", "failed", "canceled"];
+  const terminalStatuses: ChatbotJobStatus[] = ["completed", "failed", "canceled"];
 
-    if (scope !== "terminal") {
-      return createErrorResponse(badRequestError("Unsupported delete scope."), {
-        request: req,
-        source: "chatbot.jobs.DELETE",
-        requestId: ctx.requestId,
-      });
-    }
+  if (scope !== "terminal") {
+    throw badRequestError("Unsupported delete scope.");
+  }
 
-    const deletedCount: number = await chatbotJobRepository.deleteMany(terminalStatuses);
+  const deletedCount: number = await chatbotJobRepository.deleteMany(terminalStatuses);
 
-    if (DEBUG_CHATBOT) {
-      console.info("[chatbot][jobs][DELETE] Deleted", { 
-        count: deletedCount,
-        requestId: ctx.requestId 
-      });
-    }
-
-    return NextResponse.json({ deleted: deletedCount });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "chatbot.jobs.DELETE",
-      fallbackMessage: "Failed to delete jobs.",
-      requestId: ctx.requestId,
+  if (DEBUG_CHATBOT) {
+    console.info("[chatbot][jobs][DELETE] Deleted", { 
+      count: deletedCount,
+      requestId: ctx.requestId 
     });
   }
+
+  return NextResponse.json({ deleted: deletedCount });
 }
 
 export const GET = apiHandler(

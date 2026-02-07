@@ -5,7 +5,6 @@ import { z } from "zod";
 
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/shared/lib/api/parse-json";
 import type { AgentTeachingAgentRecord } from "@/shared/types/agent-teaching";
 import { listTeachingAgents, upsertTeachingAgent } from "@/features/ai/agentcreator/teaching/server/repository";
@@ -24,48 +23,32 @@ const createAgentSchema = z.object({
   maxDocsPerCollection: z.number().int().min(10).max(2000).optional().default(400),
 });
 
-async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const agents = await listTeachingAgents();
-    return NextResponse.json({ agents });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "agentcreator.teaching.agents.GET",
-      fallbackMessage: "Failed to fetch learner agents.",
-    });
-  }
+async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const agents = await listTeachingAgents();
+  return NextResponse.json({ agents });
 }
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const parsed = await parseJsonBody(req, createAgentSchema, {
-      logPrefix: "agentcreator.teaching.agents.POST",
-    });
-    if (!parsed.ok) return parsed.response;
+  const parsed = await parseJsonBody(req, createAgentSchema, {
+    logPrefix: "agentcreator.teaching.agents.POST",
+  });
+  if (!parsed.ok) return parsed.response;
 
-    const data = parsed.data;
-    const agent: AgentTeachingAgentRecord = await upsertTeachingAgent({
-      name: data.name,
-      description: data.description ?? null,
-      llmModel: data.llmModel,
-      embeddingModel: data.embeddingModel,
-      systemPrompt: data.systemPrompt,
-      collectionIds: data.collectionIds,
-      temperature: data.temperature,
-      maxTokens: data.maxTokens,
-      retrievalTopK: data.retrievalTopK,
-      retrievalMinScore: data.retrievalMinScore,
-      maxDocsPerCollection: data.maxDocsPerCollection,
-    });
-    return NextResponse.json({ agent });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "agentcreator.teaching.agents.POST",
-      fallbackMessage: "Failed to create learner agent.",
-    });
-  }
+  const data = parsed.data;
+  const agent: AgentTeachingAgentRecord = await upsertTeachingAgent({
+    name: data.name,
+    description: data.description ?? null,
+    llmModel: data.llmModel,
+    embeddingModel: data.embeddingModel,
+    systemPrompt: data.systemPrompt,
+    collectionIds: data.collectionIds,
+    temperature: data.temperature,
+    maxTokens: data.maxTokens,
+    retrievalTopK: data.retrievalTopK,
+    retrievalMinScore: data.retrievalMinScore,
+    maxDocsPerCollection: data.maxDocsPerCollection,
+  });
+  return NextResponse.json({ agent });
 }
 
 export const GET = apiHandler(

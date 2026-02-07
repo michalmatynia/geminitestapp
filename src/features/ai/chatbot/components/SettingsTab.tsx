@@ -2,12 +2,10 @@
 import Link from 'next/link';
 import React from 'react';
 
+import { useAgentCreatorSettings } from '@/features/ai/agentcreator';
 import { AgentCreatorSettingsSection } from '@/features/ai/agentcreator/components/AgentCreatorSettingsSection';
 import type { PlaywrightPersona } from '@/features/playwright/types';
 import { Button, Label, UnifiedSelect, SectionPanel, Checkbox, useToast } from '@/shared/ui';
-
-
-
 
 import { useChatbotLogic } from '../hooks/useChatbotLogic';
 
@@ -28,23 +26,16 @@ export function SettingsTab({
   setSearchProvider,
   playwrightPersonaId,
   setPlaywrightPersonaId,
-  agentModeEnabled,
-  setAgentModeEnabled,
-  agentBrowser,
-  setAgentBrowser,
-  agentRunHeadless,
-  setAgentRunHeadless,
-  agentIgnoreRobotsTxt,
-  setAgentIgnoreRobotsTxt,
-  agentRequireHumanApproval,
-  setAgentRequireHumanApproval,
-  agentMaxSteps,
-  setAgentMaxSteps,
   saveChatbotSettings,
   settingsDirty,
   settingsSaving,
 }: SettingsTabProps): React.JSX.Element {
   const { toast } = useToast();
+  const {
+    agentModeEnabled,
+    setAgentRunHeadless,
+  } = useAgentCreatorSettings();
+
   const [personas, setPersonas] = React.useState<PlaywrightPersona[]>([]);
   const [personasLoading, setPersonasLoading] = React.useState<boolean>(true);
 
@@ -132,20 +123,7 @@ export function SettingsTab({
         </div>
       </SectionPanel>
 
-      <AgentCreatorSettingsSection
-        agentModeEnabled={agentModeEnabled}
-        setAgentModeEnabled={setAgentModeEnabled}
-        agentBrowser={agentBrowser}
-        setAgentBrowser={setAgentBrowser}
-        agentMaxSteps={agentMaxSteps}
-        setAgentMaxSteps={setAgentMaxSteps}
-        agentRunHeadless={agentRunHeadless}
-        setAgentRunHeadless={setAgentRunHeadless}
-        agentIgnoreRobotsTxt={agentIgnoreRobotsTxt}
-        setAgentIgnoreRobotsTxt={setAgentIgnoreRobotsTxt}
-        agentRequireHumanApproval={agentRequireHumanApproval}
-        setAgentRequireHumanApproval={setAgentRequireHumanApproval}
-      />
+      <AgentCreatorSettingsSection />
 
       {agentModeEnabled && (
         <SectionPanel variant="subtle" className="space-y-4 p-4">

@@ -1,5 +1,19 @@
    change node from 22 to 24
 
+
+in My AI-Patha EasyP Path I'm testing out connectivity of my Database Query Nodes to the actual database.
+
+I'm tryin to fetch a product by ID in PostgresQL database in node node-d82e31a2, however, when I fire trigger to fetch product with id {
+  "id": "{{value}}" , where value is d9f3568e-8981-44f9-81d9-84fa403bbc44 from simulation, the result I get in the output is 
+}
+ 
+{
+  "result": {
+    "id": "d9f3568e-8981-44f9-81d9-84fa403bbc44"
+  }
+
+I can't fetch the whole product. The database provider is Prisma Postgresql 
+
    postgres to MongoDB not working
    
    - Regex Grouper manual-only AI suggestions path + output retention

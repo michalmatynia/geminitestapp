@@ -85,6 +85,84 @@ describe('Integration Handlers', () => {
       expect(result.result).toEqual([{ id: 1, name: 'Item 1' }]);
       expect(api.dbApi.query).toHaveBeenCalled();
     });
+
+    it('should resolve placeholders in query input string payload', async () => {
+      vi.mocked(api.dbApi.query).mockResolvedValue({
+        ok: true,
+        data: { item: { id: 'p-1', name_en: 'Product 1' }, count: 1 }
+      } as any);
+
+      const ctx = createMockContext({
+        node: {
+          id: 'n1',
+          type: 'database',
+          config: {
+            database: {
+              operation: 'query',
+              query: {
+                provider: 'prisma',
+                collection: 'products',
+                mode: 'custom',
+                queryTemplate: '{}',
+                single: true
+              }
+            }
+          }
+        } as any,
+        nodeInputs: {
+          query: '{\n  "id": "{{value}}"\n}',
+          value: 'p-1'
+        }
+      });
+
+      const result = await handleDatabase(ctx);
+      expect(api.dbApi.query).toHaveBeenCalledWith(
+        expect.objectContaining({
+          query: { id: 'p-1' }
+        })
+      );
+      expect(result.result).toEqual({ id: 'p-1', name_en: 'Product 1' });
+    });
+
+    it('should resolve placeholders in query input object payload', async () => {
+      vi.mocked(api.dbApi.query).mockResolvedValue({
+        ok: true,
+        data: { item: { id: 'p-2', name_en: 'Product 2' }, count: 1 }
+      } as any);
+
+      const ctx = createMockContext({
+        node: {
+          id: 'n1',
+          type: 'database',
+          config: {
+            database: {
+              operation: 'query',
+              query: {
+                provider: 'prisma',
+                collection: 'products',
+                mode: 'custom',
+                queryTemplate: '{}',
+                single: true
+              }
+            }
+          }
+        } as any,
+        nodeInputs: {
+          query: {
+            id: '{{value}}'
+          },
+          value: 'p-2'
+        }
+      });
+
+      const result = await handleDatabase(ctx);
+      expect(api.dbApi.query).toHaveBeenCalledWith(
+        expect.objectContaining({
+          query: { id: 'p-2' }
+        })
+      );
+      expect(result.result).toEqual({ id: 'p-2', name_en: 'Product 2' });
+    });
   });
 
   describe('handleHttp', () => {

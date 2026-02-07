@@ -17,41 +17,25 @@ const requestSchema = z.object({
 });
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const url = new URL(req.url);
-    const inventoryId = url.searchParams.get("inventoryId")?.trim() || null;
-    const warehouseId = await getExportWarehouseId(inventoryId);
-    return NextResponse.json({ warehouseId });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.imports.base.export-warehouse.GET",
-      fallbackMessage: "Failed to fetch warehouse."
-    });
-  }
+  const url = new URL(req.url);
+  const inventoryId = url.searchParams.get("inventoryId")?.trim() || null;
+  const warehouseId = await getExportWarehouseId(inventoryId);
+  return NextResponse.json({ warehouseId });
 }
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const parsed = await parseJsonBody(req, requestSchema, {
-      logPrefix: "imports.base.export-warehouse.POST"
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const data = parsed.data;
-    await setExportWarehouseId(
-      data.warehouseId ?? null,
-      data.inventoryId ?? null
-    );
-    return NextResponse.json({ warehouseId: data.warehouseId ?? null });
-  } catch (error: unknown) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.imports.base.export-warehouse.POST",
-      fallbackMessage: "Failed to save warehouse"
-    });
+  const parsed = await parseJsonBody(req, requestSchema, {
+    logPrefix: "imports.base.export-warehouse.POST"
+  });
+  if (!parsed.ok) {
+    return parsed.response;
   }
+  const data = parsed.data;
+  await setExportWarehouseId(
+    data.warehouseId ?? null,
+    data.inventoryId ?? null
+  );
+  return NextResponse.json({ warehouseId: data.warehouseId ?? null });
 }
 
 export const GET = apiHandler(

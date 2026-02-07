@@ -328,18 +328,33 @@ export const buildDbQueryPayload = (
   const entityIdInput = coerceInput(nodeInputs.entityId);
   const productIdInput = coerceInput(nodeInputs.productId);
   let query: Record<string, unknown> = {};
+  const parseRenderedQuery = (raw: string): Record<string, unknown> | null => {
+    const parsed = parseJsonSafe(
+      renderJsonTemplate(
+        raw,
+        nodeInputs as Record<string, unknown>,
+        inputValue ?? ''
+      )
+    );
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>;
+    }
+    return null;
+  };
   const parseQueryInput = (value: unknown): Record<string, unknown> | null => {
     if (!value) return null;
     if (typeof value === 'object' && !Array.isArray(value)) {
-      return value as Record<string, unknown>;
+      try {
+        const serialized = JSON.stringify(value);
+        return parseRenderedQuery(serialized) ?? (value as Record<string, unknown>);
+      } catch {
+        return value as Record<string, unknown>;
+      }
     }
     if (typeof value === 'string') {
       const match = value.match(/```(?:json)?\s*([\s\S]*?)```/);
       const jsonStr = match ? match[1]!.trim() : value.trim();
-      const parsed = parseJsonSafe(jsonStr);
-      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        return parsed as Record<string, unknown>;
-      }
+      return parseRenderedQuery(jsonStr);
     }
     return null;
   };

@@ -1,6 +1,5 @@
 import { handlers } from "@/features/auth/server";
 import { NextRequest, NextResponse } from "next/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { logAuthEvent } from "@/features/auth/utils/auth-request-logger";
@@ -20,27 +19,15 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       await logAuthEvent({ req, action: "auth.nextauth", stage: "failure", status: 200, outcome: "session-fallback" });
       return response;
     }
-    return createErrorResponse(error, {
-      request: req,
-      source: "auth.[...nextauth].GET",
-      fallbackMessage: "Failed to process auth request",
-    });
+    throw error;
   }
 }
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await logAuthEvent({ req, action: "auth.nextauth", stage: "start" });
-  try {
-    const response = await handlers.POST(req);
-    await logAuthEvent({ req, action: "auth.nextauth", stage: "success", status: response.status });
-    return response;
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "auth.[...nextauth].POST",
-      fallbackMessage: "Failed to process auth request",
-    });
-  }
+  const response = await handlers.POST(req);
+  await logAuthEvent({ req, action: "auth.nextauth", stage: "success", status: response.status });
+  return response;
 }
 
 export const GET = apiHandler(

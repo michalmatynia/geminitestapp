@@ -3,7 +3,6 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { parseJsonBody } from "@/features/products/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { notFoundError } from "@/shared/errors/app-error";
@@ -37,24 +36,16 @@ const resolveDomainFromRequest = async (req: NextRequest) => {
  * Fetches a list of all slugs.
  */
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<NextResponse | Response> {
-  try {
-    const cmsRepository = await getCmsRepository();
-    const scope = req.nextUrl.searchParams.get("scope");
-    if (scope === "all") {
-      await resolveCmsDomainFromRequest(req);
-      const slugs = await cmsRepository.getSlugs();
-      return NextResponse.json(slugs);
-    }
-    const domain = await resolveDomainFromRequest(req);
-    const slugs = await getSlugsForDomain(domain.id, cmsRepository);
+  const cmsRepository = await getCmsRepository();
+  const scope = req.nextUrl.searchParams.get("scope");
+  if (scope === "all") {
+    await resolveCmsDomainFromRequest(req);
+    const slugs = await cmsRepository.getSlugs();
     return NextResponse.json(slugs);
-  } catch (_error) {
-    return createErrorResponse(_error, {
-      request: req,
-      source: "cms.slugs.GET",
-      fallbackMessage: "Failed to fetch slugs",
-    });
   }
+  const domain = await resolveDomainFromRequest(req);
+  const slugs = await getSlugsForDomain(domain.id, cmsRepository);
+  return NextResponse.json(slugs);
 }
 
 /**
@@ -62,28 +53,20 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<N
  * Creates a new slug.
  */
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const parsed = await parseJsonBody(req, slugSchema, {
-      logPrefix: "cms-slugs",
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const { slug } = parsed.data;
-    const cmsRepository = await getCmsRepository();
-    const domain = await resolveDomainFromRequest(req);
-    const existing = await cmsRepository.getSlugByValue(slug);
-    const record = existing ?? (await cmsRepository.createSlug({ slug, isDefault: false }));
-    await ensureDomainSlug(domain.id, record.id);
-    const domainSlug = await getSlugForDomainById(domain.id, record.id, cmsRepository);
-    return NextResponse.json(domainSlug ?? { ...record, isDefault: false });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "cms.slugs.POST",
-      fallbackMessage: "Failed to create slug",
-    });
+  const parsed = await parseJsonBody(req, slugSchema, {
+    logPrefix: "cms-slugs",
+  });
+  if (!parsed.ok) {
+    return parsed.response;
   }
+  const { slug } = parsed.data;
+  const cmsRepository = await getCmsRepository();
+  const domain = await resolveDomainFromRequest(req);
+  const existing = await cmsRepository.getSlugByValue(slug);
+  const record = existing ?? (await cmsRepository.createSlug({ slug, isDefault: false }));
+  await ensureDomainSlug(domain.id, record.id);
+  const domainSlug = await getSlugForDomainById(domain.id, record.id, cmsRepository);
+  return NextResponse.json(domainSlug ?? { ...record, isDefault: false });
 }
 
 export const GET = apiHandler(GET_handler, { source: "cms.slugs.GET" });

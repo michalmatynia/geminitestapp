@@ -9,9 +9,8 @@ import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/shared/lib/api/parse-json";
-import { AppErrorCodes, badRequestError, isAppError } from "@/shared/errors/app-error";
+import { badRequestError } from "@/shared/errors/app-error";
 import { requireAiPathsAccess } from "@/features/ai/ai-paths/server";
 import type { AiTriggerButtonRecord } from "@/shared/types/ai-trigger-buttons";
 
@@ -172,67 +171,48 @@ const parseTriggerButtons = (raw: string | null): AiTriggerButtonRecord[] => {
   }
 };
 
-async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    await requireAiPathsAccess();
-    const raw = await readTriggerButtonsRaw();
-    const triggerButtons = parseTriggerButtons(raw);
-    return NextResponse.json(triggerButtons);
-  } catch (error) {
-    if (isAppError(error) && error.code === AppErrorCodes.unauthorized) {
-      return NextResponse.json([]);
-    }
-    return createErrorResponse(error, {
-      request: req,
-      source: "ai-paths.trigger-buttons.GET",
-      fallbackMessage: "Failed to fetch trigger buttons",
-    });
-  }
+async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  await requireAiPathsAccess();
+  const raw = await readTriggerButtonsRaw();
+  const triggerButtons = parseTriggerButtons(raw);
+  return NextResponse.json(triggerButtons);
 }
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    await requireAiPathsAccess();
-    const parsed = await parseJsonBody(req, createTriggerButtonSchema, {
-      logPrefix: "ai-paths.trigger-buttons.POST",
-    });
-    if (!parsed.ok) return parsed.response;
+  await requireAiPathsAccess();
+  const parsed = await parseJsonBody(req, createTriggerButtonSchema, {
+    logPrefix: "ai-paths.trigger-buttons.POST",
+  });
+  if (!parsed.ok) return parsed.response;
 
-    const { name, iconId, locations, mode, display } = parsed.data;
-    const raw = await readTriggerButtonsRaw();
-    const existing = parseTriggerButtons(raw);
-    const normalizedName = name.trim();
-    if (!normalizedName) {
-      throw badRequestError("Name is required.");
-    }
-
-    const now = new Date().toISOString();
-    const id =
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `trigger_${Math.random().toString(36).slice(2, 10)}`;
-
-    const record: AiTriggerButtonRecord = {
-      id,
-      name: normalizedName,
-      iconId: iconId ? iconId.trim() : null,
-      locations,
-      mode,
-      display,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    const next = [...existing, record];
-    await writeTriggerButtonsRaw(JSON.stringify(next));
-    return NextResponse.json(record);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "ai-paths.trigger-buttons.POST",
-      fallbackMessage: "Failed to create trigger button",
-    });
+  const { name, iconId, locations, mode, display } = parsed.data;
+  const raw = await readTriggerButtonsRaw();
+  const existing = parseTriggerButtons(raw);
+  const normalizedName = name.trim();
+  if (!normalizedName) {
+    throw badRequestError("Name is required.");
   }
+
+  const now = new Date().toISOString();
+  const id =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `trigger_${Math.random().toString(36).slice(2, 10)}`;
+
+  const record: AiTriggerButtonRecord = {
+    id,
+    name: normalizedName,
+    iconId: iconId ? iconId.trim() : null,
+    locations,
+    mode,
+    display,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  const next = [...existing, record];
+  await writeTriggerButtonsRaw(JSON.stringify(next));
+  return NextResponse.json(record);
 }
 
 export const GET = apiHandler(

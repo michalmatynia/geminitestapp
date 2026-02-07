@@ -18,34 +18,26 @@ async function POST_handler(
   _ctx: ApiHandlerContext,
   params: { id: string; listingId: string }
 ): Promise<Response> {
-  try {
-    const { id: productId, listingId } = params;
-    if (!productId || !listingId) {
-      throw badRequestError("Product id and listing id are required");
-    }
-
-    const parsed = await parseJsonBody(req, syncSchema, {
-      logPrefix: "integrations.products.listings.SYNC_BASE_IMAGES",
-      allowEmpty: true
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const data = parsed.data;
-    const result = await syncBaseImagesForListing(listingId, productId, data.inventoryId ?? null);
-
-    return NextResponse.json({
-      status: "synced",
-      count: result.count,
-      added: result.added
-    });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "integrations.products.listings.SYNC_BASE_IMAGES",
-      fallbackMessage: "Failed to sync image URLs from Base.com"
-    });
+  const { id: productId, listingId } = params;
+  if (!productId || !listingId) {
+    throw badRequestError("Product id and listing id are required");
   }
+
+  const parsed = await parseJsonBody(req, syncSchema, {
+    logPrefix: "integrations.products.listings.SYNC_BASE_IMAGES",
+    allowEmpty: true
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const data = parsed.data;
+  const result = await syncBaseImagesForListing(listingId, productId, data.inventoryId ?? null);
+
+  return NextResponse.json({
+    status: "synced",
+    count: result.count,
+    added: result.added
+  });
 }
 
 export const POST = apiHandlerWithParams<{ id: string; listingId: string }>(

@@ -9,30 +9,19 @@ import { buildModelProfile } from '@/features/ai/chatbot/utils';
 import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/agent-teaching';
 import { Button, ConfirmDialog, Input, Label, SectionHeader, SectionPanel, SharedModal, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast, UnifiedSelect } from '@/shared/ui';
 
-import { useDeleteEmbeddingCollectionMutation, useTeachingAgents, useTeachingCollections, useUpsertEmbeddingCollectionMutation } from '../hooks/useAgentTeaching';
+import { useDeleteEmbeddingCollectionMutation, useUpsertEmbeddingCollectionMutation } from '../hooks/useAgentTeaching';
+import { useAgentTeachingContext } from '../context/AgentTeachingContext';
 
 const isEmbeddingModel = (model: string): boolean => buildModelProfile(model).isEmbedding;
 
 export function AgentTeachingCollectionsPage(): React.JSX.Element {
   const { toast } = useToast();
-  const { data: collections = [], isLoading: loadingCollections } = useTeachingCollections();
-  const { data: agents = [], isLoading: loadingAgents } = useTeachingAgents();
-  const { data: modelOptions = [] } = useChatbotModels();
+  const { collections, agents, modelOptions, isLoading } = useAgentTeachingContext();
 
   const embeddingModels = React.useMemo(
     () => modelOptions.filter((m: string) => m.trim().length > 0 && isEmbeddingModel(m)),
     [modelOptions]
   );
-
-  const { mutateAsync: upsert, isPending: saving } = useUpsertEmbeddingCollectionMutation();
-  const { mutateAsync: remove, isPending: deleting } = useDeleteEmbeddingCollectionMutation();
-
-  const [modalOpen, setModalOpen] = React.useState(false);
-  const [editing, setEditing] = React.useState<AgentTeachingEmbeddingCollectionRecord | null>(null);
-  const [draft, setDraft] = React.useState<Partial<AgentTeachingEmbeddingCollectionRecord>>({});
-  const [itemToDelete, setItemToDelete] = React.useState<AgentTeachingEmbeddingCollectionRecord | null>(null);
-
-  const isLoading = loadingCollections || loadingAgents;
 
   const openCreate = (): void => {
     setEditing(null);

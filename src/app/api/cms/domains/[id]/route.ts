@@ -4,7 +4,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { deleteCmsDomain, setCmsDomainAlias } from "@/features/cms/services/cms-domain";
 import { ApiParams } from "@/shared/types/base-types";
@@ -18,40 +17,24 @@ async function PUT_handler(
   _ctx: ApiHandlerContext,
   params: ApiParams
 ): Promise<Response> {
-  try {
-    const parsed = await parseJsonBody(req, domainUpdateSchema, {
-      logPrefix: "cms-domains",
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-
-    const updated = await setCmsDomainAlias(params.id, parsed.data.aliasOf ?? null);
-    return NextResponse.json(updated ?? {});
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "cms.domains.[id].PUT",
-      fallbackMessage: "Failed to update domain",
-    });
+  const parsed = await parseJsonBody(req, domainUpdateSchema, {
+    logPrefix: "cms-domains",
+  });
+  if (!parsed.ok) {
+    return parsed.response;
   }
+
+  const updated = await setCmsDomainAlias(params.id, parsed.data.aliasOf ?? null);
+  return NextResponse.json(updated ?? {});
 }
 
 async function DELETE_handler(
-  req: NextRequest,
+  _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: ApiParams
 ): Promise<Response> {
-  try {
-    await deleteCmsDomain(params.id);
-    return new Response(null, { status: 204 });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "cms.domains.[id].DELETE",
-      fallbackMessage: "Failed to delete domain",
-    });
-  }
+  await deleteCmsDomain(params.id);
+  return new Response(null, { status: 204 });
 }
 
 export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, {

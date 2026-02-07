@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 import prisma from '@/shared/lib/db/prisma';
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === 'true';
@@ -11,39 +10,25 @@ async function GET_handler(req: NextRequest,
   { params }: { params: Promise<{ snapshotId: string }> }
 ): Promise<Response> {
   const requestStart = Date.now();
-  try {
-    if (!('agentBrowserSnapshot' in prisma)) {
-      return createErrorResponse(
-        internalError(
-          'Agent snapshots not initialized. Run prisma generate/db push.'
-        ),
-        { request: req, source: 'chatbot.agent.snapshots.[snapshotId].GET' }
-      );
-    }
-    const { snapshotId } = await params;
-    const snapshot = await prisma.agentBrowserSnapshot.findUnique({
-      where: { id: snapshotId },
-    });
-    if (!snapshot) {
-      return createErrorResponse(notFoundError('Snapshot not found.'), {
-        request: req,
-        source: 'chatbot.agent.snapshots.[snapshotId].GET',
-      });
-    }
-    if (DEBUG_CHATBOT) {
-      console.info('[chatbot][agent][snapshot] Loaded', {
-        snapshotId,
-        durationMs: Date.now() - requestStart,
-      });
-    }
-    return NextResponse.json({ snapshot });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: 'chatbot.agent.snapshots.[snapshotId].GET',
-      fallbackMessage: 'Failed to load agent snapshot.',
+  if (!('agentBrowserSnapshot' in prisma)) {
+    throw internalError(
+      'Agent snapshots not initialized. Run prisma generate/db push.'
+    );
+  }
+  const { snapshotId } = await params;
+  const snapshot = await prisma.agentBrowserSnapshot.findUnique({
+    where: { id: snapshotId },
+  });
+  if (!snapshot) {
+    throw notFoundError('Snapshot not found.');
+  }
+  if (DEBUG_CHATBOT) {
+    console.info('[chatbot][agent][snapshot] Loaded', {
+      snapshotId,
+      durationMs: Date.now() - requestStart,
     });
   }
+  return NextResponse.json({ snapshot });
 }
 
 export const GET = apiHandlerWithParams<{ snapshotId: string }>(

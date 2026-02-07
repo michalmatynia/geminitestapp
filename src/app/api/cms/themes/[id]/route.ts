@@ -3,7 +3,6 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { parseJsonBody } from "@/features/products/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -40,67 +39,43 @@ const themeUpdateSchema = z.object({
   customCss: z.string().nullable().optional(),
 });
 
-async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
-  try {
-    const id = params.id;
-    const cmsRepository = await getCmsRepository();
-    const theme = await cmsRepository.getThemeById(id);
+async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+  const id = params.id;
+  const cmsRepository = await getCmsRepository();
+  const theme = await cmsRepository.getThemeById(id);
 
-    if (!theme) {
-      throw notFoundError("Theme not found");
-    }
-
-    return NextResponse.json(theme);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "cms.themes.[id].GET",
-      fallbackMessage: "Failed to fetch theme",
-    });
+  if (!theme) {
+    throw notFoundError("Theme not found");
   }
+
+  return NextResponse.json(theme);
 }
 
 async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
-  try {
-    const id = params.id;
+  const id = params.id;
 
-    const parsed = await parseJsonBody(req, themeUpdateSchema, {
-      logPrefix: "cms-themes",
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-
-    const cmsRepository = await getCmsRepository();
-    const updated = await cmsRepository.updateTheme(id, parsed.data);
-
-    if (!updated) {
-      throw notFoundError("Theme not found");
-    }
-
-    return NextResponse.json(updated);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "cms.themes.[id].PUT",
-      fallbackMessage: "Failed to update theme",
-    });
+  const parsed = await parseJsonBody(req, themeUpdateSchema, {
+    logPrefix: "cms-themes",
+  });
+  if (!parsed.ok) {
+    return parsed.response;
   }
+
+  const cmsRepository = await getCmsRepository();
+  const updated = await cmsRepository.updateTheme(id, parsed.data);
+
+  if (!updated) {
+    throw notFoundError("Theme not found");
+  }
+
+  return NextResponse.json(updated);
 }
 
-async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
-  try {
-    const id = params.id;
-    const cmsRepository = await getCmsRepository();
-    await cmsRepository.deleteTheme(id);
-    return new Response(null, { status: 204 });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "cms.themes.[id].DELETE",
-      fallbackMessage: "Failed to delete theme",
-    });
-  }
+async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+  const id = params.id;
+  const cmsRepository = await getCmsRepository();
+  await cmsRepository.deleteTheme(id);
+  return new Response(null, { status: 204 });
 }
 
 export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, { source: "cms.themes.[id].GET" });

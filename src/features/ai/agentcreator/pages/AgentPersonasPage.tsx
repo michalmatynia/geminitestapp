@@ -4,11 +4,11 @@ import Link from 'next/link';
 import { useMemo } from 'react';
 
 import { AgentPersonaSettingsForm } from '@/features/ai/agentcreator/components/AgentPersonaSettingsForm';
+import { useAgentCreatorSettings } from '@/features/ai/agentcreator/hooks/useAgentCreatorSettings';
 import { useAgentPersonas, useSaveAgentPersonasMutation } from '@/features/ai/agentcreator/hooks/useAgentPersonas';
 import type { AgentPersona } from '@/features/ai/agentcreator/types';
 import { buildAgentPersonaSettings, createAgentPersonaId } from '@/features/ai/agentcreator/utils/personas';
 import { DEFAULT_MODELS } from '@/features/ai/ai-paths/lib';
-import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
 import { ItemLibrary, useToast } from '@/shared/ui';
 
 const dedupeModels = (models: string[]): string[] => {
@@ -26,7 +26,7 @@ export function AgentPersonasPage(): React.JSX.Element {
 
   const { data: personas = [], isLoading: loading } = useAgentPersonas();
   const { mutateAsync: savePersonas, isPending: saving } = useSaveAgentPersonasMutation();
-  const { data: modelOptions = [] } = useChatbotModels();
+  const { modelOptions } = useAgentCreatorSettings();
 
   const mergedModels = useMemo((): string[] => {
     return dedupeModels([...(modelOptions ?? []), ...DEFAULT_MODELS]);
@@ -120,7 +120,6 @@ export function AgentPersonasPage(): React.JSX.Element {
         <AgentPersonaSettingsForm
           settings={draft.settings || buildAgentPersonaSettings()}
           onChange={(settings: AgentPersona['settings']) => onChange({ settings })}
-          modelOptions={mergedModels}
         />
       )}
     />

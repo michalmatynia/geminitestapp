@@ -3,19 +3,16 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { XIcon } from 'lucide-react';
 
+import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 import type { AiInsightNotification } from '@/shared/types';
 import { Button } from '@/shared/ui';
 import { useToast } from '@/shared/ui';
 
 type NotificationsResponse = { notifications: AiInsightNotification[] };
 
-export function AiInsightsNotificationsDrawer({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}): React.JSX.Element | null {
+export function AiInsightsNotificationsDrawer(): React.JSX.Element | null {
+  const { aiDrawerOpen: open, setAiDrawerOpen } = useAdminLayout();
+  const onClose = () => setAiDrawerOpen(false);
   const { toast } = useToast();
   const notificationsQuery = useQuery({
     queryKey: ['ai-insights', 'notifications'],

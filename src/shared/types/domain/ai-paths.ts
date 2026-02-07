@@ -562,6 +562,57 @@ export type AiPathRunEventRecord = {
   createdAt: Date | string;
 };
 
+export type AiPathRuntimeEventSource = 'local' | 'server';
+export type AiPathRuntimeEventLevel = 'info' | 'warning' | 'error';
+export type AiPathRuntimeEventKind =
+  | 'run_started'
+  | 'run_paused'
+  | 'run_completed'
+  | 'run_canceled'
+  | 'run_failed'
+  | 'node_started'
+  | 'node_finished'
+  | 'node_failed'
+  | 'node_status'
+  | 'log';
+
+export type AiPathRuntimeNodeStatus =
+  | 'idle'
+  | 'queued'
+  | 'running'
+  | 'polling'
+  | 'paused'
+  | 'completed'
+  | 'failed'
+  | 'canceled'
+  | 'cached'
+  | 'blocked'
+  | 'skipped'
+  | 'waiting_callback'
+  | 'advance_pending'
+  | 'timeout'
+  | 'pending'
+  | (string & {});
+
+export type AiPathRuntimeNodeStatusMap = Record<string, AiPathRuntimeNodeStatus>;
+
+export type AiPathRuntimeEvent = {
+  id: string;
+  timestamp: string;
+  source: AiPathRuntimeEventSource;
+  kind: AiPathRuntimeEventKind;
+  level: AiPathRuntimeEventLevel;
+  message: string;
+  runId?: string | null | undefined;
+  runStartedAt?: string | null | undefined;
+  nodeId?: string | undefined;
+  nodeType?: string | null | undefined;
+  nodeTitle?: string | null | undefined;
+  status?: AiPathRuntimeNodeStatus | undefined;
+  iteration?: number | undefined;
+  metadata?: Record<string, unknown> | null | undefined;
+};
+
 export type PathMeta = {
   id: string;
   name: string;

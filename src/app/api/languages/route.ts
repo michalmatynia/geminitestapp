@@ -10,10 +10,8 @@ import {
 } from "@/features/internationalization/server";
 import { getInternationalizationProvider } from "@/features/internationalization/services/internationalization-provider";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { conflictError, internalError } from "@/shared/errors/app-error";
-import { logSystemEvent } from "@/features/observability/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
@@ -103,71 +101,57 @@ const seedMongoLanguages = async (db: Awaited<ReturnType<typeof getMongoDb>>) =>
  * Fetches available languages (seeds defaults if empty).
  */
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const provider = await getInternationalizationProvider();
-    if (provider === "mongodb") {
-      if (!process.env.MONGODB_URI) {
-        return createErrorResponse(internalError("MongoDB is not configured."), {
-          request: req,
-          source: "languages.GET",
-        });
-      }
-      const mongo = await getMongoDb();
-      await seedMongoLanguages(mongo);
-      const languages = await mongo
-        .collection<LanguageDoc>(LANGUAGES_COLLECTION)
-        .find({})
-        .sort({ code: 1 })
-        .toArray();
-      const formattedLanguages = languages.map(lang => ({
-        ...lang,
-        createdAt: lang.createdAt.toISOString(),
-        updatedAt: lang.updatedAt.toISOString()
-      }));
-      return NextResponse.json(formattedLanguages);
+  const provider = await getInternationalizationProvider();
+  if (provider === "mongodb") {
+    if (!process.env.MONGODB_URI) {
+      throw internalError("MongoDB is not configured.");
     }
-
-    if (!process.env.DATABASE_URL) {
-      return NextResponse.json(fallbackLanguages);
-    }
-    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      await ensureInternationalizationDefaults(tx);
-    });
-    const languages = await prisma.language.findMany({
-      orderBy: { code: "asc" },
-      include: {
-        countries: {
-          include: {
-            country: true,
-          },
-        },
-      },
-    });
+    const mongo = await getMongoDb();
+    await seedMongoLanguages(mongo);
+    const languages = await mongo
+      .collection<LanguageDoc>(LANGUAGES_COLLECTION)
+      .find({})
+      .sort({ code: 1 })
+      .toArray();
     const formattedLanguages = languages.map(lang => ({
       ...lang,
       createdAt: lang.createdAt.toISOString(),
-      updatedAt: lang.updatedAt.toISOString(),
-      countries: lang.countries.map(lc => ({
-        ...lc,
-        assignedAt: lc.assignedAt.toISOString(),
-        country: {
-          ...lc.country,
-          createdAt: lc.country.createdAt.toISOString(),
-          updatedAt: lc.country.updatedAt.toISOString()
-        }
-      }))
+      updatedAt: lang.updatedAt.toISOString()
     }));
     return NextResponse.json(formattedLanguages);
-  } catch (error) {
-    void logSystemEvent({
-      level: "error",
-      message: "Failed to fetch languages",
-      source: "languages.GET",
-      error,
-      request: req,
-    });
+  }
+
+  if (!process.env.DATABASE_URL) {
     return NextResponse.json(fallbackLanguages);
   }
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    await ensureInternationalizationDefaults(tx);
+  });
+  const languages = await prisma.language.findMany({
+    orderBy: { code: "asc" },
+    include: {
+      countries: {
+        include: {
+          country: true,
+        },
+      },
+    },
+  });
+  const formattedLanguages = languages.map(lang => ({
+    ...lang,
+    createdAt: lang.createdAt.toISOString(),
+    updatedAt: lang.updatedAt.toISOString(),
+    countries: lang.countries.map(lc => ({
+      ...lc,
+      assignedAt: lc.assignedAt.toISOString(),
+      country: {
+        ...lc.country,
+        createdAt: lc.country.createdAt.toISOString(),
+        updatedAt: lc.country.updatedAt.toISOString()
+      }
+    }))
+  }));
+  return NextResponse.json(formattedLanguages);
 }
 
 /**
@@ -175,111 +159,103 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
  * Creates a language with optional country assignments.
  */
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const parsed = await parseJsonBody(req, languageCreateSchema, {
-      logPrefix: "languages.POST",
-    });
-    if (!parsed.ok) {
-      return parsed.response;
+  const parsed = await parseJsonBody(req, languageCreateSchema, {
+    logPrefix: "languages.POST",
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const data = parsed.data;
+  const code = data.code.toUpperCase();
+
+  const provider = await getInternationalizationProvider();
+  if (provider === "mongodb") {
+    if (!process.env.MONGODB_URI) {
+      throw internalError("MongoDB is not configured.");
     }
-    const data = parsed.data;
-    const code = data.code.toUpperCase();
-
-    const provider = await getInternationalizationProvider();
-    if (provider === "mongodb") {
-      if (!process.env.MONGODB_URI) {
-        throw internalError("MongoDB is not configured.");
-      }
-      const mongo = await getMongoDb();
-      const existing = await mongo
-        .collection<LanguageDoc>(LANGUAGES_COLLECTION)
-        .findOne({ code });
-      if (existing) {
-        throw conflictError("Language code already exists.", { code });
-      }
-
-      const countryIds = data.countryIds ?? [];
-      const uniqueIds = Array.from(new Set(countryIds));
-      const countries: LanguageCountryDoc[] = [];
-
-      if (uniqueIds.length > 0) {
-        const countriesCollection = mongo.collection("countries");
-        for (const countryId of uniqueIds) {
-          const country = (await countriesCollection.findOne({ id: countryId })) as unknown as CountryDoc | null;
-          if (country) {
-            countries.push({
-              countryId: country.id,
-              country: {
-                id: country.id,
-                code: country.code,
-                name: country.name,
-              },
-            });
-          }
-        }
-      }
-
-      const now = new Date();
-      const doc: LanguageDoc = {
-        id: code,
-        code,
-        name: data.name,
-        nativeName: data.nativeName ?? null,
-        countries,
-        createdAt: now,
-        updatedAt: now,
-      };
-      await mongo.collection<LanguageDoc>(LANGUAGES_COLLECTION).insertOne(doc);
-      return NextResponse.json(doc);
+    const mongo = await getMongoDb();
+    const existing = await mongo
+      .collection<LanguageDoc>(LANGUAGES_COLLECTION)
+      .findOne({ code });
+    if (existing) {
+      throw conflictError("Language code already exists.", { code });
     }
 
     const countryIds = data.countryIds ?? [];
     const uniqueIds = Array.from(new Set(countryIds));
-    const existingLanguage = await prisma.language.findUnique({
-      where: { code },
-      select: { id: true },
-    });
-    if (existingLanguage) {
-      throw conflictError("Language code already exists.", { code });
-    }
-    const existing = await prisma.country.findMany({
-      where: { id: { in: uniqueIds } },
-      select: { id: true },
-    });
-    const existingIds = new Set(existing.map((entry: { id: string }) => entry.id));
-    const validIds = uniqueIds.filter((countryId: string) =>
-      existingIds.has(countryId)
-    );
+    const countries: LanguageCountryDoc[] = [];
 
-    const language = await prisma.language.create({
-      data: {
-        code,
-        name: data.name,
-        ...(data.nativeName !== undefined && { nativeName: data.nativeName }),
-        ...(validIds.length ? {
-          countries: {
-            createMany: {
-              data: validIds.map((countryId: string) => ({ countryId })),
+    if (uniqueIds.length > 0) {
+      const countriesCollection = mongo.collection("countries");
+      for (const countryId of uniqueIds) {
+        const country = (await countriesCollection.findOne({ id: countryId })) as unknown as CountryDoc | null;
+        if (country) {
+          countries.push({
+            countryId: country.id,
+            country: {
+              id: country.id,
+              code: country.code,
+              name: country.name,
             },
-          },
-        } : {}),
-      },
-      include: {
+          });
+        }
+      }
+    }
+
+    const now = new Date();
+    const doc: LanguageDoc = {
+      id: code,
+      code,
+      name: data.name,
+      nativeName: data.nativeName ?? null,
+      countries,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await mongo.collection<LanguageDoc>(LANGUAGES_COLLECTION).insertOne(doc);
+    return NextResponse.json(doc);
+  }
+
+  const countryIds = data.countryIds ?? [];
+  const uniqueIds = Array.from(new Set(countryIds));
+  const existingLanguage = await prisma.language.findUnique({
+    where: { code },
+    select: { id: true },
+  });
+  if (existingLanguage) {
+    throw conflictError("Language code already exists.", { code });
+  }
+  const existing = await prisma.country.findMany({
+    where: { id: { in: uniqueIds } },
+    select: { id: true },
+  });
+  const existingIds = new Set(existing.map((entry: { id: string }) => entry.id));
+  const validIds = uniqueIds.filter((countryId: string) =>
+    existingIds.has(countryId)
+  );
+
+  const language = await prisma.language.create({
+    data: {
+      code,
+      name: data.name,
+      ...(data.nativeName !== undefined && { nativeName: data.nativeName }),
+      ...(validIds.length ? {
         countries: {
-          include: {
-            country: true,
+          createMany: {
+            data: validIds.map((countryId: string) => ({ countryId })),
           },
         },
+      } : {}),
+    },
+    include: {
+      countries: {
+        include: {
+          country: true,
+        },
       },
-    });
-    return NextResponse.json(language);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "languages.POST",
-      fallbackMessage: "Failed to create language",
-    });
-  }
+    },
+  });
+  return NextResponse.json(language);
 }
 
 export const GET = apiHandler(

@@ -87,6 +87,8 @@ export function AiPathsSettingsView({
     handleStepActiveRun,
     handleCancelActiveRun,
     runtimeRunStatus,
+    runtimeNodeStatuses,
+    runtimeEvents,
     updateSelectedNode,
     handleDeleteSelectedNode,
     handleRemoveEdge,
@@ -585,6 +587,8 @@ export function AiPathsSettingsView({
             <div className={`relative ${isFocusMode ? 'h-full min-h-0' : ''}`}>
               <CanvasBoardMigrated
                 flowIntensity={flowIntensity}
+                runtimeNodeStatuses={runtimeNodeStatuses}
+                runtimeEvents={runtimeEvents}
                 viewportClassName={isFocusMode ? 'h-full min-h-0 rounded-none border-0' : undefined}
                 onRemoveEdge={handleRemoveEdge}
                 onDisconnectPort={handleDisconnectPort}

@@ -1,7 +1,15 @@
 import React from 'react';
 
 
-import type { AiNode, Edge, RuntimeState, PathFlowIntensity } from '@/features/ai/ai-paths/lib';
+import type {
+  AiNode,
+  AiPathRuntimeEvent,
+  AiPathRuntimeNodeStatus,
+  AiPathRuntimeNodeStatusMap,
+  Edge,
+  PathFlowIntensity,
+  RuntimeState,
+} from '@/features/ai/ai-paths/lib';
 import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
@@ -10,7 +18,6 @@ import {
   PORT_SIZE,
   getPortOffsetY,
   formatRuntimeValue,
-  hashRuntimeValue,
   typeStyles,
   validateConnection,
   arePortTypesCompatible,
@@ -50,10 +57,6 @@ type ConnectorInfo = {
   connectionMismatches: ConnectionTypeMismatch[];
   hasMismatch: boolean;
 };
-type RuntimeHashes = {
-  inputs: Record<string, Record<string, string>>;
-  outputs: Record<string, Record<string, string>>;
-};
 
 type CanvasBoardProps = {
   viewportRef: React.RefObject<HTMLDivElement | null>;
@@ -61,6 +64,8 @@ type CanvasBoardProps = {
   nodes: AiNode[];
   edges: Edge[];
   runtimeState: RuntimeState;
+  runtimeNodeStatuses?: AiPathRuntimeNodeStatusMap | undefined;
+  runtimeEvents?: AiPathRuntimeEvent[] | undefined;
   flowIntensity?: PathFlowIntensity | undefined;
   edgePaths: EdgePath[];
   view: { x: number; y: number; scale: number };
@@ -109,6 +114,8 @@ export function CanvasBoard({
   nodes,
   edges,
   runtimeState,
+  runtimeNodeStatuses,
+  runtimeEvents,
   flowIntensity = 'medium',
   edgePaths,
   view,

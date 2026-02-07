@@ -8,7 +8,6 @@ import {
   updateImportTemplate
 } from "@/features/integrations/server";
 import { removeUndefined } from "@/shared/utils";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
@@ -25,75 +24,51 @@ const templateSchema = z.object({
   mappings: z.array(mappingSchema).optional()
 });
 
-async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
-  try {
-    const { id } = params;
-    if (!id) {
-      throw badRequestError("Template id is required");
-    }
-    const template = await getImportTemplate(id);
-    if (!template) {
-      throw notFoundError("Template not found.", { templateId: id });
-    }
-    return NextResponse.json(template);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.import-templates.[id].GET",
-      fallbackMessage: "Failed to fetch template."
-    });
+async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+  const { id } = params;
+  if (!id) {
+    throw badRequestError("Template id is required");
   }
+  const template = await getImportTemplate(id);
+  if (!template) {
+    throw notFoundError("Template not found.", { templateId: id });
+  }
+  return NextResponse.json(template);
 }
 
 async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
-  try {
-    const { id } = params;
-    if (!id) {
-      throw badRequestError("Template id is required");
-    }
-    const parsed = await parseJsonBody(req, templateSchema, {
-      logPrefix: "import-templates.PUT"
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const data = parsed.data;
-    const template = await updateImportTemplate(id, removeUndefined({
-      name: data.name,
-      description: data.description,
-      mappings: data.mappings
-    }));
-    if (!template) {
-      throw notFoundError("Template not found.", { templateId: id });
-    }
-    return NextResponse.json(template);
-  } catch (error: unknown) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.import-templates.[id].PUT",
-      fallbackMessage: "Failed to update template."
-    });
+  const { id } = params;
+  if (!id) {
+    throw badRequestError("Template id is required");
   }
+  const parsed = await parseJsonBody(req, templateSchema, {
+    logPrefix: "import-templates.PUT"
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const data = parsed.data;
+  const template = await updateImportTemplate(id, removeUndefined({
+    name: data.name,
+    description: data.description,
+    mappings: data.mappings
+  }));
+  if (!template) {
+    throw notFoundError("Template not found.", { templateId: id });
+  }
+  return NextResponse.json(template);
 }
 
-async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
-  try {
-    const { id } = params;
-    if (!id) {
-      throw badRequestError("Template id is required");
-    }
-    const deleted = await deleteImportTemplate(id);
-    if (!deleted) {
-      throw notFoundError("Template not found.", { templateId: id });
-    }
-    return NextResponse.json({ ok: true });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.import-templates.[id].DELETE",
-      fallbackMessage: "Failed to delete template."
-    });
+async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+  const { id } = params;
+  if (!id) {
+    throw badRequestError("Template id is required");
   }
+  const deleted = await deleteImportTemplate(id);
+  if (!deleted) {
+    throw notFoundError("Template not found.", { templateId: id });
+  }
+  return NextResponse.json({ ok: true });
 }
 
 export const GET = apiHandlerWithParams<{ id: string }>(

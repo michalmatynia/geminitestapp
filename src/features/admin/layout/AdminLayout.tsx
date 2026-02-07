@@ -3,7 +3,7 @@
 import { ChevronLeftIcon } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { SessionProvider, useSession } from 'next-auth/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { AiInsightsNotificationsDrawer } from '@/features/admin/components/AiInsightsNotificationsDrawer';
 import Menu from '@/features/admin/components/Menu';
@@ -29,7 +29,6 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
   const preferredMenuCollapsedRef = useRef(isMenuCollapsed);
   const programmaticCollapsedRef = useRef(false);
   const hydratedUserRef = useRef<string | null>(null);
-  const [aiDrawerOpen, setAiDrawerOpen] = useState(false);
 
   const { data: preferences } = useUserPreferences();
   const updatePreferencesMutation = useUpdateUserPreferencesMutation();
@@ -107,12 +106,12 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
           <div className="pointer-events-auto">
             <div className="flex items-center gap-2">
               <div id="ai-paths-header-actions" className="flex items-center gap-2" />
-              <UserNav onOpenAiWarnings={() => setAiDrawerOpen(true)} />
+              <UserNav />
             </div>
           </div>
         </header>
         <main className="flex-1 p-4 overflow-y-auto">{children}</main>
-        <AiInsightsNotificationsDrawer open={aiDrawerOpen} onClose={() => setAiDrawerOpen(false)} />
+        <AiInsightsNotificationsDrawer />
       </div>
     </div>
   );

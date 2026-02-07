@@ -7,7 +7,6 @@ import { ObjectId, Sort } from "mongodb";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { parseJsonBody } from "@/features/products/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
 import prisma from "@/shared/lib/db/prisma";
@@ -235,241 +234,111 @@ const normalizeReplaceDoc = (update: unknown): Record<string, unknown> | null =>
 };
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const { access, isInternal } = await requireAiPathsAccessOrInternal(req);
-    if (!isInternal) {
-      enforceAiPathsActionRateLimit(access, "db-action");
+  const { access, isInternal } = await requireAiPathsAccessOrInternal(req);
+  if (!isInternal) {
+    enforceAiPathsActionRateLimit(access, "db-action");
+  }
+  const parsed = await parseJsonBody(req, actionSchema, {
+    logPrefix: "ai-paths.db-action",
+  });
+  if (!parsed.ok) return parsed.response;
+  if (!process.env.MONGODB_URI) {
+    throw internalError("MongoDB is not configured");
+  }
+
+  const data = parsed.data as z.infer<typeof actionSchema>;
+  const {
+    collection,
+    action,
+    filter,
+    update,
+    pipeline,
+    document,
+    documents,
+    projection,
+    sort,
+    limit = 20,
+    idType,
+    distinctField,
+    upsert,
+    returnDocument = "after",
+  } = data;
+
+  if (!isCollectionAllowed(collection)) {
+    throw internalError("Collection not allowlisted");
+  }
+
+  const appProvider = await getAppDbProvider();
+  const isWriteAction = [
+    "insertOne",
+    "insertMany",
+    "updateOne",
+    "updateMany",
+    "replaceOne",
+    "findOneAndUpdate",
+    "deleteOne",
+    "deleteMany",
+    "findOneAndDelete",
+  ].includes(action);
+
+  // When app DB provider is Prisma, route write actions through Prisma
+  if (appProvider === "prisma" && isWriteAction) {
+    if (!process.env.DATABASE_URL) {
+      throw internalError("Prisma is not configured");
     }
-    const parsed = await parseJsonBody(req, actionSchema, {
-      logPrefix: "ai-paths.db-action",
-    });
-    if (!parsed.ok) return parsed.response;
-    if (!process.env.MONGODB_URI) {
-      return createErrorResponse(internalError("MongoDB is not configured"), {
-        request: req,
-        source: "ai-paths.db-action",
+    const resolvedCollection = resolvePrismaCollectionKey(collection);
+    const delegate = resolvedCollection ? getPrismaDelegate(resolvedCollection) : null;
+    if (!delegate) {
+      throw badRequestError(`Collection "${collection}" is not available for Prisma writes.`);
+    }
+    const where = coerceQuery(filter);
+
+    if (action === "updateOne") {
+      const flatUpdates = extractFlatUpdates(update);
+      if (!flatUpdates || Object.keys(flatUpdates).length === 0) {
+        throw badRequestError("Update data is required (plain object or $set)");
+      }
+      if (!where || Object.keys(where).length === 0) {
+        throw badRequestError("Filter is required for updateOne");
+      }
+      const result = await delegate.update({ where, data: flatUpdates });
+      return NextResponse.json({ matchedCount: 1, modifiedCount: 1, value: result });
+    }
+
+    if (action === "updateMany") {
+      const flatUpdates = extractFlatUpdates(update);
+      if (!flatUpdates || Object.keys(flatUpdates).length === 0) {
+        throw badRequestError("Update data is required (plain object or $set)");
+      }
+      const result = await delegate.updateMany({ where, data: flatUpdates });
+      return NextResponse.json({
+        matchedCount: result.count,
+        modifiedCount: result.count,
       });
     }
 
-    const data = parsed.data as z.infer<typeof actionSchema>;
-    const {
-      collection,
-      action,
-      filter,
-      update,
-      pipeline,
-      document,
-      documents,
-      projection,
-      sort,
-      limit = 20,
-      idType,
-      distinctField,
-      upsert,
-      returnDocument = "after",
-    } = data;
-
-    if (!isCollectionAllowed(collection)) {
-      return createErrorResponse(internalError("Collection not allowlisted"), {
-        request: req,
-        source: "ai-paths.db-action",
-      });
+    if (action === "findOneAndUpdate") {
+      const flatUpdates = extractFlatUpdates(update);
+      if (!flatUpdates || Object.keys(flatUpdates).length === 0) {
+        throw badRequestError("Update data is required (plain object or $set)");
+      }
+      if (!where || Object.keys(where).length === 0) {
+        throw badRequestError("Filter is required for findOneAndUpdate");
+      }
+      const result = await delegate.update({ where, data: flatUpdates });
+      return NextResponse.json({ value: result, ok: 1 });
     }
 
-    const appProvider = await getAppDbProvider();
-    const isWriteAction = [
-      "insertOne",
-      "insertMany",
-      "updateOne",
-      "updateMany",
-      "replaceOne",
-      "findOneAndUpdate",
-      "deleteOne",
-      "deleteMany",
-      "findOneAndDelete",
-    ].includes(action);
-
-    // When app DB provider is Prisma, route write actions through Prisma
-    if (appProvider === "prisma" && isWriteAction) {
-      if (!process.env.DATABASE_URL) {
-        return createErrorResponse(internalError("Prisma is not configured"), {
-          request: req,
-          source: "ai-paths.db-action",
-        });
+    if (action === "replaceOne") {
+      const replacement = normalizeReplaceDoc(update);
+      if (!replacement) {
+        throw badRequestError("Replacement document is required");
       }
-      const resolvedCollection = resolvePrismaCollectionKey(collection);
-      const delegate = resolvedCollection ? getPrismaDelegate(resolvedCollection) : null;
-      if (!delegate) {
-        return createErrorResponse(
-          badRequestError(`Collection "${collection}" is not available for Prisma writes.`),
-          { request: req, source: "ai-paths.db-action" }
-        );
+      if (!where || Object.keys(where).length === 0) {
+        throw badRequestError("Filter is required for replaceOne");
       }
-      const where = coerceQuery(filter);
-
-      if (action === "updateOne") {
-        const flatUpdates = extractFlatUpdates(update);
-        if (!flatUpdates || Object.keys(flatUpdates).length === 0) {
-          throw badRequestError("Update data is required (plain object or $set)");
-        }
-        if (!where || Object.keys(where).length === 0) {
-          throw badRequestError("Filter is required for updateOne");
-        }
-        const result = await delegate.update({ where, data: flatUpdates });
-        return NextResponse.json({ matchedCount: 1, modifiedCount: 1, value: result });
-      }
-
-      if (action === "updateMany") {
-        const flatUpdates = extractFlatUpdates(update);
-        if (!flatUpdates || Object.keys(flatUpdates).length === 0) {
-          throw badRequestError("Update data is required (plain object or $set)");
-        }
-        const result = await delegate.updateMany({ where, data: flatUpdates });
-        return NextResponse.json({
-          matchedCount: result.count,
-          modifiedCount: result.count,
-        });
-      }
-
-      if (action === "findOneAndUpdate") {
-        const flatUpdates = extractFlatUpdates(update);
-        if (!flatUpdates || Object.keys(flatUpdates).length === 0) {
-          throw badRequestError("Update data is required (plain object or $set)");
-        }
-        if (!where || Object.keys(where).length === 0) {
-          throw badRequestError("Filter is required for findOneAndUpdate");
-        }
-        const result = await delegate.update({ where, data: flatUpdates });
-        return NextResponse.json({ value: result, ok: 1 });
-      }
-
-      if (action === "replaceOne") {
-        const replacement = normalizeReplaceDoc(update);
-        if (!replacement) {
-          throw badRequestError("Replacement document is required");
-        }
-        if (!where || Object.keys(where).length === 0) {
-          throw badRequestError("Filter is required for replaceOne");
-        }
-        const result = await delegate.update({ where, data: replacement });
-        return NextResponse.json({ matchedCount: 1, modifiedCount: 1, value: result });
-      }
-
-      if (action === "insertOne") {
-        const doc =
-          document && typeof document === "object" && !Array.isArray(document)
-            ? (document as Record<string, unknown>)
-            : null;
-        if (!doc) {
-          throw badRequestError("Document is required");
-        }
-        const result = await delegate.create({ data: doc });
-        const insertedId = (result as Record<string, unknown>)?.id ?? null;
-        return NextResponse.json({ insertedId, insertedCount: 1 });
-      }
-
-      if (action === "insertMany") {
-        const docs =
-          documents && Array.isArray(documents)
-            ? documents
-            : Array.isArray(document)
-              ? (document as unknown[])
-              : null;
-        if (!docs || docs.length === 0) {
-          throw badRequestError("Documents array is required");
-        }
-        const result = await delegate.createMany({
-          data: docs as Record<string, unknown>[],
-        });
-        return NextResponse.json({ insertedCount: result.count });
-      }
-
-      if (action === "deleteOne") {
-        if (!where || Object.keys(where).length === 0) {
-          throw badRequestError("Filter is required for deleteOne");
-        }
-        await delegate.delete({ where });
-        return NextResponse.json({ deletedCount: 1 });
-      }
-
-      if (action === "deleteMany") {
-        const result = await delegate.deleteMany({ where });
-        return NextResponse.json({ deletedCount: result.count });
-      }
-
-      if (action === "findOneAndDelete") {
-        if (!where || Object.keys(where).length === 0) {
-          throw badRequestError("Filter is required for findOneAndDelete");
-        }
-        const result = await delegate.delete({ where });
-        return NextResponse.json({ value: result, ok: 1 });
-      }
-
-      return createErrorResponse(
-        badRequestError(`Action "${action}" is not supported for Prisma.`),
-        { request: req, source: "ai-paths.db-action" }
-      );
-    }
-
-    const mongo = await getMongoDb();
-    const collectionRef = mongo.collection(collection);
-    const normalizedFilter = normalizeObjectId(coerceQuery(filter), idType);
-    const hasFilter = Object.keys(normalizedFilter).length > 0;
-
-    const requireFilter = [
-      "updateOne",
-      "updateMany",
-      "replaceOne",
-      "findOneAndUpdate",
-      "deleteOne",
-      "deleteMany",
-      "findOneAndDelete",
-    ].includes(action);
-
-    if (requireFilter && !hasFilter) {
-      throw badRequestError("Filter is required for this action");
-    }
-
-    if (action === "find") {
-      const cursor = collectionRef.find(
-        normalizedFilter,
-        projection ? { projection } : undefined
-      );
-      if (sort) {
-        cursor.sort(sort as Sort);
-      }
-      const items = await cursor.limit(limit).toArray();
-      return NextResponse.json({ items, count: items.length });
-    }
-
-    if (action === "findOne") {
-      const item = await collectionRef.findOne(
-        normalizedFilter,
-        projection ? { projection } : undefined
-      );
-      return NextResponse.json({ item, count: item ? 1 : 0 });
-    }
-
-    if (action === "countDocuments") {
-      const count = await collectionRef.countDocuments(normalizedFilter);
-      return NextResponse.json({ count });
-    }
-
-    if (action === "distinct") {
-      const field = distinctField?.trim();
-      if (!field) {
-        throw badRequestError("distinctField is required");
-      }
-      const values = await collectionRef.distinct(field, normalizedFilter);
-      return NextResponse.json({ values, count: values.length });
-    }
-
-    if (action === "aggregate") {
-      if (!pipeline || pipeline.length === 0) {
-        throw badRequestError("Aggregation pipeline is required");
-      }
-      const items = await collectionRef.aggregate(pipeline).toArray();
-      return NextResponse.json({ items, count: items.length });
+      const result = await delegate.update({ where, data: replacement });
+      return NextResponse.json({ matchedCount: 1, modifiedCount: 1, value: result });
     }
 
     if (action === "insertOne") {
@@ -480,8 +349,9 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       if (!doc) {
         throw badRequestError("Document is required");
       }
-      const result = await collectionRef.insertOne(doc);
-      return NextResponse.json({ insertedId: result.insertedId, insertedCount: 1 });
+      const result = await delegate.create({ data: doc });
+      const insertedId = (result as Record<string, unknown>)?.id ?? null;
+      return NextResponse.json({ insertedId, insertedCount: 1 });
     }
 
     if (action === "insertMany") {
@@ -494,86 +364,192 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       if (!docs || docs.length === 0) {
         throw badRequestError("Documents array is required");
       }
-      const result = await collectionRef.insertMany(docs as Record<string, unknown>[]);
-      return NextResponse.json({
-        insertedIds: result.insertedIds,
-        insertedCount: result.insertedCount,
+      const result = await delegate.createMany({
+        data: docs as Record<string, unknown>[],
       });
+      return NextResponse.json({ insertedCount: result.count });
     }
 
-    if (action === "replaceOne") {
-      const replacement = normalizeReplaceDoc(update);
-      if (!replacement) {
-        throw badRequestError("Replacement document is required");
+    if (action === "deleteOne") {
+      if (!where || Object.keys(where).length === 0) {
+        throw badRequestError("Filter is required for deleteOne");
       }
-      const result = await collectionRef.replaceOne(normalizedFilter, replacement, { upsert: !!upsert });
-      return NextResponse.json({
-        matchedCount: result.matchedCount,
-        modifiedCount: result.modifiedCount,
-        upsertedId: result.upsertedId ?? null,
-      });
+      await delegate.delete({ where });
+      return NextResponse.json({ deletedCount: 1 });
     }
 
-    if (action === "findOneAndUpdate") {
-      const updateDoc = normalizeUpdateDoc(update);
-      if (!updateDoc) {
-        throw badRequestError("Update document is required");
-      }
-      const result = await collectionRef.findOneAndUpdate(
-        normalizedFilter,
-        updateDoc,
-        { returnDocument, upsert: !!upsert, includeResultMetadata: true }
-      );
-      return NextResponse.json({
-        value: result.value ?? null,
-        ok: result.ok ?? 1,
-      });
-    }
-
-    if (action === "updateOne" || action === "updateMany") {
-      const updateDoc = normalizeUpdateDoc(update);
-      if (!updateDoc) {
-        throw badRequestError("Update document is required");
-      }
-      const result =
-        action === "updateOne"
-          ? await collectionRef.updateOne(normalizedFilter, updateDoc, {
-              upsert: !!upsert,
-            })
-          : await collectionRef.updateMany(normalizedFilter, updateDoc, {
-              upsert: !!upsert,
-            });
-      return NextResponse.json({
-        matchedCount: result.matchedCount,
-        modifiedCount: result.modifiedCount,
-        upsertedId: result.upsertedId ?? null,
-      });
-    }
-
-    if (action === "deleteOne" || action === "deleteMany") {
-      const result =
-        action === "deleteOne"
-          ? await collectionRef.deleteOne(normalizedFilter)
-          : await collectionRef.deleteMany(normalizedFilter);
-      return NextResponse.json({ deletedCount: result.deletedCount ?? 0 });
+    if (action === "deleteMany") {
+      const result = await delegate.deleteMany({ where });
+      return NextResponse.json({ deletedCount: result.count });
     }
 
     if (action === "findOneAndDelete") {
-      const result = await collectionRef.findOneAndDelete(normalizedFilter, { includeResultMetadata: true });
-      return NextResponse.json({
-        value: result.value ?? null,
-        ok: result.ok ?? 1,
-      });
+      if (!where || Object.keys(where).length === 0) {
+        throw badRequestError("Filter is required for findOneAndDelete");
+      }
+      const result = await delegate.delete({ where });
+      return NextResponse.json({ value: result, ok: 1 });
     }
 
-    throw badRequestError("Unsupported action");
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "ai-paths.db-action",
-      fallbackMessage: "Failed to execute database action",
+    throw badRequestError(`Action "${action}" is not supported for Prisma.`);
+  }
+
+  const mongo = await getMongoDb();
+  const collectionRef = mongo.collection(collection);
+  const normalizedFilter = normalizeObjectId(coerceQuery(filter), idType);
+  const hasFilter = Object.keys(normalizedFilter).length > 0;
+
+  const requireFilter = [
+    "updateOne",
+    "updateMany",
+    "replaceOne",
+    "findOneAndUpdate",
+    "deleteOne",
+    "deleteMany",
+    "findOneAndDelete",
+  ].includes(action);
+
+  if (requireFilter && !hasFilter) {
+    throw badRequestError("Filter is required for this action");
+  }
+
+  if (action === "find") {
+    const cursor = collectionRef.find(
+      normalizedFilter,
+      projection ? { projection } : undefined
+    );
+    if (sort) {
+      cursor.sort(sort as Sort);
+    }
+    const items = await cursor.limit(limit).toArray();
+    return NextResponse.json({ items, count: items.length });
+  }
+
+  if (action === "findOne") {
+    const item = await collectionRef.findOne(
+      normalizedFilter,
+      projection ? { projection } : undefined
+    );
+    return NextResponse.json({ item, count: item ? 1 : 0 });
+  }
+
+  if (action === "countDocuments") {
+    const count = await collectionRef.countDocuments(normalizedFilter);
+    return NextResponse.json({ count });
+  }
+
+  if (action === "distinct") {
+    const field = distinctField?.trim();
+    if (!field) {
+      throw badRequestError("distinctField is required");
+    }
+    const values = await collectionRef.distinct(field, normalizedFilter);
+    return NextResponse.json({ values, count: values.length });
+  }
+
+  if (action === "aggregate") {
+    if (!pipeline || pipeline.length === 0) {
+      throw badRequestError("Aggregation pipeline is required");
+    }
+    const items = await collectionRef.aggregate(pipeline).toArray();
+    return NextResponse.json({ items, count: items.length });
+  }
+
+  if (action === "insertOne") {
+    const doc =
+      document && typeof document === "object" && !Array.isArray(document)
+        ? (document as Record<string, unknown>)
+        : null;
+    if (!doc) {
+      throw badRequestError("Document is required");
+    }
+    const result = await collectionRef.insertOne(doc);
+    return NextResponse.json({ insertedId: result.insertedId, insertedCount: 1 });
+  }
+
+  if (action === "insertMany") {
+    const docs =
+      documents && Array.isArray(documents)
+        ? documents
+        : Array.isArray(document)
+          ? (document as unknown[])
+          : null;
+    if (!docs || docs.length === 0) {
+      throw badRequestError("Documents array is required");
+    }
+    const result = await collectionRef.insertMany(docs as Record<string, unknown>[]);
+    return NextResponse.json({
+      insertedIds: result.insertedIds,
+      insertedCount: result.insertedCount,
     });
   }
+
+  if (action === "replaceOne") {
+    const replacement = normalizeReplaceDoc(update);
+    if (!replacement) {
+      throw badRequestError("Replacement document is required");
+    }
+    const result = await collectionRef.replaceOne(normalizedFilter, replacement, { upsert: !!upsert });
+    return NextResponse.json({
+      matchedCount: result.matchedCount,
+      modifiedCount: result.modifiedCount,
+      upsertedId: result.upsertedId ?? null,
+    });
+  }
+
+  if (action === "findOneAndUpdate") {
+    const updateDoc = normalizeUpdateDoc(update);
+    if (!updateDoc) {
+      throw badRequestError("Update document is required");
+    }
+    const result = await collectionRef.findOneAndUpdate(
+      normalizedFilter,
+      updateDoc,
+      { returnDocument, upsert: !!upsert, includeResultMetadata: true }
+    );
+    return NextResponse.json({
+      value: result.value ?? null,
+      ok: result.ok ?? 1,
+    });
+  }
+
+  if (action === "updateOne" || action === "updateMany") {
+    const updateDoc = normalizeUpdateDoc(update);
+    if (!updateDoc) {
+      throw badRequestError("Update document is required");
+    }
+    const result =
+      action === "updateOne"
+        ? await collectionRef.updateOne(normalizedFilter, updateDoc, {
+            upsert: !!upsert,
+          })
+        : await collectionRef.updateMany(normalizedFilter, updateDoc, {
+            upsert: !!upsert,
+          });
+    return NextResponse.json({
+      matchedCount: result.matchedCount,
+      modifiedCount: result.modifiedCount,
+      upsertedId: result.upsertedId ?? null,
+    });
+  }
+
+  if (action === "deleteOne" || action === "deleteMany") {
+    const result =
+      action === "deleteOne"
+        ? await collectionRef.deleteOne(normalizedFilter)
+        : await collectionRef.deleteMany(normalizedFilter);
+    return NextResponse.json({ deletedCount: result.deletedCount ?? 0 });
+  }
+
+  if (action === "findOneAndDelete") {
+    const result = await collectionRef.findOneAndDelete(normalizedFilter, { includeResultMetadata: true });
+    return NextResponse.json({
+      value: result.value ?? null,
+      ok: result.ok ?? 1,
+    });
+  }
+
+  throw badRequestError("Unsupported action");
 }
 
 export const POST = apiHandler(

@@ -5,9 +5,14 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type {
   AiNode,
+  AiPathRunEventRecord,
   DbQueryConfig,
   Edge,
   ParserSampleState,
+  AiPathRuntimeEvent,
+  AiPathRuntimeEventKind,
+  AiPathRuntimeNodeStatus,
+  AiPathRuntimeNodeStatusMap,
   PathConfig,
   PathDebugEntry,
   PathDebugSnapshot,
@@ -51,6 +56,7 @@ const AI_PATHS_ENTITY_STALE_MS = 10_000;
 
 
 const LOCAL_RUN_STEP_CHUNK = 25;
+const MAX_RUNTIME_EVENTS = 300;
 
 type ToastFn = (message: string, options?: Partial<{ variant: 'success' | 'error' | 'info'; duration: number }>) => void;
 
@@ -59,6 +65,11 @@ type QueuedRun = {
   pathId: string | null;
   contextOverride?: Record<string, unknown> | null;
   queuedAt: string;
+};
+
+type RuntimeEventInput = Omit<AiPathRuntimeEvent, 'id' | 'timestamp'> & {
+  id?: string | undefined;
+  timestamp?: string | undefined;
 };
 
 type UseAiPathsRuntimeArgs = {
@@ -104,6 +115,8 @@ type UseAiPathsRuntimeResult = {
   runStatus: 'idle' | 'running' | 'paused' | 'stepping';
   handleSendToAi: (sourceNodeId: string, prompt: string) => Promise<void>;
   sendingToAi: boolean;
+  runtimeNodeStatuses: AiPathRuntimeNodeStatusMap;
+  runtimeEvents: AiPathRuntimeEvent[];
 };
 
 export function useAiPathsRuntime({
@@ -130,6 +143,8 @@ export function useAiPathsRuntime({
 }: UseAiPathsRuntimeArgs): UseAiPathsRuntimeResult {
   const [sendingToAi, setSendingToAi] = useState(false);
   const [runStatus, setRunStatus] = useState<'idle' | 'running' | 'paused' | 'stepping'>('idle');
+  const [runtimeNodeStatuses, setRuntimeNodeStatuses] = useState<AiPathRuntimeNodeStatusMap>({});
+  const [runtimeEvents, setRuntimeEvents] = useState<AiPathRuntimeEvent[]>([]);
 
   const pollInFlightRef = useRef<Set<string>>(new Set());
   const iteratorContinueInFlightRef = useRef(false);
@@ -150,6 +165,8 @@ export function useAiPathsRuntime({
   const runInFlightRef = useRef(false);
   const queuedRunsRef = useRef<QueuedRun[]>([]);
   const runtimeStateRef = useRef<RuntimeState>({ inputs: {}, outputs: {} });
+  const runtimeNodeStatusesRef = useRef<AiPathRuntimeNodeStatusMap>({});
+  const lastServerRunStatusRef = useRef<string | null>(null);
   const queryClient = useQueryClient();
   const updateSettingMutation = useUpdateSetting();
   const normalizedNodes = useMemo((): AiNode[] => normalizeNodes(nodes), [nodes]);
@@ -209,12 +226,135 @@ export function useAiPathsRuntime({
     runStatusRef.current = runStatus;
   }, [runStatus]);
 
+  useEffect((): void => {
+    const validNodeIds = new Set(normalizedNodes.map((node: AiNode): string => node.id));
+    const current = runtimeNodeStatusesRef.current;
+    let changed = false;
+    const next: AiPathRuntimeNodeStatusMap = {};
+    Object.entries(current).forEach(([nodeId, status]: [string, AiPathRuntimeNodeStatus]) => {
+      if (!validNodeIds.has(nodeId)) {
+        changed = true;
+        return;
+      }
+      next[nodeId] = status;
+    });
+    if (!changed) return;
+    resetRuntimeNodeStatuses(next);
+  }, [normalizedNodes, resetRuntimeNodeStatuses]);
+
+  useEffect((): void => {
+    Object.entries(runtimeState.outputs ?? {}).forEach(([nodeId, nodeOutputs]: [string, RuntimePortValues]) => {
+      const status = (nodeOutputs as Record<string, unknown>)?.status;
+      if (typeof status !== 'string') return;
+      const node = normalizedNodes.find((candidate: AiNode): boolean => candidate.id === nodeId);
+      setNodeStatus({
+        nodeId,
+        status,
+        source: executionMode === 'server' ? 'server' : 'local',
+        nodeType: node?.type,
+        nodeTitle: node?.title ?? null,
+      });
+    });
+  }, [executionMode, normalizedNodes, runtimeState.outputs, setNodeStatus]);
+
   const updateRunStatus = useCallback(
     (status: 'idle' | 'running' | 'paused' | 'stepping'): void => {
       runStatusRef.current = status;
       setRunStatus(status);
     },
     []
+  );
+
+  const normalizeNodeStatus = useCallback((value: unknown): AiPathRuntimeNodeStatus | null => {
+    if (typeof value !== 'string') return null;
+    const normalized = value.trim().toLowerCase();
+    if (!normalized) return null;
+    return normalized as AiPathRuntimeNodeStatus;
+  }, []);
+
+  const formatStatusLabel = useCallback((status: AiPathRuntimeNodeStatus): string => {
+    return status
+      .split('_')
+      .map((part) => (part ? `${part[0]!.toUpperCase()}${part.slice(1)}` : part))
+      .join(' ');
+  }, []);
+
+  const appendRuntimeEvent = useCallback((input: RuntimeEventInput): void => {
+    const event: AiPathRuntimeEvent = {
+      id:
+        input.id ??
+        (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+          ? crypto.randomUUID()
+          : `evt_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`),
+      timestamp: input.timestamp ?? new Date().toISOString(),
+      source: input.source,
+      kind: input.kind,
+      level: input.level,
+      message: input.message,
+      ...(input.runId !== undefined ? { runId: input.runId } : {}),
+      ...(input.runStartedAt !== undefined ? { runStartedAt: input.runStartedAt } : {}),
+      ...(input.nodeId !== undefined ? { nodeId: input.nodeId } : {}),
+      ...(input.nodeType !== undefined ? { nodeType: input.nodeType } : {}),
+      ...(input.nodeTitle !== undefined ? { nodeTitle: input.nodeTitle } : {}),
+      ...(input.status !== undefined ? { status: input.status } : {}),
+      ...(input.iteration !== undefined ? { iteration: input.iteration } : {}),
+      ...(input.metadata !== undefined ? { metadata: input.metadata } : {}),
+    };
+    setRuntimeEvents((prev: AiPathRuntimeEvent[]): AiPathRuntimeEvent[] => {
+      const next = [...prev, event];
+      if (next.length > MAX_RUNTIME_EVENTS) {
+        return next.slice(next.length - MAX_RUNTIME_EVENTS);
+      }
+      return next;
+    });
+  }, []);
+
+  const resetRuntimeNodeStatuses = useCallback((next: AiPathRuntimeNodeStatusMap = {}): void => {
+    runtimeNodeStatusesRef.current = next;
+    setRuntimeNodeStatuses(next);
+  }, []);
+
+  const setNodeStatus = useCallback(
+    (input: {
+      nodeId: string;
+      status: unknown;
+      source: 'local' | 'server';
+      runId?: string | null | undefined;
+      runStartedAt?: string | null | undefined;
+      iteration?: number | undefined;
+      nodeType?: string | null | undefined;
+      nodeTitle?: string | null | undefined;
+      kind?: AiPathRuntimeEventKind | undefined;
+      level?: 'info' | 'warning' | 'error' | undefined;
+      message?: string | undefined;
+      metadata?: Record<string, unknown> | null | undefined;
+    }): void => {
+      const normalizedStatus = normalizeNodeStatus(input.status);
+      if (!normalizedStatus) return;
+      const prevStatus = runtimeNodeStatusesRef.current[input.nodeId];
+      if (prevStatus === normalizedStatus) return;
+      const next = {
+        ...runtimeNodeStatusesRef.current,
+        [input.nodeId]: normalizedStatus,
+      };
+      runtimeNodeStatusesRef.current = next;
+      setRuntimeNodeStatuses(next);
+      appendRuntimeEvent({
+        source: input.source,
+        kind: input.kind ?? 'node_status',
+        level: input.level ?? 'info',
+        message: input.message ?? `Node ${input.nodeTitle ?? input.nodeId} is ${formatStatusLabel(normalizedStatus)}.`,
+        ...(input.runId !== undefined ? { runId: input.runId } : {}),
+        ...(input.runStartedAt !== undefined ? { runStartedAt: input.runStartedAt } : {}),
+        nodeId: input.nodeId,
+        ...(input.nodeType !== undefined ? { nodeType: input.nodeType } : {}),
+        ...(input.nodeTitle !== undefined ? { nodeTitle: input.nodeTitle } : {}),
+        status: normalizedStatus,
+        ...(input.iteration !== undefined ? { iteration: input.iteration } : {}),
+        ...(input.metadata !== undefined ? { metadata: input.metadata } : {}),
+      });
+    },
+    [appendRuntimeEvent, formatStatusLabel, normalizeNodeStatus]
   );
 
   const fetchProductById = useCallback(
@@ -344,6 +484,28 @@ export function useAiPathsRuntime({
   const applyServerRunUpdate = useCallback((run: AiPathRunRecord): void => {
     if (serverRunIdRef.current && run.id !== serverRunIdRef.current) return;
     if (activePathId && run.pathId && run.pathId !== activePathId) return;
+    const serverStatus = typeof run.status === 'string' ? run.status.trim().toLowerCase() : '';
+    if (serverStatus && lastServerRunStatusRef.current !== serverStatus) {
+      lastServerRunStatusRef.current = serverStatus;
+      appendRuntimeEvent({
+        source: 'server',
+        kind:
+          serverStatus === 'queued'
+            ? 'run_started'
+            : serverStatus === 'running'
+              ? 'run_started'
+              : serverStatus === 'paused'
+                ? 'run_paused'
+                : serverStatus === 'completed'
+                  ? 'run_completed'
+                  : serverStatus === 'canceled'
+                    ? 'run_canceled'
+                    : 'run_failed',
+        level: serverStatus === 'failed' ? 'error' : 'info',
+        message: `Run ${serverStatus}.`,
+        runId: run.id ?? null,
+      });
+    }
     if (!run.runtimeState) return;
     const parsed = parseRuntimeState(run.runtimeState);
     const runStartedAt = resolveRunStartedAt(run, parsed) ?? undefined;
@@ -369,13 +531,22 @@ export function useAiPathsRuntime({
         },
       }));
     }
-  }, [activePathId, buildActivePathConfig, setLastRunAt, setPathConfigs, setRuntimeState]);
+  }, [activePathId, appendRuntimeEvent, buildActivePathConfig, setLastRunAt, setPathConfigs, setRuntimeState]);
 
   const startServerRunStream = useCallback((runId: string): void => {
     if (!runId) return;
     stopServerRunStream();
     serverRunActiveRef.current = true;
     serverRunIdRef.current = runId;
+    lastServerRunStatusRef.current = null;
+    resetRuntimeNodeStatuses({});
+    appendRuntimeEvent({
+      source: 'server',
+      kind: 'log',
+      level: 'info',
+      runId,
+      message: 'Connected to run stream.',
+    });
     const url = `/api/ai-paths/runs/${encodeURIComponent(runId)}/stream`;
     const source = new EventSource(url);
     serverRunStreamRef.current = source;
@@ -419,17 +590,151 @@ export function useAiPathsRuntime({
           if (!changed) return prev;
           return { ...prev, inputs: nextInputs, outputs: nextOutputs };
         });
+        nodes.forEach((node) => {
+          const runtimeNode = normalizedNodes.find((candidate: AiNode): boolean => candidate.id === node.nodeId);
+          const normalizedStatus = typeof node.status === 'string' ? node.status.trim().toLowerCase() : '';
+          setNodeStatus({
+            nodeId: node.nodeId,
+            status: node.status,
+            source: 'server',
+            runId,
+            nodeType: runtimeNode?.type,
+            nodeTitle: runtimeNode?.title ?? null,
+            kind:
+              normalizedStatus === 'running'
+                ? 'node_started'
+                : normalizedStatus === 'failed'
+                  ? 'node_failed'
+                  : 'node_status',
+            level: normalizedStatus === 'failed' ? 'error' : 'info',
+          });
+        });
       } catch {
         // ignore parse errors
       }
     });
-    source.addEventListener('done', () => {
+    source.addEventListener('events', (event: Event) => {
+      try {
+        const payload = JSON.parse((event as MessageEvent).data) as {
+          events: AiPathRunEventRecord[];
+          overflow?: boolean;
+          limit?: number;
+        };
+        const eventBatch = Array.isArray(payload.events) ? payload.events : [];
+        eventBatch.forEach((item: AiPathRunEventRecord) => {
+          const metadata = (item.metadata ?? {}) as Record<string, unknown>;
+          const nodeId = typeof metadata.nodeId === 'string' ? metadata.nodeId : undefined;
+          const status = typeof metadata.status === 'string' ? metadata.status : undefined;
+          const iteration =
+            typeof metadata.iteration === 'number' && Number.isFinite(metadata.iteration)
+              ? metadata.iteration
+              : undefined;
+          const runtimeNode = nodeId
+            ? normalizedNodes.find((candidate: AiNode): boolean => candidate.id === nodeId)
+            : undefined;
+          if (nodeId && status) {
+            const normalizedStatus = status.trim().toLowerCase();
+            setNodeStatus({
+              nodeId,
+              status,
+              source: 'server',
+              runId,
+              nodeType: runtimeNode?.type,
+              nodeTitle:
+                typeof metadata.nodeTitle === 'string'
+                  ? metadata.nodeTitle
+                  : runtimeNode?.title ?? null,
+              kind:
+                normalizedStatus === 'running'
+                  ? 'node_started'
+                  : normalizedStatus === 'failed'
+                    ? 'node_failed'
+                    : 'node_status',
+              level: item.level,
+              message: item.message,
+              ...(iteration !== undefined ? { iteration } : {}),
+              metadata,
+            });
+          }
+          appendRuntimeEvent({
+            source: 'server',
+            kind: 'log',
+            level: item.level,
+            runId,
+            message: item.message,
+            ...(nodeId ? { nodeId } : {}),
+            ...(status ? { status: status.trim().toLowerCase() as AiPathRuntimeNodeStatus } : {}),
+            ...(iteration !== undefined ? { iteration } : {}),
+            metadata,
+            timestamp:
+              typeof item.createdAt === 'string'
+                ? item.createdAt
+                : item.createdAt instanceof Date
+                  ? item.createdAt.toISOString()
+                  : undefined,
+          });
+        });
+        if (payload.overflow) {
+          appendRuntimeEvent({
+            source: 'server',
+            kind: 'log',
+            level: 'warning',
+            runId,
+            message: `Run stream event batch reached limit (${payload.limit ?? eventBatch.length}).`,
+          });
+        }
+      } catch {
+        // ignore parse errors
+      }
+    });
+    source.addEventListener('done', (event: Event) => {
+      try {
+        const payload = JSON.parse((event as MessageEvent).data) as { status?: string };
+        const status = typeof payload.status === 'string' ? payload.status.trim().toLowerCase() : 'completed';
+        appendRuntimeEvent({
+          source: 'server',
+          kind:
+            status === 'completed'
+              ? 'run_completed'
+              : status === 'canceled'
+                ? 'run_canceled'
+                : status === 'paused'
+                  ? 'run_paused'
+                  : 'run_failed',
+          level: status === 'failed' ? 'error' : 'info',
+          runId,
+          message: `Run ${status}.`,
+        });
+      } catch {
+        appendRuntimeEvent({
+          source: 'server',
+          kind: 'run_completed',
+          level: 'info',
+          runId,
+          message: 'Run completed.',
+        });
+      }
       stopServerRunStream();
     });
     source.addEventListener('error', () => {
+      appendRuntimeEvent({
+        source: 'server',
+        kind: 'log',
+        level: 'warning',
+        runId,
+        message: 'Run stream disconnected.',
+      });
       stopServerRunStream();
     });
-  }, [applyServerRunUpdate, setRuntimeState, stopServerRunStream]);
+  }, [
+    applyServerRunUpdate,
+    appendRuntimeEvent,
+    normalizedNodes,
+    resetRuntimeNodeStatuses,
+    setNodeStatus,
+    setRuntimeState,
+    stopServerRunStream,
+  ]);
 
   useEffect(() => {
     if (executionMode !== 'server') {
@@ -442,6 +747,11 @@ export function useAiPathsRuntime({
       stopServerRunStream();
     };
   }, [activePathId, stopServerRunStream]);
+
+  useEffect((): void => {
+    resetRuntimeNodeStatuses({});
+    setRuntimeEvents([]);
+  }, [activePathId, resetRuntimeNodeStatuses]);
 
   const getDomSelector = useCallback((element: Element | null): string | null => {
     if (!element) return null;
@@ -720,6 +1030,143 @@ export function useAiPathsRuntime({
             seedHistory: state.history ?? undefined,
             seedRunId: state.runId ?? runId,
             seedRunStartedAt: state.runStartedAt ?? runStartedAt,
+            onNodeStart: ({
+              runId: callbackRunId,
+              runStartedAt: callbackRunStartedAt,
+              node,
+              nodeInputs,
+              iteration,
+            }) => {
+              setNodeStatus({
+                nodeId: node.id,
+                status: 'running',
+                source: 'local',
+                runId: callbackRunId,
+                runStartedAt: callbackRunStartedAt,
+                nodeType: node.type,
+                nodeTitle: node.title ?? null,
+                iteration,
+                kind: 'node_started',
+                message: `Node ${node.title ?? node.id} started.`,
+              });
+              setRuntimeState((prev: RuntimeState): RuntimeState => {
+                const next: RuntimeState = {
+                  ...prev,
+                  runId: callbackRunId,
+                  runStartedAt: callbackRunStartedAt,
+                  inputs: {
+                    ...prev.inputs,
+                    [node.id]: nodeInputs,
+                  },
+                  outputs: {
+                    ...prev.outputs,
+                    [node.id]: {
+                      ...((prev.outputs[node.id] ?? {}) as Record<string, unknown>),
+                      status: 'running',
+                    },
+                  },
+                };
+                runtimeStateRef.current = next;
+                return next;
+              });
+            },
+            onNodeFinish: ({
+              runId: callbackRunId,
+              runStartedAt: callbackRunStartedAt,
+              node,
+              nodeInputs,
+              nextOutputs,
+              cached,
+              iteration,
+            }) => {
+              const rawStatus = (nextOutputs as Record<string, unknown>)?.status;
+              const normalizedStatus =
+                normalizeNodeStatus(rawStatus) ?? (cached ? 'cached' : 'completed');
+              setNodeStatus({
+                nodeId: node.id,
+                status: normalizedStatus,
+                source: 'local',
+                runId: callbackRunId,
+                runStartedAt: callbackRunStartedAt,
+                nodeType: node.type,
+                nodeTitle: node.title ?? null,
+                iteration,
+                kind: normalizedStatus === 'failed' ? 'node_failed' : 'node_finished',
+                level: normalizedStatus === 'failed' ? 'error' : 'info',
+                message:
+                  normalizedStatus === 'cached'
+                    ? `Node ${node.title ?? node.id} reused cached outputs.`
+                    : `Node ${node.title ?? node.id} ${formatStatusLabel(normalizedStatus)}.`,
+              });
+              setRuntimeState((prev: RuntimeState): RuntimeState => {
+                const nextOutput = {
+                  ...((prev.outputs[node.id] ?? {}) as Record<string, unknown>),
+                  ...(nextOutputs as Record<string, unknown>),
+                  status: normalizedStatus,
+                } as RuntimePortValues;
+                const next: RuntimeState = {
+                  ...prev,
+                  runId: callbackRunId,
+                  runStartedAt: callbackRunStartedAt,
+                  inputs: {
+                    ...prev.inputs,
+                    [node.id]: nodeInputs,
+                  },
+                  outputs: {
+                    ...prev.outputs,
+                    [node.id]: nextOutput,
+                  },
+                };
+                runtimeStateRef.current = next;
+                return next;
+              });
+            },
+            onNodeError: ({
+              runId: callbackRunId,
+              runStartedAt: callbackRunStartedAt,
+              node,
+              nodeInputs,
+              prevOutputs,
+              error,
+              iteration,
+            }) => {
+              const message = error instanceof Error ? error.message : String(error);
+              setNodeStatus({
+                nodeId: node.id,
+                status: 'failed',
+                source: 'local',
+                runId: callbackRunId,
+                runStartedAt: callbackRunStartedAt,
+                nodeType: node.type,
+                nodeTitle: node.title ?? null,
+                iteration,
+                kind: 'node_failed',
+                level: 'error',
+                message: `Node ${node.title ?? node.id} failed: ${message}`,
+                metadata: { error: message },
+              });
+              setRuntimeState((prev: RuntimeState): RuntimeState => {
+                const next: RuntimeState = {
+                  ...prev,
+                  runId: callbackRunId,
+                  runStartedAt: callbackRunStartedAt,
+                  inputs: {
+                    ...prev.inputs,
+                    [node.id]: nodeInputs,
+                  },
+                  outputs: {
+                    ...prev.outputs,
+                    [node.id]: {
+                      ...((prevOutputs ?? {}) as Record<string, unknown>),
+                      status: 'failed',
+                      error: message,
+                    },
+                  },
+                };
+                runtimeStateRef.current = next;
+                return next;
+              });
+            },
             fetchEntityByType,
             reportAiPathsError,
             toast,
@@ -787,16 +1234,19 @@ export function useAiPathsRuntime({
     },
     [
       activePathId,
+      createRunId,
       fetchEntityByType,
+      formatStatusLabel,
       hasPendingIteratorAdvance,
+      normalizeNodeStatus,
       normalizedNodes,
       pathName,
       reportAiPathsError,
       sanitizedEdges,
+      setNodeStatus,
       setRuntimeState,
       toast,
       updateRunStatus,
-      createRunId,
     ]
   );
 
@@ -807,6 +1257,15 @@ export function useAiPathsRuntime({
     ): void => {
       const finishedAt = new Date().toISOString();
       if (outcome.status === 'completed') {
+        appendRuntimeEvent({
+          source: 'local',
+          kind: 'run_completed',
+          level: 'info',
+          runId: currentRunIdRef.current ?? outcome.state.runId ?? null,
+          runStartedAt: currentRunStartedAtRef.current ?? outcome.state.runStartedAt ?? null,
+          timestamp: finishedAt,
+          message: 'Run completed.',
+        });
         setLastRunAt(finishedAt);
         void persistDebugSnapshot(activePathId ?? null, finishedAt, outcome.state);
         if (activePathId) {
@@ -845,6 +1304,16 @@ export function useAiPathsRuntime({
       }
 
       if (outcome.status === 'error') {
+        appendRuntimeEvent({
+          source: 'local',
+          kind: 'run_failed',
+          level: 'error',
+          runId: currentRunIdRef.current ?? outcome.state.runId ?? null,
+          runStartedAt: currentRunStartedAtRef.current ?? outcome.state.runStartedAt ?? null,
+          timestamp: finishedAt,
+          message:
+            outcome.error instanceof Error ? `Run failed: ${outcome.error.message}` : 'Run failed.',
+        });
         if (outcome.state) {
           setLastRunAt(finishedAt);
           if (activePathId) {
@@ -875,6 +1344,15 @@ export function useAiPathsRuntime({
       }
 
       if (outcome.status === 'canceled') {
+        appendRuntimeEvent({
+          source: 'local',
+          kind: 'run_canceled',
+          level: 'info',
+          runId: currentRunIdRef.current ?? outcome.state.runId ?? null,
+          runStartedAt: currentRunStartedAtRef.current ?? outcome.state.runStartedAt ?? null,
+          timestamp: finishedAt,
+          message: 'Run cancelled.',
+        });
         toast('Run cancelled.', { variant: 'info' });
         void appendLocalRun({
           pathId: activePathId ?? null,
@@ -894,6 +1372,7 @@ export function useAiPathsRuntime({
     [
       activePathId,
       activeTrigger,
+      appendRuntimeEvent,
       buildActivePathConfig,
       normalizedNodes.length,
       pathName,
@@ -937,6 +1416,16 @@ export function useAiPathsRuntime({
           queuedAt: new Date().toISOString(),
         });
         const position = queuedRunsRef.current.length;
+        setNodeStatus({
+          nodeId: triggerNode.id,
+          status: 'queued',
+          source: 'local',
+          runId: currentRunIdRef.current ?? null,
+          nodeType: triggerNode.type,
+          nodeTitle: triggerNode.title ?? null,
+          kind: 'node_status',
+          message: `Node ${triggerNode.title ?? triggerNode.id} queued (${position}).`,
+        });
         toast(`Run queued${position > 1 ? ` (${position} in queue)` : ''}.`, { variant: 'info' });
         return;
       }
@@ -945,13 +1434,34 @@ export function useAiPathsRuntime({
     }
     const startedAt = new Date().toISOString();
     const startedAtMs = Date.now();
-    runInFlightRef.current = true;
     const runId = createRunId();
+    runInFlightRef.current = true;
+    resetRuntimeNodeStatuses({});
+    appendRuntimeEvent({
+      source: 'local',
+      kind: 'run_started',
+      level: 'info',
+      runId,
+      runStartedAt: startedAt,
+      timestamp: startedAt,
+      message: mode === 'step' ? 'Step run started.' : 'Run started.',
+    });
     currentRunIdRef.current = runId;
     currentRunStartedAtRef.current = startedAt;
     currentRunStartedAtMsRef.current = startedAtMs;
     lastTriggerNodeIdRef.current = triggerNode.id;
     lastTriggerEventRef.current = triggerEvent ?? null;
+    setNodeStatus({
+      nodeId: triggerNode.id,
+      status: 'running',
+      source: 'local',
+      runId,
+      runStartedAt: startedAt,
+      nodeType: triggerNode.type,
+      nodeTitle: triggerNode.title ?? null,
+      kind: 'node_started',
+      message: `Node ${triggerNode.title ?? triggerNode.id} started.`,
+    });
     abortControllerRef.current = new AbortController();
     const simulationContext = pendingSimulationContextRef.current ?? null;
     const triggerContext = {
@@ -1028,6 +1538,14 @@ export function useAiPathsRuntime({
     const outcome = await runLocalLoop(mode);
     if (outcome.status === 'paused') {
       updateRunStatus('paused');
+      appendRuntimeEvent({
+        source: 'local',
+        kind: 'run_paused',
+        level: 'info',
+        runId,
+        runStartedAt: startedAt,
+        message: 'Run paused.',
+      });
       return;
     }
 
@@ -1068,14 +1586,14 @@ export function useAiPathsRuntime({
     activePathId,
     pathName,
     activeTrigger,
+    appendRuntimeEvent,
+    resetRuntimeNodeStatuses,
     toast,
-    setLastRunAt,
-    persistDebugSnapshot,
-    setPathConfigs,
-    buildActivePathConfig,
     runMode,
+    setNodeStatus,
     stopServerRunStream,
     createRunId,
+    executionMode,
     runLocalLoop,
     updateRunStatus,
     finalizeLocalRunOutcome,
@@ -1124,6 +1642,14 @@ export function useAiPathsRuntime({
       const outcome = await runLocalLoop('run');
       if (outcome.status === 'paused') {
         updateRunStatus('paused');
+        appendRuntimeEvent({
+          source: 'local',
+          kind: 'run_paused',
+          level: 'info',
+          runId: currentRunIdRef.current ?? null,
+          runStartedAt: startedAt ?? null,
+          message: 'Run paused.',
+        });
         return;
       }
       runInFlightRef.current = false;
@@ -1140,7 +1666,7 @@ export function useAiPathsRuntime({
       }
       processQueuedRuns();
     })();
-  }, [finalizeLocalRunOutcome, processQueuedRuns, runLocalLoop, updateRunStatus]);
+  }, [appendRuntimeEvent, finalizeLocalRunOutcome, processQueuedRuns, runLocalLoop, updateRunStatus]);
 
   const stepRun = useCallback(
     (triggerNode?: AiNode): void => {
@@ -1153,6 +1679,14 @@ export function useAiPathsRuntime({
           const outcome = await runLocalLoop('step');
           if (outcome.status === 'paused') {
             updateRunStatus('paused');
+            appendRuntimeEvent({
+              source: 'local',
+              kind: 'run_paused',
+              level: 'info',
+              runId: currentRunIdRef.current ?? null,
+              runStartedAt: currentRunStartedAtRef.current ?? runtimeStateRef.current.runStartedAt ?? null,
+              message: 'Run paused.',
+            });
             return;
           }
           runInFlightRef.current = false;
@@ -1194,6 +1728,7 @@ export function useAiPathsRuntime({
       void runGraphForTrigger(resolvedTrigger, undefined, undefined, { mode: 'step' });
     },
     [
+      appendRuntimeEvent,
       finalizeLocalRunOutcome,
       normalizedNodes,
       processQueuedRuns,
@@ -1214,10 +1749,18 @@ export function useAiPathsRuntime({
       updateRunStatus('idle');
       abortControllerRef.current = null;
       pauseRequestedRef.current = false;
+      appendRuntimeEvent({
+        source: 'local',
+        kind: 'run_canceled',
+        level: 'info',
+        runId: currentRunIdRef.current ?? null,
+        runStartedAt: currentRunStartedAtRef.current ?? runtimeStateRef.current.runStartedAt ?? null,
+        message: 'Run cancelled.',
+      });
       toast('Run cancelled.', { variant: 'info' });
       processQueuedRuns();
     }
-  }, [processQueuedRuns, toast, updateRunStatus]);
+  }, [appendRuntimeEvent, processQueuedRuns, toast, updateRunStatus]);
 
   const runPollUpdate = useCallback(
     async (
@@ -1650,6 +2193,12 @@ export function useAiPathsRuntime({
     event?: React.MouseEvent
   ): Promise<void> => {
     toast('Queuing run…', { variant: 'info' });
+    appendRuntimeEvent({
+      source: 'server',
+      kind: 'log',
+      level: 'info',
+      message: 'Queuing server run.',
+    });
     const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id;
     const isScheduled = triggerEvent === 'scheduled_run';
     const adjacency = new Map<string, Set<string>>();
@@ -1716,6 +2265,12 @@ export function useAiPathsRuntime({
         },
       });
       if (!enqueueResult.ok) {
+        appendRuntimeEvent({
+          source: 'server',
+          kind: 'run_failed',
+          level: 'error',
+          message: enqueueResult.error || 'Failed to enqueue persistent run.',
+        });
         toast(enqueueResult.error || 'Failed to enqueue persistent run.', {
           variant: 'error',
         });
@@ -1732,6 +2287,17 @@ export function useAiPathsRuntime({
         if (run.runtimeState) {
           applyServerRunUpdate(run);
         }
+        setNodeStatus({
+          nodeId: triggerNode.id,
+          status: 'queued',
+          source: 'server',
+          runId: run.id,
+          runStartedAt: startedAt ?? null,
+          nodeType: triggerNode.type,
+          nodeTitle: triggerNode.title ?? null,
+          kind: 'node_status',
+          message: `Node ${triggerNode.title ?? triggerNode.id} queued.`,
+        });
       }
       toast('Persistent run queued.', { variant: 'success' });
       return;
@@ -1766,6 +2332,12 @@ export function useAiPathsRuntime({
       },
     });
     if (!enqueueResult.ok) {
+      appendRuntimeEvent({
+        source: 'server',
+        kind: 'run_failed',
+        level: 'error',
+        message: enqueueResult.error || 'Failed to enqueue persistent run.',
+      });
       toast(enqueueResult.error || 'Failed to enqueue persistent run.', {
         variant: 'error',
       });
@@ -1782,6 +2354,17 @@ export function useAiPathsRuntime({
       if (run.runtimeState) {
         applyServerRunUpdate(run);
       }
+      setNodeStatus({
+        nodeId: triggerNode.id,
+        status: 'queued',
+        source: 'server',
+        runId: run.id,
+        runStartedAt: startedAt ?? null,
+        nodeType: triggerNode.type,
+        nodeTitle: triggerNode.title ?? null,
+        kind: 'node_status',
+        message: `Node ${triggerNode.title ?? triggerNode.id} queued.`,
+      });
     }
     toast('Persistent run queued.', { variant: 'success' });
   };
@@ -2006,5 +2589,7 @@ export function useAiPathsRuntime({
     runStatus,
     handleSendToAi,
     sendingToAi,
+    runtimeNodeStatuses,
+    runtimeEvents,
   };
 }

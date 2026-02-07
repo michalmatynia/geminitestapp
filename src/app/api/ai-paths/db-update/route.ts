@@ -7,7 +7,6 @@ import { ObjectId } from "mongodb";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { parseJsonBody } from "@/features/products/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
 import prisma from "@/shared/lib/db/prisma";
@@ -170,111 +169,85 @@ const getPrismaDelegate = (collection: string): PrismaDelegate | null => {
 };
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const { access, isInternal } = await requireAiPathsAccessOrInternal(req);
-    if (!isInternal) {
-      enforceAiPathsActionRateLimit(access, "db-update");
-    }
-    const parsed = await parseJsonBody(req, updateSchema, {
-      logPrefix: "ai-paths.db-update",
-    });
-    if (!parsed.ok) return parsed.response;
-    const data = parsed.data;
-    const { provider: requestedProvider, collection, query, updates, single = true, idType } = data;
+  const { access, isInternal } = await requireAiPathsAccessOrInternal(req);
+  if (!isInternal) {
+    enforceAiPathsActionRateLimit(access, "db-update");
+  }
+  const parsed = await parseJsonBody(req, updateSchema, {
+    logPrefix: "ai-paths.db-update",
+  });
+  if (!parsed.ok) return parsed.response;
+  const data = parsed.data;
+  const { provider: requestedProvider, collection, query, updates, single = true, idType } = data;
 
-    if (!isCollectionAllowed(collection)) {
-      return createErrorResponse(internalError("Collection not allowlisted"), {
-        request: req,
-        source: "ai-paths.db-update",
-      });
-    }
+  if (!isCollectionAllowed(collection)) {
+    throw internalError("Collection not allowlisted");
+  }
 
-    const normalizedUpdates =
-      updates && typeof updates === "object" ? updates : {};
-    if (Object.keys(normalizedUpdates).length === 0) {
-      throw badRequestError("No updates provided");
-    }
-    const provider =
-      requestedProvider === "prisma"
-        ? "prisma"
-        : requestedProvider === "mongodb"
-          ? "mongodb"
-          : await getAppDbProvider();
-    const appProvider = await getAppDbProvider();
-    if (provider === "mongodb" && appProvider === "prisma") {
-      return createErrorResponse(
-        badRequestError("MongoDB writes are disabled when app_db_provider is Prisma."),
-        {
-          request: req,
-          source: "ai-paths.db-update",
-        }
-      );
-    }
+  const normalizedUpdates =
+    updates && typeof updates === "object" ? updates : {};
+  if (Object.keys(normalizedUpdates).length === 0) {
+    throw badRequestError("No updates provided");
+  }
+  const provider =
+    requestedProvider === "prisma"
+      ? "prisma"
+      : requestedProvider === "mongodb"
+        ? "mongodb"
+        : await getAppDbProvider();
+  const appProvider = await getAppDbProvider();
+  if (provider === "mongodb" && appProvider === "prisma") {
+    throw badRequestError("MongoDB writes are disabled when app_db_provider is Prisma.");
+  }
 
-    if (provider === "prisma") {
-      if (!process.env.DATABASE_URL) {
-        return createErrorResponse(internalError("Prisma is not configured"), {
-          request: req,
-          source: "ai-paths.db-update",
-        });
-      }
-      const resolvedCollection = resolvePrismaCollectionKey(collection);
-      const delegate = resolvedCollection ? getPrismaDelegate(resolvedCollection) : null;
-      if (!delegate) {
-        return createErrorResponse(badRequestError("Collection not available for Prisma"), {
-          request: req,
-          source: "ai-paths.db-update",
-        });
-      }
-      const where = coerceQuery(query);
-      if (!where || Object.keys(where).length === 0) {
-        throw badRequestError("Update requires a query filter");
-      }
-      const result = await delegate.updateMany({
-        where,
-        data: normalizedUpdates,
-      });
-      return NextResponse.json({
-        ok: true,
-        collection,
-        single,
-        matchedCount: result.count,
-        modifiedCount: result.count,
-      });
+  if (provider === "prisma") {
+    if (!process.env.DATABASE_URL) {
+      throw internalError("Prisma is not configured");
     }
-
-    if (!process.env.MONGODB_URI) {
-      return createErrorResponse(internalError("MongoDB is not configured"), {
-        request: req,
-        source: "ai-paths.db-update",
-      });
+    const resolvedCollection = resolvePrismaCollectionKey(collection);
+    const delegate = resolvedCollection ? getPrismaDelegate(resolvedCollection) : null;
+    if (!delegate) {
+      throw badRequestError("Collection not available for Prisma");
     }
-
-    const filter = normalizeObjectId(coerceQuery(query), idType);
-    if (!filter || Object.keys(filter).length === 0) {
+    const where = coerceQuery(query);
+    if (!where || Object.keys(where).length === 0) {
       throw badRequestError("Update requires a query filter");
     }
-
-    const mongo = await getMongoDb();
-    const collectionRef = mongo.collection(collection);
-    const result = single
-      ? await collectionRef.updateOne(filter, { $set: normalizedUpdates })
-      : await collectionRef.updateMany(filter, { $set: normalizedUpdates });
-
+    const result = await delegate.updateMany({
+      where,
+      data: normalizedUpdates,
+    });
     return NextResponse.json({
       ok: true,
       collection,
       single,
-      matchedCount: result.matchedCount,
-      modifiedCount: result.modifiedCount,
-    });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "ai-paths.db-update",
-      fallbackMessage: "Failed to update documents",
+      matchedCount: result.count,
+      modifiedCount: result.count,
     });
   }
+
+  if (!process.env.MONGODB_URI) {
+    throw internalError("MongoDB is not configured");
+  }
+
+  const filter = normalizeObjectId(coerceQuery(query), idType);
+  if (!filter || Object.keys(filter).length === 0) {
+    throw badRequestError("Update requires a query filter");
+  }
+
+  const mongo = await getMongoDb();
+  const collectionRef = mongo.collection(collection);
+  const result = single
+    ? await collectionRef.updateOne(filter, { $set: normalizedUpdates })
+    : await collectionRef.updateMany(filter, { $set: normalizedUpdates });
+
+  return NextResponse.json({
+    ok: true,
+    collection,
+    single,
+    matchedCount: result.matchedCount,
+    modifiedCount: result.modifiedCount,
+  });
 }
 
 export const POST = apiHandler(

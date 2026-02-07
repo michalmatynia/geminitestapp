@@ -2,7 +2,6 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import { getIntegrationsWithConnections } from "@/features/integrations/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
@@ -12,17 +11,9 @@ import type { ApiHandlerContext } from "@/shared/types/api";
  * Used for the product listing dropdown selection.
  * Supports both MongoDB and Prisma based on provider settings.
  */
-async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const integrations = await getIntegrationsWithConnections();
-    return NextResponse.json(integrations);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "integrations.with-connections.GET",
-      fallbackMessage: "Failed to fetch integrations"
-    });
-  }
+async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const integrations = await getIntegrationsWithConnections();
+  return NextResponse.json(integrations);
 }
 
 export const GET = apiHandler(

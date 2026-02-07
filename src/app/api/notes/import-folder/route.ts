@@ -4,7 +4,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { noteService } from "@/features/notesapp/server";
 import { parseJsonBody } from "@/features/products/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
@@ -95,50 +94,42 @@ async function createFolderStructure(
 }
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const parsed = await parseJsonBody(req, importSchema, {
-      logPrefix: "notes.import-folder",
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const { notebookId, parentFolderId, structure, structures } = parsed.data;
+  const parsed = await parseJsonBody(req, importSchema, {
+    logPrefix: "notes.import-folder",
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const { notebookId, parentFolderId, structure, structures } = parsed.data;
 
-    const categoryMap = new Map<string, string>();
+  const categoryMap = new Map<string, string>();
 
-    // Handle multiple folders
-    if (structures && structures.length > 0) {
-      for (const folderStructure of structures) {
-        await createFolderStructure(
-          folderStructure,
-          notebookId,
-          parentFolderId || null,
-          categoryMap
-        );
-      }
-    }
-    // Handle single folder (backward compatibility)
-    else if (structure) {
+  // Handle multiple folders
+  if (structures && structures.length > 0) {
+    for (const folderStructure of structures) {
       await createFolderStructure(
-        structure,
+        folderStructure,
         notebookId,
         parentFolderId || null,
         categoryMap
       );
     }
-
-    return NextResponse.json({
-      success: true,
-      message: "Folder structure imported successfully",
-      categoriesCreated: categoryMap.size,
-    });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "notes.import-folder.POST",
-      fallbackMessage: "Failed to import folder structure",
-    });
   }
+  // Handle single folder (backward compatibility)
+  else if (structure) {
+    await createFolderStructure(
+      structure,
+      notebookId,
+      parentFolderId || null,
+      categoryMap
+    );
+  }
+
+  return NextResponse.json({
+    success: true,
+    message: "Folder structure imported successfully",
+    categoriesCreated: categoryMap.size,
+  });
 }
 
 export const POST = apiHandler(

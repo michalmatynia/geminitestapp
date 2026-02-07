@@ -6,7 +6,6 @@ import {
   getExportStockFallbackEnabled,
   setExportStockFallbackEnabled
 } from "@/features/integrations/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -15,37 +14,21 @@ const requestSchema = z.object({
   enabled: z.boolean()
 });
 
-async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const enabled = await getExportStockFallbackEnabled();
-    return NextResponse.json({ enabled });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.exports.base.stock-fallback.GET",
-      fallbackMessage: "Failed to fetch stock fallback setting."
-    });
-  }
+async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const enabled = await getExportStockFallbackEnabled();
+  return NextResponse.json({ enabled });
 }
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const parsed = await parseJsonBody(req, requestSchema, {
-      logPrefix: "exports.base.stock-fallback.POST"
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const data = parsed.data;
-    await setExportStockFallbackEnabled(data.enabled);
-    return NextResponse.json({ enabled: data.enabled });
-  } catch (error: unknown) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.exports.base.stock-fallback.POST",
-      fallbackMessage: "Failed to save setting"
-    });
+  const parsed = await parseJsonBody(req, requestSchema, {
+    logPrefix: "exports.base.stock-fallback.POST"
+  });
+  if (!parsed.ok) {
+    return parsed.response;
   }
+  const data = parsed.data;
+  await setExportStockFallbackEnabled(data.enabled);
+  return NextResponse.json({ enabled: data.enabled });
 }
 
 export const GET = apiHandler(

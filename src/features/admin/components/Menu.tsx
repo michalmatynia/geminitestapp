@@ -384,30 +384,29 @@ const applySectionColors = (
 function NavTree({
   items,
   depth,
-  pathname,
-  isCollapsed,
   openIds,
   onToggleOpen,
 }: {
   items: NavItem[];
   depth: number;
-  pathname: string;
-  isCollapsed: boolean;
   openIds: Set<string>;
   onToggleOpen: (id: string) => void;
 }): React.ReactNode {
+  const { isMenuCollapsed } = useAdminLayout();
+  const pathname = usePathname();
+
   return (
     <div className={cn(depth === 0 ? 'space-y-1.5' : 'space-y-1')}>
       {items.map((item: NavItem) => {
         const hasChildren = !!item.children?.length;
         // Only highlight leaf links (not folders). Folders get their "current" indicator via being open.
         const active = !hasChildren && item.href ? isActiveHref(pathname, item.href, item.exact) : false;
-        const isOpen = !isCollapsed && hasChildren && openIds.has(item.id);
+        const isOpen = !isMenuCollapsed && hasChildren && openIds.has(item.id);
         const contextItems = buildNavContextItems(item, isOpen, hasChildren, onToggleOpen);
         const sectionStyle = item.sectionColor ? ADMIN_MENU_COLOR_MAP[item.sectionColor] : null;
 
         const rowStyle: React.CSSProperties | undefined =
-          isCollapsed
+          isMenuCollapsed
             ? undefined
             : {
               paddingLeft: 10 + depth * 14,
@@ -421,7 +420,7 @@ function NavTree({
 
         return (
           <div key={item.id}>
-            {isCollapsed && depth === 0 ? (
+            {isMenuCollapsed && depth === 0 ? (
               <Tooltip content={item.label} side="right">
                 <div>
                   {item.href ? (
@@ -581,8 +580,6 @@ function NavTree({
                     <NavTree
                       items={item.children ?? []}
                       depth={depth + 1}
-                      pathname={pathname}
-                      isCollapsed={isCollapsed}
                       openIds={openIds}
                       onToggleOpen={onToggleOpen}
                     />
@@ -1160,8 +1157,6 @@ export default function Menu(): React.ReactNode {
       <NavTree
         items={filteredNav}
         depth={0}
-        pathname={pathname}
-        isCollapsed={isMenuCollapsed}
         openIds={effectiveOpenIds}
         onToggleOpen={(id: string): void => {
           if (normalizedQuery) return;

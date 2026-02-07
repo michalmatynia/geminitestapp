@@ -3,7 +3,6 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getProductListingRepository } from "@/features/integrations/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
@@ -17,37 +16,29 @@ const updateListingSchema = z.object({
  * DELETE /api/products/[id]/listings/[listingId]
  * Marks a listing as removed from a marketplace.
  */
-async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; listingId: string }): Promise<Response> {
-  try {
-    const { id: productId, listingId } = params;
-    if (!productId || !listingId) {
-      throw badRequestError("Product id and listing id are required");
-    }
-
-    const repo = await getProductListingRepository();
-
-    // Verify the listing exists
-    const listing = await repo.getListingById(listingId);
-
-    if (!listing) {
-      throw notFoundError("Listing not found", { listingId });
-    }
-
-    // Verify it belongs to this product
-    if (listing.productId !== productId) {
-      throw notFoundError("Listing not found", { listingId, productId });
-    }
-
-    await repo.updateListingStatus(listingId, "removed");
-
-    return NextResponse.json({ status: "removed" });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "integrations.products.[id].listings.[listingId].DELETE",
-      fallbackMessage: "Failed to delete listing"
-    });
+async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; listingId: string }): Promise<Response> {
+  const { id: productId, listingId } = params;
+  if (!productId || !listingId) {
+    throw badRequestError("Product id and listing id are required");
   }
+
+  const repo = await getProductListingRepository();
+
+  // Verify the listing exists
+  const listing = await repo.getListingById(listingId);
+
+  if (!listing) {
+    throw notFoundError("Listing not found", { listingId });
+  }
+
+  // Verify it belongs to this product
+  if (listing.productId !== productId) {
+    throw notFoundError("Listing not found", { listingId, productId });
+  }
+
+  await repo.updateListingStatus(listingId, "removed");
+
+  return NextResponse.json({ status: "removed" });
 }
 
 /**
@@ -55,34 +46,26 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params:
  * Updates listing metadata (e.g., inventoryId).
  */
 async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; listingId: string }): Promise<Response> {
-  try {
-    const { id: productId, listingId } = params;
-    if (!productId || !listingId) {
-      throw badRequestError("Product id and listing id are required");
-    }
-    const repo = await getProductListingRepository();
-    const listing = await repo.getListingById(listingId);
-
-    if (!listing || listing.productId !== productId) {
-      throw notFoundError("Listing not found", { listingId, productId });
-    }
-
-    const parsed = await parseJsonBody(req, updateListingSchema, {
-      logPrefix: "integrations.products.listings.PATCH"
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const data = parsed.data;
-    await repo.updateListingInventoryId(listingId, data.inventoryId ?? null);
-    return NextResponse.json({ success: true });
-  } catch (error: unknown) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "integrations.products.[id].listings.[listingId].PATCH",
-      fallbackMessage: "Failed to update listing"
-    });
+  const { id: productId, listingId } = params;
+  if (!productId || !listingId) {
+    throw badRequestError("Product id and listing id are required");
   }
+  const repo = await getProductListingRepository();
+  const listing = await repo.getListingById(listingId);
+
+  if (!listing || listing.productId !== productId) {
+    throw notFoundError("Listing not found", { listingId, productId });
+  }
+
+  const parsed = await parseJsonBody(req, updateListingSchema, {
+    logPrefix: "integrations.products.listings.PATCH"
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const data = parsed.data;
+  await repo.updateListingInventoryId(listingId, data.inventoryId ?? null);
+  return NextResponse.json({ success: true });
 }
 
 export const DELETE = apiHandlerWithParams<{ id: string; listingId: string }>(

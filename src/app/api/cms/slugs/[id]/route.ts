@@ -3,7 +3,6 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { parseJsonBody } from "@/features/products/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import { getCmsRepository } from "@/features/cms/services/cms-repository";
@@ -44,24 +43,16 @@ const resolveDomainFromRequest = async (req: NextRequest) => {
  * Fetches a single slug by its ID.
  */
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Params): Promise<NextResponse | Response> {
-  try {
-    const { id } = params;
-    const cmsRepository = await getCmsRepository();
-    const domain = await resolveDomainFromRequest(req);
-    const slug = await getSlugForDomainById(domain.id, id, cmsRepository);
+  const { id } = params;
+  const cmsRepository = await getCmsRepository();
+  const domain = await resolveDomainFromRequest(req);
+  const slug = await getSlugForDomainById(domain.id, id, cmsRepository);
 
-    if (!slug) {
-      throw notFoundError("Slug not found");
-    }
-
-    return NextResponse.json(slug);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "cms.slugs.[id].GET",
-      fallbackMessage: "Failed to fetch slug",
-    });
+  if (!slug) {
+    throw notFoundError("Slug not found");
   }
+
+  return NextResponse.json(slug);
 }
 
 /**
@@ -69,25 +60,17 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Pa
  * Deletes a slug.
  */
 async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Params): Promise<NextResponse | Response> {
-  try {
-    const { id } = params;
-    const cmsRepository = await getCmsRepository();
-    const domain = await resolveDomainFromRequest(req);
+  const { id } = params;
+  const cmsRepository = await getCmsRepository();
+  const domain = await resolveDomainFromRequest(req);
 
-    await removeDomainSlug(domain.id, id);
-    const stillLinked = await isSlugLinkedToAnyDomain(id);
-    if (!stillLinked) {
-      await cmsRepository.deleteSlug(id);
-    }
-
-    return new Response(null, { status: 204 });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "cms.slugs.[id].DELETE",
-      fallbackMessage: "Failed to delete slug",
-    });
+  await removeDomainSlug(domain.id, id);
+  const stillLinked = await isSlugLinkedToAnyDomain(id);
+  if (!stillLinked) {
+    await cmsRepository.deleteSlug(id);
   }
+
+  return new Response(null, { status: 204 });
 }
 
 /**
@@ -95,64 +78,56 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params:
  * Updates a slug.
  */
 async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Params): Promise<NextResponse | Response> {
-  try {
-    const { id } = params;
+  const { id } = params;
 
-    const parsed = await parseJsonBody(req, slugUpdateSchema, {
-      logPrefix: "cms-slugs",
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const { slug, isDefault } = parsed.data;
+  const parsed = await parseJsonBody(req, slugUpdateSchema, {
+    logPrefix: "cms-slugs",
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const { slug, isDefault } = parsed.data;
 
-    const cmsRepository = await getCmsRepository();
-    const domain = await resolveDomainFromRequest(req);
-    const zoningEnabled = await isDomainZoningEnabled();
+  const cmsRepository = await getCmsRepository();
+  const domain = await resolveDomainFromRequest(req);
+  const zoningEnabled = await isDomainZoningEnabled();
 
-    const updatedSlug = await cmsRepository.updateSlug(id, {
-      slug,
-      // Default is domain-scoped, handled below.
-    });
+  const updatedSlug = await cmsRepository.updateSlug(id, {
+    slug,
+    // Default is domain-scoped, handled below.
+  });
 
-    if (!updatedSlug) {
-      throw notFoundError("Slug not found");
-    }
+  if (!updatedSlug) {
+    throw notFoundError("Slug not found");
+  }
 
-    if (typeof isDefault === "boolean") {
-      if (zoningEnabled) {
-        if (isDefault) {
-          await setDomainDefaultSlug(domain.id, id);
-        } else {
-          const links = await getDomainSlugLinks(domain.id);
-          const isCurrentDefault = links.some((link) => link.slugId === id && link.isDefault);
-          if (isCurrentDefault) {
-            await setDomainDefaultSlug(domain.id, null);
-          }
-        }
+  if (typeof isDefault === "boolean") {
+    if (zoningEnabled) {
+      if (isDefault) {
+        await setDomainDefaultSlug(domain.id, id);
       } else {
-        if (isDefault) {
-          await setGlobalDefaultSlug(id);
-        } else if (updatedSlug?.isDefault) {
-          await setGlobalDefaultSlug(null);
+        const links = await getDomainSlugLinks(domain.id);
+        const isCurrentDefault = links.some((link) => link.slugId === id && link.isDefault);
+        if (isCurrentDefault) {
+          await setDomainDefaultSlug(domain.id, null);
         }
       }
+    } else {
+      if (isDefault) {
+        await setGlobalDefaultSlug(id);
+      } else if (updatedSlug?.isDefault) {
+        await setGlobalDefaultSlug(null);
+      }
     }
-
-    if (zoningEnabled) {
-      const domainSlug = await getSlugForDomainById(domain.id, id, cmsRepository);
-      return NextResponse.json(domainSlug ?? updatedSlug);
-    }
-
-    const refreshed = await cmsRepository.getSlugById(id);
-    return NextResponse.json(refreshed ?? updatedSlug);
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "cms.slugs.[id].PUT",
-      fallbackMessage: "Failed to update slug",
-    });
   }
+
+  if (zoningEnabled) {
+    const domainSlug = await getSlugForDomainById(domain.id, id, cmsRepository);
+    return NextResponse.json(domainSlug ?? updatedSlug);
+  }
+
+  const refreshed = await cmsRepository.getSlugById(id);
+  return NextResponse.json(refreshed ?? updatedSlug);
 }
 
 export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, { source: "cms.slugs.[id].GET" });

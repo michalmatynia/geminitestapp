@@ -7,7 +7,6 @@ import { ObjectId, Sort } from "mongodb";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { parseJsonBody } from "@/features/products/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
 import prisma from "@/shared/lib/db/prisma";
@@ -205,109 +204,89 @@ const normalizePrismaOrderBy = (
 };
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const { access, isInternal } = await requireAiPathsAccessOrInternal(req);
-    if (!isInternal) {
-      enforceAiPathsActionRateLimit(access, "db-query");
-    }
-    const parsed = await parseJsonBody(req, querySchema, {
-      logPrefix: "ai-paths.db-query",
-    });
-    if (!parsed.ok) return parsed.response;
-    const data = parsed.data;
-    const {
-      provider: requestedProvider,
-      collection,
-      query,
-      projection,
-      sort,
-      limit = 20,
-      single = false,
-      idType,
-    } = data;
-
-    if (!isCollectionAllowed(collection)) {
-      return createErrorResponse(internalError("Collection not allowlisted"), {
-        request: req,
-        source: "ai-paths.db-query",
-      });
-    }
-
-    const provider =
-      requestedProvider === "prisma"
-        ? "prisma"
-        : requestedProvider === "mongodb"
-          ? "mongodb"
-          : await getAppDbProvider();
-
-    if (provider === "prisma") {
-      if (!process.env.DATABASE_URL) {
-        return createErrorResponse(internalError("Prisma is not configured"), {
-          request: req,
-          source: "ai-paths.db-query",
-        });
-      }
-      const resolvedCollection = resolvePrismaCollectionKey(collection);
-      const delegate = resolvedCollection ? getPrismaDelegate(resolvedCollection) : null;
-      if (!delegate) {
-        return createErrorResponse(badRequestError("Collection not available for Prisma"), {
-          request: req,
-          source: "ai-paths.db-query",
-        });
-      }
-      const where = coerceQuery(query);
-      const select = normalizePrismaSelect(projection);
-      const orderBy = normalizePrismaOrderBy(sort);
-      if (single) {
-        const item = delegate.findFirst
-          ? await delegate.findFirst({
-              where,
-              ...(select ? { select } : {}),
-              ...(orderBy ? { orderBy } : {}),
-            })
-          : (await delegate.findMany({
-              where,
-              ...(select ? { select } : {}),
-              ...(orderBy ? { orderBy } : {}),
-              take: 1,
-            }))[0] ?? null;
-        return NextResponse.json({ item, count: item ? 1 : 0 });
-      }
-      const [items, count] = await Promise.all([
-        delegate.findMany({
-          where,
-          ...(select ? { select } : {}),
-          ...(orderBy ? { orderBy } : {}),
-          take: limit,
-        }),
-        delegate.count({ where }),
-      ]);
-      return NextResponse.json({ items, count });
-    }
-
-    if (!process.env.MONGODB_URI) {
-      return createErrorResponse(internalError("MongoDB is not configured"), {
-        request: req,
-        source: "ai-paths.db-query",
-      });
-    }
-
-    const mongo = await getMongoDb();
-    const filter = normalizeObjectId(coerceQuery(query), idType);
-
-    const cursor = mongo.collection(collection).find(filter, projection ? { projection } : undefined);
-    if (sort) {
-      cursor.sort(sort as Sort);
-    }
-    const items = await cursor.limit(limit).toArray();
-    return NextResponse.json({ items, count: items.length });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "ai-paths.db-query",
-      fallbackMessage: "Failed to execute database query",
-    });
+  const { access, isInternal } = await requireAiPathsAccessOrInternal(req);
+  if (!isInternal) {
+    enforceAiPathsActionRateLimit(access, "db-query");
   }
+  const parsed = await parseJsonBody(req, querySchema, {
+    logPrefix: "ai-paths.db-query",
+  });
+  if (!parsed.ok) return parsed.response;
+  const data = parsed.data;
+  const {
+    provider: requestedProvider,
+    collection,
+    query,
+    projection,
+    sort,
+    limit = 20,
+    single = false,
+    idType,
+  } = data;
+
+  if (!isCollectionAllowed(collection)) {
+    throw internalError("Collection not allowlisted");
+  }
+
+  const provider =
+    requestedProvider === "prisma"
+      ? "prisma"
+      : requestedProvider === "mongodb"
+        ? "mongodb"
+        : await getAppDbProvider();
+
+  if (provider === "prisma") {
+    if (!process.env.DATABASE_URL) {
+      throw internalError("Prisma is not configured");
+    }
+    const resolvedCollection = resolvePrismaCollectionKey(collection);
+    const delegate = resolvedCollection ? getPrismaDelegate(resolvedCollection) : null;
+    if (!delegate) {
+      throw badRequestError("Collection not available for Prisma");
+    }
+    const where = coerceQuery(query);
+    const select = normalizePrismaSelect(projection);
+    const orderBy = normalizePrismaOrderBy(sort);
+    if (single) {
+      const item = delegate.findFirst
+        ? await delegate.findFirst({
+            where,
+            ...(select ? { select } : {}),
+            ...(orderBy ? { orderBy } : {}),
+          })
+        : (await delegate.findMany({
+            where,
+            ...(select ? { select } : {}),
+            ...(orderBy ? { orderBy } : {}),
+            take: 1,
+          }))[0] ?? null;
+      return NextResponse.json({ item, count: item ? 1 : 0 });
+    }
+    const [items, count] = await Promise.all([
+      delegate.findMany({
+        where,
+        ...(select ? { select } : {}),
+        ...(orderBy ? { orderBy } : {}),
+        take: limit,
+      }),
+      delegate.count({ where }),
+    ]);
+    return NextResponse.json({ items, count });
+  }
+
+  if (!process.env.MONGODB_URI) {
+    throw internalError("MongoDB is not configured");
+  }
+
+  const mongo = await getMongoDb();
+  const filter = normalizeObjectId(coerceQuery(query), idType);
+
+  const cursor = mongo.collection(collection).find(filter, projection ? { projection } : undefined);
+  if (sort) {
+    cursor.sort(sort as Sort);
+  }
+  const items = await cursor.limit(limit).toArray();
+  return NextResponse.json({ items, count: items.length });
 }
 
 export const POST = apiHandler(

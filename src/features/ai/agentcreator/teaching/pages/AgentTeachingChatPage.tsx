@@ -7,14 +7,13 @@ import type { AgentTeachingAgentRecord, AgentTeachingChatSource, AgentTeachingEm
 import type { ChatMessage } from '@/shared/types/chatbot';
 import { Button, Label, SectionHeader, SectionPanel, Textarea, useToast } from '@/shared/ui';
 
-import { useTeachingAgents, useTeachingCollections } from '../hooks/useAgentTeaching';
+import { useAgentTeachingContext } from '../context/AgentTeachingContext';
 
 type ChatResponse = { message: string; sources: AgentTeachingChatSource[] };
 
 export function AgentTeachingChatPage(): React.JSX.Element {
   const { toast } = useToast();
-  const { data: agents = [], isLoading: loadingAgents } = useTeachingAgents();
-  const { data: collections = [] } = useTeachingCollections();
+  const { agents, collections, isLoading: loadingAgents } = useAgentTeachingContext();
 
   const [selectedAgentId, setSelectedAgentId] = React.useState<string>('');
   const [input, setInput] = React.useState('');

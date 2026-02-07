@@ -4,7 +4,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { listAiInsightNotifications, clearAiInsightNotifications } from "@/features/ai/insights/repository";
 import { startAiInsightsQueue } from "@/features/jobs/server";
 
@@ -13,33 +12,17 @@ const listSchema = z.object({
 });
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    startAiInsightsQueue();
-    const url = new URL(req.url);
-    const parsed = listSchema.parse(Object.fromEntries(url.searchParams.entries()));
-    const notifications = await listAiInsightNotifications(parsed.limit ?? 20);
-    return NextResponse.json({ notifications });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "ai-insights.notifications.GET",
-      fallbackMessage: "Failed to load AI notifications",
-    });
-  }
+  startAiInsightsQueue();
+  const url = new URL(req.url);
+  const parsed = listSchema.parse(Object.fromEntries(url.searchParams.entries()));
+  const notifications = await listAiInsightNotifications(parsed.limit ?? 20);
+  return NextResponse.json({ notifications });
 }
 
-async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    startAiInsightsQueue();
-    await clearAiInsightNotifications();
-    return NextResponse.json({ ok: true });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "ai-insights.notifications.DELETE",
-      fallbackMessage: "Failed to clear AI notifications",
-    });
-  }
+async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  startAiInsightsQueue();
+  await clearAiInsightNotifications();
+  return NextResponse.json({ ok: true });
 }
 
 export const GET = apiHandler(

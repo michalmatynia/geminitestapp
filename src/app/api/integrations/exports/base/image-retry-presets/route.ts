@@ -7,7 +7,6 @@ import {
   setExportImageRetryPresets
 } from "@/features/integrations/server";
 import { normalizeImageRetryPresets } from "@/features/data-import-export";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -30,38 +29,22 @@ const requestSchema = z.object({
   presets: z.array(presetSchema).min(1)
 });
 
-async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const presets = await getExportImageRetryPresets();
-    return NextResponse.json({ presets });
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.exports.base.image-retry-presets.GET",
-      fallbackMessage: "Failed to fetch image retry presets."
-    });
-  }
+async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const presets = await getExportImageRetryPresets();
+  return NextResponse.json({ presets });
 }
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const parsed = await parseJsonBody(req, requestSchema, {
-      logPrefix: "exports.base.image-retry-presets.POST"
-    });
-    if (!parsed.ok) {
-      return parsed.response;
-    }
-    const data = parsed.data;
-    const normalized = normalizeImageRetryPresets(data.presets);
-    await setExportImageRetryPresets(normalized);
-    return NextResponse.json({ presets: normalized });
-  } catch (error: unknown) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "products.exports.base.image-retry-presets.POST",
-      fallbackMessage: "Failed to save presets"
-    });
+  const parsed = await parseJsonBody(req, requestSchema, {
+    logPrefix: "exports.base.image-retry-presets.POST"
+  });
+  if (!parsed.ok) {
+    return parsed.response;
   }
+  const data = parsed.data;
+  const normalized = normalizeImageRetryPresets(data.presets);
+  await setExportImageRetryPresets(normalized);
+  return NextResponse.json({ presets: normalized });
 }
 
 export const GET = apiHandler(

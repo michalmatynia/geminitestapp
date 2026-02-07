@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
+import { SectionDataProvider } from './SectionDataContext';
 
 import type { BlockInstance } from '../../../types/page-builder';
 
@@ -147,121 +148,123 @@ export function FrontendCarousel({ settings, blocks }: FrontendCarouselProps): R
   };
 
   return (
-    <div
-      className="relative w-full overflow-hidden"
-      style={containerStyle}
-      onMouseEnter={() => pauseOnHover && setIsPaused(true)}
-      onMouseLeave={() => pauseOnHover && setIsPaused(false)}
-    >
-      {/* Frames container */}
+    <SectionDataProvider settings={settings}>
       <div
-        className="relative w-full h-full"
-        style={{
-          ...(transitionType === 'slide'
-            ? {
-              display: 'flex',
-              transform: `translateX(-${currentIndex * 100}%)`,
-              transition: `transform ${transitionDuration}ms ease-in-out`,
-            }
-            : {}),
-        }}
+        className="relative w-full overflow-hidden"
+        style={containerStyle}
+        onMouseEnter={() => pauseOnHover && setIsPaused(true)}
+        onMouseLeave={() => pauseOnHover && setIsPaused(false)}
       >
-        {frames.map((frame: BlockInstance, index: number) => {
-          const isActive = index === currentIndex;
-          const frameSettings = frame.settings ?? {};
-          const backgroundColor = (frameSettings['backgroundColor'] as string) || '';
-          const contentAlignment = (frameSettings['contentAlignment'] as string) || 'center';
-          const verticalAlignment = (frameSettings['verticalAlignment'] as string) || 'center';
-          const paddingTop = (frameSettings['paddingTop'] as number) || 0;
-          const paddingBottom = (frameSettings['paddingBottom'] as number) || 0;
-          const paddingLeft = (frameSettings['paddingLeft'] as number) || 0;
-          const paddingRight = (frameSettings['paddingRight'] as number) || 0;
-          const animationType = (frameSettings['animationType'] as string) || 'fade-in';
-          const animationDuration = (frameSettings['animationDuration'] as number) || 500;
-          const animationDelay = (frameSettings['animationDelay'] as number) || 0;
-          const animationEasing = (frameSettings['animationEasing'] as string) || 'ease-out';
-
-          const frameStyle: React.CSSProperties = {
-            backgroundColor: backgroundColor || undefined,
-            padding: `${paddingTop}px ${paddingRight}px ${paddingBottom}px ${paddingLeft}px`,
+        {/* Frames container */}
+        <div
+          className="relative w-full h-full"
+          style={{
             ...(transitionType === 'slide'
-              ? { minWidth: '100%', flexShrink: 0 }
-              : {
-                position: index === 0 ? 'relative' : 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                opacity: transitionType === 'fade' ? (isActive ? 1 : 0) : isActive ? 1 : 0,
-                visibility: isActive ? 'visible' : 'hidden',
-                transition: transitionType === 'fade' ? `opacity ${transitionDuration}ms ease-in-out` : undefined,
-              }),
-          };
+              ? {
+                display: 'flex',
+                transform: `translateX(-${currentIndex * 100}%)`,
+                transition: `transform ${transitionDuration}ms ease-in-out`,
+              }
+              : {}),
+          }}
+        >
+          {frames.map((frame: BlockInstance, index: number) => {
+            const isActive = index === currentIndex;
+            const frameSettings = frame.settings ?? {};
+            const backgroundColor = (frameSettings['backgroundColor'] as string) || '';
+            const contentAlignment = (frameSettings['contentAlignment'] as string) || 'center';
+            const verticalAlignment = (frameSettings['verticalAlignment'] as string) || 'center';
+            const paddingTop = (frameSettings['paddingTop'] as number) || 0;
+            const paddingBottom = (frameSettings['paddingBottom'] as number) || 0;
+            const paddingLeft = (frameSettings['paddingLeft'] as number) || 0;
+            const paddingRight = (frameSettings['paddingRight'] as number) || 0;
+            const animationType = (frameSettings['animationType'] as string) || 'fade-in';
+            const animationDuration = (frameSettings['animationDuration'] as number) || 500;
+            const animationDelay = (frameSettings['animationDelay'] as number) || 0;
+            const animationEasing = (frameSettings['animationEasing'] as string) || 'ease-out';
 
-          const contentAnimationStyles = getAnimationStyles(
-            animationType,
-            isActive && !isTransitioning,
-            animationDuration,
-            animationDelay,
-            animationEasing
-          );
+            const frameStyle: React.CSSProperties = {
+              backgroundColor: backgroundColor || undefined,
+              padding: `${paddingTop}px ${paddingRight}px ${paddingBottom}px ${paddingLeft}px`,
+              ...(transitionType === 'slide'
+                ? { minWidth: '100%', flexShrink: 0 }
+                : {
+                  position: index === 0 ? 'relative' : 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  opacity: transitionType === 'fade' ? (isActive ? 1 : 0) : isActive ? 1 : 0,
+                  visibility: isActive ? 'visible' : 'hidden',
+                  transition: transitionType === 'fade' ? `opacity ${transitionDuration}ms ease-in-out` : undefined,
+                }),
+            };
 
-          return (
-            <div
-              key={frame.id}
-              className={`flex flex-col ${getAlignmentClass(contentAlignment)} ${getVerticalAlignmentClass(verticalAlignment)}`}
-              style={frameStyle}
-            >
-              <div style={contentAnimationStyles}>
-                {(frame.blocks ?? []).map((block: BlockInstance) => (
-                  <FrontendBlockRenderer key={block.id} block={block} />
-                ))}
+            const contentAnimationStyles = getAnimationStyles(
+              animationType,
+              isActive && !isTransitioning,
+              animationDuration,
+              animationDelay,
+              animationEasing
+            );
+
+            return (
+              <div
+                key={frame.id}
+                className={`flex flex-col ${getAlignmentClass(contentAlignment)} ${getVerticalAlignmentClass(verticalAlignment)}`}
+                style={frameStyle}
+              >
+                <div style={contentAnimationStyles}>
+                  {(frame.blocks ?? []).map((block: BlockInstance) => (
+                    <FrontendBlockRenderer key={block.id} block={block} />
+                  ))}
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Navigation arrows */}
-      {showNavigation && frameCount > 1 && (
-        <>
-          <button
-            type="button"
-            onClick={goToPrev}
-            disabled={!loop && currentIndex === 0}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-            aria-label="Previous slide"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-          <button
-            type="button"
-            onClick={goToNext}
-            disabled={!loop && currentIndex === frameCount - 1}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-            aria-label="Next slide"
-          >
-            <ChevronRight className="w-6 h-6" />
-          </button>
-        </>
-      )}
-
-      {/* Indicators */}
-      {showIndicators && frameCount > 1 && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2">
-          {frames.map((_: BlockInstance, index: number) => (
-            <button
-              key={index}
-              type="button"
-              onClick={() => goToIndex(index)}
-              className={`w-2.5 h-2.5 rounded-full transition-colors ${
-                index === currentIndex ? 'bg-white' : 'bg-white/40 hover:bg-white/60'
-              }`}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
+            );
+          })}
         </div>
-      )}
-    </div>
+
+        {/* Navigation arrows */}
+        {showNavigation && frameCount > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={goToPrev}
+              disabled={!loop && currentIndex === 0}
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              aria-label="Previous slide"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <button
+              type="button"
+              onClick={goToNext}
+              disabled={!loop && currentIndex === frameCount - 1}
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              aria-label="Next slide"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          </>
+        )}
+
+        {/* Indicators */}
+        {showIndicators && frameCount > 1 && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+            {frames.map((_: BlockInstance, index: number) => (
+              <button
+                key={index}
+                type="button"
+                onClick={() => goToIndex(index)}
+                className={`w-2.5 h-2.5 rounded-full transition-colors ${
+                  index === currentIndex ? 'bg-white' : 'bg-white/40 hover:bg-white/60'
+                }`}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </SectionDataProvider>
   );
 }

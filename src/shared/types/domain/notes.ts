@@ -5,21 +5,37 @@ import type {
   NotebookDto,
   NoteCategoryDto,
   NoteTagDto,
+  NoteThemeDto,
   CreateNoteDto,
   UpdateNoteDto,
   CreateNotebookDto,
-  UpdateNotebookDto
-} from '../dtos';
+  UpdateNotebookDto,
+  CreateNoteCategoryDto,
+  UpdateNoteCategoryDto,
+  CreateNoteTagDto,
+  UpdateNoteTagDto,
+  CreateNoteThemeDto,
+  UpdateNoteThemeDto,
+  NoteEditorType
+} from '../dtos/notesapp';
 
 export type {
   NoteDto,
   NotebookDto,
   NoteCategoryDto,
   NoteTagDto,
+  NoteThemeDto,
   CreateNoteDto,
   UpdateNoteDto,
   CreateNotebookDto,
-  UpdateNotebookDto
+  UpdateNotebookDto,
+  CreateNoteCategoryDto,
+  UpdateNoteCategoryDto,
+  CreateNoteTagDto,
+  UpdateNoteTagDto,
+  CreateNoteThemeDto,
+  UpdateNoteThemeDto,
+  NoteEditorType
 };
 
 export type NotebookRecord = Entity & {
@@ -28,20 +44,7 @@ export type NotebookRecord = Entity & {
   defaultThemeId?: string | null;
 };
 
-export type ThemeRecord = Entity & {
-  name: string;
-  notebookId?: string | null;
-  textColor: string;
-  backgroundColor: string;
-  markdownHeadingColor: string;
-  markdownLinkColor: string;
-  markdownCodeBackground: string;
-  markdownCodeText: string;
-  relatedNoteBorderWidth: number;
-  relatedNoteBorderColor: string;
-  relatedNoteBackgroundColor: string;
-  relatedNoteTextColor: string;
-};
+export type ThemeRecord = NoteThemeDto;
 
 export type NoteRecord = Entity & {
   title: string;
@@ -124,72 +127,16 @@ export type CategoryWithChildren = CategoryRecord & {
   };
 };
 
-export type NoteEditorType = 'markdown' | 'wysiwyg' | 'code';
-
-export type NoteCreateInput = {
-  title: string;
-  content: string;
-  editorType?: NoteEditorType | undefined;
-  color?: string | null | undefined;
-  isPinned?: boolean | undefined;
-  isArchived?: boolean | undefined;
-  isFavorite?: boolean | undefined;
-  tagIds?: string[] | undefined;
-  categoryIds?: string[] | undefined;
-  relatedNoteIds?: string[] | undefined;
-  notebookId?: string | null | undefined;
-};
-
-export type NoteUpdateInput = Partial<NoteCreateInput>;
-
-export type NotebookCreateInput = {
-  name: string;
-  color?: string | null | undefined;
-  defaultThemeId?: string | null | undefined;
-};
-
-export type NotebookUpdateInput = {
-  name?: string | undefined;
-  color?: string | null | undefined;
-  defaultThemeId?: string | null | undefined;
-};
-
-export type ThemeCreateInput = {
-  name: string;
-  notebookId?: string | null | undefined;
-  textColor?: string | undefined;
-  backgroundColor?: string | undefined;
-  markdownHeadingColor?: string | undefined;
-  markdownLinkColor?: string | undefined;
-  markdownCodeBackground?: string | undefined;
-  markdownCodeText?: string | undefined;
-  relatedNoteBorderWidth?: number | undefined;
-  relatedNoteBorderColor?: string | undefined;
-  relatedNoteBackgroundColor?: string | undefined;
-  relatedNoteTextColor?: string | undefined;
-};
-
-export type ThemeUpdateInput = Partial<ThemeCreateInput>;
-
-export type CategoryCreateInput = {
-  name: string;
-  description?: string | null | undefined;
-  color?: string | null | undefined;
-  parentId?: string | null | undefined;
-  notebookId?: string | null | undefined;
-  themeId?: string | null | undefined;
-  sortIndex?: number | null | undefined;
-};
-
-export type CategoryUpdateInput = Partial<CategoryCreateInput>;
-
-export type TagCreateInput = {
-  name: string;
-  color?: string | null | undefined;
-  notebookId?: string | null | undefined;
-};
-
-export type TagUpdateInput = Partial<TagCreateInput>;
+export type NoteCreateInput = CreateNoteDto;
+export type NoteUpdateInput = UpdateNoteDto;
+export type NotebookCreateInput = CreateNotebookDto;
+export type NotebookUpdateInput = UpdateNotebookDto;
+export type ThemeCreateInput = CreateNoteThemeDto;
+export type ThemeUpdateInput = UpdateNoteThemeDto;
+export type CategoryCreateInput = CreateNoteCategoryDto;
+export type CategoryUpdateInput = UpdateNoteCategoryDto;
+export type TagCreateInput = CreateNoteTagDto;
+export type TagUpdateInput = UpdateNoteTagDto;
 
 export type NoteFilters = {
   search?: string;

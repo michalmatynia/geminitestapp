@@ -1,8 +1,8 @@
-
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
 
 import { getSectionContainerClass, getSectionStyles, getTextAlign, type ColorSchemeColors } from '../theme-styles';
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
+import { SectionDataProvider } from './SectionDataContext';
 
 import type { BlockInstance } from '../../../types/page-builder';
 
@@ -75,20 +75,22 @@ export function FrontendBlockSection({
   );
 
   return (
-    <section
-      className={`w-full${sectionId ? ` cms-node-${sectionId}` : ''}`}
-      style={sectionStyles}
-    >
-      {customCss ? <style data-cms-custom-css={sectionId}>{customCss}</style> : null}
-      <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: 'max-w-6xl' })}>
-        {linkUrl ? (
-          <a href={linkUrl} target={linkTarget} rel={linkRel} className="block w-full">
-            {content}
-          </a>
-        ) : (
-          content
-        )}
-      </div>
-    </section>
+    <SectionDataProvider settings={settings} colorSchemes={colorSchemes}>
+      <section
+        className={`w-full${sectionId ? ` cms-node-${sectionId}` : ''}`}
+        style={sectionStyles}
+      >
+        {customCss ? <style data-cms-custom-css={sectionId}>{customCss}</style> : null}
+        <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: 'max-w-6xl' })}>
+          {linkUrl ? (
+            <a href={linkUrl} target={linkTarget} rel={linkRel} className="block w-full">
+              {content}
+            </a>
+          ) : (
+            content
+          )}
+        </div>
+      </section>
+    </SectionDataProvider>
   );
 }

@@ -36,16 +36,19 @@ npx prisma migrate dev
 npx prisma migrate reset
 npx prisma db push
 
+---
 
  Scan the Products feature and build logical try and Catch Blocks with error
    explanantion around potential areas of failur
 
    consolodate UI
 
-use Context refactor for each feature, to avoid prop drilling
+scan the application for potential areas of props-drilling and apply useContext as a refactor
 
    File Segmentation
 
+   scan the application for potential areas of unnecessary types or type clusters that can be unified into DTOs
+   
    Type centralisation into DTOs
 
    Tanstack query connection

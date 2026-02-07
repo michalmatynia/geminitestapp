@@ -32,7 +32,7 @@ const spacingSchema = z.object({
 });
 
 const themeUpdateSchema = z.object({
-  name: z.string().trim().min(1).optional(),
+  name: z.string().trim().min(1),
   colors: colorsSchema.optional(),
   typography: typographySchema.optional(),
   spacing: spacingSchema.optional(),

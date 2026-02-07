@@ -1,7 +1,7 @@
 'use client';
 
-
 import Image from 'next/image';
+import React, { createContext, useContext } from 'react';
 
 import { APP_EMBED_OPTIONS, type AppEmbedId } from '@/features/app-embeds/lib/constants';
 import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
@@ -13,11 +13,23 @@ import { CssAnimationWrapper } from '../CssAnimationWrapper';
 import { GsapAnimationWrapper } from '../GsapAnimationWrapper';
 import { useMediaStyles } from '../media-styles-context';
 import { getBlockTypographyStyles } from '../theme-styles';
+import { useSectionData } from './SectionDataContext';
 
 import type { BlockInstance } from '../../../types/page-builder';
 
+// ---------------------------------------------------------------------------
+// Block settings context to avoid drilling settings to each sub-component
+// ---------------------------------------------------------------------------
 
+const BlockSettingsContext = createContext<Record<string, unknown> | null>(null);
 
+function useBlockSettings(): Record<string, unknown> {
+  const context = useContext(BlockSettingsContext);
+  if (!context) {
+    throw new Error('Block sub-components must be used within a BlockSettingsContext.Provider');
+  }
+  return context;
+}
 
 // ---------------------------------------------------------------------------
 // Render a single element block to real HTML
@@ -32,9 +44,6 @@ export function FrontendBlockRenderer({ block, stretch = false }: FrontendBlockR
   const animConfig = block.settings['gsapAnimation'] as GsapAnimationConfig | undefined;
   const cssAnimConfig = block.settings['cssAnimation'] as CssAnimationConfig | undefined;
   const mediaStyles = useMediaStyles();
-  const content = renderBlockContent(block, mediaStyles, stretch);
-
-  if (!content) return null;
 
   return (
     <GsapAnimationWrapper config={animConfig}>
@@ -44,61 +53,68 @@ export function FrontendBlockRenderer({ block, stretch = false }: FrontendBlockR
           nodeId={block.id}
           customCss={block.settings['customCss']}
         >
-          {content}
+          <BlockSettingsContext.Provider value={block.settings}>
+            <BlockContent block={block} mediaStyles={mediaStyles} stretch={stretch} />
+          </BlockSettingsContext.Provider>
         </EventEffectsWrapper>
       </CssAnimationWrapper>
     </GsapAnimationWrapper>
   );
 }
 
-function renderBlockContent(
-  block: BlockInstance,
-  mediaStyles: React.CSSProperties | null,
-  stretch: boolean = false
-): React.ReactNode {
+function BlockContent({
+  block,
+  mediaStyles,
+  stretch = false
+}: {
+  block: BlockInstance;
+  mediaStyles: React.CSSProperties | null;
+  stretch: boolean;
+}): React.ReactNode {
   switch (block.type) {
     case 'Heading':
-      return <HeadingBlock settings={block.settings} />;
+      return <HeadingBlock />;
     case 'Text':
-      return <TextBlock settings={block.settings} />;
+      return <TextBlock />;
     case 'TextElement':
-      return <TextElementBlock settings={block.settings} />;
+      return <TextElementBlock />;
     case 'TextAtom':
       return <TextAtomBlock block={block} />;
     case 'TextAtomLetter':
-      return <TextAtomLetterBlock settings={block.settings} />;
+      return <TextAtomLetterBlock />;
     case 'Announcement':
-      return <AnnouncementBlock settings={block.settings} />;
+      return <AnnouncementBlock />;
     case 'Button':
-      return <ButtonBlock settings={block.settings} />;
+      return <ButtonBlock />;
     case 'RichText':
-      return <RichTextBlock settings={block.settings} />;
+      return <RichTextBlock />;
     case 'ImageElement':
-      return <ImageElementBlock settings={block.settings} mediaStyles={mediaStyles} stretch={stretch} />;
+      return <ImageElementBlock mediaStyles={mediaStyles} stretch={stretch} />;
     case 'Image':
-      return <ImageBlock settings={block.settings} mediaStyles={mediaStyles} stretch={stretch} />;
+      return <ImageBlock mediaStyles={mediaStyles} stretch={stretch} />;
     case 'Model3D':
-      return <Model3DBlock settings={block.settings} />;
+      return <Model3DBlock />;
     case 'VideoEmbed':
-      return <VideoEmbedBlock settings={block.settings} mediaStyles={mediaStyles} />;
+      return <VideoEmbedBlock mediaStyles={mediaStyles} />;
     case 'Divider':
-      return <DividerBlock settings={block.settings} />;
+      return <DividerBlock />;
     case 'SocialLinks':
-      return <SocialLinksBlock settings={block.settings} />;
+      return <SocialLinksBlock />;
     case 'Icon':
-      return <IconBlock settings={block.settings} />;
+      return <IconBlock />;
     case 'AppEmbed':
-      return <AppEmbedBlock settings={block.settings} />;
+      return <AppEmbedBlock />;
     default:
       return null;
   }
 }
 
 // ---------------------------------------------------------------------------
-// Individual block components
+// Individual block components - now using useBlockSettings()
 // ---------------------------------------------------------------------------
 
-function HeadingBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
+function HeadingBlock(): React.ReactNode {
+  const settings = useBlockSettings();
   const text = (settings['headingText'] as string) || 'Heading';
   const size = (settings['headingSize'] as string) || 'medium';
   const typoStyles = getBlockTypographyStyles(settings);
@@ -113,14 +129,16 @@ function HeadingBlock({ settings }: { settings: Record<string, unknown> }): Reac
   return <h2 className="text-2xl font-bold leading-tight tracking-tight md:text-3xl" style={typoStyles}>{text}</h2>;
 }
 
-function TextBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
+function TextBlock(): React.ReactNode {
+  const settings = useBlockSettings();
   const text = (settings['textContent'] as string) || '';
   if (!text) return null;
   const typoStyles = getBlockTypographyStyles(settings);
   return <p className="text-base leading-relaxed text-gray-300 md:text-lg" style={typoStyles}>{text}</p>;
 }
 
-function TextElementBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
+function TextElementBlock(): React.ReactNode {
+  const settings = useBlockSettings();
   const text = (settings['textContent'] as string) || '';
   if (!text) return null;
   const typoStyles = getBlockTypographyStyles(settings);
@@ -128,11 +146,12 @@ function TextElementBlock({ settings }: { settings: Record<string, unknown> }): 
 }
 
 function TextAtomBlock({ block }: { block: BlockInstance }): React.ReactNode {
-  const text = (block.settings['text'] as string) || '';
-  const alignment = (block.settings['alignment'] as string) || 'left';
-  const letterGap = (block.settings['letterGap'] as number) || 0;
-  const lineGap = (block.settings['lineGap'] as number) || 0;
-  const wrap = (block.settings['wrap'] as string) || 'wrap';
+  const settings = useBlockSettings();
+  const text = (settings['text'] as string) || '';
+  const alignment = (settings['alignment'] as string) || 'left';
+  const letterGap = (settings['letterGap'] as number) || 0;
+  const lineGap = (settings['lineGap'] as number) || 0;
+  const wrap = (settings['wrap'] as string) || 'wrap';
   const letters = (block.blocks ?? []).length
     ? (block.blocks ?? [])
     : Array.from(text).map((char: string, index: number): BlockInstance => ({
@@ -169,7 +188,8 @@ function TextAtomBlock({ block }: { block: BlockInstance }): React.ReactNode {
   );
 }
 
-function TextAtomLetterBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
+function TextAtomLetterBlock(): React.ReactNode {
+  const settings = useBlockSettings();
   const text = (settings['textContent'] as string) ?? '';
   const typoStyles = getBlockTypographyStyles(settings);
   return (
@@ -193,7 +213,8 @@ const toBoolean = (value: unknown, fallback: boolean): boolean => {
 
 const toRadians = (degrees: number): number => (degrees * Math.PI) / 180;
 
-function Model3DBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
+function Model3DBlock(): React.ReactNode {
+  const settings = useBlockSettings();
   const assetId = (settings['assetId'] as string) || '';
   if (!assetId) return null;
 
@@ -255,7 +276,8 @@ function Model3DBlock({ settings }: { settings: Record<string, unknown> }): Reac
   );
 }
 
-function AnnouncementBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
+function AnnouncementBlock(): React.ReactNode {
+  const settings = useBlockSettings();
   const text = (settings['text'] as string) || '';
   const link = (settings['link'] as string) || '';
   if (!text) return null;
@@ -280,7 +302,8 @@ function AnnouncementBlock({ settings }: { settings: Record<string, unknown> }):
   );
 }
 
-function ButtonBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
+function ButtonBlock(): React.ReactNode {
+  const settings = useBlockSettings();
   const label = (settings['buttonLabel'] as string) || 'Button';
   const link = (settings['buttonLink'] as string) || '#';
   const style = (settings['buttonStyle'] as string) || 'solid';
@@ -329,13 +352,21 @@ function ButtonBlock({ settings }: { settings: Record<string, unknown> }): React
   );
 }
 
-function RichTextBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
+function RichTextBlock(): React.ReactNode {
+  const settings = useBlockSettings();
+  const { colorSchemes } = useSectionData();
+  
   // RichText currently stores no editable text content, just renders as a placeholder area
   const colorScheme = (settings['colorScheme'] as string) || 'scheme-1';
+  
+  // Logic demonstrating access to context from section
+  const hasSchemes = colorSchemes && Object.keys(colorSchemes).length > 0;
+
   return (
     <div
       className="rounded-lg p-4 text-gray-400"
       data-color-scheme={colorScheme}
+      data-has-schemes={hasSchemes}
     >
       <p className="text-sm italic">Rich text content area</p>
     </div>
@@ -343,14 +374,13 @@ function RichTextBlock({ settings }: { settings: Record<string, unknown> }): Rea
 }
 
 function ImageElementBlock({
-  settings,
   mediaStyles,
   stretch = false,
 }: {
-  settings: Record<string, unknown>;
   mediaStyles: React.CSSProperties | null;
   stretch?: boolean;
 }): React.ReactNode {
+  const settings = useBlockSettings();
   const src = (settings['src'] as string) || '';
   const alt = (settings['alt'] as string) || 'Image';
   const width = (settings['width'] as number) || 100;
@@ -497,14 +527,13 @@ function ImageElementBlock({
 }
 
 function ImageBlock({
-  settings,
   mediaStyles,
   stretch = false,
 }: {
-  settings: Record<string, unknown>;
   mediaStyles: React.CSSProperties | null;
   stretch?: boolean;
 }): React.ReactNode {
+  const settings = useBlockSettings();
   const src = (settings['src'] as string) || '';
   const alt = (settings['alt'] as string) || '';
   const width = (settings['width'] as number) || 100;
@@ -608,12 +637,11 @@ function buildTransparencyMaskStyles(
 }
 
 function VideoEmbedBlock({
-  settings,
   mediaStyles,
 }: {
-  settings: Record<string, unknown>;
   mediaStyles: React.CSSProperties | null;
 }): React.ReactNode {
+  const settings = useBlockSettings();
   const url = (settings['url'] as string) || '';
   const aspectRatio = (settings['aspectRatio'] as string) || '16:9';
   const autoplay = (settings['autoplay'] as string) === 'yes';
@@ -657,7 +685,8 @@ function VideoEmbedBlock({
   );
 }
 
-function DividerBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
+function DividerBlock(): React.ReactNode {
+  const settings = useBlockSettings();
   const style = (settings['dividerStyle'] as string) || 'solid';
   const thickness = (settings['thickness'] as number) || 1;
   const color = (settings['dividerColor'] as string) || '#4b5563';
@@ -665,7 +694,8 @@ function DividerBlock({ settings }: { settings: Record<string, unknown> }): Reac
   return <hr className="my-2 border-0" style={{ borderTopStyle: style as 'solid' | 'dashed' | 'dotted', borderTopWidth: `${thickness}px`, borderTopColor: color }} />;
 }
 
-function SocialLinksBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
+function SocialLinksBlock(): React.ReactNode {
+  const settings = useBlockSettings();
   const platforms = (settings['platforms'] as string) || '';
   const links = platforms.split(',').map((l: string) => l.trim()).filter(Boolean);
 
@@ -698,7 +728,8 @@ function SocialLinksBlock({ settings }: { settings: Record<string, unknown> }): 
   );
 }
 
-function IconBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
+function IconBlock(): React.ReactNode {
+  const settings = useBlockSettings();
   const iconName = (settings['iconName'] as string) || 'Star';
   const iconSize = (settings['iconSize'] as number) || 24;
   const iconColor = (settings['iconColor'] as string) || '#ffffff';
@@ -712,7 +743,8 @@ function IconBlock({ settings }: { settings: Record<string, unknown> }): React.R
   );
 }
 
-function AppEmbedBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
+function AppEmbedBlock(): React.ReactNode {
+  const settings = useBlockSettings();
   const appId = (settings['appId'] as AppEmbedId) || 'chatbot';
   const title = (settings['title'] as string) || '';
   const embedUrl = (settings['embedUrl'] as string) || '';

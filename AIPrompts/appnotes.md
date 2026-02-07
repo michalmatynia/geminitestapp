@@ -3,6 +3,8 @@ W drafterze potrzebuje producenta, ikonek wiecej, modal as wide as other Product
 
 Some things are still connected to MongoDB, that's an issue, they have to respect the Provider
 
+Z Database Query I need an Onsuccess Trigger that will go to my another node and sent notification, and on failure,
+
 Warning notification when Ollama is not present, no generation
 
  GET /api/chatbot/sessions 200 in 464ms (compile: 56ms, proxy.ts: 121ms, render: 288ms)

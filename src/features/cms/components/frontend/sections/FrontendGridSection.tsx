@@ -1,4 +1,3 @@
-
 import Image from 'next/image';
 import { Fragment } from 'react';
 
@@ -14,6 +13,7 @@ import { FrontendCarousel } from './FrontendCarousel';
 import { FrontendHeroBlock } from './FrontendHeroBlock';
 import { FrontendImageWithTextBlock } from './FrontendImageWithTextBlock';
 import { FrontendSlideshowSection } from './FrontendSlideshowSection';
+import { SectionDataProvider, useSectionData } from './SectionDataContext';
 import { CssAnimationWrapper } from '../CssAnimationWrapper';
 import { GsapAnimationWrapper } from '../GsapAnimationWrapper';
 
@@ -289,141 +289,142 @@ export function FrontendGridSection({ sectionId, settings, blocks, colorSchemes,
   if (rowsToRender.length === 0) return null;
 
   return (
-    <section
-      style={sectionStyles}
-      className={`relative${sectionId ? ` cms-node-${sectionId}` : ''} ${hasGridBackground ? 'overflow-hidden' : ''}`}
-    >
-      {sectionCustomCss ? <style data-cms-custom-css={sectionId}>{sectionCustomCss}</style> : null}
-      {/* Legacy: ImageElements directly in grid without background mode */}
-      {gridImageBlocks.map((block: BlockInstance) => (
-        <Fragment key={`grid-background-${block.id}`}>
-          {renderBackgroundImageLayer(block.settings)}
-        </Fragment>
-      ))}
-      {/* New: ImageElements with backgroundTarget: "grid" */}
-      {gridBackgroundModeImages.map((block: BlockInstance) => (
-        <Fragment key={`grid-bg-mode-${block.id}`}>
-          {renderBackgroundImageLayer(block.settings)}
-        </Fragment>
-      ))}
-      {hasGridBackgroundSetting && renderBackgroundImageLayer(gridBackgroundSettings)}
-      <div className="relative z-10">
-        <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
-          <div className={`flex flex-col ${sectionGapClass}`} style={sectionGapStyle}>
-            {rowsToRender.map((row: BlockInstance, rowIndex: number) => {
-              const rowChildren = row.blocks ?? [];
+    <SectionDataProvider settings={settings} colorSchemes={colorSchemes}>
+      <section
+        style={sectionStyles}
+        className={`relative${sectionId ? ` cms-node-${sectionId}` : ''} ${hasGridBackground ? 'overflow-hidden' : ''}`}
+      >
+        {sectionCustomCss ? <style data-cms-custom-css={sectionId}>{sectionCustomCss}</style> : null}
+        {/* Legacy: ImageElements directly in grid without background mode */}
+        {gridImageBlocks.map((block: BlockInstance) => (
+          <Fragment key={`grid-background-${block.id}`}>
+            {renderBackgroundImageLayer(block.settings)}
+          </Fragment>
+        ))}
+        {/* New: ImageElements with backgroundTarget: "grid" */}
+        {gridBackgroundModeImages.map((block: BlockInstance) => (
+          <Fragment key={`grid-bg-mode-${block.id}`}>
+            {renderBackgroundImageLayer(block.settings)}
+          </Fragment>
+        ))}
+        {hasGridBackgroundSetting && renderBackgroundImageLayer(gridBackgroundSettings)}
+        <div className="relative z-10">
+          <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
+            <div className={`flex flex-col ${sectionGapClass}`} style={sectionGapStyle}>
+              {rowsToRender.map((row: BlockInstance, rowIndex: number) => {
+                const rowChildren = row.blocks ?? [];
 
-              // If no children at all, skip
-              if (rowChildren.length === 0) return null;
+                // If no children at all, skip
+                if (rowChildren.length === 0) return null;
 
-              // Collect row background mode images from this row's children
-              const rowBackgroundModeImages = collectBackgroundImages(rowChildren, 'row');
+                // Collect row background mode images from this row's children
+                const rowBackgroundModeImages = collectBackgroundImages(rowChildren, 'row');
 
-              const rowGapValue = resolveGapValue(row.settings?.['gap'], columnGapValue);
-              const rowGapClass = getGapClass(rowGapValue);
-              const rowGapPxRaw = row.settings?.['gapPx'];
-              const rowGapPx =
-                typeof rowGapPxRaw === 'number' && Number.isFinite(rowGapPxRaw) && rowGapPxRaw > 0
-                  ? rowGapPxRaw
-                  : columnGapPx;
-              const rowGapStyle = getGapStyle(rowGapPx);
-              const rowJustify = resolveJustifyContent(row.settings?.['justifyContent']);
-              const rowAlign = resolveAlignItems(row.settings?.['alignItems']);
-              const rowWrap = (row.settings?.['wrap'] as string) || 'wrap';
-              const rowStyles = getSectionStyles(row.settings ?? {}, colorSchemes);
-              const rowHeightMode = (row.settings?.['heightMode'] as string) || 'inherit';
-              const rowHeight = (row.settings?.['height'] as number) || 0;
-              const rowHeightStyle =
-                rowHeightMode === 'fixed' && rowHeight > 0 ? { height: `${rowHeight}px` } : undefined;
-              const rowBackgroundSettings = row.settings?.['backgroundImage'] as Record<string, unknown> | undefined;
-              const hasRowBackgroundSetting = Boolean((rowBackgroundSettings?.['src'] as string) || '');
-              const hasRowBackgroundMode = rowBackgroundModeImages.length > 0;
-              const hasRowBackground = hasRowBackgroundSetting || hasRowBackgroundMode;
-              const rowSelector = getCustomCssSelector(row.id);
-              const rowCustomCss = buildScopedCustomCss(row.settings?.['customCss'], rowSelector);
-              const rowCssAnimConfig = row.settings?.['cssAnimation'] as CssAnimationConfig | undefined;
+                const rowGapValue = resolveGapValue(row.settings?.['gap'], columnGapValue);
+                const rowGapClass = getGapClass(rowGapValue);
+                const rowGapPxRaw = row.settings?.['gapPx'];
+                const rowGapPx =
+                  typeof rowGapPxRaw === 'number' && Number.isFinite(rowGapPxRaw) && rowGapPxRaw > 0
+                    ? rowGapPxRaw
+                    : columnGapPx;
+                const rowGapStyle = getGapStyle(rowGapPx);
+                const rowJustify = resolveJustifyContent(row.settings?.['justifyContent']);
+                const rowAlign = resolveAlignItems(row.settings?.['alignItems']);
+                const rowWrap = (row.settings?.['wrap'] as string) || 'wrap';
+                const rowStyles = getSectionStyles(row.settings ?? {}, colorSchemes);
+                const rowHeightMode = (row.settings?.['heightMode'] as string) || 'inherit';
+                const rowHeight = (row.settings?.['height'] as number) || 0;
+                const rowHeightStyle =
+                  rowHeightMode === 'fixed' && rowHeight > 0 ? { height: `${rowHeight}px` } : undefined;
+                const rowBackgroundSettings = row.settings?.['backgroundImage'] as Record<string, unknown> | undefined;
+                const hasRowBackgroundSetting = Boolean((rowBackgroundSettings?.['src'] as string) || '');
+                const hasRowBackgroundMode = rowBackgroundModeImages.length > 0;
+                const hasRowBackground = hasRowBackgroundSetting || hasRowBackgroundMode;
+                const rowSelector = getCustomCssSelector(row.id);
+                const rowCustomCss = buildScopedCustomCss(row.settings?.['customCss'], rowSelector);
+                const rowCssAnimConfig = row.settings?.['cssAnimation'] as CssAnimationConfig | undefined;
 
-              // Direction setting: horizontal (side by side) or vertical (stacked)
-              const direction = (row.settings?.['direction'] as string) || 'horizontal';
-              const isVertical = direction === 'vertical';
-              const rowWrapClass = !isVertical
-                ? rowWrap === 'nowrap'
-                  ? 'flex-nowrap'
-                  : 'flex-wrap'
-                : '';
+                // Direction setting: horizontal (side by side) or vertical (stacked)
+                const direction = (row.settings?.['direction'] as string) || 'horizontal';
+                const isVertical = direction === 'vertical';
+                const rowWrapClass = !isVertical
+                  ? rowWrap === 'nowrap'
+                    ? 'flex-nowrap'
+                    : 'flex-wrap'
+                  : '';
 
-              return (
-                <CssAnimationWrapper key={`grid-row-${row.id}-${rowIndex}`} config={rowCssAnimConfig}>
-                  <div
-                    className={`relative cms-node-${row.id} ${hasRowBackground ? 'overflow-hidden' : ''}`}
-                    style={{ ...rowStyles, ...(rowHeightStyle ?? {}) }}
-                  >
-                    {rowCustomCss ? <style data-cms-custom-css={row.id}>{rowCustomCss}</style> : null}
-                    {/* Row background mode images */}
-                    {rowBackgroundModeImages.map((block: BlockInstance) => (
-                      <Fragment key={`row-bg-mode-${block.id}`}>
-                        {renderBackgroundImageLayer(block.settings)}
-                      </Fragment>
-                    ))}
-                    {hasRowBackgroundSetting && renderBackgroundImageLayer(rowBackgroundSettings)}
+                return (
+                  <CssAnimationWrapper key={`grid-row-${row.id}-${rowIndex}`} config={rowCssAnimConfig}>
                     <div
-                      className={`relative z-10 flex ${isVertical ? 'flex-col' : 'flex-row'} ${rowWrapClass} ${rowGapClass}`}
-                      style={{
-                        ...(rowHeightMode === 'fixed' && rowHeight > 0 ? { height: '100%' } : {}),
-                        ...(rowGapStyle ?? {}),
-                        ...(rowJustify ? { justifyContent: rowJustify } : {}),
-                        ...(rowAlign ? { alignItems: rowAlign } : {}),
-                      }}
+                      className={`relative cms-node-${row.id} ${hasRowBackground ? 'overflow-hidden' : ''}`}
+                      style={{ ...rowStyles, ...(rowHeightStyle ?? {}) }}
                     >
-                      {/* Render all children in order, handling columns and direct elements */}
-                      {rowChildren.map((child: BlockInstance) => {
-                        // Skip ImageElements that are in background mode (grid or row)
-                        if (child.type === 'ImageElement') {
-                          const bgTarget = (child.settings?.['backgroundTarget'] as string) || 'none';
-                          if (bgTarget === 'grid' || bgTarget === 'row') return null;
-                        }
+                      {rowCustomCss ? <style data-cms-custom-css={row.id}>{rowCustomCss}</style> : null}
+                      {/* Row background mode images */}
+                      {rowBackgroundModeImages.map((block: BlockInstance) => (
+                        <Fragment key={`row-bg-mode-${block.id}`}>
+                          {renderBackgroundImageLayer(block.settings)}
+                        </Fragment>
+                      ))}
+                      {hasRowBackgroundSetting && renderBackgroundImageLayer(rowBackgroundSettings)}
+                      <div
+                        className={`relative z-10 flex ${isVertical ? 'flex-col' : 'flex-row'} ${rowWrapClass} ${rowGapClass}`}
+                        style={{
+                          ...(rowHeightMode === 'fixed' && rowHeight > 0 ? { height: '100%' } : {}),
+                          ...(rowGapStyle ?? {}),
+                          ...(rowJustify ? { justifyContent: rowJustify } : {}),
+                          ...(rowAlign ? { alignItems: rowAlign } : {}),
+                        }}
+                      >
+                        {/* Render all children in order, handling columns and direct elements */}
+                        {rowChildren.map((child: BlockInstance) => {
+                          // Skip ImageElements that are in background mode (grid or row)
+                          if (child.type === 'ImageElement') {
+                            const bgTarget = (child.settings?.['backgroundTarget'] as string) || 'none';
+                            if (bgTarget === 'grid' || bgTarget === 'row') return null;
+                          }
 
-                        if (child.type === 'Column') {
-                          // Columns get flex-1 to share space equally when horizontal
-                          return (
-                            <div key={child.id} className={isVertical ? 'w-full' : 'flex-1 min-w-0'}>
-                              <ColumnRenderer
-                                column={child}
-                                colorSchemes={colorSchemes}
-                                rowHeightMode={rowHeightMode}
-                                rowHeight={rowHeight}
-                              />
-                            </div>
-                          );
-                        }
-                        // Direct elements in row (not inside a column)
-                        const minHeight = getBlockMinHeight(child.type);
-                        const wrapperStyle: React.CSSProperties = {
-                          minHeight: `${minHeight}px`,
-                          position: 'relative',
-                        };
-                        if (SECTION_BLOCK_TYPES.has(child.type)) {
+                          if (child.type === 'Column') {
+                            // Columns get flex-1 to share space equally when horizontal
+                            return (
+                              <div key={child.id} className={isVertical ? 'w-full' : 'flex-1 min-w-0'}>
+                                <ColumnRenderer
+                                  column={child}
+                                  rowHeightMode={rowHeightMode}
+                                  rowHeight={rowHeight}
+                                />
+                              </div>
+                            );
+                          }
+                          // Direct elements in row (not inside a column)
+                          const minHeight = getBlockMinHeight(child.type);
+                          const wrapperStyle: React.CSSProperties = {
+                            minHeight: `${minHeight}px`,
+                            position: 'relative',
+                          };
+                          if (SECTION_BLOCK_TYPES.has(child.type)) {
+                            return (
+                              <div key={child.id} className={isVertical ? 'w-full' : ''} style={wrapperStyle}>
+                                <SectionBlockRenderer block={child} />
+                              </div>
+                            );
+                          }
                           return (
                             <div key={child.id} className={isVertical ? 'w-full' : ''} style={wrapperStyle}>
-                              <SectionBlockRenderer block={child} colorSchemes={colorSchemes} />
+                              <FrontendBlockRenderer block={child} />
                             </div>
                           );
-                        }
-                        return (
-                          <div key={child.id} className={isVertical ? 'w-full' : ''} style={wrapperStyle}>
-                            <FrontendBlockRenderer block={child} />
-                          </div>
-                        );
-                      })}
+                        })}
+                      </div>
                     </div>
-                  </div>
-                </CssAnimationWrapper>
-              );
-            })}
+                  </CssAnimationWrapper>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </SectionDataProvider>
   );
 }
 
@@ -433,16 +434,15 @@ export function FrontendGridSection({ sectionId, settings, blocks, colorSchemes,
 
 function ColumnRenderer({
   column,
-  colorSchemes,
   rowHeightMode,
   rowHeight,
 }: {
   column: BlockInstance;
-  colorSchemes?: Record<string, ColorSchemeColors> | undefined;
   rowHeightMode?: string | undefined;
   rowHeight?: number | undefined;
 }): React.ReactNode {
   const children = column.blocks ?? [];
+  const { colorSchemes } = useSectionData();
 
   // Collect column background mode images
   const columnBackgroundModeImages = children.filter((b: BlockInstance) => isBackgroundModeImage(b, 'column'));
@@ -514,7 +514,7 @@ function ColumnRenderer({
               if (SECTION_BLOCK_TYPES.has(block.type)) {
                 return (
                   <div key={block.id} className={shouldStretch ? 'flex-1' : ''} style={wrapperStyle}>
-                    <SectionBlockRenderer block={block} colorSchemes={colorSchemes} stretch={shouldStretch} />
+                    <SectionBlockRenderer block={block} stretch={shouldStretch} />
                   </div>
                 );
               }
@@ -537,11 +537,9 @@ function ColumnRenderer({
 
 function SectionBlockRenderer({
   block,
-  colorSchemes,
   stretch = false,
 }: {
   block: BlockInstance;
-  colorSchemes?: Record<string, ColorSchemeColors> | undefined;
   stretch?: boolean | undefined;
 }): React.ReactNode {
   const children = block.blocks ?? [];
@@ -552,6 +550,7 @@ function SectionBlockRenderer({
   const allowInlineCustomCss = block.type !== 'Block';
   const inlineCustomCss = allowInlineCustomCss ? block.settings['customCss'] : undefined;
   const inlineCustomNodeId = allowInlineCustomCss ? block.id : '';
+  const { colorSchemes } = useSectionData();
 
   const wrapInline = (node: React.ReactNode): React.ReactNode => (
     <EventEffectsWrapper
@@ -736,7 +735,7 @@ function SectionBlockRenderer({
         <CssAnimationWrapper config={cssAnimConfig}>
           {wrapInline(
             <div className={stretchClass} style={stretchStyle}>
-              <FrontendSlideshowSection settings={block.settings} blocks={children} colorSchemes={colorSchemes} layout={{ fullWidth: true }} />
+              <FrontendSlideshowSection settings={block.settings} blocks={children} layout={{ fullWidth: true }} />
             </div>
           )}
         </CssAnimationWrapper>

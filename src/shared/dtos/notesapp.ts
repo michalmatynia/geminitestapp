@@ -1,6 +1,8 @@
 import { DtoBase, NamedDto } from '../types/base';
 
 // Notes App DTOs
+export type NoteEditorType = 'markdown' | 'wysiwyg' | 'code';
+
 export interface NoteDto extends DtoBase {
   title: string;
   content: string;
@@ -50,7 +52,7 @@ export interface NoteThemeDto extends NamedDto {
 export interface CreateNoteDto {
   title: string;
   content: string;
-  editorType?: 'markdown' | 'wysiwyg' | 'code';
+  editorType?: NoteEditorType;
   color?: string | null;
   isPinned?: boolean;
   isArchived?: boolean;

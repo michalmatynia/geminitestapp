@@ -2,6 +2,7 @@ import 'server-only';
 
 import { AUTH_SETTINGS_KEYS } from '@/features/auth/utils/auth-management';
 import { ErrorSystem } from '@/features/observability/server';
+import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
@@ -38,14 +39,33 @@ const readPrismaAuthProvider = async (): Promise<AuthDbProvider | null> => {
   }
 };
 
+const warnAuthProviderDrift = (
+  appProvider: 'prisma' | 'mongodb',
+  authProvider: AuthDbProvider,
+  source: 'mongo-setting' | 'prisma-setting' | 'fallback'
+): void => {
+  if (appProvider === authProvider) return;
+  console.warn(
+    `[auth-provider] Auth provider "${authProvider}" from ${source} differs from app provider "${appProvider}".`
+  );
+};
+
 // Auth provider must be deterministic and never fail.
 export const getAuthDataProvider = async (): Promise<AuthDbProvider> => {
+  const appProvider = await getAppDbProvider();
   const mongoSetting = await readMongoAuthProvider();
-  if (mongoSetting) return mongoSetting;
+  if (mongoSetting) {
+    warnAuthProviderDrift(appProvider, mongoSetting, 'mongo-setting');
+    return mongoSetting;
+  }
   const prismaSetting = await readPrismaAuthProvider();
-  if (prismaSetting) return prismaSetting;
-  if (process.env.MONGODB_URI) return 'mongodb';
-  return 'prisma';
+  if (prismaSetting) {
+    warnAuthProviderDrift(appProvider, prismaSetting, 'prisma-setting');
+    return prismaSetting;
+  }
+  const fallbackProvider: AuthDbProvider = process.env.MONGODB_URI ? 'mongodb' : 'prisma';
+  warnAuthProviderDrift(appProvider, fallbackProvider, 'fallback');
+  return fallbackProvider;
 };
 
 export const requireAuthProvider = (provider: AuthDbProvider): AuthDbProvider => {

@@ -12,6 +12,17 @@ const normalizeProvider = (value?: string | null): ProductDbProvider | null => {
   return value.toLowerCase().trim() === 'mongodb' ? 'mongodb' : 'prisma';
 };
 
+const warnProviderDrift = (
+  appProvider: 'prisma' | 'mongodb',
+  productProvider: ProductDbProvider,
+  source: 'prisma-setting' | 'mongo-setting'
+): void => {
+  if (appProvider === productProvider) return;
+  console.warn(
+    `[product-provider] Product provider "${productProvider}" from ${source} differs from app provider "${appProvider}".`
+  );
+};
+
 const readMongoProductProvider = async (): Promise<ProductDbProvider | null> => {
   if (!process.env.MONGODB_URI) return null;
   try {
@@ -46,6 +57,7 @@ export const getProductDataProvider = async (): Promise<ProductDbProvider> => {
     if (prismaSetting) {
       if (prismaSetting === 'prisma' && !process.env.DATABASE_URL) return 'mongodb';
       if (prismaSetting === 'mongodb' && !process.env.MONGODB_URI) return 'prisma';
+      warnProviderDrift(appProvider, prismaSetting, 'prisma-setting');
       return prismaSetting;
     }
     return 'prisma';
@@ -54,12 +66,14 @@ export const getProductDataProvider = async (): Promise<ProductDbProvider> => {
   const mongoSetting = await readMongoProductProvider();
   if (mongoSetting) {
     if (mongoSetting === 'mongodb' && !process.env.MONGODB_URI) return 'prisma';
+    warnProviderDrift(appProvider, mongoSetting, 'mongo-setting');
     return mongoSetting;
   }
   const prismaSetting = await readPrismaProductProvider();
   if (prismaSetting) {
     if (prismaSetting === 'prisma' && !process.env.DATABASE_URL) return 'mongodb';
     if (prismaSetting === 'mongodb' && !process.env.MONGODB_URI) return 'prisma';
+    warnProviderDrift(appProvider, prismaSetting, 'prisma-setting');
     return prismaSetting;
   }
   return 'mongodb';

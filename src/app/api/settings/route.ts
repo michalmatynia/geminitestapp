@@ -18,7 +18,6 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { ErrorSystem } from "@/features/observability/server";
 import { AUTH_SETTINGS_KEYS } from "@/features/auth/utils/auth-management";
-import { PRODUCT_DB_PROVIDER_SETTING_KEY } from "@/features/products/constants";
 import {
   SettingRecord,
   getCachedSettings,
@@ -62,24 +61,8 @@ const ensureSettingsIndexes = async (): Promise<void> => {
   }
   await settingsIndexesEnsured;
 };
-const productSettingKeys = new Set([
-  APP_DB_PROVIDER_SETTING_KEY,
-  PRODUCT_DB_PROVIDER_SETTING_KEY,
-  "ai_vision_model",
-  "ai_vision_user_prompt",
-  "ai_vision_prompt",
-  "ai_vision_output_enabled",
-  "openai_model",
-  "description_generation_user_prompt",
-  "description_generation_prompt",
-  "ai_generation_output_enabled",
-  "ai_description_test_product_id",
-]);
-
-const isProductSettingKey = (key: string) => productSettingKeys.has(key);
 const authSettingKeys: Set<string> = new Set(Object.values(AUTH_SETTINGS_KEYS));
-const isMongoPreferredSettingKey = (key: string) =>
-  isProductSettingKey(key) || authSettingKeys.has(key);
+const isMongoPreferredSettingKey = (key: string) => authSettingKeys.has(key);
 const isHeavySettingKey = (key: string): boolean =>
   HEAVY_KEYS.has(key) || HEAVY_PREFIXES.some((prefix) => key.startsWith(prefix));
 
@@ -250,8 +233,7 @@ const fetchAndCacheSettings = async (
       }
     });
     mongoSettings.forEach((setting: SettingRecord) => {
-      const shouldOverride =
-        isMongoPreferredSettingKey(setting.key) || !settingsMap.has(setting.key);
+      const shouldOverride = prismaMissing || isMongoPreferredSettingKey(setting.key);
       if (shouldOverride) {
         settingsMap.set(setting.key, setting);
       }

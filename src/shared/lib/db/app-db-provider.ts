@@ -79,10 +79,22 @@ export const getAppDbProvider = async (): Promise<AppDbProvider> => {
     return 'prisma';
   }
   if (setting === 'prisma') {
+    if (process.env.DATABASE_URL) return 'prisma';
+    if (process.env.MONGODB_URI) {
+      console.warn('[app-db-provider] DATABASE_URL missing; falling back to MongoDB.');
+      return 'mongodb';
+    }
+    console.warn('[app-db-provider] DATABASE_URL missing; Prisma remains selected but database is unavailable.');
     return 'prisma';
   }
   // No explicit setting found — detect from available connections.
-  // Prefer MongoDB when configured; fall back to Prisma only if DATABASE_URL exists.
+  // Prefer Prisma when both are configured to avoid accidental MongoDB drift.
+  if (process.env.DATABASE_URL && process.env.MONGODB_URI) {
+    console.warn(
+      '[app-db-provider] Both DATABASE_URL and MONGODB_URI are set without explicit provider; defaulting to Prisma.'
+    );
+    return 'prisma';
+  }
   if (process.env.MONGODB_URI) return 'mongodb';
   return 'prisma';
 };

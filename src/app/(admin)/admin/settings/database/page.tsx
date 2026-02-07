@@ -1,5 +1,6 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState, ChangeEvent } from 'react';
 
 import { AUTH_SETTINGS_KEYS } from '@/features/auth/utils/auth-management';
@@ -7,8 +8,6 @@ import { PRODUCT_DB_PROVIDER_SETTING_KEY } from '@/features/products/constants';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useToast, Button, Label } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
-
 
 const providerOptions = [
   {
@@ -62,6 +61,49 @@ type SettingsBackfillResult = {
   sampleIds?: string[];
 };
 
+type ProviderService = 'app' | 'auth' | 'product' | 'integrations' | 'cms';
+type ProviderValueStatus = 'prisma' | 'mongodb';
+type ProviderSourceStatus =
+  | 'env'
+  | 'prisma-setting'
+  | 'mongo-setting'
+  | 'app-setting'
+  | 'default'
+  | 'derived';
+
+type ProviderServiceStatus = {
+  service: ProviderService;
+  configured: ProviderValueStatus | null;
+  configuredSource: ProviderSourceStatus | null;
+  effective: ProviderValueStatus;
+  driftFromApp: boolean;
+  notes: string[];
+};
+
+type ProviderDiagnosticsResponse = {
+  timestamp: string;
+  env: {
+    hasDatabaseUrl: boolean;
+    hasMongoUri: boolean;
+    appDbProviderEnv: string | null;
+  };
+  services: ProviderServiceStatus[];
+  driftCount: number;
+  warningCount: number;
+  warnings: string[];
+};
+
+const providerServiceLabel: Record<ProviderService, string> = {
+  app: 'App',
+  auth: 'Auth',
+  product: 'Product',
+  integrations: 'Integrations',
+  cms: 'CMS',
+};
+
+const formatProvider = (value: ProviderValueStatus | null): string =>
+  value ? value.toUpperCase() : 'N/A';
+
 export default function DatabaseSettingsPage() {
   const settingsQuery = useSettingsMap();
 
@@ -106,9 +148,24 @@ function DatabaseSettingsForm({
   const [backfillLimit, setBackfillLimit] = useState(500);
   const [backfillResult, setBackfillResult] = useState<SettingsBackfillResult | null>(null);
   const updateSetting = useUpdateSetting();
-  const settingsQuery = useSettingsMap(); // Re-fetch or pass as prop if needed for other things, but here it seems only used for initial value. 
-  // Wait, the original code used settingsQuery.isPending in the button disabled state.
-  // We can just call useSettingsMap() again, it will use the cache.
+  const settingsQuery = useSettingsMap();
+  const providerDiagnosticsQuery = useQuery<ProviderDiagnosticsResponse, Error>({
+    queryKey: ['settings', 'provider-diagnostics'],
+    queryFn: async (): Promise<ProviderDiagnosticsResponse> => {
+      const res = await fetch('/api/settings/providers', { cache: 'no-store' });
+      if (!res.ok) {
+        const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(payload?.error || 'Failed to fetch provider diagnostics.');
+      }
+      return (await res.json()) as ProviderDiagnosticsResponse;
+    },
+    staleTime: 15_000,
+    refetchInterval: 30_000,
+  });
+
+  const refreshProviderDiagnostics = (): void => {
+    void providerDiagnosticsQuery.refetch();
+  };
 
   const providerDescription = useMemo(
     () =>
@@ -138,6 +195,7 @@ function DatabaseSettingsForm({
         value: provider,
       });
       setDirty(false);
+      refreshProviderDiagnostics();
       toast('Database provider saved.', { variant: 'success' });
     } catch (error) {
       logClientError(error, { context: { source: 'DatabaseSettingsPage', action: 'saveProvider', provider } });
@@ -155,6 +213,7 @@ function DatabaseSettingsForm({
         value: authProvider,
       });
       setAuthDirty(false);
+      refreshProviderDiagnostics();
       toast('Auth data provider saved.', { variant: 'success' });
     } catch (error) {
       logClientError(error, { context: { source: 'DatabaseSettingsPage', action: 'saveAuthProvider', authProvider } });
@@ -172,6 +231,7 @@ function DatabaseSettingsForm({
         value: productProvider,
       });
       setProductDirty(false);
+      refreshProviderDiagnostics();
       toast('Product data provider saved.', { variant: 'success' });
     } catch (error) {
       logClientError(error, { context: { source: 'DatabaseSettingsPage', action: 'saveProductProvider', productProvider } });
@@ -200,6 +260,7 @@ function DatabaseSettingsForm({
         const payload = (await res.json()) as { error?: string };
         throw new Error(payload?.error || 'Failed to enqueue database sync.');
       }
+      refreshProviderDiagnostics();
       toast('Database sync job queued. Track progress in Job Queue.', { variant: 'success' });
     } catch (error) {
       logClientError(error, { context: { source: 'DatabaseSettingsPage', action: 'runSync', direction } });
@@ -226,6 +287,7 @@ function DatabaseSettingsForm({
       }
       const payload = (await res.json()) as SettingsBackfillResult;
       setBackfillResult(payload);
+      refreshProviderDiagnostics();
       toast(
         dryRun ? 'Backfill dry run complete.' : 'Backfill completed.',
         { variant: 'success' }
@@ -241,6 +303,15 @@ function DatabaseSettingsForm({
     }
   };
 
+  const providerDiagnostics = providerDiagnosticsQuery.data;
+  const hasProviderDrift = (providerDiagnostics?.driftCount ?? 0) > 0;
+  const providerPanelTone = hasProviderDrift
+    ? 'border-red-500/40 bg-red-500/10'
+    : 'border-emerald-500/40 bg-emerald-500/10';
+  const providerStateTone = hasProviderDrift
+    ? 'text-red-100'
+    : 'text-emerald-100';
+
   return (
     <div className="container mx-auto py-10">
       <div className="mb-8">
@@ -251,7 +322,90 @@ function DatabaseSettingsForm({
       </div>
 
       <div className="rounded-lg border border-gray-800 bg-gray-950 p-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className={`rounded-md border p-4 ${providerPanelTone}`}>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className={`text-lg font-semibold ${providerStateTone}`}>Provider Drift Monitor</h2>
+              <p className="mt-1 text-xs text-gray-200/90">
+                Live effective provider routing across key services.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={refreshProviderDiagnostics}
+              disabled={providerDiagnosticsQuery.isFetching}
+              className="border-gray-700 text-gray-200 hover:bg-gray-900"
+            >
+              {providerDiagnosticsQuery.isFetching ? 'Refreshing...' : 'Refresh'}
+            </Button>
+          </div>
+
+          {providerDiagnosticsQuery.isLoading && (
+            <p className="mt-3 text-xs text-gray-300">Loading provider diagnostics...</p>
+          )}
+
+          {providerDiagnosticsQuery.isError && (
+            <p className="mt-3 text-xs text-red-200">
+              {providerDiagnosticsQuery.error?.message || 'Failed to load provider diagnostics.'}
+            </p>
+          )}
+
+          {providerDiagnostics && (
+            <>
+              <div className="mt-3 grid gap-2">
+                {providerDiagnostics.services.map((service: ProviderServiceStatus) => (
+                  <div
+                    key={service.service}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded border border-gray-800/80 bg-black/25 px-3 py-2"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-100">
+                        {providerServiceLabel[service.service]}
+                      </span>
+                      <span
+                        className={`rounded px-2 py-0.5 text-[10px] uppercase tracking-wide ${
+                          service.driftFromApp
+                            ? 'border border-red-500/50 bg-red-500/20 text-red-100'
+                            : 'border border-emerald-500/50 bg-emerald-500/20 text-emerald-100'
+                        }`}
+                      >
+                        {service.driftFromApp ? 'Drift' : 'Aligned'}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-gray-300">
+                      Configured {formatProvider(service.configured)}
+                      {service.configuredSource ? ` (${service.configuredSource})` : ''}
+                      {' -> Effective '}
+                      {formatProvider(service.effective)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-3 text-[11px] text-gray-300">
+                Env: DATABASE_URL {providerDiagnostics.env.hasDatabaseUrl ? 'present' : 'missing'} | MONGODB_URI{' '}
+                {providerDiagnostics.env.hasMongoUri ? 'present' : 'missing'}
+                {providerDiagnostics.env.appDbProviderEnv
+                  ? ` | APP_DB_PROVIDER=${providerDiagnostics.env.appDbProviderEnv}`
+                  : ''}
+              </div>
+
+              {providerDiagnostics.warnings.length > 0 && (
+                <div className="mt-3 rounded border border-amber-500/40 bg-amber-500/10 p-3">
+                  <div className="text-xs font-medium text-amber-100">Warnings</div>
+                  <div className="mt-2 grid gap-1 text-[11px] text-amber-100/90">
+                    {providerDiagnostics.warnings.map((warning: string, index: number) => (
+                      <div key={`${warning}-${index}`}>{warning}</div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold text-white">Global provider</h2>
             <p className="mt-1 text-sm text-gray-400">

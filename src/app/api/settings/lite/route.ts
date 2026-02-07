@@ -80,17 +80,6 @@ const readMongoSettings = async (keys: string[]): Promise<SettingRecord[]> => {
     .map((item) => ({ key: item.key, value: item.value as string }));
 };
 
-const mergeSettings = (base: SettingRecord[], extra: SettingRecord[]): SettingRecord[] => {
-  if (!extra.length) return base;
-  const map = new Map(base.map((setting) => [setting.key, setting]));
-  extra.forEach((setting) => {
-    if (!map.has(setting.key)) {
-      map.set(setting.key, setting);
-    }
-  });
-  return Array.from(map.values());
-};
-
 const fetchLiteSettings = async (): Promise<SettingRecord[]> => {
   const envProvider = process.env.APP_DB_PROVIDER?.toLowerCase().trim();
   const provider =
@@ -112,15 +101,7 @@ const fetchLiteSettings = async (): Promise<SettingRecord[]> => {
     console.warn("[settings.lite] Prisma settings table missing and no Mongo fallback; returning empty settings.");
     return [];
   }
-  if (envProvider === "prisma" || !hasMongo) {
-    return prismaSettings;
-  }
-  const missingKeys = LITE_SETTINGS_KEYS.filter(
-    (key: string) => !prismaSettings.some((setting) => setting.key === key)
-  );
-  if (!missingKeys.length) return prismaSettings;
-  const mongoSettings = await readMongoSettings(missingKeys);
-  return mergeSettings(prismaSettings, mongoSettings);
+  return prismaSettings;
 };
 
 const getCachedLiteSettings = (): SettingRecord[] | null => {

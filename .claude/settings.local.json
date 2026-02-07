@@ -64,7 +64,10 @@
       "Bash(brew install:*)",
       "Bash(brew services:*)",
       "Bash(redis-cli ping:*)",
-      "Bash(redis-cli:*)"
+      "Bash(redis-cli:*)",
+      "Bash(psql:*)",
+      "Bash(npx tsx:*)",
+      "Bash(brew list:*)"
     ]
   }
 }

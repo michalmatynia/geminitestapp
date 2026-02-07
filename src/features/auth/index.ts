@@ -7,6 +7,7 @@ export { default as AuthUserPagesPage } from './pages/admin/UserPagesPage';
 export { default as AuthUsersPage } from './pages/admin/UsersPage';
 export { default as RegisterPage } from './pages/public/RegisterPage';
 export { default as SignInPage } from './pages/public/SignInPage';
+export * from './context/AuthContext';
 export * from './types';
 export type { AuthPermission, AuthRole, AuthUserRoleMap } from './utils/auth-management';
 export * from './utils/auth-management';

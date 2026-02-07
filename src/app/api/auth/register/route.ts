@@ -6,7 +6,6 @@ import prisma from "@/shared/lib/db/prisma";
 import { normalizeAuthEmail } from "@/features/auth/server";
 import { getAuthSecurityPolicy, validatePasswordStrength } from "@/features/auth/server";
 import { getAuthUserPageSettings } from "@/features/auth/server";
-import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError } from "@/shared/errors/app-error";
 import { conflictError, internalError, validationError, forbiddenError } from "@/shared/errors/app-error";
 import { getAuthDataProvider, requireAuthProvider } from "@/features/auth/services/auth-provider";
@@ -34,106 +33,98 @@ type MongoUserDoc = {
 };
 
 async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  try {
-    const data = ctx.body as z.infer<typeof registerSchema> | undefined;
-    if (!data) throw badRequestError("Invalid payload");
-    await logAuthEvent({
-      req,
-      action: "auth.register",
-      stage: "start",
-      body: { email: data.email, name: data.name, emailVerified: data.emailVerified },
+  const data = ctx.body as z.infer<typeof registerSchema> | undefined;
+  if (!data) throw badRequestError("Invalid payload");
+  await logAuthEvent({
+    req,
+    action: "auth.register",
+    stage: "start",
+    body: { email: data.email, name: data.name, emailVerified: data.emailVerified },
+  });
+  const pageSettings = await getAuthUserPageSettings();
+  if (!pageSettings.allowSignup) {
+    throw forbiddenError("Registration is disabled.");
+  }
+  const policy = await getAuthSecurityPolicy();
+  const passwordCheck = validatePasswordStrength(data.password, policy);
+  if (!passwordCheck.ok) {
+    throw validationError("Password does not meet security policy.", {
+      issues: passwordCheck.errors,
     });
-    const pageSettings = await getAuthUserPageSettings();
-    if (!pageSettings.allowSignup) {
-      throw forbiddenError("Registration is disabled.");
-    }
-    const policy = await getAuthSecurityPolicy();
-    const passwordCheck = validatePasswordStrength(data.password, policy);
-    if (!passwordCheck.ok) {
-      throw validationError("Password does not meet security policy.", {
-        issues: passwordCheck.errors,
-      });
-    }
-    const email = normalizeAuthEmail(data.email);
-    const passwordHash = await hash(data.password, 12);
+  }
+  const email = normalizeAuthEmail(data.email);
+  const passwordHash = await hash(data.password, 12);
 
-    const provider = requireAuthProvider(await getAuthDataProvider());
-    if (provider === "prisma") {
-      if (!process.env.DATABASE_URL) {
-        throw internalError("Prisma is not configured.");
-      }
-      const existing = await prisma.user.findUnique({
-        where: { email },
-        select: { id: true },
-      });
-      if (existing) {
-        throw conflictError("User already exists.", { email });
-      }
-      const now = new Date();
-      const user = await prisma.user.create({
-        data: {
-          email,
-          name: data.name ?? null,
-          passwordHash,
-          emailVerified: data.emailVerified ? now : null,
-          image: null,
-        },
-        select: { id: true, email: true, name: true },
-      });
-      await logAuthEvent({
-        req,
-        action: "auth.register",
-        stage: "success",
-        userId: user.id,
-        body: { email: user.email, name: user.name },
-        status: 201,
-      });
-      return NextResponse.json(
-        { id: user.id, email: user.email, name: user.name },
-        { status: 201 }
-      );
+  const provider = requireAuthProvider(await getAuthDataProvider());
+  if (provider === "prisma") {
+    if (!process.env.DATABASE_URL) {
+      throw internalError("Prisma is not configured.");
     }
-
-    if (!process.env.MONGODB_URI) {
-      throw internalError("MongoDB is not configured.");
-    }
-    const db = await getMongoDb();
-    const existing = await db
-      .collection<MongoUserDoc>("users")
-      .findOne({ email });
+    const existing = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true },
+    });
     if (existing) {
       throw conflictError("User already exists.", { email });
     }
     const now = new Date();
-    const doc: MongoUserDoc = {
-      email,
-      name: data.name ?? null,
-      passwordHash,
-      emailVerified: data.emailVerified ? now : null,
-      image: null,
-      createdAt: now,
-      updatedAt: now,
-    };
-    const result = await db.collection<MongoUserDoc>("users").insertOne(doc);
+    const user = await prisma.user.create({
+      data: {
+        email,
+        name: data.name ?? null,
+        passwordHash,
+        emailVerified: data.emailVerified ? now : null,
+        image: null,
+      },
+      select: { id: true, email: true, name: true },
+    });
     await logAuthEvent({
       req,
       action: "auth.register",
       stage: "success",
-      userId: result.insertedId.toString(),
-      body: { email: doc.email, name: doc.name },
+      userId: user.id,
+      body: { email: user.email, name: user.name },
       status: 201,
     });
     return NextResponse.json(
-      { id: result.insertedId.toString(), email: doc.email, name: doc.name },
+      { id: user.id, email: user.email, name: user.name },
       { status: 201 }
     );
-  } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "auth.register.POST",
-      fallbackMessage: "Failed to register user",
-    });
   }
+
+  if (!process.env.MONGODB_URI) {
+    throw internalError("MongoDB is not configured.");
+  }
+  const db = await getMongoDb();
+  const existing = await db
+    .collection<MongoUserDoc>("users")
+    .findOne({ email });
+  if (existing) {
+    throw conflictError("User already exists.", { email });
+  }
+  const now = new Date();
+  const doc: MongoUserDoc = {
+    email,
+    name: data.name ?? null,
+    passwordHash,
+    emailVerified: data.emailVerified ? now : null,
+    image: null,
+    createdAt: now,
+    updatedAt: now,
+  };
+  const result = await db.collection<MongoUserDoc>("users").insertOne(doc);
+  await logAuthEvent({
+    req,
+    action: "auth.register",
+    stage: "success",
+    userId: result.insertedId.toString(),
+    body: { email: doc.email, name: doc.name },
+    status: 201,
+  });
+  return NextResponse.json(
+    { id: result.insertedId.toString(), email: doc.email, name: doc.name },
+    { status: 201 }
+  );
 }
 
 export const POST = apiHandler(

@@ -1,4 +1,6 @@
    change node from 22 to 24
+
+   postgres to MongoDB not working
    
    - Regex Grouper manual-only AI suggestions path + output retention
   - JSON Mapper node input/output changes

@@ -656,7 +656,7 @@ export function DatabaseNodeConfigSection({
       runtimeInputs.jobId ??
       runtimeOutputs.value ??
       runtimeOutputs.jobId;
-    const currentValue = Array.isArray(rawValue) ? rawValue[0] : rawValue;
+    const currentValue = Array.isArray(rawValue) ? (rawValue as unknown[])[0] : rawValue;
     const templateContext = { ...runtimeOutputs, ...runtimeInputs };
     const rendered = renderTemplate(
       lastTemplate,

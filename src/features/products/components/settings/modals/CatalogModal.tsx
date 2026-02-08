@@ -214,41 +214,41 @@ export function CatalogModal({
       }}
       isSaving={saveMutation.isPending}
       saveText={catalog ? 'Update' : 'Create'}
-      cancelText="Close"
-      size="lg"
+      cancelText='Close'
+      size='lg'
     >
-      <div className="space-y-6">
+      <div className='space-y-6'>
         {error && (
-          <Alert variant="error" className="p-3 text-xs">
+          <Alert variant='error' className='p-3 text-xs'>
             {error}
           </Alert>
         )}
 
-        <div className="grid gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="catalog-name">Name</Label>
+        <div className='grid gap-4'>
+          <div className='space-y-2'>
+            <Label htmlFor='catalog-name'>Name</Label>
             <Input
-              id="catalog-name"
+              id='catalog-name'
               value={form.name}
               onChange={(e) =>
                 setForm((p) => ({ ...p, name: e.target.value }))
               }
-              placeholder="e.g. Main Store"
+              placeholder='e.g. Main Store'
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="catalog-desc">Description</Label>
+          <div className='space-y-2'>
+            <Label htmlFor='catalog-desc'>Description</Label>
             <Textarea
-              id="catalog-desc"
+              id='catalog-desc'
               value={form.description}
               onChange={(e) =>
                 setForm((p) => ({ ...p, description: e.target.value }))
               }
-              placeholder="Optional description..."
+              placeholder='Optional description...'
               rows={2}
             />
           </div>
-          <Label className="flex items-center gap-2 text-gray-300">
+          <Label className='flex items-center gap-2 text-gray-300'>
             <Checkbox
               checked={form.isDefault}
               onCheckedChange={(v) =>
@@ -259,25 +259,25 @@ export function CatalogModal({
           </Label>
         </div>
 
-        <div className="rounded-md border border-border bg-card/70 p-4 space-y-4">
-          <Label className="text-sm font-semibold text-white">
+        <div className='rounded-md border border-border bg-card/70 p-4 space-y-4'>
+          <Label className='text-sm font-semibold text-white'>
             Languages
           </Label>
           {languagesLoading ? (
-            <p className="text-xs text-gray-500">Loading languages...</p>
+            <p className='text-xs text-gray-500'>Loading languages...</p>
           ) : languagesError ? (
-            <p className="text-xs text-red-400">{languagesError}</p>
+            <p className='text-xs text-red-400'>{languagesError}</p>
           ) : (
-            <div className="space-y-4">
+            <div className='space-y-4'>
               <Input
-                placeholder="Search languages..."
+                placeholder='Search languages...'
                 value={languageQuery}
                 onChange={(e) => setLanguageQuery(e.target.value)}
               />
 
-              <div className="space-y-1">
+              <div className='space-y-1'>
                 {selectedLanguageIds.length === 0 ? (
-                  <p className="text-xs text-gray-500">
+                  <p className='text-xs text-gray-500'>
                     No languages selected.
                   </p>
                 ) : (
@@ -287,35 +287,35 @@ export function CatalogModal({
                     return (
                       <div
                         key={id}
-                        className="flex items-center justify-between rounded-md border bg-gray-900 px-3 py-1.5 text-xs text-gray-200"
+                        className='flex items-center justify-between rounded-md border bg-gray-900 px-3 py-1.5 text-xs text-gray-200'
                       >
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-500 w-4">
+                        <div className='flex items-center gap-2'>
+                          <span className='text-gray-500 w-4'>
                             {index + 1}.
                           </span>
                           <span>
                             {lang.name} ({lang.code})
                           </span>
                           {id === defaultLanguageId && (
-                            <Badge variant="success">
+                            <Badge variant='success'>
                               Default
                             </Badge>
                           )}
                         </div>
-                        <div className="flex gap-1">
+                        <div className='flex gap-1'>
                           <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
+                            variant='ghost'
+                            size='icon'
+                            className='h-6 w-6'
                             onClick={() => moveLanguage(id, 'up')}
                             disabled={index === 0}
                           >
                             ↑
                           </Button>
                           <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
+                            variant='ghost'
+                            size='icon'
+                            className='h-6 w-6'
                             onClick={() => moveLanguage(id, 'down')}
                             disabled={
                               index === selectedLanguageIds.length - 1
@@ -324,9 +324,9 @@ export function CatalogModal({
                             ↓
                           </Button>
                           <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-red-400"
+                            variant='ghost'
+                            size='icon'
+                            className='h-6 w-6 text-red-400'
                             onClick={() => toggleLanguage(id)}
                           >
                             ×
@@ -338,24 +338,24 @@ export function CatalogModal({
                 )}
               </div>
 
-              <div className="max-h-32 overflow-y-auto rounded-md border border-border bg-gray-900 p-2 text-xs">
+              <div className='max-h-32 overflow-y-auto rounded-md border border-border bg-gray-900 p-2 text-xs'>
                 {availableLanguages.map((lang) => (
                   <Button
                     key={lang.id}
-                    variant="ghost"
-                    className="w-full justify-between h-8 px-2"
+                    variant='ghost'
+                    className='w-full justify-between h-8 px-2'
                     onClick={() => toggleLanguage(lang.id)}
                   >
                     <span>
                       {lang.name} ({lang.code})
                     </span>
-                    <span className="text-gray-500">Add</span>
+                    <span className='text-gray-500'>Add</span>
                   </Button>
                 ))}
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-xs text-gray-400">
+              <div className='space-y-2'>
+                <Label className='text-xs text-gray-400'>
                   Default language
                 </Label>
                 <Select
@@ -363,8 +363,8 @@ export function CatalogModal({
                   onValueChange={(v) => setDefaultLanguageId(v)}
                   disabled={selectedLanguageIds.length === 0}
                 >
-                  <SelectTrigger className="w-full bg-gray-900 border-border text-xs text-white">
-                    <SelectValue placeholder="Select default language" />
+                  <SelectTrigger className='w-full bg-gray-900 border-border text-xs text-white'>
+                    <SelectValue placeholder='Select default language' />
                   </SelectTrigger>
                   <SelectContent>
                     {selectedLanguageIds.map((id) => {
@@ -382,37 +382,37 @@ export function CatalogModal({
           )}
         </div>
 
-        <div className="rounded-md border border-border bg-card/70 p-4 space-y-4">
-          <Label className="text-sm font-semibold text-white">
+        <div className='rounded-md border border-border bg-card/70 p-4 space-y-4'>
+          <Label className='text-sm font-semibold text-white'>
             Price Groups
           </Label>
           {loadingGroups ? (
-            <p className="text-xs text-gray-500">Loading groups...</p>
+            <p className='text-xs text-gray-500'>Loading groups...</p>
           ) : (
-            <div className="space-y-4">
-              <div className="flex flex-wrap gap-2">
+            <div className='space-y-4'>
+              <div className='flex flex-wrap gap-2'>
                 {catalogPriceGroupIds.map((id) => {
                   const group = priceGroups.find((g) => g.id === id);
                   return (
                     <Button
                       key={id}
-                      variant="secondary"
-                      className="h-7 rounded-full px-3 text-xs"
+                      variant='secondary'
+                      className='h-7 rounded-full px-3 text-xs'
                       onClick={() => togglePriceGroup(id)}
                     >
                       {group?.name ?? id}{' '}
-                      <span className="ml-1 text-gray-500">×</span>
+                      <span className='ml-1 text-gray-500'>×</span>
                     </Button>
                   );
                 })}
               </div>
 
-              <div className="max-h-32 overflow-y-auto rounded-md border border-border bg-gray-900 p-2 text-xs">
+              <div className='max-h-32 overflow-y-auto rounded-md border border-border bg-gray-900 p-2 text-xs'>
                 {priceGroups.map((group) => (
                   <Button
                     key={group.id}
-                    variant="ghost"
-                    className="w-full justify-between h-8 px-2"
+                    variant='ghost'
+                    className='w-full justify-between h-8 px-2'
                     onClick={() => togglePriceGroup(group.id)}
                   >
                     <span>
@@ -427,8 +427,8 @@ export function CatalogModal({
                 ))}
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-xs text-gray-400">
+              <div className='space-y-2'>
+                <Label className='text-xs text-gray-400'>
                   Default price group
                 </Label>
                 <Select
@@ -438,8 +438,8 @@ export function CatalogModal({
                   }
                   disabled={catalogPriceGroupIds.length === 0}
                 >
-                  <SelectTrigger className="w-full bg-gray-900 border-border text-xs text-white">
-                    <SelectValue placeholder="Select default price group" />
+                  <SelectTrigger className='w-full bg-gray-900 border-border text-xs text-white'>
+                    <SelectValue placeholder='Select default price group' />
                   </SelectTrigger>
                   <SelectContent>
                     {catalogPriceGroupIds.map((id) => {

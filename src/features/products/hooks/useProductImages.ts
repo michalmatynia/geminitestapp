@@ -334,8 +334,7 @@ export function useProductImages(
           const existingSlot = newSlots[index];
           // Only update if the image ID changed or slot was empty
           if (
-            !existingSlot ||
-            existingSlot.type !== 'existing' ||
+            existingSlot?.type !== 'existing' ||
             existingSlot.slotId !== pImg.imageFile.id
           ) {
             newSlots[index] = {

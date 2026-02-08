@@ -21,7 +21,7 @@ export const buildHistoryNodeOptions = (
   const add = (id?: string | null, title?: string | null, type?: string | null): void => {
     if (!id || seen.has(id)) return;
     seen.add(id);
-    const base = title && title.trim() ? title.trim() : id;
+    const base = title?.trim() ? title.trim() : id;
     const label = type ? `${base} (${type})` : base;
     options.push({ id, label });
   };

@@ -90,21 +90,21 @@ export function PriceGroupModal({
       }}
       isSaving={saveMutation.isPending}
       saveText={priceGroup ? 'Update' : 'Create'}
-      cancelText="Close"
-      size="md"
+      cancelText='Close'
+      size='md'
     >
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="pg-name">Name</Label>
+      <div className='space-y-4'>
+        <div className='space-y-2'>
+          <Label htmlFor='pg-name'>Name</Label>
           <Input
-            id="pg-name"
+            id='pg-name'
             value={form.name}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setForm((p: typeof form) => ({ ...p, name: e.target.value }))}
-            placeholder="e.g. Retail PLN"
+            placeholder='e.g. Retail PLN'
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="pg-currency">Currency</Label>
+        <div className='space-y-2'>
+          <Label htmlFor='pg-currency'>Currency</Label>
           <Select
             value={form.currencyCode}
             onValueChange={(v: string): void => {
@@ -112,8 +112,8 @@ export function PriceGroupModal({
             }}
             disabled={loadingCurrencies}
           >
-            <SelectTrigger className="w-full bg-gray-900 border-border text-white">
-              <SelectValue placeholder="Select currency" />
+            <SelectTrigger className='w-full bg-gray-900 border-border text-white'>
+              <SelectValue placeholder='Select currency' />
             </SelectTrigger>
             <SelectContent>
               {currencyOptions.map((opt) => (

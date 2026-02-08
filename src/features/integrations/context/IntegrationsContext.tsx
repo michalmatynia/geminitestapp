@@ -223,7 +223,7 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
   const sessionOrigins = (sessionPayload?.origins as unknown[]) ?? [];
   const sessionUpdatedAt = (sessionPayload?.updatedAt as string) ?? null;
   const sessionError = sessionQuery.isError
-    ? (sessionQuery.error as Error)?.message ?? 'Failed to load session cookies.'
+    ? (sessionQuery.error)?.message ?? 'Failed to load session cookies.'
     : (sessionPayload?.error as string) ?? null;
 
   // Playwright State
@@ -272,12 +272,12 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
 
   useEffect(() => {
     if (!integrationsQuery.isError) return;
-    toast((integrationsQuery.error as Error)?.message ?? 'Failed to load integrations.', { variant: 'error' });
+    toast((integrationsQuery.error)?.message ?? 'Failed to load integrations.', { variant: 'error' });
   }, [integrationsQuery.error, integrationsQuery.isError, toast]);
 
   useEffect(() => {
     if (!connectionsQuery.isError) return;
-    toast((connectionsQuery.error as Error)?.message ?? 'Failed to load connections.', { variant: 'error' });
+    toast((connectionsQuery.error)?.message ?? 'Failed to load connections.', { variant: 'error' });
   }, [connectionsQuery.error, connectionsQuery.isError, toast]);
 
   useEffect(() => {
@@ -452,7 +452,7 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
         integrationId: activeIntegration.id,
         connectionId: connection.id,
         type,
-      })) as Record<string, unknown>;
+      }));
 
       const normalizedSteps = normalizeSteps((payload.steps as unknown[]) || []);
       if (normalizedSteps.length) setTestLog(normalizedSteps);

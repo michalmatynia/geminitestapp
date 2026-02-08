@@ -61,7 +61,7 @@ export function ColumnNodeItem({
       {
         id: 'remove-column',
         label: 'Remove column',
-        icon: <Minus className="size-3.5" />,
+        icon: <Minus className='size-3.5' />,
         tone: 'danger',
         disabled: !canRemove,
         onSelect: (): void => {
@@ -153,8 +153,8 @@ export function ColumnNodeItem({
     >
       <TreeContextMenu items={columnMenuItems}>
         <TreeRow
-          tone="none"
-          role="button"
+          tone='none'
+          role='button'
           tabIndex={0}
           onClick={(e: React.MouseEvent) => {
             e.stopPropagation();
@@ -186,27 +186,27 @@ export function ColumnNodeItem({
             hasChildren={true}
             ariaLabel={isExpanded ? 'Collapse column' : 'Expand column'}
             onToggle={(): void => toggleExpand(column.id)}
-            iconClassName="size-3"
-            placeholderClassName="block size-3 shrink-0"
+            iconClassName='size-3'
+            placeholderClassName='block size-3 shrink-0'
           />
-          <Columns className="size-3.5 shrink-0" />
-          <span className="flex-1 truncate text-left">{columnLabel}</span>
+          <Columns className='size-3.5 shrink-0' />
+          <span className='flex-1 truncate text-left'>{columnLabel}</span>
           {isDragOver && (
-            <span className="text-[10px] text-emerald-300">Drop here</span>
+            <span className='text-[10px] text-emerald-300'>Drop here</span>
           )}
-          <TreeActionSlot show="always" align="inline">
+          <TreeActionSlot show='always' align='inline'>
             <TreeActionButton
-              tone="danger"
+              tone='danger'
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 if (!canRemove) return;
                 gridActions.removeColumn(sectionId, column.id, rowId);
               }}
               disabled={!canRemove}
-              className="disabled:cursor-not-allowed disabled:opacity-40"
+              className='disabled:cursor-not-allowed disabled:opacity-40'
               title={canRemove ? 'Remove column' : 'At least one column is required'}
             >
-              <Minus className="size-3" />
+              <Minus className='size-3' />
             </TreeActionButton>
             <ColumnBlockPicker
               onSelect={(blockType: string) => blockActions.addToColumn(sectionId, column.id, blockType)}
@@ -217,7 +217,7 @@ export function ColumnNodeItem({
 
       {isExpanded && (
         <div
-          className="ml-4 border-l border-border/30 pl-1"
+          className='ml-4 border-l border-border/30 pl-1'
           onDragOver={handleColumnDragOver}
           onDragLeave={(e: React.DragEvent) => {
             if (e.currentTarget.contains(e.relatedTarget as Node)) return;

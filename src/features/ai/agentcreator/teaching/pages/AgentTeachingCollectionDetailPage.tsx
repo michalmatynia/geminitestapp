@@ -102,66 +102,66 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
   };
 
   return (
-    <div className="container mx-auto py-10 space-y-6">
+    <div className='container mx-auto py-10 space-y-6'>
       <SectionHeader
         title={collection ? collection.name : 'Collection'}
-        description="Manage documents (original text + embedding vectors)."
+        description='Manage documents (original text + embedding vectors).'
         eyebrow={(
-          <Link href="/admin/agentcreator/teaching/collections" className="text-blue-300 hover:text-blue-200">
+          <Link href='/admin/agentcreator/teaching/collections' className='text-blue-300 hover:text-blue-200'>
             ← Back to collections
           </Link>
         )}
         actions={collection ? (
-          <div className="text-xs text-gray-400">
-            Embedding model: <span className="text-gray-200">{collection.embeddingModel}</span>
+          <div className='text-xs text-gray-400'>
+            Embedding model: <span className='text-gray-200'>{collection.embeddingModel}</span>
           </div>
         ) : undefined}
       />
 
-      <SectionPanel className="p-4 space-y-4">
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
+      <SectionPanel className='p-4 space-y-4'>
+        <div className='grid gap-4 md:grid-cols-2'>
+          <div className='space-y-2'>
             <Label>Title (optional)</Label>
-            <Input value={title} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)} placeholder="e.g. Product naming rules" />
+            <Input value={title} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)} placeholder='e.g. Product naming rules' />
           </div>
-          <div className="space-y-2">
+          <div className='space-y-2'>
             <Label>Source (optional)</Label>
-            <Input value={source} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSource(e.target.value)} placeholder="e.g. internal wiki / URL / note id" />
+            <Input value={source} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSource(e.target.value)} placeholder='e.g. internal wiki / URL / note id' />
           </div>
         </div>
-        <div className="space-y-2">
+        <div className='space-y-2'>
           <Label>Tags (comma separated)</Label>
-          <Input value={tags} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTags(e.target.value)} placeholder="pricing, listings, seo" />
+          <Input value={tags} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTags(e.target.value)} placeholder='pricing, listings, seo' />
         </div>
-        <div className="space-y-2">
+        <div className='space-y-2'>
           <Label>Text to embed</Label>
           <Textarea
             value={text}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setText(e.target.value)}
-            placeholder="Paste the original text you want the agent to learn from..."
-            className="min-h-[160px]"
+            placeholder='Paste the original text you want the agent to learn from...'
+            className='min-h-[160px]'
           />
-          <div className="flex justify-end">
-            <Button type="button" onClick={() => void handleAdd()} disabled={adding || deleting || !collectionId || !text.trim()}>
+          <div className='flex justify-end'>
+            <Button type='button' onClick={() => void handleAdd()} disabled={adding || deleting || !collectionId || !text.trim()}>
               {adding ? 'Embedding...' : 'Add to collection'}
             </Button>
           </div>
-          <div className="text-[11px] text-gray-500">
+          <div className='text-[11px] text-gray-500'>
             This stores both the text and the embedding vector in MongoDB.
           </div>
         </div>
       </SectionPanel>
 
-      <SectionPanel className="p-4 space-y-3">
-        <div className="flex items-center justify-between gap-3">
+      <SectionPanel className='p-4 space-y-3'>
+        <div className='flex items-center justify-between gap-3'>
           <div>
-            <div className="text-sm font-semibold text-white">Search the embedding school</div>
-            <div className="text-[11px] text-gray-500">
+            <div className='text-sm font-semibold text-white'>Search the embedding school</div>
+            <div className='text-[11px] text-gray-500'>
               Embed a query and preview which documents would be retrieved.
             </div>
           </div>
           <Button
-            type="button"
+            type='button'
             onClick={() => void handleSearch()}
             disabled={searching || !collectionId || !searchQuery.trim()}
           >
@@ -169,22 +169,22 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
           </Button>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="md:col-span-2 space-y-2">
+        <div className='grid gap-4 md:grid-cols-3'>
+          <div className='md:col-span-2 space-y-2'>
             <Label>Query</Label>
             <Textarea
               value={searchQuery}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSearchQuery(e.target.value)}
-              placeholder="Ask something you expect the learner agent to answer from this collection..."
-              className="min-h-[90px]"
+              placeholder='Ask something you expect the learner agent to answer from this collection...'
+              className='min-h-[90px]'
               disabled={searching || !collectionId}
             />
           </div>
-          <div className="space-y-3">
-            <div className="space-y-2">
+          <div className='space-y-3'>
+            <div className='space-y-2'>
               <Label>Top K</Label>
               <Input
-                type="number"
+                type='number'
                 min={1}
                 max={50}
                 value={String(searchTopK)}
@@ -192,10 +192,10 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
                 disabled={searching || !collectionId}
               />
             </div>
-            <div className="space-y-2">
+            <div className='space-y-2'>
               <Label>Min score</Label>
               <Input
-                type="number"
+                type='number'
                 min={-1}
                 max={1}
                 step={0.01}
@@ -208,35 +208,35 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
         </div>
 
         {searchError ? (
-          <div className="rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-[11px] text-rose-200">
+          <div className='rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-[11px] text-rose-200'>
             {searchError}
           </div>
         ) : null}
 
-        <div className="rounded-md border border-border bg-card/30 p-3">
-          <div className="text-sm font-semibold text-white">Top matches</div>
+        <div className='rounded-md border border-border bg-card/30 p-3'>
+          <div className='text-sm font-semibold text-white'>Top matches</div>
           {searchResults.length === 0 ? (
-            <div className="mt-2 text-sm text-gray-400">
+            <div className='mt-2 text-sm text-gray-400'>
               {searching ? 'Searching…' : 'No matches yet. Run a search.'}
             </div>
           ) : (
-            <div className="mt-2 space-y-2">
+            <div className='mt-2 space-y-2'>
               {searchResults.map((src: AgentTeachingChatSource) => (
-                <div key={src.documentId} className="rounded-md border border-border bg-card/50 p-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="text-xs text-gray-300">
+                <div key={src.documentId} className='rounded-md border border-border bg-card/50 p-2'>
+                  <div className='flex items-center justify-between gap-2'>
+                    <div className='text-xs text-gray-300'>
                       [doc:{src.documentId}] • score {src.score.toFixed(3)}
                     </div>
                     {src.metadata?.title ? (
-                      <div className="text-[11px] text-gray-500">
+                      <div className='text-[11px] text-gray-500'>
                         {src.metadata.title}
                       </div>
                     ) : null}
                   </div>
                   {src.metadata?.source ? (
-                    <div className="mt-1 text-[11px] text-gray-500">Source: {src.metadata.source}</div>
+                    <div className='mt-1 text-[11px] text-gray-500'>Source: {src.metadata.source}</div>
                   ) : null}
-                  <div className="mt-2 max-h-28 overflow-auto whitespace-pre-wrap text-xs text-gray-200">
+                  <div className='mt-2 max-h-28 overflow-auto whitespace-pre-wrap text-xs text-gray-200'>
                     {src.text}
                   </div>
                 </div>
@@ -246,46 +246,46 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
         </div>
       </SectionPanel>
 
-      <div className="rounded-md border bg-card/60 backdrop-blur">
+      <div className='rounded-md border bg-card/60 backdrop-blur'>
         <Table>
           <TableHeader>
-            <TableRow className="border-border/60">
-              <TableHead className="text-xs text-gray-400">Text</TableHead>
-              <TableHead className="text-xs text-gray-400">Meta</TableHead>
-              <TableHead className="text-xs text-gray-400">Updated</TableHead>
-              <TableHead className="text-xs text-gray-400 text-right">Actions</TableHead>
+            <TableRow className='border-border/60'>
+              <TableHead className='text-xs text-gray-400'>Text</TableHead>
+              <TableHead className='text-xs text-gray-400'>Meta</TableHead>
+              <TableHead className='text-xs text-gray-400'>Updated</TableHead>
+              <TableHead className='text-xs text-gray-400 text-right'>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {(docsResult?.items ?? []).map((doc: AgentTeachingEmbeddingDocumentListItem) => (
-              <TableRow key={doc.id} className="border-border/50">
-                <TableCell className="text-sm text-gray-200">
-                  <div className="max-w-[520px] truncate" title={doc.text}>
+              <TableRow key={doc.id} className='border-border/50'>
+                <TableCell className='text-sm text-gray-200'>
+                  <div className='max-w-[520px] truncate' title={doc.text}>
                     {doc.text}
                   </div>
                 </TableCell>
-                <TableCell className="text-xs text-gray-400">
-                  <div className="space-y-1">
+                <TableCell className='text-xs text-gray-400'>
+                  <div className='space-y-1'>
                     {doc.metadata?.title ? <div>Title: {doc.metadata.title}</div> : null}
                     {doc.metadata?.source ? <div>Source: {doc.metadata.source}</div> : null}
                     {doc.metadata?.tags?.length ? <div>Tags: {doc.metadata.tags.join(', ')}</div> : null}
-                    <div className="text-[11px] text-gray-500">
+                    <div className='text-[11px] text-gray-500'>
                       {doc.embeddingModel} ({doc.embeddingDimensions})
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="text-xs text-gray-400">
+                <TableCell className='text-xs text-gray-400'>
                   {doc.updatedAt ? new Date(doc.updatedAt).toLocaleString() : '—'}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className='text-right'>
                   <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
+                    type='button'
+                    variant='outline'
+                    size='sm'
                     onClick={(): void => setDocToDelete(doc)}
                     disabled={adding || deleting}
                   >
-                    <Trash2 className="mr-1 size-3" />
+                    <Trash2 className='mr-1 size-3' />
                     Delete
                   </Button>
                 </TableCell>
@@ -294,7 +294,7 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
 
             {!isLoading && (docsResult?.items ?? []).length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center text-sm text-gray-400">
+                <TableCell colSpan={4} className='h-24 text-center text-sm text-gray-400'>
                   No documents yet.
                 </TableCell>
               </TableRow>
@@ -308,10 +308,10 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
         onOpenChange={(open: boolean): void => {
           if (!open) setDocToDelete(null);
         }}
-        title="Delete document"
-        description="Delete this embedded document? This cannot be undone."
-        confirmText="Delete"
-        variant="destructive"
+        title='Delete document'
+        description='Delete this embedded document? This cannot be undone.'
+        confirmText='Delete'
+        variant='destructive'
         onConfirm={(): void => {
           if (!collectionId || !docToDelete) return;
           void deleteDoc({ collectionId, documentId: docToDelete.id })

@@ -495,21 +495,21 @@ export function DatabaseConstructorTab({
   }, [connectedPlaceholders, operation, queryConfig.collection, queryConfig.provider, schemaCollections, isMultiSchema]);
 
   const pendingAiQuerySection = pendingAiQuery ? (
-    <div className="rounded-md border border-purple-500/40 bg-purple-500/10 p-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-purple-400"></div>
-          <span className="text-xs text-purple-100">AI query ready for review</span>
+    <div className='rounded-md border border-purple-500/40 bg-purple-500/10 p-3'>
+      <div className='flex items-center justify-between'>
+        <div className='flex items-center gap-2'>
+          <div className='h-2 w-2 rounded-full bg-purple-400'></div>
+          <span className='text-xs text-purple-100'>AI query ready for review</span>
           {codeSnippets.length > 0 && (
-            <span className="text-[10px] text-purple-300">
+            <span className='text-[10px] text-purple-300'>
               ({codeSnippets.length} code snippet{codeSnippets.length > 1 ? 's' : ''})
             </span>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className='flex gap-2'>
           <Button
-            type="button"
-            className="h-7 rounded-md border border-emerald-700 bg-emerald-500/10 px-3 text-[10px] text-emerald-200 hover:bg-emerald-500/20"
+            type='button'
+            className='h-7 rounded-md border border-emerald-700 bg-emerald-500/10 px-3 text-[10px] text-emerald-200 hover:bg-emerald-500/20'
             onClick={(): void => {
               // Use selected snippet if available, otherwise use full response
               const queryToAccept = selectedSnippetIndex >= 0 && codeSnippets[selectedSnippetIndex]
@@ -546,8 +546,8 @@ export function DatabaseConstructorTab({
               : 'Accept'}
           </Button>
           <Button
-            type="button"
-            className="h-7 rounded-md border border-rose-700 bg-rose-500/10 px-3 text-[10px] text-rose-200 hover:bg-rose-500/20"
+            type='button'
+            className='h-7 rounded-md border border-rose-700 bg-rose-500/10 px-3 text-[10px] text-rose-200 hover:bg-rose-500/20'
             onClick={(): void => {
               setPendingAiQuery('');
               toast('AI query rejected.', { variant: 'success' });
@@ -560,39 +560,39 @@ export function DatabaseConstructorTab({
 
       {/* Code snippet navigation */}
       {codeSnippets.length > 0 && (
-        <div className="mt-2 flex items-center gap-2">
-          <div className="flex flex-col">
+        <div className='mt-2 flex items-center gap-2'>
+          <div className='flex flex-col'>
             <Button
-              type="button"
-              className="h-5 w-5 rounded-sm border border-purple-600 bg-purple-500/20 p-0 text-purple-200 hover:bg-purple-500/40 disabled:opacity-30"
+              type='button'
+              className='h-5 w-5 rounded-sm border border-purple-600 bg-purple-500/20 p-0 text-purple-200 hover:bg-purple-500/40 disabled:opacity-30'
               disabled={selectedSnippetIndex <= 0}
               onClick={(): void => setSelectedSnippetIndex((prev: number): number => Math.max(0, prev - 1))}
             >
-              <ChevronUp className="h-3 w-3" />
+              <ChevronUp className='h-3 w-3' />
             </Button>
             <Button
-              type="button"
-              className="h-5 w-5 rounded-sm border border-purple-600 bg-purple-500/20 p-0 text-purple-200 hover:bg-purple-500/40 disabled:opacity-30"
+              type='button'
+              className='h-5 w-5 rounded-sm border border-purple-600 bg-purple-500/20 p-0 text-purple-200 hover:bg-purple-500/40 disabled:opacity-30'
               disabled={selectedSnippetIndex >= codeSnippets.length - 1}
               onClick={(): void => setSelectedSnippetIndex((prev: number): number => Math.min(codeSnippets.length - 1, prev + 1))}
             >
-              <ChevronDown className="h-3 w-3" />
+              <ChevronDown className='h-3 w-3' />
             </Button>
           </div>
-          <div className="flex-1 rounded-md border border-cyan-600/50 bg-cyan-500/10 p-2">
-            <div className="mb-1 flex items-center justify-between">
-              <span className="text-[10px] text-cyan-300">
+          <div className='flex-1 rounded-md border border-cyan-600/50 bg-cyan-500/10 p-2'>
+            <div className='mb-1 flex items-center justify-between'>
+              <span className='text-[10px] text-cyan-300'>
                 Snippet {selectedSnippetIndex + 1} of {codeSnippets.length}
               </span>
               <Button
-                type="button"
-                className="h-5 rounded-sm border border-gray-600 bg-gray-500/20 px-2 text-[9px] text-gray-300 hover:bg-gray-500/40"
+                type='button'
+                className='h-5 rounded-sm border border-gray-600 bg-gray-500/20 px-2 text-[9px] text-gray-300 hover:bg-gray-500/40'
                 onClick={(): void => setSelectedSnippetIndex(-1)}
               >
                 Show Full Response
               </Button>
             </div>
-            <pre className="max-h-20 overflow-auto rounded bg-card/70 p-2 text-[11px] text-cyan-100 whitespace-pre-wrap break-all">
+            <pre className='max-h-20 overflow-auto rounded bg-card/70 p-2 text-[11px] text-cyan-100 whitespace-pre-wrap break-all'>
               {codeSnippets[selectedSnippetIndex]}
             </pre>
           </div>
@@ -601,7 +601,7 @@ export function DatabaseConstructorTab({
 
       {/* Full response (shown when no snippet selected or no snippets available) */}
       {(selectedSnippetIndex < 0 || codeSnippets.length === 0) && (
-        <pre className="mt-2 max-h-25 overflow-auto rounded-md bg-card/70 p-2 text-[11px] text-gray-300 whitespace-pre-wrap break-all">
+        <pre className='mt-2 max-h-25 overflow-auto rounded-md bg-card/70 p-2 text-[11px] text-gray-300 whitespace-pre-wrap break-all'>
           {pendingAiQuery}
         </pre>
       )}
@@ -609,19 +609,19 @@ export function DatabaseConstructorTab({
   ) : null;
 
   return (
-    <div className="space-y-4 rounded-md border border-border bg-card/40 p-3">
+    <div className='space-y-4 rounded-md border border-border bg-card/40 p-3'>
       <div onFocusCapture={(): void => setPlaceholderTarget('query')}>
         {queryInputControls}
       </div>
 
       {pendingAiQuerySection}
 
-      <div className="space-y-3">
-        <Label className="text-xs text-gray-400">Quick Presets</Label>
-        <div className="flex flex-wrap gap-2 items-center">
+      <div className='space-y-3'>
+        <Label className='text-xs text-gray-400'>Quick Presets</Label>
+        <div className='flex flex-wrap gap-2 items-center'>
           <Button
-            type="button"
-            className="h-7 rounded-md border border-blue-700 bg-blue-500/10 px-2 text-[10px] text-blue-200 hover:bg-blue-500/20"
+            type='button'
+            className='h-7 rounded-md border border-blue-700 bg-blue-500/10 px-2 text-[10px] text-blue-200 hover:bg-blue-500/20'
             onClick={(): void => openSaveQueryPresetModal()}
           >
             Save As Preset
@@ -630,10 +630,10 @@ export function DatabaseConstructorTab({
             value={databaseConfig.presetId ?? 'custom'}
             onValueChange={(value: string): void => applyDatabasePreset(value)}
           >
-            <SelectTrigger className="h-7 w-[180px] border-border bg-card/70 text-xs text-white">
-              <SelectValue placeholder="Select preset" />
+            <SelectTrigger className='h-7 w-[180px] border-border bg-card/70 text-xs text-white'>
+              <SelectValue placeholder='Select preset' />
             </SelectTrigger>
-            <SelectContent className="border-border bg-gray-900">
+            <SelectContent className='border-border bg-gray-900'>
               {presetOptions.map((preset: DatabasePresetOption): React.JSX.Element => (
                 <SelectItem key={preset.id} value={preset.id}>
                   {preset.label}
@@ -664,11 +664,11 @@ export function DatabaseConstructorTab({
               }
             }}
           >
-            <SelectTrigger className="h-7 w-[180px] border-border bg-card/70 text-xs text-white">
-              <SelectValue placeholder="AI Queries" />
+            <SelectTrigger className='h-7 w-[180px] border-border bg-card/70 text-xs text-white'>
+              <SelectValue placeholder='AI Queries' />
             </SelectTrigger>
-            <SelectContent className="border-border bg-gray-900">
-              <SelectItem value="none">No AI Query</SelectItem>
+            <SelectContent className='border-border bg-gray-900'>
+              <SelectItem value='none'>No AI Query</SelectItem>
               {aiQueries.map((aiQuery: AiQuery): React.JSX.Element => (
                 <SelectItem key={aiQuery.id} value={aiQuery.id}>
                   AI Query {new Date(aiQuery.timestamp).toLocaleTimeString()}
@@ -677,8 +677,8 @@ export function DatabaseConstructorTab({
             </SelectContent>
           </Select>
           <Button
-            type="button"
-            className="h-7 rounded-md border border-rose-500/40 px-2 text-[10px] text-rose-200 hover:bg-rose-500/10 disabled:opacity-40"
+            type='button'
+            className='h-7 rounded-md border border-rose-500/40 px-2 text-[10px] text-rose-200 hover:bg-rose-500/10 disabled:opacity-40'
             disabled={!selectedAiQueryId}
             onClick={(): void => {
               if (!selectedAiQueryId) return;
@@ -689,26 +689,26 @@ export function DatabaseConstructorTab({
               setSelectedAiQueryId('');
               toast('AI query removed.', { variant: 'success' });
             }}
-            title="Remove selected AI query"
+            title='Remove selected AI query'
           >
             Remove AI Query
           </Button>
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/60 bg-card/40 px-3 py-2">
+      <div className='flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/60 bg-card/40 px-3 py-2'>
         <div>
-          <div className="text-xs font-medium text-gray-200">Placeholders</div>
-          <div className="text-[10px] text-gray-400">
+          <div className='text-xs font-medium text-gray-200'>Placeholders</div>
+          <div className='text-[10px] text-gray-400'>
             Open the matrix to insert any placeholder into queries or prompts.
           </div>
         </div>
         <Button
-          type="button"
-          className="h-7 rounded-md border border-sky-500/40 px-3 text-[10px] text-sky-100 hover:bg-sky-500/10"
+          type='button'
+          className='h-7 rounded-md border border-sky-500/40 px-3 text-[10px] text-sky-100 hover:bg-sky-500/10'
           onClick={(): void => setPlaceholderMatrixOpen(true)}
         >
-          <LayoutGrid className="mr-2 h-3.5 w-3.5" />
+          <LayoutGrid className='mr-2 h-3.5 w-3.5' />
           Placeholders
         </Button>
       </div>
@@ -725,21 +725,21 @@ export function DatabaseConstructorTab({
       />
 
       {hasSchemaConnection && (
-        <div className="rounded-md border border-purple-800/50 bg-purple-950/20 p-3">
-          <div className="mb-2 flex items-center gap-2">
-            <span className="text-[11px] font-medium text-purple-300">
+        <div className='rounded-md border border-purple-800/50 bg-purple-950/20 p-3'>
+          <div className='mb-2 flex items-center gap-2'>
+            <span className='text-[11px] font-medium text-purple-300'>
               Database Schema
             </span>
             {schemaLoading && (
-              <span className="text-[10px] text-gray-500">Loading...</span>
+              <span className='text-[10px] text-gray-500'>Loading...</span>
             )}
           </div>
           {fetchedCollections.length > 0 ? (
-            <div className="space-y-2">
-              <div className="text-[10px] text-gray-400">
+            <div className='space-y-2'>
+              <div className='text-[10px] text-gray-400'>
                 Click to set collection or insert field:
               </div>
-              <div className="flex flex-wrap gap-1">
+              <div className='flex flex-wrap gap-1'>
                 {fetchedCollections.map((coll: CollectionSchema): React.JSX.Element => {
                   const schemaFields = coll.fields?.map((f: FieldSchema): string => `${f.name}: ${f.type}`).join(', ') ?? '';
                   const resolvedTooltip = `{{schema:Collection "${coll.name}" with fields: ${schemaFields || 'unknown'}}}`;
@@ -747,12 +747,12 @@ export function DatabaseConstructorTab({
                     <Tooltip
                       key={`${coll.provider ?? 'db'}:${coll.name}`}
                       content={resolvedTooltip}
-                      side="bottom"
-                      maxWidth="500px"
+                      side='bottom'
+                      maxWidth='500px'
                     >
                       <Button
-                        type="button"
-                        className="rounded-md border border-purple-700/50 bg-purple-500/10 px-2 py-1 text-[10px] text-purple-300 hover:bg-purple-500/20"
+                        type='button'
+                        className='rounded-md border border-purple-700/50 bg-purple-500/10 px-2 py-1 text-[10px] text-purple-300 hover:bg-purple-500/20'
                         onClick={(): void => {
                           updateQueryConfig({
                             mode: 'custom',
@@ -773,16 +773,16 @@ export function DatabaseConstructorTab({
                 );
                 if (!currentColl?.fields?.length) return null;
                 return (
-                  <div className="mt-2">
-                    <div className="text-[10px] text-gray-400">
+                  <div className='mt-2'>
+                    <div className='text-[10px] text-gray-400'>
                       Fields in {currentColl.name}:
                     </div>
-                    <div className="mt-1 flex flex-wrap gap-1">
+                    <div className='mt-1 flex flex-wrap gap-1'>
                       {currentColl.fields.slice(0, 20).map((field: FieldSchema): React.JSX.Element => (
                         <Button
                           key={field.name}
-                          type="button"
-                          className="rounded-md border border/50 bg-gray-800/30 px-2 py-0.5 text-[9px] text-gray-300 hover:bg-gray-700/50"
+                          type='button'
+                          className='rounded-md border border/50 bg-gray-800/30 px-2 py-0.5 text-[9px] text-gray-300 hover:bg-gray-700/50'
                           onClick={(): void => {
                             const fieldQuery = `"${field.name}": "{{value}}"`;
                             const current = queryTemplateValue.trim();
@@ -803,13 +803,13 @@ export function DatabaseConstructorTab({
                           title={`Type: ${field.type}`}
                         >
                           {field.name}
-                          <span className="ml-1 text-[8px] text-gray-500">
+                          <span className='ml-1 text-[8px] text-gray-500'>
                             {field.type}
                           </span>
                         </Button>
                       ))}
                       {currentColl.fields.length > 20 && (
-                        <span className="px-2 py-0.5 text-[9px] text-gray-500">
+                        <span className='px-2 py-0.5 text-[9px] text-gray-500'>
                           +{currentColl.fields.length - 20} more
                         </span>
                       )}
@@ -819,41 +819,41 @@ export function DatabaseConstructorTab({
               })()}
             </div>
           ) : !schemaLoading ? (
-            <div className="text-[10px] text-gray-500 italic">
+            <div className='text-[10px] text-gray-500 italic'>
               No schema data available
             </div>
           ) : null}
         </div>
       )}
 
-      <div className="space-y-2">
-        <Label className="text-xs text-gray-400">Template Snippets</Label>
+      <div className='space-y-2'>
+        <Label className='text-xs text-gray-400'>Template Snippets</Label>
         <Button
-          type="button"
-          className="flex items-center gap-2 rounded-md border border-purple-600 bg-purple-500/10 px-3 py-1.5 text-[11px] text-purple-200 hover:bg-purple-500/20"
+          type='button'
+          className='flex items-center gap-2 rounded-md border border-purple-600 bg-purple-500/10 px-3 py-1.5 text-[11px] text-purple-200 hover:bg-purple-500/20'
           onClick={(): void => setSnippetsModalOpen(true)}
         >
-          <LayoutGrid className="h-3.5 w-3.5" />
+          <LayoutGrid className='h-3.5 w-3.5' />
           Browse Snippets
         </Button>
       </div>
 
       {/* Template Snippets Modal */}
       <Dialog open={snippetsModalOpen} onOpenChange={setSnippetsModalOpen}>
-        <DialogContent className="max-w-2xl border border-border bg-card text-white">
+        <DialogContent className='max-w-2xl border border-border bg-card text-white'>
           <DialogHeader>
-            <DialogTitle className="text-lg">Template Snippets</DialogTitle>
+            <DialogTitle className='text-lg'>Template Snippets</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+          <div className='space-y-4 max-h-[60vh] overflow-y-auto'>
             {/* Query Templates */}
-            <div className="space-y-2">
-              <Label className="text-xs text-gray-400 uppercase tracking-wide">Query Templates</Label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div className='space-y-2'>
+              <Label className='text-xs text-gray-400 uppercase tracking-wide'>Query Templates</Label>
+              <div className='grid grid-cols-2 sm:grid-cols-3 gap-2'>
                 {templateSnippets.map((snippet: { label: string; value: string }): React.JSX.Element => (
                   <Button
                     key={snippet.label}
-                    type="button"
-                    className="h-auto flex-col items-start gap-1 rounded-md border border-emerald-600/50 bg-emerald-500/10 p-3 text-left hover:bg-emerald-500/20"
+                    type='button'
+                    className='h-auto flex-col items-start gap-1 rounded-md border border-emerald-600/50 bg-emerald-500/10 p-3 text-left hover:bg-emerald-500/20'
                     onClick={(): void => {
                       setSelectedAiQueryId('');
                       updateQueryConfig({
@@ -864,21 +864,21 @@ export function DatabaseConstructorTab({
                       toast(`Applied: ${snippet.label}`, { variant: 'success' });
                     }}
                   >
-                    <span className="text-[11px] font-medium text-emerald-200">{snippet.label}</span>
-                    <pre className="text-[9px] text-gray-400 whitespace-pre-wrap break-all line-clamp-2">{snippet.value}</pre>
+                    <span className='text-[11px] font-medium text-emerald-200'>{snippet.label}</span>
+                    <pre className='text-[9px] text-gray-400 whitespace-pre-wrap break-all line-clamp-2'>{snippet.value}</pre>
                   </Button>
                 ))}
               </div>
             </div>
 
             {/* Read Query Types */}
-            <div className="space-y-2">
-              <Label className="text-xs text-gray-400 uppercase tracking-wide">Read Query Types</Label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div className='space-y-2'>
+              <Label className='text-xs text-gray-400 uppercase tracking-wide'>Read Query Types</Label>
+              <div className='grid grid-cols-2 sm:grid-cols-3 gap-2'>
                 {readQueryTypes.map((snippet: { label: string; value: string; disabled?: boolean; note?: string }): React.JSX.Element => (
                   <Button
                     key={snippet.label}
-                    type="button"
+                    type='button'
                     disabled={snippet.disabled}
                     className={`h-auto flex-col items-start gap-1 rounded-md border p-3 text-left ${
                       snippet.disabled
@@ -892,9 +892,9 @@ export function DatabaseConstructorTab({
                     }}
                     title={snippet.note ?? undefined}
                   >
-                    <span className="text-[11px] font-medium text-indigo-200">{snippet.label}</span>
+                    <span className='text-[11px] font-medium text-indigo-200'>{snippet.label}</span>
                     {snippet.note ? (
-                      <span className="text-[9px] text-gray-400">{snippet.note}</span>
+                      <span className='text-[9px] text-gray-400'>{snippet.note}</span>
                     ) : null}
                   </Button>
                 ))}
@@ -902,18 +902,18 @@ export function DatabaseConstructorTab({
             </div>
 
             {/* Query Operators */}
-            <div className="space-y-2">
-              <Label className="text-xs text-gray-400 uppercase tracking-wide">Query Operators</Label>
-              <div className="space-y-3">
+            <div className='space-y-2'>
+              <Label className='text-xs text-gray-400 uppercase tracking-wide'>Query Operators</Label>
+              <div className='space-y-3'>
                 {queryOperatorGroups.map((group: { label: string; items: Array<{ label: string; value: string }> }): React.JSX.Element => (
-                  <div key={group.label} className="space-y-1">
-                    <div className="text-[10px] text-gray-500">{group.label}</div>
-                    <div className="flex flex-wrap gap-2">
+                  <div key={group.label} className='space-y-1'>
+                    <div className='text-[10px] text-gray-500'>{group.label}</div>
+                    <div className='flex flex-wrap gap-2'>
                       {group.items.map((item: { label: string; value: string }): React.JSX.Element => (
                         <Button
                           key={item.label}
-                          type="button"
-                          className="h-6 rounded-md border border-emerald-600/50 bg-emerald-500/10 px-2 text-[10px] text-emerald-200 hover:bg-emerald-500/20"
+                          type='button'
+                          className='h-6 rounded-md border border-emerald-600/50 bg-emerald-500/10 px-2 text-[10px] text-emerald-200 hover:bg-emerald-500/20'
                           onClick={(): void => {
                             insertTemplateSnippet(item.value);
                             toast(`Inserted ${item.label}`, { variant: 'success' });
@@ -929,18 +929,18 @@ export function DatabaseConstructorTab({
             </div>
 
             {/* Update Operators */}
-            <div className="space-y-2">
-              <Label className="text-xs text-gray-400 uppercase tracking-wide">Update Operators</Label>
-              <div className="space-y-3">
+            <div className='space-y-2'>
+              <Label className='text-xs text-gray-400 uppercase tracking-wide'>Update Operators</Label>
+              <div className='space-y-3'>
                 {updateOperatorGroups.map((group: { label: string; items: Array<{ label: string; value: string }> }): React.JSX.Element => (
-                  <div key={group.label} className="space-y-1">
-                    <div className="text-[10px] text-gray-500">{group.label}</div>
-                    <div className="flex flex-wrap gap-2">
+                  <div key={group.label} className='space-y-1'>
+                    <div className='text-[10px] text-gray-500'>{group.label}</div>
+                    <div className='flex flex-wrap gap-2'>
                       {group.items.map((item: { label: string; value: string }): React.JSX.Element => (
                         <Button
                           key={item.label}
-                          type="button"
-                          className="h-6 rounded-md border border-sky-600/50 bg-sky-500/10 px-2 text-[10px] text-sky-200 hover:bg-sky-500/20"
+                          type='button'
+                          className='h-6 rounded-md border border-sky-600/50 bg-sky-500/10 px-2 text-[10px] text-sky-200 hover:bg-sky-500/20'
                           onClick={(): void => {
                             insertTemplateSnippet(item.value);
                             toast(`Inserted ${item.label}`, { variant: 'success' });
@@ -956,15 +956,15 @@ export function DatabaseConstructorTab({
             </div>
 
             {/* Aggregation Stages */}
-            <div className="space-y-2">
-              <Label className="text-xs text-gray-400 uppercase tracking-wide">Aggregation Stages</Label>
+            <div className='space-y-2'>
+              <Label className='text-xs text-gray-400 uppercase tracking-wide'>Aggregation Stages</Label>
               {aggregationStageSnippets.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
+                <div className='flex flex-wrap gap-2'>
                   {aggregationStageSnippets.map((stage: { label: string; value: string }): React.JSX.Element => (
                     <Button
                       key={stage.label}
-                      type="button"
-                      className="h-6 rounded-md border border-amber-600/50 bg-amber-500/10 px-2 text-[10px] text-amber-200 hover:bg-amber-500/20"
+                      type='button'
+                      className='h-6 rounded-md border border-amber-600/50 bg-amber-500/10 px-2 text-[10px] text-amber-200 hover:bg-amber-500/20'
                       onClick={(): void => {
                         insertTemplateSnippet(stage.value);
                         toast(`Inserted ${stage.label}`, { variant: 'success' });
@@ -975,23 +975,23 @@ export function DatabaseConstructorTab({
                   ))}
                 </div>
               ) : (
-                <div className="text-[10px] text-amber-200/80">
+                <div className='text-[10px] text-amber-200/80'>
                   Aggregation pipelines are MongoDB-only.
                 </div>
               )}
             </div>
 
             {/* Sort Presets */}
-            <div className="space-y-2">
-              <Label className="text-xs text-gray-400 uppercase tracking-wide">
+            <div className='space-y-2'>
+              <Label className='text-xs text-gray-400 uppercase tracking-wide'>
                 {isPrismaProvider ? 'Order By Options' : 'Sort Options'}
               </Label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <div className='grid grid-cols-2 sm:grid-cols-3 gap-2'>
                 {sortPresets.map((preset: { id: string; label: string; value: string }): React.JSX.Element => (
                   <Button
                     key={preset.id}
-                    type="button"
-                    className="h-auto flex-col items-start gap-1 rounded-md border border-sky-600/50 bg-sky-500/10 p-3 text-left hover:bg-sky-500/20"
+                    type='button'
+                    className='h-auto flex-col items-start gap-1 rounded-md border border-sky-600/50 bg-sky-500/10 p-3 text-left hover:bg-sky-500/20'
                     onClick={(): void => {
                       updateQueryConfig({
                         mode: 'custom',
@@ -1001,24 +1001,24 @@ export function DatabaseConstructorTab({
                       toast(`Applied sort: ${preset.label}`, { variant: 'success' });
                     }}
                   >
-                    <span className="text-[11px] font-medium text-sky-200">{preset.label}</span>
-                    <pre className="text-[9px] text-gray-400 whitespace-pre-wrap break-all">{preset.value}</pre>
+                    <span className='text-[11px] font-medium text-sky-200'>{preset.label}</span>
+                    <pre className='text-[9px] text-gray-400 whitespace-pre-wrap break-all'>{preset.value}</pre>
                   </Button>
                 ))}
               </div>
             </div>
 
             {/* Projection Presets */}
-            <div className="space-y-2">
-              <Label className="text-xs text-gray-400 uppercase tracking-wide">
+            <div className='space-y-2'>
+              <Label className='text-xs text-gray-400 uppercase tracking-wide'>
                 {isPrismaProvider ? 'Select (Fields)' : 'Projection (Fields)'}
               </Label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <div className='grid grid-cols-2 sm:grid-cols-3 gap-2'>
                 {projectionPresets.map((preset: { id: string; label: string; value: string }): React.JSX.Element => (
                   <Button
                     key={preset.id}
-                    type="button"
-                    className="h-auto flex-col items-start gap-1 rounded-md border border-amber-600/50 bg-amber-500/10 p-3 text-left hover:bg-amber-500/20"
+                    type='button'
+                    className='h-auto flex-col items-start gap-1 rounded-md border border-amber-600/50 bg-amber-500/10 p-3 text-left hover:bg-amber-500/20'
                     onClick={(): void => {
                       updateQueryConfig({
                         mode: 'custom',
@@ -1028,8 +1028,8 @@ export function DatabaseConstructorTab({
                       toast(`Applied projection: ${preset.label}`, { variant: 'success' });
                     }}
                   >
-                    <span className="text-[11px] font-medium text-amber-200">{preset.label}</span>
-                    <pre className="text-[9px] text-gray-400 whitespace-pre-wrap break-all line-clamp-2">{preset.value}</pre>
+                    <span className='text-[11px] font-medium text-amber-200'>{preset.label}</span>
+                    <pre className='text-[9px] text-gray-400 whitespace-pre-wrap break-all line-clamp-2'>{preset.value}</pre>
                   </Button>
                 ))}
               </div>
@@ -1038,11 +1038,11 @@ export function DatabaseConstructorTab({
         </DialogContent>
       </Dialog>
 
-      <div className="space-y-3">
-        <Label className="text-xs text-gray-400">AI Prompt (Output to AI Node)</Label>
+      <div className='space-y-3'>
+        <Label className='text-xs text-gray-400'>AI Prompt (Output to AI Node)</Label>
         <Textarea
           ref={aiPromptRef}
-          className="min-h-[100px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
+          className='min-h-[100px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
           value={databaseConfig.aiPrompt ?? ''}
           onFocus={(): void => setPlaceholderTarget('aiPrompt')}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
@@ -1084,19 +1084,19 @@ export function DatabaseConstructorTab({
           const hasAiResponse = typeof callbackValue === 'string' && callbackValue.trim().length > 0;
 
           return (
-            <div className="space-y-2">
+            <div className='space-y-2'>
               {hasValidConnection ? (
-                <div className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-emerald-400"></div>
-                    <span className="text-[11px] text-emerald-100">
-                      Connected to AI Model: <span className="font-medium text-emerald-200">{aiModelId || 'Unknown'}</span>
+                <div className='rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2'>
+                  <div className='flex items-center gap-2'>
+                    <div className='h-2 w-2 rounded-full bg-emerald-400'></div>
+                    <span className='text-[11px] text-emerald-100'>
+                      Connected to AI Model: <span className='font-medium text-emerald-200'>{aiModelId || 'Unknown'}</span>
                     </span>
                   </div>
                   {hasAiResponse && (
                     <Button
-                      type="button"
-                      className="mt-2 rounded-md border border-emerald-500/40 px-2 py-1 text-[10px] text-emerald-200 hover:bg-emerald-500/20"
+                      type='button'
+                      className='mt-2 rounded-md border border-emerald-500/40 px-2 py-1 text-[10px] text-emerald-200 hover:bg-emerald-500/20'
                       onClick={(): void => {
                         updateQueryConfig({
                           mode: 'custom',
@@ -1108,10 +1108,10 @@ export function DatabaseConstructorTab({
                       Inject AI Response into Query
                     </Button>
                   )}
-                  {onSendToAi && databaseConfig.aiPrompt && databaseConfig.aiPrompt.trim() && (
+                  {onSendToAi && databaseConfig.aiPrompt?.trim() && (
                     <Button
-                      type="button"
-                      className="mt-2 rounded-md border border-sky-500/40 bg-sky-500/10 px-3 py-1.5 text-[11px] text-sky-200 hover:bg-sky-500/20 disabled:opacity-50"
+                      type='button'
+                      className='mt-2 rounded-md border border-sky-500/40 bg-sky-500/10 px-3 py-1.5 text-[11px] text-sky-200 hover:bg-sky-500/20 disabled:opacity-50'
                       disabled={sendingToAi}
                       onClick={(): void => {
                         if (selectedNode?.id && databaseConfig.aiPrompt) {
@@ -1124,10 +1124,10 @@ export function DatabaseConstructorTab({
                   )}
                 </div>
               ) : (
-                <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-amber-400"></div>
-                    <span className="text-[11px] text-amber-100">
+                <div className='rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2'>
+                  <div className='flex items-center gap-2'>
+                    <div className='h-2 w-2 rounded-full bg-amber-400'></div>
+                    <span className='text-[11px] text-amber-100'>
                       {aiNode && !callbackEdges.length
                         ? 'AI node connected, but callback not wired'
                         : !aiNode && callbackEdges.length > 0
@@ -1137,10 +1137,10 @@ export function DatabaseConstructorTab({
                   </div>
                 </div>
               )}
-              <p className="text-[11px] text-gray-500">
-                Connect this node&apos;s <span className="text-gray-300">aiPrompt</span> output to an AI Node, then connect
-                the AI&apos;s <span className="text-gray-300">result</span> back to this node&apos;s{' '}
-                <span className="text-gray-300">queryCallback</span> input.
+              <p className='text-[11px] text-gray-500'>
+                Connect this node&apos;s <span className='text-gray-300'>aiPrompt</span> output to an AI Node, then connect
+                the AI&apos;s <span className='text-gray-300'>result</span> back to this node&apos;s{' '}
+                <span className='text-gray-300'>queryCallback</span> input.
               </p>
             </div>
           );
@@ -1148,9 +1148,9 @@ export function DatabaseConstructorTab({
       </div>
 
       {operation === 'update' && (
-        <div className="space-y-3 rounded-md border border-border bg-card/40 p-3">
-          <Label className="text-xs text-gray-400">Sample JSON (fetch to enable Field Mapping)</Label>
-          <div className="flex flex-wrap gap-2 items-center">
+        <div className='space-y-3 rounded-md border border-border bg-card/40 p-3'>
+          <Label className='text-xs text-gray-400'>Sample JSON (fetch to enable Field Mapping)</Label>
+          <div className='flex flex-wrap gap-2 items-center'>
             {hasSchemaConnection && fetchedCollections.length > 0 && (
               <Select
                 value={sampleState.entityType}
@@ -1168,10 +1168,10 @@ export function DatabaseConstructorTab({
                   });
                 }}
               >
-                <SelectTrigger className="w-[180px] border-border bg-card/70 text-sm text-white">
-                  <SelectValue placeholder="Select collection" />
+                <SelectTrigger className='w-[180px] border-border bg-card/70 text-sm text-white'>
+                  <SelectValue placeholder='Select collection' />
                 </SelectTrigger>
-                <SelectContent className="border-border bg-gray-900 max-h-60 overflow-y-auto">
+                <SelectContent className='border-border bg-gray-900 max-h-60 overflow-y-auto'>
                   {fetchedCollections.map((coll: CollectionSchema): React.JSX.Element => (
                     <SelectItem key={`${coll.provider ?? 'db'}:${coll.name}`} value={coll.name}>
                       {formatCollectionLabel(coll, Boolean(fetchedDbSchema?.provider === 'multi'))}
@@ -1181,7 +1181,7 @@ export function DatabaseConstructorTab({
               </Select>
             )}
             <Input
-              className="w-[200px] rounded-md border border-border bg-card/70 text-sm text-white"
+              className='w-[200px] rounded-md border border-border bg-card/70 text-sm text-white'
               value={sampleState.entityId}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 setUpdaterSamples((prev: Record<string, UpdaterSampleState>): Record<string, UpdaterSampleState> => ({
@@ -1192,11 +1192,11 @@ export function DatabaseConstructorTab({
                   },
                 }))
               }
-              placeholder="Document ID"
+              placeholder='Document ID'
             />
             <Button
-              type="button"
-              className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
+              type='button'
+              className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
               disabled={updaterSampleLoading || (hasSchemaConnection && !sampleState.entityType)}
               onClick={(): void =>
                 void onFetchUpdaterSample(
@@ -1210,10 +1210,10 @@ export function DatabaseConstructorTab({
             </Button>
           </div>
           {hasSchemaConnection && !fetchedDbSchema?.collections?.length && !schemaLoading && (
-            <p className="text-[11px] text-amber-300">Connect a Database Schema node to select collections</p>
+            <p className='text-[11px] text-amber-300'>Connect a Database Schema node to select collections</p>
           )}
           <Textarea
-            className="min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
+            className='min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
             value={sampleState.json}
             onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
               setUpdaterSamples((prev: Record<string, UpdaterSampleState>): Record<string, UpdaterSampleState> => ({
@@ -1227,9 +1227,9 @@ export function DatabaseConstructorTab({
             placeholder='{ "id": "123", "title": "Sample" }'
           />
           {parsedSampleError ? (
-            <p className="text-[11px] text-rose-300">{parsedSampleError}</p>
+            <p className='text-[11px] text-rose-300'>{parsedSampleError}</p>
           ) : null}
-          <div className="flex flex-wrap gap-2">
+          <div className='flex flex-wrap gap-2'>
             <Select
               value={String(sampleState.depth)}
               onValueChange={(value: string): void =>
@@ -1242,10 +1242,10 @@ export function DatabaseConstructorTab({
                 }))
               }
             >
-              <SelectTrigger className="w-[150px] border-border bg-card/70 text-sm text-white">
-                <SelectValue placeholder="Depth" />
+              <SelectTrigger className='w-[150px] border-border bg-card/70 text-sm text-white'>
+                <SelectValue placeholder='Depth' />
               </SelectTrigger>
-              <SelectContent className="border-border bg-gray-900">
+              <SelectContent className='border-border bg-gray-900'>
                 {[1, 2, 3, 4].map((depth: number): React.JSX.Element => (
                   <SelectItem key={depth} value={String(depth)}>
                     Depth {depth}
@@ -1254,7 +1254,7 @@ export function DatabaseConstructorTab({
               </SelectContent>
             </Select>
             <Button
-              type="button"
+              type='button'
               className={`rounded-md border px-3 text-[10px] ${
                 sampleState.includeContainers
                   ? 'text-emerald-200 hover:bg-emerald-500/10'
@@ -1278,18 +1278,18 @@ export function DatabaseConstructorTab({
 
       {/* Field Mapping: Show for query operations always, for update only after sample is fetched */}
       {(operation !== 'update' || sampleState.json.trim().length > 0) && (
-        <div className="space-y-3 border-t border-border pt-4">
-          <Label className="text-xs text-gray-400">Parameter Mapping</Label>
-          <div className="flex flex-wrap items-center gap-2 mb-3">
+        <div className='space-y-3 border-t border-border pt-4'>
+          <Label className='text-xs text-gray-400'>Parameter Mapping</Label>
+          <div className='flex flex-wrap items-center gap-2 mb-3'>
             <Button
-              type="button"
-              className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
+              type='button'
+              className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
               onClick={(): void => mapInputsToTargets()}
             >
             Auto-map inputs
             </Button>
             {bundleKeys.size > 0 && (
-              <span className="text-[11px] text-gray-500">
+              <span className='text-[11px] text-gray-500'>
               Bundle keys:{' '}
                 {Array.from(bundleKeys)
                   .map((key: string): string => formatPortLabel(key))
@@ -1298,7 +1298,7 @@ export function DatabaseConstructorTab({
             )}
           </div>
 
-          <div className="space-y-3">
+          <div className='space-y-3'>
             {mappings.map((mapping: UpdaterMapping, index: number): React.JSX.Element => {
               const targetValue = mapping.targetPath ?? '';
               const customValue = mapping.sourcePath ?? '';
@@ -1313,10 +1313,10 @@ export function DatabaseConstructorTab({
               return (
                 <div
                   key={`mapping-${index}`}
-                  className="flex flex-wrap gap-2 items-start"
+                  className='flex flex-wrap gap-2 items-start'
                 >
                   {/* "Pick from schema" dropdown - ALWAYS visible */}
-                  <div className="space-y-2 min-w-[180px]">
+                  <div className='space-y-2 min-w-[180px]'>
                     <Select
                       value={hasSchemaSelection ? targetValue : ''}
                       onValueChange={(value: string): void => {
@@ -1327,11 +1327,11 @@ export function DatabaseConstructorTab({
                         }
                       }}
                     >
-                      <SelectTrigger className="border-border bg-card/70 text-[10px] text-gray-200">
-                        <SelectValue placeholder="Pick from schema" />
+                      <SelectTrigger className='border-border bg-card/70 text-[10px] text-gray-200'>
+                        <SelectValue placeholder='Pick from schema' />
                       </SelectTrigger>
-                      <SelectContent className="border-border bg-gray-900">
-                        <SelectItem value="__empty__">— None —</SelectItem>
+                      <SelectContent className='border-border bg-gray-900'>
+                        <SelectItem value='__empty__'>— None —</SelectItem>
                         {uniqueTargetPathOptions.map((option: { label: string; value: string }): React.JSX.Element => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}
@@ -1342,7 +1342,7 @@ export function DatabaseConstructorTab({
                   </div>
 
                   {/* Source port selector */}
-                  <div className="space-y-2 min-w-[160px]">
+                  <div className='space-y-2 min-w-[160px]'>
                     <Select
                       value={sourcePort}
                       onValueChange={(value: string): void =>
@@ -1352,10 +1352,10 @@ export function DatabaseConstructorTab({
                         } as Partial<UpdaterMapping>)
                       }
                     >
-                      <SelectTrigger className="border-border bg-card/70 text-[10px] text-gray-200">
-                        <SelectValue placeholder="Select input" />
+                      <SelectTrigger className='border-border bg-card/70 text-[10px] text-gray-200'>
+                        <SelectValue placeholder='Select input' />
                       </SelectTrigger>
-                      <SelectContent className="border-border bg-gray-900">
+                      <SelectContent className='border-border bg-gray-900'>
                         {sourcePortOptions.map((port: string): React.JSX.Element => (
                           <SelectItem key={port} value={port}>
                             {formatPortLabel(port)}
@@ -1367,7 +1367,7 @@ export function DatabaseConstructorTab({
 
                   {/* Source path input */}
                   {hasSchemaSelection && sourcePort && (
-                    <div className="space-y-2 min-w-[140px]">
+                    <div className='space-y-2 min-w-[140px]'>
                       {sourcePort === 'bundle' && bundleKeys.size > 0 ? (
                         <Select
                           value={customValue}
@@ -1377,10 +1377,10 @@ export function DatabaseConstructorTab({
                             } as Partial<UpdaterMapping>)
                           }
                         >
-                          <SelectTrigger className="border-border bg-card/70 text-[10px] text-gray-200">
-                            <SelectValue placeholder="Pick bundle key" />
+                          <SelectTrigger className='border-border bg-card/70 text-[10px] text-gray-200'>
+                            <SelectValue placeholder='Pick bundle key' />
                           </SelectTrigger>
-                          <SelectContent className="border-border bg-gray-900">
+                          <SelectContent className='border-border bg-gray-900'>
                             {Array.from(bundleKeys).map((key: string): React.JSX.Element => (
                               <SelectItem key={key} value={key}>
                                 {formatPortLabel(key)}
@@ -1390,22 +1390,22 @@ export function DatabaseConstructorTab({
                         </Select>
                       ) : (
                         <Input
-                          className="w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                          className='w-full rounded-md border border-border bg-card/70 text-sm text-white'
                           value={customValue}
                           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                             updateMapping(index, {
                               sourcePath: event.target.value,
                             } as Partial<UpdaterMapping>)
                           }
-                          placeholder="Source path (optional)"
+                          placeholder='Source path (optional)'
                         />
                       )}
                     </div>
                   )}
 
                   <Button
-                    type="button"
-                    className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60 self-start"
+                    type='button'
+                    className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60 self-start'
                     disabled={mappings.length <= 1}
                     onClick={(): void => removeMapping(index)}
                   >
@@ -1417,8 +1417,8 @@ export function DatabaseConstructorTab({
           </div>
 
           <Button
-            type="button"
-            className="w-full rounded-md border text-xs text-white hover:bg-muted/60"
+            type='button'
+            className='w-full rounded-md border text-xs text-white hover:bg-muted/60'
             onClick={(): void => addMapping()}
           >
           Add mapping

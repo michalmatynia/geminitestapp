@@ -41,40 +41,40 @@ export function StudioProjectsList(): React.JSX.Element {
   };
 
   return (
-    <div className="space-y-4">
-      <SectionPanel className="flex items-center gap-2 p-3">
+    <div className='space-y-4'>
+      <SectionPanel className='flex items-center gap-2 p-3'>
         <Input
-          placeholder="New project ID..."
+          placeholder='New project ID...'
           value={newProjectId}
           onChange={(e) => setNewProjectId(e.target.value)}
-          className="h-9"
+          className='h-9'
         />
         <Button
-          size="sm"
+          size='sm'
           onClick={() => void handleCreate()}
           disabled={!newProjectId.trim() || createProjectMutation.isPending}
         >
-          <Plus className="mr-2 size-4" />
+          <Plus className='mr-2 size-4' />
           Create
         </Button>
       </SectionPanel>
 
-      <SectionPanel className="p-0 overflow-hidden">
-        <div className="border-b bg-muted/30 p-2">
+      <SectionPanel className='p-0 overflow-hidden'>
+        <div className='border-b bg-muted/30 p-2'>
           <Input
-            placeholder="Search projects..."
+            placeholder='Search projects...'
             value={projectSearch}
             onChange={(e) => setProjectSearch(e.target.value)}
-            className="h-8 text-xs"
+            className='h-8 text-xs'
           />
         </div>
-        <div className="max-h-[400px] overflow-auto">
+        <div className='max-h-[400px] overflow-auto'>
           {projectsQuery.isLoading ? (
-            <div className="p-4 text-center text-xs text-gray-500">Loading projects...</div>
+            <div className='p-4 text-center text-xs text-gray-500'>Loading projects...</div>
           ) : filteredProjects.length === 0 ? (
-            <div className="p-4 text-center text-xs text-gray-500">No projects found.</div>
+            <div className='p-4 text-center text-xs text-gray-500'>No projects found.</div>
           ) : (
-            <div className="divide-y divide-border/40">
+            <div className='divide-y divide-border/40'>
               {filteredProjects.map((id) => (
                 <div
                   key={id}
@@ -84,17 +84,17 @@ export function StudioProjectsList(): React.JSX.Element {
                   )}
                   onClick={() => setProjectId(id)}
                 >
-                  <span className="truncate pr-2">{id}</span>
+                  <span className='truncate pr-2'>{id}</span>
                   <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-6 text-gray-500 hover:text-red-400"
+                    variant='ghost'
+                    size='icon'
+                    className='size-6 text-gray-500 hover:text-red-400'
                     onClick={(e) => {
                       e.stopPropagation();
                       void handleDeleteProject(id);
                     }}
                   >
-                    <X className="size-3" />
+                    <X className='size-3' />
                   </Button>
                 </div>
               ))}

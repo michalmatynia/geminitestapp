@@ -55,16 +55,16 @@ export function ConnectionManager(): React.JSX.Element {
       : 'Tradera password';
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <SectionPanel variant="subtle" className="p-4">
-        <h3 className="text-sm font-semibold text-white">
+    <div className='grid gap-4 md:grid-cols-2'>
+      <SectionPanel variant='subtle' className='p-4'>
+        <h3 className='text-sm font-semibold text-white'>
           {editingConnectionId ? 'Connection details' : 'Add connection'}
         </h3>
-        <div className="mt-3 space-y-3">
+        <div className='mt-3 space-y-3'>
           <div>
-            <Label className="text-xs text-gray-400">Connection name</Label>
+            <Label className='text-xs text-gray-400'>Connection name</Label>
             <Input
-              className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white"
+              className='w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white'
               placeholder={connectionNamePlaceholder}
               value={connectionForm.name}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
@@ -76,9 +76,9 @@ export function ConnectionManager(): React.JSX.Element {
             />
           </div>
           <div>
-            <Label className="text-xs text-gray-400">{usernameLabel}</Label>
+            <Label className='text-xs text-gray-400'>{usernameLabel}</Label>
             <Input
-              className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white"
+              className='w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white'
               placeholder={usernamePlaceholder}
               value={connectionForm.username}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
@@ -90,10 +90,10 @@ export function ConnectionManager(): React.JSX.Element {
             />
           </div>
           <div>
-            <Label className="text-xs text-gray-400">{passwordLabel}</Label>
+            <Label className='text-xs text-gray-400'>{passwordLabel}</Label>
             <Input
-              className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white"
-              type="password"
+              className='w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white'
+              type='password'
               placeholder={
                 editingConnectionId
                   ? isAllegro
@@ -113,8 +113,8 @@ export function ConnectionManager(): React.JSX.Element {
             />
           </div>
           <Button
-            className="w-full rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
-            type="button"
+            className='w-full rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200'
+            type='button'
             onClick={() => { void handleSaveConnection(); }}
           >
             {editingConnectionId ? 'Update connection' : 'Save connection'}
@@ -122,25 +122,25 @@ export function ConnectionManager(): React.JSX.Element {
         </div>
       </SectionPanel>
 
-      <SectionPanel variant="subtle" className="p-4">
-        <h3 className="text-sm font-semibold text-white">Existing connection</h3>
+      <SectionPanel variant='subtle' className='p-4'>
+        <h3 className='text-sm font-semibold text-white'>Existing connection</h3>
         {connections.length === 0 ? (
-          <p className="mt-3 text-sm text-gray-400">No connections yet.</p>
+          <p className='mt-3 text-sm text-gray-400'>No connections yet.</p>
         ) : (
-          <div className="mt-3 space-y-3">
+          <div className='mt-3 space-y-3'>
             {connections.slice(0, 1).map((connection: IntegrationConnection) => (
               <SectionPanel
                 key={connection.id}
-                variant="subtle-compact"
-                className="flex items-center justify-between p-3"
+                variant='subtle-compact'
+                className='flex items-center justify-between p-3'
               >
                 <div>
-                  <p className="text-sm font-semibold text-white">
+                  <p className='text-sm font-semibold text-white'>
                     {connection.name}
                   </p>
-                  <p className="text-xs text-gray-400">{connection.username}</p>
+                  <p className='text-xs text-gray-400'>{connection.username}</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className='flex items-center gap-3'>
                   <Button
                     className={`text-xs ${
                       isBaselinker
@@ -149,7 +149,7 @@ export function ConnectionManager(): React.JSX.Element {
                           ? 'text-amber-300 hover:text-amber-200'
                           : 'text-sky-300 hover:text-sky-200'
                     }`}
-                    type="button"
+                    type='button'
                     onClick={(): void => {
                       if (isBaselinker) void handleBaselinkerTest(connection);
                       else if (isAllegro) void handleAllegroTest(connection);
@@ -160,8 +160,8 @@ export function ConnectionManager(): React.JSX.Element {
                     {isTesting ? 'Testing...' : 'Test'}
                   </Button>
                   <Button
-                    className="text-xs text-red-400 hover:text-red-300"
-                    type="button"
+                    className='text-xs text-red-400 hover:text-red-300'
+                    type='button'
                     onClick={(): void => handleDeleteConnection(connection)}
                   >
                     Remove
@@ -172,31 +172,31 @@ export function ConnectionManager(): React.JSX.Element {
           </div>
         )}
         {showPlaywright && (
-          <SectionPanel variant="subtle-compact" className="mt-4 p-3">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold text-gray-300">
+          <SectionPanel variant='subtle-compact' className='mt-4 p-3'>
+            <div className='flex items-center justify-between'>
+              <p className='text-xs font-semibold text-gray-300'>
                 Playwright live update
               </p>
-              <span className="text-xs text-gray-500">
+              <span className='text-xs text-gray-500'>
                 {isTesting ? 'Running...' : 'Idle'}
               </span>
             </div>
 
             {testLog.length === 0 ? (
-              <p className="mt-2 text-xs text-gray-500">
+              <p className='mt-2 text-xs text-gray-500'>
                 Run a connection test to see live updates.
               </p>
             ) : (
-              <div className="mt-2 max-h-40 space-y-2 overflow-y-auto text-xs text-gray-400">
+              <div className='mt-2 max-h-40 space-y-2 overflow-y-auto text-xs text-gray-400'>
                 {testLog.map((entry: TestLogEntry, index: number) => (
                   <div
                     key={`${entry.step}-${index}`}
-                    className="flex items-center justify-between gap-3"
+                    className='flex items-center justify-between gap-3'
                   >
                     <p>{entry.step}</p>
                     {entry.status !== 'pending' && (
                       <Button
-                        type="button"
+                        type='button'
                         className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                           entry.status === 'ok'
                             ? 'bg-emerald-500/20 text-emerald-200'

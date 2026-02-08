@@ -30,24 +30,24 @@ export function ImageRetryDropdown({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
-            variant="secondary"
-            size="sm"
+            variant='secondary'
+            size='sm'
             className={buttonClassName}
             disabled={disabled}
           >
             Retry image export
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="bg-card border-border">
+        <DropdownMenuContent align='start' className='bg-card border-border'>
           {presets.map((preset) => (
             <DropdownMenuItem
               key={preset.id}
               onSelect={() => onRetry(preset)}
-              className="text-gray-200 focus:bg-gray-800/70"
+              className='text-gray-200 focus:bg-gray-800/70'
             >
-              <div className="flex flex-col">
-                <span className="text-sm">{preset.label}</span>
-                <span className="text-xs text-gray-400">
+              <div className='flex flex-col'>
+                <span className='text-sm'>{preset.label}</span>
+                <span className='text-xs text-gray-400'>
                   {preset.description}
                 </span>
               </div>

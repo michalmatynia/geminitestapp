@@ -39,8 +39,8 @@ export function NotesFilters(): React.JSX.Element {
   const tags = availableTagsInScope;
 
   return (
-    <div className="flex-1">
-      <div className="relative">
+    <div className='flex-1'>
+      <div className='relative'>
         <SearchInput
           placeholder={
             selectedFolderId
@@ -53,18 +53,18 @@ export function NotesFilters(): React.JSX.Element {
           value={searchQuery}
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(e.target.value)}
           onClear={() => setSearchQuery('')}
-          className="w-full rounded-lg border bg-gray-800 py-2 text-white placeholder-gray-400"
+          className='w-full rounded-lg border bg-gray-800 py-2 text-white placeholder-gray-400'
         />
       </div>
 
-      <div className="mt-2 flex gap-2 items-center">
+      <div className='mt-2 flex gap-2 items-center'>
         <MultiSelect
           options={tags.map((t: TagRecord) => ({ value: t.id, label: t.name }))}
           selected={filterTagIds}
           onChange={setFilterTagIds}
-          placeholder="Filter by Tag..."
-          searchPlaceholder="Search tags..."
-          className="w-48"
+          placeholder='Filter by Tag...'
+          searchPlaceholder='Search tags...'
+          className='w-48'
         />
         {filterTagIds.map((tagId: string) => {
           const tag = tags.find((t: TagRecord) => t.id === tagId);
@@ -81,7 +81,7 @@ export function NotesFilters(): React.JSX.Element {
                 onClick={(): void =>
                   setFilterTagIds(filterTagIds.filter((id: string) => id !== tag.id))
                 }
-                className="hover:text-white"
+                className='hover:text-white'
               >
                 <X size={12} />
               </Button>
@@ -90,7 +90,7 @@ export function NotesFilters(): React.JSX.Element {
         })}
       </div>
 
-      <div className="mt-2 flex gap-2">
+      <div className='mt-2 flex gap-2'>
         <UnifiedSelect
           value={searchScope}
           onValueChange={(val: string) => updateSettings({ searchScope: val as 'both' | 'title' | 'content' })}
@@ -99,10 +99,10 @@ export function NotesFilters(): React.JSX.Element {
             { value: 'title', label: 'Title Only' },
             { value: 'content', label: 'Content Only' },
           ]}
-          triggerClassName="h-8 w-40 text-xs bg-gray-800 border-border text-gray-300"
+          triggerClassName='h-8 w-40 text-xs bg-gray-800 border-border text-gray-300'
         />
 
-        <div className="ml-auto flex items-center gap-1">
+        <div className='ml-auto flex items-center gap-1'>
           <UnifiedSelect
             value={sortBy}
             onValueChange={(val: string) => updateSettings({ sortBy: val as 'created' | 'updated' | 'name' })}
@@ -111,7 +111,7 @@ export function NotesFilters(): React.JSX.Element {
               { value: 'updated', label: 'Date Modified' },
               { value: 'name', label: 'Name' },
             ]}
-            triggerClassName="h-8 w-36 text-xs bg-gray-800 border-border text-gray-300"
+            triggerClassName='h-8 w-36 text-xs bg-gray-800 border-border text-gray-300'
           />
           <Button
             onClick={(): void =>
@@ -119,7 +119,7 @@ export function NotesFilters(): React.JSX.Element {
                 sortOrder: sortOrder === 'asc' ? 'desc' : 'asc',
               })
             }
-            className="h-8 rounded px-2 text-xs bg-gray-800 text-gray-400 hover:bg-gray-700 transition border border-border"
+            className='h-8 rounded px-2 text-xs bg-gray-800 text-gray-400 hover:bg-gray-700 transition border border-border'
             title={
               sortOrder === 'asc'
                 ? 'Ascending (click to change)'
@@ -130,8 +130,8 @@ export function NotesFilters(): React.JSX.Element {
           </Button>
         </div>
 
-        <div className="flex items-center gap-2 ml-2 pl-2 border-l border">
-          <span className="text-xs text-gray-500">Show:</span>
+        <div className='flex items-center gap-2 ml-2 pl-2 border-l border'>
+          <span className='text-xs text-gray-500'>Show:</span>
           <Button
             onClick={(): void => updateSettings({ showTimestamps: !showTimestamps })}
             className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
@@ -169,7 +169,7 @@ export function NotesFilters(): React.JSX.Element {
             <span>Links</span>
           </Button>
         </div>
-        <div className="flex items-center gap-2 ml-2 pl-2 border-l border">
+        <div className='flex items-center gap-2 ml-2 pl-2 border-l border'>
           <UnifiedSelect
             value={viewMode === 'list' ? 'list' : `grid-${gridDensity}`}
             onValueChange={(val: string) => {
@@ -186,7 +186,7 @@ export function NotesFilters(): React.JSX.Element {
               { value: 'grid-4', label: 'Grid (4)' },
               { value: 'grid-8', label: 'Grid (8)' },
             ]}
-            triggerClassName="h-8 w-28 text-xs bg-gray-800 border-border text-gray-300"
+            triggerClassName='h-8 w-28 text-xs bg-gray-800 border-border text-gray-300'
           />
         </div>
       </div>

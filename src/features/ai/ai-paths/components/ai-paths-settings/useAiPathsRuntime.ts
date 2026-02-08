@@ -876,7 +876,7 @@ export function useAiPathsRuntime({
         };
         const eventBatch = Array.isArray(payload.events) ? payload.events : [];
         eventBatch.forEach((item: AiPathRunEventRecord) => {
-          const metadata = (item.metadata ?? {}) as Record<string, unknown>;
+          const metadata = (item.metadata ?? {});
           const nodeId = typeof metadata.nodeId === 'string' ? metadata.nodeId : undefined;
           const status = typeof metadata.status === 'string' ? metadata.status : undefined;
           const iteration =
@@ -2159,7 +2159,7 @@ export function useAiPathsRuntime({
               const modelOutput = updatedOutputs[modelNode.id] as
                 | { jobId?: string; status?: string; result?: unknown; debugPayload?: unknown }
                 | undefined;
-              if (!modelOutput || modelOutput.jobId !== resolvedJobId) return;
+              if (modelOutput?.jobId !== resolvedJobId) return;
               updatedOutputs[modelNode.id] = {
                 ...modelOutput,
                 status: pollOutput?.status ?? 'completed',

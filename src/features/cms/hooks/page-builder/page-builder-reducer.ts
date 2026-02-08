@@ -1257,7 +1257,7 @@ export function basePageBuilderReducer(
     }
 
     case 'PASTE_SECTION': {
-      if (!state.clipboard || state.clipboard.type !== 'section') return state;
+      if (state.clipboard?.type !== 'section') return state;
       const cloned = cloneSection(state.clipboard.data as SectionInstance);
       cloned.zone = action.zone;
       return {
@@ -1275,7 +1275,7 @@ export function basePageBuilderReducer(
     }
 
     case 'PASTE_BLOCK': {
-      if (!state.clipboard || state.clipboard.type !== 'block') return state;
+      if (state.clipboard?.type !== 'block') return state;
       const cloned = cloneBlock(state.clipboard.data as BlockInstance);
       const updatedSections = state.sections.map((s: SectionInstance) => {
         if (s.id !== action.sectionId) return s;

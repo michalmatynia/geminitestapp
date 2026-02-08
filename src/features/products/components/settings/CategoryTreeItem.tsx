@@ -123,40 +123,40 @@ export function CategoryTreeItem({
         {hasChildren ? (
           <Button
             onClick={(): void => onToggleExpand(category.id)}
-            className="p-0.5 hover:bg-gray-700 rounded"
+            className='p-0.5 hover:bg-gray-700 rounded'
           >
             {isExpanded ? (
-              <ChevronDown className="size-4" />
+              <ChevronDown className='size-4' />
             ) : (
-              <ChevronRight className="size-4" />
+              <ChevronRight className='size-4' />
             )}
           </Button>
         ) : (
-          <div className="w-5" />
+          <div className='w-5' />
         )}
 
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <span className="text-sm truncate">{category.name}</span>
+        <div className='flex items-center gap-2 flex-1 min-w-0'>
+          <span className='text-sm truncate'>{category.name}</span>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className='flex items-center gap-1'>
           <Button
             onClick={(e: React.MouseEvent): void => {
               e.stopPropagation();
               onCreateChild(category.id);
             }}
-            className="p-1 hover:bg-gray-700 rounded"
-            title="Add subcategory"
+            className='p-1 hover:bg-gray-700 rounded'
+            title='Add subcategory'
           >
-            <FolderPlus className="size-3" />
+            <FolderPlus className='size-3' />
           </Button>
           <Button
             onClick={(e: React.MouseEvent): void => {
               e.stopPropagation();
               onEdit(category);
             }}
-            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-100 hover:bg-gray-700"
-            title="Edit category"
+            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-100 hover:bg-gray-700'
+            title='Edit category'
           >
             Edit
           </Button>
@@ -165,10 +165,10 @@ export function CategoryTreeItem({
               e.stopPropagation();
               onDelete(category);
             }}
-            className="p-1 hover:bg-red-600 rounded"
-            title="Delete category"
+            className='p-1 hover:bg-red-600 rounded'
+            title='Delete category'
           >
-            <Trash2 className="size-3" />
+            <Trash2 className='size-3' />
           </Button>
         </div>
       </div>

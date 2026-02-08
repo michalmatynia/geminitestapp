@@ -58,63 +58,63 @@ export default function ZonesPage(): React.JSX.Element {
   };
 
   return (
-    <div className="container mx-auto py-10">
+    <div className='container mx-auto py-10'>
       <ListPanel
         header={
           <SectionHeader
-            title="Zones (Domains)"
-            description="Zones scope CMS slugs per hostname. Domains are auto-created on first request; add here to pre-provision or share slug sets."
+            title='Zones (Domains)'
+            description='Zones scope CMS slugs per hostname. Domains are auto-created on first request; add here to pre-provision or share slug sets.'
           />
         }
       >
         <form
           onSubmit={(event: React.FormEvent<HTMLFormElement>): void => { void handleSubmit(event); }}
-          className="flex flex-col gap-3 border-b border-border px-4 py-4 sm:flex-row sm:items-end"
+          className='flex flex-col gap-3 border-b border-border px-4 py-4 sm:flex-row sm:items-end'
         >
-          <div className="flex-1">
-            <Label htmlFor="domain">Domain</Label>
+          <div className='flex-1'>
+            <Label htmlFor='domain'>Domain</Label>
             <Input
-              id="domain"
+              id='domain'
               value={domain}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setDomain(event.target.value)}
-              placeholder="milkbar.com"
-              autoComplete="off"
+              placeholder='milkbar.com'
+              autoComplete='off'
             />
-            {error ? <p className="mt-1 text-sm text-red-500">{error}</p> : null}
+            {error ? <p className='mt-1 text-sm text-red-500'>{error}</p> : null}
           </div>
-          <Button type="submit" size="sm">
+          <Button type='submit' size='sm'>
             Add Zone
           </Button>
         </form>
 
         {domains.length === 0 ? (
-          <p className="py-8 text-center text-sm text-gray-500">
+          <p className='py-8 text-center text-sm text-gray-500'>
             No zones yet. Create one or visit a domain to auto-register it.
           </p>
         ) : (
-          <ul className="divide-y divide-border">
+          <ul className='divide-y divide-border'>
             {domains.map((item: CmsDomain) => (
-              <li key={item.id} className="flex items-center justify-between px-4 py-3">
-                <div className="flex flex-col gap-1">
-                  <span className="text-sm font-medium">{item.domain}</span>
+              <li key={item.id} className='flex items-center justify-between px-4 py-3'>
+                <div className='flex flex-col gap-1'>
+                  <span className='text-sm font-medium'>{item.domain}</span>
                   {item.aliasOf ? (
-                    <span className="text-xs text-muted-foreground">
+                    <span className='text-xs text-muted-foreground'>
                       Shares slugs with {domains.find((d: CmsDomain) => d.id === item.aliasOf)?.domain ?? 'another zone'}
                     </span>
                   ) : (
-                    <span className="text-xs text-muted-foreground">Independent zone</span>
+                    <span className='text-xs text-muted-foreground'>Independent zone</span>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className='flex items-center gap-2'>
                   <Select
                     value={item.aliasOf ?? 'none'}
                     onValueChange={(value: string): void => { void handleAliasChange(item.id, value); }}
                   >
-                    <SelectTrigger className="h-8 w-[220px]">
-                      <SelectValue placeholder="Independent zone" />
+                    <SelectTrigger className='h-8 w-[220px]'>
+                      <SelectValue placeholder='Independent zone' />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">Independent zone</SelectItem>
+                      <SelectItem value='none'>Independent zone</SelectItem>
                       {domains
                         .filter((domainOption: CmsDomain) => domainOption.id !== item.id)
                         .map((domainOption: CmsDomain) => (
@@ -125,8 +125,8 @@ export default function ZonesPage(): React.JSX.Element {
                     </SelectContent>
                   </Select>
                   <Button
-                    size="sm"
-                    variant="destructive"
+                    size='sm'
+                    variant='destructive'
                     onClick={() => { void handleDelete(item.id); }}
                   >
                     Delete

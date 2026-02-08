@@ -71,7 +71,7 @@ export function TreeActionButton({
   const Comp = asChild ? Slot : 'button';
   return (
     <Comp
-      type="button"
+      type='button'
       className={cn('rounded transition', SIZE_CLASSES[size], TONE_CLASSES[tone], className)}
       {...props}
     />

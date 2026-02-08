@@ -26,7 +26,7 @@ interface FileManagerProps {
 export default function FileManager(props: FileManagerProps): React.JSX.Element {
   return (
     <FileManagerProvider {...props}>
-      <div className="p-4 bg-gray-900 text-white rounded-lg shadow-xl border border-gray-800">
+      <div className='p-4 bg-gray-900 text-white rounded-lg shadow-xl border border-gray-800'>
         <FileManagerHeader />
         <FileManagerFilters />
         <FileManagerBulkActions />

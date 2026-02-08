@@ -83,40 +83,40 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
 
   return (
     <CmsEditorLayout>
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-        <div className="flex items-center justify-between gap-4">
-          <SectionHeader title={page.name} description="Manage page slugs per zone." />
+      <div className='mx-auto flex w-full max-w-3xl flex-col gap-6'>
+        <div className='flex items-center justify-between gap-4'>
+          <SectionHeader title={page.name} description='Manage page slugs per zone.' />
           <Button onClick={(): void => { void handleSave(); }}>
             {updatePage.isPending ? 'Saving...' : 'Save'}
           </Button>
         </div>
 
-        <div className="rounded-lg border border-border/50 bg-gray-900/40 p-4">
-          <div className="mb-4">
+        <div className='rounded-lg border border-border/50 bg-gray-900/40 p-4'>
+          <div className='mb-4'>
             <CmsDomainSelector />
           </div>
 
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="slug-search">Slugs</Label>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className='space-y-3'>
+            <div className='flex items-center justify-between'>
+              <Label htmlFor='slug-search'>Slugs</Label>
+              <div className='flex items-center gap-2 text-xs text-muted-foreground'>
                 <Switch
-                  id="slug-all-zones"
+                  id='slug-all-zones'
                   checked={includeAllZones}
                   onCheckedChange={setIncludeAllZones}
                 />
-                <Label htmlFor="slug-all-zones">All zones</Label>
+                <Label htmlFor='slug-all-zones'>All zones</Label>
               </div>
             </div>
             <Input
-              id="slug-search"
+              id='slug-search'
               value={search}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSearch(e.target.value)}
-              placeholder="Search slugs..."
+              placeholder='Search slugs...'
             />
-            <div className="max-h-64 space-y-2 overflow-y-auto rounded border border-border/50 bg-gray-900/40 p-2">
+            <div className='max-h-64 space-y-2 overflow-y-auto rounded border border-border/50 bg-gray-900/40 p-2'>
               {filteredDomainSlugs.length === 0 ? (
-                <p className="py-4 text-center text-xs text-gray-500">
+                <p className='py-4 text-center text-xs text-gray-500'>
                   No slugs available for this zone.
                 </p>
               ) : (
@@ -124,7 +124,7 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
                   const checked = selectedSlugIds.includes(slug.id);
                   const isCrossZone = !domainSlugIds.has(slug.id);
                   return (
-                    <label key={slug.id} className="flex items-center gap-2 text-sm text-gray-200">
+                    <label key={slug.id} className='flex items-center gap-2 text-sm text-gray-200'>
                       <Checkbox
                         checked={checked}
                         onCheckedChange={() => {
@@ -139,7 +139,7 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
                       <span>
                         /{slug.slug}
                         {isCrossZone ? (
-                          <span className="ml-2 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] text-amber-200">
+                          <span className='ml-2 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] text-amber-200'>
                             Other zone
                           </span>
                         ) : null}
@@ -149,29 +149,29 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
                 })
               )}
             </div>
-            <p className="text-xs text-gray-500">{selectedSlugIds.length} selected</p>
+            <p className='text-xs text-gray-500'>{selectedSlugIds.length} selected</p>
           </div>
 
           {crossZoneSlugs.length > 0 ? (
-            <div className="mt-6 rounded border border-amber-500/40 bg-amber-500/10 p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-amber-200">
+            <div className='mt-6 rounded border border-amber-500/40 bg-amber-500/10 p-3'>
+              <p className='text-xs font-semibold uppercase tracking-wide text-amber-200'>
                 Cross-zone slugs
               </p>
-              <p className="mt-1 text-xs text-amber-200/80">
+              <p className='mt-1 text-xs text-amber-200/80'>
                 These slugs belong to other zones but can still point to this page.
               </p>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className='mt-3 flex flex-wrap gap-2'>
                 {crossZoneSlugs.map((slug: Slug) => (
                   <button
                     key={slug.id}
-                    type="button"
+                    type='button'
                     onClick={() =>
                       setManualSelectedSlugIds((prev: string[] | null): string[] => {
                         const current = prev ?? selectedSlugIds;
                         return current.filter((idValue: string): boolean => idValue !== slug.id);
                       })
                     }
-                    className="rounded-full border border-amber-500/40 bg-amber-500/20 px-2 py-1 text-[11px] text-amber-200"
+                    className='rounded-full border border-amber-500/40 bg-amber-500/20 px-2 py-1 text-[11px] text-amber-200'
                   >
                     /{slug.slug} ×
                   </button>

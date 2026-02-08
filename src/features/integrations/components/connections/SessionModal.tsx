@@ -20,70 +20,70 @@ export function SessionModal(): React.JSX.Element {
     <AppModal
       open={true}
       onClose={() => setShowSessionModal(false)}
-      title="Session cookies"
-      size="lg"
+      title='Session cookies'
+      size='lg'
     >
       {loading ? (
-        <div className="rounded-md border border-border bg-card/60 p-4 text-sm text-gray-400">
+        <div className='rounded-md border border-border bg-card/60 p-4 text-sm text-gray-400'>
           Loading session details...
         </div>
       ) : error ? (
-        <div className="rounded-md border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-100">
+        <div className='rounded-md border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-100'>
           {error}
         </div>
       ) : (
-        <div className="space-y-4 text-sm text-gray-200">
-          <div className="rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300">
-            <span className="text-gray-400">Obtained:</span>{' '}
+        <div className='space-y-4 text-sm text-gray-200'>
+          <div className='rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300'>
+            <span className='text-gray-400'>Obtained:</span>{' '}
             {updatedAt ? new Date(updatedAt).toLocaleString() : '—'}
           </div>
 
-          <div className="space-y-3">
+          <div className='space-y-3'>
             {cookies.length === 0 ? (
-              <div className="rounded-md border border-border bg-card/60 p-4 text-sm text-gray-400">
+              <div className='rounded-md border border-border bg-card/60 p-4 text-sm text-gray-400'>
                   No cookies stored.
               </div>
             ) : (
               cookies.map((cookie: SessionCookie, index: number) => (
                 <div
                   key={`${cookie.name || 'cookie'}-${index}`}
-                  className="rounded-md border border-border bg-card/60 p-3"
+                  className='rounded-md border border-border bg-card/60 p-3'
                 >
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-gray-300">
-                    <Badge variant="neutral">
+                  <div className='flex flex-wrap items-center gap-2 text-xs text-gray-300'>
+                    <Badge variant='neutral'>
                       {cookie.name || 'unknown'}
                     </Badge>
-                    <span className="text-gray-500">
+                    <span className='text-gray-500'>
                       {cookie.domain || '—'}
                     </span>
                   </div>
-                  <div className="mt-2 grid gap-2 text-xs text-gray-400 md:grid-cols-2">
+                  <div className='mt-2 grid gap-2 text-xs text-gray-400 md:grid-cols-2'>
                     <p>
-                      <span className="text-gray-500">Value:</span>{' '}
-                      <span className="break-all text-gray-200">
+                      <span className='text-gray-500'>Value:</span>{' '}
+                      <span className='break-all text-gray-200'>
                         {cookie.value || '—'}
                       </span>
                     </p>
                     <p>
-                      <span className="text-gray-500">Path:</span>{' '}
+                      <span className='text-gray-500'>Path:</span>{' '}
                       {cookie.path || '—'}
                     </p>
                     <p>
-                      <span className="text-gray-500">Expires:</span>{' '}
+                      <span className='text-gray-500'>Expires:</span>{' '}
                       {cookie.expires
                         ? new Date(cookie.expires * 1000).toLocaleString()
                         : 'Session'}
                     </p>
                     <p>
-                      <span className="text-gray-500">Secure:</span>{' '}
+                      <span className='text-gray-500'>Secure:</span>{' '}
                       {cookie.secure ? 'Yes' : 'No'}
                     </p>
                     <p>
-                      <span className="text-gray-500">HttpOnly:</span>{' '}
+                      <span className='text-gray-500'>HttpOnly:</span>{' '}
                       {cookie.httpOnly ? 'Yes' : 'No'}
                     </p>
                     <p>
-                      <span className="text-gray-500">SameSite:</span>{' '}
+                      <span className='text-gray-500'>SameSite:</span>{' '}
                       {cookie.sameSite || '—'}
                     </p>
                   </div>
@@ -93,8 +93,8 @@ export function SessionModal(): React.JSX.Element {
           </div>
 
           {origins.length > 0 && (
-            <div className="rounded-md border border-border bg-card/60 p-3">
-              <p className="text-xs text-gray-400">
+            <div className='rounded-md border border-border bg-card/60 p-3'>
+              <p className='text-xs text-gray-400'>
                   Origins stored: {origins.length}
               </p>
             </div>

@@ -45,20 +45,20 @@ describe('ChatInterface', () => {
   });
 
   it('calls onSend on form submit', () => {
-    render(<ChatInterface {...defaultProps} input="Hello" />);
+    render(<ChatInterface {...defaultProps} input='Hello' />);
     const button = screen.getByRole('button', { name: 'Send' });
     fireEvent.click(button);
     expect(defaultProps.onSend).toHaveBeenCalled();
   });
 
   it('disables input and button while sending', () => {
-    render(<ChatInterface {...defaultProps} isSending={true} input="Hello" />);
+    render(<ChatInterface {...defaultProps} isSending={true} input='Hello' />);
     expect(screen.getByPlaceholderText('Type your message...')).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Sending...' })).toBeDisabled();
   });
 
   it('disables send button when input is empty', () => {
-    render(<ChatInterface {...defaultProps} input="" />);
+    render(<ChatInterface {...defaultProps} input='' />);
     expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled();
   });
 });

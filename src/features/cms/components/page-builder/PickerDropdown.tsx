@@ -45,9 +45,9 @@ export function PickerDropdown({
   if (allOptionsCount === 0) return null;
 
   return (
-    <div className="relative">
+    <div className='relative'>
       <div
-        role="button"
+        role='button'
         tabIndex={-1}
         onClick={(e: React.MouseEvent) => {
           e.stopPropagation();
@@ -65,20 +65,20 @@ export function PickerDropdown({
         )}
         aria-label={ariaLabel}
       >
-        <Plus className="size-3" />
+        <Plus className='size-3' />
       </div>
 
       {isOpen && (
         <>
           <div
-            className="fixed inset-0 z-40"
+            className='fixed inset-0 z-40'
             onClick={() => setIsOpen(false)}
             onKeyDown={(e: React.KeyboardEvent) => {
               if (e.key === 'Escape') setIsOpen(false);
             }}
-            role="button"
+            role='button'
             tabIndex={-1}
-            aria-label="Close picker"
+            aria-label='Close picker'
           />
           <div className={cn(
             'absolute left-0 top-full z-50 mt-1 w-48 rounded-md border border-border/50 bg-popover/95 p-1 shadow-lg backdrop-blur-md',
@@ -86,19 +86,19 @@ export function PickerDropdown({
           )}>
             {groups.map((group: PickerGroup, groupIdx: number) => (
               <React.Fragment key={group.label}>
-                {groupIdx > 0 && <div className="my-1 border-t border-border/30" />}
-                <div className="px-2 py-1.5 text-xs font-medium uppercase tracking-wide text-gray-400">
+                {groupIdx > 0 && <div className='my-1 border-t border-border/30' />}
+                <div className='px-2 py-1.5 text-xs font-medium uppercase tracking-wide text-gray-400'>
                   {group.label}
                 </div>
                 {group.options.map((opt: PickerOption) => (
                   <button
                     key={opt.type}
-                    type="button"
+                    type='button'
                     onClick={(e: React.MouseEvent) => {
                       e.stopPropagation();
                       handleSelect(opt.type);
                     }}
-                    className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-gray-300 transition hover:bg-foreground/10"
+                    className='flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-gray-300 transition hover:bg-foreground/10'
                   >
                     {opt.icon}
                     <span>{opt.label}</span>

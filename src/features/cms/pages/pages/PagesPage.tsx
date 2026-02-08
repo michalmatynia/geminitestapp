@@ -92,11 +92,11 @@ export default function PagesPage(): React.ReactNode {
   };
 
   return (
-    <div className="container mx-auto py-10">
+    <div className='container mx-auto py-10'>
       <ListPanel
         header={
           <SectionHeader
-            title="Pages"
+            title='Pages'
             actions={
               <>
                 <CmsDomainSelector />
@@ -106,12 +106,12 @@ export default function PagesPage(): React.ReactNode {
           />
         }
       >
-        <div className="mb-4 flex flex-wrap gap-2">
+        <div className='mb-4 flex flex-wrap gap-2'>
           {STATUS_FILTERS.map((filter: StatusFilterOption) => (
             <Button
               key={filter.value}
-              type="button"
-              variant="ghost"
+              type='button'
+              variant='ghost'
               onClick={() => setStatusFilter(filter.value)}
               className={`h-auto rounded-md border px-3 py-1 text-xs font-medium transition hover:bg-blue-500/20 ${
                 statusFilter === filter.value
@@ -146,26 +146,26 @@ export default function PagesPage(): React.ReactNode {
                 ? `Preview ${activeDomain?.domain ?? 'current'}${previewPath}`
                 : 'No slug in current zone';
             return (
-              <li key={page.id} className="flex justify-between items-center py-2 border-b border">
-                <div className="flex items-center gap-3">
+              <li key={page.id} className='flex justify-between items-center py-2 border-b border'>
+                <div className='flex items-center gap-3'>
                   <Link href={`/admin/cms/builder?pageId=${page.id}`}>
-                    <span className="hover:underline">{page.name}</span>
+                    <span className='hover:underline'>{page.name}</span>
                   </Link>
                   <StatusBadge status={status} />
                   {page.slugs.length > 0 && (
-                    <span className="text-xs text-gray-500">
+                    <span className='text-xs text-gray-500'>
                       {page.slugs.map((s: PageSlugLink) => `/${s.slug.slug}`).join(', ')}
                       {outOfZone.length > 0 && (
-                        <span className="ml-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-300">
+                        <span className='ml-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-300'>
                           Cross-zone
                         </span>
                       )}
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-3">
+                <div className='flex items-center gap-3'>
                   {outOfZone.length > 0 && (
-                    <span className="text-xs text-amber-400">
+                    <span className='text-xs text-amber-400'>
                       Out of zone: {outOfZone.map((slug: string) => `/${slug}`).join(', ')}
                     </span>
                   )}
@@ -177,8 +177,8 @@ export default function PagesPage(): React.ReactNode {
                       }
                       disabled={slugsQuery.isLoading}
                     >
-                      <SelectTrigger className="h-8 w-[170px] text-xs">
-                        <SelectValue placeholder="Preview slug" />
+                      <SelectTrigger className='h-8 w-[170px] text-xs'>
+                        <SelectValue placeholder='Preview slug' />
                       </SelectTrigger>
                       <SelectContent>
                         {zoneSlugs.map((slug: string) => (
@@ -189,23 +189,23 @@ export default function PagesPage(): React.ReactNode {
                       </SelectContent>
                     </Select>
                   ) : zoneSlugs.length === 1 ? (
-                    <div className="rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-[10px] text-blue-200">
+                    <div className='rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-[10px] text-blue-200'>
                       Preview: {activeDomain?.domain ?? 'current'}/{zoneSlugs[0]}
                     </div>
                   ) : null}
                   <Button
-                    variant="outline"
-                    size="sm"
+                    variant='outline'
+                    size='sm'
                     disabled={!previewSlug || slugsQuery.isLoading}
                     title={previewTitle}
                     onClick={() => {
                       if (previewSlug) handlePreview(previewSlug);
                     }}
                   >
-                    <Eye className="mr-2 size-4" />
+                    <Eye className='mr-2 size-4' />
                     Preview
                   </Button>
-                  <Button variant="destructive" size="sm" onClick={() => { handleDelete(page); }}>
+                  <Button variant='destructive' size='sm' onClick={() => { handleDelete(page); }}>
                     Delete
                   </Button>
                 </div>
@@ -213,14 +213,14 @@ export default function PagesPage(): React.ReactNode {
             );
           })}
           {filteredPages.length === 0 && (
-            <li className="py-10">
+            <li className='py-10'>
               <EmptyState
-                title="No pages match this filter"
+                title='No pages match this filter'
                 description={statusFilter === 'all' ? 'Create your first page to get started with CMS.' : 'Try changing the status filter or create a new page.'}
                 action={
                   statusFilter === 'all' && (
-                    <Button onClick={handleCreatePage} variant="outline">
-                      <Plus className="mr-2 h-4 w-4" />
+                    <Button onClick={handleCreatePage} variant='outline'>
+                      <Plus className='mr-2 h-4 w-4' />
                       Create Page
                     </Button>
                   )
@@ -235,9 +235,9 @@ export default function PagesPage(): React.ReactNode {
         open={!!pageToDelete}
         onOpenChange={(open: boolean) => !open && setPageToDelete(null)}
         onConfirm={() => { void handleConfirmDelete(); }}
-        title="Delete Page"        description={`Are you sure you want to delete page "${pageToDelete?.name}"? This cannot be undone.`}
-        confirmText="Delete"
-        variant="destructive"
+        title='Delete Page'        description={`Are you sure you want to delete page "${pageToDelete?.name}"? This cannot be undone.`}
+        confirmText='Delete'
+        variant='destructive'
       />
     </div>
   );

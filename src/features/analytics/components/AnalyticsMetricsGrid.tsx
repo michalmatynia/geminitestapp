@@ -24,19 +24,19 @@ export function AnalyticsMetricsGrid(): React.JSX.Element {
   ] as const;
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
       {metrics.map((metric) => (
         <Card
           key={metric.label}
-          className="border-border/50 bg-gray-900/40"
+          className='border-border/50 bg-gray-900/40'
         >
-          <CardHeader className="p-4 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-300">
+          <CardHeader className='p-4 pb-2'>
+            <CardTitle className='text-sm font-medium text-gray-300'>
               {metric.label}
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-4 pt-0">
-            <div className="text-2xl font-semibold text-white">
+          <CardContent className='p-4 pt-0'>
+            <div className='text-2xl font-semibold text-white'>
               {formatCount(metric.value)}
             </div>
           </CardContent>

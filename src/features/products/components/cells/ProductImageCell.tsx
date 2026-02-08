@@ -50,13 +50,13 @@ export const ProductImageCell = React.memo(function ProductImageCell({
   }, []);
 
   if (!imageUrl) {
-    return <MissingImagePlaceholder className="size-16" />;
+    return <MissingImagePlaceholder className='size-16' />;
   }
 
   return (
     <div
       ref={containerRef}
-      className="relative"
+      className='relative'
       onMouseEnter={() => setShowPreview(true)}
       onMouseLeave={() => setShowPreview(false)}
       onMouseMove={handleMouseMove}
@@ -66,13 +66,13 @@ export const ProductImageCell = React.memo(function ProductImageCell({
         alt={productName}
         width={64}
         height={64}
-        className="size-16 rounded-md object-cover cursor-pointer transition-opacity hover:opacity-80"
+        className='size-16 rounded-md object-cover cursor-pointer transition-opacity hover:opacity-80'
         style={{ width: 'auto', height: 'auto' }}
       />
 
       {showPreview && (
         <div
-          className="fixed z-50 pointer-events-none"
+          className='fixed z-50 pointer-events-none'
           style={{
             left: `${((): number => {
               const margin = 8;
@@ -96,13 +96,13 @@ export const ProductImageCell = React.memo(function ProductImageCell({
             })()}px`,
           }}
         >
-          <div className="bg-card rounded-lg overflow-hidden shadow-2xl border border-border/60">
+          <div className='bg-card rounded-lg overflow-hidden shadow-2xl border border-border/60'>
             <Image
               src={imageUrl}
               alt={productName}
               width={PREVIEW_SIZE}
               height={PREVIEW_SIZE}
-              className="rounded-lg object-cover"
+              className='rounded-lg object-cover'
               style={{ width: 'auto', height: 'auto' }}
               priority
               quality={90}

@@ -165,48 +165,48 @@ export function VectorOverlay({ request, onClose, className }: VectorOverlayProp
         )}
       >
         <VectorDrawingCanvas
-          className="absolute inset-0 border-0 bg-transparent"
+          className='absolute inset-0 border-0 bg-transparent'
         />
 
-        <div className="absolute left-4 top-4 z-10 flex max-w-[70%] flex-col gap-1 rounded-xl border border-border/60 bg-slate-950/80 px-3 py-2 text-xs text-gray-200 shadow-lg">
-          <div className="flex items-center gap-2">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200">
+        <div className='absolute left-4 top-4 z-10 flex max-w-[70%] flex-col gap-1 rounded-xl border border-border/60 bg-slate-950/80 px-3 py-2 text-xs text-gray-200 shadow-lg'>
+          <div className='flex items-center gap-2'>
+            <div className='text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200'>
               {request.title}
             </div>
-            <div className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] text-emerald-200">
+            <div className='rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] text-emerald-200'>
               ViewBox {DEFAULT_VECTOR_VIEWBOX}
             </div>
           </div>
           {request.description ? (
-            <div className="text-[11px] text-gray-400">{request.description}</div>
+            <div className='text-[11px] text-gray-400'>{request.description}</div>
           ) : null}
-          <div className="text-[11px] text-gray-500">
+          <div className='text-[11px] text-gray-500'>
             Shift + click to add points, Delete to remove, drag points to refine.
           </div>
         </div>
 
-        <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
-          <Button type="button" size="sm" variant="outline" onClick={handleCancel}>
+        <div className='absolute right-4 top-4 z-10 flex items-center gap-2'>
+          <Button type='button' size='sm' variant='outline' onClick={handleCancel}>
             Cancel
           </Button>
-          <Button type="button" size="sm" onClick={handleApply} disabled={!hasPath}>
+          <Button type='button' size='sm' onClick={handleApply} disabled={!hasPath}>
             Apply Path
           </Button>
-          <Button type="button" size="icon" variant="ghost" onClick={handleCancel} aria-label="Close">
-            <X className="size-4" />
+          <Button type='button' size='icon' variant='ghost' onClick={handleCancel} aria-label='Close'>
+            <X className='size-4' />
           </Button>
         </div>
 
-        <div className="absolute right-4 bottom-4 z-10 max-w-[40%] rounded-xl border border-border/60 bg-slate-950/80 px-3 py-2 text-[10px] text-gray-300 shadow-lg">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-gray-500">Path Preview</div>
-          <div className="mt-1 truncate" title={hasPath ? pathPreview : 'Draw a path to generate SVG data.'}>
+        <div className='absolute right-4 bottom-4 z-10 max-w-[40%] rounded-xl border border-border/60 bg-slate-950/80 px-3 py-2 text-[10px] text-gray-300 shadow-lg'>
+          <div className='text-[10px] uppercase tracking-[0.2em] text-gray-500'>Path Preview</div>
+          <div className='mt-1 truncate' title={hasPath ? pathPreview : 'Draw a path to generate SVG data.'}>
             {hasPath ? pathPreview : 'Draw a path to generate SVG data.'}
           </div>
         </div>
 
         <VectorDrawingToolbar
-          className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2"
-          variant="min"
+          className='absolute bottom-4 left-1/2 z-10 -translate-x-1/2'
+          variant='min'
         />
       </div>
     </VectorDrawingProvider>

@@ -35,11 +35,11 @@ export default function CollapsibleMenu({
       }}
     >
       <Collapsible.Trigger
-        className="flex items-center justify-between w-full hover:bg-gray-700 p-2 rounded"
+        className='flex items-center justify-between w-full hover:bg-gray-700 p-2 rounded'
       >
-        <div className="flex items-center">
+        <div className='flex items-center'>
           {icon}
-          {!isMenuCollapsed && <span className="ml-2">{title}</span>}
+          {!isMenuCollapsed && <span className='ml-2'>{title}</span>}
         </div>
         {!isMenuCollapsed && (
           <ChevronRightIcon

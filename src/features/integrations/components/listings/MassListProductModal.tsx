@@ -123,26 +123,26 @@ function MassListProductModalContent({
       onSave={(): void => { void handleSubmit(); }}
       isSaving={submitting}
       saveText={isBaseComIntegration ? 'Export to Base.com' : 'List Products'}
-      cancelText="Cancel"
-      size="md"
+      cancelText='Cancel'
+      size='md'
     >
-      <div className="space-y-6">
+      <div className='space-y-6'>
         {error && (
-          <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <div className='rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200'>
             {error}
           </div>
         )}
 
         {submitting && progress && (
-          <div className="space-y-2">
-            <p className="text-sm text-gray-300">Processing {progress.current} of {progress.total}...</p>
-            <div className="h-2 w-full rounded-full bg-gray-800">
+          <div className='space-y-2'>
+            <p className='text-sm text-gray-300'>Processing {progress.current} of {progress.total}...</p>
+            <div className='h-2 w-full rounded-full bg-gray-800'>
               <div 
-                className="h-full rounded-full bg-primary transition-all duration-300" 
+                className='h-full rounded-full bg-primary transition-all duration-300' 
                 style={{ width: `${(progress.current / progress.total) * 100}%` }}
               />
             </div>
-            {progress.errors > 0 && <p className="text-xs text-red-400">{progress.errors} failures so far</p>}
+            {progress.errors > 0 && <p className='text-xs text-red-400'>{progress.errors} failures so far</p>}
           </div>
         )}
 
@@ -154,7 +154,7 @@ function MassListProductModalContent({
             />
 
             {loading ? (
-              <p className="text-sm text-gray-400">Loading details...</p>
+              <p className='text-sm text-gray-400'>Loading details...</p>
             ) : (
               <>
                 {isBaseComIntegration && (
@@ -165,7 +165,7 @@ function MassListProductModalContent({
           </>
         )}
         {exportLogs.length > 0 && (
-          <div className="mt-4 border-t border pt-4">
+          <div className='mt-4 border-t border pt-4'>
             <ExportLogViewer
               logs={exportLogs}
               isOpen={logsOpen}

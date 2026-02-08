@@ -66,10 +66,10 @@ export function UnifiedSelect({
               value={option.value}
               {...(option.disabled !== undefined ? { disabled: option.disabled } : {})}
             >
-              <div className="flex flex-col">
+              <div className='flex flex-col'>
                 <span>{option.label}</span>
                 {option.description && (
-                  <span className="text-[10px] text-gray-500">{option.description}</span>
+                  <span className='text-[10px] text-gray-500'>{option.description}</span>
                 )}
               </div>
             </SelectItem>

@@ -154,7 +154,7 @@ export default async function CmsSlugPage({ params }: SlugPageProps): Promise<JS
   );
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className='min-h-screen bg-gray-950 text-white'>
       {theme ? <ThemeProvider theme={theme}>{content}</ThemeProvider> : content}
     </div>
   );

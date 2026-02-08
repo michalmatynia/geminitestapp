@@ -28,7 +28,7 @@ export function FrontendImageElementSection({
   );
 
   return (
-    <section className="m-0 w-full p-0">
+    <section className='m-0 w-full p-0'>
       <FrontendBlockRenderer block={block} />
     </section>
   );

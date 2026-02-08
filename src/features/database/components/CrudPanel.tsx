@@ -71,7 +71,7 @@ function RowFormModal({
   const [formData, setFormData] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
     for (const col of columns) {
-      if (initialData && initialData[col.name] !== undefined) {
+      if (initialData?.[col.name] !== undefined) {
         initial[col.name] = formatCellValue(initialData[col.name]);
       } else {
         initial[col.name] = '';
@@ -93,20 +93,20 @@ function RowFormModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="w-full max-w-lg max-h-[80vh] overflow-auto rounded-lg border border-border bg-background p-6 shadow-lg">
-        <h3 className="text-sm font-semibold text-white mb-4">
+    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/60'>
+      <div className='w-full max-w-lg max-h-[80vh] overflow-auto rounded-lg border border-border bg-background p-6 shadow-lg'>
+        <h3 className='text-sm font-semibold text-white mb-4'>
           {mode === 'add' ? 'Add New Row' : 'Edit Row'}
         </h3>
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className='space-y-3'>
           {columns.map((col: DatabaseColumnInfo) => (
             <div key={col.name}>
-              <label className="flex items-center gap-2 text-xs text-gray-400 mb-1">
-                <span className="font-mono">{col.name}</span>
-                <span className="text-gray-600">({col.type})</span>
-                {col.isPrimaryKey && <Badge variant="default" className="text-[9px]">PK</Badge>}
+              <label className='flex items-center gap-2 text-xs text-gray-400 mb-1'>
+                <span className='font-mono'>{col.name}</span>
+                <span className='text-gray-600'>({col.type})</span>
+                {col.isPrimaryKey && <Badge variant='default' className='text-[9px]'>PK</Badge>}
                 {!col.nullable && !col.isPrimaryKey && (
-                  <span className="text-red-400">*</span>
+                  <span className='text-red-400'>*</span>
                 )}
               </label>
               <Input
@@ -115,16 +115,16 @@ function RowFormModal({
                   setFormData((prev: Record<string, string>) => ({ ...prev, [col.name]: e.target.value }))
                 }
                 placeholder={col.defaultValue ?? (col.nullable ? 'NULL' : 'required')}
-                className="h-8 font-mono text-xs"
+                className='h-8 font-mono text-xs'
                 disabled={mode === 'edit' && col.isPrimaryKey}
               />
             </div>
           ))}
-          <div className="flex justify-end gap-2 pt-3">
-            <Button type="button" variant="outline" size="sm" onClick={onClose}>
+          <div className='flex justify-end gap-2 pt-3'>
+            <Button type='button' variant='outline' size='sm' onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" size="sm" disabled={isPending}>
+            <Button type='submit' size='sm' disabled={isPending}>
               {isPending ? 'Saving...' : mode === 'add' ? 'Insert Row' : 'Update Row'}
             </Button>
           </div>
@@ -146,18 +146,18 @@ function DeleteConfirmModal({
   isPending: boolean;
 }): React.JSX.Element {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="w-full max-w-sm rounded-lg border border-border bg-background p-6 shadow-lg">
-        <div className="flex items-center gap-2 mb-3">
-          <AlertTriangleIcon className="size-5 text-red-400" />
-          <h3 className="text-sm font-semibold text-white">Delete Row</h3>
+    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/60'>
+      <div className='w-full max-w-sm rounded-lg border border-border bg-background p-6 shadow-lg'>
+        <div className='flex items-center gap-2 mb-3'>
+          <AlertTriangleIcon className='size-5 text-red-400' />
+          <h3 className='text-sm font-semibold text-white'>Delete Row</h3>
         </div>
-        <p className="text-xs text-gray-400 mb-4">
+        <p className='text-xs text-gray-400 mb-4'>
           Are you sure you want to delete this row? This action cannot be undone.
         </p>
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
-          <Button variant="destructive" size="sm" onClick={onConfirm} disabled={isPending}>
+        <div className='flex justify-end gap-2'>
+          <Button variant='outline' size='sm' onClick={onClose}>Cancel</Button>
+          <Button variant='destructive' size='sm' onClick={onConfirm} disabled={isPending}>
             {isPending ? 'Deleting...' : 'Delete'}
           </Button>
         </div>
@@ -403,9 +403,9 @@ export function CrudPanel({
   const columnKeys = rows.length > 0 ? Object.keys(rows[0] ?? {}) : columns.map((c: DatabaseColumnInfo) => c.name);
 
   return (
-    <div ref={panelRef} className="space-y-4">
+    <div ref={panelRef} className='space-y-4'>
       {/* Table selector */}
-      <div className="flex flex-wrap items-center gap-3">
+      <div className='flex flex-wrap items-center gap-3'>
         <select
           value={selectedTable}
           onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => {
@@ -415,9 +415,9 @@ export function CrudPanel({
             setError(null);
             setSuccessMessage(null);
           }}
-          className="h-8 rounded-md border border-border bg-card px-2 text-xs text-gray-200 min-w-[200px]"
+          className='h-8 rounded-md border border-border bg-card px-2 text-xs text-gray-200 min-w-[200px]'
         >
-          <option value="">Select a table...</option>
+          <option value=''>Select a table...</option>
           {tableDetails.map((t: DatabaseTableDetail) => (
             <option key={t.name} value={t.name}>
               {t.name} (~{t.rowEstimate} rows)
@@ -428,21 +428,21 @@ export function CrudPanel({
         {selectedTable && (
           <>
             <Button
-              variant="outline"
-              size="sm"
+              variant='outline'
+              size='sm'
               onClick={fetchRows}
               disabled={loading}
-              className="h-8 gap-1 text-xs"
+              className='h-8 gap-1 text-xs'
             >
-              <RefreshCwIcon className="size-3" />
+              <RefreshCwIcon className='size-3' />
               Refresh
             </Button>
             <Button
-              size="sm"
+              size='sm'
               onClick={(): void => setShowAddModal(true)}
-              className="h-8 gap-1 text-xs"
+              className='h-8 gap-1 text-xs'
             >
-              <PlusIcon className="size-3" />
+              <PlusIcon className='size-3' />
               Add Row
             </Button>
           </>
@@ -451,66 +451,66 @@ export function CrudPanel({
 
       {/* Messages */}
       {error && (
-        <div className="rounded-md border border-red-500/30 bg-red-900/20 px-3 py-2 text-xs text-red-300">
+        <div className='rounded-md border border-red-500/30 bg-red-900/20 px-3 py-2 text-xs text-red-300'>
           {error}
         </div>
       )}
       {successMessage && (
-        <div className="rounded-md border border-emerald-500/30 bg-emerald-900/20 px-3 py-2 text-xs text-emerald-300">
+        <div className='rounded-md border border-emerald-500/30 bg-emerald-900/20 px-3 py-2 text-xs text-emerald-300'>
           {successMessage}
         </div>
       )}
 
       {/* Data browser */}
       {selectedTable && (
-        <SectionPanel className="p-0">
-          {loading && <p className="p-4 text-xs text-gray-400">Loading rows...</p>}
+        <SectionPanel className='p-0'>
+          {loading && <p className='p-4 text-xs text-gray-400'>Loading rows...</p>}
 
           {!loading && rows.length === 0 && (
-            <p className="p-4 text-xs text-gray-500">No rows found in this table.</p>
+            <p className='p-4 text-xs text-gray-500'>No rows found in this table.</p>
           )}
 
           {!loading && rows.length > 0 && (
             <>
-              <div className="overflow-auto max-h-[50vh]">
-                <table className="w-full text-xs">
-                  <thead className="sticky top-0 bg-card">
-                    <tr className="border-b border-border text-left text-gray-500">
-                      <th className="px-3 py-2 font-medium">Actions</th>
+              <div className='overflow-auto max-h-[50vh]'>
+                <table className='w-full text-xs'>
+                  <thead className='sticky top-0 bg-card'>
+                    <tr className='border-b border-border text-left text-gray-500'>
+                      <th className='px-3 py-2 font-medium'>Actions</th>
                       {columnKeys.map((key: string) => (
-                        <th key={key} className="whitespace-nowrap px-3 py-2 font-medium font-mono">
+                        <th key={key} className='whitespace-nowrap px-3 py-2 font-medium font-mono'>
                           {key}
                         </th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-border">
+                  <tbody className='divide-y divide-border'>
                     {rows.map((row: Record<string, unknown>, i: number) => (
-                      <tr key={i} className="text-gray-300 hover:bg-muted/30">
-                        <td className="px-3 py-1.5">
-                          <div className="flex items-center gap-1">
+                      <tr key={i} className='text-gray-300 hover:bg-muted/30'>
+                        <td className='px-3 py-1.5'>
+                          <div className='flex items-center gap-1'>
                             <button
-                              type="button"
+                              type='button'
                               onClick={(): void => setEditingRow(row)}
-                              className="rounded p-1 text-gray-400 hover:bg-muted hover:text-blue-300"
-                              title="Edit row"
+                              className='rounded p-1 text-gray-400 hover:bg-muted hover:text-blue-300'
+                              title='Edit row'
                             >
-                              <EditIcon className="size-3" />
+                              <EditIcon className='size-3' />
                             </button>
                             <button
-                              type="button"
+                              type='button'
                               onClick={(): void => setDeletingRow(row)}
-                              className="rounded p-1 text-gray-400 hover:bg-muted hover:text-red-300"
-                              title="Delete row"
+                              className='rounded p-1 text-gray-400 hover:bg-muted hover:text-red-300'
+                              title='Delete row'
                             >
-                              <Trash2Icon className="size-3" />
+                              <Trash2Icon className='size-3' />
                             </button>
                           </div>
                         </td>
                         {columnKeys.map((key: string) => (
                           <td
                             key={key}
-                            className="max-w-[200px] truncate whitespace-nowrap px-3 py-1.5 font-mono"
+                            className='max-w-[200px] truncate whitespace-nowrap px-3 py-1.5 font-mono'
                             title={formatCellValue(row[key])}
                           >
                             {formatCellValue(row[key])}
@@ -522,8 +522,8 @@ export function CrudPanel({
                 </table>
               </div>
 
-              <div className="flex items-center justify-between border-t border-border px-4 py-2">
-                <span className="text-xs text-gray-500">
+              <div className='flex items-center justify-between border-t border-border px-4 py-2'>
+                <span className='text-xs text-gray-500'>
                   {totalRows.toLocaleString()} total rows
                 </span>
                 <Pagination
@@ -537,7 +537,7 @@ export function CrudPanel({
                   }}
                   pageSizeOptions={[10, 20, 50, 100]}
                   showPageSize
-                  className="scale-90 origin-right"
+                  className='scale-90 origin-right'
                 />
               </div>
             </>
@@ -549,7 +549,7 @@ export function CrudPanel({
       {showAddModal && tableDetail && (
         <RowFormModal
           columns={tableDetail.columns}
-          mode="add"
+          mode='add'
           onSubmit={handleAdd}
           onClose={(): void => setShowAddModal(false)}
           isPending={crudMutation.isPending}
@@ -560,7 +560,7 @@ export function CrudPanel({
         <RowFormModal
           columns={tableDetail.columns}
           initialData={editingRow}
-          mode="edit"
+          mode='edit'
           onSubmit={handleEdit}
           onClose={(): void => setEditingRow(null)}
           isPending={crudMutation.isPending}

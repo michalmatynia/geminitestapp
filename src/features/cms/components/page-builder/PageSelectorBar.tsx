@@ -91,8 +91,8 @@ export function PageSelectorBar({ variant = 'bar' }: PageSelectorBarProps): Reac
       }
     >
       {!isToolbar && (
-        <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-400">
-          <Layers className="size-3.5" />
+        <div className='flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-400'>
+          <Layers className='size-3.5' />
           <span>Page</span>
         </div>
       )}
@@ -103,7 +103,7 @@ export function PageSelectorBar({ variant = 'bar' }: PageSelectorBarProps): Reac
           value: page.id,
           label: page.name
         }))}
-        placeholder="Select a page..."
+        placeholder='Select a page...'
         className={isToolbar ? 'w-56' : 'w-64'}
         triggerClassName={isToolbar ? 'h-8' : undefined}
       />

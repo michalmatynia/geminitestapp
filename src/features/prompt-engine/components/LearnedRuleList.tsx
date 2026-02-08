@@ -11,17 +11,17 @@ export function LearnedRuleList(): React.JSX.Element {
   const { learnedDrafts } = usePromptEngine();
 
   return (
-    <div className="space-y-4">
+    <div className='space-y-4'>
       <SectionPanel>
-        <div className="text-xs uppercase text-gray-500">Learned Rules</div>
-        <div className="mt-1 text-xs text-gray-400">
+        <div className='text-xs uppercase text-gray-500'>Learned Rules</div>
+        <div className='mt-1 text-xs text-gray-400'>
           Auto-generated patterns from prompts. Review and edit before saving.
         </div>
       </SectionPanel>
 
       {learnedDrafts.length === 0 ? (
         <SectionPanel>
-          <div className="text-sm text-gray-400">No learned patterns yet.</div>
+          <div className='text-sm text-gray-400'>No learned patterns yet.</div>
         </SectionPanel>
       ) : null}
 
@@ -31,8 +31,8 @@ export function LearnedRuleList(): React.JSX.Element {
 
       <ClientOnly>
         <SectionPanel>
-          <div className="text-[11px] text-gray-500">Tip</div>
-          <div className="text-xs text-gray-400">
+          <div className='text-[11px] text-gray-500'>Tip</div>
+          <div className='text-xs text-gray-400'>
             Use the Image Studio prompt tools to suggest learned patterns automatically.
           </div>
         </SectionPanel>

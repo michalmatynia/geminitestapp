@@ -85,43 +85,43 @@ export function MultiSelect({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
-            variant="outline"
-            className="w-full justify-between text-left font-normal"
+            variant='outline'
+            className='w-full justify-between text-left font-normal'
             disabled={disabled || loading}
           >
-            <span className="truncate">
+            <span className='truncate'>
               {loading ? 'Loading...' : displayValue}
             </span>
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-64" align="start">
-          <div className="flex items-center border-b px-3 pb-2 pt-2">
-            <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+        <DropdownMenuContent className='w-64' align='start'>
+          <div className='flex items-center border-b px-3 pb-2 pt-2'>
+            <Search className='mr-2 h-4 w-4 shrink-0 opacity-50' />
             <Input
               placeholder={searchPlaceholder}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="h-8 border-none bg-transparent p-0 focus-visible:ring-0"
+              className='h-8 border-none bg-transparent p-0 focus-visible:ring-0'
             />
             {query && (
               <Button
-                variant="ghost"
-                size="sm"
+                variant='ghost'
+                size='sm'
                 onClick={() => setQuery('')}
-                className="h-auto p-1"
+                className='h-auto p-1'
               >
-                <X className="h-4 w-4" />
+                <X className='h-4 w-4' />
               </Button>
             )}
           </div>
-          <div className="max-h-64 overflow-y-auto p-1">
+          <div className='max-h-64 overflow-y-auto p-1'>
             {loading ? (
-              <div className="p-2 text-center text-sm text-muted-foreground">
+              <div className='p-2 text-center text-sm text-muted-foreground'>
                 Loading...
               </div>
             ) : filteredOptions.length === 0 ? (
-              <div className="p-2 text-center text-sm text-muted-foreground">
+              <div className='p-2 text-center text-sm text-muted-foreground'>
                 {emptyMessage}
               </div>
             ) : (

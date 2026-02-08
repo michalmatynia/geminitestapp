@@ -34,7 +34,7 @@ function AdminNotesPageContent(): React.JSX.Element {
   } = useNotesAppContext();
 
   return (
-    <div className="w-full">
+    <div className='w-full'>
       <div
         className={`grid h-[calc(100vh-120px)] w-full grid-cols-1 gap-6 ${
           isFolderTreeCollapsed
@@ -46,7 +46,7 @@ function AdminNotesPageContent(): React.JSX.Element {
       >
         {/* Sidebar */}
         {!isFolderTreeCollapsed && (
-          <SectionPanel className="hidden overflow-hidden p-0 lg:block">
+          <SectionPanel className='hidden overflow-hidden p-0 lg:block'>
             <FolderTree
               folders={folderTree}
               selectedFolderId={settings.selectedFolderId}
@@ -90,7 +90,7 @@ function AdminNotesPageContent(): React.JSX.Element {
         )}
 
         {/* Main Content */}
-        <SectionPanel className="flex min-h-0 flex-col overflow-hidden p-6">
+        <SectionPanel className='flex min-h-0 flex-col overflow-hidden p-6'>
           {selectedNote ? <NoteDetailView /> : <NoteListView />}
         </SectionPanel>
 

@@ -98,7 +98,7 @@ export function StudioMainContent(): React.JSX.Element {
   };
 
   return (
-    <div className="relative flex min-h-0 flex-1">
+    <div className='relative flex min-h-0 flex-1'>
       <div
         className={cn(
           'grid min-h-0 flex-1 transition-[grid-template-columns] duration-300 ease-in-out',
@@ -111,17 +111,17 @@ export function StudioMainContent(): React.JSX.Element {
             'order-1 flex min-h-0 flex-1 flex-col overflow-hidden transition-all duration-300 ease-in-out p-0',
             isFocusMode && 'pointer-events-none opacity-0 -translate-x-2'
           )}
-          variant="subtle"
+          variant='subtle'
           aria-hidden={isFocusMode}
         >
-          <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
-            <div className="space-y-2">
-              <Label className="text-xs text-gray-400">Project</Label>
+          <div className='flex min-h-0 flex-1 flex-col gap-3 p-4'>
+            <div className='space-y-2'>
+              <Label className='text-xs text-gray-400'>Project</Label>
               <Select
                 value={projectId || '__none__'}
                 onValueChange={(value) => setProjectId(value === '__none__' ? '' : value)}
               >
-                <SelectTrigger className="h-9 w-full">
+                <SelectTrigger className='h-9 w-full'>
                   <SelectValue placeholder={projectsQuery.isLoading ? 'Loading...' : 'Select project'} />
                 </SelectTrigger>
                 <SelectContent>
@@ -133,11 +133,11 @@ export function StudioMainContent(): React.JSX.Element {
                 </SelectContent>
               </Select>
 
-              <div className="flex flex-wrap items-center gap-2">
+              <div className='flex flex-wrap items-center gap-2'>
                 <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
+                  type='button'
+                  variant='outline'
+                  size='sm'
                   onClick={() => setSlotCreateOpen(true)}
                   disabled={!projectId}
                 >
@@ -146,68 +146,68 @@ export function StudioMainContent(): React.JSX.Element {
                 {selectedSlot ? (
                   <>
                     <Button
-                      type="button"
-                      size="sm"
+                      type='button'
+                      size='sm'
                       variant={workingSlotId === selectedSlot.id ? 'secondary' : 'outline'}
                       onClick={() => setWorkingSlotId(selectedSlot.id)}
                     >
                       {workingSlotId === selectedSlot.id ? 'Loaded' : 'Load to preview'}
                     </Button>
                     <Button
-                      type="button"
-                      size="icon"
-                      variant="outline"
-                      title="Edit slot"
+                      type='button'
+                      size='icon'
+                      variant='outline'
+                      title='Edit slot'
                       onClick={() => setSlotInlineEditOpen(true)}
                     >
-                      <Settings2 className="size-4" />
+                      <Settings2 className='size-4' />
                     </Button>
                   </>
                 ) : null}
               </div>
             </div>
 
-            <div className="flex-1 overflow-hidden">
+            <div className='flex-1 overflow-hidden'>
               <SlotTree key={projectId} />
             </div>
           </div>
         </SectionPanel>
 
         {/* Center: Preview Area */}
-        <SectionPanel className="order-2 relative flex min-h-0 flex-1 flex-col overflow-hidden p-0" variant="subtle">
+        <SectionPanel className='order-2 relative flex min-h-0 flex-1 flex-col overflow-hidden p-0' variant='subtle'>
           <PanelHeader
-            title="Preview"
+            title='Preview'
             {...(!isFocusMode ? { subtitle: workingSlot?.name || '—' } : {})}
             actions={(
-              <div className="flex items-center gap-2">
+              <div className='flex items-center gap-2'>
                 {workingSlot?.asset3dId ? (
-                  <div className="flex items-center gap-1 rounded-full border border-border/60 bg-card/60 px-1 py-0.5 text-[11px] text-gray-300">
-                    <Button size="sm" variant={previewMode === 'image' ? 'secondary' : 'ghost'} onClick={() => setPreviewMode('image')}>Image</Button>
-                    <Button size="sm" variant={previewMode === '3d' ? 'secondary' : 'ghost'} onClick={() => setPreviewMode('3d')}>3D</Button>
+                  <div className='flex items-center gap-1 rounded-full border border-border/60 bg-card/60 px-1 py-0.5 text-[11px] text-gray-300'>
+                    <Button size='sm' variant={previewMode === 'image' ? 'secondary' : 'ghost'} onClick={() => setPreviewMode('image')}>Image</Button>
+                    <Button size='sm' variant={previewMode === '3d' ? 'secondary' : 'ghost'} onClick={() => setPreviewMode('3d')}>3D</Button>
                   </div>
                 ) : null}
-                <Button variant="outline" size="sm" onClick={() => setIsFocusMode(!isFocusMode)}>
-                  {isFocusMode ? <Minimize2 className="mr-2 size-4" /> : <Maximize2 className="mr-2 size-4" />}
+                <Button variant='outline' size='sm' onClick={() => setIsFocusMode(!isFocusMode)}>
+                  {isFocusMode ? <Minimize2 className='mr-2 size-4' /> : <Maximize2 className='mr-2 size-4' />}
                   {isFocusMode ? 'Edit' : 'Show'}
                 </Button>
               </div>
             )}
           />
-          <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
-            <div className="flex-1 relative">
+          <div className='flex min-h-0 flex-1 flex-col gap-3 p-4'>
+            <div className='flex-1 relative'>
               <VectorDrawingProvider value={vectorContextValue}>
                 {previewMode === '3d' && workingSlot?.asset3dId ? (
                   <Viewer3D
                     modelUrl={`/api/assets3d/${workingSlot.asset3dId}/file`}
                     allowUserControls
                     captureRef={captureRef}
-                    className="h-full w-full"
+                    className='h-full w-full'
                   />
                 ) : (
                   <VectorDrawingCanvas />
                 )}
                 <VectorDrawingToolbar
-                  className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2"
+                  className='absolute bottom-4 left-1/2 z-20 -translate-x-1/2'
                   onClear={() => { setMaskShapes([]); setActiveMaskId(null); }}
                   disableClear={maskShapes.length === 0}
                 />
@@ -217,37 +217,37 @@ export function StudioMainContent(): React.JSX.Element {
         </SectionPanel>
 
         {/* Right Sidebar: Prompt + Params */}
-        <SectionPanel className="order-3 flex min-h-0 flex-1 flex-col overflow-hidden p-0" variant="subtle">
+        <SectionPanel className='order-3 flex min-h-0 flex-1 flex-col overflow-hidden p-0' variant='subtle'>
           <PanelHeader
-            title="Prompt & Params"
+            title='Prompt & Params'
             actions={(
-              <div className="flex flex-wrap items-center gap-2">
+              <div className='flex flex-wrap items-center gap-2'>
                 <Button
-                  variant="outline"
-                  size="icon"
+                  variant='outline'
+                  size='icon'
                   onClick={() => { setExtractDraftPrompt(promptText); setExtractReviewOpen(true); }}
                 >
-                  <Sparkles className="size-4" />
+                  <Sparkles className='size-4' />
                 </Button>
-                <Button variant="outline" size="icon" onClick={autoFormatPrompt}><Wand2 className="size-4" /></Button>
+                <Button variant='outline' size='icon' onClick={autoFormatPrompt}><Wand2 className='size-4' /></Button>
               </div>
             )}
           />
-          <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
+          <div className='flex min-h-0 flex-1 flex-col gap-3 p-4'>
             <Textarea
               value={promptText}
               onChange={(e) => setPromptText(e.target.value)}
-              className="h-40 font-mono text-[11px]"
-              placeholder="Paste prompt here..."
+              className='h-40 font-mono text-[11px]'
+              placeholder='Paste prompt here...'
             />
             
-            <div className="flex-1 overflow-auto">
+            <div className='flex-1 overflow-auto'>
               {paramsState ? (
-                <div className="space-y-3">
+                <div className='space-y-3'>
                   {/* Map over flattened params here */}
                 </div>
               ) : (
-                <div className="text-sm text-gray-400">Extract params to edit.</div>
+                <div className='text-sm text-gray-400'>Extract params to edit.</div>
               )}
             </div>
           </div>

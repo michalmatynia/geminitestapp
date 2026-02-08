@@ -44,14 +44,14 @@ export function FileUploadEventsFilters(): React.JSX.Element {
   };
 
   return (
-    <div className="mt-4">
+    <div className='mt-4'>
       <DynamicFilters
         fields={filterFields}
         values={{ status, category, projectId, query, fromDate, toDate }}
         onChange={handleFilterChange}
         onReset={handleResetFilters}
         hasActiveFilters={Boolean(status !== 'all' || category || projectId || query || fromDate || toDate)}
-        gridClassName="md:grid-cols-4 lg:grid-cols-6"
+        gridClassName='md:grid-cols-4 lg:grid-cols-6'
       />
     </div>
   );

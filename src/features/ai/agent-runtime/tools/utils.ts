@@ -143,8 +143,7 @@ export const evaluateRobotsRules = (
       if (!bestMatch || rule.path.length > bestMatch.path.length) {
         bestMatch = rule;
       } else if (
-        bestMatch &&
-        rule.path.length === bestMatch.path.length &&
+        rule.path.length === bestMatch?.path.length &&
         rule.type === 'allow'
       ) {
         bestMatch = rule;

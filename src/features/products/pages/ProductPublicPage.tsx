@@ -41,31 +41,31 @@ export async function ProductPublicPage({
     '';
 
   return (
-    <div className="container mx-auto py-12">
-      <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
+    <div className='container mx-auto py-12'>
+      <div className='grid grid-cols-1 gap-12 md:grid-cols-2'>
         <div>
-          <div className="relative h-96 w-full">
+          <div className='relative h-96 w-full'>
             {imageUrl ? (
               <Image
                 src={imageUrl}
                 alt={`${title} image`}
                 fill
-                className="rounded-lg object-cover"
-                sizes="(max-width: 768px) 100vw, 50vw"
+                className='rounded-lg object-cover'
+                sizes='(max-width: 768px) 100vw, 50vw'
               />
             ) : (
-              <MissingImagePlaceholder className="h-full w-full rounded-lg" />
+              <MissingImagePlaceholder className='h-full w-full rounded-lg' />
             )}
           </div>
         </div>
 
         <div>
-          <h1 className="text-3xl font-bold">{title}</h1>
-          <p className="my-4 text-2xl font-semibold">{priceLabel}</p>
+          <h1 className='text-3xl font-bold'>{title}</h1>
+          <p className='my-4 text-2xl font-semibold'>{priceLabel}</p>
           {description ? (
-            <p className="text-gray-400">{description}</p>
+            <p className='text-gray-400'>{description}</p>
           ) : (
-            <p className="text-gray-500">No description available.</p>
+            <p className='text-gray-500'>No description available.</p>
           )}
         </div>
       </div>

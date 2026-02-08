@@ -23,11 +23,11 @@ export function MutatorNodeConfigSection({
   };
 
   return (
-    <div className="space-y-4">
+    <div className='space-y-4'>
       <div>
-        <Label className="text-xs text-gray-400">Target Path</Label>
+        <Label className='text-xs text-gray-400'>Target Path</Label>
         <Input
-          className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+          className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
           value={mutatorConfig.path}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({
@@ -37,9 +37,9 @@ export function MutatorNodeConfigSection({
         />
       </div>
       <div>
-        <Label className="text-xs text-gray-400">Value Template</Label>
+        <Label className='text-xs text-gray-400'>Value Template</Label>
         <Textarea
-          className="mt-2 min-h-[90px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
+          className='mt-2 min-h-[90px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
           value={mutatorConfig.valueTemplate}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
             updateSelectedNodeConfig({
@@ -50,10 +50,10 @@ export function MutatorNodeConfigSection({
             })
           }
         />
-        <p className="mt-2 text-[11px] text-gray-500">
-          Use <span className="text-gray-300">{'{{value}}'}</span> for the
+        <p className='mt-2 text-[11px] text-gray-500'>
+          Use <span className='text-gray-300'>{'{{value}}'}</span> for the
           current value or dot paths like{' '}
-          <span className="text-gray-300">{'{{entity.title}}'}</span>.
+          <span className='text-gray-300'>{'{{entity.title}}'}</span>.
         </p>
       </div>
     </div>

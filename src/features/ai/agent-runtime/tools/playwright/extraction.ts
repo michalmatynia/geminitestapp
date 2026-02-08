@@ -289,7 +289,7 @@ export const findProductListingUrls = async (page: Page): Promise<string[]> => {
     document.querySelectorAll('a[href]').forEach((link: Element) => {
       const href = (link as HTMLAnchorElement).href;
       const text = (link as HTMLElement).innerText || '';
-      if (!href || !href.startsWith(origin)) return;
+      if (!href?.startsWith(origin)) return;
       if (keywords.test(href) || keywords.test(text)) {
         urls.add(href);
       }

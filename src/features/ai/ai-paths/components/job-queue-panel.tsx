@@ -148,7 +148,7 @@ const getLatestEventTimestamp = (events: AiPathRunEventRecord[]): string | null 
 
 const readMetaRecord = (meta: AiPathRunRecord['meta']): Record<string, unknown> | null => {
   if (!meta || typeof meta !== 'object' || Array.isArray(meta)) return null;
-  return meta as Record<string, unknown>;
+  return meta;
 };
 
 const readStringValue = (value: unknown): string | null => {
@@ -315,10 +315,10 @@ const isRunningStatus = (status: unknown): boolean =>
   typeof status === 'string' && status.trim().toLowerCase() === 'running';
 
 const RunningIndicator = ({ label = 'Running' }: { label?: string }): React.JSX.Element => (
-  <span className="inline-flex items-center gap-1 rounded-full border border-sky-500/40 bg-sky-500/10 px-2 py-[1px] text-[9px] uppercase text-sky-200">
-    <span className="relative inline-flex h-2 w-2">
-      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400/80" />
-      <span className="relative inline-flex h-2 w-2 rounded-full bg-sky-300" />
+  <span className='inline-flex items-center gap-1 rounded-full border border-sky-500/40 bg-sky-500/10 px-2 py-[1px] text-[9px] uppercase text-sky-200'>
+    <span className='relative inline-flex h-2 w-2'>
+      <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400/80' />
+      <span className='relative inline-flex h-2 w-2 rounded-full bg-sky-300' />
     </span>
     {label}
   </span>
@@ -792,47 +792,47 @@ export function JobQueuePanel({
   );
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className='space-y-4'>
+      <div className='flex flex-wrap items-center justify-between gap-3'>
         <div>
-          <div className="text-sm font-semibold text-white">{panelLabel}</div>
-          <div className="text-xs text-gray-400">{panelDescription}</div>
+          <div className='text-sm font-semibold text-white'>{panelLabel}</div>
+          <div className='text-xs text-gray-400'>{panelDescription}</div>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className='flex flex-wrap gap-2'>
           <Button
-            type="button"
-            className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
+            type='button'
+            className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
             onClick={() => { void runsQuery.refetch(); }}
             disabled={runsQuery.isFetching}
           >
             {runsQuery.isFetching ? 'Refreshing...' : 'Refresh'}
           </Button>
           <Button
-            type="button"
-            variant="destructive"
-            className="rounded-md border px-2 py-1 text-[10px]"
+            type='button'
+            variant='destructive'
+            className='rounded-md border px-2 py-1 text-[10px]'
             onClick={() => setClearScope('terminal')}
             disabled={clearRunsMutation.isPending}
           >
-            <Trash2 className="mr-1 size-3" />
+            <Trash2 className='mr-1 size-3' />
             Clear Finished
           </Button>
           <Button
-            type="button"
-            variant="destructive"
-            className="rounded-md border px-2 py-1 text-[10px]"
+            type='button'
+            variant='destructive'
+            className='rounded-md border px-2 py-1 text-[10px]'
             onClick={() => setClearScope('all')}
             disabled={clearRunsMutation.isPending}
           >
-            <Trash2 className="mr-1 size-3" />
+            <Trash2 className='mr-1 size-3' />
             Clear All
           </Button>
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 text-[11px] text-gray-400">
+      <div className='flex flex-wrap items-center gap-3 text-[11px] text-gray-400'>
         <Button
-          type="button"
+          type='button'
           className={`rounded-md border px-2 py-1 text-[10px] ${
             autoRefreshEnabled
               ? 'border-emerald-500/50 text-emerald-200'
@@ -842,17 +842,17 @@ export function JobQueuePanel({
         >
           {autoRefreshEnabled ? 'Auto-refresh on' : 'Auto-refresh off'}
         </Button>
-        <div className="flex items-center gap-2">
-          <Label className="text-[10px] uppercase text-gray-500">Interval</Label>
+        <div className='flex items-center gap-2'>
+          <Label className='text-[10px] uppercase text-gray-500'>Interval</Label>
           <Select
             value={String(autoRefreshInterval)}
             onValueChange={(value: string) => setAutoRefreshInterval(Number.parseInt(value, 10))}
             disabled={!autoRefreshEnabled}
           >
-            <SelectTrigger className="h-7 w-[110px] border-border bg-card/70 text-[11px] text-white">
+            <SelectTrigger className='h-7 w-[110px] border-border bg-card/70 text-[11px] text-white'>
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="border-border bg-gray-900 text-white">
+            <SelectContent className='border-border bg-gray-900 text-white'>
               {[2000, 5000, 10000, 30000].map((value: number) => (
                 <SelectItem key={value} value={String(value)}>
                   {value / 1000}s
@@ -861,16 +861,16 @@ export function JobQueuePanel({
             </SelectContent>
           </Select>
         </div>        <Button
-          type="button"
-          className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
+          type='button'
+          className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
           onClick={pauseAllStreams}
           disabled={expandedRunIds.size === 0}
         >
           Pause all streams
         </Button>
         <Button
-          type="button"
-          className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
+          type='button'
+          className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
           onClick={resumeAllStreams}
           disabled={expandedRunIds.size === 0}
         >
@@ -878,68 +878,68 @@ export function JobQueuePanel({
         </Button>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-        <div className="rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300">
-          <div className="text-[10px] uppercase text-gray-500">Worker</div>
-          <div className="mt-1 flex items-center gap-2 text-sm text-white">
+      <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-6'>
+        <div className='rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300'>
+          <div className='text-[10px] uppercase text-gray-500'>Worker</div>
+          <div className='mt-1 flex items-center gap-2 text-sm text-white'>
             {queueStatus ? (queueStatus.running ? 'Running' : 'Stopped') : '-'}
-            {queueStatus?.running ? <RunningIndicator label="Active" /> : null}
+            {queueStatus?.running ? <RunningIndicator label='Active' /> : null}
           </div>
-          <div className="mt-1 text-[11px] text-gray-400">
+          <div className='mt-1 text-[11px] text-gray-400'>
             Healthy: {queueStatus ? (queueStatus.healthy ? 'Yes' : 'No') : '-'}
           </div>
         </div>
-        <div className="rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300">
-          <div className="text-[10px] uppercase text-gray-500">Concurrency</div>
-          <div className="mt-1 text-sm text-white">
+        <div className='rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300'>
+          <div className='text-[10px] uppercase text-gray-500'>Concurrency</div>
+          <div className='mt-1 text-sm text-white'>
             {queueStatus?.concurrency ?? '-'}
           </div>
-          <div className="mt-1 flex items-center gap-2 text-[11px] text-gray-400">
+          <div className='mt-1 flex items-center gap-2 text-[11px] text-gray-400'>
             <span>Active runs: {queueStatus?.activeRuns ?? 0}</span>
-            {(queueStatus?.activeRuns ?? 0) > 0 ? <RunningIndicator label="Busy" /> : null}
+            {(queueStatus?.activeRuns ?? 0) > 0 ? <RunningIndicator label='Busy' /> : null}
           </div>
         </div>
-        <div className="rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300">
-          <div className="text-[10px] uppercase text-gray-500">Last poll</div>
-          <div className="mt-1 text-sm text-white">
+        <div className='rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300'>
+          <div className='text-[10px] uppercase text-gray-500'>Last poll</div>
+          <div className='mt-1 text-sm text-white'>
             {queueStatus?.lastPollTime
               ? new Date(queueStatus.lastPollTime).toLocaleTimeString()
               : '-'}
           </div>
-          <div className="mt-1 text-[11px] text-gray-400">
+          <div className='mt-1 text-[11px] text-gray-400'>
             Age:{' '}
             {formatDurationMs(queueStatus?.timeSinceLastPoll ?? null)}
           </div>
         </div>
-        <div className="rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300">
-          <div className="text-[10px] uppercase text-gray-500">Status</div>
-          <div className="mt-1 text-sm text-white">
+        <div className='rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300'>
+          <div className='text-[10px] uppercase text-gray-500'>Status</div>
+          <div className='mt-1 text-sm text-white'>
             {queueStatusQuery.isFetching ? 'Refreshing...' : 'Live'}
           </div>
           {queueStatusQuery.error ? (
-            <div className="mt-1 text-[11px] text-rose-200">
+            <div className='mt-1 text-[11px] text-rose-200'>
               {queueStatusQuery.error instanceof Error
                 ? queueStatusQuery.error.message
                 : 'Failed to load queue status.'}
             </div>
           ) : (
-            <div className="mt-1 text-[11px] text-gray-400">
+            <div className='mt-1 text-[11px] text-gray-400'>
               Updated every 5s
             </div>
           )}
         </div>
-        <div className="rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300">
-          <div className="text-[10px] uppercase text-gray-500">Queue Depth</div>
-          <div className="mt-1 text-sm text-white">
+        <div className='rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300'>
+          <div className='text-[10px] uppercase text-gray-500'>Queue Depth</div>
+          <div className='mt-1 text-sm text-white'>
             {queueStatus?.queuedCount ?? 0} queued
           </div>
-          <div className="mt-1 text-[11px] text-gray-400">
+          <div className='mt-1 text-[11px] text-gray-400'>
             Lag: {formatDurationMs(queueStatus?.queueLagMs ?? null)}
           </div>
-          <div className="mt-2 h-10 w-full rounded bg-slate-900/50 px-1 py-1">
-            <div className="flex h-full items-end gap-[2px]">
+          <div className='mt-2 h-10 w-full rounded bg-slate-900/50 px-1 py-1'>
+            <div className='flex h-full items-end gap-[2px]'>
               {queueHistory.length === 0 ? (
-                <div className="text-[10px] text-gray-500">No samples</div>
+                <div className='text-[10px] text-gray-500'>No samples</div>
               ) : (
                 queueHistory.slice(-30).map((entry: QueueHistoryEntry, index: number) => {
                   const max = Math.max(1, ...queueHistory.slice(-30).map((item: QueueHistoryEntry) => item.queued));
@@ -947,7 +947,7 @@ export function JobQueuePanel({
                   return (
                     <div
                       key={`${entry.ts}-${index}`}
-                      className="w-[6px] rounded bg-sky-400/60"
+                      className='w-[6px] rounded bg-sky-400/60'
                       style={{ height: `${height}%` }}
                       title={`${entry.queued} queued`}
                     />
@@ -956,66 +956,66 @@ export function JobQueuePanel({
               )}
             </div>
           </div>
-          <div className="mt-2 flex flex-wrap gap-2 text-[10px] text-gray-400">
+          <div className='mt-2 flex flex-wrap gap-2 text-[10px] text-gray-400'>
             <span>Throughput: {queueStatus?.throughputPerMinute ?? 0}/min</span>
             <span>p50: {formatDurationMs(queueStatus?.p50RuntimeMs ?? null)}</span>
             <span>p95: {formatDurationMs(queueStatus?.p95RuntimeMs ?? null)}</span>
           </div>
         </div>
-        <div className="rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300">
-          <div className="text-[10px] uppercase text-gray-500">Brain Analytics Queue</div>
-          <div className="mt-1 flex items-center gap-2 text-sm text-white">
+        <div className='rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300'>
+          <div className='text-[10px] uppercase text-gray-500'>Brain Analytics Queue</div>
+          <div className='mt-1 flex items-center gap-2 text-sm text-white'>
             {queueStatus?.brainQueue?.running ? 'Running' : 'Stopped'}
-            {queueStatus?.brainQueue?.running ? <RunningIndicator label="Active" /> : null}
+            {queueStatus?.brainQueue?.running ? <RunningIndicator label='Active' /> : null}
           </div>
-          <div className="mt-1 flex items-center gap-2 text-[11px] text-gray-400">
+          <div className='mt-1 flex items-center gap-2 text-[11px] text-gray-400'>
             <span>
               Active {queueStatus?.brainQueue?.activeJobs ?? 0} · Waiting {queueStatus?.brainQueue?.waitingJobs ?? 0}
             </span>
             {(queueStatus?.brainQueue?.activeJobs ?? 0) > 0 ? (
-              <RunningIndicator label="Busy" />
+              <RunningIndicator label='Busy' />
             ) : null}
           </div>
-          <div className="mt-2 text-[10px] text-gray-400">
+          <div className='mt-2 text-[10px] text-gray-400'>
             Reports 24h: {queueStatus?.brainAnalytics24h?.totalReports ?? 0}
           </div>
-          <div className="mt-1 text-[10px] text-gray-400">
+          <div className='mt-1 text-[10px] text-gray-400'>
             Analytics {queueStatus?.brainAnalytics24h?.analyticsReports ?? 0} · Logs {queueStatus?.brainAnalytics24h?.logReports ?? 0}
           </div>
-          <div className="mt-1 text-[10px] text-amber-200/90">
+          <div className='mt-1 text-[10px] text-amber-200/90'>
             Warnings {queueStatus?.brainAnalytics24h?.warningReports ?? 0} · Errors {queueStatus?.brainAnalytics24h?.errorReports ?? 0}
           </div>
         </div>
       </div>
 
       {queueStatus?.queueLagMs && queueStatus.queueLagMs > lagThresholdMs ? (
-        <div className="mt-4 rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+        <div className='mt-4 rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100'>
           Queue lag is high: {formatDurationMs(queueStatus.queueLagMs)} (threshold {formatDurationMs(lagThresholdMs)}). Consider increasing concurrency or investigating slow nodes.
         </div>
       ) : null}
 
-      <div className="mt-4 rounded-md border border-border/60 bg-card/40 p-3">
-        <div className="flex items-center justify-between">
+      <div className='mt-4 rounded-md border border-border/60 bg-card/40 p-3'>
+        <div className='flex items-center justify-between'>
           <div>
-            <div className="text-xs text-gray-200">Queue Metrics (History)</div>
-            <div className="text-[11px] text-gray-500">
+            <div className='text-xs text-gray-200'>Queue Metrics (History)</div>
+            <div className='text-[11px] text-gray-500'>
               Last {queueHistory.length} samples · refresh {autoRefreshEnabled ? `${Math.round(autoRefreshInterval / 1000)}s` : 'off'}
               {queueHistory.length > 0
                 ? ` · last sample ${new Date(queueHistory[queueHistory.length - 1]!.ts).toLocaleTimeString()}`
                 : ''}
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className='flex items-center gap-2'>
             <Button
-              type="button"
-              className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
+              type='button'
+              className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
               onClick={() => setShowMetricsPanel((prev: boolean) => !prev)}
             >
               {showMetricsPanel ? 'Hide' : 'Show'}
             </Button>
             <Button
-              type="button"
-              className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
+              type='button'
+              className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
               onClick={() => setQueueHistory([])}
             >
               Clear
@@ -1023,11 +1023,11 @@ export function JobQueuePanel({
           </div>
         </div>
         {showMetricsPanel ? (
-          <div className="mt-3 space-y-3">
-            <div className="h-24 w-full rounded bg-slate-900/60 px-2 py-2">
-              <div className="flex h-full items-end gap-[2px]">
+          <div className='mt-3 space-y-3'>
+            <div className='h-24 w-full rounded bg-slate-900/60 px-2 py-2'>
+              <div className='flex h-full items-end gap-[2px]'>
                 {queueHistory.length === 0 ? (
-                  <div className="text-[10px] text-gray-500">No samples</div>
+                  <div className='text-[10px] text-gray-500'>No samples</div>
                 ) : (
                   queueHistory.map((entry: QueueHistoryEntry, index: number) => {
                     const max = Math.max(1, ...queueHistory.map((item: QueueHistoryEntry) => item.queued));
@@ -1035,7 +1035,7 @@ export function JobQueuePanel({
                     return (
                       <div
                         key={`${entry.ts}-${index}`}
-                        className="w-[5px] rounded bg-emerald-400/60"
+                        className='w-[5px] rounded bg-emerald-400/60'
                         style={{ height: `${height}%` }}
                         title={`${entry.queued} queued @ ${new Date(entry.ts).toLocaleTimeString()}`}
                       />
@@ -1044,27 +1044,27 @@ export function JobQueuePanel({
                 )}
               </div>
             </div>
-            <div className="grid gap-2 md:grid-cols-3">
-              <div className="rounded-md border border-border/60 bg-card/60 p-2 text-[11px] text-gray-300">
-                <div className="text-[10px] uppercase text-gray-500">Queue Depth</div>
-                <div className="mt-1 text-sm text-white">{queueStatus?.queuedCount ?? 0}</div>
-                <div className="mt-1 text-[10px] text-gray-400">
+            <div className='grid gap-2 md:grid-cols-3'>
+              <div className='rounded-md border border-border/60 bg-card/60 p-2 text-[11px] text-gray-300'>
+                <div className='text-[10px] uppercase text-gray-500'>Queue Depth</div>
+                <div className='mt-1 text-sm text-white'>{queueStatus?.queuedCount ?? 0}</div>
+                <div className='mt-1 text-[10px] text-gray-400'>
                   Lag: {formatDurationMs(queueStatus?.queueLagMs ?? null)}
                 </div>
               </div>
-              <div className="rounded-md border border-border/60 bg-card/60 p-2 text-[11px] text-gray-300">
-                <div className="text-[10px] uppercase text-gray-500">Throughput</div>
-                <div className="mt-1 text-sm text-white">{queueStatus?.throughputPerMinute ?? 0}/min</div>
-                <div className="mt-1 text-[10px] text-gray-400">
+              <div className='rounded-md border border-border/60 bg-card/60 p-2 text-[11px] text-gray-300'>
+                <div className='text-[10px] uppercase text-gray-500'>Throughput</div>
+                <div className='mt-1 text-sm text-white'>{queueStatus?.throughputPerMinute ?? 0}/min</div>
+                <div className='mt-1 text-[10px] text-gray-400'>
                   Completed: {queueStatus?.completedLastMinute ?? 0} (last min)
                 </div>
               </div>
-              <div className="rounded-md border border-border/60 bg-card/60 p-2 text-[11px] text-gray-300">
-                <div className="text-[10px] uppercase text-gray-500">Runtime</div>
-                <div className="mt-1 text-sm text-white">
+              <div className='rounded-md border border-border/60 bg-card/60 p-2 text-[11px] text-gray-300'>
+                <div className='text-[10px] uppercase text-gray-500'>Runtime</div>
+                <div className='mt-1 text-sm text-white'>
                   avg {formatDurationMs(queueStatus?.avgRuntimeMs ?? null)}
                 </div>
-                <div className="mt-1 text-[10px] text-gray-400">
+                <div className='mt-1 text-[10px] text-gray-400'>
                   p50 {formatDurationMs(queueStatus?.p50RuntimeMs ?? null)} · p95 {formatDurationMs(queueStatus?.p95RuntimeMs ?? null)}
                 </div>
               </div>
@@ -1073,35 +1073,35 @@ export function JobQueuePanel({
         ) : null}
       </div>
 
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
-        <div className="space-y-1">
-          <Label className="text-[10px] uppercase text-gray-500">Path filter</Label>
+      <div className='grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]'>
+        <div className='space-y-1'>
+          <Label className='text-[10px] uppercase text-gray-500'>Path filter</Label>
           <Input
-            className="h-9 rounded-md border border-border bg-card/60 px-3 text-sm text-white"
+            className='h-9 rounded-md border border-border bg-card/60 px-3 text-sm text-white'
             value={pathFilter}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => setPathFilter(event.target.value)}
             placeholder={activePathId ? `Active path: ${activePathId}` : 'All paths'}
           />
         </div>
-        <div className="space-y-1">
-          <Label className="text-[10px] uppercase text-gray-500">Search</Label>
+        <div className='space-y-1'>
+          <Label className='text-[10px] uppercase text-gray-500'>Search</Label>
           <Input
-            className="h-9 rounded-md border border-border bg-card/60 px-3 text-sm text-white"
+            className='h-9 rounded-md border border-border bg-card/60 px-3 text-sm text-white'
             value={searchQuery}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(event.target.value)}
-            placeholder="Run ID, path name, entity, error..."
+            placeholder='Run ID, path name, entity, error...'
           />
         </div>
-        <div className="space-y-1">
-          <Label className="text-[10px] uppercase text-gray-500">Page size</Label>
+        <div className='space-y-1'>
+          <Label className='text-[10px] uppercase text-gray-500'>Page size</Label>
           <Select
             value={String(pageSize)}
             onValueChange={(value: string) => setPageSize(Number.parseInt(value, 10))}
           >
-            <SelectTrigger className="h-9 w-[110px] border-border bg-card/70 text-[11px] text-white">
+            <SelectTrigger className='h-9 w-[110px] border-border bg-card/70 text-[11px] text-white'>
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="border-border bg-gray-900 text-white">
+            <SelectContent className='border-border bg-gray-900 text-white'>
               {PAGE_SIZES.map((size: number) => (
                 <SelectItem key={size} value={String(size)}>
                   {size}
@@ -1111,13 +1111,13 @@ export function JobQueuePanel({
           </Select>
         </div>                    </div>
             
-      <div className="flex flex-wrap gap-2">
+      <div className='flex flex-wrap gap-2'>
         {STATUS_FILTERS.map((filter: (typeof STATUS_FILTERS)[number]) => {
           const active = statusFilter === filter.id;
           return (
             <Button
               key={filter.id}
-              type="button"
+              type='button'
               className={`rounded-md border px-2 py-1 text-[10px] ${
                 active ? 'border-emerald-500/50 text-emerald-200' : 'text-gray-300 hover:bg-muted/60'
               }`}
@@ -1128,14 +1128,14 @@ export function JobQueuePanel({
           );
         })}
       </div>            
-      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-400">
+      <div className='flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-400'>
         <span>
                         Showing {runs.length} of {total} runs
         </span>
-        <div className="flex items-center gap-2">
+        <div className='flex items-center gap-2'>
           <Button
-            type="button"
-            className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
+            type='button'
+            className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
             onClick={() => setPage((prev: number) => Math.max(1, prev - 1))}
             disabled={page <= 1}
           >
@@ -1145,8 +1145,8 @@ export function JobQueuePanel({
                           Page {page} / {totalPages}
           </span>
           <Button
-            type="button"
-            className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
+            type='button'
+            className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
             onClick={() => setPage((prev: number) => Math.min(totalPages, prev + 1))}
             disabled={page >= totalPages}
           >
@@ -1156,11 +1156,11 @@ export function JobQueuePanel({
       </div>
             
       {runs.length === 0 ? (
-        <div className="rounded-md border border-border bg-card/40 p-4 text-sm text-gray-400">
+        <div className='rounded-md border border-border bg-card/40 p-4 text-sm text-gray-400'>
                         No runs found for the current filters.
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className='space-y-3'>
           {runs.map((run: AiPathRunRecord) => {            const isExpanded = expandedRunIds.has(run.id);
             const detail = runDetails[run.id];
             const detailLoading = runDetailLoading.has(run.id);
@@ -1197,20 +1197,20 @@ export function JobQueuePanel({
             return (
               <div
                 key={run.id}
-                className="rounded-md border border-border/60 bg-card/70 p-3 text-xs text-gray-300"
+                className='rounded-md border border-border/60 bg-card/70 p-3 text-xs text-gray-300'
               >
-                <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className='flex flex-wrap items-start justify-between gap-3'>
                   <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <div className="text-[10px] uppercase text-gray-400">{detailRun.status}</div>
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <div className='text-[10px] uppercase text-gray-400'>{detailRun.status}</div>
                       {isRunning ? <RunningIndicator /> : null}
                     </div>
                     {isScheduledRun ? (
-                      <div className="mt-1 inline-flex rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[9px] uppercase text-amber-200">
+                      <div className='mt-1 inline-flex rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[9px] uppercase text-amber-200'>
                         Scheduled
                       </div>
                     ) : null}
-                    <div className="mt-1 flex flex-wrap items-center gap-1">
+                    <div className='mt-1 flex flex-wrap items-center gap-1'>
                       <span
                         className={`rounded-full border px-2 py-[1px] text-[9px] uppercase ${getOriginBadgeClass(runOrigin)}`}
                       >
@@ -1221,74 +1221,74 @@ export function JobQueuePanel({
                       >
                         Run: {getExecutionLabel(runExecution)}
                       </span>
-                      <span className="rounded-full border border-border/60 bg-card/60 px-2 py-[1px] text-[9px] uppercase text-gray-300">
+                      <span className='rounded-full border border-border/60 bg-card/60 px-2 py-[1px] text-[9px] uppercase text-gray-300'>
                         Source: {runSource}
                       </span>
                       <span
-                        className="rounded-full border border-sky-500/35 bg-sky-500/10 px-2 py-[1px] text-[9px] text-sky-200"
+                        className='rounded-full border border-sky-500/35 bg-sky-500/10 px-2 py-[1px] text-[9px] text-sky-200'
                         title={runSourceDebug}
                       >
                         Debug: {runSourceDebug}
                       </span>
                     </div>
-                    <div className="text-sm text-white">{detailRun.pathName ?? 'AI Path'}</div>
-                    <div className="text-[11px] text-gray-400">
-                      Run ID: <span className="font-mono">{detailRun.id}</span>
+                    <div className='text-sm text-white'>{detailRun.pathName ?? 'AI Path'}</div>
+                    <div className='text-[11px] text-gray-400'>
+                      Run ID: <span className='font-mono'>{detailRun.id}</span>
                     </div>
-                    <div className="text-[11px] text-gray-500">
+                    <div className='text-[11px] text-gray-500'>
                       Created {formatDate(detailRun.createdAt)}
                     </div>
-                    <div className="text-[11px] text-gray-500">
+                    <div className='text-[11px] text-gray-500'>
                       Stream: {streamStatus}
                     </div>
                     {(detailRun.entityType || detailRun.entityId) && (
-                      <div className="text-[11px] text-gray-500">
+                      <div className='text-[11px] text-gray-500'>
                         Entity: {detailRun.entityType ?? '?'} {detailRun.entityId ?? ''}
                       </div>
                     )}
                     {detailRun.errorMessage && (
-                      <div className="mt-1 rounded-md border border-rose-500/30 bg-rose-500/10 px-2 py-1 text-[11px] text-rose-200">
+                      <div className='mt-1 rounded-md border border-rose-500/30 bg-rose-500/10 px-2 py-1 text-[11px] text-rose-200'>
                         Error: {detailRun.errorMessage}
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className='flex flex-wrap items-center gap-2'>
                     <Button
-                      type="button"
-                      className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
+                      type='button'
+                      className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
                       onClick={() => toggleRun(run.id)}
                     >
                       {isExpanded ? 'Hide details' : 'Details'}
                     </Button>
                     <Button
-                      type="button"
-                      className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
+                      type='button'
+                      className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
                       onClick={() => toggleStream(run.id)}
                       disabled={!isExpanded}
                     >
                       {pausedStreams.has(run.id) ? 'Resume stream' : 'Pause stream'}
                     </Button>
                     <Button
-                      type="button"
-                      className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
+                      type='button'
+                      className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
                       onClick={() => void loadRunDetail(run.id)}
                       disabled={detailLoading}
                     >
                       {detailLoading ? 'Loading...' : 'Refresh detail'}
                     </Button>
                     <Button
-                      type="button"
-                      variant="outline"
-                      className="rounded-md border px-2 py-1 text-[10px] text-amber-200 hover:bg-amber-500/10"
+                      type='button'
+                      variant='outline'
+                      className='rounded-md border px-2 py-1 text-[10px] text-amber-200 hover:bg-amber-500/10'
                       onClick={() => cancelRunMutation.mutate(run.id)}
                       disabled={!canCancel || isCancellingThisRun}
                     >
                       {isCancellingThisRun ? 'Canceling...' : 'Cancel'}
                     </Button>
                     <Button
-                      type="button"
-                      variant="destructive"
-                      className="rounded-md border px-2 py-1 text-[10px]"
+                      type='button'
+                      variant='destructive'
+                      className='rounded-md border px-2 py-1 text-[10px]'
                       onClick={() => setRunToDelete(detailRun)}
                       disabled={isDeletingThisRun}
                     >
@@ -1298,85 +1298,85 @@ export function JobQueuePanel({
                 </div>
 
                 {isExpanded ? (
-                  <div className="mt-4 space-y-3">
+                  <div className='mt-4 space-y-3'>
                     {detailError ? (
-                      <div className="rounded-md border border-rose-500/30 bg-rose-500/10 p-3 text-[11px] text-rose-200">
+                      <div className='rounded-md border border-rose-500/30 bg-rose-500/10 p-3 text-[11px] text-rose-200'>
                         {detailError}
                       </div>
                     ) : null}
 
                     {!detail && !detailLoading ? (
-                      <div className="text-[11px] text-gray-500">
+                      <div className='text-[11px] text-gray-500'>
                         Loading run details...
                       </div>
                     ) : null}
 
                     {detail ? (
                       <>
-                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 text-[11px] text-gray-400">
+                        <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3 text-[11px] text-gray-400'>
                           <div>
-                            <span className="uppercase text-gray-500">Path ID</span>
-                            <div className="text-white">{detailRun.pathId ?? '-'}</div>
+                            <span className='uppercase text-gray-500'>Path ID</span>
+                            <div className='text-white'>{detailRun.pathId ?? '-'}</div>
                           </div>
                           <div>
-                            <span className="uppercase text-gray-500">Status</span>
-                            <div className="text-white">{detailRun.status}</div>
+                            <span className='uppercase text-gray-500'>Status</span>
+                            <div className='text-white'>{detailRun.status}</div>
                           </div>
                           <div>
-                            <span className="uppercase text-gray-500">Trigger</span>
-                            <div className="text-white">{detailRun.triggerEvent ?? '-'}</div>
+                            <span className='uppercase text-gray-500'>Trigger</span>
+                            <div className='text-white'>{detailRun.triggerEvent ?? '-'}</div>
                           </div>
                           <div>
-                            <span className="uppercase text-gray-500">Origin</span>
-                            <div className="text-white">{getOriginLabel(runOrigin)}</div>
+                            <span className='uppercase text-gray-500'>Origin</span>
+                            <div className='text-white'>{getOriginLabel(runOrigin)}</div>
                           </div>
                           <div>
-                            <span className="uppercase text-gray-500">Run type</span>
-                            <div className="text-white">{getExecutionLabel(runExecution)}</div>
+                            <span className='uppercase text-gray-500'>Run type</span>
+                            <div className='text-white'>{getExecutionLabel(runExecution)}</div>
                           </div>
                           <div>
-                            <span className="uppercase text-gray-500">Source</span>
-                            <div className="text-white">{runSource}</div>
+                            <span className='uppercase text-gray-500'>Source</span>
+                            <div className='text-white'>{runSource}</div>
                           </div>
-                          <div className="sm:col-span-2 lg:col-span-3">
-                            <span className="uppercase text-gray-500">Source debug</span>
-                            <div className="font-mono text-sky-200">{runSourceDebug}</div>
-                          </div>
-                          <div>
-                            <span className="uppercase text-gray-500">Started</span>
-                            <div className="text-white">{formatDate(detailRun.startedAt)}</div>
+                          <div className='sm:col-span-2 lg:col-span-3'>
+                            <span className='uppercase text-gray-500'>Source debug</span>
+                            <div className='font-mono text-sky-200'>{runSourceDebug}</div>
                           </div>
                           <div>
-                            <span className="uppercase text-gray-500">Finished</span>
-                            <div className="text-white">{formatDate(detailRun.finishedAt)}</div>
+                            <span className='uppercase text-gray-500'>Started</span>
+                            <div className='text-white'>{formatDate(detailRun.startedAt)}</div>
                           </div>
                           <div>
-                            <span className="uppercase text-gray-500">Dead-lettered</span>
-                            <div className="text-white">{formatDate(detailRun.deadLetteredAt)}</div>
+                            <span className='uppercase text-gray-500'>Finished</span>
+                            <div className='text-white'>{formatDate(detailRun.finishedAt)}</div>
                           </div>
                           <div>
-                            <span className="uppercase text-gray-500">Retry</span>
-                            <div className="text-white">
+                            <span className='uppercase text-gray-500'>Dead-lettered</span>
+                            <div className='text-white'>{formatDate(detailRun.deadLetteredAt)}</div>
+                          </div>
+                          <div>
+                            <span className='uppercase text-gray-500'>Retry</span>
+                            <div className='text-white'>
                               {detailRun.retryCount ?? 0}/{detailRun.maxAttempts ?? '-'}
                             </div>
                           </div>
                           <div>
-                            <span className="uppercase text-gray-500">Next retry</span>
-                            <div className="text-white">{formatDate(detailRun.nextRetryAt)}</div>
+                            <span className='uppercase text-gray-500'>Next retry</span>
+                            <div className='text-white'>{formatDate(detailRun.nextRetryAt)}</div>
                           </div>
                           <div>
-                            <span className="uppercase text-gray-500">Trigger node</span>
-                            <div className="text-white">{detailRun.triggerNodeId ?? '-'}</div>
+                            <span className='uppercase text-gray-500'>Trigger node</span>
+                            <div className='text-white'>{detailRun.triggerNodeId ?? '-'}</div>
                           </div>
                         </div>
 
-                        <details className="rounded-md border border-border/70 bg-black/20 p-3">
-                          <summary className="cursor-pointer text-[11px] uppercase text-gray-400">
+                        <details className='rounded-md border border-border/70 bg-black/20 p-3'>
+                          <summary className='cursor-pointer text-[11px] uppercase text-gray-400'>
                             Run history
                           </summary>
                           {historyOptions.length > 1 ? (
-                            <div className="mt-3 flex flex-wrap items-center gap-2">
-                              <Label className="text-[10px] uppercase text-gray-500">
+                            <div className='mt-3 flex flex-wrap items-center gap-2'>
+                              <Label className='text-[10px] uppercase text-gray-500'>
                                 Node
                               </Label>
                               <Select
@@ -1385,10 +1385,10 @@ export function JobQueuePanel({
                                   setHistorySelection((prev: Record<string, string>) => ({ ...prev, [run.id]: value }))
                                 }
                               >
-                                <SelectTrigger className="h-7 w-[220px] border-border bg-card/70 text-[11px] text-white">
-                                  <SelectValue placeholder="Select node" />
+                                <SelectTrigger className='h-7 w-[220px] border-border bg-card/70 text-[11px] text-white'>
+                                  <SelectValue placeholder='Select node' />
                                 </SelectTrigger>
-                                <SelectContent className="border-border bg-gray-900 text-white">
+                                <SelectContent className='border-border bg-gray-900 text-white'>
                                   {historyOptions.map((option: { id: string; label: string }) => (
                                     <SelectItem key={option.id} value={option.id}>
                                       {option.label}
@@ -1397,76 +1397,76 @@ export function JobQueuePanel({
                                 </SelectContent>
                               </Select>                            </div>
                           ) : (
-                            <div className="mt-2 text-[11px] text-gray-500">
+                            <div className='mt-2 text-[11px] text-gray-500'>
                               {historyOptions[0]?.label ?? 'No history nodes'}
                             </div>
                           )}
-                          <div className="mt-3">
+                          <div className='mt-3'>
                             <RunHistoryEntries
                               entries={historyEntries}
-                              emptyMessage="No history recorded for this run."
+                              emptyMessage='No history recorded for this run.'
                               showNodeLabel
                             />
                           </div>
                         </details>
 
-                        <details className="rounded-md border border-border/70 bg-black/20 p-3">
-                          <summary className="cursor-pointer text-[11px] uppercase text-gray-400">
+                        <details className='rounded-md border border-border/70 bg-black/20 p-3'>
+                          <summary className='cursor-pointer text-[11px] uppercase text-gray-400'>
                             Nodes ({nodes.length})
                           </summary>
                           {nodes.length === 0 ? (
-                            <div className="mt-2 text-[11px] text-gray-500">
+                            <div className='mt-2 text-[11px] text-gray-500'>
                               No nodes recorded for this run.
                             </div>
                           ) : (
-                            <div className="mt-3 space-y-2">
+                            <div className='mt-3 space-y-2'>
                               {nodes.map((node: AiPathRunNodeRecord) => (
                                 <details
                                   key={node.id}
-                                  className="rounded-md border border-border/60 bg-black/30 p-3"
-                                >                                  <summary className="cursor-pointer text-[11px] text-gray-300">
+                                  className='rounded-md border border-border/60 bg-black/30 p-3'
+                                >                                  <summary className='cursor-pointer text-[11px] text-gray-300'>
                                     {node.nodeTitle ?? node.nodeId}{' '}
                                     {node.nodeType ? `(${node.nodeType})` : ''}
-                                    <span className="ml-2 text-gray-500">
+                                    <span className='ml-2 text-gray-500'>
                                       {node.status}
                                     </span>
                                   </summary>
-                                  <div className="mt-2 grid gap-2 text-[11px] text-gray-400 sm:grid-cols-2 lg:grid-cols-3">
+                                  <div className='mt-2 grid gap-2 text-[11px] text-gray-400 sm:grid-cols-2 lg:grid-cols-3'>
                                     <div>
-                                      <span className="uppercase text-gray-500">Started</span>
-                                      <div className="text-white">{formatDate(node.startedAt)}</div>
+                                      <span className='uppercase text-gray-500'>Started</span>
+                                      <div className='text-white'>{formatDate(node.startedAt)}</div>
                                     </div>
                                     <div>
-                                      <span className="uppercase text-gray-500">Finished</span>
-                                      <div className="text-white">{formatDate(node.finishedAt)}</div>
+                                      <span className='uppercase text-gray-500'>Finished</span>
+                                      <div className='text-white'>{formatDate(node.finishedAt)}</div>
                                     </div>
                                     <div>
-                                      <span className="uppercase text-gray-500">Attempt</span>
-                                      <div className="text-white">{node.attempt}</div>
+                                      <span className='uppercase text-gray-500'>Attempt</span>
+                                      <div className='text-white'>{node.attempt}</div>
                                     </div>
                                   </div>
                                   {node.errorMessage ? (
-                                    <div className="mt-2 rounded-md border border-rose-500/30 bg-rose-500/10 p-2 text-[11px] text-rose-200">
+                                    <div className='mt-2 rounded-md border border-rose-500/30 bg-rose-500/10 p-2 text-[11px] text-rose-200'>
                                       Error: {node.errorMessage}
                                     </div>
                                   ) : null}
-                                  <div className="mt-3 grid gap-3 lg:grid-cols-2">
+                                  <div className='mt-3 grid gap-3 lg:grid-cols-2'>
                                     <div>
-                                      <Label className="text-[10px] uppercase text-gray-500">
+                                      <Label className='text-[10px] uppercase text-gray-500'>
                                         Inputs
                                       </Label>
                                       <Textarea
-                                        className="mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200"
+                                        className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                                         readOnly
                                         value={safePrettyJson(node.inputs)}
                                       />
                                     </div>
                                     <div>
-                                      <Label className="text-[10px] uppercase text-gray-500">
+                                      <Label className='text-[10px] uppercase text-gray-500'>
                                         Outputs
                                       </Label>
                                       <Textarea
-                                        className="mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200"
+                                        className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                                         readOnly
                                         value={safePrettyJson(node.outputs)}
                                       />
@@ -1478,24 +1478,24 @@ export function JobQueuePanel({
                           )}
                         </details>
 
-                        <details className="rounded-md border border-border/70 bg-black/20 p-3">
-                          <summary className="cursor-pointer text-[11px] uppercase text-gray-400">
+                        <details className='rounded-md border border-border/70 bg-black/20 p-3'>
+                          <summary className='cursor-pointer text-[11px] uppercase text-gray-400'>
                             Events ({events.length})
                           </summary>
                           {events.length === 0 ? (
-                            <div className="mt-2 text-[11px] text-gray-500">No events.</div>
+                            <div className='mt-2 text-[11px] text-gray-500'>No events.</div>
                           ) : (
-                            <div className="mt-3 divide-y divide-border/70">
+                            <div className='mt-3 divide-y divide-border/70'>
                               {events.map((event: AiPathRunEventRecord) => (
-                                <div key={event.id} className="py-2">                                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-400">
+                                <div key={event.id} className='py-2'>                                  <div className='flex flex-wrap items-center gap-2 text-[11px] text-gray-400'>
                                   <span>{formatDate(event.createdAt)}</span>
-                                  <span className="rounded-full border px-2 py-0.5 text-[10px] text-gray-300">
+                                  <span className='rounded-full border px-2 py-0.5 text-[10px] text-gray-300'>
                                     {event.level}
                                   </span>
                                 </div>
-                                <div className="mt-1 text-sm text-white">{event.message}</div>
+                                <div className='mt-1 text-sm text-white'>{event.message}</div>
                                 {event.metadata ? (
-                                  <pre className="mt-2 max-h-40 overflow-auto rounded-md border border-border bg-black/30 p-2 text-[11px] text-gray-200">
+                                  <pre className='mt-2 max-h-40 overflow-auto rounded-md border border-border bg-black/30 p-2 text-[11px] text-gray-200'>
                                     {safePrettyJson(event.metadata)}
                                   </pre>
                                 ) : null}
@@ -1505,74 +1505,74 @@ export function JobQueuePanel({
                           )}
                         </details>
 
-                        <details className="rounded-md border border-border/70 bg-black/20 p-3">
-                          <summary className="cursor-pointer text-[11px] uppercase text-gray-400">
+                        <details className='rounded-md border border-border/70 bg-black/20 p-3'>
+                          <summary className='cursor-pointer text-[11px] uppercase text-gray-400'>
                             Runtime state
                           </summary>
-                          <div className="mt-3 grid gap-3 lg:grid-cols-2">
+                          <div className='mt-3 grid gap-3 lg:grid-cols-2'>
                             <div>
-                              <Label className="text-[10px] uppercase text-gray-500">Inputs</Label>
+                              <Label className='text-[10px] uppercase text-gray-500'>Inputs</Label>
                               <Textarea
-                                className="mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200"
+                                className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                                 readOnly
                                 value={safePrettyJson(detailRun.runtimeState?.inputs)}
                               />
                             </div>
                             <div>
-                              <Label className="text-[10px] uppercase text-gray-500">Outputs</Label>
+                              <Label className='text-[10px] uppercase text-gray-500'>Outputs</Label>
                               <Textarea
-                                className="mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200"
+                                className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                                 readOnly
                                 value={safePrettyJson(detailRun.runtimeState?.outputs)}
                               />
                             </div>
                           </div>
-                          <div className="mt-3">
-                            <Label className="text-[10px] uppercase text-gray-500">Hashes</Label>
+                          <div className='mt-3'>
+                            <Label className='text-[10px] uppercase text-gray-500'>Hashes</Label>
                             <Textarea
-                              className="mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200"
+                              className='mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                               readOnly
                               value={safePrettyJson(detailRun.runtimeState?.hashes)}
                             />
                           </div>
                         </details>
 
-                        <details className="rounded-md border border-border/70 bg-black/20 p-3">
-                          <summary className="cursor-pointer text-[11px] uppercase text-gray-400">
+                        <details className='rounded-md border border-border/70 bg-black/20 p-3'>
+                          <summary className='cursor-pointer text-[11px] uppercase text-gray-400'>
                             Graph snapshot
                           </summary>
                           <Textarea
-                            className="mt-2 min-h-[160px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200"
+                            className='mt-2 min-h-[160px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                             readOnly
                             value={safePrettyJson(detailRun.graph)}
                           />
                         </details>
 
-                        <details className="rounded-md border border-border/70 bg-black/20 p-3">
-                          <summary className="cursor-pointer text-[11px] uppercase text-gray-400">
+                        <details className='rounded-md border border-border/70 bg-black/20 p-3'>
+                          <summary className='cursor-pointer text-[11px] uppercase text-gray-400'>
                             Raw payloads
                           </summary>
-                          <div className="mt-3 space-y-3">
+                          <div className='mt-3 space-y-3'>
                             <div>
-                              <Label className="text-[10px] uppercase text-gray-500">Run</Label>
+                              <Label className='text-[10px] uppercase text-gray-500'>Run</Label>
                               <Textarea
-                                className="mt-2 min-h-[140px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200"
+                                className='mt-2 min-h-[140px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                                 readOnly
                                 value={safePrettyJson(detailRun)}
                               />
                             </div>
                             <div>
-                              <Label className="text-[10px] uppercase text-gray-500">Nodes</Label>
+                              <Label className='text-[10px] uppercase text-gray-500'>Nodes</Label>
                               <Textarea
-                                className="mt-2 min-h-[140px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200"
+                                className='mt-2 min-h-[140px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                                 readOnly
                                 value={safePrettyJson(nodes)}
                               />
                             </div>
                             <div>
-                              <Label className="text-[10px] uppercase text-gray-500">Events</Label>
+                              <Label className='text-[10px] uppercase text-gray-500'>Events</Label>
                               <Textarea
-                                className="mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200"
+                                className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                                 readOnly
                                 value={safePrettyJson(events)}
                               />
@@ -1593,10 +1593,10 @@ export function JobQueuePanel({
         open={clearScope === 'terminal'}
         onOpenChange={(open: boolean): void => setClearScope(open ? 'terminal' : null)}
         onConfirm={() => clearRunsMutation.mutate('terminal')}
-        title="Clear finished AI Path runs"
-        description="Delete completed, failed, canceled, and dead-lettered runs from this queue list."
-        confirmText="Clear Finished"
-        variant="destructive"
+        title='Clear finished AI Path runs'
+        description='Delete completed, failed, canceled, and dead-lettered runs from this queue list.'
+        confirmText='Clear Finished'
+        variant='destructive'
         loading={clearRunsMutation.isPending}
       />
 
@@ -1604,10 +1604,10 @@ export function JobQueuePanel({
         open={clearScope === 'all'}
         onOpenChange={(open: boolean): void => setClearScope(open ? 'all' : null)}
         onConfirm={() => clearRunsMutation.mutate('all')}
-        title="Clear all AI Path runs"
-        description="Delete all runs in this queue list, including queued, running, and paused entries."
-        confirmText="Clear All"
-        variant="destructive"
+        title='Clear all AI Path runs'
+        description='Delete all runs in this queue list, including queued, running, and paused entries.'
+        confirmText='Clear All'
+        variant='destructive'
         loading={clearRunsMutation.isPending}
       />
 
@@ -1618,10 +1618,10 @@ export function JobQueuePanel({
           if (!runToDelete) return;
           deleteRunMutation.mutate(runToDelete.id);
         }}
-        title="Delete AI Path run"
+        title='Delete AI Path run'
         description={`Delete run ${runToDelete?.id ?? ''}? This removes its run, node, and event history.`}
-        confirmText="Delete Run"
-        variant="destructive"
+        confirmText='Delete Run'
+        variant='destructive'
         loading={deleteRunMutation.isPending}
       />
     </div>

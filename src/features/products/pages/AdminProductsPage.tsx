@@ -436,10 +436,10 @@ export function AdminProductsPage(): React.JSX.Element {
         onConfirm={(): void => {
           void handleMassDelete();
         }}
-        title="Delete Products"
+        title='Delete Products'
         description={`Are you sure you want to delete ${Object.keys(rowSelection).filter((id: string) => rowSelection[id]).length} selected products? This action cannot be undone.`}
-        confirmText="Delete"
-        variant="destructive"
+        confirmText='Delete'
+        variant='destructive'
         loading={bulkDeleteMutation.isPending}
       />
       <ConfirmDialog
@@ -450,10 +450,10 @@ export function AdminProductsPage(): React.JSX.Element {
         onConfirm={(): void => {
           void handleConfirmSingleDelete();
         }}
-        title="Delete Product"
+        title='Delete Product'
         description={`Are you sure you want to delete product "${productToDelete?.name_en || productToDelete?.name_pl || 'this product'}"? This action cannot be undone.`}
-        confirmText="Delete"
-        variant="destructive"
+        confirmText='Delete'
+        variant='destructive'
         loading={bulkDeleteMutation.isPending}
       />
       <ProductListProvider

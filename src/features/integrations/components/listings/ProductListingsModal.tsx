@@ -93,21 +93,21 @@ function ProductListingsModalContent(): React.JSX.Element {
     >
       <ProductListingsConfirmDialogs />
       
-      <div className="space-y-4">
+      <div className='space-y-4'>
         {isLoading ? (
-          <p className="text-sm text-gray-400">Loading listings...</p>
+          <p className='text-sm text-gray-400'>Loading listings...</p>
         ) : error ? (
-          <Alert variant="error">
-            <div className="flex flex-col gap-3">
+          <Alert variant='error'>
+            <div className='flex flex-col gap-3'>
               <span>{error}</span>
               {isImageExportError(error) && lastExportListingId ? (
-                <div className="flex flex-wrap items-center gap-2">
+                <div className='flex flex-wrap items-center gap-2'>
                   <ImageRetryDropdown
                     presets={imageRetryPresets}
                     onRetry={(preset: ImageRetryPreset) => void handleImageRetry(preset)}
                     disabled={Boolean(exportingListing)}
                   />
-                  <span className="text-xs text-red-200/80">
+                  <span className='text-xs text-red-200/80'>
                     Applies JPEG resize/compression and retries automatically.
                   </span>
                 </div>
@@ -115,28 +115,28 @@ function ProductListingsModalContent(): React.JSX.Element {
             </div>
           </Alert>
         ) : (
-          <div className="space-y-3">
+          <div className='space-y-3'>
             {canStartListing && <ProductListingsStartPanel />}
             
             {filteredListings.length === 0 ? (
-              <div className="rounded-md border bg-card/50 px-4 py-8 text-center">
+              <div className='rounded-md border bg-card/50 px-4 py-8 text-center'>
                 {filterIntegrationSlug ? (
-                  <div className="space-y-3">
-                    <div className="text-sm text-gray-300">
+                  <div className='space-y-3'>
+                    <div className='text-sm text-gray-300'>
                       {statusTargetLabel} status
                     </div>
-                    <div className="rounded-md border border-border bg-card/60 px-3 py-2 text-xs text-gray-400">
+                    <div className='rounded-md border border-border bg-card/60 px-3 py-2 text-xs text-gray-400'>
                       Not connected.
                     </div>
                     {isBaseFilter && <ProductListingsSyncPanel />}
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    <div className="border-t border-border pt-3">
-                      <p className="text-sm text-gray-400">
+                  <div className='space-y-4'>
+                    <div className='border-t border-border pt-3'>
+                      <p className='text-sm text-gray-400'>
                         This product is not listed on any marketplace yet.
                       </p>
-                      <p className="mt-2 text-xs text-gray-500">
+                      <p className='mt-2 text-xs text-gray-500'>
                         Use the + button in the header to list products on a marketplace.
                       </p>
                     </div>
@@ -144,9 +144,9 @@ function ProductListingsModalContent(): React.JSX.Element {
                 )}
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className='space-y-3'>
                 {filterIntegrationSlug && (
-                  <div className="rounded-md border border-border bg-card/60 px-3 py-2 text-xs text-gray-300">
+                  <div className='rounded-md border border-border bg-card/60 px-3 py-2 text-xs text-gray-300'>
                     {statusTargetLabel} status: {filteredListings[0]?.status ?? 'Unknown'}
                   </div>
                 )}
@@ -160,7 +160,7 @@ function ProductListingsModalContent(): React.JSX.Element {
         )}
         
         {exportLogs.length > 0 && (
-          <div className="mt-4 border-t border pt-4">
+          <div className='mt-4 border-t border pt-4'>
             <ExportLogViewer
               logs={exportLogs}
               isOpen={logsOpen}

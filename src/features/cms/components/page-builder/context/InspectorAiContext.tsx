@@ -121,7 +121,7 @@ function serializeBlock(block: BlockInstance): SerializedBlock {
   return {
     id: block.id,
     type: block.type,
-    settings: (block.settings ?? {}) as Record<string, unknown>,
+    settings: (block.settings ?? {}),
     blocks: (block.blocks ?? []).map((b: BlockInstance) => serializeBlock(b)),
   };
 }
@@ -250,12 +250,12 @@ export function InspectorAiProvider({
   }, [state]);
 
   const selectedGridRow = useMemo<BlockInstance | null>(() => {
-    if (!selectedParentSection || selectedParentSection.type !== 'Grid' || !selectedParentColumn) return null;
+    if (selectedParentSection?.type !== 'Grid' || !selectedParentColumn) return null;
     return (
-      (selectedParentSection.blocks as BlockInstance[]).find(
+      (selectedParentSection.blocks).find(
         (block: BlockInstance) =>
           block.type === 'Row' &&
-          (block.blocks ?? []).some((column: BlockInstance) => (column as BlockInstance).id === selectedParentColumn.id)
+          (block.blocks ?? []).some((column: BlockInstance) => (column).id === selectedParentColumn.id)
       ) ?? null
     );
   }, [selectedParentSection, selectedParentColumn]);

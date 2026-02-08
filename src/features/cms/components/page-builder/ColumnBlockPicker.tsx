@@ -63,7 +63,7 @@ export function ColumnBlockPicker({ onSelect, allowedBlockTypes }: ColumnBlockPi
     <PickerDropdown
       groups={groups}
       onSelect={onSelect}
-      ariaLabel="Add block to column"
+      ariaLabel='Add block to column'
     />
   );
 }

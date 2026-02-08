@@ -80,23 +80,23 @@ export function AppModal({
         onInteractOutside={handleInteractOutside}
         onEscapeKeyDown={handleEscapeKeyDown}
       >
-        <DialogTitle className="sr-only">{title}</DialogTitle>
+        <DialogTitle className='sr-only'>{title}</DialogTitle>
         <div className={cn('pointer-events-auto w-full rounded-lg border bg-card p-6', sizeClasses[size], className)}>
           {header ? (
-            <div className="mb-4">{header}</div>
+            <div className='mb-4'>{header}</div>
           ) : (
-            <div className="mb-4 flex items-center justify-between">
+            <div className='mb-4 flex items-center justify-between'>
               <h2 className={cn('text-2xl font-bold text-white', titleHidden && 'sr-only')}>
                 {title}
               </h2>
-              <div className="flex items-center gap-2"> {/* Container for close button and header actions */}
+              <div className='flex items-center gap-2'> {/* Container for close button and header actions */}
                 {headerActions} {/* Render header actions here */}
                 {showClose ? (
                   <Button
-                    type="button"
+                    type='button'
                     onClick={() => handleOpenChange(false)}
-                    variant="outline"
-                    className="border border-white/20 bg-transparent text-white hover:border-white/40 hover:bg-white/5"
+                    variant='outline'
+                    className='border border-white/20 bg-transparent text-white hover:border-white/40 hover:bg-white/5'
                   >
                     Close
                   </Button>
@@ -107,7 +107,7 @@ export function AppModal({
           <div className={cn(bodyHeightClass, 'overflow-y-auto pr-2', bodyClassName ?? '')}>
             {children}
           </div>
-          {footer ? <div className="mt-6 flex justify-end gap-2">{footer}</div> : null}
+          {footer ? <div className='mt-6 flex justify-end gap-2'>{footer}</div> : null}
         </div>
       </DialogContent>
     </Dialog>

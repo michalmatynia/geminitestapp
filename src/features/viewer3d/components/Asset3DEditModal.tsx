@@ -98,79 +98,79 @@ export function Asset3DEditModal({
     <SharedModal
       open={open}
       onClose={onClose}
-      title="Edit 3D Asset"
+      title='Edit 3D Asset'
       footer={
-        <div className="flex items-center justify-end gap-2">
-          <Button variant="ghost" onClick={onClose} disabled={isSaving}>
+        <div className='flex items-center justify-end gap-2'>
+          <Button variant='ghost' onClick={onClose} disabled={isSaving}>
             Cancel
           </Button>
           <Button
             onClick={() => { void handleSave(); }}
             loading={isSaving}
-            loadingText="Saving..."
+            loadingText='Saving...'
           >
             Save Changes
           </Button>
         </div>
       }
     >
-      <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+      <div className='space-y-4 max-h-[60vh] overflow-y-auto pr-1'>
         {/* File Info (read-only) */}
-        <SectionPanel variant="subtle-compact" className="p-3 text-sm">
-          <p className="text-gray-400">
-            <span className="text-gray-500">File:</span>{' '}
-            <span className="text-white">{asset.filename}</span>
+        <SectionPanel variant='subtle-compact' className='p-3 text-sm'>
+          <p className='text-gray-400'>
+            <span className='text-gray-500'>File:</span>{' '}
+            <span className='text-white'>{asset.filename}</span>
           </p>
-          <p className="text-gray-400 mt-1">
-            <span className="text-gray-500">Size:</span>{' '}
+          <p className='text-gray-400 mt-1'>
+            <span className='text-gray-500'>Size:</span>{' '}
             {formatFileSize(asset.size)}
           </p>
         </SectionPanel>
 
         {/* Name */}
-        <div className="space-y-1">
-          <Label htmlFor="name" className="text-sm text-gray-300">
+        <div className='space-y-1'>
+          <Label htmlFor='name' className='text-sm text-gray-300'>
             Name
           </Label>
           <Input
-            id="name"
+            id='name'
             value={name}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setName(e.target.value)}
-            placeholder="Enter asset name..."
-            className="bg-gray-800 border-gray-700"
+            placeholder='Enter asset name...'
+            className='bg-gray-800 border-gray-700'
           />
         </div>
 
         {/* Description */}
-        <div className="space-y-1">
-          <Label htmlFor="description" className="text-sm text-gray-300">
+        <div className='space-y-1'>
+          <Label htmlFor='description' className='text-sm text-gray-300'>
             Description
           </Label>
           <textarea
-            id="description"
+            id='description'
             value={description}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setDescription(e.target.value)}
-            placeholder="Enter description..."
+            placeholder='Enter description...'
             rows={3}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm"
+            className='w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm'
           />
         </div>
 
         {/* Category */}
-        <div className="space-y-1">
-          <Label htmlFor="category" className="text-sm text-gray-300">
+        <div className='space-y-1'>
+          <Label htmlFor='category' className='text-sm text-gray-300'>
             Category
           </Label>
-          <div className="flex gap-2">
+          <div className='flex gap-2'>
             <Input
-              id="category"
+              id='category'
               value={category}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setCategory(e.target.value)}
-              placeholder="Enter category..."
-              list="categories-list"
-              className="bg-gray-800 border-gray-700 flex-1"
+              placeholder='Enter category...'
+              list='categories-list'
+              className='bg-gray-800 border-gray-700 flex-1'
             />
-            <datalist id="categories-list">
+            <datalist id='categories-list'>
               {existingCategories.map((cat: string) => (
                 <option key={cat} value={cat} />
               ))}
@@ -179,9 +179,9 @@ export function Asset3DEditModal({
         </div>
 
         {/* Tags */}
-        <div className="space-y-1">
-          <Label className="text-sm text-gray-300">Tags</Label>
-          <div className="flex gap-2">
+        <div className='space-y-1'>
+          <Label className='text-sm text-gray-300'>Tags</Label>
+          <div className='flex gap-2'>
             <Input
               value={newTag}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNewTag(e.target.value)}
@@ -191,11 +191,11 @@ export function Asset3DEditModal({
                   handleAddTag();
                 }
               }}
-              placeholder="Add tag..."
-              list="tags-list"
-              className="bg-gray-800 border-gray-700 flex-1"
+              placeholder='Add tag...'
+              list='tags-list'
+              className='bg-gray-800 border-gray-700 flex-1'
             />
-            <datalist id="tags-list">
+            <datalist id='tags-list'>
               {existingTags
                 .filter((t: string) => !tags.includes(t))
                 .map((tag: string) => (
@@ -203,28 +203,28 @@ export function Asset3DEditModal({
                 ))}
             </datalist>
             <Button
-              type="button"
-              variant="secondary"
-              size="icon"
+              type='button'
+              variant='secondary'
+              size='icon'
               onClick={handleAddTag}
             >
-              <Plus className="h-4 w-4" />
+              <Plus className='h-4 w-4' />
             </Button>
           </div>
           {tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-2">
+            <div className='flex flex-wrap gap-1 mt-2'>
               {tags.map((tag: string) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center gap-1 px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs"
+                  className='inline-flex items-center gap-1 px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs'
                 >
                   {tag}
                   <button
-                    type="button"
+                    type='button'
                     onClick={() => handleRemoveTag(tag)}
-                    className="text-gray-500 hover:text-red-400"
+                    className='text-gray-500 hover:text-red-400'
                   >
-                    <X className="h-3 w-3" />
+                    <X className='h-3 w-3' />
                   </button>
                 </span>
               ))}
@@ -233,14 +233,14 @@ export function Asset3DEditModal({
         </div>
 
         {/* Visibility */}
-        <label className="flex items-center gap-3 cursor-pointer">
+        <label className='flex items-center gap-3 cursor-pointer'>
           <Checkbox
             checked={isPublic}
             onCheckedChange={(v: boolean | 'indeterminate'): void => setIsPublic(v === true)}
           />
           <div>
-            <span className="text-sm text-white font-medium">Public visibility</span>
-            <p className="text-[11px] text-gray-500">
+            <span className='text-sm text-white font-medium'>Public visibility</span>
+            <p className='text-[11px] text-gray-500'>
               Make this asset accessible publicly
             </p>
           </div>
@@ -248,7 +248,7 @@ export function Asset3DEditModal({
 
         {/* Error */}
         {error && (
-          <Alert variant="error">
+          <Alert variant='error'>
             {error}
           </Alert>
         )}

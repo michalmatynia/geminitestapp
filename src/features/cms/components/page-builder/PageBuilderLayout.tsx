@@ -95,18 +95,18 @@ function PageBuilderInner(): React.ReactNode {
   }, [dispatch, state.leftPanelCollapsed]);
 
   return (
-    <div className="flex h-[calc(100vh-64px)] flex-col bg-gray-900 text-white">
-      <div className="relative flex flex-1 overflow-hidden">
+    <div className='flex h-[calc(100vh-64px)] flex-col bg-gray-900 text-white'>
+      <div className='relative flex flex-1 overflow-hidden'>
         {/* Left panel toggle (shown when collapsed) */}
         {state.leftPanelCollapsed && !isViewing && (
           <Button
             onClick={() => dispatch({ type: 'TOGGLE_LEFT_PANEL' })}
-            size="sm"
-            variant="outline"
-            className="absolute left-1 top-1 z-10 h-8 w-8 p-0 border text-gray-300 hover:bg-muted/50"
-            aria-label="Show left panel"
+            size='sm'
+            variant='outline'
+            className='absolute left-1 top-1 z-10 h-8 w-8 p-0 border text-gray-300 hover:bg-muted/50'
+            aria-label='Show left panel'
           >
-            <PanelLeftClose className="size-4" />
+            <PanelLeftClose className='size-4' />
           </Button>
         )}
 
@@ -117,76 +117,76 @@ function PageBuilderInner(): React.ReactNode {
             state.leftPanelCollapsed ? 'w-0 opacity-0 -translate-x-2 pointer-events-none' : 'w-72 opacity-100 translate-x-0'
           }`}
         >
-          <div className="flex w-72 min-h-0 flex-col border-r border-border bg-gray-900">
+          <div className='flex w-72 min-h-0 flex-col border-r border-border bg-gray-900'>
             <PanelHeader
               title={leftPanelLabel}
               actions={(
-                <div className="flex items-center gap-1">
+                <div className='flex items-center gap-1'>
                   <Button
                     onClick={() => setLeftPanelMode('sections')}
-                    size="icon"
-                    variant="ghost"
+                    size='icon'
+                    variant='ghost'
                     className={`h-6 w-6 p-0 ${
                       leftPanelMode === 'sections'
                         ? 'text-gray-500/70'
                         : 'text-blue-300 hover:text-blue-200'
                     }`}
-                    title="Back to sections"
-                    aria-label="Back to sections"
+                    title='Back to sections'
+                    aria-label='Back to sections'
                     disabled={leftPanelMode === 'sections'}
                   >
-                    <ArrowLeft className="size-3.5" />
+                    <ArrowLeft className='size-3.5' />
                   </Button>
                   <Button
                     onClick={() => setLeftPanelMode('menu')}
-                    size="icon"
-                    variant="ghost"
+                    size='icon'
+                    variant='ghost'
                     className={`h-6 w-6 p-0 ${
                       leftPanelMode === 'menu'
                         ? 'text-blue-300 hover:text-blue-200'
                         : 'text-gray-500 hover:text-gray-300'
                     }`}
-                    title="Menu settings"
-                    aria-label="Menu settings"
+                    title='Menu settings'
+                    aria-label='Menu settings'
                   >
-                    <Menu className="size-3.5" />
+                    <Menu className='size-3.5' />
                   </Button>
                   <Button
                     onClick={() => setLeftPanelMode('app-embeds')}
-                    size="icon"
-                    variant="ghost"
+                    size='icon'
+                    variant='ghost'
                     className={`h-6 w-6 p-0 ${
                       leftPanelMode === 'app-embeds'
                         ? 'text-blue-300 hover:text-blue-200'
                         : 'text-gray-500 hover:text-gray-300'
                     }`}
-                    title="App embeds"
-                    aria-label="App embeds"
+                    title='App embeds'
+                    aria-label='App embeds'
                   >
-                    <AppWindow className="size-3.5" />
+                    <AppWindow className='size-3.5' />
                   </Button>
                   <Button
                     onClick={() => setLeftPanelMode('theme')}
-                    size="icon"
-                    variant="ghost"
+                    size='icon'
+                    variant='ghost'
                     className={`h-6 w-6 p-0 ${
                       leftPanelMode === 'theme'
                         ? 'text-blue-300 hover:text-blue-200'
                         : 'text-gray-500 hover:text-gray-300'
                     }`}
-                    title="Theme settings"
-                    aria-label="Theme settings"
+                    title='Theme settings'
+                    aria-label='Theme settings'
                   >
-                    <Settings className="size-3.5" />
+                    <Settings className='size-3.5' />
                   </Button>
                   <Button
                     onClick={() => dispatch({ type: 'TOGGLE_LEFT_PANEL' })}
-                    size="icon"
-                    variant="ghost"
-                    className="h-6 w-6 p-0 text-gray-500 hover:text-gray-300"
-                    aria-label="Hide left panel"
+                    size='icon'
+                    variant='ghost'
+                    className='h-6 w-6 p-0 text-gray-500 hover:text-gray-300'
+                    aria-label='Hide left panel'
                   >
-                    <PanelLeftClose className="size-3.5" />
+                    <PanelLeftClose className='size-3.5' />
                   </Button>
                 </div>
               )}
@@ -205,12 +205,12 @@ function PageBuilderInner(): React.ReactNode {
         {state.rightPanelCollapsed && !isViewing && (
           <Button
             onClick={() => dispatch({ type: 'TOGGLE_RIGHT_PANEL' })}
-            size="sm"
-            variant="outline"
-            className="absolute right-1 top-1 z-10 h-8 w-8 p-0 border text-gray-300 hover:bg-muted/50"
-            aria-label="Show right panel"
+            size='sm'
+            variant='outline'
+            className='absolute right-1 top-1 z-10 h-8 w-8 p-0 border text-gray-300 hover:bg-muted/50'
+            aria-label='Show right panel'
           >
-            <PanelRightClose className="size-4" />
+            <PanelRightClose className='size-4' />
           </Button>
         )}
 

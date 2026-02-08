@@ -47,7 +47,7 @@ export function StatusBadge({
       )}
       title={title}
     >
-      {icon && <span className="flex-shrink-0">{icon}</span>}
+      {icon && <span className='flex-shrink-0'>{icon}</span>}
       {!hideLabel && label ? <span>{label}</span> : null}
     </Badge>
   );

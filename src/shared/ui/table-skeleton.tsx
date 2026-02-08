@@ -23,7 +23,7 @@ export function TableSkeleton({
         <TableRow key={rowIndex} className={rowClassName}>
           {Array.from({ length: columns }).map((_, colIndex) => (
             <TableCell key={colIndex} className={cellClassName}>
-              <Skeleton className="h-4 w-full" />
+              <Skeleton className='h-4 w-full' />
             </TableCell>
           ))}
         </TableRow>

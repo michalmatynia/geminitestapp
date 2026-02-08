@@ -128,20 +128,20 @@ export function TriggerButtonBar({
               {isRunning ? (
                 <span
                   aria-hidden
-                  className="pointer-events-none absolute inset-0 z-0 origin-left bg-emerald-500/10 transition-transform duration-200 ease-linear"
+                  className='pointer-events-none absolute inset-0 z-0 origin-left bg-emerald-500/10 transition-transform duration-200 ease-linear'
                   style={{ transform: `scaleX(${Math.max(0.02, progress)})` }}
                 />
               ) : null}
-              <span className="relative z-10 inline-flex size-7 items-center justify-center rounded-md border border-border bg-card/60">
+              <span className='relative z-10 inline-flex size-7 items-center justify-center rounded-md border border-border bg-card/60'>
                 {Icon ? (
-                  <Icon className="size-4 text-gray-200" style={{ opacity: textOpacity }} />
+                  <Icon className='size-4 text-gray-200' style={{ opacity: textOpacity }} />
                 ) : (
-                  <Settings2 className="size-4 text-gray-500" style={{ opacity: textOpacity }} />
+                  <Settings2 className='size-4 text-gray-500' style={{ opacity: textOpacity }} />
                 )}
               </span>
               {showLabel ? (
                 <span
-                  className="relative z-10 max-w-[180px] truncate text-xs text-gray-200 transition-opacity duration-200 ease-linear"
+                  className='relative z-10 max-w-[180px] truncate text-xs text-gray-200 transition-opacity duration-200 ease-linear'
                   style={{ opacity: textOpacity }}
                 >
                   {button.name}
@@ -150,7 +150,7 @@ export function TriggerButtonBar({
               <Switch
                 checked={checked}
                 disabled={isRunning}
-                className="relative z-10"
+                className='relative z-10'
                 onCheckedChange={(nextChecked: boolean) => {
                   const next = { ...toggleMap, [button.id]: nextChecked };
                   setToggleMap(next);
@@ -207,7 +207,7 @@ export function TriggerButtonBar({
                       } else {
                         setRunStates((prev: Record<string, TriggerRunState>) => {
                           const state = prev[button.id];
-                          if (!state || state.status !== 'running') return prev;
+                          if (state?.status !== 'running') return prev;
                           return { ...prev, [button.id]: { status: 'idle', progress: 0 } };
                         });
                       }
@@ -222,7 +222,7 @@ export function TriggerButtonBar({
         return (
           <Button
             key={button.id}
-            variant="outline"
+            variant='outline'
             size={showLabel ? 'sm' : 'icon'}
             title={button.name}
             disabled={isRunning}
@@ -284,7 +284,7 @@ export function TriggerButtonBar({
                   } else {
                     setRunStates((prev: Record<string, TriggerRunState>) => {
                       const state = prev[button.id];
-                      if (!state || state.status !== 'running') return prev;
+                      if (state?.status !== 'running') return prev;
                       return { ...prev, [button.id]: { status: 'idle', progress: 0 } };
                     });
                   }
@@ -300,18 +300,18 @@ export function TriggerButtonBar({
             {isRunning ? (
               <span
                 aria-hidden
-                className="pointer-events-none absolute inset-0 z-0 origin-left bg-emerald-500/10 transition-transform duration-200 ease-linear"
+                className='pointer-events-none absolute inset-0 z-0 origin-left bg-emerald-500/10 transition-transform duration-200 ease-linear'
                 style={{ transform: `scaleX(${Math.max(0.02, progress)})` }}
               />
             ) : null}
             {Icon ? (
-              <Icon className="relative z-10 size-4" style={{ opacity: showLabel ? 1 : textOpacity }} />
+              <Icon className='relative z-10 size-4' style={{ opacity: showLabel ? 1 : textOpacity }} />
             ) : (
-              <Settings2 className="relative z-10 size-4" style={{ opacity: showLabel ? 1 : textOpacity }} />
+              <Settings2 className='relative z-10 size-4' style={{ opacity: showLabel ? 1 : textOpacity }} />
             )}
             {showLabel ? (
               <span
-                className="relative z-10 max-w-[160px] truncate transition-opacity duration-200 ease-linear"
+                className='relative z-10 max-w-[160px] truncate transition-opacity duration-200 ease-linear'
                 style={{ opacity: textOpacity }}
               >
                 {button.name}

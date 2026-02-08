@@ -37,17 +37,17 @@ export function TreeCaret({
   if (!hasChildren) {
     if (showDot) {
       return (
-        <span className={cn(sharedClasses, 'text-gray-500', dotClassName)} aria-hidden="true">
+        <span className={cn(sharedClasses, 'text-gray-500', dotClassName)} aria-hidden='true'>
           &bull;
         </span>
       );
     }
-    return <span className={cn(sharedClasses, placeholderClassName)} aria-hidden="true" />;
+    return <span className={cn(sharedClasses, placeholderClassName)} aria-hidden='true' />;
   }
 
   if (!onToggle) {
     return (
-      <span className={sharedClasses} aria-hidden="true">
+      <span className={sharedClasses} aria-hidden='true'>
         <Icon className={iconClasses} />
       </span>
     );
@@ -55,7 +55,7 @@ export function TreeCaret({
 
   return (
     <span
-      role="button"
+      role='button'
       tabIndex={0}
       aria-label={ariaLabel}
       className={cn('rounded p-0.5 hover:bg-muted/50', sharedClasses, buttonClassName)}

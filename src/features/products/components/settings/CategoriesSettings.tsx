@@ -287,14 +287,14 @@ export function CategoriesSettings({
   }, [showModal, parentOptions, formData.parentId]);
 
   return (
-    <div className="space-y-5">
+    <div className='space-y-5'>
       {/* Catalog Selector */}
-      <SectionPanel variant="subtle" className="p-4">
-        <p className="text-sm font-semibold text-white mb-3">Select Catalog</p>
-        <p className="text-xs text-gray-400 mb-3">
+      <SectionPanel variant='subtle' className='p-4'>
+        <p className='text-sm font-semibold text-white mb-3'>Select Catalog</p>
+        <p className='text-xs text-gray-400 mb-3'>
           Each catalog has its own category tree. Select a catalog to manage its categories.
         </p>
-        <div className="w-full max-w-xs">
+        <div className='w-full max-w-xs'>
           <UnifiedSelect
             value={selectedCatalogId || ''}
             onValueChange={onCatalogChange}
@@ -302,7 +302,7 @@ export function CategoriesSettings({
               value: catalog.id,
               label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`
             }))}
-            placeholder="Select a catalog..."
+            placeholder='Select a catalog...'
           />
         </div>
       </SectionPanel>
@@ -310,39 +310,39 @@ export function CategoriesSettings({
       {/* Category Tree */}
       {selectedCatalogId && (
         <>
-          <div className="flex justify-start">
+          <div className='flex justify-start'>
             <Button
               onClick={(): void => handleOpenCreateModal(null)}
-              className="bg-white text-gray-900 hover:bg-gray-200"
+              className='bg-white text-gray-900 hover:bg-gray-200'
             >
-              <Plus className="size-4 mr-2" />
+              <Plus className='size-4 mr-2' />
               Add Category
             </Button>
           </div>
 
-          <SectionPanel variant="subtle" className="p-4">
-            <p className="text-sm font-semibold text-white mb-4">
+          <SectionPanel variant='subtle' className='p-4'>
+            <p className='text-sm font-semibold text-white mb-4'>
               Category Tree for &quot;{selectedCatalog?.name}&quot;
             </p>
 
             {loading ? (
-              <div className="rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">
+              <div className='rounded-md border border-dashed border p-4 text-center text-sm text-gray-400'>
                 Loading categories...
               </div>
             ) : categories.length === 0 ? (
               <EmptyState
-                title="No categories yet"
-                description="Categories help you organize products into a hierarchical tree."
+                title='No categories yet'
+                description='Categories help you organize products into a hierarchical tree.'
                 action={
-                  <Button onClick={(): void => handleOpenCreateModal(null)} variant="outline">
-                    <Plus className="size-4 mr-2" />
+                  <Button onClick={(): void => handleOpenCreateModal(null)} variant='outline'>
+                    <Plus className='size-4 mr-2' />
                     Add Category
                   </Button>
                 }
               />
             ) : (
               <div
-                className="space-y-0.5 rounded-md border border-border bg-gray-900 p-2"
+                className='space-y-0.5 rounded-md border border-border bg-gray-900 p-2'
                 onDragOver={(e: React.DragEvent): void => {
                   e.preventDefault();
                 }}
@@ -350,7 +350,7 @@ export function CategoriesSettings({
               >
                 {/* Root drop zone */}
                 <div
-                  className="flex items-center gap-2 px-2 py-1.5 rounded text-sm text-gray-500 border border-dashed border mb-2"
+                  className='flex items-center gap-2 px-2 py-1.5 rounded text-sm text-gray-500 border border-dashed border mb-2'
                   onDragOver={(e: React.DragEvent): void => {
                     e.preventDefault();
                     (e.currentTarget as HTMLElement).classList.add('bg-emerald-600/20', 'border-emerald-500');
@@ -392,8 +392,8 @@ export function CategoriesSettings({
 
       {!selectedCatalogId && catalogs.length === 0 && (
         <EmptyState
-          title="No catalogs found"
-          description="Please create a catalog first in the Catalogs section before adding categories."
+          title='No catalogs found'
+          description='Please create a catalog first in the Catalogs section before adding categories.'
         />
       )}
 
@@ -401,14 +401,14 @@ export function CategoriesSettings({
         open={!!categoryToDelete}
         onOpenChange={(open: boolean) => !open && setCategoryToDelete(null)}
         onConfirm={(): void => { void handleConfirmDelete(); }}
-        title="Delete Category"
+        title='Delete Category'
         description={
           categoryToDelete?.children && categoryToDelete.children.length > 0
             ? `Are you sure you want to delete category "${categoryToDelete.name}" and ALL its subcategories? This cannot be undone.`
             : `Are you sure you want to delete category "${categoryToDelete?.name}"? This cannot be undone.`
         }
-        confirmText="Delete"
-        variant="destructive"
+        confirmText='Delete'
+        variant='destructive'
       />
 
       <CategoryForm

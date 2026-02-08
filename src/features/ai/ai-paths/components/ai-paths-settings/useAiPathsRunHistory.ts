@@ -262,7 +262,7 @@ export function useAiPathsRunHistory({
       const d = query.state.data as
         | { ok: boolean; data: { runs: AiPathRunRecord[] } }
         | undefined;
-      if (!d || !d.ok) return false;
+      if (!d?.ok) return false;
       const runs: AiPathRunRecord[] = d.data?.runs ?? [];
       const hasActive: boolean = runs.some(
         (run: AiPathRunRecord): boolean => run.status === 'queued' || run.status === 'running'
@@ -272,7 +272,7 @@ export function useAiPathsRunHistory({
   });
 
   const runList = useMemo((): AiPathRunRecord[] => {
-    if (!runsQuery.data || !runsQuery.data.ok) return [] as AiPathRunRecord[];
+    if (!runsQuery.data?.ok) return [] as AiPathRunRecord[];
     return runsQuery.data.data.runs ?? [];
   }, [runsQuery.data]);
 

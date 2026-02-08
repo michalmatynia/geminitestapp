@@ -58,7 +58,7 @@ export function SlideshowFrameNodeItem({
       {
         id: 'remove-frame',
         label: 'Remove frame',
-        icon: <Trash2 className="size-3.5" />,
+        icon: <Trash2 className='size-3.5' />,
         tone: 'danger',
         onSelect: (): void => {
           blockActions.remove(sectionId, frame.id);
@@ -69,11 +69,11 @@ export function SlideshowFrameNodeItem({
   );
 
   return (
-    <div className="group/frame">
+    <div className='group/frame'>
       <TreeContextMenu items={frameMenuItems}>
         <TreeRow
-          tone="none"
-          role="button"
+          tone='none'
+          role='button'
           tabIndex={0}
           onClick={() => selectNode(frame.id)}
           onKeyDown={(e: React.KeyboardEvent) => {
@@ -190,25 +190,25 @@ export function SlideshowFrameNodeItem({
             }}
             onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
             onClick={(e: React.MouseEvent) => e.stopPropagation()}
-            className="flex items-center justify-center opacity-0 group-hover/frame:opacity-100"
-            aria-label="Drag frame"
+            className='flex items-center justify-center opacity-0 group-hover/frame:opacity-100'
+            aria-label='Drag frame'
           >
-            <GripVertical className="size-3 shrink-0 text-gray-600 cursor-grab active:cursor-grabbing" />
+            <GripVertical className='size-3 shrink-0 text-gray-600 cursor-grab active:cursor-grabbing' />
           </div>
           <TreeCaret
             isOpen={isExpanded}
             hasChildren={true}
             ariaLabel={isExpanded ? 'Collapse frame' : 'Expand frame'}
             onToggle={(): void => toggleExpand(frame.id)}
-            iconClassName="size-3"
-            placeholderClassName="block size-3 shrink-0"
+            iconClassName='size-3'
+            placeholderClassName='block size-3 shrink-0'
           />
-          <Icon className="size-3.5 shrink-0" />
-          <span className="flex-1 truncate text-left">{blockLabel}</span>
+          <Icon className='size-3.5 shrink-0' />
+          <span className='flex-1 truncate text-left'>{blockLabel}</span>
           {isDragOver && (
-            <span className="text-[10px] text-emerald-300">Drop here</span>
+            <span className='text-[10px] text-emerald-300'>Drop here</span>
           )}
-          <TreeActionSlot show="always" align="inline">
+          <TreeActionSlot show='always' align='inline'>
             <div draggable={false} onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}>
               <ColumnBlockPicker
                 onSelect={(elemType: string) => blockActions.addElementToSectionBlock(sectionId, frame.id, elemType)}
@@ -217,16 +217,16 @@ export function SlideshowFrameNodeItem({
             </div>
           </TreeActionSlot>
           {!isDragOver && (
-            <TreeActionSlot show="hover" align="inline">
+            <TreeActionSlot show='hover' align='inline'>
               <TreeActionButton
-                tone="danger"
+                tone='danger'
                 onClick={(e: React.MouseEvent) => {
                   e.stopPropagation();
                   blockActions.remove(sectionId, frame.id);
                 }}
-                title="Remove frame"
+                title='Remove frame'
               >
-                <Trash2 className="size-3" />
+                <Trash2 className='size-3' />
               </TreeActionButton>
             </TreeActionSlot>
           )}
@@ -235,7 +235,7 @@ export function SlideshowFrameNodeItem({
 
       {isExpanded && (
         <div
-          className="ml-5 border-l border-border/30 pl-1"
+          className='ml-5 border-l border-border/30 pl-1'
           onDragOver={(e: React.DragEvent) => {
             const hasBlockPayload = hasDragType(e.dataTransfer, [DRAG_KEYS.TEXT]);
             const blockDrag = readBlockDragData(e.dataTransfer, {

@@ -221,10 +221,10 @@ function renderBackgroundImageLayer(settings?: Record<string, unknown>): React.R
   delete (imageStyles as { width?: string | number }).width;
 
   return (
-    <div className="absolute inset-0 z-0" style={wrapperStyles}>
+    <div className='absolute inset-0 z-0' style={wrapperStyles}>
       <Image src={src} alt={alt} fill style={imageStyles} />
       {presentation.hasOverlay && (
-        <div className="pointer-events-none absolute inset-0" style={presentation.overlayStyles} />
+        <div className='pointer-events-none absolute inset-0' style={presentation.overlayStyles} />
       )}
     </div>
   );
@@ -308,7 +308,7 @@ export function FrontendGridSection({ sectionId, settings, blocks }: FrontendGri
           </Fragment>
         ))}
         {hasGridBackgroundSetting && renderBackgroundImageLayer(gridBackgroundSettings)}
-        <div className="relative z-10">
+        <div className='relative z-10'>
           <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
             <div className={`flex flex-col ${sectionGapClass}`} style={sectionGapStyle}>
               {rowsToRender.map((row: BlockInstance, rowIndex: number) => {
@@ -598,13 +598,13 @@ function SectionBlockRenderer({
         <CssAnimationWrapper config={cssAnimConfig}>
           {wrapInline(
             <div style={{ ...sectionStyles, ...(stretchStyle ?? {}) }} className={stretchClass}>
-              <div className="space-y-4">
+              <div className='space-y-4'>
                 {children.length > 0 ? (
                   children.map((child: BlockInstance) => (
                     <FrontendBlockRenderer key={child.id} block={child} />
                   ))
                 ) : (
-                  <p className="text-gray-500">Rich text section</p>
+                  <p className='text-gray-500'>Rich text section</p>
                 )}
               </div>
             </div>
@@ -655,7 +655,7 @@ function SectionBlockRenderer({
             >
               {blockCustomCss ? <style data-cms-custom-css={block.id}>{blockCustomCss}</style> : null}
               {linkUrl ? (
-                <a href={linkUrl} target={linkTarget} rel={linkRel} className="block w-full">
+                <a href={linkUrl} target={linkTarget} rel={linkRel} className='block w-full'>
                   {content}
                 </a>
               ) : (
@@ -708,7 +708,7 @@ function SectionBlockRenderer({
                   <FrontendBlockRenderer key={letter.id} block={letter} />
                 ))
               ) : (
-                <span className="text-sm text-gray-400">Text atoms</span>
+                <span className='text-sm text-gray-400'>Text atoms</span>
               )}
             </div>
           )}

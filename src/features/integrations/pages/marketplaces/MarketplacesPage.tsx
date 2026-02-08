@@ -43,41 +43,41 @@ export default function MarketplacesPage(): React.JSX.Element {
   };
 
   return (
-    <SectionPanel className="p-6">
+    <SectionPanel className='p-6'>
       <SectionHeader
-        title="Marketplaces"
-        description="Configure and manage external marketplaces for product listings."
-        className="mb-6"
+        title='Marketplaces'
+        description='Configure and manage external marketplaces for product listings.'
+        className='mb-6'
       />
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className='grid gap-4 md:grid-cols-2'>
         {marketplaces.map((marketplace: { name: string; description: string; href: string }) => (
           <Link
             key={marketplace.name}
             href={marketplace.href}
-            className="rounded-md border border-border bg-gray-900 p-4 transition hover:border-border/60"
+            className='rounded-md border border-border bg-gray-900 p-4 transition hover:border-border/60'
           >
-            <h2 className="text-lg font-semibold text-white">
+            <h2 className='text-lg font-semibold text-white'>
               {marketplace.name}
             </h2>
-            <p className="mt-1 text-sm text-gray-400">
+            <p className='mt-1 text-sm text-gray-400'>
               {marketplace.description}
             </p>
           </Link>
         ))}
       </div>
 
-      <div className="mt-6 rounded-md border border-border bg-gray-900 p-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className='mt-6 rounded-md border border-border bg-gray-900 p-4'>
+        <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
           <div>
-            <h3 className="text-base font-semibold text-white">Base.com image sync</h3>
-            <p className="text-sm text-gray-400">
+            <h3 className='text-base font-semibold text-white'>Base.com image sync</h3>
+            <p className='text-sm text-gray-400'>
               Queue a job to sync all Base.com image URLs into product image links.
             </p>
           </div>
           <Button
-            type="button"
-            variant="outline"
+            type='button'
+            variant='outline'
             onClick={() => setShowSyncConfirm(true)}
             disabled={syncMutation.isPending}
           >
@@ -89,11 +89,11 @@ export default function MarketplacesPage(): React.JSX.Element {
       <ConfirmDialog
         open={showSyncConfirm}
         onOpenChange={setShowSyncConfirm}
-        title="Sync Base.com images for all listings?"
-        description="This will enqueue a background job to pull image URLs from Base.com for every listing."
+        title='Sync Base.com images for all listings?'
+        description='This will enqueue a background job to pull image URLs from Base.com for every listing.'
         onConfirm={() => void handleSyncBaseImages()}
-        confirmText="Queue Sync"
-        variant="success"
+        confirmText='Queue Sync'
+        variant='success'
         loading={syncMutation.isPending}
       />
     </SectionPanel>

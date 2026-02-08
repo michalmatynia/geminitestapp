@@ -423,10 +423,10 @@ function NavTree({
         return (
           <div key={item.id}>
             {isMenuCollapsed && depth === 0 ? (
-              <Tooltip content={item.label} side="right">
+              <Tooltip content={item.label} side='right'>
                 <div>
                   {item.href ? (
-                    <TreeContextMenu items={contextItems} className="cursor-pointer">
+                    <TreeContextMenu items={contextItems} className='cursor-pointer'>
                       <Link
                         href={item.href}
                         prefetch={false}
@@ -437,19 +437,19 @@ function NavTree({
                           active ? 'bg-gray-700/60 text-white' : 'text-gray-200 hover:bg-gray-700/40'
                         )}
                       >
-                        <span className="relative text-gray-200">
-                          {item.icon ?? <AppWindow className="size-4" />}
+                        <span className='relative text-gray-200'>
+                          {item.icon ?? <AppWindow className='size-4' />}
                           {sectionStyle ? (
                             <span className={cn('absolute -right-1 -top-1 h-2 w-2 rounded-full', sectionStyle.dot)} />
                           ) : null}
                         </span>
-                        <span className="sr-only">{item.label}</span>
+                        <span className='sr-only'>{item.label}</span>
                       </Link>
                     </TreeContextMenu>
                   ) : (
-                    <TreeContextMenu items={contextItems} className="cursor-pointer">
+                    <TreeContextMenu items={contextItems} className='cursor-pointer'>
                       <button
-                        type="button"
+                        type='button'
                         onClick={(): void => {
                           if (item.action) item.action();
                           if (!item.href && hasChildren) onToggleOpen(item.id);
@@ -460,13 +460,13 @@ function NavTree({
                           active ? 'bg-gray-700/60 text-white' : 'text-gray-200 hover:bg-gray-700/40'
                         )}
                       >
-                        <span className="relative text-gray-200">
-                          {item.icon ?? <AppWindow className="size-4" />}
+                        <span className='relative text-gray-200'>
+                          {item.icon ?? <AppWindow className='size-4' />}
                           {sectionStyle ? (
                             <span className={cn('absolute -right-1 -top-1 h-2 w-2 rounded-full', sectionStyle.dot)} />
                           ) : null}
                         </span>
-                        <span className="sr-only">{item.label}</span>
+                        <span className='sr-only'>{item.label}</span>
                       </button>
                     </TreeContextMenu>
                   )}
@@ -475,9 +475,9 @@ function NavTree({
             ) : (
               <>
                 {hasChildren ? (
-                  <TreeContextMenu items={contextItems} className="cursor-pointer">
+                  <TreeContextMenu items={contextItems} className='cursor-pointer'>
                     <button
-                      type="button"
+                      type='button'
                       onClick={(): void => {
                         if (item.action) {
                           item.action();
@@ -490,23 +490,23 @@ function NavTree({
                       aria-expanded={isOpen}
                       aria-controls={`${item.id}-children`}
                     >
-                      <div className="flex min-w-0 items-center gap-2">
+                      <div className='flex min-w-0 items-center gap-2'>
                         {depth === 0 && item.icon ? (
                           <>
                             {sectionStyle ? (
                               <span className={cn('h-2 w-2 rounded-full', sectionStyle.dot)} />
                             ) : null}
-                            <span className="shrink-0 text-gray-200">{item.icon}</span>
+                            <span className='shrink-0 text-gray-200'>{item.icon}</span>
                           </>
                         ) : depth > 0 ? (
                           sectionStyle ? (
                             <span className={cn('h-1.5 w-1.5 rounded-full', sectionStyle.dot)} />
                           ) : (
-                            <span className="shrink-0 text-gray-600">•</span>
+                            <span className='shrink-0 text-gray-600'>•</span>
                           )
                         ) : null}
 
-                        <span className="min-w-0 truncate text-left">{item.label}</span>
+                        <span className='min-w-0 truncate text-left'>{item.label}</span>
                       </div>
 
                       <ChevronRightIcon
@@ -514,12 +514,12 @@ function NavTree({
                           'size-4 shrink-0 text-gray-400 transition-transform duration-200',
                           isOpen ? 'rotate-90' : ''
                         )}
-                        aria-hidden="true"
+                        aria-hidden='true'
                       />
                     </button>
                   </TreeContextMenu>
                 ) : item.href ? (
-                  <TreeContextMenu items={contextItems} className="cursor-pointer">
+                  <TreeContextMenu items={contextItems} className='cursor-pointer'>
                     <Link
                       href={item.href}
                       prefetch={false}
@@ -527,58 +527,58 @@ function NavTree({
                       className={rowClassName}
                       style={rowStyle}
                     >
-                      <div className="flex min-w-0 items-center gap-2">
+                      <div className='flex min-w-0 items-center gap-2'>
                         {depth === 0 && item.icon ? (
                           <>
                             {sectionStyle ? (
                               <span className={cn('h-2 w-2 rounded-full', sectionStyle.dot)} />
                             ) : null}
-                            <span className="shrink-0 text-gray-200">{item.icon}</span>
+                            <span className='shrink-0 text-gray-200'>{item.icon}</span>
                           </>
                         ) : depth > 0 ? (
                           sectionStyle ? (
                             <span className={cn('h-1.5 w-1.5 rounded-full', sectionStyle.dot)} />
                           ) : (
-                            <span className="shrink-0 text-gray-600">•</span>
+                            <span className='shrink-0 text-gray-600'>•</span>
                           )
                         ) : null}
-                        <span className="min-w-0 truncate">{item.label}</span>
+                        <span className='min-w-0 truncate'>{item.label}</span>
                       </div>
                     </Link>
                   </TreeContextMenu>
                 ) : (
-                  <TreeContextMenu items={contextItems} className="cursor-pointer">
+                  <TreeContextMenu items={contextItems} className='cursor-pointer'>
                     <button
-                      type="button"
+                      type='button'
                       onClick={(): void => {
                         if (item.action) item.action();
                       }}
                       className={rowClassName}
                       style={rowStyle}
                     >
-                      <div className="flex min-w-0 items-center gap-2">
+                      <div className='flex min-w-0 items-center gap-2'>
                         {depth === 0 && item.icon ? (
                           <>
                             {sectionStyle ? (
                               <span className={cn('h-2 w-2 rounded-full', sectionStyle.dot)} />
                             ) : null}
-                            <span className="shrink-0 text-gray-200">{item.icon}</span>
+                            <span className='shrink-0 text-gray-200'>{item.icon}</span>
                           </>
                         ) : depth > 0 ? (
                           sectionStyle ? (
                             <span className={cn('h-1.5 w-1.5 rounded-full', sectionStyle.dot)} />
                           ) : (
-                            <span className="shrink-0 text-gray-600">•</span>
+                            <span className='shrink-0 text-gray-600'>•</span>
                           )
                         ) : null}
-                        <span className="min-w-0 truncate text-left">{item.label}</span>
+                        <span className='min-w-0 truncate text-left'>{item.label}</span>
                       </div>
                     </button>
                   </TreeContextMenu>
                 )}
 
                 {hasChildren && isOpen ? (
-                  <div className="mt-1" id={`${item.id}-children`}>
+                  <div className='mt-1' id={`${item.id}-children`}>
                     <NavTree
                       items={item.children ?? []}
                       depth={depth + 1}
@@ -604,13 +604,13 @@ export const buildAdminNav = (handlers: {
     id: 'home',
     label: 'Home',
     href: '/admin',
-    icon: <HomeIcon className="size-4" />,
+    icon: <HomeIcon className='size-4' />,
     keywords: ['dashboard', 'home'],
   },
   {
     id: 'workspace',
     label: 'Workspace',
-    icon: <AppWindow className="size-4" />,
+    icon: <AppWindow className='size-4' />,
     children: [
       { id: 'workspace/front-manage', label: 'Front Manage', href: '/admin/front-manage' },
       { id: 'workspace/import', label: 'Import', href: '/admin/import' },
@@ -623,14 +623,14 @@ export const buildAdminNav = (handlers: {
     id: 'image-studio',
     label: 'Image Studio',
     href: '/admin/image-studio',
-    icon: <ImageIcon className="size-4" />,
+    icon: <ImageIcon className='size-4' />,
     keywords: ['ai', 'images', 'mask', 'studio', 'relight'],
   },
   {
     id: 'commerce',
     label: 'Commerce',
     href: '/admin/products',
-    icon: <PackageIcon className="size-4" />,
+    icon: <PackageIcon className='size-4' />,
     children: [
       {
         id: 'commerce/products',
@@ -660,7 +660,7 @@ export const buildAdminNav = (handlers: {
     id: 'integrations',
     label: 'Integrations',
     href: '/admin/integrations',
-    icon: <Plug className="size-4" />,
+    icon: <Plug className='size-4' />,
     children: [
       { id: 'integrations/connections', label: 'Connections', href: '/admin/integrations' },
       { id: 'integrations/add', label: 'Add Integration', href: '/admin/integrations/add' },
@@ -693,7 +693,7 @@ export const buildAdminNav = (handlers: {
     id: 'jobs',
     label: 'Jobs',
     href: '/admin/ai-paths/queue',
-    icon: <WorkflowIcon className="size-4" />,
+    icon: <WorkflowIcon className='size-4' />,
     keywords: ['queue', 'runner', 'workers', 'background', 'tasks'],
     children: [
       { id: 'jobs/queue', label: 'Job Queue', href: '/admin/ai-paths/queue' },
@@ -704,7 +704,7 @@ export const buildAdminNav = (handlers: {
     id: 'ai',
     label: 'AI',
     href: '/admin/ai-paths',
-    icon: <GitBranchIcon className="size-4" />,
+    icon: <GitBranchIcon className='size-4' />,
     children: [
       {
         id: 'ai/ai-paths',
@@ -764,7 +764,7 @@ export const buildAdminNav = (handlers: {
             id: 'ai/chatbot/chat',
             label: 'Chat',
             href: '/admin/chatbot',
-            icon: <MessageCircleIcon className="size-4" />,
+            icon: <MessageCircleIcon className='size-4' />,
             onClick: handlers.onOpenChat,
           },
           { id: 'ai/chatbot/sessions', label: 'Sessions', href: '/admin/chatbot/sessions' },
@@ -778,13 +778,13 @@ export const buildAdminNav = (handlers: {
     id: 'content',
     label: 'Content',
     href: '/admin/notes',
-    icon: <BookOpenIcon className="size-4" />,
+    icon: <BookOpenIcon className='size-4' />,
     children: [
       {
         id: 'content/notes',
         label: 'Notes',
         href: '/admin/notes',
-        icon: <StickyNoteIcon className="size-4" />,
+        icon: <StickyNoteIcon className='size-4' />,
         children: [
           { id: 'content/notes/list', label: 'Note List', href: '/admin/notes' },
           { id: 'content/notes/notebooks', label: 'Notebooks', href: '/admin/notes/notebooks' },
@@ -824,7 +824,7 @@ export const buildAdminNav = (handlers: {
     id: 'system',
     label: 'System',
     href: '/admin/settings',
-    icon: <SettingsIcon className="size-4" />,
+    icon: <SettingsIcon className='size-4' />,
     children: [
       {
         id: 'system/settings',
@@ -847,30 +847,30 @@ export const buildAdminNav = (handlers: {
         id: 'system/routes',
         label: 'Route Map',
         href: '/admin/routes',
-        icon: <MapIcon className="size-4" />,
+        icon: <MapIcon className='size-4' />,
         keywords: ['routes', 'navigation', 'map'],
       },
       {
         id: 'system/analytics',
         label: 'Analytics',
         href: '/admin/analytics',
-        icon: <BarChart3Icon className="size-4" />,
+        icon: <BarChart3Icon className='size-4' />,
         keywords: ['page analytics', 'traffic', 'visitors', 'referrers'],
       },
       {
         id: 'system/ai-insights',
         label: 'AI Insights',
         href: '/admin/ai-insights',
-        icon: <SparklesIcon className="size-4" />,
+        icon: <SparklesIcon className='size-4' />,
         keywords: ['ai insights', 'analytics', 'logs', 'warnings'],
       },
-      { id: 'system/logs', label: 'System Logs', href: '/admin/system/logs', icon: <ActivityIcon className="size-4" /> },
-      { id: 'system/uploads', label: 'Upload Events', href: '/admin/ai-paths/queue?tab=file-uploads', icon: <ActivityIcon className="size-4" /> },
+      { id: 'system/logs', label: 'System Logs', href: '/admin/system/logs', icon: <ActivityIcon className='size-4' /> },
+      { id: 'system/uploads', label: 'Upload Events', href: '/admin/ai-paths/queue?tab=file-uploads', icon: <ActivityIcon className='size-4' /> },
       {
         id: 'system/auth',
         label: 'Auth',
         href: '/admin/auth',
-        icon: <ShieldIcon className="size-4" />,
+        icon: <ShieldIcon className='size-4' />,
         children: [
           { id: 'system/auth/dashboard', label: 'Dashboard', href: '/admin/auth/dashboard' },
           { id: 'system/auth/users', label: 'Users', href: '/admin/auth/users' },
@@ -1028,7 +1028,7 @@ export default function Menu(): React.ReactNode {
       {
         id: 'favorites',
         label: 'Favorites',
-        icon: <StarIcon className="size-4" />,
+        icon: <StarIcon className='size-4' />,
         children: favoriteItems,
       },
       ...navWithColors,
@@ -1100,18 +1100,18 @@ export default function Menu(): React.ReactNode {
     >
       {!isMenuCollapsed ? (
         <TreeHeader>
-          <div className="flex items-center gap-2">
+          <div className='flex items-center gap-2'>
             <SearchInput
               value={query}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => setQuery(event.target.value)}
-              placeholder="Search admin pages…"
-              className="h-9 flex-1 bg-gray-900/40"
+              placeholder='Search admin pages…'
+              className='h-9 flex-1 bg-gray-900/40'
               onClear={() => setQuery('')}
             />
             <Button
-              variant="outline"
-              size="sm"
-              className="h-9 shrink-0"
+              variant='outline'
+              size='sm'
+              className='h-9 shrink-0'
               disabled={Boolean(normalizedQuery)}
               onClick={handleToggleAllFolders}
               title={normalizedQuery ? 'Clear search to toggle all folders' : undefined}
@@ -1120,18 +1120,18 @@ export default function Menu(): React.ReactNode {
             </Button>
           </div>
           {normalizedQuery ? (
-            <div className="text-[11px] text-gray-500">
-              Filtering menu: <span className="text-gray-300">{query.trim()}</span>
+            <div className='text-[11px] text-gray-500'>
+              Filtering menu: <span className='text-gray-300'>{query.trim()}</span>
             </div>
           ) : null}
         </TreeHeader>
       ) : (
-        <Tooltip content={isAnyFolderOpen ? 'Collapse all folders' : 'Expand all folders'} side="right">
+        <Tooltip content={isAnyFolderOpen ? 'Collapse all folders' : 'Expand all folders'} side='right'>
           <div>
             <Button
-              variant="outline"
-              size="sm"
-              className="h-9 w-full"
+              variant='outline'
+              size='sm'
+              className='h-9 w-full'
               disabled={Boolean(normalizedQuery)}
               onClick={handleToggleAllFolders}
             >

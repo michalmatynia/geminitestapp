@@ -46,16 +46,16 @@ export function RoutingTab(): React.JSX.Element {
   } = useBrain();
 
   return (
-    <div className="space-y-4">
-      <SectionPanel variant="subtle">
-        <div className="text-xs text-gray-300">
+    <div className='space-y-4'>
+      <SectionPanel variant='subtle'>
+        <div className='text-xs text-gray-300'>
           Configure global defaults first, then enable per-feature overrides where needed.
         </div>
       </SectionPanel>
 
       <SectionPanel>
-        <div className="text-xs uppercase text-gray-500">Global defaults</div>
-        <div className="mt-2">
+        <div className='text-xs uppercase text-gray-500'>Global defaults</div>
+        <div className='mt-2'>
           <AssignmentEditor
             assignment={settings.defaults}
             onChange={handleDefaultChange}
@@ -63,7 +63,7 @@ export function RoutingTab(): React.JSX.Element {
         </div>
       </SectionPanel>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className='grid gap-4 md:grid-cols-2'>
         {ROUTING_FEATURES.map((feature: FeatureConfig) => {
           const overrideEnabled = overridesEnabled[feature.key];
           const assignment = overrideEnabled
@@ -72,15 +72,15 @@ export function RoutingTab(): React.JSX.Element {
 
           return (
             <SectionPanel key={feature.key}>
-              <div className="flex items-start justify-between gap-2">
+              <div className='flex items-start justify-between gap-2'>
                 <div>
-                  <div className="text-sm font-semibold text-gray-100">{feature.label}</div>
-                  <div className="text-xs text-gray-400">{feature.description}</div>
+                  <div className='text-sm font-semibold text-gray-100'>{feature.label}</div>
+                  <div className='text-xs text-gray-400'>{feature.description}</div>
                 </div>
-                <label className="flex items-center gap-2 text-[11px] text-gray-400">
+                <label className='flex items-center gap-2 text-[11px] text-gray-400'>
                   <input
-                    type="checkbox"
-                    className="h-3 w-3 rounded border-gray-600"
+                    type='checkbox'
+                    className='h-3 w-3 rounded border-gray-600'
                     checked={overrideEnabled}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => toggleOverride(feature.key, e.target.checked)}
                   />
@@ -88,7 +88,7 @@ export function RoutingTab(): React.JSX.Element {
                 </label>
               </div>
 
-              <div className="mt-3">
+              <div className='mt-3'>
                 <AssignmentEditor
                   assignment={assignment}
                   onChange={(next: AiBrainAssignment) => handleOverrideChange(feature.key, next)}
@@ -97,7 +97,7 @@ export function RoutingTab(): React.JSX.Element {
               </div>
 
               {!overrideEnabled ? (
-                <div className="mt-2 text-[11px] text-gray-500">Using global defaults.</div>
+                <div className='mt-2 text-[11px] text-gray-500'>Using global defaults.</div>
               ) : null}
             </SectionPanel>
           );

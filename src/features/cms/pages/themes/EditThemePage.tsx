@@ -27,35 +27,35 @@ function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.
   };
 
   return (
-    <div className="container mx-auto max-w-2xl py-10">
-      <SectionHeader title="Edit Theme" className="mb-6" />
-      <form onSubmit={(e: React.FormEvent) => { void handleSubmit(e); }} className="space-y-8">
-        <FormSection title="General" description="Basic identification for this theme.">
-          <FormField label="Theme Name" required id="theme-name">
+    <div className='container mx-auto max-w-2xl py-10'>
+      <SectionHeader title='Edit Theme' className='mb-6' />
+      <form onSubmit={(e: React.FormEvent) => { void handleSubmit(e); }} className='space-y-8'>
+        <FormSection title='General' description='Basic identification for this theme.'>
+          <FormField label='Theme Name' required id='theme-name'>
             <Input
-              id="theme-name"
+              id='theme-name'
               value={name}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
-              placeholder="e.g. Modern Dark"
+              placeholder='e.g. Modern Dark'
               required
             />
           </FormField>
         </FormSection>
 
-        <FormSection title="Colors" description="Brand and semantic colors for the theme." gridClassName="grid-cols-2">
+        <FormSection title='Colors' description='Brand and semantic colors for the theme.' gridClassName='grid-cols-2'>
           {(Object.keys(colors) as Array<keyof CmsThemeColors>).map((key: keyof CmsThemeColors) => (
-            <FormField key={key} label={key} className="capitalize">
-              <div className="flex items-center gap-2">
+            <FormField key={key} label={key} className='capitalize'>
+              <div className='flex items-center gap-2'>
                 <input
-                  type="color"
+                  type='color'
                   value={colors[key]}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateColor(key, e.target.value)}
-                  className="h-9 w-10 cursor-pointer rounded border border-border/50 bg-transparent p-0.5"
+                  className='h-9 w-10 cursor-pointer rounded border border-border/50 bg-transparent p-0.5'
                 />
                 <Input
                   value={colors[key]}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateColor(key, e.target.value)}
-                  className="flex-1 text-xs font-mono"
+                  className='flex-1 text-xs font-mono'
                   maxLength={7}
                 />
               </div>
@@ -63,29 +63,29 @@ function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.
           ))}
         </FormSection>
 
-        <FormSection title="Typography" description="Font families and weights." gridClassName="grid-cols-2">
-          <FormField label="Heading Font">
+        <FormSection title='Typography' description='Font families and weights.' gridClassName='grid-cols-2'>
+          <FormField label='Heading Font'>
             <Input
               value={typography.headingFont}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTypography((p: CmsThemeTypography) => ({ ...p, headingFont: e.target.value }))}
             />
           </FormField>
-          <FormField label="Body Font">
+          <FormField label='Body Font'>
             <Input
               value={typography.bodyFont}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTypography((p: CmsThemeTypography) => ({ ...p, bodyFont: e.target.value }))}
             />
           </FormField>
-          <FormField label="Base Size (px)">
+          <FormField label='Base Size (px)'>
             <Input
-              type="number"
+              type='number'
               value={typography.baseSize}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTypography((p: CmsThemeTypography) => ({ ...p, baseSize: Number(e.target.value) }))}
             />
           </FormField>
-          <FormField label="Heading Weight">
+          <FormField label='Heading Weight'>
             <Input
-              type="number"
+              type='number'
               value={typography.headingWeight}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTypography((p: CmsThemeTypography) => ({ ...p, headingWeight: Number(e.target.value) }))}
               min={100}
@@ -93,9 +93,9 @@ function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.
               step={100}
             />
           </FormField>
-          <FormField label="Body Weight" className="col-span-1">
+          <FormField label='Body Weight' className='col-span-1'>
             <Input
-              type="number"
+              type='number'
               value={typography.bodyWeight}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTypography((p: CmsThemeTypography) => ({ ...p, bodyWeight: Number(e.target.value) }))}
               min={100}
@@ -105,14 +105,14 @@ function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.
           </FormField>
         </FormSection>
 
-        <FormSection title="Spacing" description="Layout dimensions and constraints." gridClassName="grid-cols-2">
-          <FormField label="Section Padding">
+        <FormSection title='Spacing' description='Layout dimensions and constraints.' gridClassName='grid-cols-2'>
+          <FormField label='Section Padding'>
             <Input
               value={spacing.sectionPadding}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSpacing((p: CmsThemeSpacing) => ({ ...p, sectionPadding: e.target.value }))}
             />
           </FormField>
-          <FormField label="Container Max Width">
+          <FormField label='Container Max Width'>
             <Input
               value={spacing.containerMaxWidth}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSpacing((p: CmsThemeSpacing) => ({ ...p, containerMaxWidth: e.target.value }))}
@@ -120,8 +120,8 @@ function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.
           </FormField>
         </FormSection>
 
-        <div className="pt-4">
-          <Button type="submit" size="lg" className="w-full md:w-auto min-w-[200px]" disabled={updateTheme.isPending || !name.trim()}>
+        <div className='pt-4'>
+          <Button type='submit' size='lg' className='w-full md:w-auto min-w-[200px]' disabled={updateTheme.isPending || !name.trim()}>
             {updateTheme.isPending ? 'Saving...' : 'Save Theme'}
           </Button>
         </div>
@@ -137,16 +137,16 @@ export default function EditThemePage(): React.JSX.Element {
 
   if (themeQuery.isLoading) {
     return (
-      <div className="container mx-auto py-10">
-        <p className="text-gray-500 animate-pulse">Loading theme...</p>
+      <div className='container mx-auto py-10'>
+        <p className='text-gray-500 animate-pulse'>Loading theme...</p>
       </div>
     );
   }
 
   if (!themeQuery.data) {
     return (
-      <div className="container mx-auto py-10">
-        <p className="text-red-500">Theme not found.</p>
+      <div className='container mx-auto py-10'>
+        <p className='text-red-500'>Theme not found.</p>
       </div>
     );
   }

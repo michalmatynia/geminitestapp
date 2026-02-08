@@ -142,14 +142,14 @@ export function SlotTree(): React.JSX.Element {
               depth={depth}
               baseIndent={8}
               indent={10}
-              tone="subtle"
+              tone='subtle'
               selected={isSelected}
               dragOver={isDragOver}
-              className="text-xs"
+              className='text-xs'
             >
               <button
-                type="button"
-                className="w-full text-left cursor-grab active:cursor-grabbing"
+                type='button'
+                className='w-full text-left cursor-grab active:cursor-grabbing'
                 onClick={() => onSelectFolder(node.path)}
                 onDoubleClick={() => toggle(node.id)}
                 title={node.path || 'Project root'}
@@ -194,12 +194,12 @@ export function SlotTree(): React.JSX.Element {
                   hasChildren={node.children.length > 0}
                   ariaLabel={isOpen ? `Collapse ${node.name}` : `Expand ${node.name}`}
                   onToggle={() => toggle(node.id)}
-                  className="text-gray-400"
-                  buttonClassName="hover:bg-gray-700"
-                  placeholderClassName="w-4"
+                  className='text-gray-400'
+                  buttonClassName='hover:bg-gray-700'
+                  placeholderClassName='w-4'
                 />
-                <Folder className="size-4 text-gray-400" />
-                <span className="truncate">{node.name}</span>
+                <Folder className='size-4 text-gray-400' />
+                <span className='truncate'>{node.name}</span>
               </button>
             </TreeRow>
           </TreeContextMenu>
@@ -237,13 +237,13 @@ export function SlotTree(): React.JSX.Element {
           depth={depth}
           baseIndent={18}
           indent={10}
-          tone="subtle"
+          tone='subtle'
           selected={isSelected}
-          className="text-xs"
+          className='text-xs'
         >
           <button
-            type="button"
-            className="w-full text-left cursor-grab active:cursor-grabbing"
+            type='button'
+            className='w-full text-left cursor-grab active:cursor-grabbing'
             onClick={() => onSelectSlot(slot)}
             title={slot.name || slot.id}
             draggable
@@ -256,8 +256,8 @@ export function SlotTree(): React.JSX.Element {
               setDragOverPath(null);
             }}
           >
-            <ImageIcon className="size-4 text-gray-400" />
-            <span className="truncate">{slot.name || node.name}</span>
+            <ImageIcon className='size-4 text-gray-400' />
+            <span className='truncate'>{slot.name || node.name}</span>
           </button>
         </TreeRow>
       </TreeContextMenu>
@@ -266,7 +266,7 @@ export function SlotTree(): React.JSX.Element {
 
   return (
     <div
-      className="h-full overflow-auto rounded border border-border bg-card/40 p-2"
+      className='h-full overflow-auto rounded border border-border bg-card/40 p-2'
       onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
         if (!hasDragType(e.dataTransfer, [DRAG_KEYS.ASSET_ID, DRAG_KEYS.FOLDER_PATH])) return;
         e.preventDefault();
@@ -292,7 +292,7 @@ export function SlotTree(): React.JSX.Element {
       }}
     >
       {tree.children.length === 0 ? (
-        <div className="flex h-full items-center justify-center px-2 text-center text-xs text-gray-500">
+        <div className='flex h-full items-center justify-center px-2 text-center text-xs text-gray-500'>
           No folders yet. Create a folder or add slots here.
         </div>
       ) : rootOpen ? (

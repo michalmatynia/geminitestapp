@@ -33,23 +33,23 @@ export default function FilePreviewModal({
       open={true}
       onClose={onClose}
       title={file.filename}
-      size="lg"
+      size='lg'
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
         <div>
-          <h2 className="text-2xl font-bold mb-4">{file.filename}</h2>
-          <div className="relative w-full h-64">
+          <h2 className='text-2xl font-bold mb-4'>{file.filename}</h2>
+          <div className='relative w-full h-64'>
             <Image
               src={file.filepath}
               alt={file.filename}
               fill
-              className="rounded object-contain"
+              className='rounded object-contain'
             />
           </div>
         </div>
         <div>
-          <h3 className="text-xl font-bold mb-4">File Information</h3>
-          <div className="space-y-2 text-sm text-gray-200">
+          <h3 className='text-xl font-bold mb-4'>File Information</h3>
+          <div className='space-y-2 text-sm text-gray-200'>
             {file.id && (
               <p>
                 <strong>ID:</strong> {file.id}
@@ -85,11 +85,11 @@ export default function FilePreviewModal({
               </p>
             )}
           </div>
-          <div className="mt-4 rounded-md border border-border/60 bg-black/30 p-3">
-            <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+          <div className='mt-4 rounded-md border border-border/60 bg-black/30 p-3'>
+            <div className='text-xs font-semibold uppercase tracking-wide text-gray-400'>
                 Raw Metadata
             </div>
-            <pre className="mt-2 max-h-48 overflow-auto text-[11px] text-gray-300">
+            <pre className='mt-2 max-h-48 overflow-auto text-[11px] text-gray-300'>
               {JSON.stringify(file, null, 2)}
             </pre>
           </div>

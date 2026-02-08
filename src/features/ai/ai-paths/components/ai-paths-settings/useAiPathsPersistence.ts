@@ -876,7 +876,7 @@ export function useAiPathsPersistence({
         const baseNodes = options?.nodesOverride ?? nodesRef.current;
         const resolvedNodes = options?.nodeOverride
           ? (() => {
-            const targetNode = options.nodeOverride as AiNode;
+            const targetNode = options.nodeOverride;
             let replaced = false;
             const next = baseNodes.map((node: AiNode): AiNode => {
               if (node.id !== targetNode.id) return node;

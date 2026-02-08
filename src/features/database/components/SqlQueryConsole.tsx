@@ -101,62 +101,62 @@ export function SqlQueryConsole({
   };
 
   return (
-    <div className="space-y-4">
+    <div className='space-y-4'>
       {/* Editor */}
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
+        <div className='flex items-center justify-between mb-2'>
+          <div className='flex items-center gap-2'>
             <select
               value={dbType}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
                 setDbType(e.target.value as DatabaseType)
               }
-              className="h-8 rounded-md border border-border bg-card px-2 text-xs text-gray-200"
+              className='h-8 rounded-md border border-border bg-card px-2 text-xs text-gray-200'
             >
-              <option value="postgresql">PostgreSQL</option>
-              <option value="mongodb">MongoDB</option>
+              <option value='postgresql'>PostgreSQL</option>
+              <option value='mongodb'>MongoDB</option>
             </select>
-            <span className="text-[11px] text-gray-500">
+            <span className='text-[11px] text-gray-500'>
               {dbType === 'postgresql' ? 'Enter SQL query' : 'Use the CRUD panel for MongoDB operations'}
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className='flex items-center gap-2'>
             {/* History dropdown */}
-            <div className="relative">
+            <div className='relative'>
               <Button
-                variant="outline"
-                size="sm"
+                variant='outline'
+                size='sm'
                 onClick={(): void => setShowHistory(!showHistory)}
-                className="h-8 gap-1 text-xs"
+                className='h-8 gap-1 text-xs'
                 disabled={history.length === 0}
               >
-                <ClockIcon className="size-3" />
+                <ClockIcon className='size-3' />
                 History ({history.length})
-                <ChevronDownIcon className="size-3" />
+                <ChevronDownIcon className='size-3' />
               </Button>
               {showHistory && history.length > 0 && (
-                <div className="absolute right-0 top-full z-50 mt-1 w-96 max-h-64 overflow-auto rounded-md border border-border bg-card shadow-lg">
-                  <div className="flex items-center justify-between border-b border-border px-3 py-2">
-                    <span className="text-[11px] text-gray-500">Recent queries</span>
+                <div className='absolute right-0 top-full z-50 mt-1 w-96 max-h-64 overflow-auto rounded-md border border-border bg-card shadow-lg'>
+                  <div className='flex items-center justify-between border-b border-border px-3 py-2'>
+                    <span className='text-[11px] text-gray-500'>Recent queries</span>
                     <Button
-                      variant="ghost"
-                      size="sm"
+                      variant='ghost'
+                      size='sm'
                       onClick={clearHistory}
-                      className="h-6 gap-1 text-[10px] text-red-400"
+                      className='h-6 gap-1 text-[10px] text-red-400'
                     >
-                      <Trash2Icon className="size-3" />
+                      <Trash2Icon className='size-3' />
                       Clear
                     </Button>
                   </div>
                   {history.map((item: string, i: number) => (
                     <button
                       key={i}
-                      type="button"
+                      type='button'
                       onClick={(): void => {
                         setSql(item);
                         setShowHistory(false);
                       }}
-                      className="w-full truncate border-b border-border px-3 py-2 text-left text-xs font-mono text-gray-300 hover:bg-muted/50 last:border-b-0"
+                      className='w-full truncate border-b border-border px-3 py-2 text-left text-xs font-mono text-gray-300 hover:bg-muted/50 last:border-b-0'
                     >
                       {item}
                     </button>
@@ -167,10 +167,10 @@ export function SqlQueryConsole({
             <Button
               onClick={executeQuery}
               disabled={queryMutation.isPending || !sql.trim()}
-              size="sm"
-              className="h-8 gap-1 text-xs"
+              size='sm'
+              className='h-8 gap-1 text-xs'
             >
-              <PlayIcon className="size-3" />
+              <PlayIcon className='size-3' />
               {queryMutation.isPending ? 'Running...' : 'Execute'}
             </Button>
           </div>
@@ -186,72 +186,72 @@ export function SqlQueryConsole({
               ? 'SELECT * FROM "User" LIMIT 20;\n\n-- Press Ctrl+Enter to execute'
               : 'Use the CRUD panel below for MongoDB operations'
           }
-          className="w-full min-h-[140px] rounded-md border border-border bg-card/60 p-3 font-mono text-xs text-gray-200 placeholder:text-gray-600 focus:border-emerald-500/50 focus:outline-none focus:ring-1 focus:ring-emerald-500/30 resize-y"
+          className='w-full min-h-[140px] rounded-md border border-border bg-card/60 p-3 font-mono text-xs text-gray-200 placeholder:text-gray-600 focus:border-emerald-500/50 focus:outline-none focus:ring-1 focus:ring-emerald-500/30 resize-y'
           spellCheck={false}
         />
-        <p className="mt-1 text-[11px] text-gray-600">
+        <p className='mt-1 text-[11px] text-gray-600'>
           Ctrl+Enter to execute. 30s timeout. Production execution disabled.
         </p>
       </div>
 
       {/* Results */}
       {result && (
-        <SectionPanel className="p-4">
+        <SectionPanel className='p-4'>
           {/* Info bar */}
-          <div className="flex flex-wrap items-center gap-3 mb-3">
+          <div className='flex flex-wrap items-center gap-3 mb-3'>
             {result.command && (
-              <Badge variant="outline" className="text-[10px]">
+              <Badge variant='outline' className='text-[10px]'>
                 {result.command}
               </Badge>
             )}
-            <span className="text-xs text-gray-400">
+            <span className='text-xs text-gray-400'>
               {result.rowCount} row{result.rowCount !== 1 ? 's' : ''} affected
             </span>
-            <span className="text-xs text-gray-500">
+            <span className='text-xs text-gray-500'>
               {result.duration}ms
             </span>
           </div>
 
           {/* Error */}
           {result.error && (
-            <div className="rounded-md border border-red-500/30 bg-red-900/20 px-3 py-2 text-xs text-red-300 mb-3">
+            <div className='rounded-md border border-red-500/30 bg-red-900/20 px-3 py-2 text-xs text-red-300 mb-3'>
               {result.error}
             </div>
           )}
 
           {/* Results table */}
           {!result.error && result.rows.length > 0 && (
-            <div className="overflow-auto max-h-[50vh] rounded-md border border-border">
-              <table className="w-full text-xs">
-                <thead className="sticky top-0 bg-card">
-                  <tr className="border-b border-border text-left text-gray-500">
-                    <th className="px-3 py-2 font-medium text-gray-600">#</th>
+            <div className='overflow-auto max-h-[50vh] rounded-md border border-border'>
+              <table className='w-full text-xs'>
+                <thead className='sticky top-0 bg-card'>
+                  <tr className='border-b border-border text-left text-gray-500'>
+                    <th className='px-3 py-2 font-medium text-gray-600'>#</th>
                     {result.fields.length > 0
                       ? result.fields.map((f: { name: string }) => (
-                        <th key={f.name} className="whitespace-nowrap px-3 py-2 font-medium font-mono">
+                        <th key={f.name} className='whitespace-nowrap px-3 py-2 font-medium font-mono'>
                           {f.name}
                         </th>
                       ))
                       : Object.keys(result.rows[0] ?? {}).map((key: string) => (
-                        <th key={key} className="whitespace-nowrap px-3 py-2 font-medium font-mono">
+                        <th key={key} className='whitespace-nowrap px-3 py-2 font-medium font-mono'>
                           {key}
                         </th>
                       ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
+                <tbody className='divide-y divide-border'>
                   {result.rows.map((row: Record<string, unknown>, i: number) => {
                     const keys =
                       result.fields.length > 0
                         ? result.fields.map((f: { name: string }) => f.name)
                         : Object.keys(row);
                     return (
-                      <tr key={i} className="text-gray-300 hover:bg-muted/30">
-                        <td className="px-3 py-1.5 text-gray-600">{i + 1}</td>
+                      <tr key={i} className='text-gray-300 hover:bg-muted/30'>
+                        <td className='px-3 py-1.5 text-gray-600'>{i + 1}</td>
                         {keys.map((key: string) => (
                           <td
                             key={key}
-                            className="max-w-[250px] truncate whitespace-nowrap px-3 py-1.5 font-mono"
+                            className='max-w-[250px] truncate whitespace-nowrap px-3 py-1.5 font-mono'
                             title={formatCellValue(row[key])}
                           >
                             {formatCellValue(row[key])}
@@ -267,12 +267,12 @@ export function SqlQueryConsole({
 
           {/* No rows message for non-error SELECT */}
           {!result.error && result.rows.length === 0 && result.command === 'SELECT' && (
-            <p className="text-xs text-gray-500">Query returned no rows.</p>
+            <p className='text-xs text-gray-500'>Query returned no rows.</p>
           )}
 
           {/* Success message for mutations */}
           {!result.error && result.rows.length === 0 && result.command && result.command !== 'SELECT' && (
-            <p className="text-xs text-emerald-400">
+            <p className='text-xs text-emerald-400'>
               {result.command} completed successfully. {result.rowCount} row{result.rowCount !== 1 ? 's' : ''} affected.
             </p>
           )}

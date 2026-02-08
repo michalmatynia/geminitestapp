@@ -63,7 +63,7 @@ export function IconSelector({
           value={query}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setQuery(event.target.value)}
           placeholder={searchPlaceholder}
-          className="h-8 text-xs"
+          className='h-8 text-xs'
         />
       ) : null}
       <div
@@ -71,7 +71,7 @@ export function IconSelector({
         style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
       >
         {filteredItems.length === 0 ? (
-          <div className="col-span-full rounded border border-dashed border-border p-3 text-[11px] text-gray-500">
+          <div className='col-span-full rounded border border-dashed border-border p-3 text-[11px] text-gray-500'>
             {emptyLabel}
           </div>
         ) : (
@@ -79,9 +79,9 @@ export function IconSelector({
             const IconComponent = item.icon;
             const selected = value === item.id;
             return (
-              <Tooltip key={item.id} content={item.label} side="top">
+              <Tooltip key={item.id} content={item.label} side='top'>
                 <Button
-                  type="button"
+                  type='button'
                   onClick={(): void => {
                     if (selected && allowClear) {
                       onChange(null);
@@ -105,7 +105,7 @@ export function IconSelector({
           })
         )}
       </div>
-      {helperText ? <div className="text-[11px] text-gray-400">{helperText}</div> : null}
+      {helperText ? <div className='text-[11px] text-gray-400'>{helperText}</div> : null}
     </div>
   );
 }

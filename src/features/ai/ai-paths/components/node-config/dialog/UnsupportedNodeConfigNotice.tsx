@@ -45,7 +45,7 @@ export function UnsupportedNodeConfigNotice({
   if (SUPPORTED_NODE_TYPES.has(selectedNode.type)) return null;
 
   return (
-    <div className="rounded-md border border-border bg-card/50 p-4 text-sm text-gray-400">
+    <div className='rounded-md border border-border bg-card/50 p-4 text-sm text-gray-400'>
       No configuration is available for this node yet.
     </div>
   );

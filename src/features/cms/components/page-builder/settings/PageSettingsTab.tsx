@@ -468,14 +468,14 @@ function PageSettingsTab(): React.ReactNode {
   if (!page) return null;
 
   return (
-    <Tabs defaultValue="page" className="flex flex-1 flex-col overflow-hidden">
-      <div className="space-y-4 px-4 pt-4">
-        <div className="rounded border border-border/40 bg-gray-800/30 px-3 py-2">
-          <div className="flex items-center gap-2">
-            <FileText className="size-3 text-gray-500" />
+    <Tabs defaultValue='page' className='flex flex-1 flex-col overflow-hidden'>
+      <div className='space-y-4 px-4 pt-4'>
+        <div className='rounded border border-border/40 bg-gray-800/30 px-3 py-2'>
+          <div className='flex items-center gap-2'>
+            <FileText className='size-3 text-gray-500' />
             {isEditingName ? (
               <Input
-                id="page-name"
+                id='page-name'
                 ref={nameInputRef}
                 value={page.name}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleNameChange(e.target.value)}
@@ -485,74 +485,74 @@ function PageSettingsTab(): React.ReactNode {
                     event.currentTarget.blur();
                   }
                 }}
-                placeholder="Page name"
-                className="h-7 flex-1 bg-transparent px-2 text-xs"
+                placeholder='Page name'
+                className='h-7 flex-1 bg-transparent px-2 text-xs'
               />
             ) : (
-              <span className="flex-1 truncate text-xs text-gray-200">
+              <span className='flex-1 truncate text-xs text-gray-200'>
                 {page.name || 'Untitled page'}
               </span>
             )}
             {isEditingName ? (
-              <div className="flex items-center gap-1">
+              <div className='flex items-center gap-1'>
                 <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
+                  type='button'
+                  variant='ghost'
+                  size='icon'
                   onClick={() => setIsEditingName(false)}
-                  className="h-6 w-6 text-emerald-300 hover:text-emerald-100"
-                  aria-label="Save page name"
+                  className='h-6 w-6 text-emerald-300 hover:text-emerald-100'
+                  aria-label='Save page name'
                 >
-                  <Check className="size-3.5" />
+                  <Check className='size-3.5' />
                 </Button>
                 <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
+                  type='button'
+                  variant='ghost'
+                  size='icon'
                   onClick={() => setIsEditingName(false)}
-                  className="h-6 w-6 text-rose-300 hover:text-rose-100"
-                  aria-label="Cancel editing page name"
+                  className='h-6 w-6 text-rose-300 hover:text-rose-100'
+                  aria-label='Cancel editing page name'
                 >
-                  <X className="size-3.5" />
+                  <X className='size-3.5' />
                 </Button>
               </div>
             ) : (
               <Button
-                type="button"
-                variant="ghost"
-                size="icon"
+                type='button'
+                variant='ghost'
+                size='icon'
                 onClick={() => setIsEditingName(true)}
-                className="h-6 w-6 text-gray-400 hover:text-white"
-                aria-label="Edit page name"
+                className='h-6 w-6 text-gray-400 hover:text-white'
+                aria-label='Edit page name'
               >
-                <Pencil className="size-3.5" />
+                <Pencil className='size-3.5' />
               </Button>
             )}
           </div>
         </div>
 
-        <div className="rounded border border-border/40 bg-gray-800/20 px-3 py-2">
-          <CmsDomainSelector label="Zone" triggerClassName="h-8 w-full" />
+        <div className='rounded border border-border/40 bg-gray-800/20 px-3 py-2'>
+          <CmsDomainSelector label='Zone' triggerClassName='h-8 w-full' />
         </div>
       </div>
 
-      <TabsList className="mx-4 mt-3 w-[calc(100%-2rem)]">
-        <TabsTrigger value="page" className="flex-1 text-xs">Page</TabsTrigger>
-        <TabsTrigger value="seo" className="flex-1 text-xs">SEO</TabsTrigger>
-        <TabsTrigger value="ai" className="flex-1 text-xs">AI</TabsTrigger>
+      <TabsList className='mx-4 mt-3 w-[calc(100%-2rem)]'>
+        <TabsTrigger value='page' className='flex-1 text-xs'>Page</TabsTrigger>
+        <TabsTrigger value='seo' className='flex-1 text-xs'>SEO</TabsTrigger>
+        <TabsTrigger value='ai' className='flex-1 text-xs'>AI</TabsTrigger>
       </TabsList>
 
       {/* ---- Page tab ---- */}
-      <TabsContent value="page" className="flex-1 overflow-y-auto p-4 mt-0">
-        <div className="space-y-4">
+      <TabsContent value='page' className='flex-1 overflow-y-auto p-4 mt-0'>
+        <div className='space-y-4'>
           {/* Status */}
-          <div className="space-y-2">
-            <Label className="text-xs text-gray-400">Status</Label>
-            <div className="flex gap-2">
+          <div className='space-y-2'>
+            <Label className='text-xs text-gray-400'>Status</Label>
+            <div className='flex gap-2'>
               {STATUS_OPTIONS.map((opt: { label: string; value: PageStatus }) => (
                 <button
                   key={opt.value}
-                  type="button"
+                  type='button'
                   onClick={(): void => handleStatusChange(opt.value)}
                   className={`flex-1 rounded-md border px-3 py-1.5 text-xs font-medium transition ${
                     page.status === opt.value
@@ -567,38 +567,38 @@ function PageSettingsTab(): React.ReactNode {
               ))}
             </div>
             {page.publishedAt && page.status === 'published' && (
-              <p className="text-[10px] text-gray-500">
+              <p className='text-[10px] text-gray-500'>
                 Published: {new Date(page.publishedAt).toLocaleDateString()}
               </p>
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-xs text-gray-400">Menu</Label>
-            <div className="flex items-center justify-between rounded border border-border/40 bg-gray-900/40 px-3 py-2">
-              <span className="text-xs text-gray-300">Show global menu on this page</span>
+          <div className='space-y-2'>
+            <Label className='text-xs text-gray-400'>Menu</Label>
+            <div className='flex items-center justify-between rounded border border-border/40 bg-gray-900/40 px-3 py-2'>
+              <span className='text-xs text-gray-300'>Show global menu on this page</span>
               <Switch checked={showMenuValue} onCheckedChange={handleMenuVisibilityChange} />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-xs text-gray-400">Slugs for this zone</Label>
+          <div className='space-y-2'>
+            <Label className='text-xs text-gray-400'>Slugs for this zone</Label>
             <Input
               value={search}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSearch(e.target.value)}
-              placeholder="Search slugs..."
-              className="h-8 text-xs"
+              placeholder='Search slugs...'
+              className='h-8 text-xs'
             />
-            <div className="max-h-48 space-y-2 overflow-y-auto rounded border border-border/40 bg-gray-900/40 p-2">
+            <div className='max-h-48 space-y-2 overflow-y-auto rounded border border-border/40 bg-gray-900/40 p-2'>
               {filteredDomainSlugs.length === 0 ? (
-                <p className="py-4 text-center text-xs text-gray-500">
+                <p className='py-4 text-center text-xs text-gray-500'>
                   No slugs available for this zone.
                 </p>
               ) : (
                 filteredDomainSlugs.map((slug: Slug) => {
                   const checked = selectedSlugIds.includes(slug.id);
                   return (
-                    <label key={slug.id} className="flex items-center gap-2 text-xs text-gray-200">
+                    <label key={slug.id} className='flex items-center gap-2 text-xs text-gray-200'>
                       <Checkbox
                         checked={checked}
                         onCheckedChange={(): void => handleToggleSlug(slug)}
@@ -609,24 +609,24 @@ function PageSettingsTab(): React.ReactNode {
                 })
               )}
             </div>
-            <p className="text-[10px] text-gray-500">{selectedSlugIds.length} selected</p>
+            <p className='text-[10px] text-gray-500'>{selectedSlugIds.length} selected</p>
           </div>
 
           {crossZoneSlugs.length > 0 ? (
-            <div className="rounded border border-amber-500/40 bg-amber-500/10 p-3">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-200">
+            <div className='rounded border border-amber-500/40 bg-amber-500/10 p-3'>
+              <p className='text-[10px] font-semibold uppercase tracking-wide text-amber-200'>
                 Cross-zone slugs
               </p>
-              <p className="mt-1 text-[10px] text-amber-200/80">
+              <p className='mt-1 text-[10px] text-amber-200/80'>
                 These slugs are not part of the current zone. Remove them or switch zones.
               </p>
-              <div className="mt-2 flex flex-wrap gap-1.5">
+              <div className='mt-2 flex flex-wrap gap-1.5'>
                 {crossZoneSlugs.map((slug: Slug) => (
                   <button
                     key={slug.id}
-                    type="button"
+                    type='button'
                     onClick={(): void => handleRemoveSlug(slug)}
-                    className="rounded-full border border-amber-500/40 bg-amber-500/20 px-2 py-0.5 text-[10px] text-amber-200"
+                    className='rounded-full border border-amber-500/40 bg-amber-500/20 px-2 py-0.5 text-[10px] text-amber-200'
                   >
                     /{slug.slug} ×
                   </button>
@@ -635,33 +635,33 @@ function PageSettingsTab(): React.ReactNode {
             </div>
           ) : null}
 
-          <div className="space-y-2">
-            <Label className="text-xs text-gray-400">Home page</Label>
+          <div className='space-y-2'>
+            <Label className='text-xs text-gray-400'>Home page</Label>
             {eligibleHomeSlugs.length === 0 ? (
-              <p className="text-xs text-gray-500">
+              <p className='text-xs text-gray-500'>
                 Assign at least one slug in this zone to set this page as the home page.
               </p>
             ) : (
-              <div className="space-y-2">
+              <div className='space-y-2'>
                 {eligibleHomeSlugs.map((slug: Slug) => {
                   const isHome = currentHomeSlug?.id === slug.id;
                   return (
                     <div
                       key={slug.id}
-                      className="flex items-center justify-between rounded border border-border/40 bg-gray-900/40 px-2.5 py-2 text-xs"
+                      className='flex items-center justify-between rounded border border-border/40 bg-gray-900/40 px-2.5 py-2 text-xs'
                     >
-                      <span className="text-gray-200">/{slug.slug}</span>
+                      <span className='text-gray-200'>/{slug.slug}</span>
                       {isHome ? (
-                        <span className="rounded-full border border-green-500/40 bg-green-500/10 px-2 py-0.5 text-[10px] text-green-300">
+                        <span className='rounded-full border border-green-500/40 bg-green-500/10 px-2 py-0.5 text-[10px] text-green-300'>
                           Home
                         </span>
                       ) : (
                         <Button
-                          size="sm"
-                          variant="outline"
+                          size='sm'
+                          variant='outline'
                           disabled={updateSlug.isPending}
                           onClick={(): void => { void handleSetHome(slug); }}
-                          className="h-6 px-2 text-[10px]"
+                          className='h-6 px-2 text-[10px]'
                         >
                           Set as home
                         </Button>
@@ -670,7 +670,7 @@ function PageSettingsTab(): React.ReactNode {
                   );
                 })}
                 {currentHomeSlug && !pageHomeSlug ? (
-                  <p className="text-[10px] text-gray-500">
+                  <p className='text-[10px] text-gray-500'>
                     Current home page: /{currentHomeSlug.slug}
                   </p>
                 ) : null}
@@ -678,82 +678,82 @@ function PageSettingsTab(): React.ReactNode {
             )}
           </div>
 
-          <p className="text-xs text-gray-500">
+          <p className='text-xs text-gray-500'>
             Select a section or block from the tree to edit its settings.
           </p>
         </div>
       </TabsContent>
 
       {/* ---- SEO tab ---- */}
-      <TabsContent value="seo" className="flex-1 overflow-y-auto p-4 mt-0">
-        <div className="space-y-4">
-          <div className="rounded border border-border/40 bg-gray-800/30 px-3 py-2 text-xs text-gray-400">
-            <Globe className="mr-1.5 inline size-3" />
+      <TabsContent value='seo' className='flex-1 overflow-y-auto p-4 mt-0'>
+        <div className='space-y-4'>
+          <div className='rounded border border-border/40 bg-gray-800/30 px-3 py-2 text-xs text-gray-400'>
+            <Globe className='mr-1.5 inline size-3' />
             Search Engine Optimization
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="seo-title" className="text-xs text-gray-400">Page title</Label>
+          <div className='space-y-1.5'>
+            <Label htmlFor='seo-title' className='text-xs text-gray-400'>Page title</Label>
             <Input
-              id="seo-title"
+              id='seo-title'
               value={page.seoTitle ?? ''}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleSeoChange('seoTitle', e.target.value)}
               placeholder={page.name}
-              className="h-8 text-xs"
+              className='h-8 text-xs'
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="seo-desc" className="text-xs text-gray-400">Meta description</Label>
+          <div className='space-y-1.5'>
+            <Label htmlFor='seo-desc' className='text-xs text-gray-400'>Meta description</Label>
             <Input
-              id="seo-desc"
+              id='seo-desc'
               value={page.seoDescription ?? ''}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleSeoChange('seoDescription', e.target.value)}
-              placeholder="Page description for search engines"
-              className="h-8 text-xs"
+              placeholder='Page description for search engines'
+              className='h-8 text-xs'
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="seo-canonical" className="text-xs text-gray-400">Canonical URL</Label>
+          <div className='space-y-1.5'>
+            <Label htmlFor='seo-canonical' className='text-xs text-gray-400'>Canonical URL</Label>
             <Input
-              id="seo-canonical"
+              id='seo-canonical'
               value={page.seoCanonical ?? ''}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleSeoChange('seoCanonical', e.target.value)}
-              placeholder="https://example.com/page"
-              className="h-8 text-xs"
+              placeholder='https://example.com/page'
+              className='h-8 text-xs'
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="seo-og" className="text-xs text-gray-400">OG Image URL</Label>
+          <div className='space-y-1.5'>
+            <Label htmlFor='seo-og' className='text-xs text-gray-400'>OG Image URL</Label>
             <Input
-              id="seo-og"
+              id='seo-og'
               value={page.seoOgImage ?? ''}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleSeoChange('seoOgImage', e.target.value)}
-              placeholder="https://example.com/image.png"
-              className="h-8 text-xs"
+              placeholder='https://example.com/image.png'
+              className='h-8 text-xs'
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="seo-robots" className="text-xs text-gray-400">Robots meta</Label>
+          <div className='space-y-1.5'>
+            <Label htmlFor='seo-robots' className='text-xs text-gray-400'>Robots meta</Label>
             <Input
-              id="seo-robots"
+              id='seo-robots'
               value={page.robotsMeta ?? 'index,follow'}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleSeoChange('robotsMeta', e.target.value)}
-              placeholder="index,follow"
-              className="h-8 text-xs"
+              placeholder='index,follow'
+              className='h-8 text-xs'
             />
           </div>
 
           {/* SEO Preview */}
-          <div className="space-y-1.5 rounded border border-border/30 bg-gray-800/20 p-3">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-gray-500">Search preview</p>
-            <p className="text-sm font-medium text-blue-400 truncate">
+          <div className='space-y-1.5 rounded border border-border/30 bg-gray-800/20 p-3'>
+            <p className='text-[10px] font-medium uppercase tracking-wide text-gray-500'>Search preview</p>
+            <p className='text-sm font-medium text-blue-400 truncate'>
               {page.seoTitle || page.name}
             </p>
-            <p className="text-xs text-gray-400 line-clamp-2">
+            <p className='text-xs text-gray-400 line-clamp-2'>
               {page.seoDescription || 'No description set'}
             </p>
           </div>
@@ -761,32 +761,32 @@ function PageSettingsTab(): React.ReactNode {
       </TabsContent>
 
       {/* ---- AI tab ---- */}
-      <TabsContent value="ai" className="flex-1 overflow-y-auto p-4 mt-0">
-        <div className="space-y-4">
-          <div className="rounded border border-border/40 bg-gray-800/30 px-3 py-2 text-xs text-gray-400">
+      <TabsContent value='ai' className='flex-1 overflow-y-auto p-4 mt-0'>
+        <div className='space-y-4'>
+          <div className='rounded border border-border/40 bg-gray-800/30 px-3 py-2 text-xs text-gray-400'>
             AI page assistant
           </div>
-          <div className="space-y-2">
-            <Label className="text-xs text-gray-400">Task</Label>
+          <div className='space-y-2'>
+            <Label className='text-xs text-gray-400'>Task</Label>
             <UnifiedSelect
               value={pageAiTask}
               onValueChange={(value: string): void => setPageAiTask(value as 'layout' | 'seo')}
               options={pageAiTaskOptions}
-              placeholder="Select task"
+              placeholder='Select task'
             />
           </div>
-          <div className="space-y-2">
-            <Label className="text-xs text-gray-400">Provider</Label>
+          <div className='space-y-2'>
+            <Label className='text-xs text-gray-400'>Provider</Label>
             <UnifiedSelect
               value={pageAiProvider}
               onValueChange={(value: string): void => setPageAiProvider(value as 'model' | 'agent')}
               options={pageAiProviderOptions}
-              placeholder="Select provider"
+              placeholder='Select provider'
             />
           </div>
           {pageAiProvider !== 'agent' ? (
-            <div className="space-y-2">
-              <Label className="text-xs text-gray-400">Model</Label>
+            <div className='space-y-2'>
+              <Label className='text-xs text-gray-400'>Model</Label>
               <UnifiedSelect
                 value={pageAiModelId}
                 onValueChange={(value: string): void => setPageAiModelId(value)}
@@ -795,8 +795,8 @@ function PageSettingsTab(): React.ReactNode {
               />
             </div>
           ) : (
-            <div className="space-y-2">
-              <Label className="text-xs text-gray-400">Deepthinking agent</Label>
+            <div className='space-y-2'>
+              <Label className='text-xs text-gray-400'>Deepthinking agent</Label>
               <UnifiedSelect
                 value={pageAiAgentId}
                 onValueChange={(value: string): void => setPageAiAgentId(value)}
@@ -805,22 +805,22 @@ function PageSettingsTab(): React.ReactNode {
               />
             </div>
           )}
-          <div className="space-y-2">
-            <Label className="text-xs text-gray-400">Prompt</Label>
+          <div className='space-y-2'>
+            <Label className='text-xs text-gray-400'>Prompt</Label>
             <Textarea
               value={pageAiPrompt}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setPageAiPrompt(e.target.value)}
               placeholder={`Describe what you need.\n\nContext:\n${pageAiPlaceholder}`}
-              className="min-h-[120px] text-xs"
+              className='min-h-[120px] text-xs'
               spellCheck={false}
             />
           </div>
-          <div className="flex items-center justify-between">
-            <div className="text-[11px] text-gray-500">Context placeholders</div>
+          <div className='flex items-center justify-between'>
+            <div className='text-[11px] text-gray-500'>Context placeholders</div>
             <Button
-              type="button"
-              variant="outline"
-              size="sm"
+              type='button'
+              variant='outline'
+              size='sm'
               onClick={(): void => {
                 const current = pageAiPrompt.trim();
                 const nextPrompt = current.length ? `${current}\n\n${pageAiPlaceholder}` : pageAiPlaceholder;
@@ -833,12 +833,12 @@ function PageSettingsTab(): React.ReactNode {
           <Textarea
             value={pageAiPlaceholder}
             readOnly
-            className="min-h-[64px] text-xs font-mono text-gray-300"
+            className='min-h-[64px] text-xs font-mono text-gray-300'
           />
-          <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className='flex flex-wrap items-center justify-between gap-2'>
             <Button
-              type="button"
-              size="sm"
+              type='button'
+              size='sm'
               onClick={(): void => void handleGeneratePageAi()}
               disabled={pageAiLoading}
             >
@@ -846,9 +846,9 @@ function PageSettingsTab(): React.ReactNode {
             </Button>
             {pageAiLoading && (
               <Button
-                type="button"
-                size="sm"
-                variant="outline"
+                type='button'
+                size='sm'
+                variant='outline'
                 onClick={handleCancelPageAi}
               >
                 Cancel
@@ -856,16 +856,16 @@ function PageSettingsTab(): React.ReactNode {
             )}
           </div>
           {pageAiError && (
-            <div className="text-xs text-red-400">{pageAiError}</div>
+            <div className='text-xs text-red-400'>{pageAiError}</div>
           )}
           {pageAiOutput && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs text-gray-400">AI output</Label>
+            <div className='space-y-2'>
+              <div className='flex items-center justify-between'>
+                <Label className='text-xs text-gray-400'>AI output</Label>
                 <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
+                  type='button'
+                  size='sm'
+                  variant='outline'
                   onClick={handleApplyPageAi}
                 >
                   Apply
@@ -874,7 +874,7 @@ function PageSettingsTab(): React.ReactNode {
               <Textarea
                 value={pageAiOutput}
                 readOnly
-                className="min-h-[140px] text-xs font-mono text-gray-300"
+                className='min-h-[140px] text-xs font-mono text-gray-300'
               />
             </div>
           )}

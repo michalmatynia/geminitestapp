@@ -7,7 +7,7 @@ const AdminPromptEngineValidationPatternsPage = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="p-6 text-sm text-muted-foreground">Loading validation patterns...</div>
+      <div className='p-6 text-sm text-muted-foreground'>Loading validation patterns...</div>
     ),
   }
 );

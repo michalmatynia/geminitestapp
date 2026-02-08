@@ -120,13 +120,13 @@ export function JobsProvider({ children }: { children: ReactNode }): React.JSX.E
     listingJobsLoading: listingJobsQuery.isLoading,
     listingJobsRefreshing: listingJobsQuery.isFetching,
     refetchListingJobs: listingJobsQuery.refetch,
-    listingJobsError: listingJobsQuery.error as Error | null,
+    listingJobsError: listingJobsQuery.error,
     
     chatbotJobs,
     chatbotJobsLoading: chatbotJobsQuery.isLoading,
     chatbotJobsRefreshing: chatbotJobsQuery.isFetching,
     refetchChatbotJobs: chatbotJobsQuery.refetch,
-    chatbotJobsError: chatbotJobsQuery.error as Error | null,
+    chatbotJobsError: chatbotJobsQuery.error,
     
     query,
     setQuery,

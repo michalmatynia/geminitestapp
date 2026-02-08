@@ -70,7 +70,7 @@ export const MemoizedViewer3D = memo(function MemoizedViewer3D({
   );
 
   return (
-    <div style={{ height: `${Math.max(120, height)}px` }} className="w-full">
+    <div style={{ height: `${Math.max(120, height)}px` }} className='w-full'>
       <Viewer3D
         modelUrl={modelUrl}
         backgroundColor={backgroundColor}
@@ -92,7 +92,7 @@ export const MemoizedViewer3D = memo(function MemoizedViewer3D({
         modelPosition={position}
         modelRotation={rotation}
         modelScale={scale}
-        className="h-full w-full"
+        className='h-full w-full'
       />
     </div>
   );

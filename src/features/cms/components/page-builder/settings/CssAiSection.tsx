@@ -69,27 +69,27 @@ function CssAiSection(): React.JSX.Element {
   }, [cssDiff]);
 
   return (
-    <SectionPanel variant="subtle-compact" className="space-y-3">
-      <div className="flex items-center justify-between">
-        <Label className="text-[10px] uppercase tracking-wider text-gray-400">
+    <SectionPanel variant='subtle-compact' className='space-y-3'>
+      <div className='flex items-center justify-between'>
+        <Label className='text-[10px] uppercase tracking-wider text-gray-400'>
           CSS AI Assistant
         </Label>
-        <span className="text-[10px] text-gray-500">Optional</span>
+        <span className='text-[10px] text-gray-500'>Optional</span>
       </div>
-      <div className="space-y-1.5">
-        <Label className="text-xs text-gray-400">Provider</Label>
+      <div className='space-y-1.5'>
+        <Label className='text-xs text-gray-400'>Provider</Label>
         <UnifiedSelect
           value={customCssAiConfig.provider ?? 'model'}
           onValueChange={(value: string): void =>
             updateCustomCssAiConfig({ provider: value as CustomCssAiProvider })
           }
           options={providerOptions}
-          placeholder="Select provider"
+          placeholder='Select provider'
         />
       </div>
       {customCssAiConfig.provider !== 'agent' ? (
-        <div className="space-y-1.5">
-          <Label className="text-xs text-gray-400">Model</Label>
+        <div className='space-y-1.5'>
+          <Label className='text-xs text-gray-400'>Model</Label>
           <UnifiedSelect
             value={customCssAiConfig.modelId ?? ''}
             onValueChange={(value: string): void =>
@@ -100,8 +100,8 @@ function CssAiSection(): React.JSX.Element {
           />
         </div>
       ) : (
-        <div className="space-y-1.5">
-          <Label className="text-xs text-gray-400">Deepthinking agent</Label>
+        <div className='space-y-1.5'>
+          <Label className='text-xs text-gray-400'>Deepthinking agent</Label>
           <UnifiedSelect
             value={customCssAiConfig.agentId ?? ''}
             onValueChange={(value: string): void =>
@@ -116,24 +116,24 @@ function CssAiSection(): React.JSX.Element {
           />
         </div>
       )}
-      <div className="space-y-1.5">
-        <Label className="text-xs text-gray-400">Prompt</Label>
+      <div className='space-y-1.5'>
+        <Label className='text-xs text-gray-400'>Prompt</Label>
         <Textarea
           value={customCssAiConfig.prompt ?? ''}
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
             updateCustomCssAiConfig({ prompt: e.target.value })
           }
           placeholder={`Describe the CSS you want.\n\nContext:\n${contextPlaceholder}`}
-          className="min-h-[120px] text-xs"
+          className='min-h-[120px] text-xs'
           spellCheck={false}
         />
       </div>
-      <div className="flex items-center justify-between">
-        <div className="text-[11px] text-gray-500">Context placeholders</div>
+      <div className='flex items-center justify-between'>
+        <div className='text-[11px] text-gray-500'>Context placeholders</div>
         <Button
-          type="button"
-          variant="outline"
-          size="sm"
+          type='button'
+          variant='outline'
+          size='sm'
           onClick={(): void => {
             const current = (customCssAiConfig.prompt ?? '').trim();
             const nextPrompt = current.length
@@ -148,17 +148,17 @@ function CssAiSection(): React.JSX.Element {
       <Textarea
         value={contextPlaceholder}
         readOnly
-        className="min-h-[64px] text-xs font-mono text-gray-300"
+        className='min-h-[64px] text-xs font-mono text-gray-300'
       />
-      <div className="text-[11px] text-gray-500">
-        <span className="font-mono text-gray-300">page_context</span> = full page UI context,{' '}
-        <span className="font-mono text-gray-300">element_context</span> = selected element details.
+      <div className='text-[11px] text-gray-500'>
+        <span className='font-mono text-gray-300'>page_context</span> = full page UI context,{' '}
+        <span className='font-mono text-gray-300'>element_context</span> = selected element details.
       </div>
-      <div className="rounded border border-border/40 bg-gray-900/40 p-2">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <Label className="text-xs text-gray-400">Context preview</Label>
-          <div className="flex flex-wrap items-center gap-2">
-            <label className="flex items-center gap-2 text-[11px] text-gray-300">
+      <div className='rounded border border-border/40 bg-gray-900/40 p-2'>
+        <div className='flex flex-wrap items-center justify-between gap-2'>
+          <Label className='text-xs text-gray-400'>Context preview</Label>
+          <div className='flex flex-wrap items-center gap-2'>
+            <label className='flex items-center gap-2 text-[11px] text-gray-300'>
               <Switch
                 checked={contextPreviewFull}
                 onCheckedChange={(value: boolean | 'indeterminate'): void =>
@@ -168,17 +168,17 @@ function CssAiSection(): React.JSX.Element {
               Full context
             </label>
             <Button
-              type="button"
-              size="sm"
-              variant="outline"
+              type='button'
+              size='sm'
+              variant='outline'
               onClick={(): void => setContextPreviewNonce((prev: number) => prev + 1)}
             >
               Refresh
             </Button>
             <Button
-              type="button"
-              size="sm"
-              variant="outline"
+              type='button'
+              size='sm'
+              variant='outline'
               onClick={(): void => setContextPreviewOpen(!contextPreviewOpen)}
             >
               {contextPreviewOpen ? 'Hide' : 'Show'}
@@ -191,19 +191,19 @@ function CssAiSection(): React.JSX.Element {
             onValueChange={(value: string): void =>
               setContextPreviewTab(value as 'page' | 'element')
             }
-            className="mt-3"
+            className='mt-3'
           >
-            <TabsList className="w-full">
-              <TabsTrigger value="page" className="flex-1 text-xs">Page</TabsTrigger>
-              <TabsTrigger value="element" className="flex-1 text-xs">Element</TabsTrigger>
+            <TabsList className='w-full'>
+              <TabsTrigger value='page' className='flex-1 text-xs'>Page</TabsTrigger>
+              <TabsTrigger value='element' className='flex-1 text-xs'>Element</TabsTrigger>
             </TabsList>
-            <TabsContent value="page" className="mt-2 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] text-gray-400">Full page context</span>
+            <TabsContent value='page' className='mt-2 space-y-2'>
+              <div className='flex items-center justify-between'>
+                <span className='text-[11px] text-gray-400'>Full page context</span>
                 <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
+                  type='button'
+                  size='sm'
+                  variant='ghost'
                   onClick={(): void => void copyContext(pageContextPreview)}
                 >
                   Copy
@@ -212,16 +212,16 @@ function CssAiSection(): React.JSX.Element {
               <Textarea
                 value={pageContextPreview}
                 readOnly
-                className="min-h-[160px] text-xs font-mono text-gray-300"
+                className='min-h-[160px] text-xs font-mono text-gray-300'
               />
             </TabsContent>
-            <TabsContent value="element" className="mt-2 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] text-gray-400">Selected element context</span>
+            <TabsContent value='element' className='mt-2 space-y-2'>
+              <div className='flex items-center justify-between'>
+                <span className='text-[11px] text-gray-400'>Selected element context</span>
                 <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
+                  type='button'
+                  size='sm'
+                  variant='ghost'
                   onClick={(): void => void copyContext(elementContextPreview)}
                 >
                   Copy
@@ -230,18 +230,18 @@ function CssAiSection(): React.JSX.Element {
               <Textarea
                 value={elementContextPreview}
                 readOnly
-                className="min-h-[160px] text-xs font-mono text-gray-300"
+                className='min-h-[160px] text-xs font-mono text-gray-300'
               />
             </TabsContent>
           </Tabs>
         ) : (
-          <div className="mt-2 text-[11px] text-gray-500">
+          <div className='mt-2 text-[11px] text-gray-500'>
             Preview the raw context payloads used for AI prompts.
           </div>
         )}
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <label className="flex items-center gap-2 text-xs text-gray-300">
+      <div className='flex flex-wrap items-center justify-between gap-2'>
+        <label className='flex items-center gap-2 text-xs text-gray-300'>
           <Switch
             checked={cssAiAutoApply}
             onCheckedChange={(value: boolean | 'indeterminate'): void =>
@@ -251,8 +251,8 @@ function CssAiSection(): React.JSX.Element {
           Auto-apply on generate
         </label>
         <Button
-          type="button"
-          size="sm"
+          type='button'
+          size='sm'
           onClick={(): void => void generateCss()}
           disabled={cssAiLoading}
         >
@@ -260,9 +260,9 @@ function CssAiSection(): React.JSX.Element {
         </Button>
         {cssAiLoading && (
           <Button
-            type="button"
-            size="sm"
-            variant="outline"
+            type='button'
+            size='sm'
+            variant='outline'
             onClick={cancelCss}
           >
             Cancel
@@ -270,7 +270,7 @@ function CssAiSection(): React.JSX.Element {
         )}
       </div>
       {cssAiAutoApply && (
-        <label className="flex items-center gap-2 text-xs text-gray-300">
+        <label className='flex items-center gap-2 text-xs text-gray-300'>
           <Switch
             checked={cssAiAppend}
             onCheckedChange={(value: boolean | 'indeterminate'): void =>
@@ -281,25 +281,25 @@ function CssAiSection(): React.JSX.Element {
         </label>
       )}
       {cssAiError && (
-        <div className="text-xs text-red-400">{cssAiError}</div>
+        <div className='text-xs text-red-400'>{cssAiError}</div>
       )}
       {cssAiOutput && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs text-gray-400">Last generated CSS</Label>
-            <div className="flex items-center gap-2">
+        <div className='space-y-2'>
+          <div className='flex items-center justify-between'>
+            <Label className='text-xs text-gray-400'>Last generated CSS</Label>
+            <div className='flex items-center gap-2'>
               <Button
-                type="button"
-                size="sm"
-                variant="outline"
+                type='button'
+                size='sm'
+                variant='outline'
                 onClick={(): void => applyCss('append')}
               >
                 Apply append
               </Button>
               <Button
-                type="button"
-                size="sm"
-                variant="outline"
+                type='button'
+                size='sm'
+                variant='outline'
                 onClick={(): void => applyCss('replace')}
               >
                 Apply replace
@@ -309,26 +309,26 @@ function CssAiSection(): React.JSX.Element {
           <Textarea
             value={cssAiOutput}
             readOnly
-            className="min-h-[120px] text-xs font-mono text-gray-300"
+            className='min-h-[120px] text-xs font-mono text-gray-300'
           />
-          <div className="rounded border border-border/40 bg-gray-900/40 p-2">
-            <div className="flex items-center justify-between text-[11px] text-gray-400">
-              <div className="flex items-center gap-3">
+          <div className='rounded border border-border/40 bg-gray-900/40 p-2'>
+            <div className='flex items-center justify-between text-[11px] text-gray-400'>
+              <div className='flex items-center gap-3'>
                 <span>Diff</span>
-                <span className="text-emerald-300">+{cssDiffStats.added}</span>
-                <span className="text-rose-300">-{cssDiffStats.removed}</span>
-                <span className="text-gray-500">={cssDiffStats.same}</span>
+                <span className='text-emerald-300'>+{cssDiffStats.added}</span>
+                <span className='text-rose-300'>-{cssDiffStats.removed}</span>
+                <span className='text-gray-500'>={cssDiffStats.same}</span>
               </div>
               <Button
-                type="button"
-                size="sm"
-                variant="ghost"
+                type='button'
+                size='sm'
+                variant='ghost'
                 onClick={(): void => setCssAiDiffOnly((prev: boolean) => !prev)}
               >
                 {cssAiDiffOnly ? 'Changes only' : 'Show all'}
               </Button>
             </div>
-            <div className="mt-2 max-h-48 overflow-auto rounded bg-black/40 p-2 font-mono text-[11px]">
+            <div className='mt-2 max-h-48 overflow-auto rounded bg-black/40 p-2 font-mono text-[11px]'>
               {cssDiffLines.length > 0 ? (
                 cssDiffLines.map((line: { type: 'add' | 'remove' | 'same'; text: string }, index: number) => {
                   const prefix = line.type === 'add' ? '+ ' : line.type === 'remove' ? '- ' : '  ';
@@ -346,10 +346,10 @@ function CssAiSection(): React.JSX.Element {
                   );
                 })
               ) : (
-                <div className="text-gray-500">No differences yet.</div>
+                <div className='text-gray-500'>No differences yet.</div>
               )}
               {cssDiff?.truncated ? (
-                <div className="mt-1 text-gray-500">Diff truncated\u2026</div>
+                <div className='mt-1 text-gray-500'>Diff truncated\u2026</div>
               ) : null}
             </div>
           </div>

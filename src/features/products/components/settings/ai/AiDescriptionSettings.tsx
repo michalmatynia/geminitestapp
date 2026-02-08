@@ -223,58 +223,58 @@ export function AiDescriptionSettings(): React.JSX.Element {
     toast('Test results cleared.');
   };
 
-  if (configLoading) return <div className="text-sm text-gray-400">Loading settings...</div>;
+  if (configLoading) return <div className='text-sm text-gray-400'>Loading settings...</div>;
 
   const testing = !!activeJobId;
 
   return (
     <SettingsPageLayout
-      title="AI Description Configuration"
-      description="Configure multi-step generation flow for product descriptions."
+      title='AI Description Configuration'
+      description='Configure multi-step generation flow for product descriptions.'
       onSave={handleSave}
       isSaving={false}
       actions={
         <>
           <Input
-            placeholder="Product ID or SKU"
+            placeholder='Product ID or SKU'
             value={testProductId}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTestProductId(e.target.value)}
-            className="w-[180px] bg-gray-900 border text-white h-9 text-sm"
+            className='w-[180px] bg-gray-900 border text-white h-9 text-sm'
           />
-          <Button variant="secondary" onClick={() => void handleTest()} disabled={testing || enqueuing} className="gap-2 h-9">
+          <Button variant='secondary' onClick={() => void handleTest()} disabled={testing || enqueuing} className='gap-2 h-9'>
             <PlayIcon className={`size-3.5 ${testing ? 'animate-pulse' : ''}`} />
             {testing ? 'Testing...' : 'Test on Product'}
           </Button>
 
           {testResult && (
-            <Button variant="ghost" onClick={clearTestResults} className="gap-2 h-9 text-red-400 hover:text-red-300">
-              <XCircle className="size-3.5" />
+            <Button variant='ghost' onClick={clearTestResults} className='gap-2 h-9 text-red-400 hover:text-red-300'>
+              <XCircle className='size-3.5' />
               Clear Results
             </Button>
           )}
 
-          <Button variant="outline" onClick={() => void handleQueueAll()} disabled={bulkQueuing} className="gap-2 h-9 text-purple-400 border-purple-900/50 hover:bg-purple-950">
+          <Button variant='outline' onClick={() => void handleQueueAll()} disabled={bulkQueuing} className='gap-2 h-9 text-purple-400 border-purple-900/50 hover:bg-purple-950'>
             <RefreshCcw className={`size-3.5 ${bulkQueuing ? 'animate-spin' : ''}`} />
             {bulkQueuing ? 'Queuing...' : 'Queue for All'}
           </Button>
 
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="outline" className="h-9 gap-2">
-                <InfoIcon className="size-4" />
+              <Button variant='outline' className='h-9 gap-2'>
+                <InfoIcon className='size-4' />
                 Placeholders
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+            <DialogContent className='max-w-md max-h-[80vh] overflow-y-auto'>
               <DialogHeader>
                 <DialogTitle>Available Placeholders</DialogTitle>
                 <DialogDescription>Use these placeholders to inject dynamic data into your prompts.</DialogDescription>
               </DialogHeader>
-              <div className="space-y-2 mt-4">
+              <div className='space-y-2 mt-4'>
                 {AVAILABLE_PLACEHOLDERS.map((ph: { key: string, description: string }) => (
-                  <div key={ph.key} className="flex items-center justify-between text-sm border-b border-border/50 pb-2 last:border-0 last:pb-0">
-                    <code className="text-purple-400 font-bold bg-purple-500/10 px-1 py-0.5 rounded">[{ph.key}]</code>
-                    <span className="text-gray-500 italic text-xs">{ph.description}</span>
+                  <div key={ph.key} className='flex items-center justify-between text-sm border-b border-border/50 pb-2 last:border-0 last:pb-0'>
+                    <code className='text-purple-400 font-bold bg-purple-500/10 px-1 py-0.5 rounded'>[{ph.key}]</code>
+                    <span className='text-gray-500 italic text-xs'>{ph.description}</span>
                   </div>
                 ))}
               </div>
@@ -283,59 +283,59 @@ export function AiDescriptionSettings(): React.JSX.Element {
         </>
       }
     >
-      <div className="space-y-8">
+      <div className='space-y-8'>
         <PromptGenerationSection
           pathNumber={1}
-          pathTitle="Signal Path 1: Image Analysis"
-          inputLabel="Input Prompt"
+          pathTitle='Signal Path 1: Image Analysis'
+          inputLabel='Input Prompt'
           inputValue={visionInputPrompt}
           onInputChange={setVisionInputPrompt}
-          initialResultLabel="Initial Result"
+          initialResultLabel='Initial Result'
           initialResultValue={testResult?.analysisInitial || null}
           onCopyInitialResult={() => copyResult(testResult?.analysisInitial)}
-          modelLabel="Vision Model"
+          modelLabel='Vision Model'
           modelValue={imageAnalysisModel}
           onModelChange={setImageAnalysisModel}
           modelOptions={[...STATIC_VISION_MODELS, ...ollamaModels]}
           outputEnabled={visionOutputEnabled}
           onOutputEnabledChange={setVisionOutputEnabled}
-          outputPromptLabel="Output Prompt"
+          outputPromptLabel='Output Prompt'
           outputPromptValue={visionOutputPrompt}
           onOutputPromptChange={setVisionOutputPrompt}
-          outputPlaceholder="Refine result... use [result] for initial analysis."
-          finalResultLabel="Final Analysis"
+          outputPlaceholder='Refine result... use [result] for initial analysis.'
+          finalResultLabel='Final Analysis'
           finalResultValue={testResult?.analysisFinal || null}
           onCopyFinalResult={() => copyResult(testResult?.analysisFinal)}
-          badgeVariant="info"
-          badgeTextColor="text-blue-400"
-          outputEnabledCheckboxId="v-output-enabled"
+          badgeVariant='info'
+          badgeTextColor='text-blue-400'
+          outputEnabledCheckboxId='v-output-enabled'
         />
 
         <PromptGenerationSection
           pathNumber={2}
-          pathTitle="Signal Path 2: Description Generation"
-          inputLabel="Input Prompt"
+          pathTitle='Signal Path 2: Description Generation'
+          inputLabel='Input Prompt'
           inputValue={generationInputPrompt}
           onInputChange={setGenerationInputPrompt}
-          initialResultLabel="Initial Description"
+          initialResultLabel='Initial Description'
           initialResultValue={testResult?.descriptionInitial || null}
           onCopyInitialResult={() => copyResult(testResult?.descriptionInitial)}
-          modelLabel="Generation Model"
+          modelLabel='Generation Model'
           modelValue={descriptionGenerationModel}
           onModelChange={setDescriptionGenerationModel}
           modelOptions={[...STATIC_TEXT_MODELS, ...ollamaModels]}
           outputEnabled={generationOutputEnabled}
           onOutputEnabledChange={setGenerationOutputEnabled}
-          outputPromptLabel="Output Prompt"
+          outputPromptLabel='Output Prompt'
           outputPromptValue={generationOutputPrompt}
           onOutputPromptChange={setGenerationOutputPrompt}
-          outputPlaceholder="Final polish... use [result] for initial description."
-          finalResultLabel="Final Description"
+          outputPlaceholder='Final polish... use [result] for initial description.'
+          finalResultLabel='Final Description'
           finalResultValue={testResult?.descriptionFinal || null}
           onCopyFinalResult={() => copyResult(testResult?.descriptionFinal)}
-          badgeVariant="secondary"
-          badgeTextColor="text-purple-400"
-          outputEnabledCheckboxId="g-output-enabled"
+          badgeVariant='secondary'
+          badgeTextColor='text-purple-400'
+          outputEnabledCheckboxId='g-output-enabled'
         />
       </div>
     </SettingsPageLayout>

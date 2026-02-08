@@ -16,14 +16,14 @@ const renderSortableHeader = <TData, TValue>(
 
   return (
     <Button
-      type="button"
+      type='button'
       onClick={handler ?? undefined}
       // optional: prevent "clickable" affordance if it can't sort
       disabled={!handler}
-      className="inline-flex items-center gap-1 text-left text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+      className='inline-flex items-center gap-1 text-left text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60'
     >
       {label}
-      <span className="text-xs text-muted-foreground">
+      <span className='text-xs text-muted-foreground'>
         {direction === 'asc' ? '▲' : direction === 'desc' ? '▼' : '↕'}
       </span>
     </Button>
@@ -72,10 +72,10 @@ export const getDatabaseColumns = (options?: {
     cell: ({ row }: { row: { original: DatabaseInfo } }): React.JSX.Element => {
       const backup = row.original;
       return (
-        <div className="flex space-x-2">
+        <div className='flex space-x-2'>
           {options?.onPreview && (
             <Button
-              variant="secondary"
+              variant='secondary'
               onClick={(): void => options.onPreview?.(backup.name)}
             >
               Preview
@@ -91,7 +91,7 @@ export const getDatabaseColumns = (options?: {
           </Button>
 
           <Button
-            variant="destructive"
+            variant='destructive'
             onClick={(): void => {
               options?.onDeleteRequest?.(backup.name);
             }}

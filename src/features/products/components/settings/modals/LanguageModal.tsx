@@ -90,54 +90,54 @@ export function LanguageModal(): React.JSX.Element {
       }}
       isSaving={saveMutation.isPending}
       saveText={language ? 'Update' : 'Add'}
-      cancelText="Close"
-      size="md"
+      cancelText='Close'
+      size='md'
     >
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="lang-code">Code</Label>
+      <div className='space-y-4'>
+        <div className='space-y-2'>
+          <Label htmlFor='lang-code'>Code</Label>
           <Input
-            id="lang-code"
+            id='lang-code'
             value={form.code}
             onChange={(e) =>
               setForm((p) => ({ ...p, code: e.target.value.toUpperCase() }))
             }
-            placeholder="e.g. EN"
+            placeholder='e.g. EN'
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="lang-name">Name</Label>
+        <div className='space-y-2'>
+          <Label htmlFor='lang-name'>Name</Label>
           <Input
-            id="lang-name"
+            id='lang-name'
             value={form.name}
             onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-            placeholder="e.g. English"
+            placeholder='e.g. English'
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="lang-native">Native Name</Label>
+        <div className='space-y-2'>
+          <Label htmlFor='lang-native'>Native Name</Label>
           <Input
-            id="lang-native"
+            id='lang-native'
             value={form.nativeName}
             onChange={(e) =>
               setForm((p) => ({ ...p, nativeName: e.target.value }))
             }
-            placeholder="e.g. English"
+            placeholder='e.g. English'
           />
         </div>
-        <div className="space-y-2">
+        <div className='space-y-2'>
           <Label>Associated Countries</Label>
-          <div className="mt-2 grid grid-cols-2 gap-2 max-h-48 overflow-y-auto rounded-md border border-border bg-card/50 p-3">
+          <div className='mt-2 grid grid-cols-2 gap-2 max-h-48 overflow-y-auto rounded-md border border-border bg-card/50 p-3'>
             {countries.map((country) => (
               <Label
                 key={country.id}
-                className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-1.5 rounded transition-colors"
+                className='flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-1.5 rounded transition-colors'
               >
                 <Checkbox
                   checked={selectedCountryIds.includes(country.id)}
                   onCheckedChange={() => toggleCountry(country.id)}
                 />
-                <span className="text-xs text-gray-200">
+                <span className='text-xs text-gray-200'>
                   {country.name} ({country.code})
                 </span>
               </Label>

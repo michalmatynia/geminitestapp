@@ -20,10 +20,10 @@ export function AgentCreatorSettingsSection(): React.ReactElement {
   } = useAgentCreatorSettings();
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-medium text-white">Agent Settings</h3>
-      <div className="flex items-center gap-4">
-        <Label className="flex items-center gap-2 text-sm text-gray-300">
+    <div className='space-y-4'>
+      <h3 className='text-lg font-medium text-white'>Agent Settings</h3>
+      <div className='flex items-center gap-4'>
+        <Label className='flex items-center gap-2 text-sm text-gray-300'>
           <Checkbox
             checked={agentModeEnabled}
             onCheckedChange={(checked: boolean) => setAgentModeEnabled(Boolean(checked))}
@@ -32,9 +32,9 @@ export function AgentCreatorSettingsSection(): React.ReactElement {
         </Label>
       </div>
       {agentModeEnabled && (
-        <SectionPanel variant="subtle" className="space-y-4 p-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
+        <SectionPanel variant='subtle' className='space-y-4 p-4'>
+          <div className='grid gap-4 md:grid-cols-2'>
+            <div className='space-y-2'>
               <Label>Browser</Label>
               <UnifiedSelect
                 value={agentBrowser}
@@ -46,18 +46,18 @@ export function AgentCreatorSettingsSection(): React.ReactElement {
                 ]}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="agent-max-steps">Max Steps</Label>
+            <div className='space-y-2'>
+              <Label htmlFor='agent-max-steps'>Max Steps</Label>
               <Input
-                id="agent-max-steps"
-                type="number"
+                id='agent-max-steps'
+                type='number'
                 value={agentMaxSteps}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAgentMaxSteps(Number(e.target.value))}
               />
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-4">
-            <Label className="flex items-center gap-2 text-sm text-gray-300">
+          <div className='flex flex-wrap items-center gap-4'>
+            <Label className='flex items-center gap-2 text-sm text-gray-300'>
               <Checkbox
                 checked={agentRunHeadless}
                 onCheckedChange={(checked: boolean) =>
@@ -66,7 +66,7 @@ export function AgentCreatorSettingsSection(): React.ReactElement {
               />
               Run Headless
             </Label>
-            <Label className="flex items-center gap-2 text-sm text-gray-300">
+            <Label className='flex items-center gap-2 text-sm text-gray-300'>
               <Checkbox
                 checked={agentIgnoreRobotsTxt}
                 onCheckedChange={(checked: boolean) =>
@@ -75,7 +75,7 @@ export function AgentCreatorSettingsSection(): React.ReactElement {
               />
               Ignore robots.txt
             </Label>
-            <Label className="flex items-center gap-2 text-sm text-gray-300">
+            <Label className='flex items-center gap-2 text-sm text-gray-300'>
               <Checkbox
                 checked={agentRequireHumanApproval}
                 onCheckedChange={(checked: boolean) =>

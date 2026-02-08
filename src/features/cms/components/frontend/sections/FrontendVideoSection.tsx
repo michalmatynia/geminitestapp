@@ -52,23 +52,23 @@ export function FrontendVideoSection({ settings }: FrontendVideoSectionProps): R
       <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: 'max-w-4xl' })}>
         {embedUrl ? (
           <div
-            className="cms-media relative w-full"
+            className='cms-media relative w-full'
             style={{ paddingBottom: getAspectPadding(aspectRatio), ...(mediaStyles ?? {}) }}
           >
             <iframe
-              className="absolute inset-0 h-full w-full"
+              className='absolute inset-0 h-full w-full'
               src={`${embedUrl}${autoplay ? '?autoplay=1&mute=1' : ''}`}
-              title="Embedded video"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              title='Embedded video'
+              allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
               allowFullScreen
             />
           </div>
         ) : (
           <div
-            className="cms-media flex items-center justify-center bg-gray-800/50"
+            className='cms-media flex items-center justify-center bg-gray-800/50'
             style={{ paddingBottom: getAspectPadding(aspectRatio), position: 'relative', ...(mediaStyles ?? {}) }}
           >
-            <p className="absolute inset-0 flex items-center justify-center text-gray-500">
+            <p className='absolute inset-0 flex items-center justify-center text-gray-500'>
               Enter a video URL in section settings
             </p>
           </div>

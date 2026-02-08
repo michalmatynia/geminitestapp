@@ -38,25 +38,25 @@ export function AdminAiPathsPage(): React.JSX.Element {
               setActiveTab(value as 'canvas' | 'paths' | 'docs')
             }
           >
-            <TabsList className="bg-card/70">
-              <TabsTrigger value="canvas">Canvas</TabsTrigger>
-              <TabsTrigger value="paths">Paths</TabsTrigger>
-              <TabsTrigger value="docs">Docs</TabsTrigger>
+            <TabsList className='bg-card/70'>
+              <TabsTrigger value='canvas'>Canvas</TabsTrigger>
+              <TabsTrigger value='paths'>Paths</TabsTrigger>
+              <TabsTrigger value='docs'>Docs</TabsTrigger>
             </TabsList>
           </Tabs>
         ) : (
-          <div className="h-9 w-[180px]" />
+          <div className='h-9 w-[180px]' />
         )}
-        <div id="ai-paths-name" className="text-sm text-gray-300" />
+        <div id='ai-paths-name' className='text-sm text-gray-300' />
       </div>
       <SectionPanel className={isFocusMode ? 'h-full p-0 border-0 rounded-none' : 'p-6'}>
         <div className={`mb-4 flex items-center ${isFocusMode ? 'hidden' : ''}`}>
-          <div id="ai-paths-actions" className="flex w-full items-center" />
+          <div id='ai-paths-actions' className='flex w-full items-center' />
         </div>
         <AiPathsSettings
           activeTab={activeTab}
           renderActions={(actions: React.ReactNode) => (
-            <div className="w-full">{actions}</div>
+            <div className='w-full'>{actions}</div>
           )}
           onTabChange={setActiveTab}
           isFocusMode={isFocusMode}

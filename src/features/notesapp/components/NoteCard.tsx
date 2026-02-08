@@ -193,27 +193,27 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
           : 'cursor-pointer hover:shadow-md hover:brightness-90',
       )}
     >
-      <div className="mb-2 flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <h3 className="font-semibold">{note.title}</h3>
+      <div className='mb-2 flex items-start justify-between gap-2'>
+        <div className='flex items-center gap-2'>
+          <h3 className='font-semibold'>{note.title}</h3>
           {isCodeNote && (
-            <Badge variant="success" className="text-[10px] h-4">
+            <Badge variant='success' className='text-[10px] h-4'>
               CODE
             </Badge>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className='flex items-center gap-2'>
           {isCodeNote && (
             <CopyButton 
               value={note.content}
-              className="text-gray-500 hover:text-blue-500"
+              className='text-gray-500 hover:text-blue-500'
             />
           )}
           <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-auto w-auto p-0 text-gray-500 hover:bg-transparent hover:text-yellow-500"
+            type='button'
+            variant='ghost'
+            size='icon'
+            className='h-auto w-auto p-0 text-gray-500 hover:bg-transparent hover:text-yellow-500'
             onMouseDown={(event: React.MouseEvent): void => event.preventDefault()}
             onClick={(event: React.MouseEvent): void => {
               event.stopPropagation();
@@ -227,28 +227,28 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
               className={note.isFavorite ? 'fill-yellow-400 text-yellow-500' : ''}
             />
           </Button>
-          {note.isPinned && <Pin size={16} className="text-blue-600" />}
+          {note.isPinned && <Pin size={16} className='text-blue-600' />}
         </div>
       </div>
       
-      <div className="pt-0">
+      <div className='pt-0'>
         {thumbnailFile && (
-          <div className="mb-3 overflow-hidden rounded-md border">
+          <div className='mb-3 overflow-hidden rounded-md border'>
             <Image
               src={thumbnailFile.filepath}
               alt={thumbnailFile.filename}
               width={320}
               height={180}
-              className="h-28 w-full object-cover"
-              sizes="(min-width: 1024px) 240px, 100vw"
+              className='h-28 w-full object-cover'
+              sizes='(min-width: 1024px) 240px, 100vw'
             />
           </div>
         )}
         <div
-          className="mb-3 max-h-36 overflow-hidden text-sm prose prose-sm"
+          className='mb-3 max-h-36 overflow-hidden text-sm prose prose-sm'
           dangerouslySetInnerHTML={{ __html: contentHtml }}
         />
-        <div className="flex flex-wrap gap-2">
+        <div className='flex flex-wrap gap-2'>
           {note.tags.map((nt: { tagId: string; tag: { color: string | null; name: string } }) => (
             <Tag
               key={nt.tagId}
@@ -260,9 +260,9 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
       </div>
 
       {(showTimestamps || showBreadcrumbs || (showRelatedNotes && relatedNotes.length > 0)) && (
-        <div className="flex flex-col items-stretch pt-2 mt-2 border-t border-white/10">
+        <div className='flex flex-col items-stretch pt-2 mt-2 border-t border-white/10'>
           {showTimestamps && (
-            <div className="flex flex-col gap-0.5 text-[10px] text-gray-500">
+            <div className='flex flex-col gap-0.5 text-[10px] text-gray-500'>
               <span>Created: {new Date(note.createdAt).toLocaleString()}</span>
               <span>Modified: {new Date(note.updatedAt).toLocaleString()}</span>
             </div>
@@ -277,19 +277,19 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
                 ).map((crumb: { id: string | null; name: string; isNote?: boolean }, index: number, array: Array<{ id: string | null; name: string; isNote?: boolean }>) => (
                   <React.Fragment key={index}>
                     <Button
-                      variant="link"
+                      variant='link'
                       onClick={(e: React.MouseEvent): void => {
                         e.stopPropagation();
                         if (crumb.id) { 
                           onSelectFolder(crumb.id);
                         }
                       }}
-                      className="h-auto p-0 text-xs text-inherit cursor-pointer hover:underline whitespace-nowrap"
+                      className='h-auto p-0 text-xs text-inherit cursor-pointer hover:underline whitespace-nowrap'
                     >
                       {crumb.name}
                     </Button>
                     {index < array.length - 1 && (
-                      <ChevronRight size={10} className="flex-shrink-0" />
+                      <ChevronRight size={10} className='flex-shrink-0' />
                     )}
                   </React.Fragment>
                 ))}
@@ -297,18 +297,18 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
             </div>
           )}
           {showRelatedNotes && relatedNotes.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div className='mt-2 flex flex-wrap gap-2'>
               {relatedNotes
                 .filter((item: RelatedNote, index: number, array: RelatedNote[]) => array.findIndex((entry: RelatedNote) => entry.id === item.id) === index)
                 .slice(0, 4)
                 .map((related: RelatedNote) => (
                   <div
                     key={related.id}
-                    className="w-24 cursor-pointer rounded-md px-2 py-1 text-[10px]"
+                    className='w-24 cursor-pointer rounded-md px-2 py-1 text-[10px]'
                     style={relatedNoteStyle}
                   >
-                    <div className="truncate font-semibold">{related.title}</div>
-                    <div className="line-clamp-2 text-[9px] opacity-80">No content</div>
+                    <div className='truncate font-semibold'>{related.title}</div>
+                    <div className='line-clamp-2 text-[9px] opacity-80'>No content</div>
                   </div>
                 ))}
             </div>

@@ -71,35 +71,35 @@ export default function AddIntegrationPage(): React.JSX.Element {
   }, [integrationsQuery.data]);
 
   return (
-    <div className="container mx-auto py-10">
-      <SectionPanel className="p-6">
+    <div className='container mx-auto py-10'>
+      <SectionPanel className='p-6'>
         <SectionHeader
-          title="Add Integrations"
-          description="Select a marketplace connection to add to your map."
+          title='Add Integrations'
+          description='Select a marketplace connection to add to your map.'
           eyebrow={(
-            <Link href="/admin/integrations" className="text-blue-300 hover:text-blue-200">
+            <Link href='/admin/integrations' className='text-blue-300 hover:text-blue-200'>
               ← Back to integrations
             </Link>
           )}
-          className="mb-6"
+          className='mb-6'
         />
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className='grid gap-6 md:grid-cols-2'>
           {AVAILABLE_INTEGRATIONS.map((integration: (typeof AVAILABLE_INTEGRATIONS)[number]) => (
             <div
               key={integration.slug}
-              className="rounded-xl border bg-card p-5"
+              className='rounded-xl border bg-card p-5'
             >
-              <div className="flex items-start justify-between">
+              <div className='flex items-start justify-between'>
                 <div>
-                  <h2 className="text-xl font-semibold text-white">
+                  <h2 className='text-xl font-semibold text-white'>
                     {integration.name}
                   </h2>
-                  <p className="mt-2 text-sm text-gray-400">
+                  <p className='mt-2 text-sm text-gray-400'>
                     {integration.description}
                   </p>
                 </div>
-                <div className="flex flex-col items-end gap-2">
+                <div className='flex flex-col items-end gap-2'>
                   <span
                     className={`rounded-full px-2 py-1 text-xs ${
                       integration.type === 'marketplace'
@@ -118,15 +118,15 @@ export default function AddIntegrationPage(): React.JSX.Element {
                   >
                     {integration.method === 'api' ? 'API' : 'Browser'}
                   </span>
-                  <span className="rounded-full bg-gray-800 px-2 py-1 text-xs text-gray-300">
+                  <span className='rounded-full bg-gray-800 px-2 py-1 text-xs text-gray-300'>
                     Added: {integrationCounts[integration.slug] ?? 0}
                   </span>
                 </div>
               </div>
-              <div className="mt-6 flex justify-end">
+              <div className='mt-6 flex justify-end'>
                 <Button
-                  className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
-                  type="button"
+                  className='rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200'
+                  type='button'
                   disabled={createIntegrationMutation.isPending}
                   onClick={() => { void handleAdd(integration); }}
                 >

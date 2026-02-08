@@ -77,77 +77,77 @@ export function AdminProductProducersPage(): React.JSX.Element {
   };
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between gap-3">
+    <div className='space-y-5'>
+      <div className='flex items-center justify-between gap-3'>
         <div>
-          <h1 className="text-xl font-semibold text-white">Producers</h1>
-          <p className="text-xs text-muted-foreground">
+          <h1 className='text-xl font-semibold text-white'>Producers</h1>
+          <p className='text-xs text-muted-foreground'>
             Manage producers and assign them in Product Edit.
           </p>
         </div>
-        <Button onClick={openCreate} className="bg-white text-gray-900 hover:bg-gray-200">
-          <Plus className="size-4 mr-2" />
+        <Button onClick={openCreate} className='bg-white text-gray-900 hover:bg-gray-200'>
+          <Plus className='size-4 mr-2' />
           Add Producer
         </Button>
       </div>
 
-      <div className="rounded-md border border-border bg-card/60 p-4">
-        <div className="mb-3">
-          <Label htmlFor="producer-search" className="text-sm font-semibold text-white">
+      <div className='rounded-md border border-border bg-card/60 p-4'>
+        <div className='mb-3'>
+          <Label htmlFor='producer-search' className='text-sm font-semibold text-white'>
             Search
           </Label>
           <Input
-            id="producer-search"
+            id='producer-search'
             value={query}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
-            placeholder="Search by name..."
-            className="mt-2 max-w-sm"
+            placeholder='Search by name...'
+            className='mt-2 max-w-sm'
           />
         </div>
 
         {loading ? (
-          <div className="rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">
+          <div className='rounded-md border border-dashed border p-4 text-center text-sm text-gray-400'>
             Loading producers...
           </div>
         ) : filtered.length === 0 ? (
           <EmptyState
-            title="No producers"
-            description="Create a producer to attach it to products."
+            title='No producers'
+            description='Create a producer to attach it to products.'
             action={
-              <Button onClick={openCreate} variant="outline">
-                <Plus className="size-4 mr-2" />
+              <Button onClick={openCreate} variant='outline'>
+                <Plus className='size-4 mr-2' />
                 Create Producer
               </Button>
             }
           />
         ) : (
-          <div className="space-y-2">
+          <div className='space-y-2'>
             {filtered.map((producer: Producer) => (
               <div
                 key={producer.id}
-                className="flex items-center justify-between gap-3 rounded-md border border-border bg-gray-900 px-3 py-2"
+                className='flex items-center justify-between gap-3 rounded-md border border-border bg-gray-900 px-3 py-2'
               >
-                <div className="min-w-0">
-                  <div className="text-sm text-gray-100 truncate">{producer.name}</div>
+                <div className='min-w-0'>
+                  <div className='text-sm text-gray-100 truncate'>{producer.name}</div>
                   {producer.website && (
-                    <div className="text-xs text-muted-foreground truncate">{producer.website}</div>
+                    <div className='text-xs text-muted-foreground truncate'>{producer.website}</div>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className='flex items-center gap-2'>
                   <Button
-                    type="button"
+                    type='button'
                     onClick={(): void => openEdit(producer)}
-                    className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-100 hover:bg-gray-700"
+                    className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-100 hover:bg-gray-700'
                   >
                     Edit
                   </Button>
                   <Button
-                    type="button"
+                    type='button'
                     onClick={(): void => setToDelete(producer)}
-                    className="rounded bg-red-600/80 px-2 py-1 text-xs text-white hover:bg-red-600"
-                    title="Delete producer"
+                    className='rounded bg-red-600/80 px-2 py-1 text-xs text-white hover:bg-red-600'
+                    title='Delete producer'
                   >
-                    <Trash2 className="size-3" />
+                    <Trash2 className='size-3' />
                   </Button>
                 </div>
               </div>
@@ -160,33 +160,33 @@ export function AdminProductProducersPage(): React.JSX.Element {
         open={open}
         onClose={() => setOpen(false)}
         title={editing ? 'Edit Producer' : 'Create Producer'}
-        size="sm"
+        size='sm'
       >
-        <div className="space-y-4">
+        <div className='space-y-4'>
           <div>
-            <Label htmlFor="producer-name">Name</Label>
+            <Label htmlFor='producer-name'>Name</Label>
             <Input
-              id="producer-name"
+              id='producer-name'
               value={form.name}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setForm((prev: ProducerFormState) => ({ ...prev, name: e.target.value }))
               }
-              placeholder="Producer name"
+              placeholder='Producer name'
             />
           </div>
           <div>
-            <Label htmlFor="producer-website">Website (optional)</Label>
+            <Label htmlFor='producer-website'>Website (optional)</Label>
             <Input
-              id="producer-website"
+              id='producer-website'
               value={form.website}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setForm((prev: ProducerFormState) => ({ ...prev, website: e.target.value }))
               }
-              placeholder="https://..."
+              placeholder='https://...'
             />
           </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setOpen(false)}>
+          <div className='flex justify-end gap-2'>
+            <Button variant='outline' onClick={() => setOpen(false)}>
               Cancel
             </Button>
             <Button
@@ -195,7 +195,7 @@ export function AdminProductProducersPage(): React.JSX.Element {
               }}
               disabled={saveMutation.isPending}
               aria-disabled={saveMutation.isPending}
-              className="bg-white text-gray-900 hover:bg-gray-200"
+              className='bg-white text-gray-900 hover:bg-gray-200'
             >
               {saveMutation.isPending ? 'Saving...' : 'Save'}
             </Button>
@@ -208,11 +208,11 @@ export function AdminProductProducersPage(): React.JSX.Element {
         onOpenChange={(next: boolean) => {
           if (!next) setToDelete(null);
         }}
-        title="Delete producer?"
+        title='Delete producer?'
         description={`This will delete "${toDelete?.name ?? ''}".`}
-        confirmText="Delete"
-        cancelText="Cancel"
-        variant="destructive"
+        confirmText='Delete'
+        cancelText='Cancel'
+        variant='destructive'
         loading={deleteMutation.isPending}
         onCancel={() => setToDelete(null)}
         onConfirm={() => {

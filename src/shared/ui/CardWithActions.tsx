@@ -31,22 +31,22 @@ export function CardWithActions({
       onClick={onClick}
     >
       {/* Header */}
-      <div className="flex items-start justify-between gap-2 p-3 pb-0">
-        <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-medium truncate" title={title}>
+      <div className='flex items-start justify-between gap-2 p-3 pb-0'>
+        <div className='min-w-0 flex-1'>
+          <h3 className='text-sm font-medium truncate' title={title}>
             {title}
           </h3>
           {description && (
-            <p className="text-xs text-muted-foreground truncate mt-0.5" title={description}>
+            <p className='text-xs text-muted-foreground truncate mt-0.5' title={description}>
               {description}
             </p>
           )}
         </div>
-        {actions && <div className="flex-shrink-0 flex items-center gap-1">{actions}</div>}
+        {actions && <div className='flex-shrink-0 flex items-center gap-1'>{actions}</div>}
       </div>
 
       {/* Main Content */}
-      <div className="p-3">
+      <div className='p-3'>
         {children}
       </div>
     </SectionPanel>

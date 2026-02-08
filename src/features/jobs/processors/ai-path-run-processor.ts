@@ -86,7 +86,7 @@ export const processRun = async (run: AiPathRunRecord): Promise<void> => {
   try {
     await executePathRun(run);
     const latest = await (getPathRunRepository()).findRunById(run.id);
-    if (latest && latest.status === 'canceled') {
+    if (latest?.status === 'canceled') {
       console.log(`[aiPathRunQueue] Run ${run.id} was canceled during execution`);
       return;
     }

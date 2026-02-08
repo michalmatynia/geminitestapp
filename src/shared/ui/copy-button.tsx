@@ -56,7 +56,7 @@ export function CopyButton({
 
   return (
     <Button
-      type="button"
+      type='button'
       variant={variant}
       size={showText ? 'default' : size}
       onClick={(e: React.MouseEvent): void => { void handleCopy(e); }}

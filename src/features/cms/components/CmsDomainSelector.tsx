@@ -25,21 +25,21 @@ export function CmsDomainSelector({
 
   if (!zoningEnabled) {
     return (
-      <div className="flex items-center gap-2">
+      <div className='flex items-center gap-2'>
         {label ? (
-          <span className="text-[11px] font-medium uppercase tracking-wide text-gray-400">
+          <span className='text-[11px] font-medium uppercase tracking-wide text-gray-400'>
             {label}
           </span>
         ) : null}
-        <span className="text-[11px] text-gray-500">Simple routing</span>
+        <span className='text-[11px] text-gray-500'>Simple routing</span>
       </div>
     );
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className='flex items-center gap-2'>
       {label ? (
-        <span className="text-[11px] font-medium uppercase tracking-wide text-gray-400">
+        <span className='text-[11px] font-medium uppercase tracking-wide text-gray-400'>
           {label}
         </span>
       ) : null}
@@ -56,7 +56,7 @@ export function CmsDomainSelector({
           ].filter(Boolean).join(', ') || undefined
         }))}
         placeholder={domains.length ? 'Select zone' : 'No zones'}
-        className="w-[220px]"
+        className='w-[220px]'
         triggerClassName={triggerClassName}
       />
     </div>

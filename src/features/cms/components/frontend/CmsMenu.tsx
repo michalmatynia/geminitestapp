@@ -242,9 +242,9 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
       <div style={containerStyle}>
         {menu.collapsible && (
           <button
-            type="button"
+            type='button'
             onClick={(): void => setCollapsed((prev: boolean) => !prev)}
-            className="mb-2 inline-flex items-center gap-2 rounded border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-white/80 hover:bg-white/10"
+            className='mb-2 inline-flex items-center gap-2 rounded border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-white/80 hover:bg-white/10'
           >
             {collapsed ? 'Expand' : 'Collapse'}
           </button>
@@ -280,7 +280,7 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
                 {menu.showItemImages && item.imageUrl && (
                   <Image
                     src={item.imageUrl}
-                    alt=""
+                    alt=''
                     width={menu.itemImageSize}
                     height={menu.itemImageSize}
                     style={{ objectFit: 'cover', borderRadius: 6 }}
@@ -301,8 +301,8 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
                 href={item.url}
                 className={className}
                 style={style}
-                target="_blank"
-                rel="noreferrer"
+                target='_blank'
+                rel='noreferrer'
                 data-menu-item
               >
                 {content}

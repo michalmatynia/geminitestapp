@@ -198,11 +198,11 @@ export function PromptNodeConfigSection({
   }, [directPlaceholders, bundleKeys, runtimeInputs]);
 
   return (
-    <div className="space-y-4">
+    <div className='space-y-4'>
       <div>
-        <Label className="text-xs text-gray-400">Prompt Template</Label>
+        <Label className='text-xs text-gray-400'>Prompt Template</Label>
         <Textarea
-          className="mt-2 min-h-[140px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
+          className='mt-2 min-h-[140px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
           ref={promptTemplateRef}
           value={promptConfig.template}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
@@ -210,35 +210,35 @@ export function PromptNodeConfigSection({
               prompt: { template: event.target.value },
             })
           }
-          placeholder="Describe the product: {{title}}"
+          placeholder='Describe the product: {{title}}'
         />
-        <p className="mt-2 text-[11px] text-gray-500">
+        <p className='mt-2 text-[11px] text-gray-500'>
           Images are passed separately via the Prompt{' '}
-          <span className="text-gray-300">images</span> output and the Model{' '}
-          <span className="text-gray-300">images</span> input. You don&apos;t
-          need an <span className="text-gray-300">images</span> placeholder
+          <span className='text-gray-300'>images</span> output and the Model{' '}
+          <span className='text-gray-300'>images</span> input. You don&apos;t
+          need an <span className='text-gray-300'>images</span> placeholder
           inside the prompt text.
         </p>
       </div>
-      <div className="rounded-md border border-border bg-card/50 p-3 text-[11px] text-gray-400">
-        <div className="flex items-center justify-between gap-2 text-gray-300">
+      <div className='rounded-md border border-border bg-card/50 p-3 text-[11px] text-gray-400'>
+        <div className='flex items-center justify-between gap-2 text-gray-300'>
           <span>Available placeholders</span>
           <Button
-            type="button"
-            className="h-7 rounded-md border border-border px-2 text-[10px] text-gray-200 hover:bg-muted/50"
+            type='button'
+            className='h-7 rounded-md border border-border px-2 text-[10px] text-gray-200 hover:bg-muted/50'
             onClick={() => setPlaceholderMatrixOpen(true)}
           >
             Placeholders
           </Button>
         </div>
         {bundleKeys.size > 0 ? (
-          <div className="mt-2 flex flex-wrap gap-2">
+          <div className='mt-2 flex flex-wrap gap-2'>
             {Array.from(bundleKeys).map((key: string) => (
               <span
                 key={key}
-                role="button"
+                role='button'
                 tabIndex={0}
-                className="cursor-pointer rounded-full border px-2 py-0.5 text-[10px] text-gray-200 transition hover:border-gray-500 hover:bg-muted/50"
+                className='cursor-pointer rounded-full border px-2 py-0.5 text-[10px] text-gray-200 transition hover:border-gray-500 hover:bg-muted/50'
                 onClick={() => insertPromptPlaceholder(`{{${key}}}`)}
                 onKeyDown={(event: React.KeyboardEvent<HTMLSpanElement>) => {
                   if (event.key === 'Enter' || event.key === ' ') {
@@ -252,21 +252,21 @@ export function PromptNodeConfigSection({
             ))}
           </div>
         ) : (
-          <div className="mt-2 text-[11px] text-gray-500">
+          <div className='mt-2 text-[11px] text-gray-500'>
             Connect a Parser or Bundle node to the bundle input to surface
             placeholder hints.
           </div>
         )}
         {directPlaceholders.length > 0 && (
-          <div className="mt-3">
-            <div className="text-[11px] text-gray-500">Direct inputs</div>
-            <div className="mt-2 flex flex-wrap gap-2">
+          <div className='mt-3'>
+            <div className='text-[11px] text-gray-500'>Direct inputs</div>
+            <div className='mt-2 flex flex-wrap gap-2'>
               {directPlaceholders.map((port: string) => (
                 <span
                   key={port}
-                  role="button"
+                  role='button'
                   tabIndex={0}
-                  className="cursor-pointer rounded-full border px-2 py-0.5 text-[10px] text-gray-200 transition hover:border-gray-500 hover:bg-muted/50"
+                  className='cursor-pointer rounded-full border px-2 py-0.5 text-[10px] text-gray-200 transition hover:border-gray-500 hover:bg-muted/50'
                   onClick={() => insertPromptPlaceholder(`{{${port}}}`)}
                   onKeyDown={(event: React.KeyboardEvent<HTMLSpanElement>) => {
                     if (event.key === 'Enter' || event.key === ' ') {
@@ -306,20 +306,20 @@ export function PromptNodeConfigSection({
         const hasPromptContent = promptConfig.template && promptConfig.template.trim().length > 0;
 
         return (
-          <div className="mt-4 space-y-2">
+          <div className='mt-4 space-y-2'>
             {aiNode ? (
-              <div className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2">
-                <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-emerald-400"></div>
-                  <span className="text-[11px] text-emerald-100">
+              <div className='rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2'>
+                <div className='flex items-center gap-2'>
+                  <div className='h-2 w-2 rounded-full bg-emerald-400'></div>
+                  <span className='text-[11px] text-emerald-100'>
                     Connected to AI Model:{' '}
-                    <span className="font-medium text-emerald-200">{aiModelId || 'Unknown'}</span>
+                    <span className='font-medium text-emerald-200'>{aiModelId || 'Unknown'}</span>
                   </span>
                 </div>
                 {onSendToAi && hasPromptContent && (
                   <Button
-                    type="button"
-                    className="mt-2 rounded-md border border-sky-500/40 bg-sky-500/10 px-3 py-1.5 text-[11px] text-sky-200 hover:bg-sky-500/20 disabled:opacity-50"
+                    type='button'
+                    className='mt-2 rounded-md border border-sky-500/40 bg-sky-500/10 px-3 py-1.5 text-[11px] text-sky-200 hover:bg-sky-500/20 disabled:opacity-50'
                     disabled={sendingToAi}
                     onClick={() => {
                       if (!onSendToAi) return;
@@ -335,28 +335,28 @@ export function PromptNodeConfigSection({
                 )}
               </div>
             ) : (
-              <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2">
-                <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-amber-400"></div>
-                  <span className="text-[11px] text-amber-100">
+              <div className='rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2'>
+                <div className='flex items-center gap-2'>
+                  <div className='h-2 w-2 rounded-full bg-amber-400'></div>
+                  <span className='text-[11px] text-amber-100'>
                     Not connected to AI Model
                   </span>
                 </div>
               </div>
             )}
-            <p className="text-[11px] text-gray-500">
-              Connect this node&apos;s <span className="text-gray-300">prompt</span> output to an AI Model node to enable direct sending.
+            <p className='text-[11px] text-gray-500'>
+              Connect this node&apos;s <span className='text-gray-300'>prompt</span> output to an AI Model node to enable direct sending.
             </p>
           </div>
         );
       })()}
 
-      <div className="mt-4">
-        <div className="flex items-center justify-between gap-2">
-          <Label className="text-xs text-gray-400">Resolved Prompt</Label>
+      <div className='mt-4'>
+        <div className='flex items-center justify-between gap-2'>
+          <Label className='text-xs text-gray-400'>Resolved Prompt</Label>
           <Button
-            type="button"
-            className="h-7 rounded-md border border-border px-2 text-[10px] text-gray-200 hover:bg-muted/50 disabled:opacity-50"
+            type='button'
+            className='h-7 rounded-md border border-border px-2 text-[10px] text-gray-200 hover:bg-muted/50 disabled:opacity-50'
             onClick={() => {
               if (!resolvedPrompt.trim()) {
                 toast('Resolved prompt is empty.', { variant: 'error' });
@@ -368,21 +368,21 @@ export function PromptNodeConfigSection({
                 .catch(() => toast('Failed to copy.', { variant: 'error' }));
             }}
             disabled={!resolvedPrompt.trim()}
-            title="Copy the resolved prompt (after placeholder substitution)"
+            title='Copy the resolved prompt (after placeholder substitution)'
           >
             Copy Resolved
           </Button>
         </div>
         <Textarea
-          className="mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
+          className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
           value={resolvedPrompt}
           readOnly
-          placeholder="Run the graph to resolve placeholders."
+          placeholder='Run the graph to resolve placeholders.'
         />
-        <p className="mt-1 text-[11px] text-gray-500">
-          Uses incoming ports (including <span className="text-gray-300">result</span>) to substitute placeholders.
-          Use <span className="text-gray-300">{'{{value}}'}</span> or{' '}
-          <span className="text-gray-300">{'{{result}}'}</span>.
+        <p className='mt-1 text-[11px] text-gray-500'>
+          Uses incoming ports (including <span className='text-gray-300'>result</span>) to substitute placeholders.
+          Use <span className='text-gray-300'>{'{{value}}'}</span> or{' '}
+          <span className='text-gray-300'>{'{{result}}'}</span>.
         </p>
       </div>
 
@@ -419,36 +419,36 @@ export function PromptNodeConfigSection({
             : false;
 
         return (
-          <div className="mt-4">
-            <Label className="text-xs text-gray-400">Result Input</Label>
+          <div className='mt-4'>
+            <Label className='text-xs text-gray-400'>Result Input</Label>
             <Textarea
-              className="mt-2 min-h-[100px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
+              className='mt-2 min-h-[100px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
               value={displayValue}
               readOnly
-              placeholder="No result received yet. Connect a node to the result input and run the graph."
+              placeholder='No result received yet. Connect a node to the result input and run the graph.'
             />
             {!hasResult && resultSourceNode?.type === 'model' && resultSourceModelHasPoll && !resultSourceModelWaits && resultSourcePort === 'result' && (
-              <div className="mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100">
-                This Prompt is connected to <span className="text-amber-200">Model.result</span>, but that Model has a{' '}
-                <span className="text-amber-200">Poll</span> connected and{' '}
-                <span className="text-amber-200">Wait for result</span> is disabled, so the Model emits only{' '}
-                <span className="text-amber-200">jobId</span>. Connect{' '}
-                <span className="text-amber-200">Poll.result</span> instead, or enable{' '}
-                <span className="text-amber-200">Wait for result</span> on the Model node.
+              <div className='mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100'>
+                This Prompt is connected to <span className='text-amber-200'>Model.result</span>, but that Model has a{' '}
+                <span className='text-amber-200'>Poll</span> connected and{' '}
+                <span className='text-amber-200'>Wait for result</span> is disabled, so the Model emits only{' '}
+                <span className='text-amber-200'>jobId</span>. Connect{' '}
+                <span className='text-amber-200'>Poll.result</span> instead, or enable{' '}
+                <span className='text-amber-200'>Wait for result</span> on the Model node.
               </div>
             )}
             {!hasResult && resultSourceNode?.type === 'poll' && resultSourcePollStatus === 'polling' && (
-              <div className="mt-2 rounded-md border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-[11px] text-sky-100">
-                Poll is still running. The <span className="text-sky-200">result</span> will populate when polling completes.
+              <div className='mt-2 rounded-md border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-[11px] text-sky-100'>
+                Poll is still running. The <span className='text-sky-200'>result</span> will populate when polling completes.
               </div>
             )}
             {!hasResult && resultSourceNode?.type === 'poll' && resultSourcePollStatus === 'failed' && (
-              <div className="mt-2 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-[11px] text-red-100">
+              <div className='mt-2 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-[11px] text-red-100'>
                 Poll failed. Check the Poll node output for an error, or verify the job/database query configuration.
               </div>
             )}
-            <p className="mt-1 text-[11px] text-gray-500">
-              Shows the value passed through the <span className="text-gray-300">result</span> input port.
+            <p className='mt-1 text-[11px] text-gray-500'>
+              Shows the value passed through the <span className='text-gray-300'>result</span> input port.
             </p>
           </div>
         );

@@ -185,20 +185,20 @@ export function TemplateNodeConfigSection({
   };
 
   return (
-    <div className="space-y-4">
+    <div className='space-y-4'>
       <div>
-        <div className="flex items-center justify-between gap-2">
-          <Label className="text-xs text-gray-400">Template</Label>
+        <div className='flex items-center justify-between gap-2'>
+          <Label className='text-xs text-gray-400'>Template</Label>
           <Button
-            type="button"
-            className="h-7 rounded-md border border-border px-2 text-[10px] text-gray-200 hover:bg-muted/50"
+            type='button'
+            className='h-7 rounded-md border border-border px-2 text-[10px] text-gray-200 hover:bg-muted/50'
             onClick={() => setPlaceholderMatrixOpen(true)}
           >
             Placeholders
           </Button>
         </div>
         <Textarea
-          className="mt-2 min-h-[140px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
+          className='mt-2 min-h-[140px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
           ref={templateRef}
           value={templateConfig.template}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
@@ -207,10 +207,10 @@ export function TemplateNodeConfigSection({
             })
           }
         />
-        <p className="mt-2 text-[11px] text-gray-500">
+        <p className='mt-2 text-[11px] text-gray-500'>
           Use placeholders like{' '}
-          <span className="text-gray-300">{'{{context.entity.title}}'}</span> or{' '}
-          <span className="text-gray-300">{'{{result}}'}</span>.
+          <span className='text-gray-300'>{'{{context.entity.title}}'}</span> or{' '}
+          <span className='text-gray-300'>{'{{result}}'}</span>.
         </p>
       </div>
       <PlaceholderMatrixDialog

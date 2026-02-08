@@ -231,8 +231,8 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
 
   // Nodes and edges are already normalized/sanitized at enqueue time
   // (path-run-service.ts:39-40), so skip redundant re-normalization.
-  const nodes = graph.nodes as AiNode[];
-  const edges = graph.edges as Edge[];
+  const nodes = graph.nodes;
+  const edges = graph.edges;
   const triggerNodeId = resolveTriggerNodeId(
     nodes,
     edges,

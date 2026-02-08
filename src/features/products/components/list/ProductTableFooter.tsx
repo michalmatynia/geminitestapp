@@ -87,31 +87,31 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
 
   return (
     <>
-      <div className="space-y-3 border-t bg-muted/50 px-4 py-4">
-        <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-          <div className="text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">{selectedCount}</span>{' '}
-            of <span className="font-medium text-foreground">{table.getFilteredRowModel().rows.length}</span>{' '}
+      <div className='space-y-3 border-t bg-muted/50 px-4 py-4'>
+        <div className='flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center'>
+          <div className='text-sm text-muted-foreground'>
+            <span className='font-medium text-foreground'>{selectedCount}</span>{' '}
+            of <span className='font-medium text-foreground'>{table.getFilteredRowModel().rows.length}</span>{' '}
             row(s) selected.
           </div>
           <Button
             onClick={() => setShowDeleteConfirm(true)}
             disabled={!hasSelection || isDeleting}
-            variant="destructive"
-            size="sm"
-            className="gap-2"
+            variant='destructive'
+            size='sm'
+            className='gap-2'
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className='h-4 w-4' />
             {isDeleting ? 'Deleting...' : `Delete Selected (${selectedCount})`}
           </Button>
           <Button
             onClick={() => setShowBase64Confirm(true)}
             disabled={!hasSelection || isConverting}
-            variant="outline"
-            size="sm"
-            className="gap-2"
+            variant='outline'
+            size='sm'
+            className='gap-2'
           >
-            <ImageIcon className="h-4 w-4" />
+            <ImageIcon className='h-4 w-4' />
             {isConverting ? 'Converting...' : `Base64 Images (${selectedCount})`}
           </Button>
         </div>
@@ -121,22 +121,22 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
       <ConfirmDialog
         open={showDeleteConfirm}
         onOpenChange={setShowDeleteConfirm}
-        title="Delete selected products?"
+        title='Delete selected products?'
         description={`Are you sure you want to delete ${selectedCount} selected ${selectedCount === 1 ? 'product' : 'products'}? This action cannot be undone.`}
         onConfirm={() => void handleMassDelete()}
-        confirmText="Delete"
-        variant="destructive"
+        confirmText='Delete'
+        variant='destructive'
         loading={isDeleting}
       />
 
       <ConfirmDialog
         open={showBase64Confirm}
         onOpenChange={setShowBase64Confirm}
-        title="Generate Base64 images?"
+        title='Generate Base64 images?'
         description={`Create Base64-encoded image links for ${selectedCount} selected ${selectedCount === 1 ? 'product' : 'products'}? This can be heavy for large images.`}
         onConfirm={() => void handleMassBase64()}
-        confirmText="Convert"
-        variant="success"
+        confirmText='Convert'
+        variant='success'
         loading={isConverting}
       />
     </>

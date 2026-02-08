@@ -7,19 +7,19 @@ export default function ProductFormImportInfo(): React.JSX.Element {
   const { register } = useFormContext<ProductFormData>();
 
   return (
-    <FormSection title="System Information" description="Data imported from external integration platforms.">
+    <FormSection title='System Information' description='Data imported from external integration platforms.'>
       <FormField 
-        label="Base ID" 
-        id="baseProductId"
-        description="This ID is imported from Base.com and cannot be edited."
+        label='Base ID' 
+        id='baseProductId'
+        description='This ID is imported from Base.com and cannot be edited.'
       >
         <Input
-          id="baseProductId"
+          id='baseProductId'
           {...register('baseProductId')}
           disabled
-          className="bg-muted cursor-not-allowed"
-          placeholder="Imported from Base.com"
-          aria-readonly="true"
+          className='bg-muted cursor-not-allowed'
+          placeholder='Imported from Base.com'
+          aria-readonly='true'
         />
       </FormField>
     </FormSection>

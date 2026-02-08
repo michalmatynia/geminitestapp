@@ -91,9 +91,9 @@ export function ModelNodeConfigSection({
   });
 
   return (
-    <div className="space-y-4">
+    <div className='space-y-4'>
       <div>
-        <Label className="text-xs text-gray-400">Model</Label>
+        <Label className='text-xs text-gray-400'>Model</Label>
         <UnifiedSelect
           value={modelConfig.modelId}
           onValueChange={(value: string): void =>
@@ -102,17 +102,17 @@ export function ModelNodeConfigSection({
             })
           }
           options={mergedModelOptions.map((model: string) => ({ value: model, label: model }))}
-          placeholder="Select model"
-          triggerClassName="mt-2 w-full border-border bg-card/70 text-sm text-white"
+          placeholder='Select model'
+          triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
         />
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className='grid gap-3 sm:grid-cols-2'>
         <div>
-          <Label className="text-xs text-gray-400">Temperature</Label>
+          <Label className='text-xs text-gray-400'>Temperature</Label>
           <Input
-            type="number"
-            step="0.1"
-            className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+            type='number'
+            step='0.1'
+            className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
             value={modelConfig.temperature}
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
               updateSelectedNodeConfig({
@@ -128,11 +128,11 @@ export function ModelNodeConfigSection({
           />
         </div>
         <div>
-          <Label className="text-xs text-gray-400">Max Tokens</Label>
+          <Label className='text-xs text-gray-400'>Max Tokens</Label>
           <Input
-            type="number"
-            step="50"
-            className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+            type='number'
+            step='50'
+            className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
             value={modelConfig.maxTokens}
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
               updateSelectedNodeConfig({
@@ -148,10 +148,10 @@ export function ModelNodeConfigSection({
           />
         </div>
       </div>
-      <SectionPanel variant="subtle-compact" className="flex items-center justify-between p-2 text-xs text-gray-300">
+      <SectionPanel variant='subtle-compact' className='flex items-center justify-between p-2 text-xs text-gray-300'>
         <span>Accepts Images</span>
         <Button
-          type="button"
+          type='button'
           className={`rounded border px-3 py-1 text-xs ${
             modelConfig.vision
               ? 'text-emerald-200 hover:bg-emerald-500/10'
@@ -166,10 +166,10 @@ export function ModelNodeConfigSection({
           {modelConfig.vision ? 'Enabled' : 'Disabled'}
         </Button>
       </SectionPanel>
-      <SectionPanel variant="subtle-compact" className="flex items-center justify-between p-2 text-xs text-gray-300">
+      <SectionPanel variant='subtle-compact' className='flex items-center justify-between p-2 text-xs text-gray-300'>
         <span>Wait for result</span>
         <Button
-          type="button"
+          type='button'
           className={`rounded border px-3 py-1 text-xs ${
             modelConfig.waitForResult !== false
               ? 'text-emerald-200 hover:bg-emerald-500/10'
@@ -188,16 +188,16 @@ export function ModelNodeConfigSection({
         </Button>
       </SectionPanel>
       {hasPollConsumer && (
-        <SectionPanel variant="subtle-compact" className="border-amber-500/40 bg-amber-500/10 p-2 text-[11px] text-amber-100">
+        <SectionPanel variant='subtle-compact' className='border-amber-500/40 bg-amber-500/10 p-2 text-[11px] text-amber-100'>
           {modelConfig.waitForResult === false
             ? 'Poll is connected to this Model\'s jobId. The Model will emit only jobId, so use Poll.result for your Viewer.'
             : 'Poll is connected to this Model\'s jobId. Wait for result is enabled, so the Model will still emit result; Poll will also fetch the job.'}
         </SectionPanel>
       )}
-      <p className="text-[11px] text-gray-500">
+      <p className='text-[11px] text-gray-500'>
         When enabled, the Model node polls the job until completion and emits
-        <span className="text-gray-300"> result</span>. Disable to emit only{' '}
-        <span className="text-gray-300">jobId</span> and use a Poll node.
+        <span className='text-gray-300'> result</span>. Disable to emit only{' '}
+        <span className='text-gray-300'>jobId</span> and use a Poll node.
       </p>
     </div>
   );

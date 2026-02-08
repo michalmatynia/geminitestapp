@@ -33,15 +33,15 @@ vi.mock('@/shared/ui', async () => {
   return {
     ...actual,
     Dialog: ({ children, open }: any) => (
-      <div data-testid="dialog">
+      <div data-testid='dialog'>
         {children}
-        {open && <div data-testid="dialog-content" />}
+        {open && <div data-testid='dialog-content' />}
       </div>
     ),
-    DialogContent: ({ children }: any) => <div data-testid="dialog-content">{children}</div>,
+    DialogContent: ({ children }: any) => <div data-testid='dialog-content'>{children}</div>,
     DialogHeader: ({ children }: any) => <div>{children}</div>,
     DialogTitle: ({ children }: any) => <div>{children}</div>,
-    DialogTrigger: ({ children }: any) => <div data-testid="dialog-trigger">{children}</div>,
+    DialogTrigger: ({ children }: any) => <div data-testid='dialog-trigger'>{children}</div>,
   };
 });
 
@@ -59,13 +59,13 @@ describe('SectionPicker Component', () => {
   });
 
   it('should render the add section button', () => {
-    render(<SectionPicker zone="template" onSelect={vi.fn()} />, { wrapper });
+    render(<SectionPicker zone='template' onSelect={vi.fn()} />, { wrapper });
     expect(screen.getByRole('button', { name: /Add section/i })).toBeInTheDocument();
   });
 
   it('should call onSelect when a section type is clicked', () => {
     const onSelect = vi.fn();
-    render(<SectionPicker zone="template" onSelect={onSelect} />, { wrapper });
+    render(<SectionPicker zone='template' onSelect={onSelect} />, { wrapper });
 
     // Open the dialog by clicking the trigger
     fireEvent.click(screen.getByRole('button', { name: /Add section/i }));
@@ -77,7 +77,7 @@ describe('SectionPicker Component', () => {
   });
 
   it('should be disabled when the disabled prop is true', () => {
-    render(<SectionPicker zone="template" onSelect={vi.fn()} disabled={true} />, { wrapper });
+    render(<SectionPicker zone='template' onSelect={vi.fn()} disabled={true} />, { wrapper });
     const addButton = screen.getByRole('button', { name: /Add section/i });
     expect(addButton).toBeDisabled();
   });

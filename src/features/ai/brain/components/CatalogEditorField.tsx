@@ -33,15 +33,15 @@ export function CatalogEditorField({
   placeholder: string;
 }): React.JSX.Element {
   return (
-    <div className="space-y-1">
-      <Label className="text-xs text-gray-300">{label}</Label>
+    <div className='space-y-1'>
+      <Label className='text-xs text-gray-300'>{label}</Label>
       <Textarea
-        className="min-h-[108px] font-mono text-xs"
+        className='min-h-[108px] font-mono text-xs'
         value={serializeListForTextarea(value)}
         onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onChange(normalizeListFromTextarea(e.target.value))}
         placeholder={placeholder}
       />
-      <div className="text-[11px] text-gray-500">{description}</div>
+      <div className='text-[11px] text-gray-500'>{description}</div>
     </div>
   );
 }

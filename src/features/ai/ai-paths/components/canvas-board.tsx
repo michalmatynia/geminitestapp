@@ -393,12 +393,12 @@ export function CanvasBoard({
         )
         : null;
     return (
-      <div className="space-y-1">
-        <div className="text-[11px] text-gray-400">
+      <div className='space-y-1'>
+        <div className='text-[11px] text-gray-400'>
           {label}: {formatPortLabel(info.port)}
         </div>
-        <div className="text-[10px] text-gray-400">
-          Data type: <span className="text-gray-200">{info.expectedLabel}</span>
+        <div className='text-[10px] text-gray-400'>
+          Data type: <span className='text-gray-200'>{info.expectedLabel}</span>
         </div>
         {info.actualType ? (
           <div
@@ -410,17 +410,17 @@ export function CanvasBoard({
           </div>
         ) : null}
         {info.isHistory ? (
-          <div className="text-[10px] text-amber-200">
+          <div className='text-[10px] text-amber-200'>
             {info.historyLength > 1 ? `History (${info.historyLength})` : 'Single value'}
           </div>
         ) : null}
         {info.runtimeMismatch ? (
-          <div className="text-[10px] text-rose-300">
+          <div className='text-[10px] text-rose-300'>
             Type mismatch (expected {info.expectedLabel})
           </div>
         ) : null}
         {info.connectionMismatches.length > 0 ? (
-          <div className="space-y-1 text-[10px] text-rose-300">
+          <div className='space-y-1 text-[10px] text-rose-300'>
             {info.connectionMismatches.map((mismatch, index) => {
               const fromLabel = mismatch.fromNode?.title ?? mismatch.fromNode?.id ?? 'unknown';
               const toLabel = mismatch.toNode?.title ?? mismatch.toNode?.id ?? 'unknown';
@@ -434,16 +434,16 @@ export function CanvasBoard({
             })}
           </div>
         ) : null}
-        <pre className="mt-1 max-h-56 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200">
+        <pre className='mt-1 max-h-56 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200'>
           {formatConnectorValue(info.value)}
         </pre>
-        <div className="text-[10px] text-gray-500">
+        <div className='text-[10px] text-gray-500'>
           Right-click to disconnect. Drag to reconnect.
         </div>
         {diff ? (
-          <div className="mt-2">
-            <div className="text-[10px] text-gray-400">Diff (last two passes)</div>
-            <div className="mt-1 max-h-40 overflow-auto rounded bg-black/50 p-2 font-mono text-[10px] leading-relaxed">
+          <div className='mt-2'>
+            <div className='text-[10px] text-gray-400'>Diff (last two passes)</div>
+            <div className='mt-1 max-h-40 overflow-auto rounded bg-black/50 p-2 font-mono text-[10px] leading-relaxed'>
               {diff.lines.map((line, index) => {
                 const prefix = line.type === 'add' ? '+ ' : line.type === 'remove' ? '- ' : '  ';
                 const colorClass =
@@ -463,7 +463,7 @@ export function CanvasBoard({
                 );
               })}
               {diff.truncated ? (
-                <div className="mt-1 text-gray-500">Diff truncated…</div>
+                <div className='mt-1 text-gray-500'>Diff truncated…</div>
               ) : null}
             </div>
           </div>
@@ -788,41 +788,41 @@ export function CanvasBoard({
       onPointerUp={handlePanEnd}
       onPointerLeave={handlePanEnd}
     >
-      <SectionPanel variant="subtle-compact" className="absolute bottom-3 left-3 z-10 p-2 text-[11px] text-gray-400">
+      <SectionPanel variant='subtle-compact' className='absolute bottom-3 left-3 z-10 p-2 text-[11px] text-gray-400'>
         Nodes: {nodes.length}
         {lastDrop ? ` • Last drop: ${Math.round(lastDrop.x)}, ${Math.round(lastDrop.y)}` : ''}
         {` • View: ${Math.round(view.x)}, ${Math.round(view.y)} @ ${Math.round(view.scale * 100)}%`}
       </SectionPanel>
-      <SectionPanel variant="subtle-compact" className="absolute bottom-4 right-4 z-10 p-2 text-xs text-gray-300">
-        <div className="mb-2 text-[11px] uppercase text-gray-500">View Controls</div>
-        <div className="flex items-center gap-2">
+      <SectionPanel variant='subtle-compact' className='absolute bottom-4 right-4 z-10 p-2 text-xs text-gray-300'>
+        <div className='mb-2 text-[11px] uppercase text-gray-500'>View Controls</div>
+        <div className='flex items-center gap-2'>
           <Button
-            className="h-7 w-7 rounded-full border text-xs text-white hover:bg-muted/60"
-            type="button"
+            className='h-7 w-7 rounded-full border text-xs text-white hover:bg-muted/60'
+            type='button'
             onClick={() => zoomTo(view.scale - 0.1)}
           >
             -
           </Button>
-          <span className="min-w-[56px] text-center text-[11px] text-gray-300">
+          <span className='min-w-[56px] text-center text-[11px] text-gray-300'>
             {Math.round(view.scale * 100)}%
           </span>
           <Button
-            className="h-7 w-7 rounded-full border text-xs text-white hover:bg-muted/60"
-            type="button"
+            className='h-7 w-7 rounded-full border text-xs text-white hover:bg-muted/60'
+            type='button'
             onClick={() => zoomTo(view.scale + 0.1)}
           >
             +
           </Button>
           <Button
-            className="h-7 rounded-full border px-2 text-[11px] text-white hover:bg-muted/60"
-            type="button"
+            className='h-7 rounded-full border px-2 text-[11px] text-white hover:bg-muted/60'
+            type='button'
             onClick={fitToNodes}
           >
             Fit
           </Button>
           <Button
-            className="h-7 rounded-full border px-2 text-[11px] text-white hover:bg-muted/60"
-            type="button"
+            className='h-7 rounded-full border px-2 text-[11px] text-white hover:bg-muted/60'
+            type='button'
             onClick={resetView}
           >
             Reset
@@ -831,7 +831,7 @@ export function CanvasBoard({
       </SectionPanel>
       <div
         ref={canvasRef}
-        className="absolute left-0 top-0"
+        className='absolute left-0 top-0'
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         style={{
@@ -846,29 +846,29 @@ export function CanvasBoard({
       >
         {lastDrop ? (
           <div
-            className="absolute"
+            className='absolute'
             style={{
               width: 10,
               height: 10,
               transform: `translate(${lastDrop.x}px, ${lastDrop.y}px)`,
             }}
           >
-            <span className="absolute inset-0 rounded-full bg-sky-400/40 animate-ping" />
-            <span className="absolute inset-0 rounded-full border border-sky-300/70 bg-sky-500/60" />
+            <span className='absolute inset-0 rounded-full bg-sky-400/40 animate-ping' />
+            <span className='absolute inset-0 rounded-full border border-sky-300/70 bg-sky-500/60' />
           </div>
         ) : null}
         <svg
-          className="absolute inset-0"
+          className='absolute inset-0'
           width={CANVAS_WIDTH}
           height={CANVAS_HEIGHT}
           style={{ pointerEvents: 'auto' }}
         >
           <defs>
-            <filter id="signal-dot-glow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="2" result="blur" />
+            <filter id='signal-dot-glow' x='-50%' y='-50%' width='200%' height='200%'>
+              <feGaussianBlur stdDeviation='2' result='blur' />
               <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
+                <feMergeNode in='blur' />
+                <feMergeNode in='SourceGraphic' />
               </feMerge>
             </filter>
           </defs>
@@ -899,12 +899,12 @@ export function CanvasBoard({
             const arrowWidth = isSelected ? 6 : 5;
             const arrowPath = `M 0 0 L -${arrowSize} ${arrowWidth / 2} L -${arrowSize} -${arrowWidth / 2} Z`;
             return (
-              <g key={edge.id} className="group cursor-pointer">
+              <g key={edge.id} className='group cursor-pointer'>
                 <path
                   d={edge.path}
-                  stroke="transparent"
-                  strokeWidth="14"
-                  fill="none"
+                  stroke='transparent'
+                  strokeWidth='14'
+                  fill='none'
                   style={{ pointerEvents: 'stroke' }}
                   onContextMenu={(event) => {
                     event.preventDefault();
@@ -920,8 +920,8 @@ export function CanvasBoard({
                   d={edge.path}
                   className={edgeClass}
                   strokeWidth={isSelected ? 2.5 : 1.6}
-                  stroke="currentColor"
-                  fill="none"
+                  stroke='currentColor'
+                  fill='none'
                   style={{ pointerEvents: 'none' }}
                 />
                 {isFlowing && flowEnabled ? (
@@ -930,13 +930,13 @@ export function CanvasBoard({
                       d={edge.path}
                       className={`${edgeClass} ai-paths-wire-flow`}
                       strokeWidth={isSelected ? 3.4 : 2.2}
-                      stroke="currentColor"
-                      fill="none"
+                      stroke='currentColor'
+                      fill='none'
                       style={{ pointerEvents: 'none' }}
                     />
                     <SignalDots
                       path={edge.path}
-                      intensity={resolvedFlowIntensity as Exclude<typeof resolvedFlowIntensity, 'off'>}
+                      intensity={resolvedFlowIntensity}
                     />
                   </>
                 ) : null}
@@ -945,8 +945,8 @@ export function CanvasBoard({
                     d={arrowPath}
                     transform={`translate(${edge.arrow.x} ${edge.arrow.y}) rotate(${edge.arrow.angle})`}
                     className={edgeClass}
-                    fill="currentColor"
-                    stroke="none"
+                    fill='currentColor'
+                    stroke='none'
                     style={{ pointerEvents: 'none' }}
                   />
                 ) : null}
@@ -963,9 +963,9 @@ export function CanvasBoard({
             return (
               <path
                 d={path}
-                stroke="rgba(56,189,248,0.55)"
-                strokeWidth="1.6"
-                fill="none"
+                stroke='rgba(56,189,248,0.55)'
+                strokeWidth='1.6'
+                fill='none'
               />
             );
           })() : null}
@@ -1065,36 +1065,36 @@ export function CanvasBoard({
                 style={{ minHeight: NODE_MIN_HEIGHT }}
               >
                 {isInputPulse || isOutputPulse ? (
-                  <div className="absolute -top-2 right-2 flex items-center gap-1">
+                  <div className='absolute -top-2 right-2 flex items-center gap-1'>
                     {isInputPulse ? (
                       <span
-                        className="relative inline-flex h-2.5 w-2.5"
-                        title="Input loaded"
+                        className='relative inline-flex h-2.5 w-2.5'
+                        title='Input loaded'
                       >
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400/70" />
-                        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-sky-300 shadow-[0_0_6px_rgba(56,189,248,0.75)]" />
+                        <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400/70' />
+                        <span className='relative inline-flex h-2.5 w-2.5 rounded-full bg-sky-300 shadow-[0_0_6px_rgba(56,189,248,0.75)]' />
                       </span>
                     ) : null}
                     {isOutputPulse ? (
                       <span
-                        className="relative inline-flex h-2.5 w-2.5"
-                        title="Output sent"
+                        className='relative inline-flex h-2.5 w-2.5'
+                        title='Output sent'
                       >
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400/70" />
-                        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-300 shadow-[0_0_6px_rgba(251,191,36,0.75)]" />
+                        <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400/70' />
+                        <span className='relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-300 shadow-[0_0_6px_rgba(251,191,36,0.75)]' />
                       </span>
                     ) : null}
                   </div>
                 ) : null}
                 <div
-                  className="pointer-events-none absolute bottom-1 right-2 w-[90%] break-all text-right text-[9px] font-mono text-gray-400/80"
+                  className='pointer-events-none absolute bottom-1 right-2 w-[90%] break-all text-right text-[9px] font-mono text-gray-400/80'
                 >
                   {node.id}
                 </div>
                 {node.inputs.map((input, index) => (
                   <div
                     key={`input-${node.id}-${input}`}
-                    className="absolute flex items-center"
+                    className='absolute flex items-center'
                     style={{
                       left: -(PORT_SIZE / 2) - 4,
                       top: getPortOffsetY(index, node.inputs.length) - PORT_SIZE / 2,
@@ -1130,15 +1130,15 @@ export function CanvasBoard({
                         <>
                           <Tooltip
                             content={renderConnectorTooltip(connectorInfo)}
-                            side="right"
-                            maxWidth="360px"
+                            side='right'
+                            maxWidth='360px'
                             open={isTooltipOpen}
                             disableHover
                           >
-                            <div className="relative">
+                            <div className='relative'>
                               <button
-                                type="button"
-                                data-port="input"
+                                type='button'
+                                data-port='input'
                                 className={`cursor-pointer rounded-full border bg-sky-500/20 shadow-[0_0_8px_rgba(56,189,248,0.35)] hover:border-sky-200 ${
                                   isConnecting
                                     ? isConnectable
@@ -1180,7 +1180,7 @@ export function CanvasBoard({
                                 title={`Input: ${formatPortLabel(input)}`}
                               />
                               {hasMismatch ? (
-                                <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-black/60" />
+                                <span className='absolute -right-1 -top-1 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-black/60' />
                               ) : null}
                             </div>
                           </Tooltip>
@@ -1205,7 +1205,7 @@ export function CanvasBoard({
                 {node.outputs.map((output, index) => (
                   <div
                     key={`output-${node.id}-${output}`}
-                    className="absolute flex items-center"
+                    className='absolute flex items-center'
                     style={{
                       right: -(PORT_SIZE / 2) - 4,
                       top: getPortOffsetY(index, node.outputs.length) - PORT_SIZE / 2,
@@ -1237,15 +1237,15 @@ export function CanvasBoard({
                           </span>
                           <Tooltip
                             content={renderConnectorTooltip(connectorInfo)}
-                            side="left"
-                            maxWidth="360px"
+                            side='left'
+                            maxWidth='360px'
                             open={isTooltipOpen}
                             disableHover
                           >
-                            <div className="relative">
+                            <div className='relative'>
                               <button
-                                type="button"
-                                data-port="output"
+                                type='button'
+                                data-port='output'
                                 className={`cursor-pointer rounded-full border bg-amber-500/20 shadow-[0_0_8px_rgba(251,191,36,0.35)] hover:border-amber-200 ${
                                   isPinned ? 'border-amber-300/80 ring-2 ring-amber-300/70' : 'border-amber-400/60'
                                 }`}
@@ -1270,7 +1270,7 @@ export function CanvasBoard({
                                 title={`Output: ${formatPortLabel(output)}`}
                               />
                               {hasMismatch ? (
-                                <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-black/60" />
+                                <span className='absolute -right-1 -top-1 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-black/60' />
                               ) : null}
                             </div>
                           </Tooltip>
@@ -1279,15 +1279,15 @@ export function CanvasBoard({
                     })()}
                   </div>
                 ))}
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-semibold text-white">{node.title}</span>
-                  <div className="flex items-center gap-1">
+                <div className='flex items-center justify-between gap-2'>
+                  <span className='text-xs font-semibold text-white'>{node.title}</span>
+                  <div className='flex items-center gap-1'>
                     {isScheduledTrigger ? (
-                      <span className="rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[9px] uppercase text-amber-200">
+                      <span className='rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[9px] uppercase text-amber-200'>
                         Scheduled
                       </span>
                     ) : null}
-                    <span className="rounded-full border px-2 py-[1px] text-[10px] uppercase text-gray-400">
+                    <span className='rounded-full border px-2 py-[1px] text-[10px] uppercase text-gray-400'>
                       {node.type}
                     </span>
                   </div>
@@ -1313,20 +1313,20 @@ export function CanvasBoard({
                   </div>
                 ) : null}
                 {isBlockerProcessing && (
-                  <div className="inline-flex w-fit items-center gap-1 rounded-full border border-sky-500/40 bg-sky-500/10 px-2 py-[2px] text-[9px] uppercase tracking-wide text-sky-200">
+                  <div className='inline-flex w-fit items-center gap-1 rounded-full border border-sky-500/40 bg-sky-500/10 px-2 py-[2px] text-[9px] uppercase tracking-wide text-sky-200'>
                     Processing
                     <NodeProcessingDots active />
                   </div>
                 )}
                 {node.type === 'viewer' && !triggerConnected.has(node.id) && (
-                  <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[9px] text-amber-200">
+                  <div className='rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[9px] text-amber-200'>
                     Not wired to a Trigger
                   </div>
                 )}
                 {node.type === 'trigger' && (
                   <Button
-                    className="self-start rounded-md border border-emerald-500/40 px-2 py-1 text-[10px] text-emerald-200 hover:bg-emerald-500/10"
-                    type="button"
+                    className='self-start rounded-md border border-emerald-500/40 px-2 py-1 text-[10px] text-emerald-200 hover:bg-emerald-500/10'
+                    type='button'
                     onPointerDown={(event) => event.stopPropagation()}
                     onClick={(event) => onFireTrigger(node, event)}
                   >
@@ -1334,34 +1334,34 @@ export function CanvasBoard({
                   </Button>
                 )}
                 {node.type === 'trigger' && (
-                  <div className="text-[10px] uppercase text-lime-200/80">
+                  <div className='text-[10px] uppercase text-lime-200/80'>
                     {isScheduledTrigger
                       ? 'Server scheduled trigger'
                       : 'Accepts context input'}
                   </div>
                 )}
                 {node.type === 'context' && (
-                  <span className="text-[10px] uppercase text-emerald-300/80">
+                  <span className='text-[10px] uppercase text-emerald-300/80'>
                     Role output can feed any Trigger
                   </span>
                 )}
                 {node.type === 'simulation' && (
-                  <span className="text-[10px] uppercase text-cyan-300/80">
+                  <span className='text-[10px] uppercase text-cyan-300/80'>
                     Wire Trigger ↔ Simulation
                   </span>
                 )}
                 {node.type === 'viewer' && (
-                  <div className="rounded-md border border-border bg-card/60 px-2 py-1 text-[10px] text-gray-400">
+                  <div className='rounded-md border border-border bg-card/60 px-2 py-1 text-[10px] text-gray-400'>
                     Open node to view results
                   </div>
                 )}
               </div>
               {showNote ? (
                 <div
-                  className="mt-2 w-full rounded-lg border border-black/10 px-3 py-2 text-[11px] text-gray-900 shadow-sm"
+                  className='mt-2 w-full rounded-lg border border-black/10 px-3 py-2 text-[11px] text-gray-900 shadow-sm'
                   style={{ backgroundColor: noteColor }}
                 >
-                  <div className="whitespace-pre-wrap break-words">{noteText}</div>
+                  <div className='whitespace-pre-wrap break-words'>{noteText}</div>
                 </div>
               ) : null}
             </div>

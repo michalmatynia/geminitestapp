@@ -214,17 +214,17 @@ export function NoteDetailView(): React.JSX.Element | null {
   );
 
   return (
-    <div className="flex h-full flex-col">
+    <div className='flex h-full flex-col'>
       {/* Breadcrumb for selected note */}
-      <div className="mb-4 flex items-center gap-2 text-sm text-gray-400">
+      <div className='mb-4 flex items-center gap-2 text-sm text-gray-400'>
         {isFolderTreeCollapsed && (
           <Button
             onClick={onExpandFolderTree}
-            variant="outline"
-            className="border text-gray-300 hover:bg-muted/50 hover:text-white"
+            variant='outline'
+            className='border text-gray-300 hover:bg-muted/50 hover:text-white'
           >
-            <ChevronLeft className="-scale-x-100" size={16} />
-            <span className="ml-2">Show Folders</span>
+            <ChevronLeft className='-scale-x-100' size={16} />
+            <span className='ml-2'>Show Folders</span>
           </Button>
         )}
         {buildBreadcrumbPath(
@@ -234,28 +234,28 @@ export function NoteDetailView(): React.JSX.Element | null {
         ).map((crumb: { id: string | null; name: string; isNote?: boolean }, index: number, array: Array<{ id: string | null; name: string; isNote?: boolean }>) => (
           <React.Fragment key={index}>
             {crumb.isNote ? (
-              <span className="text-gray-300">{crumb.name}</span>
+              <span className='text-gray-300'>{crumb.name}</span>
             ) : (
               <Button
-                variant="link"
+                variant='link'
                 onClick={(): void => {
                   setSelectedFolderId(crumb.id);
                   setSelectedNote(null);
                   setIsEditing(false);
                 }}
-                className="h-auto p-0 text-gray-400 hover:text-blue-400 transition"
+                className='h-auto p-0 text-gray-400 hover:text-blue-400 transition'
               >
                 {crumb.name}
               </Button>
             )}
             {index < array.length - 1 && (
-              <ChevronRight size={16} className="text-gray-600" />
+              <ChevronRight size={16} className='text-gray-600' />
             )}
           </React.Fragment>
         ))}
       </div>
 
-      <div className="mb-4 flex items-center gap-4">
+      <div className='mb-4 flex items-center gap-4'>
         <Button
           onClick={(): void => {
             if (isEditing) {
@@ -264,63 +264,63 @@ export function NoteDetailView(): React.JSX.Element | null {
               setSelectedNote(null);
             }
           }}
-          className="min-w-[80px] border border-white/20 hover:border-white/40"
+          className='min-w-[80px] border border-white/20 hover:border-white/40'
         >
           Back
         </Button>
         <Button
-          type="button"
+          type='button'
           onClick={(): void => void onToggleFavorite(selectedNote)}
-          className="flex items-center gap-2 border border-white/20 hover:border-white/40"
+          className='flex items-center gap-2 border border-white/20 hover:border-white/40'
         >
           <Star
             size={16}
             className={selectedNote.isFavorite ? 'fill-yellow-400 text-yellow-500' : ''}
           />
-          <span className="text-sm">
+          <span className='text-sm'>
             {selectedNote.isFavorite ? 'Favorited' : 'Favorite'}
           </span>
         </Button>
         {!isEditing ? (
           <Button
             onClick={(): void => setIsEditing(true)}
-            className="min-w-[80px] border border-white/20 hover:border-white/40"
+            className='min-w-[80px] border border-white/20 hover:border-white/40'
           >
             Edit
           </Button>
         ) : (
           <>
             <Button
-              type="button"
-              form="note-edit-form"
+              type='button'
+              form='note-edit-form'
               onClick={(): void => {
                 const form = document.getElementById('note-edit-form') as HTMLFormElement;
                 form?.requestSubmit();
               }}
-              className="min-w-[80px] border border-white/20 hover:border-white/40"
+              className='min-w-[80px] border border-white/20 hover:border-white/40'
             >
               Update
             </Button>
             <Button
-              type="button"
+              type='button'
               onClick={(): void => setIsEditing(false)}
-              className="min-w-[80px] border border-white/20 hover:border-white/40"
+              className='min-w-[80px] border border-white/20 hover:border-white/40'
             >
               Cancel
             </Button>
             <Button
-              type="button"
+              type='button'
               onClick={(): void => { void handleDeleteNote(); }}
-              className="min-w-[80px] border border-red-500/20 hover:border-red-500/40 text-red-400"
+              className='min-w-[80px] border border-red-500/20 hover:border-red-500/40 text-red-400'
             >
               Delete
             </Button>
           </>
         )}
-        <div className="ml-auto">
+        <div className='ml-auto'>
           <TriggerButtonBar
-            location="note_modal"
-            entityType="note"
+            location='note_modal'
+            entityType='note'
             entityId={selectedNote.id}
             getEntityJson={() => selectedNote as unknown as Record<string, unknown>}
           />
@@ -328,7 +328,7 @@ export function NoteDetailView(): React.JSX.Element | null {
       </div>
 
       {isEditing ? (
-        <div className="flex-1 overflow-y-auto">
+        <div className='flex-1 overflow-y-auto'>
           <NoteForm
             note={selectedNote}
             onSuccess={handleUpdateSuccess}
@@ -336,18 +336,18 @@ export function NoteDetailView(): React.JSX.Element | null {
         </div>
       ) : (
         <SectionPanel
-          className="flex-1 overflow-y-auto p-6 cursor-text"
+          className='flex-1 overflow-y-auto p-6 cursor-text'
           onDoubleClick={() => setIsEditing(true)}
           style={previewStyle}
         >
           <h1
-            className="mb-4 text-3xl font-bold"
+            className='mb-4 text-3xl font-bold'
             style={{ color: previewTextColor }}
           >
             {selectedNote.title}
           </h1>
           <div
-            className="prose max-w-none"
+            className='prose max-w-none'
             style={previewTypographyStyle}
             dangerouslySetInnerHTML={{
               __html:
@@ -390,12 +390,12 @@ export function NoteDetailView(): React.JSX.Element | null {
             }}
           />
           {relatedNotes.length > 0 && (
-            <div className="mt-6 space-y-4">
-              <div className="space-y-2">
-                <div className="text-xs uppercase tracking-wide text-gray-400">
+            <div className='mt-6 space-y-4'>
+              <div className='space-y-2'>
+                <div className='text-xs uppercase tracking-wide text-gray-400'>
                   Related Notes
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className='flex flex-wrap gap-2'>
                   {relatedNotes
                     .filter(
                       (noteItem: RelatedNote, index: number, array: RelatedNote[]) =>
@@ -406,10 +406,10 @@ export function NoteDetailView(): React.JSX.Element | null {
                       return (
                         <SectionPanel
                           key={related.id}
-                          variant="subtle-compact"
-                          className="relative w-40 cursor-pointer text-left text-xs transition"
+                          variant='subtle-compact'
+                          className='relative w-40 cursor-pointer text-left text-xs transition'
                           style={relatedPreviewStyle}
-                          role="button"
+                          role='button'
                           tabIndex={0}
                           onClick={(): void => onSelectRelatedNote(related.id)}
                           onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
@@ -419,20 +419,20 @@ export function NoteDetailView(): React.JSX.Element | null {
                             }
                           }}
                         >
-                          <div className="truncate font-semibold">
+                          <div className='truncate font-semibold'>
                             {relatedNote?.title ?? related.title}
                           </div>
-                          <div className="line-clamp-2 text-[11px] opacity-80">
+                          <div className='line-clamp-2 text-[11px] opacity-80'>
                             {relatedNote?.content ?? 'No content'}
                           </div>
                           <Button
-                            type="button"
+                            type='button'
                             onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
                               event.stopPropagation();
                               void onUnlinkRelatedNote(related.id);
                             }}
-                            className="absolute right-2 top-2 opacity-70 hover:opacity-100"
-                            aria-label="Unlink related note"
+                            className='absolute right-2 top-2 opacity-70 hover:opacity-100'
+                            aria-label='Unlink related note'
                           >
                             <X size={12} />
                           </Button>
@@ -443,7 +443,7 @@ export function NoteDetailView(): React.JSX.Element | null {
               </div>
             </div>
           )}
-          <div className="mt-8 pt-4 border-t border-border flex gap-6 text-sm text-gray-500">
+          <div className='mt-8 pt-4 border-t border-border flex gap-6 text-sm text-gray-500'>
             <span>Created: {new Date(selectedNote.createdAt).toLocaleString()}</span>
             <span>Modified: {new Date(selectedNote.updatedAt).toLocaleString()}</span>
           </div>

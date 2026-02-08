@@ -103,16 +103,16 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
   }
 
   return (
-    <Table className="max-w-4xl">
+    <Table className='max-w-4xl'>
       <TableHeader>
         <TableRow>
-          <TableHead className="w-[50px]"></TableHead>
+          <TableHead className='w-[50px]'></TableHead>
           <TableHead>Name</TableHead>
-          <TableHead className="w-[200px]">Location</TableHead>
-          <TableHead className="w-[150px]">Mode</TableHead>
-          <TableHead className="w-[150px]">Display</TableHead>
-          <TableHead className="w-[100px]">Path</TableHead>
-          <TableHead className="w-[100px] text-right">Actions</TableHead>
+          <TableHead className='w-[200px]'>Location</TableHead>
+          <TableHead className='w-[150px]'>Mode</TableHead>
+          <TableHead className='w-[150px]'>Display</TableHead>
+          <TableHead className='w-[100px]'>Path</TableHead>
+          <TableHead className='w-[100px] text-right'>Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -138,56 +138,56 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
             )}
           >
             <TableCell>
-              <GripVertical className="size-4 text-muted-foreground" />
+              <GripVertical className='size-4 text-muted-foreground' />
             </TableCell>
             <TableCell>{row.name}</TableCell>
             <TableCell>
-              <div className="flex flex-col gap-1">
+              <div className='flex flex-col gap-1'>
                 {row.locations.map((loc: string, idx: number) => (
-                  <span key={idx} className="inline-flex items-center rounded-md bg-blue-500/10 px-2 py-1 text-xs font-medium text-blue-400 ring-1 ring-inset ring-blue-500/20">
+                  <span key={idx} className='inline-flex items-center rounded-md bg-blue-500/10 px-2 py-1 text-xs font-medium text-blue-400 ring-1 ring-inset ring-blue-500/20'>
                     {loc}
                   </span>
                 ))}
               </div>
             </TableCell>
             <TableCell>
-              <span className="inline-flex items-center rounded-md bg-purple-500/10 px-2 py-1 text-xs font-medium text-purple-400 ring-1 ring-inset ring-purple-500/20">
+              <span className='inline-flex items-center rounded-md bg-purple-500/10 px-2 py-1 text-xs font-medium text-purple-400 ring-1 ring-inset ring-purple-500/20'>
                 {row.mode}
               </span>
             </TableCell>
             <TableCell>
               {(() : React.JSX.Element => {
                 const Icon = row.iconId ? ICON_LIBRARY_MAP[row.iconId] : undefined;
-                if (!Icon) return <span className="text-sm">{row.display}</span>;
+                if (!Icon) return <span className='text-sm'>{row.display}</span>;
                 return (
-                  <span className="flex items-center gap-2">
-                    <Icon className="size-4" />
-                    {row.display === 'icon_label' && <span className="text-sm">{row.display}</span>}
+                  <span className='flex items-center gap-2'>
+                    <Icon className='size-4' />
+                    {row.display === 'icon_label' && <span className='text-sm'>{row.display}</span>}
                   </span>
                 );
               })()}
             </TableCell>
             <TableCell>
-              <span className="text-sm text-muted-foreground">
+              <span className='text-sm text-muted-foreground'>
                 {row.pathName || 'N/A'}
               </span>
             </TableCell>
-            <TableCell className="text-right">
+            <TableCell className='text-right'>
               <Button
-                variant="ghost"
-                size="sm"
+                variant='ghost'
+                size='sm'
                 onClick={(): void => onEdit(row)}
-                className="text-muted-foreground hover:text-white"
+                className='text-muted-foreground hover:text-white'
               >
                 Edit
               </Button>
               <Button
-                variant="ghost"
-                size="sm"
+                variant='ghost'
+                size='sm'
                 onClick={(): void => onDelete(row.id)}
-                className="text-destructive hover:text-red-500"
+                className='text-destructive hover:text-red-500'
               >
-                <Trash2 className="size-4" />
+                <Trash2 className='size-4' />
               </Button>
             </TableCell>
           </TableRow>

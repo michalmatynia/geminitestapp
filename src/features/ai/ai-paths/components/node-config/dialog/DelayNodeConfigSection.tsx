@@ -20,13 +20,13 @@ export function DelayNodeConfigSection({
   const delayConfig = selectedNode.config?.delay ?? { ms: 300 };
 
   return (
-    <div className="space-y-4">
+    <div className='space-y-4'>
       <div>
-        <Label className="text-xs text-gray-400">Delay (ms)</Label>
+        <Label className='text-xs text-gray-400'>Delay (ms)</Label>
         <Input
-          type="number"
-          step="50"
-          className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+          type='number'
+          step='50'
+          className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
           value={delayConfig.ms}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({
@@ -37,7 +37,7 @@ export function DelayNodeConfigSection({
           }
         />
       </div>
-      <p className="text-[11px] text-gray-500">
+      <p className='text-[11px] text-gray-500'>
         Adds a pause before passing inputs downstream.
       </p>
     </div>

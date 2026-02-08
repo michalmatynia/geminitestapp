@@ -127,7 +127,7 @@ export function Admin3DAssetsPage(): React.JSX.Element {
 
   const stats =
     !loading && assets.length > 0 ? (
-      <div className="text-sm text-muted-foreground">
+      <div className='text-sm text-muted-foreground'>
         Showing {assets.length} asset{assets.length !== 1 ? 's' : ''}
         {hasActiveFilters && ' (filtered)'}
       </div>
@@ -137,22 +137,22 @@ export function Admin3DAssetsPage(): React.JSX.Element {
     <ListPanel
       header={
         <SectionHeader
-          title="3D Assets"
-          description="Upload and manage 3D models with dithering preview"
+          title='3D Assets'
+          description='Upload and manage 3D models with dithering preview'
           actions={
             <>
               <Button
-                variant="outline"
-                size="sm"
+                variant='outline'
+                size='sm'
                 onClick={() => void assetsQuery.refetch()}
                 disabled={loading}
-                className="gap-2"
+                className='gap-2'
               >
                 <RefreshCw className={cn('h-4 w-4', assetsQuery.isFetching && 'animate-spin')} />
                 Refresh
               </Button>
-              <Button size="sm" onClick={() => setShowUploader(true)}>
-                <Upload className="mr-2 h-4 w-4" />
+              <Button size='sm' onClick={() => setShowUploader(true)}>
+                <Upload className='mr-2 h-4 w-4' />
                 Upload Asset
               </Button>
             </>
@@ -161,61 +161,61 @@ export function Admin3DAssetsPage(): React.JSX.Element {
       }
       alerts={
         error ? (
-          <Alert variant="error">
+          <Alert variant='error'>
             {error}
           </Alert>
         ) : null
       }
       filters={
         <SectionPanel>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className='flex flex-wrap items-center gap-3'>
             <SearchInput
               value={searchQuery}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(e.target.value)}
               onClear={() => setSearchQuery('')}
-              placeholder="Search assets..."
-              className="h-8"
-              containerClassName="flex-1 min-w-[200px] max-w-md"
+              placeholder='Search assets...'
+              className='h-8'
+              containerClassName='flex-1 min-w-[200px] max-w-md'
             />
 
             <Button
               variant={showFilters ? 'default' : 'outline'}
-              size="sm"
+              size='sm'
               onClick={() => setShowFilters(!showFilters)}
-              className="gap-2"
+              className='gap-2'
             >
-              <Filter className="h-4 w-4" />
+              <Filter className='h-4 w-4' />
               Filters
               {hasActiveFilters && (
-                <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] text-white">
+                <span className='ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] text-white'>
                   {(selectedCategory ? 1 : 0) + selectedTags.length}
                 </span>
               )}
             </Button>
 
             {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">
-                <X className="h-4 w-4" />
+              <Button variant='ghost' size='sm' onClick={clearFilters} className='gap-1'>
+                <X className='h-4 w-4' />
                 Clear
               </Button>
             )}
 
-            <div className="ml-auto flex items-center overflow-hidden rounded-md border border-border bg-muted/20">
+            <div className='ml-auto flex items-center overflow-hidden rounded-md border border-border bg-muted/20'>
               <Button
                 variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                size="icon"
-                className="h-8 w-8 rounded-none"
+                size='icon'
+                className='h-8 w-8 rounded-none'
                 onClick={() => setViewMode('grid')}
               >
-                <Grid className="h-4 w-4" />
+                <Grid className='h-4 w-4' />
               </Button>
               <Button
                 variant={viewMode === 'list' ? 'default' : 'ghost'}
-                size="icon"
-                className="h-8 w-8 rounded-none"
+                size='icon'
+                className='h-8 w-8 rounded-none'
                 onClick={() => setViewMode('list')}
               >
-                <List className="h-4 w-4" />
+                <List className='h-4 w-4' />
               </Button>
             </div>
           </div>
@@ -225,9 +225,9 @@ export function Admin3DAssetsPage(): React.JSX.Element {
     >
       {showFilters && (
         <SectionPanel>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
             <div>
-              <Label className="mb-2 block text-sm text-muted-foreground">Category</Label>
+              <Label className='mb-2 block text-sm text-muted-foreground'>Category</Label>
               <UnifiedSelect
                 value={selectedCategory ?? '__all__'}
                 onValueChange={(v: string): void => setSelectedCategory(v === '__all__' ? null : v)}
@@ -238,30 +238,30 @@ export function Admin3DAssetsPage(): React.JSX.Element {
                     label: cat,
                   })),
                 ]}
-                placeholder="All categories"
+                placeholder='All categories'
               />
             </div>
 
             <div>
-              <label className="mb-2 block text-sm text-muted-foreground">Tags</label>
-              <div className="flex flex-wrap gap-2">
+              <label className='mb-2 block text-sm text-muted-foreground'>Tags</label>
+              <div className='flex flex-wrap gap-2'>
                 {allTags.map((tag: string) => (
                   <Button
                     key={tag}
                     variant={selectedTags.includes(tag) ? 'default' : 'outline'}
-                    size="sm"
+                    size='sm'
                     onClick={() =>
                       setSelectedTags((prev: string[]) =>
                         prev.includes(tag) ? prev.filter((t: string) => t !== tag) : [...prev, tag]
                       )
                     }
-                    className="h-7 px-2 text-xs"
+                    className='h-7 px-2 text-xs'
                   >
                     {tag}
                   </Button>
                 ))}
                 {allTags.length === 0 && (
-                  <span className="text-sm text-muted-foreground">No tags available</span>
+                  <span className='text-sm text-muted-foreground'>No tags available</span>
                 )}
               </div>
             </div>
@@ -271,10 +271,10 @@ export function Admin3DAssetsPage(): React.JSX.Element {
 
       {showUploader && (
         <SectionPanel>
-          <div className="p-4">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-foreground">Upload 3D Asset</h3>
-              <Button variant="ghost" size="sm" onClick={() => setShowUploader(false)}>
+          <div className='p-4'>
+            <div className='mb-4 flex items-center justify-between'>
+              <h3 className='text-lg font-semibold text-foreground'>Upload 3D Asset</h3>
+              <Button variant='ghost' size='sm' onClick={() => setShowUploader(false)}>
                 Cancel
               </Button>
             </div>
@@ -289,30 +289,30 @@ export function Admin3DAssetsPage(): React.JSX.Element {
       )}
 
       {loading && (
-        <div className="flex items-center justify-center rounded-md border border-dashed border-border py-16 text-muted-foreground">
-          <Loader2 className="h-7 w-7 animate-spin text-blue-400" />
+        <div className='flex items-center justify-center rounded-md border border-dashed border-border py-16 text-muted-foreground'>
+          <Loader2 className='h-7 w-7 animate-spin text-blue-400' />
         </div>
       )}
 
       {!loading && assets.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-border bg-card/50 py-12 text-muted-foreground">
-          <Box className="mb-4 h-12 w-12 opacity-60" />
-          <p className="text-base font-medium text-foreground">
+        <div className='flex flex-col items-center justify-center rounded-md border border-dashed border-border bg-card/50 py-12 text-muted-foreground'>
+          <Box className='mb-4 h-12 w-12 opacity-60' />
+          <p className='text-base font-medium text-foreground'>
             {hasActiveFilters ? 'No matching assets' : 'No 3D assets yet'}
           </p>
-          <p className="text-sm text-muted-foreground">
+          <p className='text-sm text-muted-foreground'>
             {hasActiveFilters
               ? 'Try adjusting your filters'
               : 'Upload your first .glb or .gltf file'}
           </p>
           {!hasActiveFilters && (
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+            <div className='mt-4 flex flex-wrap items-center justify-center gap-2'>
               <Button onClick={() => setShowUploader(true)}>
-                <Upload className="mr-2 h-4 w-4" />
+                <Upload className='mr-2 h-4 w-4' />
                 Upload Asset
               </Button>
               <Button
-                variant="outline"
+                variant='outline'
                 disabled={reindexMutation.isPending}
                 onClick={(): void => {
                   void reindexMutation
@@ -332,7 +332,7 @@ export function Admin3DAssetsPage(): React.JSX.Element {
       )}
 
       {!loading && assets.length > 0 && viewMode === 'grid' && (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
           {assets.map((asset: Asset3DRecord) => (
             <Asset3DCard
               key={asset.id}
@@ -347,85 +347,85 @@ export function Admin3DAssetsPage(): React.JSX.Element {
       )}
 
       {!loading && assets.length > 0 && viewMode === 'list' && (
-        <Table className="text-sm text-foreground">
+        <Table className='text-sm text-foreground'>
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead className="hidden sm:table-cell">Category</TableHead>
-              <TableHead className="hidden md:table-cell">Tags</TableHead>
-              <TableHead className="hidden lg:table-cell">Size</TableHead>
-              <TableHead className="hidden lg:table-cell">Date</TableHead>
-              <TableHead className="w-36 text-right">Actions</TableHead>
+              <TableHead className='hidden sm:table-cell'>Category</TableHead>
+              <TableHead className='hidden md:table-cell'>Tags</TableHead>
+              <TableHead className='hidden lg:table-cell'>Size</TableHead>
+              <TableHead className='hidden lg:table-cell'>Date</TableHead>
+              <TableHead className='w-36 text-right'>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {assets.map((asset: Asset3DRecord) => (
               <TableRow key={asset.id}>
                 <TableCell>
-                  <div className="flex items-center gap-3">
+                  <div className='flex items-center gap-3'>
                     <div
-                      className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-border bg-muted/40"
+                      className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-border bg-muted/40'
                       onClick={() => setPreviewAsset(asset)}
                     >
-                      <Box className="h-4 w-4 text-muted-foreground" />
+                      <Box className='h-4 w-4 text-muted-foreground' />
                     </div>
-                    <span className="text-sm font-medium text-foreground truncate">
+                    <span className='text-sm font-medium text-foreground truncate'>
                       {asset.name || asset.filename}
                     </span>
                   </div>
                 </TableCell>
-                <TableCell className="hidden sm:table-cell">
+                <TableCell className='hidden sm:table-cell'>
                   {asset.category ? (
-                    <span className="rounded bg-blue-500/10 px-2 py-0.5 text-xs text-blue-300">
+                    <span className='rounded bg-blue-500/10 px-2 py-0.5 text-xs text-blue-300'>
                       {asset.category}
                     </span>
                   ) : (
-                    <span className="text-sm text-muted-foreground">-</span>
+                    <span className='text-sm text-muted-foreground'>-</span>
                   )}
                 </TableCell>
-                <TableCell className="hidden md:table-cell">
-                  <div className="flex flex-wrap gap-1">
+                <TableCell className='hidden md:table-cell'>
+                  <div className='flex flex-wrap gap-1'>
                     {asset.tags.slice(0, 2).map((tag: string) => (
                       <span
                         key={tag}
-                        className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground"
+                        className='rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground'
                       >
                         {tag}
                       </span>
                     ))}
                     {asset.tags.length > 2 && (
-                      <span className="text-xs text-muted-foreground">
+                      <span className='text-xs text-muted-foreground'>
                         +{asset.tags.length - 2}
                       </span>
                     )}
                     {asset.tags.length === 0 && (
-                      <span className="text-sm text-muted-foreground">-</span>
+                      <span className='text-sm text-muted-foreground'>-</span>
                     )}
                   </div>
                 </TableCell>
-                <TableCell className="hidden lg:table-cell text-muted-foreground">
+                <TableCell className='hidden lg:table-cell text-muted-foreground'>
                   {formatFileSize(asset.size)}
                 </TableCell>
-                <TableCell className="hidden lg:table-cell text-muted-foreground">
+                <TableCell className='hidden lg:table-cell text-muted-foreground'>
                   {formatDate(asset.createdAt)}
                 </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setPreviewAsset(asset)}>
+                <TableCell className='text-right'>
+                  <div className='flex items-center justify-end gap-2'>
+                    <Button variant='outline' size='sm' onClick={() => setPreviewAsset(asset)}>
                       Preview
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => setEditAsset(asset)}>
+                    <Button variant='outline' size='sm' onClick={() => setEditAsset(asset)}>
                       Edit
                     </Button>
                     <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-400 hover:text-red-300"
+                      variant='ghost'
+                      size='sm'
+                      className='text-red-400 hover:text-red-300'
                       onClick={() => void handleDelete(asset)}
                       disabled={deleteMutation.isPending && deleteMutation.variables === asset.id}
                     >
                       {deleteMutation.isPending && deleteMutation.variables === asset.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Loader2 className='h-4 w-4 animate-spin' />
                       ) : (
                         'Delete'
                       )}

@@ -63,29 +63,29 @@ export function StudioSettingsContent(): React.JSX.Element {
   };
 
   return (
-    <div className="rounded border border-border bg-card/40 overflow-hidden">
+    <div className='rounded border border-border bg-card/40 overflow-hidden'>
       <PanelHeader
-        title="Studio Settings"
+        title='Studio Settings'
         actions={(
-          <div className="flex items-center gap-2">
+          <div className='flex items-center gap-2'>
             <Button
-              variant="outline"
-              size="sm"
+              variant='outline'
+              size='sm'
               onClick={handleRefreshSettings}
-              title="Reload settings"
+              title='Reload settings'
             >
-              <RefreshCcw className="mr-2 size-4" />
+              <RefreshCcw className='mr-2 size-4' />
               Refresh
             </Button>
             <Button
-              variant="outline"
-              size="sm"
+              variant='outline'
+              size='sm'
               onClick={resetStudioSettings}
             >
               Reset
             </Button>
             <Button
-              size="sm"
+              size='sm'
               onClick={() => void saveStudioSettings()}
               disabled={Boolean(advancedOverridesError)}
             >
@@ -95,16 +95,16 @@ export function StudioSettingsContent(): React.JSX.Element {
         )}
       />
 
-      <div className="p-3 space-y-4">
+      <div className='p-3 space-y-4'>
         {!settingsLoaded ? (
-          <div className="text-xs text-gray-500">Loading settings…</div>
+          <div className='text-xs text-gray-500'>Loading settings…</div>
         ) : null}
 
-        <div className="space-y-2">
-          <Label className="text-xs text-gray-400">Prompt Extraction</Label>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <div className="text-[11px] text-gray-500">Mode</div>
+        <div className='space-y-2'>
+          <Label className='text-xs text-gray-400'>Prompt Extraction</Label>
+          <div className='grid grid-cols-2 gap-2'>
+            <div className='space-y-1'>
+              <div className='text-[11px] text-gray-500'>Mode</div>
               <Select
                 value={studioSettings.promptExtraction.mode}
                 onValueChange={(value: string) =>
@@ -117,18 +117,18 @@ export function StudioSettingsContent(): React.JSX.Element {
                   }))
                 }
               >
-                <SelectTrigger className="h-8">
+                <SelectTrigger className='h-8'>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="programmatic">Programmatic</SelectItem>
-                  <SelectItem value="gpt">GPT (AI)</SelectItem>
+                  <SelectItem value='programmatic'>Programmatic</SelectItem>
+                  <SelectItem value='gpt'>GPT (AI)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="space-y-1">
-              <div className="text-[11px] text-gray-500">Model</div>
+            <div className='space-y-1'>
+              <div className='text-[11px] text-gray-500'>Model</div>
               <Input
                 value={studioSettings.promptExtraction.gpt.model}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -140,19 +140,19 @@ export function StudioSettingsContent(): React.JSX.Element {
                     },
                   }))
                 }
-                className="h-8"
-                placeholder="e.g. gpt-4o-mini"
+                className='h-8'
+                placeholder='e.g. gpt-4o-mini'
               />
             </div>
           </div>
         </div>
 
         {/* AI Extractor Settings */}
-        <div className="space-y-2">
-          <Label className="text-xs text-gray-400">UI Extractor</Label>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <div className="text-[11px] text-gray-500">Mode</div>
+        <div className='space-y-2'>
+          <Label className='text-xs text-gray-400'>UI Extractor</Label>
+          <div className='grid grid-cols-2 gap-2'>
+            <div className='space-y-1'>
+              <div className='text-[11px] text-gray-500'>Mode</div>
               <Select
                 value={studioSettings.uiExtractor.mode}
                 onValueChange={(value: string) =>
@@ -165,18 +165,18 @@ export function StudioSettingsContent(): React.JSX.Element {
                   }))
                 }
               >
-                <SelectTrigger className="h-8">
+                <SelectTrigger className='h-8'>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="heuristic">Heuristic</SelectItem>
-                  <SelectItem value="ai">AI</SelectItem>
-                  <SelectItem value="both">Both</SelectItem>
+                  <SelectItem value='heuristic'>Heuristic</SelectItem>
+                  <SelectItem value='ai'>AI</SelectItem>
+                  <SelectItem value='both'>Both</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1">
-              <div className="text-[11px] text-gray-500">Model</div>
+            <div className='space-y-1'>
+              <div className='text-[11px] text-gray-500'>Model</div>
               <Input
                 value={studioSettings.uiExtractor.model}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -185,19 +185,19 @@ export function StudioSettingsContent(): React.JSX.Element {
                     uiExtractor: { ...prev.uiExtractor, model: e.target.value },
                   }))
                 }
-                className="h-8"
-                placeholder="e.g. gpt-4o-mini"
+                className='h-8'
+                placeholder='e.g. gpt-4o-mini'
               />
             </div>
           </div>
         </div>
 
         {/* OpenAI Options */}
-        <div className="space-y-2">
-          <Label className="text-xs text-gray-400">Target AI (OpenAI / GPT)</Label>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <div className="text-[11px] text-gray-500">API</div>
+        <div className='space-y-2'>
+          <Label className='text-xs text-gray-400'>Target AI (OpenAI / GPT)</Label>
+          <div className='grid grid-cols-2 gap-2'>
+            <div className='space-y-1'>
+              <div className='text-[11px] text-gray-500'>API</div>
               <Select
                 value={studioSettings.targetAi.openai.api}
                 onValueChange={(value: string) =>
@@ -207,17 +207,17 @@ export function StudioSettingsContent(): React.JSX.Element {
                   }))
                 }
               >
-                <SelectTrigger className="h-8">
+                <SelectTrigger className='h-8'>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="images">Images</SelectItem>
-                  <SelectItem value="responses">Responses</SelectItem>
+                  <SelectItem value='images'>Images</SelectItem>
+                  <SelectItem value='responses'>Responses</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1">
-              <div className="text-[11px] text-gray-500">Model</div>
+            <div className='space-y-1'>
+              <div className='text-[11px] text-gray-500'>Model</div>
               <Input
                 value={studioSettings.targetAi.openai.model}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -226,21 +226,21 @@ export function StudioSettingsContent(): React.JSX.Element {
                     targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, model: e.target.value } },
                   }))
                 }
-                className="h-8"
+                className='h-8'
               />
             </div>
           </div>
         </div>
 
-        <div className="space-y-1">
-          <div className="text-[11px] text-gray-500">Advanced Overrides (JSON)</div>
+        <div className='space-y-1'>
+          <div className='text-[11px] text-gray-500'>Advanced Overrides (JSON)</div>
           <Textarea
             value={advancedOverridesText}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleAdvancedOverridesChange(e.target.value)}
-            className="h-28 font-mono text-[11px]"
+            className='h-28 font-mono text-[11px]'
           />
           {advancedOverridesError ? (
-            <div className="text-[11px] text-red-300">{advancedOverridesError}</div>
+            <div className='text-[11px] text-red-300'>{advancedOverridesError}</div>
           ) : null}
         </div>
       </div>

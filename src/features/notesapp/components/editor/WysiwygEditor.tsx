@@ -58,7 +58,7 @@ const ToolbarButton = ({
   children,
 }: ToolbarButtonProps): React.JSX.Element => (
   <Button
-    type="button"
+    type='button'
     onClick={onClick}
     disabled={disabled}
     title={title}
@@ -190,60 +190,60 @@ export function WysiwygEditor({
   if (!editor) {
     return (
       <div
-        className="w-full rounded-lg border px-4 py-3 min-h-[200px]"
+        className='w-full rounded-lg border px-4 py-3 min-h-[200px]'
         style={{ backgroundColor: contentBackground, color: contentTextColor }}
       >
-        <div className="text-gray-400 text-sm">Loading editor...</div>
+        <div className='text-gray-400 text-sm'>Loading editor...</div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-2">
+    <div className='space-y-2'>
       {/* WYSIWYG Toolbar */}
-      <div className="flex flex-wrap items-center gap-1 rounded-lg border bg-gray-900 px-3 py-2">
+      <div className='flex flex-wrap items-center gap-1 rounded-lg border bg-gray-900 px-3 py-2'>
         {/* Undo/Redo */}
         <ToolbarButton
           onClick={() => editor.chain().focus().undo().run()}
           disabled={!editor.can().undo()}
-          title="Undo"
+          title='Undo'
         >
-          <Undo className="size-4" />
+          <Undo className='size-4' />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().redo().run()}
           disabled={!editor.can().redo()}
-          title="Redo"
+          title='Redo'
         >
-          <Redo className="size-4" />
+          <Redo className='size-4' />
         </ToolbarButton>
 
-        <div className="h-6 w-px bg-gray-700 mx-1" />
+        <div className='h-6 w-px bg-gray-700 mx-1' />
 
         {/* Text formatting */}
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBold().run()}
           isActive={editor.isActive('bold')}
-          title="Bold"
+          title='Bold'
         >
-          <Bold className="size-4" />
+          <Bold className='size-4' />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleItalic().run()}
           isActive={editor.isActive('italic')}
-          title="Italic"
+          title='Italic'
         >
-          <Italic className="size-4" />
+          <Italic className='size-4' />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleCode().run()}
           isActive={editor.isActive('code')}
-          title="Inline Code"
+          title='Inline Code'
         >
-          <Code className="size-4" />
+          <Code className='size-4' />
         </ToolbarButton>
 
-        <div className="h-6 w-px bg-gray-700 mx-1" />
+        <div className='h-6 w-px bg-gray-700 mx-1' />
 
         {/* Headings */}
         <ToolbarButton
@@ -251,104 +251,104 @@ export function WysiwygEditor({
             editor.chain().focus().toggleHeading({ level: 1 }).run()
           }
           isActive={editor.isActive('heading', { level: 1 })}
-          title="Heading 1"
+          title='Heading 1'
         >
-          <Heading1 className="size-4" />
+          <Heading1 className='size-4' />
         </ToolbarButton>
         <ToolbarButton
           onClick={() =>
             editor.chain().focus().toggleHeading({ level: 2 }).run()
           }
           isActive={editor.isActive('heading', { level: 2 })}
-          title="Heading 2"
+          title='Heading 2'
         >
-          <Heading2 className="size-4" />
+          <Heading2 className='size-4' />
         </ToolbarButton>
         <ToolbarButton
           onClick={() =>
             editor.chain().focus().toggleHeading({ level: 3 }).run()
           }
           isActive={editor.isActive('heading', { level: 3 })}
-          title="Heading 3"
+          title='Heading 3'
         >
-          <Heading3 className="size-4" />
+          <Heading3 className='size-4' />
         </ToolbarButton>
 
-        <div className="h-6 w-px bg-gray-700 mx-1" />
+        <div className='h-6 w-px bg-gray-700 mx-1' />
 
         {/* Lists */}
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           isActive={editor.isActive('bulletList')}
-          title="Bullet List"
+          title='Bullet List'
         >
-          <List className="size-4" />
+          <List className='size-4' />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
           isActive={editor.isActive('orderedList')}
-          title="Numbered List"
+          title='Numbered List'
         >
-          <ListOrdered className="size-4" />
+          <ListOrdered className='size-4' />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleTaskList().run()}
           isActive={editor.isActive('taskList')}
-          title="Task List"
+          title='Task List'
         >
-          <CheckSquare className="size-4" />
+          <CheckSquare className='size-4' />
         </ToolbarButton>
 
-        <div className="h-6 w-px bg-gray-700 mx-1" />
+        <div className='h-6 w-px bg-gray-700 mx-1' />
 
         {/* Block elements */}
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
           isActive={editor.isActive('blockquote')}
-          title="Quote"
+          title='Quote'
         >
-          <Quote className="size-4" />
+          <Quote className='size-4' />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().setHorizontalRule().run()}
-          title="Horizontal Rule"
+          title='Horizontal Rule'
         >
-          <Minus className="size-4" />
+          <Minus className='size-4' />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleCodeBlock().run()}
           isActive={editor.isActive('codeBlock')}
-          title="Code Block"
+          title='Code Block'
         >
-          <Code className="size-4" />
+          <Code className='size-4' />
         </ToolbarButton>
 
-        <div className="h-6 w-px bg-gray-700 mx-1" />
+        <div className='h-6 w-px bg-gray-700 mx-1' />
 
         {/* Insert elements */}
         <ToolbarButton
           onClick={addLink}
           isActive={editor.isActive('link')}
-          title="Add Link"
+          title='Add Link'
         >
-          <LinkIcon className="size-4" />
+          <LinkIcon className='size-4' />
         </ToolbarButton>
-        <ToolbarButton onClick={addImage} title="Add Image">
-          <ImageIcon className="size-4" />
+        <ToolbarButton onClick={addImage} title='Add Image'>
+          <ImageIcon className='size-4' />
         </ToolbarButton>
-        <ToolbarButton onClick={addTable} title="Insert Table">
-          <TableIcon className="size-4" />
+        <ToolbarButton onClick={addTable} title='Insert Table'>
+          <TableIcon className='size-4' />
         </ToolbarButton>
       </div>
 
       {/* Editor Content Area */}
       <div
-        className="w-full rounded-lg border border min-h-[250px]"
+        className='w-full rounded-lg border border min-h-[250px]'
         style={{ backgroundColor: contentBackground, color: contentTextColor }}
       >
         <EditorContent
           editor={editor}
-          className="[&_.ProseMirror]:min-h-[250px] [&_.ProseMirror]:outline-none [&_.ProseMirror_p]:my-2 [&_.ProseMirror_h1]:text-2xl [&_.ProseMirror_h1]:font-bold [&_.ProseMirror_h1]:my-3 [&_.ProseMirror_h2]:text-xl [&_.ProseMirror_h2]:font-semibold [&_.ProseMirror_h2]:my-2 [&_.ProseMirror_h3]:text-lg [&_.ProseMirror_h3]:font-medium [&_.ProseMirror_h3]:my-2 [&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ul]:ml-6 [&_.ProseMirror_ol]:list-decimal [&_.ProseMirror_ol]:ml-6 [&_.ProseMirror_blockquote]:border-l-4 [&_.ProseMirror_blockquote]:border-border/60 [&_.ProseMirror_blockquote]:pl-4 [&_.ProseMirror_blockquote]:italic [&_.ProseMirror_code]:bg-gray-800 [&_.ProseMirror_code]:px-1 [&_.ProseMirror_code]:rounded [&_.ProseMirror_pre]:bg-gray-800 [&_.ProseMirror_pre]:p-3 [&_.ProseMirror_pre]:rounded [&_.ProseMirror_pre]:overflow-x-auto [&_.ProseMirror_a]:text-blue-400 [&_.ProseMirror_a]:underline [&_.ProseMirror_img]:max-w-full [&_.ProseMirror_img]:rounded-lg [&_.ProseMirror_table]:border-collapse [&_.ProseMirror_table]:w-full [&_.ProseMirror_th]:border [&_.ProseMirror_th]:border-border/60 [&_.ProseMirror_th]:p-2 [&_.ProseMirror_th]:bg-gray-800 [&_.ProseMirror_td]:border [&_.ProseMirror_td]:border-border/60 [&_.ProseMirror_td]:p-2 [&_.ProseMirror_hr]:border-border/60 [&_.ProseMirror_hr]:my-4 [&_ul[data-type=taskList]]:list-none [&_ul[data-type=taskList]]:ml-0 [&_ul[data-type=taskList]_li]:flex [&_ul[data-type=taskList]_li]:items-start [&_ul[data-type=taskList]_li]:gap-2 [&_ul[data-type=taskList]_input]:mt-1"
+          className='[&_.ProseMirror]:min-h-[250px] [&_.ProseMirror]:outline-none [&_.ProseMirror_p]:my-2 [&_.ProseMirror_h1]:text-2xl [&_.ProseMirror_h1]:font-bold [&_.ProseMirror_h1]:my-3 [&_.ProseMirror_h2]:text-xl [&_.ProseMirror_h2]:font-semibold [&_.ProseMirror_h2]:my-2 [&_.ProseMirror_h3]:text-lg [&_.ProseMirror_h3]:font-medium [&_.ProseMirror_h3]:my-2 [&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ul]:ml-6 [&_.ProseMirror_ol]:list-decimal [&_.ProseMirror_ol]:ml-6 [&_.ProseMirror_blockquote]:border-l-4 [&_.ProseMirror_blockquote]:border-border/60 [&_.ProseMirror_blockquote]:pl-4 [&_.ProseMirror_blockquote]:italic [&_.ProseMirror_code]:bg-gray-800 [&_.ProseMirror_code]:px-1 [&_.ProseMirror_code]:rounded [&_.ProseMirror_pre]:bg-gray-800 [&_.ProseMirror_pre]:p-3 [&_.ProseMirror_pre]:rounded [&_.ProseMirror_pre]:overflow-x-auto [&_.ProseMirror_a]:text-blue-400 [&_.ProseMirror_a]:underline [&_.ProseMirror_img]:max-w-full [&_.ProseMirror_img]:rounded-lg [&_.ProseMirror_table]:border-collapse [&_.ProseMirror_table]:w-full [&_.ProseMirror_th]:border [&_.ProseMirror_th]:border-border/60 [&_.ProseMirror_th]:p-2 [&_.ProseMirror_th]:bg-gray-800 [&_.ProseMirror_td]:border [&_.ProseMirror_td]:border-border/60 [&_.ProseMirror_td]:p-2 [&_.ProseMirror_hr]:border-border/60 [&_.ProseMirror_hr]:my-4 [&_ul[data-type=taskList]]:list-none [&_ul[data-type=taskList]]:ml-0 [&_ul[data-type=taskList]_li]:flex [&_ul[data-type=taskList]_li]:items-start [&_ul[data-type=taskList]_li]:gap-2 [&_ul[data-type=taskList]_input]:mt-1'
         />
       </div>
     </div>

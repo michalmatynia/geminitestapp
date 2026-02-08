@@ -88,19 +88,19 @@ function renderFieldGroups(
     }
     const label = group.kind === 'padding' ? 'Padding' : 'Margin';
     return (
-      <div key={group.kind} className="space-y-1.5">
-        <Label className="text-xs text-gray-400">{label}</Label>
-        <div className="grid grid-cols-2 gap-2">
+      <div key={group.kind} className='space-y-1.5'>
+        <Label className='text-xs text-gray-400'>{label}</Label>
+        <div className='grid grid-cols-2 gap-2'>
           {group.fields.map((field: SettingsField) => (
-            <div key={field.key} className="space-y-0.5">
-              <span className="text-[10px] text-gray-500 uppercase">
+            <div key={field.key} className='space-y-0.5'>
+              <span className='text-[10px] text-gray-500 uppercase'>
                 {field.key.replace(/^(padding|margin)/, '')}
               </span>
               <Input
-                type="number"
+                type='number'
                 value={(settings[field.key] as number) ?? field.defaultValue ?? 0}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(field.key, Number(e.target.value))}
-                className="text-xs h-7 px-1.5"
+                className='text-xs h-7 px-1.5'
               />
             </div>
           ))}

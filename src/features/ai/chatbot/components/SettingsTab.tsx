@@ -74,20 +74,20 @@ export function SettingsTab(): React.JSX.Element {
     personas.find((item: PlaywrightPersona): boolean => item.id === playwrightPersonaId) ?? null;
 
   return (
-    <div className="space-y-6 p-4">
-      <SectionPanel variant="subtle" className="space-y-4 p-4">
-        <h3 className="text-lg font-medium text-white">General Settings</h3>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
+    <div className='space-y-6 p-4'>
+      <SectionPanel variant='subtle' className='space-y-4 p-4'>
+        <h3 className='text-lg font-medium text-white'>General Settings</h3>
+        <div className='grid gap-4 md:grid-cols-2'>
+          <div className='space-y-2'>
             <Label>Model</Label>
             <UnifiedSelect
               value={model}
               onValueChange={(value: string): void => setModel(value)}
               options={modelOptions.map((opt: string) => ({ value: opt, label: opt }))}
-              placeholder="Select a model"
+              placeholder='Select a model'
             />
           </div>
-          <div className="space-y-2">
+          <div className='space-y-2'>
             <Label>Search Provider</Label>
             <UnifiedSelect
               value={searchProvider}
@@ -100,20 +100,20 @@ export function SettingsTab(): React.JSX.Element {
             />
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-4">
-          <Label className="flex items-center gap-2 text-sm text-gray-300">
+        <div className='flex flex-wrap items-center gap-4'>
+          <Label className='flex items-center gap-2 text-sm text-gray-300'>
             <Checkbox
               checked={webSearchEnabled} onCheckedChange={(checked: boolean): void => setWebSearchEnabled(Boolean(checked))}
             />
             Enable Web Search
           </Label>
-          <Label className="flex items-center gap-2 text-sm text-gray-300">
+          <Label className='flex items-center gap-2 text-sm text-gray-300'>
             <Checkbox
               checked={useGlobalContext} onCheckedChange={(checked: boolean): void => setUseGlobalContext(Boolean(checked))}
             />
             Use Global Context
           </Label>
-          <Label className="flex items-center gap-2 text-sm text-gray-300">
+          <Label className='flex items-center gap-2 text-sm text-gray-300'>
             <Checkbox
               checked={useLocalContext} onCheckedChange={(checked: boolean): void => setUseLocalContext(Boolean(checked))}
             />
@@ -125,31 +125,31 @@ export function SettingsTab(): React.JSX.Element {
       <AgentCreatorSettingsSection />
 
       {agentModeEnabled && (
-        <SectionPanel variant="subtle" className="space-y-4 p-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <SectionPanel variant='subtle' className='space-y-4 p-4'>
+          <div className='flex flex-wrap items-center justify-between gap-3'>
             <div>
-              <p className="text-sm font-semibold text-white">
+              <p className='text-sm font-semibold text-white'>
                 Playwright persona
               </p>
-              <p className="mt-1 text-xs text-gray-400">
+              <p className='mt-1 text-xs text-gray-400'>
                 Choose a shared automation profile for agent runs.
               </p>
             </div>
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/admin/settings/playwright">Manage personas</Link>
+            <Button variant='outline' size='sm' asChild>
+              <Link href='/admin/settings/playwright'>Manage personas</Link>
             </Button>
           </div>
 
           {personasLoading ? (
-            <p className="text-xs text-gray-500">Loading personas...</p>
+            <p className='text-xs text-gray-500'>Loading personas...</p>
           ) : personas.length === 0 ? (
-            <p className="text-xs text-gray-500">
+            <p className='text-xs text-gray-500'>
               No personas yet. Create one in settings.
             </p>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label className="text-xs text-gray-400">Persona</Label>
+            <div className='grid gap-4 md:grid-cols-2'>
+              <div className='space-y-2'>
+                <Label className='text-xs text-gray-400'>Persona</Label>
                 <UnifiedSelect
                   value={playwrightPersonaId ?? 'custom'}
                   onValueChange={handlePersonaChange}
@@ -160,29 +160,29 @@ export function SettingsTab(): React.JSX.Element {
                       label: persona.name
                     }))
                   ]}
-                  placeholder="Select persona"
+                  placeholder='Select persona'
                 />
-                <p className="text-[11px] text-gray-500">
+                <p className='text-[11px] text-gray-500'>
                   Selecting a persona updates the headless setting.
                 </p>
               </div>
-              <SectionPanel variant="subtle" className="p-3 text-xs text-gray-400">
+              <SectionPanel variant='subtle' className='p-3 text-xs text-gray-400'>
                 {selectedPersona ? (
                   <>
-                    <p className="text-xs font-semibold text-gray-200">
+                    <p className='text-xs font-semibold text-gray-200'>
                       {selectedPersona.name}
                     </p>
-                    <p className="mt-1">
+                    <p className='mt-1'>
                       {selectedPersona.description ||
                         'No description provided.'}
                     </p>
                   </>
                 ) : (
                   <>
-                    <p className="text-xs font-semibold text-gray-200">
+                    <p className='text-xs font-semibold text-gray-200'>
                       Custom settings
                     </p>
-                    <p className="mt-1">
+                    <p className='mt-1'>
                       Pick a persona or keep your own agent preferences.
                     </p>
                   </>
@@ -193,7 +193,7 @@ export function SettingsTab(): React.JSX.Element {
         </SectionPanel>
       )}
 
-      <div className="flex justify-end">
+      <div className='flex justify-end'>
         <Button
           onClick={(): void => void saveChatbotSettings()}
           disabled={!settingsDirty}

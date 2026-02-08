@@ -19,13 +19,13 @@ export function FileManagerBulkActions(): React.JSX.Element {
   }
 
   return (
-    <div className="mb-4 flex flex-wrap items-center gap-2">
+    <div className='mb-4 flex flex-wrap items-center gap-2'>
       <Input
-        type="text"
-        placeholder="Tags to apply (comma-separated)"
+        type='text'
+        placeholder='Tags to apply (comma-separated)'
         value={bulkTagInput}
         onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setBulkTagInput(e.target.value)}
-        className="w-full md:w-72 p-2 bg-gray-800 rounded"
+        className='w-full md:w-72 p-2 bg-gray-800 rounded'
       />
       <UnifiedSelect
         value={bulkTagMode}
@@ -34,11 +34,11 @@ export function FileManagerBulkActions(): React.JSX.Element {
           { value: 'add', label: 'Add' },
           { value: 'replace', label: 'Replace' }
         ]}
-        className="w-full md:w-32"
-        triggerClassName="text-sm"
+        className='w-full md:w-32'
+        triggerClassName='text-sm'
       />
       <Button
-        size="sm"
+        size='sm'
         onClick={(): void => { void handleApplyTags(); }}
         disabled={isPending}
       >

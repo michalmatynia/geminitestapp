@@ -678,7 +678,7 @@ export async function evaluateGraph({
     Object.entries(seedHistory).forEach(([nodeId, entries]: [string, RuntimeHistoryEntry[]]) => {
       if (!Array.isArray(entries)) return;
       entries.forEach((entry: RuntimeHistoryEntry) => {
-        if (!entry || entry.runId !== resolvedRunId) return;
+        if (entry?.runId !== resolvedRunId) return;
         if (entry.runStartedAt !== resolvedRunStartedAt) return;
         const hash = entry.inputHash;
         if (!hash) return;
@@ -697,8 +697,8 @@ export async function evaluateGraph({
   ): RuntimeState => ({
     runId: resolvedRunId,
     runStartedAt: resolvedRunStartedAt,
-    inputs: cloneValue(inputsSnapshot) as Record<string, RuntimePortValues>,
-    outputs: cloneValue(outputs) as Record<string, RuntimePortValues>,
+    inputs: cloneValue(inputsSnapshot),
+    outputs: cloneValue(outputs),
     hashes: inputHashes.size ? Object.fromEntries(inputHashes) : undefined,
     history: buildHistorySnapshot(),
   });
@@ -1662,8 +1662,8 @@ export async function evaluateGraph({
           const errorState: RuntimeState = {
             runId: resolvedRunId,
             runStartedAt: resolvedRunStartedAt,
-            inputs: cloneValue(nextInputs) as Record<string, RuntimePortValues>,
-            outputs: cloneValue(outputs) as Record<string, RuntimePortValues>,
+            inputs: cloneValue(nextInputs),
+            outputs: cloneValue(outputs),
             hashes: inputHashes.size ? Object.fromEntries(inputHashes) : undefined,
             history: historySnapshot,
           };

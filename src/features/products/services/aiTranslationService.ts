@@ -64,7 +64,7 @@ function extractJson(text: string): unknown {
   } catch {
     // 2. Try to find JSON block
     const match = text.match(/```json\s*([\s\S]*?)\s*```/) || text.match(/```\s*([\s\S]*?)\s*```/);
-    if (match && match[1]) {
+    if (match?.[1]) {
       try {
         return JSON.parse(match[1].trim());
       } catch {

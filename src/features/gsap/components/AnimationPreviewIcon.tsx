@@ -216,13 +216,13 @@ export function AnimationPreviewIcon({ preset, active = false, className }: Anim
       )}
     >
       {isStagger ? (
-        <div className="flex items-center gap-1">
-          <span data-dot className="size-1.5 rounded-full bg-sky-200" />
-          <span data-dot className="size-1.5 rounded-full bg-sky-200" />
-          <span data-dot className="size-1.5 rounded-full bg-sky-200" />
+        <div className='flex items-center gap-1'>
+          <span data-dot className='size-1.5 rounded-full bg-sky-200' />
+          <span data-dot className='size-1.5 rounded-full bg-sky-200' />
+          <span data-dot className='size-1.5 rounded-full bg-sky-200' />
         </div>
       ) : (
-        <span data-dot className="size-2 rounded-full bg-sky-200" />
+        <span data-dot className='size-2 rounded-full bg-sky-200' />
       )}
     </div>
   );

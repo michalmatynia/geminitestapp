@@ -57,7 +57,7 @@ export function BlockNodeItem({
       {
         id: 'remove-block',
         label: 'Remove block',
-        icon: <Trash2 className="size-3.5" />,
+        icon: <Trash2 className='size-3.5' />,
         tone: 'danger',
         disabled: isBackgroundMode,
         onSelect: (): void => {
@@ -71,8 +71,8 @@ export function BlockNodeItem({
   return (
     <TreeContextMenu items={blockMenuItems}>
       <TreeRow
-        tone="none"
-        role="button"
+        tone='none'
+        role='button'
         tabIndex={0}
         draggable={canDrag}
         onClick={() => selectNode(block.id)}
@@ -214,39 +214,39 @@ export function BlockNodeItem({
             }}
             onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
             onClick={(e: React.MouseEvent) => e.stopPropagation()}
-            className="flex items-center justify-center opacity-0 group-hover:opacity-100"
-            aria-label="Drag element"
+            className='flex items-center justify-center opacity-0 group-hover:opacity-100'
+            aria-label='Drag element'
           >
-            <GripVertical className="size-3 shrink-0 text-gray-600 cursor-grab active:cursor-grabbing" />
+            <GripVertical className='size-3 shrink-0 text-gray-600 cursor-grab active:cursor-grabbing' />
           </div>
         ) : (
-          <span className="size-3 shrink-0" />
+          <span className='size-3 shrink-0' />
         )}
-        <Icon className="size-3.5 shrink-0" />
-        <span className="flex-1 truncate">{blockLabel}</span>
+        <Icon className='size-3.5 shrink-0' />
+        <span className='flex-1 truncate'>{blockLabel}</span>
         {isBackgroundMode && (
           <span title={`Locked as ${backgroundTarget} background`}>
-            <Lock className="size-3 shrink-0 text-amber-500" />
+            <Lock className='size-3 shrink-0 text-amber-500' />
           </span>
         )}
         {isBackgroundMode && (
-          <span className="text-[9px] text-amber-500/70 uppercase">{backgroundTarget} bg</span>
+          <span className='text-[9px] text-amber-500/70 uppercase'>{backgroundTarget} bg</span>
         )}
         {isDragOver && (
-          <span className="text-[10px] text-emerald-300">Insert here</span>
+          <span className='text-[10px] text-emerald-300'>Insert here</span>
         )}
         {/* Delete button - visible on hover when selected or always visible on hover */}
         {!isDragOver && !isBackgroundMode && (
-          <TreeActionSlot show="hover" align="end">
+          <TreeActionSlot show='hover' align='end'>
             <TreeActionButton
-              tone="danger"
+              tone='danger'
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 blockActions.remove(sectionId, block.id, columnId, parentBlockId);
               }}
-              title="Remove block"
+              title='Remove block'
             >
-              <Trash2 className="size-3" />
+              <Trash2 className='size-3' />
             </TreeActionButton>
           </TreeActionSlot>
         )}

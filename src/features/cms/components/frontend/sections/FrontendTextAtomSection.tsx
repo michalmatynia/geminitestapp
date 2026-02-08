@@ -44,7 +44,7 @@ export function FrontendTextAtomSection({
   };
 
   return (
-    <section className="m-0 w-full p-0">
+    <section className='m-0 w-full p-0'>
       <div style={containerStyle}>
         {letters.map((letter: BlockInstance) => {
           const textContent = (letter.settings['textContent'] as string) ?? '';
@@ -52,7 +52,7 @@ export function FrontendTextAtomSection({
           return (
             <span
               key={letter.id}
-              className="inline-block"
+              className='inline-block'
               style={{ ...typoStyles, whiteSpace: 'pre' }}
             >
               {textContent}

@@ -84,28 +84,28 @@ export default function ProductFormOther(): React.JSX.Element {
   });
 
   return (
-    <div className="space-y-6">
+    <div className='space-y-6'>
       {!hasCatalogs && (
-        <FormSection variant="subtle-compact" className="border-amber-500/40 bg-amber-500/10 text-amber-100">
-          <p className="text-sm">Select a catalog to set pricing and price groups.</p>
+        <FormSection variant='subtle-compact' className='border-amber-500/40 bg-amber-500/10 text-amber-100'>
+          <p className='text-sm'>Select a catalog to set pricing and price groups.</p>
         </FormSection>
       )}
 
       {hasCatalogs && (
-        <FormSection title="Pricing" gridClassName="md:grid-cols-2">
-          <FormField label="Base Price" error={errors.price?.message} id="price">
+        <FormSection title='Pricing' gridClassName='md:grid-cols-2'>
+          <FormField label='Base Price' error={errors.price?.message} id='price'>
             <Input
-              id="price"
-              type="number"
-              step="0.01"
+              id='price'
+              type='number'
+              step='0.01'
               {...register('price', { valueAsNumber: true })}
-              placeholder="0.00"
+              placeholder='0.00'
             />
           </FormField>
 
           <FormField 
-            label="Default Price Group" 
-            id="defaultPriceGroupId"
+            label='Default Price Group' 
+            id='defaultPriceGroupId'
             description={isPriceGroupAutoAssigned ? 'Auto-assigned from catalog' : undefined}
           >
             <UnifiedSelect
@@ -116,49 +116,49 @@ export default function ProductFormOther(): React.JSX.Element {
                 value: group.id,
                 label: `${group.name}${group.isDefault ? ' (Default)' : ''} (${group.currency?.code ?? group.currencyCode})`
               }))}
-              placeholder="Select default price group"
+              placeholder='Select default price group'
               triggerClassName={isPriceGroupAutoAssigned ? 'cursor-not-allowed opacity-60' : ''}
             />
           </FormField>
 
           {selectedDefaultPriceGroupId && filteredPriceGroups.length > 0 && (
-            <div className="md:col-span-2 space-y-2">
-              <label className="text-[11px] font-medium uppercase tracking-wider text-gray-400">Price Groups Overview</label>
-              <div className="rounded-md border border-border bg-card/40 overflow-hidden">
-                <table className="w-full text-xs">
-                  <thead className="border-b bg-muted/50">
+            <div className='md:col-span-2 space-y-2'>
+              <label className='text-[11px] font-medium uppercase tracking-wider text-gray-400'>Price Groups Overview</label>
+              <div className='rounded-md border border-border bg-card/40 overflow-hidden'>
+                <table className='w-full text-xs'>
+                  <thead className='border-b bg-muted/50'>
                     <tr>
-                      <th className="px-3 py-2 text-left font-medium text-gray-400">Price Group</th>
-                      <th className="px-3 py-2 text-left font-medium text-gray-400">Currency</th>
-                      <th className="px-3 py-2 text-right font-medium text-gray-400">Price</th>
+                      <th className='px-3 py-2 text-left font-medium text-gray-400'>Price Group</th>
+                      <th className='px-3 py-2 text-left font-medium text-gray-400'>Currency</th>
+                      <th className='px-3 py-2 text-right font-medium text-gray-400'>Price</th>
                     </tr>
                   </thead>
                   <tbody>
                     {priceGroupPrices.map((group: PriceGroupWithCalculatedPrice) => (
-                      <tr key={group.id} className="border-b last:border-0 border-border/50">
-                        <td className="px-3 py-2">
-                          <div className="flex items-center gap-2">
+                      <tr key={group.id} className='border-b last:border-0 border-border/50'>
+                        <td className='px-3 py-2'>
+                          <div className='flex items-center gap-2'>
                             <span className={group.id === selectedDefaultPriceGroupId ? 'font-semibold text-white' : 'text-gray-300'}>
                               {group.name}
                             </span>
                             {group.id === selectedDefaultPriceGroupId && (
-                              <span className="text-[10px] text-emerald-400 uppercase font-bold tracking-tighter">Selected</span>
+                              <span className='text-[10px] text-emerald-400 uppercase font-bold tracking-tighter'>Selected</span>
                             )}
                             {group.isCalculated && group.sourceGroupName && (
-                              <span className="text-[10px] text-gray-500 italic">
+                              <span className='text-[10px] text-gray-500 italic'>
                                 ({group.sourceGroupName} × {group.priceMultiplier})
                               </span>
                             )}
                           </div>
                         </td>
-                        <td className="px-3 py-2 text-gray-500">{group.currency?.code ?? group.currencyCode}</td>
-                        <td className="px-3 py-2 text-right font-mono">
+                        <td className='px-3 py-2 text-gray-500'>{group.currency?.code ?? group.currencyCode}</td>
+                        <td className='px-3 py-2 text-right font-mono'>
                           {group.calculatedPrice !== null ? (
                             <span className={group.isCalculated ? 'text-blue-400' : 'text-white'}>
                               {group.calculatedPrice.toFixed(2)}
                             </span>
                           ) : (
-                            <span className="text-gray-600">-</span>
+                            <span className='text-gray-600'>-</span>
                           )}
                         </td>
                       </tr>
@@ -166,7 +166,7 @@ export default function ProductFormOther(): React.JSX.Element {
                   </tbody>
                 </table>
               </div>
-              <p className="text-[10px] text-gray-500 italic">
+              <p className='text-[10px] text-gray-500 italic'>
                 Blue prices are automatically calculated based on the default group.
               </p>
             </div>
@@ -174,28 +174,28 @@ export default function ProductFormOther(): React.JSX.Element {
         </FormSection>
       )}
 
-      <FormSection title="Organization" gridClassName="md:grid-cols-2">
-        <FormField label="Supplier Name" error={errors.supplierName?.message} id="supplierName">
-          <Input id="supplierName" {...register('supplierName')} placeholder="e.g. Acme Corp" />
+      <FormSection title='Organization' gridClassName='md:grid-cols-2'>
+        <FormField label='Supplier Name' error={errors.supplierName?.message} id='supplierName'>
+          <Input id='supplierName' {...register('supplierName')} placeholder='e.g. Acme Corp' />
         </FormField>
 
-        <FormField label="Supplier Link" error={errors.supplierLink?.message} id="supplierLink">
-          <Input id="supplierLink" {...register('supplierLink')} placeholder="https://..." />
+        <FormField label='Supplier Link' error={errors.supplierLink?.message} id='supplierLink'>
+          <Input id='supplierLink' {...register('supplierLink')} placeholder='https://...' />
         </FormField>
 
-        <FormField label="Price Comment" error={errors.priceComment?.message} id="priceComment">
-          <Input id="priceComment" {...register('priceComment')} placeholder="Internal notes about pricing" />
+        <FormField label='Price Comment' error={errors.priceComment?.message} id='priceComment'>
+          <Input id='priceComment' {...register('priceComment')} placeholder='Internal notes about pricing' />
         </FormField>
 
-        <FormField label="Stock" error={errors.stock?.message} id="stock">
-          <Input id="stock" type="number" {...register('stock', { valueAsNumber: true })} placeholder="0" />
+        <FormField label='Stock' error={errors.stock?.message} id='stock'>
+          <Input id='stock' type='number' {...register('stock', { valueAsNumber: true })} placeholder='0' />
         </FormField>
       </FormSection>
 
-      <FormSection title="Relationships" gridClassName="md:grid-cols-2">
-        <div className="space-y-4 md:col-span-2">
+      <FormSection title='Relationships' gridClassName='md:grid-cols-2'>
+        <div className='space-y-4 md:col-span-2'>
           <MultiSelect
-            label="Catalogs"
+            label='Catalogs'
             options={catalogs.map((c: CatalogRecord) => ({ value: c.id, label: c.name }))}
             selected={selectedCatalogIds}
             onChange={(values: string[]) => {
@@ -206,12 +206,12 @@ export default function ProductFormOther(): React.JSX.Element {
             }}
             loading={catalogsLoading}
             emptyMessage={catalogsError || 'No catalogs found'}
-            placeholder="Select catalogs"
-            searchPlaceholder="Search catalogs..."
+            placeholder='Select catalogs'
+            searchPlaceholder='Search catalogs...'
           />
 
           <MultiSelect
-            label="Categories"
+            label='Categories'
             options={categories.map((c: ProductCategory) => ({ value: c.id, label: c.name }))}
             selected={selectedCategoryId ? [selectedCategoryId] : []}
             onChange={(values: string[]) => {
@@ -220,15 +220,15 @@ export default function ProductFormOther(): React.JSX.Element {
             loading={categoriesLoading}
             disabled={!hasCatalogs}
             placeholder={hasCatalogs ? 'Select category' : 'Select a catalog first'}
-            searchPlaceholder="Search categories..."
+            searchPlaceholder='Search categories...'
             single
           />
           {selectedCategoryId ? (
-            <div className="-mt-2 flex justify-end">
+            <div className='-mt-2 flex justify-end'>
               <Button
-                type="button"
-                variant="ghost"
-                className="h-7 px-2 text-xs text-gray-300 hover:text-white"
+                type='button'
+                variant='ghost'
+                className='h-7 px-2 text-xs text-gray-300 hover:text-white'
                 onClick={(): void => setCategoryId(null)}
               >
                 Clear category
@@ -237,7 +237,7 @@ export default function ProductFormOther(): React.JSX.Element {
           ) : null}
 
           <MultiSelect
-            label="Tags"
+            label='Tags'
             options={tags.map((t: ProductTag) => ({ value: t.id, label: t.name }))}
             selected={selectedTagIds}
             onChange={(values: string[]) => {
@@ -249,11 +249,11 @@ export default function ProductFormOther(): React.JSX.Element {
             loading={tagsLoading}
             disabled={!hasCatalogs}
             placeholder={hasCatalogs ? 'Select tags' : 'Select a catalog first'}
-            searchPlaceholder="Search tags..."
+            searchPlaceholder='Search tags...'
           />
 
           <MultiSelect
-            label="Producers"
+            label='Producers'
             options={producers.map((p: Producer) => ({ value: p.id, label: p.name }))}
             selected={selectedProducerIds}
             onChange={(values: string[]) => {
@@ -263,8 +263,8 @@ export default function ProductFormOther(): React.JSX.Element {
               if (removed) toggleProducer(removed);
             }}
             loading={producersLoading}
-            placeholder="Select producers"
-            searchPlaceholder="Search producers..."
+            placeholder='Select producers'
+            searchPlaceholder='Search producers...'
           />
         </div>
       </FormSection>

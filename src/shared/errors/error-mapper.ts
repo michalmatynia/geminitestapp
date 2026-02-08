@@ -21,7 +21,7 @@ export type MapStatusOptions = {
 };
 
 const safeMessage = (message: string | null | undefined, fallback: string): string =>
-  message && message.trim() ? message : fallback;
+  message?.trim() ? message : fallback;
 
 export const mapStatusToAppError = (
   message: string,
@@ -104,7 +104,7 @@ export const mapErrorToAppError = (
       return timeoutError(fallbackMessage ?? 'Operation timed out');
     }
 
-    if (err.name && err.name.toLowerCase().includes('mongo')) {
+    if (err.name?.toLowerCase().includes('mongo')) {
       const codeNumber = typeof err.code === 'number' ? err.code : Number(err.code);
       const message = err.message ?? '';
       if (codeNumber === 11000 || message.includes('E11000') || message.includes('duplicate key')) {

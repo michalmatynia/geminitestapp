@@ -24,24 +24,24 @@ export function FrontendImageWithTextBlock({ settings, blocks }: FrontendImageWi
   return (
     <div className={`flex flex-col gap-4 ${imageFirst ? 'md:flex-row' : 'md:flex-row-reverse'}`}>
       {/* Image */}
-      <div className="cms-media relative w-full md:w-2/5" style={mediaStyles ?? undefined}>
+      <div className='cms-media relative w-full md:w-2/5' style={mediaStyles ?? undefined}>
         {image ? (
           <Image
             src={image}
-            alt=""
+            alt=''
             fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, 40vw"
+            className='object-cover'
+            sizes='(max-width: 768px) 100vw, 40vw'
           />
         ) : (
-          <div className="flex min-h-[120px] w-full items-center justify-center bg-gray-800">
-            <ImageIcon className="size-10 text-gray-600" />
+          <div className='flex min-h-[120px] w-full items-center justify-center bg-gray-800'>
+            <ImageIcon className='size-10 text-gray-600' />
           </div>
         )}
       </div>
 
       {/* Content */}
-      <div className="flex w-full flex-col justify-center gap-3 md:w-3/5">
+      <div className='flex w-full flex-col justify-center gap-3 md:w-3/5'>
         {blocks.map((block: BlockInstance) => (
           <FrontendBlockRenderer key={block.id} block={block} />
         ))}

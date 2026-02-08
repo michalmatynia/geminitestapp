@@ -50,11 +50,11 @@ export const SignalDots = React.memo(function SignalDots({
       r={radius}
       fill={color}
       opacity={opacity}
-      filter="url(#signal-dot-glow)"
+      filter='url(#signal-dot-glow)'
     >
       <animateMotion
         dur={`${duration}s`}
-        repeatCount="indefinite"
+        repeatCount='indefinite'
         path={path}
       />
     </circle>

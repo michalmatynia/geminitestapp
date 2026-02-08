@@ -100,22 +100,22 @@ function ColorField({
   onChange: (v: string) => void;
 }): React.JSX.Element {
   return (
-    <div className="space-y-1">
-      <Label className="text-[10px] uppercase tracking-wider text-gray-500">{label}</Label>
-      <div className="flex items-center gap-2">
-        <label className="relative flex size-7 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded border border-border/50">
+    <div className='space-y-1'>
+      <Label className='text-[10px] uppercase tracking-wider text-gray-500'>{label}</Label>
+      <div className='flex items-center gap-2'>
+        <label className='relative flex size-7 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded border border-border/50'>
           <input
-            type="color"
+            type='color'
             value={value}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)}
-            className="absolute inset-0 size-full cursor-pointer opacity-0"
+            className='absolute inset-0 size-full cursor-pointer opacity-0'
           />
-          <div className="size-full rounded" style={{ backgroundColor: value }} />
+          <div className='size-full rounded' style={{ backgroundColor: value }} />
         </label>
         <Input
           value={value}
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)}
-          className="h-7 flex-1 bg-gray-800/40 text-xs font-mono"
+          className='h-7 flex-1 bg-gray-800/40 text-xs font-mono'
         />
       </div>
     </div>
@@ -138,18 +138,18 @@ function NumberField({
   max?: number;
 }): React.JSX.Element {
   return (
-    <div className="space-y-1">
-      <Label className="text-[10px] uppercase tracking-wider text-gray-500">{label}</Label>
-      <div className="flex items-center gap-1.5">
+    <div className='space-y-1'>
+      <Label className='text-[10px] uppercase tracking-wider text-gray-500'>{label}</Label>
+      <div className='flex items-center gap-1.5'>
         <Input
-          type="number"
+          type='number'
           value={value}
           min={min}
           max={max}
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(Number(e.target.value))}
-          className="h-7 flex-1 bg-gray-800/40 text-xs"
+          className='h-7 flex-1 bg-gray-800/40 text-xs'
         />
-        {suffix && <span className="text-[10px] text-gray-500">{suffix}</span>}
+        {suffix && <span className='text-[10px] text-gray-500'>{suffix}</span>}
       </div>
     </div>
   );
@@ -171,21 +171,21 @@ function RangeField({
   suffix?: string;
 }): React.JSX.Element {
   return (
-    <div className="space-y-1">
-      <div className="flex items-center justify-between">
-        <Label className="text-[10px] uppercase tracking-wider text-gray-500">{label}</Label>
-        <span className="text-[11px] text-gray-300">
+    <div className='space-y-1'>
+      <div className='flex items-center justify-between'>
+        <Label className='text-[10px] uppercase tracking-wider text-gray-500'>{label}</Label>
+        <span className='text-[11px] text-gray-300'>
           {value}
           {suffix}
         </span>
       </div>
       <input
-        type="range"
+        type='range'
         min={min}
         max={max}
         value={value}
         onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(Number(e.target.value))}
-        className="w-full accent-blue-500"
+        className='w-full accent-blue-500'
       />
     </div>
   );
@@ -203,13 +203,13 @@ function SelectField({
   options: { label: string; value: string }[];
 }): React.JSX.Element {
   return (
-    <div className="space-y-1">
-      <Label className="text-[10px] uppercase tracking-wider text-gray-500">{label}</Label>
+    <div className='space-y-1'>
+      <Label className='text-[10px] uppercase tracking-wider text-gray-500'>{label}</Label>
       <UnifiedSelect
         value={value}
         onValueChange={onChange}
         options={options}
-        triggerClassName="h-7 bg-gray-800/40 text-xs"
+        triggerClassName='h-7 bg-gray-800/40 text-xs'
       />
     </div>
   );
@@ -225,12 +225,12 @@ function CheckboxField({
   onChange: (v: boolean) => void;
 }): React.JSX.Element {
   return (
-    <label className="flex items-center gap-2 cursor-pointer">
+    <label className='flex items-center gap-2 cursor-pointer'>
       <Checkbox
         checked={checked}
         onCheckedChange={(v: boolean | 'indeterminate'): void => onChange(v === true)}
       />
-      <span className="text-xs text-gray-300">{label}</span>
+      <span className='text-xs text-gray-300'>{label}</span>
     </label>
   );
 }
@@ -393,14 +393,14 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
       switch (section) {
         case 'Visibility & Placement':
           return (
-            <div className="space-y-3">
+            <div className='space-y-3'>
               <CheckboxField
-                label="Show menu"
+                label='Show menu'
                 checked={settings.showMenu}
                 onChange={(v: boolean): void => update('showMenu', v)}
               />
               <SelectField
-                label="Menu position"
+                label='Menu position'
                 value={settings.menuPlacement}
                 onChange={(v: string): void => update('menuPlacement', v as 'top' | 'left' | 'right')}
                 options={[
@@ -410,13 +410,13 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                 ]}
               />
               <CheckboxField
-                label="Collapsible menu"
+                label='Collapsible menu'
                 checked={settings.collapsible}
                 onChange={(v: boolean): void => update('collapsible', v)}
               />
               {settings.collapsible && (
                 <CheckboxField
-                  label="Collapsed by default"
+                  label='Collapsed by default'
                   checked={settings.collapsedByDefault}
                   onChange={(v: boolean): void => update('collapsedByDefault', v)}
                 />
@@ -424,21 +424,21 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
               {(settings.menuPlacement === 'left' || settings.menuPlacement === 'right') && (
                 <>
                   <RangeField
-                    label="Side width"
+                    label='Side width'
                     value={settings.sideWidth}
                     onChange={(v: number): void => update('sideWidth', v)}
                     min={160}
                     max={420}
-                    suffix="px"
+                    suffix='px'
                   />
                   {settings.collapsible && (
                     <RangeField
-                      label="Collapsed width"
+                      label='Collapsed width'
                       value={settings.collapsedWidth}
                       onChange={(v: number): void => update('collapsedWidth', v)}
                       min={48}
                       max={120}
-                      suffix="px"
+                      suffix='px'
                     />
                   )}
                 </>
@@ -448,9 +448,9 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
 
         case 'Menu Layout':
           return (
-            <div className="space-y-3">
+            <div className='space-y-3'>
               <SelectField
-                label="Layout style"
+                label='Layout style'
                 value={settings.layoutStyle}
                 onChange={(v: string): void => update('layoutStyle', v)}
                 options={[
@@ -460,7 +460,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                 ]}
               />
               <SelectField
-                label="Alignment"
+                label='Alignment'
                 value={settings.alignment}
                 onChange={(v: string): void => update('alignment', v)}
                 options={[
@@ -471,15 +471,15 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                 ]}
               />
               <RangeField
-                label="Max width"
+                label='Max width'
                 value={settings.maxWidth}
                 onChange={(v: number): void => update('maxWidth', v)}
                 min={800}
                 max={1400}
-                suffix="px"
+                suffix='px'
               />
               <CheckboxField
-                label="Full width"
+                label='Full width'
                 checked={settings.fullWidth}
                 onChange={(v: boolean): void => update('fullWidth', v)}
               />
@@ -488,29 +488,29 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
 
         case 'Menu Items':
           return (
-            <div className="space-y-2">
+            <div className='space-y-2'>
               {settings.items.map((item: MenuItem) => (
                 <SectionPanel
                   key={item.id}
-                  variant="subtle-compact"
-                  className="flex items-start gap-1.5 p-2"
+                  variant='subtle-compact'
+                  className='flex items-start gap-1.5 p-2'
                 >
-                  <div className="flex-1 space-y-1.5">
+                  <div className='flex-1 space-y-1.5'>
                     <Input
                       value={item.label}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                         updateMenuItem(item.id, 'label', e.target.value)
                       }
-                      placeholder="Label"
-                      className="h-7 bg-gray-800/40 text-xs"
+                      placeholder='Label'
+                      className='h-7 bg-gray-800/40 text-xs'
                     />
                     <Input
                       value={item.url}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                         updateMenuItem(item.id, 'url', e.target.value)
                       }
-                      placeholder="URL"
-                      className="h-7 bg-gray-800/40 text-xs"
+                      placeholder='URL'
+                      className='h-7 bg-gray-800/40 text-xs'
                     />
                     {settings.showItemImages && (
                       <Input
@@ -518,28 +518,28 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                         onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                           updateMenuItem(item.id, 'imageUrl', e.target.value)
                         }
-                        placeholder="Image URL"
-                        className="h-7 bg-gray-800/40 text-xs"
+                        placeholder='Image URL'
+                        className='h-7 bg-gray-800/40 text-xs'
                       />
                     )}
                   </div>
                   <button
-                    type="button"
+                    type='button'
                     onClick={(): void => removeMenuItem(item.id)}
-                    className="mt-1 rounded p-1 text-gray-500 hover:text-red-300 hover:bg-red-500/10"
-                    title="Remove item"
+                    className='mt-1 rounded p-1 text-gray-500 hover:text-red-300 hover:bg-red-500/10'
+                    title='Remove item'
                   >
-                    <Trash2 className="size-3.5" />
+                    <Trash2 className='size-3.5' />
                   </button>
                 </SectionPanel>
               ))}
               <Button
-                size="sm"
-                variant="outline"
-                className="w-full text-xs"
+                size='sm'
+                variant='outline'
+                className='w-full text-xs'
                 onClick={addMenuItem}
               >
-                <Plus className="mr-1.5 size-3.5" />
+                <Plus className='mr-1.5 size-3.5' />
                 Add menu item
               </Button>
             </div>
@@ -547,20 +547,20 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
 
         case 'Menu Images':
           return (
-            <div className="space-y-3">
+            <div className='space-y-3'>
               <CheckboxField
-                label="Show item images"
+                label='Show item images'
                 checked={settings.showItemImages}
                 onChange={(v: boolean): void => update('showItemImages', v)}
               />
               {settings.showItemImages && (
                 <RangeField
-                  label="Image size"
+                  label='Image size'
                   value={settings.itemImageSize}
                   onChange={(v: number): void => update('itemImageSize', v)}
                   min={12}
                   max={48}
-                  suffix="px"
+                  suffix='px'
                 />
               )}
             </div>
@@ -568,37 +568,37 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
 
         case 'Typography':
           return (
-            <div className="space-y-3">
+            <div className='space-y-3'>
               <SelectField
-                label="Font family"
+                label='Font family'
                 value={settings.fontFamily}
                 onChange={(v: string): void => update('fontFamily', v)}
                 options={FONT_FAMILY_OPTIONS}
               />
               <NumberField
-                label="Font size"
+                label='Font size'
                 value={settings.fontSize}
                 onChange={(v: number): void => update('fontSize', v)}
-                suffix="px"
+                suffix='px'
                 min={10}
                 max={32}
               />
               <SelectField
-                label="Font weight"
+                label='Font weight'
                 value={settings.fontWeight}
                 onChange={(v: string): void => update('fontWeight', v)}
                 options={FONT_WEIGHT_OPTIONS}
               />
               <NumberField
-                label="Letter spacing"
+                label='Letter spacing'
                 value={settings.letterSpacing}
                 onChange={(v: number): void => update('letterSpacing', v)}
-                suffix="px"
+                suffix='px'
                 min={-2}
                 max={10}
               />
               <SelectField
-                label="Text transform"
+                label='Text transform'
                 value={settings.textTransform}
                 onChange={(v: string): void => update('textTransform', v)}
                 options={[
@@ -612,9 +612,9 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
 
         case 'Colors':
           return (
-            <div className="space-y-3">
+            <div className='space-y-3'>
               <SelectField
-                label="Color scheme"
+                label='Color scheme'
                 value={menuColorSchemeId}
                 onChange={(v: string): void => update('menuColorSchemeId', v)}
                 options={colorSchemeOptions}
@@ -622,22 +622,22 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
               {menuColorSchemeId === 'custom' && (
                 <>
                   <ColorField
-                    label="Background"
+                    label='Background'
                     value={settings.backgroundColor}
                     onChange={(v: string): void => update('backgroundColor', v)}
                   />
                   <ColorField
-                    label="Text color"
+                    label='Text color'
                     value={settings.textColor}
                     onChange={(v: string): void => update('textColor', v)}
                   />
                   <ColorField
-                    label="Active item"
+                    label='Active item'
                     value={settings.activeItemColor}
                     onChange={(v: string): void => update('activeItemColor', v)}
                   />
                   <ColorField
-                    label="Border"
+                    label='Border'
                     value={settings.borderColor}
                     onChange={(v: string): void => update('borderColor', v)}
                   />
@@ -648,30 +648,30 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
 
         case 'Spacing':
           return (
-            <div className="space-y-3">
-              <Label className="text-[10px] uppercase tracking-wider text-gray-500">Padding</Label>
-              <div className="grid grid-cols-2 gap-2">
-                <NumberField label="Top" value={settings.paddingTop} onChange={(v: number): void => update('paddingTop', v)} suffix="px" min={0} max={100} />
-                <NumberField label="Right" value={settings.paddingRight} onChange={(v: number): void => update('paddingRight', v)} suffix="px" min={0} max={100} />
-                <NumberField label="Bottom" value={settings.paddingBottom} onChange={(v: number): void => update('paddingBottom', v)} suffix="px" min={0} max={100} />
-                <NumberField label="Left" value={settings.paddingLeft} onChange={(v: number): void => update('paddingLeft', v)} suffix="px" min={0} max={100} />
+            <div className='space-y-3'>
+              <Label className='text-[10px] uppercase tracking-wider text-gray-500'>Padding</Label>
+              <div className='grid grid-cols-2 gap-2'>
+                <NumberField label='Top' value={settings.paddingTop} onChange={(v: number): void => update('paddingTop', v)} suffix='px' min={0} max={100} />
+                <NumberField label='Right' value={settings.paddingRight} onChange={(v: number): void => update('paddingRight', v)} suffix='px' min={0} max={100} />
+                <NumberField label='Bottom' value={settings.paddingBottom} onChange={(v: number): void => update('paddingBottom', v)} suffix='px' min={0} max={100} />
+                <NumberField label='Left' value={settings.paddingLeft} onChange={(v: number): void => update('paddingLeft', v)} suffix='px' min={0} max={100} />
               </div>
               <RangeField
-                label="Item gap"
+                label='Item gap'
                 value={settings.itemGap}
                 onChange={(v: number): void => update('itemGap', v)}
                 min={0}
                 max={40}
-                suffix="px"
+                suffix='px'
               />
             </div>
           );
 
         case 'Mobile Menu':
           return (
-            <div className="space-y-3">
+            <div className='space-y-3'>
               <SelectField
-                label="Breakpoint"
+                label='Breakpoint'
                 value={settings.mobileBreakpoint}
                 onChange={(v: string): void => update('mobileBreakpoint', v)}
                 options={[
@@ -681,7 +681,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                 ]}
               />
               <SelectField
-                label="Animation"
+                label='Animation'
                 value={settings.mobileAnimation}
                 onChange={(v: string): void => update('mobileAnimation', v)}
                 options={[
@@ -692,12 +692,12 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                 ]}
               />
               <ColorField
-                label="Hamburger color"
+                label='Hamburger color'
                 value={settings.hamburgerColor}
                 onChange={(v: string): void => update('hamburgerColor', v)}
               />
               <CheckboxField
-                label="Show overlay"
+                label='Show overlay'
                 checked={settings.mobileOverlay}
                 onChange={(v: boolean): void => update('mobileOverlay', v)}
               />
@@ -706,27 +706,27 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
 
         case 'Dropdown Style':
           return (
-            <div className="space-y-3">
+            <div className='space-y-3'>
               <ColorField
-                label="Background"
+                label='Background'
                 value={settings.dropdownBg}
                 onChange={(v: string): void => update('dropdownBg', v)}
               />
               <ColorField
-                label="Text color"
+                label='Text color'
                 value={settings.dropdownTextColor}
                 onChange={(v: string): void => update('dropdownTextColor', v)}
               />
               <NumberField
-                label="Border radius"
+                label='Border radius'
                 value={settings.dropdownRadius}
                 onChange={(v: number): void => update('dropdownRadius', v)}
-                suffix="px"
+                suffix='px'
                 min={0}
                 max={24}
               />
               <SelectField
-                label="Shadow"
+                label='Shadow'
                 value={settings.dropdownShadow}
                 onChange={(v: string): void => update('dropdownShadow', v)}
                 options={[
@@ -737,10 +737,10 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                 ]}
               />
               <NumberField
-                label="Min width"
+                label='Min width'
                 value={settings.dropdownMinWidth}
                 onChange={(v: number): void => update('dropdownMinWidth', v)}
-                suffix="px"
+                suffix='px'
                 min={100}
                 max={400}
               />
@@ -754,9 +754,9 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
           const isSide = settings.menuPlacement === 'left' || settings.menuPlacement === 'right';
           const canHideOnScroll = isSticky || isSide;
           return (
-            <div className="space-y-3">
+            <div className='space-y-3'>
               <SelectField
-                label="Menu position"
+                label='Menu position'
                 value={positionMode}
                 onChange={(v: string): void => update('positionMode', v as 'static' | 'sticky')}
                 options={[
@@ -767,20 +767,20 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
               {isSticky && (
                 <>
                   <NumberField
-                    label="Sticky offset"
+                    label='Sticky offset'
                     value={settings.stickyOffset}
                     onChange={(v: number): void => update('stickyOffset', v)}
-                    suffix="px"
+                    suffix='px'
                     min={0}
                     max={200}
                   />
                   <CheckboxField
-                    label="Shrink on scroll"
+                    label='Shrink on scroll'
                     checked={settings.shrinkOnScroll}
                     onChange={(v: boolean): void => update('shrinkOnScroll', v)}
                   />
                   <ColorField
-                    label="Sticky background"
+                    label='Sticky background'
                     value={settings.stickyBackground}
                     onChange={(v: string): void => update('stickyBackground', v)}
                   />
@@ -789,16 +789,16 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
               {canHideOnScroll && (
                 <>
                   <CheckboxField
-                    label="Hide on scroll"
+                    label='Hide on scroll'
                     checked={settings.hideOnScroll}
                     onChange={(v: boolean): void => update('hideOnScroll', v)}
                   />
                   {settings.hideOnScroll && (
                     <NumberField
-                      label="Show on scroll up after"
+                      label='Show on scroll up after'
                       value={settings.showOnScrollUpAfterPx}
                       onChange={(v: number): void => update('showOnScrollUpAfterPx', v)}
-                      suffix="px"
+                      suffix='px'
                       min={0}
                       max={600}
                     />
@@ -811,9 +811,9 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
 
         case 'Active State':
           return (
-            <div className="space-y-3">
+            <div className='space-y-3'>
               <SelectField
-                label="Style"
+                label='Style'
                 value={settings.activeStyle}
                 onChange={(v: string): void => update('activeStyle', v)}
                 options={[
@@ -825,7 +825,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                 ]}
               />
               <ColorField
-                label="Active color"
+                label='Active color'
                 value={settings.activeColor}
                 onChange={(v: string): void => update('activeColor', v)}
               />
@@ -834,9 +834,9 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
 
         case 'Hover Effects':
           return (
-            <div className="space-y-3">
+            <div className='space-y-3'>
               <SelectField
-                label="Style"
+                label='Style'
                 value={settings.hoverStyle}
                 onChange={(v: string): void => update('hoverStyle', v)}
                 options={[
@@ -848,32 +848,32 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                 ]}
               />
               <ColorField
-                label="Hover color"
+                label='Hover color'
                 value={settings.hoverColor}
                 onChange={(v: string): void => update('hoverColor', v)}
               />
               <RangeField
-                label="Transition speed"
+                label='Transition speed'
                 value={settings.transitionSpeed}
                 onChange={(v: number): void => update('transitionSpeed', v)}
                 min={100}
                 max={500}
-                suffix="ms"
+                suffix='ms'
               />
             </div>
           );
 
         case 'Animations':
           return (
-            <div className="space-y-3">
+            <div className='space-y-3'>
               <SelectField
-                label="Entry animation"
+                label='Entry animation'
                 value={settings.menuEntryAnimation}
                 onChange={(v: string): void => update('menuEntryAnimation', v as AnimationPreset)}
                 options={ANIMATION_PRESETS}
               />
               <SelectField
-                label="Hover animation"
+                label='Hover animation'
                 value={settings.menuHoverAnimation}
                 onChange={(v: string): void => update('menuHoverAnimation', v as AnimationPreset)}
                 options={ANIMATION_PRESETS}
@@ -882,28 +882,28 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
           );
 
         default:
-          return <div className="text-xs text-gray-500">Settings coming soon.</div>;
+          return <div className='text-xs text-gray-500'>Settings coming soon.</div>;
       }
     },
     [settings, update, addMenuItem, updateMenuItem, removeMenuItem, colorSchemeOptions, menuColorSchemeId]
   );
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className='flex min-h-0 flex-1 flex-col'>
       {showHeader && (
         <PanelHeader
-          title="Menu settings"
-          subtitle="Configure the look and behaviour of your page navigation."
+          title='Menu settings'
+          subtitle='Configure the look and behaviour of your page navigation.'
         />
       )}
-      <div className="flex-1 overflow-y-auto p-3">
-        <div className="space-y-3">
-          <SectionPanel variant="subtle" className="p-3">
-            <Label className="text-[10px] uppercase tracking-wider text-gray-500">
+      <div className='flex-1 overflow-y-auto p-3'>
+        <div className='space-y-3'>
+          <SectionPanel variant='subtle' className='p-3'>
+            <Label className='text-[10px] uppercase tracking-wider text-gray-500'>
               Menu scope
             </Label>
             {zoningEnabled ? (
-              <div className="mt-2 space-y-2">
+              <div className='mt-2 space-y-2'>
                 <UnifiedSelect
                   value={menuScopeId}
                   onValueChange={(value: string): void => {
@@ -917,41 +917,41 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                       description: domain.id === activeDomainId ? 'active' : undefined
                     }))
                   ]}
-                  placeholder="Select zone"
-                  triggerClassName="h-8 text-xs"
+                  placeholder='Select zone'
+                  triggerClassName='h-8 text-xs'
                 />
                 {menuScopeId !== 'default' && !hasScopedMenu ? (
-                  <p className="text-[10px] text-gray-500">
+                  <p className='text-[10px] text-gray-500'>
                     Using default menu until you customize this zone.
                   </p>
                 ) : null}
               </div>
             ) : (
-              <p className="mt-2 text-[11px] text-gray-500">
+              <p className='mt-2 text-[11px] text-gray-500'>
                 Simple routing enabled. This menu applies globally.
               </p>
             )}
           </SectionPanel>
-          <div className="space-y-2">
+          <div className='space-y-2'>
             {MENU_SECTIONS.map((section: string) => {
               const isOpen = openSections.has(section);
               return (
                 <SectionPanel
                   key={section}
-                  variant="subtle"
-                  className="p-0 overflow-hidden"
+                  variant='subtle'
+                  className='p-0 overflow-hidden'
                 >
                   <button
-                    type="button"
+                    type='button'
                     onClick={(): void => toggleSection(section)}
-                    className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-gray-200 hover:bg-muted/40"
+                    className='flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-gray-200 hover:bg-muted/40'
                     aria-expanded={isOpen}
                   >
                     <span>{section}</span>
                     <ChevronDown className={`size-4 text-gray-500 transition ${isOpen ? 'rotate-180' : ''}`} />
                   </button>
                   {isOpen && (
-                    <div className="px-3 pb-3">{renderSectionBody(section)}</div>
+                    <div className='px-3 pb-3'>{renderSectionBody(section)}</div>
                   )}
                 </SectionPanel>
               );

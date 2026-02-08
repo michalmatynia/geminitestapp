@@ -47,7 +47,7 @@ export function BlockPicker({ sectionType, onSelect }: BlockPickerProps): React.
     <PickerDropdown
       groups={groups}
       onSelect={onSelect}
-      ariaLabel="Add block"
+      ariaLabel='Add block'
     />
   );
 }

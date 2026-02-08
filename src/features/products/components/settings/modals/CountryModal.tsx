@@ -94,12 +94,12 @@ export function CountryModal(): React.JSX.Element {
       }}
       isSaving={saveMutation.isPending}
       saveText={country ? 'Update' : 'Add'}
-      cancelText="Close"
-      size="md"
+      cancelText='Close'
+      size='md'
     >
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="country-code">Code</Label>
+      <div className='space-y-4'>
+        <div className='space-y-2'>
+          <Label htmlFor='country-code'>Code</Label>
           <Select
             value={form.code}
             onValueChange={(value: string): void => {
@@ -109,8 +109,8 @@ export function CountryModal(): React.JSX.Element {
               setForm({ code: value, name: sel?.name ?? '' });
             }}
           >
-            <SelectTrigger className="w-full bg-gray-900 border-border text-white">
-              <SelectValue placeholder="Select code" />
+            <SelectTrigger className='w-full bg-gray-900 border-border text-white'>
+              <SelectValue placeholder='Select code' />
             </SelectTrigger>
             <SelectContent>
               {countryCodeOptions.map((opt) => (
@@ -121,30 +121,30 @@ export function CountryModal(): React.JSX.Element {
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="country-name">Name</Label>
+        <div className='space-y-2'>
+          <Label htmlFor='country-name'>Name</Label>
           <Input
-            id="country-name"
+            id='country-name'
             value={form.name}
             onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
           />
         </div>
-        <div className="space-y-2">
+        <div className='space-y-2'>
           <Label>Associated Currencies</Label>
           {loadingCurrencies ? (
-            <p className="text-xs text-gray-500">Loading currencies...</p>
+            <p className='text-xs text-gray-500'>Loading currencies...</p>
           ) : (
-            <div className="mt-2 grid grid-cols-2 gap-2 max-h-48 overflow-y-auto rounded-md border border-border bg-card/50 p-3">
+            <div className='mt-2 grid grid-cols-2 gap-2 max-h-48 overflow-y-auto rounded-md border border-border bg-card/50 p-3'>
               {currencyOptions.map((curr) => (
                 <Label
                   key={curr.id}
-                  className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-1.5 rounded transition-colors"
+                  className='flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-1.5 rounded transition-colors'
                 >
                   <Checkbox
                     checked={selectedCurrencyIds.includes(curr.id)}
                     onCheckedChange={() => toggleCurrency(curr.id)}
                   />
-                  <span className="text-xs text-gray-200">
+                  <span className='text-xs text-gray-200'>
                     {curr.code} ({curr.name})
                   </span>
                 </Label>

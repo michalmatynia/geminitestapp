@@ -53,7 +53,7 @@ function calculateDepth(
   while (currentId && !visited.has(currentId)) {
     visited.add(currentId);
     const cat = categoriesById.get(currentId);
-    if (!cat || !cat.parentId) break;
+    if (!cat?.parentId) break;
     depth++;
     currentId = cat.parentId;
   }

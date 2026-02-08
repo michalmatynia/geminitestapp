@@ -67,30 +67,30 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
 
   return (
     <div className={cn('rounded border bg-card/60 p-2', borderClass)}>
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <div className="min-w-0">
-          <div className="truncate font-mono text-[11px] text-gray-200">{leaf.path}</div>
+      <div className='mb-2 flex items-center justify-between gap-2'>
+        <div className='min-w-0'>
+          <div className='truncate font-mono text-[11px] text-gray-200'>{leaf.path}</div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="text-[11px] text-gray-400">
+        <div className='flex items-center gap-2'>
+          <div className='text-[11px] text-gray-400'>
             {Array.isArray(value) ? 'array' : value === null ? 'null' : typeof value}
           </div>
           <Button
-            type="button"
-            size="icon"
-            variant="ghost"
+            type='button'
+            size='icon'
+            variant='ghost'
             title={flipped ? 'Show value' : 'Edit selector'}
             onClick={onFlip}
           >
-            <Repeat2 className="size-4" />
+            <Repeat2 className='size-4' />
           </Button>
         </div>
       </div>
 
       {flipped ? (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <div className="text-[11px] text-gray-400">Selector</div>
+        <div className='space-y-2'>
+          <div className='flex items-center gap-2'>
+            <div className='text-[11px] text-gray-400'>Selector</div>
             <Select
               value={selectedUiControl}
               onValueChange={(next: string) => {
@@ -98,7 +98,7 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
                 onUiControlChange(next);
               }}
             >
-              <SelectTrigger className="h-7 w-[140px] px-2">
+              <SelectTrigger className='h-7 w-[140px] px-2'>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -112,26 +112,26 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
           </div>
 
           {spec?.hint ? (
-            <div className="text-[11px] text-gray-500">
-              Hint: <span className="text-gray-400">{spec.hint}</span>
+            <div className='text-[11px] text-gray-500'>
+              Hint: <span className='text-gray-400'>{spec.hint}</span>
             </div>
           ) : null}
 
           {selectedUiControl === 'auto' && recommendation.reason ? (
-            <div className="text-[11px] text-gray-500">
-              Suggestion: <span className="text-gray-400">{recommendation.reason}</span>
+            <div className='text-[11px] text-gray-500'>
+              Suggestion: <span className='text-gray-400'>{recommendation.reason}</span>
             </div>
           ) : null}
 
           {errors.length > 0 || warnings.length > 0 ? (
-            <div className="space-y-1 text-[11px]">
+            <div className='space-y-1 text-[11px]'>
               {errors.map((issue: ParamIssue) => (
-                <div key={`${issue.path}:${issue.code ?? issue.message}`} className="text-red-300">
+                <div key={`${issue.path}:${issue.code ?? issue.message}`} className='text-red-300'>
                   {issue.message}
                 </div>
               ))}
               {warnings.map((issue: ParamIssue) => (
-                <div key={`${issue.path}:${issue.code ?? issue.message}`} className="text-yellow-300">
+                <div key={`${issue.path}:${issue.code ?? issue.message}`} className='text-yellow-300'>
                   {issue.message}
                 </div>
               ))}
@@ -142,18 +142,18 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
         <>
           {requestedControl !== 'json' && uiKind === 'boolean' && isBool ? (
             requestedControl === 'buttons' ? (
-              <div className="flex items-center gap-2">
+              <div className='flex items-center gap-2'>
                 <Button
-                  type="button"
-                  size="sm"
+                  type='button'
+                  size='sm'
                   variant={value ? 'secondary' : 'outline'}
                   onClick={() => onChange(true)}
                 >
                   true
                 </Button>
                 <Button
-                  type="button"
-                  size="sm"
+                  type='button'
+                  size='sm'
                   variant={!value ? 'secondary' : 'outline'}
                   onClick={() => onChange(false)}
                 >
@@ -161,8 +161,8 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
                 </Button>
               </div>
             ) : (
-              <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-200">
-                <input type="checkbox" checked={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.checked)} />
+              <label className='flex cursor-pointer items-center gap-2 text-xs text-gray-200'>
+                <input type='checkbox' checked={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.checked)} />
                 <span>{value ? 'true' : 'false'}</span>
               </label>
             )
@@ -170,12 +170,12 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
 
           {requestedControl !== 'json' && uiKind === 'enum' && typeof value === 'string' && spec?.enumOptions ? (
             requestedControl === 'buttons' ? (
-              <div className="flex flex-wrap gap-2">
+              <div className='flex flex-wrap gap-2'>
                 {spec.enumOptions.map((opt: string) => (
                   <Button
                     key={opt}
-                    type="button"
-                    size="sm"
+                    type='button'
+                    size='sm'
                     variant={opt === value ? 'secondary' : 'outline'}
                     onClick={() => onChange(opt)}
                   >
@@ -184,10 +184,10 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
                 ))}
               </div>
             ) : requestedControl === 'text' ? (
-              <Input value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)} className="h-8" />
+              <Input value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)} className='h-8' />
             ) : (
               <Select value={value} onValueChange={(v: string) => onChange(v)}>
-                <SelectTrigger className="h-8">
+                <SelectTrigger className='h-8'>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -202,10 +202,10 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
           ) : null}
 
           {requestedControl !== 'json' && uiKind === 'number' && isNumber ? (
-            <div className="space-y-2">
+            <div className='space-y-2'>
               {requestedControl === 'slider' && canSlider ? (
                 <input
-                  type="range"
+                  type='range'
                   min={spec?.min ?? 0}
                   max={spec?.max ?? 1}
                   step={spec?.step ?? 0.01}
@@ -215,11 +215,11 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
                     if (!Number.isFinite(next)) return;
                     onChange(next);
                   }}
-                  className="w-full"
+                  className='w-full'
                 />
               ) : null}
               <Input
-                type="number"
+                type='number'
                 value={String(value)}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   const next = Number(e.target.value);
@@ -229,18 +229,18 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
                 min={spec?.min}
                 max={spec?.max}
                 step={spec?.step}
-                className="h-8"
+                className='h-8'
               />
             </div>
           ) : null}
 
           {requestedControl !== 'json' && uiKind === 'rgb' && Array.isArray(value) ? (
-            <div className="grid grid-cols-3 gap-2">
+            <div className='grid grid-cols-3 gap-2'>
               {['R', 'G', 'B'].map((label: string, index: number) => (
-                <div key={label} className="space-y-1">
-                  <div className="text-[10px] text-gray-500">{label}</div>
+                <div key={label} className='space-y-1'>
+                  <div className='text-[10px] text-gray-500'>{label}</div>
                   <Input
-                    type="number"
+                    type='number'
                     value={String(value[index] ?? '')}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       const next = Number(e.target.value);
@@ -252,7 +252,7 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
                     min={spec?.min ?? 0}
                     max={spec?.max ?? 255}
                     step={spec?.step ?? 1}
-                    className="h-8"
+                    className='h-8'
                   />
                 </div>
               ))}
@@ -260,12 +260,12 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
           ) : null}
 
           {requestedControl !== 'json' && uiKind === 'tuple2' && Array.isArray(value) ? (
-            <div className="grid grid-cols-2 gap-2">
+            <div className='grid grid-cols-2 gap-2'>
               {['X', 'Y'].map((label: string, index: number) => (
-                <div key={label} className="space-y-1">
-                  <div className="text-[10px] text-gray-500">{label}</div>
+                <div key={label} className='space-y-1'>
+                  <div className='text-[10px] text-gray-500'>{label}</div>
                   <Input
-                    type="number"
+                    type='number'
                     value={String(value[index] ?? '')}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       const next = Number(e.target.value);
@@ -277,7 +277,7 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
                     min={spec?.min}
                     max={spec?.max}
                     step={spec?.step ?? 1}
-                    className="h-8"
+                    className='h-8'
                   />
                 </div>
               ))}
@@ -286,9 +286,9 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
 
           {requestedControl !== 'json' && uiKind === 'string' && isString ? (
             requestedControl === 'textarea' ? (
-              <Textarea value={value} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onChange(e.target.value)} className="h-24 font-mono text-[11px]" />
+              <Textarea value={value} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onChange(e.target.value)} className='h-24 font-mono text-[11px]' />
             ) : (
-              <Input value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)} className="h-8" />
+              <Input value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)} className='h-8' />
             )
           ) : null}
 
@@ -303,7 +303,7 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
                   onChange(raw);
                 }
               }}
-              className="h-24 font-mono text-[11px]"
+              className='h-24 font-mono text-[11px]'
             />
           ) : null}
         </>

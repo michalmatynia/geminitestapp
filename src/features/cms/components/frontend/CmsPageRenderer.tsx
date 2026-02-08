@@ -84,7 +84,7 @@ export function CmsPageRenderer({
   return (
     <MediaStylesProvider value={mediaStyles ?? null}>
       <CmsPageProvider colorSchemes={colorSchemes ?? {}} layout={layout ?? {}}>
-        <div className="cms-page cms-hover-scope" style={{ ...hoverVars, ...(mediaVars ?? {}) }}>
+        <div className='cms-page cms-hover-scope' style={{ ...hoverVars, ...(mediaVars ?? {}) }}>
           {ZONE_ORDER.map((zone: PageZone) =>
             sectionsByZone[zone].map((section: typeof sections[number]) => {
               return (

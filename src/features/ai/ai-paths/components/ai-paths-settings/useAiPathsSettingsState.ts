@@ -585,7 +585,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
         id?: string
       ): Promise<{ sample: unknown | null; fetchedId: string }> => {
         const queries: Array<{ query: Record<string, unknown>; idType?: 'string' | 'objectId' }> = [];
-        if (id && id.trim()) {
+        if (id?.trim()) {
           queries.push({ query: { id }, idType: 'string' });
           if (isObjectId(id)) {
             queries.push({ query: { _id: id }, idType: 'objectId' });
@@ -785,7 +785,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     const savedModels = nodes
       .filter((node: AiNode): boolean => node.type === 'model')
       .map((node: AiNode): string | undefined => node.config?.model?.modelId)
-      .filter((modelId: string | undefined): modelId is string => Boolean(modelId && modelId.trim()));
+      .filter((modelId: string | undefined): modelId is string => Boolean(modelId?.trim()));
     return Array.from(
       new Set([
         ...DEFAULT_MODELS,

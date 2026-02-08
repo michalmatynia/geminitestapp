@@ -67,16 +67,16 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
 
   return (
     <ItemLibrary<PlaywrightPersona>
-      title="Playwright Personas"
-      description="Centralize browser automation settings to reuse across integrations and chatbot flows."
-      entityName="Persona"
+      title='Playwright Personas'
+      description='Centralize browser automation settings to reuse across integrations and chatbot flows.'
+      entityName='Persona'
       items={personas}
       isLoading={loading}
       isSaving={saving}
       onSave={handleSavePersona}
       onDelete={handleDeletePersona}
       backLink={(
-        <Link href="/admin/settings" className="text-blue-300 hover:text-blue-200">
+        <Link href='/admin/settings' className='text-blue-300 hover:text-blue-200'>
           ← Back to settings
         </Link>
       )}
@@ -109,8 +109,8 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
             onChange({ settings: nextSettings });
           }}
           showSave={false}
-          title="Persona settings"
-          description="Tune browser behavior, timeouts, and automation pacing."
+          title='Persona settings'
+          description='Tune browser behavior, timeouts, and automation pacing.'
         />
       )}
     />

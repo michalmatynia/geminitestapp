@@ -78,44 +78,44 @@ function EditSlugForm({
   };
 
   return (
-    <div className="container mx-auto py-10">
-      <SectionHeader title="Edit Slug" className="mb-6" />
+    <div className='container mx-auto py-10'>
+      <SectionHeader title='Edit Slug' className='mb-6' />
       <form onSubmit={(e: React.FormEvent<HTMLFormElement>): void => { void handleSubmit(e); }}>
-        <div className="mb-4">
-          <Label htmlFor="slug">Slug</Label>
+        <div className='mb-4'>
+          <Label htmlFor='slug'>Slug</Label>
           <Input
-            id="slug"
+            id='slug'
             value={slug.slug}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSlug({ ...slug, slug: e.target.value })}
             required
           />
         </div>
-        <div className="mb-4 flex items-center">
+        <div className='mb-4 flex items-center'>
           <Switch
-            id="isDefault"
+            id='isDefault'
             checked={Boolean(slug.isDefault)}
             onCheckedChange={(checked: boolean): void => setSlug({ ...slug, isDefault: checked })}
           />
-          <Label htmlFor="isDefault" className="ml-2">
+          <Label htmlFor='isDefault' className='ml-2'>
             Set as default
           </Label>
         </div>
         {zoningEnabled ? (
-          <div className="mb-6 space-y-2 rounded border border-border/50 bg-gray-900/40 p-3">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm">Zones using this slug</Label>
-              <span className="text-xs text-muted-foreground">
+          <div className='mb-6 space-y-2 rounded border border-border/50 bg-gray-900/40 p-3'>
+            <div className='flex items-center justify-between'>
+              <Label className='text-sm'>Zones using this slug</Label>
+              <span className='text-xs text-muted-foreground'>
                 {selectedDomainIds.length} selected
               </span>
             </div>
-            <div className="max-h-48 space-y-2 overflow-y-auto rounded border border-border/50 bg-gray-950/40 p-2">
+            <div className='max-h-48 space-y-2 overflow-y-auto rounded border border-border/50 bg-gray-950/40 p-2'>
               {domains.length === 0 ? (
-                <p className="py-3 text-center text-xs text-muted-foreground">No zones available.</p>
+                <p className='py-3 text-center text-xs text-muted-foreground'>No zones available.</p>
               ) : (
                 domains.map((domain: CmsDomain) => {
                   const checked = selectedDomainIds.includes(domain.id);
                   return (
-                    <label key={domain.id} className="flex items-center gap-2 text-sm text-gray-200">
+                    <label key={domain.id} className='flex items-center gap-2 text-sm text-gray-200'>
                       <Checkbox
                         checked={checked}
                         onCheckedChange={() => {
@@ -129,7 +129,7 @@ function EditSlugForm({
                       />
                       {domain.domain}
                       {domain.aliasOf ? (
-                        <span className="text-[11px] text-muted-foreground">
+                        <span className='text-[11px] text-muted-foreground'>
                           (alias of {domains.find((item: CmsDomain) => item.id === domain.aliasOf)?.domain ?? 'zone'})
                         </span>
                       ) : null}
@@ -138,12 +138,12 @@ function EditSlugForm({
                 })
               )}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className='text-xs text-muted-foreground'>
               Assign this slug to multiple zones to reuse the same path across hostnames.
             </p>
           </div>
         ) : null}
-        <Button type="submit">Update</Button>
+        <Button type='submit'>Update</Button>
       </form>
     </div>
   );

@@ -2072,7 +2072,7 @@ const validateConnection = (
 
   // Check port compatibility
   const allowedPorts: string[] | undefined = PORT_COMPATIBILITY[fromPort];
-  if (!allowedPorts || !allowedPorts.includes(toPort)) {
+  if (!allowedPorts?.includes(toPort)) {
     return {
       valid: false,
       message: `Port ${fromPort} cannot connect to ${toPort}.`,

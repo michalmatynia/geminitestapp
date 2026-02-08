@@ -40,14 +40,14 @@ export function ChatInterface(props: ChatInterfaceProps): React.JSX.Element {
   const onSend = props.onSend ?? defaultOnSend;
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex-1 overflow-y-auto p-4">
+    <div className='flex h-full flex-col'>
+      <div className='flex-1 overflow-y-auto p-4'>
         {messages.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-gray-500">
+          <div className='flex h-full items-center justify-center text-gray-500'>
             <p>Start a conversation...</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className='space-y-4'>
             {messages.map((msg: ChatMessage, index: number): React.JSX.Element => (
               <div
                 key={index}
@@ -70,18 +70,18 @@ export function ChatInterface(props: ChatInterfaceProps): React.JSX.Element {
           </div>
         )}
       </div>
-      <div className="border-t border-border p-4">
-        <form onSubmit={onSend} className="flex gap-2">
+      <div className='border-t border-border p-4'>
+        <form onSubmit={onSend} className='flex gap-2'>
           <Input
-            className="flex-1 rounded-md border bg-gray-900 px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
+            className='flex-1 rounded-md border bg-gray-900 px-3 py-2 text-white focus:border-blue-500 focus:outline-none'
             value={input}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setInput(e.target.value)}
-            placeholder="Type your message..."
+            placeholder='Type your message...'
             disabled={isSending}
           />
           <Button
-            type="submit"
-            className="rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            type='submit'
+            className='rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50'
             disabled={isSending || !input.trim()}
           >
             {isSending ? 'Sending...' : 'Send'}

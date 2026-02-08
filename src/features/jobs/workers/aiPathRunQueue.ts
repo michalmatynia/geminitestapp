@@ -200,7 +200,7 @@ export const enqueuePathRunJob = async (runId: string): Promise<void> => {
 const resolveAiPathRunQueue = (): { queue: Queue | null; owned: boolean } => {
   const existing = queue.getQueue();
   if (existing) {
-    return { queue: existing as Queue, owned: false };
+    return { queue: existing, owned: false };
   }
   const connection = getRedisConnection();
   if (!connection) {

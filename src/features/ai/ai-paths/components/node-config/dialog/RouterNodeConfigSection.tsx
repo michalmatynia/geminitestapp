@@ -24,9 +24,9 @@ export function RouterNodeConfigSection({
   };
 
   return (
-    <div className="space-y-4">
+    <div className='space-y-4'>
       <div>
-        <Label className="text-xs text-gray-400">Match Source</Label>
+        <Label className='text-xs text-gray-400'>Match Source</Label>
         <UnifiedSelect
           value={routerConfig.mode}
           onValueChange={(value: string): void =>
@@ -41,12 +41,12 @@ export function RouterNodeConfigSection({
             { value: 'valid', label: 'Validator valid' },
             { value: 'value', label: 'Value input' }
           ]}
-          placeholder="Select mode"
-          triggerClassName="mt-2 w-full border-border bg-card/70 text-sm text-white"
+          placeholder='Select mode'
+          triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
         />
       </div>
       <div>
-        <Label className="text-xs text-gray-400">Match Mode</Label>
+        <Label className='text-xs text-gray-400'>Match Mode</Label>
         <UnifiedSelect
           value={routerConfig.matchMode}
           onValueChange={(value: string): void =>
@@ -63,14 +63,14 @@ export function RouterNodeConfigSection({
             { value: 'equals', label: 'Equals' },
             { value: 'contains', label: 'Contains' }
           ]}
-          placeholder="Select match mode"
-          triggerClassName="mt-2 w-full border-border bg-card/70 text-sm text-white"
+          placeholder='Select match mode'
+          triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
         />
       </div>
       <div>
-        <Label className="text-xs text-gray-400">Compare To</Label>
+        <Label className='text-xs text-gray-400'>Compare To</Label>
         <Input
-          className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+          className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
           value={routerConfig.compareTo}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({

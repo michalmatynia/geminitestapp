@@ -19,12 +19,12 @@ export function CreateNoteModal(): React.JSX.Element | null {
     <FormModal
       isOpen={isCreating}
       onClose={(): void => setIsCreating(false)}
-      title="Create Note"
+      title='Create Note'
       formRef={formRef} // Pass the ref here
       onSave={handleCreateSuccess} // Pass onSuccess as the onSave callback if formRef is not used
-      saveText="Create"
+      saveText='Create'
       actions={
-        <TriggerButtonBar location="note_modal" entityType="note" />
+        <TriggerButtonBar location='note_modal' entityType='note' />
       }
     >
       <NoteForm

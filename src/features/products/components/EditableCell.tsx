@@ -88,15 +88,15 @@ export const EditableCell = memo(function EditableCell({
     return (
       <Input
         ref={inputRef}
-        type="number"
+        type='number'
         step={field === 'price' ? '0.01' : '1'}
-        min="0"
+        min='0'
         value={editValue}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditValue(e.target.value)}
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
         disabled={isSaving}
-        className="h-8 w-24 text-sm"
+        className='h-8 w-24 text-sm'
       />
     );
   }
@@ -104,7 +104,7 @@ export const EditableCell = memo(function EditableCell({
   return (
     <div
       onDoubleClick={handleDoubleClick}
-      className="cursor-pointer rounded px-2 py-1 hover:bg-muted/50/50 transition-colors"
+      className='cursor-pointer rounded px-2 py-1 hover:bg-muted/50/50 transition-colors'
       title={`Double-click to edit ${field}`}
     >
       {value !== null ? (field === 'price' ? value.toFixed(2) : value) : '-'}

@@ -34,8 +34,8 @@ export function AllegroApiConsole(): React.JSX.Element {
 
   return (
     <ApiConsole
-      title="Allegro API Console"
-      description="Send requests using the active Allegro connection token."
+      title='Allegro API Console'
+      description='Send requests using the active Allegro connection token.'
       presets={allegroApiPresets}
       method={allegroApiMethod}
       setMethod={setAllegroApiMethod}
@@ -43,7 +43,7 @@ export function AllegroApiConsole(): React.JSX.Element {
       setPath={setAllegroApiPath}
       bodyOrParams={allegroApiBody}
       setBodyOrParams={setAllegroApiBody}
-      bodyOrParamsLabel="JSON body"
+      bodyOrParamsLabel='JSON body'
       loading={allegroApiLoading}
       error={allegroApiError}
       response={
@@ -60,11 +60,11 @@ export function AllegroApiConsole(): React.JSX.Element {
       }
       onRequest={() => { void handleAllegroApiRequest(); }}
       isConnected={isConnected}
-      connectionWarning="Connect Allegro to enable API requests."
+      connectionWarning='Connect Allegro to enable API requests.'
       baseUrl={activeConnection?.allegroUseSandbox
         ? 'https://api.allegro.pl.allegrosandbox.pl'
         : 'https://api.allegro.pl'}
-      methodType="select"
+      methodType='select'
     />
   );
 }

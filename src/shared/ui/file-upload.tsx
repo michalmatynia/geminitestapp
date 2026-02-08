@@ -130,20 +130,20 @@ export function FileUploadButton({
   };
 
   return (
-    <span className="inline-flex flex-col gap-1">
+    <span className='inline-flex flex-col gap-1'>
       <Input
         ref={inputRef}
-        type="file"
+        type='file'
         accept={accept}
         multiple={multiple}
-        className="hidden"
+        className='hidden'
         disabled={buttonProps.disabled}
         onChange={(e) => {
           void handleChange(e);
         }}
       />
       <Button
-        type="button"
+        type='button'
         {...buttonProps}
         onClick={() => inputRef.current?.click()}
         onDragOver={composeEventHandler(
@@ -164,14 +164,14 @@ export function FileUploadButton({
         {children}
       </Button>
       {showProgress && isUploading ? (
-        <span className="flex items-center gap-2">
-          <span className="h-1 w-full overflow-hidden rounded bg-slate-800/60">
+        <span className='flex items-center gap-2'>
+          <span className='h-1 w-full overflow-hidden rounded bg-slate-800/60'>
             <span
-              className="block h-full rounded bg-blue-500/70 transition-[width] duration-150"
+              className='block h-full rounded bg-blue-500/70 transition-[width] duration-150'
               style={{ width: `${Math.max(2, progress)}%` }}
             />
           </span>
-          <span className="text-[10px] text-gray-400 tabular-nums">{Math.round(progress)}%</span>
+          <span className='text-[10px] text-gray-400 tabular-nums'>{Math.round(progress)}%</span>
         </span>
       ) : null}
     </span>
@@ -263,13 +263,13 @@ export function FileUploadTrigger({
   };
 
   return (
-    <span className="inline-flex flex-col gap-1">
+    <span className='inline-flex flex-col gap-1'>
       <Input
         ref={inputRef}
-        type="file"
+        type='file'
         accept={accept}
         multiple={multiple}
-        className="hidden"
+        className='hidden'
         disabled={disabled}
         onChange={(e) => {
           void handleChange(e);
@@ -277,7 +277,7 @@ export function FileUploadTrigger({
       />
       <Comp
         className={className}
-        role="button"
+        role='button'
         tabIndex={disabled ? -1 : 0}
         aria-disabled={disabled}
         onClick={() => {
@@ -305,14 +305,14 @@ export function FileUploadTrigger({
         {children}
       </Comp>
       {showProgress && isUploading ? (
-        <span className="flex items-center gap-2">
-          <span className="h-1 w-full overflow-hidden rounded bg-slate-800/60">
+        <span className='flex items-center gap-2'>
+          <span className='h-1 w-full overflow-hidden rounded bg-slate-800/60'>
             <span
-              className="block h-full rounded bg-blue-500/70 transition-[width] duration-150"
+              className='block h-full rounded bg-blue-500/70 transition-[width] duration-150'
               style={{ width: `${Math.max(2, progress)}%` }}
             />
           </span>
-          <span className="text-[10px] text-gray-400 tabular-nums">{Math.round(progress)}%</span>
+          <span className='text-[10px] text-gray-400 tabular-nums'>{Math.round(progress)}%</span>
         </span>
       ) : null}
     </span>

@@ -39,10 +39,10 @@ export function AssignmentEditor({
     <div className={cn('grid gap-3', readOnly ? 'opacity-70' : '')}
       aria-disabled={!!readOnly}
     >
-      <label className="flex items-center gap-2 text-xs text-gray-300">
+      <label className='flex items-center gap-2 text-xs text-gray-300'>
         <input
-          type="checkbox"
-          className="h-3 w-3 rounded border-gray-600"
+          type='checkbox'
+          className='h-3 w-3 rounded border-gray-600'
           checked={assignment.enabled}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField({ enabled: e.target.checked })}
           disabled={!!readOnly}
@@ -50,16 +50,16 @@ export function AssignmentEditor({
         Enabled
       </label>
 
-      <div className="grid gap-2 md:grid-cols-2">
-        <div className="space-y-1">
-          <Label className="text-xs text-gray-400">Provider</Label>
+      <div className='grid gap-2 md:grid-cols-2'>
+        <div className='space-y-1'>
+          <Label className='text-xs text-gray-400'>Provider</Label>
           <Select
             value={assignment.provider}
             onValueChange={(value: string) => updateField({ provider: value as AiBrainProvider })}
             disabled={!!readOnly}
           >
-            <SelectTrigger className="h-9">
-              <SelectValue placeholder="Select provider" />
+            <SelectTrigger className='h-9'>
+              <SelectValue placeholder='Select provider' />
             </SelectTrigger>
             <SelectContent>
               {providerOptions.map((opt: { value: AiBrainProvider; label: string }) => (
@@ -71,10 +71,10 @@ export function AssignmentEditor({
           </Select>
         </div>
 
-        <div className="space-y-1">
-          <Label className="text-xs text-gray-400">Temperature</Label>
+        <div className='space-y-1'>
+          <Label className='text-xs text-gray-400'>Temperature</Label>
           <Input
-            type="number"
+            type='number'
             min={0}
             max={2}
             step={0.1}
@@ -84,50 +84,50 @@ export function AssignmentEditor({
           />
         </div>
 
-        <div className="space-y-1">
-          <Label className="text-xs text-gray-400">Model ID</Label>
+        <div className='space-y-1'>
+          <Label className='text-xs text-gray-400'>Model ID</Label>
           <Input
             value={assignment.modelId}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField({ modelId: e.target.value })}
-            placeholder="gpt-4o-mini"
+            placeholder='gpt-4o-mini'
             disabled={!!readOnly || assignment.provider !== 'model'}
           />
           {modelQuickPicks.length > 0 ? (
             <UnifiedSelect
-              value=""
+              value=''
               onValueChange={(value: string) => updateField({ modelId: value })}
               options={modelQuickPicks}
-              placeholder="Pick model preset"
+              placeholder='Pick model preset'
               disabled={!!readOnly || assignment.provider !== 'model'}
-              triggerClassName="h-8 text-[11px]"
+              triggerClassName='h-8 text-[11px]'
             />
           ) : null}
         </div>
 
-        <div className="space-y-1">
-          <Label className="text-xs text-gray-400">Agent ID</Label>
+        <div className='space-y-1'>
+          <Label className='text-xs text-gray-400'>Agent ID</Label>
           <Input
             value={assignment.agentId}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField({ agentId: e.target.value })}
-            placeholder="agent_xxx"
+            placeholder='agent_xxx'
             disabled={!!readOnly || assignment.provider !== 'agent'}
           />
           {agentQuickPicks.length > 0 ? (
             <UnifiedSelect
-              value=""
+              value=''
               onValueChange={(value: string) => updateField({ agentId: value })}
               options={agentQuickPicks}
-              placeholder="Pick agent/persona preset"
+              placeholder='Pick agent/persona preset'
               disabled={!!readOnly || assignment.provider !== 'agent'}
-              triggerClassName="h-8 text-[11px]"
+              triggerClassName='h-8 text-[11px]'
             />
           ) : null}
         </div>
 
-        <div className="space-y-1 md:col-span-2">
-          <Label className="text-xs text-gray-400">Max tokens</Label>
+        <div className='space-y-1 md:col-span-2'>
+          <Label className='text-xs text-gray-400'>Max tokens</Label>
           <Input
-            type="number"
+            type='number'
             min={1}
             max={8192}
             step={1}
@@ -138,13 +138,13 @@ export function AssignmentEditor({
         </div>
       </div>
 
-      <div className="space-y-1">
-        <Label className="text-xs text-gray-400">Notes</Label>
+      <div className='space-y-1'>
+        <Label className='text-xs text-gray-400'>Notes</Label>
         <textarea
-          className="flex min-h-[72px] w-full rounded-md border border-input bg-background px-3 py-2 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          className='flex min-h-[72px] w-full rounded-md border border-input bg-background px-3 py-2 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
           value={assignment.notes ?? ''}
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => updateField({ notes: e.target.value })}
-          placeholder="Optional notes for this assignment"
+          placeholder='Optional notes for this assignment'
           disabled={!!readOnly}
         />
       </div>

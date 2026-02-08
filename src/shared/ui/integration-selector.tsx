@@ -31,7 +31,7 @@ export function IntegrationSelector({
   return (
     <div className={className}>
       <div>
-        <Label className="mb-2 block text-sm font-medium text-gray-300">
+        <Label className='mb-2 block text-sm font-medium text-gray-300'>
           Integration
         </Label>
         <UnifiedSelect
@@ -44,13 +44,13 @@ export function IntegrationSelector({
               value: integration.id,
               label: integration.name
             }))}
-          placeholder="Select an integration..."
+          placeholder='Select an integration...'
         />
       </div>
 
       {selectedIntegration && selectedIntegration.connections.length > 0 && (
         <div>
-          <Label className="mb-2 block text-sm font-medium text-gray-300">
+          <Label className='mb-2 block text-sm font-medium text-gray-300'>
             Account / Connection
           </Label>
           <UnifiedSelect
@@ -63,7 +63,7 @@ export function IntegrationSelector({
                 value: connection.id,
                 label: connection.name
               }))}
-            placeholder="Select an account..."
+            placeholder='Select an account...'
           />
         </div>
       )}

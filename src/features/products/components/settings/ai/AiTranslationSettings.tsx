@@ -45,34 +45,34 @@ export function AiTranslationSettings(): React.JSX.Element {
     }
   };
 
-  if (settingsLoading) return <div className="text-sm text-gray-400">Loading settings...</div>;
+  if (settingsLoading) return <div className='text-sm text-gray-400'>Loading settings...</div>;
 
   return (
-    <div className="space-y-8">
+    <div className='space-y-8'>
       <SectionHeader
-        title="AI Translation Configuration"
-        description="Configure the AI model used for translating product names and descriptions."
-        size="md"
+        title='AI Translation Configuration'
+        description='Configure the AI model used for translating product names and descriptions.'
+        size='md'
       />
 
-      <SectionPanel variant="subtle" className="space-y-6">
-        <div className="max-w-md space-y-4">
-          <div className="space-y-2">
+      <SectionPanel variant='subtle' className='space-y-6'>
+        <div className='max-w-md space-y-4'>
+          <div className='space-y-2'>
             <Label>Translation Model</Label>
             <UnifiedSelect
               value={translationModel}
               onValueChange={setTranslationModel}
               options={[...STATIC_TRANSLATION_MODELS, ...ollamaModels]}
             />
-            <p className="text-xs text-gray-500 mt-2">
+            <p className='text-xs text-gray-500 mt-2'>
               This model will be used to translate product names and descriptions into
               languages associated with the product&apos;s catalogs.
             </p>
           </div>
 
-          <SectionPanel variant="subtle-compact" className="border border-border">
-            <h4 className="text-sm font-medium text-white mb-2">How It Works</h4>
-            <ul className="text-xs text-gray-400 space-y-1 list-disc list-inside">
+          <SectionPanel variant='subtle-compact' className='border border-border'>
+            <h4 className='text-sm font-medium text-white mb-2'>How It Works</h4>
+            <ul className='text-xs text-gray-400 space-y-1 list-disc list-inside'>
               <li>
                 Translation requests can be triggered from the Product Edit/Create panel
               </li>
@@ -90,11 +90,11 @@ export function AiTranslationSettings(): React.JSX.Element {
         </div>
       </SectionPanel>
 
-      <div className="flex justify-end">
+      <div className='flex justify-end'>
         <Button
           onClick={() => void handleSave()}
           disabled={saving}
-          className="bg-white text-black hover:bg-gray-200"
+          className='bg-white text-black hover:bg-gray-200'
         >
           {saving ? 'Saving...' : 'Save Configuration'}
         </Button>

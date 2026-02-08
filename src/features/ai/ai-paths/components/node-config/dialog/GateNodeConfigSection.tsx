@@ -23,9 +23,9 @@ export function GateNodeConfigSection({
   };
 
   return (
-    <div className="space-y-4">
+    <div className='space-y-4'>
       <div>
-        <Label className="text-xs text-gray-400">Mode</Label>
+        <Label className='text-xs text-gray-400'>Mode</Label>
         <UnifiedSelect
           value={gateConfig.mode}
           onValueChange={(value: string): void =>
@@ -40,14 +40,14 @@ export function GateNodeConfigSection({
             { value: 'block', label: 'Block on invalid' },
             { value: 'pass', label: 'Pass-through' }
           ]}
-          placeholder="Select mode"
-          triggerClassName="mt-2 w-full border-border bg-card/70 text-sm text-white"
+          placeholder='Select mode'
+          triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
         />
       </div>
       <div>
-        <Label className="text-xs text-gray-400">Fail Message</Label>
+        <Label className='text-xs text-gray-400'>Fail Message</Label>
         <Input
-          className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+          className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
           value={gateConfig.failMessage ?? ''}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({

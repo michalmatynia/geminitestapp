@@ -53,9 +53,9 @@ export function TriggerNodeConfigSection({
   if (!selectedNode.config) return null; // Added type guard
 
   return (
-    <div className="space-y-4">
+    <div className='space-y-4'>
       <div>
-        <Label className="text-xs text-gray-400">Trigger Action</Label>
+        <Label className='text-xs text-gray-400'>Trigger Action</Label>
         <UnifiedSelect
           value={triggerConfig.event}
           onValueChange={(value: string): void =>
@@ -67,16 +67,16 @@ export function TriggerNodeConfigSection({
             value: event.id,
             label: event.label
           }))}
-          placeholder="Select action"
-          triggerClassName="mt-2 w-full border-border bg-card/70 text-sm text-white"
+          placeholder='Select action'
+          triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
         />
       </div>
       {isScheduled ? (
-        <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100">
-          <div className="text-[10px] font-semibold uppercase tracking-wide text-amber-200">
+        <div className='rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100'>
+          <div className='text-[10px] font-semibold uppercase tracking-wide text-amber-200'>
             Server Schedule
           </div>
-          <div className="mt-1 text-amber-100/80">
+          <div className='mt-1 text-amber-100/80'>
             This trigger runs from server schedules or cron. Context input is optional,
             and manual runs are allowed for testing.
           </div>

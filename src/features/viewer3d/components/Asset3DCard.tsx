@@ -48,22 +48,22 @@ export function Asset3DCard({
       {...(className ? { className } : {})}
       onClick={(): void => onPreview(asset)}
       actions={
-        <div className="flex items-center gap-1">
+        <div className='flex items-center gap-1'>
           <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-blue-400"
+            variant='ghost'
+            size='icon'
+            className='h-7 w-7 text-muted-foreground hover:text-blue-400'
             onClick={(e: React.MouseEvent): void => {
               e.stopPropagation();
               onEdit(asset);
             }}
           >
-            <Edit2 className="h-4 w-4" />
+            <Edit2 className='h-4 w-4' />
           </Button>
           <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-red-400"
+            variant='ghost'
+            size='icon'
+            className='h-7 w-7 text-muted-foreground hover:text-red-400'
             onClick={(e: React.MouseEvent): void => {
               e.stopPropagation();
               onDelete(asset);
@@ -71,19 +71,19 @@ export function Asset3DCard({
             disabled={isDeleting}
           >
             {isDeleting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className='h-4 w-4 animate-spin' />
             ) : (
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className='h-4 w-4' />
             )}
           </Button>
         </div>
       }
       media={
-        <div className="h-40 bg-muted/30 p-0 flex items-center justify-center transition-colors group-hover:bg-muted/40">
-          <div className="flex flex-col items-center gap-2 text-muted-foreground group-hover:text-blue-400 transition-colors">
-            <Box className="h-12 w-12" />
-            <span className="text-xs flex items-center gap-1">
-              <Eye className="h-3 w-3" />
+        <div className='h-40 bg-muted/30 p-0 flex items-center justify-center transition-colors group-hover:bg-muted/40'>
+          <div className='flex flex-col items-center gap-2 text-muted-foreground group-hover:text-blue-400 transition-colors'>
+            <Box className='h-12 w-12' />
+            <span className='text-xs flex items-center gap-1'>
+              <Eye className='h-3 w-3' />
               Click to preview
             </span>
           </div>
@@ -102,12 +102,12 @@ export function Asset3DCard({
           >
             {asset.isPublic ? (
               <>
-                <Globe className="h-3 w-3" />
+                <Globe className='h-3 w-3' />
                 Public
               </>
             ) : (
               <>
-                <Lock className="h-3 w-3" />
+                <Lock className='h-3 w-3' />
                 Private
               </>
             )}
@@ -115,34 +115,34 @@ export function Asset3DCard({
 
           {/* Category Badge */}
           {asset.category && (
-            <div className="absolute top-2 left-2 px-2 py-1 rounded text-xs bg-blue-500/10 text-blue-300">
+            <div className='absolute top-2 left-2 px-2 py-1 rounded text-xs bg-blue-500/10 text-blue-300'>
               {asset.category}
             </div>
           )}
         </>
       }
       footer={
-        <div className="text-xs text-muted-foreground">
+        <div className='text-xs text-muted-foreground'>
           <span>{formatFileSize(asset.size)}</span>
-          <span className="mx-1">•</span>
+          <span className='mx-1'>•</span>
           <span>{formatDate(asset.createdAt)}</span>
         </div>
       }
     >
       {/* Tags */}
       {asset.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1">
+        <div className='flex flex-wrap gap-1'>
           {asset.tags.slice(0, 3).map((tag: string) => (
             <Tag
               key={tag}
               label={tag}
-              className="bg-muted text-muted-foreground"
+              className='bg-muted text-muted-foreground'
             />
           ))}
           {asset.tags.length > 3 && (
             <Tag
               label={`+${asset.tags.length - 3}`}
-              className="bg-muted text-muted-foreground"
+              className='bg-muted text-muted-foreground'
             />
           )}
         </div>

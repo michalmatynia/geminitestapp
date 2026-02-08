@@ -137,7 +137,7 @@ export function FrontendCarousel({ settings, blocks }: FrontendCarouselProps): R
 
   if (frameCount === 0) {
     return (
-      <div className="flex items-center justify-center p-8 text-gray-400 border border-dashed border-gray-300 rounded">
+      <div className='flex items-center justify-center p-8 text-gray-400 border border-dashed border-gray-300 rounded'>
         No carousel frames
       </div>
     );
@@ -150,14 +150,14 @@ export function FrontendCarousel({ settings, blocks }: FrontendCarouselProps): R
   return (
     <SectionDataProvider settings={settings}>
       <div
-        className="relative w-full overflow-hidden"
+        className='relative w-full overflow-hidden'
         style={containerStyle}
         onMouseEnter={() => pauseOnHover && setIsPaused(true)}
         onMouseLeave={() => pauseOnHover && setIsPaused(false)}
       >
         {/* Frames container */}
         <div
-          className="relative w-full h-full"
+          className='relative w-full h-full'
           style={{
             ...(transitionType === 'slide'
               ? {
@@ -228,33 +228,33 @@ export function FrontendCarousel({ settings, blocks }: FrontendCarouselProps): R
         {showNavigation && frameCount > 1 && (
           <>
             <button
-              type="button"
+              type='button'
               onClick={goToPrev}
               disabled={!loop && currentIndex === 0}
-              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-              aria-label="Previous slide"
+              className='absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed'
+              aria-label='Previous slide'
             >
-              <ChevronLeft className="w-6 h-6" />
+              <ChevronLeft className='w-6 h-6' />
             </button>
             <button
-              type="button"
+              type='button'
               onClick={goToNext}
               disabled={!loop && currentIndex === frameCount - 1}
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-              aria-label="Next slide"
+              className='absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed'
+              aria-label='Next slide'
             >
-              <ChevronRight className="w-6 h-6" />
+              <ChevronRight className='w-6 h-6' />
             </button>
           </>
         )}
 
         {/* Indicators */}
         {showIndicators && frameCount > 1 && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+          <div className='absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2'>
             {frames.map((_: BlockInstance, index: number) => (
               <button
                 key={index}
-                type="button"
+                type='button'
                 onClick={() => goToIndex(index)}
                 className={`w-2.5 h-2.5 rounded-full transition-colors ${
                   index === currentIndex ? 'bg-white' : 'bg-white/40 hover:bg-white/60'

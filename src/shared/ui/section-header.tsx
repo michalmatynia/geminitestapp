@@ -46,10 +46,10 @@ export function SectionHeader({
         className
       )}
     >
-      <div className="space-y-2 flex-1 min-w-0"> {/* Added flex-1 and min-w-0 for better flex behavior */}
-        {eyebrow ? <div className="text-sm text-muted-foreground">{eyebrow}</div> : null}
-        <div className="flex items-center gap-3">
-          {icon ? <div className="shrink-0">{icon}</div> : null}
+      <div className='space-y-2 flex-1 min-w-0'> {/* Added flex-1 and min-w-0 for better flex behavior */}
+        {eyebrow ? <div className='text-sm text-muted-foreground'>{eyebrow}</div> : null}
+        <div className='flex items-center gap-3'>
+          {icon ? <div className='shrink-0'>{icon}</div> : null}
           <h1
             className={cn(
               'font-bold tracking-tight text-white',
@@ -72,7 +72,7 @@ export function SectionHeader({
         ) : null}
       </div>
       {actions ? (
-        <div className="flex flex-wrap items-center gap-2 shrink-0"> {/* Added shrink-0 for actions */}
+        <div className='flex flex-wrap items-center gap-2 shrink-0'> {/* Added shrink-0 for actions */}
           {actions}
         </div>
       ) : null}

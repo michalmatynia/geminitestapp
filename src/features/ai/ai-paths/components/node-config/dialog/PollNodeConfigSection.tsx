@@ -127,31 +127,31 @@ export function PollNodeConfigSection({
   );
 
   return (
-    <div className="space-y-4">
+    <div className='space-y-4'>
       <div>
-        <Label className="text-xs text-gray-400">Mode</Label>
+        <Label className='text-xs text-gray-400'>Mode</Label>
         <Select
           value={resolvedPollConfig.mode || ''}
           onValueChange={(value: string): void =>
             updatePollConfig({ mode: value as 'job' | 'database' })
           }
         >
-          <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-            <SelectValue placeholder="Select mode" />
+          <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
+            <SelectValue placeholder='Select mode' />
           </SelectTrigger>
-          <SelectContent className="border-border bg-gray-900">
-            <SelectItem value="job">AI Job</SelectItem>
-            <SelectItem value="database">Database Query</SelectItem>
+          <SelectContent className='border-border bg-gray-900'>
+            <SelectItem value='job'>AI Job</SelectItem>
+            <SelectItem value='database'>Database Query</SelectItem>
           </SelectContent>
         </Select>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className='grid gap-3 sm:grid-cols-2'>
         <div>
-          <Label className="text-xs text-gray-400">Interval (ms)</Label>
+          <Label className='text-xs text-gray-400'>Interval (ms)</Label>
           <Input
-            type="number"
-            step="100"
-            className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+            type='number'
+            step='100'
+            className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
             value={resolvedPollConfig.intervalMs}
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
               updatePollConfig({
@@ -164,11 +164,11 @@ export function PollNodeConfigSection({
           />
         </div>
         <div>
-          <Label className="text-xs text-gray-400">Max Attempts</Label>
+          <Label className='text-xs text-gray-400'>Max Attempts</Label>
           <Input
-            type="number"
-            step="1"
-            className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+            type='number'
+            step='1'
+            className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
             value={resolvedPollConfig.maxAttempts}
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
               updatePollConfig({
@@ -182,16 +182,16 @@ export function PollNodeConfigSection({
         </div>
       </div>
       {resolvedPollConfig.mode === 'job' && (
-        <p className="text-[11px] text-gray-500">
+        <p className='text-[11px] text-gray-500'>
           Polls /api/products/ai-jobs/{'{{jobId}}'} until completion and outputs
           result + status.
         </p>
       )}
       {resolvedPollConfig.mode === 'database' && (
-        <div className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2">
+        <div className='space-y-4'>
+          <div className='grid gap-3 sm:grid-cols-2'>
             <div>
-              <Label className="text-xs text-gray-400">Provider</Label>
+              <Label className='text-xs text-gray-400'>Provider</Label>
               <Select
                 value={queryConfig.provider}
                 onValueChange={(value: string): void =>
@@ -203,18 +203,18 @@ export function PollNodeConfigSection({
                   })
                 }
               >
-                <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-                  <SelectValue placeholder="Select provider" />
+                <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
+                  <SelectValue placeholder='Select provider' />
                 </SelectTrigger>
-                <SelectContent className="border-border bg-gray-900">
-                  <SelectItem value="auto">Auto (legacy)</SelectItem>
-                  <SelectItem value="mongodb">MongoDB</SelectItem>
-                  <SelectItem value="prisma">Prisma</SelectItem>
+                <SelectContent className='border-border bg-gray-900'>
+                  <SelectItem value='auto'>Auto (legacy)</SelectItem>
+                  <SelectItem value='mongodb'>MongoDB</SelectItem>
+                  <SelectItem value='prisma'>Prisma</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="text-xs text-gray-400">Collection</Label>
+              <Label className='text-xs text-gray-400'>Collection</Label>
               <Select
                 value={collectionOption}
                 onValueChange={(value: string): void =>
@@ -227,10 +227,10 @@ export function PollNodeConfigSection({
                   })
                 }
               >
-                <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-                  <SelectValue placeholder="Select collection" />
+                <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
+                  <SelectValue placeholder='Select collection' />
                 </SelectTrigger>
-                <SelectContent className="border-border bg-gray-900">
+                <SelectContent className='border-border bg-gray-900'>
                   {DB_COLLECTION_OPTIONS.map(
                     (option: {
                       label: string;
@@ -241,16 +241,16 @@ export function PollNodeConfigSection({
                       </SelectItem>
                     ),
                   )}
-                  <SelectItem value="custom">Custom</SelectItem>
+                  <SelectItem value='custom'>Custom</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           {collectionOption === 'custom' && (
             <div>
-              <Label className="text-xs text-gray-400">Custom collection</Label>
+              <Label className='text-xs text-gray-400'>Custom collection</Label>
               <Input
-                className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
                 value={queryConfig.collection}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   updatePollConfig({
@@ -263,18 +263,18 @@ export function PollNodeConfigSection({
               />
             </div>
           )}
-          <div className="rounded-md border border-border bg-card/60 p-3">
-            <div className="text-[11px] text-gray-400">Query preview</div>
-            <pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200">
+          <div className='rounded-md border border-border bg-card/60 p-3'>
+            <div className='text-[11px] text-gray-400'>Query preview</div>
+            <pre className='mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200'>
               {queryPreviewText}
             </pre>
-            <p className="mt-2 text-[11px] text-gray-500">
+            <p className='mt-2 text-[11px] text-gray-500'>
               Preview uses current runtime inputs (if available).
             </p>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className='grid gap-3 sm:grid-cols-2'>
             <div>
-              <Label className="text-xs text-gray-400">Query mode</Label>
+              <Label className='text-xs text-gray-400'>Query mode</Label>
               <Select
                 value={queryConfig.mode}
                 onValueChange={(value: string): void =>
@@ -286,17 +286,17 @@ export function PollNodeConfigSection({
                   })
                 }
               >
-                <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-                  <SelectValue placeholder="Select mode" />
+                <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
+                  <SelectValue placeholder='Select mode' />
                 </SelectTrigger>
-                <SelectContent className="border-border bg-gray-900">
-                  <SelectItem value="preset">Preset</SelectItem>
-                  <SelectItem value="custom">Custom</SelectItem>
+                <SelectContent className='border-border bg-gray-900'>
+                  <SelectItem value='preset'>Preset</SelectItem>
+                  <SelectItem value='custom'>Custom</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="text-xs text-gray-400">ID type</Label>
+              <Label className='text-xs text-gray-400'>ID type</Label>
               <Select
                 value={queryConfig.idType}
                 onValueChange={(value: string): void =>
@@ -308,20 +308,20 @@ export function PollNodeConfigSection({
                   })
                 }
               >
-                <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-                  <SelectValue placeholder="Select ID type" />
+                <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
+                  <SelectValue placeholder='Select ID type' />
                 </SelectTrigger>
-                <SelectContent className="border-border bg-gray-900">
-                  <SelectItem value="string">String</SelectItem>
-                  <SelectItem value="objectId">ObjectId</SelectItem>
+                <SelectContent className='border-border bg-gray-900'>
+                  <SelectItem value='string'>String</SelectItem>
+                  <SelectItem value='objectId'>ObjectId</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           {queryConfig.mode === 'preset' && (
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className='grid gap-3 sm:grid-cols-2'>
               <div>
-                <Label className="text-xs text-gray-400">Preset</Label>
+                <Label className='text-xs text-gray-400'>Preset</Label>
                 <Select
                   value={queryConfig.preset}
                   onValueChange={(value: string): void =>
@@ -333,21 +333,21 @@ export function PollNodeConfigSection({
                     })
                   }
                 >
-                  <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-                    <SelectValue placeholder="Select preset" />
+                  <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
+                    <SelectValue placeholder='Select preset' />
                   </SelectTrigger>
-                  <SelectContent className="border-border bg-gray-900">
-                    <SelectItem value="by_id">By _id</SelectItem>
-                    <SelectItem value="by_productId">By productId</SelectItem>
-                    <SelectItem value="by_entityId">By entityId</SelectItem>
-                    <SelectItem value="by_field">By custom field</SelectItem>
+                  <SelectContent className='border-border bg-gray-900'>
+                    <SelectItem value='by_id'>By _id</SelectItem>
+                    <SelectItem value='by_productId'>By productId</SelectItem>
+                    <SelectItem value='by_entityId'>By entityId</SelectItem>
+                    <SelectItem value='by_field'>By custom field</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label className="text-xs text-gray-400">Custom field</Label>
+                <Label className='text-xs text-gray-400'>Custom field</Label>
                 <Input
-                  className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                  className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
                   value={queryConfig.field}
                   disabled={queryConfig.preset !== 'by_field'}
                   onChange={(
@@ -366,9 +366,9 @@ export function PollNodeConfigSection({
           )}
           {queryConfig.mode === 'custom' && (
             <div>
-              <Label className="text-xs text-gray-400">Query template</Label>
+              <Label className='text-xs text-gray-400'>Query template</Label>
               <Textarea
-                className="mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
                 value={queryConfig.queryTemplate}
                 onChange={(
                   event: React.ChangeEvent<HTMLTextAreaElement>,
@@ -381,19 +381,19 @@ export function PollNodeConfigSection({
                   })
                 }
               />
-              <p className="mt-2 text-[11px] text-gray-500">
+              <p className='mt-2 text-[11px] text-gray-500'>
                 Supports placeholders like {'{{value}}'}, {'{{entityId}}'},{' '}
                 {'{{jobId}}'}.
               </p>
             </div>
           )}
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className='grid gap-3 sm:grid-cols-2'>
             <div>
-              <Label className="text-xs text-gray-400">Limit</Label>
+              <Label className='text-xs text-gray-400'>Limit</Label>
               <Input
-                type="number"
-                step="1"
-                className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                type='number'
+                step='1'
+                className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
                 value={queryConfig.limit}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   updatePollConfig({
@@ -405,10 +405,10 @@ export function PollNodeConfigSection({
                 }
               />
             </div>
-            <div className="flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300">
+            <div className='flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300'>
               <span>Single result</span>
               <Button
-                type="button"
+                type='button'
                 className={`rounded border px-3 py-1 text-xs ${
                   queryConfig.single
                     ? 'text-emerald-200 hover:bg-emerald-500/10'
@@ -427,11 +427,11 @@ export function PollNodeConfigSection({
               </Button>
             </div>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className='grid gap-3 sm:grid-cols-2'>
             <div>
-              <Label className="text-xs text-gray-400">Sort JSON</Label>
+              <Label className='text-xs text-gray-400'>Sort JSON</Label>
               <Textarea
-                className="mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                className='mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
                 value={queryConfig.sort}
                 onChange={(
                   event: React.ChangeEvent<HTMLTextAreaElement>,
@@ -446,9 +446,9 @@ export function PollNodeConfigSection({
               />
             </div>
             <div>
-              <Label className="text-xs text-gray-400">Projection JSON</Label>
+              <Label className='text-xs text-gray-400'>Projection JSON</Label>
               <Textarea
-                className="mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                className='mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
                 value={queryConfig.projection}
                 onChange={(
                   event: React.ChangeEvent<HTMLTextAreaElement>,
@@ -463,11 +463,11 @@ export function PollNodeConfigSection({
               />
             </div>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className='grid gap-3 sm:grid-cols-2'>
             <div>
-              <Label className="text-xs text-gray-400">Success path</Label>
+              <Label className='text-xs text-gray-400'>Success path</Label>
               <Input
-                className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
                 value={resolvedPollConfig.successPath}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   updatePollConfig({ successPath: event.target.value })
@@ -475,7 +475,7 @@ export function PollNodeConfigSection({
               />
             </div>
             <div>
-              <Label className="text-xs text-gray-400">Success operator</Label>
+              <Label className='text-xs text-gray-400'>Success operator</Label>
               <Select
                 value={resolvedPollConfig.successOperator ?? 'equals'}
                 onValueChange={(value: string): void =>
@@ -488,23 +488,23 @@ export function PollNodeConfigSection({
                   })
                 }
               >
-                <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-                  <SelectValue placeholder="Select operator" />
+                <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
+                  <SelectValue placeholder='Select operator' />
                 </SelectTrigger>
-                <SelectContent className="border-border bg-gray-900">
-                  <SelectItem value="truthy">Truthy</SelectItem>
-                  <SelectItem value="equals">Equals</SelectItem>
-                  <SelectItem value="notEquals">Not equals</SelectItem>
-                  <SelectItem value="contains">Contains</SelectItem>
+                <SelectContent className='border-border bg-gray-900'>
+                  <SelectItem value='truthy'>Truthy</SelectItem>
+                  <SelectItem value='equals'>Equals</SelectItem>
+                  <SelectItem value='notEquals'>Not equals</SelectItem>
+                  <SelectItem value='contains'>Contains</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className='grid gap-3 sm:grid-cols-2'>
             <div>
-              <Label className="text-xs text-gray-400">Success value</Label>
+              <Label className='text-xs text-gray-400'>Success value</Label>
               <Input
-                className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
                 value={resolvedPollConfig.successValue}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   updatePollConfig({ successValue: event.target.value })
@@ -512,9 +512,9 @@ export function PollNodeConfigSection({
               />
             </div>
             <div>
-              <Label className="text-xs text-gray-400">Result path</Label>
+              <Label className='text-xs text-gray-400'>Result path</Label>
               <Input
-                className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
                 value={resolvedPollConfig.resultPath}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   updatePollConfig({ resultPath: event.target.value })
@@ -522,7 +522,7 @@ export function PollNodeConfigSection({
               />
             </div>
           </div>
-          <p className="text-[11px] text-gray-500">
+          <p className='text-[11px] text-gray-500'>
             Polls the selected provider using the query settings. Use Success path/value to
             stop polling when a record matches.
           </p>

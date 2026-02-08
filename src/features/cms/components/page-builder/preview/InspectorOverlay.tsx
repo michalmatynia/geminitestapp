@@ -60,11 +60,11 @@ export const buildStyleEntries = (settings: Record<string, unknown>): InspectorE
 };
 
 export const renderInspectorEntries = (entries: InspectorEntry[]): React.ReactNode => (
-  <div className="space-y-1">
+  <div className='space-y-1'>
     {entries.map((entry: InspectorEntry) => (
-      <div key={`${entry.label}-${entry.value}`} className="flex items-start gap-2">
-        <span className="min-w-[110px] text-[10px] uppercase tracking-wider text-gray-400">{entry.label}</span>
-        <span className="text-[11px] text-gray-200 break-all">
+      <div key={`${entry.label}-${entry.value}`} className='flex items-start gap-2'>
+        <span className='min-w-[110px] text-[10px] uppercase tracking-wider text-gray-400'>{entry.label}</span>
+        <span className='text-[11px] text-gray-200 break-all'>
           {entry.value.length > 80 ? `${entry.value.slice(0, 80)}…` : entry.value}
         </span>
       </div>
@@ -81,14 +81,14 @@ export const InspectorTooltip = ({
 }): React.ReactNode => {
   const visibleSections = sections.filter((section: InspectorSection) => section.entries.length > 0);
   return (
-    <div className="space-y-2 text-xs">
-      <div className="text-[10px] uppercase tracking-wider text-blue-200">{title}</div>
+    <div className='space-y-2 text-xs'>
+      <div className='text-[10px] uppercase tracking-wider text-blue-200'>{title}</div>
       {visibleSections.length === 0 ? (
-        <div className="text-[11px] text-gray-400">No inspector details</div>
+        <div className='text-[11px] text-gray-400'>No inspector details</div>
       ) : (
         visibleSections.map((section: InspectorSection) => (
-          <div key={section.title} className="space-y-1">
-            <div className="text-[10px] uppercase tracking-wider text-gray-500">{section.title}</div>
+          <div key={section.title} className='space-y-1'>
+            <div className='text-[10px] uppercase tracking-wider text-gray-500'>{section.title}</div>
             {renderInspectorEntries(section.entries)}
           </div>
         ))
@@ -219,7 +219,7 @@ export const InspectorHover = ({
       {enabled && showTooltip && effectiveOpen && content && tooltipPos && typeof document !== 'undefined'
         ? createPortal(
           <div
-            className="fixed z-[99999] -translate-x-full -translate-y-full rounded-md border border-gray-700 bg-gray-900/95 px-3 py-2 text-xs text-gray-200 shadow-lg pointer-events-none"
+            className='fixed z-[99999] -translate-x-full -translate-y-full rounded-md border border-gray-700 bg-gray-900/95 px-3 py-2 text-xs text-gray-200 shadow-lg pointer-events-none'
             style={{ left: tooltipPos.left, top: tooltipPos.top, width: INSPECTOR_TOOLTIP_WIDTH }}
           >
             {content}

@@ -51,17 +51,17 @@ type ToolOption = {
 };
 
 const FULL_TOOLS: ToolOption[] = [
-  { key: 'select', label: 'Select', icon: <MousePointer2 className="size-4" /> },
-  { key: 'polygon', label: 'Polygon', icon: <Pentagon className="size-4" /> },
-  { key: 'lasso', label: 'Lasso', icon: <Lasso className="size-4" /> },
-  { key: 'rect', label: 'Rectangle', icon: <RectangleHorizontal className="size-4" /> },
-  { key: 'ellipse', label: 'Ellipse', icon: <Circle className="size-4" /> },
-  { key: 'brush', label: 'Brush', icon: <Brush className="size-4" /> },
+  { key: 'select', label: 'Select', icon: <MousePointer2 className='size-4' /> },
+  { key: 'polygon', label: 'Polygon', icon: <Pentagon className='size-4' /> },
+  { key: 'lasso', label: 'Lasso', icon: <Lasso className='size-4' /> },
+  { key: 'rect', label: 'Rectangle', icon: <RectangleHorizontal className='size-4' /> },
+  { key: 'ellipse', label: 'Ellipse', icon: <Circle className='size-4' /> },
+  { key: 'brush', label: 'Brush', icon: <Brush className='size-4' /> },
 ];
 
 const MIN_TOOLS: ToolOption[] = [
-  { key: 'select', label: 'Edit', icon: <MousePointer2 className="size-4" /> },
-  { key: 'polygon', label: 'Pen', icon: <Pentagon className="size-4" /> },
+  { key: 'select', label: 'Edit', icon: <MousePointer2 className='size-4' /> },
+  { key: 'polygon', label: 'Pen', icon: <Pentagon className='size-4' /> },
 ];
 
 export function VectorDrawingToolbar(props: VectorDrawingToolbarProps): React.JSX.Element {
@@ -126,91 +126,91 @@ export function VectorDrawingToolbar(props: VectorDrawingToolbarProps): React.JS
       {toolOptions.map((option: ToolOption) => (
         <Tooltip key={option.key} content={option.label}>
           <Button
-            type="button"
+            type='button'
             variant={tool === option.key ? 'secondary' : 'outline'}
-            size="icon"
+            size='icon'
             onClick={() => onSelectTool(option.key)}
           >
             {option.icon}
           </Button>
         </Tooltip>
       ))}
-      {hasActions ? <div className="mx-1 h-6 w-px bg-border" /> : null}
+      {hasActions ? <div className='mx-1 h-6 w-px bg-border' /> : null}
       {onUndo ? (
-        <Tooltip content="Undo last point">
+        <Tooltip content='Undo last point'>
           <Button
-            type="button"
-            variant="outline"
-            size="icon"
+            type='button'
+            variant='outline'
+            size='icon'
             onClick={onUndo}
             disabled={disableUndo}
           >
-            <RotateCcw className="size-4" />
+            <RotateCcw className='size-4' />
           </Button>
         </Tooltip>
       ) : null}
       {onClose ? (
-        <Tooltip content="Close polygon">
+        <Tooltip content='Close polygon'>
           <Button
-            type="button"
-            variant="outline"
-            size="icon"
+            type='button'
+            variant='outline'
+            size='icon'
             onClick={onClose}
             disabled={disableClose}
           >
-            <Check className="size-4" />
+            <Check className='size-4' />
           </Button>
         </Tooltip>
       ) : null}
       {onDetach ? (
-        <Tooltip content="Detach polygon">
+        <Tooltip content='Detach polygon'>
           <Button
-            type="button"
-            variant="outline"
-            size="icon"
+            type='button'
+            variant='outline'
+            size='icon'
             onClick={onDetach}
             disabled={disableDetach}
           >
-            <Unlink className="size-4" />
+            <Unlink className='size-4' />
           </Button>
         </Tooltip>
       ) : null}
       {onClear ? (
-        <Tooltip content="Clear shapes">
+        <Tooltip content='Clear shapes'>
           <Button
-            type="button"
-            variant="outline"
-            size="icon"
+            type='button'
+            variant='outline'
+            size='icon'
             onClick={onClear}
             disabled={disableClear}
           >
-            <Trash2 className="size-4" />
+            <Trash2 className='size-4' />
           </Button>
         </Tooltip>
       ) : null}
       {onSmooth ? (
-        <Tooltip content="Smooth path">
+        <Tooltip content='Smooth path'>
           <Button
-            type="button"
-            variant="outline"
-            size="icon"
+            type='button'
+            variant='outline'
+            size='icon'
             onClick={onSmooth}
             disabled={disableSmooth}
           >
-            <Sparkles className="size-4" />
+            <Sparkles className='size-4' />
           </Button>
         </Tooltip>
       ) : null}
       {onSimplify ? (
-        <Tooltip content="Simplify path">
+        <Tooltip content='Simplify path'>
           <Button
-            type="button"
-            variant="outline"
-            size="icon"
+            type='button'
+            variant='outline'
+            size='icon'
             onClick={onSimplify}
             disabled={disableSimplify}
           >
-            <Filter className="size-4" />
+            <Filter className='size-4' />
           </Button>
         </Tooltip>
       ) : null}

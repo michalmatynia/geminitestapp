@@ -289,7 +289,7 @@ export function ParserNodeConfigSection({
     });
     const nextMappings: Record<string, string> = {};
     (nextEntries).forEach(([key, path]: [string, string]) => {
-      if (!key || !key.trim()) return;
+      if (!key?.trim()) return;
       nextMappings[key.trim()] = path;
     });
     commitMappingsDebounced(nextMappings);
@@ -300,7 +300,7 @@ export function ParserNodeConfigSection({
     );
     const nextMappings: Record<string, string> = {};
     nextEntries.forEach(([key, path]: [string, string]) => {
-      if (!key || !key.trim()) return;
+      if (!key?.trim()) return;
       nextMappings[key.trim()] = path;
     });
     commitMappingsDebounced(nextMappings);
@@ -310,7 +310,7 @@ export function ParserNodeConfigSection({
     const nextEntries = entries.filter((_: [string, string], idx: number) => idx !== index);
     const nextMappings: Record<string, string> = {};
     nextEntries.forEach(([key, path]: [string, string]) => {
-      if (!key || !key.trim()) return;
+      if (!key?.trim()) return;
       nextMappings[key.trim()] = path;
     });
     commitMappingsImmediate(nextMappings);
@@ -367,7 +367,7 @@ export function ParserNodeConfigSection({
       );
       const nextMappings: Record<string, string> = {};
       nextEntries.forEach(([key, path]: [string, string]) => {
-        if (!key || !key.trim()) return;
+        if (!key?.trim()) return;
         nextMappings[key.trim()] = path;
       });
       commitMappingsImmediate(nextMappings);
@@ -384,33 +384,33 @@ export function ParserNodeConfigSection({
   );
 
   return (
-    <div className="space-y-4">
-      <SectionPanel variant="subtle-compact" className="px-3 py-2 text-[11px] text-gray-300">
-        <div className="text-gray-400">Input source</div>
-        <div className="mt-1 text-sm text-gray-200">{parserSourceLabel}</div>
+    <div className='space-y-4'>
+      <SectionPanel variant='subtle-compact' className='px-3 py-2 text-[11px] text-gray-300'>
+        <div className='text-gray-400'>Input source</div>
+        <div className='mt-1 text-sm text-gray-200'>{parserSourceLabel}</div>
       </SectionPanel>
       <div>
-        <Label className="text-xs text-gray-400">Preset</Label>
+        <Label className='text-xs text-gray-400'>Preset</Label>
         <UnifiedSelect
           value={presetId}
           onValueChange={(value: string) =>
             commitMappingsImmediate(draftMappings, outputMode, value)
           }
           options={presetOptions.map((p: { id: string; label: string; description?: string }) => ({ value: p.id, label: p.label, description: (p as { description?: string }).description }))}
-          placeholder="Select preset"
-          className="mt-2"
+          placeholder='Select preset'
+          className='mt-2'
         />
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className='mt-3 flex flex-wrap gap-2'>
           <Button
-            type="button"
-            className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
+            type='button'
+            className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
             onClick={() => applyPreset('replace')}
           >
             Replace mappings
           </Button>
           <Button
-            type="button"
-            className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
+            type='button'
+            className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
             onClick={() => applyPreset('merge')}
           >
             Add missing fields
@@ -419,8 +419,8 @@ export function ParserNodeConfigSection({
       </div>
 
       <div>
-        <Label className="text-xs text-gray-400">Sample JSON</Label>
-        <div className="mt-2 grid gap-2 sm:grid-cols-[160px_1fr_auto] sm:items-center">
+        <Label className='text-xs text-gray-400'>Sample JSON</Label>
+        <div className='mt-2 grid gap-2 sm:grid-cols-[160px_1fr_auto] sm:items-center'>
           <UnifiedSelect
             value={sampleState.entityType}
             onValueChange={(value: string) =>
@@ -437,11 +437,11 @@ export function ParserNodeConfigSection({
               { value: 'note', label: 'Note' },
               { value: 'custom', label: 'Custom' },
             ]}
-            placeholder="Entity type"
+            placeholder='Entity type'
           />
-          <div className="space-y-2">
+          <div className='space-y-2'>
             <Input
-              className="w-full rounded-md border border-border bg-card/70 text-sm text-white"
+              className='w-full rounded-md border border-border bg-card/70 text-sm text-white'
               value={sampleState.entityId}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                 setParserSamples((prev: Record<string, ParserSampleState>) => ({
@@ -453,7 +453,7 @@ export function ParserNodeConfigSection({
                   },
                 }))
               }
-              placeholder="Entity ID"
+              placeholder='Entity ID'
             />
             {simulationOptions.length > 0 && (
               <UnifiedSelect
@@ -474,14 +474,14 @@ export function ParserNodeConfigSection({
                   }));
                 }}
                 options={simulationOptions.map((opt: { id: string; label: string }) => ({ value: opt.id, label: opt.label }))}
-                placeholder="Use simulation ID"
-                triggerClassName="text-[10px] h-8"
+                placeholder='Use simulation ID'
+                triggerClassName='text-[10px] h-8'
               />
             )}
           </div>
           <Button
-            type="button"
-            className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
+            type='button'
+            className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
             disabled={parserSampleLoading}
             onClick={() =>
               void handleFetchParserSample(
@@ -495,7 +495,7 @@ export function ParserNodeConfigSection({
           </Button>
         </div>
         <Textarea
-          className="mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
+          className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
           value={sampleState.json}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
             setParserSamples((prev: Record<string, ParserSampleState>) => ({
@@ -508,7 +508,7 @@ export function ParserNodeConfigSection({
           }
           placeholder='{ "id": "123", "title": "Sample" }'
         />
-        <div className="mt-2 flex flex-wrap gap-2">
+        <div className='mt-2 flex flex-wrap gap-2'>
           <UnifiedSelect
             value={sampleState.mappingMode}
             onValueChange={(value: string) =>
@@ -524,7 +524,7 @@ export function ParserNodeConfigSection({
               { value: 'top', label: 'Top-level fields' },
               { value: 'flatten', label: 'Flatten nested' },
             ]}
-            className="w-[180px]"
+            className='w-[180px]'
           />
           <UnifiedSelect
             value={String(sampleState.depth)}
@@ -538,10 +538,10 @@ export function ParserNodeConfigSection({
               }))
             }
             options={[1, 2, 3, 4].map((d: number) => ({ value: String(d), label: `Depth ${d}` }))}
-            className="w-[160px]"
+            className='w-[160px]'
           />
           <Button
-            type="button"
+            type='button'
             className={`rounded-md border px-3 text-[10px] ${
               sampleState.includeContainers
                 ? 'text-emerald-200 hover:bg-emerald-500/10'
@@ -575,28 +575,28 @@ export function ParserNodeConfigSection({
                 { value: 'path', label: 'Path keys' },
                 { value: 'leaf', label: 'Leaf keys' },
               ]}
-              className="w-[170px]"
+              className='w-[170px]'
             />
           )}
         </div>
         {parsedSample.error ? (
-          <p className="mt-2 text-[11px] text-rose-300">
+          <p className='mt-2 text-[11px] text-rose-300'>
             {parsedSample.error}
           </p>
         ) : null}
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className='mt-3 flex flex-wrap gap-2'>
           {Object.keys(sampleMappings).length > 0 && (
             <>
               <Button
-                type="button"
-                className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
+                type='button'
+                className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
                 onClick={() => applySampleMappings('replace')}
               >
                 Auto-map from sample
               </Button>
               <Button
-                type="button"
-                className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
+                type='button'
+                className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
                 onClick={() => applySampleMappings('merge')}
               >
                 Add missing from sample
@@ -604,8 +604,8 @@ export function ParserNodeConfigSection({
             </>
           )}
           <Button
-            type="button"
-            className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
+            type='button'
+            className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
             onClick={handleDetectImages}
           >
             Detect images
@@ -614,7 +614,7 @@ export function ParserNodeConfigSection({
       </div>
 
       <div>
-        <Label className="text-xs text-gray-400">Output Mode</Label>
+        <Label className='text-xs text-gray-400'>Output Mode</Label>
         <UnifiedSelect
           value={outputMode}
           onValueChange={(value: string) =>
@@ -627,87 +627,87 @@ export function ParserNodeConfigSection({
             { value: 'individual', label: 'Individual outputs' },
             { value: 'bundle', label: 'Single bundle output' },
           ]}
-          className="mt-2"
+          className='mt-2'
         />
-        <p className="mt-2 text-[11px] text-gray-500">
-          Bundle mode emits a single <span className="text-gray-300">bundle</span>{' '}
+        <p className='mt-2 text-[11px] text-gray-500'>
+          Bundle mode emits a single <span className='text-gray-300'>bundle</span>{' '}
           port and uses mapping keys as placeholders for Prompt templates.
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className='flex flex-wrap gap-2'>
         <Button
-          type="button"
-          className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
+          type='button'
+          className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
           onClick={() => addMapping('title', '$.title')}
         >
           Add title
         </Button>
         <Button
-          type="button"
-          className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
+          type='button'
+          className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
           onClick={() => addMapping('images', '$.images')}
         >
           Add images
         </Button>
         <Button
-          type="button"
-          className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
+          type='button'
+          className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
           onClick={() => addMapping('productId', '$.id')}
         >
           Add id
         </Button>
         <Button
-          type="button"
-          className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
+          type='button'
+          className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
           onClick={() => addMapping('sku', '$.sku')}
         >
           Add sku
         </Button>
         <Button
-          type="button"
-          className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
+          type='button'
+          className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
           onClick={() => addMapping('price', '$.price')}
         >
           Add price
         </Button>
       </div>
 
-      <div className="space-y-3">
+      <div className='space-y-3'>
         {entries.map(([key, path]: [string, string], index: number) => (
           <div
             key={`${key}-${index}`}
-            className="grid gap-2 sm:grid-cols-[160px_1fr_auto] sm:items-start"
+            className='grid gap-2 sm:grid-cols-[160px_1fr_auto] sm:items-start'
           >
             <Input
-              className="w-full rounded-md border border-border bg-card/70 text-sm text-white"
+              className='w-full rounded-md border border-border bg-card/70 text-sm text-white'
               value={key}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                 updateMappingKey(index, event.target.value)
               }
-              placeholder="output key"
+              placeholder='output key'
             />
-            <div className="space-y-2">
+            <div className='space-y-2'>
               <Input
-                className="w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                className='w-full rounded-md border border-border bg-card/70 text-sm text-white'
                 value={path}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                   updateMappingPath(index, event.target.value)
                 }
-                placeholder="$.path.to.value"
+                placeholder='$.path.to.value'
               />
               <UnifiedSelect
                 onValueChange={(value: string) => updateMappingPath(index, value)}
                 options={uniqueSuggestedPathOptions}
-                placeholder="Pick a suggested path"
-                triggerClassName="text-[10px] h-8"
-                value=""
+                placeholder='Pick a suggested path'
+                triggerClassName='text-[10px] h-8'
+                value=''
               />
             </div>
             <Button
-              type="button"
+              type='button'
               disabled={entries.length <= 1}
-              className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50"
+              className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50'
               onClick={() => removeMapping(index)}
             >
               Remove
@@ -716,10 +716,10 @@ export function ParserNodeConfigSection({
         ))}
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-3">
+      <div className='grid gap-2 sm:grid-cols-3'>
         <Button
-          type="button"
-          className="w-full rounded-md border text-xs text-white hover:bg-muted/60"
+          type='button'
+          className='w-full rounded-md border text-xs text-white hover:bg-muted/60'
           onClick={() =>
             addMapping(`field_${entries.length + 1}`, '')
           }
@@ -727,16 +727,16 @@ export function ParserNodeConfigSection({
           Add mapping
         </Button>
         <Button
-          type="button"
-          className="w-full rounded-md border text-xs text-gray-200 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50"
+          type='button'
+          className='w-full rounded-md border text-xs text-gray-200 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50'
           disabled={entries.length === 0}
           onClick={() => removeMapping(entries.length - 1)}
         >
           Remove last
         </Button>
         <Button
-          type="button"
-          className="w-full rounded-md border border-rose-400/50 text-xs text-rose-100 hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+          type='button'
+          className='w-full rounded-md border border-rose-400/50 text-xs text-rose-100 hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-50'
           disabled={entries.length === 0}
           onClick={() => commitMappingsImmediate({}, outputMode, 'custom')}
         >
@@ -744,12 +744,12 @@ export function ParserNodeConfigSection({
         </Button>
       </div>
       {imageEntryIndex >= 0 && (
-        <SectionPanel variant="subtle-compact" className="p-3 text-[11px] text-gray-400">
-          <div className="text-gray-300">Image helpers</div>
-          <div className="mt-2 flex flex-wrap gap-2">
+        <SectionPanel variant='subtle-compact' className='p-3 text-[11px] text-gray-400'>
+          <div className='text-gray-300'>Image helpers</div>
+          <div className='mt-2 flex flex-wrap gap-2'>
             <Button
-              type="button"
-              className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
+              type='button'
+              className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
               onClick={() =>
                 updateMappingPath(imageEntryIndex, '$.images')
               }
@@ -757,8 +757,8 @@ export function ParserNodeConfigSection({
               Use $.images
             </Button>
             <Button
-              type="button"
-              className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
+              type='button'
+              className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
               onClick={() =>
                 updateMappingPath(imageEntryIndex, '$.imageLinks')
               }
@@ -766,8 +766,8 @@ export function ParserNodeConfigSection({
               Use $.imageLinks
             </Button>
             <Button
-              type="button"
-              className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
+              type='button'
+              className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
               onClick={() =>
                 updateMappingPath(imageEntryIndex, '$.media')
               }
@@ -777,11 +777,11 @@ export function ParserNodeConfigSection({
           </div>
         </SectionPanel>
       )}
-      <p className="text-[11px] text-gray-500">
+      <p className='text-[11px] text-gray-500'>
         Use JSON paths like{' '}
-        <span className="text-gray-300">{'$.images'}</span>,{' '}
-        <span className="text-gray-300">{'$.imageLinks'}</span>, or{' '}
-        <span className="text-gray-300">{'$.media'}</span> for image arrays.
+        <span className='text-gray-300'>{'$.images'}</span>,{' '}
+        <span className='text-gray-300'>{'$.imageLinks'}</span>, or{' '}
+        <span className='text-gray-300'>{'$.media'}</span> for image arrays.
       </p>
     </div>
   );

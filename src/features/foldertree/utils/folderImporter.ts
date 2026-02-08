@@ -24,7 +24,7 @@ export async function parseFolderStructure(
   // Collect all file system entries
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
-    if (item && item.kind === 'file') {
+    if (item?.kind === 'file') {
       const entry = item.webkitGetAsEntry?.();
       if (entry) {
         entries.push(entry);
@@ -63,7 +63,7 @@ export async function parseMultipleFolders(
   // Collect all file system entries
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
-    if (item && item.kind === 'file') {
+    if (item?.kind === 'file') {
       const entry = item.webkitGetAsEntry?.();
       if (entry) {
         entries.push(entry);

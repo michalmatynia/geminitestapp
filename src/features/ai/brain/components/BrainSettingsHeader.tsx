@@ -11,16 +11,16 @@ export function BrainSettingsHeader(): React.JSX.Element {
 
   return (
     <SectionHeader
-      eyebrow="System"
-      title="Brain"
-      icon={<Brain className="size-5 text-emerald-300" />}
-      description="Unified control center for AI routing, provider keys, report schedules, prompt steering, and deep metrics."
+      eyebrow='System'
+      title='Brain'
+      icon={<Brain className='size-5 text-emerald-300' />}
+      description='Unified control center for AI routing, provider keys, report schedules, prompt steering, and deep metrics.'
       actions={
         <>
-          <Button variant="outline" size="sm" onClick={handleReset}>
+          <Button variant='outline' size='sm' onClick={handleReset}>
             Reset
           </Button>
-          <Button size="sm" onClick={() => void handleSave()} disabled={saving}>
+          <Button size='sm' onClick={() => void handleSave()} disabled={saving}>
             {saving ? 'Saving...' : 'Save'}
           </Button>
         </>

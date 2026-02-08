@@ -52,39 +52,39 @@ function ChatbotJobsPageContent(): React.JSX.Element {
   }, [jobs, query]);
 
   return (
-    <div className="container mx-auto py-10">
+    <div className='container mx-auto py-10'>
       <SectionHeader
-        title="Chatbot Jobs"
+        title='Chatbot Jobs'
         eyebrow={(
           <Link
-            href="/admin/chatbot"
-            className="text-blue-300 hover:text-blue-200"
+            href='/admin/chatbot'
+            className='text-blue-300 hover:text-blue-200'
           >
             ← Back to chatbot
           </Link>
         )}
-        className="mb-6"
+        className='mb-6'
       />
-      <SectionPanel className="p-4">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <SectionPanel className='p-4'>
+        <div className='mb-4 flex flex-wrap items-center justify-between gap-3'>
           <Input
-            className="max-w-sm h-8 text-sm"
-            placeholder="Search jobs..."
+            className='max-w-sm h-8 text-sm'
+            placeholder='Search jobs...'
             value={query}
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setQuery(event.target.value)}
           />
-          <div className="flex flex-wrap items-center gap-2">
+          <div className='flex flex-wrap items-center gap-2'>
             <Button
-              variant="outline"
-              size="sm"
+              variant='outline'
+              size='sm'
               onClick={(): void => { void refetch(); }}
               disabled={isRefreshing}
             >
               {isRefreshing ? 'Refreshing...' : 'Refresh'}
             </Button>
             <Button
-              variant="destructive"
-              size="sm"
+              variant='destructive'
+              size='sm'
               onClick={handleClearCompletedChatbotJobs}
               disabled={isClearingChatbotJobs}
             >
@@ -93,34 +93,34 @@ function ChatbotJobsPageContent(): React.JSX.Element {
           </div>
         </div>
         {isLoading ? (
-          <p className="text-sm text-gray-400">Loading jobs...</p>
+          <p className='text-sm text-gray-400'>Loading jobs...</p>
         ) : error ? (
-          <p className="text-sm text-red-400">{error.message}</p>
+          <p className='text-sm text-red-400'>{error.message}</p>
         ) : filteredJobs.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-gray-400">No jobs yet</p>
-            <p className="text-sm text-gray-500 mt-1">Chatbot jobs track background processing of AI messages.</p>
+          <div className='text-center py-8'>
+            <p className='text-gray-400'>No jobs yet</p>
+            <p className='text-sm text-gray-500 mt-1'>Chatbot jobs track background processing of AI messages.</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className='space-y-3'>
             {filteredJobs.map((job: ChatbotJob) => (
               <div
                 key={job.id}
-                className="rounded-md border border-border bg-gray-900 px-4 py-3"
+                className='rounded-md border border-border bg-gray-900 px-4 py-3'
               >
-                <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className='flex flex-wrap items-start justify-between gap-3'>
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-gray-500">
+                    <p className='text-xs uppercase tracking-wide text-gray-500'>
                       Chat job
                     </p>
-                    <p className="text-sm text-white">
+                    <p className='text-sm text-white'>
                       {job.status.toUpperCase()} · {job.model || 'Default model'}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className='text-xs text-gray-500'>
                       Created {new Date(job.createdAt).toLocaleString()}
                     </p>
                     {job.payload ? (
-                      <p className="mt-2 text-xs text-gray-300">
+                      <p className='mt-2 text-xs text-gray-300'>
                         Prompt:{' '}
                         {((): string => {
                           const payload = job.payload as {
@@ -139,21 +139,21 @@ function ChatbotJobsPageContent(): React.JSX.Element {
                       </p>
                     ) : null}
                     {job.errorMessage ? (
-                      <p className="mt-1 text-xs text-red-300">
+                      <p className='mt-1 text-xs text-red-300'>
                         {job.errorMessage}
                       </p>
                     ) : null}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className='flex items-center gap-2'>
                     <Link href={`/admin/chatbot?session=${job.sessionId}`}>
-                      <Button variant="outline" size="sm">
+                      <Button variant='outline' size='sm'>
                         Open session
                       </Button>
                     </Link>
                     {(job.status === 'pending' || job.status === 'running') ? (
                       <Button
-                        variant="destructive"
-                        size="sm"
+                        variant='destructive'
+                        size='sm'
                         disabled={isCancellingChatbotJob(job.id)}
                         onClick={(): void => { void handleCancelChatbotJob(job.id); }}
                       >

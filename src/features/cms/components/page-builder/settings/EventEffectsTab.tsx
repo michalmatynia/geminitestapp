@@ -28,54 +28,54 @@ function EventEffectsTab({
 }: EventEffectsTabProps): React.ReactNode {
   if (!eventConfig) {
     return (
-      <div className="text-xs text-gray-500">Select a block or section to configure event effects.</div>
+      <div className='text-xs text-gray-500'>Select a block or section to configure event effects.</div>
     );
   }
 
   return (
-    <div className="space-y-5">
-      <div className="rounded border border-border/40 bg-gray-800/30 px-3 py-2 text-xs text-gray-400">
+    <div className='space-y-5'>
+      <div className='rounded border border-border/40 bg-gray-800/30 px-3 py-2 text-xs text-gray-400'>
         Event effects for{' '}
-        <span className="text-gray-200">
+        <span className='text-gray-200'>
           {selectedBlockLabel ?? selectedSectionLabel ?? 'Element'}
         </span>
       </div>
 
-      <div className="space-y-3 rounded border border-border/40 bg-gray-900/40 p-3">
-        <div className="text-xs font-semibold text-gray-200">Hover</div>
+      <div className='space-y-3 rounded border border-border/40 bg-gray-900/40 p-3'>
+        <div className='text-xs font-semibold text-gray-200'>Hover</div>
         <SelectField
-          label="Hover effect"
+          label='Hover effect'
           value={eventConfig.hoverEffect}
           onChange={(value: string): void => onEventSettingChange('eventHoverEffect', value)}
           options={EVENT_HOVER_EFFECT_OPTIONS}
         />
         <RangeField
-          label="Hover scale"
+          label='Hover scale'
           value={eventConfig.hoverScale}
           onChange={(value: number): void => onEventSettingChange('eventHoverScale', value)}
           min={1}
           max={1.2}
           step={0.01}
-          suffix="x"
+          suffix='x'
           disabled={eventConfig.hoverEffect === 'none'}
         />
-        <p className="text-[11px] text-gray-500">
+        <p className='text-[11px] text-gray-500'>
           Hover effects preview in the builder; they apply on the live site too.
         </p>
       </div>
 
-      <div className="space-y-3 rounded border border-border/40 bg-gray-900/40 p-3">
-        <div className="text-xs font-semibold text-gray-200">Click</div>
+      <div className='space-y-3 rounded border border-border/40 bg-gray-900/40 p-3'>
+        <div className='text-xs font-semibold text-gray-200'>Click</div>
         <SelectField
-          label="Click action"
+          label='Click action'
           value={eventConfig.clickAction}
           onChange={(value: string): void => onEventSettingChange('eventClickAction', value)}
           options={EVENT_CLICK_ACTION_OPTIONS}
         />
 
         {eventConfig.clickAction === 'navigate' && (
-          <div className="space-y-2">
-            <Label className="text-[10px] uppercase tracking-wider text-gray-500">
+          <div className='space-y-2'>
+            <Label className='text-[10px] uppercase tracking-wider text-gray-500'>
               URL
             </Label>
             <Input
@@ -83,11 +83,11 @@ function EventEffectsTab({
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                 onEventSettingChange('eventClickUrl', e.target.value)
               }
-              placeholder="https://example.com"
-              className="h-8 text-xs"
+              placeholder='https://example.com'
+              className='h-8 text-xs'
             />
             <SelectField
-              label="Open link"
+              label='Open link'
               value={eventConfig.clickTarget}
               onChange={(value: string): void => onEventSettingChange('eventClickTarget', value)}
               options={EVENT_CLICK_TARGET_OPTIONS}
@@ -96,8 +96,8 @@ function EventEffectsTab({
         )}
 
         {eventConfig.clickAction === 'scroll' && (
-          <div className="space-y-2">
-            <Label className="text-[10px] uppercase tracking-wider text-gray-500">
+          <div className='space-y-2'>
+            <Label className='text-[10px] uppercase tracking-wider text-gray-500'>
               Target ID
             </Label>
             <Input
@@ -105,16 +105,16 @@ function EventEffectsTab({
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                 onEventSettingChange('eventClickScrollTarget', e.target.value)
               }
-              placeholder="hero-section"
-              className="h-8 text-xs"
+              placeholder='hero-section'
+              className='h-8 text-xs'
             />
             <SelectField
-              label="Scroll behavior"
+              label='Scroll behavior'
               value={eventConfig.clickScrollBehavior}
               onChange={(value: string): void => onEventSettingChange('eventClickScrollBehavior', value)}
               options={EVENT_SCROLL_BEHAVIOR_OPTIONS}
             />
-            <p className="text-[11px] text-gray-500">
+            <p className='text-[11px] text-gray-500'>
               The target should match an element ID (with or without #).
             </p>
           </div>

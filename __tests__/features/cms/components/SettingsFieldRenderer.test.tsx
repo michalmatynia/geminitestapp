@@ -9,7 +9,7 @@ import { ToastProvider } from '@/shared/ui';
 
 // Mock MediaLibraryPanel
 vi.mock('@/features/cms/components/page-builder/MediaLibraryPanel', () => ({
-  MediaLibraryPanel: () => <div data-testid="media-library" />,
+  MediaLibraryPanel: () => <div data-testid='media-library' />,
 }));
 
 const queryClient = new QueryClient();
@@ -30,7 +30,7 @@ describe('SettingsFieldRenderer Component', () => {
 
   it('should render and handle a text field', () => {
     const field = { key: 'title', label: 'Title', type: 'text' as const };
-    render(<SettingsFieldRenderer field={field} value="Hello" onChange={mockOnChange} />, { wrapper });
+    render(<SettingsFieldRenderer field={field} value='Hello' onChange={mockOnChange} />, { wrapper });
     
     const input = screen.getByDisplayValue('Hello');
     expect(input).toBeInTheDocument();
@@ -52,7 +52,7 @@ describe('SettingsFieldRenderer Component', () => {
 
   it('should render and handle a color field', () => {
     const field = { key: 'bg', label: 'Background', type: 'color' as const };
-    render(<SettingsFieldRenderer field={field} value="#ff0000" onChange={mockOnChange} />, { wrapper });
+    render(<SettingsFieldRenderer field={field} value='#ff0000' onChange={mockOnChange} />, { wrapper });
     
     // Use getAllByDisplayValue because both color picker and text input have it
     const inputs = screen.getAllByDisplayValue('#ff0000');

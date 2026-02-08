@@ -44,20 +44,20 @@ export function BaseApiConsole(): React.JSX.Element {
 
   return (
     <ApiConsole
-      title="Base.com API Console"
-      description="Send Base.com API requests using the active connection token."
+      title='Base.com API Console'
+      description='Send Base.com API requests using the active connection token.'
       presets={baseApiPresets}
       method={baseApiMethod}
       setMethod={setBaseApiMethod}
       bodyOrParams={baseApiParams}
       setBodyOrParams={setBaseApiParams}
-      bodyOrParamsLabel="Parameters (JSON)"
+      bodyOrParamsLabel='Parameters (JSON)'
       loading={baseApiLoading}
       error={baseApiError}
       response={baseApiResponse}
       onRequest={() => { void handleBaseApiRequest(); }}
-      baseUrl="https://api.baselinker.com/connector.php"
-      methodType="input"
+      baseUrl='https://api.baselinker.com/connector.php'
+      methodType='input'
     />
   );
 }

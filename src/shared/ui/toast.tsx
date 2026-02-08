@@ -199,9 +199,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }): Reac
         {toasts.length > 0 ? (
           <div
             className={`pointer-events-none fixed z-[60] space-y-2 ${positionStyles[settings.position]}`}
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
+            role='status'
+            aria-live='polite'
+            aria-atomic='true'
           >
             {toasts.map((item) => {
               const classes = getToastClasses(item.variant, settings.accent);
@@ -210,20 +210,20 @@ export function ToastProvider({ children }: { children: React.ReactNode }): Reac
                 <div
                   key={item.id}
                   className={`pointer-events-auto flex items-center gap-3 rounded-lg border px-4 py-3 text-sm shadow-lg backdrop-blur-sm transition-all animate-in fade-in slide-in-from-right-5 duration-300 ${classes.container}`}
-                  role="alert"
+                  role='alert'
                 >
                   {IconComponent && (
                     <IconComponent className={`size-4 flex-shrink-0 ${classes.icon}`} />
                   )}
-                  <div className="flex-1">{item.message}</div>
+                  <div className='flex-1'>{item.message}</div>
                   <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5 flex-shrink-0 p-0 hover:bg-transparent"
+                    variant='ghost'
+                    size='icon'
+                    className='h-5 w-5 flex-shrink-0 p-0 hover:bg-transparent'
                     onClick={() => removeToast(item.id)}
-                    aria-label="Dismiss notification"
+                    aria-label='Dismiss notification'
                   >
-                    <X className="size-4" />
+                    <X className='size-4' />
                   </Button>
                 </div>
               );

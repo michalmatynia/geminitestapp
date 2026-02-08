@@ -282,33 +282,33 @@ function ChatbotContextPageInner(): React.JSX.Element {
   });
 
   return (
-    <div className="container mx-auto py-10">
+    <div className='container mx-auto py-10'>
       <SectionHeader
-        title="Chatbot Context"
-        description="Define global instructions applied to every chat."
+        title='Chatbot Context'
+        description='Define global instructions applied to every chat.'
         eyebrow={(
-          <Link href="/admin/chatbot" className="text-blue-300 hover:text-blue-200">
+          <Link href='/admin/chatbot' className='text-blue-300 hover:text-blue-200'>
             ← Back to chatbot
           </Link>
         )}
-        className="mb-6"
+        className='mb-6'
       />
-      <SectionPanel className="p-6">
+      <SectionPanel className='p-6'>
         <SectionHeader
-          title="Global Contexts"
-          size="md"
-          className="mb-4"
+          title='Global Contexts'
+          size='md'
+          className='mb-4'
           actions={
             <>
               <Button
                 onClick={openCreateModal}
-                className="size-11 rounded-full bg-primary p-0 text-primary-foreground hover:bg-primary/90"
-                aria-label="Create context"
+                className='size-11 rounded-full bg-primary p-0 text-primary-foreground hover:bg-primary/90'
+                aria-label='Create context'
               >
-                <PlusIcon className="size-5" />
+                <PlusIcon className='size-5' />
               </Button>
               <FileUploadTrigger
-                accept="application/pdf"
+                accept='application/pdf'
                 disabled={loading || saving || uploading}
                 onFilesSelected={async (files: File[], helpers?: FileUploadHelpers) => {
                   const file = files[0];
@@ -317,14 +317,14 @@ function ChatbotContextPageInner(): React.JSX.Element {
                 }}
                 asChild
               >
-                <Label className="cursor-pointer rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-gray-300">
+                <Label className='cursor-pointer rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-gray-300'>
                   {uploading ? 'Uploading...' : 'Upload PDF'}
                 </Label>
               </FileUploadTrigger>
               <Button
-                type="button"
-                variant="outline"
-                size="sm"
+                type='button'
+                variant='outline'
+                size='sm'
                 onClick={(): void => {
                   const params: URLSearchParams = new URLSearchParams();
                   if (tagQuery.trim()) {
@@ -343,19 +343,19 @@ function ChatbotContextPageInner(): React.JSX.Element {
             </>
           }
         />
-        <div className="mb-4 flex flex-wrap items-center gap-3">
+        <div className='mb-4 flex flex-wrap items-center gap-3'>
           <Input
-            placeholder="Search contexts or tags..."
+            placeholder='Search contexts or tags...'
             value={tagQuery}
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setTagQuery(event.target.value)}
-            className="max-w-xs"
+            className='max-w-xs'
             disabled={loading}
           />
-          <div className="flex flex-wrap gap-2 text-xs text-gray-300">
+          <div className='flex flex-wrap gap-2 text-xs text-gray-300'>
             {uniqueTags.map((tag: string): React.JSX.Element => (
               <Button
                 key={tag}
-                type="button"
+                type='button'
                 className={`rounded-full border px-3 py-1 transition ${
                   tagFilters.includes(tag)
                     ? 'border-blue-400/40 bg-blue-500/10 text-blue-100'
@@ -374,8 +374,8 @@ function ChatbotContextPageInner(): React.JSX.Element {
             ))}
             {tagFilters.length > 0 ? (
               <Button
-                type="button"
-                className="rounded-full border px-3 py-1 text-gray-300 hover:border-gray-500"
+                type='button'
+                className='rounded-full border px-3 py-1 text-gray-300 hover:border-gray-500'
                 onClick={(): void => setTagFilters([])}
               >
                 Clear filters
@@ -383,21 +383,21 @@ function ChatbotContextPageInner(): React.JSX.Element {
             ) : null}
           </div>
         </div>
-        <div className="overflow-hidden rounded-md border border-border">
-          <table className="min-w-full text-left text-sm text-gray-200">
-            <thead className="bg-gray-900 text-xs uppercase text-gray-500">
+        <div className='overflow-hidden rounded-md border border-border'>
+          <table className='min-w-full text-left text-sm text-gray-200'>
+            <thead className='bg-gray-900 text-xs uppercase text-gray-500'>
               <tr>
-                <th className="px-4 py-3">Title</th>
-                <th className="px-4 py-3">Tags</th>
-                <th className="px-4 py-3">Source</th>
-                <th className="px-4 py-3">Active</th>
-                <th className="px-4 py-3 text-right">Actions</th>
+                <th className='px-4 py-3'>Title</th>
+                <th className='px-4 py-3'>Tags</th>
+                <th className='px-4 py-3'>Source</th>
+                <th className='px-4 py-3'>Active</th>
+                <th className='px-4 py-3 text-right'>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredContexts.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-gray-500">
+                  <td colSpan={5} className='px-4 py-6 text-center text-gray-500'>
                     No contexts match the current filters.
                   </td>
                 </tr>
@@ -405,15 +405,15 @@ function ChatbotContextPageInner(): React.JSX.Element {
                 filteredContexts.map((item: ContextItem): React.JSX.Element => (
                   <tr
                     key={item.id}
-                    className="border-t border-border bg-card hover:bg-card/60"
+                    className='border-t border-border bg-card hover:bg-card/60'
                   >
-                    <td className="px-4 py-3 font-semibold text-white">
+                    <td className='px-4 py-3 font-semibold text-white'>
                       {item.title}
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1">
+                    <td className='px-4 py-3'>
+                      <div className='flex flex-wrap gap-1'>
                         {(item.tags || []).length === 0 ? (
-                          <span className="text-xs text-gray-500">None</span>
+                          <span className='text-xs text-gray-500'>None</span>
                         ) : (
                           (item.tags || []).map((tag: string): React.JSX.Element => (
                             <Tag
@@ -424,11 +424,11 @@ function ChatbotContextPageInner(): React.JSX.Element {
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-400">
+                    <td className='px-4 py-3 text-xs text-gray-400'>
                       {item.source === 'pdf' ? 'PDF' : 'Manual'}
                     </td>
-                    <td className="px-4 py-3">
-                      <Label className="flex items-center gap-2 text-xs text-gray-400">
+                    <td className='px-4 py-3'>
+                      <Label className='flex items-center gap-2 text-xs text-gray-400'>
                         <Checkbox
                           checked={activeIds.includes(item.id)} onCheckedChange={(checked: boolean | 'indeterminate'): void => {
                             setActiveIds((prev: string[]): string[] =>
@@ -441,20 +441,20 @@ function ChatbotContextPageInner(): React.JSX.Element {
                         {activeIds.includes(item.id) ? 'Enabled' : 'Disabled'}
                       </Label>
                     </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex justify-end gap-2">
+                    <td className='px-4 py-3 text-right'>
+                      <div className='flex justify-end gap-2'>
                         <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
+                          type='button'
+                          variant='outline'
+                          size='sm'
                           onClick={(): void => openEditModal(item)}
                         >
                           Edit
                         </Button>
                         <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
+                          type='button'
+                          variant='outline'
+                          size='sm'
                           onClick={(): void => handleDeleteContext(item.id)}
                         >
                           Delete
@@ -467,9 +467,9 @@ function ChatbotContextPageInner(): React.JSX.Element {
             </tbody>
           </table>
         </div>
-        <div className="mt-6 flex justify-end">
+        <div className='mt-6 flex justify-end'>
           <Button
-            type="button"
+            type='button'
             onClick={(): void => { void handleSaveContexts(); }}
             disabled={saving || loading}
           >
@@ -489,21 +489,21 @@ function ChatbotContextPageInner(): React.JSX.Element {
           footer={
             <>
               <Button
-                type="button"
-                variant="outline"
+                type='button'
+                variant='outline'
                 onClick={closeModal}
               >
                 Cancel
               </Button>
-              <Button type="button" onClick={handleSaveDraft}>
+              <Button type='button' onClick={handleSaveDraft}>
                 Save context
               </Button>
             </>
           }
         >
-          <div className="space-y-4">
+          <div className='space-y-4'>
             <div>
-              <Label className="mb-2 block text-sm font-medium text-gray-200">
+              <Label className='mb-2 block text-sm font-medium text-gray-200'>
                   Title
               </Label>
               <Input
@@ -517,10 +517,10 @@ function ChatbotContextPageInner(): React.JSX.Element {
               />
             </div>
             <div>
-              <Label className="mb-2 block text-sm font-medium text-gray-200">
+              <Label className='mb-2 block text-sm font-medium text-gray-200'>
                     Tags
               </Label>
-              <div className="flex flex-wrap gap-2">
+              <div className='flex flex-wrap gap-2'>
                 {(modalDraft.tags || []).map((tag: string): React.JSX.Element => (
                   <Tag
                     key={tag}
@@ -540,9 +540,9 @@ function ChatbotContextPageInner(): React.JSX.Element {
                   />
                 ))}
               </div>
-              <div className="mt-2 flex gap-2">
+              <div className='mt-2 flex gap-2'>
                 <Input
-                  placeholder="Add tag"
+                  placeholder='Add tag'
                   value={tagDraft}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setTagDraft(event.target.value)}
                   onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
@@ -566,8 +566,8 @@ function ChatbotContextPageInner(): React.JSX.Element {
                   disabled={saving}
                 />
                 <Button
-                  type="button"
-                  variant="outline"
+                  type='button'
+                  variant='outline'
                   onClick={(): void => {
                     const nextTag: string = tagDraft.trim();
                     if (!nextTag) return;
@@ -590,11 +590,11 @@ function ChatbotContextPageInner(): React.JSX.Element {
               </div>
             </div>
             <div>
-              <Label className="mb-2 block text-sm font-medium text-gray-200">
+              <Label className='mb-2 block text-sm font-medium text-gray-200'>
                     Content
               </Label>
               <Textarea
-                placeholder="Add instructions..."
+                placeholder='Add instructions...'
                 value={modalDraft.content}
                 onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
                   setModalDraft((prev: ContextDraft | null): ContextDraft | null =>
@@ -605,7 +605,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
                 disabled={saving}
               />
             </div>
-            <Label className="flex items-center gap-2 text-sm text-gray-300">
+            <Label className='flex items-center gap-2 text-sm text-gray-300'>
               <Checkbox
                 checked={modalDraft.active} onCheckedChange={(checked: boolean | 'indeterminate'): void =>
                   setModalDraft((prev: ContextDraft | null): ContextDraft | null =>
@@ -624,7 +624,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
 
 export default function ChatbotContextPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className="p-6 text-sm text-gray-500">Loading...</div>}>
+    <Suspense fallback={<div className='p-6 text-sm text-gray-500'>Loading...</div>}>
       <ChatbotContextPageInner />
     </Suspense>
   );

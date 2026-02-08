@@ -102,18 +102,18 @@ export function TreeContextMenu({
   const menu = open && mounted ? createPortal(
     <div
       ref={menuRef}
-      className="z-50 min-w-[8rem] overflow-hidden rounded-md border border-border/50 bg-popover/90 p-1 text-popover-foreground shadow-md backdrop-blur-md"
+      className='z-50 min-w-[8rem] overflow-hidden rounded-md border border-border/50 bg-popover/90 p-1 text-popover-foreground shadow-md backdrop-blur-md'
       style={{ position: 'fixed', top: position.y, left: position.x }}
-      role="menu"
+      role='menu'
     >
       {items.map((item) => {
         if (item.separator) {
-          return <div key={item.id} className="-mx-1 my-1 h-px bg-foreground/10" />;
+          return <div key={item.id} className='-mx-1 my-1 h-px bg-foreground/10' />;
         }
         return (
           <button
             key={item.id}
-            type="button"
+            type='button'
             onClick={() => {
               if (item.disabled) return;
               item.onSelect?.();
@@ -124,10 +124,10 @@ export function TreeContextMenu({
               item.disabled ? 'pointer-events-none opacity-50' : 'hover:bg-foreground/10 focus:bg-foreground/10 focus:text-foreground',
               item.tone === 'danger' && 'text-red-300 hover:text-red-200'
             )}
-            role="menuitem"
+            role='menuitem'
             disabled={item.disabled}
           >
-            {item.icon ? <span className="mr-2 inline-flex size-4 items-center justify-center">{item.icon}</span> : null}
+            {item.icon ? <span className='mr-2 inline-flex size-4 items-center justify-center'>{item.icon}</span> : null}
             {item.label}
           </button>
         );

@@ -120,13 +120,13 @@ function HeadingBlock(): React.ReactNode {
   const typoStyles = getBlockTypographyStyles(settings);
 
   if (size === 'small') {
-    return <h3 className="text-xl font-bold leading-tight tracking-tight md:text-2xl" style={typoStyles}>{text}</h3>;
+    return <h3 className='text-xl font-bold leading-tight tracking-tight md:text-2xl' style={typoStyles}>{text}</h3>;
   }
   if (size === 'large') {
-    return <h2 className="text-3xl font-bold leading-tight tracking-tight md:text-5xl" style={typoStyles}>{text}</h2>;
+    return <h2 className='text-3xl font-bold leading-tight tracking-tight md:text-5xl' style={typoStyles}>{text}</h2>;
   }
   // medium
-  return <h2 className="text-2xl font-bold leading-tight tracking-tight md:text-3xl" style={typoStyles}>{text}</h2>;
+  return <h2 className='text-2xl font-bold leading-tight tracking-tight md:text-3xl' style={typoStyles}>{text}</h2>;
 }
 
 function TextBlock(): React.ReactNode {
@@ -134,7 +134,7 @@ function TextBlock(): React.ReactNode {
   const text = (settings['textContent'] as string) || '';
   if (!text) return null;
   const typoStyles = getBlockTypographyStyles(settings);
-  return <p className="text-base leading-relaxed text-gray-300 md:text-lg" style={typoStyles}>{text}</p>;
+  return <p className='text-base leading-relaxed text-gray-300 md:text-lg' style={typoStyles}>{text}</p>;
 }
 
 function TextElementBlock(): React.ReactNode {
@@ -142,7 +142,7 @@ function TextElementBlock(): React.ReactNode {
   const text = (settings['textContent'] as string) || '';
   if (!text) return null;
   const typoStyles = getBlockTypographyStyles(settings);
-  return <p className="m-0 p-0 text-base leading-relaxed text-gray-200" style={typoStyles}>{text}</p>;
+  return <p className='m-0 p-0 text-base leading-relaxed text-gray-200' style={typoStyles}>{text}</p>;
 }
 
 function TextAtomBlock({ block }: { block: BlockInstance }): React.ReactNode {
@@ -193,7 +193,7 @@ function TextAtomLetterBlock(): React.ReactNode {
   const text = (settings['textContent'] as string) ?? '';
   const typoStyles = getBlockTypographyStyles(settings);
   return (
-    <span className="inline-block" style={{ ...typoStyles, whiteSpace: 'pre' }}>
+    <span className='inline-block' style={{ ...typoStyles, whiteSpace: 'pre' }}>
       {text}
     </span>
   );
@@ -248,7 +248,7 @@ function Model3DBlock(): React.ReactNode {
   const modelUrl = `/api/assets3d/${assetId}/file`;
 
   return (
-    <div className="w-full" style={{ height: `${Math.max(120, height)}px` }}>
+    <div className='w-full' style={{ height: `${Math.max(120, height)}px` }}>
       <Viewer3D
         modelUrl={modelUrl}
         backgroundColor={backgroundColor}
@@ -270,7 +270,7 @@ function Model3DBlock(): React.ReactNode {
         modelPosition={position}
         modelRotation={rotation}
         modelScale={scale}
-        className="h-full w-full"
+        className='h-full w-full'
       />
     </div>
   );
@@ -287,7 +287,7 @@ function AnnouncementBlock(): React.ReactNode {
     return (
       <a
         href={link}
-        className="text-sm font-medium text-blue-200 underline decoration-blue-400/50 hover:text-blue-100"
+        className='text-sm font-medium text-blue-200 underline decoration-blue-400/50 hover:text-blue-100'
         style={typoStyles}
       >
         {text}
@@ -296,7 +296,7 @@ function AnnouncementBlock(): React.ReactNode {
   }
 
   return (
-    <span className="text-sm text-gray-200" style={typoStyles}>
+    <span className='text-sm text-gray-200' style={typoStyles}>
       {text}
     </span>
   );
@@ -364,11 +364,11 @@ function RichTextBlock(): React.ReactNode {
 
   return (
     <div
-      className="rounded-lg p-4 text-gray-400"
+      className='rounded-lg p-4 text-gray-400'
       data-color-scheme={colorScheme}
       data-has-schemes={hasSchemes}
     >
-      <p className="text-sm italic">Rich text content area</p>
+      <p className='text-sm italic'>Rich text content area</p>
     </div>
   );
 }
@@ -486,7 +486,7 @@ function ImageElementBlock({
   if (!src) {
     return (
       <div
-        className="cms-media flex items-center justify-center bg-gray-800/50 py-8 text-gray-500 text-sm"
+        className='cms-media flex items-center justify-center bg-gray-800/50 py-8 text-gray-500 text-sm'
         style={wrapperStyles}
       >
         No image selected
@@ -499,7 +499,7 @@ function ImageElementBlock({
   delete (imageStylesForFill as { height?: string | number }).height;
 
   return (
-    <div className="relative" style={wrapperStyles}>
+    <div className='relative' style={wrapperStyles}>
       {useFill ? (
         <Image
           src={src}
@@ -520,7 +520,7 @@ function ImageElementBlock({
         />
       )}
       {overlayType !== 'none' && (
-        <div className="pointer-events-none absolute inset-0" style={overlayStyles} />
+        <div className='pointer-events-none absolute inset-0' style={overlayStyles} />
       )}
     </div>
   );
@@ -547,7 +547,7 @@ function ImageBlock({
   if (!src) {
     return (
       <div
-        className="cms-media flex items-center justify-center bg-gray-800/50 py-8 text-gray-500 text-sm"
+        className='cms-media flex items-center justify-center bg-gray-800/50 py-8 text-gray-500 text-sm'
         style={{ width: `${width}%`, ...resolvedStyles }}
       >
         No image selected
@@ -567,7 +567,7 @@ function ImageBlock({
   const useFill = stretch;
 
   return (
-    <div className="cms-media" style={wrapperStyles}>
+    <div className='cms-media' style={wrapperStyles}>
       {useFill ? (
         <Image src={src} alt={alt} fill className={imageClassName} />
       ) : (
@@ -666,19 +666,19 @@ function VideoEmbedBlock({
 
   if (!embedUrl) {
     return (
-      <div className="cms-media flex items-center justify-center bg-gray-800/50 py-8 text-gray-500 text-sm" style={resolvedStyles}>
+      <div className='cms-media flex items-center justify-center bg-gray-800/50 py-8 text-gray-500 text-sm' style={resolvedStyles}>
         Enter a video URL
       </div>
     );
   }
 
   return (
-    <div className="cms-media relative w-full" style={resolvedStyles}>
+    <div className='cms-media relative w-full' style={resolvedStyles}>
       <iframe
-        className="absolute inset-0 h-full w-full"
+        className='absolute inset-0 h-full w-full'
         src={`${embedUrl}${autoplay ? '?autoplay=1&mute=1' : ''}`}
-        title="Embedded video"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        title='Embedded video'
+        allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
         allowFullScreen
       />
     </div>
@@ -691,7 +691,7 @@ function DividerBlock(): React.ReactNode {
   const thickness = (settings['thickness'] as number) || 1;
   const color = (settings['dividerColor'] as string) || '#4b5563';
 
-  return <hr className="my-2 border-0" style={{ borderTopStyle: style as 'solid' | 'dashed' | 'dotted', borderTopWidth: `${thickness}px`, borderTopColor: color }} />;
+  return <hr className='my-2 border-0' style={{ borderTopStyle: style as 'solid' | 'dashed' | 'dotted', borderTopWidth: `${thickness}px`, borderTopColor: color }} />;
 }
 
 function SocialLinksBlock(): React.ReactNode {
@@ -700,11 +700,11 @@ function SocialLinksBlock(): React.ReactNode {
   const links = platforms.split(',').map((l: string) => l.trim()).filter(Boolean);
 
   if (links.length === 0) {
-    return <p className="text-sm text-gray-500">Add social media URLs in settings</p>;
+    return <p className='text-sm text-gray-500'>Add social media URLs in settings</p>;
   }
 
   return (
-    <div className="flex items-center gap-4">
+    <div className='flex items-center gap-4'>
       {links.map((link: string, idx: number) => {
         let label = 'Link';
         try {
@@ -716,11 +716,11 @@ function SocialLinksBlock(): React.ReactNode {
           <a
             key={idx}
             href={link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-full border border-gray-600 p-2 text-gray-400 transition hover:text-white hover:border-white"
+            target='_blank'
+            rel='noopener noreferrer'
+            className='rounded-full border border-gray-600 p-2 text-gray-400 transition hover:text-white hover:border-white'
           >
-            <span className="text-xs font-medium uppercase">{label.slice(0, 2)}</span>
+            <span className='text-xs font-medium uppercase'>{label.slice(0, 2)}</span>
           </a>
         );
       })}
@@ -735,8 +735,8 @@ function IconBlock(): React.ReactNode {
   const iconColor = (settings['iconColor'] as string) || '#ffffff';
 
   return (
-    <div className="flex items-center justify-center">
-      <span style={{ fontSize: `${iconSize}px`, color: iconColor }} role="img" aria-label={iconName}>
+    <div className='flex items-center justify-center'>
+      <span style={{ fontSize: `${iconSize}px`, color: iconColor }} role='img' aria-label={iconName}>
         {iconName === 'Star' ? '★' : iconName === 'Heart' ? '♥' : iconName === 'Check' ? '✓' : iconName === 'Arrow' ? '→' : '●'}
       </span>
     </div>
@@ -752,21 +752,21 @@ function AppEmbedBlock(): React.ReactNode {
   const appLabel = APP_EMBED_OPTIONS.find((option: { id: AppEmbedId; label: string }) => option.id === appId)?.label ?? 'App';
 
   return (
-    <div className="cms-hover-card w-full rounded-lg border border-border/40 bg-gray-900/40 p-4">
-      <div className="mb-3">
-        <div className="text-sm font-semibold text-white">{title || appLabel}</div>
-        <div className="text-[10px] uppercase tracking-wide text-gray-500">App embed</div>
+    <div className='cms-hover-card w-full rounded-lg border border-border/40 bg-gray-900/40 p-4'>
+      <div className='mb-3'>
+        <div className='text-sm font-semibold text-white'>{title || appLabel}</div>
+        <div className='text-[10px] uppercase tracking-wide text-gray-500'>App embed</div>
       </div>
       {embedUrl ? (
         <iframe
           src={embedUrl}
           title={title || appLabel}
-          className="w-full rounded-md border border-border/40 bg-black"
+          className='w-full rounded-md border border-border/40 bg-black'
           style={{ height }}
         />
       ) : (
         <div
-          className="flex items-center justify-center rounded-md border border-dashed border-border/40 bg-gray-800/40 text-xs text-gray-400"
+          className='flex items-center justify-center rounded-md border border-dashed border-border/40 bg-gray-800/40 text-xs text-gray-400'
           style={{ height }}
         >
           Provide an embed URL to render the {appLabel} app here.

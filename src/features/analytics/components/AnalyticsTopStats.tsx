@@ -17,24 +17,24 @@ function MiniTable(props: {
   emptyLabel: string;
 }): React.JSX.Element {
   if (props.rows.length === 0) {
-    return <p className="text-sm text-gray-500">{props.emptyLabel}</p>;
+    return <p className='text-sm text-gray-500'>{props.emptyLabel}</p>;
   }
 
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead className="px-2">Value</TableHead>
-          <TableHead className="px-2 text-right">Count</TableHead>
+          <TableHead className='px-2'>Value</TableHead>
+          <TableHead className='px-2 text-right'>Count</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {props.rows.map((row) => (
           <TableRow key={row.key}>
-            <TableCell className="px-2 py-2 text-sm text-gray-200">
-              <span className="truncate">{row.left}</span>
+            <TableCell className='px-2 py-2 text-sm text-gray-200'>
+              <span className='truncate'>{row.left}</span>
             </TableCell>
-            <TableCell className="px-2 py-2 text-right text-sm text-gray-200">
+            <TableCell className='px-2 py-2 text-right text-sm text-gray-200'>
               {row.right}
             </TableCell>
           </TableRow>
@@ -49,21 +49,21 @@ export function AnalyticsTopStats(): React.JSX.Element {
   const summary = summaryQuery.data;
 
   return (
-    <div className="mt-6 grid gap-6 lg:grid-cols-2">
-      <SectionPanel className="p-4">
-        <h2 className="mb-3 text-sm font-semibold text-white">Top Pages</h2>
+    <div className='mt-6 grid gap-6 lg:grid-cols-2'>
+      <SectionPanel className='p-4'>
+        <h2 className='mb-3 text-sm font-semibold text-white'>Top Pages</h2>
         <MiniTable
           rows={(summary?.topPages ?? []).map((item) => ({
             key: item.path,
             left: item.path,
             right: formatCount(item.count),
           }))}
-          emptyLabel="No pageviews yet."
+          emptyLabel='No pageviews yet.'
         />
       </SectionPanel>
 
-      <SectionPanel className="p-4">
-        <h2 className="mb-3 text-sm font-semibold text-white">
+      <SectionPanel className='p-4'>
+        <h2 className='mb-3 text-sm font-semibold text-white'>
           Top Referrers
         </h2>
         <MiniTable
@@ -72,12 +72,12 @@ export function AnalyticsTopStats(): React.JSX.Element {
             left: item.referrer,
             right: formatCount(item.count),
           }))}
-          emptyLabel="No referrers yet."
+          emptyLabel='No referrers yet.'
         />
       </SectionPanel>
 
-      <SectionPanel className="p-4">
-        <h2 className="mb-3 text-sm font-semibold text-white">
+      <SectionPanel className='p-4'>
+        <h2 className='mb-3 text-sm font-semibold text-white'>
           Top Languages
         </h2>
         <MiniTable
@@ -86,12 +86,12 @@ export function AnalyticsTopStats(): React.JSX.Element {
             left: item.language,
             right: formatCount(item.count),
           }))}
-          emptyLabel="No language data yet."
+          emptyLabel='No language data yet.'
         />
       </SectionPanel>
 
-      <SectionPanel className="p-4">
-        <h2 className="mb-3 text-sm font-semibold text-white">
+      <SectionPanel className='p-4'>
+        <h2 className='mb-3 text-sm font-semibold text-white'>
           Top Countries
         </h2>
         <MiniTable
@@ -100,7 +100,7 @@ export function AnalyticsTopStats(): React.JSX.Element {
             left: item.country,
             right: formatCount(item.count),
           }))}
-          emptyLabel="No geo data yet."
+          emptyLabel='No geo data yet.'
         />
       </SectionPanel>
     </div>

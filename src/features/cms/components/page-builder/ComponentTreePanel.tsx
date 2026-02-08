@@ -69,17 +69,17 @@ export function ComponentTreePanel(): React.ReactNode {
   return (
     <TreeActionsProvider expandedIds={expandedIds} setExpandedIds={setExpandedIds}>
       <FolderTreePanel
-        className="flex-1 min-h-0"
-        bodyClassName="flex-1 min-h-0 overflow-y-auto"
+        className='flex-1 min-h-0'
+        bodyClassName='flex-1 min-h-0 overflow-y-auto'
         header={(
           <TreeHeader
-            title="Structure"
+            title='Structure'
             subtitle={state.currentPage ? `${sectionCount} sections` : 'No page loaded'}
           />
         )}
       >
         {!state.currentPage ? (
-          <div className="p-4" />
+          <div className='p-4' />
         ) : (
           ZONE_ORDER.map((zone) => {
             const isCollapsed = collapsedZones.has(zone);
@@ -143,22 +143,22 @@ function ZoneGroup({
   const draggedSectionId = dragState.section.id;
 
   return (
-    <div className="border-b border-border/50">
+    <div className='border-b border-border/50'>
       {/* Zone header */}
-      <div className="px-4 py-2.5">
+      <div className='px-4 py-2.5'>
         <button
-          type="button"
+          type='button'
           onClick={() => onToggleZone(zone)}
-          className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-400 hover:text-gray-300 transition"
+          className='flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-400 hover:text-gray-300 transition'
         >
           {isCollapsed ? (
-            <ChevronRight className="size-3.5" />
+            <ChevronRight className='size-3.5' />
           ) : (
-            <ChevronDown className="size-3.5" />
+            <ChevronDown className='size-3.5' />
           )}
           <span>{label}</span>
           {zoneSections.length > 0 && (
-            <span className="ml-1 text-[10px] text-gray-500">
+            <span className='ml-1 text-[10px] text-gray-500'>
               ({zoneSections.length})
             </span>
           )}
@@ -167,7 +167,7 @@ function ZoneGroup({
 
       {/* Zone sections */}
       {!isCollapsed && (
-        <div className="px-2 pb-2">
+        <div className='px-2 pb-2'>
           {zoneSections.length === 0 ? (
             <div
               onDragOver={(e: React.DragEvent) => {
@@ -194,7 +194,7 @@ function ZoneGroup({
               {isZoneDragOver ? 'Drop section here' : 'No sections'}
             </div>
           ) : (
-            <div className="space-y-0.5">
+            <div className='space-y-0.5'>
               {zoneSections.map((section: SectionInstance, index: number) => (
                 <React.Fragment key={section.id}>
                   <SectionDropTarget
@@ -218,13 +218,13 @@ function ZoneGroup({
             </div>
           )}
           {/* Add section + paste always at the bottom of the zone */}
-          <div className="mt-2 flex flex-wrap items-center gap-1">
+          <div className='mt-2 flex flex-wrap items-center gap-1'>
             {clipboard?.type === 'section' && (
               <button
-                type="button"
+                type='button'
                 onClick={() => sectionActions.paste(zone)}
-                className="rounded px-1.5 py-0.5 text-[10px] text-gray-400 hover:bg-foreground/10 hover:text-gray-200 transition"
-                title="Paste section"
+                className='rounded px-1.5 py-0.5 text-[10px] text-gray-400 hover:bg-foreground/10 hover:text-gray-200 transition'
+                title='Paste section'
               >
                 Paste
               </button>

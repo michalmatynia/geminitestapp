@@ -97,13 +97,13 @@ export function AgentPersonaSettingsForm({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-2">
+    <div className='space-y-4'>
+      <div className='grid gap-4 md:grid-cols-2'>
         {MODEL_FIELDS.map((field: ModelField) => (
-          <div key={field.key} className="space-y-2">
+          <div key={field.key} className='space-y-2'>
             <div>
-              <Label className="text-xs text-gray-300">{field.label}</Label>
-              <p className="text-[11px] text-gray-500">{field.description}</p>
+              <Label className='text-xs text-gray-300'>{field.label}</Label>
+              <p className='text-[11px] text-gray-500'>{field.description}</p>
             </div>
             <UnifiedSelect
               value={toSelectValue(settings[field.key])}
@@ -112,8 +112,8 @@ export function AgentPersonaSettingsForm({
                 { value: DEFAULT_VALUE, label: 'Default (auto)' },
                 ...mergedOptions.map((model: string) => ({ value: model, label: model }))
               ]}
-              placeholder="Select model"
-              triggerClassName="w-full border-border bg-card/70 text-sm text-white"
+              placeholder='Select model'
+              triggerClassName='w-full border-border bg-card/70 text-sm text-white'
             />
           </div>
         ))}

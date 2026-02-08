@@ -57,7 +57,7 @@ export function DynamicFilters({
         <div key={field.key} className={field.colSpan}>
           <Label 
             htmlFor={`filter-${field.key}`}
-            className="text-[11px] font-medium text-gray-400 mb-1.5 block"
+            className='text-[11px] font-medium text-gray-400 mb-1.5 block'
           >
             {field.label}
           </Label>
@@ -68,7 +68,7 @@ export function DynamicFilters({
               onValueChange={(value) => onChange(field.key, value)}
               options={field.options ?? []}
               placeholder={field.placeholder ?? `Select ${field.label.toLowerCase()}...`}
-              triggerClassName="h-9"
+              triggerClassName='h-9'
             />
           ) : field.type === 'search' ? (
             <SearchInput
@@ -77,7 +77,7 @@ export function DynamicFilters({
               value={String(values[field.key] ?? '')}
               onChange={(e) => onChange(field.key, e.target.value)}
               onClear={() => onChange(field.key, '')}
-              className="h-9"
+              className='h-9'
             />
           ) : (
             <Input
@@ -86,7 +86,7 @@ export function DynamicFilters({
               placeholder={field.placeholder ?? field.label}
               value={String(values[field.key] ?? '')}
               onChange={(e) => onChange(field.key, e.target.value)}
-              className="h-9"
+              className='h-9'
             />
           )}
         </div>

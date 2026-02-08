@@ -154,10 +154,10 @@ export function renderBackgroundImageLayer(
   delete (imageStyles as { width?: string | number }).width;
 
   return (
-    <div className="absolute inset-0 z-0" style={wrapperStyles}>
+    <div className='absolute inset-0 z-0' style={wrapperStyles}>
       <NextImage src={src} alt={alt} fill style={imageStyles} />
       {presentation.hasOverlay && (
-        <div className="pointer-events-none absolute inset-0" style={presentation.overlayStyles} />
+        <div className='pointer-events-none absolute inset-0' style={presentation.overlayStyles} />
       )}
     </div>
   );

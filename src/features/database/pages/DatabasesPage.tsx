@@ -217,11 +217,11 @@ function DatabasesContent(): React.JSX.Element {
           >
             Upload Backup
           </FileUploadButton>
-          <Button variant="secondary" onClick={handlePreviewCurrent}>
+          <Button variant='secondary' onClick={handlePreviewCurrent}>
             Preview Current DB
           </Button>
           <Button
-            variant="outline"
+            variant='outline'
             onClick={(): void => {
               window.location.assign('/admin/databases/operations');
             }}
@@ -258,18 +258,18 @@ function DatabasesContent(): React.JSX.Element {
         open={!!backupToDelete}
         onOpenChange={(open: boolean) => !open && setBackupToDelete(null)}
         onConfirm={(): void => { void handleConfirmDelete(); }}
-        title="Delete Backup"
+        title='Delete Backup'
         description={`Are you sure you want to delete backup "${backupToDelete}"? This cannot be undone.`}
-        confirmText="Delete"
-        variant="destructive"
+        confirmText='Delete'
+        variant='destructive'
       />
 
       {isProd ? (
-        <div className="mb-6 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+        <div className='mb-6 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100'>
           Backups are disabled in production. Create or upload backups in a non-production environment.
         </div>
       ) : null}
-      <SectionPanel className="p-6">
+      <SectionPanel className='p-6'>
         <DataTable
           columns={getDatabaseColumns({
             onPreview: handlePreview,

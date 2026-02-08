@@ -21,40 +21,40 @@ vi.mock('@/features/cms/components/page-builder/ComponentTreePanel', () => ({
   ComponentTreePanel: () => {
     const { dispatch } = usePageBuilder();
     return (
-      <div data-testid="component-tree-panel">
+      <div data-testid='component-tree-panel'>
         Tree
-        <button aria-label="Hide left panel" onClick={() => dispatch({ type: 'TOGGLE_LEFT_PANEL' })}>Hide</button>
+        <button aria-label='Hide left panel' onClick={() => dispatch({ type: 'TOGGLE_LEFT_PANEL' })}>Hide</button>
       </div>
     );
   },
 }));
 
 vi.mock('@/features/cms/components/page-builder/PagePreviewPanel', () => ({
-  PagePreviewPanel: () => <div data-testid="page-preview-panel">Preview</div>,
+  PagePreviewPanel: () => <div data-testid='page-preview-panel'>Preview</div>,
 }));
 
 vi.mock('@/features/cms/components/page-builder/ComponentSettingsPanel', () => ({
   ComponentSettingsPanel: () => {
     const { dispatch } = usePageBuilder();
     return (
-      <div data-testid="component-settings-panel">
+      <div data-testid='component-settings-panel'>
         Settings
-        <button aria-label="Hide right panel" onClick={() => dispatch({ type: 'TOGGLE_RIGHT_PANEL' })}>Hide</button>
+        <button aria-label='Hide right panel' onClick={() => dispatch({ type: 'TOGGLE_RIGHT_PANEL' })}>Hide</button>
       </div>
     );
   },
 }));
 
 vi.mock('@/features/cms/components/page-builder/ThemeSettingsPanel', () => ({
-  ThemeSettingsPanel: () => <div data-testid="theme-settings-panel">Theme</div>,
+  ThemeSettingsPanel: () => <div data-testid='theme-settings-panel'>Theme</div>,
 }));
 
 vi.mock('@/features/cms/components/page-builder/MenuSettingsPanel', () => ({
-  MenuSettingsPanel: () => <div data-testid="menu-settings-panel">Menu</div>,
+  MenuSettingsPanel: () => <div data-testid='menu-settings-panel'>Menu</div>,
 }));
 
 vi.mock('@/features/cms/components/page-builder/AppEmbedsPanel', () => ({
-  AppEmbedsPanel: () => <div data-testid="app-embeds-panel">App Embeds</div>,
+  AppEmbedsPanel: () => <div data-testid='app-embeds-panel'>App Embeds</div>,
 }));
 
 const queryClient = new QueryClient({

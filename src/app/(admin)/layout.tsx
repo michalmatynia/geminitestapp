@@ -34,7 +34,7 @@ export default async function Layout({
     redirect('/auth/signin');
   }
   return (
-    <SettingsStoreProvider mode="admin">
+    <SettingsStoreProvider mode='admin'>
       <AdminLayout session={session} initialMenuCollapsed={initialMenuCollapsed}>
         {children}
       </AdminLayout>

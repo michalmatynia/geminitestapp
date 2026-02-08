@@ -5,7 +5,7 @@ import { RunHistoryPanel } from '@/features/ai/ai-paths/components/run-history-p
 
 // Mock child components/utils
 vi.mock('./RunHistoryEntries', () => ({
-  RunHistoryEntries: () => <div data-testid="history-entries" />,
+  RunHistoryEntries: () => <div data-testid='history-entries' />,
 }));
 vi.mock('./run-history-utils', () => ({
   buildHistoryNodeOptions: () => [],

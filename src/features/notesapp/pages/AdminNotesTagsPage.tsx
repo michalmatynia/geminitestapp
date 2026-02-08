@@ -105,48 +105,48 @@ export function AdminNotesTagsPage(): React.JSX.Element {
   );
 
   return (
-    <div className="container mx-auto py-10">
+    <div className='container mx-auto py-10'>
       <SectionHeader
-        title="Note Tags"
-        description="Create and remove tags used in the Notes app."
-        className="mb-6"
+        title='Note Tags'
+        description='Create and remove tags used in the Notes app.'
+        className='mb-6'
       />
 
-      <div className="max-w-3xl space-y-6">
-        <SectionPanel className="p-6">
-          <SectionHeader title="Search" size="sm" className="mb-4" />
+      <div className='max-w-3xl space-y-6'>
+        <SectionPanel className='p-6'>
+          <SectionHeader title='Search' size='sm' className='mb-4' />
           <SearchInput
             value={searchQuery}
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(event.target.value)}
             onClear={() => setSearchQuery('')}
-            placeholder="Search tags..."
-            className="w-full"
+            placeholder='Search tags...'
+            className='w-full'
           />
         </SectionPanel>
-        <SectionPanel className="p-6">
-          <SectionHeader title="Create Tag" size="sm" className="mb-4" />
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-            <div className="flex-1">
-              <Label className="mb-2 block text-sm font-medium text-gray-200">
+        <SectionPanel className='p-6'>
+          <SectionHeader title='Create Tag' size='sm' className='mb-4' />
+          <div className='flex flex-col gap-4 sm:flex-row sm:items-end'>
+            <div className='flex-1'>
+              <Label className='mb-2 block text-sm font-medium text-gray-200'>
                 Tag Name
               </Label>
               <Input
-                type="text"
+                type='text'
                 value={name}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setName(event.target.value)}
-                className="w-full"
-                placeholder="Enter tag name"
+                className='w-full'
+                placeholder='Enter tag name'
               />
             </div>
             <div>
-              <Label className="mb-2 block text-sm font-medium text-gray-200">
+              <Label className='mb-2 block text-sm font-medium text-gray-200'>
                 Color
               </Label>
               <Input
-                type="color"
+                type='color'
                 value={color}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setColor(event.target.value)}
-                className="h-10 w-20"
+                className='h-10 w-20'
               />
             </div>
             <Button onClick={(): void => { void handleCreate(); }} disabled={createTag.isPending}>
@@ -155,69 +155,69 @@ export function AdminNotesTagsPage(): React.JSX.Element {
           </div>
         </SectionPanel>
 
-        <SectionPanel className="p-6">
+        <SectionPanel className='p-6'>
           <SectionHeader
-            title="Existing Tags"
-            size="sm"
-            className="mb-4"
+            title='Existing Tags'
+            size='sm'
+            className='mb-4'
             actions={(
-              <Button variant="outline" onClick={(): void => { void tagsQuery.refetch(); }}>
+              <Button variant='outline' onClick={(): void => { void tagsQuery.refetch(); }}>
                 Refresh
               </Button>
             )}
           />
           {loading ? (
-            <div className="text-sm text-gray-400">Loading tags...</div>
+            <div className='text-sm text-gray-400'>Loading tags...</div>
           ) : filteredTags.length === 0 ? (
-            <div className="text-sm text-gray-500">No tags created yet.</div>
+            <div className='text-sm text-gray-500'>No tags created yet.</div>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className='grid gap-3 sm:grid-cols-2'>
               {filteredTags.map((tag: TagRecord) => {
                 const isEditing = editingId === tag.id;
                 return (
                   <SectionPanel
                     key={tag.id}
-                    variant="subtle"
-                    className="flex items-center justify-between gap-3 px-4 py-3"
+                    variant='subtle'
+                    className='flex items-center justify-between gap-3 px-4 py-3'
                   >
-                    <div className="flex flex-1 items-center gap-3">
+                    <div className='flex flex-1 items-center gap-3'>
                       <span
-                        className="h-3 w-3 rounded-full"
+                        className='h-3 w-3 rounded-full'
                         style={{ backgroundColor: tag.color || '#3b82f6' }}
                       />
                       {isEditing ? (
-                        <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+                        <div className='flex flex-1 flex-col gap-2 sm:flex-row sm:items-center'>
                           <Input
-                            type="text"
+                            type='text'
                             value={editingName}
                             onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setEditingName(event.target.value)}
-                            className="w-full"
+                            className='w-full'
                           />
                           <Input
-                            type="color"
+                            type='color'
                             value={editingColor}
                             onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setEditingColor(event.target.value)}
-                            className="h-8 w-14"
+                            className='h-8 w-14'
                           />
                         </div>
                       ) : (
-                        <span className="text-sm text-gray-200">{tag.name}</span>
+                        <span className='text-sm text-gray-200'>{tag.name}</span>
                       )}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className='flex items-center gap-2'>
                       {isEditing ? (
                         <>
                           <Button
-                            variant="outline"
-                            size="sm"
+                            variant='outline'
+                            size='sm'
                             onClick={(): void => { void handleUpdate(tag.id); }}
                             disabled={updateTag.isPending}
                           >
                             Save
                           </Button>
                           <Button
-                            variant="ghost"
-                            size="sm"
+                            variant='ghost'
+                            size='sm'
                             onClick={(): void => handleEditCancel()}
                           >
                             Cancel
@@ -225,17 +225,17 @@ export function AdminNotesTagsPage(): React.JSX.Element {
                         </>
                       ) : (
                         <Button
-                          variant="outline"
-                          size="sm"
+                          variant='outline'
+                          size='sm'
                           onClick={(): void => handleEditStart(tag)}
                         >
                           Edit
                         </Button>
                       )}
                       <Button
-                        type="button"
+                        type='button'
                         onClick={(): void => { void handleDelete(tag.id); }}
-                        className="text-gray-400 hover:text-red-400"
+                        className='text-gray-400 hover:text-red-400'
                         aria-label={`Delete ${tag.name}`}
                       >
                         <Trash2 size={16} />

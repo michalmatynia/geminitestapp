@@ -89,7 +89,7 @@ export function useCanvasInteractions() {
         if (!edge.toPort) return;
         const targetKey = `${edge.to}:${edge.toPort}`;
         if (remainingTargets.has(targetKey)) return;
-        const nodeInputs = (nextInputs?.[edge.to] ?? {}) as Record<string, unknown>;
+        const nodeInputs = (nextInputs?.[edge.to] ?? {});
         if (!(edge.toPort in nodeInputs)) return;
         if (!changed) {
           nextInputs = { ...existingInputs };
@@ -266,7 +266,7 @@ export function useCanvasInteractions() {
     event: React.PointerEvent<HTMLDivElement>,
     nodeId: string
   ): void => {
-    if (!dragState || dragState.nodeId !== nodeId) return;
+    if (dragState?.nodeId !== nodeId) return;
     const viewport = viewportRef.current?.getBoundingClientRect();
     if (!viewport) return;
     const nextX = Math.min(
@@ -474,7 +474,7 @@ export function useCanvasInteractions() {
     if (connecting) return;
     
     const edgeToMove = edges.find((e) => e.to === nodeId && e.toPort === port);
-    if (!edgeToMove || !edgeToMove.from || !edgeToMove.fromPort) return;
+    if (!edgeToMove?.from || !edgeToMove.fromPort) return;
     
     const fromNode = nodes.find((n) => n.id === edgeToMove.from);
     if (!fromNode) return;
@@ -610,7 +610,7 @@ export function useCanvasInteractions() {
       return;
     }
     
-    if (!payload || !payload.type) return;
+    if (!payload?.type) return;
 
     const localX = canvasRect
       ? (event.clientX - canvasRect.left) / view.scale

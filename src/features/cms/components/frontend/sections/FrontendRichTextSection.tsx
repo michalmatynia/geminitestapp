@@ -17,12 +17,12 @@ export function FrontendRichTextSection({ settings, blocks }: FrontendRichTextSe
   return (
     <section style={sectionStyles}>
       <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: 'max-w-3xl' })}>
-        <div className="space-y-4">
+        <div className='space-y-4'>
           {blocks.map((block: BlockInstance) => (
             <FrontendBlockRenderer key={block.id} block={block} />
           ))}
           {blocks.length === 0 && (
-            <p className="text-gray-500">Rich text section</p>
+            <p className='text-gray-500'>Rich text section</p>
           )}
         </div>
       </div>

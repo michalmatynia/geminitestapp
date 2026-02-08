@@ -5,16 +5,16 @@ import { CmsPageRenderer } from '@/features/cms/components/frontend/CmsPageRende
 
 // Mock the section components
 vi.mock('@/features/cms/components/frontend/sections/FrontendHeroSection', () => ({
-  FrontendHeroSection: () => <div data-testid="section-hero">Hero</div>,
+  FrontendHeroSection: () => <div data-testid='section-hero'>Hero</div>,
 }));
 vi.mock('@/features/cms/components/frontend/sections/FrontendRichTextSection', () => ({
-  FrontendRichTextSection: () => <div data-testid="section-rich-text">RichText</div>,
+  FrontendRichTextSection: () => <div data-testid='section-rich-text'>RichText</div>,
 }));
 vi.mock('@/features/cms/components/frontend/sections/FrontendGridSection', () => ({
-  FrontendGridSection: () => <div data-testid="section-grid">Grid</div>,
+  FrontendGridSection: () => <div data-testid='section-grid'>Grid</div>,
 }));
 vi.mock('@/features/cms/components/frontend/sections/FrontendNewsletterSection', () => ({
-  FrontendNewsletterSection: () => <div data-testid="section-newsletter">Newsletter</div>,
+  FrontendNewsletterSection: () => <div data-testid='section-newsletter'>Newsletter</div>,
 }));
 
 // Mock GSAP wrapper to just render children

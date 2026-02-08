@@ -94,7 +94,7 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
         if (!result[category]) {
           result[category] = [];
         }
-        result[category]!.push({
+        result[category].push({
           name: record.name,
           description: record.description && record.description.length > 0 ? record.description : `Saved ${record.sectionType} template`,
           category,
@@ -163,16 +163,16 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
     const columns = Math.max(1, Math.min(items.length, 4));
     return (
       <div
-        className="grid gap-1 rounded-md border border-border/40 bg-gray-900/60 p-2"
+        className='grid gap-1 rounded-md border border-border/40 bg-gray-900/60 p-2'
         style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
       >
         {items.length === 0 ? (
-          <div className="col-span-full h-6 rounded bg-gray-800/60" />
+          <div className='col-span-full h-6 rounded bg-gray-800/60' />
         ) : (
           items.map((type: string, idx: number) => (
             <div
               key={`${type}-${idx}`}
-              className="flex h-6 items-center justify-center rounded bg-gray-800/60 text-[9px] uppercase tracking-wide text-gray-400"
+              className='flex h-6 items-center justify-center rounded bg-gray-800/60 text-[9px] uppercase tracking-wide text-gray-400'
             >
               {type}
             </div>
@@ -188,56 +188,56 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
   return (
     <>
       <Button
-        size="sm"
-        variant="outline"
-        className="h-7 gap-1.5 border-border/60 bg-card/40 text-xs text-gray-300 hover:bg-foreground/5 hover:text-gray-100"
+        size='sm'
+        variant='outline'
+        className='h-7 gap-1.5 border-border/60 bg-card/40 text-xs text-gray-300 hover:bg-foreground/5 hover:text-gray-100'
         disabled={disabled}
         onClick={() => setIsOpen(true)}
       >
-        <Plus className="size-3.5" />
+        <Plus className='size-3.5' />
         Add section
       </Button>
       <AppModal
         open={isOpen}
         onClose={() => setIsOpen(false)}
-        title="Add a section"
-        size="lg"
-        bodyClassName="h-[70vh]"
+        title='Add a section'
+        size='lg'
+        bodyClassName='h-[70vh]'
         header={
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-white">Add a section</h2>
+          <div className='flex items-center justify-between'>
+            <h2 className='text-2xl font-bold text-white'>Add a section</h2>
             <Button
-              type="button"
+              type='button'
               onClick={() => setIsOpen(false)}
-              className="min-w-[100px] border border-white/20 hover:border-white/40"
+              className='min-w-[100px] border border-white/20 hover:border-white/40'
             >
               Close
             </Button>
           </div>
         }
       >
-        <div className="space-y-6">
+        <div className='space-y-6'>
           {primitives.length > 0 && (
             <div>
-              <div className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-400">
+              <div className='mb-2 text-xs font-medium uppercase tracking-wide text-gray-400'>
                 Primitives
               </div>
-              <div className="grid gap-3 md:grid-cols-2">
+              <div className='grid gap-3 md:grid-cols-2'>
                 {primitives.map((def: SectionDefinition) => (
                   <button
                     key={def.type}
-                    type="button"
+                    type='button'
                     onClick={() => handleSelect(def.type)}
-                    className="flex w-full flex-col gap-2 rounded-md border border-border/50 bg-card/60 p-3 text-left transition hover:bg-foreground/5"
+                    className='flex w-full flex-col gap-2 rounded-md border border-border/50 bg-card/60 p-3 text-left transition hover:bg-foreground/5'
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-200">{def.label}</span>
-                      <span className="text-[10px] uppercase tracking-wide text-gray-500">
+                    <div className='flex items-center justify-between'>
+                      <span className='text-sm font-medium text-gray-200'>{def.label}</span>
+                      <span className='text-[10px] uppercase tracking-wide text-gray-500'>
                         {def.type}
                       </span>
                     </div>
                     {renderPreview(def.allowedBlockTypes)}
-                    <span className="text-xs text-gray-500">
+                    <span className='text-xs text-gray-500'>
                       {renderAllowedBlocks(def.allowedBlockTypes)}
                     </span>
                   </button>
@@ -248,25 +248,25 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
 
           {elements.length > 0 && (
             <div>
-              <div className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-400">
+              <div className='mb-2 text-xs font-medium uppercase tracking-wide text-gray-400'>
                 Elements
               </div>
-              <div className="grid gap-3 md:grid-cols-2">
+              <div className='grid gap-3 md:grid-cols-2'>
                 {elements.map((def: SectionDefinition) => (
                   <button
                     key={def.type}
-                    type="button"
+                    type='button'
                     onClick={() => handleSelect(def.type)}
-                    className="flex w-full flex-col gap-2 rounded-md border border-border/50 bg-card/60 p-3 text-left transition hover:bg-foreground/5"
+                    className='flex w-full flex-col gap-2 rounded-md border border-border/50 bg-card/60 p-3 text-left transition hover:bg-foreground/5'
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-200">{def.label}</span>
-                      <span className="text-[10px] uppercase tracking-wide text-gray-500">
+                    <div className='flex items-center justify-between'>
+                      <span className='text-sm font-medium text-gray-200'>{def.label}</span>
+                      <span className='text-[10px] uppercase tracking-wide text-gray-500'>
                         {def.type}
                       </span>
                     </div>
                     {renderPreview(def.allowedBlockTypes)}
-                    <span className="text-xs text-gray-500">
+                    <span className='text-xs text-gray-500'>
                       {renderAllowedBlocks(def.allowedBlockTypes)}
                     </span>
                   </button>
@@ -277,25 +277,25 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
 
           {templates.length > 0 && (
             <div>
-              <div className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-400">
+              <div className='mb-2 text-xs font-medium uppercase tracking-wide text-gray-400'>
                 Templates
               </div>
-              <div className="grid gap-3 md:grid-cols-2">
+              <div className='grid gap-3 md:grid-cols-2'>
                 {templates.map((def: SectionDefinition) => (
                   <button
                     key={def.type}
-                    type="button"
+                    type='button'
                     onClick={() => handleSelect(def.type)}
-                    className="flex w-full flex-col gap-2 rounded-md border border-border/50 bg-card/60 p-3 text-left transition hover:bg-foreground/5"
+                    className='flex w-full flex-col gap-2 rounded-md border border-border/50 bg-card/60 p-3 text-left transition hover:bg-foreground/5'
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-200">{def.label}</span>
-                      <span className="text-[10px] uppercase tracking-wide text-gray-500">
+                    <div className='flex items-center justify-between'>
+                      <span className='text-sm font-medium text-gray-200'>{def.label}</span>
+                      <span className='text-[10px] uppercase tracking-wide text-gray-500'>
                         {def.type}
                       </span>
                     </div>
                     {renderPreview(def.allowedBlockTypes)}
-                    <span className="text-xs text-gray-500">
+                    <span className='text-xs text-gray-500'>
                       {renderAllowedBlocks(def.allowedBlockTypes)}
                     </span>
                   </button>
@@ -306,44 +306,44 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
 
           {templatePreviewGroups.length > 0 && (
             <div>
-              <div className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-400">
+              <div className='mb-2 text-xs font-medium uppercase tracking-wide text-gray-400'>
               Templates
               </div>
-              <div className="space-y-4">
+              <div className='space-y-4'>
                 {templatePreviewGroups.map((group: TemplatePreviewGroup) => (
                   <div key={group.category}>
-                    <div className="mb-2 text-[11px] font-medium uppercase tracking-wide text-gray-500">
+                    <div className='mb-2 text-[11px] font-medium uppercase tracking-wide text-gray-500'>
                       {group.category}
                     </div>
-                    <div className="grid gap-3 md:grid-cols-2">
+                    <div className='grid gap-3 md:grid-cols-2'>
                       {group.templates.map(({ template, blockTypes, sectionType, templateRecordId }: TemplatePreview) => (
-                        <div key={template.name} className="relative">
+                        <div key={template.name} className='relative'>
                           <button
-                            type="button"
+                            type='button'
                             onClick={() => handleInsertTemplate(template)}
-                            className="flex w-full flex-col gap-2 rounded-md border border-border/50 bg-card/60 p-3 text-left transition hover:bg-foreground/5"
+                            className='flex w-full flex-col gap-2 rounded-md border border-border/50 bg-card/60 p-3 text-left transition hover:bg-foreground/5'
                           >
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-medium text-gray-200">{template.name}</span>
-                              <span className="text-[10px] uppercase tracking-wide text-gray-500">
+                            <div className='flex items-center justify-between'>
+                              <span className='text-sm font-medium text-gray-200'>{template.name}</span>
+                              <span className='text-[10px] uppercase tracking-wide text-gray-500'>
                                 {sectionType}
                               </span>
                             </div>
-                            <span className="text-xs text-gray-500">{template.description}</span>
+                            <span className='text-xs text-gray-500'>{template.description}</span>
                             {renderPreview(blockTypes)}
                           </button>
                           {templateRecordId && (
                             <button
-                              type="button"
+                              type='button'
                               onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
                                 e.stopPropagation();
                                 handleDeleteSectionTemplate(templateRecordId);
                               }}
-                              className="absolute right-1.5 top-1.5 rounded p-1 text-gray-500 hover:bg-red-500/20 hover:text-red-400 transition"
-                              title="Delete saved template"
-                              aria-label="Delete saved template"
+                              className='absolute right-1.5 top-1.5 rounded p-1 text-gray-500 hover:bg-red-500/20 hover:text-red-400 transition'
+                              title='Delete saved template'
+                              aria-label='Delete saved template'
                             >
-                              <Trash2 className="size-3.5" />
+                              <Trash2 className='size-3.5' />
                             </button>
                           )}
                         </div>

@@ -38,42 +38,42 @@ export function Pagination({
 
   return (
     <div className={cn('flex flex-wrap items-center gap-3', className)}>
-      <div className="flex items-center gap-3">
+      <div className='flex items-center gap-3'>
         {showLabels && !isCompact && (
-          <span className="text-sm font-medium text-muted-foreground">Page</span>
+          <span className='text-sm font-medium text-muted-foreground'>Page</span>
         )}
         <Button
-          type="button"
+          type='button'
           onClick={() => onPageChange(Math.max(1, page - 1))}
           disabled={page <= 1}
-          variant="outline"
-          size="sm"
-          className="h-8 w-8 p-0"
-          aria-label="Previous page"
+          variant='outline'
+          size='sm'
+          className='h-8 w-8 p-0'
+          aria-label='Previous page'
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className='h-4 w-4' />
         </Button>
-        <div className="flex items-center gap-2 px-2">
-          <span className="min-w-fit text-sm font-medium">{page}</span>
-          <span className="text-sm text-muted-foreground">/</span>
-          <span className="min-w-fit text-sm text-muted-foreground">{totalPages}</span>
+        <div className='flex items-center gap-2 px-2'>
+          <span className='min-w-fit text-sm font-medium'>{page}</span>
+          <span className='text-sm text-muted-foreground'>/</span>
+          <span className='min-w-fit text-sm text-muted-foreground'>{totalPages}</span>
         </div>
         <Button
-          type="button"
+          type='button'
           onClick={() => onPageChange(Math.min(totalPages, page + 1))}
           disabled={page >= totalPages}
-          variant="outline"
-          size="sm"
-          className="h-8 w-8 p-0"
-          aria-label="Next page"
+          variant='outline'
+          size='sm'
+          className='h-8 w-8 p-0'
+          aria-label='Next page'
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className='h-4 w-4' />
         </Button>
       </div>
 
       {showPageSize && onPageSizeChange && pageSize !== undefined && (
-        <div className="flex items-center gap-2">
-          {showLabels && !isCompact && <Label className="text-xs text-muted-foreground whitespace-nowrap">Rows per page</Label>}
+        <div className='flex items-center gap-2'>
+          {showLabels && !isCompact && <Label className='text-xs text-muted-foreground whitespace-nowrap'>Rows per page</Label>}
           <Select
             value={String(pageSize)}
             onValueChange={(value) => {
@@ -81,7 +81,7 @@ export function Pagination({
               onPageChange(1);
             }}
           >
-            <SelectTrigger className="h-8 w-24 text-xs">
+            <SelectTrigger className='h-8 w-24 text-xs'>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

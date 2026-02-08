@@ -1282,8 +1282,7 @@ export const handleDatabase: NodeHandler = async ({
             ? (updateDoc as Record<string, unknown>)
             : null;
           const updateSet =
-          updateDocRecord &&
-          updateDocRecord.$set &&
+          updateDocRecord?.$set &&
           typeof updateDocRecord.$set === 'object' &&
           !Array.isArray(updateDocRecord.$set)
             ? (updateDocRecord.$set as Record<string, unknown>)
@@ -1898,7 +1897,7 @@ export const handleDatabase: NodeHandler = async ({
             queryPayload.query &&
             typeof queryPayload.query === 'object' &&
             !Array.isArray(queryPayload.query)
-              ? (queryPayload.query as Record<string, unknown>)
+              ? (queryPayload.query)
               : {};
             const fallbackQuery =
             Object.keys(queryFromPayload).length > 0
@@ -1954,7 +1953,7 @@ export const handleDatabase: NodeHandler = async ({
           queryPayload.query &&
           typeof queryPayload.query === 'object' &&
           !Array.isArray(queryPayload.query)
-            ? (queryPayload.query as Record<string, unknown>)
+            ? (queryPayload.query)
             : {};
           const query =
           Object.keys(queryFromPayload).length > 0

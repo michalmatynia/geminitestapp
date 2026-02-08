@@ -85,7 +85,7 @@ function getUploadTarget({
       throw new Error('projectId is required for studio uploads.');
     }
     const safeProject = sanitizeSegment(projectId);
-    const safeFolder = folder && folder.trim() ? sanitizeFolderPath(folder) : '';
+    const safeFolder = folder?.trim() ? sanitizeFolderPath(folder) : '';
     const diskDir = safeFolder
       ? path.join(studioRoot, safeProject, safeFolder)
       : path.join(studioRoot, safeProject);

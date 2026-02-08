@@ -62,37 +62,37 @@ export function SelectedNodeInfo({
   if (!selectedNode) {
     return (
       <div className={className}>
-        <p className="text-sm text-gray-500">No node selected</p>
+        <p className='text-sm text-gray-500'>No node selected</p>
       </div>
     );
   }
 
   return (
     <div className={className}>
-      <div className="space-y-2">
+      <div className='space-y-2'>
         <div>
-          <span className="text-xs uppercase text-gray-500">Title</span>
-          <p className="text-sm font-medium text-white">{selectedNode.title}</p>
+          <span className='text-xs uppercase text-gray-500'>Title</span>
+          <p className='text-sm font-medium text-white'>{selectedNode.title}</p>
         </div>
         <div>
-          <span className="text-xs uppercase text-gray-500">Type</span>
-          <p className="text-sm text-gray-300">{selectedNode.type}</p>
+          <span className='text-xs uppercase text-gray-500'>Type</span>
+          <p className='text-sm text-gray-300'>{selectedNode.type}</p>
         </div>
         <div>
-          <span className="text-xs uppercase text-gray-500">Connections</span>
-          <p className="text-sm text-gray-300">
+          <span className='text-xs uppercase text-gray-500'>Connections</span>
+          <p className='text-sm text-gray-300'>
             {connectedEdges.incoming} in, {connectedEdges.outgoing} out
           </p>
         </div>
         <div>
-          <span className="text-xs uppercase text-gray-500">Inputs</span>
-          <p className="text-sm text-gray-300">
+          <span className='text-xs uppercase text-gray-500'>Inputs</span>
+          <p className='text-sm text-gray-300'>
             {selectedNode.inputs.join(', ') || 'None'}
           </p>
         </div>
         <div>
-          <span className="text-xs uppercase text-gray-500">Outputs</span>
-          <p className="text-sm text-gray-300">
+          <span className='text-xs uppercase text-gray-500'>Outputs</span>
+          <p className='text-sm text-gray-300'>
             {selectedNode.outputs.join(', ') || 'None'}
           </p>
         </div>
@@ -113,11 +113,11 @@ export function NodeActionButtons(): React.JSX.Element | null {
   if (!selectedNodeId) return null;
 
   return (
-    <div className="flex gap-2">
+    <div className='flex gap-2'>
       {/* Actions would use context action hooks */}
       <button
-        type="button"
-        className="rounded border px-2 py-1 text-xs text-gray-300"
+        type='button'
+        className='rounded border px-2 py-1 text-xs text-gray-300'
         // onClick={() => clearSelection()}
       >
         Deselect

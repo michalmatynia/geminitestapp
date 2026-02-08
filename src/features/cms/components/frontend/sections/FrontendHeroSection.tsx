@@ -35,13 +35,13 @@ export function FrontendHeroSection({ settings, blocks }: FrontendHeroSectionPro
         {/* Background image or gradient */}
         {image ? (
           <div
-            className="absolute inset-0 bg-cover bg-center"
+            className='absolute inset-0 bg-cover bg-center'
             style={{ backgroundImage: `url(${image})` }}
           >
-            <div className="absolute inset-0 bg-black/50" />
+            <div className='absolute inset-0 bg-black/50' />
           </div>
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
+          <div className='absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900' />
         )}
 
         {/* Content overlay */}
@@ -52,13 +52,13 @@ export function FrontendHeroSection({ settings, blocks }: FrontendHeroSectionPro
             paddingClass: 'px-6',
           })} text-center`}
         >
-          <div className="space-y-4">
+          <div className='space-y-4'>
             {blocks.map((block: BlockInstance) => (
               <FrontendBlockRenderer key={block.id} block={block} />
             ))}
           </div>
           {blocks.length === 0 && (
-            <p className="text-lg text-gray-400">Hero section</p>
+            <p className='text-lg text-gray-400'>Hero section</p>
           )}
         </div>
       </section>

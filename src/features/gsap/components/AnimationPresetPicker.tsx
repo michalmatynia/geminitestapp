@@ -23,7 +23,7 @@ export function AnimationPresetPicker({
   const [hoveredPreset, setHoveredPreset] = useState<AnimationPreset | null>(null);
 
   return (
-    <div className={cn('grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4', className)} role="radiogroup">
+    <div className={cn('grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4', className)} role='radiogroup'>
       {ANIMATION_PRESETS.map((preset: { value: AnimationPreset; label: string }) => {
         const isActive = value === preset.value;
         const isPreviewing = isActive || hoveredPreset === preset.value;
@@ -31,8 +31,8 @@ export function AnimationPresetPicker({
         return (
           <button
             key={preset.value}
-            type="button"
-            role="radio"
+            type='button'
+            role='radio'
             aria-checked={isActive}
             onClick={(): void => onChange(preset.value)}
             onMouseEnter={(): void => setHoveredPreset(preset.value)}
@@ -47,7 +47,7 @@ export function AnimationPresetPicker({
             )}
           >
             <AnimationPreviewIcon preset={preset.value} active={isPreviewing} />
-            <span className="text-xs font-medium leading-tight">{preset.label}</span>
+            <span className='text-xs font-medium leading-tight'>{preset.label}</span>
           </button>
         );
       })}

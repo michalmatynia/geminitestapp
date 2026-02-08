@@ -17,15 +17,15 @@ export function NodeHistoryTab({
   const history = (runtimeState.history?.[selectedNode.id] ?? []);
   const hasHistory = history.length > 0;
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="text-xs text-gray-400">
+    <div className='space-y-4'>
+      <div className='flex flex-wrap items-center justify-between gap-2'>
+        <div className='text-xs text-gray-400'>
           History entries: {history.length}
         </div>
         {onClearNodeHistory ? (
           <Button
-            type="button"
-            className="rounded-md border border-border px-3 py-1 text-xs text-gray-300 hover:bg-card/60"
+            type='button'
+            className='rounded-md border border-border px-3 py-1 text-xs text-gray-300 hover:bg-card/60'
             onClick={() => {
               void onClearNodeHistory(selectedNode.id);
             }}
@@ -38,7 +38,7 @@ export function NodeHistoryTab({
       </div>
       <RunHistoryEntries
         entries={history}
-        emptyMessage="No history yet. Run the path to capture inputs/outputs for this node."
+        emptyMessage='No history yet. Run the path to capture inputs/outputs for this node.'
       />
     </div>
   );

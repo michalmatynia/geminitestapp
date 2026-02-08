@@ -18,7 +18,7 @@ vi.mock('@/features/cms/hooks/useCmsQueries', () => ({
 
 // Mock the child components to simplify testing
 vi.mock('@/features/cms/components/page-builder/ComponentTreeNodeItem', () => ({
-  SectionNodeItem: ({ section }: any) => <div data-testid="section-item">{section.type}</div>,
+  SectionNodeItem: ({ section }: any) => <div data-testid='section-item'>{section.type}</div>,
 }));
 vi.mock('@/features/cms/components/page-builder/SectionPicker', () => ({
   SectionPicker: () => <button>Add Section</button>,

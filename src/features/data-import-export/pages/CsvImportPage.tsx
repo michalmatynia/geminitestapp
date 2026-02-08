@@ -34,9 +34,9 @@ const CSVImportPage = (): React.JSX.Element => {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">Import Products from CSV</h1>
-      <div className="flex w-full max-w-sm items-center space-x-2">
-        <FileUploadButton onFilesSelected={(files: File[]) => handleFileChange(files)} accept=".csv">
+      <h1 className='text-2xl font-bold mb-4'>Import Products from CSV</h1>
+      <div className='flex w-full max-w-sm items-center space-x-2'>
+        <FileUploadButton onFilesSelected={(files: File[]) => handleFileChange(files)} accept='.csv'>
           Choose CSV
         </FileUploadButton>
         <Button

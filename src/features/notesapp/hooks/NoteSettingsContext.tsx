@@ -80,7 +80,7 @@ async function loadSelectedFolderFromDb(): Promise<string | null> {
     const settingsList = await fetchNoteSettingsList();
     const setting = settingsList.find((s: { key: string }) => s.key === DB_SETTING_KEY);
 
-    if (setting && setting.value) {
+    if (setting?.value) {
       return setting.value;
     }
     return null;
@@ -95,7 +95,7 @@ async function loadSelectedNotebookFromDb(): Promise<string | null> {
     const settingsList = await fetchNoteSettingsList();
     const setting = settingsList.find((s: { key: string }) => s.key === DB_NOTEBOOK_KEY);
 
-    if (setting && setting.value) {
+    if (setting?.value) {
       return setting.value;
     }
     return null;
@@ -126,7 +126,7 @@ async function loadAutoformatFromDb(): Promise<boolean | null> {
     const settingsList = await fetchNoteSettingsList();
     const setting = settingsList.find((s: { key: string }) => s.key === DB_AUTOFORMAT_KEY);
 
-    if (setting && setting.value) {
+    if (setting?.value) {
       return setting.value === 'true';
     }
     return null;

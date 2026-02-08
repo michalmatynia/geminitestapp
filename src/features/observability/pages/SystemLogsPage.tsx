@@ -32,23 +32,23 @@ function LogDiagnostics(): React.JSX.Element {
   } = useSystemLogsContext();
 
   return (
-    <SectionPanel className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <SectionPanel className='space-y-4'>
+      <div className='flex flex-wrap items-center justify-between gap-3'>
         <div>
-          <div className="text-lg font-semibold text-white">Diagnostics</div>
-          <div className="text-xs text-gray-400">
+          <div className='text-lg font-semibold text-white'>Diagnostics</div>
+          <div className='text-xs text-gray-400'>
             Mongo index status for AI Paths runtime collections.
           </div>
         </div>
-        <div className="flex items-center gap-2 text-xs text-gray-500">
+        <div className='flex items-center gap-2 text-xs text-gray-500'>
           <span>
             {diagnosticsUpdatedAt
               ? `Updated ${formatTimestamp(diagnosticsUpdatedAt)}`
               : '—'}
           </span>
           <Button
-            variant="outline"
-            size="sm"
+            variant='outline'
+            size='sm'
             onClick={(): void => {
               void mongoDiagnosticsQuery.refetch();
             }}
@@ -57,30 +57,30 @@ function LogDiagnostics(): React.JSX.Element {
             Refresh
           </Button>
           <Button
-            variant="outline"
-            size="sm"
+            variant='outline'
+            size='sm'
             onClick={() => setIsRebuildIndexesConfirmOpen(true)}
             disabled={rebuildIndexesMutation.isPending}
-            className="border-amber-500/40 text-amber-200 hover:bg-amber-500/10"
+            className='border-amber-500/40 text-amber-200 hover:bg-amber-500/10'
           >
             {rebuildIndexesMutation.isPending ? 'Rebuilding...' : 'Rebuild missing indexes'}
           </Button>
         </div>
       </div>
       {mongoDiagnosticsQuery.isLoading ? (
-        <div className="text-sm text-gray-400">Loading diagnostics...</div>
+        <div className='text-sm text-gray-400'>Loading diagnostics...</div>
       ) : diagnostics.length === 0 ? (
-        <div className="text-sm text-gray-400">No diagnostics available.</div>
+        <div className='text-sm text-gray-400'>No diagnostics available.</div>
       ) : (
-        <div className="rounded-md border border-border/70 bg-card/60">
+        <div className='rounded-md border border-border/70 bg-card/60'>
           <Table>
             <TableHeader>
-              <TableRow className="border-border/60">
-                <TableHead className="text-xs text-gray-400">Collection</TableHead>
-                <TableHead className="text-xs text-gray-400">Expected</TableHead>
-                <TableHead className="text-xs text-gray-400">Missing</TableHead>
-                <TableHead className="text-xs text-gray-400">Extra</TableHead>
-                <TableHead className="text-xs text-gray-400 text-right">Status</TableHead>
+              <TableRow className='border-border/60'>
+                <TableHead className='text-xs text-gray-400'>Collection</TableHead>
+                <TableHead className='text-xs text-gray-400'>Expected</TableHead>
+                <TableHead className='text-xs text-gray-400'>Missing</TableHead>
+                <TableHead className='text-xs text-gray-400'>Extra</TableHead>
+                <TableHead className='text-xs text-gray-400 text-right'>Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -93,31 +93,31 @@ function LogDiagnostics(): React.JSX.Element {
                     ? 'OK'
                     : 'Missing';
                 return (
-                  <TableRow key={collection.name} className="border-border/50">
-                    <TableCell className="font-mono text-xs text-gray-200">
+                  <TableRow key={collection.name} className='border-border/50'>
+                    <TableCell className='font-mono text-xs text-gray-200'>
                       {collection.name}
                     </TableCell>
-                    <TableCell className="text-xs text-gray-300">
+                    <TableCell className='text-xs text-gray-300'>
                       {collection.expected.length}
                     </TableCell>
-                    <TableCell className="text-xs text-gray-300">
+                    <TableCell className='text-xs text-gray-300'>
                       {collection.error ? (
-                        <div className="space-y-1 text-rose-200">
+                        <div className='space-y-1 text-rose-200'>
                           <div>—</div>
-                          <div className="rounded bg-rose-500/10 px-2 py-1 text-[10px]">
+                          <div className='rounded bg-rose-500/10 px-2 py-1 text-[10px]'>
                             {collection.error}
                           </div>
                         </div>
                       ) : missingCount === 0 ? (
                         '0'
                       ) : (
-                        <div className="space-y-1">
-                          <div className="text-amber-200">{missingCount}</div>
-                          <div className="space-y-1 text-[10px] text-amber-200">
+                        <div className='space-y-1'>
+                          <div className='text-amber-200'>{missingCount}</div>
+                          <div className='space-y-1 text-[10px] text-amber-200'>
                             {collection.missing.map((item) => (
                               <div
                                 key={JSON.stringify(item.key)}
-                                className="rounded bg-amber-500/10 px-2 py-1"
+                                className='rounded bg-amber-500/10 px-2 py-1'
                               >
                                 {JSON.stringify(item.key)}
                               </div>
@@ -126,10 +126,10 @@ function LogDiagnostics(): React.JSX.Element {
                         </div>
                       )}
                     </TableCell>
-                    <TableCell className="text-xs text-gray-300">
+                    <TableCell className='text-xs text-gray-300'>
                       {extraCount}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className='text-right'>
                       <span
                         className={`rounded border px-2 py-0.5 text-xs ${
                           collection.error
@@ -157,65 +157,65 @@ function LogMetrics(): React.JSX.Element {
   const { metricsQuery, metrics, levels } = useSystemLogsContext();
 
   return (
-    <SectionPanel variant="subtle" className="p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <SectionPanel variant='subtle' className='p-4'>
+      <div className='flex flex-wrap items-center justify-between gap-3'>
         <div>
-          <h2 className="text-lg font-semibold text-white">Metrics</h2>
-          <p className="text-xs text-gray-400">
+          <h2 className='text-lg font-semibold text-white'>Metrics</h2>
+          <p className='text-xs text-gray-400'>
             Metrics reflect the current filters.
           </p>
         </div>
-        <div className="text-xs text-gray-500">
+        <div className='text-xs text-gray-500'>
           {metrics?.generatedAt ? `Updated ${formatTimestamp(metrics.generatedAt)}` : '—'}
         </div>
       </div>
       {metricsQuery.isLoading ? (
-        <div className="mt-4 text-sm text-gray-400">Loading metrics...</div>
+        <div className='mt-4 text-sm text-gray-400'>Loading metrics...</div>
       ) : !metrics ? (
-        <div className="mt-4 text-sm text-gray-400">
+        <div className='mt-4 text-sm text-gray-400'>
           No metrics available yet.
         </div>
       ) : (
-        <div className="mt-4 grid gap-4 md:grid-cols-3">
-          <SectionPanel variant="subtle-compact" className="p-3">
-            <div className="text-xs text-gray-400">Totals</div>
-            <div className="mt-2 space-y-1 text-sm text-gray-200">
+        <div className='mt-4 grid gap-4 md:grid-cols-3'>
+          <SectionPanel variant='subtle-compact' className='p-3'>
+            <div className='text-xs text-gray-400'>Totals</div>
+            <div className='mt-2 space-y-1 text-sm text-gray-200'>
               <div>Total: {metrics.total}</div>
               <div>Last 24h: {metrics.last24Hours}</div>
               <div>Last 7d: {metrics.last7Days}</div>
             </div>
           </SectionPanel>
-          <SectionPanel variant="subtle-compact" className="p-3">
-            <div className="text-xs text-gray-400">By level</div>
-            <div className="mt-2 space-y-1 text-sm text-gray-200">
-              <div className="text-red-300">Errors: {levels.error}</div>
-              <div className="text-yellow-300">Warnings: {levels.warn}</div>
-              <div className="text-blue-300">Info: {levels.info}</div>
+          <SectionPanel variant='subtle-compact' className='p-3'>
+            <div className='text-xs text-gray-400'>By level</div>
+            <div className='mt-2 space-y-1 text-sm text-gray-200'>
+              <div className='text-red-300'>Errors: {levels.error}</div>
+              <div className='text-yellow-300'>Warnings: {levels.warn}</div>
+              <div className='text-blue-300'>Info: {levels.info}</div>
             </div>
           </SectionPanel>
-          <SectionPanel variant="subtle-compact" className="p-3">
-            <div className="text-xs text-gray-400">Top sources</div>
+          <SectionPanel variant='subtle-compact' className='p-3'>
+            <div className='text-xs text-gray-400'>Top sources</div>
             {metrics.topSources.length === 0 ? (
-              <div className="mt-2 text-xs text-gray-500">No sources yet.</div>
+              <div className='mt-2 text-xs text-gray-500'>No sources yet.</div>
             ) : (
-              <div className="mt-2 space-y-1 text-xs text-gray-300">
+              <div className='mt-2 space-y-1 text-xs text-gray-300'>
                 {metrics.topSources.map((item) => (
-                  <div key={item.source} className="flex items-center justify-between gap-2">
-                    <span className="truncate">{item.source}</span>
-                    <span className="text-gray-500">{item.count}</span>
+                  <div key={item.source} className='flex items-center justify-between gap-2'>
+                    <span className='truncate'>{item.source}</span>
+                    <span className='text-gray-500'>{item.count}</span>
                   </div>
                 ))}
               </div>
             )}
-            <div className="mt-3 text-xs text-gray-400">Top paths</div>
+            <div className='mt-3 text-xs text-gray-400'>Top paths</div>
             {metrics.topPaths.length === 0 ? (
-              <div className="mt-2 text-xs text-gray-500">No paths yet.</div>
+              <div className='mt-2 text-xs text-gray-500'>No paths yet.</div>
             ) : (
-              <div className="mt-2 space-y-1 text-xs text-gray-300">
+              <div className='mt-2 space-y-1 text-xs text-gray-300'>
                 {metrics.topPaths.map((item) => (
-                  <div key={item.path} className="flex items-center justify-between gap-2">
-                    <span className="truncate">{item.path}</span>
-                    <span className="text-gray-500">{item.count}</span>
+                  <div key={item.path} className='flex items-center justify-between gap-2'>
+                    <span className='truncate'>{item.path}</span>
+                    <span className='text-gray-500'>{item.count}</span>
                   </div>
                 ))}
               </div>
@@ -231,17 +231,17 @@ function AiLogInterpreter(): React.JSX.Element {
   const { runInsightMutation, insightsQuery } = useSystemLogsContext();
 
   return (
-    <SectionPanel variant="subtle" className="p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <SectionPanel variant='subtle' className='p-4'>
+      <div className='flex flex-wrap items-center justify-between gap-3'>
         <div>
-          <h2 className="text-lg font-semibold text-white">AI Log Interpreter</h2>
-          <p className="text-xs text-gray-400">
+          <h2 className='text-lg font-semibold text-white'>AI Log Interpreter</h2>
+          <p className='text-xs text-gray-400'>
             Summarizes error patterns and potential causes using your configured AI model or agent.
           </p>
         </div>
         <Button
-          variant="outline"
-          size="sm"
+          variant='outline'
+          size='sm'
           onClick={() => runInsightMutation.mutate()}
           disabled={runInsightMutation.isPending}
         >
@@ -249,17 +249,17 @@ function AiLogInterpreter(): React.JSX.Element {
         </Button>
       </div>
       {insightsQuery.isLoading ? (
-        <div className="mt-3 text-xs text-gray-400">Loading AI insights...</div>
+        <div className='mt-3 text-xs text-gray-400'>Loading AI insights...</div>
       ) : insightsQuery.error ? (
-        <div className="mt-3 text-xs text-red-400">{insightsQuery.error.message}</div>
+        <div className='mt-3 text-xs text-red-400'>{insightsQuery.error.message}</div>
       ) : (insightsQuery.data?.insights?.length ?? 0) === 0 ? (
-        <div className="mt-3 text-xs text-gray-500">No AI insights yet.</div>
+        <div className='mt-3 text-xs text-gray-500'>No AI insights yet.</div>
       ) : (
-        <div className="mt-3 space-y-3">
+        <div className='mt-3 space-y-3'>
           {insightsQuery.data?.insights.map((insight: AiInsightRecord) => (
-            <div key={insight.id} className="rounded-md border border-border/60 bg-gray-950/40 p-3 text-xs text-gray-300">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] uppercase text-gray-500">
+            <div key={insight.id} className='rounded-md border border-border/60 bg-gray-950/40 p-3 text-xs text-gray-300'>
+              <div className='flex items-center justify-between gap-2'>
+                <span className='text-[10px] uppercase text-gray-500'>
                   {formatTimestamp(insight.createdAt)}
                 </span>
                 <span
@@ -274,9 +274,9 @@ function AiLogInterpreter(): React.JSX.Element {
                   {insight.status}
                 </span>
               </div>
-              <div className="mt-2 text-sm text-white">{insight.summary}</div>
+              <div className='mt-2 text-sm text-white'>{insight.summary}</div>
               {insight.warnings.length > 0 ? (
-                <ul className="mt-2 list-disc space-y-1 pl-4 text-[11px] text-amber-200">
+                <ul className='mt-2 list-disc space-y-1 pl-4 text-[11px] text-amber-200'>
                   {insight.warnings.map((warning: string, index: number) => (
                     <li key={`${insight.id}-warn-${index}`}>{warning}</li>
                   ))}
@@ -286,7 +286,7 @@ function AiLogInterpreter(): React.JSX.Element {
           ))}
         </div>
       )}
-      <div className="mt-3 text-[10px] text-gray-500">
+      <div className='mt-3 text-[10px] text-gray-500'>
         Configure the AI model/agent in Settings → AI.
       </div>
     </SectionPanel>
@@ -306,8 +306,8 @@ function LogList(): React.JSX.Element {
   } = useSystemLogsContext();
 
   return (
-    <SectionPanel variant="subtle" className="p-0">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 text-xs text-gray-400">
+    <SectionPanel variant='subtle' className='p-0'>
+      <div className='flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 text-xs text-gray-400'>
         <span>
           Showing {logs.length} of {total} logs
         </span>
@@ -315,73 +315,73 @@ function LogList(): React.JSX.Element {
           page={page}
           totalPages={totalPages}
           onPageChange={setPage}
-          className="scale-90 origin-right"
+          className='scale-90 origin-right'
         />
       </div>
       {logsQuery.isLoading ? (
-        <div className="px-4 py-8 text-sm text-gray-400">Loading logs...</div>
+        <div className='px-4 py-8 text-sm text-gray-400'>Loading logs...</div>
       ) : logs.length === 0 ? (
-        <div className="px-4 py-8 text-sm text-gray-400">
+        <div className='px-4 py-8 text-sm text-gray-400'>
           No system logs found.
         </div>
       ) : (
-        <div className="divide-y divide-border">
+        <div className='divide-y divide-border'>
           {logs.map((log: SystemLogRecord) => (
-            <div key={log.id} className="px-4 py-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
+            <div key={log.id} className='px-4 py-4'>
+              <div className='flex flex-wrap items-center justify-between gap-3'>
+                <div className='flex items-center gap-3'>
                   <StatusBadge
                     status={log.level}
                     variant={log.level === 'warn' ? 'warning' : log.level as 'info' | 'success' | 'warning' | 'error'}
                   />
-                  <span className="text-xs text-gray-400">
+                  <span className='text-xs text-gray-400'>
                     {formatTimestamp(log.createdAt)}
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className='flex items-center gap-2'>
                   {log.source ? (
-                    <span className="text-xs text-gray-500">{log.source}</span>
+                    <span className='text-xs text-gray-500'>{log.source}</span>
                   ) : null}
                   <Button
-                    variant="outline"
-                    size="sm"
+                    variant='outline'
+                    size='sm'
                     onClick={() => interpretLogMutation.mutate(log.id)}
                     disabled={interpretLogMutation.isPending}
-                    className="h-6 px-2 text-[10px]"
+                    className='h-6 px-2 text-[10px]'
                   >
                     Interpret
                   </Button>
                 </div>
               </div>
-              <div className="mt-2 text-sm text-gray-200">{log.message}</div>
+              <div className='mt-2 text-sm text-gray-200'>{log.message}</div>
               {(log.path || log.method || log.statusCode) && (
-                <div className="mt-2 text-xs text-gray-500">
+                <div className='mt-2 text-xs text-gray-500'>
                   {log.method ? `${log.method} ` : ''}
                   {log.path ?? ''}
                   {log.statusCode ? ` • ${log.statusCode}` : ''}
                 </div>
               )}
               {log.context && getContextValue(log.context, 'fingerprint') ? (
-                <div className="mt-2 text-xs text-gray-500">
+                <div className='mt-2 text-xs text-gray-500'>
                   Fingerprint:{' '}
-                  <span className="font-mono text-gray-300">
+                  <span className='font-mono text-gray-300'>
                     {String(getContextValue(log.context, 'fingerprint'))}
                   </span>
                 </div>
               ) : null}
               {(log.context || log.stack) && (
-                <details className="mt-2 text-xs text-gray-400">
-                  <summary className="cursor-pointer hover:text-gray-200">
+                <details className='mt-2 text-xs text-gray-400'>
+                  <summary className='cursor-pointer hover:text-gray-200'>
                     Details
                   </summary>
                   {logInterpretations[log.id] ? (
-                    <SectionPanel variant="subtle-compact" className="mt-2 p-2 text-[11px] text-gray-300">
-                      <div className="font-semibold text-gray-200">AI Interpretation</div>
-                      <div className="mt-2 text-gray-300">
+                    <SectionPanel variant='subtle-compact' className='mt-2 p-2 text-[11px] text-gray-300'>
+                      <div className='font-semibold text-gray-200'>AI Interpretation</div>
+                      <div className='mt-2 text-gray-300'>
                         {logInterpretations[log.id]?.summary}
                       </div>
                       {logInterpretations[log.id]?.warnings?.length ? (
-                        <ul className="mt-2 list-disc space-y-1 pl-4 text-[11px] text-amber-200">
+                        <ul className='mt-2 list-disc space-y-1 pl-4 text-[11px] text-amber-200'>
                           {logInterpretations[log.id]?.warnings?.map((warning: string, index: number) => (
                             <li key={`${log.id}-ai-${index}`}>{warning}</li>
                           ))}
@@ -390,51 +390,51 @@ function LogList(): React.JSX.Element {
                     </SectionPanel>
                   ) : null}
                   {log.source === 'client' && log.context ? (
-                    <SectionPanel variant="subtle-compact" className="mt-2 p-2 text-[11px] text-gray-300">
-                      <div className="font-semibold text-gray-200">Client context</div>
-                      <div className="mt-2 grid gap-2 md:grid-cols-2">
+                    <SectionPanel variant='subtle-compact' className='mt-2 p-2 text-[11px] text-gray-300'>
+                      <div className='font-semibold text-gray-200'>Client context</div>
+                      <div className='mt-2 grid gap-2 md:grid-cols-2'>
                         <div>
-                          <div className="text-gray-500">App</div>
+                          <div className='text-gray-500'>App</div>
                           <div>{String((getContextValue(log.context, 'app.version') as string | number | null) ?? '—')}</div>
-                          <div className="text-gray-500">Build</div>
+                          <div className='text-gray-500'>Build</div>
                           <div>{String((getContextValue(log.context, 'app.buildId') as string | number | null) ?? '—')}</div>
-                          <div className="text-gray-500">Release</div>
+                          <div className='text-gray-500'>Release</div>
                           <div>{String((getContextValue(log.context, 'app.releaseChannel') as string | number | null) ?? '—')}</div>
                         </div>
                         <div>
-                          <div className="text-gray-500">User</div>
+                          <div className='text-gray-500'>User</div>
                           <div>{String((getContextValue(log.context, 'user.email') as string | number | null) ?? '—')}</div>
-                          <div className="text-gray-500">Role</div>
+                          <div className='text-gray-500'>Role</div>
                           <div>{String((getContextValue(log.context, 'user.role') as string | number | null) ?? '—')}</div>
-                          <div className="text-gray-500">Route</div>
+                          <div className='text-gray-500'>Route</div>
                           <div>{String((getContextValue(log.context, 'route') as string | number | null) ?? '—')}</div>
                         </div>
                         <div>
-                          <div className="text-gray-500">Device</div>
+                          <div className='text-gray-500'>Device</div>
                           <div>{String((getContextValue(log.context, 'device.platform') as string | number | null) ?? '—')}</div>
-                          <div className="text-gray-500">Memory</div>
+                          <div className='text-gray-500'>Memory</div>
                           <div>{String((getContextValue(log.context, 'device.deviceMemory') as string | number | null) ?? '—')}</div>
-                          <div className="text-gray-500">Cores</div>
+                          <div className='text-gray-500'>Cores</div>
                           <div>{String((getContextValue(log.context, 'device.hardwareConcurrency') as string | number | null) ?? '—')}</div>
                         </div>
                         <div>
-                          <div className="text-gray-500">Network</div>
+                          <div className='text-gray-500'>Network</div>
                           <div>{String((getContextValue(log.context, 'network.effectiveType') as string | number | null) ?? '—')}</div>
-                          <div className="text-gray-500">Downlink</div>
+                          <div className='text-gray-500'>Downlink</div>
                           <div>{String((getContextValue(log.context, 'network.downlink') as string | number | null) ?? '—')}</div>
-                          <div className="text-gray-500">RTT</div>
+                          <div className='text-gray-500'>RTT</div>
                           <div>{String((getContextValue(log.context, 'network.rtt') as string | number | null) ?? '—')}</div>
                         </div>
                       </div>
                     </SectionPanel>
                   ) : null}
                   {log.stack && (
-                    <pre className="mt-2 whitespace-pre-wrap rounded border border-border bg-card p-2 text-[11px] text-gray-300">
+                    <pre className='mt-2 whitespace-pre-wrap rounded border border-border bg-card p-2 text-[11px] text-gray-300'>
                       {log.stack}
                     </pre>
                   )}
                   {log.context && (
-                    <pre className="mt-2 whitespace-pre-wrap rounded border border-border bg-card p-2 text-[11px] text-gray-300">
+                    <pre className='mt-2 whitespace-pre-wrap rounded border border-border bg-card p-2 text-[11px] text-gray-300'>
                       {JSON.stringify(log.context, null, 2)}
                     </pre>
                   )}
@@ -474,13 +474,13 @@ function SystemLogsContent(): React.JSX.Element {
 
   return (
     <AdminPageLayout
-      title="System Logs"
-      description="Centralized error and warning events captured across the platform."
+      title='System Logs'
+      description='Centralized error and warning events captured across the platform.'
       mainActions={
         <>
           <Button
-            variant="outline"
-            size="sm"
+            variant='outline'
+            size='sm'
             onClick={() => window.location.assign('/admin/settings/logging')}
           >
             Client Logging Settings
@@ -493,9 +493,9 @@ function SystemLogsContent(): React.JSX.Element {
             isRefreshing={logsQuery.isFetching || metricsQuery.isFetching}
           />
           <Button
-            variant="outline"
-            size="sm"
-            className="gap-2"
+            variant='outline'
+            size='sm'
+            className='gap-2'
             disabled={logs.length === 0}
             onClick={(): void => {
               void navigator.clipboard.writeText(logsJson).then(() => {
@@ -503,24 +503,24 @@ function SystemLogsContent(): React.JSX.Element {
               });
             }}
           >
-            <Copy className="h-4 w-4" />
+            <Copy className='h-4 w-4' />
             Copy
           </Button>
           <Button
-            variant="outline"
-            size="sm"
+            variant='outline'
+            size='sm'
             onClick={() => setIsClearLogsConfirmOpen(true)}
-            className="border-red-500/40 text-red-200 hover:bg-red-500/10"
+            className='border-red-500/40 text-red-200 hover:bg-red-500/10'
             disabled={logs.length === 0 || clearLogsMutation.isPending}
           >
-            <Trash2 className="mr-2 h-4 w-4" />
+            <Trash2 className='mr-2 h-4 w-4' />
             {clearLogsMutation.isPending ? 'Clearing...' : 'Clear Logs'}
           </Button>
         </>
       }
     >
       <ListPanel
-        variant="flat"
+        variant='flat'
         alerts={
           <>
             <ConfirmDialog
@@ -529,10 +529,10 @@ function SystemLogsContent(): React.JSX.Element {
               onConfirm={(): void => {
                 void handleClearLogs();
               }}
-              title="Clear System Logs"
-              description="Are you sure you want to clear all system logs? This action cannot be undone."
-              confirmText="Clear All"
-              variant="destructive"
+              title='Clear System Logs'
+              description='Are you sure you want to clear all system logs? This action cannot be undone.'
+              confirmText='Clear All'
+              variant='destructive'
             />
             <ConfirmDialog
               open={isRebuildIndexesConfirmOpen}
@@ -540,9 +540,9 @@ function SystemLogsContent(): React.JSX.Element {
               onConfirm={(): void => {
                 void handleRebuildMongoIndexes();
               }}
-              title="Rebuild Indexes"
-              description="This will scan AI Paths collections and create missing indexes. Proceed?"
-              confirmText="Rebuild"
+              title='Rebuild Indexes'
+              description='This will scan AI Paths collections and create missing indexes. Proceed?'
+              confirmText='Rebuild'
             />
             <LogDiagnostics />
           </>
@@ -554,11 +554,11 @@ function SystemLogsContent(): React.JSX.Element {
             onChange={handleFilterChange}
             onReset={handleResetFilters}
             hasActiveFilters={Boolean(level !== 'all' || query || source || fromDate || toDate)}
-            gridClassName="md:grid-cols-5"
+            gridClassName='md:grid-cols-5'
           />
         }
       >
-        <div className="space-y-6">
+        <div className='space-y-6'>
           <LogMetrics />
           <AiLogInterpreter />
           <LogList />

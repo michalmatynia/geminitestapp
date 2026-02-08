@@ -62,16 +62,16 @@ export function AgentPersonasPage(): React.JSX.Element {
 
   return (
     <ItemLibrary<AgentPersona>
-      title="Agent Personas"
-      description="Assign models to each reasoning stage for autonomous agents and AI Paths."
-      entityName="Persona"
+      title='Agent Personas'
+      description='Assign models to each reasoning stage for autonomous agents and AI Paths.'
+      entityName='Persona'
       items={personas}
       isLoading={loading}
       isSaving={saving}
       onSave={handleSavePersona}
       onDelete={handleDeletePersona}
       backLink={(
-        <Link href="/admin/agentcreator" className="text-blue-300 hover:text-blue-200">
+        <Link href='/admin/agentcreator' className='text-blue-300 hover:text-blue-200'>
           ← Back to agent creator
         </Link>
       )}

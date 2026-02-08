@@ -104,14 +104,14 @@ export function ProductSettingsPage(): React.JSX.Element {
 
   return (
     <InternationalizationProvider>
-      <SectionPanel className="p-6">
+      <SectionPanel className='p-6'>
         <SectionHeader
-          title="Product Settings"
-          className="mb-6"
+          title='Product Settings'
+          className='mb-6'
         />
-        <div className="grid gap-6 md:grid-cols-[240px_1fr]">
-          <SectionPanel className="p-4">
-            <div className="flex flex-col gap-2">
+        <div className='grid gap-6 md:grid-cols-[240px_1fr]'>
+          <SectionPanel className='p-4'>
+            <div className='flex flex-col gap-2'>
               {settingSections.map((section: typeof settingSections[number]) => (
                 <Button
                   key={section}
@@ -127,7 +127,7 @@ export function ProductSettingsPage(): React.JSX.Element {
               ))}
             </div>
           </SectionPanel>
-          <SectionPanel className="p-6">
+          <SectionPanel className='p-6'>
             {activeSection === 'Categories' && (
               <CategoriesSettings
                 loading={loadingCategories}

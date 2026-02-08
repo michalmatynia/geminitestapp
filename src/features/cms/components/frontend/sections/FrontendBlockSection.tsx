@@ -81,7 +81,7 @@ export function FrontendBlockSection({
         {customCss ? <style data-cms-custom-css={sectionId}>{customCss}</style> : null}
         <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: 'max-w-6xl' })}>
           {linkUrl ? (
-            <a href={linkUrl} target={linkTarget} rel={linkRel} className="block w-full">
+            <a href={linkUrl} target={linkTarget} rel={linkRel} className='block w-full'>
               {content}
             </a>
           ) : (

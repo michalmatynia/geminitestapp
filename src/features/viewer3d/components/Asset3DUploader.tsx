@@ -116,7 +116,7 @@ export function Asset3DUploader({
       {/* File Drop Zone */}
       {!file ? (
         <FileUploadTrigger
-          accept=".glb,.gltf"
+          accept='.glb,.gltf'
           onFilesSelected={(files: File[]) => {
             const selectedFile = files[0];
             if (selectedFile) void handleFileSelect(selectedFile);
@@ -140,84 +140,84 @@ export function Asset3DUploader({
             }}
             onDrop={handleDrop}
           >
-            <div className="flex flex-col items-center gap-2">
-              <Upload className="h-8 w-8 text-gray-500" />
-              <span className="text-sm text-gray-400">
+            <div className='flex flex-col items-center gap-2'>
+              <Upload className='h-8 w-8 text-gray-500' />
+              <span className='text-sm text-gray-400'>
               Drop .glb or .gltf file here
               </span>
-              <span className="text-xs text-gray-500">or click to browse</span>
+              <span className='text-xs text-gray-500'>or click to browse</span>
             </div>
           </div>
         </FileUploadTrigger>
       ) : (
-        <div className="space-y-4">
+        <div className='space-y-4'>
           {/* Selected File */}
-          <div className="flex items-center justify-between p-3 bg-gray-800 rounded-lg border border-gray-700">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 bg-blue-500/20 rounded flex items-center justify-center">
-                <Upload className="h-5 w-5 text-blue-400" />
+          <div className='flex items-center justify-between p-3 bg-gray-800 rounded-lg border border-gray-700'>
+            <div className='flex items-center gap-3'>
+              <div className='h-10 w-10 bg-blue-500/20 rounded flex items-center justify-center'>
+                <Upload className='h-5 w-5 text-blue-400' />
               </div>
               <div>
-                <p className="text-sm font-medium text-white">{file.name}</p>
-                <p className="text-xs text-gray-400">{formatFileSize(file.size)}</p>
+                <p className='text-sm font-medium text-white'>{file.name}</p>
+                <p className='text-xs text-gray-400'>{formatFileSize(file.size)}</p>
               </div>
             </div>
             <Button
-              variant="ghost"
-              size="icon"
+              variant='ghost'
+              size='icon'
               onClick={() => setFile(null)}
               disabled={isUploading}
             >
-              <X className="h-4 w-4" />
+              <X className='h-4 w-4' />
             </Button>
           </div>
 
           {/* Name */}
           <div>
-            <Label htmlFor="upload-name" className="text-sm text-gray-300">
+            <Label htmlFor='upload-name' className='text-sm text-gray-300'>
               Name
             </Label>
             <Input
-              id="upload-name"
+              id='upload-name'
               value={name}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setName(e.target.value)}
-              placeholder="Enter asset name..."
-              className="mt-1 bg-gray-800 border-gray-700"
+              placeholder='Enter asset name...'
+              className='mt-1 bg-gray-800 border-gray-700'
               disabled={isUploading}
             />
           </div>
 
           {/* Description */}
           <div>
-            <Label htmlFor="upload-description" className="text-sm text-gray-300">
+            <Label htmlFor='upload-description' className='text-sm text-gray-300'>
               Description
             </Label>
             <textarea
-              id="upload-description"
+              id='upload-description'
               value={description}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setDescription(e.target.value)}
-              placeholder="Enter description..."
+              placeholder='Enter description...'
               rows={2}
-              className="mt-1 w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm"
+              className='mt-1 w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm'
               disabled={isUploading}
             />
           </div>
 
           {/* Category */}
           <div>
-            <Label htmlFor="upload-category" className="text-sm text-gray-300">
+            <Label htmlFor='upload-category' className='text-sm text-gray-300'>
               Category
             </Label>
             <Input
-              id="upload-category"
+              id='upload-category'
               value={category}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setCategory(e.target.value)}
-              placeholder="Enter category..."
-              list="upload-categories-list"
-              className="mt-1 bg-gray-800 border-gray-700"
+              placeholder='Enter category...'
+              list='upload-categories-list'
+              className='mt-1 bg-gray-800 border-gray-700'
               disabled={isUploading}
             />
-            <datalist id="upload-categories-list">
+            <datalist id='upload-categories-list'>
               {existingCategories.map((cat: string) => (
                 <option key={cat} value={cat} />
               ))}
@@ -226,8 +226,8 @@ export function Asset3DUploader({
 
           {/* Tags */}
           <div>
-            <Label className="text-sm text-gray-300">Tags</Label>
-            <div className="mt-1 flex gap-2">
+            <Label className='text-sm text-gray-300'>Tags</Label>
+            <div className='mt-1 flex gap-2'>
               <Input
                 value={newTag}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNewTag(e.target.value)}
@@ -237,12 +237,12 @@ export function Asset3DUploader({
                     handleAddTag();
                   }
                 }}
-                placeholder="Add tag..."
-                list="upload-tags-list"
-                className="bg-gray-800 border-gray-700 flex-1"
+                placeholder='Add tag...'
+                list='upload-tags-list'
+                className='bg-gray-800 border-gray-700 flex-1'
                 disabled={isUploading}
               />
-              <datalist id="upload-tags-list">
+              <datalist id='upload-tags-list'>
                 {existingTags
                   .filter((t: string) => !tags.includes(t))
                   .map((tag: string) => (
@@ -250,30 +250,30 @@ export function Asset3DUploader({
                   ))}
               </datalist>
               <Button
-                type="button"
-                variant="secondary"
-                size="icon"
+                type='button'
+                variant='secondary'
+                size='icon'
                 onClick={handleAddTag}
                 disabled={isUploading}
               >
-                <Plus className="h-4 w-4" />
+                <Plus className='h-4 w-4' />
               </Button>
             </div>
             {tags.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-2">
+              <div className='flex flex-wrap gap-1 mt-2'>
                 {tags.map((tag: string) => (
                   <span
                     key={tag}
-                    className="inline-flex items-center gap-1 px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs"
+                    className='inline-flex items-center gap-1 px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs'
                   >
                     {tag}
                     <button
-                      type="button"
+                      type='button'
                       onClick={() => handleRemoveTag(tag)}
-                      className="text-gray-500 hover:text-red-400"
+                      className='text-gray-500 hover:text-red-400'
                       disabled={isUploading}
                     >
-                      <X className="h-3 w-3" />
+                      <X className='h-3 w-3' />
                     </button>
                   </span>
                 ))}
@@ -282,46 +282,46 @@ export function Asset3DUploader({
           </div>
 
           {/* Visibility */}
-          <label className="flex items-center gap-3 cursor-pointer">
+          <label className='flex items-center gap-3 cursor-pointer'>
             <input
-              type="checkbox"
+              type='checkbox'
               checked={isPublic}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setIsPublic(e.target.checked)}
-              className="rounded border-gray-600 bg-gray-800 text-blue-500 focus:ring-blue-500"
+              className='rounded border-gray-600 bg-gray-800 text-blue-500 focus:ring-blue-500'
               disabled={isUploading}
             />
-            <span className="text-sm text-gray-300">Make publicly visible</span>
+            <span className='text-sm text-gray-300'>Make publicly visible</span>
           </label>
         </div>
       )}
 
       {/* Error */}
       {error && (
-        <p className="mt-2 text-sm text-red-400">{error}</p>
+        <p className='mt-2 text-sm text-red-400'>{error}</p>
       )}
 
       {/* Format Info */}
-      <p className="mt-2 text-xs text-gray-500">
+      <p className='mt-2 text-xs text-gray-500'>
         Supported formats: {Object.keys(SUPPORTED_3D_FORMATS).join(', ')}. Max 100MB.
       </p>
 
       {/* Actions */}
       {file && (
-        <div className="flex justify-end gap-2 mt-4">
+        <div className='flex justify-end gap-2 mt-4'>
           {onCancel && (
-            <Button variant="ghost" onClick={onCancel} disabled={isUploading}>
+            <Button variant='ghost' onClick={onCancel} disabled={isUploading}>
               Cancel
             </Button>
           )}
           <Button onClick={() => void handleUpload()} disabled={isUploading}>
             {isUploading ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className='h-4 w-4 mr-2 animate-spin' />
                 Uploading...
               </>
             ) : (
               <>
-                <Upload className="h-4 w-4 mr-2" />
+                <Upload className='h-4 w-4 mr-2' />
                 Upload Asset
               </>
             )}

@@ -28,35 +28,35 @@ export function LearnedRuleItem({ draft }: LearnedRuleItemProps): React.JSX.Elem
   const rule = draft.parsed;
 
   return (
-    <SectionPanel className="space-y-3">
-      <div className="flex items-start justify-between gap-2">
-        <div className="text-sm font-medium text-gray-100">{rule?.title ?? 'Invalid rule'}</div>
-        <div className="flex items-center gap-2">
-          <Tooltip content="Copy JSON">
+    <SectionPanel className='space-y-3'>
+      <div className='flex items-start justify-between gap-2'>
+        <div className='text-sm font-medium text-gray-100'>{rule?.title ?? 'Invalid rule'}</div>
+        <div className='flex items-center gap-2'>
+          <Tooltip content='Copy JSON'>
             <Button
-              type="button"
-              variant="ghost"
-              size="icon"
+              type='button'
+              variant='ghost'
+              size='icon'
               onClick={() => void handleCopy(draft.text, 'Rule')}
             >
-              <Copy className="size-4" />
+              <Copy className='size-4' />
             </Button>
           </Tooltip>
-          <Button type="button" variant="outline" size="sm" onClick={() => handleRemoveLearnedRule(draft.uid)}>
+          <Button type='button' variant='outline' size='sm' onClick={() => handleRemoveLearnedRule(draft.uid)}>
             Remove
           </Button>
         </div>
       </div>
       <Textarea
-        className="min-h-[140px] font-mono text-[12px]"
+        className='min-h-[140px] font-mono text-[12px]'
         value={draft.text}
         onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => handleLearnedRuleTextChange(draft.uid, event.target.value)}
       />
       {draft.error ? (
-        <div className="text-xs text-red-300">{draft.error}</div>
+        <div className='text-xs text-red-300'>{draft.error}</div>
       ) : null}
       {rule ? (
-        <div className="text-xs text-gray-400">
+        <div className='text-xs text-gray-400'>
           <div>Severity: {formatSeverityLabel(rule.severity)}</div>
           <div>Enabled: {rule.enabled ? 'Yes' : 'No'}</div>
         </div>

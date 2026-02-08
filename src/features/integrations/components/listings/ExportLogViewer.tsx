@@ -109,9 +109,9 @@ export function ExportLogViewer({
   };
 
   return (
-    <SectionPanel variant="subtle" className="p-0 overflow-hidden">
+    <SectionPanel variant='subtle' className='p-0 overflow-hidden'>
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         aria-expanded={isOpen}
         onClick={(): void => onToggle?.(!isOpen)}
@@ -121,26 +121,26 @@ export function ExportLogViewer({
             onToggle?.(!isOpen);
           }
         }}
-        className="flex w-full items-center justify-between px-4 py-3 hover:bg-muted/50/50 transition cursor-pointer"
+        className='flex w-full items-center justify-between px-4 py-3 hover:bg-muted/50/50 transition cursor-pointer'
       >
-        <div className="flex items-center gap-2">
+        <div className='flex items-center gap-2'>
           <ChevronDown
             size={16}
             className={`transition-transform ${isOpen ? 'rotate-0' : '-rotate-90'}`}
           />
-          <span className="font-semibold text-sm text-gray-200">
+          <span className='font-semibold text-sm text-gray-200'>
             Export Logs ({logs.length})
           </span>
         </div>
         <Button
-          type="button"
-          variant="ghost"
-          size="sm"
+          type='button'
+          variant='ghost'
+          size='sm'
           onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
             e.stopPropagation();
             handleCopy();
           }}
-          className="text-xs"
+          className='text-xs'
         >
           {copied ? <Check size={14} /> : <Copy size={14} />}
           {copied ? 'Copied' : 'Copy'}
@@ -148,13 +148,13 @@ export function ExportLogViewer({
       </div>
 
       {isOpen && (
-        <div className="border-t border px-4 py-3 bg-card/50 max-h-96 overflow-y-auto">
+        <div className='border-t border px-4 py-3 bg-card/50 max-h-96 overflow-y-auto'>
           {imagePayloadSummary && (
-            <SectionPanel variant="subtle-compact" className="mb-3 p-2 text-[11px] text-gray-300">
-              <div className="text-[10px] uppercase tracking-wide text-gray-500">
+            <SectionPanel variant='subtle-compact' className='mb-3 p-2 text-[11px] text-gray-300'>
+              <div className='text-[10px] uppercase tracking-wide text-gray-500'>
                 Image payload summary
               </div>
-              <div className="mt-1 flex flex-wrap gap-3">
+              <div className='mt-1 flex flex-wrap gap-3'>
                 <span>Images: {imagePayloadSummary.count}</span>
                 <span>
                   Original: {formatBytes(imagePayloadSummary.totalOriginalBytes)}
@@ -180,7 +180,7 @@ export function ExportLogViewer({
               </div>
             </SectionPanel>
           )}
-          <div className="space-y-2 font-mono text-xs">
+          <div className='space-y-2 font-mono text-xs'>
             {logs.map((log: ExportLog, index: number) => {
               const bgColor =
                 log.level === 'error'
@@ -191,20 +191,20 @@ export function ExportLogViewer({
 
               return (
                 <div key={index} className={`p-2 rounded ${bgColor}`}>
-                  <div className="flex justify-between items-start gap-2">
-                    <div className="flex-1">
-                      <div className="text-gray-500">
-                        [{log.timestamp}] <span className="font-semibold">[{log.level.toUpperCase()}]</span>
+                  <div className='flex justify-between items-start gap-2'>
+                    <div className='flex-1'>
+                      <div className='text-gray-500'>
+                        [{log.timestamp}] <span className='font-semibold'>[{log.level.toUpperCase()}]</span>
                       </div>
-                      <div className="mt-1 break-words whitespace-pre-wrap">
+                      <div className='mt-1 break-words whitespace-pre-wrap'>
                         {log.message}
                       </div>
                       {log.context && (
-                        <details className="mt-2 text-gray-400 cursor-pointer">
-                          <summary className="hover:text-gray-300 transition">
+                        <details className='mt-2 text-gray-400 cursor-pointer'>
+                          <summary className='hover:text-gray-300 transition'>
                             Context Details
                           </summary>
-                          <pre className="mt-2 p-2 bg-card/50 rounded text-[11px] overflow-x-auto">
+                          <pre className='mt-2 p-2 bg-card/50 rounded text-[11px] overflow-x-auto'>
                             {JSON.stringify(log.context, null, 2)}
                           </pre>
                         </details>

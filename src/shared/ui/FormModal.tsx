@@ -36,10 +36,10 @@ export function FormModal({
 
   const saveButton = formRef ? (
     <Button
-      type="button" // Use type="button" as we'll use onClick to trigger submit
+      type='button' // Use type="button" as we'll use onClick to trigger submit
       onClick={() => formRef.current?.requestSubmit()} // Use ref to trigger form submission
       disabled={isSaving}
-      className="min-w-[100px] border border-white/20 hover:border-white/40"
+      className='min-w-[100px] border border-white/20 hover:border-white/40'
     >
       {isSaving ? 'Saving...' : saveText}
     </Button>
@@ -47,7 +47,7 @@ export function FormModal({
     <Button
       onClick={onSave}
       disabled={isSaving}
-      className="min-w-[100px] border border-white/20 hover:border-white/40"
+      className='min-w-[100px] border border-white/20 hover:border-white/40'
     >
       {isSaving ? 'Saving...' : saveText}
     </Button>
@@ -59,9 +59,9 @@ export function FormModal({
       {saveButton}
       {actions} {/* Include any additional actions passed */}
       <Button
-        type="button"
+        type='button'
         onClick={onClose}
-        className="min-w-[100px] border border-white/20 hover:border-white/40"
+        className='min-w-[100px] border border-white/20 hover:border-white/40'
       >
         {cancelText}
       </Button>

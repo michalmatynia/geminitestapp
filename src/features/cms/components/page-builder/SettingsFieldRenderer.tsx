@@ -147,7 +147,7 @@ export function SettingsFieldRenderer({
   }, []);
 
   return (
-    <div className="space-y-1.5">
+    <div className='space-y-1.5'>
       {field.type === 'text' && (
         <TextField
           label={field.label}
@@ -159,7 +159,7 @@ export function SettingsFieldRenderer({
 
       {field.type === 'link' && (
         <>
-          <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
             {field.label}
           </Label>
           <LinkField value={(value as string) ?? ''} onChange={handleChange} />
@@ -195,10 +195,10 @@ export function SettingsFieldRenderer({
 
       {field.type === 'alignment' && (
         <>
-          <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
             {field.label}
           </Label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className='grid grid-cols-3 gap-2'>
             {(field.options ?? [
               { label: 'Left', value: 'left' },
               { label: 'Center', value: 'center' },
@@ -209,9 +209,9 @@ export function SettingsFieldRenderer({
               return (
                 <Button
                   key={opt.value}
-                  type="button"
-                  variant="outline"
-                  size="sm"
+                  type='button'
+                  variant='outline'
+                  size='sm'
                   aria-pressed={isActive}
                   className={`w-full justify-center ${isActive ? 'border-primary/60 bg-primary/10 text-primary' : 'border-foreground/20'}`}
                   onClick={(): void => handleChange(opt.value)}
@@ -236,18 +236,18 @@ export function SettingsFieldRenderer({
 
       {field.type === 'radio' && (
         <>
-          <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
             {field.label}
           </Label>
           <RadioGroup
             value={(value as string) ?? ''}
             onValueChange={(v: string): void => handleChange(v)}
-            className="space-y-1"
+            className='space-y-1'
           >
             {(field.options ?? []).map((opt: SettingsFieldOption) => (
-              <div key={opt.value} className="flex items-center gap-2">
+              <div key={opt.value} className='flex items-center gap-2'>
                 <RadioGroupItem value={opt.value} id={`${field.key}-${opt.value}`} disabled={isDisabled} />
-                <Label htmlFor={`${field.key}-${opt.value}`} className="text-sm text-gray-300 cursor-pointer">
+                <Label htmlFor={`${field.key}-${opt.value}`} className='text-sm text-gray-300 cursor-pointer'>
                   {opt.label}
                 </Label>
               </div>
@@ -277,7 +277,7 @@ export function SettingsFieldRenderer({
       )}
 
       {field.type === 'color-scheme' && (
-        <div className="space-y-2">
+        <div className='space-y-2'>
           <SelectField
             label={field.label}
             value={(value as string) ?? 'scheme-1'}
@@ -285,16 +285,16 @@ export function SettingsFieldRenderer({
             options={colorSchemeOptions}
             disabled={isDisabled}
           />
-          <div className="flex items-center justify-between text-[11px] text-gray-500">
+          <div className='flex items-center justify-between text-[11px] text-gray-500'>
             <span>Need a new scheme?</span>
             <Button
-              type="button"
-              size="sm"
-              variant="ghost"
+              type='button'
+              size='sm'
+              variant='ghost'
               onClick={openColorSchemeCreator}
-              className="h-6 px-2 text-[11px] text-blue-300 hover:text-blue-200"
+              className='h-6 px-2 text-[11px] text-blue-300 hover:text-blue-200'
             >
-              <Palette className="mr-1 size-3" />
+              <Palette className='mr-1 size-3' />
               Create scheme
             </Button>
           </div>
@@ -338,7 +338,7 @@ export function SettingsFieldRenderer({
 
       {field.type === 'spacing' && (
         <>
-          <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
             {field.label}
           </Label>
           <SpacingField value={value} onChange={handleChange} fieldKey={field.key} />
@@ -347,7 +347,7 @@ export function SettingsFieldRenderer({
 
       {field.type === 'border' && (
         <>
-          <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
             {field.label}
           </Label>
           <BorderField value={value} onChange={handleChange} fieldKey={field.key} />
@@ -356,7 +356,7 @@ export function SettingsFieldRenderer({
 
       {field.type === 'shadow' && (
         <>
-          <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
             {field.label}
           </Label>
           <ShadowField value={value} onChange={handleChange} fieldKey={field.key} />
@@ -365,7 +365,7 @@ export function SettingsFieldRenderer({
 
       {field.type === 'background' && (
         <>
-          <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
             {field.label}
           </Label>
           <BackgroundField value={value} onChange={handleChange} fieldKey={field.key} />
@@ -374,7 +374,7 @@ export function SettingsFieldRenderer({
 
       {field.type === 'typography' && (
         <>
-          <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
             {field.label}
           </Label>
           <TypographyField value={value} onChange={handleChange} fieldKey={field.key} />
@@ -400,15 +400,15 @@ function SpacingField({ value, onChange }: CompositeFieldProps): React.ReactNode
     onChange({ ...spacing, [side]: v });
   };
   return (
-    <div className="grid grid-cols-4 gap-1.5">
+    <div className='grid grid-cols-4 gap-1.5'>
       {(['top', 'right', 'bottom', 'left'] as const).map((side: string) => (
-        <div key={side} className="space-y-0.5">
-          <span className="text-[10px] text-gray-500 uppercase">{side[0]}</span>
+        <div key={side} className='space-y-0.5'>
+          <span className='text-[10px] text-gray-500 uppercase'>{side[0]}</span>
           <Input
-            type="number"
+            type='number'
             value={spacing[side] ?? 0}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update(side, Number(e.target.value))}
-            className="text-xs h-7 px-1.5"
+            className='text-xs h-7 px-1.5'
           />
         </div>
       ))}
@@ -422,52 +422,52 @@ function BorderField({ value, onChange }: CompositeFieldProps): React.ReactNode 
     onChange({ ...border, [key]: v });
   };
   return (
-    <div className="space-y-2">
-      <div className="grid grid-cols-2 gap-2">
-        <div className="space-y-0.5">
-          <span className="text-[10px] text-gray-500 uppercase">Width</span>
+    <div className='space-y-2'>
+      <div className='grid grid-cols-2 gap-2'>
+        <div className='space-y-0.5'>
+          <span className='text-[10px] text-gray-500 uppercase'>Width</span>
           <Input
-            type="number"
+            type='number'
             value={(border.width as number) ?? 0}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('width', Number(e.target.value))}
-            className="text-xs h-7"
+            className='text-xs h-7'
             min={0}
           />
         </div>
-        <div className="space-y-0.5">
-          <span className="text-[10px] text-gray-500 uppercase">Radius</span>
+        <div className='space-y-0.5'>
+          <span className='text-[10px] text-gray-500 uppercase'>Radius</span>
           <Input
-            type="number"
+            type='number'
             value={(border.radius as number) ?? 0}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('radius', Number(e.target.value))}
-            className="text-xs h-7"
+            className='text-xs h-7'
             min={0}
           />
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        <div className="space-y-0.5">
-          <span className="text-[10px] text-gray-500 uppercase">Style</span>
+      <div className='grid grid-cols-2 gap-2'>
+        <div className='space-y-0.5'>
+          <span className='text-[10px] text-gray-500 uppercase'>Style</span>
           <UnifiedSelect
             value={(border.style as string) ?? 'solid'}
             onValueChange={(v: string): void => update('style', v)}
             options={BORDER_STYLE_OPTIONS}
-            triggerClassName="text-xs h-7"
+            triggerClassName='text-xs h-7'
           />
         </div>
-        <div className="space-y-0.5">
-          <span className="text-[10px] text-gray-500 uppercase">Color</span>
-          <div className="flex items-center gap-1">
+        <div className='space-y-0.5'>
+          <span className='text-[10px] text-gray-500 uppercase'>Color</span>
+          <div className='flex items-center gap-1'>
             <input
-              type="color"
+              type='color'
               value={(border.color as string) ?? '#4b5563'}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('color', e.target.value)}
-              className="h-7 w-7 cursor-pointer rounded border border-border/50 bg-transparent p-0.5"
+              className='h-7 w-7 cursor-pointer rounded border border-border/50 bg-transparent p-0.5'
             />
             <Input
               value={(border.color as string) ?? '#4b5563'}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('color', e.target.value)}
-              className="text-xs h-7 font-mono flex-1"
+              className='text-xs h-7 font-mono flex-1'
               maxLength={7}
             />
           </div>
@@ -483,32 +483,32 @@ function ShadowField({ value, onChange }: CompositeFieldProps): React.ReactNode 
     onChange({ ...shadow, [key]: v });
   };
   return (
-    <div className="space-y-2">
-      <div className="grid grid-cols-4 gap-1.5">
+    <div className='space-y-2'>
+      <div className='grid grid-cols-4 gap-1.5'>
         {(['x', 'y', 'blur', 'spread'] as const).map((prop: string) => (
-          <div key={prop} className="space-y-0.5">
-            <span className="text-[10px] text-gray-500 uppercase">{prop}</span>
+          <div key={prop} className='space-y-0.5'>
+            <span className='text-[10px] text-gray-500 uppercase'>{prop}</span>
             <Input
-              type="number"
+              type='number'
               value={(shadow[prop] as number) ?? 0}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update(prop, Number(e.target.value))}
-              className="text-xs h-7 px-1.5"
+              className='text-xs h-7 px-1.5'
             />
           </div>
         ))}
       </div>
-      <div className="flex items-center gap-1">
-        <span className="text-[10px] text-gray-500 uppercase w-10">Color</span>
+      <div className='flex items-center gap-1'>
+        <span className='text-[10px] text-gray-500 uppercase w-10'>Color</span>
         <input
-          type="color"
+          type='color'
           value={(shadow.color as string)?.slice(0, 7) ?? '#000000'}
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('color', e.target.value)}
-          className="h-7 w-7 cursor-pointer rounded border border-border/50 bg-transparent p-0.5"
+          className='h-7 w-7 cursor-pointer rounded border border-border/50 bg-transparent p-0.5'
         />
         <Input
           value={(shadow.color as string) ?? '#00000040'}
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('color', e.target.value)}
-          className="text-xs h-7 font-mono flex-1"
+          className='text-xs h-7 font-mono flex-1'
         />
       </div>
     </div>
@@ -537,41 +537,41 @@ function BackgroundField({ value, onChange }: CompositeFieldProps): React.ReactN
   const toOpacity = typeof bg.gradientToOpacity === 'number' ? bg.gradientToOpacity : 100;
 
   return (
-    <div className="space-y-2">
+    <div className='space-y-2'>
       <UnifiedSelect
         value={bgType}
         onValueChange={(v: string): void => update('type', v)}
         options={BG_TYPE_OPTIONS}
-        triggerClassName="text-xs h-7"
+        triggerClassName='text-xs h-7'
       />
 
       {bgType === 'none' && (
-        <SectionPanel variant="subtle-compact" className="px-3 py-2 text-[11px] text-gray-400">
+        <SectionPanel variant='subtle-compact' className='px-3 py-2 text-[11px] text-gray-400'>
           No background override (uses color scheme / inherited background).
         </SectionPanel>
       )}
 
       {bgType === 'solid' && (
-        <div className="flex items-center gap-2">
+        <div className='flex items-center gap-2'>
           <input
-            type="color"
+            type='color'
             value={(bg.color as string) ?? '#000000'}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('color', e.target.value)}
-            className="h-8 w-10 cursor-pointer rounded border border-border/50 bg-transparent p-0.5"
+            className='h-8 w-10 cursor-pointer rounded border border-border/50 bg-transparent p-0.5'
           />
           <Input
             value={(bg.color as string) ?? '#000000'}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('color', e.target.value)}
-            className="flex-1 text-xs font-mono"
+            className='flex-1 text-xs font-mono'
             maxLength={7}
           />
         </div>
       )}
 
       {bgType === 'gradient' && (
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] text-gray-500 w-10">Dir</span>
+        <div className='space-y-1.5'>
+          <div className='flex items-center gap-2'>
+            <span className='text-[10px] text-gray-500 w-10'>Dir</span>
             <UnifiedSelect
               value={currentDirectionValue}
               onValueChange={(v: string): void => {
@@ -579,71 +579,71 @@ function BackgroundField({ value, onChange }: CompositeFieldProps): React.ReactN
                 update('gradientAngle', Number(v));
               }}
               options={GRADIENT_DIRECTION_OPTIONS}
-              className="flex-1"
-              triggerClassName="text-xs h-7"
+              className='flex-1'
+              triggerClassName='text-xs h-7'
             />
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] text-gray-500 w-10">From</span>
+          <div className='flex items-center gap-2'>
+            <span className='text-[10px] text-gray-500 w-10'>From</span>
             <input
-              type="color"
+              type='color'
               value={(bg.gradientFrom as string) ?? '#000000'}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('gradientFrom', e.target.value)}
-              className="h-7 w-7 cursor-pointer rounded border border-border/50 bg-transparent p-0.5"
+              className='h-7 w-7 cursor-pointer rounded border border-border/50 bg-transparent p-0.5'
             />
             <Input
               value={(bg.gradientFrom as string) ?? '#000000'}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('gradientFrom', e.target.value)}
-              className="flex-1 text-xs font-mono"
+              className='flex-1 text-xs font-mono'
               maxLength={7}
             />
             <Input
-              type="number"
+              type='number'
               value={fromOpacity}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('gradientFromOpacity', Number(e.target.value))}
-              className="w-16 text-xs h-7"
+              className='w-16 text-xs h-7'
               min={0}
               max={100}
-              title="Opacity (%)"
+              title='Opacity (%)'
             />
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] text-gray-500 w-10">To</span>
+          <div className='flex items-center gap-2'>
+            <span className='text-[10px] text-gray-500 w-10'>To</span>
             <input
-              type="color"
+              type='color'
               value={(bg.gradientTo as string) ?? '#ffffff'}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('gradientTo', e.target.value)}
-              className="h-7 w-7 cursor-pointer rounded border border-border/50 bg-transparent p-0.5"
+              className='h-7 w-7 cursor-pointer rounded border border-border/50 bg-transparent p-0.5'
             />
             <Input
               value={(bg.gradientTo as string) ?? '#ffffff'}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('gradientTo', e.target.value)}
-              className="flex-1 text-xs font-mono"
+              className='flex-1 text-xs font-mono'
               maxLength={7}
             />
             <Input
-              type="number"
+              type='number'
               value={toOpacity}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('gradientToOpacity', Number(e.target.value))}
-              className="w-16 text-xs h-7"
+              className='w-16 text-xs h-7'
               min={0}
               max={100}
-              title="Opacity (%)"
+              title='Opacity (%)'
             />
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] text-gray-500 w-10">Angle</span>
+          <div className='flex items-center gap-2'>
+            <span className='text-[10px] text-gray-500 w-10'>Angle</span>
             <Input
-              type="number"
+              type='number'
               value={currentAngle}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('gradientAngle', Number(e.target.value))}
-              className="w-20 text-xs h-7"
+              className='w-20 text-xs h-7'
               min={0}
               max={360}
             />
-            <span className="text-xs text-gray-500">deg</span>
+            <span className='text-xs text-gray-500'>deg</span>
           </div>
-          <p className="text-[11px] text-gray-500">
+          <p className='text-[11px] text-gray-500'>
             Use opacity to create transparent gradients (0–100%).
           </p>
         </div>
@@ -653,8 +653,8 @@ function BackgroundField({ value, onChange }: CompositeFieldProps): React.ReactN
         <Input
           value={(bg.imageUrl as string) ?? ''}
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('imageUrl', e.target.value)}
-          placeholder="Image URL..."
-          className="text-xs"
+          placeholder='Image URL...'
+          className='text-xs'
         />
       )}
     </div>
@@ -667,75 +667,75 @@ function TypographyField({ value, onChange }: CompositeFieldProps): React.ReactN
     onChange({ ...typo, [key]: v });
   };
   return (
-    <div className="space-y-2">
-      <div className="space-y-0.5">
-        <span className="text-[10px] text-gray-500 uppercase">Font Family</span>
+    <div className='space-y-2'>
+      <div className='space-y-0.5'>
+        <span className='text-[10px] text-gray-500 uppercase'>Font Family</span>
         <UnifiedSelect
           value={(typo.fontFamily as string) ?? 'Inter, sans-serif'}
           onValueChange={(v: string): void => update('fontFamily', v)}
           options={FONT_FAMILY_OPTIONS}
-          triggerClassName="text-xs h-7"
+          triggerClassName='text-xs h-7'
         />
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        <div className="space-y-0.5">
-          <span className="text-[10px] text-gray-500 uppercase">Weight</span>
+      <div className='grid grid-cols-2 gap-2'>
+        <div className='space-y-0.5'>
+          <span className='text-[10px] text-gray-500 uppercase'>Weight</span>
           <UnifiedSelect
             value={String((typo.fontWeight as string | number) ?? '400')}
             onValueChange={(v: string): void => update('fontWeight', v)}
             options={FONT_WEIGHT_OPTIONS}
-            triggerClassName="text-xs h-7"
+            triggerClassName='text-xs h-7'
           />
         </div>
-        <div className="space-y-0.5">
-          <span className="text-[10px] text-gray-500 uppercase">Size (px)</span>
+        <div className='space-y-0.5'>
+          <span className='text-[10px] text-gray-500 uppercase'>Size (px)</span>
           <Input
-            type="number"
+            type='number'
             value={(typo.fontSize as number) ?? 16}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('fontSize', Number(e.target.value))}
-            className="text-xs h-7"
+            className='text-xs h-7'
             min={8}
             max={200}
           />
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        <div className="space-y-0.5">
-          <span className="text-[10px] text-gray-500 uppercase">Line Height</span>
+      <div className='grid grid-cols-2 gap-2'>
+        <div className='space-y-0.5'>
+          <span className='text-[10px] text-gray-500 uppercase'>Line Height</span>
           <Input
-            type="number"
+            type='number'
             value={(typo.lineHeight as number) ?? 1.5}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('lineHeight', Number(e.target.value))}
-            className="text-xs h-7"
+            className='text-xs h-7'
             min={0.5}
             max={5}
             step={0.1}
           />
         </div>
-        <div className="space-y-0.5">
-          <span className="text-[10px] text-gray-500 uppercase">Letter Spacing</span>
+        <div className='space-y-0.5'>
+          <span className='text-[10px] text-gray-500 uppercase'>Letter Spacing</span>
           <Input
-            type="number"
+            type='number'
             value={(typo.letterSpacing as number) ?? 0}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('letterSpacing', Number(e.target.value))}
-            className="text-xs h-7"
+            className='text-xs h-7'
             step={0.5}
           />
         </div>
       </div>
-      <div className="space-y-0.5">
-        <span className="text-[10px] text-gray-500 uppercase">Text Color</span>
-        <div className="flex items-center gap-2">
+      <div className='space-y-0.5'>
+        <span className='text-[10px] text-gray-500 uppercase'>Text Color</span>
+        <div className='flex items-center gap-2'>
           <input
-            type="color"
+            type='color'
             value={(typo.textColor as string) ?? '#ffffff'}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('textColor', e.target.value)}
-            className="h-7 w-7 cursor-pointer rounded border border-border/50 bg-transparent p-0.5"
+            className='h-7 w-7 cursor-pointer rounded border border-border/50 bg-transparent p-0.5'
           />
           <Input
             value={(typo.textColor as string) ?? '#ffffff'}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('textColor', e.target.value)}
-            className="flex-1 text-xs font-mono"
+            className='flex-1 text-xs font-mono'
             maxLength={7}
           />
         </div>
@@ -769,57 +769,57 @@ function LinkField({ value, onChange }: LinkFieldProps): React.ReactNode {
   };
 
   return (
-    <div className="space-y-2">
-      <div className="relative">
+    <div className='space-y-2'>
+      <div className='relative'>
         <Input
           value={value}
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)}
-          className="pr-10 text-sm"
-          placeholder="https://example.com or /your-slug"
+          className='pr-10 text-sm'
+          placeholder='https://example.com or /your-slug'
         />
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="absolute right-1 top-1 h-7 w-7 text-gray-400 hover:text-gray-200"
-              title="Pick from slugs"
+              type='button'
+              variant='ghost'
+              size='icon'
+              className='absolute right-1 top-1 h-7 w-7 text-gray-400 hover:text-gray-200'
+              title='Pick from slugs'
             >
-              <Link2 className="size-3.5" />
+              <Link2 className='size-3.5' />
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg">
+          <DialogContent className='max-w-lg'>
             <DialogHeader>
               <DialogTitle>Select a slug</DialogTitle>
             </DialogHeader>
-            <div className="space-y-3">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-2.5 top-2.5 size-4 text-gray-500" />
+            <div className='space-y-3'>
+              <div className='relative'>
+                <Search className='pointer-events-none absolute left-2.5 top-2.5 size-4 text-gray-500' />
                 <Input
                   value={query}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setQuery(e.target.value)}
-                  className="pl-8 text-sm"
-                  placeholder="Search slugs..."
+                  className='pl-8 text-sm'
+                  placeholder='Search slugs...'
                 />
               </div>
-              <div className="max-h-64 space-y-1 overflow-y-auto rounded border border-border/50 p-2">
+              <div className='max-h-64 space-y-1 overflow-y-auto rounded border border-border/50 p-2'>
                 {slugsQuery.isLoading && (
-                  <div className="p-2 text-xs text-gray-500">Loading slugs...</div>
+                  <div className='p-2 text-xs text-gray-500'>Loading slugs...</div>
                 )}
                 {!slugsQuery.isLoading && filtered.length === 0 && (
-                  <div className="p-2 text-xs text-gray-500">No slugs found.</div>
+                  <div className='p-2 text-xs text-gray-500'>No slugs found.</div>
                 )}
                 {filtered.map((slug: Slug) => (
                   <button
                     key={slug.id}
-                    type="button"
+                    type='button'
                     onClick={(): void => handleSelect(slug)}
-                    className="flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-sm text-gray-200 hover:bg-foreground/5"
+                    className='flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-sm text-gray-200 hover:bg-foreground/5'
                   >
                     <span>/{slug.slug}</span>
                     {slug.isDefault ? (
-                      <span className="text-[10px] uppercase tracking-wide text-gray-500">
+                      <span className='text-[10px] uppercase tracking-wide text-gray-500'>
                         Default
                       </span>
                     ) : null}
@@ -832,10 +832,10 @@ function LinkField({ value, onChange }: LinkFieldProps): React.ReactNode {
       </div>
       {value ? (
         <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          className="w-full text-xs text-gray-400 hover:text-gray-200"
+          type='button'
+          size='sm'
+          variant='ghost'
+          className='w-full text-xs text-gray-400 hover:text-gray-200'
           onClick={(): void => onChange('')}
         >
           Clear link

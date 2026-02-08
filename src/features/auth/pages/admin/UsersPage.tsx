@@ -315,7 +315,7 @@ export default function AuthUsersPage(): React.JSX.Element {
 
   if (!canReadUsers) {
     return (
-      <SectionPanel className="p-6 text-sm text-amber-300">
+      <SectionPanel className='p-6 text-sm text-amber-300'>
         You don&apos;t have permission to view user accounts. Ask an admin to grant
         `auth.users.read` or elevate your account.
       </SectionPanel>
@@ -327,12 +327,12 @@ export default function AuthUsersPage(): React.JSX.Element {
       <ListPanel
         header={
           <SectionHeader
-            title="Users"
+            title='Users'
             description={`Manage user accounts and assign roles (provider: ${provider}).`}
             actions={
               <>
                 <Button
-                  variant="outline"
+                  variant='outline'
                   onClick={() => {
                     void authUsersQuery.refetch();
                     void refetchSettings();
@@ -341,10 +341,10 @@ export default function AuthUsersPage(): React.JSX.Element {
                 >
                   Refresh
                 </Button>
-                <Button variant="outline" onClick={() => setMockOpen(true)}>
+                <Button variant='outline' onClick={() => setMockOpen(true)}>
                   Mock Sign-in
                 </Button>
-                <Button variant="outline" onClick={() => setCreateOpen(true)}>
+                <Button variant='outline' onClick={() => setCreateOpen(true)}>
                   Create User
                 </Button>
                 <Button
@@ -359,14 +359,14 @@ export default function AuthUsersPage(): React.JSX.Element {
         }
         filters={
           <SectionPanel>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
               <Input
                 value={search}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSearch(event.target.value)}
-                placeholder="Search by name, email, or ID"
-                className="h-8 text-sm sm:max-w-xs"
+                placeholder='Search by name, email, or ID'
+                className='h-8 text-sm sm:max-w-xs'
               />
-              <div className="text-xs text-gray-500">
+              <div className='text-xs text-gray-500'>
                 {dirtyRoles ? 'Unsaved role changes' : 'Roles are up to date'}
               </div>
             </div>
@@ -374,44 +374,44 @@ export default function AuthUsersPage(): React.JSX.Element {
         }
       >
         {loading ? (
-          <div className="rounded-md border border-dashed border-border p-6 text-center text-gray-400">
+          <div className='rounded-md border border-dashed border-border p-6 text-center text-gray-400'>
             Loading users...
           </div>
         ) : (
-          <Table className="text-gray-200">
+          <Table className='text-gray-200'>
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Verified</TableHead>
                 <TableHead>Role</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className='text-right'>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredUsers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-gray-500">
+                  <TableCell colSpan={5} className='text-center text-gray-500'>
                     No users found.
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredUsers.map((user: AuthUserSummary) => (
                   <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.name ?? 'Unnamed'}</TableCell>
-                    <TableCell className="text-gray-300">{user.email ?? 'No email'}</TableCell>
+                    <TableCell className='font-medium'>{user.name ?? 'Unnamed'}</TableCell>
+                    <TableCell className='text-gray-300'>{user.email ?? 'No email'}</TableCell>
                     <TableCell>
                       {user.emailVerified ? (
-                        <Badge variant="success">
+                        <Badge variant='success'>
                           Verified
                         </Badge>
                       ) : (
-                        <Badge variant="warning">
+                        <Badge variant='warning'>
                           Pending
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell className="min-w-[180px]">
+                    <TableCell className='min-w-[180px]'>
                       {(() : React.ReactNode => {
                         const currentRoleId = localUserRoles[user.id];
                         const isValidRole = currentRoleId && roles.some((r: AuthRole) => r.id === currentRoleId);
@@ -421,11 +421,11 @@ export default function AuthUsersPage(): React.JSX.Element {
                             value={selectValue}
                             onValueChange={(value: string) => handleRoleChange(user.id, value)}
                           >
-                            <SelectTrigger className="h-8 bg-gray-900 border text-white">
-                              <SelectValue placeholder="Select role" />
+                            <SelectTrigger className='h-8 bg-gray-900 border text-white'>
+                              <SelectValue placeholder='Select role' />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="none">Unassigned</SelectItem>
+                              <SelectItem value='none'>Unassigned</SelectItem>
                               {roles.map((role: AuthRole) => (
                                 <SelectItem key={role.id} value={role.id}>
                                   {role.name}
@@ -436,8 +436,8 @@ export default function AuthUsersPage(): React.JSX.Element {
                         );
                       })()}
                     </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(user)}>
+                    <TableCell className='text-right'>
+                      <Button variant='ghost' size='sm' onClick={() => handleOpenEdit(user)}>
                         Edit
                       </Button>
                     </TableCell>
@@ -450,100 +450,100 @@ export default function AuthUsersPage(): React.JSX.Element {
       </ListPanel>
 
       <Dialog open={Boolean(editingUser)} onOpenChange={(open: boolean) => !open && setEditingUser(null)}>
-        <DialogContent className="bg-card border-border text-white">
+        <DialogContent className='bg-card border-border text-white'>
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-name" className="text-xs text-gray-300">
+          <div className='space-y-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='edit-name' className='text-xs text-gray-300'>
                 Name
               </Label>
               <Input
-                id="edit-name"
+                id='edit-name'
                 value={editName}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEditName(event.target.value)}
-                className="bg-gray-900 border text-white"
+                className='bg-gray-900 border text-white'
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-email" className="text-xs text-gray-300">
+            <div className='space-y-2'>
+              <Label htmlFor='edit-email' className='text-xs text-gray-300'>
                 Email
               </Label>
               <Input
-                id="edit-email"
+                id='edit-email'
                 value={editEmail}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEditEmail(event.target.value)}
-                className="bg-gray-900 border text-white"
+                className='bg-gray-900 border text-white'
               />
             </div>
-            <div className="flex items-center gap-2">
+            <div className='flex items-center gap-2'>
               <Checkbox
-                id="edit-verified"
+                id='edit-verified'
                 checked={editVerified} onCheckedChange={(checked: boolean | 'indeterminate') => setEditVerified(Boolean(checked))}
-                className="h-4 w-4 rounded border bg-gray-900"
+                className='h-4 w-4 rounded border bg-gray-900'
               />
-              <Label htmlFor="edit-verified" className="text-xs text-gray-300">
+              <Label htmlFor='edit-verified' className='text-xs text-gray-300'>
                 Email verified
               </Label>
             </div>
-            <div className="rounded-md border border-border bg-card/40 p-3 space-y-3">
-              <div className="text-xs font-semibold text-gray-300">
+            <div className='rounded-md border border-border bg-card/40 p-3 space-y-3'>
+              <div className='text-xs font-semibold text-gray-300'>
                 Security controls
               </div>
               {loadingSecurity ? (
-                <div className="text-xs text-gray-500">Loading security profile...</div>
+                <div className='text-xs text-gray-500'>Loading security profile...</div>
               ) : null}
               {!canManageSecurity ? (
-                <div className="text-xs text-amber-300">
+                <div className='text-xs text-amber-300'>
                   You don&apos;t have permission to view or edit security controls.
                 </div>
               ) : null}
-              <div className="flex items-center gap-2">
+              <div className='flex items-center gap-2'>
                 <Checkbox
-                  id="edit-disabled"
+                  id='edit-disabled'
                   checked={editDisabled}
                   onCheckedChange={(checked: boolean | 'indeterminate') => setEditDisabled(Boolean(checked))}
                   disabled={!canManageSecurity}
-                  className="h-4 w-4 rounded border bg-gray-900"
+                  className='h-4 w-4 rounded border bg-gray-900'
                 />
-                <Label htmlFor="edit-disabled" className="text-xs text-gray-300">
+                <Label htmlFor='edit-disabled' className='text-xs text-gray-300'>
                   Disable account
                 </Label>
               </div>
-              <div className="flex items-center gap-2">
+              <div className='flex items-center gap-2'>
                 <Checkbox
-                  id="edit-banned"
+                  id='edit-banned'
                   checked={editBanned}
                   onCheckedChange={(checked: boolean | 'indeterminate') => setEditBanned(Boolean(checked))}
                   disabled={!canManageSecurity}
-                  className="h-4 w-4 rounded border bg-gray-900"
+                  className='h-4 w-4 rounded border bg-gray-900'
                 />
-                <Label htmlFor="edit-banned" className="text-xs text-gray-300">
+                <Label htmlFor='edit-banned' className='text-xs text-gray-300'>
                   Ban account
                 </Label>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-allowed-ips" className="text-xs text-gray-300">
+              <div className='space-y-2'>
+                <Label htmlFor='edit-allowed-ips' className='text-xs text-gray-300'>
                   Allowed IPs (optional)
                 </Label>
                 <Textarea
-                  id="edit-allowed-ips"
+                  id='edit-allowed-ips'
                   value={editAllowedIps}
                   onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => setEditAllowedIps(event.target.value)}
                   disabled={!canManageSecurity}
-                  className="min-h-[80px] w-full rounded-md border bg-gray-900 px-3 py-2 text-xs text-white"
-                  placeholder="One IP per line or comma-separated"
+                  className='min-h-[80px] w-full rounded-md border bg-gray-900 px-3 py-2 text-xs text-white'
+                  placeholder='One IP per line or comma-separated'
                 />
               </div>
-              <div className="text-xs text-gray-500">
+              <div className='text-xs text-gray-500'>
                 MFA status: {editMfaEnabled ? 'enabled' : 'disabled'}
               </div>
               {editMfaEnabled ? (
                 <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
+                  type='button'
+                  variant='outline'
+                  size='sm'
                   onClick={() => void handleDisableMfa()}
                   disabled={!canManageSecurity}
                 >
@@ -552,8 +552,8 @@ export default function AuthUsersPage(): React.JSX.Element {
               ) : null}
             </div>
           </div>
-          <DialogFooter className="pt-4">
-            <Button variant="outline" onClick={() => setEditingUser(null)}>
+          <DialogFooter className='pt-4'>
+            <Button variant='outline' onClick={() => setEditingUser(null)}>
               Cancel
             </Button>
             <Button
@@ -569,53 +569,53 @@ export default function AuthUsersPage(): React.JSX.Element {
       </Dialog>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="bg-card border-border text-white">
+        <DialogContent className='bg-card border-border text-white'>
           <DialogHeader>
             <DialogTitle>Create User</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="create-name" className="text-xs text-gray-300">
+          <div className='space-y-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='create-name' className='text-xs text-gray-300'>
                 Name
               </Label>
               <Input
-                id="create-name"
+                id='create-name'
                 value={createForm.name}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                   setCreateForm((prev: CreateUserForm) => ({ ...prev, name: event.target.value }))
                 }
-                className="bg-gray-900 border text-white"
+                className='bg-gray-900 border text-white'
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="create-email" className="text-xs text-gray-300">
+            <div className='space-y-2'>
+              <Label htmlFor='create-email' className='text-xs text-gray-300'>
                 Email
               </Label>
               <Input
-                id="create-email"
+                id='create-email'
                 value={createForm.email}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                   setCreateForm((prev: CreateUserForm) => ({ ...prev, email: event.target.value }))
                 }
-                className="bg-gray-900 border text-white"
+                className='bg-gray-900 border text-white'
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="create-password" className="text-xs text-gray-300">
+            <div className='space-y-2'>
+              <Label htmlFor='create-password' className='text-xs text-gray-300'>
                 Temporary password
               </Label>
               <Input
-                id="create-password"
-                type="password"
+                id='create-password'
+                type='password'
                 value={createForm.password}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                   setCreateForm((prev: CreateUserForm) => ({ ...prev, password: event.target.value }))
                 }
-                className="bg-gray-900 border text-white"
+                className='bg-gray-900 border text-white'
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="create-role" className="text-xs text-gray-300">
+            <div className='space-y-2'>
+              <Label htmlFor='create-role' className='text-xs text-gray-300'>
                 Role
               </Label>
               <Select
@@ -624,11 +624,11 @@ export default function AuthUsersPage(): React.JSX.Element {
                   setCreateForm((prev: CreateUserForm) => ({ ...prev, roleId: value }))
                 }
               >
-                <SelectTrigger className="bg-gray-900 border text-white">
-                  <SelectValue placeholder="Select role" />
+                <SelectTrigger className='bg-gray-900 border text-white'>
+                  <SelectValue placeholder='Select role' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Unassigned</SelectItem>
+                  <SelectItem value='none'>Unassigned</SelectItem>
                   {roles.map((role: AuthRole) => (
                     <SelectItem key={role.id} value={role.id}>
                       {role.name}
@@ -637,24 +637,24 @@ export default function AuthUsersPage(): React.JSX.Element {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center gap-2">
+            <div className='flex items-center gap-2'>
               <Checkbox
-                id="create-verified"
+                id='create-verified'
                 checked={createForm.verified} onCheckedChange={(checked: boolean | 'indeterminate') =>
                   setCreateForm((prev: CreateUserForm) => ({
                     ...prev,
                     verified: Boolean(checked),
                   }))
                 }
-                className="h-4 w-4 rounded border bg-gray-900"
+                className='h-4 w-4 rounded border bg-gray-900'
               />
-              <Label htmlFor="create-verified" className="text-xs text-gray-300">
+              <Label htmlFor='create-verified' className='text-xs text-gray-300'>
                 Mark email as verified
               </Label>
             </div>
           </div>
-          <DialogFooter className="pt-4">
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>
+          <DialogFooter className='pt-4'>
+            <Button variant='outline' onClick={() => setCreateOpen(false)}>
               Cancel
             </Button>
             <Button onClick={() => void handleCreateUser()} disabled={registerUserMutation.isPending}>
@@ -665,35 +665,35 @@ export default function AuthUsersPage(): React.JSX.Element {
       </Dialog>
 
       <Dialog open={mockOpen} onOpenChange={setMockOpen}>
-        <DialogContent className="bg-card border-border text-white">
+        <DialogContent className='bg-card border-border text-white'>
           <DialogHeader>
             <DialogTitle>Mock Sign-in</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-xs text-gray-400">
+          <div className='space-y-4'>
+            <p className='text-xs text-gray-400'>
               Verify credentials against MongoDB without changing your session.
             </p>
-            <div className="space-y-2">
-              <Label htmlFor="mock-email" className="text-xs text-gray-300">
+            <div className='space-y-2'>
+              <Label htmlFor='mock-email' className='text-xs text-gray-300'>
                 Email
               </Label>
               <Input
-                id="mock-email"
+                id='mock-email'
                 value={mockEmail}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => setMockEmail(event.target.value)}
-                className="bg-gray-900 border text-white"
+                className='bg-gray-900 border text-white'
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="mock-password" className="text-xs text-gray-300">
+            <div className='space-y-2'>
+              <Label htmlFor='mock-password' className='text-xs text-gray-300'>
                 Password
               </Label>
               <Input
-                id="mock-password"
-                type="password"
+                id='mock-password'
+                type='password'
                 value={mockPassword}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => setMockPassword(event.target.value)}
-                className="bg-gray-900 border text-white"
+                className='bg-gray-900 border text-white'
               />
             </div>
             {mockStatus !== 'idle' ? (
@@ -708,8 +708,8 @@ export default function AuthUsersPage(): React.JSX.Element {
               </div>
             ) : null}
           </div>
-          <DialogFooter className="pt-4">
-            <Button variant="outline" onClick={() => setMockOpen(false)}>
+          <DialogFooter className='pt-4'>
+            <Button variant='outline' onClick={() => setMockOpen(false)}>
               Close
             </Button>
             <Button onClick={() => void handleMockSignIn()} disabled={mockSignInMutation.isPending}>

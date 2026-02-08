@@ -97,35 +97,35 @@ export function ItemLibrary<T extends LibraryItem>({
   };
 
   return (
-    <div className="container mx-auto py-10 space-y-6">
+    <div className='container mx-auto py-10 space-y-6'>
       <SectionHeader
         title={title}
         description={description}
         eyebrow={backLink}
         actions={
-          <Button onClick={openCreate} className="gap-2">
-            <Plus className="size-4" />
+          <Button onClick={openCreate} className='gap-2'>
+            <Plus className='size-4' />
             New {entityName}
           </Button>
         }
       />
 
-      <SectionPanel className="p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+      <SectionPanel className='p-4'>
+        <div className='flex flex-wrap items-center justify-between gap-3'>
           <div>
-            <p className="text-sm font-semibold text-white">{entityName} library</p>
-            <p className="mt-1 text-xs text-gray-400">
+            <p className='text-sm font-semibold text-white'>{entityName} library</p>
+            <p className='mt-1 text-xs text-gray-400'>
               Manage your collection of {entityName.toLowerCase()}s.
             </p>
           </div>
-          <div className="text-xs text-gray-500">
+          <div className='text-xs text-gray-500'>
             {isLoading ? 'Loading...' : `${items.length} ${entityName.toLowerCase()}(s)`}
           </div>
         </div>
       </SectionPanel>
 
       {isLoading ? (
-        <div className="rounded-md border border-dashed border-border p-12 text-center text-sm text-gray-400">
+        <div className='rounded-md border border-dashed border-border p-12 text-center text-sm text-gray-400'>
           Loading {entityName.toLowerCase()}s...
         </div>
       ) : sortedItems.length === 0 ? (
@@ -133,59 +133,59 @@ export function ItemLibrary<T extends LibraryItem>({
           title={`No ${entityName.toLowerCase()}s yet`}
           description={`Create your first ${entityName.toLowerCase()} to get started.`}
           action={
-            <Button onClick={openCreate} variant="outline">
-              <Plus className="mr-2 h-4 w-4" />
+            <Button onClick={openCreate} variant='outline'>
+              <Plus className='mr-2 h-4 w-4' />
               New {entityName}
             </Button>
           }
         />
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
           {sortedItems.map((item) => (
-            <Card key={item.id} className="border-border bg-card/70 p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-white">{item.name}</p>
-                  <p className="mt-1 text-xs text-gray-400 line-clamp-2">
+            <Card key={item.id} className='border-border bg-card/70 p-4'>
+              <div className='flex items-start justify-between gap-3'>
+                <div className='min-w-0'>
+                  <p className='text-sm font-semibold text-white'>{item.name}</p>
+                  <p className='mt-1 text-xs text-gray-400 line-clamp-2'>
                     {item.description || 'No description provided.'}
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className='flex flex-wrap gap-2'>
                   <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
+                    type='button'
+                    variant='outline'
+                    size='sm'
                     onClick={() => openEdit(item)}
                     disabled={isSaving}
                   >
-                    <Pencil className="mr-1 size-3" />
+                    <Pencil className='mr-1 size-3' />
                     Edit
                   </Button>
                   <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
+                    type='button'
+                    variant='outline'
+                    size='sm'
                     onClick={() => setItemToDelete(item)}
                     disabled={isSaving}
                   >
-                    <Trash2 className="mr-1 size-3" />
+                    <Trash2 className='mr-1 size-3' />
                     Delete
                   </Button>
                 </div>
               </div>
               {renderItemTags && (
-                <div className="mt-3 flex flex-wrap gap-2">
+                <div className='mt-3 flex flex-wrap gap-2'>
                   {renderItemTags(item).map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-full border px-2 py-1 text-[11px] text-gray-300"
+                      className='rounded-full border px-2 py-1 text-[11px] text-gray-300'
                     >
                       {tag}
                     </span>
                   ))}
                 </div>
               )}
-              <div className="mt-4 flex flex-wrap items-center gap-3 text-[11px] text-gray-500">
+              <div className='mt-4 flex flex-wrap items-center gap-3 text-[11px] text-gray-500'>
                 <span>Updated: {formatTime(item.updatedAt)}</span>
                 <span>Created: {formatTime(item.createdAt)}</span>
               </div>
@@ -208,8 +208,8 @@ export function ItemLibrary<T extends LibraryItem>({
         }}
         title={`Delete ${entityName}`}
         description={`Are you sure you want to delete ${entityName.toLowerCase()} "${itemToDelete?.name}"? This cannot be undone.`}
-        confirmText="Delete"
-        variant="destructive"
+        confirmText='Delete'
+        variant='destructive'
       />
 
       <AppModal
@@ -218,18 +218,18 @@ export function ItemLibrary<T extends LibraryItem>({
         title={editingItem ? `Edit ${entityName}` : `New ${entityName}`}
         footer={
           <>
-            <Button type="button" variant="outline" onClick={closeModal} disabled={isSaving}>
+            <Button type='button' variant='outline' onClick={closeModal} disabled={isSaving}>
               Cancel
             </Button>
-            <Button type="button" onClick={handleSave} disabled={isSaving || !draft.name?.trim()}>
+            <Button type='button' onClick={handleSave} disabled={isSaving || !draft.name?.trim()}>
               {isSaving ? 'Saving...' : `Save ${entityName.toLowerCase()}`}
             </Button>
           </>
         }
       >
-        <div className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
+        <div className='space-y-6'>
+          <div className='grid gap-4 md:grid-cols-2'>
+            <div className='space-y-2'>
               <Label>Name</Label>
               <Input
                 value={draft.name || ''}
@@ -237,18 +237,18 @@ export function ItemLibrary<T extends LibraryItem>({
                 placeholder={`Enter ${entityName.toLowerCase()} name`}
               />
             </div>
-            <div className="space-y-2">
+            <div className='space-y-2'>
               <Label>Description</Label>
               <Textarea
                 value={draft.description || ''}
                 onChange={(e) => setDraft({ ...draft, description: e.target.value })}
-                placeholder="Optional description"
-                className="min-h-[90px]"
+                placeholder='Optional description'
+                className='min-h-[90px]'
               />
             </div>
           </div>
 
-          {renderExtraFields && renderExtraFields(draft as T, (updates) => setDraft({ ...draft, ...updates }))}
+          {renderExtraFields?.(draft as T, (updates) => setDraft({ ...draft, ...updates }))}
         </div>
       </AppModal>
     </div>

@@ -25,13 +25,13 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
   }, [defaultTab]);
 
   return (
-    <div className="container mx-auto py-10">
-      <SectionPanel className="p-6">
+    <div className='container mx-auto py-10'>
+      <SectionPanel className='p-6'>
         <SectionHeader
-          title="Job Queue"
-          description="Monitor node-system runs, external runs, export jobs, and file uploads."
+          title='Job Queue'
+          description='Monitor node-system runs, external runs, export jobs, and file uploads.'
         />
-        <div className="mt-6">
+        <div className='mt-6'>
           <Tabs
             value={activeTab}
             onValueChange={(next: string): void =>
@@ -43,26 +43,26 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
                     : 'paths'
               )
             }
-            className="space-y-6"
+            className='space-y-6'
           >
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="paths">Node Runs</TabsTrigger>
-              <TabsTrigger value="paths-external">External Runs</TabsTrigger>
-              <TabsTrigger value="file-uploads">File Uploads</TabsTrigger>
+            <TabsList className='grid w-full grid-cols-3'>
+              <TabsTrigger value='paths'>Node Runs</TabsTrigger>
+              <TabsTrigger value='paths-external'>External Runs</TabsTrigger>
+              <TabsTrigger value='file-uploads'>File Uploads</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="paths" className="space-y-4">
-              <JobQueuePanel sourceFilter="ai_paths_ui" />
+            <TabsContent value='paths' className='space-y-4'>
+              <JobQueuePanel sourceFilter='ai_paths_ui' />
             </TabsContent>
 
-            <TabsContent value="paths-external" className="space-y-4">
-              <JobQueuePanel sourceFilter="ai_paths_ui" sourceMode="exclude" />
-              <div id="export-jobs">
+            <TabsContent value='paths-external' className='space-y-4'>
+              <JobQueuePanel sourceFilter='ai_paths_ui' sourceMode='exclude' />
+              <div id='export-jobs'>
                 <ProductListingJobsPanel showBackToProducts={false} />
               </div>
             </TabsContent>
 
-            <TabsContent value="file-uploads" className="space-y-4">
+            <TabsContent value='file-uploads' className='space-y-4'>
               <FileUploadEventsPanel />
             </TabsContent>
 

@@ -162,37 +162,37 @@ function ListProductModalContent({
       onSave={(): void => { void handleSubmit(); }}
       isSaving={submitting}
       saveText={isBaseComIntegration ? 'Export to Base.com' : 'List Product'}
-      cancelText="Cancel"
-      size="md"
+      cancelText='Cancel'
+      size='md'
     >
-      <div className="space-y-6">
+      <div className='space-y-6'>
         {error && (
-          <SectionPanel variant="subtle-compact" className="border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200">
-            <div className="flex flex-col gap-3">
+          <SectionPanel variant='subtle-compact' className='border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200'>
+            <div className='flex flex-col gap-3'>
               <span>{error}</span>
               {isBaseComIntegration && isImageExportError(error) ? (
-                <div className="flex flex-wrap items-center gap-2">
+                <div className='flex flex-wrap items-center gap-2'>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
-                        variant="secondary"
-                        size="sm"
-                        className="bg-red-500/20 text-red-100 hover:bg-red-500/30"
+                        variant='secondary'
+                        size='sm'
+                        className='bg-red-500/20 text-red-100 hover:bg-red-500/30'
                         disabled={submitting}
                       >
                         Retry image export
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="bg-card border-border">
+                    <DropdownMenuContent align='start' className='bg-card border-border'>
                       {imageRetryPresets.map((preset: ImageRetryPreset) => (
                         <DropdownMenuItem
                           key={preset.id}
                           onSelect={(): void => { void handleImageRetry(preset); }}
-                          className="text-gray-200 focus:bg-gray-800/70"
+                          className='text-gray-200 focus:bg-gray-800/70'
                         >
-                          <div className="flex flex-col">
-                            <span className="text-sm">{preset.label}</span>
-                            <span className="text-xs text-gray-400">
+                          <div className='flex flex-col'>
+                            <span className='text-sm'>{preset.label}</span>
+                            <span className='text-xs text-gray-400'>
                               {preset.description}
                             </span>
                           </div>
@@ -200,7 +200,7 @@ function ListProductModalContent({
                       ))}
                     </DropdownMenuContent>
                   </DropdownMenu>
-                  <span className="text-xs text-red-200/80">
+                  <span className='text-xs text-red-200/80'>
                     Applies JPEG resize/compression and retries automatically.
                   </span>
                 </div>
@@ -210,13 +210,13 @@ function ListProductModalContent({
         )}
 
         {loading ? (
-          <p className="text-sm text-gray-400">Loading integrations...</p>
+          <p className='text-sm text-gray-400'>Loading integrations...</p>
         ) : integrationsWithConnections.length === 0 ? (
-          <SectionPanel variant="subtle" className="border-yellow-500/40 bg-yellow-500/10 p-6 text-center">
-            <p className="text-sm text-yellow-200">
+          <SectionPanel variant='subtle' className='border-yellow-500/40 bg-yellow-500/10 p-6 text-center'>
+            <p className='text-sm text-yellow-200'>
               No integrations with configured accounts found.
             </p>
-            <p className="mt-2 text-xs text-yellow-300/70">
+            <p className='mt-2 text-xs text-yellow-300/70'>
               Please set up an integration with at least one account first.
             </p>
           </SectionPanel>
@@ -229,8 +229,8 @@ function ListProductModalContent({
               />
             ) : (
               <>
-                <div className="space-y-2">
-                  <Label htmlFor="integration">Marketplace / Integration</Label>
+                <div className='space-y-2'>
+                  <Label htmlFor='integration'>Marketplace / Integration</Label>
                   <UnifiedSelect
                     value={selectedIntegrationId}
                     onValueChange={setSelectedIntegrationId}
@@ -240,13 +240,13 @@ function ListProductModalContent({
                         value: integration.id,
                         label: integration.name
                       }))}
-                    placeholder="Select a marketplace..."
+                    placeholder='Select a marketplace...'
                   />
                 </div>
 
                 {selectedIntegration && (
-                  <div className="space-y-2">
-                    <Label htmlFor="connection">Account</Label>
+                  <div className='space-y-2'>
+                    <Label htmlFor='connection'>Account</Label>
                     <UnifiedSelect
                       value={selectedConnectionId}
                       onValueChange={setSelectedConnectionId}
@@ -256,9 +256,9 @@ function ListProductModalContent({
                           value: connection.id,
                           label: connection.name
                         }))}
-                      placeholder="Select an account..."
+                      placeholder='Select an account...'
                     />
-                    <p className="text-xs text-gray-500">
+                    <p className='text-xs text-gray-500'>
                       Choose which account to use for listing this product on{' '}
                       {selectedIntegration.name}.
                     </p>
@@ -273,7 +273,7 @@ function ListProductModalContent({
           </>
         )}
         {exportLogs.length > 0 && (
-          <div className="mt-4 border-t border pt-4">
+          <div className='mt-4 border-t border pt-4'>
             <ExportLogViewer
               logs={exportLogs}
               isOpen={logsOpen}

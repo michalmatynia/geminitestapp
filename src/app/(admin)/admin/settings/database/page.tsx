@@ -108,7 +108,7 @@ export default function DatabaseSettingsPage() {
   const settingsQuery = useSettingsMap();
 
   if (settingsQuery.isLoading || !settingsQuery.data) {
-    return <div className="p-10 text-center text-gray-400">Loading settings...</div>;
+    return <div className='p-10 text-center text-gray-400'>Loading settings...</div>;
   }
 
   const initialProvider: ProviderValue =
@@ -313,54 +313,54 @@ function DatabaseSettingsForm({
     : 'text-emerald-100';
 
   return (
-    <div className="container mx-auto py-10">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white">Database Provider</h1>
-        <p className="mt-2 text-sm text-gray-400">
+    <div className='container mx-auto py-10'>
+      <div className='mb-8'>
+        <h1 className='text-3xl font-bold text-white'>Database Provider</h1>
+        <p className='mt-2 text-sm text-gray-400'>
           Choose the single database provider for the entire application.
         </p>
       </div>
 
-      <div className="rounded-lg border border-gray-800 bg-gray-950 p-6">
+      <div className='rounded-lg border border-gray-800 bg-gray-950 p-6'>
         <div className={`rounded-md border p-4 ${providerPanelTone}`}>
-          <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className='flex flex-wrap items-start justify-between gap-3'>
             <div>
               <h2 className={`text-lg font-semibold ${providerStateTone}`}>Provider Drift Monitor</h2>
-              <p className="mt-1 text-xs text-gray-200/90">
+              <p className='mt-1 text-xs text-gray-200/90'>
                 Live effective provider routing across key services.
               </p>
             </div>
             <Button
-              type="button"
-              variant="outline"
+              type='button'
+              variant='outline'
               onClick={refreshProviderDiagnostics}
               disabled={providerDiagnosticsQuery.isFetching}
-              className="border-gray-700 text-gray-200 hover:bg-gray-900"
+              className='border-gray-700 text-gray-200 hover:bg-gray-900'
             >
               {providerDiagnosticsQuery.isFetching ? 'Refreshing...' : 'Refresh'}
             </Button>
           </div>
 
           {providerDiagnosticsQuery.isLoading && (
-            <p className="mt-3 text-xs text-gray-300">Loading provider diagnostics...</p>
+            <p className='mt-3 text-xs text-gray-300'>Loading provider diagnostics...</p>
           )}
 
           {providerDiagnosticsQuery.isError && (
-            <p className="mt-3 text-xs text-red-200">
+            <p className='mt-3 text-xs text-red-200'>
               {providerDiagnosticsQuery.error?.message || 'Failed to load provider diagnostics.'}
             </p>
           )}
 
           {providerDiagnostics && (
             <>
-              <div className="mt-3 grid gap-2">
+              <div className='mt-3 grid gap-2'>
                 {providerDiagnostics.services.map((service: ProviderServiceStatus) => (
                   <div
                     key={service.service}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded border border-gray-800/80 bg-black/25 px-3 py-2"
+                    className='flex flex-wrap items-center justify-between gap-3 rounded border border-gray-800/80 bg-black/25 px-3 py-2'
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-100">
+                    <div className='flex items-center gap-2'>
+                      <span className='text-sm font-medium text-gray-100'>
                         {providerServiceLabel[service.service]}
                       </span>
                       <span
@@ -373,7 +373,7 @@ function DatabaseSettingsForm({
                         {service.driftFromApp ? 'Drift' : 'Aligned'}
                       </span>
                     </div>
-                    <div className="text-[11px] text-gray-300">
+                    <div className='text-[11px] text-gray-300'>
                       Configured {formatProvider(service.configured)}
                       {service.configuredSource ? ` (${service.configuredSource})` : ''}
                       {' -> Effective '}
@@ -383,7 +383,7 @@ function DatabaseSettingsForm({
                 ))}
               </div>
 
-              <div className="mt-3 text-[11px] text-gray-300">
+              <div className='mt-3 text-[11px] text-gray-300'>
                 Env: DATABASE_URL {providerDiagnostics.env.hasDatabaseUrl ? 'present' : 'missing'} | MONGODB_URI{' '}
                 {providerDiagnostics.env.hasMongoUri ? 'present' : 'missing'}
                 {providerDiagnostics.env.appDbProviderEnv
@@ -392,9 +392,9 @@ function DatabaseSettingsForm({
               </div>
 
               {providerDiagnostics.warnings.length > 0 && (
-                <div className="mt-3 rounded border border-amber-500/40 bg-amber-500/10 p-3">
-                  <div className="text-xs font-medium text-amber-100">Warnings</div>
-                  <div className="mt-2 grid gap-1 text-[11px] text-amber-100/90">
+                <div className='mt-3 rounded border border-amber-500/40 bg-amber-500/10 p-3'>
+                  <div className='text-xs font-medium text-amber-100'>Warnings</div>
+                  <div className='mt-2 grid gap-1 text-[11px] text-amber-100/90'>
                     {providerDiagnostics.warnings.map((warning: string, index: number) => (
                       <div key={`${warning}-${index}`}>{warning}</div>
                     ))}
@@ -405,30 +405,30 @@ function DatabaseSettingsForm({
           )}
         </div>
 
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
+        <div className='mt-6 flex flex-wrap items-center justify-between gap-4'>
           <div>
-            <h2 className="text-lg font-semibold text-white">Global provider</h2>
-            <p className="mt-1 text-sm text-gray-400">
+            <h2 className='text-lg font-semibold text-white'>Global provider</h2>
+            <p className='mt-1 text-sm text-gray-400'>
               This overrides product, integration, auth, and notes data sources.
             </p>
           </div>
           <Button
-            type="button"
+            type='button'
             onClick={() => void saveProvider()}
             disabled={settingsQuery.isPending || updateSetting.isPending || !dirty}
-            className="inline-flex items-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:cursor-not-allowed disabled:bg-gray-700 disabled:text-gray-300"
+            className='inline-flex items-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:cursor-not-allowed disabled:bg-gray-700 disabled:text-gray-300'
           >
             {updateSetting.isPending ? 'Saving...' : 'Save'}
           </Button>
         </div>
 
-        <div className="mt-6 max-w-lg space-y-2">
-          <Label className="text-sm font-medium text-gray-200" htmlFor="app-db-provider">
+        <div className='mt-6 max-w-lg space-y-2'>
+          <Label className='text-sm font-medium text-gray-200' htmlFor='app-db-provider'>
             Database provider
           </Label>
           <select
-            id="app-db-provider"
-            className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-600 disabled:cursor-not-allowed disabled:text-gray-500"
+            id='app-db-provider'
+            className='w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-600 disabled:cursor-not-allowed disabled:text-gray-500'
             value={provider}
             onChange={(event: ChangeEvent<HTMLSelectElement>) => {
               const value = event.target.value === 'mongodb' ? 'mongodb' : 'prisma';
@@ -443,39 +443,39 @@ function DatabaseSettingsForm({
               </option>
             ))}
           </select>
-          <p className="text-xs text-gray-400">{providerDescription}</p>
+          <p className='text-xs text-gray-400'>{providerDescription}</p>
         </div>
 
-        <div className="mt-6 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100">
+        <div className='mt-6 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100'>
           Switching providers does not migrate existing data. Make sure the target
           database is prepared before switching.
         </div>
 
-        <div className="mt-8 border-t border-gray-800 pt-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className='mt-8 border-t border-gray-800 pt-6'>
+          <div className='flex flex-wrap items-center justify-between gap-4'>
             <div>
-              <h2 className="text-lg font-semibold text-white">Auth data provider</h2>
-              <p className="mt-1 text-sm text-gray-400">
+              <h2 className='text-lg font-semibold text-white'>Auth data provider</h2>
+              <p className='mt-1 text-sm text-gray-400'>
                 Choose where auth users, sessions, and security data are read/written.
               </p>
             </div>
             <Button
-              type="button"
+              type='button'
               onClick={() => void saveAuthProvider()}
               disabled={settingsQuery.isPending || updateSetting.isPending || !authDirty}
-              className="inline-flex items-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:cursor-not-allowed disabled:bg-gray-700 disabled:text-gray-300"
+              className='inline-flex items-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:cursor-not-allowed disabled:bg-gray-700 disabled:text-gray-300'
             >
               {updateSetting.isPending ? 'Saving...' : 'Save'}
             </Button>
           </div>
 
-          <div className="mt-6 max-w-lg space-y-2">
-            <Label className="text-sm font-medium text-gray-200" htmlFor="auth-db-provider">
+          <div className='mt-6 max-w-lg space-y-2'>
+            <Label className='text-sm font-medium text-gray-200' htmlFor='auth-db-provider'>
               Auth provider
             </Label>
             <select
-              id="auth-db-provider"
-              className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-600 disabled:cursor-not-allowed disabled:text-gray-500"
+              id='auth-db-provider'
+              className='w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-600 disabled:cursor-not-allowed disabled:text-gray-500'
               value={authProvider}
               onChange={(event: ChangeEvent<HTMLSelectElement>) => {
                 const value = event.target.value === 'prisma' ? 'prisma' : 'mongodb';
@@ -490,40 +490,40 @@ function DatabaseSettingsForm({
                 </option>
               ))}
             </select>
-            <p className="text-xs text-gray-400">{authProviderDescription}</p>
+            <p className='text-xs text-gray-400'>{authProviderDescription}</p>
           </div>
 
-          <div className="mt-4 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100">
+          <div className='mt-4 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100'>
             Changing auth provider does not migrate auth data. Run the Database Sync tool
             before switching if you need data in both stores.
           </div>
         </div>
 
-        <div className="mt-8 border-t border-gray-800 pt-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className='mt-8 border-t border-gray-800 pt-6'>
+          <div className='flex flex-wrap items-center justify-between gap-4'>
             <div>
-              <h2 className="text-lg font-semibold text-white">Product data provider</h2>
-              <p className="mt-1 text-sm text-gray-400">
+              <h2 className='text-lg font-semibold text-white'>Product data provider</h2>
+              <p className='mt-1 text-sm text-gray-400'>
                 Choose where products, catalogs, categories, tags, and listings are read/written.
               </p>
             </div>
             <Button
-              type="button"
+              type='button'
               onClick={() => void saveProductProvider()}
               disabled={settingsQuery.isPending || updateSetting.isPending || !productDirty}
-              className="inline-flex items-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:cursor-not-allowed disabled:bg-gray-700 disabled:text-gray-300"
+              className='inline-flex items-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:cursor-not-allowed disabled:bg-gray-700 disabled:text-gray-300'
             >
               {updateSetting.isPending ? 'Saving...' : 'Save'}
             </Button>
           </div>
 
-          <div className="mt-6 max-w-lg space-y-2">
-            <Label className="text-sm font-medium text-gray-200" htmlFor="product-db-provider">
+          <div className='mt-6 max-w-lg space-y-2'>
+            <Label className='text-sm font-medium text-gray-200' htmlFor='product-db-provider'>
               Product provider
             </Label>
             <select
-              id="product-db-provider"
-              className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-600 disabled:cursor-not-allowed disabled:text-gray-500"
+              id='product-db-provider'
+              className='w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-600 disabled:cursor-not-allowed disabled:text-gray-500'
               value={productProvider}
               onChange={(event: ChangeEvent<HTMLSelectElement>) => {
                 const value = event.target.value === 'prisma' ? 'prisma' : 'mongodb';
@@ -538,52 +538,52 @@ function DatabaseSettingsForm({
                 </option>
               ))}
             </select>
-            <p className="text-xs text-gray-400">{productProviderDescription}</p>
+            <p className='text-xs text-gray-400'>{productProviderDescription}</p>
           </div>
 
-          <div className="mt-4 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100">
+          <div className='mt-4 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100'>
             Changing product provider does not migrate data. Run the Database Sync tool
             before switching if you need data in both stores.
           </div>
         </div>
 
-        <div className="mt-8 border-t border-gray-800 pt-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className='mt-8 border-t border-gray-800 pt-6'>
+          <div className='flex flex-wrap items-center justify-between gap-4'>
             <div>
-              <h2 className="text-lg font-semibold text-white">Settings Key Backfill</h2>
-              <p className="mt-1 text-sm text-gray-400">
+              <h2 className='text-lg font-semibold text-white'>Settings Key Backfill</h2>
+              <p className='mt-1 text-sm text-gray-400'>
                 Backfills missing MongoDB settings keys when only a string _id exists.
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className='flex flex-wrap gap-2'>
               <Button
-                type="button"
-                variant="outline"
+                type='button'
+                variant='outline'
                 disabled={backfillLoading}
                 onClick={() => void runSettingsBackfill(true)}
-                className="border-gray-700 text-gray-200 hover:bg-gray-900"
+                className='border-gray-700 text-gray-200 hover:bg-gray-900'
               >
                 {backfillLoading ? 'Running...' : 'Dry Run'}
               </Button>
               <Button
-                type="button"
-                variant="outline"
+                type='button'
+                variant='outline'
                 disabled={backfillLoading}
                 onClick={() => void runSettingsBackfill(false)}
-                className="border-emerald-400/60 text-emerald-100 hover:bg-emerald-500/20"
+                className='border-emerald-400/60 text-emerald-100 hover:bg-emerald-500/20'
               >
                 {backfillLoading ? 'Running...' : 'Run Backfill'}
               </Button>
             </div>
           </div>
 
-          <div className="mt-4 max-w-xs space-y-2">
-            <Label className="text-sm font-medium text-gray-200" htmlFor="settings-backfill-limit">
+          <div className='mt-4 max-w-xs space-y-2'>
+            <Label className='text-sm font-medium text-gray-200' htmlFor='settings-backfill-limit'>
               Batch size
             </Label>
             <input
-              id="settings-backfill-limit"
-              type="number"
+              id='settings-backfill-limit'
+              type='number'
               min={1}
               max={5000}
               value={backfillLimit}
@@ -591,21 +591,21 @@ function DatabaseSettingsForm({
                 const next = Number.parseInt(event.target.value, 10);
                 setBackfillLimit(Number.isFinite(next) ? Math.min(Math.max(next, 1), 5000) : 500);
               }}
-              className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-600 disabled:cursor-not-allowed disabled:text-gray-500"
+              className='w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-600 disabled:cursor-not-allowed disabled:text-gray-500'
               disabled={backfillLoading}
             />
-            <p className="text-xs text-gray-400">
+            <p className='text-xs text-gray-400'>
               Updates up to this many missing keys per run.
             </p>
           </div>
 
           {backfillResult && (
-            <div className="mt-4 rounded-md border border-slate-700/60 bg-slate-900/40 p-3 text-xs text-slate-200">
+            <div className='mt-4 rounded-md border border-slate-700/60 bg-slate-900/40 p-3 text-xs text-slate-200'>
               <div>Matched: {backfillResult.matched}</div>
               <div>Modified: {backfillResult.modified}</div>
               <div>Remaining: {backfillResult.remaining}</div>
               {backfillResult.sampleIds && backfillResult.sampleIds.length > 0 && (
-                <div className="mt-2 text-slate-300">
+                <div className='mt-2 text-slate-300'>
                   Sample ids: {backfillResult.sampleIds.join(', ')}
                 </div>
               )}
@@ -613,28 +613,28 @@ function DatabaseSettingsForm({
           )}
         </div>
 
-        <div className="mt-6 rounded-md border border-red-500/30 bg-red-500/10 p-4">
-          <h3 className="text-sm font-semibold text-red-200">Database Sync (Destructive)</h3>
-          <p className="mt-1 text-xs text-red-200/80">
+        <div className='mt-6 rounded-md border border-red-500/30 bg-red-500/10 p-4'>
+          <h3 className='text-sm font-semibold text-red-200'>Database Sync (Destructive)</h3>
+          <p className='mt-1 text-xs text-red-200/80'>
             Runs a full sync between MongoDB and Prisma. The target database will be overwritten.
             Backups are created automatically before each run.
           </p>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className='mt-3 flex flex-wrap gap-2'>
             <Button
-              type="button"
-              variant="outline"
+              type='button'
+              variant='outline'
               disabled={syncing !== null}
               onClick={() => void runSync('mongo_to_prisma')}
-              className="border-red-400/60 text-red-100 hover:bg-red-500/20"
+              className='border-red-400/60 text-red-100 hover:bg-red-500/20'
             >
               {syncing === 'mongo_to_prisma' ? 'Syncing...' : 'Sync MongoDB → Prisma'}
             </Button>
             <Button
-              type="button"
-              variant="outline"
+              type='button'
+              variant='outline'
               disabled={syncing !== null}
               onClick={() => void runSync('prisma_to_mongo')}
-              className="border-red-400/60 text-red-100 hover:bg-red-500/20"
+              className='border-red-400/60 text-red-100 hover:bg-red-500/20'
             >
               {syncing === 'prisma_to_mongo' ? 'Syncing...' : 'Sync Prisma → MongoDB'}
             </Button>

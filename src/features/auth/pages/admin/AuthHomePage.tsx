@@ -36,22 +36,22 @@ const cards = [
 
 export default function AuthPage(): React.JSX.Element {
   return (
-    <SectionPanel className="p-6">
+    <SectionPanel className='p-6'>
       <SectionHeader
-        title="Auth"
-        description="Start building your authentication system."
-        className="mb-6"
+        title='Auth'
+        description='Start building your authentication system.'
+        className='mb-6'
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
         {cards.map((card: { title: string; description: string; href: string }) => (
           <Link
             key={card.title}
             href={card.href}
-            className="rounded-md border border-border bg-gray-900 p-4 text-left transition hover:border hover:bg-muted/60"
+            className='rounded-md border border-border bg-gray-900 p-4 text-left transition hover:border hover:bg-muted/60'
           >
-            <h2 className="text-lg font-semibold text-white">{card.title}</h2>
-            <p className="mt-1 text-sm text-gray-400">{card.description}</p>
+            <h2 className='text-lg font-semibold text-white'>{card.title}</h2>
+            <p className='mt-1 text-sm text-gray-400'>{card.description}</p>
           </Link>
         ))}
       </div>

@@ -19,8 +19,8 @@ export function AdminFrontManagePage(): React.ReactNode {
 
   if (settingsQuery.isPending || !settingsQuery.data) {
     return (
-      <div className="container mx-auto py-10">
-        <div className="text-white">Loading front page settings...</div>
+      <div className='container mx-auto py-10'>
+        <div className='text-white'>Loading front page settings...</div>
       </div>
     );
   }
@@ -81,31 +81,31 @@ function AdminFrontManageContent({
   };
 
   return (
-    <div className="container mx-auto max-w-4xl py-10">
+    <div className='container mx-auto max-w-4xl py-10'>
       <SectionHeader
-        title="Front Manage"
-        description="Pick which app should open when users land on the home page."
+        title='Front Manage'
+        description='Pick which app should open when users land on the home page.'
         eyebrow={(
-          <Link href="/admin" className="text-blue-300 hover:text-blue-200">
+          <Link href='/admin' className='text-blue-300 hover:text-blue-200'>
             ← Back to dashboard
           </Link>
         )}
-        className="mb-6"
+        className='mb-6'
       />
 
-      <SectionPanel className="p-6">
+      <SectionPanel className='p-6'>
         <SectionHeader
-          title="Front Page Destination"
-          description="Choose one application to serve as the entry point for your site."
-          size="sm"
-          className="mb-6"
+          title='Front Page Destination'
+          description='Choose one application to serve as the entry point for your site.'
+          size='sm'
+          className='mb-6'
         />
-        <div className="space-y-4">
-          <div className="grid gap-3">
+        <div className='space-y-4'>
+          <div className='grid gap-3'>
             {options.map((option: { id: FrontAppOption; title: string; description: string; route: string }) => (
               <Button
                 key={option.id}
-                type="button"
+                type='button'
                 onClick={() => setSelected(option.id)}
                 className={cn(
                   'flex w-full items-center justify-between rounded-lg border px-4 py-3 text-left transition-colors',
@@ -115,8 +115,8 @@ function AdminFrontManageContent({
                 )}
               >
                 <div>
-                  <div className="text-base font-semibold">{option.title}</div>
-                  <div className="text-xs text-gray-400">{option.description}</div>
+                  <div className='text-base font-semibold'>{option.title}</div>
+                  <div className='text-xs text-gray-400'>{option.description}</div>
                 </div>
                 <div
                   className={cn(
@@ -132,15 +132,15 @@ function AdminFrontManageContent({
             ))}
           </div>
 
-          <div className="flex justify-end pt-4">
+          <div className='flex justify-end pt-4'>
             <Button
               onClick={() => void handleSave()}
               disabled={updateSetting.isPending}
-              className="bg-blue-600 hover:bg-blue-700 text-white min-w-[140px]"
+              className='bg-blue-600 hover:bg-blue-700 text-white min-w-[140px]'
             >
               {updateSetting.isPending ? 'Saving...' : (
                 <>
-                  <SaveIcon className="mr-2 size-4" />
+                  <SaveIcon className='mr-2 size-4' />
                   Save Selection
                 </>
               )}

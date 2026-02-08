@@ -27,7 +27,7 @@ function AdminPromptEngineValidationPatternsContent({
   const { promptEngineSettings, saveError } = usePromptEngine();
 
   return (
-    <div className="space-y-4">
+    <div className='space-y-4'>
       <PromptEngineToolbar
         embedded={embedded}
         eyebrow={eyebrow}
@@ -35,34 +35,34 @@ function AdminPromptEngineValidationPatternsContent({
         backLinkLabel={backLinkLabel}
       />
 
-      <SectionPanel variant="subtle">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="text-sm text-gray-200">
+      <SectionPanel variant='subtle'>
+        <div className='flex flex-wrap items-center justify-between gap-2'>
+          <div className='text-sm text-gray-200'>
             {promptEngineSettings.promptValidation.enabled ? (
-              <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-200">
+              <span className='rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-200'>
                 Validator enabled
               </span>
             ) : (
-              <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] text-amber-200">
+              <span className='rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] text-amber-200'>
                 Validator disabled
               </span>
             )}
           </div>
-          <div className="text-[11px] text-gray-400">
+          <div className='text-[11px] text-gray-400'>
             Source: {usePromptEngine().isUsingDefaults ? 'defaults' : 'saved settings'}
           </div>
         </div>
       </SectionPanel>
 
       {saveError ? (
-        <SectionPanel variant="danger">
-          <div className="text-xs text-red-200">{saveError}</div>
+        <SectionPanel variant='danger'>
+          <div className='text-xs text-red-200'>{saveError}</div>
         </SectionPanel>
       ) : null}
 
       <PromptEngineFilters />
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className='grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]'>
         <RuleList />
         <LearnedRuleList />
       </div>

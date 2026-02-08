@@ -51,7 +51,7 @@ export function FileManagerGrid(): React.JSX.Element {
   };
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+    <div className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4'>
       {filteredFiles.map((file: ExpandedImageFile) => (
         <div
           key={file.id}
@@ -62,47 +62,47 @@ export function FileManagerGrid(): React.JSX.Element {
           }`}
           onClick={(): void => handleClick(file)}
         >
-          <div className="absolute left-2 top-2 rounded bg-gray-900/80 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-gray-300 z-10">
+          <div className='absolute left-2 top-2 rounded bg-gray-900/80 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-gray-300 z-10'>
             {resolveFolder(file.filepath)}
           </div>
-          <div className="aspect-square relative w-full">
+          <div className='aspect-square relative w-full'>
             <Image
               src={file.filepath}
               alt={file.filename}
               fill
-              className="object-cover"
+              className='object-cover'
             />
           </div>
-          <div className="p-2">
-            <p className="text-center text-sm truncate font-medium" title={file.filename}>
+          <div className='p-2'>
+            <p className='text-center text-sm truncate font-medium' title={file.filename}>
               {file.filename}
             </p>
             {(file.tags ?? []).length > 0 && (
-              <div className="mt-1 flex flex-wrap justify-center gap-1">
+              <div className='mt-1 flex flex-wrap justify-center gap-1'>
                 {(file.tags ?? []).slice(0, 3).map((tag: string) => (
-                  <span key={tag} className="rounded-full bg-gray-800/70 px-2 py-0.5 text-[10px] text-gray-400">
+                  <span key={tag} className='rounded-full bg-gray-800/70 px-2 py-0.5 text-[10px] text-gray-400'>
                     #{tag}
                   </span>
                 ))}
               </div>
             )}
-            <div className="mt-1 text-center text-xs text-gray-400">
+            <div className='mt-1 text-center text-xs text-gray-400'>
               {file.products.map(({ product }: { product: { id: string; name: string } }) => (
                 <Link
                   key={product.id}
                   href={`/admin/products/${product.id}/edit`}
-                  className="hover:underline block truncate"
+                  className='hover:underline block truncate'
                   onClick={(e) => e.stopPropagation()}
                 >
                   {product.name}
                 </Link>
               ))}
             </div>
-            <div className="mt-2 flex justify-center gap-2">
+            <div className='mt-2 flex justify-center gap-2'>
               <Button
-                variant="secondary"
-                size="sm"
-                className="h-7 px-2 text-[11px]"
+                variant='secondary'
+                size='sm'
+                className='h-7 px-2 text-[11px]'
                 onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
                   e.stopPropagation();
                   setPreviewFile(file);
@@ -111,9 +111,9 @@ export function FileManagerGrid(): React.JSX.Element {
                 View
               </Button>
               <Button
-                variant="destructive"
-                size="sm"
-                className="h-7 px-2 text-[11px]"
+                variant='destructive'
+                size='sm'
+                className='h-7 px-2 text-[11px]'
                 onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
                   e.stopPropagation();
                   void handleDelete(file.id);

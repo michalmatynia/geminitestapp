@@ -93,7 +93,7 @@ export function MarkdownEditor({
         className={showPreview ? 'flex-shrink-0' : 'flex-1'}
         style={showPreview && editorWidth ? { width: editorWidth } : undefined}
       >
-        <div className="relative">
+        <div className='relative'>
           <Textarea
             ref={contentRef}
             placeholder={isCodeMode
@@ -103,7 +103,7 @@ export function MarkdownEditor({
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setContent(e.target.value)}
             onPaste={(e: React.ClipboardEvent<HTMLTextAreaElement>): void => { void onPaste(e); }}
             rows={12}
-            className="w-full rounded-lg border px-4 py-2 font-mono"
+            className='w-full rounded-lg border px-4 py-2 font-mono'
             style={{
               backgroundColor: contentBackground,
               color: contentTextColor,
@@ -112,10 +112,10 @@ export function MarkdownEditor({
             required
           />
           {isPasting && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
-              <div className="flex items-center gap-2 text-white">
-                <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-400 border-t-white" />
-                <span className="text-sm">Uploading image...</span>
+            <div className='absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg'>
+              <div className='flex items-center gap-2 text-white'>
+                <div className='h-5 w-5 animate-spin rounded-full border-2 border-gray-400 border-t-white' />
+                <span className='text-sm'>Uploading image...</span>
               </div>
             </div>
           )}
@@ -124,27 +124,27 @@ export function MarkdownEditor({
       {showPreview && (
         <>
           <div
-            className="mx-3 flex w-3 cursor-col-resize items-stretch"
+            className='mx-3 flex w-3 cursor-col-resize items-stretch'
             onPointerDown={(event: React.PointerEvent): void => {
               event.preventDefault();
               setIsDraggingSplitter(true);
             }}
           >
-            <div className="relative w-full rounded bg-gray-800/80 ring-1 ring-gray-600/70 hover:bg-gray-700">
-              <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                <span className="h-6 w-px bg-gray-500/80" />
+            <div className='relative w-full rounded bg-gray-800/80 ring-1 ring-gray-600/70 hover:bg-gray-700'>
+              <span className='pointer-events-none absolute inset-0 flex items-center justify-center'>
+                <span className='h-6 w-px bg-gray-500/80' />
               </span>
             </div>
           </div>
           <div
-            className="flex-1 rounded-lg border px-4 py-3"
+            className='flex-1 rounded-lg border px-4 py-3'
             style={{ backgroundColor: contentBackground, color: contentTextColor }}
           >
-            <div className="mb-2 text-xs uppercase tracking-wide text-gray-400">
+            <div className='mb-2 text-xs uppercase tracking-wide text-gray-400'>
               {isCodeMode ? 'Code Preview' : 'Preview'}
             </div>
             <div
-              className="prose max-w-none [&_img]:cursor-pointer [&_img]:transition-opacity [&_img]:hover:opacity-80"
+              className='prose max-w-none [&_img]:cursor-pointer [&_img]:transition-opacity [&_img]:hover:opacity-80'
               style={previewTypographyStyle}
               dangerouslySetInnerHTML={{ __html: debouncedContentHtml }}
               onMouseOver={(e: React.MouseEvent): void => {

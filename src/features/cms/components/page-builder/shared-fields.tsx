@@ -57,61 +57,61 @@ export function ImagePickerField({
   const isUploading = uploadMutation.isPending;
 
   return (
-    <div className="space-y-2">
+    <div className='space-y-2'>
       {label && (
-        <Label className="text-[10px] uppercase tracking-wider text-gray-500">
+        <Label className='text-[10px] uppercase tracking-wider text-gray-500'>
           {label}
         </Label>
       )}
-      <div className="relative flex h-28 items-center justify-center overflow-hidden rounded border border-dashed border-border/50 bg-gray-800/30">
+      <div className='relative flex h-28 items-center justify-center overflow-hidden rounded border border-dashed border-border/50 bg-gray-800/30'>
         {value ? (
           <NextImage
             src={value}
-            alt="Selected"
+            alt='Selected'
             fill
-            sizes="320px"
-            className="object-cover"
+            sizes='320px'
+            className='object-cover'
             unoptimized
           />
         ) : (
-          <span className="text-xs text-gray-500">No image</span>
+          <span className='text-xs text-gray-500'>No image</span>
         )}
         {isUploading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-            <Loader2 className="size-6 animate-spin text-white" />
+          <div className='absolute inset-0 flex items-center justify-center bg-black/50'>
+            <Loader2 className='size-6 animate-spin text-white' />
           </div>
         )}
       </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className='grid grid-cols-2 gap-2'>
         <FileUploadButton
-          size="sm"
-          variant="outline"
-          className="text-xs"
-          accept="image/*"
+          size='sm'
+          variant='outline'
+          className='text-xs'
+          accept='image/*'
           disabled={disabled || isUploading}
           onFilesSelected={(files: File[], helpers?: FileUploadHelpers) => handleFileUpload(files, helpers)}
         >
-          <Upload className="mr-1.5 size-3" />
+          <Upload className='mr-1.5 size-3' />
           {value ? 'Replace' : 'Upload'}
         </FileUploadButton>
         <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          className="text-xs"
+          type='button'
+          size='sm'
+          variant='outline'
+          className='text-xs'
           onClick={(): void => setOpen(true)}
           disabled={disabled || isUploading}
         >
-          <FolderOpen className="mr-1.5 size-3" />
+          <FolderOpen className='mr-1.5 size-3' />
           Browse
         </Button>
       </div>
       {value ? (
         <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          className="w-full text-xs text-gray-400 hover:text-gray-200"
+          type='button'
+          size='sm'
+          variant='ghost'
+          className='w-full text-xs text-gray-400 hover:text-gray-200'
           onClick={(): void => onChange('')}
           disabled={disabled || isUploading}
         >
@@ -121,7 +121,7 @@ export function ImagePickerField({
       <MediaLibraryPanel
         open={open}
         onOpenChange={setOpen}
-        selectionMode="single"
+        selectionMode='single'
         onSelect={(filepaths: string[]): void => onChange(filepaths[0] ?? '')}
         {...(handleFileUpload && {
           onFilesSelected: async (files: File[], helpers?: FileUploadHelpers): Promise<void> => {
@@ -164,21 +164,21 @@ export function Asset3DPickerField({
   const modelUrl = selectedAsset ? `/api/assets3d/${selectedAsset.id}/file` : null;
 
   return (
-    <div className="space-y-2">
+    <div className='space-y-2'>
       {label && (
-        <Label className="text-[10px] uppercase tracking-wider text-gray-500">
+        <Label className='text-[10px] uppercase tracking-wider text-gray-500'>
           {label}
         </Label>
       )}
-      <div className="relative flex h-40 items-center justify-center overflow-hidden rounded border border-dashed border-border/50 bg-gray-800/30">
+      <div className='relative flex h-40 items-center justify-center overflow-hidden rounded border border-dashed border-border/50 bg-gray-800/30'>
         {selectedAsset && modelUrl ? (
           <Viewer3D
             modelUrl={modelUrl}
-            backgroundColor="#111827"
+            backgroundColor='#111827'
             autoRotate
             autoRotateSpeed={2}
-            environment="studio"
-            lighting="studio"
+            environment='studio'
+            lighting='studio'
             lightIntensity={1}
             enableShadows
             enableBloom={false}
@@ -189,28 +189,28 @@ export function Asset3DPickerField({
             enableVignette={false}
             autoFit
             presentationMode={false}
-            className="h-full w-full"
+            className='h-full w-full'
           />
         ) : (
-          <span className="text-xs text-gray-500">No 3D asset selected</span>
+          <span className='text-xs text-gray-500'>No 3D asset selected</span>
         )}
       </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className='grid grid-cols-2 gap-2'>
         <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          className="text-xs"
+          type='button'
+          size='sm'
+          variant='outline'
+          className='text-xs'
           onClick={(): void => setOpen(true)}
           disabled={disabled}
         >
           Browse 3D assets
         </Button>
         <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          className="text-xs"
+          type='button'
+          size='sm'
+          variant='outline'
+          className='text-xs'
           onClick={(): void => {
             if (selectedAsset) setPreviewAsset(selectedAsset);
           }}
@@ -221,10 +221,10 @@ export function Asset3DPickerField({
       </div>
       {value ? (
         <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          className="w-full text-xs text-gray-400 hover:text-gray-200"
+          type='button'
+          size='sm'
+          variant='ghost'
+          className='w-full text-xs text-gray-400 hover:text-gray-200'
           onClick={(): void => onChange('')}
           disabled={disabled}
         >
@@ -232,14 +232,14 @@ export function Asset3DPickerField({
         </Button>
       ) : null}
 
-      <SharedModal open={open} onClose={() => setOpen(false)} title="Select 3D asset" size="xl">
-        <div className="space-y-4 text-sm text-gray-200">
-          <div className="grid gap-2 md:grid-cols-[1fr_200px_200px]">
+      <SharedModal open={open} onClose={() => setOpen(false)} title='Select 3D asset' size='xl'>
+        <div className='space-y-4 text-sm text-gray-200'>
+          <div className='grid gap-2 md:grid-cols-[1fr_200px_200px]'>
             <Input
               value={search}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
-              placeholder="Search assets..."
-              className="h-9"
+              placeholder='Search assets...'
+              className='h-9'
             />
             <UnifiedSelect
               value={category}
@@ -248,10 +248,10 @@ export function Asset3DPickerField({
                 { value: '__all__', label: 'All categories' },
                 ...categories.map((cat: string) => ({ value: cat, label: cat }))
               ]}
-              placeholder="Category"
-              triggerClassName="h-9"
+              placeholder='Category'
+              triggerClassName='h-9'
             />
-            <label className="flex items-center gap-2 text-xs text-gray-300">
+            <label className='flex items-center gap-2 text-xs text-gray-300'>
               <Checkbox
                 checked={isPublicOnly}
                 onCheckedChange={(value: boolean): void => setIsPublicOnly(Boolean(value))}
@@ -261,15 +261,15 @@ export function Asset3DPickerField({
           </div>
 
           {tags.length > 0 ? (
-            <SectionPanel variant="subtle" className="p-2">
-              <div className="text-[11px] text-gray-400">Tags</div>
-              <div className="mt-2 flex flex-wrap gap-2">
+            <SectionPanel variant='subtle' className='p-2'>
+              <div className='text-[11px] text-gray-400'>Tags</div>
+              <div className='mt-2 flex flex-wrap gap-2'>
                 {tags.map((tag: string) => {
                   const active = selectedTags.includes(tag);
                   return (
                     <button
                       key={tag}
-                      type="button"
+                      type='button'
                       className={cn(
                         'rounded-full border px-2 py-1 text-[11px]',
                         active
@@ -290,36 +290,36 @@ export function Asset3DPickerField({
             </SectionPanel>
           ) : null}
 
-          <div className="grid gap-3 md:grid-cols-[1fr_320px]">
-            <div className="space-y-2">
+          <div className='grid gap-3 md:grid-cols-[1fr_320px]'>
+            <div className='space-y-2'>
               {assetsQuery.isLoading ? (
-                <div className="text-xs text-gray-400">Loading assets...</div>
+                <div className='text-xs text-gray-400'>Loading assets...</div>
               ) : assets.length === 0 ? (
-                <div className="text-xs text-gray-400">No 3D assets found.</div>
+                <div className='text-xs text-gray-400'>No 3D assets found.</div>
               ) : (
-                <div className="space-y-2">
+                <div className='space-y-2'>
                   {assets.map((asset: Asset3DRecord) => (
-                    <SectionPanel key={asset.id} variant="subtle" className="p-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="min-w-0">
-                          <div className="truncate text-sm text-gray-100">{asset.name || asset.filename}</div>
-                          <div className="text-[11px] text-gray-400">
+                    <SectionPanel key={asset.id} variant='subtle' className='p-2'>
+                      <div className='flex items-center justify-between gap-2'>
+                        <div className='min-w-0'>
+                          <div className='truncate text-sm text-gray-100'>{asset.name || asset.filename}</div>
+                          <div className='text-[11px] text-gray-400'>
                             {asset.category ? `${asset.category} • ` : ''}
                             {asset.tags?.length ? asset.tags.join(', ') : 'No tags'}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className='flex items-center gap-2'>
                           <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
+                            type='button'
+                            size='sm'
+                            variant='outline'
                             onClick={() => setPreviewAsset(asset)}
                           >
                             Preview
                           </Button>
                           <Button
-                            type="button"
-                            size="sm"
+                            type='button'
+                            size='sm'
                             onClick={() => {
                               onChange(asset.id);
                               setOpen(false);
@@ -334,17 +334,17 @@ export function Asset3DPickerField({
                 </div>
               )}
             </div>
-            <SectionPanel variant="subtle" className="p-2">
-              <div className="text-[11px] text-gray-400">Preview</div>
+            <SectionPanel variant='subtle' className='p-2'>
+              <div className='text-[11px] text-gray-400'>Preview</div>
               {previewAsset ? (
-                <div className="mt-2 h-56">
+                <div className='mt-2 h-56'>
                   <Viewer3D
                     modelUrl={`/api/assets3d/${previewAsset.id}/file`}
-                    backgroundColor="#111827"
+                    backgroundColor='#111827'
                     autoRotate
                     autoRotateSpeed={2}
-                    environment="studio"
-                    lighting="studio"
+                    environment='studio'
+                    lighting='studio'
                     lightIntensity={1}
                     enableShadows
                     enableBloom={false}
@@ -355,11 +355,11 @@ export function Asset3DPickerField({
                     enableVignette={false}
                     autoFit
                     presentationMode={false}
-                    className="h-full w-full"
+                    className='h-full w-full'
                   />
                 </div>
               ) : (
-                <div className="mt-2 text-xs text-gray-500">Pick an asset to preview.</div>
+                <div className='mt-2 text-xs text-gray-500'>Pick an asset to preview.</div>
               )}
             </SectionPanel>
           </div>
@@ -387,31 +387,31 @@ export function ColorField({
   return (
     <div className={cn('space-y-1', className)}>
       {label && (
-        <Label className="text-[10px] uppercase tracking-wider text-gray-500">
+        <Label className='text-[10px] uppercase tracking-wider text-gray-500'>
           {label}
         </Label>
       )}
-      <div className="flex items-center gap-2">
+      <div className='flex items-center gap-2'>
         <label className={cn(
           'relative flex size-7 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded border border-border/50',
           disabled && 'cursor-not-allowed opacity-50'
         )}>
           <input
-            type="color"
+            type='color'
             value={value || '#ffffff'}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)}
-            className="absolute inset-0 size-full cursor-pointer opacity-0"
+            className='absolute inset-0 size-full cursor-pointer opacity-0'
             disabled={disabled}
           />
           <div
-            className="size-full rounded"
+            className='size-full rounded'
             style={{ backgroundColor: value || '#ffffff' }}
           />
         </label>
         <Input
           value={value || '#ffffff'}
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)}
-          className="h-7 flex-1 bg-gray-800/40 text-xs font-mono"
+          className='h-7 flex-1 bg-gray-800/40 text-xs font-mono'
           maxLength={7}
           disabled={disabled}
         />
@@ -434,22 +434,22 @@ export function NumberField({
   return (
     <div className={cn('space-y-1', className)}>
       {label && (
-        <Label className="text-[10px] uppercase tracking-wider text-gray-500">
+        <Label className='text-[10px] uppercase tracking-wider text-gray-500'>
           {label}
         </Label>
       )}
-      <div className="flex items-center gap-1.5">
+      <div className='flex items-center gap-1.5'>
         <Input
-          type="number"
+          type='number'
           value={value ?? 0}
           min={min}
           max={max}
           step={step}
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(Number(e.target.value))}
-          className="h-7 flex-1 bg-gray-800/40 text-xs"
+          className='h-7 flex-1 bg-gray-800/40 text-xs'
           disabled={disabled}
         />
-        {suffix && <span className="text-[10px] text-gray-500">{suffix}</span>}
+        {suffix && <span className='text-[10px] text-gray-500'>{suffix}</span>}
       </div>
     </div>
   );
@@ -469,19 +469,19 @@ export function RangeField({
   const safeValue = Number.isFinite(value) ? value : min;
   return (
     <div className={cn('space-y-1', className)}>
-      <div className="flex items-center justify-between">
+      <div className='flex items-center justify-between'>
         {label && (
-          <Label className="text-[10px] uppercase tracking-wider text-gray-500">
+          <Label className='text-[10px] uppercase tracking-wider text-gray-500'>
             {label}
           </Label>
         )}
-        <span className="text-[11px] text-gray-300">
+        <span className='text-[11px] text-gray-300'>
           {safeValue}
           {suffix}
         </span>
       </div>
       <input
-        type="range"
+        type='range'
         min={min}
         max={max}
         step={step}
@@ -506,7 +506,7 @@ export function SelectField({
   return (
     <div className={cn('space-y-1', className)}>
       {label && (
-        <Label className="text-[10px] uppercase tracking-wider text-gray-500">
+        <Label className='text-[10px] uppercase tracking-wider text-gray-500'>
           {label}
         </Label>
       )}
@@ -516,7 +516,7 @@ export function SelectField({
         disabled={disabled || false}
         options={options}
         placeholder={placeholder}
-        triggerClassName="h-7 bg-gray-800/40 text-xs"
+        triggerClassName='h-7 bg-gray-800/40 text-xs'
       />
     </div>
   );
@@ -542,7 +542,7 @@ export function CheckboxField({
         onCheckedChange={(v: boolean | 'indeterminate'): void => onChange(v === true)}
         disabled={disabled}
       />
-      <span className="text-xs text-gray-300">{label}</span>
+      <span className='text-xs text-gray-300'>{label}</span>
     </label>
   );
 }
@@ -558,7 +558,7 @@ export function TextField({
   return (
     <div className={cn('space-y-1', className)}>
       {label && (
-        <Label className="text-[10px] uppercase tracking-wider text-gray-500">
+        <Label className='text-[10px] uppercase tracking-wider text-gray-500'>
           {label}
         </Label>
       )}
@@ -566,7 +566,7 @@ export function TextField({
         value={value || ''}
         onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)}
         placeholder={placeholder}
-        className="h-7 bg-gray-800/40 text-xs"
+        className='h-7 bg-gray-800/40 text-xs'
         disabled={disabled}
       />
     </div>

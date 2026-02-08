@@ -58,11 +58,11 @@ export const FolderNode = React.memo(function FolderNode({
   const isRenaming = renamingFolderId === folder.id;
   const contextMenuItems = useMemo<TreeContextMenuItem[]>(
     () => [
-      { id: 'new-note', label: 'New note', icon: <FilePlus className="size-3.5" />, onSelect: (): void => onCreateNote(folder.id) },
-      { id: 'new-folder', label: 'New folder', icon: <FolderPlus className="size-3.5" />, onSelect: (): void => onCreateSubfolder(folder.id) },
-      { id: 'rename', label: 'Rename', icon: <Edit2 className="size-3.5" />, onSelect: (): void => onStartRename(folder.id) },
+      { id: 'new-note', label: 'New note', icon: <FilePlus className='size-3.5' />, onSelect: (): void => onCreateNote(folder.id) },
+      { id: 'new-folder', label: 'New folder', icon: <FolderPlus className='size-3.5' />, onSelect: (): void => onCreateSubfolder(folder.id) },
+      { id: 'rename', label: 'Rename', icon: <Edit2 className='size-3.5' />, onSelect: (): void => onStartRename(folder.id) },
       { id: 'separator-1', separator: true },
-      { id: 'delete', label: 'Delete', icon: <Trash2 className="size-3.5" />, tone: 'danger', onSelect: (): void => onDelete(folder.id) },
+      { id: 'delete', label: 'Delete', icon: <Trash2 className='size-3.5' />, tone: 'danger', onSelect: (): void => onDelete(folder.id) },
     ],
     [folder.id, onCreateNote, onCreateSubfolder, onStartRename, onDelete]
   );
@@ -200,12 +200,12 @@ export const FolderNode = React.memo(function FolderNode({
       <TreeContextMenu items={contextMenuItems}>
         <TreeRow
           draggable
-          tone="primary"
+          tone='primary'
           selected={isSelected}
           dragOver={isDragOver && canDropHere}
-          dragOverClassName="bg-green-600 text-white"
+          dragOverClassName='bg-green-600 text-white'
           depth={level}
-          className="cursor-pointer active:cursor-grabbing gap-1"
+          className='cursor-pointer active:cursor-grabbing gap-1'
           onDragStart={(e: React.DragEvent<HTMLDivElement>): void => {
             e.stopPropagation();
             setFolderDragData(e.dataTransfer, folder.id);
@@ -273,34 +273,34 @@ export const FolderNode = React.memo(function FolderNode({
           }}
         >
           {reorderHover === 'above' && (
-            <div className="absolute left-2 right-2 top-0 h-0.5 rounded bg-blue-400/90" />
+            <div className='absolute left-2 right-2 top-0 h-0.5 rounded bg-blue-400/90' />
           )}
           {reorderHover === 'below' && (
-            <div className="absolute left-2 right-2 bottom-0 h-0.5 rounded bg-blue-400/90" />
+            <div className='absolute left-2 right-2 bottom-0 h-0.5 rounded bg-blue-400/90' />
           )}
           <TreeCaret
             isOpen={isExpanded}
             hasChildren={hasChildren || hasNotes}
             ariaLabel={isExpanded ? `Collapse ${folder.name}` : `Expand ${folder.name}`}
             onToggle={(): void => onToggleExpand(folder.id)}
-            iconClassName="size-4"
-            buttonClassName="hover:bg-gray-700"
-            placeholderClassName="w-5"
+            iconClassName='size-4'
+            buttonClassName='hover:bg-gray-700'
+            placeholderClassName='w-5'
           />
 
           <div
             onClick={(): void => { if (!isRenaming) onSelect(folder.id); }}
-            className="flex items-center gap-2 flex-1 min-w-0"
+            className='flex items-center gap-2 flex-1 min-w-0'
           >
             {isExpanded || !hasChildren ? (
-              <FolderOpen className="size-4 flex-shrink-0" />
+              <FolderOpen className='size-4 flex-shrink-0' />
             ) : (
-              <Folder className="size-4 flex-shrink-0" />
+              <Folder className='size-4 flex-shrink-0' />
             )}
             {isRenaming ? (
               <Input
                 ref={renameInputRef}
-                type="text"
+                type='text'
                 defaultValue={folder.name}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
                   renameValueRef.current = e.target.value;
@@ -308,58 +308,58 @@ export const FolderNode = React.memo(function FolderNode({
                 onKeyDown={handleRenameKeyDown}
                 onBlur={handleRenameSubmit}
                 onClick={(e: React.MouseEvent<HTMLInputElement>): void => e.stopPropagation()}
-                className="text-sm bg-gray-800 border border-blue-500 rounded px-1 py-0.5 text-white outline-none flex-1 min-w-0"
+                className='text-sm bg-gray-800 border border-blue-500 rounded px-1 py-0.5 text-white outline-none flex-1 min-w-0'
               />
             ) : (
-              <span className="text-sm truncate">{folder.name}</span>
+              <span className='text-sm truncate'>{folder.name}</span>
             )}
           </div>
 
           {!isRenaming && (
-            <TreeActionSlot show="hover" isVisible={isSelected}>
+            <TreeActionSlot show='hover' isVisible={isSelected}>
               <TreeActionButton
                 onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
                   e.stopPropagation();
                   onCreateNote(folder.id);
                 }}
-                size="sm"
-                tone="muted"
-                title="Add note"
+                size='sm'
+                tone='muted'
+                title='Add note'
               >
-                <FilePlus className="size-3" />
+                <FilePlus className='size-3' />
               </TreeActionButton>
               <TreeActionButton
                 onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
                   e.stopPropagation();
                   onCreateSubfolder(folder.id);
                 }}
-                size="sm"
-                tone="muted"
-                title="Add subfolder"
+                size='sm'
+                tone='muted'
+                title='Add subfolder'
               >
-                <FolderPlus className="size-3" />
+                <FolderPlus className='size-3' />
               </TreeActionButton>
               <TreeActionButton
                 onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
                   e.stopPropagation();
                   onStartRename(folder.id);
                 }}
-                size="sm"
-                tone="muted"
-                title="Rename folder"
+                size='sm'
+                tone='muted'
+                title='Rename folder'
               >
-                <Edit2 className="size-3" />
+                <Edit2 className='size-3' />
               </TreeActionButton>
               <TreeActionButton
                 onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
                   e.stopPropagation();
                   onDelete(folder.id);
                 }}
-                size="sm"
-                tone="danger"
-                title="Delete folder and all contents"
+                size='sm'
+                tone='danger'
+                title='Delete folder and all contents'
               >
-                <Trash2 className="size-3" />
+                <Trash2 className='size-3' />
               </TreeActionButton>
             </TreeActionSlot>
           )}

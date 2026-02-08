@@ -62,26 +62,26 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
   const accentColor = accentOptions.find((option: { value: string; color: string }) => option.value === accent)?.color ?? 'bg-emerald-500';
 
   return (
-    <div className="container mx-auto py-10">
+    <div className='container mx-auto py-10'>
       <SectionHeader
-        title="Notifications"
-        description="Customize toast position, accent color, and preview behavior."
+        title='Notifications'
+        description='Customize toast position, accent color, and preview behavior.'
         eyebrow={(
-          <Link href="/admin/settings" className="text-blue-300 hover:text-blue-200">
+          <Link href='/admin/settings' className='text-blue-300 hover:text-blue-200'>
             ← Back to settings
           </Link>
         )}
-        className="mb-8"
+        className='mb-8'
       />
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className='grid gap-6 lg:grid-cols-3'>
         {/* Settings Panel */}
-        <div className="lg:col-span-2 space-y-6">
-          <SectionPanel className="p-6">
-            <div className="space-y-6">
+        <div className='lg:col-span-2 space-y-6'>
+          <SectionPanel className='p-6'>
+            <div className='space-y-6'>
               {/* Position Setting */}
               <div>
-                <Label htmlFor="position" className="mb-3 block text-sm font-semibold">
+                <Label htmlFor='position' className='mb-3 block text-sm font-semibold'>
                   Toast Position
                 </Label>
                 <UnifiedSelect
@@ -92,16 +92,16 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
                     label: opt.label,
                     description: opt.description
                   }))}
-                  placeholder="Select position"
+                  placeholder='Select position'
                 />
-                <p className="mt-2 text-xs text-gray-400">
+                <p className='mt-2 text-xs text-gray-400'>
                   Choose where notifications appear on your screen.
                 </p>
               </div>
 
               {/* Accent Color Setting */}
-              <div className="pt-2">
-                <Label htmlFor="accent" className="mb-3 block text-sm font-semibold">
+              <div className='pt-2'>
+                <Label htmlFor='accent' className='mb-3 block text-sm font-semibold'>
                   Accent Color
                 </Label>
                 <UnifiedSelect
@@ -112,17 +112,17 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
                     label: opt.label,
                     description: opt.value === accent ? 'Currently selected' : undefined
                   }))}
-                  placeholder="Select accent color"
+                  placeholder='Select accent color'
                 />
-                <p className="mt-2 text-xs text-gray-400">
+                <p className='mt-2 text-xs text-gray-400'>
                   Select the primary color for success notifications.
                 </p>
               </div>
 
               {/* Color Palette Preview */}
-              <div className="pt-2">
-                <Label className="mb-3 block text-sm font-semibold">Available Colors</Label>
-                <div className="grid grid-cols-5 gap-2">
+              <div className='pt-2'>
+                <Label className='mb-3 block text-sm font-semibold'>Available Colors</Label>
+                <div className='grid grid-cols-5 gap-2'>
                   {accentOptions.map((option: { value: string; label: string; color: string }) => (
                     <Button
                       key={option.value}
@@ -134,7 +134,7 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
                       }`}
                     >
                       <div className={`size-6 rounded-md ${option.color}`} />
-                      <span className="absolute bottom-full left-1/2 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-800 px-2 py-1 text-xs font-medium text-white group-hover:block">
+                      <span className='absolute bottom-full left-1/2 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-800 px-2 py-1 text-xs font-medium text-white group-hover:block'>
                         {option.label}
                       </span>
                     </Button>
@@ -143,17 +143,17 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap gap-3 border-t border-border pt-6">
-                <Button onClick={handleSave} className="gap-2">
+              <div className='flex flex-wrap gap-3 border-t border-border pt-6'>
+                <Button onClick={handleSave} className='gap-2'>
                   Save Settings
                 </Button>
-                <Button variant="outline" onClick={() => showPreview('success')}>
+                <Button variant='outline' onClick={() => showPreview('success')}>
                   Preview Success
                 </Button>
-                <Button variant="outline" onClick={() => showPreview('info')}>
+                <Button variant='outline' onClick={() => showPreview('info')}>
                   Preview Info
                 </Button>
-                <Button variant="outline" onClick={() => showPreview('error')}>
+                <Button variant='outline' onClick={() => showPreview('error')}>
                   Preview Error
                 </Button>
               </div>
@@ -163,42 +163,42 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
 
         {/* Preview Panel */}
         <div>
-          <SectionPanel className="sticky top-6 p-6">
-            <h2 className="mb-4 text-sm font-semibold text-white">Position Preview</h2>
-            <SectionPanel variant="subtle" className="relative aspect-video w-full bg-gray-900">
+          <SectionPanel className='sticky top-6 p-6'>
+            <h2 className='mb-4 text-sm font-semibold text-white'>Position Preview</h2>
+            <SectionPanel variant='subtle' className='relative aspect-video w-full bg-gray-900'>
               {/* Position indicator */}
               <div
                 className={`absolute size-10 rounded-lg border-2 border-dashed border-emerald-400/50 bg-emerald-400/10 ${preview.x}-3 ${preview.y}-3 flex items-center justify-center`}
               >
-                <div className="size-1 rounded-full bg-emerald-400" />
+                <div className='size-1 rounded-full bg-emerald-400' />
               </div>
 
               {/* Corner labels */}
-              <div className="absolute left-2 top-2 text-xs text-gray-500">TL</div>
-              <div className="absolute right-2 top-2 text-xs text-gray-500">TR</div>
-              <div className="absolute bottom-2 left-2 text-xs text-gray-500">BL</div>
-              <div className="absolute bottom-2 right-2 text-xs text-gray-500">BR</div>
+              <div className='absolute left-2 top-2 text-xs text-gray-500'>TL</div>
+              <div className='absolute right-2 top-2 text-xs text-gray-500'>TR</div>
+              <div className='absolute bottom-2 left-2 text-xs text-gray-500'>BL</div>
+              <div className='absolute bottom-2 right-2 text-xs text-gray-500'>BR</div>
             </SectionPanel>
 
-            <SectionPanel variant="subtle-compact" className="mt-4 space-y-2 bg-gray-900 p-3">
-              <p className="text-xs font-medium text-gray-300">Current Settings:</p>
-              <div className="space-y-1">
-                <p className="flex items-center justify-between text-xs text-gray-400">
+            <SectionPanel variant='subtle-compact' className='mt-4 space-y-2 bg-gray-900 p-3'>
+              <p className='text-xs font-medium text-gray-300'>Current Settings:</p>
+              <div className='space-y-1'>
+                <p className='flex items-center justify-between text-xs text-gray-400'>
                   <span>Position:</span>
-                  <span className="font-mono text-gray-300 capitalize">{position}</span>
+                  <span className='font-mono text-gray-300 capitalize'>{position}</span>
                 </p>
-                <div className="flex items-center justify-between text-xs text-gray-400">
+                <div className='flex items-center justify-between text-xs text-gray-400'>
                   <span>Accent:</span>
-                  <span className="flex items-center gap-1">
-                    <span className={`size-2 rounded-full ${accentColor}`} aria-hidden="true" />
-                    <span className="font-mono text-gray-300 capitalize">{accent}</span>
+                  <span className='flex items-center gap-1'>
+                    <span className={`size-2 rounded-full ${accentColor}`} aria-hidden='true' />
+                    <span className='font-mono text-gray-300 capitalize'>{accent}</span>
                   </span>
                 </div>
               </div>
             </SectionPanel>
 
-            <SectionPanel variant="subtle-compact" className="mt-4 border-blue-500/20 bg-blue-500/5 p-3">
-              <p className="text-xs text-blue-200">
+            <SectionPanel variant='subtle-compact' className='mt-4 border-blue-500/20 bg-blue-500/5 p-3'>
+              <p className='text-xs text-blue-200'>
                 💡 Click the preview buttons to see how notifications appear with your settings.
               </p>
             </SectionPanel>

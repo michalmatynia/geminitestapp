@@ -187,43 +187,43 @@ export function ContextNodeConfigSection({
     },
   };
   return (
-    <div className="space-y-4">
-      <p className="text-[11px] text-gray-500">
-        Connect Trigger <span className="text-gray-300">context</span> into this
+    <div className='space-y-4'>
+      <p className='text-[11px] text-gray-500'>
+        Connect Trigger <span className='text-gray-300'>context</span> into this
         node to filter it. If left unconnected, the filter will fetch an
         entity based on the settings below.
       </p>
-      <div className="flex flex-wrap items-center gap-2">
+      <div className='flex flex-wrap items-center gap-2'>
         <Button
-          type="button"
-          className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-card/70"
+          type='button'
+          className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-card/70'
           onClick={() => { void copyPayload(combinedPayload, 'Payload'); }}
         >
           Copy payload
         </Button>
         <Button
-          type="button"
-          className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-card/70"
+          type='button'
+          className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-card/70'
           onClick={() => { void copyPayload(sanitizedInputs, 'Inputs'); }}
         >
           Copy inputs
         </Button>
         <Button
-          type="button"
-          className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-card/70"
+          type='button'
+          className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-card/70'
           onClick={() => { void copyPayload(sanitizedOutputs, 'Outputs'); }}
         >
           Copy outputs
         </Button>
         <Button
-          type="button"
-          className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-card/70"
+          type='button'
+          className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-card/70'
           onClick={() => { void copyDiff(); }}
         >
           Copy diff
         </Button>
         <Button
-          type="button"
+          type='button'
           className={`rounded-md border px-2 py-1 text-[10px] ${
             hideLargeFields
               ? 'border-emerald-400/50 bg-emerald-500/10 text-emerald-200'
@@ -234,7 +234,7 @@ export function ContextNodeConfigSection({
           {hideLargeFields ? 'Hide large fields' : 'Show large fields'}
         </Button>
         <Button
-          type="button"
+          type='button'
           className={`rounded-md border px-2 py-1 text-[10px] ${
             showDiff
               ? 'border-emerald-400/50 bg-emerald-500/10 text-emerald-200'
@@ -246,7 +246,7 @@ export function ContextNodeConfigSection({
         </Button>
         {showDiff && (
           <Button
-            type="button"
+            type='button'
             className={`rounded-md border px-2 py-1 text-[10px] ${
               diffOnlyChanges
                 ? 'border-emerald-400/50 bg-emerald-500/10 text-emerald-200'
@@ -258,87 +258,87 @@ export function ContextNodeConfigSection({
           </Button>
         )}
       </div>
-      <div className="grid gap-3 md:grid-cols-2">
-        <div className="rounded-md border border-border bg-card/60 p-3">
-          <div className="text-[11px] text-gray-400">Resolved Entity</div>
-          <div className="mt-2 text-[12px] text-gray-200">
+      <div className='grid gap-3 md:grid-cols-2'>
+        <div className='rounded-md border border-border bg-card/60 p-3'>
+          <div className='text-[11px] text-gray-400'>Resolved Entity</div>
+          <div className='mt-2 text-[12px] text-gray-200'>
             {resolvedEntityId
               ? `${resolvedEntityType || 'entity'} · ${resolvedEntityId}`
               : 'No entity resolved yet'}
           </div>
         </div>
-        <div className="rounded-md border border-border bg-card/60 p-3">
-          <div className="text-[11px] text-gray-400">Received context summary</div>
-          <div className="mt-2 text-[12px] text-gray-200">
+        <div className='rounded-md border border-border bg-card/60 p-3'>
+          <div className='text-[11px] text-gray-400'>Received context summary</div>
+          <div className='mt-2 text-[12px] text-gray-200'>
             {receivedContextText
               ? `${receivedContextText.length} chars`
               : 'No context input received'}
           </div>
         </div>
       </div>
-      <div className="rounded-md border border-border bg-card/60 p-3">
-        <div className="text-[11px] text-gray-400">Received payload (context input)</div>
+      <div className='rounded-md border border-border bg-card/60 p-3'>
+        <div className='text-[11px] text-gray-400'>Received payload (context input)</div>
         {receivedContextText ? (
-          <pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200">
+          <pre className='mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200'>
             {receivedContextText}
           </pre>
         ) : (
-          <p className="mt-2 text-[11px] text-gray-500">
+          <p className='mt-2 text-[11px] text-gray-500'>
             No context payload received yet. Fire the trigger or connect a
             context input to inspect the payload.
           </p>
         )}
       </div>
-      <div className="rounded-md border border-border bg-card/60 p-3">
-        <div className="text-[11px] text-gray-400">All incoming inputs</div>
+      <div className='rounded-md border border-border bg-card/60 p-3'>
+        <div className='text-[11px] text-gray-400'>All incoming inputs</div>
         {Object.keys(receivedInputs).length > 0 ? (
-          <pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200">
+          <pre className='mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200'>
             {receivedInputsText}
           </pre>
         ) : (
-          <p className="mt-2 text-[11px] text-gray-500">
+          <p className='mt-2 text-[11px] text-gray-500'>
             No inputs recorded yet for this node.
           </p>
         )}
       </div>
-      <div className="rounded-md border border-border bg-card/60 p-3">
-        <div className="text-[11px] text-gray-400">Resolved outputs</div>
+      <div className='rounded-md border border-border bg-card/60 p-3'>
+        <div className='text-[11px] text-gray-400'>Resolved outputs</div>
         {Object.keys(resolvedOutputs).length > 0 ? (
-          <pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200">
+          <pre className='mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200'>
             {resolvedOutputsText}
           </pre>
         ) : (
-          <p className="mt-2 text-[11px] text-gray-500">
+          <p className='mt-2 text-[11px] text-gray-500'>
             No resolved outputs yet. Trigger the path to populate this panel.
           </p>
         )}
       </div>
       {showDiff && (
-        <div className="rounded-md border border-border bg-card/60 p-3">
-          <div className="text-[11px] text-gray-400">
+        <div className='rounded-md border border-border bg-card/60 p-3'>
+          <div className='text-[11px] text-gray-400'>
             Diff (inputs vs outputs)
           </div>
-          <div className="mt-2 flex flex-wrap gap-2 text-[10px] text-gray-300">
+          <div className='mt-2 flex flex-wrap gap-2 text-[10px] text-gray-300'>
             <span>Added: {diff.added.length}</span>
             <span>Removed: {diff.removed.length}</span>
             <span>Changed: {diff.changed.length}</span>
             <span>Unchanged: {diff.same.length}</span>
           </div>
           {diffLines.length > 0 ? (
-            <pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200">
+            <pre className='mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200'>
               {diffLines.join('\n')}
             </pre>
           ) : (
-            <p className="mt-2 text-[11px] text-gray-500">
+            <p className='mt-2 text-[11px] text-gray-500'>
               No differences detected yet.
             </p>
           )}
         </div>
       )}
       <div>
-        <Label className="text-xs text-gray-400">Filter Role</Label>
+        <Label className='text-xs text-gray-400'>Filter Role</Label>
         <Input
-          className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+          className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
           value={contextConfig.role}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
             updateSelectedNodeConfig({
@@ -346,18 +346,18 @@ export function ContextNodeConfigSection({
             })
           }
         />
-        <p className="mt-2 text-[11px] text-gray-500">
+        <p className='mt-2 text-[11px] text-gray-500'>
           Optional label attached to the filtered context output.
         </p>
       </div>
       <div>
-        <Label className="text-xs text-gray-400">Context Scope Presets</Label>
-        <div className="mt-2 flex flex-wrap gap-2">
+        <Label className='text-xs text-gray-400'>Context Scope Presets</Label>
+        <div className='mt-2 flex flex-wrap gap-2'>
           {(['light', 'medium', 'full'] as const).map((preset: 'light' | 'medium' | 'full') => (
             <Button
               key={preset}
-              type="button"
-              className="rounded-md border px-3 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
+              type='button'
+              className='rounded-md border px-3 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
               onClick={() =>
                 updateSelectedNodeConfig({
                   context: applyContextPreset(contextConfig, preset),
@@ -368,8 +368,8 @@ export function ContextNodeConfigSection({
             </Button>
           ))}
           <Button
-            type="button"
-            className="rounded-md border px-3 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
+            type='button'
+            className='rounded-md border px-3 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
             onClick={() =>
               updateSelectedNodeConfig({
                 context: {
@@ -384,13 +384,13 @@ export function ContextNodeConfigSection({
             RESET
           </Button>
         </div>
-        <p className="mt-2 text-[11px] text-gray-500">
+        <p className='mt-2 text-[11px] text-gray-500'>
           Presets adjust scope to include curated fields for the selected entity (or a generic set when auto).
         </p>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className='grid gap-3 sm:grid-cols-2'>
         <div>
-          <Label className="text-xs text-gray-400">Collection Type</Label>
+          <Label className='text-xs text-gray-400'>Collection Type</Label>
           <Select
             value={contextConfig.entityType ?? 'auto'}
             onValueChange={(value: string) =>
@@ -399,20 +399,20 @@ export function ContextNodeConfigSection({
               })
             }
           >
-            <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-              <SelectValue placeholder="Select collection" />
+            <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
+              <SelectValue placeholder='Select collection' />
             </SelectTrigger>
-            <SelectContent className="border-border bg-gray-900">
-              <SelectItem value="auto">Auto (use trigger)</SelectItem>
-              <SelectItem value="product">Product</SelectItem>
-              <SelectItem value="note">Note</SelectItem>
-              <SelectItem value="chat">Chat</SelectItem>
-              <SelectItem value="log">Log Entry</SelectItem>
+            <SelectContent className='border-border bg-gray-900'>
+              <SelectItem value='auto'>Auto (use trigger)</SelectItem>
+              <SelectItem value='product'>Product</SelectItem>
+              <SelectItem value='note'>Note</SelectItem>
+              <SelectItem value='chat'>Chat</SelectItem>
+              <SelectItem value='log'>Log Entry</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div>
-          <Label className="text-xs text-gray-400">Scope Target</Label>
+          <Label className='text-xs text-gray-400'>Scope Target</Label>
           <Select
             value={contextConfig.scopeTarget ?? 'entity'}
             onValueChange={(value: string) =>
@@ -424,21 +424,21 @@ export function ContextNodeConfigSection({
               })
             }
           >
-            <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-              <SelectValue placeholder="Select target" />
+            <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
+              <SelectValue placeholder='Select target' />
             </SelectTrigger>
-            <SelectContent className="border-border bg-gray-900">
-              <SelectItem value="entity">Entity only</SelectItem>
-              <SelectItem value="context">Full context</SelectItem>
+            <SelectContent className='border-border bg-gray-900'>
+              <SelectItem value='entity'>Entity only</SelectItem>
+              <SelectItem value='context'>Full context</SelectItem>
             </SelectContent>
           </Select>
-          <p className="mt-2 text-[11px] text-gray-500">
+          <p className='mt-2 text-[11px] text-gray-500'>
             Choose whether scope filters apply to the entity payload or the
             full context object.
           </p>
         </div>
         <div>
-          <Label className="text-xs text-gray-400">Entity ID Source</Label>
+          <Label className='text-xs text-gray-400'>Entity ID Source</Label>
           <Select
             value={contextConfig.entityIdSource ?? 'simulation'}
             onValueChange={(value: string) =>
@@ -450,26 +450,26 @@ export function ContextNodeConfigSection({
               })
             }
           >
-            <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-              <SelectValue placeholder="Select source" />
+            <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
+              <SelectValue placeholder='Select source' />
             </SelectTrigger>
-            <SelectContent className="border-border bg-gray-900">
-              <SelectItem value="simulation">Simulation node</SelectItem>
-              <SelectItem value="context">Context payload</SelectItem>
-              <SelectItem value="manual">Manual ID</SelectItem>
+            <SelectContent className='border-border bg-gray-900'>
+              <SelectItem value='simulation'>Simulation node</SelectItem>
+              <SelectItem value='context'>Context payload</SelectItem>
+              <SelectItem value='manual'>Manual ID</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
       <div>
-        <Label className="text-xs text-gray-400">Target Fields</Label>
-        <div className="mt-2 flex flex-wrap gap-2">
+        <Label className='text-xs text-gray-400'>Target Fields</Label>
+        <div className='mt-2 flex flex-wrap gap-2'>
           {presetSet.suggested?.map((field: string) => {
             const active = contextConfig.includePaths?.includes(field);
             return (
               <button
                 key={field}
-                type="button"
+                type='button'
                 onClick={() =>
                   updateSelectedNodeConfig({
                     context: toggleContextTarget(contextConfig, field),
@@ -486,7 +486,7 @@ export function ContextNodeConfigSection({
             );
           })}
           <button
-            type="button"
+            type='button'
             onClick={() =>
               updateSelectedNodeConfig({
                 context: {
@@ -497,20 +497,20 @@ export function ContextNodeConfigSection({
                 },
               })
             }
-            className="rounded-full border px-2 py-1 text-[10px] text-gray-300 hover:bg-card/70"
+            className='rounded-full border px-2 py-1 text-[10px] text-gray-300 hover:bg-card/70'
           >
             Clear
           </button>
         </div>
-        <p className="mt-2 text-[11px] text-gray-500">
+        <p className='mt-2 text-[11px] text-gray-500'>
           Click to toggle fields. This switches scope to include mode.
         </p>
       </div>
       {contextConfig.entityIdSource === 'manual' && (
         <div>
-          <Label className="text-xs text-gray-400">Entity ID</Label>
+          <Label className='text-xs text-gray-400'>Entity ID</Label>
           <Input
-            className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+            className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
             value={contextConfig.entityId ?? ''}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
               updateSelectedNodeConfig({
@@ -521,7 +521,7 @@ export function ContextNodeConfigSection({
         </div>
       )}
       <div>
-        <Label className="text-xs text-gray-400">Data Scope</Label>
+        <Label className='text-xs text-gray-400'>Data Scope</Label>
         <Select
           value={contextConfig.scopeMode ?? 'full'}
           onValueChange={(value: string) =>
@@ -534,29 +534,29 @@ export function ContextNodeConfigSection({
           }
         >
 
-          <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-            <SelectValue placeholder="Select scope" />
+          <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
+            <SelectValue placeholder='Select scope' />
           </SelectTrigger>
-          <SelectContent className="border-border bg-gray-900">
-            <SelectItem value="full">Full entity payload</SelectItem>
-            <SelectItem value="include">Include only listed paths</SelectItem>
-            <SelectItem value="exclude">Exclude listed paths</SelectItem>
+          <SelectContent className='border-border bg-gray-900'>
+            <SelectItem value='full'>Full entity payload</SelectItem>
+            <SelectItem value='include'>Include only listed paths</SelectItem>
+            <SelectItem value='exclude'>Exclude listed paths</SelectItem>
           </SelectContent>
         </Select>
-        <p className="mt-2 text-[11px] text-gray-500">
-          Use dot paths (e.g. <span className="text-gray-300">priceGroups.default</span>).
+        <p className='mt-2 text-[11px] text-gray-500'>
+          Use dot paths (e.g. <span className='text-gray-300'>priceGroups.default</span>).
         </p>
       </div>
       {(contextConfig.scopeMode === 'include' ||
         contextConfig.scopeMode === 'exclude') && (
         <div>
-          <Label className="text-xs text-gray-400">
+          <Label className='text-xs text-gray-400'>
             {contextConfig.scopeMode === 'include'
               ? 'Include paths (one per line)'
               : 'Exclude paths (one per line)'}
           </Label>
           <Textarea
-            className="mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
+            className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
             value={
               contextConfig.scopeMode === 'include'
                 ? (contextConfig.includePaths ?? []).join('\n')

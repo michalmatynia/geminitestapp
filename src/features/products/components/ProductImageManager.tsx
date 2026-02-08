@@ -391,70 +391,70 @@ export default function ProductImageManager(): React.JSX.Element {
 
   return (
     <div>
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-400">Image slots</span>
-          <span className="text-xs text-gray-500">(drag to reorder)</span>
+      <div className='mb-3 flex items-center justify-between'>
+        <div className='flex items-center gap-2'>
+          <span className='text-xs text-gray-400'>Image slots</span>
+          <span className='text-xs text-gray-500'>(drag to reorder)</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className='flex items-center gap-2'>
           <Button
-            type="button"
-            variant="outline"
-            size="sm"
+            type='button'
+            variant='outline'
+            size='sm'
             onClick={() => void convertAllSlotsToBase64()}
-            className="h-7 px-2 text-xs"
+            className='h-7 px-2 text-xs'
           >
             Convert All to Base64
           </Button>
           <Button
-            type="button"
-            variant="ghost"
-            size="sm"
+            type='button'
+            variant='ghost'
+            size='sm'
             onClick={() => setShowDebug((prev: boolean) => !prev)}
-            className="h-7 px-2 text-xs"
+            className='h-7 px-2 text-xs'
           >
             {showDebug ? 'Hide debug' : 'Show debug'}
           </Button>
         </div>
       </div>
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <span className="text-xs text-gray-400">External host</span>
+      <div className='mb-3 flex flex-wrap items-center gap-2'>
+        <span className='text-xs text-gray-400'>External host</span>
         <Input
           value={externalBaseInput}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
             setExternalBaseInput(event.target.value)
           }
           onBlur={saveExternalBaseUrl}
-          placeholder="https://cdn.example.com"
-          className="h-7 w-64 px-2 text-[11px]"
-          aria-label="External image host"
+          placeholder='https://cdn.example.com'
+          className='h-7 w-64 px-2 text-[11px]'
+          aria-label='External image host'
         />
         <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="h-7 px-2 text-xs"
+          type='button'
+          variant='outline'
+          size='sm'
+          className='h-7 px-2 text-xs'
           onClick={saveExternalBaseUrl}
           disabled={updateSetting.isPending}
         >
           {updateSetting.isPending ? 'Saving...' : 'Save'}
         </Button>
         {externalBaseSetting.trim() ? (
-          <span className="text-[10px] text-emerald-300/80">Active</span>
+          <span className='text-[10px] text-emerald-300/80'>Active</span>
         ) : (
-          <span className="text-[10px] text-gray-500">Not set</span>
+          <span className='text-[10px] text-gray-500'>Not set</span>
         )}
       </div>
 
       {showDebug && (uploadError || debugInfo) && (
-        <Alert variant="error" className="mb-3 p-3 text-xs">
+        <Alert variant='error' className='mb-3 p-3 text-xs'>
           {uploadError ? <div>Upload error: {uploadError}</div> : null}
           {debugInfo ? (
-            <div className="space-y-1 mt-2">
+            <div className='space-y-1 mt-2'>
               <div>
                 Debug: {debugInfo.action} — {debugInfo.message}
               </div>
-              <div className="text-[11px] text-red-300/80">
+              <div className='text-[11px] text-red-300/80'>
                 {debugInfo.timestamp}
                 {debugInfo.slotIndex !== undefined
                   ? ` · slot ${debugInfo.slotIndex + 1}`
@@ -466,7 +466,7 @@ export default function ProductImageManager(): React.JSX.Element {
         </Alert>
       )}
 
-      <div className="grid grid-cols-5 gap-2">
+      <div className='grid grid-cols-5 gap-2'>
         {imageSlots.map((slot: ProductImageSlot | null, index: number) => {
           const isDragging = draggedIndex === index;
           const isDragOver = dragOverIndex === index;
@@ -516,32 +516,32 @@ export default function ProductImageManager(): React.JSX.Element {
           const slotKey = `slot-${index}`;
 
           return (
-            <div key={slotKey} className="flex flex-col items-center gap-1">
+            <div key={slotKey} className='flex flex-col items-center gap-1'>
               <input
                 ref={(node: HTMLInputElement | null) => {
                   fileInputRefs.current[index] = node;
                 }}
-                type="file"
-                accept="image/*"
+                type='file'
+                accept='image/*'
                 multiple
-                className="hidden"
+                className='hidden'
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                   const files = Array.from(event.target.files ?? []);
                   handleSlotFileUpload(index, files);
                   event.currentTarget.value = '';
                 }}
-                aria-hidden="true"
+                aria-hidden='true'
                 tabIndex={-1}
               />
-              <div className="flex w-full items-center justify-between gap-2">
-                <div className="flex items-center gap-1 text-[10px] text-gray-400">
+              <div className='flex w-full items-center justify-between gap-2'>
+                <div className='flex items-center gap-1 text-[10px] text-gray-400'>
                   <span
                     className={`rounded-full border px-1 ${
                       hasUpload
                         ? 'border-emerald-400 text-emerald-300'
                         : 'border-gray-600 text-gray-500'
                     }`}
-                    title="Uploaded image"
+                    title='Uploaded image'
                   >
                     U
                   </span>
@@ -551,7 +551,7 @@ export default function ProductImageManager(): React.JSX.Element {
                         ? 'border-sky-400 text-sky-300'
                         : 'border-gray-600 text-gray-500'
                     }`}
-                    title="Image link"
+                    title='Image link'
                   >
                     L
                   </span>
@@ -561,7 +561,7 @@ export default function ProductImageManager(): React.JSX.Element {
                         ? 'border-purple-400 text-purple-300'
                         : 'border-gray-600 text-gray-500'
                     }`}
-                    title="Base64 image"
+                    title='Base64 image'
                   >
                     B
                   </span>
@@ -571,24 +571,24 @@ export default function ProductImageManager(): React.JSX.Element {
                         ? 'border-amber-400 text-amber-300'
                         : 'border-gray-600 text-gray-500'
                     }`}
-                    title="External host"
+                    title='External host'
                   >
                     E
                   </span>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className='flex items-center gap-1'>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-6 px-2 text-[10px]"
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        className='h-6 px-2 text-[10px]'
                       >
                         View: {modeLabel}
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align='end'>
                       <DropdownMenuItem
                         disabled={!hasUpload}
                         onClick={() =>
@@ -641,11 +641,11 @@ export default function ProductImageManager(): React.JSX.Element {
                   </DropdownMenu>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button type="button" variant="ghost" size="icon" className="h-6 w-6">
-                        <MoreVertical className="h-3.5 w-3.5" />
+                      <Button type='button' variant='ghost' size='icon' className='h-6 w-6'>
+                        <MoreVertical className='h-3.5 w-3.5' />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align='end'>
                       <DropdownMenuItem onClick={() => openSlotFilePicker(index)}>
                         Upload image
                       </DropdownMenuItem>
@@ -723,8 +723,8 @@ export default function ProductImageManager(): React.JSX.Element {
                   {displayUrl ? (
                     <>
                       {hasUpload ? (
-                        <div className="absolute left-0 top-0 z-10 flex h-6 w-6 items-center justify-center rounded-br-md bg-gray-900/80 text-gray-400">
-                          <GripVertical className="h-3 w-3" />
+                        <div className='absolute left-0 top-0 z-10 flex h-6 w-6 items-center justify-center rounded-br-md bg-gray-900/80 text-gray-400'>
+                          <GripVertical className='h-3 w-3' />
                         </div>
                       ) : null}
                       <NextImage
@@ -733,7 +733,7 @@ export default function ProductImageManager(): React.JSX.Element {
                         width={128}
                         height={128}
                         unoptimized
-                        className="rounded-md object-cover pointer-events-none"
+                        className='rounded-md object-cover pointer-events-none'
                         draggable={false}
                         onDragStart={(event: React.DragEvent<HTMLImageElement>) => event.preventDefault()}
                         onError={() =>
@@ -746,10 +746,10 @@ export default function ProductImageManager(): React.JSX.Element {
                       />
                       {hasUpload ? (
                         <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="absolute right-0 top-0 h-6 w-6 rounded-full"
+                          type='button'
+                          variant='destructive'
+                          size='icon'
+                          className='absolute right-0 top-0 h-6 w-6 rounded-full'
                           onClick={() => {
                             handleSlotDisconnectImage(index).catch((error: unknown) => {
                               pushDebug({
@@ -764,29 +764,29 @@ export default function ProductImageManager(): React.JSX.Element {
                           }}
                           aria-label={`Remove image ${index + 1}`}
                         >
-                          <XIcon className="h-4 w-4" />
+                          <XIcon className='h-4 w-4' />
                         </Button>
                       ) : null}
-                      <div className="absolute bottom-0 left-0 rounded-tr-md bg-gray-900/80 px-1.5 py-0.5 text-[10px] text-gray-400">
+                      <div className='absolute bottom-0 left-0 rounded-tr-md bg-gray-900/80 px-1.5 py-0.5 text-[10px] text-gray-400'>
                         {index + 1}
                       </div>
                     </>
                   ) : (
-                    <div className="flex flex-col items-center justify-center text-gray-500">
+                    <div className='flex flex-col items-center justify-center text-gray-500'>
                       <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
+                        type='button'
+                        variant='ghost'
+                        size='icon'
                         aria-label={`Upload image to slot ${index + 1}`}
                         onClick={() => openSlotFilePicker(index)}
                       >
-                        <PlusIcon className="h-6 w-6" />
+                        <PlusIcon className='h-6 w-6' />
                       </Button>
-                      <span className="text-xs">Upload</span>
+                      <span className='text-xs'>Upload</span>
                       <Button
-                        type="button"
-                        variant="ghost"
-                        className="text-xs"
+                        type='button'
+                        variant='ghost'
+                        className='text-xs'
                         onClick={() => triggerFileManager(index)}
                         aria-label={`Choose existing image for slot ${index + 1}`}
                       >
@@ -798,18 +798,18 @@ export default function ProductImageManager(): React.JSX.Element {
               </div>
               {(mode === 'link' || (hasLink && !hasUpload)) ? (
                 <Input
-                  type="url"
+                  type='url'
                   value={linkValue}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                     setImageLinkAt(index, event.target.value)
                   }
-                  placeholder="Paste image link"
-                  className="h-7 w-full px-2 text-[10px]"
+                  placeholder='Paste image link'
+                  className='h-7 w-full px-2 text-[10px]'
                   aria-label={`Image link for slot ${index + 1}`}
                 />
               ) : null}
               {hasBase64 ? (
-                <div className="w-full text-[10px] text-purple-300/80">
+                <div className='w-full text-[10px] text-purple-300/80'>
                   Base64 stored
                 </div>
               ) : null}

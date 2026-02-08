@@ -203,14 +203,14 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   }, [triggerButtonsQuery.data]);
 
   return (
-    <div className="container mx-auto py-10">
-      <SectionPanel className="p-6">
+    <div className='container mx-auto py-10'>
+      <SectionPanel className='p-6'>
         <SectionHeader
-          title="Trigger Buttons"
+          title='Trigger Buttons'
           actions={
-            <div className="flex items-center gap-2">
+            <div className='flex items-center gap-2'>
               <Button
-                variant="outline"
+                variant='outline'
                 onClick={() => {
                   void triggerButtonsQuery.refetch();
                 }}
@@ -222,7 +222,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
           }
         />
 
-        <div className="mt-6">
+        <div className='mt-6'>
           <TriggerButtonListManager
             data={rows}
             onEdit={handleEdit}
@@ -230,7 +230,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
             onOrderChange={handleOrderChange}
             isLoading={triggerButtonsQuery.isLoading}
           />
-          <div className="mt-2 text-[11px] text-gray-500">
+          <div className='mt-2 text-[11px] text-gray-500'>
             Drag the handle on the left to reorder. The same order is used in modals and lists.
           </div>
         </div>
@@ -240,21 +240,21 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         open={editorOpen}
         onClose={(): void => setEditorOpen(false)}
         title={draft.id ? 'Edit Trigger Button' : 'Create Trigger Button'}
-        size="md"
+        size='md'
       >
-        <div className="space-y-6">
-          <div className="space-y-2">
+        <div className='space-y-6'>
+          <div className='space-y-2'>
             <Label>Name</Label>
             <Input
               value={draft.name}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => ({ ...prev, name: event.target.value }))
               }
-              placeholder="e.g. Generate SEO Title"
+              placeholder='e.g. Generate SEO Title'
             />
           </div>
 
-          <div className="space-y-2">
+          <div className='space-y-2'>
             <Label>Icon</Label>
             <IconSelector
               value={draft.iconId}
@@ -265,11 +265,11 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
                 }))
               }
               columns={6}
-              helperText="Click an icon to select it. Click the selected icon again to clear."
+              helperText='Click an icon to select it. Click the selected icon again to clear.'
             />
           </div>
 
-          <div className="space-y-2">
+          <div className='space-y-2'>
             <Label>Display</Label>
             <Select
               value={draft.display}
@@ -277,8 +277,8 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
                 setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => ({ ...prev, display: value as AiTriggerButtonDisplay }))
               }
             >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select display" />
+              <SelectTrigger className='w-full'>
+                <SelectValue placeholder='Select display' />
               </SelectTrigger>
               <SelectContent>
                 {DISPLAY_OPTIONS.map((option: { value: AiTriggerButtonDisplay; label: string }): React.JSX.Element => (
@@ -288,20 +288,20 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
                 ))}
               </SelectContent>
             </Select>
-            <div className="text-[11px] text-gray-400">
+            <div className='text-[11px] text-gray-400'>
               Icon only is useful for tight spaces (modal headers). Icon + label is clearer in lists.
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className='space-y-3'>
             <Label>Attach to</Label>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
               {LOCATION_OPTIONS.map((option: { value: AiTriggerButtonLocation; label: string }): React.JSX.Element => {
                 const checked = draft.locations.includes(option.value);
                 return (
                   <label
                     key={option.value}
-                    className="flex cursor-pointer items-center gap-2 rounded-md border border-border bg-card/40 px-3 py-2 text-sm text-gray-200 hover:bg-card/60"
+                    className='flex cursor-pointer items-center gap-2 rounded-md border border-border bg-card/40 px-3 py-2 text-sm text-gray-200 hover:bg-card/60'
                   >
                     <Checkbox
                       checked={checked}
@@ -315,14 +315,14 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
                         });
                       }}
                     />
-                    <span className="text-xs">{option.label}</span>
+                    <span className='text-xs'>{option.label}</span>
                   </label>
                 );
               })}
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className='space-y-2'>
             <Label>Trigger condition</Label>
             <Select
               value={draft.mode}
@@ -330,8 +330,8 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
                 setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => ({ ...prev, mode: value as AiTriggerButtonMode }))
               }
             >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select mode" />
+              <SelectTrigger className='w-full'>
+                <SelectValue placeholder='Select mode' />
               </SelectTrigger>
               <SelectContent>
                 {MODE_OPTIONS.map((option: { value: AiTriggerButtonMode; label: string }): React.JSX.Element => (
@@ -341,13 +341,13 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
                 ))}
               </SelectContent>
             </Select>
-            <div className="text-[11px] text-gray-400">
+            <div className='text-[11px] text-gray-400'>
               Click triggers fire immediately. Toggle triggers render as an On/Off switch in the UI and fire when changed.
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2">
-            <Button variant="outline" onClick={(): void => setEditorOpen(false)} disabled={saving}>
+          <div className='flex items-center justify-end gap-2'>
+            <Button variant='outline' onClick={(): void => setEditorOpen(false)} disabled={saving}>
               Cancel
             </Button>
             <Button onClick={(): void => { void handleSave(); }} disabled={saving}>

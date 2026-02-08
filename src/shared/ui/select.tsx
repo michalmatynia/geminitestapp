@@ -151,7 +151,7 @@ const SelectTrigger = React.forwardRef<
       >
         {props.children}
         <SelectPrimitive.Icon asChild>
-          <ChevronDown className="size-4 opacity-50" />
+          <ChevronDown className='size-4 opacity-50' />
         </SelectPrimitive.Icon>
       </SelectPrimitive.Trigger>
     );
@@ -183,12 +183,12 @@ const SelectTrigger = React.forwardRef<
       disabled={disabled}
     >
       {placeholder ? (
-        <option value="" disabled>
+        <option value='' disabled>
           {placeholder}
         </option>
       ) : null}
       {!hasValue && !placeholder ? (
-        <option value="" disabled>
+        <option value='' disabled>
           Select an option
         </option>
       ) : null}
@@ -267,9 +267,9 @@ const SelectItem = React.forwardRef<
       )}
       {...props}
     >
-      <span className="absolute left-2 flex size-3.5 items-center justify-center">
+      <span className='absolute left-2 flex size-3.5 items-center justify-center'>
         <SelectPrimitive.ItemIndicator>
-          <Check className="size-4" />
+          <Check className='size-4' />
         </SelectPrimitive.ItemIndicator>
       </span>
 

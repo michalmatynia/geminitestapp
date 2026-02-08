@@ -15,9 +15,9 @@ export default function CmsEditorLayout({
 
   return (
     <AdminLayout>
-      <div className="flex h-screen bg-gray-900 text-white">
+      <div className='flex h-screen bg-gray-900 text-white'>
         <CmsSideMenu page={page} setPage={setPage} />
-        <main className="flex-1 p-4 overflow-y-auto">{children}</main>
+        <main className='flex-1 p-4 overflow-y-auto'>{children}</main>
       </div>
     </AdminLayout>
   );

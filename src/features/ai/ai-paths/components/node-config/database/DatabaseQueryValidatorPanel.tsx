@@ -51,36 +51,36 @@ export function DatabaseQueryValidatorPanel({
               : 'border-rose-500/40 bg-rose-500/10 text-rose-100'
       }`}
     >
-      <div className="font-medium">{providerLabel} Query Validator</div>
-      <div className="mt-1">{queryValidation.message}</div>
+      <div className='font-medium'>{providerLabel} Query Validator</div>
+      <div className='mt-1'>{queryValidation.message}</div>
       {queryValidation.line && queryValidation.column && (
-        <div className="mt-1">
+        <div className='mt-1'>
           Line {queryValidation.line}, column {queryValidation.column}
         </div>
       )}
       {queryValidation.snippet && (
-        <pre className="mt-2 whitespace-pre-wrap text-[11px] text-rose-100">
+        <pre className='mt-2 whitespace-pre-wrap text-[11px] text-rose-100'>
           {queryValidation.snippet}
         </pre>
       )}
       {queryValidation.hints && queryValidation.hints.length > 0 && (
-        <div className="mt-2 space-y-1 text-[11px] text-rose-100/90">
+        <div className='mt-2 space-y-1 text-[11px] text-rose-100/90'>
           {queryValidation.hints.map((hint: string): React.JSX.Element => (
             <div key={hint}>- {hint}</div>
           ))}
         </div>
       )}
       {queryValidation.issues && queryValidation.issues.length > 0 && (
-        <div className="mt-3 space-y-2">
-          <div className="text-[10px] uppercase tracking-wide text-gray-300">
+        <div className='mt-3 space-y-2'>
+          <div className='text-[10px] uppercase tracking-wide text-gray-300'>
             Validation Palette
           </div>
           {queryValidation.issues.map((issue) => (
             <div
               key={issue.id}
-              className="rounded-md border border-border/60 bg-card/40 px-2 py-1 text-[11px] text-gray-200"
+              className='rounded-md border border-border/60 bg-card/40 px-2 py-1 text-[11px] text-gray-200'
             >
-              <div className="flex items-center justify-between gap-2 text-[10px] uppercase tracking-wide text-gray-300">
+              <div className='flex items-center justify-between gap-2 text-[10px] uppercase tracking-wide text-gray-300'>
                 <span>{issue.title}</span>
                 <span
                   className={
@@ -94,7 +94,7 @@ export function DatabaseQueryValidatorPanel({
                   {issue.severity}
                 </span>
               </div>
-              <div className="mt-1 text-[11px] text-gray-200">{issue.message}</div>
+              <div className='mt-1 text-[11px] text-gray-200'>{issue.message}</div>
             </div>
           ))}
         </div>
@@ -111,8 +111,8 @@ export function DatabaseQueryValidatorPanel({
 
         return (
           <Button
-            type="button"
-            className="mt-3 w-full rounded-md border border-purple-700 bg-purple-500/10 px-3 py-2 text-[11px] text-purple-200 hover:bg-purple-500/20"
+            type='button'
+            className='mt-3 w-full rounded-md border border-purple-700 bg-purple-500/10 px-3 py-2 text-[11px] text-purple-200 hover:bg-purple-500/20'
             onClick={(): void => {
               const providerName =
                 queryConfig.provider === 'prisma'
@@ -149,8 +149,8 @@ Please return ONLY the corrected query as valid JSON, without any explanation or
       })()}
       {isPrismaProvider && (queryValidation.status === 'error' || looksLikeMongo) && (
         <Button
-          type="button"
-          className="mt-3 w-full rounded-md border border-cyan-700 bg-cyan-500/10 px-3 py-2 text-[11px] text-cyan-100 hover:bg-cyan-500/20"
+          type='button'
+          className='mt-3 w-full rounded-md border border-cyan-700 bg-cyan-500/10 px-3 py-2 text-[11px] text-cyan-100 hover:bg-cyan-500/20'
           onClick={(): void => {
             const mode = operation === 'update' ? 'update' : 'query';
             const result = convertMongoToPrismaQuery(queryTemplateValue, mode);

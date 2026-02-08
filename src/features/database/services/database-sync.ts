@@ -680,7 +680,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const docs = await mongo.collection('auth_login_challenges').find({}).toArray();
     const data = docs
       .map((doc: Record<string, unknown>) => {
-        const id = normalizeId(doc as Record<string, unknown>);
+        const id = normalizeId(doc);
         if (!id) return null;
         return {
           id,
@@ -700,7 +700,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const docs = await mongo.collection('auth_security_attempts').find({}).toArray();
     const data = docs
       .map((doc: Record<string, unknown>) => {
-        const id = normalizeId(doc as Record<string, unknown>);
+        const id = normalizeId(doc);
         if (!id) return null;
         return {
           id,
@@ -1566,7 +1566,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const seenSlugs = new Set<string>();
     const data = docs
       .map((doc: Record<string, unknown>): Prisma.IntegrationCreateManyInput | null => {
-        const id = normalizeId(doc as Record<string, unknown>);
+        const id = normalizeId(doc);
         if (!id) return null;
         const rawName = typeof (doc as { name?: string }).name === 'string' ? (doc as { name?: string }).name?.trim() ?? '' : '';
         const name = rawName || id;
@@ -1617,7 +1617,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const warnings: string[] = [];
     const byIntegration = new Map<string, { doc: any; updatedAt: Date }>();
     docs.forEach((doc: Record<string, unknown>) => {
-      const id = normalizeId(doc as Record<string, unknown>);
+      const id = normalizeId(doc);
       const integrationId = (doc as { integrationId?: string }).integrationId ?? '';
       if (!id || !integrationId) {
         warnings.push('Skipped integration connection with missing id/integrationId');
@@ -1703,7 +1703,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const warnings: string[] = [];
     const byKey = new Map<string, { doc: any; updatedAt: Date }>();
     docs.forEach((doc: Record<string, unknown>) => {
-      const id = normalizeId(doc as Record<string, unknown>);
+      const id = normalizeId(doc);
       const productId = (doc as { productId?: string }).productId ?? '';
       const connectionId = (doc as { connectionId?: string }).connectionId ?? '';
       if (!id || !productId || !connectionId) {
@@ -1766,7 +1766,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const docs = await mongo.collection('product_drafts').find({}).toArray();
     const data = docs
       .map((doc: Record<string, unknown>): Prisma.ProductDraftCreateManyInput | null => {
-        const id = normalizeId(doc as Record<string, unknown>);
+        const id = normalizeId(doc);
         if (!id) return null;
         return {
           id,
@@ -1817,7 +1817,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const docs = await mongo.collection('cms_slugs').find({}).toArray();
     const data = docs
       .map((doc: Record<string, unknown>): Prisma.SlugCreateManyInput | null => {
-        const id = normalizeId(doc as Record<string, unknown>);
+        const id = normalizeId(doc);
         if (!id) return null;
         return {
           id,
@@ -1838,7 +1838,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const docs = await mongo.collection('cms_themes').find({}).toArray();
     const data = docs
       .map((doc: Record<string, unknown>): Prisma.CmsThemeCreateManyInput | null => {
-        const id = normalizeId(doc as Record<string, unknown>);
+        const id = normalizeId(doc);
         if (!id) return null;
         return {
           id,
@@ -1862,7 +1862,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const docs = await mongo.collection('cms_pages').find({}).toArray();
     const data = docs
       .map((doc: Record<string, unknown>) => {
-        const id = normalizeId(doc as Record<string, unknown>);
+        const id = normalizeId(doc);
         if (!id) return null;
         return {
           id,
@@ -1936,7 +1936,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const docs = await mongo.collection('cms_domains').find({}).toArray();
     const data = docs
       .map((doc: Record<string, unknown>): Prisma.CmsDomainCreateManyInput | null => {
-        const id = normalizeId(doc as Record<string, unknown>);
+        const id = normalizeId(doc);
         if (!id) return null;
         return {
           id,
@@ -1981,7 +1981,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const seenNames = new Set<string>();
     const data = docs
       .map((doc: Record<string, unknown>): Prisma.NotebookCreateManyInput | null => {
-        const id = normalizeId(doc as Record<string, unknown>);
+        const id = normalizeId(doc);
         if (!id) return null;
         const name = (doc as { name?: string }).name ?? id;
         if (seenNames.has(name)) {
@@ -2019,7 +2019,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const docs = await mongo.collection('themes').find({}).toArray();
     const data = docs
       .map((doc: Record<string, unknown>): Prisma.ThemeCreateManyInput | null => {
-        const id = normalizeId(doc as Record<string, unknown>);
+        const id = normalizeId(doc);
         if (!id) return null;
         const rawNotebookId = (doc as { notebookId?: string | null }).notebookId ?? null;
         const resolvedNotebookId =
@@ -2067,7 +2067,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const seenTags = new Set<string>();
     const data = docs
       .map((doc: Record<string, unknown>): Prisma.TagCreateManyInput | null => {
-        const id = normalizeId(doc as Record<string, unknown>);
+        const id = normalizeId(doc);
         if (!id) return null;
         const name = (doc as { name?: string }).name ?? id;
         const rawNotebookId = (doc as { notebookId?: string | null }).notebookId ?? null;
@@ -2116,7 +2116,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     );
     const raw = docs
       .map((doc: Record<string, unknown>): Prisma.CategoryCreateManyInput | null => {
-        const id = normalizeId(doc as Record<string, unknown>);
+        const id = normalizeId(doc);
         if (!id) return null;
         return {
           id,
@@ -2292,7 +2292,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     );
     const data = docs
       .map((doc: Record<string, unknown>): Prisma.NoteFileCreateManyInput | null => {
-        const id = normalizeId(doc as Record<string, unknown>);
+        const id = normalizeId(doc);
         const noteId = (doc as { noteId?: string }).noteId;
         if (!id || !noteId || !availableNoteIds.has(noteId)) return null;
         return {
@@ -2320,7 +2320,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const docs = await mongo.collection('product_ai_jobs').find({}).toArray();
     const data = docs
       .map((doc: Record<string, unknown>): Prisma.ProductAiJobCreateManyInput | null => {
-        const id = normalizeId(doc as Record<string, unknown>);
+        const id = normalizeId(doc);
         const productId = (doc as { productId?: string }).productId;
         if (!id || !productId) return null;
         return {
@@ -2347,7 +2347,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const docs = await mongo.collection('ai_path_runs').find({}).toArray();
     const data = docs
       .map((doc: Record<string, unknown>): Prisma.AiPathRunCreateManyInput | null => {
-        const id = normalizeId(doc as Record<string, unknown>);
+        const id = normalizeId(doc);
         if (!id) return null;
         return {
           id,
@@ -2387,7 +2387,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const docs = await mongo.collection('ai_path_run_nodes').find({}).toArray();
     const data = docs
       .map((doc: Record<string, unknown>): Prisma.AiPathRunNodeCreateManyInput | null => {
-        const id = normalizeId(doc as Record<string, unknown>);
+        const id = normalizeId(doc);
         const runId = (doc as { runId?: string }).runId;
         if (!id || !runId) return null;
         return {
@@ -2418,7 +2418,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
     const docs = await mongo.collection('ai_path_run_events').find({}).toArray();
     const data = docs
       .map((doc: Record<string, unknown>): Prisma.AiPathRunEventCreateManyInput | null => {
-        const id = normalizeId(doc as Record<string, unknown>);
+        const id = normalizeId(doc);
         const runId = (doc as { runId?: string }).runId;
         if (!id || !runId) return null;
         return {

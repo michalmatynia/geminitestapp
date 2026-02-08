@@ -56,7 +56,7 @@ export function UrlGuardProvider(): null {
            
           console.warn('[url-guard] blocked invalid navigation', { url, normalized: next, stack: new Error().stack });
         }
-        return original(next, ...rest);
+        original(next, ...rest);
       };
     };
 
@@ -80,9 +80,9 @@ export function UrlGuardProvider(): null {
              
             console.warn(`[url-guard] ${label} invalid`, { url, normalized: next, stack: new Error().stack });
           }
-          return original.call(window.history, data, title, next);
+          original.call(window.history, data, title, next); return;
         }
-        return original.call(window.history, data, title, url as string | URL | null);
+        original.call(window.history, data, title, url as string | URL | null);
       };
     };
 

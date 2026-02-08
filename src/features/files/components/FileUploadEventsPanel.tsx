@@ -21,7 +21,7 @@ export function FileUploadEventsPanel({
 }: FileUploadEventsPanelProps): React.JSX.Element {
   return (
     <FileUploadEventsProvider>
-      <SectionPanel className="p-4 bg-gray-900 border-gray-800">
+      <SectionPanel className='p-4 bg-gray-900 border-gray-800'>
         <FileUploadEventsHeader title={title} description={description} />
         <FileUploadEventsFilters />
         <FileUploadEventsTable />

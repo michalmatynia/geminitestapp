@@ -60,14 +60,14 @@ export function RowNodeItem({
       {
         id: 'add-column',
         label: 'Add column',
-        icon: <Columns className="size-3.5" />,
+        icon: <Columns className='size-3.5' />,
         onSelect: () => gridActions.addColumn(sectionId, row.id),
       },
       { id: 'separator-1', separator: true },
       {
         id: 'remove-row',
         label: 'Remove row',
-        icon: <Trash2 className="size-3.5" />,
+        icon: <Trash2 className='size-3.5' />,
         tone: 'danger',
         disabled: !canRemoveRow,
         onSelect: (): void => {
@@ -82,8 +82,8 @@ export function RowNodeItem({
     <div>
       <TreeContextMenu items={rowMenuItems}>
         <TreeRow
-          tone="none"
-          role="button"
+          tone='none'
+          role='button'
           tabIndex={0}
           onClick={(e: React.MouseEvent) => {
             e.stopPropagation();
@@ -196,45 +196,45 @@ export function RowNodeItem({
                 : 'text-gray-300 hover:bg-muted/40'
           }`}
         >
-          <GripVertical className="size-3.5 shrink-0" />
+          <GripVertical className='size-3.5 shrink-0' />
           <TreeCaret
             isOpen={isExpanded}
             hasChildren={true}
             ariaLabel={isExpanded ? 'Collapse row' : 'Expand row'}
             onToggle={(): void => toggleExpand(row.id)}
-            iconClassName="size-3"
-            placeholderClassName="block size-3 shrink-0"
+            iconClassName='size-3'
+            placeholderClassName='block size-3 shrink-0'
           />
-          <span className="flex-1 truncate text-left">{rowLabel}</span>
-          <TreeActionSlot show="always" align="inline">
+          <span className='flex-1 truncate text-left'>{rowLabel}</span>
+          <TreeActionSlot show='always' align='inline'>
             <TreeActionButton
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 gridActions.addColumn(sectionId, row.id);
               }}
-              title="Add column"
+              title='Add column'
             >
-              <Plus className="size-3" />
+              <Plus className='size-3' />
             </TreeActionButton>
             <TreeActionButton
-              tone="danger"
+              tone='danger'
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 if (!canRemoveRow) return;
                 gridActions.removeRow(sectionId, row.id);
               }}
               disabled={!canRemoveRow}
-              className="disabled:cursor-not-allowed disabled:opacity-40"
+              className='disabled:cursor-not-allowed disabled:opacity-40'
               title={canRemoveRow ? 'Remove row' : 'At least one row is required'}
             >
-              <Trash2 className="size-3" />
+              <Trash2 className='size-3' />
             </TreeActionButton>
           </TreeActionSlot>
         </TreeRow>
       </TreeContextMenu>
 
       {isExpanded && (row.blocks ?? []).length > 0 && (
-        <div className="ml-4 border-l border-border/30 pl-1">
+        <div className='ml-4 border-l border-border/30 pl-1'>
           {/* Render all row children - both Columns and direct elements */}
           {(row.blocks ?? []).map((child: BlockInstance, childIndex: number) => {
             if (child.type === 'Column') {

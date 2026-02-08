@@ -573,13 +573,13 @@ export function VectorCanvas({
     >
       {src ? (
         <>
-          <div className="relative h-full w-full">
+          <div className='relative h-full w-full'>
             <Image
               ref={imgRef}
               src={src}
-              alt="Selected slot"
+              alt='Selected slot'
               fill
-              className="select-none object-contain"
+              className='select-none object-contain'
               onLoadingComplete={() => syncCanvasSize()}
               draggable={false}
               unoptimized
@@ -613,7 +613,7 @@ export function VectorCanvas({
             />
           ) : null}
           {showEmptyState && !allowWithoutImage ? (
-            <div className="text-sm text-gray-400">{emptyStateLabel}</div>
+            <div className='text-sm text-gray-400'>{emptyStateLabel}</div>
           ) : null}
         </>
       )}
@@ -656,116 +656,116 @@ export function VectorToolbar({
         className
       )}
     >
-      <Tooltip content="Select">
+      <Tooltip content='Select'>
         <Button
-          type="button"
+          type='button'
           variant={tool === 'select' ? 'secondary' : 'outline'}
-          size="icon"
+          size='icon'
           onClick={() => onSelectTool('select')}
         >
-          <MousePointer2 className="size-4" />
+          <MousePointer2 className='size-4' />
         </Button>
       </Tooltip>
-      <Tooltip content="Polygon">
+      <Tooltip content='Polygon'>
         <Button
-          type="button"
+          type='button'
           variant={tool === 'polygon' ? 'secondary' : 'outline'}
-          size="icon"
+          size='icon'
           onClick={() => onSelectTool('polygon')}
         >
-          <Pentagon className="size-4" />
+          <Pentagon className='size-4' />
         </Button>
       </Tooltip>
-      <Tooltip content="Lasso">
+      <Tooltip content='Lasso'>
         <Button
-          type="button"
+          type='button'
           variant={tool === 'lasso' ? 'secondary' : 'outline'}
-          size="icon"
+          size='icon'
           onClick={() => onSelectTool('lasso')}
         >
-          <Lasso className="size-4" />
+          <Lasso className='size-4' />
         </Button>
       </Tooltip>
-      <Tooltip content="Rectangle">
+      <Tooltip content='Rectangle'>
         <Button
-          type="button"
+          type='button'
           variant={tool === 'rect' ? 'secondary' : 'outline'}
-          size="icon"
+          size='icon'
           onClick={() => onSelectTool('rect')}
         >
-          <RectangleHorizontal className="size-4" />
+          <RectangleHorizontal className='size-4' />
         </Button>
       </Tooltip>
-      <Tooltip content="Ellipse">
+      <Tooltip content='Ellipse'>
         <Button
-          type="button"
+          type='button'
           variant={tool === 'ellipse' ? 'secondary' : 'outline'}
-          size="icon"
+          size='icon'
           onClick={() => onSelectTool('ellipse')}
         >
-          <Circle className="size-4" />
+          <Circle className='size-4' />
         </Button>
       </Tooltip>
-      <Tooltip content="Brush">
+      <Tooltip content='Brush'>
         <Button
-          type="button"
+          type='button'
           variant={tool === 'brush' ? 'secondary' : 'outline'}
-          size="icon"
+          size='icon'
           onClick={() => onSelectTool('brush')}
         >
-          <Brush className="size-4" />
+          <Brush className='size-4' />
         </Button>
       </Tooltip>
-      {hasActions ? <div className="mx-1 h-6 w-px bg-border" /> : null}
+      {hasActions ? <div className='mx-1 h-6 w-px bg-border' /> : null}
       {onUndo ? (
-        <Tooltip content="Undo last point">
+        <Tooltip content='Undo last point'>
           <Button
-            type="button"
-            variant="outline"
-            size="icon"
+            type='button'
+            variant='outline'
+            size='icon'
             onClick={onUndo}
             disabled={disableUndo}
           >
-            <RotateCcw className="size-4" />
+            <RotateCcw className='size-4' />
           </Button>
         </Tooltip>
       ) : null}
       {onClose ? (
-        <Tooltip content="Close polygon">
+        <Tooltip content='Close polygon'>
           <Button
-            type="button"
-            variant="outline"
-            size="icon"
+            type='button'
+            variant='outline'
+            size='icon'
             onClick={onClose}
             disabled={disableClose}
           >
-            <Check className="size-4" />
+            <Check className='size-4' />
           </Button>
         </Tooltip>
       ) : null}
       {onDetach ? (
-        <Tooltip content="Detach polygon">
+        <Tooltip content='Detach polygon'>
           <Button
-            type="button"
-            variant="outline"
-            size="icon"
+            type='button'
+            variant='outline'
+            size='icon'
             onClick={onDetach}
             disabled={disableDetach}
           >
-            <Unlink className="size-4" />
+            <Unlink className='size-4' />
           </Button>
         </Tooltip>
       ) : null}
       {onClear ? (
-        <Tooltip content="Clear shapes">
+        <Tooltip content='Clear shapes'>
           <Button
-            type="button"
-            variant="outline"
-            size="icon"
+            type='button'
+            variant='outline'
+            size='icon'
             onClick={onClear}
             disabled={disableClear}
           >
-            <Trash2 className="size-4" />
+            <Trash2 className='size-4' />
           </Button>
         </Tooltip>
       ) : null}

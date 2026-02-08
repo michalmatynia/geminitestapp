@@ -24,20 +24,20 @@ export function AnalyticsDashboardHeader(): React.JSX.Element {
   return (
     <>
       <SectionHeader
-        title="Page Analytics"
-        description="Traffic, referrers, languages, and recent activity."
-        className="mb-6"
+        title='Page Analytics'
+        description='Traffic, referrers, languages, and recent activity.'
+        className='mb-6'
         actions={(
           <>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-400">Scope</span>
+            <div className='flex items-center gap-2'>
+              <span className='text-xs text-gray-400'>Scope</span>
               <Select
                 value={scope}
                 onValueChange={(val: string): void =>
                   setScope(val as AnalyticsScope | 'all')
                 }
               >
-                <SelectTrigger className="h-9 w-[100px] border-border bg-gray-900/40 text-sm text-white">
+                <SelectTrigger className='h-9 w-[100px] border-border bg-gray-900/40 text-sm text-white'>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -50,15 +50,15 @@ export function AnalyticsDashboardHeader(): React.JSX.Element {
               </Select>
             </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-400">Range</span>
+            <div className='flex items-center gap-2'>
+              <span className='text-xs text-gray-400'>Range</span>
               <Select
                 value={range}
                 onValueChange={(val: string): void =>
                   setRange(val as AnalyticsRange)
                 }
               >
-                <SelectTrigger className="h-9 w-[130px] border-border bg-gray-900/40 text-sm text-white">
+                <SelectTrigger className='h-9 w-[130px] border-border bg-gray-900/40 text-sm text-white'>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -72,8 +72,8 @@ export function AnalyticsDashboardHeader(): React.JSX.Element {
             </div>
 
             <Button
-              variant="outline"
-              size="sm"
+              variant='outline'
+              size='sm'
               onClick={(): void => {
                 void summaryQuery.refetch();
               }}
@@ -85,15 +85,15 @@ export function AnalyticsDashboardHeader(): React.JSX.Element {
         )}
       />
 
-      <div className="mb-6">
+      <div className='mb-6'>
         {summaryQuery.isLoading ? (
-          <p className="text-sm text-gray-500">Loading analytics…</p>
+          <p className='text-sm text-gray-500'>Loading analytics…</p>
         ) : summaryQuery.error ? (
-          <p className="text-sm text-red-400">
+          <p className='text-sm text-red-400'>
             {summaryQuery.error.message}
           </p>
         ) : fromToLabel ? (
-          <p className="text-xs text-gray-500">Window: {fromToLabel}</p>
+          <p className='text-xs text-gray-500'>Window: {fromToLabel}</p>
         ) : null}
       </div>
     </>

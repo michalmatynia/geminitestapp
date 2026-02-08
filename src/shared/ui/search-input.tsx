@@ -18,7 +18,7 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
   ({ value, onClear, containerClassName, className, ...props }, ref) => {
     return (
       <div className={cn('relative flex items-center', containerClassName)}>
-        <Search className="absolute left-3 size-4 text-gray-500" />
+        <Search className='absolute left-3 size-4 text-gray-500' />
         <Input
           ref={ref}
           value={value}
@@ -27,14 +27,14 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
         />
         {value && onClear && (
           <Button
-            type="button"
-            variant="ghost"
-            size="icon"
+            type='button'
+            variant='ghost'
+            size='icon'
             onClick={onClear}
-            className="absolute right-1 size-7 text-gray-500 hover:text-gray-300"
-            aria-label="Clear search"
+            className='absolute right-1 size-7 text-gray-500 hover:text-gray-300'
+            aria-label='Clear search'
           >
-            <X className="size-3.5" />
+            <X className='size-3.5' />
           </Button>
         )}
       </div>

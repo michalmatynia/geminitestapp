@@ -59,7 +59,7 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
       onChange={handleFilterChange}
       onReset={handleResetFilters}
       hasActiveFilters={hasActiveFilters}
-      gridClassName="sm:grid-cols-2 lg:grid-cols-6"
+      gridClassName='sm:grid-cols-2 lg:grid-cols-6'
     />
   );
 });
@@ -86,15 +86,15 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
       onSelectAllGlobal={onSelectAllGlobal}
       loadingGlobal={loadingGlobal}
       onDeleteSelected={onDeleteSelected}
-      className="border-t pt-3"
+      className='border-t pt-3'
       actions={
         <DropdownMenuItem
           onClick={() => {
             if (onAddToMarketplace) onAddToMarketplace();
           }}
-          className="cursor-pointer gap-2"
+          className='cursor-pointer gap-2'
         >
-          <Store className="h-4 w-4" />
+          <Store className='h-4 w-4' />
           Add to Marketplace
         </DropdownMenuItem>
       }

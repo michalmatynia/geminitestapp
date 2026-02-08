@@ -56,7 +56,7 @@ export const collectUiInventory = async (
         if (el.id) return `#${CSS.escape(el.id)}`;
         const parts: string[] = [];
         let node: Element | null = el;
-        while (node && node.nodeType === 1 && node !== document.documentElement) {
+        while (node?.nodeType === 1 && node !== document.documentElement) {
           let part = node.tagName.toLowerCase();
           const name = node.getAttribute('name');
           const dataTest =

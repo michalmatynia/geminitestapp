@@ -304,8 +304,8 @@ export function DraftCreator({
 
   if (draftQuery.isLoading) {
     return (
-      <div className="rounded-lg bg-card p-6">
-        <p className="text-sm text-gray-400">Loading draft...</p>
+      <div className='rounded-lg bg-card p-6'>
+        <p className='text-sm text-gray-400'>Loading draft...</p>
       </div>
     );
   }
@@ -317,56 +317,56 @@ export function DraftCreator({
         e.preventDefault();
         void handleSave();
       }}
-      className="space-y-6"
+      className='space-y-6'
     >
-      <div className="space-y-6">
-        <Tabs defaultValue="details" className="w-full">
-          <TabsList className="mb-6">
-            <TabsTrigger value="details">Details</TabsTrigger>
-            <TabsTrigger value="parameters">Parameters</TabsTrigger>
+      <div className='space-y-6'>
+        <Tabs defaultValue='details' className='w-full'>
+          <TabsList className='mb-6'>
+            <TabsTrigger value='details'>Details</TabsTrigger>
+            <TabsTrigger value='parameters'>Parameters</TabsTrigger>
           </TabsList>
-          <TabsContent value="details" className="mt-0 space-y-6">
+          <TabsContent value='details' className='mt-0 space-y-6'>
             {/* Draft Info */}
-            <div className="space-y-4 rounded-lg border border-border bg-card/50 p-4">
-              <h3 className="text-sm font-semibold text-white">Draft Information</h3>
+            <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
+              <h3 className='text-sm font-semibold text-white'>Draft Information</h3>
 
-              <div className="space-y-2">
-                <Label htmlFor="name">
-              Draft Name <span className="text-red-500">*</span>
+              <div className='space-y-2'>
+                <Label htmlFor='name'>
+              Draft Name <span className='text-red-500'>*</span>
                 </Label>
                 <Input
-                  id="name"
+                  id='name'
                   value={name}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setName(e.target.value)}
-                  placeholder="e.g., Standard Product Template"
+                  placeholder='e.g., Standard Product Template'
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="description">Draft Description</Label>
+              <div className='space-y-2'>
+                <Label htmlFor='description'>Draft Description</Label>
                 <Textarea
-                  id="description"
+                  id='description'
                   value={description}
                   onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setDescription(e.target.value)}
-                  placeholder="Describe what this draft is for..."
+                  placeholder='Describe what this draft is for...'
                   rows={2}
                 />
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="flex items-center justify-between rounded-md border border-border bg-gray-900 px-4 py-3">
+              <div className='grid gap-4 md:grid-cols-2'>
+                <div className='flex items-center justify-between rounded-md border border-border bg-gray-900 px-4 py-3'>
                   <div>
-                    <Label htmlFor="active" className="cursor-pointer">
+                    <Label htmlFor='active' className='cursor-pointer'>
                   Active Draft
                     </Label>
-                    <p className="text-xs text-gray-400">
+                    <p className='text-xs text-gray-400'>
                   Show quick create button in products list
                     </p>
                   </div>
-                  <Switch id="active" checked={active} onCheckedChange={(val: boolean): void => setActive(val)} />
+                  <Switch id='active' checked={active} onCheckedChange={(val: boolean): void => setActive(val)} />
                 </div>
 
-                <div className="space-y-2">
+                <div className='space-y-2'>
                   <Label>Icon</Label>
                   <IconSelector value={icon} onChange={setIcon} columns={6} showSearch={false} />
                 </div>
@@ -374,170 +374,170 @@ export function DraftCreator({
             </div>
 
             {/* Product Fields */}
-            <div className="space-y-4 rounded-lg border border-border bg-card/50 p-4">
-              <h3 className="text-sm font-semibold text-white">Default Product Values</h3>
+            <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
+              <h3 className='text-sm font-semibold text-white'>Default Product Values</h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="sku">SKU</Label>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='sku'>SKU</Label>
                   <Input
-                    id="sku"
+                    id='sku'
                     value={sku}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSku(e.target.value)}
-                    placeholder="Product SKU"
+                    placeholder='Product SKU'
                   />
                 </div>
-                <div className="space-y-2">
+                <div className='space-y-2'>
                   <Label>Product Identifier</Label>
-                  <div className="flex gap-2">
+                  <div className='flex gap-2'>
                     <Select
                       value={identifierType}
                       onValueChange={(value: string): void =>
                         setIdentifierType(value as 'ean' | 'gtin' | 'asin')
                       }
                     >
-                      <SelectTrigger className="w-[100px]">
+                      <SelectTrigger className='w-[100px]'>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="ean">EAN</SelectItem>
-                        <SelectItem value="gtin">GTIN</SelectItem>
-                        <SelectItem value="asin">ASIN</SelectItem>
+                        <SelectItem value='ean'>EAN</SelectItem>
+                        <SelectItem value='gtin'>GTIN</SelectItem>
+                        <SelectItem value='asin'>ASIN</SelectItem>
                       </SelectContent>
                     </Select>
                     {identifierType === 'ean' && (
                       <Input
-                        id="ean"
+                        id='ean'
                         value={ean}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setEan(e.target.value)}
-                        placeholder="Enter EAN"
+                        placeholder='Enter EAN'
                       />
                     )}
                     {identifierType === 'gtin' && (
                       <Input
-                        id="gtin"
+                        id='gtin'
                         value={gtin}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setGtin(e.target.value)}
-                        placeholder="Enter GTIN"
+                        placeholder='Enter GTIN'
                       />
                     )}
                     {identifierType === 'asin' && (
                       <Input
-                        id="asin"
+                        id='asin'
                         value={asin}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setAsin(e.target.value)}
-                        placeholder="Enter ASIN"
+                        placeholder='Enter ASIN'
                       />
                     )}
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="weight">Weight (kg)</Label>
+              <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='weight'>Weight (kg)</Label>
                   <Input
-                    id="weight"
-                    type="number"
-                    step="0.01"
+                    id='weight'
+                    type='number'
+                    step='0.01'
                     value={weight}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setWeight(e.target.value)}
-                    placeholder="0.00"
+                    placeholder='0.00'
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="sizeLength">Length (cm)</Label>
+                <div className='space-y-2'>
+                  <Label htmlFor='sizeLength'>Length (cm)</Label>
                   <Input
-                    id="sizeLength"
-                    type="number"
-                    step="0.01"
+                    id='sizeLength'
+                    type='number'
+                    step='0.01'
                     value={sizeLength}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSizeLength(e.target.value)}
-                    placeholder="0.00"
+                    placeholder='0.00'
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="sizeWidth">Width (cm)</Label>
+                <div className='space-y-2'>
+                  <Label htmlFor='sizeWidth'>Width (cm)</Label>
                   <Input
-                    id="sizeWidth"
-                    type="number"
-                    step="0.01"
+                    id='sizeWidth'
+                    type='number'
+                    step='0.01'
                     value={sizeWidth}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSizeWidth(e.target.value)}
-                    placeholder="0.00"
+                    placeholder='0.00'
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="length">Height (cm)</Label>
+                <div className='space-y-2'>
+                  <Label htmlFor='length'>Height (cm)</Label>
                   <Input
-                    id="length"
-                    type="number"
-                    step="0.01"
+                    id='length'
+                    type='number'
+                    step='0.01'
                     value={length}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setLength(e.target.value)}
-                    placeholder="0.00"
+                    placeholder='0.00'
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="nameEn">Name (English)</Label>
+              <div className='grid grid-cols-3 gap-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='nameEn'>Name (English)</Label>
                   <Input
-                    id="nameEn"
+                    id='nameEn'
                     value={nameEn}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNameEn(e.target.value)}
-                    placeholder="Product name"
+                    placeholder='Product name'
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="namePl">Name (Polish)</Label>
+                <div className='space-y-2'>
+                  <Label htmlFor='namePl'>Name (Polish)</Label>
                   <Input
-                    id="namePl"
+                    id='namePl'
                     value={namePl}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNamePl(e.target.value)}
-                    placeholder="Nazwa produktu"
+                    placeholder='Nazwa produktu'
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="nameDe">Name (German)</Label>
+                <div className='space-y-2'>
+                  <Label htmlFor='nameDe'>Name (German)</Label>
                   <Input
-                    id="nameDe"
+                    id='nameDe'
                     value={nameDe}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNameDe(e.target.value)}
-                    placeholder="Produktname"
+                    placeholder='Produktname'
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="descEn">Description (English)</Label>
+              <div className='grid grid-cols-3 gap-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='descEn'>Description (English)</Label>
                   <Textarea
-                    id="descEn"
+                    id='descEn'
                     value={descEn}
                     onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setDescEn(e.target.value)}
-                    placeholder="Product description"
+                    placeholder='Product description'
                     rows={3}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="descPl">Description (Polish)</Label>
+                <div className='space-y-2'>
+                  <Label htmlFor='descPl'>Description (Polish)</Label>
                   <Textarea
-                    id="descPl"
+                    id='descPl'
                     value={descPl}
                     onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setDescPl(e.target.value)}
-                    placeholder="Opis produktu"
+                    placeholder='Opis produktu'
                     rows={3}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="descDe">Description (German)</Label>
+                <div className='space-y-2'>
+                  <Label htmlFor='descDe'>Description (German)</Label>
                   <Textarea
-                    id="descDe"
+                    id='descDe'
                     value={descDe}
                     onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setDescDe(e.target.value)}
-                    placeholder="Produktbeschreibung"
+                    placeholder='Produktbeschreibung'
                     rows={3}
                   />
                 </div>
@@ -545,72 +545,72 @@ export function DraftCreator({
             </div>
 
             {/* Pricing and Supplier */}
-            <div className="space-y-4 rounded-lg border border-border bg-card/50 p-4">
-              <h3 className="text-sm font-semibold text-white">Pricing & Supplier Information</h3>
+            <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
+              <h3 className='text-sm font-semibold text-white'>Pricing & Supplier Information</h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="price">Base Price</Label>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='price'>Base Price</Label>
                   <Input
-                    id="price"
-                    type="number"
-                    step="0.01"
+                    id='price'
+                    type='number'
+                    step='0.01'
                     value={price}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setPrice(e.target.value)}
-                    placeholder="0.00"
+                    placeholder='0.00'
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="stock">Stock</Label>
+                <div className='space-y-2'>
+                  <Label htmlFor='stock'>Stock</Label>
                   <Input
-                    id="stock"
-                    type="number"
+                    id='stock'
+                    type='number'
                     value={stock}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setStock(e.target.value)}
-                    placeholder="0"
+                    placeholder='0'
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="supplierName">Supplier Name</Label>
+              <div className='space-y-2'>
+                <Label htmlFor='supplierName'>Supplier Name</Label>
                 <Input
-                  id="supplierName"
+                  id='supplierName'
                   value={supplierName}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSupplierName(e.target.value)}
-                  placeholder="Supplier name"
+                  placeholder='Supplier name'
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="supplierLink">Supplier Link</Label>
+              <div className='space-y-2'>
+                <Label htmlFor='supplierLink'>Supplier Link</Label>
                 <Input
-                  id="supplierLink"
+                  id='supplierLink'
                   value={supplierLink}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSupplierLink(e.target.value)}
-                  placeholder="https://..."
+                  placeholder='https://...'
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="priceComment">Price Comment</Label>
+              <div className='space-y-2'>
+                <Label htmlFor='priceComment'>Price Comment</Label>
                 <Input
-                  id="priceComment"
+                  id='priceComment'
                   value={priceComment}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setPriceComment(e.target.value)}
-                  placeholder="Additional price information"
+                  placeholder='Additional price information'
                 />
               </div>
             </div>
 
             {/* Catalogs */}
-            <div className="space-y-4 rounded-lg border border-border bg-card/50 p-4">
-              <h3 className="text-sm font-semibold text-white">Catalogs</h3>
-              <div className="flex flex-wrap gap-2">
+            <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
+              <h3 className='text-sm font-semibold text-white'>Catalogs</h3>
+              <div className='flex flex-wrap gap-2'>
                 {catalogs.map((catalog: CatalogRecord): React.JSX.Element => (
                   <Button
                     key={catalog.id}
-                    type="button"
+                    type='button'
                     onClick={(): void => toggleCatalog(catalog.id)}
                     className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
                       selectedCatalogIds.includes(catalog.id)
@@ -626,13 +626,13 @@ export function DraftCreator({
 
             {/* Categories */}
             {categories.length > 0 && (
-              <div className="space-y-4 rounded-lg border border-border bg-card/50 p-4">
-                <h3 className="text-sm font-semibold text-white">Categories</h3>
-                <div className="flex flex-wrap gap-2">
+              <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
+                <h3 className='text-sm font-semibold text-white'>Categories</h3>
+                <div className='flex flex-wrap gap-2'>
                   {categories.map((category: ProductCategoryDto): React.JSX.Element => (
                     <Button
                       key={category.id}
-                      type="button"
+                      type='button'
                       onClick={(): void => toggleCategory(category.id)}
                       className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
                         selectedCategoryId === category.id
@@ -649,13 +649,13 @@ export function DraftCreator({
 
             {/* Tags */}
             {tags.length > 0 && (
-              <div className="space-y-4 rounded-lg border border-border bg-card/50 p-4">
-                <h3 className="text-sm font-semibold text-white">Tags</h3>
-                <div className="flex flex-wrap gap-2">
+              <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
+                <h3 className='text-sm font-semibold text-white'>Tags</h3>
+                <div className='flex flex-wrap gap-2'>
                   {tags.map((tag: ProductTag): React.JSX.Element => (
                     <Button
                       key={tag.id}
-                      type="button"
+                      type='button'
                       onClick={(): void => toggleTag(tag.id)}
                       className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
                         selectedTagIds.includes(tag.id)
@@ -672,9 +672,9 @@ export function DraftCreator({
 
             {/* Price Group Info */}
             {selectedCatalogIds.length > 0 && (
-              <div className="rounded-lg border border-blue-900/50 bg-blue-950/20 p-4">
-                <h3 className="text-sm font-semibold text-blue-400 mb-2">Price Group Information</h3>
-                <p className="text-sm text-blue-300/70">
+              <div className='rounded-lg border border-blue-900/50 bg-blue-950/20 p-4'>
+                <h3 className='text-sm font-semibold text-blue-400 mb-2'>Price Group Information</h3>
+                <p className='text-sm text-blue-300/70'>
               Products created from this draft will automatically use the default price group from the selected catalog(s).
               Price groups are configured per catalog and cannot be manually overridden in drafts.
                 </p>
@@ -682,12 +682,12 @@ export function DraftCreator({
             )}
 
             {/* Image Links */}
-            <div className="space-y-4 rounded-lg border border-border bg-card/50 p-4">
-              <h3 className="text-sm font-semibold text-white">Default Image Links (up to 15)</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
+              <h3 className='text-sm font-semibold text-white'>Default Image Links (up to 15)</h3>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
                 {imageLinks.map((link: string, index: number): React.JSX.Element => (
-                  <div key={index} className="space-y-1">
-                    <Label htmlFor={`image-${index}`} className="text-xs text-gray-400">
+                  <div key={index} className='space-y-1'>
+                    <Label htmlFor={`image-${index}`} className='text-xs text-gray-400'>
                   Image {index + 1}
                     </Label>
                     <Input
@@ -699,7 +699,7 @@ export function DraftCreator({
                         setImageLinks(newLinks);
                       }}
                       placeholder={'https://...'}
-                      className="text-sm"
+                      className='text-sm'
                     />
                   </div>
                 ))}
@@ -707,34 +707,34 @@ export function DraftCreator({
             </div>
 
             {/* Import Info */}
-            <div className="space-y-4 rounded-lg border border-border bg-card/50 p-4">
-              <h3 className="text-sm font-semibold text-white">Import Information</h3>
-              <div className="space-y-2">
-                <Label htmlFor="baseProductId">Base Product ID</Label>
+            <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
+              <h3 className='text-sm font-semibold text-white'>Import Information</h3>
+              <div className='space-y-2'>
+                <Label htmlFor='baseProductId'>Base Product ID</Label>
                 <Input
-                  id="baseProductId"
+                  id='baseProductId'
                   value={baseProductId}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setBaseProductId(e.target.value)}
-                  placeholder="Imported from Base.com"
+                  placeholder='Imported from Base.com'
                 />
-                <p className="text-xs text-gray-400">
+                <p className='text-xs text-gray-400'>
               This ID is used for products imported from Base.com
                 </p>
               </div>
             </div>
           </TabsContent>
-          <TabsContent value="parameters" className="mt-0 space-y-4">
-            <div className="rounded-lg border border-border bg-card/50 p-4 space-y-4">
-              <div className="flex items-center justify-between gap-3">
+          <TabsContent value='parameters' className='mt-0 space-y-4'>
+            <div className='rounded-lg border border-border bg-card/50 p-4 space-y-4'>
+              <div className='flex items-center justify-between gap-3'>
                 <div>
-                  <h3 className="text-sm font-semibold text-white">Parameters</h3>
-                  <p className="text-xs text-gray-400">
+                  <h3 className='text-sm font-semibold text-white'>Parameters</h3>
+                  <p className='text-xs text-gray-400'>
                     Set default parameter values for products created from this draft.
                   </p>
                 </div>
                 <Button
-                  type="button"
-                  variant="outline"
+                  type='button'
+                  variant='outline'
                   onClick={addParameterValue}
                   disabled={parametersLoading || parameters.length === 0}
                 >
@@ -743,19 +743,19 @@ export function DraftCreator({
               </div>
 
               {parametersLoading ? (
-                <div className="rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">
+                <div className='rounded-md border border-dashed border p-4 text-center text-sm text-gray-400'>
                   Loading parameters...
                 </div>
               ) : parameters.length === 0 ? (
-                <div className="rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">
+                <div className='rounded-md border border-dashed border p-4 text-center text-sm text-gray-400'>
                   No parameters available for the selected catalog(s).
                 </div>
               ) : parameterValues.length === 0 ? (
-                <div className="rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">
+                <div className='rounded-md border border-dashed border p-4 text-center text-sm text-gray-400'>
                   Add your first parameter to start defining defaults.
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className='space-y-3'>
                   {parameterValues.map((entry: ProductParameterValue, index: number): React.JSX.Element => {
                     const availableOptions: ProductParameter[] = parameters.filter(
                       (parameter: ProductParameter): boolean =>
@@ -765,15 +765,15 @@ export function DraftCreator({
                     return (
                       <div
                         key={`${entry.parameterId || 'new'}-${index}`}
-                        className="flex flex-col gap-3 rounded-md border border-border bg-card/60 p-3 md:flex-row md:items-center"
+                        className='flex flex-col gap-3 rounded-md border border-border bg-card/60 p-3 md:flex-row md:items-center'
                       >
-                        <div className="w-full md:w-64">
+                        <div className='w-full md:w-64'>
                           <Select
                             value={entry.parameterId}
                             onValueChange={(value: string): void => updateParameterId(index, value)}
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder="Select parameter" />
+                              <SelectValue placeholder='Select parameter' />
                             </SelectTrigger>
                             <SelectContent>
                               {availableOptions.map((parameter: ProductParameter): React.JSX.Element => (
@@ -784,19 +784,19 @@ export function DraftCreator({
                             </SelectContent>
                           </Select>
                         </div>
-                        <div className="flex-1">
+                        <div className='flex-1'>
                           <Input
                             value={entry.value}
                             onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                               updateParameterValue(index, event.target.value)
                             }
-                            placeholder="Value"
+                            placeholder='Value'
                             disabled={!entry.parameterId}
                           />
                         </div>
                         <Button
-                          type="button"
-                          variant="ghost"
+                          type='button'
+                          variant='ghost'
                           onClick={(): void => removeParameterValue(index)}
                         >
                           Remove

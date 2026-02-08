@@ -142,16 +142,16 @@ const colorClasses: Record<string, { border: string; text: string }> = {
 
 export function AdminSettingsHomePage(): React.ReactNode {
   return (
-    <div className="container mx-auto py-10">
+    <div className='container mx-auto py-10'>
       {/* Header */}
       <SectionHeader
-        title="Settings"
-        description="Customize your application preferences and configuration."
-        className="mb-8"
+        title='Settings'
+        description='Customize your application preferences and configuration.'
+        className='mb-8'
       />
 
       {/* Settings Grid */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className='grid gap-4 md:grid-cols-2'>
         {settings.map((setting: SettingsOption) => {
           const Icon = setting.icon;
           const colors = colorClasses[setting.color] || colorClasses.emerald!;
@@ -159,30 +159,30 @@ export function AdminSettingsHomePage(): React.ReactNode {
           return (
             <Link key={setting.id} href={setting.href}>
               <Card className={`group relative h-full cursor-pointer border-border bg-card p-6 transition-all duration-300 hover:border hover:bg-muted/50 ${colors.border}`}>
-                <div className="flex items-start gap-4">
+                <div className='flex items-start gap-4'>
                   {/* Icon */}
                   <div className={`flex size-12 flex-shrink-0 items-center justify-center rounded-lg ${setting.bgColor} transition-transform duration-300 group-hover:scale-110`}>
                     <Icon className={`size-6 ${colors.text}`} />
                   </div>
 
                   {/* Content */}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2">
+                  <div className='min-w-0 flex-1'>
+                    <div className='flex items-start justify-between gap-2'>
                       <div>
-                        <h2 className="text-lg font-semibold text-white transition-colors group-hover:text-gray-100">
+                        <h2 className='text-lg font-semibold text-white transition-colors group-hover:text-gray-100'>
                           {setting.title}
                         </h2>
-                        <p className="mt-1 text-sm text-gray-400 group-hover:text-gray-300">
+                        <p className='mt-1 text-sm text-gray-400 group-hover:text-gray-300'>
                           {setting.description}
                         </p>
                       </div>
-                      <ArrowRightIcon className="mt-1 size-4 flex-shrink-0 text-gray-600 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-gray-400" />
+                      <ArrowRightIcon className='mt-1 size-4 flex-shrink-0 text-gray-600 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-gray-400' />
                     </div>
                   </div>
                 </div>
 
                 {/* Hover effect indicator */}
-                <div className="absolute inset-0 rounded-lg opacity-0 shadow-lg transition-opacity duration-300 group-hover:opacity-100 pointer-events-none" />
+                <div className='absolute inset-0 rounded-lg opacity-0 shadow-lg transition-opacity duration-300 group-hover:opacity-100 pointer-events-none' />
               </Card>
             </Link>
           );
@@ -190,14 +190,14 @@ export function AdminSettingsHomePage(): React.ReactNode {
       </div>
 
       {/* Help Section */}
-      <SectionPanel className="mt-8">
-        <h3 className="text-sm font-semibold text-white">Need Help?</h3>
-        <p className="mt-2 text-sm text-gray-400">
+      <SectionPanel className='mt-8'>
+        <h3 className='text-sm font-semibold text-white'>Need Help?</h3>
+        <p className='mt-2 text-sm text-gray-400'>
           Each setting section contains detailed explanations and preview options to help you customize your preferences.
         </p>
-        <div className="mt-4 flex gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/admin">Back to Admin</Link>
+        <div className='mt-4 flex gap-2'>
+          <Button variant='outline' size='sm' asChild>
+            <Link href='/admin'>Back to Admin</Link>
           </Button>
         </div>
       </SectionPanel>

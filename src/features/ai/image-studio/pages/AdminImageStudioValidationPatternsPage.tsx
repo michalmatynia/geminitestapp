@@ -17,9 +17,9 @@ export function AdminImageStudioValidationPatternsPage({
     <AdminPromptEngineValidationPatternsPage
       embedded={embedded}
       {...onSavedProp}
-      eyebrow="AI · Image Studio"
-      backLinkHref="/admin/image-studio"
-      backLinkLabel="Back to Studio"
+      eyebrow='AI · Image Studio'
+      backLinkHref='/admin/image-studio'
+      backLinkLabel='Back to Studio'
     />
   );
 }

@@ -41,14 +41,14 @@ export function ResourceCard({
       {...(onClick ? { onClick } : {})}
       className={cn('flex h-full flex-col', className)}
     >
-      <div className="flex h-full flex-col">
+      <div className='flex h-full flex-col'>
         {/* Media Top Area */}
         {media && (
           <div className={cn('relative overflow-hidden rounded-md', mediaClassName)}>
             {media}
             {/* Overlay Badges */}
             {badges && (
-              <div className="absolute inset-0 pointer-events-none p-2">
+              <div className='absolute inset-0 pointer-events-none p-2'>
                 {badges}
               </div>
             )}
@@ -56,13 +56,13 @@ export function ResourceCard({
         )}
 
         {/* Content Body */}
-        <div className="flex-1 mt-3">
+        <div className='flex-1 mt-3'>
           {children}
         </div>
 
         {/* Footer Area */}
         {footer && (
-          <div className="mt-3 border-t border-white/5 pt-3">
+          <div className='mt-3 border-t border-white/5 pt-3'>
             {footer}
           </div>
         )}

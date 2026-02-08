@@ -8,7 +8,7 @@ export default function FrontendLayout({
   children: React.ReactNode;
 }): JSX.Element {
   return (
-    <div className="min-h-screen bg-background">
+    <div className='min-h-screen bg-background'>
       <QueryErrorBoundary>
         {children}
       </QueryErrorBoundary>

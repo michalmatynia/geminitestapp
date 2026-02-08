@@ -35,42 +35,42 @@ export default function CreatePagePage(): React.JSX.Element {
   };
 
   return (
-    <div className="container mx-auto py-10">
-      <SectionHeader title="Create Page" className="mb-6" />
-      <div className="mb-6">
+    <div className='container mx-auto py-10'>
+      <SectionHeader title='Create Page' className='mb-6' />
+      <div className='mb-6'>
         <CmsDomainSelector />
       </div>
       <form onSubmit={(e: React.FormEvent<HTMLFormElement>): void => { void handleSubmit(e); }}>
-        <div className="mb-4">
-          <Label htmlFor="name">Page Name</Label>
+        <div className='mb-4'>
+          <Label htmlFor='name'>Page Name</Label>
           <Input
-            id="name"
+            id='name'
             value={name}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setName(e.target.value)}
             required
           />
         </div>
-        <div className="mb-4 space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="slug-search">Slugs</Label>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className='mb-4 space-y-2'>
+          <div className='flex items-center justify-between'>
+            <Label htmlFor='slug-search'>Slugs</Label>
+            <div className='flex items-center gap-2 text-xs text-muted-foreground'>
               <Switch
-                id="slug-all-zones"
+                id='slug-all-zones'
                 checked={includeAllZones}
                 onCheckedChange={setIncludeAllZones}
               />
-              <Label htmlFor="slug-all-zones">All zones</Label>
+              <Label htmlFor='slug-all-zones'>All zones</Label>
             </div>
           </div>
           <Input
-            id="slug-search"
+            id='slug-search'
             value={search}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSearch(e.target.value)}
-            placeholder="Search slugs..."
+            placeholder='Search slugs...'
           />
-          <div className="max-h-56 space-y-2 overflow-y-auto rounded border border-border/50 bg-gray-900/40 p-2">
+          <div className='max-h-56 space-y-2 overflow-y-auto rounded border border-border/50 bg-gray-900/40 p-2'>
             {filteredSlugs.length === 0 ? (
-              <p className="py-4 text-center text-xs text-gray-500">
+              <p className='py-4 text-center text-xs text-gray-500'>
                 No slugs available for this zone.
               </p>
             ) : (
@@ -78,7 +78,7 @@ export default function CreatePagePage(): React.JSX.Element {
                 const checked = slugIds.includes(slug.id);
                 const isCrossZone = includeAllZones && !domainSlugIds.has(slug.id);
                 return (
-                  <label key={slug.id} className="flex items-center gap-2 text-sm text-gray-200">
+                  <label key={slug.id} className='flex items-center gap-2 text-sm text-gray-200'>
                     <Checkbox
                       checked={checked}
                       onCheckedChange={() => {
@@ -90,7 +90,7 @@ export default function CreatePagePage(): React.JSX.Element {
                     <span>
                       /{slug.slug}
                       {isCrossZone ? (
-                        <span className="ml-2 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] text-amber-200">
+                        <span className='ml-2 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] text-amber-200'>
                           Other zone
                         </span>
                       ) : null}
@@ -100,9 +100,9 @@ export default function CreatePagePage(): React.JSX.Element {
               })
             )}
           </div>
-          <p className="text-xs text-gray-500">{slugIds.length} selected</p>
+          <p className='text-xs text-gray-500'>{slugIds.length} selected</p>
         </div>
-        <Button type="submit">Create</Button>
+        <Button type='submit'>Create</Button>
       </form>
     </div>
   );

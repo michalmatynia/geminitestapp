@@ -82,40 +82,40 @@ export function MediaLibraryPanel({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl w-[calc(100vw-2rem)] max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader className="flex flex-row items-center justify-between space-y-0">
+      <DialogContent className='max-w-5xl w-[calc(100vw-2rem)] max-h-[90vh] overflow-hidden flex flex-col'>
+        <DialogHeader className='flex flex-row items-center justify-between space-y-0'>
           <DialogTitle>Media Library</DialogTitle>
           <DialogClose asChild>
-            <Button variant="ghost" size="icon" aria-label="Close media library">
-              <X className="size-4" />
+            <Button variant='ghost' size='icon' aria-label='Close media library'>
+              <X className='size-4' />
             </Button>
           </DialogClose>
         </DialogHeader>
 
-        <div className="flex items-center gap-3">
+        <div className='flex items-center gap-3'>
           <FileUploadButton
-            variant="outline"
-            size="sm"
-            accept="image/*"
+            variant='outline'
+            size='sm'
+            accept='image/*'
             multiple
             disabled={uploadMutation.isPending}
             onFilesSelected={(files: File[], helpers?: FileUploadHelpers) => 
               onFilesSelected ? onFilesSelected(files, helpers) : handleUpload(files, helpers)
             }
           >
-            <Upload className="mr-2 size-4" />
+            <Upload className='mr-2 size-4' />
             {uploadMutation.isPending ? 'Uploading...' : 'Upload images'}
           </FileUploadButton>
-          <p className="text-xs text-gray-500">Supported formats: images</p>
+          <p className='text-xs text-gray-500'>Supported formats: images</p>
         </div>
 
-        <div className="mt-4 rounded border border-border/40 bg-gray-900 flex-1 overflow-auto">
+        <div className='mt-4 rounded border border-border/40 bg-gray-900 flex-1 overflow-auto'>
           <FileManager
             onSelectFile={handleSelect}
             selectionMode={selectionMode}
             autoConfirmSelection={shouldAutoConfirm}
             showFolderFilter
-            defaultFolder="cms"
+            defaultFolder='cms'
             showBulkActions={selectionMode === 'multiple'}
             showTagSearch
           />

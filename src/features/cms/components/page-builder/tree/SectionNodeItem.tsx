@@ -88,14 +88,14 @@ export function SectionNodeItem({
       {
         id: 'toggle-visibility',
         label: isHidden ? 'Show section' : 'Hide section',
-        icon: isHidden ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />,
+        icon: isHidden ? <Eye className='size-3.5' /> : <EyeOff className='size-3.5' />,
         onSelect: () => sectionActions.toggleVisibility(section.id, !isHidden),
       },
       { id: 'separator-1', separator: true },
       {
         id: 'delete-section',
         label: 'Delete section',
-        icon: <Trash2 className="size-3.5" />,
+        icon: <Trash2 className='size-3.5' />,
         tone: 'danger',
         onSelect: () => sectionActions.remove(section.id),
       },
@@ -117,10 +117,10 @@ export function SectionNodeItem({
   };
 
   return (
-    <div className="group/section">
+    <div className='group/section'>
       <TreeContextMenu items={sectionMenuItems}>
         <TreeRow
-          tone="none"
+          tone='none'
           onClick={() => selectNode(section.id)}
           onKeyDown={(e: React.KeyboardEvent) => {
             if (e.key === 'Enter' || e.key === ' ') {
@@ -204,11 +204,11 @@ export function SectionNodeItem({
                   }
                 } else {
                   const targetIndex = dropPosition === 'below' ? sectionIndex + 1 : sectionIndex;
-                  sectionActions.dropInZone(dragSectionId, section.zone as PageZone, targetIndex);
+                  sectionActions.dropInZone(dragSectionId, section.zone, targetIndex);
                 }
               } else {
                 const targetIndex = dropPosition === 'below' ? sectionIndex + 1 : sectionIndex;
-                sectionActions.dropInZone(dragSectionId, section.zone as PageZone, targetIndex);
+                sectionActions.dropInZone(dragSectionId, section.zone, targetIndex);
               }
               endSectionDrag();
             } else if (draggedBlockId && !isFileSection) {
@@ -306,33 +306,33 @@ export function SectionNodeItem({
             }}
             onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
             onClick={(e: React.MouseEvent) => e.stopPropagation()}
-            className="flex items-center justify-center opacity-0 group-hover/section:opacity-100"
-            aria-label="Drag section"
+            className='flex items-center justify-center opacity-0 group-hover/section:opacity-100'
+            aria-label='Drag section'
           >
-            <GripVertical className="size-3 shrink-0 text-gray-600 cursor-grab active:cursor-grabbing" />
+            <GripVertical className='size-3 shrink-0 text-gray-600 cursor-grab active:cursor-grabbing' />
           </div>
           <TreeCaret
             isOpen={isExpanded}
             hasChildren={canToggle}
             ariaLabel={isExpanded ? `Collapse ${section.type}` : `Expand ${section.type}`}
             onToggle={canToggle ? (): void => toggleExpand(section.id) : undefined}
-            placeholderClassName="block size-3.5 shrink-0 pointer-events-none"
+            placeholderClassName='block size-3.5 shrink-0 pointer-events-none'
           />
-          <Icon className="size-4 shrink-0 pointer-events-none" />
-          <span className="flex-1 truncate text-left pointer-events-none">
+          <Icon className='size-4 shrink-0 pointer-events-none' />
+          <span className='flex-1 truncate text-left pointer-events-none'>
             {resolveNodeLabel(section.type, section.settings['label'])}
           </span>
           {isSectionDragOver && (
-            <span className="text-[10px] text-purple-300 pointer-events-none">Move here</span>
+            <span className='text-[10px] text-purple-300 pointer-events-none'>Move here</span>
           )}
           {isDragOver && (
-            <span className="text-[10px] text-emerald-300 pointer-events-none">Drop here</span>
+            <span className='text-[10px] text-emerald-300 pointer-events-none'>Drop here</span>
           )}
           <TreeActionSlot
-            show="hover"
+            show='hover'
             isVisible={isSelected}
-            align="inline"
-            className="gap-0.5 pointer-events-none"
+            align='inline'
+            className='gap-0.5 pointer-events-none'
           >
             <TreeActionButton
               onClick={(e: React.MouseEvent) => {
@@ -340,22 +340,22 @@ export function SectionNodeItem({
                 sectionActions.toggleVisibility(section.id, !isHidden);
               }}
               onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
-              className="pointer-events-auto"
+              className='pointer-events-auto'
               title={isHidden ? 'Show section' : 'Hide section'}
             >
-              {isHidden ? <EyeOff className="size-3" /> : <Eye className="size-3" />}
+              {isHidden ? <EyeOff className='size-3' /> : <Eye className='size-3' />}
             </TreeActionButton>
             <TreeActionButton
-              tone="danger"
+              tone='danger'
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 sectionActions.remove(section.id);
               }}
               onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
-              className="pointer-events-auto"
-              title="Delete section"
+              className='pointer-events-auto'
+              title='Delete section'
             >
-              <Trash2 className="size-3" />
+              <Trash2 className='size-3' />
             </TreeActionButton>
           </TreeActionSlot>
         </TreeRow>
@@ -363,7 +363,7 @@ export function SectionNodeItem({
 
 
       {isExpanded && section.type === 'Grid' && (
-        <div className="ml-4 border-l border-border/30 pl-1">
+        <div className='ml-4 border-l border-border/30 pl-1'>
           {gridRows.length > 0 ? (
             gridRows.map((row: BlockInstance, rowIndex: number) => (
               <RowNodeItem
@@ -385,11 +385,11 @@ export function SectionNodeItem({
               />
             ))
           ) : (
-            <div className="py-2 text-xs text-gray-500">No rows yet.</div>
+            <div className='py-2 text-xs text-gray-500'>No rows yet.</div>
           )}
           {gridLayerEntries.length > 0 && (
-            <div className="mt-2 space-y-1">
-              <div className="px-2 text-[10px] uppercase tracking-wide text-gray-500">
+            <div className='mt-2 space-y-1'>
+              <div className='px-2 text-[10px] uppercase tracking-wide text-gray-500'>
                 Grid backgrounds
               </div>
               {gridLayerEntries.map(({ block, index }: { block: BlockInstance; index: number }) => (
@@ -403,14 +403,14 @@ export function SectionNodeItem({
             </div>
           )}
           <button
-            type="button"
+            type='button'
             onClick={(e: React.MouseEvent) => {
               e.stopPropagation();
               gridActions.addRow(section.id);
             }}
-            className="mt-1 flex items-center gap-1 rounded px-2 py-1 text-xs text-gray-400 hover:bg-muted/40 hover:text-gray-200"
+            className='mt-1 flex items-center gap-1 rounded px-2 py-1 text-xs text-gray-400 hover:bg-muted/40 hover:text-gray-200'
           >
-            <Plus className="size-3" />
+            <Plus className='size-3' />
             Add row
           </button>
         </div>
@@ -479,9 +479,9 @@ export function SectionNodeItem({
               )
             ))
           ) : (
-            <div className="py-2 text-xs text-gray-500">No blocks yet. Drag blocks here or use the + button below.</div>
+            <div className='py-2 text-xs text-gray-500'>No blocks yet. Drag blocks here or use the + button below.</div>
           )}
-          <div className="mt-1">
+          <div className='mt-1'>
             <BlockPicker
               sectionType={section.type}
               onSelect={(blockType: string) => blockActions.add(section.id, blockType)}

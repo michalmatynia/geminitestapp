@@ -20,7 +20,7 @@ vi.mock('@/shared/ui', async () => {
     ...actual,
     useToast: () => ({ toast: vi.fn() }),
     FilePreviewModal: ({ children, onClose }: any) => (
-      <div data-testid="preview-modal">
+      <div data-testid='preview-modal'>
         <button onClick={onClose}>Close</button>
         {children}
       </div>
@@ -74,7 +74,7 @@ describe('FileManager Component', () => {
 
   it('should handle single file selection', () => {
     const onSelectFile = vi.fn();
-    render(<FileManager onSelectFile={onSelectFile} selectionMode="single" autoConfirmSelection={true} />, { wrapper });
+    render(<FileManager onSelectFile={onSelectFile} selectionMode='single' autoConfirmSelection={true} />, { wrapper });
     
     const file1 = screen.getByAltText('image1.jpg');
     fireEvent.click(file1);
@@ -84,7 +84,7 @@ describe('FileManager Component', () => {
 
   it('should handle multiple file selection and confirmation', () => {
     const onSelectFile = vi.fn();
-    render(<FileManager onSelectFile={onSelectFile} selectionMode="multiple" />, { wrapper });
+    render(<FileManager onSelectFile={onSelectFile} selectionMode='multiple' />, { wrapper });
     
     const file1 = screen.getByAltText('image1.jpg');
     const file2 = screen.getByAltText('image2.png');
@@ -102,7 +102,7 @@ describe('FileManager Component', () => {
   });
 
   it('should open preview modal when View is clicked', () => {
-    render(<FileManager mode="view" />, { wrapper });
+    render(<FileManager mode='view' />, { wrapper });
     
     const viewButtons = screen.getAllByText('View');
     fireEvent.click(viewButtons[0]!);

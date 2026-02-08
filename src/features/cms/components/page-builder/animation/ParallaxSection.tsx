@@ -267,9 +267,9 @@ export function ParallaxSection({ config, onChange }: ParallaxSectionProps): Rea
   );
 
   return (
-    <SectionPanel variant="subtle-compact" className="space-y-2">
-      <div className="space-y-1.5">
-        <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+    <SectionPanel variant='subtle-compact' className='space-y-2'>
+      <div className='space-y-1.5'>
+        <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
           Parallax
         </Label>
         <UnifiedSelect
@@ -281,9 +281,9 @@ export function ParallaxSection({ config, onChange }: ParallaxSectionProps): Rea
 
       {parallaxPresetValue !== 'none' && (
         <>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+          <div className='grid gap-3 sm:grid-cols-2'>
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
                 Pattern
               </Label>
               <UnifiedSelect
@@ -293,14 +293,14 @@ export function ParallaxSection({ config, onChange }: ParallaxSectionProps): Rea
               />
             </div>
 
-            <label className="flex items-center gap-2 text-xs text-gray-300">
+            <label className='flex items-center gap-2 text-xs text-gray-300'>
               <Checkbox checked={parallaxReverseValue} onCheckedChange={handleParallaxReverseChange} />
               Reverse direction
             </label>
           </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+          <div className='space-y-1.5'>
+            <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
               Axis
             </Label>
             <UnifiedSelect
@@ -310,77 +310,77 @@ export function ParallaxSection({ config, onChange }: ParallaxSectionProps): Rea
             />
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+          <div className='grid gap-3 sm:grid-cols-2'>
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
                 Offset (px)
               </Label>
               <Input
-                type="number"
+                type='number'
                 min={-300}
                 max={300}
                 step={5}
                 value={parallaxOffsetValue}
                 onChange={handleParallaxOffsetChange}
-                className="text-sm"
+                className='text-sm'
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
                 Scrub
               </Label>
               <Input
-                type="number"
+                type='number'
                 min={0}
                 max={2}
                 step={0.1}
                 value={parallaxScrubValue}
                 onChange={handleParallaxScrubChange}
-                className="text-sm"
+                className='text-sm'
               />
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+          <div className='grid gap-3 sm:grid-cols-2'>
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
                 Start
               </Label>
               <Input
                 value={parallaxStartValue}
                 onChange={handleParallaxStartChange}
-                placeholder="top bottom"
-                className="text-sm"
+                placeholder='top bottom'
+                className='text-sm'
               />
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
                 End
               </Label>
               <Input
                 value={parallaxEndValue}
                 onChange={handleParallaxEndChange}
-                placeholder="bottom top"
-                className="text-sm"
+                placeholder='bottom top'
+                className='text-sm'
               />
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+          <div className='grid gap-3 sm:grid-cols-2'>
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
                 Target selector
               </Label>
               <Input
                 value={parallaxSelectorValue}
                 onChange={handleParallaxSelectorChange}
-                placeholder=":scope > *"
-                className="text-sm"
+                placeholder=':scope > *'
+                className='text-sm'
               />
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
                 Ease
               </Label>
               <UnifiedSelect
@@ -391,198 +391,198 @@ export function ParallaxSection({ config, onChange }: ParallaxSectionProps): Rea
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+          <div className='grid gap-3 sm:grid-cols-2'>
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
                 Scale from
               </Label>
               <Input
-                type="number"
+                type='number'
                 min={0.2}
                 max={3}
                 step={0.02}
                 value={parallaxScaleFromValue}
                 onChange={handleParallaxScaleFromChange}
-                className="text-sm"
+                className='text-sm'
               />
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
                 Scale to
               </Label>
               <Input
-                type="number"
+                type='number'
                 min={0.2}
                 max={3}
                 step={0.02}
                 value={parallaxScaleToValue}
                 onChange={handleParallaxScaleToChange}
-                className="text-sm"
+                className='text-sm'
               />
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+          <div className='grid gap-3 sm:grid-cols-2'>
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
                 Rotate from (deg)
               </Label>
               <Input
-                type="number"
+                type='number'
                 min={-180}
                 max={180}
                 step={1}
                 value={parallaxRotateFromValue}
                 onChange={handleParallaxRotateFromChange}
-                className="text-sm"
+                className='text-sm'
               />
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
                 Rotate to (deg)
               </Label>
               <Input
-                type="number"
+                type='number'
                 min={-180}
                 max={180}
                 step={1}
                 value={parallaxRotateToValue}
                 onChange={handleParallaxRotateToChange}
-                className="text-sm"
+                className='text-sm'
               />
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+          <div className='grid gap-3 sm:grid-cols-2'>
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
                 Opacity from
               </Label>
               <Input
-                type="number"
+                type='number'
                 min={0}
                 max={1}
                 step={0.05}
                 value={parallaxOpacityFromValue}
                 onChange={handleParallaxOpacityFromChange}
-                className="text-sm"
+                className='text-sm'
               />
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
                 Opacity to
               </Label>
               <Input
-                type="number"
+                type='number'
                 min={0}
                 max={1}
                 step={0.05}
                 value={parallaxOpacityToValue}
                 onChange={handleParallaxOpacityToChange}
-                className="text-sm"
+                className='text-sm'
               />
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+          <div className='grid gap-3 sm:grid-cols-2'>
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
                 Blur from (px)
               </Label>
               <Input
-                type="number"
+                type='number'
                 min={0}
                 max={30}
                 step={1}
                 value={parallaxBlurFromValue}
                 onChange={handleParallaxBlurFromChange}
-                className="text-sm"
+                className='text-sm'
               />
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
                 Blur to (px)
               </Label>
               <Input
-                type="number"
+                type='number'
                 min={0}
                 max={30}
                 step={1}
                 value={parallaxBlurToValue}
                 onChange={handleParallaxBlurToChange}
-                className="text-sm"
+                className='text-sm'
               />
             </div>
           </div>
           {parallaxPatternValue === 'increment' && (
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
                 Per-child step (px)
               </Label>
               <Input
-                type="number"
+                type='number'
                 min={0}
                 max={200}
                 step={1}
                 value={parallaxChildStepValue}
                 onChange={handleParallaxChildStepChange}
-                className="text-sm"
+                className='text-sm'
               />
             </div>
           )}
 
           {parallaxPatternValue === 'layers' && (
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+            <div className='grid gap-3 sm:grid-cols-2'>
+              <div className='space-y-1.5'>
+                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
                   Layer strength
                 </Label>
                 <Input
-                  type="number"
+                  type='number'
                   min={0}
                   max={2}
                   step={0.05}
                   value={parallaxLayerStrengthValue}
                   onChange={handleParallaxLayerStrengthChange}
-                  className="text-sm"
+                  className='text-sm'
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+              <div className='space-y-1.5'>
+                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
                   Layer scale step
                 </Label>
                 <Input
-                  type="number"
+                  type='number'
                   min={0}
                   max={0.2}
                   step={0.005}
                   value={parallaxLayerScaleStepValue}
                   onChange={handleParallaxLayerScaleStepChange}
-                  className="text-sm"
+                  className='text-sm'
                 />
               </div>
             </div>
           )}
 
           {parallaxPatternValue === 'random' && (
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
                 Random seed
               </Label>
               <Input
-                type="number"
+                type='number'
                 min={0}
                 max={1000}
                 step={1}
                 value={parallaxRandomSeedValue}
                 onChange={handleParallaxRandomSeedChange}
-                className="text-sm"
+                className='text-sm'
               />
             </div>
           )}
 
-          <p className="text-[10px] text-gray-500">
-            Use a selector like <span className="text-gray-400">:scope &gt; *</span> for per-child patterns.
+          <p className='text-[10px] text-gray-500'>
+            Use a selector like <span className='text-gray-400'>:scope &gt; *</span> for per-child patterns.
           </p>
         </>
       )}

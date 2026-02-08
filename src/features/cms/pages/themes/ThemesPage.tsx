@@ -21,14 +21,14 @@ export default function ThemesPage(): React.ReactNode {
   };
 
   return (
-    <div className="container mx-auto py-10">
+    <div className='container mx-auto py-10'>
       <ListPanel
         header={
           <SectionHeader
-            title="Themes"
-            description="Manage color palettes, typography and spacing presets."
+            title='Themes'
+            description='Manage color palettes, typography and spacing presets.'
             actions={
-              <Button size="sm" onClick={() => router.push('/admin/cms/themes/create')}>
+              <Button size='sm' onClick={() => router.push('/admin/cms/themes/create')}>
                 Create Theme
               </Button>
             }
@@ -36,29 +36,29 @@ export default function ThemesPage(): React.ReactNode {
         }
       >
         {themes.length === 0 ? (
-          <p className="py-8 text-center text-sm text-gray-500">No themes yet.</p>
+          <p className='py-8 text-center text-sm text-gray-500'>No themes yet.</p>
         ) : (
-          <ul className="divide-y divide-border">
+          <ul className='divide-y divide-border'>
             {themes.map((theme: CmsTheme) => (
-              <li key={theme.id} className="flex items-center justify-between px-4 py-3">
+              <li key={theme.id} className='flex items-center justify-between px-4 py-3'>
                 <Link
                   href={`/admin/cms/themes/${theme.id}/edit`}
-                  className="flex items-center gap-3 hover:underline"
+                  className='flex items-center gap-3 hover:underline'
                 >
-                  <div className="flex gap-1">
+                  <div className='flex gap-1'>
                     {Object.values(theme.colors).slice(0, 5).map((color: string, idx: number) => (
                       <span
                         key={idx}
-                        className="inline-block size-4 rounded-full border border-border/50"
+                        className='inline-block size-4 rounded-full border border-border/50'
                         style={{ backgroundColor: color }}
                       />
                     ))}
                   </div>
-                  <span className="text-sm font-medium">{theme.name}</span>
+                  <span className='text-sm font-medium'>{theme.name}</span>
                 </Link>
                 <Button
-                  size="sm"
-                  variant="destructive"
+                  size='sm'
+                  variant='destructive'
                   onClick={() => { void handleDelete(theme.id); }}
                 >
                   Delete

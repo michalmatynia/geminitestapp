@@ -34,35 +34,35 @@ export function SectionTemplatePicker({ zone, disabled }: SectionTemplatePickerP
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button
-          size="sm"
-          variant="outline"
-          className="h-7 gap-1.5 text-xs"
+          size='sm'
+          variant='outline'
+          className='h-7 gap-1.5 text-xs'
           disabled={disabled}
         >
-          <BookTemplate className="size-3.5" />
+          <BookTemplate className='size-3.5' />
           Templates
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg max-h-[70vh] overflow-y-auto">
+      <DialogContent className='max-w-lg max-h-[70vh] overflow-y-auto'>
         <DialogHeader>
           <DialogTitle>Section Templates</DialogTitle>
         </DialogHeader>
-        <div className="space-y-5 pt-2">
+        <div className='space-y-5 pt-2'>
           {Object.entries(grouped).map(([category, templates]: [string, SectionTemplate[]]) => (
             <div key={category}>
-              <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-400">
+              <h3 className='mb-2 text-xs font-medium uppercase tracking-wide text-gray-400'>
                 {category}
               </h3>
-              <div className="space-y-2">
+              <div className='space-y-2'>
                 {templates.map((template: SectionTemplate) => (
                   <button
                     key={template.name}
-                    type="button"
+                    type='button'
                     onClick={() => handleInsert(template)}
-                    className="flex w-full flex-col gap-0.5 rounded-md border border-border/50 p-3 text-left transition hover:bg-foreground/5"
+                    className='flex w-full flex-col gap-0.5 rounded-md border border-border/50 p-3 text-left transition hover:bg-foreground/5'
                   >
-                    <span className="text-sm font-medium text-gray-200">{template.name}</span>
-                    <span className="text-xs text-gray-500">{template.description}</span>
+                    <span className='text-sm font-medium text-gray-200'>{template.name}</span>
+                    <span className='text-xs text-gray-500'>{template.description}</span>
                   </button>
                 ))}
               </div>

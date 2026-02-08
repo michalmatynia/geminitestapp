@@ -49,9 +49,9 @@ export default function CmsSideMenu({ page, setPage }: CmsSideMenuProps): React.
 
   if (!page) {
     return (
-      <aside className="w-80 bg-gray-800 p-4">
-        <h2 className="text-xl font-bold mb-4">Loading page…</h2>
-        <p className="text-sm text-gray-300">
+      <aside className='w-80 bg-gray-800 p-4'>
+        <h2 className='text-xl font-bold mb-4'>Loading page…</h2>
+        <p className='text-sm text-gray-300'>
           Select a page or wait for data to load.
         </p>
       </aside>
@@ -59,17 +59,17 @@ export default function CmsSideMenu({ page, setPage }: CmsSideMenuProps): React.
   }
 
   return (
-    <aside className="w-80 bg-gray-800 p-4">
-      <h2 className="text-xl font-bold mb-4">Editing: {page.name}</h2>
+    <aside className='w-80 bg-gray-800 p-4'>
+      <h2 className='text-xl font-bold mb-4'>Editing: {page.name}</h2>
 
-      <div className="space-y-4">
+      <div className='space-y-4'>
         <div>
-          <h3 className="font-bold mb-2">Header</h3>
+          <h3 className='font-bold mb-2'>Header</h3>
           {/* Header components will be listed here */}
         </div>
 
         <div>
-          <h3 className="font-bold mb-2">Template</h3>
+          <h3 className='font-bold mb-2'>Template</h3>
 
           {page.components?.map((component: PageComponent, index: number) => {
             if (component?.type === 'RichText') {
@@ -88,7 +88,7 @@ export default function CmsSideMenu({ page, setPage }: CmsSideMenuProps): React.
         </div>
 
         <div>
-          <h3 className="font-bold mb-2">Footer</h3>
+          <h3 className='font-bold mb-2'>Footer</h3>
           {/* Footer components will be listed here */}
         </div>
       </div>

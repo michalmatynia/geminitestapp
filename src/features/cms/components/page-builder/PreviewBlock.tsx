@@ -146,7 +146,7 @@ export function PreviewSection({
     inspectorActive && (isSectionHovered || isSectionSelected) ? 'z-30' : '';
   const showDivider = shouldShowSectionDivider(section.settings);
   const divider = showDivider ? (
-    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-white/5" />
+    <div className='pointer-events-none absolute inset-x-0 bottom-0 h-px bg-white/5' />
   ) : null;
   const metaEntries: InspectorEntry[] = [
     { label: 'Type', value: section.type },
@@ -247,7 +247,7 @@ export function PreviewSection({
         nodeId={section.id}
         fallbackNodeId={null}
         content={inspectorContent}
-        className="w-full"
+        className='w-full'
       >
         <GsapAnimationWrapper config={animConfig}>
           <CssAnimationWrapper config={cssAnimConfig}>
@@ -272,32 +272,32 @@ export function PreviewSection({
   const renderSectionActions = (): React.ReactNode => {
     if (!showEditorChrome || !isSectionSelected) return null;
     return (
-      <div className="absolute right-3 top-3 z-10 flex items-center gap-1 rounded-full border border-border/40 bg-gray-900/80 px-1.5 py-1 text-xs text-gray-200 shadow-sm">
+      <div className='absolute right-3 top-3 z-10 flex items-center gap-1 rounded-full border border-border/40 bg-gray-900/80 px-1.5 py-1 text-xs text-gray-200 shadow-sm'>
         <button
-          type="button"
+          type='button'
           onClick={(e: React.MouseEvent): void => {
             e.stopPropagation();
             onToggleSectionVisibility?.(section.id, !isHidden);
           }}
-          className="rounded p-1 text-gray-300 hover:text-white hover:bg-white/10"
+          className='rounded p-1 text-gray-300 hover:text-white hover:bg-white/10'
           title={isHidden ? 'Show section' : 'Hide section'}
         >
           {isHidden ? (
-            <EyeOff className="size-3.5" />
+            <EyeOff className='size-3.5' />
           ) : (
-            <Eye className="size-3.5" />
+            <Eye className='size-3.5' />
           )}
         </button>
         <button
-          type="button"
+          type='button'
           onClick={(e: React.MouseEvent): void => {
             e.stopPropagation();
             onRemoveSection?.(section.id);
           }}
-          className="rounded p-1 text-gray-300 hover:text-red-200 hover:bg-red-500/20"
-          title="Delete section"
+          className='rounded p-1 text-gray-300 hover:text-red-200 hover:bg-red-500/20'
+          title='Delete section'
         >
-          <Trash2 className="size-3.5" />
+          <Trash2 className='size-3.5' />
         </button>
       </div>
     );
@@ -488,7 +488,7 @@ export function PreviewSection({
       : null;
     return wrapInspector(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={(e: React.KeyboardEvent): void => {
@@ -523,11 +523,11 @@ export function PreviewSection({
             }
           >
             {section.blocks.length === 0 && section.type !== 'Block' ? (
-              <p className="text-sm text-gray-400">Announcement bar</p>
+              <p className='text-sm text-gray-400'>Announcement bar</p>
             ) : section.blocks.length === 0 &&
               section.type === 'Block' &&
               showEditorChrome ? (
-                <div className="flex min-h-[48px] items-center justify-center rounded border border-dashed border-gray-700/50 bg-gray-900/20 text-[10px] uppercase tracking-wider text-gray-600">
+                <div className='flex min-h-[48px] items-center justify-center rounded border border-dashed border-gray-700/50 bg-gray-900/20 text-[10px] uppercase tracking-wider text-gray-600'>
                 Empty block
                 </div>
               ) : (
@@ -550,12 +550,12 @@ export function PreviewSection({
   const renderBlocks = (emptyText: string): React.ReactNode =>
     section.blocks.length === 0 ? (
       showEditorChrome ? (
-        <div className="flex min-h-[60px] items-center justify-center rounded border border-dashed border-border/50 text-sm text-gray-500">
+        <div className='flex min-h-[60px] items-center justify-center rounded border border-dashed border-border/50 text-sm text-gray-500'>
           {emptyText}
         </div>
       ) : null
     ) : (
-      <div className="space-y-2">
+      <div className='space-y-2'>
         {section.blocks.map((block: BlockInstance) => (
           <PreviewBlockItem
             key={block.id}
@@ -690,7 +690,7 @@ export function PreviewSection({
 
     return wrapInspector(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={(e: React.KeyboardEvent): void => {
@@ -721,10 +721,10 @@ export function PreviewSection({
           ))}
           {hasGridBackgroundSetting &&
             renderBackgroundImageLayer(gridBackgroundSettings, mediaStyles)}
-          <div className="relative z-10">
+          <div className='relative z-10'>
             {rowsToRender.length === 0 ? (
               showEditorChrome ? (
-                <div className="flex min-h-[60px] items-center justify-center text-sm text-gray-500">
+                <div className='flex min-h-[60px] items-center justify-center text-sm text-gray-500'>
                   No rows
                 </div>
               ) : null
@@ -732,7 +732,7 @@ export function PreviewSection({
               isEmptyGrid &&
               hasZeroSpacing &&
               !hasFixedHeights ? (
-                <div className="h-px w-full bg-border/40" />
+                <div className='h-px w-full bg-border/40' />
               ) : (
                 <div
                   className={getSectionContainerClass({
@@ -864,23 +864,23 @@ export function PreviewSection({
                             isRowSelected &&
                             onRemoveRow &&
                             showEditorChrome && (
-                              <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-full border border-border/40 bg-gray-900/80 px-1.5 py-1 text-xs text-gray-200 shadow-sm">
+                              <div className='absolute right-2 top-2 z-10 flex items-center gap-1 rounded-full border border-border/40 bg-gray-900/80 px-1.5 py-1 text-xs text-gray-200 shadow-sm'>
                                 <button
-                                  type="button"
+                                  type='button'
                                   onClick={(e: React.MouseEvent) => {
                                     e.stopPropagation();
                                     if (!canRemoveRow) return;
                                     onRemoveRow(section.id, row.id);
                                   }}
                                   disabled={!canRemoveRow}
-                                  className="rounded p-1 text-gray-300 hover:text-red-200 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+                                  className='rounded p-1 text-gray-300 hover:text-red-200 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40'
                                   title={
                                     canRemoveRow
                                       ? 'Remove row'
                                       : 'At least one row is required'
                                   }
                                 >
-                                  <Trash2 className="size-3.5" />
+                                  <Trash2 className='size-3.5' />
                                 </button>
                               </div>
                             )}
@@ -981,7 +981,7 @@ export function PreviewSection({
                                   hasColumnBackgroundMode;
                                   const columnTooltip = (
                                     <InspectorTooltip
-                                      title="Column"
+                                      title='Column'
                                       sections={[
                                         {
                                           title: 'Meta',
@@ -1095,10 +1095,10 @@ export function PreviewSection({
                                       nodeId={column.id}
                                       fallbackNodeId={section.id}
                                       content={columnTooltip}
-                                      className="w-full"
+                                      className='w-full'
                                     >
                                       <div
-                                        role="button"
+                                        role='button'
                                         tabIndex={0}
                                         onClick={(e: React.MouseEvent): void => {
                                           e.stopPropagation();
@@ -1174,7 +1174,7 @@ export function PreviewSection({
                                             showEditorChrome
                                             ) {
                                               return (
-                                                <div className="flex min-h-[60px] items-center justify-center rounded border border-dashed border-gray-700/50 bg-gray-900/20 text-[10px] uppercase tracking-wider text-gray-600">
+                                                <div className='flex min-h-[60px] items-center justify-center rounded border border-dashed border-gray-700/50 bg-gray-900/20 text-[10px] uppercase tracking-wider text-gray-600'>
                                                 Column
                                                 </div>
                                               );
@@ -1252,7 +1252,7 @@ export function PreviewSection({
                                             );
                                           })()
                                         ) : showEditorChrome ? (
-                                          <div className="flex min-h-[60px] items-center justify-center rounded border border-dashed border-gray-700/50 bg-gray-900/20 text-[10px] uppercase tracking-wider text-gray-600">
+                                          <div className='flex min-h-[60px] items-center justify-center rounded border border-dashed border-gray-700/50 bg-gray-900/20 text-[10px] uppercase tracking-wider text-gray-600'>
                                           Column
                                           </div>
                                         ) : null}
@@ -1296,7 +1296,7 @@ export function PreviewSection({
 
     return wrapInspector(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={(e: React.KeyboardEvent): void => {
@@ -1309,7 +1309,7 @@ export function PreviewSection({
         {divider}
         {showEditorChrome && onOpenMedia && (
           <button
-            type="button"
+            type='button'
             onClick={(e: React.MouseEvent): void => {
               e.stopPropagation();
               onOpenMedia({
@@ -1318,7 +1318,7 @@ export function PreviewSection({
                 key: 'image',
               });
             }}
-            className="absolute left-3 top-3 z-10 rounded-full border border-border/40 bg-gray-900/70 px-2 py-1 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100"
+            className='absolute left-3 top-3 z-10 rounded-full border border-border/40 bg-gray-900/70 px-2 py-1 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100'
           >
             Replace image
           </button>
@@ -1336,21 +1336,21 @@ export function PreviewSection({
               {sectionImage ? (
                 <NextImage
                   src={sectionImage}
-                  alt=""
+                  alt=''
                   fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 50vw"
+                  className='object-cover'
+                  sizes='(max-width: 768px) 100vw, 50vw'
                   unoptimized
                 />
               ) : showEditorChrome ? (
                 <div
                   className={`flex ${imgHeightClass} w-full items-center justify-center bg-gray-800`}
                 >
-                  <ImageIcon className="size-16 text-gray-600" />
+                  <ImageIcon className='size-16 text-gray-600' />
                 </div>
               ) : null}
             </div>
-            <div className="flex w-full flex-col justify-center gap-4 md:w-1/2">
+            <div className='flex w-full flex-col justify-center gap-4 md:w-1/2'>
               {section.blocks.length > 0 ? (
                 section.blocks.map((block: BlockInstance) => (
                   <PreviewBlockItem
@@ -1361,7 +1361,7 @@ export function PreviewSection({
                   />
                 ))
               ) : showEditorChrome ? (
-                <p className="text-gray-500">Add content blocks</p>
+                <p className='text-gray-500'>Add content blocks</p>
               ) : null}
             </div>
           </div>
@@ -1382,7 +1382,7 @@ export function PreviewSection({
 
     return wrapInspector(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={(e: React.KeyboardEvent): void => {
@@ -1395,7 +1395,7 @@ export function PreviewSection({
         {divider}
         {showEditorChrome && onOpenMedia && (
           <button
-            type="button"
+            type='button'
             onClick={(e: React.MouseEvent): void => {
               e.stopPropagation();
               onOpenMedia({
@@ -1404,7 +1404,7 @@ export function PreviewSection({
                 key: 'image',
               });
             }}
-            className="absolute left-3 top-3 z-10 rounded-full border border-border/40 bg-gray-900/70 px-2 py-1 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100"
+            className='absolute left-3 top-3 z-10 rounded-full border border-border/40 bg-gray-900/70 px-2 py-1 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100'
           >
             Replace image
           </button>
@@ -1415,13 +1415,13 @@ export function PreviewSection({
         >
           {sectionImage ? (
             <div
-              className="absolute inset-0 bg-cover bg-center"
+              className='absolute inset-0 bg-cover bg-center'
               style={{ backgroundImage: `url(${sectionImage})` }}
             >
-              <div className="absolute inset-0 bg-black/50" />
+              <div className='absolute inset-0 bg-black/50' />
             </div>
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
+            <div className='absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900' />
           )}
           <div
             className={`relative z-10 ${getSectionContainerClass({
@@ -1430,7 +1430,7 @@ export function PreviewSection({
               paddingClass: 'px-6',
             })} text-center`}
           >
-            <div className="space-y-4">
+            <div className='space-y-4'>
               {section.blocks.map((block: BlockInstance) => (
                 <PreviewBlockItem
                   key={block.id}
@@ -1441,7 +1441,7 @@ export function PreviewSection({
               ))}
             </div>
             {section.blocks.length === 0 && (
-              <p className="text-lg text-gray-400">Hero section</p>
+              <p className='text-lg text-gray-400'>Hero section</p>
             )}
           </div>
         </div>
@@ -1453,7 +1453,7 @@ export function PreviewSection({
   if (section.type === 'RichText') {
     return wrapInspector(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={(e: React.KeyboardEvent): void => {
@@ -1465,7 +1465,7 @@ export function PreviewSection({
         {renderSectionActions()}
         {showEditorChrome && onOpenMedia && (
           <button
-            type="button"
+            type='button'
             onClick={(e: React.MouseEvent): void => {
               e.stopPropagation();
               onOpenMedia({
@@ -1474,7 +1474,7 @@ export function PreviewSection({
                 key: 'src',
               });
             }}
-            className="absolute left-3 top-3 z-10 rounded-full border border-border/40 bg-gray-900/70 px-2 py-1 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100"
+            className='absolute left-3 top-3 z-10 rounded-full border border-border/40 bg-gray-900/70 px-2 py-1 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100'
           >
             Replace image
           </button>
@@ -1486,7 +1486,7 @@ export function PreviewSection({
             maxWidthClass: 'max-w-3xl',
           })}
         >
-          <div className="space-y-4">
+          <div className='space-y-4'>
             {section.blocks.map((block: BlockInstance) => (
               <PreviewBlockItem
                 key={block.id}
@@ -1496,7 +1496,7 @@ export function PreviewSection({
               />
             ))}
             {showEditorChrome && section.blocks.length === 0 && (
-              <p className="text-gray-500">Rich text section</p>
+              <p className='text-gray-500'>Rich text section</p>
             )}
           </div>
         </div>
@@ -1515,7 +1515,7 @@ export function PreviewSection({
     }
     return wrapInspector(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={(e: React.KeyboardEvent): void => {
@@ -1528,17 +1528,17 @@ export function PreviewSection({
         {divider}
         {hasText ? (
           <p
-            className="m-0 p-0 text-base leading-relaxed text-gray-200"
+            className='m-0 p-0 text-base leading-relaxed text-gray-200'
             style={typoStyles}
           >
             {text}
           </p>
         ) : showPlaceholder ? (
-          <div className="rounded border border-dashed border-border/40 bg-gray-800/20 px-3 py-2 text-sm text-gray-500">
+          <div className='rounded border border-dashed border-border/40 bg-gray-800/20 px-3 py-2 text-sm text-gray-500'>
             Text element
           </div>
         ) : (
-          <div className="min-h-[1px]" />
+          <div className='min-h-[1px]' />
         )}
       </div>,
     );
@@ -1563,7 +1563,7 @@ export function PreviewSection({
 
     return wrapInspector(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={(e: React.KeyboardEvent): void => {
@@ -1575,7 +1575,7 @@ export function PreviewSection({
         {renderSectionActions()}
         {showEditorChrome && onOpenMedia && (
           <button
-            type="button"
+            type='button'
             onClick={(e: React.MouseEvent): void => {
               e.stopPropagation();
               onOpenMedia({
@@ -1584,14 +1584,14 @@ export function PreviewSection({
                 key: 'src',
               });
             }}
-            className="absolute left-3 top-3 z-10 rounded-full border border-border/40 bg-gray-900/70 px-2 py-1 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100"
+            className='absolute left-3 top-3 z-10 rounded-full border border-border/40 bg-gray-900/70 px-2 py-1 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100'
           >
             Replace image
           </button>
         )}
         {divider}
         {hasSrc ? (
-          <div className="relative" style={presentation.wrapperStyles}>
+          <div className='relative' style={presentation.wrapperStyles}>
             <NextImage
               src={src}
               alt={alt}
@@ -1607,14 +1607,14 @@ export function PreviewSection({
             />
             {presentation.hasOverlay && (
               <div
-                className="pointer-events-none absolute inset-0"
+                className='pointer-events-none absolute inset-0'
                 style={presentation.overlayStyles}
               />
             )}
           </div>
         ) : showEditorChrome ? (
           <div
-            className="cms-media flex items-center justify-center bg-gray-800/50 py-8 text-gray-500 text-sm"
+            className='cms-media flex items-center justify-center bg-gray-800/50 py-8 text-gray-500 text-sm'
             style={presentation.wrapperStyles}
           >
             No image selected
@@ -1645,7 +1645,7 @@ export function PreviewSection({
 
       return wrapInspector(
         <div
-          role="button"
+          role='button'
           tabIndex={0}
           onClick={handleSelect}
           onKeyDown={(e: React.KeyboardEvent): void => {
@@ -1703,7 +1703,7 @@ export function PreviewSection({
 
     return wrapInspector(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={(e: React.KeyboardEvent): void => {
@@ -1715,7 +1715,7 @@ export function PreviewSection({
         {renderSectionActions()}
         {divider}
         <div
-          className="flex items-center justify-center rounded border border-dashed border-border/40 bg-gray-900/40 text-xs text-gray-400"
+          className='flex items-center justify-center rounded border border-dashed border-border/40 bg-gray-900/40 text-xs text-gray-400'
           style={{ height: `${Math.max(120, height)}px` }}
         >
           No 3D asset selected
@@ -1751,7 +1751,7 @@ export function PreviewSection({
 
     return wrapInspector(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={(e: React.KeyboardEvent): void => {
@@ -1815,7 +1815,7 @@ export function PreviewSection({
 
     return wrapInspector(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={(e: React.KeyboardEvent): void => {
@@ -1828,12 +1828,12 @@ export function PreviewSection({
         {divider}
         {letters.length === 0 ? (
           showEditorChrome ? (
-            <div className="rounded border border-dashed border-border/40 bg-gray-800/20 p-2 text-xs text-gray-500">
+            <div className='rounded border border-dashed border-border/40 bg-gray-800/20 p-2 text-xs text-gray-500'>
               Text atoms
             </div>
           ) : null
         ) : showEditorChrome ? (
-          <div className="rounded border border-dashed border-border/40 bg-gray-800/20 p-2">
+          <div className='rounded border border-dashed border-border/40 bg-gray-800/20 p-2'>
             <div style={containerStyle}>
               {letters.map((letter: BlockInstance) => (
                 <PreviewBlockItem
@@ -1873,7 +1873,7 @@ export function PreviewSection({
       }
       if (current.type === 'Heading') {
         const next = section.blocks[i + 1];
-        if (next && next.type === 'Text') {
+        if (next?.type === 'Text') {
           items.push({ heading: current, text: next });
           i += 2;
         } else {
@@ -1887,7 +1887,7 @@ export function PreviewSection({
 
     return wrapInspector(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={(e: React.KeyboardEvent): void => {
@@ -1905,7 +1905,7 @@ export function PreviewSection({
                 fullWidth: layout?.fullWidth,
               })}
             >
-              <p className="text-gray-500 text-center py-8">
+              <p className='text-gray-500 text-center py-8'>
                 Add Heading and Text blocks to create accordion items
               </p>
             </div>
@@ -1917,25 +1917,25 @@ export function PreviewSection({
               maxWidthClass: 'max-w-3xl',
             })}
           >
-            <div className="divide-y divide-gray-700/50">
+            <div className='divide-y divide-gray-700/50'>
               {items.map(
                 (
                   item: { heading: BlockInstance; text?: BlockInstance },
                   index: number,
                 ) => (
-                  <div key={item.heading.id} className="py-4">
-                    <div className="flex w-full items-center justify-between text-left">
+                  <div key={item.heading.id} className='py-4'>
+                    <div className='flex w-full items-center justify-between text-left'>
                       <PreviewBlockItem
                         block={item.heading}
                         isSelected={selectedNodeId === item.heading.id}
                         contained
                       />
-                      <span className="ml-4 shrink-0 text-gray-400 text-xl">
+                      <span className='ml-4 shrink-0 text-gray-400 text-xl'>
                         {index === 0 ? '−' : '+'}
                       </span>
                     </div>
                     {index === 0 && item.text && (
-                      <div className="mt-3">
+                      <div className='mt-3'>
                         <PreviewBlockItem
                           block={item.text}
                           isSelected={selectedNodeId === item.text.id}
@@ -1958,7 +1958,7 @@ export function PreviewSection({
 
     return wrapInspector(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={(e: React.KeyboardEvent): void => {
@@ -1971,8 +1971,8 @@ export function PreviewSection({
         {divider}
         {section.blocks.length === 0 ? (
           showEditorChrome ? (
-            <div className="container mx-auto px-4 md:px-6">
-              <p className="text-gray-500 text-center py-8">
+            <div className='container mx-auto px-4 md:px-6'>
+              <p className='text-gray-500 text-center py-8'>
                 Add blocks to create testimonial cards
               </p>
             </div>
@@ -1984,20 +1984,20 @@ export function PreviewSection({
             })}
           >
             <div
-              className="grid gap-6"
+              className='grid gap-6'
               style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
             >
               {section.blocks.map((block: BlockInstance) => (
                 <div
                   key={block.id}
-                  className="cms-hover-card rounded-xl border border-gray-700/50 bg-gray-800/30 p-6"
+                  className='cms-hover-card rounded-xl border border-gray-700/50 bg-gray-800/30 p-6'
                 >
                   <svg
-                    className="mb-4 size-6 text-gray-500"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
+                    className='mb-4 size-6 text-gray-500'
+                    fill='currentColor'
+                    viewBox='0 0 24 24'
                   >
-                    <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10H14.017zM0 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151C7.546 6.068 5.983 8.789 5.983 11h4v10H0z" />
+                    <path d='M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10H14.017zM0 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151C7.546 6.068 5.983 8.789 5.983 11h4v10H0z' />
                   </svg>
                   <PreviewBlockItem
                     block={block}
@@ -2045,7 +2045,7 @@ export function PreviewSection({
 
     return wrapInspector(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={(e: React.KeyboardEvent): void => {
@@ -2064,30 +2064,30 @@ export function PreviewSection({
         >
           {embedUrl ? (
             <div
-              className="cms-media relative w-full"
+              className='cms-media relative w-full'
               style={{
                 paddingBottom: getAspectPadding(ratio),
                 ...(mediaStyles ?? {}),
               }}
             >
               <iframe
-                className="absolute inset-0 h-full w-full"
+                className='absolute inset-0 h-full w-full'
                 src={`${embedUrl}${autoplay ? '?autoplay=1&mute=1' : ''}`}
-                title="Embedded video"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                title='Embedded video'
+                allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
                 allowFullScreen
               />
             </div>
           ) : showEditorChrome ? (
             <div
-              className="cms-media flex items-center justify-center bg-gray-800/50"
+              className='cms-media flex items-center justify-center bg-gray-800/50'
               style={{
                 paddingBottom: getAspectPadding(ratio),
                 position: 'relative',
                 ...(mediaStyles ?? {}),
               }}
             >
-              <p className="absolute inset-0 flex items-center justify-center text-gray-500">
+              <p className='absolute inset-0 flex items-center justify-center text-gray-500'>
                 Enter a video URL in section settings
               </p>
             </div>
@@ -2112,7 +2112,7 @@ export function PreviewSection({
 
     return wrapInspector(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={(e: React.KeyboardEvent): void => {
@@ -2125,8 +2125,8 @@ export function PreviewSection({
         {divider}
         {slideCount === 0 ? (
           showEditorChrome ? (
-            <div className="container mx-auto px-4 md:px-6">
-              <p className="text-gray-500 text-center py-12">
+            <div className='container mx-auto px-4 md:px-6'>
+              <p className='text-gray-500 text-center py-12'>
                 Add blocks to create slideshow slides
               </p>
             </div>
@@ -2139,7 +2139,7 @@ export function PreviewSection({
             })}
           >
             <div
-              className="relative overflow-hidden min-h-[300px]"
+              className='relative overflow-hidden min-h-[300px]'
               style={slideHeightStyle}
               onMouseEnter={
                 slideshowAllowPauseOnHover
@@ -2153,10 +2153,7 @@ export function PreviewSection({
               }
             >
               {frames.map((frame: BlockInstance, idx: number) => {
-                const frameSettings = (frame.settings ?? {}) as Record<
-                  string,
-                  unknown
-                >;
+                const frameSettings = (frame.settings ?? {});
                 const backgroundColor =
                   (frameSettings['backgroundColor'] as string) || '';
                 const contentAlignment =
@@ -2233,7 +2230,7 @@ export function PreviewSection({
                     }
                   >
                     <div
-                      className="flex h-full w-full flex-col"
+                      className='flex h-full w-full flex-col'
                       style={frameStyle}
                     >
                       {frameBlocks.length > 0 ? (
@@ -2274,7 +2271,7 @@ export function PreviewSection({
                           },
                         )
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-sm text-gray-500">
+                        <div className='flex h-full w-full items-center justify-center text-sm text-gray-500'>
                           Empty slide
                         </div>
                       )}
@@ -2284,34 +2281,34 @@ export function PreviewSection({
               })}
             </div>
             {slideCount > 1 && (showArrows || showDots) && (
-              <div className="mt-4 flex items-center justify-center gap-4">
+              <div className='mt-4 flex items-center justify-center gap-4'>
                 {showArrows && (
                   <button
-                    type="button"
+                    type='button'
                     onClick={goToPrevSlideshow}
-                    className="rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition"
+                    className='rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition'
                   >
                     <svg
-                      className="size-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                      className='size-4'
+                      fill='none'
+                      viewBox='0 0 24 24'
+                      stroke='currentColor'
                     >
                       <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
                         strokeWidth={2}
-                        d="M15 19l-7-7 7-7"
+                        d='M15 19l-7-7 7-7'
                       />
                     </svg>
                   </button>
                 )}
                 {showDots && (
-                  <div className="flex gap-2">
+                  <div className='flex gap-2'>
                     {frames.map((_: BlockInstance, idx: number) => (
                       <button
                         key={idx}
-                        type="button"
+                        type='button'
                         onClick={(): void => setSlideshowIndex(idx)}
                         className={`size-2 rounded-full transition ${idx === currentSlideshowIndex ? 'bg-white' : 'bg-gray-600'}`}
                       />
@@ -2320,21 +2317,21 @@ export function PreviewSection({
                 )}
                 {showArrows && (
                   <button
-                    type="button"
+                    type='button'
                     onClick={goToNextSlideshow}
-                    className="rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition"
+                    className='rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition'
                   >
                     <svg
-                      className="size-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                      className='size-4'
+                      fill='none'
+                      viewBox='0 0 24 24'
+                      stroke='currentColor'
                     >
                       <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
                         strokeWidth={2}
-                        d="M9 5l7 7-7 7"
+                        d='M9 5l7 7-7 7'
                       />
                     </svg>
                   </button>
@@ -2356,7 +2353,7 @@ export function PreviewSection({
 
     return wrapInspector(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={(e: React.KeyboardEvent): void => {
@@ -2371,7 +2368,7 @@ export function PreviewSection({
           className={`${getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: 'max-w-2xl' })} text-center`}
         >
           {section.blocks.length > 0 && (
-            <div className="mb-6 space-y-4">
+            <div className='mb-6 space-y-4'>
               {section.blocks.map((block: BlockInstance) => (
                 <PreviewBlockItem
                   key={block.id}
@@ -2384,17 +2381,17 @@ export function PreviewSection({
           )}
           <form
             onSubmit={(e: React.FormEvent) => e.preventDefault()}
-            className="flex flex-col gap-3 sm:flex-row sm:gap-0"
+            className='flex flex-col gap-3 sm:flex-row sm:gap-0'
           >
             <input
-              type="email"
+              type='email'
               placeholder={placeholder}
-              className="flex-1 rounded-md border border-gray-600 bg-gray-800/50 px-4 py-3 text-sm text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:rounded-r-none"
+              className='flex-1 rounded-md border border-gray-600 bg-gray-800/50 px-4 py-3 text-sm text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:rounded-r-none'
               readOnly
             />
             <button
-              type="submit"
-              className="cms-hover-button rounded-md bg-white px-6 py-3 text-sm font-semibold text-gray-900 transition hover:bg-gray-200 sm:rounded-l-none"
+              type='submit'
+              className='cms-hover-button rounded-md bg-white px-6 py-3 text-sm font-semibold text-gray-900 transition hover:bg-gray-200 sm:rounded-l-none'
             >
               {buttonText}
             </button>
@@ -2416,7 +2413,7 @@ export function PreviewSection({
 
     return wrapInspector(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={(e: React.KeyboardEvent): void => {
@@ -2435,7 +2432,7 @@ export function PreviewSection({
         >
           <form
             onSubmit={(e: React.FormEvent) => e.preventDefault()}
-            className="space-y-4"
+            className='space-y-4'
           >
             {fields.map((field: string) => {
               const isTextarea = field.toLowerCase() === 'message';
@@ -2443,21 +2440,21 @@ export function PreviewSection({
 
               return (
                 <div key={field}>
-                  <label className="mb-1.5 block text-sm font-medium text-gray-300">
+                  <label className='mb-1.5 block text-sm font-medium text-gray-300'>
                     {label}
                   </label>
                   {isTextarea ? (
                     <textarea
                       rows={4}
                       placeholder={label}
-                      className="w-full rounded-md border border-gray-600 bg-gray-800/50 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className='w-full rounded-md border border-gray-600 bg-gray-800/50 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
                       readOnly
                     />
                   ) : (
                     <input
                       type={field.toLowerCase() === 'email' ? 'email' : 'text'}
                       placeholder={label}
-                      className="w-full rounded-md border border-gray-600 bg-gray-800/50 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className='w-full rounded-md border border-gray-600 bg-gray-800/50 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
                       readOnly
                     />
                   )}
@@ -2465,8 +2462,8 @@ export function PreviewSection({
               );
             })}
             <button
-              type="submit"
-              className="cms-hover-button w-full rounded-md bg-white px-6 py-2.5 text-sm font-semibold text-gray-900 transition hover:bg-gray-200"
+              type='submit'
+              className='cms-hover-button w-full rounded-md bg-white px-6 py-2.5 text-sm font-semibold text-gray-900 transition hover:bg-gray-200'
             >
               {submitText}
             </button>
@@ -2482,7 +2479,7 @@ export function PreviewSection({
   }
   return wrapInspector(
     <div
-      role="button"
+      role='button'
       tabIndex={0}
       onClick={handleSelect}
       onKeyDown={(e: React.KeyboardEvent): void => {
@@ -2670,9 +2667,9 @@ function PreviewBlockItem({
     const sectionBase =
       `w-full text-left text-sm transition ${contained ? 'max-w-full' : ''} ${showEditorChrome ? 'overflow-hidden' : ''}`.trim();
     return wrapBlock(
-      <div className="relative group">
+      <div className='relative group'>
         <div
-          role="button"
+          role='button'
           tabIndex={0}
           onClick={handleSelect}
           onKeyDown={handleKeyDown}
@@ -2732,7 +2729,7 @@ function PreviewBlockItem({
         </div>
         {canReplaceImage && (
           <button
-            type="button"
+            type='button'
             onClick={(e: React.MouseEvent): void => {
               e.stopPropagation();
               onOpenMedia?.({
@@ -2744,7 +2741,7 @@ function PreviewBlockItem({
                 key: 'image',
               });
             }}
-            className="absolute right-2 top-2 rounded-full border border-border/40 bg-gray-900/70 px-2 py-1 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100"
+            className='absolute right-2 top-2 rounded-full border border-border/40 bg-gray-900/70 px-2 py-1 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100'
           >
             Replace image
           </button>
@@ -2766,7 +2763,7 @@ function PreviewBlockItem({
 
     return wrapBlock(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={handleKeyDown}
@@ -2774,21 +2771,21 @@ function PreviewBlockItem({
       >
         {size === 'small' ? (
           <h3
-            className="text-xl font-bold leading-tight tracking-tight md:text-2xl text-gray-200"
+            className='text-xl font-bold leading-tight tracking-tight md:text-2xl text-gray-200'
             style={typoStyles}
           >
             {text}
           </h3>
         ) : size === 'large' ? (
           <h2
-            className="text-3xl font-bold leading-tight tracking-tight md:text-5xl text-gray-200"
+            className='text-3xl font-bold leading-tight tracking-tight md:text-5xl text-gray-200'
             style={typoStyles}
           >
             {text}
           </h2>
         ) : (
           <h2
-            className="text-2xl font-bold leading-tight tracking-tight md:text-3xl text-gray-200"
+            className='text-2xl font-bold leading-tight tracking-tight md:text-3xl text-gray-200'
             style={typoStyles}
           >
             {text}
@@ -2812,20 +2809,20 @@ function PreviewBlockItem({
     const content = link ? (
       <a
         href={link}
-        className="text-sm font-medium text-blue-200 underline decoration-blue-400/50 hover:text-blue-100"
+        className='text-sm font-medium text-blue-200 underline decoration-blue-400/50 hover:text-blue-100'
         style={typoStyles}
       >
         {text}
       </a>
     ) : (
-      <span className="text-sm text-gray-200" style={typoStyles}>
+      <span className='text-sm text-gray-200' style={typoStyles}>
         {text}
       </span>
     );
 
     return wrapBlock(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={handleKeyDown}
@@ -2839,11 +2836,11 @@ function PreviewBlockItem({
         )}
       >
         {showEditorChrome ? (
-          <Megaphone className="size-3.5 text-gray-400" />
+          <Megaphone className='size-3.5 text-gray-400' />
         ) : null}
         {content}
         {showEditorChrome && link ? (
-          <Link2 className="size-3 text-blue-300/80" />
+          <Link2 className='size-3 text-blue-300/80' />
         ) : null}
       </div>,
     );
@@ -2862,7 +2859,7 @@ function PreviewBlockItem({
 
     return wrapBlock(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={handleKeyDown}
@@ -2877,13 +2874,13 @@ function PreviewBlockItem({
       >
         {hasText ? (
           <p
-            className="text-base leading-relaxed text-gray-300 md:text-lg"
+            className='text-base leading-relaxed text-gray-300 md:text-lg'
             style={typoStyles}
           >
             {text}
           </p>
         ) : showEditorChrome ? (
-          <p className="text-sm italic text-gray-500">Add text content...</p>
+          <p className='text-sm italic text-gray-500'>Add text content...</p>
         ) : null}
       </div>,
     );
@@ -2902,7 +2899,7 @@ function PreviewBlockItem({
 
     return wrapBlock(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={handleKeyDown}
@@ -2917,13 +2914,13 @@ function PreviewBlockItem({
       >
         {hasText ? (
           <p
-            className="m-0 p-0 text-base leading-relaxed text-gray-200"
+            className='m-0 p-0 text-base leading-relaxed text-gray-200'
             style={typoStyles}
           >
             {text}
           </p>
         ) : showEditorChrome ? (
-          <p className="m-0 p-0 text-sm italic text-gray-500">Text element</p>
+          <p className='m-0 p-0 text-sm italic text-gray-500'>Text element</p>
         ) : null}
       </div>,
     );
@@ -2937,7 +2934,7 @@ function PreviewBlockItem({
 
     return wrapBlock(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={handleKeyDown}
@@ -2951,7 +2948,7 @@ function PreviewBlockItem({
         )}
       >
         <span
-          className="inline-block text-sm text-gray-200"
+          className='inline-block text-sm text-gray-200'
           style={{ ...typoStyles, whiteSpace: 'pre' }}
         >
           {displayText}
@@ -2986,7 +2983,7 @@ function PreviewBlockItem({
 
     return wrapBlock(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={handleKeyDown}
@@ -3000,18 +2997,18 @@ function PreviewBlockItem({
         )}
       >
         {hasSrc ? (
-          <div className="relative" style={wrapperStyles}>
+          <div className='relative' style={wrapperStyles}>
             <NextImage src={src} alt={alt} fill style={imageStyles} />
             {presentation.hasOverlay && (
               <div
-                className="pointer-events-none absolute inset-0"
+                className='pointer-events-none absolute inset-0'
                 style={presentation.overlayStyles}
               />
             )}
           </div>
         ) : showEditorChrome ? (
           <div
-            className="cms-media flex items-center justify-center bg-gray-800/50 py-8 text-gray-500 text-sm"
+            className='cms-media flex items-center justify-center bg-gray-800/50 py-8 text-gray-500 text-sm'
             style={presentation.wrapperStyles}
           >
             No image selected
@@ -3019,7 +3016,7 @@ function PreviewBlockItem({
         ) : null}
         {showEditorChrome && onOpenMedia && (
           <button
-            type="button"
+            type='button'
             onClick={(e: React.MouseEvent): void => {
               e.stopPropagation();
               onOpenMedia?.({
@@ -3031,7 +3028,7 @@ function PreviewBlockItem({
                 key: 'src',
               });
             }}
-            className="absolute right-2 top-2 rounded-full border border-border/40 bg-gray-900/70 px-2 py-1 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100"
+            className='absolute right-2 top-2 rounded-full border border-border/40 bg-gray-900/70 px-2 py-1 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100'
           >
             Replace image
           </button>
@@ -3085,7 +3082,7 @@ function PreviewBlockItem({
 
       return wrapBlock(
         <div
-          role="button"
+          role='button'
           tabIndex={0}
           onClick={handleSelect}
           onKeyDown={handleKeyDown}
@@ -3120,7 +3117,7 @@ function PreviewBlockItem({
             modelPosition={position}
             modelRotation={rotation}
             modelScale={scale}
-            className="h-full w-full"
+            className='h-full w-full'
           />
         </div>,
       );
@@ -3128,7 +3125,7 @@ function PreviewBlockItem({
 
     return wrapBlock(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={handleKeyDown}
@@ -3142,7 +3139,7 @@ function PreviewBlockItem({
         )}
         style={{ height: `${Math.max(120, height)}px` }}
       >
-        <div className="flex h-full w-full items-center justify-center text-xs text-gray-400">
+        <div className='flex h-full w-full items-center justify-center text-xs text-gray-400'>
           No 3D asset selected
         </div>
       </div>,
@@ -3199,7 +3196,7 @@ function PreviewBlockItem({
 
     return wrapBlock(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={handleKeyDown}
@@ -3226,7 +3223,7 @@ function PreviewBlockItem({
 
     return wrapBlock(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={handleKeyDown}
@@ -3240,10 +3237,10 @@ function PreviewBlockItem({
         )}
       >
         <div
-          className="rounded-lg p-4 text-gray-400"
+          className='rounded-lg p-4 text-gray-400'
           data-color-scheme={colorScheme}
         >
-          <p className="text-sm italic">Rich text content area</p>
+          <p className='text-sm italic'>Rich text content area</p>
         </div>
       </div>,
     );
@@ -3277,9 +3274,9 @@ function PreviewBlockItem({
       : 'block h-auto w-full max-h-full object-cover';
 
     return wrapBlock(
-      <div className="relative group">
+      <div className='relative group'>
         <div
-          role="button"
+          role='button'
           tabIndex={0}
           onClick={handleSelect}
           onKeyDown={handleKeyDown}
@@ -3293,24 +3290,24 @@ function PreviewBlockItem({
           )}
         >
           {src ? (
-            <div className="cms-media relative" style={wrapperStyles}>
+            <div className='cms-media relative' style={wrapperStyles}>
               <NextImage
                 src={src}
                 alt={alt}
                 fill
                 className={imageClassName}
-                sizes="(max-width: 768px) 100vw, 50vw"
+                sizes='(max-width: 768px) 100vw, 50vw'
                 unoptimized
               />{' '}
             </div>
           ) : showEditorChrome ? (
             <div
-              className="cms-media flex items-center justify-center bg-gray-700/30 min-h-[60px]"
+              className='cms-media flex items-center justify-center bg-gray-700/30 min-h-[60px]'
               style={wrapperStyles}
             >
-              <div className="flex flex-col items-center gap-1">
-                <ImageIcon className="size-6 text-gray-500" />
-                <span className="text-xs text-gray-500 truncate max-w-[120px]">
+              <div className='flex flex-col items-center gap-1'>
+                <ImageIcon className='size-6 text-gray-500' />
+                <span className='text-xs text-gray-500 truncate max-w-[120px]'>
                   {alt}
                 </span>
               </div>
@@ -3319,7 +3316,7 @@ function PreviewBlockItem({
         </div>
         {showEditorChrome && onOpenMedia && (
           <button
-            type="button"
+            type='button'
             onClick={(e: React.MouseEvent): void => {
               e.stopPropagation();
               onOpenMedia?.({
@@ -3331,7 +3328,7 @@ function PreviewBlockItem({
                 key: 'src',
               });
             }}
-            className="absolute right-2 top-2 rounded-full border border-border/40 bg-gray-900/70 px-2 py-1 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100"
+            className='absolute right-2 top-2 rounded-full border border-border/40 bg-gray-900/70 px-2 py-1 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100'
           >
             Replace image
           </button>
@@ -3374,7 +3371,7 @@ function PreviewBlockItem({
 
     return wrapBlock(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={handleKeyDown}
@@ -3388,18 +3385,18 @@ function PreviewBlockItem({
         )}
       >
         {embedUrl ? (
-          <div className="cms-media relative w-full" style={resolvedStyles}>
+          <div className='cms-media relative w-full' style={resolvedStyles}>
             <iframe
-              className="absolute inset-0 h-full w-full"
+              className='absolute inset-0 h-full w-full'
               src={`${embedUrl}${autoplay ? '?autoplay=1&mute=1' : ''}`}
-              title="Embedded video"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              title='Embedded video'
+              allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
               allowFullScreen
             />
           </div>
         ) : showEditorChrome ? (
           <div
-            className="cms-media flex items-center justify-center bg-gray-800/50 py-8 text-gray-500 text-sm"
+            className='cms-media flex items-center justify-center bg-gray-800/50 py-8 text-gray-500 text-sm'
             style={resolvedStyles}
           >
             Enter a video URL
@@ -3424,7 +3421,7 @@ function PreviewBlockItem({
 
     return wrapBlock(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={handleKeyDown}
@@ -3437,12 +3434,12 @@ function PreviewBlockItem({
           }`,
         )}
       >
-        <div className="cms-hover-card w-full rounded-lg border border-border/40 bg-gray-900/40 p-4">
-          <div className="mb-3">
-            <div className="text-sm font-semibold text-white">
+        <div className='cms-hover-card w-full rounded-lg border border-border/40 bg-gray-900/40 p-4'>
+          <div className='mb-3'>
+            <div className='text-sm font-semibold text-white'>
               {title || appLabel}
             </div>
-            <div className="text-[10px] uppercase tracking-wide text-gray-500">
+            <div className='text-[10px] uppercase tracking-wide text-gray-500'>
               App embed
             </div>
           </div>
@@ -3450,12 +3447,12 @@ function PreviewBlockItem({
             <iframe
               src={embedUrl}
               title={title || appLabel}
-              className="w-full rounded-md border border-border/40 bg-black"
+              className='w-full rounded-md border border-border/40 bg-black'
               style={{ height }}
             />
           ) : showEditorChrome ? (
             <div
-              className="flex items-center justify-center rounded-md border border-dashed border-border/40 bg-gray-800/40 text-xs text-gray-400"
+              className='flex items-center justify-center rounded-md border border-dashed border-border/40 bg-gray-800/40 text-xs text-gray-400'
               style={{ height }}
             >
               Provide an embed URL to render the {appLabel} app here.
@@ -3474,7 +3471,7 @@ function PreviewBlockItem({
 
     return wrapBlock(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={handleKeyDown}
@@ -3488,7 +3485,7 @@ function PreviewBlockItem({
         )}
       >
         <hr
-          className="my-2 border-0"
+          className='my-2 border-0'
           style={{
             borderTopStyle: style as 'solid' | 'dashed' | 'dotted',
             borderTopWidth: `${thickness}px`,
@@ -3512,7 +3509,7 @@ function PreviewBlockItem({
 
     return wrapBlock(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={handleKeyDown}
@@ -3527,12 +3524,12 @@ function PreviewBlockItem({
       >
         {links.length === 0 ? (
           showEditorChrome ? (
-            <p className="text-sm text-gray-500">
+            <p className='text-sm text-gray-500'>
               Add social media URLs in settings
             </p>
           ) : null
         ) : (
-          <div className="flex items-center gap-4">
+          <div className='flex items-center gap-4'>
             {links.map((link: string, idx: number) => {
               let label = 'Link';
               try {
@@ -3546,11 +3543,11 @@ function PreviewBlockItem({
                 <a
                   key={`${link}-${idx}`}
                   href={link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-full border border-gray-600 p-2 text-gray-400 transition hover:text-white hover:border-white"
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='rounded-full border border-gray-600 p-2 text-gray-400 transition hover:text-white hover:border-white'
                 >
-                  <span className="text-xs font-medium uppercase">
+                  <span className='text-xs font-medium uppercase'>
                     {label.slice(0, 2)}
                   </span>
                 </a>
@@ -3570,7 +3567,7 @@ function PreviewBlockItem({
 
     return wrapBlock(
       <div
-        role="button"
+        role='button'
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={handleKeyDown}
@@ -3583,10 +3580,10 @@ function PreviewBlockItem({
           }`,
         )}
       >
-        <div className="flex items-center justify-center">
+        <div className='flex items-center justify-center'>
           <span
             style={{ fontSize: `${iconSize}px`, color: iconColor }}
-            role="img"
+            role='img'
             aria-label={iconName}
           >
             {iconName === 'Star'
@@ -3611,7 +3608,7 @@ function PreviewBlockItem({
 
   return wrapBlock(
     <div
-      role="button"
+      role='button'
       tabIndex={0}
       onClick={handleSelect}
       onKeyDown={handleKeyDown}
@@ -3624,7 +3621,7 @@ function PreviewBlockItem({
         }`,
       )}
     >
-      <span className="flex-1 truncate text-gray-300">{block.type}</span>
+      <span className='flex-1 truncate text-gray-300'>{block.type}</span>
     </div>,
   );
 }

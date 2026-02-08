@@ -8,7 +8,7 @@ const TestComponent = () => {
   const { settings, setSettings } = usePlaywrightSettings();
   return (
     <div>
-      <div data-testid="headless">{settings.headless ? 'true' : 'false'}</div>
+      <div data-testid='headless'>{settings.headless ? 'true' : 'false'}</div>
       <button onClick={() => setSettings(prev => ({ ...prev, headless: !prev.headless }))}>
         Toggle Headless
       </button>

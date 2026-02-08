@@ -152,10 +152,10 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
   );
 
   return (
-    <div className="space-y-4">
+    <div className='space-y-4'>
       {/* Preset selector */}
-      <div className="space-y-1.5">
-        <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+      <div className='space-y-1.5'>
+        <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
           Animation preset
         </Label>
         <AnimationPresetPicker value={config.preset} onChange={handlePresetChange} />
@@ -164,22 +164,22 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
       {config.preset !== 'none' && (
         <>
           {/* Node target */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+          <div className='space-y-1.5'>
+            <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
               Node animation
             </Label>
-            <div className="grid grid-cols-3 gap-2 place-items-center">
+            <div className='grid grid-cols-3 gap-2 place-items-center'>
               {nodeTargetOptions.map((option: (typeof nodeTargetOptions)[number]) => {
                 const Icon = option.icon;
                 const isActive = resolvedNodeTarget === option.value;
                 return (
                   <Tooltip key={option.value} content={option.label}>
                     <Button
-                      type="button"
-                      size="sm"
+                      type='button'
+                      size='sm'
                       variant={isActive ? 'secondary' : 'outline'}
                       onClick={(): void => handleNodeTargetChange(option.value)}
-                      className="h-8 w-10 p-0"
+                      className='h-8 w-10 p-0'
                       aria-label={option.label}
                     >
                       {React.createElement(Icon, { className: 'size-4' })}
@@ -188,39 +188,39 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                 );
               })}
             </div>
-            <p className="text-[10px] text-gray-500">
+            <p className='text-[10px] text-gray-500'>
               Use "Animate me" for element nodes. Use "Animate children" for folder nodes to stagger direct children.
             </p>
             {resolvedNodeTarget === 'custom' && (
-              <p className="text-[10px] text-gray-400">
+              <p className='text-[10px] text-gray-400'>
                 Custom selector active. Use the selector below and choose a stagger preset if needed.
               </p>
             )}
           </div>
 
           {/* Target selector */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+          <div className='space-y-1.5'>
+            <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
               Target selector
             </Label>
             <Input
               value={selectorValue}
               onChange={handleSelectorChange}
-              placeholder=":scope > *, h2, .card"
-              className="text-sm"
+              placeholder=':scope > *, h2, .card'
+              className='text-sm'
             />
-            <div className="flex flex-wrap gap-1.5">
+            <div className='flex flex-wrap gap-1.5'>
               {quickSelectors.map((option: (typeof quickSelectors)[number]) => {
                 const Icon = option.icon;
                 const isActive = selectorValue === option.value;
                 return (
                   <Tooltip key={option.label} content={option.label}>
                     <Button
-                      type="button"
-                      size="sm"
+                      type='button'
+                      size='sm'
                       variant={isActive ? 'secondary' : 'outline'}
                       onClick={(): void => handleQuickSelector(option.value)}
-                      className="h-7 w-9 p-0"
+                      className='h-7 w-9 p-0'
                       aria-label={option.label}
                     >
                       {React.createElement(Icon as React.ComponentType<{ className?: string }>, { className: 'size-3.5' })}
@@ -229,46 +229,46 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                 );
               })}
             </div>
-            <p className="text-[10px] text-gray-500">
-              Leave empty to animate the wrapper element. Use <span className="text-gray-400">:scope &gt; *</span> for direct children.
+            <p className='text-[10px] text-gray-500'>
+              Leave empty to animate the wrapper element. Use <span className='text-gray-400'>:scope &gt; *</span> for direct children.
             </p>
           </div>
 
           {/* Duration */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+          <div className='space-y-1.5'>
+            <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
               Duration (seconds)
             </Label>
             <Input
-              type="number"
+              type='number'
               min={0.1}
               max={10}
               step={0.1}
               value={config.duration}
               onChange={handleDurationChange}
-              className="text-sm"
+              className='text-sm'
             />
           </div>
 
           {/* Delay */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+          <div className='space-y-1.5'>
+            <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
               Delay (seconds)
             </Label>
             <Input
-              type="number"
+              type='number'
               min={0}
               max={5}
               step={0.1}
               value={config.delay}
               onChange={handleDelayChange}
-              className="text-sm"
+              className='text-sm'
             />
           </div>
 
           {/* Easing */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+          <div className='space-y-1.5'>
+            <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
               Easing
             </Label>
             <UnifiedSelect
@@ -280,31 +280,31 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
               <Input
                 value={customEaseValue}
                 onChange={handleCustomEaseChange}
-                placeholder="0.42,0,0.58,1 or custom ease string"
-                className="text-sm"
+                placeholder='0.42,0,0.58,1 or custom ease string'
+                className='text-sm'
               />
             )}
           </div>
 
           {/* Trigger */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+          <div className='space-y-1.5'>
+            <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
               Trigger
             </Label>
             <RadioGroup
               value={config.trigger}
               onValueChange={handleTriggerChange}
-              className="space-y-1"
+              className='space-y-1'
             >
-              <div className="flex items-center gap-2">
-                <RadioGroupItem value="load" id="trigger-load" />
-                <Label htmlFor="trigger-load" className="text-sm text-gray-300 cursor-pointer">
+              <div className='flex items-center gap-2'>
+                <RadioGroupItem value='load' id='trigger-load' />
+                <Label htmlFor='trigger-load' className='text-sm text-gray-300 cursor-pointer'>
                   On page load
                 </Label>
               </div>
-              <div className="flex items-center gap-2">
-                <RadioGroupItem value="scroll" id="trigger-scroll" />
-                <Label htmlFor="trigger-scroll" className="text-sm text-gray-300 cursor-pointer">
+              <div className='flex items-center gap-2'>
+                <RadioGroupItem value='scroll' id='trigger-scroll' />
+                <Label htmlFor='trigger-scroll' className='text-sm text-gray-300 cursor-pointer'>
                   On scroll into view
                 </Label>
               </div>

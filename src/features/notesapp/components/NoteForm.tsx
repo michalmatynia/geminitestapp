@@ -696,25 +696,25 @@ export function NoteForm({
         id={note ? 'note-edit-form' : undefined}
         ref={formRef}
         onSubmit={(e: React.FormEvent): void => { void handleSubmit(e); }}
-        className="space-y-4"
+        className='space-y-4'
       >      
 
         <div>
-          <Label className="mb-2 block text-sm font-medium text-white">
+          <Label className='mb-2 block text-sm font-medium text-white'>
           Title
           </Label>
           <Input
-            type="text"
-            placeholder="Enter note title"
+            type='text'
+            placeholder='Enter note title'
             value={title}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setTitle(e.target.value)}
-            className="w-full rounded-lg border bg-gray-800 px-4 py-2 text-white text-lg font-semibold placeholder:text-gray-500 focus:border-blue-500 focus:outline-none"
+            className='w-full rounded-lg border bg-gray-800 px-4 py-2 text-white text-lg font-semibold placeholder:text-gray-500 focus:border-blue-500 focus:outline-none'
             required
           />
         </div>
 
         <div>
-          <Label className="mb-2 block text-sm font-medium text-white">
+          <Label className='mb-2 block text-sm font-medium text-white'>
           Content
           </Label>
           <MarkdownToolbar
@@ -827,26 +827,26 @@ export function NoteForm({
 
       {lightboxImage && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+          className='fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4'
           onClick={(): void => closeLightbox()}
         >
           <Button
-            type="button"
-            className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-colors"
+            type='button'
+            className='absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-colors'
             onClick={(): void => closeLightbox()}
           >
             <X size={24} />
           </Button>
           <div
-            className="relative h-[90vh] w-[90vw] max-h-[90vh] max-w-[90vw]"
+            className='relative h-[90vh] w-[90vw] max-h-[90vh] max-w-[90vw]'
             onClick={(e: React.MouseEvent): void => e.stopPropagation()}
           >
             <Image
               src={lightboxImage}
-              alt="Lightbox preview"
+              alt='Lightbox preview'
               fill
-              sizes="90vw"
-              className="rounded-lg object-contain"
+              sizes='90vw'
+              className='rounded-lg object-contain'
             />
           </div>
         </div>

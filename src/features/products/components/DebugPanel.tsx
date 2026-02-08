@@ -29,9 +29,9 @@ export default function DebugPanel(): React.JSX.Element | null {
   };
 
   return (
-    <div className="fixed bottom-0 right-0 bg-gray-800 text-white p-4 rounded-tl-lg shadow-lg max-w-lg max-h-96 overflow-auto z-50">
-      <h3 className="text-lg font-bold mb-2">Product Form Debug Panel</h3>
-      <pre className="text-xs">
+    <div className='fixed bottom-0 right-0 bg-gray-800 text-white p-4 rounded-tl-lg shadow-lg max-w-lg max-h-96 overflow-auto z-50'>
+      <h3 className='text-lg font-bold mb-2'>Product Form Debug Panel</h3>
+      <pre className='text-xs'>
         {JSON.stringify(context, getCircularReplacer(), 2)}
       </pre>
     </div>

@@ -35,12 +35,12 @@ export function IteratorNodeConfigSection({
     runtimeState.inputs[selectedNode.id]?.callback ?? output.callback ?? null;
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-md border border-border bg-card/50 p-3">
-        <div className="flex items-center justify-between">
-          <div className="text-[11px] text-gray-400">Runtime</div>
-          <div className="flex items-center gap-2 text-[11px]">
-            <span className="rounded-full border border-border bg-card/70 px-2 py-0.5 text-gray-200">
+    <div className='space-y-4'>
+      <div className='rounded-md border border-border bg-card/50 p-3'>
+        <div className='flex items-center justify-between'>
+          <div className='text-[11px] text-gray-400'>Runtime</div>
+          <div className='flex items-center gap-2 text-[11px]'>
+            <span className='rounded-full border border-border bg-card/70 px-2 py-0.5 text-gray-200'>
               {total > 0 ? `${Math.min(index + 1, total)}/${total}` : '0/0'}
             </span>
             <span
@@ -57,48 +57,48 @@ export function IteratorNodeConfigSection({
               {status}
             </span>
             {done ? (
-              <span className="rounded-full border border-emerald-400/50 bg-emerald-500/10 px-2 py-0.5 text-emerald-200">
+              <span className='rounded-full border border-emerald-400/50 bg-emerald-500/10 px-2 py-0.5 text-emerald-200'>
                 done
               </span>
             ) : null}
           </div>
         </div>
 
-        <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div className='mt-3 grid grid-cols-1 gap-3 md:grid-cols-2'>
           <div>
-            <Label className="text-xs text-gray-400">Current Item (value)</Label>
+            <Label className='text-xs text-gray-400'>Current Item (value)</Label>
             <Textarea
-              className="mt-2 min-h-[110px] w-full rounded-md border border-border bg-card/70 font-mono text-xs text-white"
+              className='mt-2 min-h-[110px] w-full rounded-md border border-border bg-card/70 font-mono text-xs text-white'
               value={value !== undefined ? formatRuntimeValue(value) : ''}
               readOnly
-              placeholder="No item emitted yet."
+              placeholder='No item emitted yet.'
             />
           </div>
           <div>
-            <Label className="text-xs text-gray-400">Callback Input</Label>
+            <Label className='text-xs text-gray-400'>Callback Input</Label>
             <Textarea
-              className="mt-2 min-h-[110px] w-full rounded-md border border-border bg-card/70 font-mono text-xs text-white"
+              className='mt-2 min-h-[110px] w-full rounded-md border border-border bg-card/70 font-mono text-xs text-white'
               value={callbackValue !== undefined ? formatRuntimeValue(callbackValue) : ''}
               readOnly
-              placeholder="Connect a downstream output to the callback input to advance."
+              placeholder='Connect a downstream output to the callback input to advance.'
             />
           </div>
         </div>
 
-        <p className="mt-2 text-[11px] text-gray-500">
-          The iterator emits one item on <span className="text-gray-300">value</span> and waits.
-          When <span className="text-gray-300">callback</span> receives a new (changed) value, it advances.
-          Best callback tokens: <span className="text-gray-300">jobId</span> or{' '}
-          <span className="text-gray-300">result</span> from the processing node.
+        <p className='mt-2 text-[11px] text-gray-500'>
+          The iterator emits one item on <span className='text-gray-300'>value</span> and waits.
+          When <span className='text-gray-300'>callback</span> receives a new (changed) value, it advances.
+          Best callback tokens: <span className='text-gray-300'>jobId</span> or{' '}
+          <span className='text-gray-300'>result</span> from the processing node.
         </p>
       </div>
 
-      <div className="rounded-md border border-border bg-card/50 p-3">
-        <div className="text-[11px] text-gray-400">Behavior</div>
-        <div className="mt-3 flex items-center justify-between">
+      <div className='rounded-md border border-border bg-card/50 p-3'>
+        <div className='text-[11px] text-gray-400'>Behavior</div>
+        <div className='mt-3 flex items-center justify-between'>
           <div>
-            <div className="text-[11px] text-gray-200">Auto-continue</div>
-            <div className="text-[11px] text-gray-500">
+            <div className='text-[11px] text-gray-200'>Auto-continue</div>
+            <div className='text-[11px] text-gray-500'>
               When enabled, the UI/runtime will try to kick off the next item automatically.
             </div>
           </div>
@@ -111,10 +111,10 @@ export function IteratorNodeConfigSection({
             }
           />
         </div>
-        <div className="mt-3">
-          <Label className="text-xs text-gray-400">Max steps</Label>
+        <div className='mt-3'>
+          <Label className='text-xs text-gray-400'>Max steps</Label>
           <Input
-            className="mt-2 h-8 w-[140px] border-border bg-card/70 text-xs text-white"
+            className='mt-2 h-8 w-[140px] border-border bg-card/70 text-xs text-white'
             value={String(iteratorConfig.maxSteps ?? 50)}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
               const next = Number.parseInt(event.target.value || '0', 10);
@@ -126,7 +126,7 @@ export function IteratorNodeConfigSection({
               });
             }}
           />
-          <p className="mt-2 text-[11px] text-gray-500">
+          <p className='mt-2 text-[11px] text-gray-500'>
             Safety cap for automatic continuation loops.
           </p>
         </div>

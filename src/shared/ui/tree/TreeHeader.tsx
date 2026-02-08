@@ -24,15 +24,15 @@ export function TreeHeader({
   return (
     <div className={cn('flex flex-col gap-2', className)}>
       {(title || actions) && (
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex flex-col">
+        <div className='flex items-center justify-between gap-2'>
+          <div className='flex flex-col'>
             {title && (
               <div className={cn('text-xs font-semibold uppercase tracking-wide text-gray-400', titleClassName)}>
                 {title}
               </div>
             )}
             {subtitle && (
-              <div className="text-[10px] text-gray-500 uppercase tracking-wider">
+              <div className='text-[10px] text-gray-500 uppercase tracking-wider'>
                 {subtitle}
               </div>
             )}

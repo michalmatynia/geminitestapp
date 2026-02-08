@@ -115,7 +115,7 @@ export function NodeConfigurationSections({
   if (!selectedNode) return null;
 
   return (
-    <div className="space-y-6">
+    <div className='space-y-6'>
       <TriggerNodeConfigSection
         selectedNode={selectedNode}
         updateSelectedNodeConfig={updateSelectedNodeConfig}

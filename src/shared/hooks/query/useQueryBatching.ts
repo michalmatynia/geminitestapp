@@ -36,7 +36,7 @@ export function useQueryBatching(config: QueryBatchConfig = {}): {
     const groups = batch.reduce((acc: Record<string, typeof batch>, item) => {
       const pattern = JSON.stringify(item.queryKey).replace(/["'][^"']*["']/g, '""');
       if (!acc[pattern]) acc[pattern] = [];
-      acc[pattern]!.push(item);
+      acc[pattern].push(item);
       return acc;
     }, {} as Record<string, typeof batch>);
 

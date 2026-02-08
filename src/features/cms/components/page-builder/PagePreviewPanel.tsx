@@ -520,7 +520,7 @@ export function PagePreviewPanel(): React.ReactNode {
   }, [isDesktopPreview, canvasScale, state.sections, previewWidthClass]);
 
   return (
-    <div className="relative flex min-w-0 flex-1 flex-col bg-gray-950">
+    <div className='relative flex min-w-0 flex-1 flex-col bg-gray-950'>
       {/* Toolbar */}
       <div
         className={`overflow-hidden transition-all duration-300 ease-in-out ${
@@ -529,13 +529,13 @@ export function PagePreviewPanel(): React.ReactNode {
             : 'max-h-20 opacity-100 translate-y-0 border-b border-border'
         }`}
       >
-        <div className="flex items-center justify-end gap-2 px-6 py-3">
+        <div className='flex items-center justify-end gap-2 px-6 py-3'>
           {!isViewing && (
             <>
-              <CmsDomainSelector label="" triggerClassName="h-8 w-[200px]" />
-              <PageSelectorBar variant="toolbar" />
+              <CmsDomainSelector label='' triggerClassName='h-8 w-[200px]' />
+              <PageSelectorBar variant='toolbar' />
               {slugsQuery.isLoading ? (
-                <div className="rounded-full border border-slate-500/40 bg-slate-500/10 px-3 py-1 text-[10px] text-slate-300">
+                <div className='rounded-full border border-slate-500/40 bg-slate-500/10 px-3 py-1 text-[10px] text-slate-300'>
                   Loading zone slugs…
                 </div>
               ) : zoneSlugValues.length > 1 ? (
@@ -545,8 +545,8 @@ export function PagePreviewPanel(): React.ReactNode {
                     setUserPreviewSlug((prev: string | null) => (prev === value ? prev : value))
                   }
                 >
-                  <SelectTrigger className="h-8 w-[200px] text-xs">
-                    <SelectValue placeholder="Preview slug" />
+                  <SelectTrigger className='h-8 w-[200px] text-xs'>
+                    <SelectValue placeholder='Preview slug' />
                   </SelectTrigger>
                   <SelectContent>
                     {zoneSlugValues.map((slug: string) => (
@@ -558,22 +558,22 @@ export function PagePreviewPanel(): React.ReactNode {
                 </Select>
               ) : zoneSlugValues.length === 1 ? (
                 <div
-                  className="rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-[10px] text-blue-200"
+                  className='rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-[10px] text-blue-200'
                   title={previewTargetLabel}
                 >
                   Preview: /{zoneSlugValues[0]}
                 </div>
               ) : (
-                <div className="rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1 text-[10px] text-red-200">
+                <div className='rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1 text-[10px] text-red-200'>
                   No slug in zone
                 </div>
               )}
               {outOfZoneSlugs.length > 0 && (
-                <div className="rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-[10px] text-amber-200">
+                <div className='rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-[10px] text-amber-200'>
                   Cross-zone: {outOfZoneSlugs.map((slug: string) => `/${slug}`).join(', ')}
                 </div>
               )}
-              <label className="flex items-center gap-2 rounded-full border border-slate-500/40 bg-slate-500/10 px-3 py-1 text-[10px] text-slate-200">
+              <label className='flex items-center gap-2 rounded-full border border-slate-500/40 bg-slate-500/10 px-3 py-1 text-[10px] text-slate-200'>
                 <Checkbox
                   checked={previewDraftsEnabled}
                   onCheckedChange={(value: boolean | 'indeterminate'): void => {
@@ -584,7 +584,7 @@ export function PagePreviewPanel(): React.ReactNode {
                 />
                 Draft preview
               </label>
-              <label className="flex items-center gap-2 rounded-full border border-slate-500/40 bg-slate-500/10 px-3 py-1 text-[10px] text-slate-200">
+              <label className='flex items-center gap-2 rounded-full border border-slate-500/40 bg-slate-500/10 px-3 py-1 text-[10px] text-slate-200'>
                 <Checkbox
                   checked={pauseSlideshowOnHoverInEditor}
                   onCheckedChange={(value: boolean | 'indeterminate'): void => {
@@ -597,38 +597,38 @@ export function PagePreviewPanel(): React.ReactNode {
               </label>
               <Button
                 onClick={(): void => { void handlePreview(); }}
-                size="sm"
-                variant="outline"
-                className="text-gray-300 hover:text-white"
+                size='sm'
+                variant='outline'
+                className='text-gray-300 hover:text-white'
                 disabled={!state.currentPage || updatePage.isPending}
               >
-                <Eye className="mr-2 size-4" />
+                <Eye className='mr-2 size-4' />
                 {updatePage.isPending ? 'Saving...' : 'Preview'}
               </Button>
               <Button
                 onClick={(): void => dispatch({ type: 'UNDO' })}
-                size="icon"
-                variant="ghost"
-                className="text-gray-400 hover:text-white"
+                size='icon'
+                variant='ghost'
+                className='text-gray-400 hover:text-white'
                 disabled={state.history.past.length === 0}
-                aria-label="Undo"
+                aria-label='Undo'
               >
-                <Undo2 className="size-4" />
+                <Undo2 className='size-4' />
               </Button>
               <Button
                 onClick={(): void => dispatch({ type: 'REDO' })}
-                size="icon"
-                variant="ghost"
-                className="text-gray-400 hover:text-white"
+                size='icon'
+                variant='ghost'
+                className='text-gray-400 hover:text-white'
                 disabled={state.history.future.length === 0}
-                aria-label="Redo"
+                aria-label='Redo'
               >
-                <Redo2 className="size-4" />
+                <Redo2 className='size-4' />
               </Button>
               <Button
                 onClick={(): void => { void handleSave(); }}
-                size="sm"
-                className="bg-blue-600 hover:bg-blue-700"
+                size='sm'
+                className='bg-blue-600 hover:bg-blue-700'
                 disabled={!state.currentPage || updatePage.isPending}
               >
                 {updatePage.isPending ? 'Saving...' : 'Save'}
@@ -638,12 +638,12 @@ export function PagePreviewPanel(): React.ReactNode {
           {!isViewing && (
             <Button
               onClick={handleToggleViewing}
-              size="sm"
-              variant="outline"
-              className="text-gray-300 hover:text-white"
+              size='sm'
+              variant='outline'
+              className='text-gray-300 hover:text-white'
               disabled={!state.currentPage}
             >
-              <Maximize2 className="mr-2 size-4" />
+              <Maximize2 className='mr-2 size-4' />
               Show
             </Button>
           )}
@@ -651,7 +651,7 @@ export function PagePreviewPanel(): React.ReactNode {
       </div>
 
       {isViewing && (
-        <div className="pointer-events-none absolute right-6 top-4 z-20 flex justify-end">
+        <div className='pointer-events-none absolute right-6 top-4 z-20 flex justify-end'>
           <div
             className={`pointer-events-auto transition-all duration-300 ease-in-out ${
               showEditButton ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
@@ -659,12 +659,12 @@ export function PagePreviewPanel(): React.ReactNode {
           >
             <Button
               onClick={handleToggleViewing}
-              size="sm"
-              variant="outline"
-              className="text-gray-300 hover:text-white opacity-60 hover:opacity-100"
+              size='sm'
+              variant='outline'
+              className='text-gray-300 hover:text-white opacity-60 hover:opacity-100'
               disabled={!state.currentPage}
             >
-              <Minimize2 className="mr-2 size-4" />
+              <Minimize2 className='mr-2 size-4' />
               Edit
             </Button>
           </div>
@@ -673,24 +673,24 @@ export function PagePreviewPanel(): React.ReactNode {
 
       {/* Preview area */}
       <div
-        className="flex-1 overflow-y-auto"
-        data-cms-canvas-viewport="true"
+        className='flex-1 overflow-y-auto'
+        data-cms-canvas-viewport='true'
         onPointerDown={handleCanvasPointerDown}
       >
         {!state.currentPage ? (
-          <div className="flex h-full items-center justify-center p-6 text-gray-500" data-testid="preview-no-page">
+          <div className='flex h-full items-center justify-center p-6 text-gray-500' data-testid='preview-no-page'>
             Select a page from the left panel to preview it
           </div>
         ) : !hasSections ? (
-          <div className="flex h-full items-center justify-center p-6 text-gray-500" data-testid="preview-empty">
+          <div className='flex h-full items-center justify-center p-6 text-gray-500' data-testid='preview-empty'>
             No sections yet. Use the left panel to add sections.
           </div>
         ) : (
           <>
-            <div className="p-0" style={scaledCanvasWrapperStyle} data-testid="preview-canvas-wrapper">
+            <div className='p-0' style={scaledCanvasWrapperStyle} data-testid='preview-canvas-wrapper'>
               <div
-                data-cms-canvas="true"
-                data-testid="preview-canvas"
+                data-cms-canvas='true'
+                data-testid='preview-canvas'
                 ref={canvasRef}
                 className={`cms-hover-scope relative mx-auto ${previewWidthClass} ${previewFrameClass} ${previewFrameClass ? 'p-3' : ''} ${
                   state.inspectorEnabled ? 'cursor-crosshair' : ''
@@ -739,7 +739,7 @@ export function PagePreviewPanel(): React.ReactNode {
         open={mediaOpen}
         onOpenChange={handleMediaOpenChange}
         onSelect={handleMediaSelect}
-        selectionMode="single"
+        selectionMode='single'
       />
     </div>
   );

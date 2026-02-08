@@ -25,7 +25,7 @@ const fetchWithTimeout = async (url: string, init: RequestInit, timeoutMs: numbe
 
 export const processJob = async (jobId: string): Promise<void> => {
   const job = await chatbotJobRepository.findById(jobId);
-  if (!job || job.status !== 'running') return;
+  if (job?.status !== 'running') return;
 
   const payload = job.payload as ChatPayload;
   if (!payload?.model || !Array.isArray(payload?.messages)) {

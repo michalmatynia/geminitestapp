@@ -23,7 +23,7 @@ const queue = createManagedQueue<ChatbotJobData>({
   },
   processor: async (data) => {
     const job = await chatbotJobRepository.findById(data.jobId);
-    if (!job || job.status !== 'pending') return;
+    if (job?.status !== 'pending') return;
 
     await chatbotJobRepository.update(job.id, {
       status: 'running',

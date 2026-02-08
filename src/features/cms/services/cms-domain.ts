@@ -2,8 +2,6 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import { Collection } from 'mongodb';
-
 import { getCmsDomainSettings } from '@/features/cms/services/cms-domain-settings';
 import { getCmsDataProvider } from '@/features/cms/services/cms-provider';
 import type { CmsDomain, Slug } from '@/features/cms/types';
@@ -119,7 +117,7 @@ export async function setGlobalDefaultSlug(slugId: string | null): Promise<void>
     if (!process.env.MONGODB_URI) return;
     const db = await getMongoDb();
     const now = new Date();
-    await (db.collection<SlugDocument>(SLUGS_COLLECTION) as Collection<SlugDocument>).updateMany(
+    await (db.collection<SlugDocument>(SLUGS_COLLECTION)).updateMany(
       {},
       { $set: { isDefault: false, updatedAt: now } }
     );

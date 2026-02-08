@@ -44,7 +44,7 @@ export default function TransientRecoverySettingsPage() {
   }, []);
 
   if (settingsQuery.isLoading || !settingsQuery.data || !constants) {
-    return <div className="p-10 text-center text-gray-400">Loading settings...</div>;
+    return <div className='p-10 text-center text-gray-400'>Loading settings...</div>;
   }
 
   const stored = parseJsonSetting<TransientRecoverySettings | null>(
@@ -157,24 +157,24 @@ function TransientRecoverySettingsForm({
   };
 
   return (
-    <div className="container mx-auto py-10 space-y-6">
+    <div className='container mx-auto py-10 space-y-6'>
       <div>
-        <h1 className="text-3xl font-bold text-white">Transient Recovery</h1>
-        <p className="mt-2 text-sm text-gray-400">
+        <h1 className='text-3xl font-bold text-white'>Transient Recovery</h1>
+        <p className='mt-2 text-sm text-gray-400'>
           Configure retry and circuit-breaker policies for transient failures.
         </p>
       </div>
 
-      <div className="rounded-md border border-gray-800 bg-gray-950 p-4 space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className='rounded-md border border-gray-800 bg-gray-950 p-4 space-y-6'>
+        <div className='flex flex-wrap items-center justify-between gap-4'>
           <div>
-            <h2 className="text-lg font-semibold text-white">Global toggle</h2>
-            <p className="mt-1 text-xs text-gray-400">
+            <h2 className='text-lg font-semibold text-white'>Global toggle</h2>
+            <p className='mt-1 text-xs text-gray-400'>
               Disable to skip all retries and circuit breakers across the app.
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Label className="text-xs text-gray-400">Enabled</Label>
+          <div className='flex items-center gap-2'>
+            <Label className='text-xs text-gray-400'>Enabled</Label>
             <Switch
               checked={settings.enabled}
               onCheckedChange={(checked: boolean) => {
@@ -185,17 +185,17 @@ function TransientRecoverySettingsForm({
           </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          <div className="space-y-4 rounded-md border border-gray-800 bg-gray-900 p-4">
-            <div className="flex items-center justify-between">
+        <div className='grid gap-6 md:grid-cols-2'>
+          <div className='space-y-4 rounded-md border border-gray-800 bg-gray-900 p-4'>
+            <div className='flex items-center justify-between'>
               <div>
-                <h3 className="text-sm font-semibold text-white">Retry policy</h3>
-                <p className="text-xs text-gray-400">
+                <h3 className='text-sm font-semibold text-white'>Retry policy</h3>
+                <p className='text-xs text-gray-400'>
                   Applies to transient external calls and webhooks.
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                <Label className="text-xs text-gray-400">Enabled</Label>
+              <div className='flex items-center gap-2'>
+                <Label className='text-xs text-gray-400'>Enabled</Label>
                 <Switch
                   checked={settings.retry.enabled}
                   onCheckedChange={(checked: boolean) => updateRetry('enabled', checked)}
@@ -203,11 +203,11 @@ function TransientRecoverySettingsForm({
               </div>
             </div>
 
-            <div className="grid gap-3">
-              <div className="grid gap-1">
-                <Label className="text-xs text-gray-400">Max attempts</Label>
+            <div className='grid gap-3'>
+              <div className='grid gap-1'>
+                <Label className='text-xs text-gray-400'>Max attempts</Label>
                 <Input
-                  type="number"
+                  type='number'
                   min={1}
                   value={settings.retry.maxAttempts}
                   onChange={(event: ChangeEvent<HTMLInputElement>) =>
@@ -219,10 +219,10 @@ function TransientRecoverySettingsForm({
                   disabled={settingsQuery.isPending}
                 />
               </div>
-              <div className="grid gap-1">
-                <Label className="text-xs text-gray-400">Initial delay (ms)</Label>
+              <div className='grid gap-1'>
+                <Label className='text-xs text-gray-400'>Initial delay (ms)</Label>
                 <Input
-                  type="number"
+                  type='number'
                   min={0}
                   value={settings.retry.initialDelayMs}
                   onChange={(event: ChangeEvent<HTMLInputElement>) =>
@@ -234,10 +234,10 @@ function TransientRecoverySettingsForm({
                   disabled={settingsQuery.isPending}
                 />
               </div>
-              <div className="grid gap-1">
-                <Label className="text-xs text-gray-400">Max delay (ms)</Label>
+              <div className='grid gap-1'>
+                <Label className='text-xs text-gray-400'>Max delay (ms)</Label>
                 <Input
-                  type="number"
+                  type='number'
                   min={0}
                   value={settings.retry.maxDelayMs}
                   onChange={(event: ChangeEvent<HTMLInputElement>) =>
@@ -249,10 +249,10 @@ function TransientRecoverySettingsForm({
                   disabled={settingsQuery.isPending}
                 />
               </div>
-              <div className="grid gap-1">
-                <Label className="text-xs text-gray-400">Timeout per attempt (ms)</Label>
+              <div className='grid gap-1'>
+                <Label className='text-xs text-gray-400'>Timeout per attempt (ms)</Label>
                 <Input
-                  type="number"
+                  type='number'
                   min={0}
                   value={settings.retry.timeoutMs ?? 0}
                   onChange={(event: ChangeEvent<HTMLInputElement>) =>
@@ -263,23 +263,23 @@ function TransientRecoverySettingsForm({
                   }
                   disabled={settingsQuery.isPending}
                 />
-                <p className="text-[11px] text-gray-500">
+                <p className='text-[11px] text-gray-500'>
                   Set to 0 to disable per-attempt timeout.
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="space-y-4 rounded-md border border-gray-800 bg-gray-900 p-4">
-            <div className="flex items-center justify-between">
+          <div className='space-y-4 rounded-md border border-gray-800 bg-gray-900 p-4'>
+            <div className='flex items-center justify-between'>
               <div>
-                <h3 className="text-sm font-semibold text-white">Circuit breaker</h3>
-                <p className="text-xs text-gray-400">
+                <h3 className='text-sm font-semibold text-white'>Circuit breaker</h3>
+                <p className='text-xs text-gray-400'>
                   Prevents repeated calls to failing services.
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                <Label className="text-xs text-gray-400">Enabled</Label>
+              <div className='flex items-center gap-2'>
+                <Label className='text-xs text-gray-400'>Enabled</Label>
                 <Switch
                   checked={settings.circuit.enabled}
                   onCheckedChange={(checked: boolean) => updateCircuit('enabled', checked)}
@@ -287,11 +287,11 @@ function TransientRecoverySettingsForm({
               </div>
             </div>
 
-            <div className="grid gap-3">
-              <div className="grid gap-1">
-                <Label className="text-xs text-gray-400">Failure threshold</Label>
+            <div className='grid gap-3'>
+              <div className='grid gap-1'>
+                <Label className='text-xs text-gray-400'>Failure threshold</Label>
                 <Input
-                  type="number"
+                  type='number'
                   min={1}
                   value={settings.circuit.failureThreshold}
                   onChange={(event: ChangeEvent<HTMLInputElement>) =>
@@ -307,10 +307,10 @@ function TransientRecoverySettingsForm({
                   disabled={settingsQuery.isPending}
                 />
               </div>
-              <div className="grid gap-1">
-                <Label className="text-xs text-gray-400">Reset timeout (ms)</Label>
+              <div className='grid gap-1'>
+                <Label className='text-xs text-gray-400'>Reset timeout (ms)</Label>
                 <Input
-                  type="number"
+                  type='number'
                   min={0}
                   value={settings.circuit.resetTimeoutMs}
                   onChange={(event: ChangeEvent<HTMLInputElement>) =>
@@ -329,12 +329,12 @@ function TransientRecoverySettingsForm({
           </div>
         </div>
 
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-gray-500">
+        <div className='flex items-center justify-between'>
+          <p className='text-xs text-gray-500'>
             Changes apply across the app after saving.
           </p>
           <Button
-            size="sm"
+            size='sm'
             onClick={() => void saveSettings()}
             disabled={!dirty || updateSetting.isPending}
           >

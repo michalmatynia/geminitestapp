@@ -23,47 +23,47 @@ function AdminBrainPageContent(): React.JSX.Element {
   const { activeTab, setActiveTab } = useBrain();
 
   return (
-    <div className="space-y-4">
+    <div className='space-y-4'>
       <BrainSettingsHeader />
       <BrainStateOverview />
 
       <Tabs
         value={activeTab}
         onValueChange={(value: string) => setActiveTab(value as BrainTab)}
-        className="space-y-4"
+        className='space-y-4'
       >
-        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 p-1 md:grid-cols-4">
-          <TabsTrigger value="routing" className="gap-2 text-xs md:text-sm">
-            <Brain className="size-4" />
+        <TabsList className='grid h-auto w-full grid-cols-2 gap-1 p-1 md:grid-cols-4'>
+          <TabsTrigger value='routing' className='gap-2 text-xs md:text-sm'>
+            <Brain className='size-4' />
             Routing
           </TabsTrigger>
-          <TabsTrigger value="providers" className="gap-2 text-xs md:text-sm">
-            <KeyRound className="size-4" />
+          <TabsTrigger value='providers' className='gap-2 text-xs md:text-sm'>
+            <KeyRound className='size-4' />
             Providers
           </TabsTrigger>
-          <TabsTrigger value="reports" className="gap-2 text-xs md:text-sm">
-            <Sparkles className="size-4" />
+          <TabsTrigger value='reports' className='gap-2 text-xs md:text-sm'>
+            <Sparkles className='size-4' />
             Reports
           </TabsTrigger>
-          <TabsTrigger value="metrics" className="gap-2 text-xs md:text-sm">
-            <Radar className="size-4" />
+          <TabsTrigger value='metrics' className='gap-2 text-xs md:text-sm'>
+            <Radar className='size-4' />
             Metrics
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="routing" className="space-y-4">
+        <TabsContent value='routing' className='space-y-4'>
           <RoutingTab />
         </TabsContent>
 
-        <TabsContent value="providers" className="space-y-4">
+        <TabsContent value='providers' className='space-y-4'>
           <ProvidersTab />
         </TabsContent>
 
-        <TabsContent value="reports" className="space-y-4">
+        <TabsContent value='reports' className='space-y-4'>
           <ReportsTab />
         </TabsContent>
 
-        <TabsContent value="metrics" className="space-y-4">
+        <TabsContent value='metrics' className='space-y-4'>
           <MetricsTab />
         </TabsContent>
       </Tabs>

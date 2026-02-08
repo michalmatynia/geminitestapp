@@ -54,7 +54,7 @@ export default function AuthDashboardPage(): React.JSX.Element {
 
   if (!canReadUsers) {
     return (
-      <SectionPanel className="p-6 text-sm text-amber-300">
+      <SectionPanel className='p-6 text-sm text-amber-300'>
         You don&apos;t have permission to view auth metrics. Ask an admin to grant
         `auth.users.read` or elevate your account.
       </SectionPanel>
@@ -63,76 +63,76 @@ export default function AuthDashboardPage(): React.JSX.Element {
 
   if (authUsersQuery.isPending || authLoading) {
     return (
-      <SectionPanel className="p-6 text-sm text-gray-400">
+      <SectionPanel className='p-6 text-sm text-gray-400'>
         Loading auth metrics...
       </SectionPanel>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <SectionPanel className="p-6">
+    <div className='space-y-6'>
+      <SectionPanel className='p-6'>
         <SectionHeader
-          title="Auth Dashboard"
+          title='Auth Dashboard'
           description={`Overview of user accounts and role assignments (provider: ${provider}).`}
         />
       </SectionPanel>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-card border-border">
+      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+        <Card className='bg-card border-border'>
           <CardHeader>
-            <CardTitle className="text-white text-lg">Total Users</CardTitle>
-            <CardDescription className="text-gray-500">All accounts</CardDescription>
+            <CardTitle className='text-white text-lg'>Total Users</CardTitle>
+            <CardDescription className='text-gray-500'>All accounts</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-semibold text-white">{metrics.total}</div>
+            <div className='text-3xl font-semibold text-white'>{metrics.total}</div>
           </CardContent>
         </Card>
-        <Card className="bg-card border-border">
+        <Card className='bg-card border-border'>
           <CardHeader>
-            <CardTitle className="text-white text-lg">Verified Emails</CardTitle>
-            <CardDescription className="text-gray-500">Email verified</CardDescription>
+            <CardTitle className='text-white text-lg'>Verified Emails</CardTitle>
+            <CardDescription className='text-gray-500'>Email verified</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-semibold text-white">{metrics.verified}</div>
+            <div className='text-3xl font-semibold text-white'>{metrics.verified}</div>
           </CardContent>
         </Card>
-        <Card className="bg-card border-border">
+        <Card className='bg-card border-border'>
           <CardHeader>
-            <CardTitle className="text-white text-lg">Unverified</CardTitle>
-            <CardDescription className="text-gray-500">Pending verification</CardDescription>
+            <CardTitle className='text-white text-lg'>Unverified</CardTitle>
+            <CardDescription className='text-gray-500'>Pending verification</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-semibold text-white">{metrics.unverified}</div>
+            <div className='text-3xl font-semibold text-white'>{metrics.unverified}</div>
           </CardContent>
         </Card>
-        <Card className="bg-card border-border">
+        <Card className='bg-card border-border'>
           <CardHeader>
-            <CardTitle className="text-white text-lg">Unassigned Roles</CardTitle>
-            <CardDescription className="text-gray-500">No role assigned</CardDescription>
+            <CardTitle className='text-white text-lg'>Unassigned Roles</CardTitle>
+            <CardDescription className='text-gray-500'>No role assigned</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-semibold text-white">{metrics.unassigned}</div>
+            <div className='text-3xl font-semibold text-white'>{metrics.unassigned}</div>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="bg-card border-border">
+      <Card className='bg-card border-border'>
         <CardHeader>
-          <CardTitle className="text-white text-lg">Role Distribution</CardTitle>
-          <CardDescription className="text-gray-500">
+          <CardTitle className='text-white text-lg'>Role Distribution</CardTitle>
+          <CardDescription className='text-gray-500'>
             Users assigned to each role.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <CardContent className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
           {roles.map((role: AuthRole) => (
             <div
               key={role.id}
-              className="rounded-md border border-border bg-card/50 px-4 py-3"
+              className='rounded-md border border-border bg-card/50 px-4 py-3'
             >
-              <div className="text-sm font-semibold text-white">{role.name}</div>
-              <div className="text-xs text-gray-400">{role.description ?? role.id}</div>
-              <div className="mt-2 text-2xl font-semibold text-white">
+              <div className='text-sm font-semibold text-white'>{role.name}</div>
+              <div className='text-xs text-gray-400'>{role.description ?? role.id}</div>
+              <div className='mt-2 text-2xl font-semibold text-white'>
                 {metrics.roleCounts[role.id] ?? 0}
               </div>
             </div>

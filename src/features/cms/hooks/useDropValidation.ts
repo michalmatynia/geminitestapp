@@ -112,7 +112,7 @@ export function useDropValidation(): {
 
       // For blocks that use the section definition's allowed types
       const sectionDef = getSectionDefinition(parentBlockType);
-      if (sectionDef && sectionDef.allowedBlockTypes.includes(blockType)) {
+      if (sectionDef?.allowedBlockTypes.includes(blockType)) {
         return { isValid: true };
       }
 

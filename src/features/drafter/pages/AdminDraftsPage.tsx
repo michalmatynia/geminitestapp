@@ -18,24 +18,24 @@ function AdminDraftsPageContent(): React.JSX.Element {
   const submitText = editingDraftId ? 'Update' : 'Create';
 
   const header = (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-4">
+    <div className='flex items-center justify-between'>
+      <div className='flex items-center gap-4'>
         <Button
           onClick={(): void => {
             if (formRef.current) {
               formRef.current.requestSubmit();
             }
           }}
-          className="min-w-[100px] border border-white/20 hover:border-white/40"
+          className='min-w-[100px] border border-white/20 hover:border-white/40'
         >
           {submitText}
         </Button>
-        <h2 className="text-2xl font-bold text-white">{title}</h2>
+        <h2 className='text-2xl font-bold text-white'>{title}</h2>
       </div>
       <Button
-        type="button"
+        type='button'
         onClick={closeCreator}
-        className="min-w-[100px] border border-white/20 hover:border-white/40"
+        className='min-w-[100px] border border-white/20 hover:border-white/40'
       >
         Close
       </Button>
@@ -43,11 +43,11 @@ function AdminDraftsPageContent(): React.JSX.Element {
   );
 
   return (
-    <div className="container mx-auto py-10">
+    <div className='container mx-auto py-10'>
       <SectionHeader
-        title="Product Drafts"
-        description="Create reusable templates for products with pre-filled values"
-        className="mb-6"
+        title='Product Drafts'
+        description='Create reusable templates for products with pre-filled values'
+        className='mb-6'
       />
 
       <DraftList />

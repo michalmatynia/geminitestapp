@@ -12,7 +12,7 @@ export default function LoggingSettingsPage() {
   const settingsQuery = useSettingsMap();
 
   if (settingsQuery.isLoading || !settingsQuery.data) {
-    return <div className="p-10 text-center text-gray-400">Loading settings...</div>;
+    return <div className='p-10 text-center text-gray-400'>Loading settings...</div>;
   }
 
   const tags = parseJsonSetting<Record<string, unknown> | null>(
@@ -74,35 +74,35 @@ function LoggingSettingsForm({
   };
 
   return (
-    <div className="container mx-auto py-10 space-y-6">
+    <div className='container mx-auto py-10 space-y-6'>
       <div>
-        <h1 className="text-3xl font-bold text-white">Logging Settings</h1>
-        <p className="mt-2 text-sm text-gray-400">
+        <h1 className='text-3xl font-bold text-white'>Logging Settings</h1>
+        <p className='mt-2 text-sm text-gray-400'>
           Configure client logging context shared with error reports.
         </p>
       </div>
 
-      <div className="rounded-md border border-gray-800 bg-gray-950 p-4 space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className='rounded-md border border-gray-800 bg-gray-950 p-4 space-y-4'>
+        <div className='flex flex-wrap items-center justify-between gap-4'>
           <div>
-            <h2 className="text-lg font-semibold text-white">Client logging context</h2>
-            <p className="mt-1 text-xs text-gray-400">
+            <h2 className='text-lg font-semibold text-white'>Client logging context</h2>
+            <p className='mt-1 text-xs text-gray-400'>
               Provide feature flags and tags attached to client errors.
             </p>
           </div>
           <Button
-            size="sm"
+            size='sm'
             onClick={() => void saveSettings()}
             disabled={!dirty || saveSettingsMutation.isPending}
           >
             {saveSettingsMutation.isPending ? 'Saving...' : 'Save settings'}
           </Button>
         </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label className="text-xs text-gray-400">Feature flags (JSON)</Label>
+        <div className='grid gap-4 md:grid-cols-2'>
+          <div className='space-y-2'>
+            <Label className='text-xs text-gray-400'>Feature flags (JSON)</Label>
             <Textarea
-              className="min-h-[180px] w-full rounded-md border border-gray-800 bg-gray-900 p-2 text-xs text-gray-200"
+              className='min-h-[180px] w-full rounded-md border border-gray-800 bg-gray-900 p-2 text-xs text-gray-200'
               value={clientFlags}
               onChange={(event: ChangeEvent<HTMLTextAreaElement>) => {
                 setClientFlags(event.target.value);
@@ -110,10 +110,10 @@ function LoggingSettingsForm({
               }}
             />
           </div>
-          <div className="space-y-2">
-            <Label className="text-xs text-gray-400">Tags (JSON)</Label>
+          <div className='space-y-2'>
+            <Label className='text-xs text-gray-400'>Tags (JSON)</Label>
             <Textarea
-              className="min-h-[180px] w-full rounded-md border border-gray-800 bg-gray-900 p-2 text-xs text-gray-200"
+              className='min-h-[180px] w-full rounded-md border border-gray-800 bg-gray-900 p-2 text-xs text-gray-200'
               value={clientTags}
               onChange={(event: ChangeEvent<HTMLTextAreaElement>) => {
                 setClientTags(event.target.value);

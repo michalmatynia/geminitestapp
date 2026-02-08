@@ -37,11 +37,11 @@ vi.mock('@/shared/ui', async () => {
   const actual = await vi.importActual('@/shared/ui');
   return {
     ...actual,
-    Dialog: ({ children }: any) => <div data-testid="dialog">{children}</div>,
-    DialogContent: ({ children }: any) => <div data-testid="dialog-content">{children}</div>,
+    Dialog: ({ children }: any) => <div data-testid='dialog'>{children}</div>,
+    DialogContent: ({ children }: any) => <div data-testid='dialog-content'>{children}</div>,
     DialogHeader: ({ children }: any) => <div>{children}</div>,
     DialogTitle: ({ children }: any) => <div>{children}</div>,
-    DialogTrigger: ({ children }: any) => <div data-testid="dialog-trigger">{children}</div>,
+    DialogTrigger: ({ children }: any) => <div data-testid='dialog-trigger'>{children}</div>,
   };
 });
 
@@ -54,7 +54,7 @@ describe('SectionTemplatePicker Component', () => {
   });
 
   it('should open dialog and show mocked template', () => {
-    render(<SectionTemplatePicker zone="template" />);
+    render(<SectionTemplatePicker zone='template' />);
     
     const trigger = screen.getByRole('button', { name: /Templates/i });
     fireEvent.click(trigger);
@@ -65,7 +65,7 @@ describe('SectionTemplatePicker Component', () => {
   });
 
   it('should dispatch INSERT_TEMPLATE_SECTION when a template is selected', () => {
-    render(<SectionTemplatePicker zone="header" />);
+    render(<SectionTemplatePicker zone='header' />);
     
     fireEvent.click(screen.getByRole('button', { name: /Templates/i }));
     

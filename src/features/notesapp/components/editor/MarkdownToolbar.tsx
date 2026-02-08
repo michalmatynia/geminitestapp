@@ -61,25 +61,25 @@ export function MarkdownToolbar({
   onMigrateToMarkdown,
 }: MarkdownToolbarProps): React.JSX.Element {
   return (
-    <div className="mb-2 flex flex-wrap items-center gap-2 rounded-lg border bg-gray-900 px-3 py-2">
+    <div className='mb-2 flex flex-wrap items-center gap-2 rounded-lg border bg-gray-900 px-3 py-2'>
       {/* Editor Mode Display/Toggle */}
-      <div className="flex items-center gap-2">
+      <div className='flex items-center gap-2'>
         {isEditorModeLocked ? (
           <>
             {/* Display current mode (locked) */}
-            <span className="px-2 py-1 text-xs bg-gray-800 text-gray-300 rounded border border-border/60">
+            <span className='px-2 py-1 text-xs bg-gray-800 text-gray-300 rounded border border-border/60'>
               {editorMode === 'markdown' ? 'Markdown' : editorMode === 'wysiwyg' ? 'WYSIWYG' : 'Code'}
             </span>
             {/* Migration buttons */}
             {editorMode === 'markdown' && (
-              <div className="flex gap-1">
+              <div className='flex gap-1'>
                 {onMigrateToWysiwyg && (
                   <Button
-                    type="button"
+                    type='button'
                     onClick={onMigrateToWysiwyg}
                     disabled={isMigrating}
-                    className="px-2 py-1 text-xs bg-purple-600/20 text-purple-300 border border-purple-500/40 rounded hover:bg-purple-600/30 disabled:opacity-50"
-                    title="Convert this note to WYSIWYG format"
+                    className='px-2 py-1 text-xs bg-purple-600/20 text-purple-300 border border-purple-500/40 rounded hover:bg-purple-600/30 disabled:opacity-50'
+                    title='Convert this note to WYSIWYG format'
                   >
                     {isMigrating ? 'Migrating...' : 'To WYSIWYG'}
                   </Button>
@@ -88,22 +88,22 @@ export function MarkdownToolbar({
             )}
             {editorMode === 'wysiwyg' && onMigrateToMarkdown && (
               <Button
-                type="button"
+                type='button'
                 onClick={onMigrateToMarkdown}
                 disabled={isMigrating}
-                className="px-2 py-1 text-xs bg-purple-600/20 text-purple-300 border border-purple-500/40 rounded hover:bg-purple-600/30 disabled:opacity-50"
-                title="Convert this note to Markdown format"
+                className='px-2 py-1 text-xs bg-purple-600/20 text-purple-300 border border-purple-500/40 rounded hover:bg-purple-600/30 disabled:opacity-50'
+                title='Convert this note to Markdown format'
               >
                 {isMigrating ? 'Migrating...' : 'To Markdown'}
               </Button>
             )}
             {editorMode === 'code' && onMigrateToMarkdown && (
               <Button
-                type="button"
+                type='button'
                 onClick={onMigrateToMarkdown}
                 disabled={isMigrating}
-                className="px-2 py-1 text-xs bg-purple-600/20 text-purple-300 border border-purple-500/40 rounded hover:bg-purple-600/30 disabled:opacity-50"
-                title="Convert this note to Markdown format"
+                className='px-2 py-1 text-xs bg-purple-600/20 text-purple-300 border border-purple-500/40 rounded hover:bg-purple-600/30 disabled:opacity-50'
+                title='Convert this note to Markdown format'
               >
                 {isMigrating ? 'Migrating...' : 'To Markdown'}
               </Button>
@@ -111,192 +111,192 @@ export function MarkdownToolbar({
           </>
         ) : (
           /* Mode toggle for new notes */
-          <div className="flex rounded-md border border-border/60 overflow-hidden">
+          <div className='flex rounded-md border border-border/60 overflow-hidden'>
             <Button
-              type="button"
+              type='button'
               onClick={(): void => onEditorModeChange('markdown')}
               className={`px-2 py-1 text-xs transition-colors ${
                 editorMode === 'markdown'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
               }`}
-              title="Markdown editor"
+              title='Markdown editor'
             >
               Markdown
             </Button>
             <Button
-              type="button"
+              type='button'
               onClick={(): void => onEditorModeChange('wysiwyg')}
               className={`px-2 py-1 text-xs transition-colors ${
                 editorMode === 'wysiwyg'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
               }`}
-              title="WYSIWYG editor"
+              title='WYSIWYG editor'
             >
               WYSIWYG
             </Button>
             <Button
-              type="button"
+              type='button'
               onClick={(): void => onEditorModeChange('code')}
               className={`px-2 py-1 text-xs transition-colors ${
                 editorMode === 'code'
                   ? 'bg-green-600 text-white'
                   : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
               }`}
-              title="Code snippets editor"
+              title='Code snippets editor'
             >
               Code
             </Button>
           </div>
         )}
       </div>
-      <div className="h-6 w-px bg-gray-700 mx-1" />
+      <div className='h-6 w-px bg-gray-700 mx-1' />
       {(editorMode === 'markdown' || editorMode === 'code') && (
         <>
           <Button
-            type="button"
+            type='button'
             onClick={(): void => setShowPreview(!showPreview)}
-            className="rounded border bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-            title="Toggle preview"
+            className='rounded border bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            title='Toggle preview'
           >
             {showPreview ? 'Hide Preview' : 'Show Preview'}
           </Button>
-          <div className="h-6 w-px bg-gray-700 mx-1" />
+          <div className='h-6 w-px bg-gray-700 mx-1' />
           {onUndo && (
             <Button
-              type="button"
+              type='button'
               onClick={onUndo}
               disabled={!canUndo}
-              className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Undo"
+              className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
+              title='Undo'
             >
-              <Undo className="size-3.5" />
+              <Undo className='size-3.5' />
             </Button>
           )}
           {onRedo && (
             <Button
-              type="button"
+              type='button'
               onClick={onRedo}
               disabled={!canRedo}
-              className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Redo"
+              className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
+              title='Redo'
             >
-              <Redo className="size-3.5" />
+              <Redo className='size-3.5' />
             </Button>
           )}
-          <div className="h-6 w-px bg-gray-700 mx-1" />
+          <div className='h-6 w-px bg-gray-700 mx-1' />
           <Button
-            type="button"
+            type='button'
             onClick={(): void => onApplyWrap('**', '**', 'bold text')}
-            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-            title="Bold"
+            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            title='Bold'
           >
         Bold
           </Button>
           <Button
-            type="button"
+            type='button'
             onClick={(): void => onApplyWrap('*', '*', 'italic text')}
-            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-            title="Italic"
+            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            title='Italic'
           >
         Italic
           </Button>
           <Button
-            type="button"
+            type='button'
             onClick={(): void => onApplyWrap('`', '`', 'code')}
-            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-            title="Inline code"
+            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            title='Inline code'
           >
         Code
           </Button>
           <Button
-            type="button"
+            type='button'
             onClick={onApplyBulletList}
-            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-            title="Bullet list"
+            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            title='Bullet list'
           >
         Bullet
           </Button>
           <Button
-            type="button"
+            type='button'
             onClick={onApplyChecklist}
-            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-            title="Checklist"
+            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            title='Checklist'
           >
         Checklist
           </Button>
           <Button
-            type="button"
+            type='button'
             onClick={(): void => onApplyLinePrefix('# ')}
-            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-            title="Heading"
+            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            title='Heading'
           >
         H1
           </Button>
           <Button
-            type="button"
+            type='button'
             onClick={(): void => onApplyLinePrefix('## ')}
-            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-            title="Heading 2"
+            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            title='Heading 2'
           >
         H2
           </Button>
           <Button
-            type="button"
+            type='button'
             onClick={(): void => onApplyLinePrefix('### ')}
-            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-            title="Heading 3"
+            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            title='Heading 3'
           >
         H3
           </Button>
           <Button
-            type="button"
+            type='button'
             onClick={(): void => onApplyLinePrefix('> ')}
-            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-            title="Blockquote"
+            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            title='Blockquote'
           >
         Quote
           </Button>
           <Button
-            type="button"
+            type='button'
             onClick={(): void => onInsertAtCursor('\n---\n')}
-            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-            title="Horizontal rule"
+            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            title='Horizontal rule'
           >
         HR
           </Button>
           <Button
-            type="button"
+            type='button'
             onClick={(): void => onInsertAtCursor('\n```text\ncode\n```\n')}
-            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-            title="Code block"
+            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            title='Code block'
           >
         Code Block
           </Button>
           <Button
-            type="button"
+            type='button'
             onClick={(): void => onApplyWrap('[', '](https://example.com)', 'link text')}
-            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-            title="Link"
+            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            title='Link'
           >
         Link
           </Button>
           <Button
-            type="button"
+            type='button'
             onClick={(): void =>
               onInsertAtCursor(
                 '\n| Header | Header |\n| --- | --- |\n| Cell | Cell |\n')
             }
-            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-            title="Table"
+            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            title='Table'
           >
         Table
           </Button>
           {noteFiles.length > 0 && (
-            <div className="relative">
+            <div className='relative'>
               <Select
-                value=""
+                value=''
                 onValueChange={(value: string): void => {
                   const slotIndex = parseInt(value, 10);
                   const file = noteFiles.find((f: NoteFileRecord) => f.slotIndex === slotIndex);
@@ -305,10 +305,10 @@ export function MarkdownToolbar({
                   }
                 }}
               >
-                <SelectTrigger className="rounded border bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700 h-auto" title="Insert file reference">
-                  <SelectValue placeholder="Insert File" />
+                <SelectTrigger className='rounded border bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700 h-auto' title='Insert file reference'>
+                  <SelectValue placeholder='Insert File' />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-border text-white">
+                <SelectContent className='bg-gray-800 border-border text-white'>
                   {noteFiles.map((file: NoteFileRecord) => (
                     <SelectItem key={file.slotIndex} value={String(file.slotIndex)}>
                   Slot {file.slotIndex + 1}: {file.filename.replace(/^slot-\d+-\d+-/, '').slice(0, 15)}
@@ -319,37 +319,37 @@ export function MarkdownToolbar({
               </Select>
             </div>
           )}
-          <div className="ml-2 flex items-center gap-2 border-l border pl-2">
-            <Label className="text-xs text-gray-400">Font</Label>
+          <div className='ml-2 flex items-center gap-2 border-l border pl-2'>
+            <Label className='text-xs text-gray-400'>Font</Label>
             <Select
               value={fontFamily}
               onValueChange={setFontFamily}
             >
-              <SelectTrigger className="rounded border bg-gray-800 px-2 py-1 text-xs text-gray-200 h-auto">
+              <SelectTrigger className='rounded border bg-gray-800 px-2 py-1 text-xs text-gray-200 h-auto'>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-border text-white">
-                <SelectItem value="inherit">Default</SelectItem>
-                <SelectItem value="Georgia, serif">Serif</SelectItem>
-                <SelectItem value="Trebuchet MS, sans-serif">Sans</SelectItem>
-                <SelectItem value="Courier New, monospace">Mono</SelectItem>
+              <SelectContent className='bg-gray-800 border-border text-white'>
+                <SelectItem value='inherit'>Default</SelectItem>
+                <SelectItem value='Georgia, serif'>Serif</SelectItem>
+                <SelectItem value='Trebuchet MS, sans-serif'>Sans</SelectItem>
+                <SelectItem value='Courier New, monospace'>Mono</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center gap-2">
-            <Label className="text-xs text-gray-400">Color</Label>
+          <div className='flex items-center gap-2'>
+            <Label className='text-xs text-gray-400'>Color</Label>
             <Input
-              type="color"
+              type='color'
               value={textColor}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setTextColor(event.target.value)}
-              className="h-7 w-10 rounded border bg-gray-800 p-0 border-none"
+              className='h-7 w-10 rounded border bg-gray-800 p-0 border-none'
             />
           </div>
           <Button
-            type="button"
+            type='button'
             onClick={(): void => onApplySpanStyle(textColor, fontFamily)}
-            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700 border border-border/40"
-            title="Apply font and color"
+            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700 border border-border/40'
+            title='Apply font and color'
           >
         Apply
           </Button>

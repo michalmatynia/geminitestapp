@@ -67,32 +67,32 @@ export function AgentTeachingChatPage(): React.JSX.Element {
   };
 
   return (
-    <div className="container mx-auto py-10 space-y-6">
+    <div className='container mx-auto py-10 space-y-6'>
       <SectionHeader
-        title="Learner Chat"
-        description="Chat with a learner agent. The response is generated with retrieved embedded sources."
+        title='Learner Chat'
+        description='Chat with a learner agent. The response is generated with retrieved embedded sources.'
         eyebrow={(
-          <Link href="/admin/agentcreator/teaching" className="text-blue-300 hover:text-blue-200">
+          <Link href='/admin/agentcreator/teaching' className='text-blue-300 hover:text-blue-200'>
             ← Back to learners
           </Link>
         )}
       />
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <SectionPanel className="p-4 lg:col-span-1 space-y-4">
-          <div className="text-sm font-semibold text-white">Learner Agents</div>
+      <div className='grid gap-6 lg:grid-cols-3'>
+        <SectionPanel className='p-4 lg:col-span-1 space-y-4'>
+          <div className='text-sm font-semibold text-white'>Learner Agents</div>
           {loadingAgents ? (
-            <div className="text-sm text-gray-400">Loading agents…</div>
+            <div className='text-sm text-gray-400'>Loading agents…</div>
           ) : agents.length === 0 ? (
-            <div className="text-sm text-gray-400">
+            <div className='text-sm text-gray-400'>
               No learner agents yet. Create one first.
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className='space-y-2'>
               {agents.map((agent: AgentTeachingAgentRecord) => (
                 <button
                   key={agent.id}
-                  type="button"
+                  type='button'
                   className={`w-full rounded-md border px-3 py-2 text-left text-sm transition ${
                     agent.id === selectedAgentId
                       ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-100'
@@ -104,11 +104,11 @@ export function AgentTeachingChatPage(): React.JSX.Element {
                     setLastSources([]);
                   }}
                 >
-                  <div className="font-medium">{agent.name}</div>
-                  <div className="mt-1 text-[11px] text-gray-400">
+                  <div className='font-medium'>{agent.name}</div>
+                  <div className='mt-1 text-[11px] text-gray-400'>
                     LLM: {agent.llmModel} • Embed: {agent.embeddingModel}
                   </div>
-                  <div className="mt-1 text-[11px] text-gray-500">
+                  <div className='mt-1 text-[11px] text-gray-500'>
                     Collections: {(agent.collectionIds ?? []).map(resolveCollectionName).join(', ') || '—'}
                   </div>
                 </button>
@@ -117,17 +117,17 @@ export function AgentTeachingChatPage(): React.JSX.Element {
           )}
         </SectionPanel>
 
-        <SectionPanel className="p-4 lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between gap-3">
+        <SectionPanel className='p-4 lg:col-span-2 space-y-4'>
+          <div className='flex items-center justify-between gap-3'>
             <div>
-              <div className="text-sm font-semibold text-white">Chat</div>
-              <div className="text-[11px] text-gray-500">
+              <div className='text-sm font-semibold text-white'>Chat</div>
+              <div className='text-[11px] text-gray-500'>
                 {selectedAgent ? `Agent: ${selectedAgent.name}` : 'Select an agent to start'}
               </div>
             </div>
             <Button
-              type="button"
-              variant="outline"
+              type='button'
+              variant='outline'
               onClick={(): void => {
                 setMessages([]);
                 setLastSources([]);
@@ -138,59 +138,59 @@ export function AgentTeachingChatPage(): React.JSX.Element {
             </Button>
           </div>
 
-          <div className="h-[360px] overflow-auto rounded-md border border-border bg-card/30 p-3">
+          <div className='h-[360px] overflow-auto rounded-md border border-border bg-card/30 p-3'>
             {messages.length === 0 ? (
-              <div className="text-sm text-gray-400">
+              <div className='text-sm text-gray-400'>
                 Start chatting. The server will embed your question, retrieve top sources, and answer with citations.
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className='space-y-3'>
                 {messages.map((msg: ChatMessage, idx: number) => (
-                  <div key={`${msg.role}-${idx}`} className="space-y-1">
-                    <div className="text-[11px] text-gray-500">{msg.role}</div>
-                    <div className="whitespace-pre-wrap text-sm text-gray-200">{msg.content}</div>
+                  <div key={`${msg.role}-${idx}`} className='space-y-1'>
+                    <div className='text-[11px] text-gray-500'>{msg.role}</div>
+                    <div className='whitespace-pre-wrap text-sm text-gray-200'>{msg.content}</div>
                   </div>
                 ))}
               </div>
             )}
           </div>
 
-          <div className="space-y-2">
+          <div className='space-y-2'>
             <Label>Message</Label>
             <Textarea
               value={input}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setInput(e.target.value)}
-              placeholder="Ask something that should be answered from your embedded knowledge…"
-              className="min-h-[90px]"
+              placeholder='Ask something that should be answered from your embedded knowledge…'
+              className='min-h-[90px]'
               disabled={sending || !selectedAgentId}
             />
-            <div className="flex justify-end gap-2">
-              <Button type="button" onClick={() => void handleSend()} disabled={sending || !selectedAgentId || !input.trim()}>
+            <div className='flex justify-end gap-2'>
+              <Button type='button' onClick={() => void handleSend()} disabled={sending || !selectedAgentId || !input.trim()}>
                 {sending ? 'Thinking…' : 'Send'}
               </Button>
             </div>
           </div>
 
-          <div className="rounded-md border border-border bg-card/40 p-3">
-            <div className="text-sm font-semibold text-white">Retrieved sources</div>
+          <div className='rounded-md border border-border bg-card/40 p-3'>
+            <div className='text-sm font-semibold text-white'>Retrieved sources</div>
             {lastSources.length === 0 ? (
-              <div className="mt-2 text-sm text-gray-400">
+              <div className='mt-2 text-sm text-gray-400'>
                 No sources retrieved yet (or below min score).
               </div>
             ) : (
-              <div className="mt-2 space-y-2">
+              <div className='mt-2 space-y-2'>
                 {lastSources.map((src: AgentTeachingChatSource) => (
-                  <div key={src.documentId} className="rounded-md border border-border bg-card/50 p-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="text-xs text-gray-300">
+                  <div key={src.documentId} className='rounded-md border border-border bg-card/50 p-2'>
+                    <div className='flex items-center justify-between gap-2'>
+                      <div className='text-xs text-gray-300'>
                         [doc:{src.documentId}] • {resolveCollectionName(src.collectionId)}
                       </div>
-                      <div className="text-[11px] text-gray-500">score {src.score.toFixed(3)}</div>
+                      <div className='text-[11px] text-gray-500'>score {src.score.toFixed(3)}</div>
                     </div>
                     {src.metadata?.title ? (
-                      <div className="mt-1 text-[11px] text-gray-400">Title: {src.metadata.title}</div>
+                      <div className='mt-1 text-[11px] text-gray-400'>Title: {src.metadata.title}</div>
                     ) : null}
-                    <div className="mt-2 max-h-28 overflow-auto whitespace-pre-wrap text-xs text-gray-200">
+                    <div className='mt-2 max-h-28 overflow-auto whitespace-pre-wrap text-xs text-gray-200'>
                       {src.text}
                     </div>
                   </div>

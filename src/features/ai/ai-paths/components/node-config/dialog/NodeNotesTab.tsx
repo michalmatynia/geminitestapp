@@ -40,22 +40,22 @@ export function NodeNotesTab({ selectedNode, updateSelectedNodeConfig }: NodeNot
   );
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label className="text-xs text-gray-400">Node Notes</Label>
+    <div className='space-y-4'>
+      <div className='space-y-2'>
+        <Label className='text-xs text-gray-400'>Node Notes</Label>
         <Textarea
           value={noteText}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => {
             updateSelectedNodeConfig({ notes: { text: event.target.value } });
           }}
-          placeholder="Add notes about this node..."
-          className="min-h-[140px] text-xs"
+          placeholder='Add notes about this node...'
+          className='min-h-[140px] text-xs'
         />
       </div>
 
-      <label className="flex items-center gap-2 text-xs text-gray-300">
+      <label className='flex items-center gap-2 text-xs text-gray-300'>
         <input
-          type="checkbox"
+          type='checkbox'
           checked={showOnCanvas}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
             updateSelectedNodeConfig({ notes: { showOnCanvas: event.target.checked } });
@@ -64,13 +64,13 @@ export function NodeNotesTab({ selectedNode, updateSelectedNodeConfig }: NodeNot
         Show note on canvas
       </label>
 
-      <div className="space-y-2">
-        <div className="text-xs text-gray-400">Note color</div>
-        <div className="flex flex-wrap items-center gap-2">
+      <div className='space-y-2'>
+        <div className='text-xs text-gray-400'>Note color</div>
+        <div className='flex flex-wrap items-center gap-2'>
           {NOTE_COLOR_SWATCHES.map((swatch: string) => (
             <button
               key={swatch}
-              type="button"
+              type='button'
               className={`h-7 w-7 rounded border ${
                 noteColor === swatch ? 'border-white/70 ring-2 ring-white/40' : 'border-border'
               }`}
@@ -80,19 +80,19 @@ export function NodeNotesTab({ selectedNode, updateSelectedNodeConfig }: NodeNot
               title={`Set note color ${swatch}`}
             />
           ))}
-          <div className="flex items-center gap-2">
+          <div className='flex items-center gap-2'>
             <Input
-              type="color"
+              type='color'
               value={noteColor}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                 updateSelectedNodeConfig({ notes: { color: event.target.value } });
               }}
-              className="h-8 w-10 cursor-pointer border-border bg-transparent p-1"
+              className='h-8 w-10 cursor-pointer border-border bg-transparent p-1'
             />
-            <span className="text-[11px] text-gray-400">{noteColor}</span>
+            <span className='text-[11px] text-gray-400'>{noteColor}</span>
           </div>
         </div>
-        <div className="rounded border border-border px-3 py-2 text-[11px] text-gray-900" style={previewStyle}>
+        <div className='rounded border border-border px-3 py-2 text-[11px] text-gray-900' style={previewStyle}>
           {noteText.trim() ? noteText : 'Preview: your note will appear here.'}
         </div>
       </div>

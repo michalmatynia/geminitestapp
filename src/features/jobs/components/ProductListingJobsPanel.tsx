@@ -27,23 +27,23 @@ type ListingRow = {
 const getStatusIcon = (status: string): React.JSX.Element => {
   switch (status) {
     case 'pending':
-      return <Clock className="size-3" />;
+      return <Clock className='size-3' />;
     case 'completed':
     case 'success':
     case 'listed':
-      return <CheckCircle className="size-3" />;
+      return <CheckCircle className='size-3' />;
     case 'deleted':
     case 'removed':
-      return <XCircle className="size-3" />;
+      return <XCircle className='size-3' />;
     case 'failed':
     case 'error':
-      return <XCircle className="size-3" />;
+      return <XCircle className='size-3' />;
     case 'processing':
     case 'running':
     case 'in_progress':
-      return <Loader2 className="size-3 animate-spin" />;
+      return <Loader2 className='size-3 animate-spin' />;
     default:
-      return <Clock className="size-3" />;
+      return <Clock className='size-3' />;
   }
 };
 
@@ -118,9 +118,9 @@ function ProductListingJobsPanelContent({
 
   const header = (
     <SectionHeader
-      title="Export Jobs"
-      description="Track product export and listing jobs across all integrations"
-      size="md"
+      title='Export Jobs'
+      description='Track product export and listing jobs across all integrations'
+      size='md'
       actions={
         <>
           <RefreshButton
@@ -128,8 +128,8 @@ function ProductListingJobsPanelContent({
             isRefreshing={isRefreshing}
           />
           {showBackToProducts && (
-            <Button asChild variant="outline" size="sm">
-              <Link href="/admin/products">Back to Products</Link>
+            <Button asChild variant='outline' size='sm'>
+              <Link href='/admin/products'>Back to Products</Link>
             </Button>
           )}
         </>
@@ -152,8 +152,8 @@ function ProductListingJobsPanelContent({
   ) : null;
 
   const footer = !isLoading && !error ? (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/5 pt-4">
-      <div className="text-xs text-gray-400">
+    <div className='flex flex-wrap items-center justify-between gap-3 border-t border-white/5 pt-4'>
+      <div className='text-xs text-gray-400'>
         Showing {totalRows === 0 ? 0 : startIndex + 1}–{Math.min(endIndex, totalRows)} of {totalRows}
       </div>
       <Pagination
@@ -163,7 +163,7 @@ function ProductListingJobsPanelContent({
         showPageSize
         pageSize={pageSize}
         onPageSizeChange={setPageSize}
-        variant="compact"
+        variant='compact'
       />
     </div>
   ) : null;
@@ -174,7 +174,7 @@ function ProductListingJobsPanelContent({
         header={header}
         alerts={
           error ? (
-            <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            <div className='rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200'>
               {error.message}
             </div>
           ) : null
@@ -183,8 +183,8 @@ function ProductListingJobsPanelContent({
         footer={footer}
       >
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="size-8 animate-spin text-gray-500" />
+          <div className='flex items-center justify-center py-12'>
+            <Loader2 className='size-8 animate-spin text-gray-500' />
           </div>
         ) : !error ? (
           <JobTable
@@ -213,14 +213,14 @@ function ProductListingJobsPanelContent({
         <SharedModal
           open={true}
           onClose={(): void => setSelectedListing(null)}
-          title="Export Job Details"
-          size="lg"
+          title='Export Job Details'
+          size='lg'
         >
-          <div className="space-y-6 text-sm">
-            <div className="grid grid-cols-2 gap-4 rounded-md bg-gray-900 p-4">
+          <div className='space-y-6 text-sm'>
+            <div className='grid grid-cols-2 gap-4 rounded-md bg-gray-900 p-4'>
               <div>
-                <div className="text-gray-500 uppercase text-[10px] font-bold">Status</div>
-                <div className="mt-1">
+                <div className='text-gray-500 uppercase text-[10px] font-bold'>Status</div>
+                <div className='mt-1'>
                   <StatusBadge 
                     status={selectedStatus || selectedListing.listing.status} 
                     icon={getStatusIcon(selectedStatus || selectedListing.listing.status)}
@@ -228,94 +228,94 @@ function ProductListingJobsPanelContent({
                 </div>
               </div>
               <div>
-                <div className="text-gray-500 uppercase text-[10px] font-bold">Integration</div>
-                <div className="text-white font-medium">
+                <div className='text-gray-500 uppercase text-[10px] font-bold'>Integration</div>
+                <div className='text-white font-medium'>
                   {selectedListing.listing.integrationName}
                 </div>
               </div>
               <div>
-                <div className="text-gray-500 uppercase text-[10px] font-bold">Connection</div>
-                <div className="text-white font-medium">
+                <div className='text-gray-500 uppercase text-[10px] font-bold'>Connection</div>
+                <div className='text-white font-medium'>
                   {selectedListing.listing.connectionName}
                 </div>
               </div>
               <div>
-                <div className="text-gray-500 uppercase text-[10px] font-bold">Product</div>
-                <div className="text-white font-medium">
+                <div className='text-gray-500 uppercase text-[10px] font-bold'>Product</div>
+                <div className='text-white font-medium'>
                   {selectedListing.job.productName}
                 </div>
-                <div className="text-xs text-gray-500">
+                <div className='text-xs text-gray-500'>
                     SKU: {selectedListing.job.productSku ?? '—'}
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 rounded-md border border-border bg-card/60 p-4">
+            <div className='grid grid-cols-2 gap-4 rounded-md border border-border bg-card/60 p-4'>
               <div>
-                <div className="text-gray-500 uppercase text-[10px] font-bold">Job ID</div>
-                <div className="text-white font-mono text-xs">
+                <div className='text-gray-500 uppercase text-[10px] font-bold'>Job ID</div>
+                <div className='text-white font-mono text-xs'>
                   {selectedListing.listing.id}
                 </div>
               </div>
               <div>
-                <div className="text-gray-500 uppercase text-[10px] font-bold">External ID</div>
-                <div className="text-white font-mono text-xs">
+                <div className='text-gray-500 uppercase text-[10px] font-bold'>External ID</div>
+                <div className='text-white font-mono text-xs'>
                   {selectedListing.listing.externalListingId ?? '—'}
                 </div>
               </div>
               <div>
-                <div className="text-gray-500 uppercase text-[10px] font-bold">Inventory ID</div>
-                <div className="text-white font-mono text-xs">
+                <div className='text-gray-500 uppercase text-[10px] font-bold'>Inventory ID</div>
+                <div className='text-white font-mono text-xs'>
                   {selectedListing.listing.inventoryId ?? '—'}
                 </div>
               </div>
               <div>
-                <div className="text-gray-500 uppercase text-[10px] font-bold">Created</div>
-                <div className="text-white">
+                <div className='text-gray-500 uppercase text-[10px] font-bold'>Created</div>
+                <div className='text-white'>
                   {formatDateTime(selectedListing.listing.createdAt)}
                 </div>
               </div>
               <div>
-                <div className="text-gray-500 uppercase text-[10px] font-bold">Updated</div>
-                <div className="text-white">
+                <div className='text-gray-500 uppercase text-[10px] font-bold'>Updated</div>
+                <div className='text-white'>
                   {formatDateTime(selectedListing.listing.updatedAt)}
                 </div>
               </div>
               <div>
-                <div className="text-gray-500 uppercase text-[10px] font-bold">Listed At</div>
-                <div className="text-white">
+                <div className='text-gray-500 uppercase text-[10px] font-bold'>Listed At</div>
+                <div className='text-white'>
                   {formatDateTime(selectedListing.listing.listedAt)}
                 </div>
               </div>
               <div>
-                <div className="text-gray-500 uppercase text-[10px] font-bold">Integration ID</div>
-                <div className="text-white font-mono text-xs">
+                <div className='text-gray-500 uppercase text-[10px] font-bold'>Integration ID</div>
+                <div className='text-white font-mono text-xs'>
                   {selectedListing.listing.integrationId}
                 </div>
               </div>
               <div>
-                <div className="text-gray-500 uppercase text-[10px] font-bold">Integration Slug</div>
-                <div className="text-white font-mono text-xs">
+                <div className='text-gray-500 uppercase text-[10px] font-bold'>Integration Slug</div>
+                <div className='text-white font-mono text-xs'>
                   {selectedListing.listing.integrationSlug}
                 </div>
               </div>
               <div>
-                <div className="text-gray-500 uppercase text-[10px] font-bold">Connection ID</div>
-                <div className="text-white font-mono text-xs">
+                <div className='text-gray-500 uppercase text-[10px] font-bold'>Connection ID</div>
+                <div className='text-white font-mono text-xs'>
                   {selectedListing.listing.connectionId}
                 </div>
               </div>
               <div>
-                <div className="text-gray-500 uppercase text-[10px] font-bold">Product ID</div>
-                <div className="text-white font-mono text-xs">
+                <div className='text-gray-500 uppercase text-[10px] font-bold'>Product ID</div>
+                <div className='text-white font-mono text-xs'>
                   {selectedListing.job.productId}
                 </div>
               </div>
               <div>
-                <div className="text-gray-500 uppercase text-[10px] font-bold">Product Link</div>
+                <div className='text-gray-500 uppercase text-[10px] font-bold'>Product Link</div>
                 <Link
                   href={`/admin/products?id=${selectedListing.job.productId}`}
-                  className="text-blue-400 hover:text-blue-300"
+                  className='text-blue-400 hover:text-blue-300'
                 >
                     Open product
                 </Link>
@@ -323,20 +323,20 @@ function ProductListingJobsPanelContent({
             </div>
 
 
-            <div className="grid grid-cols-1 gap-6">
-              <div className="space-y-2">
-                <div className="text-gray-500 uppercase text-[10px] font-bold">
+            <div className='grid grid-cols-1 gap-6'>
+              <div className='space-y-2'>
+                <div className='text-gray-500 uppercase text-[10px] font-bold'>
                     Listing Payload
                 </div>
-                <pre className="max-h-72 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-400 border border-border">
+                <pre className='max-h-72 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-400 border border-border'>
                   {JSON.stringify(selectedListing.listing, null, 2)}
                 </pre>
               </div>
-              <div className="space-y-2">
-                <div className="text-gray-500 uppercase text-[10px] font-bold">
+              <div className='space-y-2'>
+                <div className='text-gray-500 uppercase text-[10px] font-bold'>
                     Job Payload
                 </div>
-                <pre className="max-h-72 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-400 border border-border">
+                <pre className='max-h-72 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-400 border border-border'>
                   {JSON.stringify(selectedListing.job, null, 2)}
                 </pre>
               </div>

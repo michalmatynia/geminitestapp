@@ -23,7 +23,7 @@ export default function AuthUserPagesPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <SectionPanel className="p-6 text-sm text-gray-400">
+      <SectionPanel className='p-6 text-sm text-gray-400'>
         Loading user page settings...
       </SectionPanel>
     );
@@ -77,22 +77,22 @@ function AuthUserPagesForm({
   };
 
   return (
-    <div className="space-y-6">
-      <SectionPanel className="p-6">
+    <div className='space-y-6'>
+      <SectionPanel className='p-6'>
         <SectionHeader
-          title="User Pages"
-          description="Configure which authentication flows are available in the public UI."
+          title='User Pages'
+          description='Configure which authentication flows are available in the public UI.'
         />
       </SectionPanel>
 
-      <Card className="bg-card border-border">
+      <Card className='bg-card border-border'>
         <CardHeader>
-          <CardTitle className="text-white text-lg">Authentication Flows</CardTitle>
-          <CardDescription className="text-gray-500">
+          <CardTitle className='text-white text-lg'>Authentication Flows</CardTitle>
+          <CardDescription className='text-gray-500'>
             Toggle each flow on/off. Password strength rules live in Auth Settings.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className='space-y-4'>
           {(
             [
               ['allowSignup', 'Allow sign-up', 'Enable self-service user registration.'],
@@ -103,11 +103,11 @@ function AuthUserPagesForm({
           ).map(([key, title, description]: readonly [keyof AuthUserPageSettings, string, string]) => (
             <div
               key={key}
-              className="flex items-center justify-between rounded-md border border-border bg-card/40 px-4 py-3"
+              className='flex items-center justify-between rounded-md border border-border bg-card/40 px-4 py-3'
             >
               <div>
-                <Label className="text-sm text-gray-200">{title}</Label>
-                <div className="text-xs text-gray-500">{description}</div>
+                <Label className='text-sm text-gray-200'>{title}</Label>
+                <div className='text-xs text-gray-500'>{description}</div>
               </div>
               <Switch
                 checked={settings[key]}
@@ -118,7 +118,7 @@ function AuthUserPagesForm({
         </CardContent>
       </Card>
 
-      <div className="flex justify-end">
+      <div className='flex justify-end'>
         <Button
           onClick={() => void handleSave()}
           disabled={!dirty || updateSetting.isPending}

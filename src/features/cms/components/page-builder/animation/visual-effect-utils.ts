@@ -157,7 +157,7 @@ export const rgbToHex = (r: number, g: number, b: number): string =>
 export const parseColor = (value: string): { color: string; opacity: number } => {
   if (!value) return { color: DEFAULT_SHADOW.color, opacity: DEFAULT_SHADOW.opacity };
   const rgbaMatch = value.match(/rgba?\(([^)]+)\)/i);
-  if (rgbaMatch && rgbaMatch[1]) {
+  if (rgbaMatch?.[1]) {
     const parts = rgbaMatch[1].split(',').map((part: string) => part.trim());
     const r = Number.parseFloat(parts[0] ?? '0');
     const g = Number.parseFloat(parts[1] ?? '0');
@@ -171,7 +171,7 @@ export const parseColor = (value: string): { color: string; opacity: number } =>
     }
   }
   const hexMatch = value.match(/#([0-9a-f]{3,8})/i);
-  if (hexMatch && hexMatch[1]) {
+  if (hexMatch?.[1]) {
     return { color: `#${hexMatch[1].slice(0, 6)}`, opacity: 100 };
   }
   return { color: DEFAULT_SHADOW.color, opacity: DEFAULT_SHADOW.opacity };

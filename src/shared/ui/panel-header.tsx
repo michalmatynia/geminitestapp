@@ -23,7 +23,7 @@ export function PanelHeader({
 }: PanelHeaderProps): React.JSX.Element {
   return (
     <div className={cn('flex items-center justify-between gap-3', className)}>
-      <div className="min-w-0">
+      <div className='min-w-0'>
         <div className={cn('text-sm font-semibold text-white', titleClassName)}>{title}</div>
         {subtitle ? (
           <div className={cn('text-xs text-gray-400', subtitleClassName)}>{subtitle}</div>

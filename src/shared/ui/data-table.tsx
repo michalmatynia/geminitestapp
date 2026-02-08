@@ -112,14 +112,14 @@ export const DataTable = memo(function DataTable<TData>({
   });
 
   return (
-    <div className="rounded-md border border-border">
+    <div className='rounded-md border border-border'>
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id} className="border-border">
+            <TableRow key={headerGroup.id} className='border-border'>
               {headerGroup.headers.map((header) => {
                 return (
-                  <TableHead key={header.id} className="text-foreground">
+                  <TableHead key={header.id} className='text-foreground'>
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -138,7 +138,7 @@ export const DataTable = memo(function DataTable<TData>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center text-muted-foreground"
+                  className='h-24 text-center text-muted-foreground'
                 >
                   Loading...
                 </TableCell>
@@ -149,11 +149,11 @@ export const DataTable = memo(function DataTable<TData>({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && 'selected'}
-                className="border-border"
+                className='border-border'
                 data-row-id={getRowId ? getRowId(row.original) : undefined}
               >
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="text-muted-foreground">
+                  <TableCell key={cell.id} className='text-muted-foreground'>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
@@ -163,19 +163,19 @@ export const DataTable = memo(function DataTable<TData>({
             <TableRow>
               <TableCell
                 colSpan={columns.length}
-                className="h-24 py-12"
+                className='h-24 py-12'
               >
                 <EmptyState 
-                  title="No results" 
+                  title='No results' 
                   description="Try adjusting your filters to find what you're looking for."
-                  className="border-none p-0"
+                  className='border-none p-0'
                 />
               </TableCell>
             </TableRow>
           )}
         </TableBody>
       </Table>
-      {footer && footer(table)}
+      {footer?.(table)}
     </div>
   );
 }) as <TData>(props: DataTableProps<TData>) => JSX.Element;

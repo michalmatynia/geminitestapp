@@ -112,7 +112,7 @@ export function PreviewCarouselBlock({
     if (!showEditorChrome) return null;
     return (
       <div
-        className="flex min-h-[80px] items-center justify-center rounded border border-dashed border-gray-700/50 bg-gray-900/20 text-[10px] uppercase tracking-wider text-gray-600"
+        className='flex min-h-[80px] items-center justify-center rounded border border-dashed border-gray-700/50 bg-gray-900/20 text-[10px] uppercase tracking-wider text-gray-600'
         style={containerStyle}
       >
         Add frames to carousel
@@ -121,10 +121,10 @@ export function PreviewCarouselBlock({
   }
 
   return (
-    <div className="relative w-full overflow-hidden" style={containerStyle}>
+    <div className='relative w-full overflow-hidden' style={containerStyle}>
       {/* Frames container */}
       <div
-        className="relative w-full h-full"
+        className='relative w-full h-full'
         style={{
           ...(transitionType === 'slide'
             ? {
@@ -202,33 +202,33 @@ export function PreviewCarouselBlock({
       {showNavigation && frameCount > 1 && (
         <>
           <button
-            type="button"
+            type='button'
             onClick={goToPrev}
             disabled={!loop && currentIndex === 0}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-            aria-label="Previous slide"
+            className='absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed'
+            aria-label='Previous slide'
           >
-            <ChevronLeft className="w-6 h-6" />
+            <ChevronLeft className='w-6 h-6' />
           </button>
           <button
-            type="button"
+            type='button'
             onClick={goToNext}
             disabled={!loop && currentIndex === frameCount - 1}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-            aria-label="Next slide"
+            className='absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed'
+            aria-label='Next slide'
           >
-            <ChevronRight className="w-6 h-6" />
+            <ChevronRight className='w-6 h-6' />
           </button>
         </>
       )}
 
       {/* Indicators */}
       {showIndicators && frameCount > 1 && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+        <div className='absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2'>
           {frames.map((_: BlockInstance, index: number) => (
             <button
               key={index}
-              type="button"
+              type='button'
               onClick={(): void => goToIndex(index)}
               className={`w-2.5 h-2.5 rounded-full transition-colors ${
                 index === currentIndex ? 'bg-white' : 'bg-white/40 hover:bg-white/60'
@@ -332,20 +332,20 @@ export function PreviewSlideshowBlock({
     <div className={`relative w-full ${stretch ? 'h-full' : ''}`}>
       {frames.length === 0 ? (
         showEditorChrome ? (
-          <div className="flex min-h-[80px] items-center justify-center rounded border border-dashed border-gray-700/50 bg-gray-900/20 text-[10px] uppercase tracking-wider text-gray-600">
+          <div className='flex min-h-[80px] items-center justify-center rounded border border-dashed border-gray-700/50 bg-gray-900/20 text-[10px] uppercase tracking-wider text-gray-600'>
             Add frames to carousel
           </div>
         ) : null
       ) : (
         <>
           <div
-            className="relative overflow-hidden min-h-[200px]"
+            className='relative overflow-hidden min-h-[200px]'
             style={slideHeightStyle}
             onMouseEnter={allowPauseOnHover ? (): void => setIsPaused(true) : undefined}
             onMouseLeave={allowPauseOnHover ? (): void => setIsPaused(false) : undefined}
           >
             {frames.map((frame: BlockInstance, idx: number) => {
-              const frameSettings = (frame.settings ?? {}) as Record<string, unknown>;
+              const frameSettings = (frame.settings ?? {});
               const backgroundColor = (frameSettings['backgroundColor'] as string) || '';
               const contentAlignment = (frameSettings['contentAlignment'] as string) || 'center';
               const verticalAlignment = (frameSettings['verticalAlignment'] as string) || 'center';
@@ -406,7 +406,7 @@ export function PreviewSlideshowBlock({
                       }
                   }
                 >
-                  <div className="flex h-full w-full flex-col" style={frameStyle}>
+                  <div className='flex h-full w-full flex-col' style={frameStyle}>
                     <BlockContextProvider value={{ parentBlockId: frame.id }}>
                       {frameChildren.length > 0 ? (
                         frameChildren.map((child: BlockInstance, blockIdx: number) => {
@@ -432,7 +432,7 @@ export function PreviewSlideshowBlock({
                           );
                         })
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-sm text-gray-500">
+                        <div className='flex h-full w-full items-center justify-center text-sm text-gray-500'>
                           Empty slide
                         </div>
                       )}
@@ -443,22 +443,22 @@ export function PreviewSlideshowBlock({
             })}
           </div>
           {frames.length > 1 && (showArrows || showDots) && (
-            <div className="mt-4 flex items-center justify-center gap-4">
+            <div className='mt-4 flex items-center justify-center gap-4'>
               {showArrows && (
                 <button
-                  type="button"
+                  type='button'
                   onClick={goToPrev}
-                  className="rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition"
+                  className='rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition'
                 >
-                  <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                  <svg className='size-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 19l-7-7 7-7' /></svg>
                 </button>
               )}
               {showDots && (
-                <div className="flex gap-2">
+                <div className='flex gap-2'>
                   {frames.map((_: BlockInstance, idx: number) => (
                     <button
                       key={idx}
-                      type="button"
+                      type='button'
                       onClick={(): void => setActiveIndex(idx)}
                       className={`size-2 rounded-full transition ${idx === currentActiveIndex ? 'bg-white' : 'bg-gray-600'}`}
                     />
@@ -467,11 +467,11 @@ export function PreviewSlideshowBlock({
               )}
               {showArrows && (
                 <button
-                  type="button"
+                  type='button'
                   onClick={goToNext}
-                  className="rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition"
+                  className='rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition'
                 >
-                  <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                  <svg className='size-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5l7 7-7 7' /></svg>
                 </button>
               )}
             </div>

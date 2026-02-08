@@ -106,15 +106,15 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
 
   const observerTypeIcons: Record<string, React.ReactNode> = {
     'wheel,touch': (
-      <span className="flex items-center gap-0.5">
-        <RotateCw className="size-3.5" />
-        <Hand className="size-3.5" />
+      <span className='flex items-center gap-0.5'>
+        <RotateCw className='size-3.5' />
+        <Hand className='size-3.5' />
       </span>
     ),
-    'wheel': <RotateCw className="size-3.5" />,
-    'touch': <Hand className="size-3.5" />,
-    'pointer': <MousePointer2 className="size-3.5" />,
-    'wheel,touch,pointer': <Layers className="size-3.5" />,
+    'wheel': <RotateCw className='size-3.5' />,
+    'touch': <Hand className='size-3.5' />,
+    'pointer': <MousePointer2 className='size-3.5' />,
+    'wheel,touch,pointer': <Layers className='size-3.5' />,
   };
 
   // Motion path handlers
@@ -545,9 +545,9 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
   return (
     <>
       {/* Motion Path */}
-      <SectionPanel variant="subtle-compact" className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+      <SectionPanel variant='subtle-compact' className='space-y-2'>
+        <div className='flex items-center justify-between'>
+          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
             Motion Path
           </Label>
           <Checkbox checked={motionPathEnabledValue} onCheckedChange={handleMotionPathEnabledChange} />
@@ -555,114 +555,114 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
 
         {motionPathEnabledValue && (
           <>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
                 Path / Selector
               </Label>
-              <div className="flex items-center gap-2">
+              <div className='flex items-center gap-2'>
                 <Input
                   value={motionPathPathValue}
                   onChange={handleMotionPathPathChange}
-                  placeholder="SVG path data or selector (#path)"
-                  className="flex-1 text-xs font-mono"
+                  placeholder='SVG path data or selector (#path)'
+                  className='flex-1 text-xs font-mono'
                 />
-                <Tooltip content="Draw path on canvas">
+                <Tooltip content='Draw path on canvas'>
                   <Button
-                    type="button"
-                    size="icon"
-                    variant="outline"
+                    type='button'
+                    size='icon'
+                    variant='outline'
                     onClick={handleMotionPathDraw}
                   >
-                    <PenLine className="size-4" />
+                    <PenLine className='size-4' />
                   </Button>
                 </Tooltip>
-                <Tooltip content="Clear path">
+                <Tooltip content='Clear path'>
                   <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
+                    type='button'
+                    size='icon'
+                    variant='ghost'
                     onClick={handleMotionPathClear}
                     disabled={!motionPathPathValue && motionPathShapesValue.length === 0}
                   >
-                    <Trash2 className="size-4" />
+                    <Trash2 className='size-4' />
                   </Button>
                 </Tooltip>
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Start (0-1)</Label>
+            <div className='grid gap-3 sm:grid-cols-2'>
+              <div className='space-y-1.5'>
+                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Start (0-1)</Label>
                 <Input
-                  type="number"
+                  type='number'
                   min={0}
                   max={1}
                   step={0.01}
                   value={motionPathStartValue}
                   onChange={handleMotionPathStartChange}
-                  className="text-sm"
+                  className='text-sm'
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">End (0-1)</Label>
+              <div className='space-y-1.5'>
+                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>End (0-1)</Label>
                 <Input
-                  type="number"
+                  type='number'
                   min={0}
                   max={1}
                   step={0.01}
                   value={motionPathEndValue}
                   onChange={handleMotionPathEndChange}
-                  className="text-sm"
+                  className='text-sm'
                 />
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="flex items-center gap-2 text-xs text-gray-300">
+            <div className='grid gap-3 sm:grid-cols-2'>
+              <label className='flex items-center gap-2 text-xs text-gray-300'>
                 <Checkbox checked={motionPathAlignValue} onCheckedChange={handleMotionPathAlignChange} />
                 Align to path
               </label>
-              <label className="flex items-center gap-2 text-xs text-gray-300">
+              <label className='flex items-center gap-2 text-xs text-gray-300'>
                 <Checkbox checked={motionPathAutoRotateValue} onCheckedChange={handleMotionPathAutoRotateChange} />
                 Auto rotate
               </label>
             </div>
 
             {motionPathAutoRotateValue && (
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+              <div className='space-y-1.5'>
+                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
                   Rotate offset (deg)
                 </Label>
                 <Input
-                  type="number"
+                  type='number'
                   min={-360}
                   max={360}
                   step={1}
                   value={motionPathRotateOffsetValue}
                   onChange={handleMotionPathRotateOffsetChange}
-                  className="text-sm"
+                  className='text-sm'
                 />
               </div>
             )}
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="flex items-center gap-2 text-xs text-gray-300">
+            <div className='grid gap-3 sm:grid-cols-2'>
+              <label className='flex items-center gap-2 text-xs text-gray-300'>
                 <Checkbox checked={motionPathFollowValue} onCheckedChange={handleMotionPathFollowChange} />
                 Follow path (multi)
               </label>
               {motionPathFollowValue && (
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                <div className='space-y-1.5'>
+                  <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
                     Spacing (0-1)
                   </Label>
                   <Input
-                    type="number"
+                    type='number'
                     min={0}
                     max={1}
                     step={0.01}
                     value={motionPathSpacingValue}
                     onChange={handleMotionPathSpacingChange}
-                    className="text-sm"
+                    className='text-sm'
                   />
                 </div>
               )}
@@ -672,120 +672,120 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
       </SectionPanel>
 
       {/* SVG Effects */}
-      <SectionPanel variant="subtle-compact" className="space-y-2">
-        <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+      <SectionPanel variant='subtle-compact' className='space-y-2'>
+        <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
           SVG Effects
         </Label>
-        <div className="space-y-3">
-          <label className="flex items-center gap-2 text-xs text-gray-300">
+        <div className='space-y-3'>
+          <label className='flex items-center gap-2 text-xs text-gray-300'>
             <Checkbox checked={svgDrawEnabledValue} onCheckedChange={handleSvgDrawEnabledChange} />
             Draw SVG strokes
           </label>
           {svgDrawEnabledValue && (
             <>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Target selector</Label>
+              <div className='space-y-1.5'>
+                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Target selector</Label>
                 <Input
                   value={svgDrawSelectorValue}
                   onChange={handleSvgDrawSelectorChange}
-                  placeholder="path, line, circle"
-                  className="text-sm"
+                  placeholder='path, line, circle'
+                  className='text-sm'
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Custom path</Label>
-                <div className="flex items-center gap-2">
+              <div className='space-y-1.5'>
+                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Custom path</Label>
+                <div className='flex items-center gap-2'>
                   <Input
                     value={svgDrawPathValue}
                     onChange={handleSvgDrawPathChange}
-                    placeholder="Draw or paste SVG path"
-                    className="flex-1 text-xs font-mono"
+                    placeholder='Draw or paste SVG path'
+                    className='flex-1 text-xs font-mono'
                   />
-                  <Tooltip content="Draw path on canvas">
-                    <Button type="button" size="icon" variant="outline" onClick={handleSvgDrawCanvas}>
-                      <PenLine className="size-4" />
+                  <Tooltip content='Draw path on canvas'>
+                    <Button type='button' size='icon' variant='outline' onClick={handleSvgDrawCanvas}>
+                      <PenLine className='size-4' />
                     </Button>
                   </Tooltip>
-                  <Tooltip content="Clear path">
+                  <Tooltip content='Clear path'>
                     <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
+                      type='button'
+                      size='icon'
+                      variant='ghost'
                       onClick={handleSvgDrawClear}
                       disabled={!svgDrawPathValue && svgDrawShapesValue.length === 0}
                     >
-                      <Trash2 className="size-4" />
+                      <Trash2 className='size-4' />
                     </Button>
                   </Tooltip>
                 </div>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">From %</Label>
+              <div className='grid gap-3 sm:grid-cols-2'>
+                <div className='space-y-1.5'>
+                  <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>From %</Label>
                   <Input
-                    type="number"
+                    type='number'
                     min={0}
                     max={100}
                     step={1}
                     value={svgDrawFromValue}
                     onChange={handleSvgDrawFromChange}
-                    className="text-sm"
+                    className='text-sm'
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">To %</Label>
+                <div className='space-y-1.5'>
+                  <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>To %</Label>
                   <Input
-                    type="number"
+                    type='number'
                     min={0}
                     max={100}
                     step={1}
                     value={svgDrawToValue}
                     onChange={handleSvgDrawToChange}
-                    className="text-sm"
+                    className='text-sm'
                   />
                 </div>
               </div>
             </>
           )}
 
-          <label className="flex items-center gap-2 text-xs text-gray-300">
+          <label className='flex items-center gap-2 text-xs text-gray-300'>
             <Checkbox checked={svgMorphEnabledValue} onCheckedChange={handleSvgMorphEnabledChange} />
             Morph SVG path (basic)
           </label>
           {svgMorphEnabledValue && (
             <>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Target selector</Label>
+              <div className='space-y-1.5'>
+                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Target selector</Label>
                 <Input
                   value={svgMorphSelectorValue}
                   onChange={handleSvgMorphSelectorChange}
-                  placeholder="path"
-                  className="text-sm"
+                  placeholder='path'
+                  className='text-sm'
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Target path</Label>
-                <div className="flex items-center gap-2">
+              <div className='space-y-1.5'>
+                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Target path</Label>
+                <div className='flex items-center gap-2'>
                   <Input
                     value={svgMorphToValue}
                     onChange={handleSvgMorphToChange}
-                    placeholder="Target path data or selector (#path)"
-                    className="flex-1 text-xs font-mono"
+                    placeholder='Target path data or selector (#path)'
+                    className='flex-1 text-xs font-mono'
                   />
-                  <Tooltip content="Draw path on canvas">
-                    <Button type="button" size="icon" variant="outline" onClick={handleSvgMorphDraw}>
-                      <PenLine className="size-4" />
+                  <Tooltip content='Draw path on canvas'>
+                    <Button type='button' size='icon' variant='outline' onClick={handleSvgMorphDraw}>
+                      <PenLine className='size-4' />
                     </Button>
                   </Tooltip>
-                  <Tooltip content="Clear path">
+                  <Tooltip content='Clear path'>
                     <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
+                      type='button'
+                      size='icon'
+                      variant='ghost'
                       onClick={handleSvgMorphClear}
                       disabled={!svgMorphToValue && svgMorphShapesValue.length === 0}
                     >
-                      <Trash2 className="size-4" />
+                      <Trash2 className='size-4' />
                     </Button>
                   </Tooltip>
                 </div>
@@ -796,8 +796,8 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
       </SectionPanel>
 
       {/* Text Effects */}
-      <SectionPanel variant="subtle-compact" className="space-y-2">
-        <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+      <SectionPanel variant='subtle-compact' className='space-y-2'>
+        <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
           Text Effects
         </Label>
         <UnifiedSelect
@@ -811,52 +811,52 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
             {(textEffectValue === 'splitChars' ||
               textEffectValue === 'splitWords' ||
               textEffectValue === 'splitLines') && (
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+              <div className='space-y-1.5'>
+                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
                   Stagger (seconds)
                 </Label>
                 <Input
-                  type="number"
+                  type='number'
                   min={0.01}
                   max={2}
                   step={0.01}
                   value={textStaggerValue}
                   onChange={handleTextStaggerChange}
-                  className="text-sm"
+                  className='text-sm'
                 />
               </div>
             )}
 
             {textEffectValue === 'scramble' && (
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+              <div className='space-y-1.5'>
+                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
                   Scramble chars
                 </Label>
                 <Input
                   value={textScrambleCharsValue}
                   onChange={handleTextScrambleCharsChange}
-                  className="text-sm"
+                  className='text-sm'
                 />
               </div>
             )}
 
             {textEffectValue === 'typing' && (
               <>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                <div className='space-y-1.5'>
+                  <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
                     Typing speed (chars/sec)
                   </Label>
                   <Input
-                    type="number"
+                    type='number'
                     min={4}
                     max={120}
                     step={1}
                     value={textTypingSpeedValue}
                     onChange={handleTextTypingSpeedChange}
-                    className="text-sm"
+                    className='text-sm'
                   />
                 </div>
-                <label className="flex items-center gap-2 text-xs text-gray-300">
+                <label className='flex items-center gap-2 text-xs text-gray-300'>
                   <Checkbox checked={textCursorValue} onCheckedChange={handleTextCursorChange} />
                   Show cursor
                 </label>
@@ -864,41 +864,41 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
             )}
 
             {textEffectValue === 'countUp' && (
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+              <div className='grid gap-3 sm:grid-cols-2'>
+                <div className='space-y-1.5'>
+                  <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
                     From
                   </Label>
                   <Input
-                    type="number"
+                    type='number'
                     value={textCountFromValue}
                     onChange={handleTextCountFromChange}
-                    className="text-sm"
+                    className='text-sm'
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                <div className='space-y-1.5'>
+                  <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
                     To
                   </Label>
                   <Input
-                    type="number"
+                    type='number'
                     value={textCountToValue}
                     onChange={handleTextCountToChange}
-                    className="text-sm"
+                    className='text-sm'
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                <div className='space-y-1.5'>
+                  <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
                     Decimals
                   </Label>
                   <Input
-                    type="number"
+                    type='number'
                     min={0}
                     max={6}
                     step={1}
                     value={textCountDecimalsValue}
                     onChange={handleTextCountDecimalsChange}
-                    className="text-sm"
+                    className='text-sm'
                   />
                 </div>
               </div>
@@ -908,8 +908,8 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
       </SectionPanel>
 
       {/* Velocity-based FX */}
-      <SectionPanel variant="subtle-compact" className="space-y-2">
-        <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+      <SectionPanel variant='subtle-compact' className='space-y-2'>
+        <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
           Velocity FX
         </Label>
         <UnifiedSelect
@@ -919,29 +919,29 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
         />
         {velocityEffectValue !== 'none' && (
           <>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Strength</Label>
+            <div className='grid gap-3 sm:grid-cols-2'>
+              <div className='space-y-1.5'>
+                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Strength</Label>
                 <Input
-                  type="number"
+                  type='number'
                   min={0.01}
                   max={2}
                   step={0.01}
                   value={velocityStrengthValue}
                   onChange={handleVelocityStrengthChange}
-                  className="text-sm"
+                  className='text-sm'
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Max limit</Label>
+              <div className='space-y-1.5'>
+                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Max limit</Label>
                 <Input
-                  type="number"
+                  type='number'
                   min={1}
                   max={60}
                   step={1}
                   value={velocityMaxValue}
                   onChange={handleVelocityMaxChange}
-                  className="text-sm"
+                  className='text-sm'
                 />
               </div>
             </div>
@@ -950,18 +950,18 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
       </SectionPanel>
 
       {/* Draggable */}
-      <SectionPanel variant="subtle-compact" className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+      <SectionPanel variant='subtle-compact' className='space-y-2'>
+        <div className='flex items-center justify-between'>
+          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
             Draggable
           </Label>
           <Checkbox checked={draggableEnabledValue} onCheckedChange={handleDraggableEnabledChange} />
         </div>
 
         {draggableEnabledValue && (
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Axis</Label>
+          <div className='space-y-3'>
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Axis</Label>
               <UnifiedSelect
                 value={draggableTypeValue}
                 onValueChange={handleDraggableTypeChange}
@@ -969,66 +969,66 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Bounds selector</Label>
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Bounds selector</Label>
               <Input
                 value={draggableBoundsValue}
                 onChange={handleDraggableBoundsChange}
-                placeholder="e.g. .container"
-                className="text-sm"
+                placeholder='e.g. .container'
+                className='text-sm'
               />
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Snap (px)</Label>
+            <div className='grid gap-3 sm:grid-cols-2'>
+              <div className='space-y-1.5'>
+                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Snap (px)</Label>
                 <Input
-                  type="number"
+                  type='number'
                   min={0}
                   max={200}
                   step={1}
                   value={draggableSnapValue}
                   onChange={handleDraggableSnapChange}
-                  className="text-sm"
+                  className='text-sm'
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Momentum factor</Label>
+              <div className='space-y-1.5'>
+                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Momentum factor</Label>
                 <Input
-                  type="number"
+                  type='number'
                   min={0.1}
                   max={2}
                   step={0.05}
                   value={draggableMomentumFactorValue}
                   onChange={handleDraggableMomentumFactorChange}
-                  className="text-sm"
+                  className='text-sm'
                 />
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-4">
-              <label className="flex items-center gap-2 text-xs text-gray-300">
+            <div className='flex flex-wrap items-center gap-4'>
+              <label className='flex items-center gap-2 text-xs text-gray-300'>
                 <Checkbox checked={draggableMomentumValue} onCheckedChange={handleDraggableMomentumChange} />
                 Enable momentum
               </label>
-              <label className="flex items-center gap-2 text-xs text-gray-300">
+              <label className='flex items-center gap-2 text-xs text-gray-300'>
                 <Checkbox checked={draggableCarouselValue} onCheckedChange={handleDraggableCarouselChange} />
                 Carousel mode
               </label>
             </div>
 
             {draggableCarouselValue && (
-              <div className="space-y-3 pl-2 border-l border-border/40">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Track selector</Label>
+              <div className='space-y-3 pl-2 border-l border-border/40'>
+                <div className='space-y-1.5'>
+                  <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Track selector</Label>
                   <Input
                     value={draggableCarouselSelectorValue}
                     onChange={handleDraggableCarouselSelectorChange}
-                    placeholder="e.g. .track"
-                    className="text-sm"
+                    placeholder='e.g. .track'
+                    className='text-sm'
                   />
                 </div>
-                <label className="flex items-center gap-2 text-xs text-gray-300">
+                <label className='flex items-center gap-2 text-xs text-gray-300'>
                   <Checkbox checked={draggableCarouselSnapValue} onCheckedChange={handleDraggableCarouselSnapChange} />
                   Snap to items
                 </label>
@@ -1039,30 +1039,30 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
       </SectionPanel>
 
       {/* Observer */}
-      <SectionPanel variant="subtle-compact" className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+      <SectionPanel variant='subtle-compact' className='space-y-2'>
+        <div className='flex items-center justify-between'>
+          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
             Observer (Events)
           </Label>
           <Checkbox checked={observerEnabledValue} onCheckedChange={handleObserverEnabledChange} />
         </div>
 
         {observerEnabledValue && (
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Event types</Label>
+          <div className='space-y-3'>
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Event types</Label>
               <Input
                 value={observerTypeValue}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange({ ...config, observerType: e.target.value as ObserverType })}
-                placeholder="wheel,touch,pointer"
-                className="text-sm"
+                placeholder='wheel,touch,pointer'
+                className='text-sm'
               />
-              <div className="flex flex-wrap gap-1.5">
+              <div className='flex flex-wrap gap-1.5'>
                 {OBSERVER_TYPES.map((option: { label: string; value: string }) => (
                   <Tooltip key={option.label} content={option.label}>
                     <Button
-                      type="button"
-                      size="sm"
+                      type='button'
+                      size='sm'
                       variant={observerTypeValue.includes(option.value) ? 'secondary' : 'outline'}
                       onClick={(): void => {
                         const types = observerTypeValue.split(',').map((t: string) => t.trim()).filter(Boolean);
@@ -1071,35 +1071,35 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
                           : [...types, option.value];
                         onChange({ ...config, observerType: next.join(',') as ObserverType });
                       }}
-                      className="h-7 w-9 p-0"
+                      className='h-7 w-9 p-0'
                       aria-label={option.label}
                     >
-                      {observerTypeIcons[option.value] ?? <MousePointer2 className="size-3.5" />}
+                      {observerTypeIcons[option.value] ?? <MousePointer2 className='size-3.5' />}
                     </Button>
                   </Tooltip>
                 ))}
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Axis</Label>
+            <div className='grid gap-3 sm:grid-cols-2'>
+              <div className='space-y-1.5'>
+                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Axis</Label>
                 <UnifiedSelect
                   value={observerAxisValue}
                   onValueChange={handleObserverAxisChange}
                   options={DRAG_AXES}
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Speed</Label>
+              <div className='space-y-1.5'>
+                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Speed</Label>
                 <Input
-                  type="number"
+                  type='number'
                   min={0.1}
                   max={5}
                   step={0.1}
                   value={observerSpeedValue}
                   onChange={handleObserverSpeedChange}
-                  className="text-sm"
+                  className='text-sm'
                 />
               </div>
             </div>
@@ -1108,62 +1108,62 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
       </SectionPanel>
 
       {/* Magnet effect */}
-      <SectionPanel variant="subtle-compact" className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+      <SectionPanel variant='subtle-compact' className='space-y-2'>
+        <div className='flex items-center justify-between'>
+          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
             Magnet
           </Label>
           <Checkbox checked={magnetEnabledValue} onCheckedChange={handleMagnetEnabledChange} />
         </div>
 
         {magnetEnabledValue && (
-          <div className="space-y-3">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Strength</Label>
+          <div className='space-y-3'>
+            <div className='grid gap-3 sm:grid-cols-2'>
+              <div className='space-y-1.5'>
+                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Strength</Label>
                 <Input
-                  type="number"
+                  type='number'
                   min={0.05}
                   max={1}
                   step={0.05}
                   value={magnetStrengthValue}
                   onChange={handleMagnetStrengthChange}
-                  className="text-sm"
+                  className='text-sm'
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Radius (px)</Label>
+              <div className='space-y-1.5'>
+                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Radius (px)</Label>
                 <Input
-                  type="number"
+                  type='number'
                   min={40}
                   max={600}
                   step={10}
                   value={magnetRadiusValue}
                   onChange={handleMagnetRadiusChange}
-                  className="text-sm"
+                  className='text-sm'
                 />
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Axis</Label>
+            <div className='grid gap-3 sm:grid-cols-2'>
+              <div className='space-y-1.5'>
+                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Axis</Label>
                 <UnifiedSelect
                   value={magnetAxisValue}
                   onValueChange={handleMagnetAxisChange}
                   options={DRAG_AXES}
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Return speed</Label>
+              <div className='space-y-1.5'>
+                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Return speed</Label>
                 <Input
-                  type="number"
+                  type='number'
                   min={0.05}
                   max={2}
                   step={0.05}
                   value={magnetReturnValue}
                   onChange={handleMagnetReturnChange}
-                  className="text-sm"
+                  className='text-sm'
                 />
               </div>
             </div>

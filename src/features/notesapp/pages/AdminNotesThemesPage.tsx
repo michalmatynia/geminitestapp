@@ -140,113 +140,113 @@ export function AdminNotesThemesPage(): React.JSX.Element {
   };
 
   return (
-    <div className="container mx-auto py-10">
+    <div className='container mx-auto py-10'>
       <SectionHeader
-        title="Note Themes"
-        description="Create and manage themes for your notes."
-        className="mb-6"
+        title='Note Themes'
+        description='Create and manage themes for your notes.'
+        className='mb-6'
       />
 
-      <div className="space-y-6">
-        <SectionPanel className="p-6">
-          <SectionHeader title="Create Theme" size="sm" className="mb-4" />
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="sm:col-span-2">
-              <Label className="mb-2 block text-sm font-medium text-gray-200">
+      <div className='space-y-6'>
+        <SectionPanel className='p-6'>
+          <SectionHeader title='Create Theme' size='sm' className='mb-4' />
+          <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+            <div className='sm:col-span-2'>
+              <Label className='mb-2 block text-sm font-medium text-gray-200'>
                 Theme Name
               </Label>
               <Input
-                type="text"
+                type='text'
                 value={form.name}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setForm((prev: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'>): Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'> => ({ ...prev, name: event.target.value }))}
-                className="w-full rounded-lg border bg-gray-800 px-4 py-2 text-white"
-                placeholder="Enter theme name"
+                className='w-full rounded-lg border bg-gray-800 px-4 py-2 text-white'
+                placeholder='Enter theme name'
               />
             </div>
             <div>
-              <Label className="mb-2 block text-sm font-medium text-gray-200">
+              <Label className='mb-2 block text-sm font-medium text-gray-200'>
                 Text Color
               </Label>
               <Input
-                type="color"
+                type='color'
                 value={form.textColor}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   setForm((prev: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'>): Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'> => ({ ...prev, textColor: event.target.value }))
                 }
-                className="h-10 w-full rounded border bg-gray-800"
+                className='h-10 w-full rounded border bg-gray-800'
               />
             </div>
             <div>
-              <Label className="mb-2 block text-sm font-medium text-gray-200">
+              <Label className='mb-2 block text-sm font-medium text-gray-200'>
                 Background Color
               </Label>
               <Input
-                type="color"
+                type='color'
                 value={form.backgroundColor}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   setForm((prev: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'>): Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'> => ({ ...prev, backgroundColor: event.target.value }))
                 }
-                className="h-10 w-full rounded border bg-gray-800"
+                className='h-10 w-full rounded border bg-gray-800'
               />
             </div>
             <div>
-              <Label className="mb-2 block text-sm font-medium text-gray-200">
+              <Label className='mb-2 block text-sm font-medium text-gray-200'>
                 Markdown Heading
               </Label>
               <Input
-                type="color"
+                type='color'
                 value={form.markdownHeadingColor}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   setForm((prev: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'>): Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'> => ({ ...prev, markdownHeadingColor: event.target.value }))
                 }
-                className="h-10 w-full rounded border bg-gray-800"
+                className='h-10 w-full rounded border bg-gray-800'
               />
             </div>
             <div>
-              <Label className="mb-2 block text-sm font-medium text-gray-200">
+              <Label className='mb-2 block text-sm font-medium text-gray-200'>
                 Markdown Link
               </Label>
               <Input
-                type="color"
+                type='color'
                 value={form.markdownLinkColor}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   setForm((prev: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'>): Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'> => ({ ...prev, markdownLinkColor: event.target.value }))
                 }
-                className="h-10 w-full rounded border bg-gray-800"
+                className='h-10 w-full rounded border bg-gray-800'
               />
             </div>
             <div>
-              <Label className="mb-2 block text-sm font-medium text-gray-200">
+              <Label className='mb-2 block text-sm font-medium text-gray-200'>
                 Code Background
               </Label>
               <Input
-                type="color"
+                type='color'
                 value={form.markdownCodeBackground}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   setForm((prev: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'>): Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'> => ({ ...prev, markdownCodeBackground: event.target.value }))
                 }
-                className="h-10 w-full rounded border bg-gray-800"
+                className='h-10 w-full rounded border bg-gray-800'
               />
             </div>
             <div>
-              <Label className="mb-2 block text-sm font-medium text-gray-200">
+              <Label className='mb-2 block text-sm font-medium text-gray-200'>
                 Code Text
               </Label>
               <Input
-                type="color"
+                type='color'
                 value={form.markdownCodeText}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   setForm((prev: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'>): Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'> => ({ ...prev, markdownCodeText: event.target.value }))
                 }
-                className="h-10 w-full rounded border bg-gray-800"
+                className='h-10 w-full rounded border bg-gray-800'
               />
             </div>
             <div>
-              <Label className="mb-2 block text-sm font-medium text-gray-200">
+              <Label className='mb-2 block text-sm font-medium text-gray-200'>
                 Related Border Width
               </Label>
               <Input
-                type="number"
+                type='number'
                 min={0}
                 max={8}
                 value={form.relatedNoteBorderWidth}
@@ -256,28 +256,28 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                     relatedNoteBorderWidth: Number(event.target.value),
                   }))
                 }
-                className="h-10 w-full rounded border bg-gray-800 px-3 text-white"
+                className='h-10 w-full rounded border bg-gray-800 px-3 text-white'
               />
             </div>
             <div>
-              <Label className="mb-2 block text-sm font-medium text-gray-200">
+              <Label className='mb-2 block text-sm font-medium text-gray-200'>
                 Related Border Color
               </Label>
               <Input
-                type="color"
+                type='color'
                 value={form.relatedNoteBorderColor}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   setForm((prev: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'>): Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'> => ({ ...prev, relatedNoteBorderColor: event.target.value }))
                 }
-                className="h-10 w-full rounded border bg-gray-800"
+                className='h-10 w-full rounded border bg-gray-800'
               />
             </div>
             <div>
-              <Label className="mb-2 block text-sm font-medium text-gray-200">
+              <Label className='mb-2 block text-sm font-medium text-gray-200'>
                 Related Background
               </Label>
               <Input
-                type="color"
+                type='color'
                 value={form.relatedNoteBackgroundColor}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   setForm((prev: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'>): Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'> => ({
@@ -285,120 +285,120 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                     relatedNoteBackgroundColor: event.target.value,
                   }))
                 }
-                className="h-10 w-full rounded border bg-gray-800"
+                className='h-10 w-full rounded border bg-gray-800'
               />
             </div>
             <div>
-              <Label className="mb-2 block text-sm font-medium text-gray-200">
+              <Label className='mb-2 block text-sm font-medium text-gray-200'>
                 Related Text Color
               </Label>
               <Input
-                type="color"
+                type='color'
                 value={form.relatedNoteTextColor}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   setForm((prev: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'>): Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'> => ({ ...prev, relatedNoteTextColor: event.target.value }))
                 }
-                className="h-10 w-full rounded border bg-gray-800"
+                className='h-10 w-full rounded border bg-gray-800'
               />
             </div>
           </div>
-          <div className="mt-4">
+          <div className='mt-4'>
             <Button onClick={(): void => { void handleCreate(); }} disabled={isSaving}>
               {isSaving ? 'Saving...' : 'Create'}
             </Button>
           </div>
         </SectionPanel>
 
-        <SectionPanel className="p-6">
+        <SectionPanel className='p-6'>
           <SectionHeader
-            title="Existing Themes"
-            size="sm"
-            className="mb-4"
+            title='Existing Themes'
+            size='sm'
+            className='mb-4'
             actions={(
-              <Button variant="outline" onClick={(): void => { void themesQuery.refetch(); }}>
+              <Button variant='outline' onClick={(): void => { void themesQuery.refetch(); }}>
                 Refresh
               </Button>
             )}
           />
           {loading ? (
-            <p className="text-sm text-gray-400">Loading themes...</p>
+            <p className='text-sm text-gray-400'>Loading themes...</p>
           ) : themes.length === 0 ? (
-            <p className="text-sm text-gray-400">No themes created yet.</p>
+            <p className='text-sm text-gray-400'>No themes created yet.</p>
           ) : (
-            <div className="space-y-4">
+            <div className='space-y-4'>
               {themes.map((theme: ThemeRecord): React.JSX.Element => {
                 const isEditing: boolean = editingId === theme.id;
                 const values: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'> = isEditing ? editingForm : theme;
                 return (
                   <div
                     key={theme.id}
-                    className="rounded-lg border border-border bg-card/60 p-4"
+                    className='rounded-lg border border-border bg-card/60 p-4'
                   >
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <div className="text-sm font-semibold text-white">{theme.name}</div>
-                        <div className="text-xs text-gray-500">
+                    <div className='flex flex-wrap items-center justify-between gap-3'>
+                      <div className='flex items-center gap-2'>
+                        <div className='text-sm font-semibold text-white'>{theme.name}</div>
+                        <div className='text-xs text-gray-500'>
                           Updated {new Date(theme.updatedAt).toLocaleString()}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className='flex items-center gap-2'>
                         {isEditing ? (
                           <>
                             <Button
                               onClick={(): void => { void handleUpdate(theme.id); }}
                               disabled={isUpdating}
-                              size="sm"
+                              size='sm'
                             >
                               {isUpdating ? 'Saving...' : 'Save'}
                             </Button>
-                            <Button onClick={handleEditCancel} variant="outline" size="sm">
+                            <Button onClick={handleEditCancel} variant='outline' size='sm'>
                               Cancel
                             </Button>
                           </>
                         ) : (
-                          <Button onClick={(): void => handleEditStart(theme)} variant="outline" size="sm">
+                          <Button onClick={(): void => handleEditStart(theme)} variant='outline' size='sm'>
                             Edit
                           </Button>
                         )}
                         <Button
                           onClick={(): void => { void handleDelete(theme.id); }}
-                          variant="outline"
-                          size="sm"
-                          className="border-red-500/40 text-red-300 hover:text-red-200"
+                          variant='outline'
+                          size='sm'
+                          className='border-red-500/40 text-red-300 hover:text-red-200'
                         >
-                          <Trash2 className="size-4" />
+                          <Trash2 className='size-4' />
                         </Button>
                       </div>
                     </div>
-                    <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className='mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
                       <div>
-                        <Label className="mb-2 block text-xs text-gray-400">Theme Name</Label>
+                        <Label className='mb-2 block text-xs text-gray-400'>Theme Name</Label>
                         <Input
-                          type="text"
+                          type='text'
                           value={values.name}
                           disabled={!isEditing}
                           onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                             if (isEditing) setEditingForm((prev: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'>): Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'> => ({ ...prev, name: event.target.value }));
                           }}
-                          className="w-full rounded-md border bg-gray-800 px-3 py-2 text-sm text-white disabled:opacity-60"
+                          className='w-full rounded-md border bg-gray-800 px-3 py-2 text-sm text-white disabled:opacity-60'
                         />
                       </div>
                       <div>
-                        <Label className="mb-2 block text-xs text-gray-400">Text</Label>
+                        <Label className='mb-2 block text-xs text-gray-400'>Text</Label>
                         <Input
-                          type="color"
+                          type='color'
                           disabled={!isEditing}
                           value={values.textColor}
                           onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                             if (isEditing) setEditingForm((prev: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'>): Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'> => ({ ...prev, textColor: event.target.value }));
                           }}
-                          className="h-9 w-full rounded border bg-gray-800 disabled:opacity-60"
+                          className='h-9 w-full rounded border bg-gray-800 disabled:opacity-60'
                         />
                       </div>
                       <div>
-                        <Label className="mb-2 block text-xs text-gray-400">Background</Label>
+                        <Label className='mb-2 block text-xs text-gray-400'>Background</Label>
                         <Input
-                          type="color"
+                          type='color'
                           disabled={!isEditing}
                           value={values.backgroundColor}
                           onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -407,13 +407,13 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                               backgroundColor: event.target.value,
                             }));
                           }}
-                          className="h-9 w-full rounded border bg-gray-800 disabled:opacity-60"
+                          className='h-9 w-full rounded border bg-gray-800 disabled:opacity-60'
                         />
                       </div>
                       <div>
-                        <Label className="mb-2 block text-xs text-gray-400">Heading</Label>
+                        <Label className='mb-2 block text-xs text-gray-400'>Heading</Label>
                         <Input
-                          type="color"
+                          type='color'
                           disabled={!isEditing}
                           value={values.markdownHeadingColor}
                           onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -422,13 +422,13 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                               markdownHeadingColor: event.target.value,
                             }));
                           }}
-                          className="h-9 w-full rounded border bg-gray-800 disabled:opacity-60"
+                          className='h-9 w-full rounded border bg-gray-800 disabled:opacity-60'
                         />
                       </div>
                       <div>
-                        <Label className="mb-2 block text-xs text-gray-400">Link</Label>
+                        <Label className='mb-2 block text-xs text-gray-400'>Link</Label>
                         <Input
-                          type="color"
+                          type='color'
                           disabled={!isEditing}
                           value={values.markdownLinkColor}
                           onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -437,13 +437,13 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                               markdownLinkColor: event.target.value,
                             }));
                           }}
-                          className="h-9 w-full rounded border bg-gray-800 disabled:opacity-60"
+                          className='h-9 w-full rounded border bg-gray-800 disabled:opacity-60'
                         />
                       </div>
                       <div>
-                        <Label className="mb-2 block text-xs text-gray-400">Code Bg</Label>
+                        <Label className='mb-2 block text-xs text-gray-400'>Code Bg</Label>
                         <Input
-                          type="color"
+                          type='color'
                           disabled={!isEditing}
                           value={values.markdownCodeBackground}
                           onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -452,13 +452,13 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                               markdownCodeBackground: event.target.value,
                             }));
                           }}
-                          className="h-9 w-full rounded border bg-gray-800 disabled:opacity-60"
+                          className='h-9 w-full rounded border bg-gray-800 disabled:opacity-60'
                         />
                       </div>
                       <div>
-                        <Label className="mb-2 block text-xs text-gray-400">Code Text</Label>
+                        <Label className='mb-2 block text-xs text-gray-400'>Code Text</Label>
                         <Input
-                          type="color"
+                          type='color'
                           disabled={!isEditing}
                           value={values.markdownCodeText}
                           onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -467,15 +467,15 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                               markdownCodeText: event.target.value,
                             }));
                           }}
-                          className="h-9 w-full rounded border bg-gray-800 disabled:opacity-60"
+                          className='h-9 w-full rounded border bg-gray-800 disabled:opacity-60'
                         />
                       </div>
                       <div>
-                        <Label className="mb-2 block text-xs text-gray-400">
+                        <Label className='mb-2 block text-xs text-gray-400'>
                           Related Border Width
                         </Label>
                         <Input
-                          type="number"
+                          type='number'
                           min={0}
                           max={8}
                           disabled={!isEditing}
@@ -486,15 +486,15 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                               relatedNoteBorderWidth: Number(event.target.value),
                             }));
                           }}
-                          className="h-9 w-full rounded border bg-gray-800 px-3 text-sm text-white disabled:opacity-60"
+                          className='h-9 w-full rounded border bg-gray-800 px-3 text-sm text-white disabled:opacity-60'
                         />
                       </div>
                       <div>
-                        <Label className="mb-2 block text-xs text-gray-400">
+                        <Label className='mb-2 block text-xs text-gray-400'>
                           Related Border Color
                         </Label>
                         <Input
-                          type="color"
+                          type='color'
                           disabled={!isEditing}
                           value={values.relatedNoteBorderColor}
                           onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -503,15 +503,15 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                               relatedNoteBorderColor: event.target.value,
                             }));
                           }}
-                          className="h-9 w-full rounded border bg-gray-800 disabled:opacity-60"
+                          className='h-9 w-full rounded border bg-gray-800 disabled:opacity-60'
                         />
                       </div>
                       <div>
-                        <Label className="mb-2 block text-xs text-gray-400">
+                        <Label className='mb-2 block text-xs text-gray-400'>
                           Related Background
                         </Label>
                         <Input
-                          type="color"
+                          type='color'
                           disabled={!isEditing}
                           value={values.relatedNoteBackgroundColor}
                           onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -520,15 +520,15 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                               relatedNoteBackgroundColor: event.target.value,
                             }));
                           }}
-                          className="h-9 w-full rounded border bg-gray-800 disabled:opacity-60"
+                          className='h-9 w-full rounded border bg-gray-800 disabled:opacity-60'
                         />
                       </div>
                       <div>
-                        <Label className="mb-2 block text-xs text-gray-400">
+                        <Label className='mb-2 block text-xs text-gray-400'>
                           Related Text Color
                         </Label>
                         <Input
-                          type="color"
+                          type='color'
                           disabled={!isEditing}
                           value={values.relatedNoteTextColor}
                           onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -537,7 +537,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                               relatedNoteTextColor: event.target.value,
                             }));
                           }}
-                          className="h-9 w-full rounded border bg-gray-800 disabled:opacity-60"
+                          className='h-9 w-full rounded border bg-gray-800 disabled:opacity-60'
                         />
                       </div>
                     </div>

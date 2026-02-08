@@ -625,7 +625,7 @@ export function DatabaseNodeConfigSection({
     const currentTemplate = queryConfig.queryTemplate ?? '';
     if (!currentTemplate || currentTemplate.includes('{{')) return;
     const lastTemplate = lastTemplateWithPlaceholdersRef.current;
-    if (!lastTemplate || !lastTemplate.includes('{{')) return;
+    if (!lastTemplate?.includes('{{')) return;
     const runtimeInputs = (runtimeState.inputs[selectedNode.id] ?? {}) as Record<string, unknown>;
     const runtimeOutputs = (runtimeState.outputs[selectedNode.id] ?? {}) as Record<string, unknown>;
     const rawValue =
@@ -1569,7 +1569,7 @@ export function DatabaseNodeConfigSection({
           });
         }
       }
-      if (queryValidation && queryValidation.status === 'error') {
+      if (queryValidation?.status === 'error') {
         toast('Query auto-corrected based on validation.', { variant: 'success' });
       } else {
         toast('Query formatted and fixed.', { variant: 'success' });
@@ -1694,7 +1694,7 @@ export function DatabaseNodeConfigSection({
           return;
         }
         const data = (await dbActionMutation.mutateAsync({
-          provider: (queryConfig.provider ?? 'auto') as 'auto' | 'mongodb' | 'prisma',
+          provider: (queryConfig.provider ?? 'auto'),
           action,
           collection: collectionName,
           document: action === 'insertOne' ? (payloadValue as Record<string, unknown>) : undefined,
@@ -1760,7 +1760,7 @@ export function DatabaseNodeConfigSection({
           return;
         }
         const data = (await dbActionMutation.mutateAsync({
-          provider: (queryConfig.provider ?? 'auto') as 'auto' | 'mongodb' | 'prisma',
+          provider: (queryConfig.provider ?? 'auto'),
           action,
           collection: collectionName,
           filter: filterValue,
@@ -1856,7 +1856,7 @@ export function DatabaseNodeConfigSection({
           return;
         }
         const data = (await dbActionMutation.mutateAsync({
-          provider: (queryConfig.provider ?? 'auto') as 'auto' | 'mongodb' | 'prisma',
+          provider: (queryConfig.provider ?? 'auto'),
           action,
           collection: collectionName,
           filter: filterValue,
@@ -1923,7 +1923,7 @@ export function DatabaseNodeConfigSection({
       const sort =
                       parsedSort && typeof parsedSort === 'object' ? parsedSort : undefined;
       const data = (await dbActionMutation.mutateAsync({
-        provider: (queryConfig.provider ?? 'auto') as 'auto' | 'mongodb' | 'prisma',
+        provider: (queryConfig.provider ?? 'auto'),
         action,
         collection: queryConfig.collection ?? 'products',
         filter: actionCategory === 'aggregate' ? undefined : parsedValue,
@@ -2087,27 +2087,27 @@ export function DatabaseNodeConfigSection({
   const hasDebugPayload = debugPayload !== undefined && debugPayload !== null;
 
   const queryEditor = (
-    <div className="space-y-4 rounded-md border border-border bg-card/40 p-3">
+    <div className='space-y-4 rounded-md border border-border bg-card/40 p-3'>
       <div>
         {queryInputControls}
         {/* Query Result Display */}
         {testQueryResult && (
-          <div className="mt-3 space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs text-gray-400">Query Result</Label>
+          <div className='mt-3 space-y-2'>
+            <div className='flex items-center justify-between'>
+              <Label className='text-xs text-gray-400'>Query Result</Label>
               <Button
-                type="button"
-                className="h-6 rounded-md border px-2 text-[10px] text-gray-400 hover:bg-muted/50"
+                type='button'
+                className='h-6 rounded-md border px-2 text-[10px] text-gray-400 hover:bg-muted/50'
                 onClick={() => setTestQueryResult('')}
               >
                               Clear
               </Button>
             </div>
             <Textarea
-              className="min-h-[120px] w-full rounded-md border border-cyan-800/50 bg-card/70 font-mono text-xs text-cyan-100"
+              className='min-h-[120px] w-full rounded-md border border-cyan-800/50 bg-card/70 font-mono text-xs text-cyan-100'
               value={testQueryResult}
               readOnly
-              placeholder="Query results will appear here..."
+              placeholder='Query results will appear here...'
             />
           </div>
         )}
@@ -2127,26 +2127,26 @@ export function DatabaseNodeConfigSection({
         />
       )}
       {queryValidatorEnabled && (
-        <div className="rounded-md border border-border bg-card/50 p-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className='rounded-md border border-border bg-card/50 p-3'>
+          <div className='flex flex-wrap items-center justify-between gap-2'>
             <div>
-              <Label className="text-xs text-gray-400">Validation Palette</Label>
-              <div className="text-[11px] text-gray-500">
+              <Label className='text-xs text-gray-400'>Validation Palette</Label>
+              <div className='text-[11px] text-gray-500'>
                               Select global validation patterns to apply to this query.
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className='flex items-center gap-2'>
               <Button
-                type="button"
-                className="h-6 rounded-md border px-2 text-[10px] text-gray-300 hover:bg-muted/50 disabled:opacity-50"
+                type='button'
+                className='h-6 rounded-md border px-2 text-[10px] text-gray-300 hover:bg-muted/50 disabled:opacity-50'
                 disabled={validationPaletteRules.length === 0}
                 onClick={handleSelectAllValidationRules}
               >
                               Select all
               </Button>
               <Button
-                type="button"
-                className="h-6 rounded-md border px-2 text-[10px] text-gray-300 hover:bg-muted/50 disabled:opacity-50"
+                type='button'
+                className='h-6 rounded-md border px-2 text-[10px] text-gray-300 hover:bg-muted/50 disabled:opacity-50'
                 disabled={selectedValidationRuleIds.length === 0}
                 onClick={handleClearValidationRules}
               >
@@ -2155,28 +2155,28 @@ export function DatabaseNodeConfigSection({
             </div>
           </div>
           {validationPaletteRules.length === 0 ? (
-            <div className="mt-2 text-[11px] text-gray-500">
+            <div className='mt-2 text-[11px] text-gray-500'>
                             No global validation patterns found. Add them in Admin → Prompt Engine → Validation Patterns.
             </div>
           ) : (
-            <div className="mt-3 grid gap-2">
+            <div className='mt-3 grid gap-2'>
               {validationPaletteRules.map((rule: ValidationPaletteRule) => {
                 const checked = selectedValidationRuleIds.includes(rule.id);
                 return (
                   <label
                     key={rule.id}
-                    className="flex items-start gap-2 rounded-md border border-border/60 bg-card/40 px-2 py-2 text-xs text-gray-200"
+                    className='flex items-start gap-2 rounded-md border border-border/60 bg-card/40 px-2 py-2 text-xs text-gray-200'
                   >
                     <Checkbox
                       checked={checked}
                       onCheckedChange={() => handleToggleValidationRule(rule.id)}
-                      className="mt-0.5"
+                      className='mt-0.5'
                     />
-                    <div className="flex-1">
-                      <div className="text-[11px] font-semibold text-gray-200">
+                    <div className='flex-1'>
+                      <div className='text-[11px] font-semibold text-gray-200'>
                         {rule.title}
                       </div>
-                      <div className="text-[10px] text-gray-500">
+                      <div className='text-[10px] text-gray-500'>
                         {rule.message}
                       </div>
                     </div>
@@ -2198,9 +2198,9 @@ export function DatabaseNodeConfigSection({
           )}
         </div>
       )}
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className='grid gap-3 sm:grid-cols-2'>
         <div>
-          <Label className="text-xs text-gray-400">Provider</Label>
+          <Label className='text-xs text-gray-400'>Provider</Label>
           <Select
             value={queryConfig.provider ?? 'mongodb'}
             onValueChange={(value: string) => {
@@ -2241,18 +2241,18 @@ export function DatabaseNodeConfigSection({
               });
             }}
           >
-            <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-              <SelectValue placeholder="Select provider" />
+            <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
+              <SelectValue placeholder='Select provider' />
             </SelectTrigger>
-            <SelectContent className="border-border bg-gray-900">
-              <SelectItem value="auto">Auto (legacy)</SelectItem>
-              <SelectItem value="mongodb">MongoDB</SelectItem>
-              <SelectItem value="prisma">Prisma</SelectItem>
+            <SelectContent className='border-border bg-gray-900'>
+              <SelectItem value='auto'>Auto (legacy)</SelectItem>
+              <SelectItem value='mongodb'>MongoDB</SelectItem>
+              <SelectItem value='prisma'>Prisma</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div>
-          <Label className="text-xs text-gray-400">Collection</Label>
+          <Label className='text-xs text-gray-400'>Collection</Label>
           <Select
             value={collectionOption}
             onValueChange={(value: string) => {
@@ -2261,20 +2261,20 @@ export function DatabaseNodeConfigSection({
               });
             }}
           >
-            <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-              <SelectValue placeholder="Select collection" />
+            <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
+              <SelectValue placeholder='Select collection' />
             </SelectTrigger>
-            <SelectContent className="border-border bg-gray-900 max-h-60 overflow-y-auto">
+            <SelectContent className='border-border bg-gray-900 max-h-60 overflow-y-auto'>
               {collectionOptions.map((option: { value: string; label: string }) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
               ))}
-              <SelectItem value="custom">Custom</SelectItem>
+              <SelectItem value='custom'>Custom</SelectItem>
             </SelectContent>
           </Select>
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-[10px] text-gray-500">
+          <div className='mt-2 flex flex-wrap items-center justify-between gap-2'>
+            <p className='text-[10px] text-gray-500'>
               {schemaSource === 'connected'
                 ? 'Using live schema from connected Database Schema node.'
                 : schemaSource === 'snapshot'
@@ -2282,8 +2282,8 @@ export function DatabaseNodeConfigSection({
                   : 'No schema snapshot yet. Sync to load collections.'}
             </p>
             <Button
-              type="button"
-              className="h-6 rounded-md border border-border px-2 text-[10px] text-gray-200 hover:bg-muted/60"
+              type='button'
+              className='h-6 rounded-md border border-border px-2 text-[10px] text-gray-200 hover:bg-muted/60'
               onClick={handleSyncSchema}
               disabled={schemaSyncing}
             >
@@ -2291,12 +2291,12 @@ export function DatabaseNodeConfigSection({
             </Button>
           </div>
           {useSchemaCollections && schemaLoading && (
-            <p className="mt-2 text-[11px] text-gray-500">
+            <p className='mt-2 text-[11px] text-gray-500'>
               Loading schema collections...
             </p>
           )}
           {useSchemaCollections && !schemaLoading && !schemaSyncing && schemaCollectionOptions.length === 0 && (
-            <p className="mt-2 text-[11px] text-gray-500">
+            <p className='mt-2 text-[11px] text-gray-500'>
               {schemaSource === 'connected'
                 ? 'No schema collections available. Check the Database Schema node selection.'
                 : 'No synced collections available. Click "Sync collections" to refresh.'}
@@ -2304,18 +2304,18 @@ export function DatabaseNodeConfigSection({
           )}
           {(collectionOption === 'custom' || useSchemaCollections) && (
             <Input
-              className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+              className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
               value={queryConfig.collection}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                 updateQueryConfig({ collection: event.target.value });
               }}
-              placeholder="collection_name"
+              placeholder='collection_name'
             />
           )}
         </div>
       </div>
       {(providerWarning || productProviderWarning || providerActionWarning) && (
-        <div className="mt-3 space-y-1 rounded-md border border-amber-700/50 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100">
+        <div className='mt-3 space-y-1 rounded-md border border-amber-700/50 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100'>
           {providerActionWarning && <div>{providerActionWarning}</div>}
           {providerWarning && <div>{providerWarning}</div>}
           {productProviderWarning && <div>{productProviderWarning}</div>}
@@ -2323,11 +2323,11 @@ export function DatabaseNodeConfigSection({
       )}
       {showLimit && (
         <div>
-          <Label className="text-xs text-gray-400">Limit</Label>
+          <Label className='text-xs text-gray-400'>Limit</Label>
           <Input
-            type="number"
-            step="1"
-            className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+            type='number'
+            step='1'
+            className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
             value={queryConfig.limit}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
               updateQueryConfig({
@@ -2338,27 +2338,27 @@ export function DatabaseNodeConfigSection({
         </div>
       )}
       {isPrismaProvider && (
-        <div className="rounded-md border border-cyan-900/40 bg-cyan-500/5 p-3 text-[11px] text-cyan-100">
-          <div className="font-medium text-cyan-200">Prisma query tips</div>
-          <div className="mt-1 text-cyan-100/90">
+        <div className='rounded-md border border-cyan-900/40 bg-cyan-500/5 p-3 text-[11px] text-cyan-100'>
+          <div className='font-medium text-cyan-200'>Prisma query tips</div>
+          <div className='mt-1 text-cyan-100/90'>
                           Use a Prisma `where` object for filters and a `select` object for projections.
           </div>
-          <div className="mt-2 text-cyan-100/90">
-                          Where example: <span className="font-mono">{'{ "id": "{{value}}" }'}</span>
+          <div className='mt-2 text-cyan-100/90'>
+                          Where example: <span className='font-mono'>{'{ "id": "{{value}}" }'}</span>
           </div>
-          <div className="mt-1 text-cyan-100/90">
+          <div className='mt-1 text-cyan-100/90'>
                           Update data example:{' '}
-            <span className="font-mono">{'{ "description_en": "{{result}}" }'}</span>
+            <span className='font-mono'>{'{ "description_en": "{{result}}" }'}</span>
           </div>
-          <div className="mt-2 text-cyan-100/90">
-                          Active Prisma command: <span className="font-semibold">{providerActionLabel}</span>
+          <div className='mt-2 text-cyan-100/90'>
+                          Active Prisma command: <span className='font-semibold'>{providerActionLabel}</span>
           </div>
         </div>
       )}
       {showSort && (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className='grid gap-3 sm:grid-cols-2'>
           <div>
-            <Label className="text-xs text-gray-400">{sortPresetLabel}</Label>
+            <Label className='text-xs text-gray-400'>{sortPresetLabel}</Label>
             <Select
               value={sortPresetId}
               onValueChange={(value: string) => {
@@ -2371,11 +2371,11 @@ export function DatabaseNodeConfigSection({
                 });
               }}
             >
-              <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-                <SelectValue placeholder="Select preset" />
+              <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
+                <SelectValue placeholder='Select preset' />
               </SelectTrigger>
-              <SelectContent className="border-border bg-gray-900">
-                <SelectItem value="custom">Custom</SelectItem>
+              <SelectContent className='border-border bg-gray-900'>
+                <SelectItem value='custom'>Custom</SelectItem>
                 {sortPresets.map((preset: { id: string; label: string }) => (
                   <SelectItem key={preset.id} value={preset.id}>
                     {preset.label}
@@ -2383,9 +2383,9 @@ export function DatabaseNodeConfigSection({
                 ))}
               </SelectContent>
             </Select>
-            <Label className="mt-3 text-xs text-gray-400">{sortLabel}</Label>
+            <Label className='mt-3 text-xs text-gray-400'>{sortLabel}</Label>
             <Textarea
-              className="mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
+              className='mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
               value={queryConfig.sort}
               onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
                 updateQueryConfig({
@@ -2394,14 +2394,14 @@ export function DatabaseNodeConfigSection({
                 })
               }
             />
-            <p className="mt-2 text-[11px] text-gray-500">
+            <p className='mt-2 text-[11px] text-gray-500'>
                             Example:{' '}
-              <span className="text-gray-300">{sortExample}</span>
+              <span className='text-gray-300'>{sortExample}</span>
             </p>
           </div>
           {showProjection && (
             <div>
-              <Label className="text-xs text-gray-400">{projectionPresetLabel}</Label>
+              <Label className='text-xs text-gray-400'>{projectionPresetLabel}</Label>
               <Select
                 value={projectionPresetId}
                 onValueChange={(value: string) => {
@@ -2414,11 +2414,11 @@ export function DatabaseNodeConfigSection({
                   });
                 }}
               >
-                <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-                  <SelectValue placeholder="Select preset" />
+                <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
+                  <SelectValue placeholder='Select preset' />
                 </SelectTrigger>
-                <SelectContent className="border-border bg-gray-900">
-                  <SelectItem value="custom">Custom</SelectItem>
+                <SelectContent className='border-border bg-gray-900'>
+                  <SelectItem value='custom'>Custom</SelectItem>
                   {projectionPresets.map((preset: { id: string; label: string }) => (
                     <SelectItem key={preset.id} value={preset.id}>
                       {preset.label}
@@ -2426,11 +2426,11 @@ export function DatabaseNodeConfigSection({
                   ))}
                 </SelectContent>
               </Select>
-              <Label className="mt-3 text-xs text-gray-400">
+              <Label className='mt-3 text-xs text-gray-400'>
                 {projectionLabel}
               </Label>
               <Textarea
-                className="mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                className='mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
                 value={queryConfig.projection}
                 onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
                   updateQueryConfig({
@@ -2439,9 +2439,9 @@ export function DatabaseNodeConfigSection({
                   })
                 }
               />
-              <p className="mt-2 text-[11px] text-gray-500">
+              <p className='mt-2 text-[11px] text-gray-500'>
                             Example:{' '}
-                <span className="text-gray-300">{projectionExample}</span>
+                <span className='text-gray-300'>{projectionExample}</span>
               </p>
             </div>
           )}
@@ -2449,7 +2449,7 @@ export function DatabaseNodeConfigSection({
       )}
       {showProjection && !showSort && (
         <div>
-          <Label className="text-xs text-gray-400">{projectionPresetLabel}</Label>
+          <Label className='text-xs text-gray-400'>{projectionPresetLabel}</Label>
           <Select
             value={projectionPresetId}
             onValueChange={(value: string) => {
@@ -2462,11 +2462,11 @@ export function DatabaseNodeConfigSection({
               });
             }}
           >
-            <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-              <SelectValue placeholder="Select preset" />
+            <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
+              <SelectValue placeholder='Select preset' />
             </SelectTrigger>
-            <SelectContent className="border-border bg-gray-900">
-              <SelectItem value="custom">Custom</SelectItem>
+            <SelectContent className='border-border bg-gray-900'>
+              <SelectItem value='custom'>Custom</SelectItem>
               {projectionPresets.map((preset: { id: string; label: string }) => (
                 <SelectItem key={preset.id} value={preset.id}>
                   {preset.label}
@@ -2474,11 +2474,11 @@ export function DatabaseNodeConfigSection({
               ))}
             </SelectContent>
           </Select>
-          <Label className="mt-3 text-xs text-gray-400">
+          <Label className='mt-3 text-xs text-gray-400'>
             {projectionLabel}
           </Label>
           <Textarea
-            className="mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
+            className='mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
             value={queryConfig.projection}
             onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
               updateQueryConfig({
@@ -2487,17 +2487,17 @@ export function DatabaseNodeConfigSection({
               })
             }
           />
-          <p className="mt-2 text-[11px] text-gray-500">
+          <p className='mt-2 text-[11px] text-gray-500'>
                           Example:{' '}
-            <span className="text-gray-300">{projectionExample}</span>
+            <span className='text-gray-300'>{projectionExample}</span>
           </p>
         </div>
       )}
       {showDistinctField && (
         <div>
-          <Label className="text-xs text-gray-400">Distinct field</Label>
+          <Label className='text-xs text-gray-400'>Distinct field</Label>
           <Input
-            className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+            className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
             value={databaseConfig.distinctField ?? ''}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
               updateSelectedNodeConfig({
@@ -2507,15 +2507,15 @@ export function DatabaseNodeConfigSection({
                 },
               })
             }
-            placeholder="fieldName"
+            placeholder='fieldName'
           />
         </div>
       )}
       {showSingleToggle && (
-        <div className="flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300">
+        <div className='flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300'>
           <span>Single result</span>
           <Button
-            type="button"
+            type='button'
             className={`rounded border px-3 py-1 text-xs ${
               queryConfig.single
                 ? 'text-emerald-200 hover:bg-emerald-500/10'
@@ -2530,7 +2530,7 @@ export function DatabaseNodeConfigSection({
         </div>
       )}
       {showQueryExtras && (
-        <p className="text-[11px] text-gray-500">
+        <p className='text-[11px] text-gray-500'>
                         Collections are allowlisted on the server for safety.
         </p>
       )}
@@ -2542,13 +2542,13 @@ export function DatabaseNodeConfigSection({
       <Tabs
         value={databaseTab}
         onValueChange={(value: string) => setDatabaseTab(value as 'settings' | 'constructor' | 'presets')}
-        className="space-y-4"
+        className='space-y-4'
       >
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <TabsList className="justify-start border border-border bg-card/60">
-            <TabsTrigger value="settings">Query</TabsTrigger>
-            <TabsTrigger value="constructor">Constructor</TabsTrigger>
-            <TabsTrigger value="presets">Presets</TabsTrigger>
+        <div className='flex flex-wrap items-center justify-between gap-2'>
+          <TabsList className='justify-start border border-border bg-card/60'>
+            <TabsTrigger value='settings'>Query</TabsTrigger>
+            <TabsTrigger value='constructor'>Constructor</TabsTrigger>
+            <TabsTrigger value='presets'>Presets</TabsTrigger>
           </TabsList>
           <div
             className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-wide ${
@@ -2565,17 +2565,17 @@ export function DatabaseNodeConfigSection({
                         Action Mode: {databaseConfig.useMongoActions ? 'On' : 'Off'}
           </div>
         </div>
-        <div className="rounded-md border border-border bg-card/50 p-3">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs text-gray-400">
+        <div className='rounded-md border border-border bg-card/50 p-3'>
+          <div className='flex items-center justify-between'>
+            <Label className='text-xs text-gray-400'>
                           Last Runtime Debug
               {debugRunAt
                 ? ` • Saved ${new Date(debugRunAt).toLocaleString()}`
                 : ''}
             </Label>
             <Button
-              type="button"
-              className="h-6 rounded-md border px-2 text-[10px] text-gray-400 hover:bg-muted/50 disabled:opacity-50"
+              type='button'
+              className='h-6 rounded-md border px-2 text-[10px] text-gray-400 hover:bg-muted/50 disabled:opacity-50'
               disabled={!hasDebugPayload}
               onClick={() => {
                 if (!hasDebugPayload) return;
@@ -2592,13 +2592,13 @@ export function DatabaseNodeConfigSection({
             </Button>
           </div>
           <Textarea
-            className="mt-2 min-h-[110px] w-full rounded-md border border-amber-800/50 bg-card/70 font-mono text-xs text-amber-100"
+            className='mt-2 min-h-[110px] w-full rounded-md border border-amber-800/50 bg-card/70 font-mono text-xs text-amber-100'
             value={hasDebugPayload ? JSON.stringify(debugPayload, null, 2) : ''}
             readOnly
-            placeholder="Run the path trigger to capture debug output..."
+            placeholder='Run the path trigger to capture debug output...'
           />
         </div>
-        <TabsContent value="settings">
+        <TabsContent value='settings'>
           <DatabaseSettingsTab
             queryEditor={queryEditor}
             availablePorts={availablePorts}
@@ -2609,7 +2609,7 @@ export function DatabaseNodeConfigSection({
             updateSelectedNodeConfig={updateSelectedNodeConfig}
           />
         </TabsContent>
-        <TabsContent value="constructor">
+        <TabsContent value='constructor'>
           <DatabaseConstructorTab
             queryInputControls={queryInputControls}
             pendingAiQuery={pendingAiQuery}
@@ -2659,7 +2659,7 @@ export function DatabaseNodeConfigSection({
             uniqueTargetPathOptions={uniqueTargetPathOptions}
           />
         </TabsContent>
-        <TabsContent value="presets">
+        <TabsContent value='presets'>
           <DatabasePresetsTab
             dbQueryPresets={dbQueryPresets}
             builtInPresets={presetOptions}

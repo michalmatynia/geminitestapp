@@ -28,16 +28,16 @@ const toNumber = (value: string, fallback: number): number => {
 function HeadlessModeSection(): ReactElement {
   const { settings, setSettings } = usePlaywrightSettings();
   return (
-    <SectionPanel variant="subtle-compact">
-      <Label className="flex items-center justify-between text-sm text-gray-300">
+    <SectionPanel variant='subtle-compact'>
+      <Label className='flex items-center justify-between text-sm text-gray-300'>
         <span>
           Headless mode
-          <span className="ml-2 block text-xs text-gray-500">
+          <span className='ml-2 block text-xs text-gray-500'>
             Hide the browser window during execution.
           </span>
         </span>
         <Checkbox
-          className="h-4 w-4 accent-emerald-400"
+          className='h-4 w-4 accent-emerald-400'
           checked={settings.headless}
           onCheckedChange={(checked: boolean | 'indeterminate'): void =>
             setSettings((prev: PlaywrightSettings) => ({
@@ -54,16 +54,16 @@ function HeadlessModeSection(): ReactElement {
 function EmulationSection(): ReactElement {
   const { settings, setSettings } = usePlaywrightSettings();
   return (
-    <SectionPanel variant="subtle-compact">
-      <Label className="flex items-center justify-between text-sm text-gray-300">
+    <SectionPanel variant='subtle-compact'>
+      <Label className='flex items-center justify-between text-sm text-gray-300'>
         <span>
           Emulate Device
-          <span className="ml-2 block text-xs text-gray-500">
+          <span className='ml-2 block text-xs text-gray-500'>
             Simulate a mobile device or specific browser.
           </span>
         </span>
         <Checkbox
-          className="h-4 w-4 accent-emerald-400"
+          className='h-4 w-4 accent-emerald-400'
           checked={settings.emulateDevice}
           onCheckedChange={(checked: boolean | 'indeterminate'): void =>
             setSettings((prev: PlaywrightSettings) => ({
@@ -74,7 +74,7 @@ function EmulationSection(): ReactElement {
         />
       </Label>
       {settings.emulateDevice && (
-        <div className="mt-3">
+        <div className='mt-3'>
           <UnifiedSelect
             value={settings.deviceName}
             onValueChange={(v: string): void =>
@@ -84,7 +84,7 @@ function EmulationSection(): ReactElement {
               }))
             }
             options={playwrightDeviceOptions}
-            placeholder="Select device"
+            placeholder='Select device'
           />
         </div>
       )}
@@ -95,12 +95,12 @@ function EmulationSection(): ReactElement {
 function TimeoutsSection(): ReactElement {
   const { settings, setSettings } = usePlaywrightSettings();
   return (
-    <div className="grid gap-4 md:grid-cols-3">
-      <SectionPanel variant="subtle-compact">
-        <Label className="text-xs text-gray-400">SlowMo (ms)</Label>
+    <div className='grid gap-4 md:grid-cols-3'>
+      <SectionPanel variant='subtle-compact'>
+        <Label className='text-xs text-gray-400'>SlowMo (ms)</Label>
         <Input
-          type="number"
-          className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
+          type='number'
+          className='mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white'
           value={settings.slowMo}
           onChange={(e: ChangeEvent<HTMLInputElement>): void =>
             setSettings((prev: PlaywrightSettings) => ({
@@ -110,11 +110,11 @@ function TimeoutsSection(): ReactElement {
           }
         />
       </SectionPanel>
-      <SectionPanel variant="subtle-compact">
-        <Label className="text-xs text-gray-400">Timeout (ms)</Label>
+      <SectionPanel variant='subtle-compact'>
+        <Label className='text-xs text-gray-400'>Timeout (ms)</Label>
         <Input
-          type="number"
-          className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
+          type='number'
+          className='mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white'
           value={settings.timeout}
           onChange={(e: ChangeEvent<HTMLInputElement>): void =>
             setSettings((prev: PlaywrightSettings) => ({
@@ -124,13 +124,13 @@ function TimeoutsSection(): ReactElement {
           }
         />
       </SectionPanel>
-      <SectionPanel variant="subtle-compact">
-        <Label className="text-xs text-gray-400">
+      <SectionPanel variant='subtle-compact'>
+        <Label className='text-xs text-gray-400'>
           Navigation Timeout (ms)
         </Label>
         <Input
-          type="number"
-          className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
+          type='number'
+          className='mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white'
           value={settings.navigationTimeout}
           onChange={(e: ChangeEvent<HTMLInputElement>): void =>
             setSettings((prev: PlaywrightSettings) => ({
@@ -150,16 +150,16 @@ function TimeoutsSection(): ReactElement {
 function HumanizeSection(): ReactElement {
   const { settings, setSettings } = usePlaywrightSettings();
   return (
-    <SectionPanel variant="subtle-compact">
-      <Label className="flex items-center justify-between text-sm text-gray-300">
+    <SectionPanel variant='subtle-compact'>
+      <Label className='flex items-center justify-between text-sm text-gray-300'>
         <span>
           Humanize Mouse
-          <span className="ml-2 block text-xs text-gray-500">
+          <span className='ml-2 block text-xs text-gray-500'>
             Add jitter and randomized movement paths.
           </span>
         </span>
         <Checkbox
-          className="h-4 w-4 accent-emerald-400"
+          className='h-4 w-4 accent-emerald-400'
           checked={settings.humanizeMouse}
           onCheckedChange={(checked: boolean | 'indeterminate'): void =>
             setSettings((prev: PlaywrightSettings) => ({
@@ -170,13 +170,13 @@ function HumanizeSection(): ReactElement {
         />
       </Label>
       {settings.humanizeMouse && (
-        <div className="mt-3">
-          <Label className="text-xs text-gray-400">
+        <div className='mt-3'>
+          <Label className='text-xs text-gray-400'>
             Mouse Jitter (pixels)
           </Label>
           <Input
-            type="number"
-            className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
+            type='number'
+            className='mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white'
             value={settings.mouseJitter}
             onChange={(e: ChangeEvent<HTMLInputElement>): void =>
               setSettings((prev: PlaywrightSettings) => ({
@@ -202,14 +202,14 @@ function DelayInputs({
 }): ReactElement {
   const { settings, setSettings } = usePlaywrightSettings();
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <SectionPanel variant="subtle-compact">
-        <Label className="text-xs text-gray-400">
+    <div className='grid gap-4 md:grid-cols-2'>
+      <SectionPanel variant='subtle-compact'>
+        <Label className='text-xs text-gray-400'>
           {label} min
         </Label>
         <Input
-          type="number"
-          className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
+          type='number'
+          className='mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white'
           value={settings[minKey] as number}
           onChange={(e: ChangeEvent<HTMLInputElement>): void =>
             setSettings((prev: PlaywrightSettings) => ({
@@ -222,13 +222,13 @@ function DelayInputs({
           }
         />
       </SectionPanel>
-      <SectionPanel variant="subtle-compact">
-        <Label className="text-xs text-gray-400">
+      <SectionPanel variant='subtle-compact'>
+        <Label className='text-xs text-gray-400'>
           {label} max
         </Label>
         <Input
-          type="number"
-          className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
+          type='number'
+          className='mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white'
           value={settings[maxKey] as number}
           onChange={(e: ChangeEvent<HTMLInputElement>): void =>
             setSettings((prev: PlaywrightSettings) => ({
@@ -248,16 +248,16 @@ function DelayInputs({
 function ProxySection(): ReactElement {
   const { settings, setSettings } = usePlaywrightSettings();
   return (
-    <SectionPanel variant="subtle-compact">
-      <Label className="flex items-center justify-between text-sm text-gray-300">
+    <SectionPanel variant='subtle-compact'>
+      <Label className='flex items-center justify-between text-sm text-gray-300'>
         <span>
         Proxy
-          <span className="ml-2 block text-xs text-gray-500">
+          <span className='ml-2 block text-xs text-gray-500'>
           Route traffic through a proxy server.
           </span>
         </span>
         <Checkbox
-          className="h-4 w-4 accent-emerald-400"
+          className='h-4 w-4 accent-emerald-400'
           checked={settings.proxyEnabled}
           onCheckedChange={(checked: boolean | 'indeterminate'): void =>
             setSettings((prev: PlaywrightSettings) => ({
@@ -268,15 +268,15 @@ function ProxySection(): ReactElement {
         />
       </Label>
       {settings.proxyEnabled && (
-        <div className="mt-3 space-y-3">
+        <div className='mt-3 space-y-3'>
           <div>
-            <Label className="text-xs text-gray-400">
+            <Label className='text-xs text-gray-400'>
             Proxy server
             </Label>
             <Input
-              type="text"
-              className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-              placeholder="http://host:port"
+              type='text'
+              className='mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white'
+              placeholder='http://host:port'
               value={settings.proxyServer}
               onChange={(e: ChangeEvent<HTMLInputElement>): void =>
                 setSettings((prev: PlaywrightSettings) => ({
@@ -286,14 +286,14 @@ function ProxySection(): ReactElement {
               }
             />
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className='grid gap-4 md:grid-cols-2'>
             <div>
-              <Label className="text-xs text-gray-400">
+              <Label className='text-xs text-gray-400'>
               Proxy username
               </Label>
               <Input
-                type="text"
-                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
+                type='text'
+                className='mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white'
                 value={settings.proxyUsername}
                 onChange={(e: ChangeEvent<HTMLInputElement>): void =>
                   setSettings((prev: PlaywrightSettings) => ({
@@ -304,12 +304,12 @@ function ProxySection(): ReactElement {
               />
             </div>
             <div>
-              <Label className="text-xs text-gray-400">
+              <Label className='text-xs text-gray-400'>
               Proxy password
               </Label>
               <Input
-                type="password"
-                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
+                type='password'
+                className='mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white'
                 value={settings.proxyPassword}
                 onChange={(e: ChangeEvent<HTMLInputElement>): void =>
                   setSettings((prev: PlaywrightSettings) => ({
@@ -328,24 +328,24 @@ function ProxySection(): ReactElement {
 
 function AdvancedSettingsSection(): ReactElement {
   return (
-    <SectionPanel variant="subtle" className="p-3">
+    <SectionPanel variant='subtle' className='p-3'>
       <details>
-        <summary className="cursor-pointer text-sm font-semibold text-gray-200">
+        <summary className='cursor-pointer text-sm font-semibold text-gray-200'>
           Advanced settings
         </summary>
-        <div className="mt-4 space-y-4">
+        <div className='mt-4 space-y-4'>
           <div>
-            <p className="text-xs font-semibold text-gray-300">
+            <p className='text-xs font-semibold text-gray-300'>
             Interaction delays (ms)
             </p>
-            <p className="mt-1 text-xs text-gray-500">
+            <p className='mt-1 text-xs text-gray-500'>
             Add random pauses between actions for human-like pacing.
             </p>
           </div>
 
-          <DelayInputs label="Click delay" minKey="clickDelayMin" maxKey="clickDelayMax" />
-          <DelayInputs label="Input delay" minKey="inputDelayMin" maxKey="inputDelayMax" />
-          <DelayInputs label="Action delay" minKey="actionDelayMin" maxKey="actionDelayMax" />
+          <DelayInputs label='Click delay' minKey='clickDelayMin' maxKey='clickDelayMax' />
+          <DelayInputs label='Input delay' minKey='inputDelayMin' maxKey='inputDelayMax' />
+          <DelayInputs label='Action delay' minKey='actionDelayMin' maxKey='actionDelayMax' />
           
           <ProxySection />
         </div>
@@ -365,17 +365,17 @@ function PlaywrightSettingsFormContent({
 
   return (
     <SectionPanel
-      variant="subtle"
-      className="max-h-[70vh] overflow-y-auto p-4"
+      variant='subtle'
+      className='max-h-[70vh] overflow-y-auto p-4'
     >
-      <h3 className="text-sm font-semibold text-white">
+      <h3 className='text-sm font-semibold text-white'>
         {title ?? 'Playwright settings'}
       </h3>
-      <p className="mt-1 text-xs text-gray-400">
+      <p className='mt-1 text-xs text-gray-400'>
         {description ?? 'Control how the browser behaves during crosslisting.'}
       </p>
 
-      <div className="mt-4 space-y-4">
+      <div className='mt-4 space-y-4'>
         <HeadlessModeSection />
         <EmulationSection />
         <TimeoutsSection />
@@ -383,10 +383,10 @@ function PlaywrightSettingsFormContent({
         <AdvancedSettingsSection />
 
         {shouldShowSave && onSave ? (
-          <div className="flex justify-end">
+          <div className='flex justify-end'>
             <Button
-              type="button"
-              className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
+              type='button'
+              className='rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200'
               onClick={onSave}
             >
               {saveLabel ?? 'Save Playwright Settings'}

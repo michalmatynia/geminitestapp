@@ -308,29 +308,29 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
     return (
       <React.Fragment key={category.id}>
         <tr className={`border-b border-border ${hasPendingChange ? 'bg-yellow-500/5' : ''}`}>
-          <td className="px-4 py-2">
-            <div className="flex items-center" style={{ paddingLeft: `${depth * 20}px` }}>
+          <td className='px-4 py-2'>
+            <div className='flex items-center' style={{ paddingLeft: `${depth * 20}px` }}>
               {hasChildren ? (
                 <Button
                   onClick={(): void => toggleExpand(category.id)}
-                  className="mr-2 rounded p-0.5 text-gray-400 hover:bg-muted/50 hover:text-white"
+                  className='mr-2 rounded p-0.5 text-gray-400 hover:bg-muted/50 hover:text-white'
                 >
                   {isExpanded ? (
-                    <ChevronDown className="h-4 w-4" />
+                    <ChevronDown className='h-4 w-4' />
                   ) : (
-                    <ChevronRight className="h-4 w-4" />
+                    <ChevronRight className='h-4 w-4' />
                   )}
                 </Button>
               ) : (
-                <span className="mr-2 w-5" />
+                <span className='mr-2 w-5' />
               )}
-              <span className="text-sm text-gray-200">{category.name}</span>
+              <span className='text-sm text-gray-200'>{category.name}</span>
               {currentMapping && (
-                <Check className="ml-2 h-3 w-3 text-emerald-400" />
+                <Check className='ml-2 h-3 w-3 text-emerald-400' />
               )}
             </div>
           </td>
-          <td className="px-4 py-2">
+          <td className='px-4 py-2'>
             <UnifiedSelect
               value={currentMapping ?? '__unmapped__'}
               onValueChange={(v: string): void =>
@@ -341,7 +341,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
                 { value: '__unmapped__', label: '— Not mapped —' },
                 ...internalCategoryOptions
               ]}
-              triggerClassName="w-full bg-gray-800 border-border text-white text-sm h-8"
+              triggerClassName='w-full bg-gray-800 border-border text-white text-sm h-8'
             />
           </td>
         </tr>
@@ -357,21 +357,21 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
   };
 
   return (
-    <div className="space-y-6">
+    <div className='space-y-6'>
       <SectionHeader
-        title="Base.com Categories"
+        title='Base.com Categories'
         description={`Connection: ${connectionName}`}
         actions={
-          <div className="flex items-center gap-3">
+          <div className='flex items-center gap-3'>
             <Button
               onClick={(): void => { void handleFetchFromBase(); }}
               disabled={fetchMutation.isPending}
-              className="flex items-center gap-2 rounded-md border bg-gray-800 px-4 py-2 text-sm text-white hover:bg-gray-700 disabled:opacity-50"
+              className='flex items-center gap-2 rounded-md border bg-gray-800 px-4 py-2 text-sm text-white hover:bg-gray-700 disabled:opacity-50'
             >
               {fetchMutation.isPending ? (
-                <RefreshCw className="h-4 w-4 animate-spin" />
+                <RefreshCw className='h-4 w-4 animate-spin' />
               ) : (
-                <Download className="h-4 w-4" />
+                <Download className='h-4 w-4' />
               )}
               {fetchMutation.isPending ? 'Fetching...' : 'Fetch Categories'}
             </Button>
@@ -379,12 +379,12 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
             <Button
               onClick={(): void => { void handleSave(); }}
               disabled={saveMutation.isPending || pendingMappings.size === 0}
-              className="flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
+              className='flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50'
             >
               {saveMutation.isPending ? (
-                <RefreshCw className="h-4 w-4 animate-spin" />
+                <RefreshCw className='h-4 w-4 animate-spin' />
               ) : (
-                <Save className="h-4 w-4" />
+                <Save className='h-4 w-4' />
               )}
               {saveMutation.isPending ? 'Saving...' : `Save (${pendingMappings.size})`}
             </Button>
@@ -393,9 +393,9 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
       />
 
       {/* Catalog Selector */}
-      <div className="flex items-center gap-4">
-        <Label className="text-sm text-gray-400">Target Catalog:</Label>
-        <div className="w-[200px]">
+      <div className='flex items-center gap-4'>
+        <Label className='text-sm text-gray-400'>Target Catalog:</Label>
+        <div className='w-[200px]'>
           <UnifiedSelect
             value={selectedCatalogId ?? '__none__'}
             onValueChange={(v: string): void => setSelectedCatalogId(v === '__none__' ? null : v)}
@@ -405,41 +405,41 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
               ...catalogs.map((catalog: Catalog) => ({ value: catalog.id, label: catalog.name }))
             ]}
             placeholder={catalogsLoading ? 'Loading...' : 'Select catalog'}
-            triggerClassName="bg-gray-800 border-border text-white text-sm h-9"
+            triggerClassName='bg-gray-800 border-border text-white text-sm h-9'
           />
         </div>
 
         {selectedCatalogId && (
-          <span className="text-xs text-gray-500">
+          <span className='text-xs text-gray-500'>
             {internalCategories.length} internal categories
           </span>
         )}
       </div>
 
       {/* Stats */}
-      <div className="flex gap-6 text-sm">
-        <div className="text-gray-400">
-          Total: <span className="text-white">{stats.total}</span>
+      <div className='flex gap-6 text-sm'>
+        <div className='text-gray-400'>
+          Total: <span className='text-white'>{stats.total}</span>
         </div>
-        <div className="text-gray-400">
-          Mapped: <span className="text-emerald-400">{stats.mapped}</span>
+        <div className='text-gray-400'>
+          Mapped: <span className='text-emerald-400'>{stats.mapped}</span>
         </div>
         {stats.pending > 0 && (
-          <div className="text-gray-400">
-            Unsaved changes: <span className="text-yellow-400">{stats.pending}</span>
+          <div className='text-gray-400'>
+            Unsaved changes: <span className='text-yellow-400'>{stats.pending}</span>
           </div>
         )}
       </div>
 
       {/* Category Table */}
-      <div className="overflow-hidden rounded-md border border-border">
-        <table className="w-full">
+      <div className='overflow-hidden rounded-md border border-border'>
+        <table className='w-full'>
           <thead>
-            <tr className="border-b border-border bg-card/50">
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-400">
+            <tr className='border-b border-border bg-card/50'>
+              <th className='px-4 py-3 text-left text-xs font-medium uppercase text-gray-400'>
                 External Category
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-400">
+              <th className='px-4 py-3 text-left text-xs font-medium uppercase text-gray-400'>
                 Internal Category
               </th>
             </tr>
@@ -447,13 +447,13 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
           <tbody>
             {externalCategoriesLoading || mappingsLoading ? (
               <tr>
-                <td colSpan={2} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={2} className='px-4 py-8 text-center text-gray-500'>
                   Loading categories...
                 </td>
               </tr>
             ) : externalCategories.length === 0 ? (
               <tr>
-                <td colSpan={2} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={2} className='px-4 py-8 text-center text-gray-500'>
                   No external categories found. Click &quot;Fetch Categories&quot; to load from Base.com.
                 </td>
               </tr>

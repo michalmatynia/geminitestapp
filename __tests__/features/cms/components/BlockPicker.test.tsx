@@ -31,7 +31,7 @@ describe('BlockPicker Component', () => {
     const queryClient = createTestQueryClient();
     const { container } = render(
       <QueryClientProvider client={queryClient}>
-        <BlockPicker sectionType="EmptySection" onSelect={vi.fn()} />
+        <BlockPicker sectionType='EmptySection' onSelect={vi.fn()} />
       </QueryClientProvider>
     );
     expect(container.firstChild).toBeNull();
@@ -42,7 +42,7 @@ describe('BlockPicker Component', () => {
     const onSelect = vi.fn();
     render(
       <QueryClientProvider client={queryClient}>
-        <BlockPicker sectionType="RichText" onSelect={onSelect} />
+        <BlockPicker sectionType='RichText' onSelect={onSelect} />
       </QueryClientProvider>
     );
 
@@ -66,7 +66,7 @@ describe('BlockPicker Component', () => {
     const onSelect = vi.fn();
     render(
       <QueryClientProvider client={queryClient}>
-        <BlockPicker sectionType="RichText" onSelect={onSelect} />
+        <BlockPicker sectionType='RichText' onSelect={onSelect} />
       </QueryClientProvider>
     );
 

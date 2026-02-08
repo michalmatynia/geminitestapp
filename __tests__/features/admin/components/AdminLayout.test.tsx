@@ -52,7 +52,7 @@ const renderLayout = (children: ReactNode) => {
 
 describe('AdminLayout', () => {
   it('renders children correctly', () => {
-    renderLayout(<div data-testid="child">Test Content</div>);
+    renderLayout(<div data-testid='child'>Test Content</div>);
 
     expect(screen.getByTestId('child')).toBeInTheDocument();
     expect(screen.getByText('Test Content')).toBeInTheDocument();

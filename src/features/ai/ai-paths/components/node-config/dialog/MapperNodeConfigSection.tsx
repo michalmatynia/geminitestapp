@@ -106,23 +106,23 @@ export function MapperNodeConfigSection({
   const hasLivePreview = livePreview !== null && Object.keys(livePreview).length > 0;
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-md border border-border bg-card/50 p-3">
-        <div className="text-[11px] text-gray-400">Live Preview</div>
-        <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+    <div className='space-y-4'>
+      <div className='rounded-md border border-border bg-card/50 p-3'>
+        <div className='text-[11px] text-gray-400'>Live Preview</div>
+        <div className='mt-3 grid grid-cols-1 gap-3 md:grid-cols-2'>
           <div>
-            <Label className="text-xs text-gray-400">Context Input</Label>
+            <Label className='text-xs text-gray-400'>Context Input</Label>
             <Textarea
-              className="mt-2 min-h-[110px] w-full rounded-md border border-border bg-card/70 font-mono text-xs text-white"
+              className='mt-2 min-h-[110px] w-full rounded-md border border-border bg-card/70 font-mono text-xs text-white'
               value={contextInput !== null && contextInput !== undefined ? formatRuntimeValue(contextInput) : ''}
               readOnly
-              placeholder="Run the path or simulation to see the latest context input."
+              placeholder='Run the path or simulation to see the latest context input.'
             />
           </div>
           <div>
-            <Label className="text-xs text-gray-400">Mapped Output (Current Mappings)</Label>
+            <Label className='text-xs text-gray-400'>Mapped Output (Current Mappings)</Label>
             <Textarea
-              className="mt-2 min-h-[110px] w-full rounded-md border border-border bg-card/70 font-mono text-xs text-white"
+              className='mt-2 min-h-[110px] w-full rounded-md border border-border bg-card/70 font-mono text-xs text-white'
               value={hasLivePreview ? formatRuntimeValue(livePreview) : ''}
               readOnly
               placeholder={
@@ -135,11 +135,11 @@ export function MapperNodeConfigSection({
         </div>
       </div>
       <div>
-        <Label className="text-xs text-gray-400">
+        <Label className='text-xs text-gray-400'>
           Outputs (one per line)
         </Label>
         <Textarea
-          className="mt-2 min-h-[90px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
+          className='mt-2 min-h-[90px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
           value={outputs.join('\n')}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
             const list = parsePathList(event.target.value);
@@ -162,17 +162,17 @@ export function MapperNodeConfigSection({
             });
           }}
         />
-        <p className="mt-2 text-[11px] text-gray-500">
+        <p className='mt-2 text-[11px] text-gray-500'>
           Outputs must match downstream input ports exactly.
         </p>
       </div>
       {outputs.map((output: string): React.JSX.Element => (
         <div key={output}>
-          <Label className="text-xs text-gray-400">
+          <Label className='text-xs text-gray-400'>
             {formatPortLabel(output)} Mapping Path
           </Label>
           <Input
-            className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+            className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
             value={mapperConfig.mappings?.[output] ?? ''}
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
               const nextMappings = {
@@ -185,7 +185,7 @@ export function MapperNodeConfigSection({
             }}
           />
           {preview?.unresolved[output] ? (
-            <p className="mt-1 text-[11px] text-amber-300">
+            <p className='mt-1 text-[11px] text-amber-300'>
               Unresolved for current input: <code>{preview.unresolved[output]}</code>
             </p>
           ) : null}

@@ -26,14 +26,14 @@ export function AdminPageLayout({
   tabs,
 }: AdminPageLayoutProps): React.JSX.Element {
   return (
-    <div className="container mx-auto py-10">
+    <div className='container mx-auto py-10'>
       {tabs && (
         <Tabs
           value={tabs.activeTab}
           onValueChange={tabs.onTabChange}
-          className="mb-6"
+          className='mb-6'
         >
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className='grid w-full max-w-md grid-cols-2'>
             {tabs.tabsList.map((tab) => (
               <TabsTrigger key={tab.value} value={tab.value}>
                 {tab.label}
@@ -45,7 +45,7 @@ export function AdminPageLayout({
 
       <SectionHeader
         title={title}
-        className="mb-6"
+        className='mb-6'
         {...(description ? { description } : {})}
         {...(eyebrow ? { eyebrow } : {})}
         {...(mainActions ? { actions: mainActions } : {})}

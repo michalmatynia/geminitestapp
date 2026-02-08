@@ -325,7 +325,7 @@ export function AiPathsSettingsView({
   };
 
   if (loading) {
-    return <div className="text-sm text-gray-400">Loading AI Paths...</div>;
+    return <div className='text-sm text-gray-400'>Loading AI Paths...</div>;
   }
 
   return (
@@ -335,12 +335,12 @@ export function AiPathsSettingsView({
           {!isFocusMode && typeof document !== 'undefined' && renderActions
             ? createPortal(
               renderActions(
-                <div className="grid w-full grid-cols-[1fr_auto_1fr] items-start gap-3">
-                  <div className="flex flex-col items-start gap-2">
-                    <div className="flex flex-wrap items-center gap-3">
+                <div className='grid w-full grid-cols-[1fr_auto_1fr] items-start gap-3'>
+                  <div className='flex flex-col items-start gap-2'>
+                    <div className='flex flex-wrap items-center gap-3'>
                       <Button
-                        type="button"
-                        className="rounded-md border border-border text-sm text-gray-300 hover:bg-card/60"
+                        type='button'
+                        className='rounded-md border border-border text-sm text-gray-300 hover:bg-card/60'
                         onClick={handleTogglePathLock}
                         disabled={!activePathId}
                         title={isPathLocked ? 'Unlock to edit nodes and connections' : 'Lock to prevent edits'}
@@ -348,19 +348,19 @@ export function AiPathsSettingsView({
                         {isPathLocked ? 'Unlock Path' : 'Lock Path'}
                       </Button>
                       <Button
-                        className="rounded-md border border-amber-500/40 text-sm text-amber-200 hover:bg-amber-500/10"
+                        className='rounded-md border border-amber-500/40 text-sm text-amber-200 hover:bg-amber-500/10'
                         onClick={() => {
                           void handleClearConnectorData();
                         }}
-                        type="button"
+                        type='button'
                         disabled={!activePathId}
                       >
                           Clear Connector Data
                       </Button>
                     </div>
-                    <div className="flex flex-wrap items-center gap-3">
+                    <div className='flex flex-wrap items-center gap-3'>
                       <Button
-                        type="button"
+                        type='button'
                         className={`rounded-md border text-sm ${isPathActive ? 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10' : 'border-rose-500/40 text-rose-200 hover:bg-rose-500/10'}`}
                         onClick={handleTogglePathActive}
                         disabled={!activePathId}
@@ -369,11 +369,11 @@ export function AiPathsSettingsView({
                         {isPathActive ? 'Deactivate' : 'Activate'}
                       </Button>
                       <Button
-                        className="rounded-md border border-sky-500/40 text-sm text-sky-200 hover:bg-sky-500/10"
+                        className='rounded-md border border-sky-500/40 text-sm text-sky-200 hover:bg-sky-500/10'
                         onClick={() => {
                           void handleClearHistory();
                         }}
-                        type="button"
+                        type='button'
                         disabled={!activePathId}
                         title={hasHistory ? 'Clear history for all nodes in this path' : 'No history recorded yet'}
                       >
@@ -381,13 +381,13 @@ export function AiPathsSettingsView({
                       </Button>
                     </div>
                     {lastError && (
-                      <div className="flex items-center gap-2 rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-1 text-xs text-rose-200">
-                        <span className="max-w-[220px] truncate">
+                      <div className='flex items-center gap-2 rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-1 text-xs text-rose-200'>
+                        <span className='max-w-[220px] truncate'>
                             Last error: {lastError.message}
                         </span>
                         <Button
-                          type="button"
-                          className="rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20"
+                          type='button'
+                          className='rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20'
                           onClick={() => {
                             setLastError(null);
                             void persistLastError(null);
@@ -397,8 +397,8 @@ export function AiPathsSettingsView({
                         </Button>
                         {lastError.message === 'Failed to load AI Paths settings' && (
                           <Button
-                            type="button"
-                            className="rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20"
+                            type='button'
+                            className='rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20'
                             onClick={() => {
                               setLastError(null);
                               void persistLastError(null);
@@ -409,8 +409,8 @@ export function AiPathsSettingsView({
                           </Button>
                         )}
                         <Button
-                          type="button"
-                          className="rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20"
+                          type='button'
+                          className='rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20'
                           onClick={(): void =>
                             window.location.assign(
                               `/admin/system/logs?level=error&source=client&query=${encodeURIComponent(
@@ -424,28 +424,28 @@ export function AiPathsSettingsView({
                       </div>
                     )}
                   </div>
-                  <div className="flex justify-center">
+                  <div className='flex justify-center'>
                     {!isFocusMode && (
                       <Button
-                        type="button"
-                        className="rounded-md border border-border text-sm text-gray-200 hover:bg-card/60"
+                        type='button'
+                        className='rounded-md border border-border text-sm text-gray-200 hover:bg-card/60'
                         onClick={() => setIsFocusMode(true)}
-                        title="Show canvas only"
+                        title='Show canvas only'
                       >
                         Show
                       </Button>
                     )}
                   </div>
-                  <div className="flex flex-col items-end gap-2">
+                  <div className='flex flex-col items-end gap-2'>
                     <Button
-                      className="rounded-md border text-sm text-white hover:bg-muted/60"
-                      type="button"
+                      className='rounded-md border text-sm text-white hover:bg-muted/60'
+                      type='button'
                       onClick={handleCreatePath}
                     >
                         New Path
                     </Button>
                     <Button
-                      className="rounded-md border text-sm text-white hover:bg-muted/60"
+                      className='rounded-md border text-sm text-white hover:bg-muted/60'
                       onClick={() => {
                         if (nodeConfigDirty) {
                           toast(
@@ -471,10 +471,10 @@ export function AiPathsSettingsView({
               if (!headerTarget) return null;
               return createPortal(
                 <Button
-                  type="button"
-                  className="rounded-md border border-border text-sm text-gray-200 hover:bg-card/60"
+                  type='button'
+                  className='rounded-md border border-border text-sm text-gray-200 hover:bg-card/60'
                   onClick={() => setIsFocusMode(false)}
-                  title="Show side panels"
+                  title='Show side panels'
                 >
                   Edit
                 </Button>,
@@ -484,17 +484,17 @@ export function AiPathsSettingsView({
             : null}
           {!isFocusMode && typeof document !== 'undefined' && activePathId
             ? createPortal(
-              <div className="flex items-center justify-end gap-2">
+              <div className='flex items-center justify-end gap-2'>
                 <div className={`rounded-md border px-2 py-1 text-[10px] ${autoSaveClasses}`}>
                   {autoSaveLabel}
                 </div>
                 {lastRunAt && (
-                  <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[10px] text-emerald-200">
+                  <div className='rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[10px] text-emerald-200'>
                       Last run: {new Date(lastRunAt).toLocaleTimeString()}
                   </div>
                 )}
-                <div className="flex flex-col items-end gap-1">
-                  <Label className="text-[10px] uppercase text-gray-500">Execution</Label>
+                <div className='flex flex-col items-end gap-1'>
+                  <Label className='text-[10px] uppercase text-gray-500'>Execution</Label>
                   <UnifiedSelect
                     value={executionMode}
                     onValueChange={(value: string): void => {
@@ -503,13 +503,13 @@ export function AiPathsSettingsView({
                       }
                     }}
                     options={executionOptions}
-                    className="w-[160px]"
-                    triggerClassName="h-9 border-border bg-card/60 px-3 text-xs text-white"
+                    className='w-[160px]'
+                    triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
                     disabled={isPathLocked}
                   />
                 </div>
-                <div className="flex flex-col items-end gap-1">
-                  <Label className="text-[10px] uppercase text-gray-500">Flow</Label>
+                <div className='flex flex-col items-end gap-1'>
+                  <Label className='text-[10px] uppercase text-gray-500'>Flow</Label>
                   <UnifiedSelect
                     value={flowIntensity}
                     onValueChange={(value: string): void => {
@@ -518,13 +518,13 @@ export function AiPathsSettingsView({
                       }
                     }}
                     options={flowOptions}
-                    className="w-[160px]"
-                    triggerClassName="h-9 border-border bg-card/60 px-3 text-xs text-white"
+                    className='w-[160px]'
+                    triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
                     disabled={isPathLocked}
                   />
                 </div>
-                <div className="flex flex-col items-end gap-1">
-                  <Label className="text-[10px] uppercase text-gray-500">Run Mode</Label>
+                <div className='flex flex-col items-end gap-1'>
+                  <Label className='text-[10px] uppercase text-gray-500'>Run Mode</Label>
                   <UnifiedSelect
                     value={runMode}
                     onValueChange={(value: string): void => {
@@ -533,8 +533,8 @@ export function AiPathsSettingsView({
                       }
                     }}
                     options={runModeOptions}
-                    className="w-[160px]"
-                    triggerClassName="h-9 border-border bg-card/60 px-3 text-xs text-white"
+                    className='w-[160px]'
+                    triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
                     disabled={isPathLocked}
                   />
                 </div>
@@ -548,19 +548,19 @@ export function AiPathsSettingsView({
                     value: path.id,
                     label: path.name
                   }))}
-                  placeholder="Switch path"
-                  className="w-[320px]"
-                  triggerClassName="h-9 border-border bg-card/60 px-3 text-sm text-white"
+                  placeholder='Switch path'
+                  className='w-[320px]'
+                  triggerClassName='h-9 border-border bg-card/60 px-3 text-sm text-white'
                 />
                 <Button
-                  type="button"
-                  className="h-9 rounded-md border border-border text-sm text-gray-200 hover:bg-card/60"
+                  type='button'
+                  className='h-9 rounded-md border border-border text-sm text-gray-200 hover:bg-card/60'
                   onClick={() => {
                     setRenameDraft(pathName);
                     setRenameOpen(true);
                   }}
                   disabled={!activePathId}
-                  title="Rename this path"
+                  title='Rename this path'
                 >
                     Rename
                 </Button>
@@ -572,20 +572,20 @@ export function AiPathsSettingsView({
           <SharedModal
             open={renameOpen}
             onClose={() => setRenameOpen(false)}
-            title="Rename Path"
-            size="sm"
+            title='Rename Path'
+            size='sm'
             footer={
-              <div className="flex w-full justify-end gap-2">
+              <div className='flex w-full justify-end gap-2'>
                 <Button
-                  type="button"
-                  className="rounded-md border border-border text-sm text-gray-200 hover:bg-card/60"
+                  type='button'
+                  className='rounded-md border border-border text-sm text-gray-200 hover:bg-card/60'
                   onClick={() => setRenameOpen(false)}
                 >
                   Cancel
                 </Button>
                 <Button
-                  type="button"
-                  className="rounded-md border text-sm text-white hover:bg-muted/60"
+                  type='button'
+                  className='rounded-md border text-sm text-white hover:bg-muted/60'
                   onClick={() => {
                     const nextName = renameDraft.trim();
                     if (!nextName) {
@@ -603,14 +603,14 @@ export function AiPathsSettingsView({
               </div>
             }
           >
-            <div className="space-y-2">
-              <div className="space-y-1">
-                <Label className="text-xs text-gray-400">Name</Label>
+            <div className='space-y-2'>
+              <div className='space-y-1'>
+                <Label className='text-xs text-gray-400'>Name</Label>
                 <Input
-                  className="h-9 w-full rounded-md border border-border bg-card/60 px-3 text-sm text-white"
+                  className='h-9 w-full rounded-md border border-border bg-card/60 px-3 text-sm text-white'
                   value={renameDraft}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) => setRenameDraft(event.target.value)}
-                  placeholder="Path name"
+                  placeholder='Path name'
                   autoFocus
                 />
               </div>
@@ -631,8 +631,8 @@ export function AiPathsSettingsView({
               <CanvasSidebarWrapper
                 palette={palette}
                 onDragStart={(e: React.DragEvent<HTMLDivElement>, node: NodeDefinition) => { void handleDragStart(e, node); }}
-                onFireTrigger={(node: AiNode) => void handleFireTrigger(node)}
-                onFireTriggerPersistent={(node: AiNode) => void handleFireTriggerPersistent(node)}
+                onFireTrigger={(node: AiNode) => { void handleFireTrigger(node); }}
+                onFireTriggerPersistent={(node: AiNode) => { void handleFireTriggerPersistent(node); }}
                 onUpdateSelectedNode={(patch, options) => updateSelectedNode(patch, options)}
                 onDeleteSelectedNode={() => { handleDeleteSelectedNode(); }}
                 onRemoveEdge={(edgeId: string) => { handleRemoveEdge(edgeId); }}
@@ -646,9 +646,9 @@ export function AiPathsSettingsView({
               />
               <ClusterPresetsPanelMigrated
                 onPresetFromSelection={handlePresetFromSelection}
-                onSavePreset={() => void handleSavePreset()}
+                onSavePreset={() => { void handleSavePreset(); }}
                 onApplyPreset={(preset: ClusterPreset) => { void handleApplyPreset(preset); }}
-                onDeletePreset={(presetId: string) => void handleDeletePreset(presetId)}
+                onDeletePreset={(presetId: string) => { void handleDeletePreset(presetId); }}
                 onExportPresets={handleExportPresets}
                 presetDraft={presetDraft}
                 setPresetDraft={setPresetDraft}
@@ -659,9 +659,9 @@ export function AiPathsSettingsView({
                 isRefreshing={runsQuery.isFetching}
                 onRefresh={() => { void runsQuery.refetch(); }}
                 onOpenRunDetail={(runId: string) => { void handleOpenRunDetail(runId); }}
-                onResumeRun={(runId: string, mode: 'resume' | 'replay') => void handleResumeRun(runId, mode)}
-                onCancelRun={(runId: string) => void handleCancelRun(runId)}
-                onRequeueDeadLetter={(runId: string) => void handleRequeueDeadLetter(runId)}
+                onResumeRun={(runId: string, mode: 'resume' | 'replay') => { void handleResumeRun(runId, mode); }}
+                onCancelRun={(runId: string) => { void handleCancelRun(runId); }}
+                onRequeueDeadLetter={(runId: string) => { void handleRequeueDeadLetter(runId); }}
                 runFilter={runFilter}
                 setRunFilter={setRunFilter}
                 expandedRunHistory={expandedRunHistory}
@@ -674,23 +674,23 @@ export function AiPathsSettingsView({
               <CanvasBoardMigrated
                 runtimeRunStatus={runtimeRunStatus}
                 viewportClassName={isFocusMode ? 'h-full min-h-0 rounded-none border-0' : undefined}
-                onFireTrigger={(node) => void handleFireTrigger(node)}
+                onFireTrigger={(node) => { void handleFireTrigger(node); }}
               />
             </div>
           </div>
           {!isFocusMode ? (
-            <div className="grid gap-4 lg:grid-cols-2">
-              <div className="space-y-3 rounded-lg border border-border/60 bg-card/50 p-4">
-                <div className="flex items-start justify-between gap-3">
+            <div className='grid gap-4 lg:grid-cols-2'>
+              <div className='space-y-3 rounded-lg border border-border/60 bg-card/50 p-4'>
+                <div className='flex items-start justify-between gap-3'>
                   <div>
-                    <div className="text-sm font-semibold text-white">Runtime Analysis</div>
-                    <div className="text-xs text-gray-400">
+                    <div className='text-sm font-semibold text-white'>Runtime Analysis</div>
+                    <div className='text-xs text-gray-400'>
                       Live runtime state synced from node events plus Redis 24h analytics.
                     </div>
                   </div>
                   <Button
-                    type="button"
-                    className="rounded-md border border-border px-2 py-1 text-[10px] text-gray-200 hover:bg-card/70"
+                    type='button'
+                    className='rounded-md border border-border px-2 py-1 text-[10px] text-gray-200 hover:bg-card/70'
                     onClick={() => {
                       void runtimeAnalyticsQuery.refetch();
                     }}
@@ -700,34 +700,34 @@ export function AiPathsSettingsView({
                   </Button>
                 </div>
 
-                <div className="grid gap-2 sm:grid-cols-3">
-                  <div className="rounded-md border border-border/60 bg-card/60 p-2">
-                    <div className="text-[10px] uppercase text-gray-500">Run Status</div>
-                    <div className="mt-1 text-sm text-white">{formatStatusLabel(runtimeRunStatus)}</div>
+                <div className='grid gap-2 sm:grid-cols-3'>
+                  <div className='rounded-md border border-border/60 bg-card/60 p-2'>
+                    <div className='text-[10px] uppercase text-gray-500'>Run Status</div>
+                    <div className='mt-1 text-sm text-white'>{formatStatusLabel(runtimeRunStatus)}</div>
                   </div>
-                  <div className="rounded-md border border-border/60 bg-card/60 p-2">
-                    <div className="text-[10px] uppercase text-gray-500">Live Nodes</div>
-                    <div className="mt-1 text-sm text-white">{runtimeNodeLiveStates.length}</div>
+                  <div className='rounded-md border border-border/60 bg-card/60 p-2'>
+                    <div className='text-[10px] uppercase text-gray-500'>Live Nodes</div>
+                    <div className='mt-1 text-sm text-white'>{runtimeNodeLiveStates.length}</div>
                   </div>
-                  <div className="rounded-md border border-border/60 bg-card/60 p-2">
-                    <div className="text-[10px] uppercase text-gray-500">Storage</div>
-                    <div className="mt-1 text-sm text-white">{runtimeAnalyticsQuery.data?.storage ?? '—'}</div>
+                  <div className='rounded-md border border-border/60 bg-card/60 p-2'>
+                    <div className='text-[10px] uppercase text-gray-500'>Storage</div>
+                    <div className='mt-1 text-sm text-white'>{runtimeAnalyticsQuery.data?.storage ?? '—'}</div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-[11px] text-gray-300 sm:grid-cols-4">
+                <div className='grid grid-cols-2 gap-2 text-[11px] text-gray-300 sm:grid-cols-4'>
                   {(['running', 'queued', 'polling', 'completed', 'failed', 'cached'] as const).map((status) => (
-                    <div key={status} className="rounded-md border border-border/60 bg-card/60 px-2 py-1">
-                      <span className="text-gray-500">{formatStatusLabel(status)}:</span>{' '}
-                      <span className="text-gray-200">{runtimeNodeStatusCounts[status] ?? 0}</span>
+                    <div key={status} className='rounded-md border border-border/60 bg-card/60 px-2 py-1'>
+                      <span className='text-gray-500'>{formatStatusLabel(status)}:</span>{' '}
+                      <span className='text-gray-200'>{runtimeNodeStatusCounts[status] ?? 0}</span>
                     </div>
                   ))}
                 </div>
 
                 {runtimeNodeLiveStates.length > 0 ? (
-                  <div className="space-y-1">
-                    <div className="text-[10px] uppercase text-gray-500">Active Node States</div>
-                    <div className="flex flex-wrap gap-1.5">
+                  <div className='space-y-1'>
+                    <div className='text-[10px] uppercase text-gray-500'>Active Node States</div>
+                    <div className='flex flex-wrap gap-1.5'>
                       {runtimeNodeLiveStates.map((entry: { nodeId: string; title: string; status: string }) => (
                         <span
                           key={entry.nodeId}
@@ -740,48 +740,48 @@ export function AiPathsSettingsView({
                     </div>
                   </div>
                 ) : (
-                  <div className="text-xs text-gray-500">No active runtime node statuses right now.</div>
+                  <div className='text-xs text-gray-500'>No active runtime node statuses right now.</div>
                 )}
 
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <div className="rounded-md border border-border/60 bg-card/60 p-2 text-[11px] text-gray-300">
-                    <div className="text-[10px] uppercase text-gray-500">Runs (24h)</div>
-                    <div className="mt-1 text-sm text-white">
+                <div className='grid gap-2 sm:grid-cols-2'>
+                  <div className='rounded-md border border-border/60 bg-card/60 p-2 text-[11px] text-gray-300'>
+                    <div className='text-[10px] uppercase text-gray-500'>Runs (24h)</div>
+                    <div className='mt-1 text-sm text-white'>
                       {runtimeAnalyticsQuery.data?.runs.total ?? 0}
                     </div>
-                    <div className="mt-1 text-gray-400">
+                    <div className='mt-1 text-gray-400'>
                       Success: {formatPercent(runtimeAnalyticsQuery.data?.runs.successRate ?? 0)}
                     </div>
                   </div>
-                  <div className="rounded-md border border-border/60 bg-card/60 p-2 text-[11px] text-gray-300">
-                    <div className="text-[10px] uppercase text-gray-500">Run Runtime (24h)</div>
-                    <div className="mt-1 text-gray-200">
+                  <div className='rounded-md border border-border/60 bg-card/60 p-2 text-[11px] text-gray-300'>
+                    <div className='text-[10px] uppercase text-gray-500'>Run Runtime (24h)</div>
+                    <div className='mt-1 text-gray-200'>
                       Avg {formatDurationMs(runtimeAnalyticsQuery.data?.runs.avgDurationMs)}
                     </div>
-                    <div className="mt-1 text-gray-400">
+                    <div className='mt-1 text-gray-400'>
                       p95 {formatDurationMs(runtimeAnalyticsQuery.data?.runs.p95DurationMs)}
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-3 rounded-lg border border-border/60 bg-card/50 p-4">
+              <div className='space-y-3 rounded-lg border border-border/60 bg-card/50 p-4'>
                 <div>
-                  <div className="text-sm font-semibold text-white">Live Runtime Log</div>
-                  <div className="text-xs text-gray-400">
+                  <div className='text-sm font-semibold text-white'>Live Runtime Log</div>
+                  <div className='text-xs text-gray-400'>
                     Last {runtimeLogEvents.length} runtime events from local + server execution.
                   </div>
                 </div>
-                <div className="max-h-[280px] space-y-2 overflow-y-auto pr-1">
+                <div className='max-h-[280px] space-y-2 overflow-y-auto pr-1'>
                   {runtimeLogEvents.length > 0 ? (
                     runtimeLogEvents.map((event) => (
-                      <div key={event.id} className="rounded-md border border-border/60 bg-card/60 px-2 py-1.5 text-[11px] text-gray-300">
-                        <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
-                          <span className="text-gray-500">{new Date(event.timestamp).toLocaleTimeString()}</span>
+                      <div key={event.id} className='rounded-md border border-border/60 bg-card/60 px-2 py-1.5 text-[11px] text-gray-300'>
+                        <div className='flex flex-wrap items-center gap-1.5 text-[10px]'>
+                          <span className='text-gray-500'>{new Date(event.timestamp).toLocaleTimeString()}</span>
                           <span className={`rounded-full border px-1.5 py-0.5 ${event.level === 'error' ? 'border-rose-500/40 text-rose-200' : event.level === 'warning' ? 'border-amber-500/40 text-amber-200' : 'border-sky-500/40 text-sky-200'}`}>
                             {event.level}
                           </span>
-                          <span className="rounded-full border border-border/60 px-1.5 py-0.5 text-gray-400">
+                          <span className='rounded-full border border-border/60 px-1.5 py-0.5 text-gray-400'>
                             {event.source}
                           </span>
                           {event.status ? (
@@ -790,11 +790,11 @@ export function AiPathsSettingsView({
                             </span>
                           ) : null}
                         </div>
-                        <div className="mt-1 text-gray-200">{event.message}</div>
+                        <div className='mt-1 text-gray-200'>{event.message}</div>
                       </div>
                     ))
                   ) : (
-                    <div className="rounded-md border border-dashed border-border/60 px-3 py-4 text-xs text-gray-500">
+                    <div className='rounded-md border border-dashed border-border/60 px-3 py-4 text-xs text-gray-500'>
                       Runtime log is empty. Fire a trigger to stream node/run events.
                     </div>
                   )}
@@ -803,11 +803,11 @@ export function AiPathsSettingsView({
             </div>
           ) : null}
           {!isFocusMode && (
-            <div className="mt-4 flex justify-end">
+            <div className='mt-4 flex justify-end'>
               <Button
-                className="rounded-md border border-rose-500/40 text-sm text-rose-200 hover:bg-rose-500/10"
+                className='rounded-md border border-rose-500/40 text-sm text-rose-200 hover:bg-rose-500/10'
                 onClick={() => void handleDeletePath()}
-                type="button"
+                type='button'
                 disabled={!activePathId}
               >
                 Delete Path

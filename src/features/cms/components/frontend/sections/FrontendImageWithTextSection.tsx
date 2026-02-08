@@ -42,25 +42,25 @@ export function FrontendImageWithTextSection({ settings, blocks }: FrontendImage
             {image ? (
               <Image
                 src={image}
-                alt=""
+                alt=''
                 fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 50vw"
+                className='object-cover'
+                sizes='(max-width: 768px) 100vw, 50vw'
               />
             ) : (
               <div className={`flex ${imgHeightClass} w-full items-center justify-center bg-gray-800`}>
-                <ImageIcon className="size-16 text-gray-600" />
+                <ImageIcon className='size-16 text-gray-600' />
               </div>
             )}
           </div>
 
           {/* Content */}
-          <div className="flex w-full flex-col justify-center gap-4 md:w-1/2">
+          <div className='flex w-full flex-col justify-center gap-4 md:w-1/2'>
             {blocks.map((block: BlockInstance) => (
               <FrontendBlockRenderer key={block.id} block={block} />
             ))}
             {blocks.length === 0 && (
-              <p className="text-gray-500">Add content blocks</p>
+              <p className='text-gray-500'>Add content blocks</p>
             )}
           </div>
         </div>

@@ -579,71 +579,71 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
   };
 
   return (
-    <div className="container mx-auto py-10">
+    <div className='container mx-auto py-10'>
       <SectionHeader
-        title="Admin Menu"
-        description="Pin favorites, color sections, and build a custom menu layout."
+        title='Admin Menu'
+        description='Pin favorites, color sections, and build a custom menu layout.'
         eyebrow={(
-          <Link href="/admin/settings" className="text-blue-300 hover:text-blue-200">
+          <Link href='/admin/settings' className='text-blue-300 hover:text-blue-200'>
             ← Back to settings
           </Link>
         )}
-        className="mb-8"
+        className='mb-8'
       />
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <SectionPanel className="p-6">
-          <div className="flex items-center justify-between">
+      <div className='grid gap-6 lg:grid-cols-2'>
+        <SectionPanel className='p-6'>
+          <div className='flex items-center justify-between'>
             <div>
-              <h2 className="text-sm font-semibold text-white">Favorites</h2>
-              <p className="mt-1 text-xs text-gray-400">Pin menu items to appear at the top.</p>
+              <h2 className='text-sm font-semibold text-white'>Favorites</h2>
+              <p className='mt-1 text-xs text-gray-400'>Pin menu items to appear at the top.</p>
             </div>
-            <Star className="size-4 text-amber-300" />
+            <Star className='size-4 text-amber-300' />
           </div>
 
-          <div className="mt-4 space-y-3">
+          <div className='mt-4 space-y-3'>
             {favoritesList.length === 0 ? (
-              <SectionPanel variant="subtle" className="p-3 text-xs text-gray-400">
+              <SectionPanel variant='subtle' className='p-3 text-xs text-gray-400'>
                 No favorites yet. Select items below to pin them here.
               </SectionPanel>
             ) : (
-              <div className="space-y-2">
+              <div className='space-y-2'>
                 {favoritesList.map((entry: AdminNavLeaf | undefined, index: number) => (
-                  <SectionPanel key={entry?.id} variant="subtle" className="flex items-center justify-between px-3 py-2">
-                    <div className="min-w-0">
-                      <div className="truncate text-sm text-white">{entry?.label}</div>
+                  <SectionPanel key={entry?.id} variant='subtle' className='flex items-center justify-between px-3 py-2'>
+                    <div className='min-w-0'>
+                      <div className='truncate text-sm text-white'>{entry?.label}</div>
                       {entry?.parents?.length ? (
-                        <div className="truncate text-[11px] text-gray-500">
+                        <div className='truncate text-[11px] text-gray-500'>
                           {entry.parents.join(' / ')}
                         </div>
                       ) : null}
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className='flex items-center gap-1'>
                       <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-7 w-7 p-0"
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        className='h-7 w-7 p-0'
                         disabled={index === 0}
                         onClick={() => entry?.id && moveFavorite(entry.id, 'up')}
                       >
-                        <ArrowUp className="size-3" />
+                        <ArrowUp className='size-3' />
                       </Button>
                       <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-7 w-7 p-0"
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        className='h-7 w-7 p-0'
                         disabled={index === favoritesList.length - 1}
                         onClick={() => entry?.id && moveFavorite(entry.id, 'down')}
                       >
-                        <ArrowDown className="size-3" />
+                        <ArrowDown className='size-3' />
                       </Button>
                       <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-7 px-2 text-[11px]"
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        className='h-7 px-2 text-[11px]'
                         onClick={() => entry?.id && handleToggleFavorite(entry.id, false)}
                       >
                         Remove
@@ -655,16 +655,16 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
             )}
           </div>
 
-          <div className="mt-5">
-            <Label className="text-xs text-gray-400">Add favorites</Label>
+          <div className='mt-5'>
+            <Label className='text-xs text-gray-400'>Add favorites</Label>
             <SearchInput
               value={query}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => setQuery(event.target.value)}
-              placeholder="Search admin menu…"
-              className="mt-2 h-9 bg-gray-900/40"
+              placeholder='Search admin menu…'
+              className='mt-2 h-9 bg-gray-900/40'
               onClear={() => setQuery('')}
             />
-            <div className="mt-3 max-h-72 space-y-2 overflow-auto pr-2">
+            <div className='mt-3 max-h-72 space-y-2 overflow-auto pr-2'>
               {filteredItems.map((item: AdminNavLeaf) => (
                 <label
                   key={item.id}
@@ -677,13 +677,13 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
                     checked={favoritesSet.has(item.id)}
                     onCheckedChange={(checked: boolean | 'indeterminate') => handleToggleFavorite(item.id, Boolean(checked))}
                   />
-                  <div className="min-w-0">
-                    <div className="truncate text-sm text-white">{item.label}</div>
-                    <div className="truncate text-[11px] text-gray-500">
+                  <div className='min-w-0'>
+                    <div className='truncate text-sm text-white'>{item.label}</div>
+                    <div className='truncate text-[11px] text-gray-500'>
                       {item.parents.join(' / ')}
                     </div>
                     {item.href ? (
-                      <div className="truncate text-[11px] text-gray-600">{item.href}</div>
+                      <div className='truncate text-[11px] text-gray-600'>{item.href}</div>
                     ) : null}
                   </div>
                 </label>
@@ -692,23 +692,23 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
           </div>
         </SectionPanel>
 
-        <SectionPanel className="p-6">
-          <h2 className="text-sm font-semibold text-white">Section Colors</h2>
-          <p className="mt-1 text-xs text-gray-400">Assign accents to top-level menu sections.</p>
+        <SectionPanel className='p-6'>
+          <h2 className='text-sm font-semibold text-white'>Section Colors</h2>
+          <p className='mt-1 text-xs text-gray-400'>Assign accents to top-level menu sections.</p>
 
-          <div className="mt-4 space-y-4">
+          <div className='mt-4 space-y-4'>
             {sections.map((section: NavItem) => {
               const current = sectionColors[section.id] ?? 'none';
               const colorStyle = current !== 'none' ? ADMIN_MENU_COLOR_MAP[current] : null;
               return (
-                <SectionPanel key={section.id} variant="subtle" className="flex items-center justify-between gap-3 px-3 py-2">
-                  <div className="flex items-center gap-2">
+                <SectionPanel key={section.id} variant='subtle' className='flex items-center justify-between gap-3 px-3 py-2'>
+                  <div className='flex items-center gap-2'>
                     {colorStyle ? (
                       <span className={cn('h-2.5 w-2.5 rounded-full', colorStyle.dot)} />
                     ) : (
-                      <span className="h-2.5 w-2.5 rounded-full border border-dashed border-gray-500" />
+                      <span className='h-2.5 w-2.5 rounded-full border border-dashed border-gray-500' />
                     )}
-                    <span className="text-sm text-gray-200">{section.label}</span>
+                    <span className='text-sm text-gray-200'>{section.label}</span>
                   </div>
                   <UnifiedSelect
                     value={current}
@@ -720,8 +720,8 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
                         label: option.label,
                       }))
                     ]}
-                    className="w-[160px]"
-                    triggerClassName="h-8 text-xs"
+                    className='w-[160px]'
+                    triggerClassName='h-8 text-xs'
                   />
                 </SectionPanel>
               );
@@ -730,48 +730,48 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
         </SectionPanel>
       </div>
 
-      <SectionPanel className="mt-6 p-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+      <SectionPanel className='mt-6 p-6'>
+        <div className='flex flex-wrap items-start justify-between gap-3'>
           <div>
-            <h2 className="text-sm font-semibold text-white">Menu Builder</h2>
-            <p className="mt-1 text-xs text-gray-400">Create hierarchies, reorder items, and add custom links.</p>
+            <h2 className='text-sm font-semibold text-white'>Menu Builder</h2>
+            <p className='mt-1 text-xs text-gray-400'>Create hierarchies, reorder items, and add custom links.</p>
           </div>
-          <div className="flex items-center gap-2">
-            <Label className="text-xs text-gray-400">Use custom layout</Label>
+          <div className='flex items-center gap-2'>
+            <Label className='text-xs text-gray-400'>Use custom layout</Label>
             <Switch checked={customEnabled} onCheckedChange={(checked: boolean) => setCustomEnabled(Boolean(checked))} />
           </div>
         </div>
 
         {!customEnabled ? (
-          <div className="mt-3 rounded-md border border-border/60 bg-card/40 px-3 py-2 text-xs text-gray-400">
+          <div className='mt-3 rounded-md border border-border/60 bg-card/40 px-3 py-2 text-xs text-gray-400'>
             Custom layout is disabled. Enable it to apply this menu structure.
           </div>
         ) : null}
 
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <Button type="button" size="sm" onClick={() => addCustomNodeAt('link')}>
-            <Plus className="mr-2 size-4" />
+        <div className='mt-4 flex flex-wrap items-center gap-2'>
+          <Button type='button' size='sm' onClick={() => addCustomNodeAt('link')}>
+            <Plus className='mr-2 size-4' />
             Add link
           </Button>
-          <Button type="button" variant="outline" size="sm" onClick={() => addCustomNodeAt('group')}>
-            <Plus className="mr-2 size-4" />
+          <Button type='button' variant='outline' size='sm' onClick={() => addCustomNodeAt('group')}>
+            <Plus className='mr-2 size-4' />
             Add group
           </Button>
-          <Button type="button" variant="outline" size="sm" onClick={() => setCustomNav(defaultCustomNav)}>
+          <Button type='button' variant='outline' size='sm' onClick={() => setCustomNav(defaultCustomNav)}>
             Restore default layout
           </Button>
         </div>
 
-        <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className='mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]'>
           <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400">Layout</h3>
-            <p className="mt-1 text-[11px] text-gray-500">Drag the grip to reorder. Use indent/outdent to nest items.</p>
+            <h3 className='text-xs font-semibold uppercase tracking-wide text-gray-400'>Layout</h3>
+            <p className='mt-1 text-[11px] text-gray-500'>Drag the grip to reorder. Use indent/outdent to nest items.</p>
             {flattenedCustomNav.length === 0 ? (
-              <p className="mt-3 rounded-md border border-border bg-card/40 p-3 text-xs text-gray-400">
+              <p className='mt-3 rounded-md border border-border bg-card/40 p-3 text-xs text-gray-400'>
                 No items yet. Add links or groups to start building your menu.
               </p>
             ) : (
-              <div className="mt-3 space-y-2">
+              <div className='mt-3 space-y-2'>
                 {flattenedCustomNav.map((entry: FlattenedCustomNode, index: number) => {
                   const { node, path, depth } = entry;
                   const baseEntry = libraryItemMap.get(node.id);
@@ -823,15 +823,15 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
                       }}
                     >
                       {isDragTarget && dragOver?.position === 'above' ? (
-                        <div className="pointer-events-none absolute -top-1 left-2 right-2 h-0.5 rounded-full bg-blue-500" />
+                        <div className='pointer-events-none absolute -top-1 left-2 right-2 h-0.5 rounded-full bg-blue-500' />
                       ) : null}
                       {isDragTarget && dragOver?.position === 'below' ? (
-                        <div className="pointer-events-none absolute -bottom-1 left-2 right-2 h-0.5 rounded-full bg-blue-500" />
+                        <div className='pointer-events-none absolute -bottom-1 left-2 right-2 h-0.5 rounded-full bg-blue-500' />
                       ) : null}
-                      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2" style={{ paddingLeft: depth * 16 }}>
+                      <div className='flex min-w-0 flex-1 flex-wrap items-center gap-2' style={{ paddingLeft: depth * 16 }}>
                         <button
-                          type="button"
-                          className="grid h-8 w-8 place-items-center rounded-md border border-border/70 bg-gray-900/40 text-gray-400 hover:text-gray-200"
+                          type='button'
+                          className='grid h-8 w-8 place-items-center rounded-md border border-border/70 bg-gray-900/40 text-gray-400 hover:text-gray-200'
                           draggable
                           onDragStart={(event: React.DragEvent<HTMLButtonElement>): void => {
                             const payload = JSON.stringify(path);
@@ -846,25 +846,25 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
                             setDraggedPath(null);
                             setDragOver(null);
                           }}
-                          title="Drag to reorder"
+                          title='Drag to reorder'
                         >
-                          <GripVertical className="size-4" />
+                          <GripVertical className='size-4' />
                         </button>
-                        <div className="min-w-[160px] flex-1">
+                        <div className='min-w-[160px] flex-1'>
                           <Input
                             value={labelValue}
                             onChange={(event: React.ChangeEvent<HTMLInputElement>) => updateCustomLabel(path, event.target.value)}
-                            placeholder="Label"
-                            className="h-8 bg-gray-900/40 text-xs"
+                            placeholder='Label'
+                            className='h-8 bg-gray-900/40 text-xs'
                             disabled={isBuiltIn}
                           />
                         </div>
-                        <div className="min-w-[180px] flex-1">
+                        <div className='min-w-[180px] flex-1'>
                           <Input
                             value={hrefValue}
                             onChange={(event: React.ChangeEvent<HTMLInputElement>) => updateCustomHref(path, event.target.value)}
-                            placeholder="/admin/..."
-                            className="h-8 bg-gray-900/40 text-xs"
+                            placeholder='/admin/...'
+                            className='h-8 bg-gray-900/40 text-xs'
                             disabled={isBuiltIn}
                           />
                         </div>
@@ -877,38 +877,38 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
                           {isBuiltIn ? 'Built-in' : 'Custom'}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className='flex items-center gap-1'>
                         <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="h-8 w-8 p-0"
+                          type='button'
+                          variant='outline'
+                          size='sm'
+                          className='h-8 w-8 p-0'
                           disabled={!canIndent}
                           onClick={() => indentCustomNode(path)}
-                          title="Indent"
+                          title='Indent'
                         >
-                          <ChevronRight className="size-3" />
+                          <ChevronRight className='size-3' />
                         </Button>
                         <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="h-8 w-8 p-0"
+                          type='button'
+                          variant='outline'
+                          size='sm'
+                          className='h-8 w-8 p-0'
                           disabled={!canOutdent}
                           onClick={() => outdentCustomNode(path)}
-                          title="Outdent"
+                          title='Outdent'
                         >
-                          <ChevronLeft className="size-3" />
+                          <ChevronLeft className='size-3' />
                         </Button>
                         <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-red-200 hover:text-red-100"
+                          type='button'
+                          variant='outline'
+                          size='sm'
+                          className='h-8 w-8 p-0 text-red-200 hover:text-red-100'
                           onClick={() => removeCustomNode(path)}
-                          title="Remove"
+                          title='Remove'
                         >
-                          <Trash2 className="size-3" />
+                          <Trash2 className='size-3' />
                         </Button>
                       </div>
                     </div>
@@ -919,36 +919,36 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
           </div>
 
           <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400">Add built-in items</h3>
+            <h3 className='text-xs font-semibold uppercase tracking-wide text-gray-400'>Add built-in items</h3>
             <SearchInput
               value={libraryQuery}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => setLibraryQuery(event.target.value)}
-              placeholder="Search built-in menu…"
-              className="mt-2 h-9 bg-gray-900/40"
+              placeholder='Search built-in menu…'
+              className='mt-2 h-9 bg-gray-900/40'
               onClear={() => setLibraryQuery('')}
             />
-            <div className="mt-3 max-h-80 space-y-2 overflow-auto pr-2">
+            <div className='mt-3 max-h-80 space-y-2 overflow-auto pr-2'>
               {filteredLibraryItems.length === 0 ? (
-                <p className="rounded-md border border-border bg-card/40 p-3 text-xs text-gray-400">
+                <p className='rounded-md border border-border bg-card/40 p-3 text-xs text-gray-400'>
                   No matching menu items.
                 </p>
               ) : (
                 filteredLibraryItems.map((entry: AdminNavNodeEntry) => {
                   const isAdded = customIds.has(entry.id);
                   return (
-                    <div key={entry.id} className="flex items-center justify-between gap-2 rounded-md border border-border/60 bg-card/30 px-3 py-2">
-                      <div className="min-w-0">
-                        <div className="truncate text-sm text-white">{entry.label}</div>
+                    <div key={entry.id} className='flex items-center justify-between gap-2 rounded-md border border-border/60 bg-card/30 px-3 py-2'>
+                      <div className='min-w-0'>
+                        <div className='truncate text-sm text-white'>{entry.label}</div>
                         {entry.parents.length ? (
-                          <div className="truncate text-[11px] text-gray-500">{entry.parents.join(' / ')}</div>
+                          <div className='truncate text-[11px] text-gray-500'>{entry.parents.join(' / ')}</div>
                         ) : null}
-                        <div className="truncate text-[11px] text-gray-600">{entry.href ?? 'Group'}</div>
+                        <div className='truncate text-[11px] text-gray-600'>{entry.href ?? 'Group'}</div>
                       </div>
                       <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-7 px-2 text-[11px]"
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        className='h-7 px-2 text-[11px]'
                         disabled={isAdded}
                         onClick={() => addBuiltInNode(entry)}
                       >
@@ -963,19 +963,19 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
         </div>
       </SectionPanel>
 
-      <div className="mt-6 flex flex-wrap gap-2">
+      <div className='mt-6 flex flex-wrap gap-2'>
         <Button
-          type="button"
-          variant="outline"
-          size="sm"
+          type='button'
+          variant='outline'
+          size='sm'
           onClick={handleReset}
           disabled={isDefaultState}
         >
           Reset
         </Button>
         <Button
-          type="button"
-          size="sm"
+          type='button'
+          size='sm'
           onClick={() => {
             void handleSave();
           }}

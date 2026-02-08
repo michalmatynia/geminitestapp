@@ -40,21 +40,21 @@ export default function CreateSlugPage(): React.JSX.Element {
   };
 
   return (
-    <div className="container mx-auto py-10">
-      <SectionHeader title="Create Slug" className="mb-6" />
+    <div className='container mx-auto py-10'>
+      <SectionHeader title='Create Slug' className='mb-6' />
       <form onSubmit={(e: React.FormEvent<HTMLFormElement>): void => { void handleSubmit(e); }}>
-        <div className="mb-4">
-          <Label htmlFor="slug">Slug</Label>
+        <div className='mb-4'>
+          <Label htmlFor='slug'>Slug</Label>
           <Input
-            id="slug"
+            id='slug'
             value={slug}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSlug(e.target.value)}
-            placeholder="e.g., my-awesome-page"
+            placeholder='e.g., my-awesome-page'
             required
           />
-          {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+          {error && <p className='text-red-500 text-sm mt-1'>{error}</p>}
         </div>
-        <Button type="submit">Create</Button>
+        <Button type='submit'>Create</Button>
       </form>
     </div>
   );

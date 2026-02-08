@@ -68,40 +68,40 @@ export function ProductPreferencesPage(): React.JSX.Element {
 
   if (prefsLoading || catalogsQuery.isLoading) {
     return (
-      <div className="container mx-auto py-10">
-        <div className="rounded-lg bg-card p-6 shadow-lg">
-          <p className="text-sm text-gray-400">Loading preferences...</p>
+      <div className='container mx-auto py-10'>
+        <div className='rounded-lg bg-card p-6 shadow-lg'>
+          <p className='text-sm text-gray-400'>Loading preferences...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-10">
-      <SectionPanel className="p-6">
+    <div className='container mx-auto py-10'>
+      <SectionPanel className='p-6'>
         <SectionHeader
-          title="Product Preferences"
-          size="md"
-          description="Manage your product list display and navigation preferences"
+          title='Product Preferences'
+          size='md'
+          description='Manage your product list display and navigation preferences'
           actions={
             <Button
-              variant="outline"
+              variant='outline'
               onClick={() => router.push('/admin/products')}
             >
               Back to Products
             </Button>
           }
-          className="mb-6"
+          className='mb-6'
         />
 
-        <div className="space-y-6">
-          <SectionPanel variant="subtle" className="p-6">
-            <h2 className="mb-4 text-lg font-semibold text-white">Product List Settings</h2>
+        <div className='space-y-6'>
+          <SectionPanel variant='subtle' className='p-6'>
+            <h2 className='mb-4 text-lg font-semibold text-white'>Product List Settings</h2>
 
-            <div className="space-y-4">
+            <div className='space-y-4'>
               {/* Name Locale */}
-              <div className="space-y-2">
-                <Label htmlFor="nameLocale">Product Name Language</Label>
+              <div className='space-y-2'>
+                <Label htmlFor='nameLocale'>Product Name Language</Label>
                 <UnifiedSelect
                   value={preferences.nameLocale || 'name_en'}
                   onValueChange={(value: string) =>
@@ -116,14 +116,14 @@ export function ProductPreferencesPage(): React.JSX.Element {
                     { value: 'name_de', label: 'German' },
                   ]}
                 />
-                <p className="text-xs text-gray-500">
+                <p className='text-xs text-gray-500'>
                   Default language for product names in the list
                 </p>
               </div>
 
               {/* Default Catalog Filter */}
-              <div className="space-y-2">
-                <Label htmlFor="catalogFilter">Default Catalog Filter</Label>
+              <div className='space-y-2'>
+                <Label htmlFor='catalogFilter'>Default Catalog Filter</Label>
                 <UnifiedSelect
                   value={preferences.catalogFilter || 'all'}
                   onValueChange={(value: string) =>
@@ -140,16 +140,16 @@ export function ProductPreferencesPage(): React.JSX.Element {
                     }))
                   ]}
                 />
-                <p className="text-xs text-gray-500">
+                <p className='text-xs text-gray-500'>
                   Default catalog filter when opening the product list
                 </p>
               </div>
 
               {/* Currency Code */}
-              <div className="space-y-2">
-                <Label htmlFor="currencyCode">Preferred Currency</Label>
+              <div className='space-y-2'>
+                <Label htmlFor='currencyCode'>Preferred Currency</Label>
                 <Input
-                  id="currencyCode"
+                  id='currencyCode'
                   value={preferences.currencyCode || ''}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setPreferences((prev: ProductListPreferences) => ({
@@ -157,16 +157,16 @@ export function ProductPreferencesPage(): React.JSX.Element {
                       currencyCode: e.target.value || 'PLN',
                     }))
                   }
-                  placeholder="EUR, USD, PLN, etc."
+                  placeholder='EUR, USD, PLN, etc.'
                 />
-                <p className="text-xs text-gray-500">
+                <p className='text-xs text-gray-500'>
                   Preferred currency code for price display (leave empty for catalog default)
                 </p>
               </div>
 
               {/* Thumbnail Source */}
-              <div className="space-y-2">
-                <Label htmlFor="thumbnailSource">Thumbnail Source</Label>
+              <div className='space-y-2'>
+                <Label htmlFor='thumbnailSource'>Thumbnail Source</Label>
                 <UnifiedSelect
                   value={preferences.thumbnailSource || 'file'}
                   onValueChange={(value: string) =>
@@ -181,14 +181,14 @@ export function ProductPreferencesPage(): React.JSX.Element {
                     { value: 'base64', label: 'Base64' },
                   ]}
                 />
-                <p className="text-xs text-gray-500">
+                <p className='text-xs text-gray-500'>
                   Choose which image source is used for product list thumbnails
                 </p>
               </div>
 
               {/* Page Size */}
-              <div className="space-y-2">
-                <Label htmlFor="pageSize">Products Per Page</Label>
+              <div className='space-y-2'>
+                <Label htmlFor='pageSize'>Products Per Page</Label>
                 <UnifiedSelect
                   value={String(preferences.pageSize || 50)}
                   onValueChange={(value: string) =>
@@ -199,7 +199,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
                   }
                   options={['10', '25', '50', '100', '200'].map((size: string) => ({ value: size, label: size }))}
                 />
-                <p className="text-xs text-gray-500">
+                <p className='text-xs text-gray-500'>
                   Number of products to display per page
                 </p>
               </div>
@@ -207,18 +207,18 @@ export function ProductPreferencesPage(): React.JSX.Element {
           </SectionPanel>
 
           {/* Action Buttons */}
-          <div className="flex justify-between gap-3">
+          <div className='flex justify-between gap-3'>
             <Button
-              variant="outline"
+              variant='outline'
               onClick={() => void handleResetToDefault()}
               disabled={updateMutation.isPending}
-              className="border-yellow-600 text-yellow-600 hover:bg-yellow-600/10"
+              className='border-yellow-600 text-yellow-600 hover:bg-yellow-600/10'
             >
               Reset to Default
             </Button>
-            <div className="flex gap-3">
+            <div className='flex gap-3'>
               <Button
-                variant="outline"
+                variant='outline'
                 onClick={() => router.push('/admin/products')}
                 disabled={updateMutation.isPending}
               >

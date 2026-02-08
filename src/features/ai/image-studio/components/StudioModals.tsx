@@ -48,12 +48,12 @@ export function StudioModals(): React.JSX.Element {
       <SharedModal
         open={driveImportOpen}
         onClose={() => setDriveImportOpen(false)}
-        title="Import from Drive"
-        size="xl"
+        title='Import from Drive'
+        size='xl'
       >
         <FileManager
-          mode="select"
-          selectionMode="multiple"
+          mode='select'
+          selectionMode='multiple'
           onSelectFile={handleDriveSelection}
         />
       </SharedModal>
@@ -61,12 +61,12 @@ export function StudioModals(): React.JSX.Element {
       <SharedModal
         open={slotCreateOpen}
         onClose={() => setSlotCreateOpen(false)}
-        title="New slot"
-        size="md"
+        title='New slot'
+        size='md'
       >
-        <div className="space-y-4 text-sm text-gray-200">
-          <div className="grid gap-2">
-            <Button variant="outline" onClick={handleCreateEmptySlot} disabled={!projectId}>
+        <div className='space-y-4 text-sm text-gray-200'>
+          <div className='grid gap-2'>
+            <Button variant='outline' onClick={handleCreateEmptySlot} disabled={!projectId}>
               Create empty slot
             </Button>
           </div>

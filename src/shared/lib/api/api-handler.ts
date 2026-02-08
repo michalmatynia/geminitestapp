@@ -57,7 +57,7 @@ const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
   try {
     // eslint-disable-next-line import/no-restricted-paths
     const { logSystemEvent: realLogSystemEvent } = await import('@/features/observability/server');
-    await realLogSystemEvent(params as LogSystemEventParams);
+    await realLogSystemEvent(params);
   } catch (error) {
     console.error('Failed to log system event via observability feature:', error);
     console.log('System event (fallback):', params);
@@ -68,7 +68,7 @@ const getErrorFingerprint = async (params: ErrorFingerprintParams): Promise<stri
   try {
     // eslint-disable-next-line import/no-restricted-paths
     const { getErrorFingerprint: realGetFingerprint } = await import('@/features/observability/server');
-    return realGetFingerprint(params as ErrorFingerprintParams);
+    return realGetFingerprint(params);
   } catch (error) {
     console.error('Failed to get error fingerprint via observability feature:', error);
     return `${params.source}-${params.statusCode}-${Date.now()}`;
@@ -392,7 +392,7 @@ function applyDefaultCacheHeaders(
   override?: string
 ): void {
   if (response.headers.has('Cache-Control')) return;
-  if (override && override.trim()) {
+  if (override?.trim()) {
     response.headers.set('Cache-Control', override.trim());
     return;
   }

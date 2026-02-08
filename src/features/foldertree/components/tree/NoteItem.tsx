@@ -42,11 +42,11 @@ export const NoteItem = React.memo(function NoteItem({
   const [isDragOver, setIsDragOver] = useState(false);
   const contextMenuItems = useMemo<TreeContextMenuItem[]>(
     () => [
-      { id: 'new-note', label: 'New note', icon: <FilePlus className="size-3.5" />, onSelect: (): void => onCreateNote(folderId) },
-      { id: 'duplicate', label: 'Duplicate', icon: <Copy className="size-3.5" />, onSelect: (): void => onDuplicateNote(note.id) },
-      { id: 'rename', label: 'Rename', icon: <Edit2 className="size-3.5" />, onSelect: (): void => onStartRename(note.id) },
+      { id: 'new-note', label: 'New note', icon: <FilePlus className='size-3.5' />, onSelect: (): void => onCreateNote(folderId) },
+      { id: 'duplicate', label: 'Duplicate', icon: <Copy className='size-3.5' />, onSelect: (): void => onDuplicateNote(note.id) },
+      { id: 'rename', label: 'Rename', icon: <Edit2 className='size-3.5' />, onSelect: (): void => onStartRename(note.id) },
       { id: 'separator-1', separator: true },
-      { id: 'delete', label: 'Delete', icon: <Trash2 className="size-3.5" />, tone: 'danger', onSelect: (): void => onDeleteNote(note.id) },
+      { id: 'delete', label: 'Delete', icon: <Trash2 className='size-3.5' />, tone: 'danger', onSelect: (): void => onDeleteNote(note.id) },
     ],
     [folderId, note.id, onCreateNote, onDuplicateNote, onStartRename, onDeleteNote]
   );
@@ -89,14 +89,14 @@ export const NoteItem = React.memo(function NoteItem({
   return (
     <TreeContextMenu items={contextMenuItems}>
       <TreeRow
-        tone="primary"
+        tone='primary'
         selected={isSelected}
         dragOver={isDragOver}
-        dragOverClassName="bg-emerald-600 text-white"
+        dragOverClassName='bg-emerald-600 text-white'
         depth={level + 1}
         baseIndent={28}
         indent={16}
-        className="cursor-pointer active:cursor-grabbing text-sm"
+        className='cursor-pointer active:cursor-grabbing text-sm'
         draggable={!isRenaming}
         data-note-id={note.id}
         onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
@@ -152,7 +152,7 @@ export const NoteItem = React.memo(function NoteItem({
         {isRenaming ? (
           <Input
             ref={renameInputRef}
-            type="text"
+            type='text'
             defaultValue={note.title}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
               renameValueRef.current = e.target.value;
@@ -160,61 +160,61 @@ export const NoteItem = React.memo(function NoteItem({
             onKeyDown={handleRenameKeyDown}
             onBlur={handleRenameSubmit}
             onClick={(e: React.MouseEvent<HTMLInputElement>): void => e.stopPropagation()}
-            className="text-sm bg-gray-800 border border-blue-500 rounded px-1 py-0.5 text-white outline-none flex-1 min-w-0"
+            className='text-sm bg-gray-800 border border-blue-500 rounded px-1 py-0.5 text-white outline-none flex-1 min-w-0'
           />
         ) : (
-          <span className="text-sm truncate flex-1">{note.title}</span>
+          <span className='text-sm truncate flex-1'>{note.title}</span>
         )}
         {isDragOver && (
-          <span className="ml-auto rounded bg-emerald-500/20 px-2 py-0.5 text-[10px] text-emerald-100">
+          <span className='ml-auto rounded bg-emerald-500/20 px-2 py-0.5 text-[10px] text-emerald-100'>
           Drop to link
           </span>
         )}
         {!isRenaming && (
-          <TreeActionSlot show="hover" isVisible={isSelected}>
+          <TreeActionSlot show='hover' isVisible={isSelected}>
             <TreeActionButton
               onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
                 e.stopPropagation();
                 onCreateNote(folderId);
               }}
-              size="sm"
-              tone="muted"
-              title="Add note"
+              size='sm'
+              tone='muted'
+              title='Add note'
             >
-              <FilePlus className="size-3" />
+              <FilePlus className='size-3' />
             </TreeActionButton>
             <TreeActionButton
               onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
                 e.stopPropagation();
                 onStartRename(note.id);
               }}
-              size="sm"
-              tone="muted"
-              title="Rename note"
+              size='sm'
+              tone='muted'
+              title='Rename note'
             >
-              <Edit2 className="size-3" />
+              <Edit2 className='size-3' />
             </TreeActionButton>
             <TreeActionButton
               onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
                 e.stopPropagation();
                 onDuplicateNote(note.id);
               }}
-              size="sm"
-              tone="muted"
-              title="Duplicate note"
+              size='sm'
+              tone='muted'
+              title='Duplicate note'
             >
-              <Copy className="size-3" />
+              <Copy className='size-3' />
             </TreeActionButton>
             <TreeActionButton
               onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
                 e.stopPropagation();
                 onDeleteNote(note.id);
               }}
-              size="sm"
-              tone="danger"
-              title="Delete note"
+              size='sm'
+              tone='danger'
+              title='Delete note'
             >
-              <Trash2 className="size-3" />
+              <Trash2 className='size-3' />
             </TreeActionButton>
           </TreeActionSlot>
         )}

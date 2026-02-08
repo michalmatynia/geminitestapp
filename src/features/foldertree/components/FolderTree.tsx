@@ -194,8 +194,8 @@ function FolderTreeContent(): React.JSX.Element {
 
   return (
     <FolderTreePanel
-      className="bg-gray-900 border-r border-border"
-      bodyClassName="flex min-h-0 flex-1 flex-col"
+      className='bg-gray-900 border-r border-border'
+      bodyClassName='flex min-h-0 flex-1 flex-col'
       onDragEnterCapture={(e: React.DragEvent<HTMLDivElement>): void => {
         if (!draggedNoteId) return;
         e.preventDefault();
@@ -241,34 +241,34 @@ function FolderTreeContent(): React.JSX.Element {
       }}
       header={(
         <TreeHeader
-          title="Folders"
+          title='Folders'
           actions={(
             <>
               <Button
                 onClick={(): void => setShowDropzone(!showDropzone)}
-                size="sm"
-                variant="outline"
+                size='sm'
+                variant='outline'
                 className={`h-7 w-7 p-0 border hover:bg-muted/50 ${
                   showDropzone ? 'bg-blue-600/20 text-blue-400' : 'text-gray-300'
                 }`}
                 aria-label={showDropzone ? 'Hide dropzone' : 'Show dropzone'}
               >
-                <Upload className="size-4" />
+                <Upload className='size-4' />
               </Button>
               <Button
                 onClick={(): void => onCreateFolder(null)}
-                size="sm"
-                className="h-7 w-7 p-0 bg-blue-600 hover:bg-blue-700"
-                aria-label="Add folder"
+                size='sm'
+                className='h-7 w-7 p-0 bg-blue-600 hover:bg-blue-700'
+                aria-label='Add folder'
               >
-                <Plus className="size-4" />
+                <Plus className='size-4' />
               </Button>
               {onUndo && (
                 <Button
                   onClick={(): void => onUndo()}
-                  size="sm"
-                  variant="outline"
-                  className="h-7 px-2 border text-gray-300 hover:bg-muted/50"
+                  size='sm'
+                  variant='outline'
+                  className='h-7 px-2 border text-gray-300 hover:bg-muted/50'
                   disabled={!canUndo}
                 >
                   Undo
@@ -276,27 +276,27 @@ function FolderTreeContent(): React.JSX.Element {
               )}
               <Button
                 onClick={handleToggleSelectedCollapse}
-                size="sm"
-                variant="outline"
-                className="h-7 w-7 p-0 border text-gray-300 hover:bg-muted/50"
+                size='sm'
+                variant='outline'
+                className='h-7 w-7 p-0 border text-gray-300 hover:bg-muted/50'
                 disabled={!selectedFolderId}
                 aria-label={isSelectedSubtreeExpanded ? 'Collapse folder' : 'Expand folder'}
               >
                 {isSelectedSubtreeExpanded ? (
-                  <ChevronDown className="size-4" />
+                  <ChevronDown className='size-4' />
                 ) : (
-                  <ChevronRight className="size-4" />
+                  <ChevronRight className='size-4' />
                 )}
               </Button>
               {onToggleCollapse && (
                 <Button
                   onClick={(): void => onToggleCollapse()}
-                  size="sm"
-                  variant="outline"
-                  className="h-7 w-7 p-0 border text-gray-300 hover:bg-muted/50"
-                  aria-label="Collapse folder tree"
+                  size='sm'
+                  variant='outline'
+                  className='h-7 w-7 p-0 border text-gray-300 hover:bg-muted/50'
+                  aria-label='Collapse folder tree'
                 >
-                  <ChevronLeft className="size-4" />
+                  <ChevronLeft className='size-4' />
                 </Button>
               )}
             </>
@@ -332,7 +332,7 @@ function FolderTreeContent(): React.JSX.Element {
                   : 'text-gray-300 hover:bg-muted/50'
             } justify-start text-left`}
           >
-            <Folder className="size-4" />
+            <Folder className='size-4' />
             <span>All Notes</span>
           </Button>
           {onToggleFavorites && (
@@ -344,34 +344,34 @@ function FolderTreeContent(): React.JSX.Element {
                   : 'text-gray-300 hover:bg-muted/50'
               } justify-start text-left`}
             >
-              <Star className="size-4" />
+              <Star className='size-4' />
               <span>Favorites</span>
             </Button>
           )}
           {undoHistory && undoHistory.length > 0 && (
-            <div className="mt-3 rounded border border-border bg-card/60 p-2 text-xs text-gray-300">
+            <div className='mt-3 rounded border border-border bg-card/60 p-2 text-xs text-gray-300'>
               <Button
                 onClick={(): void => setIsHistoryExpanded(!isHistoryExpanded)}
-                className="flex w-full items-center justify-between mb-2 text-[10px] uppercase tracking-wide text-gray-500 hover:text-gray-300 transition"
+                className='flex w-full items-center justify-between mb-2 text-[10px] uppercase tracking-wide text-gray-500 hover:text-gray-300 transition'
               >
                 <span>History</span>
                 {isHistoryExpanded ? (
-                  <ChevronDown className="size-3" />
+                  <ChevronDown className='size-3' />
                 ) : (
-                  <ChevronRight className="size-3" />
+                  <ChevronRight className='size-3' />
                 )}
               </Button>
               {isHistoryExpanded && (
-                <div className="space-y-1">
+                <div className='space-y-1'>
                   {undoHistory.slice(0, 10).map((entry: { label: string }, index: number) => (
                     <Button
                       key={`${entry.label}-${index}`}
-                      type="button"
+                      type='button'
                       onClick={(): void => onUndoAtIndex?.(index)}
-                      className="flex w-full items-center justify-between rounded px-1.5 py-1 text-left text-gray-300 hover:bg-muted/50"
+                      className='flex w-full items-center justify-between rounded px-1.5 py-1 text-left text-gray-300 hover:bg-muted/50'
                     >
-                      <span className="truncate">{entry.label}</span>
-                      <span className="text-[10px] text-gray-500">Undo</span>
+                      <span className='truncate'>{entry.label}</span>
+                      <span className='text-[10px] text-gray-500'>Undo</span>
                     </Button>
                   ))}
                 </div>
@@ -393,31 +393,31 @@ function FolderTreeContent(): React.JSX.Element {
           onDragLeave={handleDropzoneDragLeave}
           onDrop={(e: React.DragEvent<HTMLDivElement>): void => { void handleFolderImport(e); }}
         >
-          <div className="p-4 text-center">
+          <div className='p-4 text-center'>
             <Upload
               className={`mx-auto mb-2 size-6 ${
                 isDropzoneActive ? 'text-blue-400' : 'text-gray-500'
               }`}
             />
-            <p className="text-xs text-gray-400">
+            <p className='text-xs text-gray-400'>
               {isImporting
                 ? 'Importing folder structure...'
                 : 'Drop folder(s) here to import'}
             </p>
-            <p className="text-[10px] text-gray-600 mt-1">
+            <p className='text-[10px] text-gray-600 mt-1'>
               Supports multiple folders · Markdown files (.md) will be converted to notes
             </p>
           </div>
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-2">
+      <div className='flex-1 overflow-y-auto p-2'>
         {folders.length === 0 ? (
-          <div className="p-4 text-center text-sm text-gray-500">
+          <div className='p-4 text-center text-sm text-gray-500'>
             No folders yet
           </div>
         ) : (
-          <div className="space-y-0.5">{folderNodes}</div>
+          <div className='space-y-0.5'>{folderNodes}</div>
         )}
       </div>
     </FolderTreePanel>

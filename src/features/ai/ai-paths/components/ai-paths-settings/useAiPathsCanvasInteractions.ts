@@ -413,12 +413,12 @@ export function useAiPathsCanvasInteractions({
       let edgeToMove: Edge | null = null;
       for (let index = edges.length - 1; index >= 0; index -= 1) {
         const edge = edges[index];
-        if (edge && edge.to === nodeId && edge.toPort === port) {
+        if (edge?.to === nodeId && edge.toPort === port) {
           edgeToMove = edge;
           break;
         }
       }
-      if (!edgeToMove || !edgeToMove.from || !edgeToMove.fromPort) return;
+      if (!edgeToMove?.from || !edgeToMove.fromPort) return;
       const fromNode = nodes.find((node: AiNode): boolean => node.id === edgeToMove.from);
       if (!fromNode) return;
       const start = getPortPosition(fromNode, edgeToMove.fromPort, 'output');
@@ -536,7 +536,7 @@ export function useAiPathsCanvasInteractions({
     event: React.PointerEvent<HTMLDivElement>,
     nodeId: string
   ): void => {
-    if (!dragState || dragState.nodeId !== nodeId) return;
+    if (dragState?.nodeId !== nodeId) return;
     const viewport = viewportRef.current?.getBoundingClientRect();
     if (!viewport) return;
     const nextX = Math.min(

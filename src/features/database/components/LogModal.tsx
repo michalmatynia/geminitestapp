@@ -15,11 +15,11 @@ export const LogModal = ({ content, onClose }: LogModalProps): React.JSX.Element
   <AppModal
     open={true}
     onClose={onClose}
-    title="Operation Log"
-    size="md"
+    title='Operation Log'
+    size='md'
   >
     <SyntaxHighlighter 
-      language="bash" 
+      language='bash' 
       style={atomDark}
       customStyle={{
         margin: 0,

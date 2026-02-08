@@ -19,24 +19,24 @@ function AdminAppEmbedsContent(): React.ReactNode {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-10 text-gray-400">
+      <div className='container mx-auto py-10 text-gray-400'>
         Loading app embed settings...
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto max-w-5xl py-10">
+    <div className='container mx-auto max-w-5xl py-10'>
       <SectionHeader
-        title="App Embeds"
-        description="Enable internal apps that can be embedded into CMS pages."
-        className="mb-6"
+        title='App Embeds'
+        description='Enable internal apps that can be embedded into CMS pages.'
+        className='mb-6'
       />
 
-      <SectionPanel className="p-6">
+      <SectionPanel className='p-6'>
         <AppEmbedList />
 
-        <div className="mt-6 flex justify-end">
+        <div className='mt-6 flex justify-end'>
           <Button
             onClick={() => { void save(); }}
             disabled={isSaving}

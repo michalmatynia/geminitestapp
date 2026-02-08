@@ -87,7 +87,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
   );
 
   const selectedGridRow = useMemo<BlockInstance | null>(() => {
-    if (!selectedParentSection || selectedParentSection.type !== 'Grid' || !selectedParentColumn) return null;
+    if (selectedParentSection?.type !== 'Grid' || !selectedParentColumn) return null;
     return selectedParentSection.blocks.find((b: BlockInstance) => b.type === 'Row' && (b.blocks ?? []).some((c: BlockInstance) => c.id === selectedParentColumn.id)) ?? null;
   }, [selectedParentSection, selectedParentColumn]);
 
@@ -170,7 +170,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
   }, [selectedBlock, selectedParentSection, selectedParentColumn, selectedParentRow, selectedParentBlock, dispatch]);
 
   const handleMakeBackground = useCallback((target: 'grid' | 'row' | 'column'): void => {
-    if (!selectedBlock || selectedBlock.type !== 'ImageElement' || !selectedParentSection || selectedParentSection.type !== 'Grid' || !imageBackgroundSrc || selectedParentBlock) return;
+    if (selectedBlock?.type !== 'ImageElement' || selectedParentSection?.type !== 'Grid' || !imageBackgroundSrc || selectedParentBlock) return;
     const backgroundImage = { ...selectedBlock.settings };
     if (target === 'grid') dispatch({ type: 'UPDATE_SECTION_SETTINGS', sectionId: selectedParentSection.id, settings: { backgroundImage } });
     else if (target === 'row') { if (selectedGridRow) dispatch({ type: 'UPDATE_BLOCK_SETTINGS', sectionId: selectedParentSection.id, blockId: selectedGridRow.id, settings: { backgroundImage } }); }
@@ -277,65 +277,65 @@ export function ComponentSettingsPanel(): React.ReactNode {
       onUpdateCustomCssAiConfig={handleCustomCssAiChange}
       contentAiAllowedKeys={contentAiAllowedKeys}
     >
-      <aside className="flex w-80 min-h-0 flex-col border-l border-border bg-gray-900">
+      <aside className='flex w-80 min-h-0 flex-col border-l border-border bg-gray-900'>
         <PanelHeader
-          title={selectedTitle} className="flex-row-reverse" titleClassName="text-right" actionsClassName="justify-start"
+          title={selectedTitle} className='flex-row-reverse' titleClassName='text-right' actionsClassName='justify-start'
           actions={(
-            <div className="flex items-center gap-1">
-              <Button type="button" size="icon" variant="ghost" onClick={() => dispatch({ type: 'TOGGLE_RIGHT_PANEL' })} className="h-6 w-6 p-0 text-gray-500 hover:text-gray-300"><PanelRightClose className="size-3.5" /></Button>
-              <Button type="button" size="icon" variant="ghost" onClick={handleToggleInspector} className={`h-6 w-6 p-0 ${state.inspectorEnabled ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`}><MousePointer2 className="size-3.5" /></Button>
-              <Button type="button" size="icon" variant="ghost" onClick={() => dispatch({ type: 'SET_PREVIEW_MODE', mode: 'desktop' })} className={`h-6 w-6 p-0 ${state.previewMode === 'desktop' ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`}><Monitor className="size-3.5" /></Button>
-              <Button type="button" size="icon" variant="ghost" onClick={() => dispatch({ type: 'SET_PREVIEW_MODE', mode: 'mobile' })} className={`h-6 w-6 p-0 ${state.previewMode === 'mobile' ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`}><Smartphone className="size-3.5" /></Button>
-              <Button type="button" size="icon" variant="ghost" onClick={() => updateInspectorSetting({ showEditorChrome: !inspectorSettings.showEditorChrome })} className={`h-6 w-6 p-0 ${inspectorSettings.showEditorChrome ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`}><Paintbrush className="size-3.5" /></Button>
+            <div className='flex items-center gap-1'>
+              <Button type='button' size='icon' variant='ghost' onClick={() => dispatch({ type: 'TOGGLE_RIGHT_PANEL' })} className='h-6 w-6 p-0 text-gray-500 hover:text-gray-300'><PanelRightClose className='size-3.5' /></Button>
+              <Button type='button' size='icon' variant='ghost' onClick={handleToggleInspector} className={`h-6 w-6 p-0 ${state.inspectorEnabled ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`}><MousePointer2 className='size-3.5' /></Button>
+              <Button type='button' size='icon' variant='ghost' onClick={() => dispatch({ type: 'SET_PREVIEW_MODE', mode: 'desktop' })} className={`h-6 w-6 p-0 ${state.previewMode === 'desktop' ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`}><Monitor className='size-3.5' /></Button>
+              <Button type='button' size='icon' variant='ghost' onClick={() => dispatch({ type: 'SET_PREVIEW_MODE', mode: 'mobile' })} className={`h-6 w-6 p-0 ${state.previewMode === 'mobile' ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`}><Smartphone className='size-3.5' /></Button>
+              <Button type='button' size='icon' variant='ghost' onClick={() => updateInspectorSetting({ showEditorChrome: !inspectorSettings.showEditorChrome })} className={`h-6 w-6 p-0 ${inspectorSettings.showEditorChrome ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`}><Paintbrush className='size-3.5' /></Button>
             </div>
           )}
         />
         {state.inspectorEnabled && (
-          <div className="border-b border-border px-4 py-3">
-            <div className="text-[10px] uppercase tracking-wider text-gray-400">Inspector options</div>
-            <div className="mt-2 space-y-2 text-xs text-gray-300">
-              <label className="flex items-center gap-2"><Checkbox checked={inspectorSettings.showTooltip} onCheckedChange={(v) => updateInspectorSetting({ showTooltip: v === true })} />Enable tooltip</label>
-              <div className="rounded border border-border/40 bg-gray-800/30 px-2 py-2 space-y-2">
-                <label className="flex items-center gap-2"><Checkbox checked={inspectorSettings.showStyleSettings} onCheckedChange={(v) => updateInspectorSetting({ showStyleSettings: v === true })} />Style settings</label>
-                <label className="flex items-center gap-2"><Checkbox checked={inspectorSettings.showStructureInfo} onCheckedChange={(v) => updateInspectorSetting({ showStructureInfo: v === true })} />Structure info</label>
-                <label className="flex items-center gap-2"><Checkbox checked={inspectorSettings.showIdentifiers} onCheckedChange={(v) => updateInspectorSetting({ showIdentifiers: v === true })} />Identifiers</label>
-                <label className="flex items-center gap-2"><Checkbox checked={inspectorSettings.showVisibilityInfo} onCheckedChange={(v) => updateInspectorSetting({ showVisibilityInfo: v === true })} />Visibility info</label>
-                <label className="flex items-center gap-2"><Checkbox checked={inspectorSettings.showConnectionInfo} onCheckedChange={(v) => updateInspectorSetting({ showConnectionInfo: v === true })} />Connection info</label>
+          <div className='border-b border-border px-4 py-3'>
+            <div className='text-[10px] uppercase tracking-wider text-gray-400'>Inspector options</div>
+            <div className='mt-2 space-y-2 text-xs text-gray-300'>
+              <label className='flex items-center gap-2'><Checkbox checked={inspectorSettings.showTooltip} onCheckedChange={(v) => updateInspectorSetting({ showTooltip: v === true })} />Enable tooltip</label>
+              <div className='rounded border border-border/40 bg-gray-800/30 px-2 py-2 space-y-2'>
+                <label className='flex items-center gap-2'><Checkbox checked={inspectorSettings.showStyleSettings} onCheckedChange={(v) => updateInspectorSetting({ showStyleSettings: v === true })} />Style settings</label>
+                <label className='flex items-center gap-2'><Checkbox checked={inspectorSettings.showStructureInfo} onCheckedChange={(v) => updateInspectorSetting({ showStructureInfo: v === true })} />Structure info</label>
+                <label className='flex items-center gap-2'><Checkbox checked={inspectorSettings.showIdentifiers} onCheckedChange={(v) => updateInspectorSetting({ showIdentifiers: v === true })} />Identifiers</label>
+                <label className='flex items-center gap-2'><Checkbox checked={inspectorSettings.showVisibilityInfo} onCheckedChange={(v) => updateInspectorSetting({ showVisibilityInfo: v === true })} />Visibility info</label>
+                <label className='flex items-center gap-2'><Checkbox checked={inspectorSettings.showConnectionInfo} onCheckedChange={(v) => updateInspectorSetting({ showConnectionInfo: v === true })} />Connection info</label>
               </div>
             </div>
           </div>
         )}
-        {!state.currentPage ? (<div className="flex-1 overflow-y-auto p-4"><p className="text-sm text-gray-500">Select a page first.</p></div>) : !hasSelection ? (<PageSettingsTab />) : (
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)} className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <TabsList className="mx-4 mt-3 w-[calc(100%-2rem)]">
-              <TabsTrigger value="settings" className="flex-1 text-xs">Settings</TabsTrigger>
-              <TabsTrigger value="animation" className="flex-1 text-xs">Anim</TabsTrigger>
-              <TabsTrigger value="cssAnimation" className="flex-1 text-xs">CSS Anim</TabsTrigger>
-              {showCustomCssTab && <TabsTrigger value="customCss" className="flex-1 text-xs">CSS</TabsTrigger>}
-              {showEventsTab && <TabsTrigger value="events" className="flex-1 text-xs">Events</TabsTrigger>}
-              {showConnectionsTab && <TabsTrigger value="connections" className="flex-1 text-xs">Conn</TabsTrigger>}
-              <TabsTrigger value="ai" className="flex-1 text-xs">AI</TabsTrigger>
+        {!state.currentPage ? (<div className='flex-1 overflow-y-auto p-4'><p className='text-sm text-gray-500'>Select a page first.</p></div>) : !hasSelection ? (<PageSettingsTab />) : (
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)} className='flex min-h-0 flex-1 flex-col overflow-hidden'>
+            <TabsList className='mx-4 mt-3 w-[calc(100%-2rem)]'>
+              <TabsTrigger value='settings' className='flex-1 text-xs'>Settings</TabsTrigger>
+              <TabsTrigger value='animation' className='flex-1 text-xs'>Anim</TabsTrigger>
+              <TabsTrigger value='cssAnimation' className='flex-1 text-xs'>CSS Anim</TabsTrigger>
+              {showCustomCssTab && <TabsTrigger value='customCss' className='flex-1 text-xs'>CSS</TabsTrigger>}
+              {showEventsTab && <TabsTrigger value='events' className='flex-1 text-xs'>Events</TabsTrigger>}
+              {showConnectionsTab && <TabsTrigger value='connections' className='flex-1 text-xs'>Conn</TabsTrigger>}
+              <TabsTrigger value='ai' className='flex-1 text-xs'>AI</TabsTrigger>
             </TabsList>
-            <TabsContent value="settings" className="flex-1 overflow-y-auto p-4 mt-0">
+            <TabsContent value='settings' className='flex-1 overflow-y-auto p-4 mt-0'>
               {selectedSection && sectionDef ? (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-2"><Button onClick={handleCopySection} variant="outline" size="sm" className="text-xs">Copy</Button><Button onClick={handleDuplicateSection} variant="outline" size="sm" className="text-xs">Duplicate</Button></div>
+                <div className='space-y-4'>
+                  <div className='grid grid-cols-2 gap-2'><Button onClick={handleCopySection} variant='outline' size='sm' className='text-xs'>Copy</Button><Button onClick={handleDuplicateSection} variant='outline' size='sm' className='text-xs'>Duplicate</Button></div>
                   {renderFieldGroups(groupSettingsFields(selectedSection.type === 'Grid' ? prependManagementFields(sectionDef.settingsSchema) : sectionDef.settingsSchema), selectedSection.settings, handleSectionSettingChangeWithGridColumns)}
-                  <div className="rounded border border-border/40 bg-gray-900/40 p-3">
-                    <div className="flex gap-2"><Input value={sectionTemplateName} onChange={(e) => setSectionTemplateName(e.target.value)} placeholder="Name" className="h-8 text-xs" /><Input value={sectionTemplateCategory} onChange={(e) => setSectionTemplateCategory(e.target.value)} placeholder="Cat" className="h-8 text-xs" /></div>
-                    <Button onClick={() => void handleSaveSectionTemplate()} size="sm" className="mt-2 w-full h-8" disabled={updateSetting.isPending}>Save Template</Button>
+                  <div className='rounded border border-border/40 bg-gray-900/40 p-3'>
+                    <div className='flex gap-2'><Input value={sectionTemplateName} onChange={(e) => setSectionTemplateName(e.target.value)} placeholder='Name' className='h-8 text-xs' /><Input value={sectionTemplateCategory} onChange={(e) => setSectionTemplateCategory(e.target.value)} placeholder='Cat' className='h-8 text-xs' /></div>
+                    <Button onClick={() => void handleSaveSectionTemplate()} size='sm' className='mt-2 w-full h-8' disabled={updateSetting.isPending}>Save Template</Button>
                   </div>
-                  <Button onClick={handleRemoveSection} variant="destructive" size="sm" className="w-full"><Trash2 className="mr-2 size-4" />Remove Section</Button>
+                  <Button onClick={handleRemoveSection} variant='destructive' size='sm' className='w-full'><Trash2 className='mr-2 size-4' />Remove Section</Button>
                 </div>
               ) : selectedColumn && columnDef ? (
-                <div className="space-y-4">
+                <div className='space-y-4'>
                   {renderFieldGroups(groupSettingsFields(prependManagementFields(columnDef.settingsSchema)), columnSettingsForRender ?? selectedColumn.settings, handleColumnSettingChange, (f) => columnHeightMode === 'inherit' && f.key === 'height' ? { ...f, disabled: true } : f)}
                 </div>
               ) : selectedBlock && blockDef ? (
-                <div className="space-y-4">
+                <div className='space-y-4'>
                   {isImageElementInContainer && backgroundTargetOptions.length > 1 && (
-                    <div className="rounded border border-border/40 bg-gray-900/40 p-3 mb-4">
-                      <select value={currentBackgroundTarget} onChange={(e) => handleBlockSettingChange('backgroundTarget', e.target.value)} className="w-full h-8 text-xs bg-gray-800 border border-border rounded px-2 text-gray-200">
+                    <div className='rounded border border-border/40 bg-gray-900/40 p-3 mb-4'>
+                      <select value={currentBackgroundTarget} onChange={(e) => handleBlockSettingChange('backgroundTarget', e.target.value)} className='w-full h-8 text-xs bg-gray-800 border border-border rounded px-2 text-gray-200'>
                         {backgroundTargetOptions.map((opt) => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
                       </select>
                     </div>
@@ -346,28 +346,28 @@ export function ComponentSettingsPanel(): React.ReactNode {
                     renderFieldGroups(groupSettingsFields(prependManagementFields(blockDef.settingsSchema)), rowSettingsForRender ?? selectedBlock.settings, handleBlockSettingChange, (f) => (selectedBlock.type === 'AppEmbed' && f.key === 'appId') ? { ...f, options: appEmbedOptions } : (isRowBlock && rowHeightMode === 'inherit' && f.key === 'height') ? { ...f, disabled: true } : f)
                   )}
                   {isGridImageElement && !isInBackgroundMode && (
-                    <div className="grid gap-2 border-t border-border/30 pt-4">
-                      {selectedParentColumn && <Button onClick={() => handleMakeBackground('column')} variant="outline" size="sm" className="w-full text-xs" disabled={!imageBackgroundSrc}>To Column</Button>}
-                      <Button onClick={() => handleMakeBackground('grid')} variant="outline" size="sm" className="w-full text-xs" disabled={!imageBackgroundSrc}>To Grid</Button>
+                    <div className='grid gap-2 border-t border-border/30 pt-4'>
+                      {selectedParentColumn && <Button onClick={() => handleMakeBackground('column')} variant='outline' size='sm' className='w-full text-xs' disabled={!imageBackgroundSrc}>To Column</Button>}
+                      <Button onClick={() => handleMakeBackground('grid')} variant='outline' size='sm' className='w-full text-xs' disabled={!imageBackgroundSrc}>To Grid</Button>
                     </div>
                   )}
-                  <div className="border-t border-border/30 pt-4">
-                    <Button onClick={isRowBlock ? handleRemoveRow : handleRemoveBlock} variant="destructive" size="sm" className="w-full"><Trash2 className="mr-2 size-4" />{isRowBlock ? 'Remove Row' : 'Remove Block'}</Button>
+                  <div className='border-t border-border/30 pt-4'>
+                    <Button onClick={isRowBlock ? handleRemoveRow : handleRemoveBlock} variant='destructive' size='sm' className='w-full'><Trash2 className='mr-2 size-4' />{isRowBlock ? 'Remove Row' : 'Remove Block'}</Button>
                   </div>
                 </div>
               ) : null}
             </TabsContent>
-            <TabsContent value="animation" className="flex-1 overflow-y-auto p-4 mt-0"><AnimationConfigPanel value={currentAnimationConfig} onChange={handleAnimationChange} /></TabsContent>
-            <TabsContent value="cssAnimation" className="flex-1 overflow-y-auto p-4 mt-0"><CssAnimationConfigPanel value={currentCssAnimationConfig ?? {}} onChange={handleCssAnimationChange} /></TabsContent>
-            <TabsContent value="ai" className="flex-1 overflow-y-auto p-4 mt-0"><ContentAiSection selectedLabel={selectedLabel} /></TabsContent>
+            <TabsContent value='animation' className='flex-1 overflow-y-auto p-4 mt-0'><AnimationConfigPanel value={currentAnimationConfig} onChange={handleAnimationChange} /></TabsContent>
+            <TabsContent value='cssAnimation' className='flex-1 overflow-y-auto p-4 mt-0'><CssAnimationConfigPanel value={currentCssAnimationConfig ?? {}} onChange={handleCssAnimationChange} /></TabsContent>
+            <TabsContent value='ai' className='flex-1 overflow-y-auto p-4 mt-0'><ContentAiSection selectedLabel={selectedLabel} /></TabsContent>
             {showCustomCssTab && (
-              <TabsContent value="customCss" className="flex-1 overflow-y-auto p-4 mt-0 space-y-3">
+              <TabsContent value='customCss' className='flex-1 overflow-y-auto p-4 mt-0 space-y-3'>
                 <CssAiSection />
-                <Textarea value={customCssValue} onChange={(e) => handleCustomCssChange(e.target.value)} placeholder={'parent { \\n  outline: 1px dashed #4ade80;\\n}\\n\\nchildren { \\n  gap: 12px;\\n}'} className="min-h-[160px] font-mono text-xs" spellCheck={false} />
+                <Textarea value={customCssValue} onChange={(e) => handleCustomCssChange(e.target.value)} placeholder={'parent { \\n  outline: 1px dashed #4ade80;\\n}\\n\\nchildren { \\n  gap: 12px;\\n}'} className='min-h-[160px] font-mono text-xs' spellCheck={false} />
               </TabsContent>
             )}
-            {showEventsTab && (<TabsContent value="events" className="flex-1 overflow-y-auto p-4 mt-0"><EventEffectsTab eventConfig={eventConfig} selectedBlockLabel={selectedBlock ? blockDef?.label ?? 'Block' : null} selectedSectionLabel={selectedSection ? sectionDef?.label ?? 'Section' : null} onEventSettingChange={handleEventSettingChange} /></TabsContent>)}
-            {showConnectionsTab && (<TabsContent value="connections" className="flex-1 overflow-y-auto p-4 mt-0"><ConnectionsTab hasSelection={hasSelection} selectedLabel={selectedLabel} connectionSettings={connectionSettings} updateConnectionSetting={updateConnectionSetting} /></TabsContent>)}
+            {showEventsTab && (<TabsContent value='events' className='flex-1 overflow-y-auto p-4 mt-0'><EventEffectsTab eventConfig={eventConfig} selectedBlockLabel={selectedBlock ? blockDef?.label ?? 'Block' : null} selectedSectionLabel={selectedSection ? sectionDef?.label ?? 'Section' : null} onEventSettingChange={handleEventSettingChange} /></TabsContent>)}
+            {showConnectionsTab && (<TabsContent value='connections' className='flex-1 overflow-y-auto p-4 mt-0'><ConnectionsTab hasSelection={hasSelection} selectedLabel={selectedLabel} connectionSettings={connectionSettings} updateConnectionSetting={updateConnectionSetting} /></TabsContent>)}
           </Tabs>
         )}
       </aside>

@@ -25,7 +25,7 @@ export function FrontendAccordionSection({ settings, blocks }: FrontendAccordion
     if (!current) { i += 1; continue; }
     if (current.type === 'Heading') {
       const next = blocks[i + 1];
-      if (next && next.type === 'Text') {
+      if (next?.type === 'Text') {
         items.push({ heading: current, text: next });
         i += 2;
       } else {
@@ -41,7 +41,7 @@ export function FrontendAccordionSection({ settings, blocks }: FrontendAccordion
     return (
       <section style={sectionStyles}>
         <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
-          <p className="text-gray-500 text-center py-8">Add Heading and Text blocks to create accordion items</p>
+          <p className='text-gray-500 text-center py-8'>Add Heading and Text blocks to create accordion items</p>
         </div>
       </section>
     );
@@ -50,7 +50,7 @@ export function FrontendAccordionSection({ settings, blocks }: FrontendAccordion
   return (
     <section style={sectionStyles}>
       <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: 'max-w-3xl' })}>
-        <div className="divide-y divide-gray-700/50">
+        <div className='divide-y divide-gray-700/50'>
           {items.map((item: { heading: BlockInstance; text?: BlockInstance }, index: number) => (
             <AccordionItem key={item.heading.id} item={item} defaultOpen={index === 0} />
           ))}
@@ -70,17 +70,17 @@ function AccordionItem({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="py-4">
+    <div className='py-4'>
       <button
-        type="button"
+        type='button'
         onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between text-left"
+        className='flex w-full items-center justify-between text-left'
       >
         <FrontendBlockRenderer block={item.heading} />
-        <span className="ml-4 shrink-0 text-gray-400 text-xl">{isOpen ? '−' : '+'}</span>
+        <span className='ml-4 shrink-0 text-gray-400 text-xl'>{isOpen ? '−' : '+'}</span>
       </button>
       {isOpen && item.text && (
-        <div className="mt-3">
+        <div className='mt-3'>
           <FrontendBlockRenderer block={item.text} />
         </div>
       )}

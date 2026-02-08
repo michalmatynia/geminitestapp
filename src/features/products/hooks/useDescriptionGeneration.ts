@@ -100,7 +100,7 @@ export function useDescriptionGeneration({ productId, onSuccess, onError }: UseD
     setGenerating(true);
     const imageUrls = imageSlots
       .filter((slot: ProductImageSlot | null): slot is NonNullable<ProductImageSlot> => slot !== null)
-      .map((slot) => (slot as NonNullable<ProductImageSlot>).previewUrl);
+      .map((slot) => (slot).previewUrl);
 
     try {
       if (productId) {

@@ -12,9 +12,9 @@ vi.mock('@/shared/ui/toast', () => ({
 
 vi.mock('@/features/files', () => ({
   FileManager: ({ onSelectFile }: any) => (
-    <div data-testid="file-manager">
+    <div data-testid='file-manager'>
       <button 
-        data-testid="select-file-btn" 
+        data-testid='select-file-btn' 
         onClick={() => onSelectFile([{ id: '1', filepath: '/uploads/img.png' }])}
       >
         Select
@@ -28,8 +28,8 @@ vi.mock('@/shared/ui', async () => {
   const actual = await vi.importActual('@/shared/ui');
   return {
     ...actual,
-    Dialog: ({ children, open }: any) => open ? <div data-testid="dialog">{children}</div> : null,
-    DialogContent: ({ children }: any) => <div data-testid="dialog-content">{children}</div>,
+    Dialog: ({ children, open }: any) => open ? <div data-testid='dialog'>{children}</div> : null,
+    DialogContent: ({ children }: any) => <div data-testid='dialog-content'>{children}</div>,
     DialogHeader: ({ children }: any) => <div>{children}</div>,
     DialogTitle: ({ children }: any) => <div>{children}</div>,
     DialogClose: ({ children }: any) => <div>{children}</div>,

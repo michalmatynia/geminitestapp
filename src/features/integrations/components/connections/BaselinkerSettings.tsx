@@ -56,75 +56,75 @@ export function BaselinkerSettings(): React.JSX.Element {
   };
 
   return (
-    <SectionPanel variant="subtle" className="space-y-4 text-sm text-gray-200">
+    <SectionPanel variant='subtle' className='space-y-4 text-sm text-gray-200'>
       <div>
-        <h3 className="text-sm font-semibold text-white">Baselinker API</h3>
-        <p className="mt-1 text-xs text-gray-400">
+        <h3 className='text-sm font-semibold text-white'>Baselinker API</h3>
+        <p className='mt-1 text-xs text-gray-400'>
           Enter your Baselinker API token in the connection fields, then test the
           connection to verify it works.
         </p>
       </div>
       {!activeConnection ? (
-        <div className="rounded-md border border-dashed border-border p-4 text-xs text-gray-400">
+        <div className='rounded-md border border-dashed border-border p-4 text-xs text-gray-400'>
           Add a connection first to enable Baselinker API access.
         </div>
       ) : (
-        <div className="space-y-3">
-          <SectionPanel variant="subtle" className="p-3 text-xs text-gray-300">
-            <div className="flex items-center justify-between">
+        <div className='space-y-3'>
+          <SectionPanel variant='subtle' className='p-3 text-xs text-gray-300'>
+            <div className='flex items-center justify-between'>
               <span>Connection status</span>
               <StatusBadge status={baselinkerConnected ? 'Connected' : 'Not tested'} />
             </div>
-            <p className="mt-2">
-              <span className="text-gray-400">Last verified:</span>{' '}
+            <p className='mt-2'>
+              <span className='text-gray-400'>Last verified:</span>{' '}
               {baseTokenUpdatedAt}
             </p>
             {activeConnection.baseLastInventoryId && (
-              <p className="mt-1">
-                <span className="text-gray-400">Last inventory:</span>{' '}
+              <p className='mt-1'>
+                <span className='text-gray-400'>Last inventory:</span>{' '}
                 {activeConnection.baseLastInventoryId}
               </p>
             )}
           </SectionPanel>
-          <SectionPanel variant="subtle" className="p-3 text-xs text-gray-300">
-            <div className="flex items-center justify-between">
+          <SectionPanel variant='subtle' className='p-3 text-xs text-gray-300'>
+            <div className='flex items-center justify-between'>
               <span>Listing sync interval</span>
               {settingsQuery.isLoading ? (
-                <span className="text-[10px] text-gray-500">Loading...</span>
+                <span className='text-[10px] text-gray-500'>Loading...</span>
               ) : (
-                <span className="text-[10px] text-gray-500">Minutes</span>
+                <span className='text-[10px] text-gray-500'>Minutes</span>
               )}
             </div>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
+            <div className='mt-2 flex flex-wrap items-center gap-2'>
               <Input
-                type="number"
-                min="1"
+                type='number'
+                min='1'
                 value={syncIntervalMinutes}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setSyncIntervalMinutes(event.target.value)}
-                className="w-32 rounded-md border border-border bg-gray-900 px-2 py-1 text-xs text-white"
+                className='w-32 rounded-md border border-border bg-gray-900 px-2 py-1 text-xs text-white'
               />
               <Button
-                type="button"
+                type='button'
                 onClick={(): void => { void handleSaveSyncInterval(); }}
                 disabled={updateSettingMutation.isPending}
-                className="rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-gray-900 hover:bg-gray-200 disabled:opacity-50"
+                className='rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-gray-900 hover:bg-gray-200 disabled:opacity-50'
               >
                 {updateSettingMutation.isPending ? 'Saving...' : 'Save'}
               </Button>
             </div>
-            <p className="mt-2 text-[10px] text-gray-400">
+            <p className='mt-2 text-[10px] text-gray-400'>
               Controls how often Base.com is checked for listing status updates.
             </p>
             {syncMessage && (
-              <p className="mt-2 text-[10px] text-gray-400">{syncMessage}</p>
+              <p className='mt-2 text-[10px] text-gray-400'>{syncMessage}</p>
             )}
           </SectionPanel>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className='flex flex-wrap items-center gap-3'>
             <Button
-              type="button"
+              type='button'
               onClick={() => { void handleBaselinkerTest(activeConnection); }}
               disabled={isTesting}
-              className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:opacity-50"
+              className='rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:opacity-50'
             >
               {isTesting
                 ? 'Testing...'
@@ -133,14 +133,14 @@ export function BaselinkerSettings(): React.JSX.Element {
                   : 'Test Connection'}
             </Button>
           </div>
-          <SectionPanel variant="subtle" className="p-3 text-xs text-gray-400">
+          <SectionPanel variant='subtle' className='p-3 text-xs text-gray-400'>
             <p>
               To get your API token, log in to{' '}
               <a
-                href="https://baselinker.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-purple-300 hover:text-purple-200"
+                href='https://baselinker.com'
+                target='_blank'
+                rel='noopener noreferrer'
+                className='text-purple-300 hover:text-purple-200'
               >
                 Baselinker
               </a>{' '}

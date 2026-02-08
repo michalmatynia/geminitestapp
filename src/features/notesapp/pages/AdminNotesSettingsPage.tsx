@@ -65,28 +65,28 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
     settings.editorMode === DEFAULT_NOTE_SETTINGS.editorMode;
 
   return (
-    <div className="container mx-auto py-10">
+    <div className='container mx-auto py-10'>
       <SectionHeader
-        title="Note Settings"
-        description="Configure default view preferences for the Notes app."
+        title='Note Settings'
+        description='Configure default view preferences for the Notes app.'
         eyebrow={(
-          <Link href="/admin/notes" className="text-blue-300 hover:text-blue-200">
+          <Link href='/admin/notes' className='text-blue-300 hover:text-blue-200'>
             ← Back to notes
           </Link>
         )}
-        className="mb-6"
+        className='mb-6'
       />
 
-      <div className="max-w-xl space-y-6">
+      <div className='max-w-xl space-y-6'>
         {/* Sorting Settings */}
-        <SectionPanel className="p-6">
-          <SectionHeader title="Sorting" size="sm" className="mb-4" />
-          <div className="space-y-4">
+        <SectionPanel className='p-6'>
+          <SectionHeader title='Sorting' size='sm' className='mb-4' />
+          <div className='space-y-4'>
             <div>
-              <Label className="mb-2 flex items-center justify-between text-sm font-medium text-gray-200">
+              <Label className='mb-2 flex items-center justify-between text-sm font-medium text-gray-200'>
                 <span>Sort By</span>
                 {!isDefault('sortBy') && (
-                  <span className="text-xs text-blue-400">Modified</span>
+                  <span className='text-xs text-blue-400'>Modified</span>
                 )}
               </Label>
               <Select
@@ -96,7 +96,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select sort field" />
+                  <SelectValue placeholder='Select sort field' />
                 </SelectTrigger>
                 <SelectContent>
                   {sortByOptions.map((option: { value: string; label: string }) => (
@@ -109,10 +109,10 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
             </div>
 
             <div>
-              <Label className="mb-2 flex items-center justify-between text-sm font-medium text-gray-200">
+              <Label className='mb-2 flex items-center justify-between text-sm font-medium text-gray-200'>
                 <span>Sort Order</span>
                 {!isDefault('sortOrder') && (
-                  <span className="text-xs text-blue-400">Modified</span>
+                  <span className='text-xs text-blue-400'>Modified</span>
                 )}
               </Label>
               <Select
@@ -122,7 +122,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select sort order" />
+                  <SelectValue placeholder='Select sort order' />
                 </SelectTrigger>
                 <SelectContent>
                   {sortOrderOptions.map((option: { value: string; label: string }) => (
@@ -137,63 +137,63 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
         </SectionPanel>
 
         {/* Visibility Settings */}
-        <SectionPanel className="p-6">
-          <SectionHeader title="Card Visibility" size="sm" className="mb-4" />
-          <div className="space-y-4">
-            <Label className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+        <SectionPanel className='p-6'>
+          <SectionHeader title='Card Visibility' size='sm' className='mb-4' />
+          <div className='space-y-4'>
+            <Label className='flex items-center justify-between'>
+              <div className='flex items-center gap-3'>
                 <Checkbox
                   checked={settings.showTimestamps} onCheckedChange={(checked: boolean | 'indeterminate'): void =>
                     updateSettings({ showTimestamps: Boolean(checked) })
                   }
-                  className="h-4 w-4 rounded border-border/60 bg-gray-800 text-blue-600 focus:ring-blue-500"
+                  className='h-4 w-4 rounded border-border/60 bg-gray-800 text-blue-600 focus:ring-blue-500'
                 />
                 <div>
-                  <span className="text-sm font-medium text-gray-200">
+                  <span className='text-sm font-medium text-gray-200'>
                     Show Timestamps
                   </span>
-                  <p className="text-xs text-gray-500">
+                  <p className='text-xs text-gray-500'>
                     Display created and modified dates on note cards
                   </p>
                 </div>
               </div>
               {!isDefault('showTimestamps') && (
-                <span className="text-xs text-blue-400">Modified</span>
+                <span className='text-xs text-blue-400'>Modified</span>
               )}
             </Label>
 
-            <Label className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+            <Label className='flex items-center justify-between'>
+              <div className='flex items-center gap-3'>
                 <Checkbox
                   checked={settings.showBreadcrumbs} onCheckedChange={(checked: boolean | 'indeterminate'): void =>
                     updateSettings({ showBreadcrumbs: Boolean(checked) })
                   }
-                  className="h-4 w-4 rounded border-border/60 bg-gray-800 text-blue-600 focus:ring-blue-500"
+                  className='h-4 w-4 rounded border-border/60 bg-gray-800 text-blue-600 focus:ring-blue-500'
                 />
                 <div>
-                  <span className="text-sm font-medium text-gray-200">
+                  <span className='text-sm font-medium text-gray-200'>
                     Show Breadcrumbs
                   </span>
-                  <p className="text-xs text-gray-500">
+                  <p className='text-xs text-gray-500'>
                     Display folder path at the bottom of note cards
                   </p>
                 </div>
               </div>
               {!isDefault('showBreadcrumbs') && (
-                <span className="text-xs text-blue-400">Modified</span>
+                <span className='text-xs text-blue-400'>Modified</span>
               )}
             </Label>
           </div>
         </SectionPanel>
 
         {/* Search Settings */}
-        <SectionPanel className="p-6">
-          <SectionHeader title="Search" size="sm" className="mb-4" />
+        <SectionPanel className='p-6'>
+          <SectionHeader title='Search' size='sm' className='mb-4' />
           <div>
-            <Label className="mb-2 flex items-center justify-between text-sm font-medium text-gray-200">
+            <Label className='mb-2 flex items-center justify-between text-sm font-medium text-gray-200'>
               <span>Default Search Scope</span>
               {!isDefault('searchScope') && (
-                <span className="text-xs text-blue-400">Modified</span>
+                <span className='text-xs text-blue-400'>Modified</span>
               )}
             </Label>
             <Select
@@ -203,7 +203,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select search scope" />
+                <SelectValue placeholder='Select search scope' />
               </SelectTrigger>
               <SelectContent>
                 {searchScopeOptions.map((option: { value: string; label: string }) => (
@@ -217,23 +217,23 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
         </SectionPanel>
 
         {/* Editor Settings */}
-        <SectionPanel className="p-6">
-          <SectionHeader title="Editor" size="sm" className="mb-4" />
-          <div className="space-y-4">
+        <SectionPanel className='p-6'>
+          <SectionHeader title='Editor' size='sm' className='mb-4' />
+          <div className='space-y-4'>
             <div>
-              <Label className="mb-2 flex items-center justify-between text-sm font-medium text-gray-200">
+              <Label className='mb-2 flex items-center justify-between text-sm font-medium text-gray-200'>
                 <span>Default Editor Mode</span>
                 {!isDefault('editorMode') && (
-                  <span className="text-xs text-blue-400">Modified</span>
+                  <span className='text-xs text-blue-400'>Modified</span>
                 )}
               </Label>
-              <div className="space-y-2">
+              <div className='space-y-2'>
                 <RadioGroup
                   value={settings.editorMode}
                   onValueChange={(value: string): void =>
                     updateSettings({ editorMode: value as NoteSettings['editorMode'] })
                   }
-                  className="space-y-2"
+                  className='space-y-2'
                 >
                   {editorModeOptions.map((option: { value: string; label: string; description: string }) => {
                     const id = `editor-mode-${option.value}`;
@@ -250,13 +250,13 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
                         <RadioGroupItem
                           id={id}
                           value={option.value}
-                          className="mt-1 border-border/60 text-blue-600"
+                          className='mt-1 border-border/60 text-blue-600'
                         />
-                        <Label htmlFor={id} className="flex-1 cursor-pointer">
-                          <span className="text-sm font-medium text-gray-200">
+                        <Label htmlFor={id} className='flex-1 cursor-pointer'>
+                          <span className='text-sm font-medium text-gray-200'>
                             {option.label}
                           </span>
-                          <p className="text-xs text-gray-500">{option.description}</p>
+                          <p className='text-xs text-gray-500'>{option.description}</p>
                         </Label>
                       </div>
                     );
@@ -265,53 +265,53 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
               </div>
             </div>
 
-            <Label className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+            <Label className='flex items-center justify-between'>
+              <div className='flex items-center gap-3'>
                 <Checkbox
                   checked={settings.autoformatOnPaste} onCheckedChange={(checked: boolean | 'indeterminate'): void =>
                     updateSettings({ autoformatOnPaste: Boolean(checked) })
                   }
-                  className="h-4 w-4 rounded border-border/60 bg-gray-800 text-blue-600 focus:ring-blue-500"
+                  className='h-4 w-4 rounded border-border/60 bg-gray-800 text-blue-600 focus:ring-blue-500'
                 />
                 <div>
-                  <span className="text-sm font-medium text-gray-200">
+                  <span className='text-sm font-medium text-gray-200'>
                     Autoformat on Paste (Markdown mode only)
                   </span>
-                  <p className="text-xs text-gray-500">
+                  <p className='text-xs text-gray-500'>
                     Automatically format pasted markdown content (trim spaces,
                     normalize blank lines, convert URLs to links, normalize list markers)
                   </p>
                 </div>
               </div>
               {!isDefault('autoformatOnPaste') && (
-                <span className="text-xs text-blue-400">Modified</span>
+                <span className='text-xs text-blue-400'>Modified</span>
               )}
             </Label>
           </div>
         </SectionPanel>
 
         {/* Navigation State */}
-        <SectionPanel className="p-6">
-          <SectionHeader title="Navigation" size="sm" className="mb-4" />
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
+        <SectionPanel className='p-6'>
+          <SectionHeader title='Navigation' size='sm' className='mb-4' />
+          <div className='space-y-2'>
+            <div className='flex items-center justify-between'>
               <div>
-                <span className="text-sm font-medium text-gray-200">
+                <span className='text-sm font-medium text-gray-200'>
                   Remember Selected Folder
                 </span>
-                <p className="text-xs text-gray-500">
+                <p className='text-xs text-gray-500'>
                   Your selected folder is saved to the database. When you return to the Notes app
                   (even after clearing cache or on a different device), it will open to your last selected folder.
                 </p>
               </div>
               {!isDefault('selectedFolderId') && (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-green-400">Saved to database</span>
+                <div className='flex items-center gap-2'>
+                  <span className='text-xs text-green-400'>Saved to database</span>
                   <Button
-                    variant="ghost"
-                    size="sm"
+                    variant='ghost'
+                    size='sm'
                     onClick={(): void => updateSettings({ selectedFolderId: null })}
-                    className="h-6 px-2 text-xs text-gray-400 hover:text-white"
+                    className='h-6 px-2 text-xs text-gray-400 hover:text-white'
                   >
                     Clear
                   </Button>
@@ -322,51 +322,51 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
         </SectionPanel>
 
         {/* Reset Button */}
-        <div className="flex justify-end">
+        <div className='flex justify-end'>
           <Button
-            variant="outline"
+            variant='outline'
             onClick={handleResetToDefaults}
             disabled={allDefaults}
-            className="gap-2"
+            className='gap-2'
           >
-            <RotateCcw className="size-4" />
+            <RotateCcw className='size-4' />
             Reset to Defaults
           </Button>
         </div>
 
         {/* Current Settings Summary */}
-        <SectionPanel className="p-4">
-          <h3 className="mb-2 text-sm font-medium text-gray-400">
+        <SectionPanel className='p-4'>
+          <h3 className='mb-2 text-sm font-medium text-gray-400'>
             Current Settings Summary
           </h3>
-          <div className="grid grid-cols-2 gap-2 text-xs text-gray-500">
+          <div className='grid grid-cols-2 gap-2 text-xs text-gray-500'>
             <span>Sort:</span>
-            <span className="text-gray-300">
+            <span className='text-gray-300'>
               {sortByOptions.find((o: { value: string }) => o.value === settings.sortBy)?.label} (
               {settings.sortOrder === 'desc' ? 'Descending' : 'Ascending'})
             </span>
             <span>Timestamps:</span>
-            <span className="text-gray-300">
+            <span className='text-gray-300'>
               {settings.showTimestamps ? 'Visible' : 'Hidden'}
             </span>
             <span>Breadcrumbs:</span>
-            <span className="text-gray-300">
+            <span className='text-gray-300'>
               {settings.showBreadcrumbs ? 'Visible' : 'Hidden'}
             </span>
             <span>Search Scope:</span>
-            <span className="text-gray-300">
+            <span className='text-gray-300'>
               {searchScopeOptions.find((o: { value: string }) => o.value === settings.searchScope)?.label}
             </span>
             <span>Selected Folder:</span>
-            <span className="text-gray-300">
+            <span className='text-gray-300'>
               {settings.selectedFolderId ? 'Saved' : 'All Notes (default)'}
             </span>
             <span>Autoformat on Paste:</span>
-            <span className="text-gray-300">
+            <span className='text-gray-300'>
               {settings.autoformatOnPaste ? 'Enabled' : 'Disabled'}
             </span>
             <span>Editor Mode:</span>
-            <span className="text-gray-300">
+            <span className='text-gray-300'>
               {editorModeOptions.find((o: { value: string }) => o.value === settings.editorMode)?.label}
             </span>
           </div>

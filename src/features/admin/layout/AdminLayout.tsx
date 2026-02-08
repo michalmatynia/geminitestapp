@@ -81,7 +81,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
   };
 
   return (
-    <div className="dark flex h-screen bg-gray-900 text-white">
+    <div className='dark flex h-screen bg-gray-900 text-white'>
       <aside
         className={`flex h-full flex-col transition-all duration-300 bg-gray-800 p-4 ${
           isMenuCollapsed ? 'w-20' : 'w-64'
@@ -90,7 +90,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
         <div className={`flex items-center mb-4 ${isMenuCollapsed ? 'justify-center' : 'justify-end'}`}>
           <Button
             onClick={handleToggleCollapse}
-            className="p-2 rounded-full hover:bg-gray-700"
+            className='p-2 rounded-full hover:bg-gray-700'
           >
             <ChevronLeftIcon
               className={`transition-transform duration-300 ${
@@ -99,20 +99,20 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
             />
           </Button>
         </div>
-        <div className="flex-1 overflow-y-auto pr-1">
+        <div className='flex-1 overflow-y-auto pr-1'>
           <Menu />
         </div>
       </aside>
-      <div className="relative flex-1 flex flex-col min-w-0">
-        <header className="absolute top-0 right-0 z-10 flex h-14 items-center px-6 pointer-events-none">
-          <div className="pointer-events-auto">
-            <div className="flex items-center gap-2">
-              <div id="ai-paths-header-actions" className="flex items-center gap-2" />
+      <div className='relative flex-1 flex flex-col min-w-0'>
+        <header className='absolute top-0 right-0 z-10 flex h-14 items-center px-6 pointer-events-none'>
+          <div className='pointer-events-auto'>
+            <div className='flex items-center gap-2'>
+              <div id='ai-paths-header-actions' className='flex items-center gap-2' />
               <UserNav />
             </div>
           </div>
         </header>
-        <main className="flex-1 p-4 overflow-y-auto">
+        <main className='flex-1 p-4 overflow-y-auto'>
           <QueryErrorBoundary>{children}</QueryErrorBoundary>
         </main>
         <AiInsightsNotificationsDrawer />

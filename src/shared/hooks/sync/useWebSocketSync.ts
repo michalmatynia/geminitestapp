@@ -45,7 +45,7 @@ export function useWebSocketSync({ url, queryKeys, enabled = true }: WebSocketSy
 
 // Hook for AI job updates via WebSocket
 export function useAiJobWebSocketSync(enabled: boolean = true): void {
-  return useWebSocketSync({
+  useWebSocketSync({
     url: `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/api/ai-jobs/ws`,
     queryKeys: [
       ['ai-jobs'],

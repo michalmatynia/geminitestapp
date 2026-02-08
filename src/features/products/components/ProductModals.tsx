@@ -57,8 +57,8 @@ export function ProductModals(): React.JSX.Element {
           <ProductFormModal
             open={isCreateOpen}
             onClose={onCloseCreate}
-            title="Create Product"
-            submitButtonText="Create"
+            title='Create Product'
+            submitButtonText='Create'
             closeOnSubmit
           />
         </ProductFormProvider>
@@ -73,8 +73,8 @@ export function ProductModals(): React.JSX.Element {
           <ProductFormModal
             open={!!editingProduct}
             onClose={onCloseEdit}
-            title="Edit Product"
-            submitButtonText="Update"
+            title='Edit Product'
+            submitButtonText='Update'
             closeOnSubmit={false}
           />
         </ProductFormProvider>
@@ -83,8 +83,8 @@ export function ProductModals(): React.JSX.Element {
       <AppModal
         open={!!integrationsProduct && !showListProductModal}
         onClose={onCloseIntegrations}
-        title="Product Listings"
-        size="md"
+        title='Product Listings'
+        size='md'
       >
         {integrationsProduct && (
           <ProductListingsModal
@@ -99,8 +99,8 @@ export function ProductModals(): React.JSX.Element {
       <AppModal
         open={!!integrationsProduct && showListProductModal}
         onClose={onCloseListProduct}
-        title="List Product"
-        size="md"
+        title='List Product'
+        size='md'
       >
         {integrationsProduct && (
           <ListProductModal
@@ -116,14 +116,14 @@ export function ProductModals(): React.JSX.Element {
       <AppModal
         open={!!exportSettingsProduct && !!onCloseExportSettings}
         onClose={() => onCloseExportSettings?.()}
-        title="Export Settings"
-        size="md"
+        title='Export Settings'
+        size='md'
       >
         {exportSettingsProduct && onCloseExportSettings && (
           <ProductListingsModal
             product={exportSettingsProduct}
             onClose={onCloseExportSettings}
-            filterIntegrationSlug="baselinker"
+            filterIntegrationSlug='baselinker'
             onListingsUpdated={onListingsUpdated}
           />
         )}
@@ -132,8 +132,8 @@ export function ProductModals(): React.JSX.Element {
       <AppModal
         open={!!massListIntegration && !!massListProductIds && massListProductIds.length > 0}
         onClose={() => onCloseMassList?.()}
-        title="Mass List Products"
-        size="md"
+        title='Mass List Products'
+        size='md'
       >
         {massListIntegration && massListProductIds && onCloseMassList && onMassListSuccess && (
           <MassListProductModal
@@ -176,30 +176,30 @@ function ProductFormModal({
   };
 
   const header = (
-    <div className="flex items-center justify-between gap-3">
-      <div className="flex items-center gap-4">
+    <div className='flex items-center justify-between gap-3'>
+      <div className='flex items-center gap-4'>
         <Button
           onClick={() => {
             void handleSubmit();
           }}
           disabled={uploading}
-          className="min-w-[100px] border border-white/20 hover:border-white/40"
+          className='min-w-[100px] border border-white/20 hover:border-white/40'
         >
           {uploading ? 'Saving...' : submitButtonText}
         </Button>
-        <h2 className="text-2xl font-bold text-white">{title}</h2>
+        <h2 className='text-2xl font-bold text-white'>{title}</h2>
       </div>
-      <div className="flex items-center gap-2">
+      <div className='flex items-center gap-2'>
         <TriggerButtonBar
-          location="product_modal"
-          entityType="product"
+          location='product_modal'
+          entityType='product'
           entityId={product?.id ?? null}
           getEntityJson={getEntityJson}
         />
         <Button
-          type="button"
+          type='button'
           onClick={onClose}
-          className="min-w-[100px] border border-white/20 hover:border-white/40"
+          className='min-w-[100px] border border-white/20 hover:border-white/40'
         >
           Close
         </Button>
@@ -213,7 +213,7 @@ function ProductFormModal({
       onClose={onClose}
       title={title} 
       header={header}
-      className="md:min-w-[52rem] max-w-[55rem]"
+      className='md:min-w-[52rem] max-w-[55rem]'
     >
       {showFileManager ? (
         <FileManager onSelectFile={handleMultiFileSelect} />

@@ -659,7 +659,7 @@ export const getProductImagesAsBase64 = async (
   // Also process imageLinks if they exist and we don't have enough images
   const imageLinks = product.imageLinks || [];
   for (const [linkIndex, link] of imageLinks.entries()) {
-    if (!link || !link.trim()) continue;
+    if (!link?.trim()) continue;
 
     // Skip if we already have this as an uploaded image
     const alreadyProcessed = imageSlots.some(

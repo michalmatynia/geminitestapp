@@ -482,35 +482,35 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
   };
 
   return (
-    <div className="container mx-auto py-10">
+    <div className='container mx-auto py-10'>
       <SectionHeader
-        title="Dead Letter Queue"
-        description="Runs that exceeded retry limits or failed permanently."
+        title='Dead Letter Queue'
+        description='Runs that exceeded retry limits or failed permanently.'
         actions={
-          <div className="flex flex-wrap items-center gap-2">
+          <div className='flex flex-wrap items-center gap-2'>
             <Input
               value={pathId}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => setPathId(event.target.value)}
-              placeholder="Filter by path ID"
-              className="h-9 w-[220px] border-border bg-card/70 text-sm text-white"
+              placeholder='Filter by path ID'
+              className='h-9 w-[220px] border-border bg-card/70 text-sm text-white'
             />
             <Input
               value={searchQuery}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(event.target.value)}
-              placeholder="Search run/entity/error"
-              className="h-9 w-[240px] border-border bg-card/70 text-sm text-white"
+              placeholder='Search run/entity/error'
+              className='h-9 w-[240px] border-border bg-card/70 text-sm text-white'
             />
             <Button
-              variant="ghost"
-              size="sm"
+              variant='ghost'
+              size='sm'
               onClick={clearFilters}
               disabled={!hasFilters}
             >
               Clear filters
             </Button>
             <Button
-              variant="outline"
-              size="sm"
+              variant='outline'
+              size='sm'
               onClick={() => { void runsQuery.refetch(); }}
               disabled={runsQuery.isFetching}
             >
@@ -520,24 +520,24 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
         }
       />
 
-      <SectionPanel className="mt-6 space-y-4 p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-gray-400">
-          <div className="flex flex-wrap items-center gap-3">
+      <SectionPanel className='mt-6 space-y-4 p-6'>
+        <div className='flex flex-wrap items-center justify-between gap-3 text-xs text-gray-400'>
+          <div className='flex flex-wrap items-center gap-3'>
             <span>{paginationLabel}</span>
             <span>Selected: {selectedCount}</span>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className='flex flex-wrap items-center gap-2'>
             <Button
-              variant="outline"
-              size="sm"
+              variant='outline'
+              size='sm'
               onClick={toggleSelectVisible}
               disabled={runs.length === 0}
             >
               {allVisibleSelected ? 'Unselect visible' : 'Select visible'}
             </Button>
             <Button
-              variant="ghost"
-              size="sm"
+              variant='ghost'
+              size='sm'
               onClick={clearSelection}
               disabled={selectedCount === 0}
             >
@@ -550,20 +550,20 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                 { value: 'resume', label: 'Resume (continue)' },
                 { value: 'replay', label: 'Replay (from start)' },
               ]}
-              placeholder="Requeue mode"
-              triggerClassName="h-8 w-[160px] border-border bg-card/70 text-xs text-white"
+              placeholder='Requeue mode'
+              triggerClassName='h-8 w-[160px] border-border bg-card/70 text-xs text-white'
             />
             <Button
-              variant="outline"
-              size="sm"
+              variant='outline'
+              size='sm'
               onClick={() => { void requeueSelectedMutation.mutateAsync(); }}
               disabled={selectedCount === 0 || requeueSelectedMutation.isPending}
             >
               {requeueSelectedMutation.isPending ? 'Requeueing...' : 'Requeue selected'}
             </Button>
             <Button
-              variant="secondary"
-              size="sm"
+              variant='secondary'
+              size='sm'
               onClick={() => { void requeueAllMutation.mutateAsync(); }}
               disabled={requeueAllMutation.isPending || total === 0}
             >
@@ -572,28 +572,28 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
           </div>
         </div>
 
-        <div className="rounded-md border border-border/70 bg-card/60">
+        <div className='rounded-md border border-border/70 bg-card/60'>
           <Table>
             <TableHeader>
-              <TableRow className="border-border/60">
-                <TableHead className="w-8">
+              <TableRow className='border-border/60'>
+                <TableHead className='w-8'>
                   <Checkbox
                     checked={headerCheckboxState}
                     onCheckedChange={toggleSelectVisible}
-                    aria-label="Select visible runs"
+                    aria-label='Select visible runs'
                   />
                 </TableHead>
-                <TableHead className="text-xs text-gray-400">Run</TableHead>
-                <TableHead className="text-xs text-gray-400">Path</TableHead>
-                <TableHead className="text-xs text-gray-400">Retries</TableHead>
-                <TableHead className="text-xs text-gray-400">Dead Lettered</TableHead>
-                <TableHead className="text-xs text-gray-400">Error</TableHead>
-                <TableHead className="text-xs text-gray-400 text-right">Actions</TableHead>
+                <TableHead className='text-xs text-gray-400'>Run</TableHead>
+                <TableHead className='text-xs text-gray-400'>Path</TableHead>
+                <TableHead className='text-xs text-gray-400'>Retries</TableHead>
+                <TableHead className='text-xs text-gray-400'>Dead Lettered</TableHead>
+                <TableHead className='text-xs text-gray-400'>Error</TableHead>
+                <TableHead className='text-xs text-gray-400 text-right'>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {runs.map((run: AiPathRunRecord) => (
-                <TableRow key={run.id} className="border-border/50">
+                <TableRow key={run.id} className='border-border/50'>
                   <TableCell>
                     <Checkbox
                       checked={selectedIds.has(run.id)}
@@ -601,43 +601,43 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                       aria-label={`Select run ${run.id}`}
                     />
                   </TableCell>
-                  <TableCell className="text-xs text-gray-200">
-                    <div className="font-mono text-[11px]">{run.id}</div>
+                  <TableCell className='text-xs text-gray-200'>
+                    <div className='font-mono text-[11px]'>{run.id}</div>
                     {run.entityId ? (
-                      <div className="mt-1 text-[10px] text-gray-500">
+                      <div className='mt-1 text-[10px] text-gray-500'>
                         Entity: {run.entityId}
                       </div>
                     ) : null}
                   </TableCell>
-                  <TableCell className="text-xs text-gray-300">
+                  <TableCell className='text-xs text-gray-300'>
                     <div>{run.pathName || 'Untitled'}</div>
-                    <div className="text-[10px] text-gray-500">{run.pathId}</div>
+                    <div className='text-[10px] text-gray-500'>{run.pathId}</div>
                   </TableCell>
-                  <TableCell className="text-xs text-gray-300">
+                  <TableCell className='text-xs text-gray-300'>
                     {run.retryCount ?? 0}/{run.maxAttempts ?? 0}
                   </TableCell>
-                  <TableCell className="text-xs text-gray-300">
+                  <TableCell className='text-xs text-gray-300'>
                     {run.deadLetteredAt
                       ? new Date(run.deadLetteredAt).toLocaleString()
                       : run.updatedAt
                         ? new Date(run.updatedAt).toLocaleString()
                         : '-'}
                   </TableCell>
-                  <TableCell className="text-[11px] text-gray-500">
+                  <TableCell className='text-[11px] text-gray-500'>
                     {run.errorMessage || '-'}
                   </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
+                  <TableCell className='text-right'>
+                    <div className='flex items-center justify-end gap-2'>
                       <Button
-                        variant="ghost"
-                        size="sm"
+                        variant='ghost'
+                        size='sm'
                         onClick={() => { void handleOpenDetail(run.id); }}
                       >
                         View
                       </Button>
                       <Button
-                        variant="outline"
-                        size="sm"
+                        variant='outline'
+                        size='sm'
                         onClick={() => { void handleRequeueSingle(run.id); }}
                       >
                         Requeue
@@ -648,7 +648,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
               ))}
               {!runsQuery.isFetching && runs.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-28 text-center text-sm text-gray-400">
+                  <TableCell colSpan={7} className='h-28 text-center text-sm text-gray-400'>
                     No dead-letter runs found.
                   </TableCell>
                 </TableRow>
@@ -657,30 +657,30 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
           </Table>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-gray-400">
+        <div className='flex flex-wrap items-center justify-between gap-3 text-xs text-gray-400'>
           <span>Page {page} of {totalPages}</span>
-          <div className="flex items-center gap-2">
+          <div className='flex items-center gap-2'>
             {PAGE_SIZES.map((size: number) => (
               <Button
                 key={size}
                 variant={size === pageSize ? 'secondary' : 'ghost'}
-                size="sm"
+                size='sm'
                 onClick={() => setPageSize(size)}
               >
                 {size}
               </Button>
             ))}
             <Button
-              variant="outline"
-              size="sm"
+              variant='outline'
+              size='sm'
               onClick={() => setPage((prev: number) => Math.max(1, prev - 1))}
               disabled={page === 1}
             >
               Previous
             </Button>
             <Button
-              variant="outline"
-              size="sm"
+              variant='outline'
+              size='sm'
               onClick={() => setPage((prev: number) => Math.min(totalPages, prev + 1))}
               disabled={page >= totalPages}
             >
@@ -691,20 +691,20 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
       </SectionPanel>
 
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-w-4xl border border-border bg-card text-white">
+        <DialogContent className='max-w-4xl border border-border bg-card text-white'>
           <DialogHeader>
             <DialogTitle>Run Details</DialogTitle>
-            <DialogDescription className="text-gray-400">Inspect the run state, node statuses, and events.</DialogDescription>
+            <DialogDescription className='text-gray-400'>Inspect the run state, node statuses, and events.</DialogDescription>
           </DialogHeader>
           {detailLoading ? (
-            <div className="text-sm text-gray-400">Loading run details...</div>
+            <div className='text-sm text-gray-400'>Loading run details...</div>
           ) : detail ? (
-            <div className="space-y-6">
-              <div className="rounded-md border border-border/70 bg-black/20 p-4 text-xs text-gray-300">
-                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400">
+            <div className='space-y-6'>
+              <div className='rounded-md border border-border/70 bg-black/20 p-4 text-xs text-gray-300'>
+                <div className='flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400'>
                   <span>Run summary</span>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[11px] text-gray-500">
+                  <div className='flex flex-wrap items-center gap-2'>
+                    <span className='text-[11px] text-gray-500'>
                       Stream:{' '}
                       {streamStatus === 'live'
                         ? 'live'
@@ -715,77 +715,77 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                             : 'stopped'}
                     </span>
                     <Button
-                      variant="ghost"
-                      size="sm"
+                      variant='ghost'
+                      size='sm'
                       onClick={() => setStreamPaused((prev: boolean) => !prev)}
                     >
                       {streamPaused ? 'Resume stream' : 'Pause stream'}
                     </Button>
                   </div>
                 </div>
-                <div className="mt-3 grid gap-3 md:grid-cols-3">
+                <div className='mt-3 grid gap-3 md:grid-cols-3'>
                   <div>
-                    <div className="text-[11px] text-gray-500">Run ID</div>
-                    <div className="mt-1 font-mono text-[11px] text-gray-200">{detail.run.id}</div>
+                    <div className='text-[11px] text-gray-500'>Run ID</div>
+                    <div className='mt-1 font-mono text-[11px] text-gray-200'>{detail.run.id}</div>
                   </div>
                   <div>
-                    <div className="text-[11px] text-gray-500">Status</div>
-                    <div className="mt-1 text-xs text-gray-200">{detail.run.status}</div>
+                    <div className='text-[11px] text-gray-500'>Status</div>
+                    <div className='mt-1 text-xs text-gray-200'>{detail.run.status}</div>
                   </div>
                   <div>
-                    <div className="text-[11px] text-gray-500">Path</div>
-                    <div className="mt-1 text-xs text-gray-200">{detail.run.pathName || 'Untitled'}</div>
-                    <div className="text-[10px] text-gray-500">{detail.run.pathId}</div>
+                    <div className='text-[11px] text-gray-500'>Path</div>
+                    <div className='mt-1 text-xs text-gray-200'>{detail.run.pathName || 'Untitled'}</div>
+                    <div className='text-[10px] text-gray-500'>{detail.run.pathId}</div>
                   </div>
                   <div>
-                    <div className="text-[11px] text-gray-500">Entity</div>
-                    <div className="mt-1 text-xs text-gray-200">{detail.run.entityId || '-'}</div>
+                    <div className='text-[11px] text-gray-500'>Entity</div>
+                    <div className='mt-1 text-xs text-gray-200'>{detail.run.entityId || '-'}</div>
                   </div>
                   <div>
-                    <div className="text-[11px] text-gray-500">Retries</div>
-                    <div className="mt-1 text-xs text-gray-200">
+                    <div className='text-[11px] text-gray-500'>Retries</div>
+                    <div className='mt-1 text-xs text-gray-200'>
                       {(detail.run.retryCount ?? 0)}/{detail.run.maxAttempts ?? 0}
                     </div>
                   </div>
                   <div>
-                    <div className="text-[11px] text-gray-500">Dead-lettered</div>
-                    <div className="mt-1 text-xs text-gray-200">
+                    <div className='text-[11px] text-gray-500'>Dead-lettered</div>
+                    <div className='mt-1 text-xs text-gray-200'>
                       {formatTimestamp(detail.run.deadLetteredAt ?? detail.run.updatedAt)}
                     </div>
                   </div>
                   <div>
-                    <div className="text-[11px] text-gray-500">Started</div>
-                    <div className="mt-1 text-xs text-gray-200">
+                    <div className='text-[11px] text-gray-500'>Started</div>
+                    <div className='mt-1 text-xs text-gray-200'>
                       {formatTimestamp(detail.run.startedAt)}
                     </div>
                   </div>
                   <div>
-                    <div className="text-[11px] text-gray-500">Finished</div>
-                    <div className="mt-1 text-xs text-gray-200">
+                    <div className='text-[11px] text-gray-500'>Finished</div>
+                    <div className='mt-1 text-xs text-gray-200'>
                       {formatTimestamp(detail.run.finishedAt)}
                     </div>
                   </div>
-                  <div className="md:col-span-3">
-                    <div className="text-[11px] text-gray-500">Error</div>
-                    <div className="mt-1 text-xs text-gray-200">
+                  <div className='md:col-span-3'>
+                    <div className='text-[11px] text-gray-500'>Error</div>
+                    <div className='mt-1 text-xs text-gray-200'>
                       {detail.run.errorMessage || '-'}
                     </div>
                   </div>
                   {nodeStatusSummary ? (
-                    <div className="md:col-span-3">
-                      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-500">
+                    <div className='md:col-span-3'>
+                      <div className='flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-500'>
                         <span>
                           Nodes: {nodeStatusSummary.completed}/{nodeStatusSummary.totalNodes} completed
                         </span>
                         <span>{nodeStatusSummary.progress}%</span>
                       </div>
-                      <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-black/40">
+                      <div className='mt-2 h-2 w-full overflow-hidden rounded-full bg-black/40'>
                         <div
-                          className="h-full rounded-full bg-emerald-400/70 transition-all"
+                          className='h-full rounded-full bg-emerald-400/70 transition-all'
                           style={{ width: `${nodeStatusSummary.progress}%` }}
                         />
                       </div>
-                      <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-gray-500">
+                      <div className='mt-2 flex flex-wrap gap-2 text-[11px] text-gray-500'>
                         {Object.entries(nodeStatusSummary.counts).map(([status, count]: [string, number]) => (
                           <span key={status}>
                             {status}: {count}
@@ -798,14 +798,14 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                 </div>
               </div>
 
-              <div className="rounded-md border border-border/70 bg-card/60">
-                <div className="flex flex-wrap items-center justify-between gap-3 px-4 pt-4 text-xs text-gray-400">
+              <div className='rounded-md border border-border/70 bg-card/60'>
+                <div className='flex flex-wrap items-center justify-between gap-3 px-4 pt-4 text-xs text-gray-400'>
                   <span>Nodes</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] text-gray-500">{detail.nodes.length} total</span>
+                  <div className='flex items-center gap-2'>
+                    <span className='text-[11px] text-gray-500'>{detail.nodes.length} total</span>
                     <Button
-                      variant="ghost"
-                      size="sm"
+                      variant='ghost'
+                      size='sm'
                       onClick={() => {
                         const hasAnyExpanded = detail.nodes.some((node: AiPathRunNodeRecord) =>
                           expandedNodeIds.has(node.nodeId)
@@ -829,8 +829,8 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                         : 'Expand all'}
                     </Button>
                     <Button
-                      variant="outline"
-                      size="sm"
+                      variant='outline'
+                      size='sm'
                       onClick={() => setShowRetryFailedConfirm(true)}
                       disabled={
                         retryFailedPending ||
@@ -844,17 +844,17 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                     </Button>
                   </div>
                 </div>
-                <div className="mt-3 overflow-hidden rounded-md border-t border-border/60">
+                <div className='mt-3 overflow-hidden rounded-md border-t border-border/60'>
                   <Table>
                     <TableHeader>
-                      <TableRow className="border-border/60">
-                        <TableHead className="text-xs text-gray-400">Node</TableHead>
-                        <TableHead className="text-xs text-gray-400">Type</TableHead>
-                        <TableHead className="text-xs text-gray-400">Status</TableHead>
-                        <TableHead className="text-xs text-gray-400">Attempt</TableHead>
-                        <TableHead className="text-xs text-gray-400">Error</TableHead>
-                        <TableHead className="text-xs text-gray-400">Data</TableHead>
-                        <TableHead className="text-xs text-gray-400 text-right">Action</TableHead>
+                      <TableRow className='border-border/60'>
+                        <TableHead className='text-xs text-gray-400'>Node</TableHead>
+                        <TableHead className='text-xs text-gray-400'>Type</TableHead>
+                        <TableHead className='text-xs text-gray-400'>Status</TableHead>
+                        <TableHead className='text-xs text-gray-400'>Attempt</TableHead>
+                        <TableHead className='text-xs text-gray-400'>Error</TableHead>
+                        <TableHead className='text-xs text-gray-400'>Data</TableHead>
+                        <TableHead className='text-xs text-gray-400 text-right'>Action</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -868,35 +868,35 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                         const isExpanded = expandedNodeIds.has(node.nodeId);
                         return (
                           <Fragment key={node.id}>
-                            <TableRow className="border-border/50">
-                              <TableCell className="text-xs text-gray-200">
-                                <div className="font-mono text-[11px]">{node.nodeId}</div>
+                            <TableRow className='border-border/50'>
+                              <TableCell className='text-xs text-gray-200'>
+                                <div className='font-mono text-[11px]'>{node.nodeId}</div>
                                 {node.nodeTitle ? (
-                                  <div className="mt-1 text-[10px] text-gray-500">
+                                  <div className='mt-1 text-[10px] text-gray-500'>
                                     {node.nodeTitle}
                                   </div>
                                 ) : null}
                               </TableCell>
-                              <TableCell className="text-xs text-gray-300">{node.nodeType}</TableCell>
-                              <TableCell className="text-xs text-gray-300">{node.status}</TableCell>
-                              <TableCell className="text-xs text-gray-300">{node.attempt ?? 0}</TableCell>
-                              <TableCell className="text-[11px] text-gray-500">
+                              <TableCell className='text-xs text-gray-300'>{node.nodeType}</TableCell>
+                              <TableCell className='text-xs text-gray-300'>{node.status}</TableCell>
+                              <TableCell className='text-xs text-gray-300'>{node.attempt ?? 0}</TableCell>
+                              <TableCell className='text-[11px] text-gray-500'>
                                 {node.errorMessage || '-'}
                               </TableCell>
                               <TableCell>
                                 <Button
-                                  variant="ghost"
-                                  size="sm"
+                                  variant='ghost'
+                                  size='sm'
                                   onClick={() => toggleNodeExpanded(node.nodeId)}
                                   disabled={!hasData}
                                 >
                                   {hasData ? (isExpanded ? 'Hide' : 'Show') : 'No data'}
                                 </Button>
                               </TableCell>
-                              <TableCell className="text-right">
+                              <TableCell className='text-right'>
                                 <Button
-                                  variant="outline"
-                                  size="sm"
+                                  variant='outline'
+                                  size='sm'
                                   onClick={() =>
                                     retryNodeMutation.mutate({
                                       runId: detail.run.id,
@@ -910,44 +910,44 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                               </TableCell>
                             </TableRow>
                             {isExpanded ? (
-                              <TableRow className="border-border/40 bg-black/20">
-                                <TableCell colSpan={7} className="px-4 pb-4 pt-2">
-                                  <div className="mb-4 grid gap-4 md:grid-cols-4">
+                              <TableRow className='border-border/40 bg-black/20'>
+                                <TableCell colSpan={7} className='px-4 pb-4 pt-2'>
+                                  <div className='mb-4 grid gap-4 md:grid-cols-4'>
                                     <div>
-                                      <div className="text-[11px] text-gray-500">Started</div>
-                                      <div className="mt-1 text-xs text-gray-200">
+                                      <div className='text-[11px] text-gray-500'>Started</div>
+                                      <div className='mt-1 text-xs text-gray-200'>
                                         {formatTimestamp(node.startedAt)}
                                       </div>
                                     </div>
                                     <div>
-                                      <div className="text-[11px] text-gray-500">Finished</div>
-                                      <div className="mt-1 text-xs text-gray-200">
+                                      <div className='text-[11px] text-gray-500'>Finished</div>
+                                      <div className='mt-1 text-xs text-gray-200'>
                                         {formatTimestamp(node.finishedAt)}
                                       </div>
                                     </div>
                                     <div>
-                                      <div className="text-[11px] text-gray-500">Updated</div>
-                                      <div className="mt-1 text-xs text-gray-200">
+                                      <div className='text-[11px] text-gray-500'>Updated</div>
+                                      <div className='mt-1 text-xs text-gray-200'>
                                         {formatTimestamp(node.updatedAt)}
                                       </div>
                                     </div>
                                     <div>
-                                      <div className="text-[11px] text-gray-500">Created</div>
-                                      <div className="mt-1 text-xs text-gray-200">
+                                      <div className='text-[11px] text-gray-500'>Created</div>
+                                      <div className='mt-1 text-xs text-gray-200'>
                                         {formatTimestamp(node.createdAt)}
                                       </div>
                                     </div>
                                   </div>
-                                  <div className="grid gap-4 md:grid-cols-2">
+                                  <div className='grid gap-4 md:grid-cols-2'>
                                     <div>
-                                      <div className="text-[11px] text-gray-500">Inputs</div>
-                                      <pre className="mt-2 max-h-32 overflow-auto rounded bg-black/40 p-2 text-[10px] text-gray-200 whitespace-pre-wrap">
+                                      <div className='text-[11px] text-gray-500'>Inputs</div>
+                                      <pre className='mt-2 max-h-32 overflow-auto rounded bg-black/40 p-2 text-[10px] text-gray-200 whitespace-pre-wrap'>
                                         {node.inputs ? JSON.stringify(node.inputs, null, 2) : 'No inputs'}
                                       </pre>
                                     </div>
                                     <div>
-                                      <div className="text-[11px] text-gray-500">Outputs</div>
-                                      <pre className="mt-2 max-h-32 overflow-auto rounded bg-black/40 p-2 text-[10px] text-gray-200 whitespace-pre-wrap">
+                                      <div className='text-[11px] text-gray-500'>Outputs</div>
+                                      <pre className='mt-2 max-h-32 overflow-auto rounded bg-black/40 p-2 text-[10px] text-gray-200 whitespace-pre-wrap'>
                                         {node.outputs ? JSON.stringify(node.outputs, null, 2) : 'No outputs'}
                                       </pre>
                                     </div>
@@ -960,7 +960,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                       })}
                       {detail.nodes.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={7} className="h-16 text-center text-xs text-gray-400">
+                          <TableCell colSpan={7} className='h-16 text-center text-xs text-gray-400'>
                             No nodes recorded.
                           </TableCell>
                         </TableRow>
@@ -974,42 +974,42 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                 open={showRetryFailedConfirm}
                 onOpenChange={setShowRetryFailedConfirm}
                 onConfirm={() => { void handleRetryFailedNodes(); }}
-                title="Retry failed nodes?"
-                description="This will requeue all failed or blocked nodes for this run. Any node retries will reset their status to pending and enqueue the run."
-                confirmText="Retry failed nodes"
-                variant="success"
+                title='Retry failed nodes?'
+                description='This will requeue all failed or blocked nodes for this run. Any node retries will reset their status to pending and enqueue the run.'
+                confirmText='Retry failed nodes'
+                variant='success'
                 loading={retryFailedPending}
               />
 
-              <div className="rounded-md border border-border/70 bg-black/20">
-                <div className="flex items-center justify-between px-4 pt-4 text-xs text-gray-400">
-                  <div className="flex items-center gap-2">
+              <div className='rounded-md border border-border/70 bg-black/20'>
+                <div className='flex items-center justify-between px-4 pt-4 text-xs text-gray-400'>
+                  <div className='flex items-center gap-2'>
                     <span>Events</span>
                     {eventsOverflow ? (
-                      <span className="rounded border border-amber-400/50 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-200">
+                      <span className='rounded border border-amber-400/50 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-200'>
                         Truncated{eventsBatchLimit ? ` (limit ${eventsBatchLimit})` : ''}
                       </span>
                     ) : null}
                   </div>
-                  <span className="text-[11px] text-gray-500">{detail.events.length} total</span>
+                  <span className='text-[11px] text-gray-500'>{detail.events.length} total</span>
                 </div>
-                <div className="max-h-60 overflow-auto p-4 text-xs text-gray-200">
+                <div className='max-h-60 overflow-auto p-4 text-xs text-gray-200'>
                   {detail.events.length === 0 ? (
-                    <div className="text-xs text-gray-400">No events recorded.</div>
+                    <div className='text-xs text-gray-400'>No events recorded.</div>
                   ) : (
-                    <div className="space-y-2">
+                    <div className='space-y-2'>
                       {detail.events.map((event: AiPathRunEventRecord) => (
                         <div
                           key={event.id}
-                          className="rounded-md border border-border/60 bg-black/30 px-3 py-2"
+                          className='rounded-md border border-border/60 bg-black/30 px-3 py-2'
                         >
-                          <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-500">
+                          <div className='flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-500'>
                             <span>{formatTimestamp(event.createdAt)}</span>
-                            <span className="uppercase">{event.level}</span>
+                            <span className='uppercase'>{event.level}</span>
                           </div>
-                          <div className="mt-1 text-xs text-gray-200">{event.message}</div>
+                          <div className='mt-1 text-xs text-gray-200'>{event.message}</div>
                           {event.metadata ? (
-                            <pre className="mt-2 max-h-28 overflow-auto rounded bg-black/40 p-2 text-[10px] text-gray-200 whitespace-pre-wrap">
+                            <pre className='mt-2 max-h-28 overflow-auto rounded bg-black/40 p-2 text-[10px] text-gray-200 whitespace-pre-wrap'>
                               {JSON.stringify(event.metadata, null, 2)}
                             </pre>
                           ) : null}
@@ -1021,7 +1021,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
               </div>
             </div>
           ) : (
-            <div className="text-sm text-gray-400">No detail available.</div>
+            <div className='text-sm text-gray-400'>No detail available.</div>
           )}
         </DialogContent>
       </Dialog>

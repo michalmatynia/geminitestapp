@@ -42,13 +42,13 @@ export function ProductConstructorPage(): React.JSX.Element {
   }, [parametersQuery.error, toast]);
 
   return (
-    <div className="rounded-lg bg-card p-6 shadow-lg">
-      <Tabs defaultValue="parameters" className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="parameters">Parameters</TabsTrigger>
+    <div className='rounded-lg bg-card p-6 shadow-lg'>
+      <Tabs defaultValue='parameters' className='w-full'>
+        <TabsList className='mb-6'>
+          <TabsTrigger value='parameters'>Parameters</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="parameters" className="mt-0">
+        <TabsContent value='parameters' className='mt-0'>
           <ParametersSettings
             loading={parametersQuery.isLoading}
             parameters={parameters}

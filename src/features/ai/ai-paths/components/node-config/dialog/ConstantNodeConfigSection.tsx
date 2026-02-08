@@ -25,9 +25,9 @@ export function ConstantNodeConfigSection({
   const isJson = constantConfig.valueType === 'json';
 
   return (
-    <div className="space-y-4">
+    <div className='space-y-4'>
       <div>
-        <Label className="text-xs text-gray-400">Value Type</Label>
+        <Label className='text-xs text-gray-400'>Value Type</Label>
         <Select
           value={constantConfig.valueType}
           onValueChange={(value: string): void =>
@@ -39,22 +39,22 @@ export function ConstantNodeConfigSection({
             })
           }
         >
-          <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-            <SelectValue placeholder="Select type" />
+          <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
+            <SelectValue placeholder='Select type' />
           </SelectTrigger>
-          <SelectContent className="border-border bg-gray-900">
-            <SelectItem value="string">String</SelectItem>
-            <SelectItem value="number">Number</SelectItem>
-            <SelectItem value="boolean">Boolean</SelectItem>
-            <SelectItem value="json">JSON</SelectItem>
+          <SelectContent className='border-border bg-gray-900'>
+            <SelectItem value='string'>String</SelectItem>
+            <SelectItem value='number'>Number</SelectItem>
+            <SelectItem value='boolean'>Boolean</SelectItem>
+            <SelectItem value='json'>JSON</SelectItem>
           </SelectContent>
         </Select>
       </div>
       <div>
-        <Label className="text-xs text-gray-400">Value</Label>
+        <Label className='text-xs text-gray-400'>Value</Label>
         {isJson ? (
           <Textarea
-            className="mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
+            className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
             value={constantConfig.value}
             onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
               updateSelectedNodeConfig({
@@ -64,7 +64,7 @@ export function ConstantNodeConfigSection({
           />
         ) : (
           <Input
-            className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+            className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
             value={constantConfig.value}
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
               updateSelectedNodeConfig({

@@ -285,54 +285,54 @@ export function NodeConfigDialog({
           requestClose();
         }}
       >
-        <DialogContent className="max-h-[85vh] w-[95vw] max-w-4xl overflow-y-auto border border-border bg-card text-white">
+        <DialogContent className='max-h-[85vh] w-[95vw] max-w-4xl overflow-y-auto border border-border bg-card text-white'>
           <DialogHeader>
-            <div className="flex items-center justify-between">
-              <DialogTitle className="flex items-center gap-2 text-lg">
+            <div className='flex items-center justify-between'>
+              <DialogTitle className='flex items-center gap-2 text-lg'>
                 <span>Configure {selectedNode.title}</span>
                 {isScheduledTrigger ? (
-                  <span className="rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[10px] uppercase text-amber-200">
+                  <span className='rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[10px] uppercase text-amber-200'>
                   Scheduled
                   </span>
                 ) : null}
               </DialogTitle>
               <Button
-                type="button"
-                size="sm"
-                className="rounded border px-3 py-1 text-xs text-gray-300 hover:bg-muted/50"
+                type='button'
+                size='sm'
+                className='rounded border px-3 py-1 text-xs text-gray-300 hover:bg-muted/50'
                 onClick={requestClose}
               >
               Close
               </Button>
             </div>
           </DialogHeader>
-          <Tabs defaultValue="settings" className="mt-2">
-            <TabsList className="w-full justify-start">
-              <TabsTrigger value="settings">Settings</TabsTrigger>
-              <TabsTrigger value="notes">Notes</TabsTrigger>
-              <TabsTrigger value="history">History</TabsTrigger>
+          <Tabs defaultValue='settings' className='mt-2'>
+            <TabsList className='w-full justify-start'>
+              <TabsTrigger value='settings'>Settings</TabsTrigger>
+              <TabsTrigger value='notes'>Notes</TabsTrigger>
+              <TabsTrigger value='history'>History</TabsTrigger>
             </TabsList>
-            <TabsContent value="settings">
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-card/60 px-3 py-2">
-                <div className="text-[11px] text-gray-400">
+            <TabsContent value='settings'>
+              <div className='mb-4 flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-card/60 px-3 py-2'>
+                <div className='text-[11px] text-gray-400'>
                   {hasUnsavedChanges
                     ? 'Unsaved changes (manual update required).'
                     : 'Node settings are applied in canvas. Click "Save Path" to persist.'}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className='flex items-center gap-2'>
                   <Button
-                    type="button"
-                    size="sm"
-                    className="rounded-md border border-muted-foreground/40 text-xs text-gray-300 hover:bg-muted/50 disabled:opacity-50"
+                    type='button'
+                    size='sm'
+                    className='rounded-md border border-muted-foreground/40 text-xs text-gray-300 hover:bg-muted/50 disabled:opacity-50'
                     disabled={!hasUnsavedChanges}
                     onClick={handleDiscardChanges}
                   >
                   Discard Changes
                   </Button>
                   <Button
-                    type="button"
-                    size="sm"
-                    className="rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10 disabled:opacity-50"
+                    type='button'
+                    size='sm'
+                    className='rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10 disabled:opacity-50'
                     disabled={!hasUnsavedChanges || isPathLocked}
                     onClick={handleUpdateNode}
                   >
@@ -371,13 +371,13 @@ export function NodeConfigDialog({
                 toast={toast}
               />
             </TabsContent>
-            <TabsContent value="notes">
+            <TabsContent value='notes'>
               <NodeNotesTab
                 selectedNode={draftSelectedNode}
                 updateSelectedNodeConfig={updateDraftConfig}
               />
             </TabsContent>
-            <TabsContent value="history">
+            <TabsContent value='history'>
               <NodeHistoryTab
                 selectedNode={selectedNode}
                 runtimeState={runtimeState}
@@ -385,15 +385,15 @@ export function NodeConfigDialog({
               />
             </TabsContent>
           </Tabs>
-          <div className="mt-4 flex items-center justify-end gap-2 text-xs text-gray-400">
-            <span className="text-[11px] uppercase tracking-wide text-gray-500">Node ID</span>
-            <span className="max-w-[260px] truncate font-mono text-xs text-gray-300">
+          <div className='mt-4 flex items-center justify-end gap-2 text-xs text-gray-400'>
+            <span className='text-[11px] uppercase tracking-wide text-gray-500'>Node ID</span>
+            <span className='max-w-[260px] truncate font-mono text-xs text-gray-300'>
               {selectedNode.id}
             </span>
             <Button
-              type="button"
-              size="sm"
-              className="rounded border border-border px-2 py-1 text-[11px] text-gray-200 hover:bg-muted/50"
+              type='button'
+              size='sm'
+              className='rounded border border-border px-2 py-1 text-[11px] text-gray-200 hover:bg-muted/50'
               onClick={() => {
                 void navigator.clipboard.writeText(selectedNode.id).then(
                   () => toast('Node ID copied.', { variant: 'success' }),
@@ -423,7 +423,7 @@ export function NodeConfigDialog({
                 event.preventDefault();
                 handleDiscardAndClose();
               }}
-              className="bg-muted text-gray-200 hover:bg-muted/80"
+              className='bg-muted text-gray-200 hover:bg-muted/80'
             >
               Discard
             </AlertDialogAction>
@@ -432,7 +432,7 @@ export function NodeConfigDialog({
                 event.preventDefault();
                 handleSaveAndClose();
               }}
-              className="bg-emerald-600 text-white hover:bg-emerald-700"
+              className='bg-emerald-600 text-white hover:bg-emerald-700'
             >
               Save & Close
             </AlertDialogAction>

@@ -55,25 +55,25 @@ export function PageBuilderSettingsPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 className="size-8 animate-spin text-gray-400" />
+      <div className='flex h-64 items-center justify-center'>
+        <Loader2 className='size-8 animate-spin text-gray-400' />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className='space-y-6 p-6'>
       <div>
-        <h1 className="text-2xl font-semibold text-white">Page Builder Settings</h1>
-        <p className="mt-1 text-sm text-gray-400">
+        <h1 className='text-2xl font-semibold text-white'>Page Builder Settings</h1>
+        <p className='mt-1 text-sm text-gray-400'>
           Configure settings for the CMS Page Builder.
         </p>
       </div>
 
-      <Card className="border-border/50 bg-gray-800/30 p-6">
-        <h2 className="mb-4 text-lg font-medium text-white">Drag & Drop Placeholders</h2>
-        <div className="space-y-4">
-          <label className="flex cursor-pointer items-center gap-3">
+      <Card className='border-border/50 bg-gray-800/30 p-6'>
+        <h2 className='mb-4 text-lg font-medium text-white'>Drag & Drop Placeholders</h2>
+        <div className='space-y-4'>
+          <label className='flex cursor-pointer items-center gap-3'>
             <Checkbox
               checked={showSectionDropPlaceholder}
               onCheckedChange={(checked: boolean | 'indeterminate'): void => {
@@ -81,16 +81,16 @@ export function PageBuilderSettingsPage(): React.JSX.Element {
               }}
             />
             <div>
-              <Label className="cursor-pointer text-sm text-gray-200">
+              <Label className='cursor-pointer text-sm text-gray-200'>
                 Show section drop placeholder
               </Label>
-              <p className="text-xs text-gray-500">
+              <p className='text-xs text-gray-500'>
                 When enabled, purple &quot;Drop here&quot; placeholders will appear when dragging sections between zones.
               </p>
             </div>
           </label>
 
-          <label className="flex cursor-pointer items-center gap-3">
+          <label className='flex cursor-pointer items-center gap-3'>
             <Checkbox
               checked={showExtractPlaceholder}
               onCheckedChange={(checked: boolean | 'indeterminate'): void => {
@@ -98,10 +98,10 @@ export function PageBuilderSettingsPage(): React.JSX.Element {
               }}
             />
             <div>
-              <Label className="cursor-pointer text-sm text-gray-200">
+              <Label className='cursor-pointer text-sm text-gray-200'>
                 Show extract placeholder when dragging blocks
               </Label>
-              <p className="text-xs text-gray-500">
+              <p className='text-xs text-gray-500'>
                 When enabled, a &quot;Drop here to extract&quot; placeholder will appear when dragging promotable blocks (ImageElement, TextElement, ButtonElement) to allow extracting them as standalone sections.
               </p>
             </div>
@@ -109,14 +109,14 @@ export function PageBuilderSettingsPage(): React.JSX.Element {
         </div>
       </Card>
 
-      <div className="flex justify-end">
+      <div className='flex justify-end'>
         <Button
           onClick={(): void => { void handleSave(); }}
           disabled={!isDirty || updateSettingsBulk.isPending}
         >
           {updateSettingsBulk.isPending ? (
             <>
-              <Loader2 className="mr-2 size-4 animate-spin" />
+              <Loader2 className='mr-2 size-4 animate-spin' />
               Saving...
             </>
           ) : (

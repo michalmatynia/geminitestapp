@@ -192,9 +192,9 @@ export default async function Home(): Promise<JSX.Element> {
             mediaStyles={getMediaInlineStyles(themeSettings)}
           />
         ) : (
-          <section className="w-full py-12">
-            <div className="container px-4 md:px-6">
-              <h1 className="text-3xl font-bold">
+          <section className='w-full py-12'>
+            <div className='container px-4 md:px-6'>
+              <h1 className='text-3xl font-bold'>
                 Welcome to {defaultSlug.slug}
               </h1>
             </div>
@@ -222,21 +222,21 @@ export default async function Home(): Promise<JSX.Element> {
       colorSchemes={colorSchemes}
       showMenu={menuSettings.showMenu}
     >
-      <div className="flex min-h-screen flex-col">
+      <div className='flex min-h-screen flex-col'>
         {showFallbackHeader ? (
-          <header className="flex h-14 items-center px-4 lg:px-6">
+          <header className='flex h-14 items-center px-4 lg:px-6'>
             <Link
-              href="#"
-              className="flex items-center justify-center"
+              href='#'
+              className='flex items-center justify-center'
               prefetch={false}
             >
-              <MountainIcon className="size-6" />
-              <span className="sr-only">Acme Inc</span>
+              <MountainIcon className='size-6' />
+              <span className='sr-only'>Acme Inc</span>
             </Link>
-            <nav className="ml-auto flex gap-4 sm:gap-6">
+            <nav className='ml-auto flex gap-4 sm:gap-6'>
               <Link
-                href="/admin"
-                className="text-sm font-medium underline-offset-4 hover:underline"
+                href='/admin'
+                className='text-sm font-medium underline-offset-4 hover:underline'
                 prefetch={false}
               >
                 Admin
@@ -245,10 +245,10 @@ export default async function Home(): Promise<JSX.Element> {
           </header>
         ) : null}
 
-        <div className="flex-1">
-          <section className="w-full py-12">
-            <div className="container px-4 md:px-6">
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className='flex-1'>
+          <section className='w-full py-12'>
+            <div className='container px-4 md:px-6'>
+              <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
                 {products.map((product: ProductWithImages) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
@@ -258,22 +258,22 @@ export default async function Home(): Promise<JSX.Element> {
         </div>
 
         {showFallbackHeader ? (
-          <footer className="flex w-full shrink-0 flex-col items-center gap-3 border-t border-gray-800 px-4 py-6 sm:flex-row md:px-6">
-            <p className="text-xs text-gray-400">
+          <footer className='flex w-full shrink-0 flex-col items-center gap-3 border-t border-gray-800 px-4 py-6 sm:flex-row md:px-6'>
+            <p className='text-xs text-gray-400'>
               &copy; 2024 Acme Inc. All rights reserved.
             </p>
-            <div className="flex flex-col items-center gap-3 sm:ml-auto sm:flex-row sm:items-center">
-              <nav className="flex gap-4 sm:gap-6">
+            <div className='flex flex-col items-center gap-3 sm:ml-auto sm:flex-row sm:items-center'>
+              <nav className='flex gap-4 sm:gap-6'>
                 <Link
-                  href="#"
-                  className="text-xs underline-offset-4 hover:underline"
+                  href='#'
+                  className='text-xs underline-offset-4 hover:underline'
                   prefetch={false}
                 >
                   Terms of Service
                 </Link>
                 <Link
-                  href="#"
-                  className="text-xs underline-offset-4 hover:underline"
+                  href='#'
+                  className='text-xs underline-offset-4 hover:underline'
                   prefetch={false}
                 >
                   Privacy
@@ -292,17 +292,17 @@ function MountainIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      xmlns='http://www.w3.org/2000/svg'
+      width='24'
+      height='24'
+      viewBox='0 0 24 24'
+      fill='none'
+      stroke='currentColor'
+      strokeWidth='2'
+      strokeLinecap='round'
+      strokeLinejoin='round'
     >
-      <path d="m8 3 4 8 5-5 5 15H2L8 3z" />
+      <path d='m8 3 4 8 5-5 5 15H2L8 3z' />
     </svg>
   );
 }
@@ -404,26 +404,26 @@ function SocialLinks({ theme }: { theme: ThemeSettings | null | undefined }) {
   if (!links.length) return null;
 
   return (
-    <nav className="flex items-center gap-2" aria-label="Social media">
+    <nav className='flex items-center gap-2' aria-label='Social media'>
       {links.map((link) => {
         const Icon = link.Icon;
         return (
           <a
             key={link.id}
             href={link.href}
-            className="inline-flex size-8 items-center justify-center rounded-full border border-gray-800 text-gray-400 transition hover:border-gray-600 hover:text-gray-100"
-            target="_blank"
-            rel="noreferrer"
+            className='inline-flex size-8 items-center justify-center rounded-full border border-gray-800 text-gray-400 transition hover:border-gray-600 hover:text-gray-100'
+            target='_blank'
+            rel='noreferrer'
             aria-label={link.label}
           >
             {Icon ? (
-              <Icon className="size-4" aria-hidden="true" />
+              <Icon className='size-4' aria-hidden='true' />
             ) : (
-              <span className="text-[10px] font-semibold" aria-hidden="true">
+              <span className='text-[10px] font-semibold' aria-hidden='true'>
                 {link.fallback}
               </span>
             )}
-            <span className="sr-only">{link.label}</span>
+            <span className='sr-only'>{link.label}</span>
           </a>
         );
       })}

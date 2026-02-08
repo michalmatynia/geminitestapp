@@ -25,7 +25,7 @@ export function ChatMessageContent({ content }: ChatMessageContentProps): React.
   const flushList = (key: string): void => {
     if (listItems.length === 0) return;
     blocks.push(
-      <ul key={key} className="list-disc space-y-1 pl-5">
+      <ul key={key} className='list-disc space-y-1 pl-5'>
         {listItems.map((item: string, index: number): React.JSX.Element => (
           <li key={`${key}-item-${index}`}>{renderInline(item)}</li>
         ))}
@@ -38,14 +38,14 @@ export function ChatMessageContent({ content }: ChatMessageContentProps): React.
     const trimmed: string = line.trim();
     if (!trimmed) {
       flushList(`list-${index}`);
-      blocks.push(<div key={`spacer-${index}`} className="h-2" />);
+      blocks.push(<div key={`spacer-${index}`} className='h-2' />);
       return;
     }
 
     if (trimmed.startsWith('### ')) {
       flushList(`list-${index}`);
       blocks.push(
-        <h3 key={`h3-${index}`} className="text-sm font-semibold text-white">
+        <h3 key={`h3-${index}`} className='text-sm font-semibold text-white'>
           {renderInline(trimmed.slice(4))}
         </h3>
       );
@@ -55,7 +55,7 @@ export function ChatMessageContent({ content }: ChatMessageContentProps): React.
     if (trimmed.startsWith('## ')) {
       flushList(`list-${index}`);
       blocks.push(
-        <h2 key={`h2-${index}`} className="text-base font-semibold text-white">
+        <h2 key={`h2-${index}`} className='text-base font-semibold text-white'>
           {renderInline(trimmed.slice(3))}
         </h2>
       );
@@ -65,7 +65,7 @@ export function ChatMessageContent({ content }: ChatMessageContentProps): React.
     if (trimmed.startsWith('# ')) {
       flushList(`list-${index}`);
       blocks.push(
-        <h1 key={`h1-${index}`} className="text-lg font-semibold text-white">
+        <h1 key={`h1-${index}`} className='text-lg font-semibold text-white'>
           {renderInline(trimmed.slice(2))}
         </h1>
       );
@@ -79,12 +79,12 @@ export function ChatMessageContent({ content }: ChatMessageContentProps): React.
 
     flushList(`list-${index}`);
     blocks.push(
-      <p key={`p-${index}`} className="leading-relaxed text-slate-100">
+      <p key={`p-${index}`} className='leading-relaxed text-slate-100'>
         {renderInline(trimmed)}
       </p>
     );
   });
 
   flushList('list-final');
-  return <div className="space-y-2">{blocks}</div>;
+  return <div className='space-y-2'>{blocks}</div>;
 }

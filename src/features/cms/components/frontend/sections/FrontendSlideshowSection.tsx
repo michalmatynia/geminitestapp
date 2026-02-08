@@ -39,12 +39,12 @@ export function FrontendSlideshowSection({
       >
         {sectionCustomCss ? <style data-cms-custom-css={sectionId}>{sectionCustomCss}</style> : null}
         <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
-          <div className="slideshow-container relative w-full">
+          <div className='slideshow-container relative w-full'>
             {blocks.map((block: BlockInstance) => (
               <FrontendBlockRenderer key={block.id} block={block} />
             ))}
             {blocks.length === 0 && (
-              <div className="flex min-h-[300px] items-center justify-center bg-gray-800/20 text-gray-500 italic">
+              <div className='flex min-h-[300px] items-center justify-center bg-gray-800/20 text-gray-500 italic'>
                 Empty slideshow
               </div>
             )}

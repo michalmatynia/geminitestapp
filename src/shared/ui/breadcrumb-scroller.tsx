@@ -46,32 +46,32 @@ export function BreadcrumbScroller({
 
   return (
     <div
-      className="relative -mx-4 -mb-4 rounded-b-lg"
+      className='relative -mx-4 -mb-4 rounded-b-lg'
       style={{ backgroundColor }}
     >
       {canScrollLeft && (
         <Button
-          type="button"
-          aria-label="Scroll breadcrumb left"
+          type='button'
+          aria-label='Scroll breadcrumb left'
           onClick={() => handleScroll('left')}
-          className="absolute left-1 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/20 p-1 text-gray-700 hover:bg-black/30"
+          className='absolute left-1 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/20 p-1 text-gray-700 hover:bg-black/30'
         >
           <ChevronLeft size={12} />
         </Button>
       )}
       {canScrollRight && (
         <Button
-          type="button"
-          aria-label="Scroll breadcrumb right"
+          type='button'
+          aria-label='Scroll breadcrumb right'
           onClick={() => handleScroll('right')}
-          className="absolute right-1 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/20 p-1 text-gray-700 hover:bg-black/30"
+          className='absolute right-1 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/20 p-1 text-gray-700 hover:bg-black/30'
         >
           <ChevronRight size={12} />
         </Button>
       )}
       <div
         ref={scrollRef}
-        className="flex items-center gap-1 overflow-x-auto px-5 py-2 pb-3 text-[10px] text-gray-700 scrollbar-hidden"
+        className='flex items-center gap-1 overflow-x-auto px-5 py-2 pb-3 text-[10px] text-gray-700 scrollbar-hidden'
       >
         {children}
       </div>

@@ -68,20 +68,20 @@ export const ProductListPanel = memo(function ProductListPanel() {
   const alerts = useMemo(() => {
     if (!loadError && !actionError) return null;
     return (
-      <div className="flex flex-col gap-2">
+      <div className='flex flex-col gap-2'>
         {loadError && (
-          <Alert variant="error">
+          <Alert variant='error'>
             {loadError}
           </Alert>
         )}
         {actionError && (
-          <Alert variant="error">
-            <div className="flex items-center justify-between">
+          <Alert variant='error'>
+            <div className='flex items-center justify-between'>
               <span>{actionError}</span>
               <Button
-                variant="ghost"
+                variant='ghost'
                 onClick={onDismissActionError}
-                className="h-auto p-0 text-red-200 hover:text-white bg-transparent hover:bg-transparent"
+                className='h-auto p-0 text-red-200 hover:text-white bg-transparent hover:bg-transparent'
               >
                 Dismiss
               </Button>
@@ -101,7 +101,7 @@ export const ProductListPanel = memo(function ProductListPanel() {
         <ProductSelectionActions />
       }
     >
-      <Profiler id="ProductsTable" onRender={handleProductsTableRender}>
+      <Profiler id='ProductsTable' onRender={handleProductsTableRender}>
         <DataTable {...tableProps} />
       </Profiler>
     </ListPanel>

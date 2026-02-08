@@ -55,9 +55,9 @@ class Model3DErrorBoundary extends Component<
     if (this.state.hasError) {
       return (
         <Html center>
-          <div className="text-red-400 text-center p-4 bg-black/50 rounded">
+          <div className='text-red-400 text-center p-4 bg-black/50 rounded'>
             <p>Failed to load 3D model</p>
-            <p className="text-sm text-gray-400 mt-2">
+            <p className='text-sm text-gray-400 mt-2'>
               {this.state.error?.message || 'Unknown error occurred'}
             </p>
           </div>
@@ -74,34 +74,34 @@ function Loader(): React.JSX.Element {
   const { progress } = useProgress();
   return (
     <Html center>
-      <div className="flex flex-col items-center gap-3">
-        <div className="relative h-16 w-16">
-          <svg className="h-16 w-16 -rotate-90" viewBox="0 0 36 36">
+      <div className='flex flex-col items-center gap-3'>
+        <div className='relative h-16 w-16'>
+          <svg className='h-16 w-16 -rotate-90' viewBox='0 0 36 36'>
             <circle
-              cx="18"
-              cy="18"
-              r="16"
-              fill="none"
-              className="stroke-gray-700"
-              strokeWidth="2"
+              cx='18'
+              cy='18'
+              r='16'
+              fill='none'
+              className='stroke-gray-700'
+              strokeWidth='2'
             />
             <circle
-              cx="18"
-              cy="18"
-              r="16"
-              fill="none"
-              className="stroke-blue-500"
-              strokeWidth="2"
+              cx='18'
+              cy='18'
+              r='16'
+              fill='none'
+              className='stroke-blue-500'
+              strokeWidth='2'
               strokeDasharray={100}
               strokeDashoffset={100 - progress}
-              strokeLinecap="round"
+              strokeLinecap='round'
             />
           </svg>
-          <span className="absolute inset-0 flex items-center justify-center text-xs font-medium text-white">
+          <span className='absolute inset-0 flex items-center justify-center text-xs font-medium text-white'>
             {Math.round(progress)}%
           </span>
         </div>
-        <span className="text-sm text-gray-400">Loading model...</span>
+        <span className='text-sm text-gray-400'>Loading model...</span>
       </div>
     </Html>
   );
@@ -196,9 +196,9 @@ function Model3D({
   if (!scene) {
     return (
       <Html center>
-        <div className="text-red-400 text-center p-4 bg-black/50 rounded">
+        <div className='text-red-400 text-center p-4 bg-black/50 rounded'>
           <p>Model not found</p>
-          <p className="text-sm text-gray-400 mt-2">
+          <p className='text-sm text-gray-400 mt-2'>
             The 3D asset could not be loaded
           </p>
         </div>
@@ -490,15 +490,15 @@ export function Viewer3D({
 
   const effects = useMemo(() => {
     const effectsList: React.ReactElement[] = [];
-    if (enableAntiAliasing) effectsList.push(<SMAA key="smaa" />);
-    if (enableToneMapping) effectsList.push(<ToneMapping key="tonemapping" mode={ToneMappingMode.ACES_FILMIC} />);
-    if (enableBloom) effectsList.push(<Bloom key="bloom" intensity={bloomIntensity} luminanceThreshold={0.9} luminanceSmoothing={0.025} />);
-    if (enableVignette) effectsList.push(<Vignette key="vignette" offset={0.3} darkness={0.5} blendFunction={BlendFunction.NORMAL} />);
-    if (enablePixelation) effectsList.push(<PixelationPass key="pixelation" pixelSize={Math.max(1, pixelSize)} />);
+    if (enableAntiAliasing) effectsList.push(<SMAA key='smaa' />);
+    if (enableToneMapping) effectsList.push(<ToneMapping key='tonemapping' mode={ToneMappingMode.ACES_FILMIC} />);
+    if (enableBloom) effectsList.push(<Bloom key='bloom' intensity={bloomIntensity} luminanceThreshold={0.9} luminanceSmoothing={0.025} />);
+    if (enableVignette) effectsList.push(<Vignette key='vignette' offset={0.3} darkness={0.5} blendFunction={BlendFunction.NORMAL} />);
+    if (enablePixelation) effectsList.push(<PixelationPass key='pixelation' pixelSize={Math.max(1, pixelSize)} />);
     if (enableOrderedDithering) {
       effectsList.push(
         <OrderedDitheringPass
-          key="ordered-dithering"
+          key='ordered-dithering'
           gridSize={orderedDitheringGridSize}
           pixelSizeRatio={orderedDitheringPixelSizeRatio}
           grayscaleOnly={orderedDitheringGrayscaleOnly}
@@ -507,7 +507,7 @@ export function Viewer3D({
         />
       );
     }
-    if (enableDithering) effectsList.push(<DitheringPass key="dithering" intensity={ditheringIntensity} />);
+    if (enableDithering) effectsList.push(<DitheringPass key='dithering' intensity={ditheringIntensity} />);
     return effectsList;
   }, [
     enableAntiAliasing,
@@ -568,7 +568,7 @@ export function Viewer3D({
       >
         {captureRef ? <ScreenshotCapture captureRef={captureRef} /> : null}
         {}
-        <color attach="background" args={[backgroundColor]} />
+        <color attach='background' args={[backgroundColor]} />
         {}
 
         {/* Lighting */}
@@ -605,7 +605,7 @@ export function Viewer3D({
               blur={2}
               far={4}
               resolution={256}
-              color="#000000"
+              color='#000000'
             />
           )}
         </Suspense>

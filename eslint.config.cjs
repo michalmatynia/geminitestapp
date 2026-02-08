@@ -72,6 +72,7 @@ module.exports = tseslint.config(
       'indent': ['error', 2, { 'SwitchCase': 1 }],
       'linebreak-style': ['error', 'unix'],
       'quotes': ['error', 'single'],
+      'jsx-quotes': ['error', 'prefer-single'],
       'semi': ['error', 'always'],
       'no-unused-vars': 'off', // Prefer @typescript-eslint/no-unused-vars
       '@typescript-eslint/no-unused-vars': ['warn', { 
@@ -86,12 +87,19 @@ module.exports = tseslint.config(
       'no-loss-of-precision': 'off',
       '@typescript-eslint/no-loss-of-precision': ['error'],
       'no-undef': 'off', // Handled by TypeScript and specific globals
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unsafe-assignment': 'warn',
-      '@typescript-eslint/no-unsafe-call': 'warn',
-      '@typescript-eslint/no-unsafe-member-access': 'warn',
-      '@typescript-eslint/no-unsafe-argument': 'warn',
-      '@typescript-eslint/no-unsafe-return': 'warn',
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-unsafe-assignment': 'error',
+      '@typescript-eslint/no-unsafe-call': 'error',
+      '@typescript-eslint/no-unsafe-member-access': 'error',
+      '@typescript-eslint/no-unsafe-argument': 'error',
+      '@typescript-eslint/no-unsafe-return': 'error',
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
+      '@typescript-eslint/await-thenable': 'error',
+      '@typescript-eslint/no-confusing-void-expression': ['error', { ignoreArrowShorthand: true }],
+      '@typescript-eslint/no-unnecessary-type-assertion': 'error',
+      '@typescript-eslint/prefer-optional-chain': 'error',
+      '@typescript-eslint/restrict-plus-operands': 'error',
       // Suppress specific React-related rules for Next.js 13+ App Router
       'react/react-in-jsx-scope': 'off',
       'react/display-name': 'off',
@@ -183,7 +191,7 @@ module.exports = tseslint.config(
   },
   {
     // Configuration for server-side files (Node.js environment)
-    files: ['src/app/api/**', 'src/middleware.ts', 'src/instrumentation.ts', 'src/**/*.server.ts'],
+    files: ['src/app/api/**/*.{ts,tsx,js,jsx}', 'src/middleware.ts', 'src/instrumentation.ts', 'src/**/*.server.{ts,tsx,js,jsx}'],
     languageOptions: {
       globals: {
         ...require('globals').node,

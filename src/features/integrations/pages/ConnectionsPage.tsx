@@ -20,15 +20,15 @@ function IntegrationsContent(): React.JSX.Element {
   } = useIntegrationsContext();
 
   return (
-    <div className="container mx-auto py-10">
+    <div className='container mx-auto py-10'>
       <ConfirmDialog
         open={!!connectionToDelete}
         onOpenChange={(open: boolean) => !open && setConnectionToDelete(null)}
         onConfirm={(): void => { void handleConfirmDeleteConnection(); }}
-        title="Delete Connection"
+        title='Delete Connection'
         description={`Are you sure you want to delete connection "${connectionToDelete?.name}"? This cannot be undone.`}
-        confirmText="Delete"
-        variant="destructive"
+        confirmText='Delete'
+        variant='destructive'
       />
       <IntegrationList
         integrations={integrations}

@@ -44,24 +44,24 @@ export function PromptEngineToolbar({
   return (
     <SectionHeader
       eyebrow={eyebrow}
-      title="Validation Patterns"
-      description="Browse Prompt Validator rules (patterns, similar matches, and autofix operations)."
+      title='Validation Patterns'
+      description='Browse Prompt Validator rules (patterns, similar matches, and autofix operations).'
       actions={
         <>
           {!embedded ? (
-            <Button type="button" variant="outline" asChild>
+            <Button type='button' variant='outline' asChild>
               <Link href={backLinkHref}>{backLinkLabel}</Link>
             </Button>
           ) : null}
-          <Button type="button" variant="outline" onClick={handleExport}>
+          <Button type='button' variant='outline' onClick={handleExport}>
             Export JSON
           </Button>
-          <Button type="button" variant="outline" onClick={handleExportLearned}>
+          <Button type='button' variant='outline' onClick={handleExportLearned}>
             Export learned
           </Button>
           <FileUploadButton
-            variant="outline"
-            accept="application/json"
+            variant='outline'
+            accept='application/json'
             onFilesSelected={(files: File[]) => {
               const file = files[0];
               if (!file) return;
@@ -71,8 +71,8 @@ export function PromptEngineToolbar({
             Import JSON
           </FileUploadButton>
           <FileUploadButton
-            variant="outline"
-            accept="application/json"
+            variant='outline'
+            accept='application/json'
             onFilesSelected={(files: File[]) => {
               const file = files[0];
               if (!file) return;
@@ -81,25 +81,25 @@ export function PromptEngineToolbar({
           >
             Import learned
           </FileUploadButton>
-          <Button type="button" variant="outline" onClick={handleAddRule}>
+          <Button type='button' variant='outline' onClick={handleAddRule}>
             Add rule
           </Button>
-          <Button type="button" variant="outline" onClick={handleAddLearnedRule}>
+          <Button type='button' variant='outline' onClick={handleAddLearnedRule}>
             Add learned
           </Button>
           <Button
-            type="button"
+            type='button'
             onClick={() => void handleSave()}
             disabled={isSaving || (!isDirty && !learnedDirty)}
           >
             {isSaving ? 'Saving...' : 'Save changes'}
           </Button>
           <Button
-            type="button"
-            variant="outline"
+            type='button'
+            variant='outline'
             onClick={() => void handleRefresh()}
             disabled={isLoading}
-            title="Reload settings"
+            title='Reload settings'
           >
             <RefreshCcw className={cn('mr-2 size-4', isLoading ? 'animate-spin' : '')} />
             Refresh

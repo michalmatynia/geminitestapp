@@ -203,22 +203,22 @@ export function DbSchemaNodeConfigSection({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-md border border-purple-800/50 bg-purple-950/20 p-4">
-        <div className="mb-3 text-sm font-medium text-purple-300">
+    <div className='space-y-4'>
+      <div className='rounded-md border border-purple-800/50 bg-purple-950/20 p-4'>
+        <div className='mb-3 text-sm font-medium text-purple-300'>
           Database Schema Browser
         </div>
 
         {schemaLoading ? (
-          <div className="py-4 text-center text-sm text-gray-400">
+          <div className='py-4 text-center text-sm text-gray-400'>
             Loading schema...
           </div>
         ) : schemaCollections.length > 0 ? (
-          <div className="space-y-4">
-            <div className="text-xs text-gray-400">
+          <div className='space-y-4'>
+            <div className='text-xs text-gray-400'>
               Provider:{' '}
-              <span className="text-purple-300">
-                {(fetchedDbSchema && fetchedDbSchema.provider === 'multi')
+              <span className='text-purple-300'>
+                {(fetchedDbSchema?.provider === 'multi')
                   ? availableProviders.join(' + ') || 'multi'
                   : fetchedDbSchema?.provider || 'N/A'}
               </span>
@@ -227,49 +227,49 @@ export function DbSchemaNodeConfigSection({
             </div>
 
             <div>
-              <Label className="text-xs text-gray-400">Schema Provider</Label>
+              <Label className='text-xs text-gray-400'>Schema Provider</Label>
               <Select
                 value={schemaConfig.provider ?? 'auto'}
                 onValueChange={(value: string) =>
                   updateSchemaConfig({ provider: value as 'auto' | 'mongodb' | 'prisma' | 'all' })
                 }
               >
-                <SelectTrigger className="mt-2 border-border bg-card/70 text-sm text-white">
-                  <SelectValue placeholder="Select provider" />
+                <SelectTrigger className='mt-2 border-border bg-card/70 text-sm text-white'>
+                  <SelectValue placeholder='Select provider' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="auto">Auto (Primary DB)</SelectItem>
-                  <SelectItem value="mongodb">MongoDB</SelectItem>
-                  <SelectItem value="prisma">Prisma (PostgreSQL)</SelectItem>
-                  <SelectItem value="all">All Providers</SelectItem>
+                  <SelectItem value='auto'>Auto (Primary DB)</SelectItem>
+                  <SelectItem value='mongodb'>MongoDB</SelectItem>
+                  <SelectItem value='prisma'>Prisma (PostgreSQL)</SelectItem>
+                  <SelectItem value='all'>All Providers</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div>
-              <Label className="text-xs text-gray-400">Collection Mode</Label>
+              <Label className='text-xs text-gray-400'>Collection Mode</Label>
               <Select
                 value={schemaConfig.mode}
                 onValueChange={(value: string) =>
                   updateSchemaConfig({ mode: value as 'all' | 'selected' })
                 }
               >
-                <SelectTrigger className="mt-2 border-border bg-card/70 text-sm text-white">
-                  <SelectValue placeholder="Select mode" />
+                <SelectTrigger className='mt-2 border-border bg-card/70 text-sm text-white'>
+                  <SelectValue placeholder='Select mode' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Collections</SelectItem>
-                  <SelectItem value="selected">Selected Collections Only</SelectItem>
+                  <SelectItem value='all'>All Collections</SelectItem>
+                  <SelectItem value='selected'>Selected Collections Only</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {schemaConfig.mode === 'selected' && (
               <div>
-                <Label className="text-xs text-gray-400">
+                <Label className='text-xs text-gray-400'>
                   Select Collections ({schemaConfig.collections?.length ?? 0} selected)
                 </Label>
-                <div className="mt-2 max-h-[200px] space-y-1 overflow-y-auto rounded-md border border-border bg-card/50 p-2">
+                <div className='mt-2 max-h-[200px] space-y-1 overflow-y-auto rounded-md border border-border bg-card/50 p-2'>
                   {schemaCollections.map((coll) => {
                     const includeProvider = fetchedDbSchema?.provider === 'multi';
                     const key = buildCollectionKey(coll, includeProvider);
@@ -277,7 +277,7 @@ export function DbSchemaNodeConfigSection({
                     return (
                       <button
                         key={key}
-                        type="button"
+                        type='button'
                         onClick={() => toggleCollection(coll)}
                         className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs transition ${
                           isSelected
@@ -285,15 +285,15 @@ export function DbSchemaNodeConfigSection({
                             : 'text-gray-300 hover:bg-muted/50'
                         }`}
                       >
-                        <span className="font-medium">
+                        <span className='font-medium'>
                           {coll.name}
                           {showProviderLabel && coll.provider ? (
-                            <span className="ml-2 text-[10px] text-gray-500">
+                            <span className='ml-2 text-[10px] text-gray-500'>
                               ({coll.provider})
                             </span>
                           ) : null}
                         </span>
-                        <span className="text-[10px] text-gray-500">
+                        <span className='text-[10px] text-gray-500'>
                           {coll.fields?.length ?? 0} fields
                         </span>
                       </button>
@@ -303,11 +303,11 @@ export function DbSchemaNodeConfigSection({
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300">
+            <div className='grid grid-cols-2 gap-3'>
+              <div className='flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300'>
                 <span>Include Fields</span>
                 <Button
-                  type="button"
+                  type='button'
                   className={`rounded border px-3 py-1 text-xs ${
                     schemaConfig.includeFields
                       ? 'text-emerald-200 hover:bg-emerald-500/10'
@@ -320,10 +320,10 @@ export function DbSchemaNodeConfigSection({
                   {schemaConfig.includeFields ? 'Yes' : 'No'}
                 </Button>
               </div>
-              <div className="flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300">
+              <div className='flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300'>
                 <span>Include Relations</span>
                 <Button
-                  type="button"
+                  type='button'
                   className={`rounded border px-3 py-1 text-xs ${
                     schemaConfig.includeRelations
                       ? 'text-emerald-200 hover:bg-emerald-500/10'
@@ -339,27 +339,27 @@ export function DbSchemaNodeConfigSection({
             </div>
 
             <div>
-              <Label className="text-xs text-gray-400">Output Format</Label>
+              <Label className='text-xs text-gray-400'>Output Format</Label>
               <Select
                 value={schemaConfig.formatAs}
                 onValueChange={(value: string) =>
                   updateSchemaConfig({ formatAs: value as 'json' | 'text' })
                 }
               >
-                <SelectTrigger className="mt-2 border-border bg-card/70 text-sm text-white">
-                  <SelectValue placeholder="Select format" />
+                <SelectTrigger className='mt-2 border-border bg-card/70 text-sm text-white'>
+                  <SelectValue placeholder='Select format' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="text">Text (Human Readable)</SelectItem>
-                  <SelectItem value="json">JSON (Structured)</SelectItem>
+                  <SelectItem value='text'>Text (Human Readable)</SelectItem>
+                  <SelectItem value='json'>JSON (Structured)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* Preview of selected collections */}
-            <div className="rounded-md border border-border bg-card/40 p-3">
-              <div className="mb-2 text-[10px] uppercase text-gray-500">Preview</div>
-              <div className="max-h-[150px] overflow-y-auto text-[11px] text-gray-300">
+            <div className='rounded-md border border-border bg-card/40 p-3'>
+              <div className='mb-2 text-[10px] uppercase text-gray-500'>Preview</div>
+              <div className='max-h-[150px] overflow-y-auto text-[11px] text-gray-300'>
                 {(schemaConfig.mode === 'all'
                   ? schemaCollections
                   : schemaCollections.filter((collection) =>
@@ -369,17 +369,17 @@ export function DbSchemaNodeConfigSection({
                     )
                   )
                 ).map((coll) => (
-                  <div key={`${coll.provider ?? 'db'}:${coll.name}`} className="mb-2">
-                    <div className="font-medium text-purple-300">
+                  <div key={`${coll.provider ?? 'db'}:${coll.name}`} className='mb-2'>
+                    <div className='font-medium text-purple-300'>
                       {coll.name}
                       {showProviderLabel && coll.provider ? (
-                        <span className="ml-2 text-[10px] text-gray-500">
+                        <span className='ml-2 text-[10px] text-gray-500'>
                           ({coll.provider})
                         </span>
                       ) : null}
                     </div>
                     {schemaConfig.includeFields && coll.fields && (
-                      <div className="ml-2 text-[10px] text-gray-500">
+                      <div className='ml-2 text-[10px] text-gray-500'>
                         {coll.fields.slice(0, 5).map((f: { name: string }) => f.name).join(', ')}
                         {coll.fields.length > 5 && ` +${coll.fields.length - 5} more`}
                       </div>
@@ -388,20 +388,20 @@ export function DbSchemaNodeConfigSection({
                 ))}
                 {schemaConfig.mode === 'selected' &&
                   (!schemaConfig.collections || schemaConfig.collections.length === 0) && (
-                  <div className="italic text-gray-500">No collections selected</div>
+                  <div className='italic text-gray-500'>No collections selected</div>
                 )}
               </div>
             </div>
 
             {/* Data Browser */}
-            <div className="rounded-md border border-cyan-800/50 bg-cyan-950/20 p-3">
-              <div className="mb-3 text-[11px] font-medium text-cyan-300">
+            <div className='rounded-md border border-cyan-800/50 bg-cyan-950/20 p-3'>
+              <div className='mb-3 text-[11px] font-medium text-cyan-300'>
                 Data Browser
               </div>
-              <div className="space-y-2">
-                <Label className="text-xs text-gray-400">Browse Collection</Label>
-                <div className="flex gap-2">
-                  <div className="flex flex-1 flex-col gap-2">
+              <div className='space-y-2'>
+                <Label className='text-xs text-gray-400'>Browse Collection</Label>
+                <div className='flex gap-2'>
+                  <div className='flex flex-1 flex-col gap-2'>
                     {availableProviders.length > 1 && (
                       <Select
                         value={browseProvider ?? ''}
@@ -409,8 +409,8 @@ export function DbSchemaNodeConfigSection({
                           setBrowseProvider((value as 'mongodb' | 'prisma') || null);
                         }}
                       >
-                        <SelectTrigger className="border-border bg-card/70 text-sm text-white">
-                          <SelectValue placeholder="Select provider" />
+                        <SelectTrigger className='border-border bg-card/70 text-sm text-white'>
+                          <SelectValue placeholder='Select provider' />
                         </SelectTrigger>
                         <SelectContent>
                           {availableProviders.map((provider) => (
@@ -431,8 +431,8 @@ export function DbSchemaNodeConfigSection({
                         setExpandedDocId(null);
                       }}
                     >
-                      <SelectTrigger className="flex-1 border-border bg-card/70 text-sm text-white">
-                        <SelectValue placeholder="Select collection to browse" />
+                      <SelectTrigger className='flex-1 border-border bg-card/70 text-sm text-white'>
+                        <SelectValue placeholder='Select collection to browse' />
                       </SelectTrigger>
                       <SelectContent>
                         {schemaCollections
@@ -450,8 +450,8 @@ export function DbSchemaNodeConfigSection({
                   </div>
                   {browseCollection && (
                     <Button
-                      type="button"
-                      className="rounded border px-3 text-xs text-gray-300 hover:bg-muted/50"
+                      type='button'
+                      className='rounded border px-3 text-xs text-gray-300 hover:bg-muted/50'
                       onClick={() => {
                         setBrowseCollection(null);
                         setBrowseSkip(0);
@@ -467,12 +467,12 @@ export function DbSchemaNodeConfigSection({
               </div>
 
               {browseCollection && (
-                <div className="mt-3 space-y-3">
+                <div className='mt-3 space-y-3'>
                   {/* Search */}
-                  <div className="flex gap-2">
+                  <div className='flex gap-2'>
                     <Input
-                      className="flex-1 border-border bg-card/70 text-sm text-white"
-                      placeholder="Search documents..."
+                      className='flex-1 border-border bg-card/70 text-sm text-white'
+                      placeholder='Search documents...'
                       value={browseSearch}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBrowseSearch(e.target.value)}
                       onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -483,8 +483,8 @@ export function DbSchemaNodeConfigSection({
                       }}
                     />
                     <Button
-                      type="button"
-                      className="rounded border border-cyan-700 px-3 text-xs text-cyan-300 hover:bg-cyan-500/10"
+                      type='button'
+                      className='rounded border border-cyan-700 px-3 text-xs text-cyan-300 hover:bg-cyan-500/10'
                       onClick={() => {
                         setBrowseSkip(0);
                         setBrowseQuery(browseSearch.trim());
@@ -495,17 +495,17 @@ export function DbSchemaNodeConfigSection({
                   </div>
 
                   {/* Results info */}
-                  <div className="text-[10px] text-gray-500">
+                  <div className='text-[10px] text-gray-500'>
                     Showing {browseSkip + 1}-{Math.min(browseSkip + browseLimit, browseTotal)} of {browseTotal} documents
                   </div>
 
                   {/* Documents list */}
                   {browseLoading ? (
-                    <div className="py-4 text-center text-sm text-gray-400">
+                    <div className='py-4 text-center text-sm text-gray-400'>
                       Loading documents...
                     </div>
                   ) : browseDocuments.length > 0 ? (
-                    <div className="max-h-[300px] space-y-2 overflow-y-auto">
+                    <div className='max-h-[300px] space-y-2 overflow-y-auto'>
                       {browseDocuments.map((doc: Record<string, unknown>, idx: number) => {
                         const rawId = doc._id ?? doc.id;
                         let docId: string;
@@ -539,29 +539,29 @@ export function DbSchemaNodeConfigSection({
                         return (
                           <div
                             key={docId}
-                            className="rounded-md border border-border bg-card/50"
+                            className='rounded-md border border-border bg-card/50'
                           >
                             <button
-                              type="button"
-                              className="flex w-full items-center justify-between px-3 py-2 text-left text-xs hover:bg-muted/50/50"
+                              type='button'
+                              className='flex w-full items-center justify-between px-3 py-2 text-left text-xs hover:bg-muted/50/50'
                               onClick={() => setExpandedDocId(isExpanded ? null : docId)}
                             >
-                              <div className="flex items-center gap-2">
-                                <span className="text-cyan-300">{displayName}</span>
-                                <span className="text-[9px] text-gray-500">({docId})</span>
+                              <div className='flex items-center gap-2'>
+                                <span className='text-cyan-300'>{displayName}</span>
+                                <span className='text-[9px] text-gray-500'>({docId})</span>
                               </div>
                               <svg
                                 className={`h-4 w-4 text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
+                                fill='none'
+                                viewBox='0 0 24 24'
+                                stroke='currentColor'
                               >
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
                               </svg>
                             </button>
                             {isExpanded && (
-                              <div className="border-t border-border p-3">
-                                <pre className="max-h-[200px] overflow-auto whitespace-pre-wrap text-[10px] text-gray-300">
+                              <div className='border-t border-border p-3'>
+                                <pre className='max-h-[200px] overflow-auto whitespace-pre-wrap text-[10px] text-gray-300'>
                                   {JSON.stringify(doc, null, 2)}
                                 </pre>
                               </div>
@@ -571,18 +571,18 @@ export function DbSchemaNodeConfigSection({
                       })}
                     </div>
                   ) : (
-                    <div className="py-4 text-center text-sm text-gray-500">
+                    <div className='py-4 text-center text-sm text-gray-500'>
                       No documents found
                     </div>
                   )}
 
                   {/* Pagination */}
                   {browseTotal > browseLimit && (
-                    <div className="flex items-center justify-between pt-2">
+                    <div className='flex items-center justify-between pt-2'>
                       <Button
-                        type="button"
+                        type='button'
                         disabled={browseSkip === 0}
-                        className="rounded border px-3 py-1 text-xs text-gray-300 hover:bg-muted/50 disabled:opacity-50"
+                        className='rounded border px-3 py-1 text-xs text-gray-300 hover:bg-muted/50 disabled:opacity-50'
                         onClick={(): void => {
                           const newSkip = Math.max(0, browseSkip - browseLimit);
                           setBrowseSkip(newSkip);
@@ -590,13 +590,13 @@ export function DbSchemaNodeConfigSection({
                       >
                         Previous
                       </Button>
-                      <span className="text-[10px] text-gray-500">
+                      <span className='text-[10px] text-gray-500'>
                         Page {Math.floor(browseSkip / browseLimit) + 1} of {Math.ceil(browseTotal / browseLimit)}
                       </span>
                       <Button
-                        type="button"
+                        type='button'
                         disabled={browseSkip + browseLimit >= browseTotal}
-                        className="rounded border px-3 py-1 text-xs text-gray-300 hover:bg-muted/50 disabled:opacity-50"
+                        className='rounded border px-3 py-1 text-xs text-gray-300 hover:bg-muted/50 disabled:opacity-50'
                         onClick={(): void => {
                           const newSkip = browseSkip + browseLimit;
                           setBrowseSkip(newSkip);
@@ -611,13 +611,13 @@ export function DbSchemaNodeConfigSection({
             </div>
           </div>
         ) : (
-          <div className="space-y-3">
-            <div className="py-4 text-center text-sm text-gray-500">
+          <div className='space-y-3'>
+            <div className='py-4 text-center text-sm text-gray-500'>
               No schema data available
             </div>
             <Button
-              type="button"
-              className="w-full rounded-md border border-purple-700 text-xs text-purple-200 hover:bg-purple-500/10"
+              type='button'
+              className='w-full rounded-md border border-purple-700 text-xs text-purple-200 hover:bg-purple-500/10'
               onClick={(): void => {
                 void schemaQuery.refetch();
               }}

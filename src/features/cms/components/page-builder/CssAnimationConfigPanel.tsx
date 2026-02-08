@@ -184,10 +184,10 @@ export function CssAnimationConfigPanel({ value, onChange }: CssAnimationConfigP
   }, [trigger]);
 
   return (
-    <div className="space-y-4">
-      <SectionPanel variant="subtle-compact" className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+    <div className='space-y-4'>
+      <SectionPanel variant='subtle-compact' className='space-y-2'>
+        <div className='flex items-center justify-between'>
+          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
             CSS Animation
           </Label>
           <Checkbox checked={enabled} onCheckedChange={handleToggleEnabled} />
@@ -195,8 +195,8 @@ export function CssAnimationConfigPanel({ value, onChange }: CssAnimationConfigP
 
         {enabled && (
           <>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Effect</Label>
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Effect</Label>
               <UnifiedSelect
                 value={effect}
                 onValueChange={handleEffectChange}
@@ -204,52 +204,52 @@ export function CssAnimationConfigPanel({ value, onChange }: CssAnimationConfigP
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Trigger</Label>
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Trigger</Label>
               <UnifiedSelect
                 value={trigger}
                 onValueChange={handleTriggerChange}
                 options={CSS_ANIMATION_TRIGGERS}
               />
-              <p className="text-[10px] text-gray-500">{helpText}</p>
+              <p className='text-[10px] text-gray-500'>{helpText}</p>
             </div>
 
             {trigger === 'inView' && (
-              <label className="flex items-center gap-2 text-xs text-gray-300">
+              <label className='flex items-center gap-2 text-xs text-gray-300'>
                 <Checkbox checked={replayOnExit} onCheckedChange={handleReplayOnExit} />
                 Replay when leaving/entering
               </label>
             )}
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Duration (ms)</Label>
+            <div className='grid gap-3 sm:grid-cols-2'>
+              <div className='space-y-1.5'>
+                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Duration (ms)</Label>
                 <Input
-                  type="number"
+                  type='number'
                   min={100}
                   max={5000}
                   step={50}
                   value={duration}
                   onChange={handleDurationChange}
-                  className="text-sm"
+                  className='text-sm'
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Delay (ms)</Label>
+              <div className='space-y-1.5'>
+                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Delay (ms)</Label>
                 <Input
-                  type="number"
+                  type='number'
                   min={0}
                   max={5000}
                   step={50}
                   value={delay}
                   onChange={handleDelayChange}
-                  className="text-sm"
+                  className='text-sm'
                 />
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Easing</Label>
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Easing</Label>
               <UnifiedSelect
                 value={easingSelectValue}
                 onValueChange={handleEasingChange}
@@ -259,44 +259,44 @@ export function CssAnimationConfigPanel({ value, onChange }: CssAnimationConfigP
                 <Input
                   value={easing}
                   onChange={handleCustomEasingChange}
-                  placeholder="cubic-bezier(0.22, 0.61, 0.36, 1)"
-                  className="text-xs font-mono"
+                  placeholder='cubic-bezier(0.22, 0.61, 0.36, 1)'
+                  className='text-xs font-mono'
                 />
               )}
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="flex items-center gap-2 text-xs text-gray-300">
+            <div className='grid gap-3 sm:grid-cols-2'>
+              <label className='flex items-center gap-2 text-xs text-gray-300'>
                 <Checkbox checked={loop} onCheckedChange={handleLoopChange} />
                 Loop animation
               </label>
               {!loop && (
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Iterations</Label>
+                <div className='space-y-1.5'>
+                  <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Iterations</Label>
                   <Input
-                    type="number"
+                    type='number'
                     min={1}
                     max={50}
                     step={1}
                     value={iterations}
                     onChange={handleIterationsChange}
-                    className="text-sm"
+                    className='text-sm'
                   />
                 </div>
               )}
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Direction</Label>
+            <div className='grid gap-3 sm:grid-cols-2'>
+              <div className='space-y-1.5'>
+                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Direction</Label>
                 <UnifiedSelect
                   value={direction}
                   onValueChange={handleDirectionChange}
                   options={CSS_ANIMATION_DIRECTIONS}
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Fill mode</Label>
+              <div className='space-y-1.5'>
+                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Fill mode</Label>
                 <UnifiedSelect
                   value={fillMode}
                   onValueChange={handleFillModeChange}
@@ -309,59 +309,59 @@ export function CssAnimationConfigPanel({ value, onChange }: CssAnimationConfigP
       </SectionPanel>
 
       {enabled && effect !== 'none' && (
-        <SectionPanel variant="subtle-compact" className="space-y-2">
-          <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+        <SectionPanel variant='subtle-compact' className='space-y-2'>
+          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
             Transform controls
           </Label>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Distance (px)</Label>
+          <div className='grid gap-3 sm:grid-cols-2'>
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Distance (px)</Label>
               <Input
-                type="number"
+                type='number'
                 min={0}
                 max={200}
                 step={2}
                 value={distance}
                 onChange={handleDistanceChange}
-                className="text-sm"
+                className='text-sm'
               />
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Scale</Label>
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Scale</Label>
               <Input
-                type="number"
+                type='number'
                 min={0.2}
                 max={2}
                 step={0.02}
                 value={scale}
                 onChange={handleScaleChange}
-                className="text-sm"
+                className='text-sm'
               />
             </div>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Rotate (deg)</Label>
+          <div className='grid gap-3 sm:grid-cols-2'>
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Rotate (deg)</Label>
               <Input
-                type="number"
+                type='number'
                 min={-180}
                 max={180}
                 step={1}
                 value={rotate}
                 onChange={handleRotateChange}
-                className="text-sm"
+                className='text-sm'
               />
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Blur (px)</Label>
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Blur (px)</Label>
               <Input
-                type="number"
+                type='number'
                 min={0}
                 max={40}
                 step={1}
                 value={blur}
                 onChange={handleBlurChange}
-                className="text-sm"
+                className='text-sm'
               />
             </div>
           </div>

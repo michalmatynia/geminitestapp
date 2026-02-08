@@ -79,20 +79,20 @@ export function CurrencyModal(): React.JSX.Element {
       }}
       isSaving={saveMutation.isPending}
       saveText={currency ? 'Update' : 'Add'}
-      cancelText="Close"
-      size="md"
+      cancelText='Close'
+      size='md'
     >
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="currency-code">Code</Label>
+      <div className='space-y-4'>
+        <div className='space-y-2'>
+          <Label htmlFor='currency-code'>Code</Label>
           <Select
             value={form.code}
             onValueChange={(value: string): void => {
               setForm((p: typeof form) => ({ ...p, code: value }));
             }}
           >
-            <SelectTrigger className="w-full bg-gray-900 border-border text-white">
-              <SelectValue placeholder="Select code" />
+            <SelectTrigger className='w-full bg-gray-900 border-border text-white'>
+              <SelectValue placeholder='Select code' />
             </SelectTrigger>
             <SelectContent>
               {['PLN', 'EUR', 'USD', 'GBP', 'SEK'].map((code: string) => (
@@ -103,21 +103,21 @@ export function CurrencyModal(): React.JSX.Element {
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="currency-name">Name</Label>
+        <div className='space-y-2'>
+          <Label htmlFor='currency-name'>Name</Label>
           <Input
-            id="currency-name"
+            id='currency-name'
             value={form.name}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setForm((p: typeof form) => ({ ...p, name: e.target.value }))}
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="currency-symbol">Symbol (optional)</Label>
+        <div className='space-y-2'>
+          <Label htmlFor='currency-symbol'>Symbol (optional)</Label>
           <Input
-            id="currency-symbol"
+            id='currency-symbol'
             value={form.symbol}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setForm((p: typeof form) => ({ ...p, symbol: e.target.value }))}
-            placeholder="$"
+            placeholder='$'
           />
         </div>
       </div>

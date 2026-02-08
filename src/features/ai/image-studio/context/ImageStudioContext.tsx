@@ -338,7 +338,7 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
     }));
     setVirtualFolders(nextFolders);
     void persistFolders(nextFolders);
-    queryClient.invalidateQueries({ queryKey: ['image-studio', 'slots', projectId] });
+    void queryClient.invalidateQueries({ queryKey: ['image-studio', 'slots', projectId] });
   }, [virtualFolders, persistFolders, queryClient, projectId]);
 
   const createFolderMutation = useMutation({

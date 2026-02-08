@@ -265,7 +265,7 @@ describe('FolderTree Component', () => {
   });
 
   it('simulates dropping a note onto a folder', () => {
-    renderWithProviders(<FolderTree {...defaultProps} draggedNoteId="n2" />);
+    renderWithProviders(<FolderTree {...defaultProps} draggedNoteId='n2' />);
     
     const workFolder = screen.getByText('Work').closest('.group');
     

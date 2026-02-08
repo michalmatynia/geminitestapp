@@ -43,10 +43,10 @@ const CircleIconButton = ({
   children,
 }: CircleIconButtonProps): React.JSX.Element => (
   <Button
-    type="button"
+    type='button'
     onClick={onClick}
-    variant="ghost"
-    size="icon"
+    variant='ghost'
+    size='icon'
     aria-label={ariaLabel}
     title={title}
     className={cn(
@@ -107,19 +107,19 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
   };
 
   return (
-    <div className="flex justify-end">
+    <div className='flex justify-end'>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
-            className="inline-flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-muted/50 hover:text-white"
-            aria-label="Open row actions"
-            type="button"
+            className='inline-flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-muted/50 hover:text-white'
+            aria-label='Open row actions'
+            type='button'
           >
-            <MoreVertical className="size-4" />
+            <MoreVertical className='size-4' />
           </Button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align='end'>
           <DropdownMenuItem
             onSelect={(event: Event): void => {
               event.preventDefault();
@@ -139,7 +139,7 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
           </DropdownMenuItem>
 
           <DropdownMenuItem
-            className="text-destructive focus:text-destructive"
+            className='text-destructive focus:text-destructive'
             onSelect={(event: Event): void => {
               event.preventDefault();
               onProductDeleteClick?.(product);
@@ -165,14 +165,14 @@ export const getProductColumns = (
           (table.getIsSomePageRowsSelected() && 'indeterminate')
         }
         onCheckedChange={(checked: boolean | 'indeterminate'): void => table.toggleAllPageRowsSelected(!!checked)}
-        aria-label="Select all"
+        aria-label='Select all'
       />
     ),
     cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => (
       <Checkbox
         checked={row.getIsSelected()}
         onCheckedChange={(checked: boolean | 'indeterminate'): void => row.toggleSelected(!!checked)}
-        aria-label="Select row"
+        aria-label='Select row'
       />
     ),
     enableSorting: false,
@@ -218,9 +218,9 @@ export const getProductColumns = (
   {
     accessorKey: 'name_en',
     header: ({ column }: { column: Column<ProductWithImages, unknown> }): React.JSX.Element => (
-      <Button variant="ghost" onClick={(): void => column.toggleSorting()}>
+      <Button variant='ghost' onClick={(): void => column.toggleSorting()}>
         Name
-        <ArrowUpDown className="ml-2 size-4" />
+        <ArrowUpDown className='ml-2 size-4' />
       </Button>
     ),
     cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => {
@@ -261,7 +261,7 @@ export const getProductColumns = (
           </span>
 
           {product.sku && (
-            <div className="flex items-center gap-1.5 text-sm text-gray-500">
+            <div className='flex items-center gap-1.5 text-sm text-gray-500'>
               <span
                 className={[
                   'select-text cursor-text',
@@ -270,15 +270,15 @@ export const getProductColumns = (
                 {product.sku}
               </span>
               {isImported && (
-                <span title="Imported product">
+                <span title='Imported product'>
                   <Download
-                    className="size-3 text-blue-400"
-                    aria-label="Imported product"
+                    className='size-3 text-blue-400'
+                    aria-label='Imported product'
                   />
                 </span>
               )}
               {isQueued && (
-                <Badge variant="processing" className="ml-1">
+                <Badge variant='processing' className='ml-1'>
                   Queued
                 </Badge>
               )}
@@ -298,12 +298,12 @@ export const getProductColumns = (
       const currencyCode: string = meta?.currencyCode || '';
 
       return (
-        <Button variant="ghost" onClick={(): void => column.toggleSorting()}>
+        <Button variant='ghost' onClick={(): void => column.toggleSorting()}>
           Price{' '}
-          <span className="ml-1 text-xs text-muted-foreground" suppressHydrationWarning>
+          <span className='ml-1 text-xs text-muted-foreground' suppressHydrationWarning>
             {currencyCode ? `(${currencyCode})` : ''}
           </span>
-          <ArrowUpDown className="ml-2 size-4" />
+          <ArrowUpDown className='ml-2 size-4' />
         </Button>
       );
     },
@@ -339,10 +339,10 @@ export const getProductColumns = (
 
       if (!setRefreshTrigger) {
         return (
-          <div className="flex items-center gap-1">
+          <div className='flex items-center gap-1'>
             <span>{displayPrice !== null ? displayPrice.toFixed(2) : '-'}</span>
             {showCurrencyIndicator && (
-              <span className="text-xs text-muted-foreground">({actualCurrency})</span>
+              <span className='text-xs text-muted-foreground'>({actualCurrency})</span>
             )}
           </div>
         );
@@ -350,11 +350,11 @@ export const getProductColumns = (
 
       if (hasConvertedPrice) {
         return (
-          <div className="flex flex-col items-start">
-            <span className="text-foreground">
+          <div className='flex flex-col items-start'>
+            <span className='text-foreground'>
               {displayPrice !== null && displayPrice.toFixed(2)}
             </span>
-            <span className="text-xs text-muted-foreground">
+            <span className='text-xs text-muted-foreground'>
               Base: {product.price?.toFixed(2)} {baseCurrencyCode}
             </span>
           </div>
@@ -362,11 +362,11 @@ export const getProductColumns = (
       }
 
       return (
-        <div className="flex items-center gap-1">
+        <div className='flex items-center gap-1'>
           <EditableCell
             value={product.price}
             productId={product.id}
-            field="price"
+            field='price'
             onUpdate={(nextValue: number): void => {
               queryClient.setQueriesData(
                 { queryKey: ['products'] },
@@ -389,7 +389,7 @@ export const getProductColumns = (
             }}
           />
           {showCurrencyIndicator && displayPrice !== product.price && (
-            <span className="text-xs text-muted-foreground" title={`Converted: ${displayPrice?.toFixed(2)} ${actualCurrency}`}>
+            <span className='text-xs text-muted-foreground' title={`Converted: ${displayPrice?.toFixed(2)} ${actualCurrency}`}>
               →{displayPrice?.toFixed(2)}
             </span>
           )}
@@ -401,9 +401,9 @@ export const getProductColumns = (
   {
     accessorKey: 'stock',
     header: ({ column }: { column: Column<ProductWithImages, unknown> }): React.JSX.Element => (
-      <Button variant="ghost" onClick={(): void => column.toggleSorting()}>
+      <Button variant='ghost' onClick={(): void => column.toggleSorting()}>
         Stock
-        <ArrowUpDown className="ml-2 size-4" />
+        <ArrowUpDown className='ml-2 size-4' />
       </Button>
     ),
     cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => {
@@ -419,7 +419,7 @@ export const getProductColumns = (
         <EditableCell
           value={product.stock}
           productId={product.id}
-          field="stock"
+          field='stock'
           onUpdate={(nextValue: number): void => {
             queryClient.setQueriesData(
               { queryKey: ['products'] },
@@ -448,9 +448,9 @@ export const getProductColumns = (
   {
     accessorKey: 'createdAt',
     header: ({ column }: { column: Column<ProductWithImages, unknown> }): React.JSX.Element => (
-      <Button variant="ghost" onClick={(): void => column.toggleSorting()}>
+      <Button variant='ghost' onClick={(): void => column.toggleSorting()}>
         Created At
-        <ArrowUpDown className="ml-2 size-4" />
+        <ArrowUpDown className='ml-2 size-4' />
       </Button>
     ),
   },
@@ -485,21 +485,21 @@ export const getProductColumns = (
         return 'border-gray-500/50 text-gray-300 hover:border-gray-400/60 hover:text-gray-200';
       };
       const baseIcon = (
-        <span aria-hidden="true" className="text-[9px] font-black uppercase leading-none tracking-tight">
+        <span aria-hidden='true' className='text-[9px] font-black uppercase leading-none tracking-tight'>
           BL
         </span>
       );
 
       return (
-        <div className="inline-flex items-center gap-1">
+        <div className='inline-flex items-center gap-1'>
           <CircleIconButton
             onClick={(): void => handleClick(product)}
-            ariaLabel="View integrations"
-            className="border-gray-500/50 text-gray-300 hover:border-gray-400/60 hover:text-white transition-colors"
+            ariaLabel='View integrations'
+            className='border-gray-500/50 text-gray-300 hover:border-gray-400/60 hover:text-white transition-colors'
           >
             <span
-              aria-hidden="true"
-              className="inline-flex size-full items-center justify-center text-[20px] font-medium leading-none tracking-tight -translate-y-[1px]"
+              aria-hidden='true'
+              className='inline-flex size-full items-center justify-center text-[20px] font-medium leading-none tracking-tight -translate-y-[1px]'
             >
               +
             </span>

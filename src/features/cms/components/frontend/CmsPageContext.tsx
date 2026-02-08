@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext } from 'react';
 
-import type { ColorSchemeColors } from '../theme-styles';
+import type { ColorSchemeColors } from './theme-styles';
 
 interface CmsPageContextValue {
   colorSchemes: Record<string, ColorSchemeColors>;

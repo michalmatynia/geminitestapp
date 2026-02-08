@@ -378,16 +378,16 @@ export function RunTimeline({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="text-[11px] uppercase text-gray-500">Filters</div>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[10px] text-emerald-200">
+    <div className='space-y-4'>
+      <div className='flex flex-wrap items-center justify-between gap-2'>
+        <div className='text-[11px] uppercase text-gray-500'>Filters</div>
+        <div className='flex flex-wrap items-center gap-2'>
+          <span className='rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[10px] text-emerald-200'>
             Persisted
           </span>
           <Button
-            type="button"
-            className="rounded-md border px-2 py-1 text-[10px] text-gray-300 hover:bg-muted/60"
+            type='button'
+            className='rounded-md border px-2 py-1 text-[10px] text-gray-300 hover:bg-muted/60'
             onClick={() => {
               setVisibleSections({ run: true, node: true, event: true });
               setStatusSort('count');
@@ -396,8 +396,8 @@ export function RunTimeline({
             Restore defaults
           </Button>
           <Button
-            type="button"
-            className="rounded-md border px-2 py-1 text-[10px] text-gray-300 hover:bg-muted/60"
+            type='button'
+            className='rounded-md border px-2 py-1 text-[10px] text-gray-300 hover:bg-muted/60'
             onClick={() => setVisibleSections({ run: true, node: true, event: true })}
           >
             Filters only
@@ -411,7 +411,7 @@ export function RunTimeline({
             return (
               <Button
                 key={filter.id}
-                type="button"
+                type='button'
                 className={`rounded-md border px-2 py-1 text-[10px] ${
                   active
                     ? 'border-emerald-500/50 text-emerald-200'
@@ -427,12 +427,12 @@ export function RunTimeline({
       </div>
 
       {visibleSections.node ? (
-        <div className="rounded-md border border-border/70 bg-black/20 p-3">
-          <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-500">
-            <span className="uppercase">Node duration summary</span>
+        <div className='rounded-md border border-border/70 bg-black/20 p-3'>
+          <div className='flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-500'>
+            <span className='uppercase'>Node duration summary</span>
             <span>{nodeDurationRows.length} nodes</span>
           </div>
-          <div className="mt-1 text-[11px] text-gray-500">
+          <div className='mt-1 text-[11px] text-gray-500'>
             Total {formatDurationMs(durationStats.total) ?? '—'} · Avg{' '}
             {formatDurationMs(durationStats.average) ?? '—'} ·{' '}
             {minMaxNodeDuration.min ? (
@@ -441,7 +441,7 @@ export function RunTimeline({
                   minMaxNodeDuration.min.durationMs
                 )}`}
               >
-                <span className="cursor-help">
+                <span className='cursor-help'>
                   Min {formatDurationMs(durationStats.min) ?? '—'}
                 </span>
               </Tooltip>
@@ -455,7 +455,7 @@ export function RunTimeline({
                   minMaxNodeDuration.max.durationMs
                 )}`}
               >
-                <span className="cursor-help">
+                <span className='cursor-help'>
                   Max {formatDurationMs(durationStats.max) ?? '—'}
                 </span>
               </Tooltip>
@@ -465,9 +465,9 @@ export function RunTimeline({
             · Timed {durationStats.timedCount}/{durationStats.totalCount}
           </div>
           {sortedDurationByStatus.length > 0 ? (
-            <div className="mt-2 space-y-2 text-[11px] text-gray-400">
-              <div className="flex flex-wrap items-center gap-2 text-gray-500">
-                <span className="uppercase">Sort by</span>
+            <div className='mt-2 space-y-2 text-[11px] text-gray-400'>
+              <div className='flex flex-wrap items-center gap-2 text-gray-500'>
+                <span className='uppercase'>Sort by</span>
                 {([
                   { id: 'count', label: 'Count' },
                   { id: 'avg', label: 'Avg duration' },
@@ -478,7 +478,7 @@ export function RunTimeline({
                   return (
                     <Button
                       key={option.id}
-                      type="button"
+                      type='button'
                       className={`rounded-md border px-2 py-1 text-[10px] ${
                         active
                           ? 'border-emerald-500/50 text-emerald-200'
@@ -491,7 +491,7 @@ export function RunTimeline({
                   );
                 })}
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className='flex flex-wrap gap-2'>
                 {sortedDurationByStatus.map((bucket: { status: string; count: number; timedCount: number; totalMs: number; averageMs: number | null; min: NodeDurationRow | null; max: NodeDurationRow | null }): React.JSX.Element => {
                   const badgeClass =
                     statusBadgeStyles[bucket.status] ??
@@ -514,7 +514,7 @@ export function RunTimeline({
                   const chip = (
                     <div
                       key={bucket.status}
-                      className="flex items-center gap-2 rounded-full border border-border/60 bg-black/30 px-3 py-1"
+                      className='flex items-center gap-2 rounded-full border border-border/60 bg-black/30 px-3 py-1'
                     >
                       <span className={`rounded-full border px-2 py-0.5 ${badgeClass}`}>
                         {bucket.status}
@@ -548,11 +548,11 @@ export function RunTimeline({
             </div>
           ) : null}
           {nodeDurationRows.length === 0 ? (
-            <div className="mt-2 text-[11px] text-gray-500">
+            <div className='mt-2 text-[11px] text-gray-500'>
               No node timing data available yet.
             </div>
           ) : (
-            <div className="mt-2 max-h-[200px] overflow-auto space-y-2">
+            <div className='mt-2 max-h-[200px] overflow-auto space-y-2'>
               {nodeDurationRows.map((row: NodeDurationRow): React.JSX.Element => {
                 const badgeClass =
                   statusBadgeStyles[row.status ?? ''] ??
@@ -560,12 +560,12 @@ export function RunTimeline({
                 return (
                   <div
                     key={row.id}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/60 bg-black/30 px-3 py-2"
+                    className='flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/60 bg-black/30 px-3 py-2'
                   >
-                    <div className="min-w-[180px] flex-1 text-sm text-white">
+                    <div className='min-w-[180px] flex-1 text-sm text-white'>
                       {row.label}
                     </div>
-                    <div className="flex items-center gap-2 text-[11px] text-gray-400">
+                    <div className='flex items-center gap-2 text-[11px] text-gray-400'>
                       <span className={`rounded-full border px-2 py-0.5 ${badgeClass}`}>
                         {row.status ?? 'unknown'}
                       </span>
@@ -580,43 +580,43 @@ export function RunTimeline({
       ) : null}
 
       <div>
-        <div className="flex items-center justify-between">
-          <div className="text-[11px] uppercase text-gray-500">Runtime timeline</div>
-          <div className="text-[11px] text-gray-500">
+        <div className='flex items-center justify-between'>
+          <div className='text-[11px] uppercase text-gray-500'>Runtime timeline</div>
+          <div className='text-[11px] text-gray-500'>
             {filteredTimelineItems.length} entries
           </div>
         </div>
         {filteredTimelineItems.length === 0 ? (
-          <div className="mt-3 rounded-md border border-border bg-card/40 p-4 text-xs text-gray-400">
+          <div className='mt-3 rounded-md border border-border bg-card/40 p-4 text-xs text-gray-400'>
             Timeline is empty for the current filters.
           </div>
         ) : (
-          <div className="mt-3 max-h-[320px] overflow-auto rounded-md border border-border bg-black/20 p-4">
-            <div className="relative border-l border-border/60 pl-4">
+          <div className='mt-3 max-h-[320px] overflow-auto rounded-md border border-border bg-black/20 p-4'>
+            <div className='relative border-l border-border/60 pl-4'>
               {filteredTimelineItems.map((item: TimelineItem, index: number): React.JSX.Element => {
                 const badgeClass =
                   statusBadgeStyles[item.status ?? ''] ??
                   'border-border bg-card/40 text-gray-200';
                 return (
-                  <div key={`${item.id}-${index}`} className="relative pb-4">
-                    <div className="absolute -left-[7px] top-2 h-2.5 w-2.5 rounded-full bg-gray-400" />
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-gray-300">
-                      <span className="text-[11px] text-gray-500">
+                  <div key={`${item.id}-${index}`} className='relative pb-4'>
+                    <div className='absolute -left-[7px] top-2 h-2.5 w-2.5 rounded-full bg-gray-400' />
+                    <div className='flex flex-wrap items-center gap-2 text-xs text-gray-300'>
+                      <span className='text-[11px] text-gray-500'>
                         {item.timestamp.toLocaleString()}
                       </span>
                       <span className={`rounded-full border px-2 py-0.5 text-[11px] ${badgeClass}`}>
                         {item.status ?? item.kind}
                       </span>
-                      <span className="text-[11px] uppercase text-gray-500">
+                      <span className='text-[11px] uppercase text-gray-500'>
                         {item.kind}
                       </span>
                     </div>
-                    <div className="mt-1 text-sm text-white">{item.label}</div>
+                    <div className='mt-1 text-sm text-white'>{item.label}</div>
                     {item.description ? (
-                      <div className="text-xs text-gray-400">{item.description}</div>
+                      <div className='text-xs text-gray-400'>{item.description}</div>
                     ) : null}
                     {item.meta ? (
-                      <div className="mt-2 rounded-md border border-rose-500/30 bg-rose-500/10 p-2 text-[11px] text-rose-200">
+                      <div className='mt-2 rounded-md border border-rose-500/30 bg-rose-500/10 p-2 text-[11px] text-rose-200'>
                         {item.meta}
                       </div>
                     ) : null}
@@ -630,37 +630,37 @@ export function RunTimeline({
 
       {visibleSections.event ? (
         <div>
-          <div className="flex items-center gap-2">
-            <div className="text-[11px] uppercase text-gray-500">Logs</div>
+          <div className='flex items-center gap-2'>
+            <div className='text-[11px] uppercase text-gray-500'>Logs</div>
             {eventsOverflow ? (
-              <span className="rounded border border-amber-400/50 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-200">
+              <span className='rounded border border-amber-400/50 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-200'>
                 Truncated{eventsBatchLimit ? ` (limit ${eventsBatchLimit})` : ''}
               </span>
             ) : null}
           </div>
           {sortedEvents.length === 0 ? (
-            <div className="mt-3 rounded-md border border-border bg-card/40 p-4 text-xs text-gray-400">
+            <div className='mt-3 rounded-md border border-border bg-card/40 p-4 text-xs text-gray-400'>
               No logs captured for this run yet.
             </div>
           ) : (
-            <div className="mt-3 max-h-[360px] overflow-auto rounded-md border border-border bg-black/20">
-              <div className="divide-y divide-border/70">
+            <div className='mt-3 max-h-[360px] overflow-auto rounded-md border border-border bg-black/20'>
+              <div className='divide-y divide-border/70'>
                 {sortedEvents.map((event: AiPathRunEventRecord): React.JSX.Element => {
                   const badgeClass =
                     levelBadgeStyles[event.level] ??
                     'border-border bg-card/40 text-gray-200';
                   const metadata = formatMetadata(event.metadata);
                   return (
-                    <div key={event.id} className="p-3">
-                      <div className="flex flex-wrap items-center gap-2 text-xs text-gray-400">
+                    <div key={event.id} className='p-3'>
+                      <div className='flex flex-wrap items-center gap-2 text-xs text-gray-400'>
                         <span>{new Date(event.createdAt).toLocaleString()}</span>
                         <span className={`rounded-full border px-2 py-0.5 text-[10px] ${badgeClass}`}>
                           {event.level}
                         </span>
                       </div>
-                      <div className="mt-1 text-sm text-white">{event.message}</div>
+                      <div className='mt-1 text-sm text-white'>{event.message}</div>
                       {metadata ? (
-                        <pre className="mt-2 max-h-40 overflow-auto rounded-md border border-border bg-black/30 p-2 text-[11px] text-gray-200">
+                        <pre className='mt-2 max-h-40 overflow-auto rounded-md border border-border bg-black/30 p-2 text-[11px] text-gray-200'>
                           {metadata}
                         </pre>
                       ) : null}

@@ -63,28 +63,28 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
   };
 
   return (
-    <div className="flex items-center justify-between rounded-md border bg-card/50 px-4 py-3">
-      <div className="flex-1">
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-white">
+    <div className='flex items-center justify-between rounded-md border bg-card/50 px-4 py-3'>
+      <div className='flex-1'>
+        <div className='flex items-center gap-2'>
+          <span className='font-medium text-white'>
             {listing.integration.name}
           </span>
           <StatusBadge status={listing.status} />
         </div>
-        <p className="mt-1 text-xs text-gray-400">
+        <p className='mt-1 text-xs text-gray-400'>
           Account: {listing.connection.name}
         </p>
         {listing.externalListingId && (
-          <p className="text-xs text-gray-500">
+          <p className='text-xs text-gray-500'>
             External ID: {listing.externalListingId}
           </p>
         )}
         {listing.inventoryId && (
-          <p className="text-xs text-gray-500">
+          <p className='text-xs text-gray-500'>
             Inventory ID: {listing.inventoryId}
           </p>
         )}
-        <div className="mt-2 space-y-1 text-xs text-gray-500">
+        <div className='mt-2 space-y-1 text-xs text-gray-500'>
           <p>Last export: {formatTimestamp(listing.listedAt)}</p>
           <p>Created: {formatTimestamp(listing.createdAt)}</p>
           <p>Updated: {formatTimestamp(listing.updatedAt)}</p>
@@ -93,20 +93,20 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
           )}
         </div>
         {listing.exportHistory && listing.exportHistory.length > 0 ? (
-          <div className="mt-3 rounded border border-border bg-card/50 p-2">
-            <div className="flex items-center justify-between">
-              <p className="text-[10px] uppercase tracking-wide text-gray-500">
+          <div className='mt-3 rounded border border-border bg-card/50 p-2'>
+            <div className='flex items-center justify-between'>
+              <p className='text-[10px] uppercase tracking-wide text-gray-500'>
                 Export history
               </p>
               <Button
-                type="button"
+                type='button'
                 onClick={(): void =>
                   setHistoryOpenByListing((prev) => ({
                     ...prev,
                     [listing.id]: !(prev[listing.id] ?? false),
                   }))
                 }
-                className="text-[10px] uppercase tracking-wide text-gray-400 hover:text-gray-200"
+                className='text-[10px] uppercase tracking-wide text-gray-400 hover:text-gray-200'
               >
                 {(historyOpenByListing[listing.id] ?? false)
                   ? 'Hide'
@@ -114,16 +114,16 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
               </Button>
             </div>
             {(historyOpenByListing[listing.id] ?? false) ? (
-              <div className="mt-2 space-y-2 text-xs text-gray-400">
+              <div className='mt-2 space-y-2 text-xs text-gray-400'>
                 {listing.exportHistory.slice(0, 5).map((event: ProductListingExportEvent, index: number) => (
-                  <div key={`${listing.id}-export-${index}`} className="grid gap-1">
-                    <div className="flex items-center justify-between text-gray-300">
+                  <div key={`${listing.id}-export-${index}`} className='grid gap-1'>
+                    <div className='flex items-center justify-between text-gray-300'>
                       <span>{formatTimestamp(event.exportedAt)}</span>
-                      <span className="uppercase text-[10px] text-gray-500">
+                      <span className='uppercase text-[10px] text-gray-500'>
                         {event.status ?? 'success'}
                       </span>
                     </div>
-                    <div className="grid gap-1">
+                    <div className='grid gap-1'>
                       <span>Inventory: {formatListValue(event.inventoryId)}</span>
                       <span>Template: {formatListValue(event.templateId)}</span>
                       <span>Warehouse: {formatListValue(event.warehouseId)}</span>
@@ -142,20 +142,20 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
             ) : null}
           </div>
         ) : (
-          <p className="mt-2 text-xs text-gray-600">No export history recorded.</p>
+          <p className='mt-2 text-xs text-gray-600'>No export history recorded.</p>
         )}
       </div>
-      <div className="ml-4 flex flex-col gap-2">
+      <div className='ml-4 flex flex-col gap-2'>
         {isBaseListing && (
           <>
             {listing.status === 'failed' && (
               <Button
-                type="button"
-                variant="outline"
-                size="sm"
+                type='button'
+                variant='outline'
+                size='sm'
                 onClick={(): void => { void handleExportAgain(listing.id); }}
                 disabled={exportingListing === listing.id}
-                className="border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10"
+                className='border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
               >
                 Export again
               </Button>
@@ -164,29 +164,29 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
+                    type='button'
+                    variant='outline'
+                    size='sm'
                     disabled={
                       exportingListing === listing.id ||
                       !listing.externalListingId
                     }
-                    className="border-sky-500/40 text-sky-200 hover:bg-sky-500/10"
+                    className='border-sky-500/40 text-sky-200 hover:bg-sky-500/10'
                   >
                     Re-export images only
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
-                  align="start"
-                  className="bg-card border-border"
+                  align='start'
+                  className='bg-card border-border'
                 >
                   <DropdownMenuItem
                     onSelect={(): void => { void handleExportImagesOnly(listing.id); }}
-                    className="text-gray-200 focus:bg-gray-800/70"
+                    className='text-gray-200 focus:bg-gray-800/70'
                   >
-                    <div className="flex flex-col">
-                      <span className="text-sm">No resize (base-only)</span>
-                      <span className="text-xs text-gray-400">
+                    <div className='flex flex-col'>
+                      <span className='text-sm'>No resize (base-only)</span>
+                      <span className='text-xs text-gray-400'>
                         Re-send images without extra compression.
                       </span>
                     </div>
@@ -197,11 +197,11 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
                       onSelect={(): void => {
                         void handleExportImagesOnly(listing.id, preset);
                       }}
-                      className="text-gray-200 focus:bg-gray-800/70"
+                      className='text-gray-200 focus:bg-gray-800/70'
                     >
-                      <div className="flex flex-col">
-                        <span className="text-sm">{preset.label}</span>
-                        <span className="text-xs text-gray-400">
+                      <div className='flex flex-col'>
+                        <span className='text-sm'>{preset.label}</span>
+                        <span className='text-xs text-gray-400'>
                           {preset.description}
                         </span>
                       </div>
@@ -211,7 +211,7 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
               </DropdownMenu>
             )}
             {!listing.inventoryId && (
-              <div className="space-y-1 text-xs text-gray-400">
+              <div className='space-y-1 text-xs text-gray-400'>
                 <Label htmlFor={`inventory-${listing.id}`}>
                   Inventory ID
                 </Label>
@@ -224,16 +224,16 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
                       [listing.id]: e.target.value,
                     }))
                   }
-                  placeholder="Enter inventory ID"
-                  className="h-7 border bg-card/60 text-gray-200"
+                  placeholder='Enter inventory ID'
+                  className='h-7 border bg-card/60 text-gray-200'
                 />
                 <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
+                  type='button'
+                  variant='outline'
+                  size='sm'
                   onClick={(): void => { void handleSaveInventoryId(listing.id); }}
                   disabled={savingInventoryId === listing.id}
-                  className="h-7 border text-gray-200 hover:bg-muted/50"
+                  className='h-7 border text-gray-200 hover:bg-muted/50'
                 >
                   Save inventory ID
                 </Button>
@@ -241,12 +241,12 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
             )}
             {listing.status !== 'removed' && (
               <Button
-                type="button"
-                variant="outline"
-                size="sm"
+                type='button'
+                variant='outline'
+                size='sm'
                 onClick={(): void => setListingToDelete(listing.id)}
                 disabled={useProductListingsContext().deletingFromBase === listing.id}
-                className="border-red-500/40 text-red-300 hover:bg-red-500/10"
+                className='border-red-500/40 text-red-300 hover:bg-red-500/10'
               >
                 Delete from Base.com
               </Button>
@@ -254,14 +254,14 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
           </>
         )}
         <Button
-          type="button"
-          variant="ghost"
-          size="sm"
+          type='button'
+          variant='ghost'
+          size='sm'
           onClick={(): void => setListingToPurge(listing.id)}
           disabled={useProductListingsContext().purgingListing === listing.id}
-          className="text-gray-400 hover:bg-muted/50 hover:text-red-400"
+          className='text-gray-400 hover:bg-muted/50 hover:text-red-400'
         >
-          <Trash2 className="mr-1 size-3" />
+          <Trash2 className='mr-1 size-3' />
           Remove history
         </Button>
       </div>

@@ -65,10 +65,10 @@ vi.mock('@/shared/ui', async () => {
   const actual = await vi.importActual('@/shared/ui');
   return {
     ...actual,
-    Tabs: ({ children, defaultValue }: any) => <div data-testid="tabs" data-default={defaultValue}>{children}</div>,
-    TabsList: ({ children }: any) => <div data-testid="tabs-list" role="tablist">{children}</div>,
-    TabsTrigger: ({ children, value }: any) => <button role="tab" data-testid={`tab-trigger-${value}`}>{children}</button>,
-    TabsContent: ({ children, value }: any) => <div role="tabpanel" data-testid={`tab-content-${value}`}>{children}</div>,
+    Tabs: ({ children, defaultValue }: any) => <div data-testid='tabs' data-default={defaultValue}>{children}</div>,
+    TabsList: ({ children }: any) => <div data-testid='tabs-list' role='tablist'>{children}</div>,
+    TabsTrigger: ({ children, value }: any) => <button role='tab' data-testid={`tab-trigger-${value}`}>{children}</button>,
+    TabsContent: ({ children, value }: any) => <div role='tabpanel' data-testid={`tab-content-${value}`}>{children}</div>,
     Button: ({ children, onClick, variant }: any) => (
       <button onClick={onClick} data-variant={variant}>{children}</button>
     ),
@@ -80,7 +80,7 @@ vi.mock('@/shared/ui/toast', () => ({
 }));
 
 vi.mock('@/features/cms/components/page-builder/MediaLibraryPanel', () => ({
-  MediaLibraryPanel: () => <div data-testid="media-library">Media</div>,
+  MediaLibraryPanel: () => <div data-testid='media-library'>Media</div>,
 }));
 
 vi.mock('@/features/cms/components/page-builder/SettingsFieldRenderer', () => ({
@@ -98,7 +98,7 @@ vi.mock('@/features/cms/components/page-builder/SettingsFieldRenderer', () => ({
 }));
 
 vi.mock('@/features/cms/components/page-builder/AnimationConfigPanel', () => ({
-  AnimationConfigPanel: () => <div data-testid="animation-panel">Animation</div>,
+  AnimationConfigPanel: () => <div data-testid='animation-panel'>Animation</div>,
 }));
 
 describe('ComponentSettingsPanel Component', () => {

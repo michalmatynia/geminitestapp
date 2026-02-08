@@ -160,7 +160,7 @@ export function VectorDrawing({
           {...(toolbarClassName ? { className: toolbarClassName } : {})}
           variant={toolbarVariant}
         />
-        {onOutput ? null : <span className="sr-only">{output.path}</span>}
+        {onOutput ? null : <span className='sr-only'>{output.path}</span>}
       </div>
     </VectorDrawingProvider>
   );

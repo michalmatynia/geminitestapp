@@ -189,15 +189,15 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
   const showList: boolean = !loading && !error && sessions.length > 0;
 
   return (
-    <div className="container mx-auto py-10">
+    <div className='container mx-auto py-10'>
       <ListPanel
         header={
           <SectionHeader
-            title="Chat Sessions"
+            title='Chat Sessions'
             eyebrow={(
               <Link
-                href="/admin/chatbot"
-                className="text-blue-300 hover:text-blue-200"
+                href='/admin/chatbot'
+                className='text-blue-300 hover:text-blue-200'
               >
                 ← Back to chatbot
               </Link>
@@ -205,18 +205,18 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
           />
         }
         alerts={
-          error ? <p className="text-sm text-red-400">{error}</p> : null
+          error ? <p className='text-sm text-red-400'>{error}</p> : null
         }
         filters={
           showList ? (
             <SectionPanel>
-              <div className="max-w-sm">
+              <div className='max-w-sm'>
                 <SearchInput
-                  placeholder="Search sessions..."
+                  placeholder='Search sessions...'
                   value={searchQuery}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(event.target.value)}
                   onClear={() => setSearchQuery('')}
-                  className="h-8 text-sm"
+                  className='h-8 text-sm'
                 />
               </div>
             </SectionPanel>
@@ -224,11 +224,11 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
         }
         actions={
           showList ? (
-            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-400">
+            <div className='flex flex-wrap items-center gap-2 text-xs text-gray-400'>
               <span>Selected: {selectedIds.size}</span>
               <Button
-                variant="outline"
-                size="sm"
+                variant='outline'
+                size='sm'
                 onClick={selectAllVisible}
                 disabled={
                   filteredSessions.length === 0 || bulkDeleting
@@ -237,16 +237,16 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
                 Select all visible
               </Button>
               <Button
-                variant="outline"
-                size="sm"
+                variant='outline'
+                size='sm'
                 onClick={selectAllMatching}
                 disabled={bulkDeleting || selectingAll}
               >
                 {selectingAll ? 'Selecting...' : 'Select all (all pages)'}
               </Button>
               <Button
-                variant="ghost"
-                size="sm"
+                variant='ghost'
+                size='sm'
                 onClick={clearSelection}
                 disabled={
                   selectedIds.size === 0 || bulkDeleting
@@ -255,8 +255,8 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
                 Clear selection
               </Button>
               <Button
-                variant="destructive"
-                size="sm"
+                variant='destructive'
+                size='sm'
                 onClick={handleBulkDeleteClick}
                 disabled={
                   selectedIds.size === 0 || bulkDeleting
@@ -264,7 +264,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
               >
                 {bulkDeleting ? 'Removing...' : 'Remove selected'}
               </Button>
-              <Label className="flex items-center gap-2 text-[11px] text-gray-500">
+              <Label className='flex items-center gap-2 text-[11px] text-gray-500'>
                 <Checkbox
                   checked={skipBulkConfirm}
                   onCheckedChange={(checked: boolean): void =>
@@ -279,63 +279,63 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
         }
       >
         {loading ? (
-          <p className="text-sm text-gray-400">Loading sessions...</p>
+          <p className='text-sm text-gray-400'>Loading sessions...</p>
         ) : error ? null : sessions.length === 0 ? (
           <EmptyState
-            title="No sessions yet"
-            description="Start a chat with an agent to see your session history here."
+            title='No sessions yet'
+            description='Start a chat with an agent to see your session history here.'
             action={
-              <Link href="/admin/chatbot">
+              <Link href='/admin/chatbot'>
                 <Button>Start Chatting</Button>
               </Link>
             }
           />
         ) : (
-          <div className="space-y-3">
+          <div className='space-y-3'>
             {filteredSessions.map((session: ChatbotSessionListItem): React.JSX.Element => (
               <div
                 key={session.id}
-                className="flex items-center justify-between rounded-md border border-border bg-gray-900 px-4 py-3"
+                className='flex items-center justify-between rounded-md border border-border bg-gray-900 px-4 py-3'
               >
-                <div className="flex items-start gap-3">
+                <div className='flex items-start gap-3'>
                   <Checkbox
                     checked={selectedIds.has(session.id)}
                     onCheckedChange={(): void => toggleSelected(session.id)}
                     aria-label={`Select session ${session.title || session.id}`}
-                    className="mt-1"
+                    className='mt-1'
                   />
                   <div>
                     {editingId === session.id ? (
                       <Input
                         value={draftTitle}
                         onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setDraftTitle(event.target.value)}
-                        className="max-w-xs"
-                        placeholder="Session title"
+                        className='max-w-xs'
+                        placeholder='Session title'
                       />
                     ) : (
-                      <p className="text-sm text-white">
+                      <p className='text-sm text-white'>
                         {session.title || `Session ${session.id.slice(0, 6)}`}
                       </p>
                     )}
-                    <p className="text-xs text-gray-500">
+                    <p className='text-xs text-gray-500'>
                       Updated {new Date(session.updatedAt).toLocaleString()}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className='flex items-center gap-2'>
                   {editingId === session.id ? (
                     <>
                       <Button
-                        variant="outline"
-                        size="sm"
+                        variant='outline'
+                        size='sm'
                         onClick={() => { void saveTitle(session.id); }}
                       >
                         Save
                       </Button>
                       <Button
-                        variant="ghost"
-                        size="sm"
+                        variant='ghost'
+                        size='sm'
                         onClick={cancelEditing}
                       >
                         Cancel
@@ -343,16 +343,16 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
                     </>
                   ) : (
                     <Button
-                      variant="outline"
-                      size="sm"
+                      variant='outline'
+                      size='sm'
                       onClick={(): void => startEditing(session)}
                     >
                       Edit
                     </Button>
                   )}
                   <Button
-                    variant="destructive"
-                    size="sm"
+                    variant='destructive'
+                    size='sm'
                     disabled={deletingId === session.id}
                     onClick={() => setSessionToDelete(session)}
                   >
@@ -362,7 +362,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
                     href={`/admin/chatbot?session=${session.id}`}
                     onClick={(): void => toast('Opening session...')}
                   >
-                    <Button variant="outline" size="sm">
+                    <Button variant='outline' size='sm'>
                       Open
                     </Button>
                   </Link>
@@ -370,7 +370,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
               </div>
             ))}
             {filteredSessions.length === 0 ? (
-              <p className="text-sm text-gray-500">No matching sessions.</p>
+              <p className='text-sm text-gray-500'>No matching sessions.</p>
             ) : null}
           </div>
         )}
@@ -380,20 +380,20 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
         open={!!sessionToDelete}
         onOpenChange={(open: boolean) => !open && setSessionToDelete(null)}
         onConfirm={(): void => { if (sessionToDelete) { void deleteSession(sessionToDelete); } }}
-        title="Delete Session"
+        title='Delete Session'
         description={`Are you sure you want to delete session "${sessionToDelete?.title || 'this session'}"? This cannot be undone.`}
-        confirmText="Delete"
-        variant="destructive"
+        confirmText='Delete'
+        variant='destructive'
       />
 
       <ConfirmDialog
         open={isBulkDeleteConfirmOpen}
         onOpenChange={(open: boolean) => setIsBulkDeleteConfirmOpen(open)}
         onConfirm={(): void => { void bulkDelete(); }}
-        title="Delete Sessions"
+        title='Delete Sessions'
         description={`Are you sure you want to delete ${selectedIds.size} selected sessions? This action cannot be undone.`}
-        confirmText="Delete All"
-        variant="destructive"
+        confirmText='Delete All'
+        variant='destructive'
       />
     </div>
   );

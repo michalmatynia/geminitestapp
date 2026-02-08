@@ -23,14 +23,14 @@ export function ProductListingsStartPanel(): React.JSX.Element {
   } = useIntegrationSelection();
 
   if (loadingIntegrations) {
-    return <p className="text-sm text-gray-400">Loading integrations...</p>;
+    return <p className='text-sm text-gray-400'>Loading integrations...</p>;
   }
 
   if (integrations.length === 0) {
     return (
-      <SectionPanel variant="subtle-compact" className="border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200">
+      <SectionPanel variant='subtle-compact' className='border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200'>
         No connected integrations.{' '}
-        <Link href="/admin/integrations" className="underline hover:text-yellow-100">
+        <Link href='/admin/integrations' className='underline hover:text-yellow-100'>
           Set up an integration
         </Link>
         .
@@ -39,8 +39,8 @@ export function ProductListingsStartPanel(): React.JSX.Element {
   }
 
   return (
-    <SectionPanel variant="subtle" className="px-4 py-4">
-      <div className="space-y-4">
+    <SectionPanel variant='subtle' className='px-4 py-4'>
+      <div className='space-y-4'>
         <IntegrationSelector
           integrations={integrations}
           selectedIntegrationId={selectedIntegrationId}
@@ -49,7 +49,7 @@ export function ProductListingsStartPanel(): React.JSX.Element {
           onConnectionChange={setSelectedConnectionId}
         />
 
-        <div className="flex justify-center">
+        <div className='flex justify-center'>
           <Button
             onClick={(): void => {
               if (onStartListing && selectedIntegrationId && selectedConnectionId) {

@@ -109,33 +109,33 @@ function SelectProductForListingModalContent({
     <FormModal
       isOpen={true}
       onClose={onClose}
-      title="List Product on Marketplace"
+      title='List Product on Marketplace'
       onSave={() => { void handleSubmit(); }}
       isSaving={submitting}
-      saveText="List Product"
-      size="xl"
+      saveText='List Product'
+      size='xl'
     >
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="space-y-4">
-          <SectionPanel variant="subtle" className="p-4 space-y-4">
-            <h3 className="text-sm font-semibold text-white">1. Select Product</h3>
+      <div className='grid gap-6 md:grid-cols-2'>
+        <div className='space-y-4'>
+          <SectionPanel variant='subtle' className='p-4 space-y-4'>
+            <h3 className='text-sm font-semibold text-white'>1. Select Product</h3>
             <SearchInput
-              placeholder="Search products..."
+              placeholder='Search products...'
               value={productSearch}
               onChange={(e) => setProductSearch(e.target.value)}
               onClear={() => setProductSearch('')}
             />
             
-            <div className="space-y-2 max-h-[400px] overflow-y-auto rounded-md border border-border">
+            <div className='space-y-2 max-h-[400px] overflow-y-auto rounded-md border border-border'>
               {productsQuery.isLoading ? (
-                <p className="p-4 text-center text-xs text-gray-500">Loading products...</p>
+                <p className='p-4 text-center text-xs text-gray-500'>Loading products...</p>
               ) : (productsQuery.products || []).length === 0 ? (
-                <p className="p-4 text-center text-xs text-gray-500">No products found.</p>
+                <p className='p-4 text-center text-xs text-gray-500'>No products found.</p>
               ) : (
                 (productsQuery.products || []).map((product: ProductWithImages) => (
                   <button
                     key={product.id}
-                    type="button"
+                    type='button'
                     onClick={() => setSelectedProductId(product.id)}
                     className={`w-full flex items-center justify-between p-3 text-left transition-colors border-b border-border last:border-0 ${
                       selectedProductId === product.id 
@@ -144,13 +144,13 @@ function SelectProductForListingModalContent({
                     }`}
                   >
                     <div>
-                      <p className="text-sm font-medium text-white line-clamp-1">
+                      <p className='text-sm font-medium text-white line-clamp-1'>
                         {product.name_en || product.name_pl || 'Unnamed Product'}
                       </p>
-                      <p className="text-xs text-gray-500">SKU: {product.sku || '—'}</p>
+                      <p className='text-xs text-gray-500'>SKU: {product.sku || '—'}</p>
                     </div>
                     {selectedProductId === product.id && (
-                      <div className="size-2 rounded-full bg-primary" />
+                      <div className='size-2 rounded-full bg-primary' />
                     )}
                   </button>
                 ))
@@ -159,38 +159,38 @@ function SelectProductForListingModalContent({
           </SectionPanel>
         </div>
 
-        <div className="space-y-4">
-          <SectionPanel variant="subtle" className="p-4 space-y-4">
-            <h3 className="text-sm font-semibold text-white">2. Integration Settings</h3>
+        <div className='space-y-4'>
+          <SectionPanel variant='subtle' className='p-4 space-y-4'>
+            <h3 className='text-sm font-semibold text-white'>2. Integration Settings</h3>
             
             {loadingIntegrations ? (
-              <p className="text-xs text-gray-500">Loading integrations...</p>
+              <p className='text-xs text-gray-500'>Loading integrations...</p>
             ) : (
               <>
-                <div className="space-y-2">
+                <div className='space-y-2'>
                   <Label>Marketplace</Label>
                   <UnifiedSelect
                     value={selectedIntegrationId}
                     onValueChange={setSelectedIntegrationId}
                     options={integrationsWithConnections.map(i => ({ value: i.id, label: i.name }))}
-                    placeholder="Select marketplace..."
+                    placeholder='Select marketplace...'
                   />
                 </div>
 
                 {selectedIntegration && (
-                  <div className="space-y-2">
+                  <div className='space-y-2'>
                     <Label>Account</Label>
                     <UnifiedSelect
                       value={selectedConnectionId}
                       onValueChange={setSelectedConnectionId}
                       options={selectedIntegration.connections.map((c: IntegrationConnectionBasic) => ({ value: c.id, label: c.name }))}
-                      placeholder="Select account..."
+                      placeholder='Select account...'
                     />
                   </div>
                 )}
 
                 {isBaseComIntegration && selectedConnectionId && (
-                  <div className="pt-4 border-t border-border">
+                  <div className='pt-4 border-t border-border'>
                     <BaseListingSettings />
                   </div>
                 )}
@@ -199,7 +199,7 @@ function SelectProductForListingModalContent({
           </SectionPanel>
 
           {error && (
-            <SectionPanel variant="subtle-compact" className="border-red-500/40 bg-red-500/10 p-3 text-xs text-red-200">
+            <SectionPanel variant='subtle-compact' className='border-red-500/40 bg-red-500/10 p-3 text-xs text-red-200'>
               {error}
             </SectionPanel>
           )}

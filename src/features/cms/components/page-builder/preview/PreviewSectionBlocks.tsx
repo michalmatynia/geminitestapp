@@ -79,23 +79,23 @@ export function PreviewImageWithTextBlock({
       className={`flex flex-col gap-4 ${imageFirst ? 'md:flex-row' : 'md:flex-row-reverse'} ${stretchClass}`}
       style={stretchStyle}
     >
-      <div className="cms-media relative w-full md:w-2/5" style={mediaStyles ?? undefined}>
+      <div className='cms-media relative w-full md:w-2/5' style={mediaStyles ?? undefined}>
         {blockImage ? (
           <NextImage
             src={blockImage}
-            alt=""
+            alt=''
             fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, 40vw"
+            className='object-cover'
+            sizes='(max-width: 768px) 100vw, 40vw'
             unoptimized
           />
         ) : showEditorChrome ? (
-          <div className="flex min-h-[120px] w-full items-center justify-center bg-gray-800">
-            <ImageIcon className="size-10 text-gray-600" />
+          <div className='flex min-h-[120px] w-full items-center justify-center bg-gray-800'>
+            <ImageIcon className='size-10 text-gray-600' />
           </div>
         ) : null}
       </div>
-      <div className="flex w-full flex-col justify-center gap-3 md:w-3/5">
+      <div className='flex w-full flex-col justify-center gap-3 md:w-3/5'>
         {children.length > 0 ? (
           children.map((child: BlockInstance) => (
             <PreviewBlockItemProxy
@@ -106,7 +106,7 @@ export function PreviewImageWithTextBlock({
             />
           ))
         ) : showEditorChrome ? (
-          <p className="text-gray-500">Add content blocks</p>
+          <p className='text-gray-500'>Add content blocks</p>
         ) : null}
       </div>
     </div>
@@ -129,20 +129,20 @@ export function PreviewHeroBlock({
 
   return (
     <div
-      className="cms-media relative min-h-[200px] overflow-hidden"
+      className='cms-media relative min-h-[200px] overflow-hidden'
       style={{ ...(mediaStyles ?? {}), ...(stretchStyle ?? {}) }}
     >
       {blockImage ? (
         <div
-          className="absolute inset-0 bg-cover bg-center"
+          className='absolute inset-0 bg-cover bg-center'
           style={{ backgroundImage: `url(${blockImage})` }}
         >
-          <div className="absolute inset-0 bg-black/50" />
+          <div className='absolute inset-0 bg-black/50' />
         </div>
       ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-800" />
+        <div className='absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-800' />
       )}
-      <div className="relative z-10 flex min-h-[200px] flex-col items-center justify-center gap-3 p-6 text-center">
+      <div className='relative z-10 flex min-h-[200px] flex-col items-center justify-center gap-3 p-6 text-center'>
         {children.length > 0 ? (
           children.map((child: BlockInstance) => (
             <PreviewBlockItemProxy
@@ -153,7 +153,7 @@ export function PreviewHeroBlock({
             />
           ))
         ) : (
-          <p className="text-gray-400">Hero banner</p>
+          <p className='text-gray-400'>Hero banner</p>
         )}
       </div>
     </div>
@@ -190,7 +190,7 @@ export function PreviewRichTextBlock({
           />
         ))
       ) : showEditorChrome ? (
-        <p className="text-gray-500">Rich text section</p>
+        <p className='text-gray-500'>Rich text section</p>
       ) : null}
     </div>
   );
@@ -234,7 +234,7 @@ export function PreviewBlockSectionBlock({
     >
       {blockCustomCss ? <style data-cms-custom-css={block.id}>{blockCustomCss}</style> : null}
       {children.length === 0 && showEditorChrome ? (
-        <div className="flex min-h-[48px] items-center justify-center rounded border border-dashed border-gray-700/50 bg-gray-900/20 text-[10px] uppercase tracking-wider text-gray-600">
+        <div className='flex min-h-[48px] items-center justify-center rounded border border-dashed border-gray-700/50 bg-gray-900/20 text-[10px] uppercase tracking-wider text-gray-600'>
           Empty block
         </div>
       ) : (
@@ -313,7 +313,7 @@ export function PreviewTextAtomBlock({
           />
         ))
       ) : showEditorChrome ? (
-        <div className="text-xs text-gray-600">Text atoms</div>
+        <div className='text-xs text-gray-600'>Text atoms</div>
       ) : null}
     </div>
   );

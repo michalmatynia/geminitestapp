@@ -60,7 +60,7 @@ export function SectionBlockNodeItem({
       {
         id: 'remove-block',
         label: 'Remove block',
-        icon: <Trash2 className="size-3.5" />,
+        icon: <Trash2 className='size-3.5' />,
         tone: 'danger',
         onSelect: (): void => {
           blockActions.remove(sectionId, block.id, columnId);
@@ -71,11 +71,11 @@ export function SectionBlockNodeItem({
   );
 
   return (
-    <div className="group/sblock">
+    <div className='group/sblock'>
       <TreeContextMenu items={sectionBlockMenuItems}>
         <TreeRow
-          tone="none"
-          role="button"
+          tone='none'
+          role='button'
           tabIndex={0}
           draggable
           onClick={() => selectNode(block.id)}
@@ -210,26 +210,26 @@ export function SectionBlockNodeItem({
             }}
             onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
             onClick={(e: React.MouseEvent) => e.stopPropagation()}
-            className="flex items-center justify-center opacity-0 group-hover/sblock:opacity-100"
-            aria-label="Drag element"
+            className='flex items-center justify-center opacity-0 group-hover/sblock:opacity-100'
+            aria-label='Drag element'
           >
-            <GripVertical className="size-3 shrink-0 text-gray-600 cursor-grab active:cursor-grabbing" />
+            <GripVertical className='size-3 shrink-0 text-gray-600 cursor-grab active:cursor-grabbing' />
           </div>
           <TreeCaret
             isOpen={isExpanded}
             hasChildren={true}
             ariaLabel={isExpanded ? 'Collapse block' : 'Expand block'}
             onToggle={(): void => toggleExpand(block.id)}
-            iconClassName="size-3"
-            placeholderClassName="block size-3 shrink-0"
+            iconClassName='size-3'
+            placeholderClassName='block size-3 shrink-0'
           />
-          <Icon className="size-3.5 shrink-0" />
-          <span className="flex-1 truncate text-left">{blockLabel}</span>
+          <Icon className='size-3.5 shrink-0' />
+          <span className='flex-1 truncate text-left'>{blockLabel}</span>
           {isDragOver && (
-            <span className="text-[10px] text-emerald-300">Drop here</span>
+            <span className='text-[10px] text-emerald-300'>Drop here</span>
           )}
           {!isTextAtom && (
-            <TreeActionSlot show="always" align="inline">
+            <TreeActionSlot show='always' align='inline'>
               <div draggable={false} onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}>
                 <ColumnBlockPicker
                   onSelect={(elemType: string) => blockActions.addElementToNestedBlock(sectionId, columnId, block.id, elemType)}
@@ -239,16 +239,16 @@ export function SectionBlockNodeItem({
           )}
           {/* Delete button for section-type blocks */}
           {!isDragOver && (
-            <TreeActionSlot show="hover" align="inline">
+            <TreeActionSlot show='hover' align='inline'>
               <TreeActionButton
-                tone="danger"
+                tone='danger'
                 onClick={(e: React.MouseEvent) => {
                   e.stopPropagation();
                   blockActions.remove(sectionId, block.id, columnId);
                 }}
-                title="Remove block"
+                title='Remove block'
               >
-                <Trash2 className="size-3" />
+                <Trash2 className='size-3' />
               </TreeActionButton>
             </TreeActionSlot>
           )}
@@ -256,7 +256,7 @@ export function SectionBlockNodeItem({
       </TreeContextMenu>
 
       {isExpanded && hasChildren && (
-        <div className="ml-5 border-l border-border/30 pl-1">
+        <div className='ml-5 border-l border-border/30 pl-1'>
           {(block.blocks ?? []).map((child: BlockInstance, childIndex: number) => (
             <BlockNodeItem
               key={child.id}

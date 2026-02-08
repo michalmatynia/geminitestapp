@@ -1,0 +1,22 @@
+
+> libapp2@0.1.0 test
+> vitest __tests__/api/auth/register.test.ts
+
+
+ DEV  v2.1.9 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp
+
+stderr | __tests__/api/auth/register.test.ts > Auth Register API > should successfully register a new user
+[auth-provider] Auth provider "mongodb" from fallback differs from app provider "prisma".
+
+stderr | __tests__/api/auth/register.test.ts > Auth Register API > should return 409 if user already exists
+[auth-provider] Auth provider "mongodb" from fallback differs from app provider "prisma".
+
+ ✓ __tests__/api/auth/register.test.ts (4 tests) 10ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  01:21:06
+   Duration  835ms (transform 81ms, setup 158ms, collect 67ms, tests 10ms, environment 311ms, prepare 36ms)
+
+ PASS  Waiting for file changes...
+       press h to show help, press q to quit

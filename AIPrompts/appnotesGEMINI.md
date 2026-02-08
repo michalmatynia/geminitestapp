@@ -19,7 +19,6 @@ run npx tsc and resolve typescript issues one by one
 Prepare a suite tests in vitests
  implement tanstack query all across application
 
-Connect tanstack queries to a unified error logging and handling system.
 connect all API to Error logging and handling system
 
 Consolidate UI Elements
@@ -63,3 +62,5 @@ Architecture segmentation and restructuring
    run npm build and address the issues one by one 
 
    run vitest and 
+
+   Connect tanstack queries to a unified error logging and handling system.

@@ -5,7 +5,7 @@ import { z } from "zod";
 import { parseJsonBody } from "@/features/products/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-import { getCmsRepository } from "@/features/cms/services/cms-repository";
+import { cmsService } from "@/features/cms/services/cms-service";
 
 const createPageSchema = z.object({
   name: z.string().trim().min(1),
@@ -17,8 +17,7 @@ const createPageSchema = z.object({
  * Fetches a list of pages.
  */
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<NextResponse | Response> {
-  const cmsRepository = await getCmsRepository();
-  const pages = await cmsRepository.getPages();
+  const pages = await cmsService.getPages();
   return NextResponse.json(pages);
 }
 
@@ -35,14 +34,13 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   }
 
   const { name, slugIds } = parsed.data;
-  const cmsRepository = await getCmsRepository();
-  const created = await cmsRepository.createPage({ name });
+  const created = await cmsService.createPage({ name });
 
   if (slugIds && slugIds.length > 0) {
-    await cmsRepository.replacePageSlugs(created.id, slugIds);
+    await cmsService.replacePageSlugs(created.id, slugIds);
   }
 
-  const page = await cmsRepository.getPageById(created.id);
+  const page = await cmsService.getPageById(created.id);
   return NextResponse.json(page ?? created);
 }
 

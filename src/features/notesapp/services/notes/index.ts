@@ -38,11 +38,20 @@ const repoCall = async <K extends keyof NoteRepository>(
   key: K,
   ...args: Parameters<NoteRepository[K]>
 ): Promise<Awaited<ReturnType<NoteRepository[K]>>> => {
-  const repo = await getRepository();
-  const fn = repo[key] as (
-    ...args: Parameters<NoteRepository[K]>
-  ) => ReturnType<NoteRepository[K]>;
-  return fn(...args) as Promise<Awaited<ReturnType<NoteRepository[K]>>>;
+  try {
+    const repo = await getRepository();
+    const fn = repo[key] as (
+      ...args: Parameters<NoteRepository[K]>
+    ) => ReturnType<NoteRepository[K]>;
+    return await fn(...args) as Promise<Awaited<ReturnType<NoteRepository[K]>>>;
+  } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: 'note-service',
+      action: 'repoCall',
+      method: key,
+    });
+    throw error;
+  }
 };
 
 // Helper: Build Relations

@@ -37,9 +37,9 @@ const extractFirstProductId = (payload: unknown): string | null => {
       if (entry && typeof entry === "object") {
         const record = entry as Record<string, unknown>;
         return (
-          toStringId(record.product_id) ??
-          toStringId(record.id) ??
-          toStringId(record.base_product_id)
+          toStringId(record['product_id']) ??
+          toStringId(record['id']) ??
+          toStringId(record['base_product_id'])
         );
       }
       const id = toStringId(entry);
@@ -53,9 +53,9 @@ const extractFirstProductId = (payload: unknown): string | null => {
       if (value && typeof value === "object") {
         const record = value as Record<string, unknown>;
         const id =
-          toStringId(record.product_id) ??
-          toStringId(record.id) ??
-          toStringId(record.base_product_id) ??
+          toStringId(record['product_id']) ??
+          toStringId(record['id']) ??
+          toStringId(record['base_product_id']) ??
           toStringId(key);
         if (id) return id;
       } else {

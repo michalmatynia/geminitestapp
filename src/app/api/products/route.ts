@@ -50,13 +50,13 @@ async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Re
   try {
     const providerStart = performance.now();
     const provider = await getProductDataProvider();
-    timings.provider = performance.now() - providerStart;
+    timings['provider'] = performance.now() - providerStart;
 
     // Read directly from the product service.
     // Why: this route is the source of truth for the admin list and must never
     // return stale empty cache entries.
     const products = await productService.getProducts(filters, { timings, provider });
-    timings.total = ctx.getElapsedMs();
+    timings['total'] = ctx.getElapsedMs();
 
     if (shouldLogTiming()) {
       console.log("[timing] products.GET", { provider, ...timings });
@@ -68,7 +68,7 @@ async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Re
     attachTimingHeaders(response, timings);
     return response;
   } catch (error) {
-    timings.total = ctx.getElapsedMs();
+    timings['total'] = ctx.getElapsedMs();
     if (shouldLogTiming()) {
       console.log("[timing] products.GET error", timings);
     }

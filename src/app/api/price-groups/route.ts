@@ -32,7 +32,7 @@ const priceGroupSchema = z
   addToPrice: z.coerce.number().int(),
 })
   .refine(
-    (data) => data.type === "standard" || !!data.sourceGroupId,
+    (data) => data.type === "standard" || !!data["sourceGroupId"],
     {
       message: "Source price group is required for dependent groups",
       path: ["sourceGroupId"],
@@ -263,7 +263,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       currencyCode: currency.code,
       type: data.type,
       basePriceField: data.basePriceField,
-      sourceGroupId: data.sourceGroupId ?? null,
+      sourceGroupId: data["sourceGroupId"] ?? null,
       priceMultiplier: data.priceMultiplier,
       addToPrice: data.addToPrice,
       createdAt: now,
@@ -294,7 +294,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         currencyId: data.currencyId,
         type: data.type,
         basePriceField: data.basePriceField,
-        ...(data.sourceGroupId !== undefined && { sourceGroupId: data.sourceGroupId }),
+        ...(data["sourceGroupId"] !== undefined && { sourceGroupId: data["sourceGroupId"] }),
         priceMultiplier: data.priceMultiplier,
         addToPrice: data.addToPrice,
       },

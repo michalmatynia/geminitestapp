@@ -342,7 +342,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     if (!imagesOnly) {
       const hasCategoryTemplateMapping = mappings.some((mapping) =>
         CATEGORY_TEMPLATE_PRODUCT_FIELDS.has(
-          mapping.targetField.trim().toLowerCase()
+          mapping["targetField"].trim().toLowerCase()
         )
       );
 
@@ -596,21 +596,21 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
           return { typed, numeric: match[2] };
         };
         for (const warehouse of warehouses) {
-          warehouseIdSet.add(warehouse.id);
-          const inferred = warehouse.typedId ?? inferTypedWarehouseId(warehouse.id)?.typed;
+          warehouseIdSet.add(warehouse["id"]);
+          const inferred = warehouse["typedId"] ?? inferTypedWarehouseId(warehouse["id"])?.typed;
           if (inferred) {
             warehouseIdSet.add(inferred);
-            if (inferred !== warehouse.id) {
+            if (inferred !== warehouse["id"]) {
               const numeric = inferTypedWarehouseId(inferred)?.numeric;
               if (numeric) {
                 warehouseAliases[numeric] = inferred;
               } else {
-                warehouseAliases[warehouse.id] = inferred;
+                warehouseAliases[warehouse["id"]] = inferred;
               }
             }
           }
-          if (warehouse.typedId && warehouse.typedId !== warehouse.id) {
-            warehouseAliases[warehouse.id] = warehouse.typedId;
+          if (warehouse["typedId"] && warehouse["typedId"] !== warehouse["id"]) {
+            warehouseAliases[warehouse["id"]] = warehouse["typedId"];
           }
         }
         if (warehouseId) {
@@ -628,7 +628,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
         } else if (warehouseId) {
           const match = warehouses.find(
             (warehouse) =>
-              warehouse.id === warehouseId || warehouse.typedId === warehouseId
+              warehouse["id"] === warehouseId || warehouse["typedId"] === warehouseId
           );
           if (match?.typedId) {
             warehouseId = match.typedId ?? null;
@@ -667,7 +667,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     const filterStockMappings = (entries: typeof mappings) => {
       if (!validWarehouseIds) return entries;
       return entries.filter((mapping) => {
-        const key = mapping.sourceKey.trim();
+        const key = mapping["sourceKey"].trim();
         const lowered = key.toLowerCase();
         if (!lowered.startsWith("stock")) return true;
         const normalized = normalizeStockMappingKey(key);
@@ -797,7 +797,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       });
       warehouseId = null;
       effectiveMappings = effectiveMappings.filter(
-        (mapping) => !mapping.sourceKey.trim().toLowerCase().startsWith("stock")
+        (mapping) => !mapping["sourceKey"].trim().toLowerCase().startsWith("stock")
       );
       includeStockWithoutWarehouse = false;
       ({ exportFields } = await buildExportSnapshot(
@@ -844,7 +844,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       });
       warehouseId = null;
       effectiveMappings = effectiveMappings.filter(
-        (mapping) => !mapping.sourceKey.trim().toLowerCase().startsWith("stock")
+        (mapping) => !mapping["sourceKey"].trim().toLowerCase().startsWith("stock")
       );
       includeStockWithoutWarehouse = false;
       ({ exportFields } = await buildExportSnapshot(

@@ -3,6 +3,7 @@ W drafterze potrzebuje producenta, ikonek wiecej, modal as wide as other Product
 
 Back up restore note working
 
+I want to include Redis in My Database management
 
 Prisma to mongdo i w drugę musi byc flawless, rowniez obsluga path przez Mongo i Auto w zaleznosci jaka baza jest wybrana jako glowna
 

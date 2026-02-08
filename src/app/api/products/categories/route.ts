@@ -53,7 +53,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 
   const providerStart = performance.now();
   const provider = await getProductDataProvider();
-  timings.provider = performance.now() - providerStart;
+  timings['provider'] = performance.now() - providerStart;
 
   if (provider === "mongodb") {
     if (!process.env["MONGODB_URI"]) {
@@ -66,7 +66,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       .find({ catalogId })
       .sort({ name: 1 })
       .toArray();
-    timings.mongo = performance.now() - mongoStart;
+    timings['mongo'] = performance.now() - mongoStart;
     const normalized = categories.map((cat: Record<string, unknown>) => {
       const { _id, ...rest } = cat as unknown as {
         _id?: { toString?: () => string };
@@ -77,7 +77,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
         id: (rest as { id?: string }).id ?? fallbackId,
       };
     });
-    timings.total = performance.now() - requestStart;
+    timings['total'] = performance.now() - requestStart;
     if (shouldLogTiming()) {
       console.log("[timing] products.categories.GET", timings);
     }
@@ -95,8 +95,8 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     where: { catalogId },
     orderBy: { name: "asc" },
   });
-  timings.prisma = performance.now() - prismaStart;
-  timings.total = performance.now() - requestStart;
+  timings['prisma'] = performance.now() - prismaStart;
+  timings['total'] = performance.now() - requestStart;
   if (shouldLogTiming()) {
     console.log("[timing] products.categories.GET", timings);
   }

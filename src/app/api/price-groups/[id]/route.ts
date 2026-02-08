@@ -34,7 +34,7 @@ const priceGroupSchema = z
     addToPrice: z.coerce.number().int(),
   })
   .refine(
-    (data) => data.type === "standard" || !!data.sourceGroupId,
+    (data) => data.type === "standard" || !!data["sourceGroupId"],
     {
       message: "Source price group is required for dependent groups",
       path: ["sourceGroupId"],
@@ -151,7 +151,7 @@ async function PUT_handler(_req: NextRequest, ctx: ApiHandlerContext, params: { 
       currencyCode: currency.code,
       type: data.type,
       basePriceField: data.basePriceField,
-      sourceGroupId: data.sourceGroupId ?? null,
+      sourceGroupId: data["sourceGroupId"] ?? null,
       priceMultiplier: data.priceMultiplier,
       addToPrice: data.addToPrice,
       updatedAt: new Date(),
@@ -165,10 +165,10 @@ async function PUT_handler(_req: NextRequest, ctx: ApiHandlerContext, params: { 
     return NextResponse.json({
       ...(updated ?? current),
       currency,
-      sourceGroup: updateDoc.sourceGroupId
+      sourceGroup: updateDoc["sourceGroupId"]
         ? await db
             .collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION)
-            .findOne({ id: updateDoc.sourceGroupId })
+            .findOne({ id: updateDoc["sourceGroupId"] })
         : null,
     } as unknown as PriceGroupWithDetails);
   }
@@ -190,7 +190,7 @@ async function PUT_handler(_req: NextRequest, ctx: ApiHandlerContext, params: { 
         currencyId: data.currencyId,
         type: data.type,
         basePriceField: data.basePriceField,
-        ...(data.sourceGroupId !== undefined && { sourceGroupId: data.sourceGroupId }),
+        ...(data["sourceGroupId"] !== undefined && { sourceGroupId: data["sourceGroupId"] }),
         priceMultiplier: data.priceMultiplier,
         addToPrice: data.addToPrice,
       },

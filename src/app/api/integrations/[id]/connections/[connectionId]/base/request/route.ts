@@ -88,7 +88,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
   }
 
   if (method === "getInventoryProductDetailed") {
-    const inventoryValue = parameters.inventory_id;
+    const inventoryValue = parameters["inventory_id"];
     const inventoryId =
       typeof inventoryValue === "string"
         ? inventoryValue.trim()

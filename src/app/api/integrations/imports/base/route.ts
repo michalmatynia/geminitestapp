@@ -238,16 +238,16 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
         const images = extractBaseImageUrls(record);
         const baseProductId =
           mapped.baseProductId ??
-          toStringId(record.base_product_id) ??
-          toStringId(record.product_id) ??
-          toStringId(record.id);
+          toStringId(record['base_product_id']) ??
+          toStringId(record['product_id']) ??
+          toStringId(record['id']);
 
         // Prioritize EN, then PL, then DE, then raw name
         const name =
           mapped.name_en ??
           mapped.name_pl ??
           mapped.name_de ??
-          (typeof record.name === "string" ? record.name : "Unnamed");
+          (typeof record['name'] === "string" ? record['name'] : "Unnamed");
 
         const description =
           mapped.description_en ??
@@ -340,9 +340,9 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
 
       productsToImport = products.filter((record) => {
         const baseProductId =
-          toStringId((record as BaseRecord).base_product_id) ??
-          toStringId((record as BaseRecord).product_id) ??
-          toStringId((record as BaseRecord).id);
+          toStringId((record as BaseRecord)['base_product_id']) ??
+          toStringId((record as BaseRecord)['product_id']) ??
+          toStringId((record as BaseRecord)['id']);
         return baseProductId ? !existingIds.has(baseProductId) : true;
       });
     }

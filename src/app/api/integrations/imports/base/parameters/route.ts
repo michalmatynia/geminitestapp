@@ -1,22 +1,23 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { getIntegrationRepository } from "@/features/integrations/server";
-import { decryptSecret } from "@/features/integrations/server";
-import { callBaseApi } from "@/features/integrations/server";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { getIntegrationRepository } from '@/features/integrations/server';
+import { decryptSecret } from '@/features/integrations/server';
+import { callBaseApi } from '@/features/integrations/server';
 import {
   getImportParameterCache,
   setImportParameterCache
-} from "@/features/integrations/server";
-import { parseJsonBody } from "@/features/products/server";
-import { badRequestError, notFoundError } from "@/shared/errors/app-error";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+} from '@/features/integrations/server';
+import { parseJsonBody } from '@/features/products/server';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const optionalIdSchema = z.preprocess(
   (value) => {
-    if (typeof value !== "string") return value;
+    if (typeof value !== 'string') return value;
     const trimmed = value.trim();
     return trimmed ? trimmed : undefined;
   },
@@ -34,17 +35,17 @@ const extractProductRecord = (payload: unknown, productId: string): Record<strin
   if (Array.isArray(products)) {
     return (
       (products.find((entry: unknown) => {
-        if (!entry || typeof entry !== "object") return false;
+        if (!entry || typeof entry !== 'object') return false;
         const record = entry as Record<string, unknown>;
         return (
-          record.product_id === productId ||
-          record.id === productId ||
-          record.base_product_id === productId
+          record['product_id'] === productId ||
+          record['id'] === productId ||
+          record['base_product_id'] === productId
         );
       }) as Record<string, unknown> | undefined) ?? (products[0] as Record<string, unknown> | undefined) ?? null
     );
   }
-  if (products && typeof products === "object") {
+  if (products && typeof products === 'object') {
     const recordMap = products as Record<string, unknown>;
     return (
       (recordMap[productId] ??
@@ -56,7 +57,7 @@ const extractProductRecord = (payload: unknown, productId: string): Record<strin
 };
 
 const collectKeysFromObject = (value: unknown, keys: Set<string>) => {
-  if (!value || typeof value !== "object") return;
+  if (!value || typeof value !== 'object') return;
   if (Array.isArray(value)) {
     value.forEach((entry: unknown) => collectKeysFromObject(entry, keys));
     return;
@@ -73,7 +74,7 @@ const collectPrefixedKeys = (
   depth: number,
   maxDepth: number
 ) => {
-  if (!value || typeof value !== "object") return;
+  if (!value || typeof value !== 'object') return;
   if (depth > maxDepth) return;
   if (Array.isArray(value)) {
     value.forEach((entry: unknown, index: number) => {
@@ -95,10 +96,10 @@ const resolveValueByPath = (
   path: string
 ): unknown => {
   if (!path) return null;
-  const parts = path.split(".");
+  const parts = path.split('.');
   let current: unknown = record;
   for (const part of parts) {
-    if (!current || typeof current !== "object") return null;
+    if (!current || typeof current !== 'object') return null;
     current = (current as Record<string, unknown>)[part];
   }
   return current;
@@ -106,10 +107,10 @@ const resolveValueByPath = (
 
 const toPreviewValue = (value: unknown): string | null => {
   if (value === null || value === undefined) return null;
-  if (typeof value === "string") {
+  if (typeof value === 'string') {
     return value.length > 120 ? `${value.slice(0, 117)}...` : value;
   }
-  if (typeof value === "number" || typeof value === "boolean") {
+  if (typeof value === 'number' || typeof value === 'boolean') {
     return String(value);
   }
   if (Array.isArray(value)) {
@@ -117,10 +118,10 @@ const toPreviewValue = (value: unknown): string | null => {
       .slice(0, 4)
       .map((entry: unknown) => toPreviewValue(entry))
       .filter(Boolean)
-      .join(", ");
+      .join(', ');
     return joined ? (value.length > 4 ? `${joined}, ...` : joined) : null;
   }
-  if (typeof value === "object") {
+  if (typeof value === 'object') {
     try {
       const stringified = JSON.stringify(value);
       return stringified.length > 160
@@ -136,69 +137,69 @@ const toPreviewValue = (value: unknown): string | null => {
 const collectParameterKeys = (product: Record<string, unknown>) => {
   const keys = new Set<string>();
   // Explicitly add common identifiers
-  keys.add("product_id");
-  keys.add("inventory_id");
-  keys.add("id");
-  keys.add("ean");
-  keys.add("sku");
+  keys.add('product_id');
+  keys.add('inventory_id');
+  keys.add('id');
+  keys.add('ean');
+  keys.add('sku');
   
   const parameterBuckets = [
-    product.parameters,
-    product.params,
-    product.attributes,
-    product.features,
-    product.text_fields,
-    (product.text_fields as Record<string, unknown> | undefined)?.features,
-    (product.text_fields as Record<string, unknown> | undefined)?.["features|en"]
+    product['parameters'],
+    product['params'],
+    product['attributes'],
+    product['features'],
+    product['text_fields'],
+    (product['text_fields'] as Record<string, unknown> | undefined)?.['features'],
+    (product['text_fields'] as Record<string, unknown> | undefined)?.['features|en']
   ];
   for (const bucket of parameterBuckets) {
     if (!bucket) continue;
     if (Array.isArray(bucket)) {
       for (const entry of bucket) {
-        if (!entry || typeof entry !== "object") continue;
+        if (!entry || typeof entry !== 'object') continue;
         const record = entry as Record<string, unknown>;
         const name =
-          record.name ??
-          record.parameter ??
-          record.code ??
-          record.label ??
-          record.title;
+          record['name'] ??
+          record['parameter'] ??
+          record['code'] ??
+          record['label'] ??
+          record['title'];
         const id =
-          record.id ??
-          record.parameter_id ??
-          record.param_id ??
-          record.attribute_id;
-        if (typeof name === "string" && name.trim()) {
+          record['id'] ??
+          record['parameter_id'] ??
+          record['param_id'] ??
+          record['attribute_id'];
+        if (typeof name === 'string' && name.trim()) {
           keys.add(name.trim());
         }
-        if (typeof id === "string" && id.trim()) {
+        if (typeof id === 'string' && id.trim()) {
           keys.add(id.trim());
         }
       }
       continue;
     }
-    if (typeof bucket === "object") {
+    if (typeof bucket === 'object') {
       collectKeysFromObject(bucket, keys);
     }
   }
 
-  if (product.text_fields) {
-    collectPrefixedKeys(product.text_fields, "text_fields", keys, 0, 2);
+  if (product['text_fields']) {
+    collectPrefixedKeys(product['text_fields'], 'text_fields', keys, 0, 2);
   }
-  if (product.images) {
-    collectPrefixedKeys(product.images, "images", keys, 0, 1);
+  if (product['images']) {
+    collectPrefixedKeys(product['images'], 'images', keys, 0, 1);
   }
-  if (product.links) {
-    collectPrefixedKeys(product.links, "links", keys, 0, 2);
+  if (product['links']) {
+    collectPrefixedKeys(product['links'], 'links', keys, 0, 2);
   }
-  if (product.prices) {
-    collectPrefixedKeys(product.prices, "prices", keys, 0, 1);
+  if (product['prices']) {
+    collectPrefixedKeys(product['prices'], 'prices', keys, 0, 1);
   }
-  if (product.stock) {
-    collectPrefixedKeys(product.stock, "stock", keys, 0, 1);
+  if (product['stock']) {
+    collectPrefixedKeys(product['stock'], 'stock', keys, 0, 1);
   }
-  if (product.locations) {
-    collectPrefixedKeys(product.locations, "locations", keys, 0, 1);
+  if (product['locations']) {
+    collectPrefixedKeys(product['locations'], 'locations', keys, 0, 1);
   }
   const sortedKeys = Array.from(keys).sort((a, b) => a.localeCompare(b));
   const values: Record<string, string> = {};
@@ -207,13 +208,13 @@ const collectParameterKeys = (product: Record<string, unknown>) => {
       product[key] ??
       resolveValueByPath(product, key);
     const fallbackBuckets = [
-      product.parameters,
-      product.params,
-      product.attributes,
-      product.features,
-      product.text_fields,
-      (product.text_fields as Record<string, unknown> | undefined)?.features,
-      (product.text_fields as Record<string, unknown> | undefined)?.["features|en"]
+      product['parameters'],
+      product['params'],
+      product['attributes'],
+      product['features'],
+      product['text_fields'],
+      (product['text_fields'] as Record<string, unknown> | undefined)?.['features'],
+      (product['text_fields'] as Record<string, unknown> | undefined)?.['features|en']
     ];
     let resolved = directValue;
     if (resolved === undefined) {
@@ -221,30 +222,29 @@ const collectParameterKeys = (product: Record<string, unknown>) => {
         if (!bucket) continue;
         if (Array.isArray(bucket)) {
           for (const entry of bucket) {
-            if (!entry || typeof entry !== "object") continue;
+            if (!entry || typeof entry !== 'object') continue;
             const record = entry as Record<string, unknown>;
             const name =
-              record.name ??
-              record.parameter ??
-              record.code ??
-              record.label ??
-              record.title;
+                      record['name'] ??
+                      record['parameter'] ??
+                      record['code'] ??
+                      record['label'] ??
+                      record['title'];
             const id =
-              record.id ??
-              record.parameter_id ??
-              record.param_id ??
-              record.attribute_id;
-            if (name === key || id === key) {
+                      record['id'] ??
+                      record['parameter_id'] ??
+                      record['param_id'] ??
+                      record['attribute_id'];            if (name === key || id === key) {
               resolved =
-                record.value ??
-                record.values ??
-                record.value_id ??
-                record.label ??
-                record.text;
+                record['value'] ??
+                record['values'] ??
+                record['value_id'] ??
+                record['label'] ??
+                record['text'];
               break;
             }
           }
-        } else if (typeof bucket === "object" && key in bucket) {
+        } else if (typeof bucket === 'object' && key in bucket) {
           resolved = (bucket as Record<string, unknown>)[key];
         }
         if (resolved !== undefined) break;
@@ -258,7 +258,7 @@ const collectParameterKeys = (product: Record<string, unknown>) => {
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, requestSchema, {
-    logPrefix: "imports.base.parameters.POST"
+    logPrefix: 'imports.base.parameters.POST'
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -276,46 +276,46 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   }
 
   if (!data.inventoryId || !data.productId) {
-    throw badRequestError("Inventory ID and Product ID are required.");
+    throw badRequestError('Inventory ID and Product ID are required.');
   }
 
   const integrationRepo = await getIntegrationRepository();
   const integrations = await integrationRepo.listIntegrations();
-  const baseIntegration = integrations.find((i) => i.slug === "baselinker");
+  const baseIntegration = integrations.find((i) => i.slug === 'baselinker');
   if (!baseIntegration) {
-    throw notFoundError("Base integration not found.");
+    throw notFoundError('Base integration not found.');
   }
 
   const connections = await integrationRepo.listConnections(baseIntegration.id);
   const connection = connections.find((c) => c.baseApiToken);
   if (!connection?.baseApiToken) {
-    throw badRequestError("No Base API token configured.");
+    throw badRequestError('No Base API token configured.');
   }
 
   const token = decryptSecret(connection.baseApiToken);
-  const payload = await callBaseApi(token, "getInventoryProductsData", {
+  const payload = await callBaseApi(token, 'getInventoryProductsData', {
     inventory_id: data.inventoryId,
     products: [data.productId]
   });
   const product = extractProductRecord(payload, data.productId);
-  if (!product || typeof product !== "object") {
-    throw notFoundError("Product not found in response.", {
+  if (!product || typeof product !== 'object') {
+    throw notFoundError('Product not found in response.', {
       productId: data.productId
     });
   }
   
   // Inject inventory_id if missing, so it can be mapped
-  if (data.inventoryId && !product["inventory_id"]) {
-    product["inventory_id"] = data.inventoryId;
+  if (data.inventoryId && !product['inventory_id']) {
+    product['inventory_id'] = data.inventoryId;
   }
 
   // Inject product ID variants if missing
   if (data.productId) {
-    if (!product["product_id"]) {
-       product["product_id"] = data.productId;
+    if (!product['product_id']) {
+      product['product_id'] = data.productId;
     }
-    if (!product["id"]) {
-        product["id"] = data.productId;
+    if (!product['id']) {
+      product['id'] = data.productId;
     }
   }
 
@@ -332,14 +332,14 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     });
   } catch (cacheError) {
     try {
-      const { ErrorSystem } = await import("@/features/observability/services/error-system");
+      const { ErrorSystem } = await import('@/features/observability/services/error-system');
       void ErrorSystem.captureException(cacheError, { 
-        service: "api/integrations/imports/base/parameters",
+        service: 'api/integrations/imports/base/parameters',
         inventoryId: data.inventoryId,
         productId: data.productId
       });
     } catch (logError) {
-      console.error("Failed to cache parameters (and logging failed)", cacheError, logError);
+      console.error('Failed to cache parameters (and logging failed)', cacheError, logError);
     }
   }
 
@@ -351,18 +351,18 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
   return NextResponse.json(
     cache
       ? {
-          inventoryId: cache.inventoryId,
-          productId: cache.productId,
-          keys: cache.keys,
-          values: cache.values
-        }
+        inventoryId: cache.inventoryId,
+        productId: cache.productId,
+        keys: cache.keys,
+        values: cache.values
+      }
       : { keys: [], values: {} }
   );
 }
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "products.imports.base.parameters.POST", requireCsrf: false });
+  { source: 'products.imports.base.parameters.POST', requireCsrf: false });
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "products.imports.base.parameters.GET", requireCsrf: false });
+  { source: 'products.imports.base.parameters.GET', requireCsrf: false });

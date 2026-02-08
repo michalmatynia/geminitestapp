@@ -108,13 +108,13 @@ const mergeRuntimeOnlyPathConfigWrite = (
   const merged: Record<string, unknown> = {
     ...current,
     ...(Object.prototype.hasOwnProperty.call(incoming, "runtimeState")
-      ? { runtimeState: incoming.runtimeState }
+      ? { runtimeState: incoming["runtimeState"] }
       : {}),
     ...(Object.prototype.hasOwnProperty.call(incoming, "lastRunAt")
-      ? { lastRunAt: incoming.lastRunAt }
+      ? { lastRunAt: incoming["lastRunAt"] }
       : {}),
     ...(Object.prototype.hasOwnProperty.call(incoming, "updatedAt")
-      ? { updatedAt: incoming.updatedAt }
+      ? { updatedAt: incoming["updatedAt"] }
       : {}),
   };
   return JSON.stringify(merged);
@@ -283,7 +283,7 @@ const fetchAndCacheSettings = async (
 ): Promise<SettingRecord[]> => {
   const totalStart = performance.now();
   const provider = await getAppDbProvider();
-  if (timings) timings.provider = performance.now() - totalStart;
+  if (timings) timings["provider"] = performance.now() - totalStart;
   const hasMongo = Boolean(process.env["MONGODB_URI"]);
   const envProvider = process.env["APP_DB_PROVIDER"]?.toLowerCase().trim();
   const forcePrisma = envProvider === "prisma";
@@ -307,7 +307,7 @@ const fetchAndCacheSettings = async (
         throw error;
       }
     } finally {
-      if (timings) timings.prisma = performance.now() - prismaStart;
+      if (timings) timings["prisma"] = performance.now() - prismaStart;
     }
   }
   const shouldReadMongoSettings = hasMongo && (!forcePrisma || prismaMissing);
@@ -315,7 +315,7 @@ const fetchAndCacheSettings = async (
     ? await (async (): Promise<SettingRecord[]> => {
         const mongoStart = performance.now();
         const settings = await listMongoSettings(scope);
-        if (timings) timings.mongo = performance.now() - mongoStart;
+        if (timings) timings["mongo"] = performance.now() - mongoStart;
         return settings;
       })()
     : [];
@@ -349,7 +349,7 @@ const fetchAndCacheSettings = async (
     });
   }
   setCachedSettings(settings, scope);
-  if (timings) timings.total = performance.now() - totalStart;
+  if (timings) timings["total"] = performance.now() - totalStart;
   if (timings && shouldLogTiming()) {
     console.log("[timing] settings.fetch", { scope, ...timings });
   }

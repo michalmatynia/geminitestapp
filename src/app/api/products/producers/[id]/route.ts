@@ -57,15 +57,15 @@ async function PUT_handler(
       }
     }
     const update: Record<string, unknown> = { updatedAt: new Date() };
-    if (name !== undefined) update.name = name;
-    if (website !== undefined) update.website = website;
+    if (name !== undefined) update['name'] = name;
+    if (website !== undefined) update['website'] = website;
 
     const res = await db.collection("product_producers").findOneAndUpdate(
       { id },
       { $set: update },
       { returnDocument: "after" },
     );
-    const doc = res?.value as Record<string, unknown> | null;
+    const doc = res?.['value'] as Record<string, unknown> | null;
     if (!doc) throw notFoundError("Producer not found", { producerId: id });
     return NextResponse.json(doc as unknown as Producer);
   }

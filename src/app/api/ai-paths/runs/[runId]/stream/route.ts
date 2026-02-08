@@ -1,20 +1,19 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest } from "next/server";
+import { NextRequest } from 'next/server';
 
-import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";
-import { notFoundError } from "@/shared/errors/app-error";
-import { assertAiPathRunAccess, requireAiPathsAccess } from "@/features/ai/ai-paths/server";
-import type { AiPathRunEventRecord, AiPathRunRecord, AiPathRunNodeRecord } from "@/shared/types/ai-paths";
-
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { assertAiPathRunAccess, requireAiPathsAccess } from '@/features/ai/ai-paths/server';
+import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { AiPathRunEventRecord, AiPathRunRecord, AiPathRunNodeRecord } from '@/shared/types/ai-paths';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const TERMINAL_STATUSES = new Set([
-  "completed",
-  "failed",
-  "canceled",
-  "dead_lettered",
+  'completed',
+  'failed',
+  'canceled',
+  'dead_lettered',
 ]);
 const normalizeLimit = (value: number, fallback: number): number => {
   if (!Number.isFinite(value) || value <= 0) return fallback;
@@ -29,7 +28,7 @@ const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout
 
 const toISOStringSafe = (value?: Date | string | null): string | null => {
   if (!value) return null;
-  if (typeof value === "string") return value;
+  if (typeof value === 'string') return value;
   return value.toISOString();
 };
 
@@ -55,16 +54,16 @@ async function GET_handler(
   const repo = getPathRunRepository();
   const initialRun = await repo.findRunById(runId);
   if (!initialRun) {
-    throw notFoundError("Run not found", { runId });
+    throw notFoundError('Run not found', { runId });
   }
   assertAiPathRunAccess(access, initialRun);
 
   const encoder = new TextEncoder();
-  const sinceParam = new URL(req.url).searchParams.get("since");
+  const sinceParam = new URL(req.url).searchParams.get('since');
   const initialSince = parseSinceParam(sinceParam);
 
   let cancelled = false;
-  req.signal.addEventListener("abort", () => {
+  req.signal.addEventListener('abort', () => {
     cancelled = true;
   });
 
@@ -77,8 +76,8 @@ async function GET_handler(
 
       const run = initialRun;
 
-      send("ready", { runId });
-      send("run", run);
+      send('ready', { runId });
+      send('run', run);
 
       let lastRunUpdatedAt = toISOStringSafe(run.updatedAt ?? run.createdAt);
       let lastNodeUpdatedAt: string | null = null;
@@ -89,7 +88,7 @@ async function GET_handler(
       while (!cancelled) {
         const nextRun: AiPathRunRecord | null = await repo.findRunById(runId);
         if (!nextRun) {
-          send("error", { message: "Run not found", runId });
+          send('error', { message: 'Run not found', runId });
           break;
         }
 
@@ -97,7 +96,7 @@ async function GET_handler(
           nextRun.updatedAt ?? nextRun.createdAt
         );
         if (nextRunUpdatedAt && nextRunUpdatedAt !== lastRunUpdatedAt) {
-          send("run", nextRun);
+          send('run', nextRun);
           lastRunUpdatedAt = nextRunUpdatedAt;
         }
 
@@ -109,7 +108,7 @@ async function GET_handler(
           return !prev || ts > prev;
         });
         if (changedNodes.length > 0) {
-          send("nodes", changedNodes);
+          send('nodes', changedNodes);
           let latestNodeTs: string | null = lastNodeUpdatedAt;
           for (const node of changedNodes) {
             const candidate = toISOStringSafe(node.updatedAt ?? node.createdAt);
@@ -126,7 +125,7 @@ async function GET_handler(
         if (events.length > 0) {
           const overflow = events.length > EVENT_BATCH_LIMIT;
           const batch = overflow ? events.slice(0, EVENT_BATCH_LIMIT) : events;
-          send("events", { events: batch, overflow, limit: EVENT_BATCH_LIMIT });
+          send('events', { events: batch, overflow, limit: EVENT_BATCH_LIMIT });
           const latestEventTime = batch.reduce<string | null>((max: string | null, event: AiPathRunEventRecord) => {
             const candidate = toISOStringSafe(event.createdAt);
             if (!candidate) return max;
@@ -139,7 +138,7 @@ async function GET_handler(
         }
 
         if (TERMINAL_STATUSES.has(nextRun.status)) {
-          send("done", { runId, status: nextRun.status });
+          send('done', { runId, status: nextRun.status });
           break;
         }
 
@@ -155,13 +154,13 @@ async function GET_handler(
 
   return new Response(stream, {
     headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive",
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
     },
   });
 }
 
 export const GET = apiHandlerWithParams<{ runId: string }>(GET_handler, {
-  source: "ai-paths.runs.stream",
+  source: 'ai-paths.runs.stream',
 });

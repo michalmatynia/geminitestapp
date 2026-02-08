@@ -1,31 +1,31 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { ObjectId, Filter } from "mongodb"; // Added imports
+import { ObjectId, Filter } from 'mongodb'; // Added imports
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
-import prisma from "@/shared/lib/db/prisma";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { parseJsonBody } from "@/shared/lib/api/parse-json";
-import { badRequestError, notFoundError } from "@/shared/errors/app-error";
-import { requireAiPathsAccess } from "@/features/ai/ai-paths/server";
-import type { AiTriggerButtonRecord } from "@/shared/types/ai-trigger-buttons";
+import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import type { AiTriggerButtonRecord } from '@/shared/types/ai-trigger-buttons';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
-const SETTINGS_COLLECTION = "settings";
-const AI_PATHS_TRIGGER_BUTTONS_KEY = "ai_paths_trigger_buttons";
+const SETTINGS_COLLECTION = 'settings';
+const AI_PATHS_TRIGGER_BUTTONS_KEY = 'ai_paths_trigger_buttons';
 
 const triggerButtonLocationSchema = z.enum([
-  "product_modal",
-  "product_list",
-  "note_modal",
-  "note_list",
+  'product_modal',
+  'product_list',
+  'note_modal',
+  'note_list',
 ]);
 
-const triggerButtonModeSchema = z.enum(["click", "toggle"]);
-const triggerButtonDisplaySchema = z.enum(["icon", "icon_label"]);
+const triggerButtonModeSchema = z.enum(['click', 'toggle']);
+const triggerButtonDisplaySchema = z.enum(['icon', 'icon_label']);
 
 const triggerButtonRecordSchema = z.object({
   id: z.string().min(1),
@@ -34,7 +34,7 @@ const triggerButtonRecordSchema = z.object({
   iconId: z.string().nullable().optional(),
   locations: z
     .preprocess(
-      (value) => (typeof value === "string" ? [value] : value),
+      (value) => (typeof value === 'string' ? [value] : value),
       z.array(triggerButtonLocationSchema)
     )
     .optional(),
@@ -57,16 +57,16 @@ const updateTriggerButtonSchema = z
     display: triggerButtonDisplaySchema.optional(),
   })
   .refine((value) => Object.keys(value).length > 0, {
-    message: "No updates provided",
+    message: 'No updates provided',
   });
 
 type SettingDoc = { _id?: string | ObjectId; key?: string; value?: string; createdAt?: Date; updatedAt?: Date };
 
 const canUsePrismaSettings = (): boolean =>
-  Boolean(process.env["DATABASE_URL"]) && "setting" in prisma;
+  Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
 
 const readMongoSetting = async (key: string): Promise<string | null> => {
-  if (!process.env["MONGODB_URI"]) return null;
+  if (!process.env['MONGODB_URI']) return null;
   const mongo = await getMongoDb();
   // Using $or with both _id (ObjectId) and key (string) allows flexibility,
   // but for _id, it must be an ObjectId type. If key is a string and not a valid ObjectId,
@@ -82,11 +82,11 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
     .collection<SettingDoc>(SETTINGS_COLLECTION)
     .findOne(filter);
   const value = doc?.value;
-  return typeof value === "string" ? value : null;
+  return typeof value === 'string' ? value : null;
 };
 
 const writeMongoSetting = async (key: string, value: string): Promise<boolean> => {
-  if (!process.env["MONGODB_URI"]) return false;
+  if (!process.env['MONGODB_URI']) return false;
   const mongo = await getMongoDb();
   const now = new Date();
   await mongo.collection<SettingDoc>(SETTINGS_COLLECTION).updateOne(
@@ -107,7 +107,7 @@ const readPrismaSetting = async (key: string): Promise<string | null> => {
       where: { key },
       select: { value: true },
     });
-    return typeof setting?.value === "string" ? setting.value : null;
+    return typeof setting?.value === 'string' ? setting.value : null;
   } catch {
     return null;
   }
@@ -126,7 +126,7 @@ const writePrismaSetting = async (key: string, value: string): Promise<boolean> 
 
 const readTriggerButtonsRaw = async (): Promise<string | null> => {
   const provider = await getAppDbProvider();
-  if (provider === "mongodb") {
+  if (provider === 'mongodb') {
     const fromMongo = await readMongoSetting(AI_PATHS_TRIGGER_BUTTONS_KEY);
     if (fromMongo !== null) return fromMongo;
     return readPrismaSetting(AI_PATHS_TRIGGER_BUTTONS_KEY);
@@ -139,16 +139,16 @@ const readTriggerButtonsRaw = async (): Promise<string | null> => {
 const writeTriggerButtonsRaw = async (value: string): Promise<void> => {
   const provider = await getAppDbProvider();
   const wrote =
-    provider === "mongodb"
+    provider === 'mongodb'
       ? await writeMongoSetting(AI_PATHS_TRIGGER_BUTTONS_KEY, value)
       : await writePrismaSetting(AI_PATHS_TRIGGER_BUTTONS_KEY, value);
   if (!wrote) {
     const fallback =
-      provider === "mongodb"
+      provider === 'mongodb'
         ? await writePrismaSetting(AI_PATHS_TRIGGER_BUTTONS_KEY, value)
         : await writeMongoSetting(AI_PATHS_TRIGGER_BUTTONS_KEY, value);
     if (!fallback) {
-      throw new Error("No settings store configured for trigger buttons.");
+      throw new Error('No settings store configured for trigger buttons.');
     }
   }
 };
@@ -167,14 +167,14 @@ const parseTriggerButtons = (raw: string | null): AiTriggerButtonRecord[] => {
       const locations =
         Array.isArray(data.locations) && data.locations.length > 0
           ? data.locations
-          : (["product_modal"] as const);
+          : (['product_modal'] as const);
       items.push({
         id: data.id,
         name: data.name,
         iconId: data.iconId ?? null,
         locations: [...locations],
-        mode: data.mode ?? "click",
-        display: data.display ?? "icon_label",
+        mode: data.mode ?? 'click',
+        display: data.display ?? 'icon_label',
         createdAt: data.createdAt ?? now,
         updatedAt: data.updatedAt ?? data.createdAt ?? now,
       });
@@ -192,16 +192,16 @@ async function PATCH_handler(
 ): Promise<Response> {
   await requireAiPathsAccess();
   const id = params.id;
-  if (!id) throw badRequestError("Missing trigger button id.");
+  if (!id) throw badRequestError('Missing trigger button id.');
   const parsed = await parseJsonBody(req, updateTriggerButtonSchema, {
-    logPrefix: "ai-paths.trigger-buttons.PATCH",
+    logPrefix: 'ai-paths.trigger-buttons.PATCH',
   });
   if (!parsed.ok) return parsed.response;
   const raw = await readTriggerButtonsRaw();
   const existing = parseTriggerButtons(raw);
   const index = existing.findIndex((item: AiTriggerButtonRecord) => item.id === id);
   if (index === -1) {
-    throw notFoundError("Trigger button not found.", { id });
+    throw notFoundError('Trigger button not found.', { id });
   }
   const current = existing[index]!;
   const now = new Date().toISOString();
@@ -227,21 +227,21 @@ async function DELETE_handler(
 ): Promise<Response> {
   await requireAiPathsAccess();
   const id = params.id;
-  if (!id) throw badRequestError("Missing trigger button id.");
+  if (!id) throw badRequestError('Missing trigger button id.');
   const raw = await readTriggerButtonsRaw();
   const existing = parseTriggerButtons(raw);
   const next = existing.filter((item: AiTriggerButtonRecord) => item.id !== id);
   if (next.length === existing.length) {
-    throw notFoundError("Trigger button not found.", { id });
+    throw notFoundError('Trigger button not found.', { id });
   }
   await writeTriggerButtonsRaw(JSON.stringify(next));
   return NextResponse.json({ ok: true });
 }
 
 export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, {
-  source: "ai-paths.trigger-buttons.PATCH",
+  source: 'ai-paths.trigger-buttons.PATCH',
 });
 
 export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, {
-  source: "ai-paths.trigger-buttons.DELETE",
+  source: 'ai-paths.trigger-buttons.DELETE',
 });

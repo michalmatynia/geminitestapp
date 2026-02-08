@@ -11,7 +11,7 @@ describe('base-token-resolver', () => {
   beforeEach(() => {
     vi.resetModules();
     process.env = { ...originalEnv };
-    process.env.INTEGRATION_ENCRYPTION_KEY = Buffer.from('b'.repeat(32)).toString('base64');
+    process.env['INTEGRATION_ENCRYPTION_KEY'] = Buffer.from('b'.repeat(32)).toString('base64');
   });
 
   afterEach(() => {

@@ -25,9 +25,9 @@ describe('Transform Handlers', () => {
         fetchEntityCached: vi.fn().mockResolvedValue({ id: 'p1', name: 'Product 1' })
       });
       const result = await handleContext(ctx);
-      expect(result.entityId).toBe('p1');
-      expect(result.entityType).toBe('product');
-      expect((result.context as any).source).toBe('context-filter');
+      expect(result['entityId']).toBe('p1');
+      expect(result['entityType']).toBe('product');
+      expect((result['context'] as any).source).toBe('context-filter');
     });
   });
 
@@ -63,7 +63,7 @@ describe('Transform Handlers', () => {
         nodeInputs: { entityJson: { name: 'Fallback Name' } }
       });
       const result = await handleParser(ctx);
-      expect(result.title).toBe('Fallback Name');
+      expect(result['title']).toBe('Fallback Name');
     });
   });
 
@@ -159,7 +159,7 @@ describe('Transform Handlers', () => {
         nodeInputs: { context: { user: { score: 0 } } }
       });
       const result = await handleMutator(ctx);
-      expect((result.context as any).user.score).toBe('100');
+      expect((result['context'] as any).user.score).toBe('100');
     });
   });
 
@@ -179,8 +179,8 @@ describe('Transform Handlers', () => {
         nodeInputs: { context: { user: { name: 'Alice' } } }
       });
       const result = await handleValidator(ctx);
-      expect(result.valid).toBe(false);
-      expect(result.errors).toContain('user.email');
+      expect(result['valid']).toBe(false);
+      expect(result['errors']).toContain('user.email');
     });
   });
 

@@ -50,7 +50,7 @@ vi.mock('bcryptjs', () => ({
 describe('Auth Register API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.MONGODB_URI = 'mongodb://mock';
+    process.env['MONGODB_URI'] = 'mongodb://mock';
     
     // Set default mock return value
     vi.mocked(getAuthUserPageSettings).mockResolvedValue({
@@ -61,7 +61,7 @@ describe('Auth Register API', () => {
 
   afterAll(() => {
     vi.restoreAllMocks();
-    delete process.env.MONGODB_URI;
+    delete process.env['MONGODB_URI'];
   });
 
   it('should successfully register a new user', async () => {

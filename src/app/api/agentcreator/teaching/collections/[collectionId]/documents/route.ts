@@ -1,15 +1,15 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { parseJsonBody } from "@/shared/lib/api/parse-json";
-import { badRequestError, notFoundError } from "@/shared/errors/app-error";
-import type { AgentTeachingEmbeddingDocumentListItem } from "@/shared/types/agent-teaching";
-import { createEmbeddingDocument, getEmbeddingCollectionById, listEmbeddingDocuments } from "@/features/ai/agentcreator/teaching/server/repository";
-import { generateOllamaEmbedding } from "@/features/ai/agentcreator/teaching/server/embeddings";
+import { generateOllamaEmbedding } from '@/features/ai/agentcreator/teaching/server/embeddings';
+import { createEmbeddingDocument, getEmbeddingCollectionById, listEmbeddingDocuments } from '@/features/ai/agentcreator/teaching/server/repository';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import type { AgentTeachingEmbeddingDocumentListItem } from '@/shared/types/agent-teaching';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const createDocumentSchema = z.object({
   text: z.string().trim().min(1),
@@ -23,10 +23,10 @@ type Params = { collectionId: string };
 async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const params = ctx.params as unknown as Params | undefined;
   const collectionId = params?.collectionId;
-  if (!collectionId) throw badRequestError("Missing collectionId.");
+  if (!collectionId) throw badRequestError('Missing collectionId.');
   const url = new URL(req.url);
-  const limit = Number(url.searchParams.get("limit") ?? "50");
-  const skip = Number(url.searchParams.get("skip") ?? "0");
+  const limit = Number(url.searchParams.get('limit') ?? '50');
+  const skip = Number(url.searchParams.get('skip') ?? '0');
   const result = await listEmbeddingDocuments(collectionId, { limit, skip });
   return NextResponse.json(result);
 }
@@ -34,13 +34,13 @@ async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Re
 async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const params = ctx.params as unknown as Params | undefined;
   const collectionId = params?.collectionId;
-  if (!collectionId) throw badRequestError("Missing collectionId.");
+  if (!collectionId) throw badRequestError('Missing collectionId.');
   const collection = await getEmbeddingCollectionById(collectionId);
   if (!collection) {
-    throw notFoundError("Collection not found");
+    throw notFoundError('Collection not found');
   }
   const parsed = await parseJsonBody(req, createDocumentSchema, {
-    logPrefix: "agentcreator.teaching.documents.POST",
+    logPrefix: 'agentcreator.teaching.documents.POST',
   });
   if (!parsed.ok) return parsed.response;
   const data = parsed.data;
@@ -67,11 +67,11 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
-  { source: "agentcreator.teaching.documents.GET" }
+  { source: 'agentcreator.teaching.documents.GET' }
 );
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
-  { source: "agentcreator.teaching.documents.POST" }
+  { source: 'agentcreator.teaching.documents.POST' }
 );
 

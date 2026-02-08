@@ -20,7 +20,7 @@ vi.mock('@/shared/lib/db/prisma', () => ({
 describe('Transient Recovery Settings', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.DATABASE_URL = 'postgresql://...';
+    process.env['DATABASE_URL'] = 'postgresql://...';
   });
 
   it('returns default settings if no setting found in DB', async () => {

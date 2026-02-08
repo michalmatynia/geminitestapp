@@ -45,7 +45,7 @@ vi.mock('bcryptjs', () => ({
 describe('Auth Register API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.MONGODB_URI = 'mongodb://localhost:27017/test';
+    process.env['MONGODB_URI'] = 'mongodb://localhost:27017/test';
   });
 
   it('registers a new user successfully with MongoDB', async () => {

@@ -49,15 +49,15 @@ describe('critical-error-notifier', () => {
   });
 
   it('should not notify if disabled', async () => {
-    process.env.CRITICAL_ERROR_NOTIFICATIONS_ENABLED = 'false';
+    process.env['CRITICAL_ERROR_NOTIFICATIONS_ENABLED'] = 'false';
     const result = await notifyCriticalError(mockLog, true);
     expect(result.delivered).toBe(false);
     expect(fetch).not.toHaveBeenCalled();
   });
 
   it('should notify if enabled and critical', async () => {
-    process.env.CRITICAL_ERROR_NOTIFICATIONS_ENABLED = 'true';
-    process.env.CRITICAL_ERROR_WEBHOOK_URL = 'http://webhook.test';
+    process.env['CRITICAL_ERROR_NOTIFICATIONS_ENABLED'] = 'true';
+    process.env['CRITICAL_ERROR_WEBHOOK_URL'] = 'http://webhook.test';
     
     const result = await notifyCriticalError(mockLog, true);
     
@@ -69,9 +69,9 @@ describe('critical-error-notifier', () => {
   });
 
   it('should throttle frequent identical notifications', async () => {
-    process.env.CRITICAL_ERROR_NOTIFICATIONS_ENABLED = 'true';
-    process.env.CRITICAL_ERROR_WEBHOOK_URL = 'http://webhook.test';
-    process.env.CRITICAL_ERROR_THROTTLE_SECONDS = '60';
+    process.env['CRITICAL_ERROR_NOTIFICATIONS_ENABLED'] = 'true';
+    process.env['CRITICAL_ERROR_WEBHOOK_URL'] = 'http://webhook.test';
+    process.env['CRITICAL_ERROR_THROTTLE_SECONDS'] = '60';
 
     // First call
     const res1 = await notifyCriticalError(mockLog, true);
@@ -87,9 +87,9 @@ describe('critical-error-notifier', () => {
   });
 
   it('should not notify if log level is below minimum', async () => {
-    process.env.CRITICAL_ERROR_NOTIFICATIONS_ENABLED = 'true';
-    process.env.CRITICAL_ERROR_WEBHOOK_URL = 'http://webhook.test';
-    process.env.CRITICAL_ERROR_MIN_LEVEL = 'error';
+    process.env['CRITICAL_ERROR_NOTIFICATIONS_ENABLED'] = 'true';
+    process.env['CRITICAL_ERROR_WEBHOOK_URL'] = 'http://webhook.test';
+    process.env['CRITICAL_ERROR_MIN_LEVEL'] = 'error';
 
     const infoLog = { ...mockLog, level: 'info' };
     const result = await notifyCriticalError(infoLog, true);

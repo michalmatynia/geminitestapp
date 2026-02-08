@@ -323,7 +323,7 @@ export function useAiPathsRuntime({
       ]);
       let changed = false;
       candidateNodeIds.forEach((nodeId: string) => {
-        const outputStatus = ((currentOutputs[nodeId] ?? {}) as Record<string, unknown>).status;
+        const outputStatus = ((currentOutputs[nodeId] ?? {}) as Record<string, unknown>)['status'];
         const normalizedStatus = normalizeNodeStatus(nextStatuses[nodeId] ?? outputStatus);
         if (!normalizedStatus) return;
         if (NON_SETTLED_RUNTIME_NODE_STATUSES.has(normalizedStatus)) return;
@@ -403,7 +403,7 @@ export function useAiPathsRuntime({
       serverRunActiveRef.current ||
       runStatusRef.current !== 'idle';
     Object.entries(runtimeState.outputs ?? {}).forEach(([nodeId, nodeOutputs]: [string, RuntimePortValues]) => {
-      const status = (nodeOutputs as Record<string, unknown>)?.status;
+      const status = (nodeOutputs as Record<string, unknown>)?.['status'];
       if (typeof status !== 'string') return;
       const normalizedStatus = normalizeNodeStatus(status);
       if (!normalizedStatus) return;
@@ -565,18 +565,18 @@ export function useAiPathsRuntime({
     (simulationNode: AiNode, simulationContext: Record<string, unknown>): void => {
       if (executionMode !== 'local') return;
       const entityId =
-        typeof simulationContext.entityId === 'string' ? simulationContext.entityId : null;
+        typeof simulationContext['entityId'] === 'string' ? (simulationContext['entityId'] as string) : null;
       const entityType =
-        typeof simulationContext.entityType === 'string' ? simulationContext.entityType : null;
+        typeof simulationContext['entityType'] === 'string' ? (simulationContext['entityType'] as string) : null;
       const productId =
-        typeof simulationContext.productId === 'string' ? simulationContext.productId : null;
+        typeof simulationContext['productId'] === 'string' ? (simulationContext['productId'] as string) : null;
       const simulationOutputs: RuntimePortValues = {
         context: simulationContext,
         ...(entityId ? { entityId } : {}),
         ...(entityType ? { entityType } : {}),
         ...(productId ? { productId } : {}),
-        ...(simulationContext.entityJson !== undefined
-          ? { entityJson: simulationContext.entityJson }
+        ...(simulationContext['entityJson'] !== undefined
+          ? { entityJson: simulationContext['entityJson'] }
           : {}),
       };
       setRuntimeState((prev: RuntimeState): RuntimeState => {
@@ -827,17 +827,17 @@ export function useAiPathsRuntime({
           const nextInputs = { ...(prev.inputs ?? {}) };
           let changed = false;
           for (const node of nodes) {
-            const prevOut = (nextOutputs[node.nodeId] ?? {}) as Record<string, unknown>;
-            if (prevOut.status !== node.status) {
-              nextOutputs[node.nodeId] = { ...prevOut, status: node.status } as RuntimePortValues;
+            const prevOut = (nextOutputs[node['nodeId']] ?? {}) as Record<string, unknown>;
+            if (prevOut['status'] !== node['status']) {
+              nextOutputs[node['nodeId']] = { ...prevOut, status: node['status'] } as RuntimePortValues;
               changed = true;
             }
-            if (node.inputs) {
-              nextInputs[node.nodeId] = node.inputs;
+            if (node['inputs']) {
+              nextInputs[node['nodeId']] = node['inputs'];
               changed = true;
             }
-            if (node.outputs) {
-              nextOutputs[node.nodeId] = { ...(nextOutputs[node.nodeId] as Record<string, unknown> ?? {}), ...node.outputs, status: node.status } as RuntimePortValues;
+            if (node['outputs']) {
+              nextOutputs[node['nodeId']] = { ...(nextOutputs[node['nodeId']] as Record<string, unknown> ?? {}), ...node['outputs'], status: node['status'] } as RuntimePortValues;
               changed = true;
             }
           }
@@ -876,12 +876,12 @@ export function useAiPathsRuntime({
         };
         const eventBatch = Array.isArray(payload.events) ? payload.events : [];
         eventBatch.forEach((item: AiPathRunEventRecord) => {
-          const metadata = (item.metadata ?? {});
-          const nodeId = typeof metadata.nodeId === 'string' ? metadata.nodeId : undefined;
-          const status = typeof metadata.status === 'string' ? metadata.status : undefined;
+          const metadata = (item.metadata ?? {}) as Record<string, unknown>;
+          const nodeId = typeof metadata['nodeId'] === 'string' ? metadata['nodeId'] : undefined;
+          const status = typeof metadata['status'] === 'string' ? metadata['status'] : undefined;
           const iteration =
-            typeof metadata.iteration === 'number' && Number.isFinite(metadata.iteration)
-              ? metadata.iteration
+            typeof metadata['iteration'] === 'number' && Number.isFinite(metadata['iteration'])
+              ? metadata['iteration']
               : undefined;
           const runtimeNode = nodeId
             ? normalizedNodes.find((candidate: AiNode): boolean => candidate.id === nodeId)
@@ -895,8 +895,8 @@ export function useAiPathsRuntime({
               runId,
               nodeType: runtimeNode?.type,
               nodeTitle:
-                typeof metadata.nodeTitle === 'string'
-                  ? metadata.nodeTitle
+                typeof metadata['nodeTitle'] === 'string'
+                  ? metadata['nodeTitle']
                   : runtimeNode?.title ?? null,
               kind:
                 normalizedStatus === 'running'
@@ -1287,7 +1287,7 @@ export function useAiPathsRuntime({
       normalizedNodes.some((node: AiNode): boolean => {
         if (node.type !== 'iterator') return false;
         if (node.config?.iterator?.autoContinue === false) return false;
-        const status = state.outputs[node.id]?.status;
+        const status = (state.outputs[node.id] as Record<string, unknown> | undefined)?.['status'];
         return status === 'advance_pending';
       }),
     [normalizedNodes]
@@ -1394,7 +1394,7 @@ export function useAiPathsRuntime({
               cached,
               iteration,
             }) => {
-              const rawStatus = (nextOutputs as Record<string, unknown>)?.status;
+              const rawStatus = (nextOutputs as Record<string, unknown>)?.['status'];
               const normalizedStatus =
                 normalizeNodeStatus(rawStatus) ?? (cached ? 'cached' : 'completed');
               setNodeStatus({
@@ -1595,24 +1595,24 @@ export function useAiPathsRuntime({
           }));
         }
         const entityId =
-          typeof (meta.triggerContext as Record<string, unknown>)?.entityId === 'string'
-            ? ((meta.triggerContext as Record<string, unknown>).entityId as string)
+          typeof ((meta['triggerContext'] ?? {}) as Record<string, unknown>)?.['entityId'] === 'string'
+            ? (((meta['triggerContext'] ?? {}) as Record<string, unknown>)['entityId'] as string)
             : null;
         const entityType =
-          typeof (meta.triggerContext as Record<string, unknown>)?.entityType === 'string'
-            ? ((meta.triggerContext as Record<string, unknown>).entityType as string)
+          typeof ((meta['triggerContext'] ?? {}) as Record<string, unknown>)?.['entityType'] === 'string'
+            ? (((meta['triggerContext'] ?? {}) as Record<string, unknown>)['entityType'] as string)
             : null;
         void appendLocalRun({
           pathId: activePathId ?? null,
           pathName: pathName ?? null,
-          triggerEvent: meta.triggerEvent ?? null,
+          triggerEvent: (meta['triggerEvent'] ?? null) as string | null,
           triggerLabel: activeTrigger ?? null,
           entityId,
           entityType,
           status: 'success',
-          startedAt: meta.startedAt,
+          startedAt: (meta['startedAt'] ?? '') as string,
           finishedAt,
-          durationMs: Date.now() - meta.startedAtMs,
+          durationMs: Date.now() - ((meta['startedAtMs'] ?? 0) as number),
           nodeCount: normalizedNodes.length,
           source: 'ai_paths_ui',
         });
@@ -1647,12 +1647,12 @@ export function useAiPathsRuntime({
         void appendLocalRun({
           pathId: activePathId ?? null,
           pathName: pathName ?? null,
-          triggerEvent: meta.triggerEvent ?? null,
+          triggerEvent: (meta['triggerEvent'] ?? null) as string | null,
           triggerLabel: activeTrigger ?? null,
           status: 'error',
-          startedAt: meta.startedAt,
+          startedAt: (meta['startedAt'] ?? '') as string,
           finishedAt,
-          durationMs: Date.now() - meta.startedAtMs,
+          durationMs: Date.now() - ((meta['startedAtMs'] ?? 0) as number),
           nodeCount: normalizedNodes.length,
           error: outcome.error instanceof Error ? outcome.error.message : 'Local run failed',
           source: 'ai_paths_ui',
@@ -1675,12 +1675,12 @@ export function useAiPathsRuntime({
         void appendLocalRun({
           pathId: activePathId ?? null,
           pathName: pathName ?? null,
-          triggerEvent: meta.triggerEvent ?? null,
+          triggerEvent: (meta['triggerEvent'] ?? null) as string | null,
           triggerLabel: activeTrigger ?? null,
           status: 'error',
-          startedAt: meta.startedAt,
+          startedAt: (meta['startedAt'] ?? '') as string,
           finishedAt,
-          durationMs: Date.now() - meta.startedAtMs,
+          durationMs: Date.now() - ((meta['startedAtMs'] ?? 0) as number),
           nodeCount: normalizedNodes.length,
           error: 'Run cancelled',
           source: 'ai_paths_ui',
@@ -1792,14 +1792,14 @@ export function useAiPathsRuntime({
     triggerContextRef.current = triggerContext;
     pendingSimulationContextRef.current = null;
     const immediateEntityId =
-      typeof triggerContext.entityId === 'string'
-        ? triggerContext.entityId
-        : typeof triggerContext.productId === 'string'
-          ? triggerContext.productId
+      typeof triggerContext['entityId'] === 'string'
+        ? (triggerContext['entityId'] as string)
+        : typeof triggerContext['productId'] === 'string'
+          ? (triggerContext['productId'] as string)
           : null;
     const immediateEntityType =
-      typeof triggerContext.entityType === 'string'
-        ? triggerContext.entityType
+      typeof triggerContext['entityType'] === 'string'
+        ? (triggerContext['entityType'] as string)
         : null;
     const immediateContext = {
       ...triggerContext,
@@ -1807,7 +1807,7 @@ export function useAiPathsRuntime({
       ...(immediateEntityType ? { entityType: immediateEntityType } : {}),
       trigger: triggerEvent,
       pathId: activePathId ?? null,
-      source: triggerContext.source ?? null,
+      source: triggerContext['source'] ?? null,
     };
     const immediateOutputs: RuntimePortValues = {
       trigger: true,
@@ -1818,12 +1818,12 @@ export function useAiPathsRuntime({
         pathId: activePathId ?? null,
         entityId: immediateEntityId,
         entityType: immediateEntityType,
-        ui: triggerContext.ui ?? null,
-        location: triggerContext.location ?? null,
-        source: triggerContext.source ?? null,
-        user: triggerContext.user ?? null,
-        event: triggerContext.event ?? null,
-        extras: triggerContext.extras ?? null,
+        ui: triggerContext['ui'] ?? null,
+        location: triggerContext['location'] ?? null,
+        source: triggerContext['source'] ?? null,
+        user: triggerContext['user'] ?? null,
+        event: triggerContext['event'] ?? null,
+        extras: triggerContext['extras'] ?? null,
       },
       context: immediateContext,
       ...(immediateEntityId ? { entityId: immediateEntityId } : {}),

@@ -72,14 +72,10 @@ const groupIconMap: Record<string, React.ComponentType<{ className?: string }>> 
 
 function TableDetailCard({
   detail,
-  page,
-  pageSize,
   onQueryTable,
   onManageTable,
 }: {
   detail: DatabaseTableDetail;
-  page: number;
-  pageSize: number;
   onQueryTable?: (tableName: string) => void;
   onManageTable?: (tableName: string) => void;
 }): React.JSX.Element {
@@ -184,7 +180,7 @@ function TableDetailCard({
             </TabsContent>
 
             <TabsContent value='data' className='p-0'>
-              <DataTab tableRows={tableRow} page={page} pageSize={pageSize} />
+              <DataTab tableRows={tableRow} />
             </TabsContent>
           </Tabs>
         </div>
@@ -318,13 +314,10 @@ function ForeignKeysTab({ foreignKeys }: { foreignKeys: DatabaseForeignKeyInfo[]
 
 function DataTab({
   tableRows,
-  page,
-  pageSize,
 }: {
   tableRows: DatabasePreviewRow | undefined;
-  page: number;
-  pageSize: number;
 }): React.JSX.Element {
+  const { page, pageSize } = useDatabase();
   if (!tableRows || tableRows.rows.length === 0) {
     return <p className='px-4 py-3 text-xs text-gray-500'>No row data available.</p>;
   }
@@ -382,12 +375,14 @@ function DatabasePreviewContent(): React.JSX.Element {
     error,
     mode,
     backupName,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
   } = useDatabase();
 
   const [groupQuery, setGroupQuery] = useState('');
   const [tableQuery, setTableQuery] = useState('');
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [consoleSql, setConsoleSql] = useState('');
   const [showConsole, setShowConsole] = useState(false);
@@ -560,8 +555,6 @@ function DatabasePreviewContent(): React.JSX.Element {
                   <TableDetailCard
                     key={detail.name}
                     detail={detail}
-                    page={page}
-                    pageSize={pageSize}
                     onQueryTable={(name: string): void => {
                       setConsoleSql(`SELECT * FROM "${name}" LIMIT 20`);
                       setShowConsole(true);

@@ -1,14 +1,14 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { parseJsonBody } from "@/shared/lib/api/parse-json";
-import { badRequestError, notFoundError } from "@/shared/errors/app-error";
-import type { AgentTeachingAgentRecord } from "@/shared/types/agent-teaching";
-import { deleteTeachingAgent, getTeachingAgentById, upsertTeachingAgent } from "@/features/ai/agentcreator/teaching/server/repository";
+import { deleteTeachingAgent, getTeachingAgentById, upsertTeachingAgent } from '@/features/ai/agentcreator/teaching/server/repository';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import type { AgentTeachingAgentRecord } from '@/shared/types/agent-teaching';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const updateAgentSchema = z.object({
   name: z.string().trim().min(1).optional(),
@@ -30,14 +30,14 @@ async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<
   const params = ctx.params as unknown as Params | undefined;
   const agentId = params?.agentId;
   if (!agentId) {
-    throw badRequestError("Missing agentId.");
+    throw badRequestError('Missing agentId.');
   }
   const existing = await getTeachingAgentById(agentId);
   if (!existing) {
-    throw notFoundError("Not found");
+    throw notFoundError('Not found');
   }
   const parsed = await parseJsonBody(req, updateAgentSchema, {
-    logPrefix: "agentcreator.teaching.agents.PATCH",
+    logPrefix: 'agentcreator.teaching.agents.PATCH',
   });
   if (!parsed.ok) return parsed.response;
 
@@ -64,7 +64,7 @@ async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext): Promis
   const params = ctx.params as unknown as Params | undefined;
   const agentId = params?.agentId;
   if (!agentId) {
-    throw badRequestError("Missing agentId.");
+    throw badRequestError('Missing agentId.');
   }
   const deleted = await deleteTeachingAgent(agentId);
   return NextResponse.json({ ok: true, deleted });
@@ -72,10 +72,10 @@ async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext): Promis
 
 export const PATCH = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => PATCH_handler(req, ctx),
-  { source: "agentcreator.teaching.agents.PATCH" }
+  { source: 'agentcreator.teaching.agents.PATCH' }
 );
 
 export const DELETE = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => DELETE_handler(req, ctx),
-  { source: "agentcreator.teaching.agents.DELETE" }
+  { source: 'agentcreator.teaching.agents.DELETE' }
 );

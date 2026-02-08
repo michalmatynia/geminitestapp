@@ -336,7 +336,7 @@ export function useAiPathsPresets({
       const list = (Array.isArray(parsed)
         ? parsed
         : parsed && typeof parsed === 'object' && 'presets' in (parsed as Record<string, unknown>)
-          ? (parsed as Record<string, unknown>).presets
+          ? (parsed as Record<string, unknown>)['presets']
           : null) as unknown[] | null;
       if (!list) {
         toast('Invalid presets JSON. Expected an array.', { variant: 'error' });

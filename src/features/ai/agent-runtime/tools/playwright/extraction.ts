@@ -84,22 +84,22 @@ export const extractProductNames = async (page: Page): Promise<string[]> => {
         typeNames.includes('productgroup') ||
         typeNames.includes('productmodel')
       ) {
-        if (typeof record.name === 'string') {
-          pushName(record.name);
+        if (typeof record['name'] === 'string') {
+          pushName(record['name']);
         }
       }
-      if (typeNames.includes('itemlist') && Array.isArray(record.itemListElement)) {
-        record.itemListElement.forEach((entry: unknown) => {
+      if (typeNames.includes('itemlist') && Array.isArray(record['itemListElement'])) {
+        (record['itemListElement'] as unknown[]).forEach((entry: unknown) => {
           if (!entry || typeof entry !== 'object') return;
           const itemRecord = entry as Record<string, unknown>;
-          const item = itemRecord.item;
-          if (typeof itemRecord.name === 'string') {
-            pushName(itemRecord.name);
+          const item = itemRecord['item'];
+          if (typeof itemRecord['name'] === 'string') {
+            pushName(itemRecord['name']);
           }
           if (item && typeof item === 'object') {
             const itemObj = item as Record<string, unknown>;
-            if (typeof itemObj.name === 'string') {
-              pushName(itemObj.name);
+            if (typeof itemObj['name'] === 'string') {
+              pushName(itemObj['name']);
             }
           }
         });

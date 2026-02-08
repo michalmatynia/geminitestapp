@@ -64,40 +64,40 @@ export default function AgentRunsPage(): React.ReactElement {
   );
   const plannerContextAudits = useMemo(
     () =>
-      agentAuditLogs.filter((audit: AgentAuditLog) => audit.metadata?.type === 'planner-context'),
+      agentAuditLogs.filter((audit: AgentAuditLog) => audit.metadata?.['type'] === 'planner-context'),
     [agentAuditLogs]
   );
   const planAudits = useMemo(
-    () => agentAuditLogs.filter((audit: AgentAuditLog) => audit.metadata?.type === 'plan'),
+    () => agentAuditLogs.filter((audit: AgentAuditLog) => audit.metadata?.['type'] === 'plan'),
     [agentAuditLogs]
   );
   const planUpdateAudits = useMemo(
     () =>
       agentAuditLogs.filter((audit: AgentAuditLog) => {
         const auditType =
-          typeof audit.metadata?.type === 'string' ? audit.metadata.type : '';
+          typeof audit.metadata?.['type'] === 'string' ? audit.metadata['type'] : '';
         return ['plan', 'plan-update'].includes(auditType);
       }),
     [agentAuditLogs]
   );
   const branchAudits = useMemo(
-    () => agentAuditLogs.filter((audit: AgentAuditLog) => audit.metadata?.type === 'plan-branch'),
+    () => agentAuditLogs.filter((audit: AgentAuditLog) => audit.metadata?.['type'] === 'plan-branch'),
     [agentAuditLogs]
   );
   const replanAudits = useMemo(
     () =>
       agentAuditLogs.filter((audit: AgentAuditLog) => {
         const auditType =
-          typeof audit.metadata?.type === 'string' ? audit.metadata.type : '';
+          typeof audit.metadata?.['type'] === 'string' ? audit.metadata['type'] : '';
         return ['plan-replan', 'plan-adapt', 'self-check-replan'].includes(
           auditType
         );
       }),
     [agentAuditLogs]
   );
-  const latestSessionContext = sessionContextLogs.at(-1)?.metadata ?? null;
-  const latestLoginCandidates = loginCandidateLogs.at(-1)?.metadata ?? null;
-  const latestPlannerContext = plannerContextAudits.at(-1)?.metadata ?? null;
+  const latestSessionContext = (sessionContextLogs.at(-1)?.metadata as Record<string, unknown> | null) ?? null;
+  const latestLoginCandidates = (loginCandidateLogs.at(-1)?.metadata as Record<string, unknown> | null) ?? null;
+  const latestPlannerContext = (plannerContextAudits.at(-1)?.metadata as Record<string, unknown> | null) ?? null;
   const latestPlanHierarchy =
     (
       planAudits.at(-1)?.metadata as {
@@ -106,10 +106,10 @@ export default function AgentRunsPage(): React.ReactElement {
     )?.hierarchy ?? null;
   const latestPlanSteps = useMemo(() => {
     const latestPlan = planUpdateAudits.find((audit: AgentAuditLog) =>
-      Array.isArray(audit.metadata?.steps)
+      Array.isArray((audit.metadata as Record<string, unknown>)?.['steps'])
     );
-    return Array.isArray(latestPlan?.metadata?.steps)
-      ? (latestPlan?.metadata?.steps as Array<{
+    return Array.isArray((latestPlan?.metadata as Record<string, unknown>)?.['steps'])
+      ? ((latestPlan?.metadata as Record<string, unknown>)?.['steps'] as Array<{
           id?: string;
           title?: string;
           status?: string;
@@ -213,8 +213,8 @@ export default function AgentRunsPage(): React.ReactElement {
                       <p className='text-[11px] text-gray-500'>
                         Run ID: {job.id}
                       </p>
-                      Snapshots: {job._count?.browserSnapshots ?? 0} · Logs:{' '}
-                      {job._count?.browserLogs ?? 0}
+                      Snapshots: {job._count?.['browserSnapshots'] ?? 0} · Logs:{' '}
+                      {job._count?.['browserLogs'] ?? 0}
                       {job.requiresHumanIntervention ? ' · needs input' : ''}
                     </div>
                     {job.errorMessage ? (
@@ -766,7 +766,7 @@ export default function AgentRunsPage(): React.ReactElement {
                       </p>
                       <div className='mt-1 max-h-36 overflow-y-auto'>
                         {(
-                              latestSessionContext.cookies as
+                              latestSessionContext['cookies'] as
                                 | Array<{
                                     name: string;
                                     domain: string;
@@ -817,21 +817,21 @@ export default function AgentRunsPage(): React.ReactElement {
                         <p>
                               Local:{' '}
                           {(
-                                latestSessionContext.storage as {
+                                latestSessionContext['storage'] as {
                                   localCount?: number;
                                 }
                           )?.localCount ?? 0}
                           {' · '}
                               Session:{' '}
                           {(
-                                latestSessionContext.storage as {
+                                latestSessionContext['storage'] as {
                                   sessionCount?: number;
                                 }
                           )?.sessionCount ?? 0}
                         </p>
                         <div className='mt-1 max-h-20 overflow-y-auto text-[10px] text-gray-400'>
                           {(
-                                latestSessionContext.storage as {
+                                latestSessionContext['storage'] as {
                                   localKeys?: string[];
                                   sessionKeys?: string[];
                                 }
@@ -861,7 +861,7 @@ export default function AgentRunsPage(): React.ReactElement {
                       </p>
                       <div className='mt-1 max-h-36 space-y-1 overflow-y-auto'>
                         {(
-                              latestLoginCandidates?.inputs as
+                              latestLoginCandidates['inputs'] as
                                 | Array<{
                                     tag: string;
                                     id: string | null;
@@ -905,7 +905,7 @@ export default function AgentRunsPage(): React.ReactElement {
                       </p>
                       <div className='mt-1 max-h-36 space-y-1 overflow-y-auto'>
                         {(
-                              latestLoginCandidates?.buttons as
+                              latestLoginCandidates['buttons'] as
                                 | Array<{
                                     tag: string;
                                     id: string | null;

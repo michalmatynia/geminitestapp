@@ -1,33 +1,33 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
 
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { requireAiPathsAccess } from "@/features/ai/ai-paths/server";
-import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";
-import type { AiPathRunStatus } from "@/shared/types/ai-paths";
-import type { ProductAiJobStatus } from "@/features/jobs/types/product-ai-job-repository";
-import { getProductAiJobProvider, getProductAiJobRepository } from "@/features/jobs/services/product-ai-job-repository";
-import prisma from "@/shared/lib/db/prisma";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
+import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { getProductAiJobProvider, getProductAiJobRepository } from '@/features/jobs/services/product-ai-job-repository';
+import type { ProductAiJobStatus } from '@/features/jobs/types/product-ai-job-repository';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import type { AiPathRunStatus } from '@/shared/types/ai-paths';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const AI_PATH_STATUSES: AiPathRunStatus[] = [
-  "queued",
-  "running",
-  "paused",
-  "completed",
-  "failed",
-  "canceled",
-  "dead_lettered",
+  'queued',
+  'running',
+  'paused',
+  'completed',
+  'failed',
+  'canceled',
+  'dead_lettered',
 ];
 
 const JOB_STATUSES: ProductAiJobStatus[] = [
-  "pending",
-  "running",
-  "completed",
-  "failed",
-  "canceled",
+  'pending',
+  'running',
+  'completed',
+  'failed',
+  'canceled',
 ];
 
 const toIso = (value?: Date | string | null): string | null => {
@@ -43,10 +43,10 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const errors: Record<string, string> = {};
 
   const aiPathsProvider = process.env['DATABASE_URL']
-    ? "prisma"
+    ? 'prisma'
     : process.env['MONGODB_URI']
-      ? "mongodb"
-      : "unknown";
+      ? 'mongodb'
+      : 'unknown';
 
   const aiPaths = await (async () => {
     try {
@@ -61,10 +61,10 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
       const all = await repo.listRuns({ limit: 1, offset: 0 });
       const latest = all.runs[0]
         ? {
-            id: all.runs[0].id,
-            status: all.runs[0].status,
-            createdAt: toIso(all.runs[0].createdAt),
-          }
+          id: all.runs[0].id,
+          status: all.runs[0].status,
+          createdAt: toIso(all.runs[0].createdAt),
+        }
         : null;
       return {
         provider: aiPathsProvider,
@@ -73,7 +73,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
         latest,
       };
     } catch (error) {
-      errors['aiPaths'] = error instanceof Error ? error.message : "Failed to load AI Paths counts.";
+      errors['aiPaths'] = error instanceof Error ? error.message : 'Failed to load AI Paths counts.';
       return {
         provider: aiPathsProvider,
         total: null,
@@ -86,11 +86,11 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const aiJobs = await (async () => {
     try {
       await getProductAiJobRepository();
-      const provider = getProductAiJobProvider() ?? "unknown";
+      const provider = getProductAiJobProvider() ?? 'unknown';
 
-      if (provider === "mongodb") {
+      if (provider === 'mongodb') {
         const db = await getMongoDb();
-        const collection = db.collection("product_ai_jobs");
+        const collection = db.collection('product_ai_jobs');
         const totals = await Promise.all(
           JOB_STATUSES.map(async (status) => [status, await collection.countDocuments({ status })] as const)
         );
@@ -106,23 +106,23 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
           byStatus: Object.fromEntries(totals) as Record<ProductAiJobStatus, number>,
           latest: latest
             ? {
-                id: (latest as unknown as { id?: string; _id?: string }).id ?? String(latest['_id']),
-                status: latest['status'] as ProductAiJobStatus,
-                createdAt: toIso(latest['createdAt'] as Date | string | null),
-                productId: latest['productId'] as string | null,
-                type: latest['type'] as string | null,
-              }
+              id: (latest as unknown as { id?: string; _id?: string }).id ?? String(latest['_id']),
+              status: latest['status'] as ProductAiJobStatus,
+              createdAt: toIso(latest['createdAt'] as Date | string | null),
+              productId: latest['productId'] as string | null,
+              type: latest['type'] as string | null,
+            }
             : null,
         };
       }
 
-      if (provider === "prisma") {
+      if (provider === 'prisma') {
         const totals = await Promise.all(
           JOB_STATUSES.map(async (status) => [status, await prisma.productAiJob.count({ where: { status } })] as const)
         );
         const total = await prisma.productAiJob.count();
         const latest = await prisma.productAiJob.findFirst({
-          orderBy: { createdAt: "desc" },
+          orderBy: { createdAt: 'desc' },
           select: { id: true, status: true, createdAt: true, productId: true, type: true },
         });
         return {
@@ -131,12 +131,12 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
           byStatus: Object.fromEntries(totals) as Record<ProductAiJobStatus, number>,
           latest: latest
             ? {
-                id: latest.id,
-                status: latest.status as ProductAiJobStatus,
-                createdAt: toIso(latest.createdAt),
-                productId: latest.productId ?? null,
-                type: latest.type ?? null,
-              }
+              id: latest.id,
+              status: latest.status as ProductAiJobStatus,
+              createdAt: toIso(latest.createdAt),
+              productId: latest.productId ?? null,
+              type: latest.type ?? null,
+            }
             : null,
         };
       }
@@ -148,9 +148,9 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
         latest: null,
       };
     } catch (error) {
-      errors['aiJobs'] = error instanceof Error ? error.message : "Failed to load AI Jobs counts.";
+      errors['aiJobs'] = error instanceof Error ? error.message : 'Failed to load AI Jobs counts.';
       return {
-        provider: getProductAiJobProvider() ?? "unknown",
+        provider: getProductAiJobProvider() ?? 'unknown',
         total: null,
         byStatus: {} as Record<ProductAiJobStatus, number>,
         latest: null,
@@ -172,5 +172,5 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
 }
 
 export const GET = apiHandler(GET_handler, {
-  source: "ai-paths.health.GET",
+  source: 'ai-paths.health.GET',
 });

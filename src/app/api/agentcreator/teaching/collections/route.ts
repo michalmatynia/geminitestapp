@@ -1,13 +1,13 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { parseJsonBody } from "@/shared/lib/api/parse-json";
-import type { AgentTeachingEmbeddingCollectionRecord } from "@/shared/types/agent-teaching";
-import { listEmbeddingCollections, upsertEmbeddingCollection } from "@/features/ai/agentcreator/teaching/server/repository";
+import { listEmbeddingCollections, upsertEmbeddingCollection } from '@/features/ai/agentcreator/teaching/server/repository';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import type { AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/agent-teaching';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const createCollectionSchema = z.object({
   name: z.string().trim().min(1),
@@ -22,7 +22,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, createCollectionSchema, {
-    logPrefix: "agentcreator.teaching.collections.POST",
+    logPrefix: 'agentcreator.teaching.collections.POST',
   });
   if (!parsed.ok) return parsed.response;
   const data = parsed.data;
@@ -36,11 +36,11 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
-  { source: "agentcreator.teaching.collections.GET" }
+  { source: 'agentcreator.teaching.collections.GET' }
 );
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
-  { source: "agentcreator.teaching.collections.POST" }
+  { source: 'agentcreator.teaching.collections.POST' }
 );
 

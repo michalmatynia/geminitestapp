@@ -1,11 +1,12 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { listAiInsightNotifications, clearAiInsightNotifications } from "@/features/ai/insights/repository";
-import { startAiInsightsQueue } from "@/features/jobs/server";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { listAiInsightNotifications, clearAiInsightNotifications } from '@/features/ai/insights/repository';
+import { startAiInsightsQueue } from '@/features/jobs/server';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const listSchema = z.object({
   limit: z.coerce.number().int().positive().max(50).optional(),
@@ -27,9 +28,9 @@ async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promi
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
-  { source: "ai-insights.notifications.GET" }
+  { source: 'ai-insights.notifications.GET' }
 );
 export const DELETE = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => DELETE_handler(req, ctx),
-  { source: "ai-insights.notifications.DELETE" }
+  { source: 'ai-insights.notifications.DELETE' }
 );

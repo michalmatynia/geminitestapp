@@ -2,16 +2,16 @@ export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import {
   getRuntimeAnalyticsSummary,
   resolveRuntimeAnalyticsRangeWindow,
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
-import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import { startAiInsightsQueue, startAiPathRunQueue } from '@/features/jobs/server';
 import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandler, getQueryParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
 import type { AiPathRuntimeAnalyticsRange } from '@/shared/types/ai-paths';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const RANGE_VALUES: readonly AiPathRuntimeAnalyticsRange[] = ['1h', '24h', '7d', '30d'];
 

@@ -1,19 +1,19 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
-import { apiHandler, getPaginationParams, getQueryParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { parseJsonBody } from "@/shared/lib/api/parse-json";
-import { auth, extractClientIp } from "@/features/auth/server";
-import { authError, badRequestError } from "@/shared/errors/app-error";
-import type { AnalyticsEventCreateInput, AnalyticsScope } from "@/shared/types";
-import { insertAnalyticsEvent, listAnalyticsEvents } from "@/features/analytics/server";
+import { insertAnalyticsEvent, listAnalyticsEvents } from '@/features/analytics/server';
+import { auth, extractClientIp } from '@/features/auth/server';
+import { authError, badRequestError } from '@/shared/errors/app-error';
+import { apiHandler, getPaginationParams, getQueryParams } from '@/shared/lib/api/api-handler';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import type { AnalyticsEventCreateInput, AnalyticsScope } from '@/shared/types';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const createEventSchema = z.object({
-  type: z.enum(["pageview", "event"]),
-  scope: z.enum(["public", "admin"]),
+  type: z.enum(['pageview', 'event']),
+  scope: z.enum(['public', 'admin']),
   path: z.string().min(1),
   search: z.string().optional().nullable(),
   url: z.string().optional().nullable(),
@@ -58,19 +58,19 @@ const createEventSchema = z.object({
     })
     .optional()
     .nullable(),
-  meta: z.record(z.string(), z["unknown"]()).optional().nullable(),
+  meta: z.record(z.string(), z['unknown']()).optional().nullable(),
   clientTs: z.string().optional().nullable(),
 });
 
-const RANGE_VALUES = ["24h", "7d", "30d"] as const;
+const RANGE_VALUES = ['24h', '7d', '30d'] as const;
 type AnalyticsRange = (typeof RANGE_VALUES)[number];
 
 const getRangeWindow = (range: AnalyticsRange): { from: Date; to: Date } => {
   const to = new Date();
   const msByRange: Record<AnalyticsRange, number> = {
-    "24h": 24 * 60 * 60 * 1000,
-    "7d": 7 * 24 * 60 * 60 * 1000,
-    "30d": 30 * 24 * 60 * 60 * 1000,
+    '24h': 24 * 60 * 60 * 1000,
+    '7d': 7 * 24 * 60 * 60 * 1000,
+    '30d': 30 * 24 * 60 * 60 * 1000,
   };
   const from = new Date(to.getTime() - msByRange[range]);
   return { from, to };
@@ -78,7 +78,7 @@ const getRangeWindow = (range: AnalyticsRange): { from: Date; to: Date } => {
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, createEventSchema, {
-    logPrefix: "analytics.events.POST",
+    logPrefix: 'analytics.events.POST',
   });
   if (!parsed.ok) return parsed.response;
 
@@ -86,14 +86,14 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const userId = session?.user?.id ?? null;
 
   const ip = extractClientIp(req);
-  const userAgent = req.headers.get("user-agent");
+  const userAgent = req.headers.get('user-agent');
 
   const country =
-    req.headers.get("x-vercel-ip-country") ??
-    req.headers.get("cf-ipcountry") ??
+    req.headers.get('x-vercel-ip-country') ??
+    req.headers.get('cf-ipcountry') ??
     null;
-  const region = req.headers.get("x-vercel-ip-country-region") ?? null;
-  const city = req.headers.get("x-vercel-ip-city") ?? null;
+  const region = req.headers.get('x-vercel-ip-country-region') ?? null;
+  const city = req.headers.get('x-vercel-ip-city') ?? null;
 
   const input: AnalyticsEventCreateInput = {
     type: parsed.data.type,
@@ -130,22 +130,22 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
-  if (!session?.user) throw authError("Unauthorized.");
+  if (!session?.user) throw authError('Unauthorized.');
 
   const searchParams = getQueryParams(req);
   const { page, pageSize, skip } = getPaginationParams(searchParams);
 
-  const rangeRaw = searchParams.get("range") ?? "24h";
+  const rangeRaw = searchParams.get('range') ?? '24h';
   if (!RANGE_VALUES.includes(rangeRaw as AnalyticsRange)) {
-    throw badRequestError("Invalid range");
+    throw badRequestError('Invalid range');
   }
   const range = rangeRaw as AnalyticsRange;
 
-  const scopeRaw = searchParams.get("scope") ?? "all";
+  const scopeRaw = searchParams.get('scope') ?? 'all';
   const scope =
-    scopeRaw === "all" ? undefined : (scopeRaw as AnalyticsScope);
-  if (scopeRaw !== "all" && scope !== "public" && scope !== "admin") {
-    throw badRequestError("Invalid scope");
+    scopeRaw === 'all' ? undefined : (scopeRaw as AnalyticsScope);
+  if (scopeRaw !== 'all' && scope !== 'public' && scope !== 'admin') {
+    throw badRequestError('Invalid scope');
   }
 
   const { from, to } = getRangeWindow(range);
@@ -168,10 +168,10 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
-  { source: "analytics.events.POST", requireCsrf: false }
+  { source: 'analytics.events.POST', requireCsrf: false }
 );
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
-  { source: "analytics.events.GET" }
+  { source: 'analytics.events.GET' }
 );

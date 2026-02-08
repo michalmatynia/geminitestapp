@@ -43,12 +43,12 @@ vi.mock('@/features/products/server', () => ({
 describe('Product Tags API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.DATABASE_URL = 'postgresql://mock';
+    process.env['DATABASE_URL'] = 'postgresql://mock';
   });
 
   afterAll(() => {
     vi.restoreAllMocks();
-    delete process.env.DATABASE_URL;
+    delete process.env['DATABASE_URL'];
   });
 
   describe('GET /api/products/tags', () => {

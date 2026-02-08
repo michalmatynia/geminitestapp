@@ -1,25 +1,25 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
 
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import {
-  cancelPathRunWithRepository,
-} from "@/features/ai/ai-paths/services/path-run-service";
-import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";
-import { removePathRunQueueEntries } from "@/features/jobs/workers/aiPathRunQueue";
-import { mongoPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository/mongo-path-run-repository";
-import { prismaPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository/prisma-path-run-repository";
 import {
   assertAiPathRunAccess,
   enforceAiPathsActionRateLimit,
   requireAiPathsAccess,
-} from "@/features/ai/ai-paths/server";
-import type { AiPathRunRepository } from "@/features/ai/ai-paths/types/path-run-repository";
-import type { AiPathRunRecord } from "@/shared/types/ai-paths";
+} from '@/features/ai/ai-paths/server';
+import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { mongoPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository/mongo-path-run-repository';
+import { prismaPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository/prisma-path-run-repository';
+import {
+  cancelPathRunWithRepository,
+} from '@/features/ai/ai-paths/services/path-run-service';
+import type { AiPathRunRepository } from '@/features/ai/ai-paths/types/path-run-repository';
+import { removePathRunQueueEntries } from '@/features/jobs/workers/aiPathRunQueue';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { AiPathRunRecord } from '@/shared/types/ai-paths';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
-const TERMINAL_STATUSES = new Set(["completed", "failed", "canceled", "dead_lettered"]);
+const TERMINAL_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
 
 const resolveFallbackRepository = (
   primary: AiPathRunRepository
@@ -39,7 +39,7 @@ async function POST_handler(
   params: { runId: string }
 ): Promise<Response> {
   const access = await requireAiPathsAccess();
-  enforceAiPathsActionRateLimit(access, "run-cancel");
+  enforceAiPathsActionRateLimit(access, 'run-cancel');
   const runId: string = params.runId;
   const repo = getPathRunRepository();
   let repoForRun: AiPathRunRepository = repo;
@@ -60,7 +60,7 @@ async function POST_handler(
       run: null,
       canceled: false,
       runId,
-      message: "Run already missing. Queue entry (if present) has been removed.",
+      message: 'Run already missing. Queue entry (if present) has been removed.',
     });
   }
   assertAiPathRunAccess(access, existing);
@@ -79,5 +79,5 @@ async function POST_handler(
 }
 
 export const POST = apiHandlerWithParams<{ runId: string }>(POST_handler, {
-  source: "ai-paths.runs.cancel",
+  source: 'ai-paths.runs.cancel',
 });

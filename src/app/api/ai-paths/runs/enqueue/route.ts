@@ -1,16 +1,16 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { parseJsonBody } from "@/features/products/server";
-import { badRequestError } from "@/shared/errors/app-error";
-import { enqueuePathRun } from "@/features/ai/ai-paths/services/path-run-service";
-import { startAiPathRunQueue } from "@/features/jobs/server";
-import type { AiNode, Edge } from "@/shared/types/ai-paths";
-import { enforceAiPathsRunRateLimit, requireAiPathsRunAccess } from "@/features/ai/ai-paths/server";
+import { enforceAiPathsRunRateLimit, requireAiPathsRunAccess } from '@/features/ai/ai-paths/server';
+import { enqueuePathRun } from '@/features/ai/ai-paths/services/path-run-service';
+import { startAiPathRunQueue } from '@/features/jobs/server';
+import { parseJsonBody } from '@/features/products/server';
+import { badRequestError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { AiNode, Edge } from '@/shared/types/ai-paths';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const enqueueSchema = z.object({
   pathId: z.string().trim().min(1),
@@ -32,29 +32,29 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const access = await requireAiPathsRunAccess();
   await enforceAiPathsRunRateLimit(access);
   const parsed = await parseJsonBody(req, enqueueSchema, {
-    logPrefix: "ai-paths.runs.enqueue",
+    logPrefix: 'ai-paths.runs.enqueue',
   });
   if (!parsed.ok) return parsed.response;
 
   const data = parsed.data;
   const { nodes, edges, ...rest } = data;
   let normalizedMeta = rest.meta ?? null;
-  if (normalizedMeta && typeof normalizedMeta === "object") {
+  if (normalizedMeta && typeof normalizedMeta === 'object') {
     const metaRecord = normalizedMeta as Record<string, unknown>;
-    const sourceValue = metaRecord["source"];
-    if (sourceValue && typeof sourceValue === "object") {
-      const triggerEventId = typeof metaRecord["triggerEventId"] === "string"
-        ? metaRecord["triggerEventId"]
+    const sourceValue = metaRecord['source'];
+    if (sourceValue && typeof sourceValue === 'object') {
+      const triggerEventId = typeof metaRecord['triggerEventId'] === 'string'
+        ? metaRecord['triggerEventId']
         : null;
       normalizedMeta = {
         ...metaRecord,
         sourceInfo: sourceValue,
-        source: triggerEventId ? "trigger_button" : "ai_paths_ui",
+        source: triggerEventId ? 'trigger_button' : 'ai_paths_ui',
       };
     }
   }
   if (!Array.isArray(nodes) || !Array.isArray(edges)) {
-    throw badRequestError("Nodes and edges are required to enqueue a run.");
+    throw badRequestError('Nodes and edges are required to enqueue a run.');
   }
 
   const run = await enqueuePathRun({
@@ -79,4 +79,4 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "ai-paths.runs.enqueue" });
+  { source: 'ai-paths.runs.enqueue' });

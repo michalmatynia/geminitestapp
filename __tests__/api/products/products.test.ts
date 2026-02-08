@@ -62,22 +62,22 @@ import prisma from '@/shared/lib/db/prisma';
 // Helper to create mock product data
 const createMockProductData = (overrides: Record<string, unknown> = {}) => ({
   id: `test-product-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-  sku: overrides.sku || `SKU-${Date.now()}`,
-  name_en: overrides.name_en || 'Test Product (EN)',
-  name_pl: overrides.name_pl || 'Test Product (PL)',
-  name_de: overrides.name_de || 'Test Product (DE)',
-  description_en: overrides.description_en || 'Description (EN)',
-  description_pl: overrides.description_pl || 'Description (PL)',
-  description_de: overrides.description_de || 'Description (DE)',
+  sku: overrides['sku'] || `SKU-${Date.now()}`,
+  name_en: overrides['name_en'] || 'Test Product (EN)',
+  name_pl: overrides['name_pl'] || 'Test Product (PL)',
+  name_de: overrides['name_de'] || 'Test Product (DE)',
+  description_en: overrides['description_en'] || 'Description (EN)',
+  description_pl: overrides['description_pl'] || 'Description (PL)',
+  description_de: overrides['description_de'] || 'Description (DE)',
   price:
-    typeof overrides.price === 'number'
-      ? overrides.price
-      : overrides.price
-        ? parseInt(overrides.price as string, 10)
+    typeof overrides['price'] === 'number'
+      ? overrides['price']
+      : overrides['price']
+        ? parseInt(overrides['price'] as string, 10)
         : 100,
-  stock: overrides.stock || 10,
-  weight: overrides.weight || 100,
-  length: overrides.length || 20,
+  stock: overrides['stock'] || 10,
+  weight: overrides['weight'] || 100,
+  length: overrides['length'] || 20,
   createdAt: new Date(),
   updatedAt: new Date(),
   images: [],

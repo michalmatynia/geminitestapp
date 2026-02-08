@@ -207,7 +207,7 @@ export function useAiPathsRunHistory({
       counts[status] = (counts[status] ?? 0) + 1;
     });
     const total = runDetail.nodes.length;
-    const completed = counts.completed ?? 0;
+    const completed = counts['completed'] ?? 0;
     const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
     return { counts, total, completed, progress };
   }, [runDetail]);
@@ -259,7 +259,7 @@ export function useAiPathsRunHistory({
     refetchInterval: (
       query: Query<{ ok: boolean; data: { runs: AiPathRunRecord[] } }, Error, { ok: boolean; data: { runs: AiPathRunRecord[] } }, readonly unknown[]>
     ): number | false => {
-      const d = query.state.data as
+      const d = query.state['data'] as
         | { ok: boolean; data: { runs: AiPathRunRecord[] } }
         | undefined;
       if (!d?.ok) return false;

@@ -1,17 +1,17 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
 
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { notFoundError } from "@/shared/errors/app-error";
-import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";
-import { removePathRunQueueEntries } from "@/features/jobs/workers/aiPathRunQueue";
 import {
   assertAiPathRunAccess,
   enforceAiPathsActionRateLimit,
   requireAiPathsAccess,
-} from "@/features/ai/ai-paths/server";
+} from '@/features/ai/ai-paths/server';
+import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { removePathRunQueueEntries } from '@/features/jobs/workers/aiPathRunQueue';
+import { notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 async function GET_handler(
   _req: NextRequest,
@@ -23,7 +23,7 @@ async function GET_handler(
   const repo = getPathRunRepository();
   const run = await repo.findRunById(runId);
   if (run === null) {
-    throw notFoundError("Run not found", { runId });
+    throw notFoundError('Run not found', { runId });
   }
   assertAiPathRunAccess(access, run);
   const nodes = await repo.listRunNodes(runId);
@@ -37,21 +37,21 @@ async function DELETE_handler(
   params: { runId: string }
 ): Promise<Response> {
   const access = await requireAiPathsAccess();
-  enforceAiPathsActionRateLimit(access, "run-delete");
+  enforceAiPathsActionRateLimit(access, 'run-delete');
   const runId = params.runId;
   const repo = getPathRunRepository();
   const run = await repo.findRunById(runId);
   if (run === null) {
-    throw notFoundError("Run not found", { runId });
+    throw notFoundError('Run not found', { runId });
   }
   assertAiPathRunAccess(access, run);
   await removePathRunQueueEntries([runId]);
   const deleted = await repo.deleteRun(runId);
   if (!deleted) {
-    throw notFoundError("Run not found", { runId });
+    throw notFoundError('Run not found', { runId });
   }
   return NextResponse.json({ deleted: true, runId });
 }
 
-export const GET = apiHandlerWithParams<{ runId: string }>(GET_handler, { source: "ai-paths.runs.detail" });
-export const DELETE = apiHandlerWithParams<{ runId: string }>(DELETE_handler, { source: "ai-paths.runs.delete" });
+export const GET = apiHandlerWithParams<{ runId: string }>(GET_handler, { source: 'ai-paths.runs.detail' });
+export const DELETE = apiHandlerWithParams<{ runId: string }>(DELETE_handler, { source: 'ai-paths.runs.delete' });

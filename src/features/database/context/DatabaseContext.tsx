@@ -28,6 +28,10 @@ interface DatabaseContextType {
   tableRows: DatabasePreviewRow[];
   enums: DatabaseEnumInfo[];
   databaseSize: string;
+  page: number;
+  setPage: (page: number) => void;
+  pageSize: number;
+  setPageSize: (size: number) => void;
 }
 
 const DatabaseContext = createContext<DatabaseContextType | undefined>(undefined);
@@ -44,12 +48,14 @@ export function DatabaseProvider({
   backupName?: string | undefined;
 }): React.JSX.Element {
   const [dbType, setDbType] = useState<DatabaseType>(defaultDbType);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const { data, isLoading, error, refetch } = useDatabasePreview({
     mode,
     type: dbType,
-    page: 1,
-    pageSize: 100,
+    page,
+    pageSize,
     backupName,
     enabled: true,
   });
@@ -76,8 +82,27 @@ export function DatabaseProvider({
       tableRows,
       enums,
       databaseSize,
+      page,
+      setPage,
+      pageSize,
+      setPageSize,
     }),
-    [dbType, tableDetails, isLoading, error, refetch, mode, backupName, groups, tables, tableRows, enums, databaseSize]
+    [
+      dbType,
+      tableDetails,
+      isLoading,
+      error,
+      refetch,
+      mode,
+      backupName,
+      groups,
+      tables,
+      tableRows,
+      enums,
+      databaseSize,
+      page,
+      pageSize,
+    ]
   );
 
   return <DatabaseContext.Provider value={value}>{children}</DatabaseContext.Provider>;

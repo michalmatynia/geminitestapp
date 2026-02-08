@@ -15,7 +15,7 @@ describe('auth-encryption', () => {
     vi.resetModules();
     process.env = { ...originalEnv };
     // 32-byte key in base64: "a" * 32
-    process.env.AUTH_ENCRYPTION_KEY = Buffer.from('a'.repeat(32)).toString('base64');
+    process.env['AUTH_ENCRYPTION_KEY'] = Buffer.from('a'.repeat(32)).toString('base64');
   });
 
   afterEach(() => {
@@ -38,8 +38,8 @@ describe('auth-encryption', () => {
   });
 
   it('should throw error if key is missing', () => {
-    delete process.env.AUTH_ENCRYPTION_KEY;
-    delete process.env.INTEGRATION_ENCRYPTION_KEY;
+    delete process.env['AUTH_ENCRYPTION_KEY'];
+    delete process.env['INTEGRATION_ENCRYPTION_KEY'];
     expect(() => encryptAuthSecret('test')).toThrow('is required for auth secrets');
   });
 });

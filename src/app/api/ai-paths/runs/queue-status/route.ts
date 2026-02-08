@@ -1,11 +1,11 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
 
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { requireAiPathsAccess } from "@/features/ai/ai-paths/server";
-import { getAiPathRunQueueStatus, startAiInsightsQueue, startAiPathRunQueue } from "@/features/jobs/server";
+import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
+import { getAiPathRunQueueStatus, startAiInsightsQueue, startAiPathRunQueue } from '@/features/jobs/server';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
@@ -17,5 +17,5 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
-  { source: "ai-paths.runs.queue-status" }
+  { source: 'ai-paths.runs.queue-status' }
 );

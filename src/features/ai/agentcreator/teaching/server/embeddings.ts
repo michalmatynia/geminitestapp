@@ -5,12 +5,12 @@ const OLLAMA_BASE_URL = process.env["OLLAMA_BASE_URL"] ?? 'http://localhost:1143
 const extractEmbedding = (payload: unknown): number[] | null => {
   if (!payload || typeof payload !== 'object') return null;
   const record = payload as Record<string, unknown>;
-  if (Array.isArray(record.embedding)) {
-    const vec = record.embedding.filter((v: unknown): v is number => typeof v === 'number');
+  if (Array.isArray(record['embedding'])) {
+    const vec = (record['embedding'] as unknown[]).filter((v: unknown): v is number => typeof v === 'number');
     return vec.length > 0 ? vec : null;
   }
-  if (Array.isArray(record.embeddings) && Array.isArray(record.embeddings[0])) {
-    const first = record.embeddings[0] as unknown[];
+  if (Array.isArray(record['embeddings']) && Array.isArray(record['embeddings'][0])) {
+    const first = record['embeddings'][0] as unknown[];
     const vec = first.filter((v: unknown): v is number => typeof v === 'number');
     return vec.length > 0 ? vec : null;
   }

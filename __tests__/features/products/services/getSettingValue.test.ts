@@ -31,8 +31,8 @@ import { getSettingValue } from '@/features/products/services/aiDescriptionServi
 describe('getSettingValue', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.DATABASE_URL = 'postgres://test-db';
-    process.env.MONGODB_URI = 'mongodb://test-db';
+    process.env['DATABASE_URL'] = 'postgres://test-db';
+    process.env['MONGODB_URI'] = 'mongodb://test-db';
   });
 
   it('uses Mongo first when provider is mongodb', async () => {

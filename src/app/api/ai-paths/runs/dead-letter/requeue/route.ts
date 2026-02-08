@@ -1,39 +1,39 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { parseJsonBody } from "@/features/products/server";
-import { resumePathRun } from "@/features/ai/ai-paths/services/path-run-service";
-import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";
-import { startAiPathRunQueue } from "@/features/jobs/server";
 import {
   assertAiPathRunAccess,
   enforceAiPathsActionRateLimit,
   requireAiPathsAccess,
-} from "@/features/ai/ai-paths/server";
+} from '@/features/ai/ai-paths/server';
+import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { resumePathRun } from '@/features/ai/ai-paths/services/path-run-service';
+import { startAiPathRunQueue } from '@/features/jobs/server';
+import { parseJsonBody } from '@/features/products/server';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const requeueSchema = z.object({
   runIds: z.array(z.string().trim().min(1)).optional(),
   pathId: z.string().trim().optional().nullable(),
   query: z.string().trim().optional(),
-  mode: z.enum(["resume", "replay"]).optional(),
+  mode: z.enum(['resume', 'replay']).optional(),
   limit: z.number().int().min(1).max(1000).optional(),
 });
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const access = await requireAiPathsAccess();
-  enforceAiPathsActionRateLimit(access, "run-requeue");
+  enforceAiPathsActionRateLimit(access, 'run-requeue');
   const parsed = await parseJsonBody(req, requeueSchema, {
-    logPrefix: "ai-paths.runs.dead-letter.requeue",
+    logPrefix: 'ai-paths.runs.dead-letter.requeue',
   });
   if (!parsed.ok) return parsed.response;
 
   const runIds = Array.isArray(parsed.data?.runIds) ? parsed.data.runIds : [];
   const pathId = parsed.data?.pathId?.trim() || undefined;
-  const mode = parsed.data?.mode ?? "resume";
+  const mode = parsed.data?.mode ?? 'resume';
   const query = parsed.data?.query?.trim() || undefined;
   const limit = parsed.data?.limit ?? undefined;
 
@@ -45,7 +45,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       ...(!access.isElevated ? { userId: access.userId } : {}),
       ...(pathId ? { pathId } : {}),
       ...(query ? { query } : {}),
-      status: "dead_lettered",
+      status: 'dead_lettered',
       ...(limit ? { limit } : {}),
     });
     targetRunIds = runs.map((run: { id: string }) => run.id);
@@ -62,7 +62,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     try {
       const run = await repo.findRunById(runId);
       if (!run) {
-        errors.push({ runId, error: "Run not found" });
+        errors.push({ runId, error: 'Run not found' });
         continue;
       }
       try {
@@ -70,11 +70,11 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       } catch (error) {
         errors.push({
           runId,
-          error: error instanceof Error ? error.message : "Run access denied",
+          error: error instanceof Error ? error.message : 'Run access denied',
         });
         continue;
       }
-      if (run.status !== "dead_lettered") {
+      if (run.status !== 'dead_lettered') {
         errors.push({ runId, error: `Run is ${run.status}` });
         continue;
       }
@@ -83,7 +83,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     } catch (error) {
       errors.push({
         runId,
-        error: error instanceof Error ? error.message : "Failed to requeue run",
+        error: error instanceof Error ? error.message : 'Failed to requeue run',
       });
     }
   }
@@ -101,6 +101,6 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- {
-  source: "ai-paths.runs.dead-letter.requeue",
-});
+  {
+    source: 'ai-paths.runs.dead-letter.requeue',
+  });

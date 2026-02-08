@@ -23,13 +23,13 @@ describe('postgres utils', () => {
 
   describe('getPgConnectionUrl', () => {
     it('should strip schema parameter from DATABASE_URL', () => {
-      process.env.DATABASE_URL = 'postgresql://user:pass@localhost:5432/db?schema=public';
+      process.env['DATABASE_URL'] = 'postgresql://user:pass@localhost:5432/db?schema=public';
       const result = getPgConnectionUrl();
       expect(result).toBe('postgresql://user:pass@localhost:5432/db');
     });
 
     it('should return raw URL if invalid', () => {
-      process.env.DATABASE_URL = 'invalid-url';
+      process.env['DATABASE_URL'] = 'invalid-url';
       expect(getPgConnectionUrl()).toBe('invalid-url');
     });
   });

@@ -6,7 +6,7 @@ import { GET, POST } from '@/app/api/chatbot/route';
 import { server } from '@/mocks/server';
 
 
-const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
+const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] || 'http://localhost:11434';
 
 describe('Chatbot API', () => {
   let consoleErrorSpy: MockInstance;

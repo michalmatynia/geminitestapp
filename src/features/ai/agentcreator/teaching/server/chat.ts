@@ -86,7 +86,7 @@ export async function runTeachingChat(params: {
   const ollamaOptions: Record<string, unknown> = { temperature };
   if (Number.isFinite(maxTokens) && maxTokens > 0) {
     // Ollama option name for generation length.
-    ollamaOptions.num_predict = Math.round(maxTokens);
+    ollamaOptions['num_predict'] = Math.round(maxTokens);
   }
 
   const res = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {

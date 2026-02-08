@@ -348,21 +348,21 @@ export function useAiPathsPersistence({
             ? (uiStateParsed as Record<string, unknown>)
             : null;
         const preferredPathIdFromUi =
-          typeof uiState?.activePathId === 'string' ? uiState.activePathId : null;
+          typeof uiState?.['activePathId'] === 'string' ? uiState?.['activePathId'] : null;
         const preferredPathIdFromUser =
-          typeof userPreferences?.aiPathsActivePathId === 'string' &&
-          userPreferences.aiPathsActivePathId.trim().length > 0
-            ? userPreferences.aiPathsActivePathId.trim()
+          typeof userPreferences?.['aiPathsActivePathId'] === 'string' &&
+          (userPreferences?.['aiPathsActivePathId'] as string).trim().length > 0
+            ? (userPreferences?.['aiPathsActivePathId'] as string).trim()
             : null;
-        const preferredGroups = Array.isArray(uiState?.expandedGroups)
-          ? uiState.expandedGroups.filter(
+        const preferredGroups = Array.isArray(uiState?.['expandedGroups'])
+          ? (uiState?.['expandedGroups'] as unknown[]).filter(
             (value: unknown): value is string =>
               typeof value === 'string' && value.trim().length > 0
           )
           : null;
         const preferredPaletteCollapsed =
-          typeof uiState?.paletteCollapsed === 'boolean'
-            ? uiState.paletteCollapsed
+          typeof uiState?.['paletteCollapsed'] === 'boolean'
+            ? uiState?.['paletteCollapsed']
             : null;
         const hasStoredUiState = Boolean(uiState);
         if (preferredGroups) {

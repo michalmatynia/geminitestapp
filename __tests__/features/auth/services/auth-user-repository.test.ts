@@ -10,7 +10,7 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
 describe('Auth User Repository', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    process.env.MONGODB_URI = 'mongodb://...';
+    process.env['MONGODB_URI'] = 'mongodb://...';
   });
 
   describe('findAuthUserByEmail', () => {

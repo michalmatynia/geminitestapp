@@ -158,14 +158,14 @@ async function POST_handler(req: NextRequest,
       run.planState && typeof run.planState === 'object'
         ? (run.planState as Record<string, unknown>)
         : null;
-    const steps = Array.isArray(planState?.steps)
-      ? (planState.steps as Array<Record<string, unknown>>)
+    const steps = Array.isArray(planState?.['steps'])
+      ? (planState?.['steps'] as Array<Record<string, unknown>>)
       : null;
     if (!steps) {
       throw badRequestError('No plan steps available to retry.');
     }
     const nextSteps = steps.map((step) => {
-      if (step && typeof step === 'object' && step.id === body.stepId) {
+      if (step && typeof step === 'object' && step['id'] === body.stepId) {
         const typed = step as {
           id: string;
           status?: string;
@@ -176,7 +176,7 @@ async function POST_handler(req: NextRequest,
           ...typed,
           status: 'pending',
           attempts: 0,
-          maxAttempts: (typed.maxAttempts ?? 1) + 1,
+          maxAttempts: (typed['maxAttempts'] ?? 1) + 1,
         };
       }
       return step;
@@ -228,14 +228,14 @@ async function POST_handler(req: NextRequest,
       run.planState && typeof run.planState === 'object'
         ? (run.planState as Record<string, unknown>)
         : null;
-    const steps = Array.isArray(planState?.steps)
-      ? (planState.steps as Array<Record<string, unknown>>)
+    const steps = Array.isArray(planState?.['steps'])
+      ? (planState?.['steps'] as Array<Record<string, unknown>>)
       : null;
     if (!steps) {
       throw badRequestError('No plan steps available to override.');
     }
     const nextSteps = steps.map((step) => {
-      if (step && typeof step === 'object' && step.id === body.stepId) {
+      if (step && typeof step === 'object' && step['id'] === body.stepId) {
         return { ...step, status: body.status };
       }
       return step;

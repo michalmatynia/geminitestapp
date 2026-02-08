@@ -1577,8 +1577,8 @@ export function useAiPathsRuntime({
           source: 'local',
           kind: 'run_completed',
           level: 'info',
-          runId: currentRunIdRef.current ?? outcome.state.runId ?? null,
-          runStartedAt: currentRunStartedAtRef.current ?? outcome.state.runStartedAt ?? null,
+          runId: currentRunIdRef.current ?? outcome.state?.runId ?? null,
+          runStartedAt: currentRunStartedAtRef.current ?? outcome.state?.runStartedAt ?? null,
           timestamp: finishedAt,
           message: 'Run completed.',
         });
@@ -1625,8 +1625,8 @@ export function useAiPathsRuntime({
           source: 'local',
           kind: 'run_failed',
           level: 'error',
-          runId: currentRunIdRef.current ?? outcome.state.runId ?? null,
-          runStartedAt: currentRunStartedAtRef.current ?? outcome.state.runStartedAt ?? null,
+          runId: currentRunIdRef.current ?? outcome.state?.runId ?? null,
+          runStartedAt: currentRunStartedAtRef.current ?? outcome.state?.runStartedAt ?? null,
           timestamp: finishedAt,
           message:
             outcome.error instanceof Error ? `Run failed: ${outcome.error.message}` : 'Run failed.',
@@ -1666,8 +1666,8 @@ export function useAiPathsRuntime({
           source: 'local',
           kind: 'run_canceled',
           level: 'info',
-          runId: currentRunIdRef.current ?? outcome.state.runId ?? null,
-          runStartedAt: currentRunStartedAtRef.current ?? outcome.state.runStartedAt ?? null,
+          runId: currentRunIdRef.current ?? outcome.state?.runId ?? null,
+          runStartedAt: currentRunStartedAtRef.current ?? outcome.state?.runStartedAt ?? null,
           timestamp: finishedAt,
           message: 'Run cancelled.',
         });

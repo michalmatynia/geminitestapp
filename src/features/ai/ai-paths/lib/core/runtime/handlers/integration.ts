@@ -97,38 +97,38 @@ export const handleTrigger: NodeHandler = async ({
   }
   const eventName: string =
     triggerEvent ?? node.config?.trigger?.event ?? 'manual';
-  const contextInput = (coerceInput(nodeInputs.context) ??
-    coerceInput(nodeInputs.simulation)) as
+  const contextInput = (coerceInput(nodeInputs['context']) ??
+    coerceInput(nodeInputs['simulation'])) as
     | { entityId?: string; entityType?: string; productId?: string; entity?: unknown; entityJson?: unknown; product?: unknown }
     | undefined;
   const contextEntity =
-    (contextInput?.entity as Record<string, unknown> | undefined) ??
-    (contextInput?.entityJson as Record<string, unknown> | undefined) ??
-    (contextInput?.product as Record<string, unknown> | undefined) ??
+    (contextInput?.['entity'] as Record<string, unknown> | undefined) ??
+    (contextInput?.['entityJson'] as Record<string, unknown> | undefined) ??
+    (contextInput?.['product'] as Record<string, unknown> | undefined) ??
     null;
   const simulationInputId: string | null =
-    contextInput?.entityId ?? contextInput?.productId ?? null;
+    contextInput?.['entityId'] ?? contextInput?.['productId'] ?? null;
   const simulationInputType: string | null =
-    contextInput?.entityType ?? simulationEntityType ?? null;
+    contextInput?.['entityType'] ?? (simulationEntityType) ?? null;
   const resolvedEntityId: string | null = simulationInputId ?? null;
   const resolvedEntityType: string | null = simulationInputType ?? null;
   const triggerExtras: Record<string, unknown> = (triggerContext as Record<string, unknown>) ?? {};
   const triggerEntity =
-    triggerExtras.entity ?? triggerExtras.entityJson ?? triggerExtras.product ?? null;
+    triggerExtras['entity'] ?? triggerExtras['entityJson'] ?? triggerExtras['product'] ?? null;
   const triggerEntityId: string | null =
-    typeof triggerExtras.entityId === 'string'
-      ? (triggerExtras.entityId)
-      : typeof triggerExtras.productId === 'string'
-        ? (triggerExtras.productId)
+    typeof triggerExtras['entityId'] === 'string'
+      ? (triggerExtras['entityId'])
+      : typeof triggerExtras['productId'] === 'string'
+        ? (triggerExtras['productId'])
         : null;
   const triggerEntityType: string | null =
-    typeof triggerExtras.entityType === 'string'
-      ? (triggerExtras.entityType)
+    typeof triggerExtras['entityType'] === 'string'
+      ? (triggerExtras['entityType'])
       : null;
   const effectiveEntityId: string | null = resolvedEntityId ?? triggerEntityId ?? null;
   const effectiveEntityType: string | null = resolvedEntityType ?? triggerEntityType ?? null;
   let hydratedEntity: Record<string, unknown> | null =
-    resolvedEntity ??
+    (resolvedEntity) ??
     contextEntity ??
     (triggerEntity as Record<string, unknown> | null) ??
     null;
@@ -143,30 +143,30 @@ export const handleTrigger: NodeHandler = async ({
     }
   }
   const resolvedContext: Record<string, unknown> = {
-    ...(contextInput && typeof contextInput === 'object' ? contextInput : {}),
-    entityType: resolvedEntityType ?? triggerEntityType ?? contextInput?.entityType,
-    entityId: resolvedEntityId ?? triggerEntityId ?? contextInput?.entityId,
+    ...(contextInput && typeof contextInput === 'object' ? (contextInput as Record<string, unknown>) : {}),
+    entityType: resolvedEntityType ?? triggerEntityType ?? contextInput?.['entityType'],
+    entityId: resolvedEntityId ?? triggerEntityId ?? contextInput?.['entityId'],
     source: node.title,
     timestamp: now,
     entity:
       hydratedEntity ??
       (() => {
         try {
-          return buildFallbackEntity(effectiveEntityId ?? fallbackEntityId);
+          return buildFallbackEntity((effectiveEntityId ?? fallbackEntityId) as string);
         } catch {
           return { id: effectiveEntityId ?? fallbackEntityId };
         }
       })(),
   };
-  if (hydratedEntity && typeof resolvedContext.entityJson === 'undefined') {
-    resolvedContext.entityJson = hydratedEntity;
+  if (hydratedEntity && typeof resolvedContext['entityJson'] === 'undefined') {
+    resolvedContext['entityJson'] = hydratedEntity;
   }
   if (
     hydratedEntity &&
     effectiveEntityType === 'product' &&
-    typeof resolvedContext.product === 'undefined'
+    typeof resolvedContext['product'] === 'undefined'
   ) {
-    resolvedContext.product = hydratedEntity;
+    resolvedContext['product'] = hydratedEntity;
   }
   return {
     trigger: true,
@@ -177,28 +177,28 @@ export const handleTrigger: NodeHandler = async ({
       pathId: activePathId,
       entityId: effectiveEntityId,
       entityType: effectiveEntityType,
-      ui: triggerExtras.ui ?? null,
-      location: triggerExtras.location ?? null,
-      source: triggerExtras.source ?? null,
-      user: triggerExtras.user ?? null,
-      event: triggerExtras.event ?? null,
-      extras: triggerExtras.extras ?? null,
+      ui: triggerExtras['ui'] ?? null,
+      location: triggerExtras['location'] ?? null,
+      source: triggerExtras['source'] ?? null,
+      user: triggerExtras['user'] ?? null,
+      event: triggerExtras['event'] ?? null,
+      extras: triggerExtras['extras'] ?? null,
     },
     context: {
       ...resolvedContext,
       entityId:
-        effectiveEntityId ?? (resolvedContext.entityId as string | null),
+        effectiveEntityId ?? (resolvedContext['entityId'] as string | null),
       entityType:
-        effectiveEntityType ?? (resolvedContext.entityType as string | null),
-      ui: triggerExtras.ui ?? resolvedContext.ui,
-      location: triggerExtras.location ?? resolvedContext.location,
+        effectiveEntityType ?? (resolvedContext['entityType'] as string | null),
+      ui: triggerExtras['ui'] ?? resolvedContext['ui'],
+      location: triggerExtras['location'] ?? resolvedContext['location'],
       source:
-        triggerExtras.source ??
-        (resolvedContext.source as string | null) ??
+        triggerExtras['source'] ??
+        (resolvedContext['source'] as string | null) ??
         node.title,
-      user: triggerExtras.user ?? resolvedContext.user,
-      event: triggerExtras.event ?? resolvedContext.event,
-      extras: triggerExtras.extras ?? resolvedContext.extras,
+      user: triggerExtras['user'] ?? resolvedContext['user'],
+      event: triggerExtras['event'] ?? resolvedContext['event'],
+      extras: triggerExtras['extras'] ?? resolvedContext['extras'],
       trigger: eventName,
       pathId: activePathId,
     },
@@ -252,8 +252,8 @@ export const handleNotification: NodeHandler = ({
       /{{\s*(result|value|current)\b[^}]*}}|\[\s*(result|value|current)\b[^\]]*\]/.test(template);
     if (templateNeedsCurrentValue) {
       const currentValue =
-        coerceInput(promptSourceInputs.result) ??
-        coerceInput(promptSourceInputs.value);
+        coerceInput(promptSourceInputs['result']) ??
+        coerceInput(promptSourceInputs['value']);
       const hasCurrentValue =
         currentValue !== undefined &&
         currentValue !== null &&
@@ -278,16 +278,16 @@ export const handleNotification: NodeHandler = ({
   }
   const messageSource: unknown =
     derivedPromptMessage ??
-    coerceInput(nodeInputs.result) ??
-    coerceInput(nodeInputs.prompt) ??
-    coerceInput(nodeInputs.value) ??
-    coerceInput(nodeInputs.bundle) ??
-    coerceInput(nodeInputs.context) ??
-    coerceInput(nodeInputs.triggerName) ??
-    coerceInput(nodeInputs.trigger) ??
-    coerceInput(nodeInputs.meta) ??
-    coerceInput(nodeInputs.entityId) ??
-    coerceInput(nodeInputs.entityType);
+    coerceInput(nodeInputs['result']) ??
+    coerceInput(nodeInputs['prompt']) ??
+    coerceInput(nodeInputs['value']) ??
+    coerceInput(nodeInputs['bundle']) ??
+    coerceInput(nodeInputs['context']) ??
+    coerceInput(nodeInputs['triggerName']) ??
+    coerceInput(nodeInputs['trigger']) ??
+    coerceInput(nodeInputs['meta']) ??
+    coerceInput(nodeInputs['entityId']) ??
+    coerceInput(nodeInputs['entityType']);
   if (messageSource === undefined) {
     return prevOutputs;
   }
@@ -312,11 +312,11 @@ export const handlePoll: NodeHandler = async ({
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   if (deferPoll) {
     const existingStatus: string | null =
-      typeof prevOutputs.status === 'string' ? (prevOutputs.status) : null;
+      typeof prevOutputs['status'] === 'string' ? (prevOutputs['status']) : null;
     if (existingStatus === 'completed' || existingStatus === 'failed') {
       return prevOutputs;
     }
-    const rawJobId: unknown = coerceInput(nodeInputs.jobId);
+    const rawJobId: unknown = coerceInput(nodeInputs['jobId']);
     const jobId: string =
       typeof rawJobId === 'string' || typeof rawJobId === 'number'
         ? String(rawJobId).trim()
@@ -325,7 +325,7 @@ export const handlePoll: NodeHandler = async ({
       return prevOutputs;
     }
     const existingResult: unknown =
-      prevOutputs.result !== undefined ? prevOutputs.result : null;
+      prevOutputs['result'] !== undefined ? prevOutputs['result'] : null;
     executed.poll.add(node.id);
     return {
       result: existingResult,
@@ -344,7 +344,7 @@ export const handlePoll: NodeHandler = async ({
     mode: 'job',
   };
   const pollMode: 'job' | 'database' = pollConfig.mode ?? 'job';
-  const rawJobId: unknown = coerceInput(nodeInputs.jobId);
+  const rawJobId: unknown = coerceInput(nodeInputs['jobId']);
   const jobId: string =
     typeof rawJobId === 'string' || typeof rawJobId === 'number'
       ? String(rawJobId).trim()
@@ -587,66 +587,66 @@ export const handleDatabase: NodeHandler = async ({
       ): void => {
         if (!ctx || typeof ctx !== 'object') return;
         const entityId: string | undefined =
-        pickString(ctx.entityId) ??
-        pickString(ctx.productId) ??
-        pickString(ctx.id) ??
-        pickString(ctx._id);
+        pickString(ctx['entityId']) ??
+        pickString(ctx['productId']) ??
+        pickString(ctx['id']) ??
+        pickString(ctx['_id']);
         const productId: string | undefined =
-        pickString(ctx.productId) ??
-        pickString(ctx.entityId) ??
-        pickString(ctx.id) ??
-        pickString(ctx._id);
-        const entityType: string | undefined = pickString(ctx.entityType);
-        if (next.entityId === undefined && entityId) next.entityId = entityId;
-        if (next.productId === undefined && productId) next.productId = productId;
-        if (next.entityType === undefined && entityType)
-          next.entityType = entityType;
+        pickString(ctx['productId']) ??
+        pickString(ctx['entityId']) ??
+        pickString(ctx['id']) ??
+        pickString(ctx['_id']);
+        const entityType: string | undefined = pickString(ctx['entityType']);
+        if (next['entityId'] === undefined && entityId) next['entityId'] = entityId;
+        if (next['productId'] === undefined && productId) next['productId'] = productId;
+        if (next['entityType'] === undefined && entityType)
+          next['entityType'] = entityType;
       };
       const applyFromObject = (record: Record<string, unknown>): void => {
         const entityId: string | undefined =
-        pickString(record.entityId) ??
-        pickString(record.productId) ??
-        pickString(record.id) ??
-        pickString(record._id);
+        pickString(record['entityId']) ??
+        pickString(record['productId']) ??
+        pickString(record['id']) ??
+        pickString(record['_id']);
         const productId: string | undefined =
-        pickString(record.productId) ??
-        pickString(record.entityId) ??
-        pickString(record.id) ??
-        pickString(record._id);
-        const entityType: string | undefined = pickString(record.entityType);
-        if (next.entityId === undefined && entityId) next.entityId = entityId;
-        if (next.productId === undefined && productId) next.productId = productId;
-        if (next.entityType === undefined && entityType)
-          next.entityType = entityType;
+        pickString(record['productId']) ??
+        pickString(record['entityId']) ??
+        pickString(record['id']) ??
+        pickString(record['_id']);
+        const entityType: string | undefined = pickString(record['entityType']);
+        if (next['entityId'] === undefined && entityId) next['entityId'] = entityId;
+        if (next['productId'] === undefined && productId) next['productId'] = productId;
+        if (next['entityType'] === undefined && entityType)
+          next['entityType'] = entityType;
       };
-      const contextValue: unknown = coerceInput(inputs.context);
+      const contextValue: unknown = coerceInput(inputs['context']);
       if (contextValue && typeof contextValue === 'object') {
         applyFromObject(contextValue as Record<string, unknown>);
       }
-      const metaValue: unknown = coerceInput(inputs.meta);
+      const metaValue: unknown = coerceInput(inputs['meta']);
       if (metaValue && typeof metaValue === 'object') {
         applyFromObject(metaValue as Record<string, unknown>);
       }
-      const bundleValue: unknown = coerceInput(inputs.bundle);
+      const bundleValue: unknown = coerceInput(inputs['bundle']);
       if (bundleValue && typeof bundleValue === 'object') {
         applyFromObject(bundleValue as Record<string, unknown>);
       }
       pickFromContext(triggerContext as Record<string, unknown>);
-      if (next.entityId === undefined && fallbackEntityId) {
-        next.entityId = fallbackEntityId;
+      if (next['entityId'] === undefined && fallbackEntityId) {
+        next['entityId'] = fallbackEntityId;
       }
-      if (next.productId === undefined && next.entityId) {
-        next.productId = next.entityId;
+      if (next['productId'] === undefined && next['entityId']) {
+        next['productId'] = next['entityId'];
       }
-      if (next.entityType === undefined && simulationEntityType) {
-        next.entityType = simulationEntityType;
+      if (next['entityType'] === undefined && simulationEntityType) {
+        next['entityType'] = simulationEntityType;
       }
-      if (next.value === undefined) {
+      if (next['value'] === undefined) {
         const fallbackValue =
-        (typeof next.entityId === 'string' && next.entityId.trim() ? next.entityId : undefined) ??
-        (typeof next.productId === 'string' && next.productId.trim() ? next.productId : undefined);
+        (typeof next['entityId'] === 'string' && (next['entityId']).trim() ? next['entityId'] : undefined) ??
+        (typeof next['productId'] === 'string' && (next['productId']).trim() ? next['productId'] : undefined);
         if (fallbackValue) {
-          next.value = fallbackValue;
+          next['value'] = fallbackValue;
         }
       }
       return next;
@@ -676,7 +676,7 @@ export const handleDatabase: NodeHandler = async ({
     );
 
     const templateInputValue: unknown =
-    coerceInput(resolvedInputs.value) ?? coerceInput(resolvedInputs.jobId);
+    coerceInput(resolvedInputs['value']) ?? coerceInput(resolvedInputs['jobId']);
     const templateSources: string[] = [
       aiPromptTemplate,
       queryConfig.queryTemplate ?? '',
@@ -685,7 +685,7 @@ export const handleDatabase: NodeHandler = async ({
     const wantsSchemaPlaceholders = templateSources.some((value: string) =>
       value.includes('{{Collection:')
     );
-    const schemaInput = resolvedInputs.schema;
+    const schemaInput = resolvedInputs['schema'];
     let schemaData: SchemaResponse | null = null;
     if (wantsSchemaPlaceholders) {
       if (
@@ -764,11 +764,11 @@ export const handleDatabase: NodeHandler = async ({
     const templateInputs: RuntimePortValues = {
       ...resolvedInputs,
     };
-    if (templateInputs.result === undefined && templateInputs.value !== undefined) {
-      templateInputs.result = templateInputs.value;
+    if (templateInputs['result'] === undefined && templateInputs['value'] !== undefined) {
+      templateInputs['result'] = templateInputs['value'];
     }
-    if (templateInputs.value === undefined && templateInputs.result !== undefined) {
-      templateInputs.value = templateInputs.result;
+    if (templateInputs['value'] === undefined && templateInputs['result'] !== undefined) {
+      templateInputs['value'] = templateInputs['result'];
     }
     const templateContext: Record<string, unknown> = {
       ...templateInputs,
@@ -784,8 +784,8 @@ export const handleDatabase: NodeHandler = async ({
       const inputValue: unknown = templateInputValue;
       const queryPayload = buildDbQueryPayload(templateContext as RuntimePortValues, queryConfig);
       const actionProvider =
-      queryPayload.provider === 'mongodb' || queryPayload.provider === 'prisma'
-        ? queryPayload.provider
+      queryPayload['provider'] === 'mongodb' || queryPayload['provider'] === 'prisma'
+        ? queryPayload['provider']
         : null;
       const actionSupportError = actionProvider
         ? getUnsupportedProviderActionMessage(actionProvider, action)
@@ -802,12 +802,12 @@ export const handleDatabase: NodeHandler = async ({
           aiPrompt,
         };
       }
-      const filter = (queryPayload.query) ?? {};
-      const projection = queryPayload.projection;
-      const sort = queryPayload.sort;
-      const limit = queryPayload.limit;
-      const idType = queryPayload.idType;
-      const collection = queryPayload.collection;
+      const filter = (queryPayload['query']) ?? {};
+      const projection = queryPayload['projection'];
+      const sort = queryPayload['sort'];
+      const limit = queryPayload['limit'];
+      const idType = queryPayload['idType'];
+      const collection = queryPayload['collection'];
       const distinctField: string | undefined = dbConfig.distinctField?.trim() || undefined;
       const updateTemplate: string = dbConfig.updateTemplate?.trim() ?? '';
 
@@ -869,12 +869,12 @@ export const handleDatabase: NodeHandler = async ({
             };
           }
           return {
-            result: aggResult.data.items ?? [],
+            result: (aggResult.data as Record<string, unknown>)?.['items'] ?? [],
             bundle: {
               count:
-              aggResult.data.count ??
-              (Array.isArray(aggResult.data.items)
-                ? aggResult.data.items.length
+              (aggResult.data as Record<string, unknown>)?.['count'] ??
+              (Array.isArray((aggResult.data as Record<string, unknown>)?.['items'])
+                ? ((aggResult.data as Record<string, unknown>)?.['items'] as unknown[]).length
                 : 0),
               collection,
             },
@@ -898,7 +898,7 @@ export const handleDatabase: NodeHandler = async ({
           };
         }
         const readResult: ApiResponse<DbActionResult> = await dbApi.action<DbActionResult>({ 
-          ...(queryPayload.provider ? { provider: queryPayload.provider as 'auto' | 'mongodb' | 'prisma' } : {}),
+          ...(queryPayload['provider'] ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' } : {}),
           action,
           collection,
           filter,
@@ -913,9 +913,9 @@ export const handleDatabase: NodeHandler = async ({
           return { result: null, bundle: { error: 'Read failed' }, aiPrompt };
         }
         const data: DbActionResult = readResult.data;
-        const result: unknown = data.item ?? data.items ?? data.values ?? data.count ?? [];
+        const result: unknown = data['item'] ?? data['items'] ?? data['values'] ?? data['count'] ?? [];
         const count: number =
-        data.count ??
+        (data['count'] as number) ??
         (Array.isArray(result) ? (result as unknown[]).length : result ? 1 : 0);
         toast(
           `Database query succeeded for ${collection} (${count} result${count === 1 ? '' : 's'}).`,
@@ -997,7 +997,7 @@ export const handleDatabase: NodeHandler = async ({
           };
         }
         const insertActionPayload = {
-          ...(queryPayload.provider ? { provider: queryPayload.provider as 'auto' | 'mongodb' | 'prisma' } : {}),
+          ...(queryPayload['provider'] ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' } : {}),
           action,
           collection,
           ...(action === 'insertOne' && payloadObject
@@ -1019,8 +1019,8 @@ export const handleDatabase: NodeHandler = async ({
           return { result: null, bundle: { error: 'Insert failed' }, aiPrompt };
         }
         const insertedCount: number =
-        typeof (insertResult.data as Record<string, unknown> | null)?.insertedCount === 'number'
-          ? ((insertResult.data as Record<string, unknown>).insertedCount as number)
+        typeof (insertResult.data as Record<string, unknown> | null)?.['insertedCount'] === 'number'
+          ? ((insertResult.data as Record<string, unknown>)['insertedCount'] as number)
           : 1;
         toast(
           `Entity created in ${collection} (${insertedCount} row${insertedCount === 1 ? '' : 's'}).`,
@@ -1053,9 +1053,9 @@ export const handleDatabase: NodeHandler = async ({
           filter: resolvedFilter,
           updateTemplate: updateTemplate || undefined,
           idType,
-          entityId: resolvedInputs.entityId,
-          productId: resolvedInputs.productId,
-          entityType: resolvedInputs.entityType,
+          entityId: resolvedInputs['entityId'],
+          productId: resolvedInputs['productId'],
+          entityType: resolvedInputs['entityType'],
         };
         const buildUpdatesFromMappings = (): {
         updates: Record<string, unknown>;
@@ -1064,7 +1064,7 @@ export const handleDatabase: NodeHandler = async ({
         unresolvedSourcePorts: string[];
       } => {
           const fallbackTarget: string =
-          dbConfig.mappings?.[0]?.targetPath ?? 'content_en';
+          dbConfig.mappings?.[0]?.['targetPath'] ?? 'content_en';
           const fallbackSourcePort: string = node.inputs.includes('result')
             ? 'result'
             : 'content_en';
@@ -1116,10 +1116,10 @@ export const handleDatabase: NodeHandler = async ({
             typeof value === 'object' &&
             !mapping.sourcePath
             ) {
-              const resultValue: unknown = (value as Record<string, unknown>).result;
+              const resultValue: unknown = (value as Record<string, unknown>)['result'];
               const descriptionValue: unknown = (value as Record<string, unknown>)
-                .description;
-              const contentValue: unknown = (value as Record<string, unknown>).content_en;
+                ['description'];
+              const contentValue: unknown = (value as Record<string, unknown>)['content_en'];
               value = resultValue ?? descriptionValue ?? contentValue ?? value;
             }
             if (sourcePort === 'result' && isEffectivelyMissing(value)) {
@@ -1249,10 +1249,10 @@ export const handleDatabase: NodeHandler = async ({
         }
         const resolveEntityId = (): string | null => {
           const entityIdValue =
-          typeof resolvedInputs.entityId === 'string'
-            ? resolvedInputs.entityId
-            : typeof resolvedInputs.productId === 'string'
-              ? resolvedInputs.productId
+          typeof resolvedInputs['entityId'] === 'string'
+            ? (resolvedInputs['entityId'])
+            : typeof resolvedInputs['productId'] === 'string'
+              ? (resolvedInputs['productId'])
               : null;
           if (entityIdValue && entityIdValue.trim()) return entityIdValue;
           const fallbackEntityId: string = resolveEntityIdFromInputs(
@@ -1263,10 +1263,10 @@ export const handleDatabase: NodeHandler = async ({
           );
           if (fallbackEntityId.trim()) return fallbackEntityId;
           const filterId =
-          typeof resolvedFilter.id === 'string'
-            ? resolvedFilter.id
-            : typeof resolvedFilter._id === 'string'
-              ? resolvedFilter._id
+          typeof resolvedFilter['id'] === 'string'
+            ? (resolvedFilter['id'])
+            : typeof resolvedFilter['_id'] === 'string'
+              ? (resolvedFilter['_id'])
               : null;
           return filterId && filterId.trim() ? filterId : null;
         };
@@ -1282,10 +1282,10 @@ export const handleDatabase: NodeHandler = async ({
             ? (updateDoc as Record<string, unknown>)
             : null;
           const updateSet =
-          updateDocRecord?.$set &&
-          typeof updateDocRecord.$set === 'object' &&
-          !Array.isArray(updateDocRecord.$set)
-            ? (updateDocRecord.$set as Record<string, unknown>)
+          updateDocRecord?.['$set'] &&
+          typeof updateDocRecord['$set'] === 'object' &&
+          !Array.isArray(updateDocRecord['$set'])
+            ? (updateDocRecord['$set'] as Record<string, unknown>)
             : null;
           const updatePlain =
           updateDocRecord && !Object.keys(updateDocRecord).some((key) => key.startsWith('$'))
@@ -1304,7 +1304,7 @@ export const handleDatabase: NodeHandler = async ({
                 action: 'updateEntity',
                 collection,
                 nodeId: node.id,
-                provider: queryPayload.provider,
+                provider: queryPayload['provider'],
               },
               'Database update skipped:',
             );
@@ -1338,8 +1338,8 @@ export const handleDatabase: NodeHandler = async ({
             };
           }
           const modifiedCount: number =
-          typeof (updateResult.data as Record<string, unknown> | null)?.modifiedCount === 'number'
-            ? ((updateResult.data as Record<string, unknown>).modifiedCount as number)
+          typeof (updateResult.data as Record<string, unknown> | null)?.['modifiedCount'] === 'number'
+            ? ((updateResult.data as Record<string, unknown>)['modifiedCount'] as number)
             : 1;
           toast(
             `Entity updated in ${collection} (${modifiedCount} row${modifiedCount === 1 ? '' : 's'}).`,
@@ -1350,8 +1350,8 @@ export const handleDatabase: NodeHandler = async ({
             content_en:
             primaryTarget === 'content_en'
               ? ((primaryValue as string | undefined) ??
-                (nodeInputs.content_en as string | undefined))
-              : (nodeInputs.content_en as string | undefined),
+                (nodeInputs['content_en'] as string | undefined))
+              : (nodeInputs['content_en'] as string | undefined),
             result: updateResult.data,
             bundle: updateResult.data as Record<string, unknown>,
             debugPayload,
@@ -1372,7 +1372,7 @@ export const handleDatabase: NodeHandler = async ({
           if (!resolvedFilter || Object.keys(resolvedFilter).length === 0) {
             reportAiPathsError(
               new Error('Database update missing filter'),
-              { action: 'dbUpdate', collection, nodeId: node.id, provider: queryPayload.provider },
+              { action: 'dbUpdate', collection, nodeId: node.id, provider: queryPayload['provider'] },
               'Database update skipped:',
             );
             toast('Database update skipped: missing query filter.', { variant: 'error' });
@@ -1385,12 +1385,12 @@ export const handleDatabase: NodeHandler = async ({
           }
         }
         const updateResult: ApiResponse<unknown> = await dbApi.action({
-          ...(queryPayload.provider ? { provider: queryPayload.provider as 'auto' | 'mongodb' | 'prisma' } : {}),
+          ...(queryPayload['provider'] ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' } : {}),
           action,
           collection,
           filter: resolvedFilter,
           update: updateDoc,
-          ...(idType !== undefined ? { idType } : {}),
+          ...(idType !== undefined ? { idType: idType as 'string' | 'objectId' } : {}),
         });
         executed.updater.add(node.id);
         if (!updateResult.ok) {
@@ -1408,8 +1408,8 @@ export const handleDatabase: NodeHandler = async ({
           };
         }
         const modifiedCount: number =
-        typeof (updateResult.data as Record<string, unknown> | null)?.modifiedCount === 'number'
-          ? ((updateResult.data as Record<string, unknown>).modifiedCount as number)
+        typeof (updateResult.data as Record<string, unknown> | null)?.['modifiedCount'] === 'number'
+          ? ((updateResult.data as Record<string, unknown>)['modifiedCount'] as number)
           : 1;
         toast(
           `Entity updated in ${collection} (${modifiedCount} row${modifiedCount === 1 ? '' : 's'}).`,
@@ -1420,8 +1420,8 @@ export const handleDatabase: NodeHandler = async ({
           content_en:
           primaryTarget === 'content_en'
             ? ((primaryValue as string | undefined) ??
-              (nodeInputs.content_en as string | undefined))
-            : (nodeInputs.content_en as string | undefined),
+              (nodeInputs['content_en'] as string | undefined))
+            : (nodeInputs['content_en'] as string | undefined),
           result: updateResult.data,
           bundle: updateResult.data as Record<string, unknown>,
           debugPayload,
@@ -1442,11 +1442,11 @@ export const handleDatabase: NodeHandler = async ({
           };
         }
         const deleteResult: ApiResponse<unknown> = await dbApi.action({
-          ...(queryPayload.provider ? { provider: queryPayload.provider as 'auto' | 'mongodb' | 'prisma' } : {}),
+          ...(queryPayload['provider'] ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' } : {}),
           action,
           collection,
           filter,
-          ...(idType !== undefined ? { idType } : {}),
+          ...(idType !== undefined ? { idType: idType as 'string' | 'objectId' } : {}),
         });
         executed.updater.add(node.id);
         if (!deleteResult.ok) {
@@ -1468,9 +1468,9 @@ export const handleDatabase: NodeHandler = async ({
     }
 
     if (operation === 'query') {
-      const inputQuery: unknown = coerceInput(nodeInputs.query);
-      const callbackInput: unknown = coerceInput(nodeInputs.queryCallback);
-      const aiQueryInput: unknown = coerceInput(nodeInputs.aiQuery);
+      const inputQuery: unknown = coerceInput(nodeInputs['query']);
+      const callbackInput: unknown = coerceInput(nodeInputs['queryCallback']);
+      const aiQueryInput: unknown = coerceInput(nodeInputs['aiQuery']);
       const resolvedEntityId: string | null = resolveEntityIdFromInputs(
       resolvedInputs as RuntimePortValues,
       undefined,
@@ -1478,8 +1478,8 @@ export const handleDatabase: NodeHandler = async ({
       simulationEntityId,
       );
       const inputValue: unknown = templateInputValue;
-      const entityIdInput: unknown = coerceInput(resolvedInputs.entityId);
-      const productIdInput: unknown = coerceInput(resolvedInputs.productId);
+      const entityIdInput: unknown = coerceInput(resolvedInputs['entityId']);
+      const productIdInput: unknown = coerceInput(resolvedInputs['productId']);
       const parseRenderedQuery = (raw: string): Record<string, unknown> | null => {
         const parsed: unknown = parseJsonSafe(
           renderJsonTemplate(
@@ -1524,11 +1524,11 @@ export const handleDatabase: NodeHandler = async ({
 
         if (parsedAiQuery && typeof parsedAiQuery === 'object') {
         // Handle nested query structure (AI might return {query: {...}, collection: "..."})
-          if (parsedAiQuery.query && typeof parsedAiQuery.query === 'object') {
-            query = parsedAiQuery.query as Record<string, unknown>;
+          if (parsedAiQuery['query'] && typeof parsedAiQuery['query'] === 'object') {
+            query = parsedAiQuery['query'] as Record<string, unknown>;
             // Override collection if AI specified one
-            if (typeof parsedAiQuery.collection === 'string') {
-              queryConfig.collection = parsedAiQuery.collection;
+            if (typeof parsedAiQuery['collection'] === 'string') {
+              queryConfig.collection = parsedAiQuery['collection'];
             }
           } else {
             query = parsedAiQuery;
@@ -1649,7 +1649,7 @@ export const handleDatabase: NodeHandler = async ({
         sort,
         limit: queryConfig.limit,
         single: queryConfig.single,
-        idType: queryConfig.idType,
+        idType: queryConfig.idType as 'string' | 'objectId' | undefined,
       });
       if (!queryResult.ok) {
         reportAiPathsError(
@@ -1670,10 +1670,10 @@ export const handleDatabase: NodeHandler = async ({
         };
       }
       const result: unknown = queryConfig.single
-        ? (queryResult.data.item ?? null)
-        : (queryResult.data.items ?? []);
+        ? ((queryResult.data as Record<string, unknown>)['item'] ?? null)
+        : ((queryResult.data as Record<string, unknown>)['items'] ?? []);
       const count: number =
-      queryResult.data.count ??
+      ((queryResult.data as Record<string, unknown>)['count'] as number) ??
       (Array.isArray(result) ? (result as unknown[]).length : result ? 1 : 0);
       const collectionLabel =
       typeof queryConfig.collection === 'string' && queryConfig.collection.trim()
@@ -1695,7 +1695,7 @@ export const handleDatabase: NodeHandler = async ({
     }
 
     if (operation === 'update') {
-      const fallbackTarget: string = dbConfig.mappings?.[0]?.targetPath ?? 'content_en';
+      const fallbackTarget: string = (dbConfig.mappings as any)?.[0]?.['targetPath'] ?? 'content_en';
       const fallbackSourcePort: string = node.inputs.includes('result')
         ? 'result'
         : 'content_en';
@@ -1746,9 +1746,9 @@ export const handleDatabase: NodeHandler = async ({
         typeof value === 'object' &&
         !mapping.sourcePath
         ) {
-          const resultValue: unknown = (value as Record<string, unknown>).result;
-          const descriptionValue: unknown = (value as Record<string, unknown>).description;
-          const contentValue: unknown = (value as Record<string, unknown>).content_en;
+          const resultValue: unknown = (value as Record<string, unknown>)['result'];
+          const descriptionValue: unknown = (value as Record<string, unknown>)['description'];
+          const contentValue: unknown = (value as Record<string, unknown>)['content_en'];
           value = resultValue ?? descriptionValue ?? contentValue ?? value;
         }
         if (sourcePort === 'result' && isEffectivelyMissing(value)) {
@@ -1806,7 +1806,7 @@ export const handleDatabase: NodeHandler = async ({
 
       if (updateStrategy === 'many') {
         const queryPayload = buildDbQueryPayload(resolvedInputs as RuntimePortValues, queryConfig);
-        const query = (queryPayload.query) ?? {};
+        const query = (queryPayload['query']) ?? {};
         const hasQuery =
         query && typeof query === 'object' && Object.keys(query).length > 0;
 
@@ -1827,7 +1827,7 @@ export const handleDatabase: NodeHandler = async ({
             error: 'append_not_supported',
             updates,
             query,
-            collection: queryPayload.collection,
+            collection: queryPayload['collection'],
           };
           executed.updater.add(node.id);
         } else if (hasUpdates && !hasQuery && !executed.updater.has(node.id)) {
@@ -1837,7 +1837,7 @@ export const handleDatabase: NodeHandler = async ({
             updateResult = {
               dryRun: true,
               updateMany: true,
-              collection: queryPayload.collection,
+              collection: queryPayload['collection'],
               query,
               updates,
               mode: dbConfig.mode ?? 'replace',
@@ -1845,12 +1845,12 @@ export const handleDatabase: NodeHandler = async ({
             executed.updater.add(node.id);
           } else {
             const dbUpdateResult: ApiResponse<DbActionResult> = await dbApi.update<DbActionResult>({ 
-              provider: queryPayload.provider,
-              collection: queryPayload.collection,
+              provider: (queryPayload['provider'] as any),
+              collection: queryPayload['collection'],
               query,
               updates,
               single: false,
-              ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
+              ...(queryPayload['idType'] !== undefined ? { idType: queryPayload['idType'] as any } : {}),
             });
             executed.updater.add(node.id);
             if (!dbUpdateResult.ok) {
@@ -1858,21 +1858,21 @@ export const handleDatabase: NodeHandler = async ({
                 new Error(dbUpdateResult.error),
                 {
                   action: 'updateMany',
-                  collection: queryPayload.collection,
+                  collection: queryPayload['collection'],
                   nodeId: node.id,
                 },
                 'Database update many failed:',
               );
-              toast(`Failed to update ${queryPayload.collection}.`, {
+              toast(`Failed to update ${queryPayload['collection']}.`, {
                 variant: 'error',
               });
             } else {
               updateResult = dbUpdateResult.data;
-              const modified: number = dbUpdateResult.data?.modifiedCount ?? 0;
-              const matched: number = dbUpdateResult.data?.matchedCount ?? 0;
+              const modified: number = (dbUpdateResult.data as Record<string, unknown>)?.['modifiedCount'] as number ?? 0;
+              const matched: number = (dbUpdateResult.data as Record<string, unknown>)?.['matchedCount'] as number ?? 0;
               const countLabel = modified || matched;
               toast(
-                `Updated ${countLabel} document${countLabel === 1 ? '' : 's'} in ${queryPayload.collection}.`,
+                `Updated ${countLabel} document${countLabel === 1 ? '' : 's'} in ${queryPayload['collection']}.`,
                 { variant: 'success' },
               );
             }
@@ -1894,10 +1894,10 @@ export const handleDatabase: NodeHandler = async ({
             queryConfig,
             );
             const queryFromPayload =
-            queryPayload.query &&
-            typeof queryPayload.query === 'object' &&
-            !Array.isArray(queryPayload.query)
-              ? (queryPayload.query)
+            queryPayload['query'] &&
+            typeof queryPayload['query'] === 'object' &&
+            !Array.isArray(queryPayload['query'])
+              ? (queryPayload['query'])
               : {};
             const fallbackQuery =
             Object.keys(queryFromPayload).length > 0
@@ -1906,7 +1906,7 @@ export const handleDatabase: NodeHandler = async ({
                 ? { [idField]: entityId }
                 : {};
             const collection =
-            queryPayload.collection?.trim() || configuredCollection || entityType;
+            (queryPayload['collection'] as string | undefined)?.trim() || configuredCollection || entityType;
             updateResult = {
               dryRun: true,
               updateMany: false,
@@ -1923,7 +1923,7 @@ export const handleDatabase: NodeHandler = async ({
           }
           try {
             const entityUpdateResult = await entityApi.update({
-              entityType,
+              entityType: entityType as any,
               entityId,
               updates,
               mode: dbConfig.mode ?? 'replace',
@@ -1950,10 +1950,10 @@ export const handleDatabase: NodeHandler = async ({
           queryConfig,
           );
           const queryFromPayload =
-          queryPayload.query &&
-          typeof queryPayload.query === 'object' &&
-          !Array.isArray(queryPayload.query)
-            ? (queryPayload.query)
+          queryPayload['query'] &&
+          typeof queryPayload['query'] === 'object' &&
+          !Array.isArray(queryPayload['query'])
+            ? (queryPayload['query'])
             : {};
           const query =
           Object.keys(queryFromPayload).length > 0
@@ -1962,7 +1962,7 @@ export const handleDatabase: NodeHandler = async ({
               ? { [idField]: entityId }
               : {};
           const collection =
-          queryPayload.collection?.trim() || configuredCollection || entityType;
+          (queryPayload['collection'] as string | undefined)?.trim() || configuredCollection || entityType;
 
           if (Object.keys(query).length === 0) {
             reportAiPathsError(
@@ -1981,12 +1981,12 @@ export const handleDatabase: NodeHandler = async ({
             executed.updater.add(node.id);
           } else {
             const dbUpdateResult: ApiResponse<DbActionResult> = await dbApi.update<DbActionResult>({
-              provider: queryPayload.provider,
+              provider: (queryPayload['provider'] as any),
               collection,
               query,
               updates,
               single: true,
-              ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
+              ...(queryPayload['idType'] !== undefined ? { idType: queryPayload['idType'] as any } : {}),
             });
             executed.updater.add(node.id);
             if (!dbUpdateResult.ok) {
@@ -2025,9 +2025,9 @@ export const handleDatabase: NodeHandler = async ({
         content_en:
         primaryTarget === 'content_en'
           ? ((primaryValue as string | undefined) ??
-            (nodeInputs.content_en as string | undefined) ??
+            (nodeInputs['content_en'] as string | undefined) ??
             '')
-          : (nodeInputs.content_en as string | undefined),
+          : (nodeInputs['content_en'] as string | undefined),
         bundle: updates,
         result: updateResult,
         debugPayload,
@@ -2057,7 +2057,7 @@ export const handleDatabase: NodeHandler = async ({
         ? parsedTemplatePayload
         : null;
       const rawPayload = templatePayload ?? coerceInput(nodeInputs[writeSource]);
-      const callbackInput = coerceInput(nodeInputs.queryCallback);
+      const callbackInput = coerceInput(nodeInputs['queryCallback']);
     
       const coercePayloadObject = (value: unknown): Record<string, unknown> | null => {
         if (!value) return null;
@@ -2256,9 +2256,9 @@ export const handleDatabase: NodeHandler = async ({
         result: insertResult,
         bundle: insertResult as Record<string, unknown>,
         content_en:
-        typeof (insertResult as Record<string, unknown>)?.content_en ===
+        typeof (insertResult as Record<string, unknown>)?.['content_en'] ===
         'string'
-          ? ((insertResult as Record<string, unknown>).content_en as string)
+          ? ((insertResult as Record<string, unknown>)['content_en'] as string)
           : undefined,
         aiPrompt,
       };

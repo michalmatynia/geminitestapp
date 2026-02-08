@@ -400,7 +400,7 @@ const buildDatabaseInputHash = (
     includeInput('jobId');
     if ((dbConfig.updateStrategy ?? 'one') === 'many') {
       const payload = buildDbQueryPayload(nodeInputs, queryConfig);
-      inputs.queryPayload = payload;
+      inputs['queryPayload'] = payload;
     }
     return hashRuntimeValue({
       v: CACHE_VERSION,
@@ -785,18 +785,18 @@ export async function evaluateGraph({
   const orderedNodes = orderNodesByDependencies();
   const triggerSource =
     triggerContext && typeof triggerContext === 'object'
-      ? (triggerContext).source
+      ? (triggerContext)['source']
       : null;
   const resolvedPathId =
     activePathId ??
     (triggerSource && typeof triggerSource === 'object'
-      ? ((triggerSource as Record<string, unknown>).pathId as string | undefined)
+      ? ((triggerSource as Record<string, unknown>)['pathId'] as string | undefined)
       : undefined) ??
     null;
   const resolvedPathName =
     activePathName ??
     (triggerSource && typeof triggerSource === 'object'
-      ? ((triggerSource as Record<string, unknown>).pathName as string | undefined)
+      ? ((triggerSource as Record<string, unknown>)['pathName'] as string | undefined)
       : undefined);
 
   const buildInputLinks = (
@@ -808,7 +808,7 @@ export async function evaluateGraph({
     return incoming
       .map((edge: Edge): RuntimeHistoryLink | null => {
         const toPort = edge.toPort ?? null;
-        const isPresent = toPort ? nodeInputs[toPort] !== undefined : hasInputs;
+        const isPresent = toPort ? (nodeInputs as Record<string, unknown>)[toPort] !== undefined : hasInputs;
         if (!isPresent) return null;
         const fromNode = nodeById.get(edge.from);
         return {
@@ -831,7 +831,7 @@ export async function evaluateGraph({
     return outgoing
       .map((edge: Edge): RuntimeHistoryLink | null => {
         const fromPort = edge.fromPort ?? null;
-        const isPresent = fromPort ? nodeOutputs[fromPort] !== undefined : hasOutputs;
+        const isPresent = fromPort ? (nodeOutputs as Record<string, unknown>)[fromPort] !== undefined : hasOutputs;
         if (!isPresent) return null;
         const toNode = nodeById.get(edge.to);
         return {
@@ -852,12 +852,12 @@ export async function evaluateGraph({
     incoming.forEach((edge: Edge) => {
       const fromOutput = outputs[edge.from];
       if (!fromOutput || !edge.fromPort || !edge.toPort) return;
-      const value = fromOutput[edge.fromPort];
+      const value = (fromOutput as Record<string, unknown>)[edge.fromPort];
       if (value === undefined) return;
       const expectedTypes = getPortDataTypes(edge.toPort);
       if (!isValueCompatibleWithTypes(value, expectedTypes)) return;
-      const existing = collected[edge.toPort];
-      collected[edge.toPort] = appendInputValue(existing, value);
+      const existing = (collected as Record<string, unknown>)[edge.toPort];
+      (collected as Record<string, unknown>)[edge.toPort] = appendInputValue(existing, value);
     });
     return collected;
   };
@@ -880,7 +880,7 @@ export async function evaluateGraph({
       });
       if (connectedPorts.size === 0) return true;
       return Array.from(connectedPorts).every((port: string) =>
-        rawInputs[port] !== undefined
+        (rawInputs as Record<string, unknown>)[port] !== undefined
       );
     }
     const connectedPorts = new Set<string>();
@@ -892,13 +892,13 @@ export async function evaluateGraph({
     const operation = dbConfig.operation ?? 'query';
     const hasAnyValue = (ports: string[]): boolean =>
       ports.some((port: string) =>
-        hasMeaningfulValue(coerceInput(rawInputs[port]))
+        hasMeaningfulValue(coerceInput((rawInputs as Record<string, unknown>)[port]))
       );
     const anyConnected = (ports: string[]): boolean =>
       ports.some((port: string) => connectedPorts.has(port));
     const allConnectedHaveValues = (ports: string[]): boolean =>
       ports.every((port: string) =>
-        !connectedPorts.has(port) || hasMeaningfulValue(coerceInput(rawInputs[port]))
+        !connectedPorts.has(port) || hasMeaningfulValue(coerceInput((rawInputs as Record<string, unknown>)[port]))
       );
 
     if (operation === 'query') {
@@ -1118,14 +1118,14 @@ export async function evaluateGraph({
   let simulationEntityId: string | null = null;
   let simulationEntityType: string | null = null;
   const triggerEntityId =
-    typeof triggerContext?.entityId === 'string'
-      ? triggerContext?.entityId
-      : typeof triggerContext?.productId === 'string'
-        ? triggerContext?.productId
+    typeof triggerContext?.['entityId'] === 'string'
+      ? triggerContext?.['entityId']
+      : typeof triggerContext?.['productId'] === 'string'
+        ? triggerContext?.['productId']
         : null;
   const triggerEntityType =
-    typeof triggerContext?.entityType === 'string'
-      ? normalizeEntityType(triggerContext?.entityType)
+    typeof triggerContext?.['entityType'] === 'string'
+      ? normalizeEntityType(triggerContext?.['entityType'])
       : null;
 
   if (triggerNodeId) {
@@ -1171,60 +1171,60 @@ export async function evaluateGraph({
     const applyRecord = (value: unknown): void => {
       if (!value || typeof value !== 'object') return;
       const record = value as Record<string, unknown>;
-      if (!pickString(next.entityId)) {
+      if (!pickString(next['entityId'])) {
         const resolvedEntityId =
-          pickString(record.entityId) ??
-          pickString(record.productId) ??
-          pickString(record.id) ??
-          pickString(record._id);
+          pickString(record['entityId']) ??
+          pickString(record['productId']) ??
+          pickString(record['id']) ??
+          pickString(record['_id']);
         if (resolvedEntityId) {
-          next.entityId = resolvedEntityId;
+          next['entityId'] = resolvedEntityId;
         }
       }
-      if (!pickString(next.productId)) {
+      if (!pickString(next['productId'])) {
         const resolvedProductId =
-          pickString(record.productId) ??
-          pickString(record.entityId) ??
-          pickString(record.id) ??
-          pickString(record._id);
+          pickString(record['productId']) ??
+          pickString(record['entityId']) ??
+          pickString(record['id']) ??
+          pickString(record['_id']);
         if (resolvedProductId) {
-          next.productId = resolvedProductId;
+          next['productId'] = resolvedProductId;
         }
       }
-      if (!pickString(next.entityType)) {
-        const resolvedEntityType = pickString(record.entityType);
+      if (!pickString(next['entityType'])) {
+        const resolvedEntityType = pickString(record['entityType']);
         if (resolvedEntityType) {
-          next.entityType = resolvedEntityType;
+          next['entityType'] = resolvedEntityType;
         }
       }
     };
 
-    applyRecord(coerceInput(next.context));
-    applyRecord(coerceInput(next.meta));
-    applyRecord(coerceInput(next.bundle));
+    applyRecord(coerceInput(next['context']));
+    applyRecord(coerceInput(next['meta']));
+    applyRecord(coerceInput(next['bundle']));
 
-    if (!pickString(next.entityId)) {
-      next.entityId =
-        pickString(triggerContext?.entityId) ??
-        pickString(triggerContext?.productId) ??
+    if (!pickString(next['entityId'])) {
+      next['entityId'] =
+        pickString(triggerContext?.['entityId']) ??
+        pickString(triggerContext?.['productId']) ??
         fallbackEntityId ??
         undefined;
     }
-    if (!pickString(next.productId)) {
-      next.productId =
-        pickString(triggerContext?.productId) ??
-        pickString(triggerContext?.entityId) ??
-        pickString(next.entityId) ??
+    if (!pickString(next['productId'])) {
+      next['productId'] =
+        pickString(triggerContext?.['productId']) ??
+        pickString(triggerContext?.['entityId']) ??
+        pickString(next['entityId']) ??
         undefined;
     }
-    if (!pickString(next.entityType)) {
-      next.entityType =
-        pickString(triggerContext?.entityType) ??
+    if (!pickString(next['entityType'])) {
+      next['entityType'] =
+        pickString(triggerContext?.['entityType']) ??
         simulationEntityType ??
         undefined;
     }
 
-    if (!pickString(next.entityId) || !pickString(next.productId) || !pickString(next.entityType)) {
+    if (!pickString(next['entityId']) || !pickString(next['productId']) || !pickString(next['entityType'])) {
       for (const [nodeId, output] of Object.entries(outputs)) {
         if (!output || typeof output !== 'object') continue;
         const nodeType = nodeById.get(nodeId)?.type;
@@ -1232,35 +1232,35 @@ export async function evaluateGraph({
           continue;
         }
         applyRecord(output as Record<string, unknown>);
-        if (pickString(next.entityId) && pickString(next.productId) && pickString(next.entityType)) {
+        if (pickString(next['entityId']) && pickString(next['productId']) && pickString(next['entityType'])) {
           break;
         }
       }
     }
 
-    const resolvedEntityId = pickString(next.entityId);
-    const resolvedEntityType = pickString(next.entityType);
+    const resolvedEntityId = pickString(next['entityId']);
+    const resolvedEntityType = pickString(next['entityType']);
 
     if (!resolvedEntityId && resolvedEntity && typeof resolvedEntity === 'object') {
       const fallbackId =
-        pickString(resolvedEntity.id) ??
-        pickString(resolvedEntity._id);
+        pickString(resolvedEntity['id']) ??
+        pickString(resolvedEntity['_id']);
       if (fallbackId) {
-        next.entityId = fallbackId;
+        next['entityId'] = fallbackId;
       }
     }
-    if (!pickString(next.productId) && pickString(next.entityId)) {
-      next.productId = pickString(next.entityId);
+    if (!pickString(next['productId']) && pickString(next['entityId'])) {
+      next['productId'] = pickString(next['entityId']);
     }
     if (!resolvedEntityType && simulationEntityType) {
-      next.entityType = simulationEntityType;
+      next['entityType'] = simulationEntityType;
     }
-    if (!pickString(next.value)) {
+    if (!pickString(next['value'])) {
       const fallbackValue =
-        pickString(next.entityId) ??
-        pickString(next.productId);
+        pickString(next['entityId']) ??
+        pickString(next['productId']);
       if (fallbackValue) {
-        next.value = fallbackValue;
+        next['value'] = fallbackValue;
       }
     }
     return next;
@@ -1292,18 +1292,18 @@ export async function evaluateGraph({
           maybeUuid && entityId.length !== 36
             ? ` (id looks like a UUID but length is ${entityId.length}; expected 36)`
             : '';
-        contextPayload.error = `Entity not found: ${entityType} ${entityId}${hint}`;
+        contextPayload['error'] = `Entity not found: ${entityType} ${entityId}${hint}`;
       }
       if (entity) {
         const imageUrls = extractImageUrls(entity);
         if (imageUrls.length) {
-          contextPayload.images = imageUrls;
-          contextPayload.imageUrls = imageUrls;
+          contextPayload['images'] = imageUrls;
+          contextPayload['imageUrls'] = imageUrls;
         }
-        contextPayload.entity = entity;
-        contextPayload.entityJson = entity;
+        contextPayload['entity'] = entity;
+        contextPayload['entityJson'] = entity;
         if (entityType === 'product') {
-          contextPayload.product = entity;
+          contextPayload['product'] = entity;
         }
       }
       outputs[node.id] = {
@@ -1859,7 +1859,7 @@ const hasPendingIteratorAdvance = (nodes: AiNode[], state: RuntimeState): boolea
   nodes.some((node: AiNode): boolean => {
     if (node.type !== 'iterator') return false;
     if (node.config?.iterator?.autoContinue === false) return false;
-    const status = state.outputs[node.id]?.status;
+    const status = state.outputs[node.id]?.['status'];
     return status === 'advance_pending';
   });
 

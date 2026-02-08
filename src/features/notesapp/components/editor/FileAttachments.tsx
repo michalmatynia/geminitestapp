@@ -4,41 +4,27 @@ import { Upload, FileIcon, Link2, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import React from 'react';
 
+import { useNoteFormContext } from '@/features/notesapp/context/NoteFormContext';
 import type { NoteFileRecord } from '@/shared/types/notes';
 import { Button, Label, FileUploadTrigger, type FileUploadHelpers } from '@/shared/ui';
 
 
+export function FileAttachments(): React.JSX.Element {
+  const {
+    note,
+    noteFiles,
+    MAX_SLOTS: maxSlots,
+    uploadingSlots,
+    getNextAvailableSlot,
+    handleFileUpload: onFileUpload,
+    handleMultiFileUpload: onMultiFileUpload,
+    handleFileDelete: onFileDelete,
+    insertFileReference: onInsertFileReference,
+    formatFileSize,
+    isImageFile,
+  } = useNoteFormContext();
 
-
-
-interface FileAttachmentsProps {
-  noteId?: string | undefined;
-  noteFiles: NoteFileRecord[];
-  maxSlots: number;
-  uploadingSlots: Set<number>;
-  getNextAvailableSlot: () => number | null;
-  onFileUpload: (slotIndex: number, file: File) => Promise<void>;
-  onMultiFileUpload: (files: FileList | File[], helpers?: FileUploadHelpers) => Promise<void>;
-  onFileDelete: (slotIndex: number) => Promise<void>;
-  onInsertFileReference: (file: NoteFileRecord) => void;
-  formatFileSize: (bytes: number) => string;
-  isImageFile: (mimetype: string) => boolean;
-}
-
-export function FileAttachments({
-  noteId,
-  noteFiles,
-  maxSlots,
-  uploadingSlots,
-  getNextAvailableSlot,
-  onFileUpload,
-  onMultiFileUpload,
-  onFileDelete,
-  onInsertFileReference,
-  formatFileSize,
-  isImageFile,
-}: FileAttachmentsProps): React.JSX.Element {
-  if (!noteId) {
+  if (!note?.id) {
     return (
       <div className='rounded-lg border border-dashed border-border/60 bg-gray-800/50 p-4 text-center text-sm text-gray-400'>
         Save the note first to enable file attachments ({maxSlots} slots available)

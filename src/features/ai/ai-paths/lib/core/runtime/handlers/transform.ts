@@ -23,7 +23,7 @@ export const handleContext: NodeHandler = async ({
   simulationEntityId,
   simulationEntityType,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
-  const rawContext = coerceInput(nodeInputs.context);
+  const rawContext = coerceInput(nodeInputs['context']);
   const inputContext =
     rawContext && typeof rawContext === 'object'
       ? (rawContext as Record<string, unknown>)
@@ -56,23 +56,23 @@ export const handleParser: NodeHandler = ({
   reportAiPathsError,
 }: NodeHandlerContext): RuntimePortValues => {
   try {
-    const contextInput = coerceInput(nodeInputs.context);
+    const contextInput = coerceInput(nodeInputs['context']);
     const contextEntity =
       contextInput && typeof contextInput === 'object'
-        ? ((contextInput as Record<string, unknown>).entity as
+        ? ((contextInput as Record<string, unknown>)['entity'] as
             | Record<string, unknown>
             | undefined) ??
-          ((contextInput as Record<string, unknown>).entityJson as
+          ((contextInput as Record<string, unknown>)['entityJson'] as
             | Record<string, unknown>
             | undefined) ??
-          ((contextInput as Record<string, unknown>).product as
+          ((contextInput as Record<string, unknown>)['product'] as
             | Record<string, unknown>
             | undefined)
         : undefined;
     const source =
-      (coerceInput(nodeInputs.entityJson) as Record<string, unknown> | undefined) ??
+      (coerceInput(nodeInputs['entityJson']) as Record<string, unknown> | undefined) ??
       contextEntity ??
-      (resolvedEntity ?? undefined) ??
+      (resolvedEntity as Record<string, unknown> | undefined) ??
       (fallbackEntityId ? buildFallbackEntity(fallbackEntityId) : undefined);
 
     if (!source) {
@@ -156,7 +156,7 @@ export const handleParser: NodeHandler = ({
       }
       const extraOutputs = node.outputs.reduce<Record<string, unknown>>((acc: Record<string, unknown>, output: string): Record<string, unknown> => {
         if (output !== 'bundle' && parsed[output] !== undefined) {
-          acc[output] = parsed[output];
+          acc[output] = (parsed as Record<string, unknown>)[output];
         }
         return acc;
       }, {});
@@ -185,16 +185,16 @@ export const handleMapper: NodeHandler = ({
 }: NodeHandlerContext): RuntimePortValues => {
   try {
     const sources = {
-      context: coerceInput(nodeInputs.context),
-      result: coerceInput(nodeInputs.result),
-      bundle: coerceInput(nodeInputs.bundle),
-      value: coerceInput(nodeInputs.value),
+      context: coerceInput(nodeInputs['context']),
+      result: coerceInput(nodeInputs['result']),
+      bundle: coerceInput(nodeInputs['bundle']),
+      value: coerceInput(nodeInputs['value']),
     };
     const contextValue =
-      sources.context ??
-      sources.result ??
-      sources.bundle ??
-      sources.value;
+      sources['context'] ??
+      sources['result'] ??
+      sources['bundle'] ??
+      sources['value'];
     if (contextValue === undefined) return {};
 
     const sourcePathPattern = /^(context|result|bundle|value)(?:\.|\[|$)/;
@@ -264,7 +264,7 @@ export const handleMapper: NodeHandler = ({
 };
 
 export const handleMutator: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
-  const contextValue = coerceInput(nodeInputs.context) as
+  const contextValue = coerceInput(nodeInputs['context']) as
     | Record<string, unknown>
     | undefined;
   if (!contextValue) {
@@ -281,7 +281,7 @@ export const handleMutator: NodeHandler = ({ node, nodeInputs }: NodeHandlerCont
   const currentValue = getValueAtMappingPath(contextValue, targetPath);
   const rendered = renderTemplate(
     mutatorConfig.valueTemplate ?? '{{value}}',
-    { ...contextValue, ...nodeInputs } as Record<string, unknown>,
+    { ...contextValue, ...(nodeInputs as Record<string, unknown>) } as Record<string, unknown>,
     currentValue
   );
   const updated = cloneValue(contextValue);
@@ -337,7 +337,7 @@ const applyStringMutatorReplace = (
 
 export const handleStringMutator: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
   const rawInput = coerceInput(
-    nodeInputs.value ?? nodeInputs.prompt ?? nodeInputs.result
+    nodeInputs['value'] ?? nodeInputs['prompt'] ?? nodeInputs['result']
   );
   if (rawInput === undefined || rawInput === null) {
     return {};
@@ -398,7 +398,7 @@ export const handleStringMutator: NodeHandler = ({ node, nodeInputs }: NodeHandl
 };
 
 export const handleValidator: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
-  const contextValue = coerceInput(nodeInputs.context) as
+  const contextValue = coerceInput(nodeInputs['context']) as
     | Record<string, unknown>
     | undefined;
   if (!contextValue) {
@@ -543,7 +543,7 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
     aiPrompt: '',
   };
 
-  const rawInput = nodeInputs.value ?? nodeInputs.prompt;
+  const rawInput = nodeInputs['value'] ?? nodeInputs['prompt'];
   const splitLines = regexConfig.splitLines ?? true;
   const items = buildRegexItems(rawInput, splitLines);
 
@@ -562,7 +562,7 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
   const aiPrompt = aiPromptTemplate.trim()
     ? renderTemplate(
       aiPromptTemplate,
-        { ...nodeInputs, text: textForPrompt, lines: items } as Record<string, unknown>,
+        { ...(nodeInputs as Record<string, unknown>), text: textForPrompt, lines: items } as Record<string, unknown>,
         textForPrompt
     )
     : '';
@@ -776,7 +776,7 @@ const coerceIteratorItems = (value: unknown): unknown[] => {
     if (Array.isArray(parsed)) return parsed;
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
       const record = parsed as Record<string, unknown>;
-      const nested = record.items ?? record.values ?? record.rows ?? record.results;
+      const nested = record['items'] ?? record['values'] ?? record['rows'] ?? record['results'];
       if (Array.isArray(nested)) return nested as unknown[];
     }
     // Fallback: treat as newline-delimited list.
@@ -788,7 +788,7 @@ const coerceIteratorItems = (value: unknown): unknown[] => {
 
   if (typeof value === 'object') {
     const record = value as Record<string, unknown>;
-    const nested = record.items ?? record.values ?? record.rows ?? record.results;
+    const nested = record['items'] ?? record['values'] ?? record['rows'] ?? record['results'];
     if (Array.isArray(nested)) return nested as unknown[];
   }
 
@@ -796,17 +796,17 @@ const coerceIteratorItems = (value: unknown): unknown[] => {
 };
 
 export const handleIterator: NodeHandler = ({ nodeInputs, prevOutputs, now }: NodeHandlerContext): RuntimePortValues => {
-  const iterableInput = nodeInputs.value;
-  const callbackInput = coerceInput(nodeInputs.callback);
+  const iterableInput = nodeInputs['value'];
+  const callbackInput = coerceInput(nodeInputs['callback']);
 
   const items = coerceIteratorItems(iterableInput);
   const total = items.length;
   const itemsHash = hashRuntimeValue(items);
 
-  const prevItemsHash = typeof prevOutputs.itemsHash === 'string' ? prevOutputs.itemsHash : '';
-  const prevIndex = typeof prevOutputs.index === 'number' && Number.isFinite(prevOutputs.index) ? prevOutputs.index : 0;
-  const prevLastAckHash = typeof prevOutputs.lastAckHash === 'string' ? prevOutputs.lastAckHash : '';
-  const prevAdvanceStamp = typeof prevOutputs.advanceStamp === 'string' ? prevOutputs.advanceStamp : '';
+  const prevItemsHash = typeof prevOutputs['itemsHash'] === 'string' ? prevOutputs['itemsHash'] : '';
+  const prevIndex = typeof prevOutputs['index'] === 'number' && Number.isFinite(prevOutputs['index']) ? prevOutputs['index'] as number : 0;
+  const prevLastAckHash = typeof prevOutputs['lastAckHash'] === 'string' ? prevOutputs['lastAckHash'] : '';
+  const prevAdvanceStamp = typeof prevOutputs['advanceStamp'] === 'string' ? prevOutputs['advanceStamp'] : '';
 
   let index = prevItemsHash && prevItemsHash === itemsHash ? prevIndex : 0;
   const lastAckHash = prevItemsHash && prevItemsHash === itemsHash ? prevLastAckHash : '';
@@ -868,7 +868,7 @@ export const handleIterator: NodeHandler = ({ nodeInputs, prevOutputs, now }: No
   // If we advanced earlier in this evaluateGraph call, hold "advance_pending" until the next call.
   // This prevents the engine's inner iteration loop from emitting the next item without downstream
   // nodes being able to re-run (they're tracked via `executed.*` sets per evaluateGraph call).
-  if (prevOutputs.status === 'advance_pending' && advanceStamp === now) {
+  if (prevOutputs['status'] === 'advance_pending' && advanceStamp === now) {
     return {
       value: null,
       index,

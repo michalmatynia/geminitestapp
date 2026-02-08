@@ -3,91 +3,57 @@
 import { X } from 'lucide-react';
 import React from 'react';
 
-import type { TagRecord, NoteWithRelations, ThemeRecord } from '@/shared/types/notes';
+import { useNoteFormContext } from '@/features/notesapp/context/NoteFormContext';
+import type { TagRecord, NoteWithRelations } from '@/shared/types/notes';
 import { Button, Input, Label, Checkbox, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
 
-
-
-
 interface NoteMetadataProps {
-  title: string;
-  setTitle: (title: string) => void;
   showTitle?: boolean;
-  selectedFolderId: string;
-  setSelectedFolderId: (id: string) => void;
-  flatFolders: Array<{ id: string; name: string; level: number }>;
-  color: string;
-  setColor: (color: string) => void;
-  isPinned: boolean;
-  setIsPinned: (isPinned: boolean) => void;
-  isArchived: boolean;
-  setIsArchived: (isArchived: boolean) => void;
-  isFavorite: boolean;
-  setIsFavorite: (isFavorite: boolean) => void;
-  selectedTagIds: string[];
-  availableTags: TagRecord[];
-  tagInput: string;
-  setTagInput: (input: string) => void;
-  isTagDropdownOpen: boolean;
-  setIsTagDropdownOpen: (isOpen: boolean) => void;
-  filteredTags: TagRecord[];
-  onAddTag: (tag: TagRecord) => void;
-  onCreateTag: () => Promise<void>;
-  onSaveCategory?: (categoryId: string) => void;
-  onRemoveTag: (tagId: string) => void;
-  onTagClick?: ((tagId: string) => void) | undefined;
-  selectedRelatedNotes: Array<{ id: string; title: string; color: string | null; content: string }>;
-  setSelectedRelatedNotes: React.Dispatch<React.SetStateAction<Array<{ id: string; title: string; color: string | null; content: string }>>>;
-  relatedNoteQuery: string;
-  setRelatedNoteQuery: (query: string) => void;
-  isRelatedDropdownOpen: boolean;
-  setIsRelatedDropdownOpen: (isOpen: boolean) => void;
-  relatedNoteResults: NoteWithRelations[];
-  isRelatedLoading: boolean;
-  onSelectRelatedNote: (noteId: string) => void;
-  effectiveTheme: ThemeRecord;
-  noteId?: string | undefined;
 }
 
 export function NoteMetadata({
-  title,
-  setTitle,
   showTitle = true,
-  selectedFolderId,
-  setSelectedFolderId,
-  flatFolders,
-  color,
-  setColor,
-  isPinned,
-  setIsPinned,
-  isArchived,
-  setIsArchived,
-  isFavorite,
-  setIsFavorite,
-  selectedTagIds,
-  availableTags,
-  tagInput,
-  setTagInput,
-  isTagDropdownOpen,
-  setIsTagDropdownOpen,
-  filteredTags,
-  onAddTag,
-  onCreateTag,
-  onRemoveTag,
-  onTagClick,
-  selectedRelatedNotes,
-  setSelectedRelatedNotes,
-  relatedNoteQuery,
-  setRelatedNoteQuery,
-  isRelatedDropdownOpen,
-  setIsRelatedDropdownOpen,
-  relatedNoteResults,
-  isRelatedLoading,
-  onSelectRelatedNote,
-  effectiveTheme,
-  noteId,
 }: NoteMetadataProps): React.JSX.Element {
+  const {
+    note,
+    title,
+    setTitle,
+    selectedFolderId,
+    setSelectedFolderId,
+    flatFolders,
+    color,
+    setColor,
+    isPinned,
+    setIsPinned,
+    isArchived,
+    setIsArchived,
+    isFavorite,
+    setIsFavorite,
+    selectedTagIds,
+    availableTags,
+    tagInput,
+    setTagInput,
+    isTagDropdownOpen,
+    setIsTagDropdownOpen,
+    filteredTags,
+    handleAddTag,
+    handleCreateTag,
+    handleRemoveTag,
+    handleFilterByTag,
+    selectedRelatedNotes,
+    setSelectedRelatedNotes,
+    relatedNoteQuery,
+    setRelatedNoteQuery,
+    isRelatedDropdownOpen,
+    setIsRelatedDropdownOpen,
+    relatedNoteResults,
+    isRelatedLoading,
+    handleSelectRelatedNote,
+    effectiveTheme,
+  } = useNoteFormContext();
+
+  const noteId = note?.id;
   const tagInputRef = React.useRef<HTMLInputElement>(null);
 
   const relatedNoteStyle = {
@@ -168,14 +134,14 @@ export function NoteMetadata({
               >
                 <Button
                   type='button'
-                  onClick={(): void => onTagClick?.(tag.id)}
+                  onClick={(): void => handleFilterByTag(tag.id)}
                   className='hover:text-white'
                 >
                   {tag.name}
                 </Button>
                 <Button
                   type='button'
-                  onClick={(): void => onRemoveTag(tag.id)}
+                  onClick={(): void => handleRemoveTag(tag.id)}
                   className='hover:text-white'
                 >
                   <X size={12} />
@@ -200,7 +166,7 @@ export function NoteMetadata({
                 if (e.key === 'Enter') {
                   e.preventDefault();
                   if (tagInput.trim()) {
-                    void onCreateTag();
+                    void handleCreateTag();
                   }
                 }
               }}
@@ -214,7 +180,7 @@ export function NoteMetadata({
                 {filteredTags.map((tag: TagRecord) => (
                   <li
                     key={tag.id}
-                    onClick={(): void => onAddTag(tag)}
+                    onClick={(): void => handleAddTag(tag)}
                     className='cursor-pointer px-4 py-2 hover:bg-gray-700 hover:text-white'
                   >
                     {tag.name}
@@ -225,7 +191,7 @@ export function NoteMetadata({
                     (t: TagRecord) => t.name.toLowerCase() === tagInput.toLowerCase()
                   ) && (
                   <li
-                    onClick={(): void => { void onCreateTag(); }}
+                    onClick={(): void => { void handleCreateTag(); }}
                     className='cursor-pointer px-4 py-2 text-blue-400 hover:bg-gray-700'
                   >
                       Create &quot;{tagInput}&quot;
@@ -255,11 +221,11 @@ export function NoteMetadata({
               style={relatedNoteStyle}
               role='button'
               tabIndex={0}
-              onClick={(): void => onSelectRelatedNote(related.id)}
+              onClick={(): void => handleSelectRelatedNote(related.id)}
               onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
                 if (event.key === 'Enter' || event.key === ' ') {
                   event.preventDefault();
-                  onSelectRelatedNote(related.id);
+                  handleSelectRelatedNote(related.id);
                 }
               }}
             >

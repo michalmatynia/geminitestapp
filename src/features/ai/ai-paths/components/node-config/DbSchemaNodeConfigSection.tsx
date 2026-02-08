@@ -507,7 +507,7 @@ export function DbSchemaNodeConfigSection({
                   ) : browseDocuments.length > 0 ? (
                     <div className='max-h-[300px] space-y-2 overflow-y-auto'>
                       {browseDocuments.map((doc: Record<string, unknown>, idx: number) => {
-                        const rawId = doc._id ?? doc.id;
+                        const rawId = doc['_id'] ?? doc['id'];
                         let docId: string;
                         if (typeof rawId === 'string') {
                           docId = rawId;
@@ -525,7 +525,7 @@ export function DbSchemaNodeConfigSection({
                           docId = `doc-${idx}`;
                         }
                         const isExpanded = expandedDocId === docId;
-                        const displayNameValue = doc.name ?? doc.title ?? doc.name_en ?? doc.sku ?? docId;
+                        const displayNameValue = doc['name'] ?? doc['title'] ?? doc['name_en'] ?? doc['sku'] ?? docId;
                         let displayName: string;
                         if (typeof displayNameValue === 'string') {
                           displayName = displayNameValue;

@@ -103,14 +103,14 @@ export const handleAgent: NodeHandler = async ({
   const rawPrompt =
     template?.length
       ? promptFromTemplate
-      : coerceInput(nodeInputs.prompt) ??
-        coerceInput(nodeInputs.value) ??
-        coerceInput(nodeInputs.result) ??
-        coerceInput(nodeInputs.bundle) ??
-        coerceInput(nodeInputs.context) ??
-        coerceInput(nodeInputs.entityJson) ??
-        coerceInput(nodeInputs.title) ??
-        coerceInput(nodeInputs.content_en);
+      : coerceInput(nodeInputs['prompt']) ??
+        coerceInput(nodeInputs['value']) ??
+        coerceInput(nodeInputs['result']) ??
+        coerceInput(nodeInputs['bundle']) ??
+        coerceInput(nodeInputs['context']) ??
+        coerceInput(nodeInputs['entityJson']) ??
+        coerceInput(nodeInputs['title']) ??
+        coerceInput(nodeInputs['content_en']);
 
   const prompt =
     typeof rawPrompt === 'string'
@@ -188,8 +188,8 @@ export const handleAgent: NodeHandler = async ({
         ? (run.planState as Record<string, unknown>)
         : coercePayloadObject(run?.planState) ?? null;
     const checkpointBrief =
-      typeof planState?.checkpointBrief === 'string'
-        ? planState.checkpointBrief
+      typeof planState?.['checkpointBrief'] === 'string'
+        ? planState['checkpointBrief']
         : '';
     const logLines = Array.isArray(run?.logLines) ? run?.logLines : [];
     const lastLog =
@@ -264,14 +264,14 @@ export const handleLearnerAgent: NodeHandler = async ({
   const rawPrompt =
     template?.length
       ? promptFromTemplate
-      : coerceInput(nodeInputs.prompt) ??
-        coerceInput(nodeInputs.value) ??
-        coerceInput(nodeInputs.result) ??
-        coerceInput(nodeInputs.bundle) ??
-        coerceInput(nodeInputs.context) ??
-        coerceInput(nodeInputs.entityJson) ??
-        coerceInput(nodeInputs.title) ??
-        coerceInput(nodeInputs.content_en);
+      : coerceInput(nodeInputs['prompt']) ??
+        coerceInput(nodeInputs['value']) ??
+        coerceInput(nodeInputs['result']) ??
+        coerceInput(nodeInputs['bundle']) ??
+        coerceInput(nodeInputs['context']) ??
+        coerceInput(nodeInputs['entityJson']) ??
+        coerceInput(nodeInputs['title']) ??
+        coerceInput(nodeInputs['content_en']);
 
   const prompt =
     typeof rawPrompt === 'string'
@@ -286,8 +286,8 @@ export const handleLearnerAgent: NodeHandler = async ({
   const payload = { agentId, messages };
   const payloadHash = hashRuntimeValue({ payload, runId, runStartedAt });
   const prevPayloadHash =
-    typeof (prevOutputs as Record<string, unknown>).payloadHash === 'string'
-      ? ((prevOutputs as Record<string, unknown>).payloadHash as string)
+    typeof (prevOutputs as Record<string, unknown>)['payloadHash'] === 'string'
+      ? ((prevOutputs as Record<string, unknown>)['payloadHash'] as string)
       : '';
   if (prevPayloadHash && prevPayloadHash === payloadHash) {
     return prevOutputs;

@@ -303,7 +303,7 @@ export function RunDetailDialogWithContext(): React.JSX.Element {
       counts[status] = (counts[status] ?? 0) + 1;
     });
     const total = runDetail.nodes.length;
-    const completed = counts.completed ?? 0;
+    const completed = counts['completed'] ?? 0;
     const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
     return { counts, total, completed, progress };
   }, [runDetail]);

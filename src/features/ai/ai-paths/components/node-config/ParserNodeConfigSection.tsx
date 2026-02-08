@@ -181,21 +181,21 @@ export function ParserNodeConfigSection({
       }),
     [samplePaths]
   );
-  const parserRuntimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
+  const parserRuntimeInputs = (runtimeState.inputs[selectedNode.id] ?? {}) as Record<string, unknown>;
   const parserContext =
-    parserRuntimeInputs.context && typeof parserRuntimeInputs.context === 'object'
-      ? (parserRuntimeInputs.context as Record<string, unknown>)
+    parserRuntimeInputs['context'] && typeof parserRuntimeInputs['context'] === 'object'
+      ? (parserRuntimeInputs['context'] as Record<string, unknown>)
       : null;
   const parserContextEntity =
-    parserContext?.entity ||
-    parserContext?.entityJson ||
-    parserContext?.product ||
+    parserContext?.['entity'] ||
+    parserContext?.['entityJson'] ||
+    parserContext?.['product'] ||
     null;
-  const parserSourceLabel = parserRuntimeInputs.entityJson
+  const parserSourceLabel = parserRuntimeInputs['entityJson']
     ? 'entityJson input'
     : parserContextEntity
       ? 'context entity'
-      : parserRuntimeInputs.context
+      : parserRuntimeInputs['context']
         ? 'context (no entity)'
         : 'no runtime input yet';
   const suggestedPathOptions = React.useMemo(

@@ -975,7 +975,7 @@ export function CanvasBoard({
           const isSelected = node.id === selectedNodeId;
           const style = typeStyles[node.type];
           const canUsePersistedStatusFallback = runtimeRunStatus !== 'idle';
-          const statusFromRuntimeState = runtimeState.outputs[node.id]?.status;
+          const statusFromRuntimeState = (runtimeState.outputs[node.id] as Record<string, unknown> | undefined)?.['status'];
           const runtimeNodeStatusRaw =
             runtimeNodeStatuses?.[node.id] ??
             (canUsePersistedStatusFallback && typeof statusFromRuntimeState === 'string'
@@ -991,16 +991,16 @@ export function CanvasBoard({
           const iteratorOutput =
             node.type === 'iterator'
               ? (runtimeState.outputs[node.id] as
-                  | { status?: string; index?: number; total?: number; done?: boolean }
+                  | Record<string, unknown>
                   | undefined)
               : undefined;
-          const iteratorStatus = iteratorOutput?.status ?? null;
+          const iteratorStatus = (iteratorOutput?.['status'] as string | undefined) ?? null;
           const iteratorIndex =
-            typeof iteratorOutput?.index === 'number' ? iteratorOutput.index : null;
+            typeof iteratorOutput?.['index'] === 'number' ? (iteratorOutput?.['index']) : null;
           const iteratorTotal =
-            typeof iteratorOutput?.total === 'number' ? iteratorOutput.total : null;
+            typeof iteratorOutput?.['total'] === 'number' ? (iteratorOutput?.['total']) : null;
           const iteratorDone =
-            typeof iteratorOutput?.done === 'boolean' ? iteratorOutput.done : null;
+            typeof iteratorOutput?.['done'] === 'boolean' ? (iteratorOutput?.['done']) : null;
           const iteratorProgressLabel =
             iteratorIndex !== null && iteratorTotal !== null && iteratorTotal > 0
               ? `${Math.min(iteratorIndex + 1, iteratorTotal)}/${iteratorTotal}`

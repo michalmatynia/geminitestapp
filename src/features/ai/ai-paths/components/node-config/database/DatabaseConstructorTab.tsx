@@ -1076,11 +1076,11 @@ export function DatabaseConstructorTab({
             ? nodes.find((n: AiNode): boolean => n.id === aiPromptEdges[0]?.to && n.type === 'model')
             : null;
 
-          const aiModelId = aiNode?.config?.model?.modelId;
+          const aiModelId = aiNode?.config?.['model']?.['modelId'];
           const hasValidConnection = aiNode && callbackEdges.length > 0;
 
-          const callbackValue = runtimeState.inputs[selectedNode.id]?.queryCallback
-            ?? runtimeState.outputs[selectedNode.id]?.queryCallback;
+          const callbackValue = (runtimeState.inputs[selectedNode.id] as Record<string, unknown> | undefined)?.['queryCallback']
+            ?? (runtimeState.outputs[selectedNode.id] as Record<string, unknown> | undefined)?.['queryCallback'];
           const hasAiResponse = typeof callbackValue === 'string' && callbackValue.trim().length > 0;
 
           return (

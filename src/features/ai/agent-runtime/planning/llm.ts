@@ -1091,7 +1091,7 @@ export async function evaluatePlanWithLLM({
       ? normalizePlanHierarchy({ goals: parsed.revisedGoals })
       : null;
     const revisedSpecs =
-      revisedHierarchy && revisedHierarchy.goals.length
+      revisedHierarchy?.goals.length
         ? flattenPlanHierarchy(revisedHierarchy)
         : (parsed.revisedSteps ?? []);
     const revisedSteps = revisedSpecs.length
@@ -2006,7 +2006,7 @@ export async function optimizePlanWithLLM({
       ? normalizePlanHierarchy({ goals: parsed.optimizedGoals })
       : null;
     const optimizedSpecs =
-      optimizedHierarchy && optimizedHierarchy.goals.length
+      optimizedHierarchy?.goals.length
         ? flattenPlanHierarchy(optimizedHierarchy)
         : (parsed.optimizedSteps ?? []);
     const optimizedSteps = optimizedSpecs.length

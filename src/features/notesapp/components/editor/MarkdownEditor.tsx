@@ -2,48 +2,37 @@
 
 import React from 'react';
 
+import { useNoteFormContext } from '@/features/notesapp/context/NoteFormContext';
 import { useToast, Textarea } from '@/shared/ui';
 
 
 import { renderMarkdownToHtml } from '../../utils';
 
 interface MarkdownEditorProps {
-  content: string;
-  setContent: (content: string) => void;
-  showPreview: boolean;
-  editorWidth: number | null;
-  setEditorWidth: React.Dispatch<React.SetStateAction<number | null>>;
-  isDraggingSplitter: boolean;
-  setIsDraggingSplitter: (isDragging: boolean) => void;
-  editorSplitRef: React.RefObject<HTMLDivElement | null>;
-  contentRef: React.RefObject<HTMLTextAreaElement | null>;
-  isPasting: boolean;
-  contentBackground: string;
-  contentTextColor: string;
-  previewTypographyStyle: React.CSSProperties;
-  onPaste: (e: React.ClipboardEvent<HTMLTextAreaElement>) => Promise<void>;
-  setLightboxImage: (imgSrc: string | null) => void;
   isCodeMode?: boolean;
 }
 
 export function MarkdownEditor({
-  content,
-  setContent,
-  showPreview,
-  editorWidth,
-  setEditorWidth,
-  isDraggingSplitter,
-  setIsDraggingSplitter,
-  editorSplitRef,
-  contentRef,
-  isPasting,
-  contentBackground,
-  contentTextColor,
-  previewTypographyStyle,
-  onPaste,
-  setLightboxImage,
   isCodeMode = false,
 }: MarkdownEditorProps): React.JSX.Element {
+  const {
+    content,
+    setContent,
+    showPreview,
+    editorWidth,
+    setEditorWidth,
+    isDraggingSplitter,
+    setIsDraggingSplitter,
+    editorSplitRef,
+    contentRef,
+    isPasting,
+    contentBackground,
+    contentTextColor,
+    previewTypographyStyle,
+    handlePaste,
+    setLightboxImage,
+  } = useNoteFormContext();
+
   const { toast } = useToast();
   const [debouncedContentHtml, setDebouncedContentHtml] = React.useState<string>('');
 
@@ -101,7 +90,7 @@ export function MarkdownEditor({
               : 'Enter note content (paste images directly!)'}
             value={content}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setContent(e.target.value)}
-            onPaste={(e: React.ClipboardEvent<HTMLTextAreaElement>): void => { void onPaste(e); }}
+            onPaste={(e: React.ClipboardEvent<HTMLTextAreaElement>): void => { void handlePaste(e); }}
             rows={12}
             className='w-full rounded-lg border px-4 py-2 font-mono'
             style={{

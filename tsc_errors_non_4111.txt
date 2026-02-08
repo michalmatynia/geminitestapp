@@ -1,0 +1,24 @@
+src/features/notesapp/components/editor/NoteMetadata.tsx(19,5): error TS6133: 'note' is declared but its value is never read.
+src/features/notesapp/components/editor/NoteMetadata.tsx(40,5): error TS6133: 'handleAddTag' is declared but its value is never read.
+src/features/notesapp/components/editor/NoteMetadata.tsx(41,5): error TS6133: 'handleCreateTag' is declared but its value is never read.
+src/features/notesapp/components/editor/NoteMetadata.tsx(42,5): error TS6133: 'handleRemoveTag' is declared but its value is never read.
+src/features/notesapp/components/editor/NoteMetadata.tsx(43,5): error TS6133: 'handleFilterByTag' is declared but its value is never read.
+src/features/notesapp/components/editor/NoteMetadata.tsx(136,40): error TS2552: Cannot find name 'onTagClick'. Did you mean 'onclick'?
+src/features/notesapp/components/editor/NoteMetadata.tsx(143,40): error TS2304: Cannot find name 'onRemoveTag'.
+src/features/notesapp/components/editor/NoteMetadata.tsx(168,26): error TS2304: Cannot find name 'onCreateTag'.
+src/features/notesapp/components/editor/NoteMetadata.tsx(182,42): error TS2304: Cannot find name 'onAddTag'.
+src/features/notesapp/components/editor/NoteMetadata.tsx(193,49): error TS2304: Cannot find name 'onCreateTag'.
+src/features/notesapp/components/editor/NoteMetadata.tsx(276,21): error TS2552: Cannot find name 'noteId'. Did you mean 'note'?
+src/features/notesapp/components/editor/NoteMetadata.tsx(276,47): error TS2552: Cannot find name 'noteId'. Did you mean 'note'?
+src/features/notesapp/components/editor/NoteMetadata.tsx(311,24): error TS2552: Cannot find name 'noteId'. Did you mean 'note'?
+src/features/notesapp/components/editor/NoteMetadata.tsx(311,50): error TS2552: Cannot find name 'noteId'. Did you mean 'note'?
+src/features/notesapp/components/NoteForm.tsx(721,13): error TS2322: Type '{ onUndo: () => void; onRedo: () => void; canUndo: boolean; canRedo: boolean; noteFiles: NoteFileRecord[]; textColor: string; setTextColor: Dispatch<SetStateAction<string>>; ... 16 more ...; onMigrateToMarkdown: () => void; }' is not assignable to type 'IntrinsicAttributes & MarkdownToolbarProps'.
+  Property 'onUndo' does not exist on type 'IntrinsicAttributes & MarkdownToolbarProps'.
+src/features/notesapp/components/NoteForm.tsx(789,11): error TS2322: Type '{ title: string; setTitle: (title: string) => void; showTitle: false; selectedFolderId: string; setSelectedFolderId: Dispatch<SetStateAction<string>>; flatFolders: { ...; }[]; ... 29 more ...; noteId: string | undefined; }' is not assignable to type 'IntrinsicAttributes & NoteMetadataProps'.
+  Property 'title' does not exist on type 'IntrinsicAttributes & NoteMetadataProps'.
+src/features/notesapp/context/NoteFormContext.tsx(3,74): error TS6133: 'useRef' is declared but its value is never read.
+src/features/notesapp/context/NoteFormContext.tsx(226,9): error TS2451: Cannot redeclare block-scoped variable 'createNoteMutation'.
+src/features/notesapp/context/NoteFormContext.tsx(226,30): error TS2552: Cannot find name 'useCreateNoteNoteMutation'. Did you mean 'createNoteMutation'?
+src/features/notesapp/context/NoteFormContext.tsx(255,14): error TS2304: Cannot find name 'CategoryWithChildren'.
+src/features/notesapp/context/NoteFormContext.tsx(370,9): error TS2451: Cannot redeclare block-scoped variable 'createNoteMutation'.
+src/features/notesapp/context/NoteFormContext.tsx(624,31): error TS2740: Type '{ note: NoteWithRelations | null; content: string; setContent: (newState: string, skipHistory?: boolean | undefined) => void; undo: () => void; redo: () => void; canUndo: boolean; ... 56 more ...; handleSubmit: (e: FormEvent<...>) => Promise<...>; }' is missing the following properties from type 'NoteFormContextValue': handleSelectRelatedNote, availableTags, handleFilterByTag, setIsCreating, and 6 more.

@@ -71,7 +71,7 @@ export function TemplateNodeConfigSection({
       });
     }
   });
-  const runtimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
+  const runtimeInputs = (runtimeState.inputs[selectedNode.id] ?? {}) as Record<string, unknown>;
   const placeholderGroups: PlaceholderGroup[] = React.useMemo(() => {
     const groups: PlaceholderGroup[] = [];
     const uniqueDirect = Array.from(new Set(inputPorts));
@@ -97,7 +97,7 @@ export function TemplateNodeConfigSection({
     const bundleEntries: PlaceholderGroup['entries'] = [];
     if (bundleKeys.size > 0) {
       let bundleContext: Record<string, unknown> | null = null;
-      const bundleValue = runtimeInputs.bundle;
+      const bundleValue = runtimeInputs['bundle'];
       if (bundleValue && typeof bundleValue === 'object' && !Array.isArray(bundleValue)) {
         bundleContext = bundleValue as Record<string, unknown>;
       } else if (typeof bundleValue === 'string') {
@@ -130,7 +130,7 @@ export function TemplateNodeConfigSection({
       });
     }
 
-    const currentValue = runtimeInputs.value;
+    const currentValue = runtimeInputs['value'];
     const currentResolved =
       currentValue !== undefined ? formatRuntimeValue(currentValue) : '—';
     groups.push({

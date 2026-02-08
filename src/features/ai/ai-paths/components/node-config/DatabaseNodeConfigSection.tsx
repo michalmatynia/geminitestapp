@@ -400,39 +400,39 @@ export function DatabaseNodeConfigSection({
   React.useEffect(() => {
     if (selectedNode.type !== 'database') return;
 
-    const runtimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
+    const runtimeInputs = (runtimeState.inputs[selectedNode.id] ?? {}) as Record<string, unknown>;
 
     // Extract potential entityId/productId from various sources
     let detectedId: string | undefined;
     let detectedCollection: string | undefined;
 
     // Check direct inputs
-    if (typeof runtimeInputs.entityId === 'string' && runtimeInputs.entityId.trim()) {
-      detectedId = runtimeInputs.entityId.trim();
-    } else if (typeof runtimeInputs.productId === 'string' && runtimeInputs.productId.trim()) {
-      detectedId = runtimeInputs.productId.trim();
-    } else if (typeof runtimeInputs.value === 'string' && runtimeInputs.value.trim()) {
-      detectedId = runtimeInputs.value.trim();
+    if (typeof runtimeInputs['entityId'] === 'string' && (runtimeInputs['entityId']).trim()) {
+      detectedId = (runtimeInputs['entityId']).trim();
+    } else if (typeof runtimeInputs['productId'] === 'string' && (runtimeInputs['productId']).trim()) {
+      detectedId = (runtimeInputs['productId']).trim();
+    } else if (typeof runtimeInputs['value'] === 'string' && (runtimeInputs['value']).trim()) {
+      detectedId = (runtimeInputs['value']).trim();
     }
 
     // Check context input for nested entityId/entityType
-    const contextInput = runtimeInputs.context;
+    const contextInput = runtimeInputs['context'];
     if (contextInput && typeof contextInput === 'object') {
       const ctx = contextInput as Record<string, unknown>;
-      if (!detectedId && typeof ctx.entityId === 'string' && ctx.entityId.trim()) {
-        detectedId = ctx.entityId.trim();
+      if (!detectedId && typeof ctx['entityId'] === 'string' && (ctx['entityId']).trim()) {
+        detectedId = (ctx['entityId']).trim();
       }
-      if (typeof ctx.entityType === 'string' && ctx.entityType.trim()) {
-        detectedCollection = ctx.entityType.trim();
+      if (typeof ctx['entityType'] === 'string' && (ctx['entityType']).trim()) {
+        detectedCollection = (ctx['entityType']).trim();
       }
     }
 
     // Check for collection from inputs
     if (!detectedCollection) {
-      if (typeof runtimeInputs.entityType === 'string' && runtimeInputs.entityType.trim()) {
-        detectedCollection = runtimeInputs.entityType.trim();
-      } else if (typeof runtimeInputs.collection === 'string' && runtimeInputs.collection.trim()) {
-        detectedCollection = runtimeInputs.collection.trim();
+      if (typeof runtimeInputs['entityType'] === 'string' && (runtimeInputs['entityType']).trim()) {
+        detectedCollection = (runtimeInputs['entityType']).trim();
+      } else if (typeof runtimeInputs['collection'] === 'string' && (runtimeInputs['collection']).trim()) {
+        detectedCollection = (runtimeInputs['collection']).trim();
       }
     }
 
@@ -470,8 +470,8 @@ export function DatabaseNodeConfigSection({
 
   React.useEffect(() => {
     if (selectedNode.type !== 'database') return;
-    const callbackValue = runtimeState.inputs[selectedNode.id]?.queryCallback
-      ?? runtimeState.outputs[selectedNode.id]?.queryCallback;
+    const callbackValue = (runtimeState.inputs[selectedNode.id] as Record<string, unknown> | undefined)?.[ 'queryCallback' ]
+      ?? (runtimeState.outputs[selectedNode.id] as Record<string, unknown> | undefined)?.[ 'queryCallback' ];
     if (typeof callbackValue === 'string' && callbackValue.trim().length > 0) {
       if (callbackValue !== lastInjectedResponseRef.current) {
         lastInjectedResponseRef.current = callbackValue;
@@ -629,10 +629,10 @@ export function DatabaseNodeConfigSection({
     const runtimeInputs = (runtimeState.inputs[selectedNode.id] ?? {}) as Record<string, unknown>;
     const runtimeOutputs = (runtimeState.outputs[selectedNode.id] ?? {}) as Record<string, unknown>;
     const rawValue =
-      runtimeInputs.value ??
-      runtimeInputs.jobId ??
-      runtimeOutputs.value ??
-      runtimeOutputs.jobId;
+      runtimeInputs['value'] ??
+      runtimeInputs['jobId'] ??
+      runtimeOutputs['value'] ??
+      runtimeOutputs['jobId'];
     const currentValue = Array.isArray(rawValue) ? (rawValue as unknown[])[0] : rawValue;
     const templateContext = { ...runtimeOutputs, ...runtimeInputs };
     const rendered = renderTemplate(
@@ -1603,10 +1603,10 @@ export function DatabaseNodeConfigSection({
       });
       const templateContext = { ...runtimeOutputs, ...runtimeInputs, ...placeholderContext };
       const rawValue =
-                      runtimeInputs.value ??
-                      runtimeInputs.jobId ??
-                      runtimeOutputs.value ??
-                      runtimeOutputs.jobId;
+                      runtimeInputs['value'] ??
+                      runtimeInputs['jobId'] ??
+                      runtimeOutputs['value'] ??
+                      runtimeOutputs['jobId'];
       const currentValue = Array.isArray(rawValue) ? (rawValue as unknown[])[0] : rawValue;
       const collectionName = queryConfig.collection ?? 'products';
       const serializePreview = (value: unknown): string => {

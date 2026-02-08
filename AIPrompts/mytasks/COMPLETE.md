@@ -616,30 +616,6 @@ Or track a DB boolean like existsOnDisk and validate asynchronously (cron/task).
 Or only verify file existence in admin detail view, not list.
 
 
-4. Error handling consistency
-
-
-Right now you try/catch and rethrow the same error:
-
-Copy
-catch (error) {
-  logger.error("Error creating product:", error);
-  throw error;
-}
-That’s fine for logging, but it’s not giving you typed, mappable errors (400/404/409/etc.).
-
-
-Upgrade:
-
-
-Introduce AppError types and throw those from service/repo.
-
-
-Route wrapper maps errors → HTTP status + safe payload.
-
-
-Your service should not throw plain Error("SKU is required") (that becomes 500 unless mapped).
-
 
 5. Validation inconsistency: duplicateProduct() bypasses Zod
 
@@ -1058,7 +1034,7 @@ This is the biggest correctness gap.
 
 Problem
 
-
+eAch image should be linked to like an image card (like it does in File manager) with max info
 If image upload succeeds but catalog update fails (or vice versa), you can end up with:
 
 
@@ -1241,21 +1217,6 @@ Optional “full scan” in staging (slower, more aggressive)
 
 Output machine-readable results (JSON)
 
-3) Generate AI-driven report
-
-Transform scan JSON → normalized findings
-
-AI produces:
-
-Executive summary
-
-Top risks + why they matter
-
-Reproduction steps (safe)
-
-Fix recommendations (Next.js-specific where possible)
-
-“Diffable” remediation checklist
 
 4) Store + view in a Next.js “Security Center”
 

@@ -30,7 +30,7 @@ export const handleConstant: NodeHandler = ({ node }: NodeHandlerContext): Runti
 };
 
 export const handleMath: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
-  const inputValue = coerceInput(nodeInputs.value);
+  const inputValue = coerceInput(nodeInputs['value']);
   const numeric = Number(inputValue);
   const mathConfig = node.config?.math ?? { operation: 'add', operand: 0 };
   const operand = mathConfig.operand ?? 0;
@@ -73,7 +73,7 @@ export const handleCompare: NodeHandler = ({ node, nodeInputs }: NodeHandlerCont
     caseSensitive: false,
     message: 'Comparison failed',
   };
-  const currentValue = coerceInput(nodeInputs.value);
+  const currentValue = coerceInput(nodeInputs['value']);
   const compareTo = compareConfig.compareTo ?? '';
   const base = safeStringify(currentValue);
   const target = String(compareTo ?? '');
@@ -131,7 +131,7 @@ export const handleRouter: NodeHandler = ({ node, nodeInputs }: NodeHandlerConte
     compareTo: '',
   };
   const valueCandidate =
-    config.mode === 'valid' ? coerceInput(nodeInputs.valid) : coerceInput(nodeInputs.value);
+    config.mode === 'valid' ? coerceInput(nodeInputs['valid']) : coerceInput(nodeInputs['value']);
   const compareTarget = config.compareTo ?? '';
   const asString = safeStringify(valueCandidate);
   let shouldPass = false;
@@ -167,11 +167,11 @@ export const handleRouter: NodeHandler = ({ node, nodeInputs }: NodeHandlerConte
 };
 
 export const handleGate: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
-  const contextValue = coerceInput(nodeInputs.context) as
+  const contextValue = coerceInput(nodeInputs['context']) as
     | Record<string, unknown>
     | undefined;
-  const validInput = coerceInput(nodeInputs.valid);
-  const errorsInput = coerceInputArray(nodeInputs.errors);
+  const validInput = coerceInput(nodeInputs['valid']);
+  const errorsInput = coerceInputArray(nodeInputs['errors']);
   const config = node.config?.gate ?? { mode: 'block', failMessage: 'Gate blocked' };
   const isValid = typeof validInput === 'boolean' ? validInput : Boolean(validInput);
   if (!isValid && config.mode === 'block') {

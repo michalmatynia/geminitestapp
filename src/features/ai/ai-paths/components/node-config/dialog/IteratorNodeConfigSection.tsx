@@ -26,13 +26,13 @@ export function IteratorNodeConfigSection({
   };
 
   const output = runtimeState.outputs[selectedNode.id] ?? {};
-  const index = typeof output.index === 'number' ? output.index : 0;
-  const total = typeof output.total === 'number' ? output.total : 0;
-  const status = typeof output.status === 'string' ? output.status : 'idle';
-  const done = typeof output.done === 'boolean' ? output.done : false;
-  const value = output.value;
+  const index = typeof output['index'] === 'number' ? output['index'] : 0;
+  const total = typeof output['total'] === 'number' ? output['total'] : 0;
+  const status = typeof output['status'] === 'string' ? output['status'] : 'idle';
+  const done = typeof output['done'] === 'boolean' ? output['done'] : false;
+  const value = output['value'];
   const callbackValue =
-    runtimeState.inputs[selectedNode.id]?.callback ?? output.callback ?? null;
+    runtimeState.inputs[selectedNode.id]?.['callback'] ?? output['callback'] ?? null;
 
   return (
     <div className='space-y-4'>

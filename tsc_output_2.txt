@@ -44,6 +44,231 @@ __tests__/features/products/services/aiTranslationService.test.ts(52,32): error 
 __tests__/features/products/services/aiTranslationService.test.ts(56,32): error TS4111: Property 'german' comes from an index signature, so it must be accessed with ['german'].
 __tests__/features/products/services/aiTranslationService.test.ts(76,32): error TS4111: Property 'english' comes from an index signature, so it must be accessed with ['english'].
 __tests__/features/products/services/aiTranslationService.test.ts(77,32): error TS4111: Property 'polish' comes from an index signature, so it must be accessed with ['polish'].
+src/features/ai/ai-paths/components/node-config/database/query-utils.ts(349,16): error TS4111: Property 'equals' comes from an index signature, so it must be accessed with ['equals'].
+src/features/ai/ai-paths/components/node-config/database/query-utils.ts(353,16): error TS4111: Property 'not' comes from an index signature, so it must be accessed with ['not'].
+src/features/ai/ai-paths/components/node-config/database/query-utils.ts(357,16): error TS4111: Property 'gt' comes from an index signature, so it must be accessed with ['gt'].
+src/features/ai/ai-paths/components/node-config/database/query-utils.ts(361,16): error TS4111: Property 'gte' comes from an index signature, so it must be accessed with ['gte'].
+src/features/ai/ai-paths/components/node-config/database/query-utils.ts(365,16): error TS4111: Property 'lt' comes from an index signature, so it must be accessed with ['lt'].
+src/features/ai/ai-paths/components/node-config/database/query-utils.ts(369,16): error TS4111: Property 'lte' comes from an index signature, so it must be accessed with ['lte'].
+src/features/ai/ai-paths/components/node-config/database/query-utils.ts(373,16): error TS4111: Property 'in' comes from an index signature, so it must be accessed with ['in'].
+src/features/ai/ai-paths/components/node-config/database/query-utils.ts(377,16): error TS4111: Property 'notIn' comes from an index signature, so it must be accessed with ['notIn'].
+src/features/ai/ai-paths/components/node-config/database/query-utils.ts(383,18): error TS4111: Property 'contains' comes from an index signature, so it must be accessed with ['contains'].
+src/features/ai/ai-paths/components/node-config/database/query-utils.ts(390,18): error TS4111: Property 'mode' comes from an index signature, so it must be accessed with ['mode'].
+src/features/ai/ai-paths/components/node-config/database/query-utils.ts(396,18): error TS4111: Property 'not' comes from an index signature, so it must be accessed with ['not'].
+src/features/ai/ai-paths/components/node-config/database/query-utils.ts(399,18): error TS4111: Property 'equals' comes from an index signature, so it must be accessed with ['equals'].
+src/features/ai/ai-paths/components/node-config/database/query-utils.ts(405,18): error TS4111: Property 'not' comes from an index signature, so it must be accessed with ['not'].
+src/features/ai/ai-paths/components/node-config/database/query-utils.ts(438,18): error TS4111: Property 'AND' comes from an index signature, so it must be accessed with ['AND'].
+src/features/ai/ai-paths/components/node-config/database/query-utils.ts(444,18): error TS4111: Property 'OR' comes from an index signature, so it must be accessed with ['OR'].
+src/features/ai/ai-paths/components/node-config/database/query-utils.ts(450,18): error TS4111: Property 'NOT' comes from an index signature, so it must be accessed with ['NOT'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(410,30): error TS4111: Property 'entityId' comes from an index signature, so it must be accessed with ['entityId'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(410,69): error TS4111: Property 'entityId' comes from an index signature, so it must be accessed with ['entityId'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(411,34): error TS4111: Property 'entityId' comes from an index signature, so it must be accessed with ['entityId'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(412,37): error TS4111: Property 'productId' comes from an index signature, so it must be accessed with ['productId'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(412,77): error TS4111: Property 'productId' comes from an index signature, so it must be accessed with ['productId'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(413,34): error TS4111: Property 'productId' comes from an index signature, so it must be accessed with ['productId'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(414,37): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(414,73): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(415,34): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(419,40): error TS4111: Property 'context' comes from an index signature, so it must be accessed with ['context'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(422,37): error TS4111: Property 'entityId' comes from an index signature, so it must be accessed with ['entityId'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(422,66): error TS4111: Property 'entityId' comes from an index signature, so it must be accessed with ['entityId'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(423,26): error TS4111: Property 'entityId' comes from an index signature, so it must be accessed with ['entityId'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(425,22): error TS4111: Property 'entityType' comes from an index signature, so it must be accessed with ['entityType'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(425,53): error TS4111: Property 'entityType' comes from an index signature, so it must be accessed with ['entityType'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(426,34): error TS4111: Property 'entityType' comes from an index signature, so it must be accessed with ['entityType'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(432,32): error TS4111: Property 'entityType' comes from an index signature, so it must be accessed with ['entityType'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(432,73): error TS4111: Property 'entityType' comes from an index signature, so it must be accessed with ['entityType'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(433,44): error TS4111: Property 'entityType' comes from an index signature, so it must be accessed with ['entityType'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(434,39): error TS4111: Property 'collection' comes from an index signature, so it must be accessed with ['collection'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(434,80): error TS4111: Property 'collection' comes from an index signature, so it must be accessed with ['collection'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(435,44): error TS4111: Property 'collection' comes from an index signature, so it must be accessed with ['collection'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(473,65): error TS4111: Property 'queryCallback' comes from an index signature, so it must be accessed with ['queryCallback'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(474,49): error TS4111: Property 'queryCallback' comes from an index signature, so it must be accessed with ['queryCallback'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(632,21): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(633,21): error TS4111: Property 'jobId' comes from an index signature, so it must be accessed with ['jobId'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(634,22): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(635,22): error TS4111: Property 'jobId' comes from an index signature, so it must be accessed with ['jobId'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(1606,37): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(1607,37): error TS4111: Property 'jobId' comes from an index signature, so it must be accessed with ['jobId'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(1608,38): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+src/features/ai/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(1609,38): error TS4111: Property 'jobId' comes from an index signature, so it must be accessed with ['jobId'].
+src/features/ai/ai-paths/components/node-config/DbSchemaNodeConfigSection.tsx(510,43): error TS4111: Property '_id' comes from an index signature, so it must be accessed with ['_id'].
+src/features/ai/ai-paths/components/node-config/DbSchemaNodeConfigSection.tsx(510,54): error TS4111: Property 'id' comes from an index signature, so it must be accessed with ['id'].
+src/features/ai/ai-paths/components/node-config/DbSchemaNodeConfigSection.tsx(528,54): error TS4111: Property 'name' comes from an index signature, so it must be accessed with ['name'].
+src/features/ai/ai-paths/components/node-config/DbSchemaNodeConfigSection.tsx(528,66): error TS4111: Property 'title' comes from an index signature, so it must be accessed with ['title'].
+src/features/ai/ai-paths/components/node-config/DbSchemaNodeConfigSection.tsx(528,79): error TS4111: Property 'name_en' comes from an index signature, so it must be accessed with ['name_en'].
+src/features/ai/ai-paths/components/node-config/DbSchemaNodeConfigSection.tsx(528,94): error TS4111: Property 'sku' comes from an index signature, so it must be accessed with ['sku'].
+src/features/ai/ai-paths/components/node-config/dialog/IteratorNodeConfigSection.tsx(29,31): error TS4111: Property 'index' comes from an index signature, so it must be accessed with ['index'].
+src/features/ai/ai-paths/components/node-config/dialog/IteratorNodeConfigSection.tsx(29,59): error TS4111: Property 'index' comes from an index signature, so it must be accessed with ['index'].
+src/features/ai/ai-paths/components/node-config/dialog/IteratorNodeConfigSection.tsx(30,31): error TS4111: Property 'total' comes from an index signature, so it must be accessed with ['total'].
+src/features/ai/ai-paths/components/node-config/dialog/IteratorNodeConfigSection.tsx(30,59): error TS4111: Property 'total' comes from an index signature, so it must be accessed with ['total'].
+src/features/ai/ai-paths/components/node-config/dialog/IteratorNodeConfigSection.tsx(31,32): error TS4111: Property 'status' comes from an index signature, so it must be accessed with ['status'].
+src/features/ai/ai-paths/components/node-config/dialog/IteratorNodeConfigSection.tsx(31,61): error TS4111: Property 'status' comes from an index signature, so it must be accessed with ['status'].
+src/features/ai/ai-paths/components/node-config/dialog/IteratorNodeConfigSection.tsx(32,30): error TS4111: Property 'done' comes from an index signature, so it must be accessed with ['done'].
+src/features/ai/ai-paths/components/node-config/dialog/IteratorNodeConfigSection.tsx(32,58): error TS4111: Property 'done' comes from an index signature, so it must be accessed with ['done'].
+src/features/ai/ai-paths/components/node-config/dialog/IteratorNodeConfigSection.tsx(33,24): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+src/features/ai/ai-paths/components/node-config/dialog/IteratorNodeConfigSection.tsx(35,43): error TS4111: Property 'callback' comes from an index signature, so it must be accessed with ['callback'].
+src/features/ai/ai-paths/components/node-config/dialog/IteratorNodeConfigSection.tsx(35,62): error TS4111: Property 'callback' comes from an index signature, so it must be accessed with ['callback'].
+src/features/ai/ai-paths/components/node-config/dialog/MapperNodeConfigSection.tsx(30,26): error TS4111: Property 'context' comes from an index signature, so it must be accessed with ['context'].
+src/features/ai/ai-paths/components/node-config/dialog/MapperNodeConfigSection.tsx(31,25): error TS4111: Property 'result' comes from an index signature, so it must be accessed with ['result'].
+src/features/ai/ai-paths/components/node-config/dialog/MapperNodeConfigSection.tsx(32,25): error TS4111: Property 'bundle' comes from an index signature, so it must be accessed with ['bundle'].
+src/features/ai/ai-paths/components/node-config/dialog/MapperNodeConfigSection.tsx(33,24): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+src/features/ai/ai-paths/components/node-config/dialog/PollNodeConfigSection.tsx(120,28): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+src/features/ai/ai-paths/components/node-config/dialog/PollNodeConfigSection.tsx(121,28): error TS4111: Property 'jobId' comes from an index signature, so it must be accessed with ['jobId'].
+src/features/ai/ai-paths/components/node-config/dialog/PromptNodeConfigSection.tsx(139,41): error TS4111: Property 'bundle' comes from an index signature, so it must be accessed with ['bundle'].
+src/features/ai/ai-paths/components/node-config/dialog/PromptNodeConfigSection.tsx(172,40): error TS4111: Property 'result' comes from an index signature, so it must be accessed with ['result'].
+src/features/ai/ai-paths/components/node-config/dialog/PromptNodeConfigSection.tsx(172,64): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+src/features/ai/ai-paths/components/node-config/dialog/PromptNodeConfigSection.tsx(390,67): error TS4111: Property 'result' comes from an index signature, so it must be accessed with ['result'].
+src/features/ai/ai-paths/components/node-config/dialog/PromptNodeConfigSection.tsx(391,53): error TS4111: Property 'result' comes from an index signature, so it must be accessed with ['result'].
+src/features/ai/ai-paths/components/node-config/dialog/PromptNodeConfigSection.tsx(405,59): error TS4111: Property 'status' comes from an index signature, so it must be accessed with ['status'].
+src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx(116,25): error TS4111: Property 'pattern' comes from an index signature, so it must be accessed with ['pattern'].
+src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx(116,56): error TS4111: Property 'pattern' comes from an index signature, so it must be accessed with ['pattern'].
+src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx(118,27): error TS4111: Property 'pattern' comes from an index signature, so it must be accessed with ['pattern'].
+src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx(119,32): error TS4111: Property 'flags' comes from an index signature, so it must be accessed with ['flags'].
+src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx(119,80): error TS4111: Property 'flags' comes from an index signature, so it must be accessed with ['flags'].
+src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx(120,29): error TS4111: Property 'groupBy' comes from an index signature, so it must be accessed with ['groupBy'].
+src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx(120,70): error TS4111: Property 'groupBy' comes from an index signature, so it must be accessed with ['groupBy'].
+src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx(123,25): error TS4111: Property 'regex' comes from an index signature, so it must be accessed with ['regex'].
+src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx(123,54): error TS4111: Property 'regex' comes from an index signature, so it must be accessed with ['regex'].
+src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx(124,52): error TS4111: Property 'regex' comes from an index signature, so it must be accessed with ['regex'].
+src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx(126,34): error TS4111: Property 'regex' comes from an index signature, so it must be accessed with ['regex'].
+src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx(523,45): error TS4111: Property 'regexCallback' comes from an index signature, so it must be accessed with ['regexCallback'].
+src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx(524,46): error TS4111: Property 'regexCallback' comes from an index signature, so it must be accessed with ['regexCallback'].
+src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx(566,43): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx(567,43): error TS4111: Property 'prompt' comes from an index signature, so it must be accessed with ['prompt'].
+src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx(568,44): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx(569,44): error TS4111: Property 'prompt' comes from an index signature, so it must be accessed with ['prompt'].
+src/features/ai/ai-paths/components/node-config/dialog/TemplateNodeConfigSection.tsx(100,41): error TS4111: Property 'bundle' comes from an index signature, so it must be accessed with ['bundle'].
+src/features/ai/ai-paths/components/node-config/dialog/TemplateNodeConfigSection.tsx(133,40): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+src/features/ai/ai-paths/components/node-config/ParserNodeConfigSection.tsx(186,25): error TS4111: Property 'context' comes from an index signature, so it must be accessed with ['context'].
+src/features/ai/ai-paths/components/node-config/ParserNodeConfigSection.tsx(186,63): error TS4111: Property 'context' comes from an index signature, so it must be accessed with ['context'].
+src/features/ai/ai-paths/components/node-config/ParserNodeConfigSection.tsx(187,30): error TS4111: Property 'context' comes from an index signature, so it must be accessed with ['context'].
+src/features/ai/ai-paths/components/node-config/ParserNodeConfigSection.tsx(190,20): error TS4111: Property 'entity' comes from an index signature, so it must be accessed with ['entity'].
+src/features/ai/ai-paths/components/node-config/ParserNodeConfigSection.tsx(191,20): error TS4111: Property 'entityJson' comes from an index signature, so it must be accessed with ['entityJson'].
+src/features/ai/ai-paths/components/node-config/ParserNodeConfigSection.tsx(192,20): error TS4111: Property 'product' comes from an index signature, so it must be accessed with ['product'].
+src/features/ai/ai-paths/components/node-config/ParserNodeConfigSection.tsx(194,49): error TS4111: Property 'entityJson' comes from an index signature, so it must be accessed with ['entityJson'].
+src/features/ai/ai-paths/components/node-config/ParserNodeConfigSection.tsx(198,29): error TS4111: Property 'context' comes from an index signature, so it must be accessed with ['context'].
+src/features/ai/ai-paths/components/run-detail-dialog.tsx(306,30): error TS4111: Property 'completed' comes from an index signature, so it must be accessed with ['completed'].
+src/features/ai/ai-paths/hooks/useAiPathTriggerEvent.ts(169,21): error TS4111: Property 'activePathId' comes from an index signature, so it must be accessed with ['activePathId'].
+src/features/ai/ai-paths/hooks/useAiPathTriggerEvent.ts(169,58): error TS4111: Property 'activePathId' comes from an index signature, so it must be accessed with ['activePathId'].
+src/features/ai/ai-paths/hooks/useAiPathTriggerEvent.ts(170,17): error TS4111: Property 'activePathId' comes from an index signature, so it must be accessed with ['activePathId'].
+src/features/ai/ai-paths/hooks/useAiPathTriggerEvent.ts(290,10): error TS4111: Property 'entityJson' comes from an index signature, so it must be accessed with ['entityJson'].
+src/features/ai/ai-paths/hooks/useAiPathTriggerEvent.ts(291,10): error TS4111: Property 'entity' comes from an index signature, so it must be accessed with ['entity'].
+src/features/ai/ai-paths/hooks/useAiPathTriggerEvent.ts(292,45): error TS4111: Property 'product' comes from an index signature, so it must be accessed with ['product'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(403,14): error TS4111: Property 'queryPayload' comes from an index signature, so it must be accessed with ['queryPayload'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(788,26): error TS4111: Property 'source' comes from an index signature, so it must be accessed with ['source'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(793,53): error TS4111: Property 'pathId' comes from an index signature, so it must be accessed with ['pathId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(799,53): error TS4111: Property 'pathName' comes from an index signature, so it must be accessed with ['pathName'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1121,28): error TS4111: Property 'entityId' comes from an index signature, so it must be accessed with ['entityId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1122,25): error TS4111: Property 'entityId' comes from an index signature, so it must be accessed with ['entityId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1123,32): error TS4111: Property 'productId' comes from an index signature, so it must be accessed with ['productId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1124,27): error TS4111: Property 'productId' comes from an index signature, so it must be accessed with ['productId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1127,28): error TS4111: Property 'entityType' comes from an index signature, so it must be accessed with ['entityType'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1128,45): error TS4111: Property 'entityType' comes from an index signature, so it must be accessed with ['entityType'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1174,28): error TS4111: Property 'entityId' comes from an index signature, so it must be accessed with ['entityId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1176,29): error TS4111: Property 'entityId' comes from an index signature, so it must be accessed with ['entityId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1177,29): error TS4111: Property 'productId' comes from an index signature, so it must be accessed with ['productId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1178,29): error TS4111: Property 'id' comes from an index signature, so it must be accessed with ['id'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1179,29): error TS4111: Property '_id' comes from an index signature, so it must be accessed with ['_id'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1181,16): error TS4111: Property 'entityId' comes from an index signature, so it must be accessed with ['entityId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1184,28): error TS4111: Property 'productId' comes from an index signature, so it must be accessed with ['productId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1186,29): error TS4111: Property 'productId' comes from an index signature, so it must be accessed with ['productId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1187,29): error TS4111: Property 'entityId' comes from an index signature, so it must be accessed with ['entityId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1188,29): error TS4111: Property 'id' comes from an index signature, so it must be accessed with ['id'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1189,29): error TS4111: Property '_id' comes from an index signature, so it must be accessed with ['_id'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1191,16): error TS4111: Property 'productId' comes from an index signature, so it must be accessed with ['productId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1194,28): error TS4111: Property 'entityType' comes from an index signature, so it must be accessed with ['entityType'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1195,54): error TS4111: Property 'entityType' comes from an index signature, so it must be accessed with ['entityType'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1197,16): error TS4111: Property 'entityType' comes from an index signature, so it must be accessed with ['entityType'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1202,34): error TS4111: Property 'context' comes from an index signature, so it must be accessed with ['context'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1203,34): error TS4111: Property 'meta' comes from an index signature, so it must be accessed with ['meta'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1204,34): error TS4111: Property 'bundle' comes from an index signature, so it must be accessed with ['bundle'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1206,26): error TS4111: Property 'entityId' comes from an index signature, so it must be accessed with ['entityId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1207,12): error TS4111: Property 'entityId' comes from an index signature, so it must be accessed with ['entityId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1208,36): error TS4111: Property 'entityId' comes from an index signature, so it must be accessed with ['entityId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1209,36): error TS4111: Property 'productId' comes from an index signature, so it must be accessed with ['productId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1213,26): error TS4111: Property 'productId' comes from an index signature, so it must be accessed with ['productId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1214,12): error TS4111: Property 'productId' comes from an index signature, so it must be accessed with ['productId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1215,36): error TS4111: Property 'productId' comes from an index signature, so it must be accessed with ['productId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1216,36): error TS4111: Property 'entityId' comes from an index signature, so it must be accessed with ['entityId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1217,25): error TS4111: Property 'entityId' comes from an index signature, so it must be accessed with ['entityId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1220,26): error TS4111: Property 'entityType' comes from an index signature, so it must be accessed with ['entityType'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1221,12): error TS4111: Property 'entityType' comes from an index signature, so it must be accessed with ['entityType'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1222,36): error TS4111: Property 'entityType' comes from an index signature, so it must be accessed with ['entityType'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1227,26): error TS4111: Property 'entityId' comes from an index signature, so it must be accessed with ['entityId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1227,56): error TS4111: Property 'productId' comes from an index signature, so it must be accessed with ['productId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1227,87): error TS4111: Property 'entityType' comes from an index signature, so it must be accessed with ['entityType'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1235,29): error TS4111: Property 'entityId' comes from an index signature, so it must be accessed with ['entityId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1235,58): error TS4111: Property 'productId' comes from an index signature, so it must be accessed with ['productId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1235,88): error TS4111: Property 'entityType' comes from an index signature, so it must be accessed with ['entityType'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1241,46): error TS4111: Property 'entityId' comes from an index signature, so it must be accessed with ['entityId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1242,48): error TS4111: Property 'entityType' comes from an index signature, so it must be accessed with ['entityType'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1246,35): error TS4111: Property 'id' comes from an index signature, so it must be accessed with ['id'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1247,35): error TS4111: Property '_id' comes from an index signature, so it must be accessed with ['_id'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1249,14): error TS4111: Property 'entityId' comes from an index signature, so it must be accessed with ['entityId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1252,26): error TS4111: Property 'productId' comes from an index signature, so it must be accessed with ['productId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1252,56): error TS4111: Property 'entityId' comes from an index signature, so it must be accessed with ['entityId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1253,12): error TS4111: Property 'productId' comes from an index signature, so it must be accessed with ['productId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1253,40): error TS4111: Property 'entityId' comes from an index signature, so it must be accessed with ['entityId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1256,12): error TS4111: Property 'entityType' comes from an index signature, so it must be accessed with ['entityType'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1258,26): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1260,25): error TS4111: Property 'entityId' comes from an index signature, so it must be accessed with ['entityId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1261,25): error TS4111: Property 'productId' comes from an index signature, so it must be accessed with ['productId'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1263,14): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1295,24): error TS4111: Property 'error' comes from an index signature, so it must be accessed with ['error'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1300,26): error TS4111: Property 'images' comes from an index signature, so it must be accessed with ['images'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1301,26): error TS4111: Property 'imageUrls' comes from an index signature, so it must be accessed with ['imageUrls'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1303,24): error TS4111: Property 'entity' comes from an index signature, so it must be accessed with ['entity'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1304,24): error TS4111: Property 'entityJson' comes from an index signature, so it must be accessed with ['entityJson'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1306,26): error TS4111: Property 'product' comes from an index signature, so it must be accessed with ['product'].
+src/features/ai/ai-paths/lib/core/runtime/engine.ts(1862,44): error TS4111: Property 'status' comes from an index signature, so it must be accessed with ['status'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/agent.ts(106,32): error TS4111: Property 'prompt' comes from an index signature, so it must be accessed with ['prompt'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/agent.ts(107,32): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/agent.ts(108,32): error TS4111: Property 'result' comes from an index signature, so it must be accessed with ['result'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/agent.ts(109,32): error TS4111: Property 'bundle' comes from an index signature, so it must be accessed with ['bundle'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/agent.ts(110,32): error TS4111: Property 'context' comes from an index signature, so it must be accessed with ['context'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/agent.ts(111,32): error TS4111: Property 'entityJson' comes from an index signature, so it must be accessed with ['entityJson'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/agent.ts(112,32): error TS4111: Property 'title' comes from an index signature, so it must be accessed with ['title'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/agent.ts(113,32): error TS4111: Property 'content_en' comes from an index signature, so it must be accessed with ['content_en'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/agent.ts(191,25): error TS4111: Property 'checkpointBrief' comes from an index signature, so it must be accessed with ['checkpointBrief'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/agent.ts(192,21): error TS4111: Property 'checkpointBrief' comes from an index signature, so it must be accessed with ['checkpointBrief'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/agent.ts(267,32): error TS4111: Property 'prompt' comes from an index signature, so it must be accessed with ['prompt'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/agent.ts(268,32): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/agent.ts(269,32): error TS4111: Property 'result' comes from an index signature, so it must be accessed with ['result'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/agent.ts(270,32): error TS4111: Property 'bundle' comes from an index signature, so it must be accessed with ['bundle'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/agent.ts(271,32): error TS4111: Property 'context' comes from an index signature, so it must be accessed with ['context'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/agent.ts(272,32): error TS4111: Property 'entityJson' comes from an index signature, so it must be accessed with ['entityJson'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/agent.ts(273,32): error TS4111: Property 'title' comes from an index signature, so it must be accessed with ['title'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/agent.ts(274,32): error TS4111: Property 'content_en' comes from an index signature, so it must be accessed with ['content_en'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/agent.ts(289,53): error TS4111: Property 'payloadHash' comes from an index signature, so it must be accessed with ['payloadHash'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/agent.ts(290,51): error TS4111: Property 'payloadHash' comes from an index signature, so it must be accessed with ['payloadHash'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/common.ts(33,45): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/common.ts(76,47): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/common.ts(134,54): error TS4111: Property 'valid' comes from an index signature, so it must be accessed with ['valid'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/common.ts(134,86): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/common.ts(170,47): error TS4111: Property 'context' comes from an index signature, so it must be accessed with ['context'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/common.ts(173,45): error TS4111: Property 'valid' comes from an index signature, so it must be accessed with ['valid'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/common.ts(174,51): error TS4111: Property 'errors' comes from an index signature, so it must be accessed with ['errors'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(23,47): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(75,52): error TS4111: Property 'prompt' comes from an index signature, so it must be accessed with ['prompt'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(117,71): error TS4111: Property 'prompt' comes from an index signature, so it must be accessed with ['prompt'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(180,70): error TS4111: Property 'images' comes from an index signature, so it must be accessed with ['images'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(185,16): error TS4111: Property 'images' comes from an index signature, so it must be accessed with ['images'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(186,16): error TS4111: Property 'bundle' comes from an index signature, so it must be accessed with ['bundle'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(187,16): error TS4111: Property 'context' comes from an index signature, so it must be accessed with ['context'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(188,16): error TS4111: Property 'entityJson' comes from an index signature, so it must be accessed with ['entityJson'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(189,16): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(190,16): error TS4111: Property 'result' comes from an index signature, so it must be accessed with ['result'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(212,40): error TS4111: Property 'jobId' comes from an index signature, so it must be accessed with ['jobId'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(212,73): error TS4111: Property 'jobId' comes from an index signature, so it must be accessed with ['jobId'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(213,75): error TS4111: Property 'payloadHash' comes from an index signature, so it must be accessed with ['payloadHash'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(214,49): error TS4111: Property 'payloadHash' comes from an index signature, so it must be accessed with ['payloadHash'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(297,45): error TS4111: Property 'entityJson' comes from an index signature, so it must be accessed with ['entityJson'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(304,29): error TS4111: Property 'images' comes from an index signature, so it must be accessed with ['images'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(305,17): error TS4111: Property 'imageLinks' comes from an index signature, so it must be accessed with ['imageLinks'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(306,17): error TS4111: Property 'images' comes from an index signature, so it must be accessed with ['images'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(351,32): error TS4111: Property 'productId' comes from an index signature, so it must be accessed with ['productId'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(352,34): error TS4111: Property 'description_en' comes from an index signature, so it must be accessed with ['description_en'].
 src/features/ai/ai-paths/lib/core/runtime/handlers/integration.ts(100,48): error TS4111: Property 'context' comes from an index signature, so it must be accessed with ['context'].
 src/features/ai/ai-paths/lib/core/runtime/handlers/integration.ts(101,28): error TS4111: Property 'simulation' comes from an index signature, so it must be accessed with ['simulation'].
 src/features/ai/ai-paths/lib/core/runtime/handlers/integration.ts(117,19): error TS4111: Property 'entity' comes from an index signature, so it must be accessed with ['entity'].
@@ -631,7 +856,6 @@ src/features/files/services/image-file-repository/mongo-image-file-repository.ts
 src/features/files/services/image-file-repository/mongo-image-file-repository.ts(83,13): error TS4111: Property 'tags' comes from an index signature, so it must be accessed with ['tags'].
 src/features/files/services/image-file-repository/prisma-image-file-repository.ts(59,13): error TS4111: Property 'filename' comes from an index signature, so it must be accessed with ['filename'].
 src/features/files/services/image-file-repository/prisma-image-file-repository.ts(62,13): error TS4111: Property 'tags' comes from an index signature, so it must be accessed with ['tags'].
-src/features/foldertree/types/folder-tree-ui.ts(1,37): error TS6196: 'NoteRecord' is declared but never used.
 src/features/integrations/components/listings/ExportLogViewer.tsx(33,26): error TS4111: Property 'outputBytes' comes from an index signature, so it must be accessed with ['outputBytes'].
 src/features/integrations/components/listings/ExportLogViewer.tsx(34,26): error TS4111: Property 'originalBytes' comes from an index signature, so it must be accessed with ['originalBytes'].
 src/features/integrations/components/listings/ExportLogViewer.tsx(35,26): error TS4111: Property 'base64Length' comes from an index signature, so it must be accessed with ['base64Length'].
@@ -853,32 +1077,6 @@ src/features/jobs/services/productAiService.ts(160,16): error TS4111: Property '
 src/features/jobs/services/productAiService.ts(160,65): error TS4111: Property 'entityType' comes from an index signature, so it must be accessed with ['entityType'].
 src/features/jobs/services/productAiService.ts(163,27): error TS4111: Property 'source' comes from an index signature, so it must be accessed with ['source'].
 src/features/jobs/services/productAiService.ts(164,26): error TS4111: Property 'graph' comes from an index signature, so it must be accessed with ['graph'].
-src/features/notesapp/components/NoteForm.tsx(26,5): error TS6133: 'undo' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(27,5): error TS6133: 'redo' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(28,5): error TS6133: 'canUndo' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(29,5): error TS6133: 'canRedo' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(32,5): error TS6133: 'textColor' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(33,5): error TS6133: 'setTextColor' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(34,5): error TS6133: 'fontFamily' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(35,5): error TS6133: 'setFontFamily' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(36,5): error TS6133: 'showPreview' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(37,5): error TS6133: 'setShowPreview' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(39,5): error TS6133: 'setEditorMode' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(40,5): error TS6133: 'isEditorModeLocked' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(41,5): error TS6133: 'isMigrating' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(42,5): error TS6133: 'handleMigrateToWysiwyg' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(43,5): error TS6133: 'handleMigrateToMarkdown' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(226,15): error TS2322: Type '{ content: string; setContent: (content: string) => void; contentBackground: string; contentTextColor: string; }' is not assignable to type 'IntrinsicAttributes'.
-  Property 'content' does not exist on type 'IntrinsicAttributes'.
-src/features/notesapp/components/NoteForm.tsx(271,6): error TS2375: Type '{ children: Element; note: NoteWithRelations | null | undefined; onSuccess: () => void; }' is not assignable to type '{ note?: NoteWithRelations | null; onSuccess: () => void; children: ReactNode; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'note' are incompatible.
-    Type 'NoteWithRelations | null | undefined' is not assignable to type 'NoteWithRelations | null'.
-      Type 'undefined' is not assignable to type 'NoteWithRelations | null'.
-src/features/notesapp/components/NoteForm.tsx(272,8): error TS2375: Type '{ formRef: RefObject<HTMLFormElement | null> | undefined; }' is not assignable to type '{ formRef?: RefObject<HTMLFormElement | null>; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'formRef' are incompatible.
-    Type 'RefObject<HTMLFormElement | null> | undefined' is not assignable to type 'RefObject<HTMLFormElement | null>'.
-      Type 'undefined' is not assignable to type 'RefObject<HTMLFormElement | null>'.
-src/features/notesapp/context/NoteFormContext.tsx(760,31): error TS2740: Type '{ note: NoteWithRelations | null; content: string; setContent: (newState: string, skipHistory?: boolean | undefined) => void; undo: () => void; redo: () => void; canUndo: boolean; ... 59 more ...; handleSubmit: (e: FormEvent<...>) => Promise<...>; }' is missing the following properties from type 'NoteFormContextValue': handleSelectRelatedNote, availableTags, handleFilterByTag, setIsCreating, and 12 more.
 src/features/notesapp/hooks/useNoteOperations.ts(259,20): error TS4111: Property 'parentId' comes from an index signature, so it must be accessed with ['parentId'].
 src/features/observability/context/SystemLogsContext.tsx(193,48): error TS4111: Property 'logId' comes from an index signature, so it must be accessed with ['logId'].
 src/features/observability/context/SystemLogsContext.tsx(193,90): error TS4111: Property 'logId' comes from an index signature, so it must be accessed with ['logId'].

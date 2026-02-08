@@ -19,15 +19,15 @@ import {
 
 export const handleTemplate: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
   const templateConfig = node.config?.template ?? { template: '' };
-  const data = { ...nodeInputs };
-  const currentValue = coerceInput(nodeInputs.value) ?? '';
+  const data = { ...(nodeInputs as Record<string, unknown>) };
+  const currentValue = coerceInput(nodeInputs['value']) ?? '';
   const prompt = templateConfig.template
     ? renderTemplate(
       templateConfig.template,
-        data as Record<string, unknown>,
-        currentValue
+      data,
+      currentValue
     )
-    : Object.entries(nodeInputs as Record<string, unknown>)
+    : Object.entries(data)
       .map(([key, value]: [string, unknown]) => `${key}: ${formatRuntimeValue(value)}`)
       .join('\n');
   return { prompt: prompt || 'Prompt: (no template)' };
@@ -72,7 +72,7 @@ export const handleModel: NodeHandler = async ({
   if (skipAiJobs) {
     return prevOutputs;
   }
-  const promptInputs = coerceInputArray(nodeInputs.prompt);
+  const promptInputs = coerceInputArray(nodeInputs['prompt']);
   const promptCandidates = edges
     .filter((edge: Edge) => edge.to === node.id && edge.toPort === 'prompt')
     .map((edge: Edge): PromptCandidate => ({
@@ -114,7 +114,7 @@ export const handleModel: NodeHandler = async ({
     ? buildPromptOutput(promptSourceNode.config?.prompt, promptSourceInputs)
     : null;
   const promptSourceOutput = promptSourceNode
-    ? derivedPrompt?.promptOutput ?? allOutputs[promptSourceNode.id]?.prompt
+    ? derivedPrompt?.promptOutput ?? allOutputs[promptSourceNode.id]?.['prompt']
     : undefined;
   const promptInput =
     promptSourceOutput ??
@@ -177,17 +177,17 @@ export const handleModel: NodeHandler = async ({
         entry.value !== null
     );
   const promptImageOutput = promptSourceNode?.id
-    ? derivedPrompt?.imagesValue ?? allOutputs[promptSourceNode.id]?.images
+    ? derivedPrompt?.imagesValue ?? allOutputs[promptSourceNode.id]?.['images']
     : undefined;
   const imageSource =
     promptImageOutput ??
     imageEdge?.value ??
-    nodeInputs.images ??
-    nodeInputs.bundle ??
-    nodeInputs.context ??
-    nodeInputs.entityJson ??
-    nodeInputs.value ??
-    nodeInputs.result;
+    nodeInputs['images'] ??
+    nodeInputs['bundle'] ??
+    nodeInputs['context'] ??
+    nodeInputs['entityJson'] ??
+    nodeInputs['value'] ??
+    nodeInputs['result'];
   const imageUrls = extractImageUrls(imageSource);
   const payload = {
     prompt,
@@ -209,9 +209,9 @@ export const handleModel: NodeHandler = async ({
   // Idempotency across evaluateGraph calls (seeded outputs): if we already enqueued a job for the same payload,
   // don't enqueue again. This prevents accidental duplicate jobs when the graph is re-evaluated during polling
   // or iterator auto-continue.
-  const prevJobId = typeof prevOutputs.jobId === 'string' ? prevOutputs.jobId.trim() : '';
-  const prevPayloadHash = typeof (prevOutputs as Record<string, unknown>).payloadHash === 'string'
-    ? ((prevOutputs as Record<string, unknown>).payloadHash as string)
+  const prevJobId = typeof prevOutputs['jobId'] === 'string' ? (prevOutputs['jobId']).trim() : '';
+  const prevPayloadHash = typeof (prevOutputs as Record<string, unknown>)['payloadHash'] === 'string'
+    ? ((prevOutputs as Record<string, unknown>)['payloadHash'] as string)
     : '';
   if (prevJobId && prevPayloadHash === payloadHash) {
     return { ...prevOutputs, payloadHash };
@@ -294,22 +294,22 @@ export const handleAiDescription: NodeHandler = async ({
   reportAiPathsError,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   if (executed.ai.has(node.id)) return prevOutputs;
-  const entityJson = coerceInput(nodeInputs.entityJson) as
+  const entityJson = coerceInput(nodeInputs['entityJson']) as
     | Record<string, unknown>
     | undefined;
   if (!entityJson) {
     return {};
   }
   const rawImages =
-    (coerceInput(nodeInputs.images) as unknown[] | undefined) ??
-    (entityJson.imageLinks as unknown[] | undefined) ??
-    (entityJson.images as unknown[] | undefined) ??
+    (coerceInput(nodeInputs['images']) as unknown[] | undefined) ??
+    (entityJson['imageLinks'] as unknown[] | undefined) ??
+    (entityJson['images'] as unknown[] | undefined) ??
     [];
   const imageUrls = rawImages
     .map((item: unknown) => {
       if (typeof item === 'string') return item;
       if (item && typeof item === 'object') {
-        const url = (item as { url?: string }).url;
+        const url = (item as { url?: string })['url'];
         if (typeof url === 'string') return url;
       }
       return null;
@@ -348,8 +348,8 @@ export const handleDescriptionUpdater: NodeHandler = async ({
   reportAiPathsError,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   if (executed.updater.has(node.id)) return prevOutputs;
-  const productId = nodeInputs.productId as string | undefined;
-  const description = nodeInputs.description_en as string | undefined;
+  const productId = nodeInputs['productId'] as string | undefined;
+  const description = nodeInputs['description_en'] as string | undefined;
   if (!productId || !description) {
     return {};
   }

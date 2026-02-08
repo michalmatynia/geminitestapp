@@ -30,17 +30,11 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useCallback, useRef } from 'react';
 
+import { useNoteFormContext } from '@/features/notesapp/context/NoteFormContext';
 import { logClientError } from '@/features/observability';
 import { Button } from '@/shared/ui';
 
 import type { Editor } from '@tiptap/react';
-
-interface WysiwygEditorProps {
-  content: string;
-  setContent: (content: string) => void;
-  contentBackground: string;
-  contentTextColor: string;
-}
 
 interface ToolbarButtonProps {
   onClick: () => void;
@@ -83,12 +77,14 @@ const sanitizeContent = (html: string | undefined | null): string => {
   return temp.innerHTML;
 };
 
-export function WysiwygEditor({
-  content,
-  setContent,
-  contentBackground,
-  contentTextColor,
-}: WysiwygEditorProps): React.JSX.Element {
+export function WysiwygEditor(): React.JSX.Element {
+  const {
+    content,
+    setContent,
+    contentBackground,
+    contentTextColor,
+  } = useNoteFormContext();
+
   const lastContentRef = useRef(content);
   
   const editor = useEditor({

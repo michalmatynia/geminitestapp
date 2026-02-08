@@ -136,7 +136,7 @@ export function PromptNodeConfigSection({
     const bundleEntries: PlaceholderGroup['entries'] = [];
     if (bundleKeys.size > 0) {
       let bundleContext: Record<string, unknown> | null = null;
-      const bundleValue = runtimeInputs.bundle;
+      const bundleValue = runtimeInputs['bundle'];
       if (bundleValue && typeof bundleValue === 'object' && !Array.isArray(bundleValue)) {
         bundleContext = bundleValue as Record<string, unknown>;
       } else if (typeof bundleValue === 'string') {
@@ -169,7 +169,7 @@ export function PromptNodeConfigSection({
       });
     }
 
-    const currentValue = runtimeInputs.result ?? runtimeInputs.value;
+    const currentValue = runtimeInputs['result'] ?? runtimeInputs['value'];
     const currentResolved =
       currentValue !== undefined ? formatRuntimeValue(currentValue) : '—';
     groups.push({
@@ -387,8 +387,8 @@ export function PromptNodeConfigSection({
       </div>
 
       {(() : React.JSX.Element => {
-        const resultValue = runtimeState.inputs[selectedNode.id]?.result
-          ?? runtimeState.outputs[selectedNode.id]?.result;
+        const resultValue = runtimeState.inputs[selectedNode.id]?.['result']
+          ?? runtimeState.outputs[selectedNode.id]?.['result'];
         const hasResult = resultValue !== undefined && resultValue !== null;
         const displayValue = hasResult
           ? (typeof resultValue === 'string'
@@ -402,7 +402,7 @@ export function PromptNodeConfigSection({
         const resultSourcePort = resultEdge?.fromPort ?? null;
         const resultSourcePollStatus =
           resultSourceNode?.type === 'poll'
-            ? (runtimeState.outputs[resultSourceNode.id]?.status as string | undefined)
+            ? (runtimeState.outputs[resultSourceNode.id]?.['status'] as string | undefined)
             : undefined;
         const resultSourceModelHasPoll =
           resultSourceNode?.type === 'model'

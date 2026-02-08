@@ -1,5 +1,11 @@
+Centralize Form validation
+
 
 W drafterze potrzebuje producenta, ikonek wiecej, modal as wide as other Product crete modals, Icon Matrix so that Icons are not spread everywhere, Check If I can Export Product with Producer, when the description is present a little text icon
+
+Daily Backups
+
+Category name not visible immediately after update, same for database backup
 
 One Click Base Export
 

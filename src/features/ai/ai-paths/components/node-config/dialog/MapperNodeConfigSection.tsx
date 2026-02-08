@@ -27,10 +27,10 @@ type MapperPreview = {
 const SOURCE_PATH_PATTERN = /^(context|result|bundle|value)(?:\.|\[|$)/;
 
 const buildMapperSources = (runtimeInputs: Record<string, unknown>): MapperSources => ({
-  context: runtimeInputs.context ?? null,
-  result: runtimeInputs.result ?? null,
-  bundle: runtimeInputs.bundle ?? null,
-  value: runtimeInputs.value ?? null,
+  context: runtimeInputs['context'] ?? null,
+  result: runtimeInputs['result'] ?? null,
+  bundle: runtimeInputs['bundle'] ?? null,
+  value: runtimeInputs['value'] ?? null,
 });
 
 const getMapperContextValue = (sources: MapperSources): unknown =>

@@ -113,17 +113,17 @@ const parseRegexCandidate = (raw: string): RegexCandidate | null => {
     const parsed = JSON.parse(trimmed) as unknown;
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
       const record = parsed as Record<string, unknown>;
-      if (typeof record.pattern === 'string' && record.pattern.trim()) {
+      if (typeof record['pattern'] === 'string' && record['pattern'].trim()) {
         return {
-          pattern: record.pattern.trim(),
-          flags: typeof record.flags === 'string' ? normalizeRegexFlags(record.flags) : '',
-          ...(typeof record.groupBy === 'string' ? { groupBy: record.groupBy } : {}),
+          pattern: record['pattern'].trim(),
+          flags: typeof record['flags'] === 'string' ? normalizeRegexFlags(record['flags']) : '',
+          ...(typeof record['groupBy'] === 'string' ? { groupBy: record['groupBy'] } : {}),
         };
       }
-      if (typeof record.regex === 'string' && record.regex.trim()) {
-        const literal = extractRegexLiteral(record.regex);
+      if (typeof record['regex'] === 'string' && record['regex'].trim()) {
+        const literal = extractRegexLiteral(record['regex']);
         if (literal) return { pattern: literal.pattern, flags: normalizeRegexFlags(literal.flags) };
-        return { pattern: record.regex.trim(), flags: '' };
+        return { pattern: record['regex'].trim(), flags: '' };
       }
     }
   } catch {
@@ -520,8 +520,8 @@ export function RegexNodeConfigSection({
 
   React.useEffect(() => {
     const callbackValue =
-      runtimeState.inputs[selectedNode.id]?.regexCallback ??
-      runtimeState.outputs[selectedNode.id]?.regexCallback;
+      runtimeState.inputs[selectedNode.id]?.['regexCallback'] ??
+      runtimeState.outputs[selectedNode.id]?.['regexCallback'];
     const resolvedCallbackValue =
       typeof callbackValue === 'string'
         ? callbackValue
@@ -563,10 +563,10 @@ export function RegexNodeConfigSection({
   }, [isPatternEmpty, pattern, normalizedFlags]);
 
   const runtimeSample =
-    runtimeState.inputs[selectedNode.id]?.value ??
-    runtimeState.inputs[selectedNode.id]?.prompt ??
-    runtimeState.outputs[selectedNode.id]?.value ??
-    runtimeState.outputs[selectedNode.id]?.prompt ??
+    runtimeState.inputs[selectedNode.id]?.['value'] ??
+    runtimeState.inputs[selectedNode.id]?.['prompt'] ??
+    runtimeState.outputs[selectedNode.id]?.['value'] ??
+    runtimeState.outputs[selectedNode.id]?.['prompt'] ??
     undefined;
 
   const sampleSource = (regexConfig.sampleText ?? '').trim() ? regexConfig.sampleText : runtimeSample;

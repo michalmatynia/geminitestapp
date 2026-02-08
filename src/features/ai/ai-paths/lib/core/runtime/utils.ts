@@ -124,7 +124,7 @@ export const buildPromptOutput = (
   nodeInputs: RuntimePortValues
 ): { promptOutput: string; imagesValue: unknown } => {
   const resolvedConfig = promptConfig ?? { template: '' };
-  const bundleValue = coerceInput(nodeInputs.bundle);
+  const bundleValue = coerceInput(nodeInputs['bundle']);
   let bundleContext: Record<string, unknown> = {};
   if (bundleValue && typeof bundleValue === 'object' && !Array.isArray(bundleValue)) {
     bundleContext = bundleValue as Record<string, unknown>;
@@ -135,25 +135,25 @@ export const buildPromptOutput = (
     }
   }
   const bundleTitle = 
-    bundleContext.title ??
-    bundleContext.name ??
-    bundleContext.name_en ??
-    bundleContext.name_pl ??
-    bundleContext.name_de ??
-    bundleContext.label ??
-    bundleContext.productName ??
+    bundleContext['title'] ??
+    bundleContext['name'] ??
+    bundleContext['name_en'] ??
+    bundleContext['name_pl'] ??
+    bundleContext['name_de'] ??
+    bundleContext['label'] ??
+    bundleContext['productName'] ??
     undefined;
   const bundleId = 
-    bundleContext.productId ??
-    bundleContext.entityId ??
-    bundleContext.id ??
-    bundleContext._id ??
+    bundleContext['productId'] ??
+    bundleContext['entityId'] ??
+    bundleContext['id'] ??
+    bundleContext['_id'] ??
     undefined;
   const bundleDescription = 
-    bundleContext.content_en ??
-    bundleContext.description_en ??
-    bundleContext.description ??
-    bundleContext.content ??
+    bundleContext['content_en'] ??
+    bundleContext['description_en'] ??
+    bundleContext['description'] ??
+    bundleContext['content'] ??
     undefined;
   const alias: Record<string, unknown> = {
     ...(bundleTitle !== undefined ? { title: bundleTitle, name: bundleTitle } : {}),
@@ -162,23 +162,23 @@ export const buildPromptOutput = (
       ? { content_en: bundleDescription, description_en: bundleDescription } 
       : {}),
   };
-  const data = { ...bundleContext, ...alias, ...nodeInputs, bundle: bundleContext };
+  const data = { ...bundleContext, ...alias, ...(nodeInputs as Record<string, unknown>), bundle: bundleContext };
   const currentValue = 
-    coerceInput(nodeInputs.result) ?? coerceInput(nodeInputs.value) ?? '';
+    coerceInput(nodeInputs['result']) ?? coerceInput(nodeInputs['value']) ?? '';
   const prompt = resolvedConfig.template
     ? renderTemplate(
       resolvedConfig.template,
-        data as Record<string, unknown>,
-        currentValue
+      data,
+      currentValue
     )
-    : Object.entries(data as Record<string, unknown>)
+    : Object.entries(data)
       .map(([key, value]: [string, unknown]) => `${key}: ${formatRuntimeValue(value)}`)
       .join('\n');
   const imagesValue = 
-    nodeInputs.images !== undefined
-      ? nodeInputs.images
-      : bundleContext.images !== undefined
-        ? bundleContext.images
+    nodeInputs['images'] !== undefined
+      ? nodeInputs['images']
+      : bundleContext['images'] !== undefined
+        ? bundleContext['images']
         : undefined;
   return { promptOutput: prompt || 'Prompt: (no template)', imagesValue };
 };
@@ -190,21 +190,21 @@ export const resolveJobProductId = (
   activePathId?: string | null
 ): string => {
   const direct = 
-    coerceInput(nodeInputs.productId) ?? coerceInput(nodeInputs.entityId);
+    coerceInput(nodeInputs['productId']) ?? coerceInput(nodeInputs['entityId']);
   if (typeof direct === 'string' && direct.trim()) return direct.trim();
   if (typeof direct === 'number') return String(direct);
-  const contextValue = coerceInput(nodeInputs.context) as
+  const contextValue = coerceInput(nodeInputs['context']) as
     | { entityId?: string; productId?: string } 
     | undefined;
-  if (contextValue?.productId?.trim()) return contextValue.productId.trim();
-  if (contextValue?.entityId?.trim()) return contextValue.entityId.trim();
-  const entityJson = coerceInput(nodeInputs.entityJson) as
+  if (contextValue?.['productId']?.trim()) return contextValue['productId'].trim();
+  if (contextValue?.['entityId']?.trim()) return contextValue['entityId'].trim();
+  const entityJson = coerceInput(nodeInputs['entityJson']) as
     | { id?: string | number } 
     | undefined;
-  if (typeof entityJson?.id === 'string' && entityJson.id.trim()) {
-    return entityJson.id.trim();
+  if (typeof entityJson?.['id'] === 'string' && entityJson['id'].trim()) {
+    return entityJson['id'].trim();
   }
-  if (typeof entityJson?.id === 'number') return String(entityJson.id);
+  if (typeof entityJson?.['id'] === 'number') return String(entityJson['id']);
   if (simulationEntityType === 'product' && simulationEntityId) {
     return simulationEntityId;
   }
@@ -219,35 +219,35 @@ export const resolveEntityIdFromInputs = (
 ): string => {
   const direct =
     (idField ? coerceInput(nodeInputs[idField]) : undefined) ??
-    coerceInput(nodeInputs.entityId) ??
-    coerceInput(nodeInputs.productId);
+    coerceInput(nodeInputs['entityId']) ??
+    coerceInput(nodeInputs['productId']);
   if (typeof direct === 'string' && direct.trim()) return direct.trim();
   if (typeof direct === 'number') return String(direct);
-  const contextValue = coerceInput(nodeInputs.context) as
+  const contextValue = coerceInput(nodeInputs['context']) as
     | { entityId?: string; productId?: string } 
     | undefined;
-  if (contextValue?.productId?.trim()) return contextValue.productId.trim();
-  if (contextValue?.entityId?.trim()) return contextValue.entityId.trim();
-  const bundleValue = coerceInput(nodeInputs.bundle) as
+  if (contextValue?.['productId']?.trim()) return contextValue['productId'].trim();
+  if (contextValue?.['entityId']?.trim()) return contextValue['entityId'].trim();
+  const bundleValue = coerceInput(nodeInputs['bundle']) as
     | { entityId?: string; productId?: string; id?: string | number } 
     | undefined;
-  if (typeof bundleValue?.productId === 'string' && bundleValue.productId.trim()) {
-    return bundleValue.productId.trim();
+  if (typeof bundleValue?.['productId'] === 'string' && bundleValue['productId'].trim()) {
+    return bundleValue['productId'].trim();
   }
-  if (typeof bundleValue?.entityId === 'string' && bundleValue.entityId.trim()) {
-    return bundleValue.entityId.trim();
+  if (typeof bundleValue?.['entityId'] === 'string' && bundleValue['entityId'].trim()) {
+    return bundleValue['entityId'].trim();
   }
-  if (typeof bundleValue?.id === 'string' && bundleValue.id.trim()) {
-    return bundleValue.id.trim();
+  if (typeof bundleValue?.['id'] === 'string' && bundleValue['id'].trim()) {
+    return bundleValue['id'].trim();
   }
-  if (typeof bundleValue?.id === 'number') return String(bundleValue.id);
-  const entityJson = coerceInput(nodeInputs.entityJson) as
+  if (typeof bundleValue?.['id'] === 'number') return String(bundleValue['id']);
+  const entityJson = coerceInput(nodeInputs['entityJson']) as
     | { id?: string | number } 
     | undefined;
-  if (typeof entityJson?.id === 'string' && entityJson.id.trim()) {
-    return entityJson.id.trim();
+  if (typeof entityJson?.['id'] === 'string' && entityJson['id'].trim()) {
+    return entityJson['id'].trim();
   }
-  if (typeof entityJson?.id === 'number') return String(entityJson.id);
+  if (typeof entityJson?.['id'] === 'number') return String(entityJson['id']);
   if (simulationEntityType === 'product' && simulationEntityId) {
     return simulationEntityId;
   }
@@ -282,7 +282,7 @@ export const pollGraphJob = async (
           | null
           | undefined;
         if (result && typeof result === 'object' && 'result' in result) {
-          return (result as { result?: string }).result ?? '';
+          return (result as { result?: string })['result'] ?? '';
         }
         return typeof result === 'string' ? result : JSON.stringify(result ?? '');
       }
@@ -322,11 +322,11 @@ export const buildDbQueryPayload = (
   single?: boolean;
   idType?: string;
 } => {
-  const inputQuery = coerceInput(nodeInputs.query);
-  const aiQueryInput = coerceInput(nodeInputs.aiQuery ?? nodeInputs.queryCallback);
-  const inputValue = coerceInput(nodeInputs.value) ?? coerceInput(nodeInputs.jobId);
-  const entityIdInput = coerceInput(nodeInputs.entityId);
-  const productIdInput = coerceInput(nodeInputs.productId);
+  const inputQuery = coerceInput(nodeInputs['query']);
+  const aiQueryInput = coerceInput(nodeInputs['aiQuery'] ?? nodeInputs['queryCallback']);
+  const inputValue = coerceInput(nodeInputs['value']) ?? coerceInput(nodeInputs['jobId']);
+  const entityIdInput = coerceInput(nodeInputs['entityId']);
+  const productIdInput = coerceInput(nodeInputs['productId']);
   let query: Record<string, unknown> = {};
   const parseRenderedQuery = (raw: string): Record<string, unknown> | null => {
     const parsed = parseJsonSafe(
@@ -558,32 +558,32 @@ export const resolveContextPayload = async (
   const contextConfig = config;
   const fallbackRole = contextConfig.role ?? DEFAULT_CONTEXT_ROLE;
   const baseRole =
-    baseContext && typeof baseContext.role === 'string' ? baseContext.role : null;
+    baseContext && typeof baseContext['role'] === 'string' ? baseContext['role'] : null;
   const role = baseRole ?? fallbackRole;
   const rawEntityType = contextConfig.entityType?.trim() || 'auto';
   const baseEntityType =
-    baseContext && typeof baseContext.entityType === 'string'
-      ? baseContext.entityType
+    baseContext && typeof baseContext['entityType'] === 'string'
+      ? baseContext['entityType']
       : null;
   const entityType =
     rawEntityType === 'auto'
-      ? baseEntityType ?? simulationEntityType ?? 'entity'
-      : rawEntityType || baseEntityType || simulationEntityType || 'entity';
+      ? (baseEntityType) ?? (simulationEntityType) ?? 'entity'
+      : rawEntityType || (baseEntityType) || (simulationEntityType) || 'entity';
   const manualId = contextConfig.entityId?.trim() || null;
   const baseEntityId =
-    baseContext && typeof baseContext.entityId === 'string'
-      ? baseContext.entityId
+    baseContext && typeof baseContext['entityId'] === 'string'
+      ? baseContext['entityId']
       : null;
   const entityId =
     contextConfig.entityIdSource === 'manual'
       ? manualId
       : contextConfig.entityIdSource === 'context'
-        ? baseEntityId ?? manualId ?? null
-        : baseEntityId ?? simulationEntityId ?? manualId ?? null;
+        ? (baseEntityId) ?? manualId ?? null
+        : (baseEntityId) ?? (simulationEntityId) ?? manualId ?? null;
   const baseEntity =
-    (baseContext?.entity as Record<string, unknown> | undefined) ??
-    (baseContext?.entityJson as Record<string, unknown> | undefined) ??
-    (baseContext?.product as Record<string, unknown> | undefined) ??
+    (baseContext?.['entity'] as Record<string, unknown> | undefined) ??
+    (baseContext?.['entityJson'] as Record<string, unknown> | undefined) ??
+    (baseContext?.['product'] as Record<string, unknown> | undefined) ??
     null;
   const fetched =
     baseEntity ?? (entityId && entityType ? await fetchEntityCached(entityType, entityId) : null);
@@ -592,41 +592,41 @@ export const resolveContextPayload = async (
   const scopedEntity =
     scopeTarget === 'entity' ? applyContextScope(rawEntity, contextConfig) : rawEntity;
   const entityForContext = scopeTarget === 'context' ? rawEntity : scopedEntity;
-  const baseImages = Array.isArray(baseContext?.images)
-    ? (baseContext?.images as unknown[])
+  const baseImages = Array.isArray(baseContext?.['images'])
+    ? (baseContext?.['images'] as unknown[])
     : null;
   // Only extract images from entity when base images aren't already provided
   const resolvedImages =
     baseImages && baseImages.length ? baseImages : extractImageUrls(entityForContext ?? rawEntity);
   const baseContextRest = baseContext ? { ...baseContext } : {};
-  delete (baseContextRest as Record<string, unknown>).entity;
-  delete (baseContextRest as Record<string, unknown>).entityJson;
-  delete (baseContextRest as Record<string, unknown>).product;
-  delete (baseContextRest as Record<string, unknown>).images;
-  delete (baseContextRest as Record<string, unknown>).imageUrls;
-  delete (baseContextRest as Record<string, unknown>).role;
-  delete (baseContextRest as Record<string, unknown>).entityType;
-  delete (baseContextRest as Record<string, unknown>).entityId;
-  delete (baseContextRest as Record<string, unknown>).source;
-  delete (baseContextRest as Record<string, unknown>).timestamp;
-  delete (baseContextRest as Record<string, unknown>).productId;
+  delete (baseContextRest as Record<string, unknown>)['entity'];
+  delete (baseContextRest as Record<string, unknown>)['entityJson'];
+  delete (baseContextRest as Record<string, unknown>)['product'];
+  delete (baseContextRest as Record<string, unknown>)['images'];
+  delete (baseContextRest as Record<string, unknown>)['imageUrls'];
+  delete (baseContextRest as Record<string, unknown>)['role'];
+  delete (baseContextRest as Record<string, unknown>)['entityType'];
+  delete (baseContextRest as Record<string, unknown>)['entityId'];
+  delete (baseContextRest as Record<string, unknown>)['source'];
+  delete (baseContextRest as Record<string, unknown>)['timestamp'];
+  delete (baseContextRest as Record<string, unknown>)['productId'];
   const context = {
     role,
     entityType,
     entityId,
-    source: (baseContext?.source as string | undefined) ?? 'context-filter',
-    timestamp: (baseContext?.timestamp as string | undefined) ?? now,
+    source: (baseContext?.['source'] as string | undefined) ?? 'context-filter',
+    timestamp: (baseContext?.['timestamp'] as string | undefined) ?? now,
     ...(resolvedImages.length ? { images: resolvedImages, imageUrls: resolvedImages } : {}),
     ...baseContextRest,
     entity: entityForContext,
     productId:
       entityType === 'product'
         ? entityId
-        : (baseContext?.productId as string | undefined),
+        : (baseContext?.['productId'] as string | undefined),
     product:
       entityType === 'product'
         ? entityForContext
-        : (baseContext?.product as Record<string, unknown> | undefined),
+        : (baseContext?.['product'] as Record<string, unknown> | undefined),
   };
   const scopedContext =
     scopeTarget === 'context' ? applyContextScope(context, contextConfig) : context;

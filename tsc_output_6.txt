@@ -44,6 +44,33 @@ __tests__/features/products/services/aiTranslationService.test.ts(52,32): error 
 __tests__/features/products/services/aiTranslationService.test.ts(56,32): error TS4111: Property 'german' comes from an index signature, so it must be accessed with ['german'].
 __tests__/features/products/services/aiTranslationService.test.ts(76,32): error TS4111: Property 'english' comes from an index signature, so it must be accessed with ['english'].
 __tests__/features/products/services/aiTranslationService.test.ts(77,32): error TS4111: Property 'polish' comes from an index signature, so it must be accessed with ['polish'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/common.ts(33,45): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/common.ts(76,47): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/common.ts(134,54): error TS4111: Property 'valid' comes from an index signature, so it must be accessed with ['valid'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/common.ts(134,86): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/common.ts(170,47): error TS4111: Property 'context' comes from an index signature, so it must be accessed with ['context'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/common.ts(173,45): error TS4111: Property 'valid' comes from an index signature, so it must be accessed with ['valid'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/common.ts(174,51): error TS4111: Property 'errors' comes from an index signature, so it must be accessed with ['errors'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(23,47): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(75,52): error TS4111: Property 'prompt' comes from an index signature, so it must be accessed with ['prompt'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(117,71): error TS4111: Property 'prompt' comes from an index signature, so it must be accessed with ['prompt'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(180,70): error TS4111: Property 'images' comes from an index signature, so it must be accessed with ['images'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(185,16): error TS4111: Property 'images' comes from an index signature, so it must be accessed with ['images'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(186,16): error TS4111: Property 'bundle' comes from an index signature, so it must be accessed with ['bundle'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(187,16): error TS4111: Property 'context' comes from an index signature, so it must be accessed with ['context'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(188,16): error TS4111: Property 'entityJson' comes from an index signature, so it must be accessed with ['entityJson'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(189,16): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(190,16): error TS4111: Property 'result' comes from an index signature, so it must be accessed with ['result'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(212,40): error TS4111: Property 'jobId' comes from an index signature, so it must be accessed with ['jobId'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(212,73): error TS4111: Property 'jobId' comes from an index signature, so it must be accessed with ['jobId'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(213,75): error TS4111: Property 'payloadHash' comes from an index signature, so it must be accessed with ['payloadHash'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(214,49): error TS4111: Property 'payloadHash' comes from an index signature, so it must be accessed with ['payloadHash'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(297,45): error TS4111: Property 'entityJson' comes from an index signature, so it must be accessed with ['entityJson'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(304,29): error TS4111: Property 'images' comes from an index signature, so it must be accessed with ['images'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(305,17): error TS4111: Property 'imageLinks' comes from an index signature, so it must be accessed with ['imageLinks'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(306,17): error TS4111: Property 'images' comes from an index signature, so it must be accessed with ['images'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(351,32): error TS4111: Property 'productId' comes from an index signature, so it must be accessed with ['productId'].
+src/features/ai/ai-paths/lib/core/runtime/handlers/generation.ts(352,34): error TS4111: Property 'description_en' comes from an index signature, so it must be accessed with ['description_en'].
 src/features/ai/ai-paths/lib/core/runtime/handlers/integration.ts(100,48): error TS4111: Property 'context' comes from an index signature, so it must be accessed with ['context'].
 src/features/ai/ai-paths/lib/core/runtime/handlers/integration.ts(101,28): error TS4111: Property 'simulation' comes from an index signature, so it must be accessed with ['simulation'].
 src/features/ai/ai-paths/lib/core/runtime/handlers/integration.ts(117,19): error TS4111: Property 'entity' comes from an index signature, so it must be accessed with ['entity'].
@@ -631,7 +658,6 @@ src/features/files/services/image-file-repository/mongo-image-file-repository.ts
 src/features/files/services/image-file-repository/mongo-image-file-repository.ts(83,13): error TS4111: Property 'tags' comes from an index signature, so it must be accessed with ['tags'].
 src/features/files/services/image-file-repository/prisma-image-file-repository.ts(59,13): error TS4111: Property 'filename' comes from an index signature, so it must be accessed with ['filename'].
 src/features/files/services/image-file-repository/prisma-image-file-repository.ts(62,13): error TS4111: Property 'tags' comes from an index signature, so it must be accessed with ['tags'].
-src/features/foldertree/types/folder-tree-ui.ts(1,37): error TS6196: 'NoteRecord' is declared but never used.
 src/features/integrations/components/listings/ExportLogViewer.tsx(33,26): error TS4111: Property 'outputBytes' comes from an index signature, so it must be accessed with ['outputBytes'].
 src/features/integrations/components/listings/ExportLogViewer.tsx(34,26): error TS4111: Property 'originalBytes' comes from an index signature, so it must be accessed with ['originalBytes'].
 src/features/integrations/components/listings/ExportLogViewer.tsx(35,26): error TS4111: Property 'base64Length' comes from an index signature, so it must be accessed with ['base64Length'].
@@ -853,32 +879,6 @@ src/features/jobs/services/productAiService.ts(160,16): error TS4111: Property '
 src/features/jobs/services/productAiService.ts(160,65): error TS4111: Property 'entityType' comes from an index signature, so it must be accessed with ['entityType'].
 src/features/jobs/services/productAiService.ts(163,27): error TS4111: Property 'source' comes from an index signature, so it must be accessed with ['source'].
 src/features/jobs/services/productAiService.ts(164,26): error TS4111: Property 'graph' comes from an index signature, so it must be accessed with ['graph'].
-src/features/notesapp/components/NoteForm.tsx(26,5): error TS6133: 'undo' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(27,5): error TS6133: 'redo' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(28,5): error TS6133: 'canUndo' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(29,5): error TS6133: 'canRedo' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(32,5): error TS6133: 'textColor' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(33,5): error TS6133: 'setTextColor' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(34,5): error TS6133: 'fontFamily' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(35,5): error TS6133: 'setFontFamily' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(36,5): error TS6133: 'showPreview' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(37,5): error TS6133: 'setShowPreview' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(39,5): error TS6133: 'setEditorMode' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(40,5): error TS6133: 'isEditorModeLocked' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(41,5): error TS6133: 'isMigrating' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(42,5): error TS6133: 'handleMigrateToWysiwyg' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(43,5): error TS6133: 'handleMigrateToMarkdown' is declared but its value is never read.
-src/features/notesapp/components/NoteForm.tsx(226,15): error TS2322: Type '{ content: string; setContent: (content: string) => void; contentBackground: string; contentTextColor: string; }' is not assignable to type 'IntrinsicAttributes'.
-  Property 'content' does not exist on type 'IntrinsicAttributes'.
-src/features/notesapp/components/NoteForm.tsx(271,6): error TS2375: Type '{ children: Element; note: NoteWithRelations | null | undefined; onSuccess: () => void; }' is not assignable to type '{ note?: NoteWithRelations | null; onSuccess: () => void; children: ReactNode; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'note' are incompatible.
-    Type 'NoteWithRelations | null | undefined' is not assignable to type 'NoteWithRelations | null'.
-      Type 'undefined' is not assignable to type 'NoteWithRelations | null'.
-src/features/notesapp/components/NoteForm.tsx(272,8): error TS2375: Type '{ formRef: RefObject<HTMLFormElement | null> | undefined; }' is not assignable to type '{ formRef?: RefObject<HTMLFormElement | null>; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'formRef' are incompatible.
-    Type 'RefObject<HTMLFormElement | null> | undefined' is not assignable to type 'RefObject<HTMLFormElement | null>'.
-      Type 'undefined' is not assignable to type 'RefObject<HTMLFormElement | null>'.
-src/features/notesapp/context/NoteFormContext.tsx(760,31): error TS2740: Type '{ note: NoteWithRelations | null; content: string; setContent: (newState: string, skipHistory?: boolean | undefined) => void; undo: () => void; redo: () => void; canUndo: boolean; ... 59 more ...; handleSubmit: (e: FormEvent<...>) => Promise<...>; }' is missing the following properties from type 'NoteFormContextValue': handleSelectRelatedNote, availableTags, handleFilterByTag, setIsCreating, and 12 more.
 src/features/notesapp/hooks/useNoteOperations.ts(259,20): error TS4111: Property 'parentId' comes from an index signature, so it must be accessed with ['parentId'].
 src/features/observability/context/SystemLogsContext.tsx(193,48): error TS4111: Property 'logId' comes from an index signature, so it must be accessed with ['logId'].
 src/features/observability/context/SystemLogsContext.tsx(193,90): error TS4111: Property 'logId' comes from an index signature, so it must be accessed with ['logId'].

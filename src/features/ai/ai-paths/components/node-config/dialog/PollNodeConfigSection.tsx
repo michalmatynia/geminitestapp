@@ -117,8 +117,8 @@ export function PollNodeConfigSection({
     return acc;
   }, {});
   const inputValue =
-    (resolvedRuntimeInputs.value as string) ??
-    (resolvedRuntimeInputs.jobId as string) ??
+    (resolvedRuntimeInputs['value'] as string) ??
+    (resolvedRuntimeInputs['jobId'] as string) ??
     '';
   const queryPreviewText = renderTemplate(
     queryConfig.queryTemplate ?? '{}',

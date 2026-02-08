@@ -223,8 +223,8 @@ export const buildMongoQueryValidation = (value: string): QueryValidationResult 
     let line: number | undefined;
     let column: number | undefined;
     let snippet: string | undefined;
-    if (match?.groups?.pos) {
-      const position = Number(match.groups.pos);
+    if (match?.groups?.['pos']) {
+      const position = Number(match.groups['pos']);
       if (!Number.isNaN(position)) {
         const clamped = Math.max(0, Math.min(raw.length, position));
         const before = raw.slice(0, clamped);
@@ -284,8 +284,8 @@ export const buildJsonQueryValidation = (value: string): QueryValidationResult =
     let line: number | undefined;
     let column: number | undefined;
     let snippet: string | undefined;
-    if (match?.groups?.pos) {
-      const position = Number(match.groups.pos);
+    if (match?.groups?.['pos']) {
+      const position = Number(match.groups['pos']);
       if (!Number.isNaN(position)) {
         const clamped = Math.max(0, Math.min(raw.length, position));
         const before = raw.slice(0, clamped);
@@ -346,63 +346,63 @@ const convertMongoFieldCondition = (
   for (const [key, rawVal] of Object.entries(value)) {
     switch (key) {
       case '$eq':
-        result.equals = rawVal;
+        result['equals'] = rawVal;
         onChange();
         break;
       case '$ne':
-        result.not = rawVal;
+        result['not'] = rawVal;
         onChange();
         break;
       case '$gt':
-        result.gt = rawVal;
+        result['gt'] = rawVal;
         onChange();
         break;
       case '$gte':
-        result.gte = rawVal;
+        result['gte'] = rawVal;
         onChange();
         break;
       case '$lt':
-        result.lt = rawVal;
+        result['lt'] = rawVal;
         onChange();
         break;
       case '$lte':
-        result.lte = rawVal;
+        result['lte'] = rawVal;
         onChange();
         break;
       case '$in':
-        result.in = ensureArray(rawVal);
+        result['in'] = ensureArray(rawVal);
         onChange();
         break;
       case '$nin':
-        result.notIn = ensureArray(rawVal);
+        result['notIn'] = ensureArray(rawVal);
         onChange();
         break;
       case '$regex': {
         const pattern = normalizeString(rawVal);
         if (pattern) {
-          result.contains = pattern;
+          result['contains'] = pattern;
           onChange();
         }
         break;
       }
       case '$options':
         if (rawVal === 'i') {
-          result.mode = 'insensitive';
+          result['mode'] = 'insensitive';
           onChange();
         }
         break;
       case '$exists':
         if (rawVal === true) {
-          result.not = null;
+          result['not'] = null;
           onChange();
         } else if (rawVal === false) {
-          result.equals = null;
+          result['equals'] = null;
           onChange();
         }
         break;
       case '$not':
         if (rawVal && typeof rawVal === 'object' && !Array.isArray(rawVal)) {
-          result.not = convertMongoFieldCondition(
+          result['not'] = convertMongoFieldCondition(
             rawVal as Record<string, unknown>,
             warnings,
             onChange,
@@ -435,19 +435,19 @@ const convertMongoWhere = (
       const rawVal = obj[key];
       switch (key) {
         case '$and':
-          result.AND = ensureArray(rawVal).map((entry) =>
+          result['AND'] = ensureArray(rawVal).map((entry) =>
             convertMongoWhere(entry, warnings, onChange),
           );
           onChange();
           break;
         case '$or':
-          result.OR = ensureArray(rawVal).map((entry) =>
+          result['OR'] = ensureArray(rawVal).map((entry) =>
             convertMongoWhere(entry, warnings, onChange),
           );
           onChange();
           break;
         case '$nor':
-          result.NOT = ensureArray(rawVal).map((entry) =>
+          result['NOT'] = ensureArray(rawVal).map((entry) =>
             convertMongoWhere(entry, warnings, onChange),
           );
           onChange();

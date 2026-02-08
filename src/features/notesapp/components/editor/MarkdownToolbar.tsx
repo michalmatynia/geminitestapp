@@ -1,65 +1,52 @@
 'use client';
 
 import { Undo, Redo } from 'lucide-react';
+import React from 'react';
 
+import { useNoteFormContext } from '@/features/notesapp/context/NoteFormContext';
 import type { NoteFileRecord } from '@/shared/types/notes';
 import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
 
-
 interface MarkdownToolbarProps {
-  noteFiles: NoteFileRecord[];
-  textColor: string;
-  setTextColor: (color: string) => void;
-  fontFamily: string;
-  setFontFamily: (font: string) => void;
-  showPreview: boolean;
-  setShowPreview: (show: boolean) => void;
   onApplyWrap: (prefix: string, suffix: string, placeholder: string) => void;
   onApplyLinePrefix: (prefix: string) => void;
   onInsertAtCursor: (value: string) => void;
   onApplyBulletList: () => void;
   onApplyChecklist: () => void;
   onApplySpanStyle: (color: string, font: string) => void;
-  onInsertFileReference: (file: NoteFileRecord) => void;
-  onUndo?: () => void;
-  onRedo?: () => void;
-  canUndo?: boolean;
-  canRedo?: boolean;
-  editorMode: 'markdown' | 'wysiwyg' | 'code';
-  onEditorModeChange: (mode: 'markdown' | 'wysiwyg' | 'code') => void;
-  isEditorModeLocked?: boolean;
-  isMigrating?: boolean;
-  onMigrateToWysiwyg?: () => void;
-  onMigrateToMarkdown?: () => void;
 }
 
 export function MarkdownToolbar({
-  noteFiles,
-  textColor,
-  setTextColor,
-  fontFamily,
-  setFontFamily,
-  showPreview,
-  setShowPreview,
   onApplyWrap,
   onApplyLinePrefix,
   onInsertAtCursor,
   onApplyBulletList,
   onApplyChecklist,
   onApplySpanStyle,
-  onInsertFileReference,
-  onUndo,
-  onRedo,
-  canUndo = false,
-  canRedo = false,
-  editorMode,
-  onEditorModeChange,
-  isEditorModeLocked = false,
-  isMigrating = false,
-  onMigrateToWysiwyg,
-  onMigrateToMarkdown,
 }: MarkdownToolbarProps): React.JSX.Element {
+  const {
+    noteFiles,
+    textColor,
+    setTextColor,
+    fontFamily,
+    setFontFamily,
+    showPreview,
+    setShowPreview,
+    insertFileReference,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    editorMode,
+    setEditorMode,
+    isEditorModeLocked,
+    isMigrating,
+    handleMigrateToWysiwyg,
+    handleMigrateToMarkdown,
+    content,
+  } = useNoteFormContext();
+
   return (
     <div className='mb-2 flex flex-wrap items-center gap-2 rounded-lg border bg-gray-900 px-3 py-2'>
       {/* Editor Mode Display/Toggle */}
@@ -73,23 +60,21 @@ export function MarkdownToolbar({
             {/* Migration buttons */}
             {editorMode === 'markdown' && (
               <div className='flex gap-1'>
-                {onMigrateToWysiwyg && (
-                  <Button
-                    type='button'
-                    onClick={onMigrateToWysiwyg}
-                    disabled={isMigrating}
-                    className='px-2 py-1 text-xs bg-purple-600/20 text-purple-300 border border-purple-500/40 rounded hover:bg-purple-600/30 disabled:opacity-50'
-                    title='Convert this note to WYSIWYG format'
-                  >
-                    {isMigrating ? 'Migrating...' : 'To WYSIWYG'}
-                  </Button>
-                )}
+                <Button
+                  type='button'
+                  onClick={() => { void handleMigrateToWysiwyg(content); }}
+                  disabled={isMigrating}
+                  className='px-2 py-1 text-xs bg-purple-600/20 text-purple-300 border border-purple-500/40 rounded hover:bg-purple-600/30 disabled:opacity-50'
+                  title='Convert this note to WYSIWYG format'
+                >
+                  {isMigrating ? 'Migrating...' : 'To WYSIWYG'}
+                </Button>
               </div>
             )}
-            {editorMode === 'wysiwyg' && onMigrateToMarkdown && (
+            {editorMode === 'wysiwyg' && (
               <Button
                 type='button'
-                onClick={onMigrateToMarkdown}
+                onClick={() => { void handleMigrateToMarkdown(content); }}
                 disabled={isMigrating}
                 className='px-2 py-1 text-xs bg-purple-600/20 text-purple-300 border border-purple-500/40 rounded hover:bg-purple-600/30 disabled:opacity-50'
                 title='Convert this note to Markdown format'
@@ -97,10 +82,10 @@ export function MarkdownToolbar({
                 {isMigrating ? 'Migrating...' : 'To Markdown'}
               </Button>
             )}
-            {editorMode === 'code' && onMigrateToMarkdown && (
+            {editorMode === 'code' && (
               <Button
                 type='button'
-                onClick={onMigrateToMarkdown}
+                onClick={() => { void handleMigrateToMarkdown(content); }}
                 disabled={isMigrating}
                 className='px-2 py-1 text-xs bg-purple-600/20 text-purple-300 border border-purple-500/40 rounded hover:bg-purple-600/30 disabled:opacity-50'
                 title='Convert this note to Markdown format'
@@ -114,7 +99,7 @@ export function MarkdownToolbar({
           <div className='flex rounded-md border border-border/60 overflow-hidden'>
             <Button
               type='button'
-              onClick={(): void => onEditorModeChange('markdown')}
+              onClick={(): void => setEditorMode('markdown')}
               className={`px-2 py-1 text-xs transition-colors ${
                 editorMode === 'markdown'
                   ? 'bg-blue-600 text-white'
@@ -126,7 +111,7 @@ export function MarkdownToolbar({
             </Button>
             <Button
               type='button'
-              onClick={(): void => onEditorModeChange('wysiwyg')}
+              onClick={(): void => setEditorMode('wysiwyg')}
               className={`px-2 py-1 text-xs transition-colors ${
                 editorMode === 'wysiwyg'
                   ? 'bg-blue-600 text-white'
@@ -138,7 +123,7 @@ export function MarkdownToolbar({
             </Button>
             <Button
               type='button'
-              onClick={(): void => onEditorModeChange('code')}
+              onClick={(): void => setEditorMode('code')}
               className={`px-2 py-1 text-xs transition-colors ${
                 editorMode === 'code'
                   ? 'bg-green-600 text-white'
@@ -163,28 +148,24 @@ export function MarkdownToolbar({
             {showPreview ? 'Hide Preview' : 'Show Preview'}
           </Button>
           <div className='h-6 w-px bg-gray-700 mx-1' />
-          {onUndo && (
-            <Button
-              type='button'
-              onClick={onUndo}
-              disabled={!canUndo}
-              className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
-              title='Undo'
-            >
-              <Undo className='size-3.5' />
-            </Button>
-          )}
-          {onRedo && (
-            <Button
-              type='button'
-              onClick={onRedo}
-              disabled={!canRedo}
-              className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
-              title='Redo'
-            >
-              <Redo className='size-3.5' />
-            </Button>
-          )}
+          <Button
+            type='button'
+            onClick={undo}
+            disabled={!canUndo}
+            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
+            title='Undo'
+          >
+            <Undo className='size-3.5' />
+          </Button>
+          <Button
+            type='button'
+            onClick={redo}
+            disabled={!canRedo}
+            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
+            title='Redo'
+          >
+            <Redo className='size-3.5' />
+          </Button>
           <div className='h-6 w-px bg-gray-700 mx-1' />
           <Button
             type='button'
@@ -301,7 +282,7 @@ export function MarkdownToolbar({
                   const slotIndex = parseInt(value, 10);
                   const file = noteFiles.find((f: NoteFileRecord) => f.slotIndex === slotIndex);
                   if (file) {
-                    onInsertFileReference(file);
+                    insertFileReference(file);
                   }
                 }}
               >

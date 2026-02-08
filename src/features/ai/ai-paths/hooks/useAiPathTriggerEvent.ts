@@ -166,8 +166,8 @@ const resolveTriggerSelection = async (
   );
 
   const activePathId =
-    typeof uiState?.activePathId === 'string' && uiState.activePathId.trim().length > 0
-      ? uiState.activePathId.trim()
+    typeof uiState?.['activePathId'] === 'string' && uiState['activePathId'].trim().length > 0
+      ? uiState['activePathId'].trim()
       : null;
 
   const preferredConfig: PathConfig | null =
@@ -287,9 +287,9 @@ const buildTriggerContext = (args: {
   };
 
   if (args.entityJson) {
-    base.entityJson = args.entityJson;
-    base.entity = args.entityJson;
-    if (args.entityType === 'product') base.product = args.entityJson;
+    base['entityJson'] = args.entityJson;
+    base['entity'] = args.entityJson;
+    if (args.entityType === 'product') base['product'] = args.entityJson;
   }
 
   return base;

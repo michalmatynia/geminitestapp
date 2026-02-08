@@ -1,0 +1,118 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/route.ts
+   70:9   warning  Unexpected console statement  no-console
+   87:7   warning  Unexpected console statement  no-console
+  201:7   warning  Unexpected console statement  no-console
+  272:9   warning  Unexpected console statement  no-console
+  393:7   warning  Unexpected console statement  no-console
+  414:7   warning  Unexpected console statement  no-console
+  458:11  warning  Unexpected console statement  no-console
+  473:11  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/sessions/[sessionId]/messages/route.ts
+  39:5  warning  Unexpected console statement  no-console
+  74:5  warning  Unexpected console statement  no-console
+  92:5  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/sessions/[sessionId]/route.ts
+  21:5  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/sessions/route.ts
+   55:5  warning  Unexpected console statement  no-console
+   66:5  warning  Unexpected console statement  no-console
+   81:5  warning  Unexpected console statement  no-console
+  102:5  warning  Unexpected console statement  no-console
+  120:5  warning  Unexpected console statement  no-console
+  141:5  warning  Unexpected console statement  no-console
+  153:5  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/client-errors/route.ts
+  22:5  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/images/sync-base/all/route.ts
+  32:9  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/imports/base/parameters/route.ts
+  342:7  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/ai-jobs/enqueue/route.ts
+  28:3  warning  Unexpected console statement  no-console
+  31:3  warning  Unexpected console statement  no-console
+  40:5  warning  Unexpected console statement  no-console
+  45:9  warning  Unexpected console statement  no-console
+  60:3  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/ai-jobs/route.ts
+  16:7  warning  Unexpected console statement  no-console
+  24:7  warning  Unexpected console statement  no-console
+  46:7  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/categories/route.ts
+  58:5  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/images/base64/all/route.ts
+  32:9  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/route.ts
+  157:3  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/settings/database/sync/route.ts
+  68:9  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/settings/lite/route.ts
+   98:7  warning  Unexpected console statement  no-console
+  101:5  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/settings/route.ts
+   59:9  warning  Unexpected console statement  no-console
+  276:5  warning  Unexpected console statement  no-console
+  303:9  warning  Unexpected console statement  no-console
+  323:5  warning  Unexpected console statement  no-console
+  354:5  warning  Unexpected console statement  no-console
+  380:7  warning  Unexpected console statement  no-console
+  393:7  warning  Unexpected console statement  no-console
+  406:7  warning  Unexpected console statement  no-console
+  435:5  warning  Unexpected console statement  no-console
+  502:9  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/productService.ts
+  219:11  error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  219:30  error  Unsafe call of a type that could not be resolved                              @typescript-eslint/no-unsafe-call
+  220:13  error  Unsafe assignment of an `any` value                                           @typescript-eslint/no-unsafe-assignment
+  220:29  error  Unsafe call of an `any` typed value                                           @typescript-eslint/no-unsafe-call
+  220:32  error  Unsafe member access .createProduct on an `any` value                         @typescript-eslint/no-unsafe-member-access
+  223:15  error  Unsafe call of an `any` typed value                                           @typescript-eslint/no-unsafe-call
+  223:18  error  Unsafe member access .addProductImages on an `any` value                      @typescript-eslint/no-unsafe-member-access
+  223:43  error  Unsafe member access .id on an `any` value                                    @typescript-eslint/no-unsafe-member-access
+  225:13  error  Unsafe call of an `any` typed value                                           @typescript-eslint/no-unsafe-call
+  225:16  error  Unsafe member access .replaceProductCatalogs on an `any` value                @typescript-eslint/no-unsafe-member-access
+  225:47  error  Unsafe member access .id on an `any` value                                    @typescript-eslint/no-unsafe-member-access
+  226:13  error  Unsafe call of an `any` typed value                                           @typescript-eslint/no-unsafe-call
+  226:16  error  Unsafe member access .replaceProductCategory on an `any` value                @typescript-eslint/no-unsafe-member-access
+  226:47  error  Unsafe member access .id on an `any` value                                    @typescript-eslint/no-unsafe-member-access
+  227:13  error  Unsafe call of an `any` typed value                                           @typescript-eslint/no-unsafe-call
+  227:16  error  Unsafe member access .replaceProductTags on an `any` value                    @typescript-eslint/no-unsafe-member-access
+  227:43  error  Unsafe member access .id on an `any` value                                    @typescript-eslint/no-unsafe-member-access
+  228:13  error  Unsafe call of an `any` typed value                                           @typescript-eslint/no-unsafe-call
+  228:16  error  Unsafe member access .replaceProductProducers on an `any` value               @typescript-eslint/no-unsafe-member-access
+  228:48  error  Unsafe member access .id on an `any` value                                    @typescript-eslint/no-unsafe-member-access
+  229:13  error  Unsafe call of an `any` typed value                                           @typescript-eslint/no-unsafe-call
+  229:16  error  Unsafe member access .replaceProductNotes on an `any` value                   @typescript-eslint/no-unsafe-member-access
+  229:44  error  Unsafe member access .id on an `any` value                                    @typescript-eslint/no-unsafe-member-access
+  234:15  error  Unsafe assignment of an `any` value                                           @typescript-eslint/no-unsafe-assignment
+  234:39  error  Unsafe call of an `any` typed value                                           @typescript-eslint/no-unsafe-call
+  234:42  error  Unsafe member access .getProductById on an `any` value                        @typescript-eslint/no-unsafe-member-access
+  234:65  error  Unsafe member access .id on an `any` value                                    @typescript-eslint/no-unsafe-member-access
+  235:49  error  Unsafe member access .defaultPriceGroupId on an `any` value                   @typescript-eslint/no-unsafe-member-access
+  239:19  error  Unsafe call of an `any` typed value                                           @typescript-eslint/no-unsafe-call
+  239:22  error  Unsafe member access .updateProduct on an `any` value                         @typescript-eslint/no-unsafe-member-access
+  239:44  error  Unsafe member access .id on an `any` value                                    @typescript-eslint/no-unsafe-member-access
+  246:7   error  Unsafe return of a value of type `any`                                        @typescript-eslint/no-unsafe-return
+  251:22  error  Unsafe member access .sku on a type that cannot be resolved                   @typescript-eslint/no-unsafe-member-access
+  252:52  error  Unsafe argument of type error typed assigned to a parameter of type `string`  @typescript-eslint/no-unsafe-argument
+  252:63  error  Unsafe member access .sku on a type that cannot be resolved                   @typescript-eslint/no-unsafe-member-access
+  255:48  error  Unsafe argument of type error typed assigned to a parameter of type `string`  @typescript-eslint/no-unsafe-argument
+  255:59  error  Unsafe member access .id on a type that cannot be resolved                    @typescript-eslint/no-unsafe-member-access
+
+✖ 83 problems (38 errors, 45 warnings)
+

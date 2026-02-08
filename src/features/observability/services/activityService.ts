@@ -1,7 +1,8 @@
 import 'server-only';
 
-import { getActivityRepository } from '@/features/observability/server';
 import type { CreateActivityLogDto, ActivityLogDto } from '@/shared/dtos/system';
+
+import { getActivityRepository } from './activity-repository';
 
 /**
  * Logs a user activity event.

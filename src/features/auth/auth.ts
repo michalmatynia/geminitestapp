@@ -378,12 +378,12 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
             }).catch(() => {});
           }
         },
-        async signOut({ token }) {
-          if (token?.sub) {
+        async signOut(message: { token?: JWT | null }) {
+          if (message.token?.sub) {
             void logActivity({
               type: ActivityTypes.AUTH.LOGOUT,
               description: 'User logged out',
-              userId: token.sub,
+              userId: message.token.sub,
             }).catch(() => {});
           }
         },

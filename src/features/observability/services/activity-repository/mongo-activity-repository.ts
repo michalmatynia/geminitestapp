@@ -38,7 +38,7 @@ export const mongoActivityRepository: ActivityRepository = {
     if (filters.entityId) query.entityId = filters.entityId;
     if (filters.entityType) query.entityType = filters.entityType;
     if (filters.search) {
-      query.description = { $regex: filters.search, $options: 'i' } as any;
+      query.description = { $regex: filters.search, $options: 'i' };
     }
 
     const logs = await db
@@ -61,7 +61,7 @@ export const mongoActivityRepository: ActivityRepository = {
     if (filters.entityId) query.entityId = filters.entityId;
     if (filters.entityType) query.entityType = filters.entityType;
     if (filters.search) {
-      query.description = { $regex: filters.search, $options: 'i' } as any;
+      query.description = { $regex: filters.search, $options: 'i' };
     }
 
     return db.collection(COLLECTION).countDocuments(query);
@@ -78,10 +78,10 @@ export const mongoActivityRepository: ActivityRepository = {
       entityType: data.entityType ?? null,
       metadata: data.metadata ?? null,
       createdAt: now,
-    };
+    } as ActivityLogDoc;
     
-    const result = await db.collection(COLLECTION).insertOne(doc as any);
-    return toActivityDto({ ...doc, _id: result.insertedId } as ActivityLogDoc);
+    const result = await db.collection<ActivityLogDoc>(COLLECTION).insertOne(doc);
+    return toActivityDto({ ...doc, _id: result.insertedId });
   },
 
   async deleteActivity(id: string): Promise<void> {

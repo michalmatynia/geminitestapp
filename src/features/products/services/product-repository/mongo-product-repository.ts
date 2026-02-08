@@ -236,8 +236,6 @@ export const mongoProductRepository: ProductRepository = {
 
     cursor = cursor.skip(skip);
     cursor = cursor.limit(limit);
-      cursor = cursor.limit(limit);
-    }
 
     const docs = await cursor.toArray();
     return docs.map(toProductResponse);

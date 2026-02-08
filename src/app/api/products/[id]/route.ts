@@ -3,14 +3,16 @@ export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { ActivityTypes, logActivity } from '@/features/observability/server';
-import { productService } from '@/features/products/server';
+import { ActivityTypes, logActivity } from '@/features/observability/services/activityService';
 import { parseJsonBody } from '@/features/products/server';
 import { getProductRepository } from '@/features/products/services/product-repository';
+import { productService } from '@/features/products/services/productService'; // Direct import
+import type { ProductRecord, ProductWithImages } from '@/features/products/types';
 import { validateProductUpdateMiddleware } from '@/features/products/validations/middleware';
 import { badRequestError, notFoundError, payloadTooLargeError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api';
+import { idParamSchema } from '@/shared/validations/api-schemas';
 
 const isLikelyPayloadTooLarge = (error: unknown): boolean => {
   const message = error instanceof Error ? error.message : String(error ?? '');
@@ -54,6 +56,7 @@ async function PUT_handler(
   const id = params.id;
   let formData: FormData;
   try {
+     
     formData = await req.formData();
   } catch (error) {
     if (isLikelyPayloadTooLarge(error)) {
@@ -74,7 +77,7 @@ async function PUT_handler(
     return validation.response;
   }
 
-  const product = await productService.updateProduct(id, formData, { userId: _ctx.userId ?? undefined });
+  const product: ProductWithImages | null = await productService.updateProduct(id, formData, { userId: _ctx.userId ?? undefined });
   if (!product) {
     throw notFoundError('Product not found', { productId: id });
   }
@@ -110,20 +113,21 @@ async function PATCH_handler(
   if (data.stock !== undefined) updateData.stock = data.stock;
 
   const productRepository = await getProductRepository();
-  const product = await productRepository.updateProduct(id, updateData);
+  const product: ProductRecord | null = await productRepository.updateProduct(id, updateData);
   if (!product) {
     throw notFoundError('Product not found', { productId: id });
   }
 
   // Manually log activity for PATCH as it uses repository directly for now
-  void logActivity({
+   
+  void (logActivity({
     type: ActivityTypes.PRODUCT.UPDATED,
     description: `Quick updated product ${id}`,
     userId: _ctx.userId,
     entityId: id,
     entityType: 'product',
     metadata: { changes: updateData }
-  }).catch(() => {});
+  })).catch(() => {});
 
   return NextResponse.json(product);
 }
@@ -138,7 +142,7 @@ async function DELETE_handler(
   params: { id: string }
 ): Promise<Response> {
   const id = params.id;
-  const product = await productService.deleteProduct(id, { userId: _ctx.userId ?? undefined });
+  const product: ProductRecord | null = await productService.deleteProduct(id, { userId: _ctx.userId ?? undefined });
   if (!product) {
     throw notFoundError('Product not found', { productId: id });
   }

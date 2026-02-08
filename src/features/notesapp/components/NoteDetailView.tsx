@@ -8,6 +8,7 @@ import { useNotesLookup } from '@/features/notesapp/api/useNoteQueries';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import type { NoteWithRelations, RelatedNote, NoteRelationWithTarget, NoteRelationWithSource } from '@/shared/types/notes';
 import { Button, useToast, SectionPanel } from '@/shared/ui';
+import { sanitizeHtml } from '@/shared/utils';
 
 import { NoteForm } from './NoteForm';
 import { buildBreadcrumbPath, renderMarkdownToHtml } from '../utils';
@@ -350,10 +351,11 @@ export function NoteDetailView(): React.JSX.Element | null {
             className='prose max-w-none'
             style={previewTypographyStyle}
             dangerouslySetInnerHTML={{
-              __html:
+              __html: sanitizeHtml(
                 selectedNote.editorType === 'wysiwyg'
                   ? selectedNote.content
-                  : renderMarkdownToHtml(selectedNote.content),
+                  : renderMarkdownToHtml(selectedNote.content)
+              ),
             }}
             onMouseOver={(e: React.MouseEvent<HTMLDivElement>): void => {
               const target = e.target;

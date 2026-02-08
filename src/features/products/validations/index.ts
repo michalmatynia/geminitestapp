@@ -4,13 +4,16 @@ import {
   productUpdateSchema,
   type ProductCreateInput,
   type ProductUpdateInput,
+  type ProductFiltersParsed,
 } from './schemas';
 
 export {
   productCreateSchema,
   productUpdateSchema,
+  productFilterSchema,
   type ProductCreateInput,
   type ProductUpdateInput,
+  type ProductFiltersParsed,
 };
 
 // Validators and core types

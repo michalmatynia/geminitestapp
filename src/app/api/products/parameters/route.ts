@@ -40,7 +40,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
  * Creates a new product parameter.
  */
 async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  const data = productParameterCreateSchema.parse(ctx.body);
+  const data = ctx.body as z.infer<typeof productParameterCreateSchema>;
   const { name_en, catalogId } = data;
 
   const repository = await getParameterRepository();

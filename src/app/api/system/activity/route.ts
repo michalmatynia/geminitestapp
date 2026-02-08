@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { getActivityRepository } from '@/features/observability/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api';
 import { commonListQuerySchema } from '@/shared/validations/api-schemas';
 
+type ListQuery = z.infer<typeof commonListQuerySchema>;
+
 /**
  * GET /api/system/activity
  * Fetches system-wide activity logs.
  */
 async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  const query = ctx.query as any;
+  const query = ctx.query as ListQuery;
   const repository = await getActivityRepository();
   
   const filters = {

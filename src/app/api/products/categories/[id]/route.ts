@@ -48,7 +48,7 @@ async function PUT_handler(
   ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
-  const data = productCategoryUpdateSchema.parse(ctx.body);
+  const data = ctx.body as z.infer<typeof productCategoryUpdateSchema>;
   const { name, parentId, catalogId } = data;
 
   const repository = await getCategoryRepository();

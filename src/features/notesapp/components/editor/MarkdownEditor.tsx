@@ -4,6 +4,7 @@ import React from 'react';
 
 import { useNoteFormContext } from '@/features/notesapp/context/NoteFormContext';
 import { useToast, Textarea } from '@/shared/ui';
+import { sanitizeHtml } from '@/shared/utils';
 
 
 import { renderMarkdownToHtml } from '../../utils';
@@ -39,7 +40,8 @@ export function MarkdownEditor({
   React.useEffect((): void | (() => void) => {
     if (!showPreview) return;
     const timer = setTimeout((): void => {
-      setDebouncedContentHtml(renderMarkdownToHtml(content));
+      const html = renderMarkdownToHtml(content);
+      setDebouncedContentHtml(sanitizeHtml(html));
     }, 150); // 150ms debounce
     return (): void => clearTimeout(timer);
   }, [content, showPreview]);

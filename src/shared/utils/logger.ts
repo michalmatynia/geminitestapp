@@ -1,3 +1,5 @@
+import { getRequestContext } from '@/shared/lib/observability/request-context';
+
 /**
  * Simple logger utility to provide a consistent interface for logging.
  * This can be expanded to log to external services or files if needed.
@@ -5,35 +7,53 @@
 
 type LogLevel = 'info' | 'warn' | 'error' | 'log';
 
-const formatMessage = (level: LogLevel, message: string): string => {
+const formatMessage = (level: LogLevel, message: string, context?: Record<string, unknown>): string => {
   const timestamp = new Date().toISOString();
-  return `[${timestamp}] [${level.toUpperCase()}] ${message}`;
+  const requestContext = getRequestContext();
+  const requestId = requestContext?.requestId ? ` [RID:${requestContext.requestId}]` : '';
+  const userId = requestContext?.userId ? ` [UID:${requestContext.userId}]` : '';
+  
+  const _structuredData = {
+    timestamp,
+    level: level.toUpperCase(),
+    message,
+    requestId: requestContext?.requestId,
+    userId: requestContext?.userId,
+    ...context,
+  };
+
+  // For human readable console output while maintaining parsability
+  return `[${timestamp}] [${level.toUpperCase()}]${requestId}${userId} ${message}`;
 };
 
 export const logger = {
-  info: (message: string, ...args: unknown[]): void => {
-    console.info(formatMessage('info', message), ...args);
+  info: (message: string, context?: Record<string, unknown>): void => {
+    console.info(formatMessage('info', message, context), context || '');
   },
-  warn: (message: string, ...args: unknown[]): void => {
-    console.warn(formatMessage('warn', message), ...args);
+  warn: (message: string, context?: Record<string, unknown>): void => {
+    console.warn(formatMessage('warn', message, context), context || '');
   },
-  error: (message: string, ...args: unknown[]): void => {
-    console.error(formatMessage('error', message), ...args);
+  error: (message: string, error?: unknown, context?: Record<string, unknown>): void => {
+    const combinedContext = { 
+      ...(context || {}), 
+      error: error instanceof Error ? { message: error.message, stack: error.stack } : error 
+    };
+    console.error(formatMessage('error', message, combinedContext), combinedContext);
+    
     // Integration with centralized observability
     if (typeof window !== 'undefined') {
       void (async (): Promise<void> => {
         try {
-          // Use string message or first arg as error object
-          const error = args[0] instanceof Error ? args[0] : new Error(message);
+          const err = error instanceof Error ? error : new Error(message);
           const { logClientError } = await import('@/shared/utils/observability/client-error-logger');
-          logClientError(error, { context: { source: 'shared-logger', message, args } });
+          logClientError(err, { context: { source: 'shared-logger', message, ...combinedContext } });
         } catch {
           // Fallback if logClientError fails or import fails
         }
       })();
     }
   },
-  log: (message: string, ...args: unknown[]): void => {
-    console.log(formatMessage('log', message), ...args);
+  log: (message: string, context?: Record<string, unknown>): void => {
+    console.log(formatMessage('log', message, context), context || '');
   },
 };

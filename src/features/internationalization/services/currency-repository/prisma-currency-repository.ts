@@ -1,0 +1,85 @@
+import { Prisma as _Prisma, type Currency } from '@prisma/client';
+
+import { defaultCurrencies } from '@/features/internationalization/server';
+import type { CurrencyRepository } from '@/features/internationalization/types/services/currency-repository';
+import prisma from '@/shared/lib/db/prisma';
+import type { CurrencyRecord } from '@/shared/types/domain/internationalization';
+
+const toCurrencyDomain = (currency: Currency): CurrencyRecord => ({
+  id: currency.id,
+  code: currency.code,
+  name: currency.name,
+  symbol: currency.symbol ?? null,
+  createdAt: currency.createdAt.toISOString(),
+  updatedAt: currency.updatedAt.toISOString(),
+});
+
+export const prismaCurrencyRepository: CurrencyRepository = {
+  async listCurrencies(): Promise<CurrencyRecord[]> {
+    const currencies = await prisma.currency.findMany({
+      orderBy: { code: 'asc' },
+    });
+    return currencies.map(toCurrencyDomain);
+  },
+
+  async getCurrencyByCode(code: string): Promise<CurrencyRecord | null> {
+    const currency = await prisma.currency.findUnique({
+      where: { code },
+    });
+    return currency ? toCurrencyDomain(currency) : null;
+  },
+
+  async getCurrencyById(id: string): Promise<CurrencyRecord | null> {
+    const currency = await prisma.currency.findUnique({
+      where: { id },
+    });
+    return currency ? toCurrencyDomain(currency) : null;
+  },
+
+  async createCurrency(data: { code: string; name: string; symbol?: string | null }): Promise<CurrencyRecord> {
+    const currency = await prisma.currency.create({
+      data: {
+        id: data.code,
+        code: data.code,
+        name: data.name,
+        symbol: data.symbol ?? null,
+      },
+    });
+    return toCurrencyDomain(currency);
+  },
+
+  async updateCurrency(id: string, data: { code?: string; name?: string; symbol?: string | null }): Promise<CurrencyRecord> {
+    const currency = await prisma.currency.update({
+      where: { id },
+      data: {
+        ...data,
+        id: data.code ?? id, // Allow changing ID if code changes
+      },
+    });
+    return toCurrencyDomain(currency);
+  },
+
+  async deleteCurrency(id: string): Promise<void> {
+    await prisma.currency.delete({ where: { id } });
+  },
+
+  async isCurrencyInUse(id: string): Promise<boolean> {
+    const [priceGroupCount, countryCount] = await Promise.all([
+      prisma.priceGroup.count({ where: { currencyId: id } }),
+      prisma.countryCurrency.count({ where: { currencyId: id } }),
+    ]);
+    return priceGroupCount > 0 || countryCount > 0;
+  },
+
+  async ensureDefaultCurrencies(): Promise<void> {
+    await prisma.currency.createMany({
+      data: defaultCurrencies.map(c => ({
+        id: c.code,
+        code: c.code,
+        name: c.name,
+        symbol: c.symbol ?? null
+      })),
+      skipDuplicates: true,
+    });
+  },
+};

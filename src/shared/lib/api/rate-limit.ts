@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { rateLimitedError } from '@/shared/errors/app-error';
+import { getRedisClient } from '@/shared/lib/redis';
 
 import type { NextRequest } from 'next/server';
 
@@ -16,6 +17,13 @@ type RateLimitEntry = {
   requests: number[];
 };
 
+type RateLimitResult = {
+  allowed: boolean;
+  remaining: number;
+  resetTime: number;
+  totalHits: number;
+};
+
 class RateLimiter {
   private store: Map<string, RateLimitEntry> = new Map<string, RateLimitEntry>();
   private config: Required<RateLimitConfig>;
@@ -27,12 +35,43 @@ class RateLimiter {
     };
   }
 
-  check(req: NextRequest): {
-    allowed: boolean;
-    remaining: number;
-    resetTime: number;
-    totalHits: number;
-  } {
+  async check(req: NextRequest, prefix: string): Promise<RateLimitResult> {
+    const key = `${prefix}:${this.config.keyGenerator(req)}`;
+    const redis = getRedisClient();
+
+    if (redis) {
+      try {
+        const now = Date.now();
+        const windowStart = now - this.config.windowMs;
+        
+        // Multi-transaction for atomicity
+        const multi = redis.multi();
+        multi.zremrangebyscore(key, 0, windowStart);
+        multi.zcard(key);
+        multi.zadd(key, now, `${now}-${Math.random()}`);
+        multi.pexpire(key, this.config.windowMs);
+        
+        const results = await multi.exec();
+        if (!results) throw new Error('Multi exec failed');
+        
+        const count = (results[1]?.[1] as number) ?? 0;
+        const allowed = count < this.config.maxRequests;
+        
+        return {
+          allowed,
+          remaining: Math.max(0, this.config.maxRequests - count - (allowed ? 1 : 0)),
+          resetTime: now + this.config.windowMs,
+          totalHits: count + (allowed ? 1 : 0),
+        };
+      } catch (error) {
+        console.error('[rate-limit] Redis failure, falling back to memory:', error);
+      }
+    }
+
+    return this.checkInMemory(req);
+  }
+
+  private checkInMemory(req: NextRequest): RateLimitResult {
     const key = this.config.keyGenerator(req);
     const now = Date.now();
     const windowStart = now - this.config.windowMs;
@@ -108,12 +147,12 @@ export const buildRateLimitHeaders = (
   'X-RateLimit-Window': limiter.getConfig().windowMs.toString(),
 });
 
-export const enforceRateLimit = (
+export const enforceRateLimit = async (
   req: NextRequest,
   key: RateLimiterKey
-): { headers: Record<string, string> } | never => {
+): Promise<{ headers: Record<string, string> }> => {
   const limiter = rateLimiters[key] ?? rateLimiters.api;
-  const result = limiter.check(req);
+  const result = await limiter.check(req, key);
   const headers = buildRateLimitHeaders(limiter, result);
   if (!result.allowed) {
     const retryAfterMs = Math.max(0, result.resetTime - Date.now());
@@ -130,3 +169,4 @@ if (typeof setInterval !== 'undefined') {
     Object.values(rateLimiters).forEach((limiter: RateLimiter): void => limiter.cleanup());
   }, 5 * 60 * 1000);
 }
+

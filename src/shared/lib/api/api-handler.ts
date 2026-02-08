@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { badRequestError, forbiddenError, methodNotAllowedError, payloadTooLargeError, validationError } from '@/shared/errors/app-error';
 import { resolveError } from '@/shared/errors/resolve-error';
 import { enforceRateLimit } from '@/shared/lib/api/rate-limit';
+import { runWithContext } from '@/shared/lib/observability/request-context';
 import {
   CSRF_SAFE_METHODS,
   getCsrfTokenFromHeaders,
@@ -210,78 +211,79 @@ export function apiHandler(
       getElapsedMs: (): number => Math.round(performance.now() - startTime),
     };
 
-    try {
-      enforceCsrf(request, options);
+    return runWithContext({ requestId, startTime, userId: context.userId }, async () => {
+      try {
+        enforceCsrf(request, options);
 
-      let rateLimitHeaders: Record<string, string> | undefined;
-      const rateKey = options.rateLimitKey === false ? null : (options.rateLimitKey ?? 'api');
-      if (rateKey && shouldEnforceRateLimit()) {
-        const rateResult = enforceRateLimit(request, rateKey);
-        rateLimitHeaders = rateResult.headers;
-        context.rateLimitHeaders = rateLimitHeaders;
-      }
-
-      if (options.parseJsonBody) {
-        const parsed = await parseJsonBody(request, {
-          maxBodyBytes: options.maxBodyBytes ?? DEFAULT_JSON_BODY_BYTES,
-          schema: options.bodySchema,
-        });
-        context.body = parsed.body;
-      }
-
-      if (options.querySchema) {
-        const queryParams = Object.fromEntries(new URL(request.url).searchParams.entries());
-        const validation = options.querySchema.safeParse(queryParams);
-        if (!validation.success) {
-          throw validationError('Query validation failed', { issues: validation.error.flatten() });
+        let rateLimitHeaders: Record<string, string> | undefined;
+        const rateKey = options.rateLimitKey === false ? null : (options.rateLimitKey ?? 'api');
+        if (rateKey && shouldEnforceRateLimit()) {
+          const rateResult = await enforceRateLimit(request, rateKey);
+          rateLimitHeaders = rateResult.headers;
+          context.rateLimitHeaders = rateLimitHeaders;
         }
-        context.query = validation.data;
-      }
+        if (options.parseJsonBody) {
+          const parsed = await parseJsonBody(request, {
+            maxBodyBytes: options.maxBodyBytes ?? DEFAULT_JSON_BODY_BYTES,
+            schema: options.bodySchema,
+          });
+          context.body = parsed.body;
+        }
 
-      const response = await handler(request, context);
+        if (options.querySchema) {
+          const queryParams = Object.fromEntries(new URL(request.url).searchParams.entries());
+          const validation = options.querySchema.safeParse(queryParams);
+          if (!validation.success) {
+            throw validationError('Query validation failed', { issues: validation.error.flatten() });
+          }
+          context.query = validation.data;
+        }
 
-      // Log successful requests if configured
-      if (options.logSuccess) {
-        void logSystemEvent({
-          level: options.successLogLevel ?? 'info',
-          message: `${options.source} completed successfully`,
-          source: options.source,
+        const response = await handler(request, context);
+
+        // Log successful requests if configured
+        if (options.logSuccess) {
+          void logSystemEvent({
+            level: options.successLogLevel ?? 'info',
+            message: `${options.source} completed successfully`,
+            source: options.source,
+            request,
+            requestId,
+            statusCode: response.status,
+            context: {
+              durationMs: context.getElapsedMs(),
+            },
+          });
+        }
+
+        // Add request ID to response headers for client-side tracking
+        if (!response.headers.has('x-request-id')) {
+          response.headers.set('x-request-id', requestId);
+        }
+        if (context.rateLimitHeaders) {
+          Object.entries(context.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
+            response.headers.set(key, value);
+          });
+        }
+        applySecurityHeaders(response);
+        applyDefaultCacheHeaders(response, request.method, options.cacheControl);
+        return response;
+      } catch (error) {
+        const response = await createErrorResponseWithTiming(
+          error,
           request,
-          requestId,
-          statusCode: response.status,
-          context: {
-            durationMs: context.getElapsedMs(),
-          },
-        });
+          context,
+          options
+        );
+        if (context.rateLimitHeaders) {
+          Object.entries(context.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
+            response.headers.set(key, value);
+          });
+        }
+        applySecurityHeaders(response);
+        return response;
       }
-
-      // Add request ID to response headers for client-side tracking
-      if (!response.headers.has('x-request-id')) {
-        response.headers.set('x-request-id', requestId);
-      }
-      if (context.rateLimitHeaders) {
-        Object.entries(context.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
-          response.headers.set(key, value);
-        });
-      }
-      applySecurityHeaders(response);
-      applyDefaultCacheHeaders(response, request.method, options.cacheControl);
-      return response;
-    } catch (error) {
-      const response = await createErrorResponseWithTiming(
-        error,
-        request,
-        context,
-        options
-      );
-      if (context.rateLimitHeaders) {
-        Object.entries(context.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
-          response.headers.set(key, value);
-        });
-      }
-      applySecurityHeaders(response);
-      return response;
-    }
+    });
   };
 }
 
@@ -324,86 +326,87 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
       getElapsedMs: () => Math.round(performance.now() - startTime),
     };
 
-    try {
-      enforceCsrf(request, options);
+    return runWithContext({ requestId, startTime, userId: handlerContext.userId }, async () => {
+      try {
+        enforceCsrf(request, options);
 
-      let rateLimitHeaders: Record<string, string> | undefined;
-      const rateKey = options.rateLimitKey === false ? null : (options.rateLimitKey ?? 'api');
-      if (rateKey && shouldEnforceRateLimit()) {
-        const rateResult = enforceRateLimit(request, rateKey);
-        rateLimitHeaders = rateResult.headers;
-        handlerContext.rateLimitHeaders = rateLimitHeaders;
-      }
-
-      if (options.parseJsonBody) {
-        const parsed = await parseJsonBody(request, {
-          maxBodyBytes: options.maxBodyBytes ?? DEFAULT_JSON_BODY_BYTES,
-          schema: options.bodySchema,
-        });
-        handlerContext.body = parsed.body;
-      }
-
-      if (options.querySchema) {
-        const queryParams = Object.fromEntries(new URL(request.url).searchParams.entries());
-        const validation = options.querySchema.safeParse(queryParams);
-        if (!validation.success) {
-          throw validationError('Query validation failed', { issues: validation.error.flatten() });
+        let rateLimitHeaders: Record<string, string> | undefined;
+        const rateKey = options.rateLimitKey === false ? null : (options.rateLimitKey ?? 'api');
+        if (rateKey && shouldEnforceRateLimit()) {
+          const rateResult = await enforceRateLimit(request, rateKey);
+          rateLimitHeaders = rateResult.headers;
+          handlerContext.rateLimitHeaders = rateLimitHeaders;
         }
-        handlerContext.query = validation.data;
-      }
-
-      const params = await routeContext.params;
-      
-      if (options.paramsSchema) {
-        const validation = options.paramsSchema.safeParse(params);
-        if (!validation.success) {
-          throw validationError('Parameter validation failed', { issues: validation.error.flatten() });
+        if (options.parseJsonBody) {
+          const parsed = await parseJsonBody(request, {
+            maxBodyBytes: options.maxBodyBytes ?? DEFAULT_JSON_BODY_BYTES,
+            schema: options.bodySchema,
+          });
+          handlerContext.body = parsed.body;
         }
-      }
 
-      const response = await handler(request, handlerContext, params);
+        if (options.querySchema) {
+          const queryParams = Object.fromEntries(new URL(request.url).searchParams.entries());
+          const validation = options.querySchema.safeParse(queryParams);
+          if (!validation.success) {
+            throw validationError('Query validation failed', { issues: validation.error.flatten() });
+          }
+          handlerContext.query = validation.data;
+        }
 
-      if (options.logSuccess) {
-        void logSystemEvent({
-          level: options.successLogLevel ?? 'info',
-          message: `${options.source} completed successfully`,
-          source: options.source,
+        const params = await routeContext.params;
+        
+        if (options.paramsSchema) {
+          const validation = options.paramsSchema.safeParse(params);
+          if (!validation.success) {
+            throw validationError('Parameter validation failed', { issues: validation.error.flatten() });
+          }
+        }
+
+        const response = await handler(request, handlerContext, params);
+
+        if (options.logSuccess) {
+          void logSystemEvent({
+            level: options.successLogLevel ?? 'info',
+            message: `${options.source} completed successfully`,
+            source: options.source,
+            request,
+            requestId,
+            statusCode: response.status,
+            context: {
+              durationMs: handlerContext.getElapsedMs(),
+              params,
+            },
+          });
+        }
+
+        if (!response.headers.has('x-request-id')) {
+          response.headers.set('x-request-id', requestId);
+        }
+        if (handlerContext.rateLimitHeaders) {
+          Object.entries(handlerContext.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
+            response.headers.set(key, value);
+          });
+        }
+        applySecurityHeaders(response);
+        applyDefaultCacheHeaders(response, request.method, options.cacheControl);
+        return response;
+      } catch (error) {
+        const response = await createErrorResponseWithTiming(
+          error,
           request,
-          requestId,
-          statusCode: response.status,
-          context: {
-            durationMs: handlerContext.getElapsedMs(),
-            params,
-          },
-        });
+          handlerContext,
+          options
+        );
+        if (handlerContext.rateLimitHeaders) {
+          Object.entries(handlerContext.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
+            response.headers.set(key, value);
+          });
+        }
+        applySecurityHeaders(response);
+        return response;
       }
-
-      if (!response.headers.has('x-request-id')) {
-        response.headers.set('x-request-id', requestId);
-      }
-      if (handlerContext.rateLimitHeaders) {
-        Object.entries(handlerContext.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
-          response.headers.set(key, value);
-        });
-      }
-      applySecurityHeaders(response);
-      applyDefaultCacheHeaders(response, request.method, options.cacheControl);
-      return response;
-    } catch (error) {
-      const response = await createErrorResponseWithTiming(
-        error,
-        request,
-        handlerContext,
-        options
-      );
-      if (handlerContext.rateLimitHeaders) {
-        Object.entries(handlerContext.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
-          response.headers.set(key, value);
-        });
-      }
-      applySecurityHeaders(response);
-      return response;
-    }
+    });
   };
 }
 

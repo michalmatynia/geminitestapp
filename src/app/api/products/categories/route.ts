@@ -68,7 +68,7 @@ async function getHandlerInternal(req: NextRequest, _ctx: ApiHandlerContext): Pr
  * Creates a new product category.
  */
 async function postHandlerInternal(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  const data = productCategoryCreateSchema.parse(ctx.body);
+  const data = ctx.body as z.infer<typeof productCategoryCreateSchema>;
   const { name, parentId, catalogId } = data;
 
   const repository = await getCategoryRepository();

@@ -1,17 +1,17 @@
-import { Prisma } from '@prisma/client';
+import { Prisma, type ActivityLog } from '@prisma/client';
 
 import type { ActivityRepository, ActivityFilters } from '@/features/observability/types/services/activity-repository';
 import type { ActivityLogDto, CreateActivityLogDto } from '@/shared/dtos/system';
 import prisma from '@/shared/lib/db/prisma';
 
-const toActivityDto = (log: any): ActivityLogDto => ({
+const toActivityDto = (log: ActivityLog): ActivityLogDto => ({
   id: log.id,
   type: log.type,
   description: log.description,
-  userId: log.userId ?? null,
-  entityId: log.entityId ?? null,
-  entityType: log.entityType ?? null,
-  metadata: log.metadata as Record<string, unknown> | null,
+  userId: log.userId,
+  entityId: log.entityId,
+  entityType: log.entityType,
+  metadata: (log.metadata as Record<string, unknown>) || null,
   createdAt: log.createdAt.toISOString(),
 });
 
@@ -57,7 +57,7 @@ export const prismaActivityRepository: ActivityRepository = {
         userId: data.userId,
         entityId: data.entityId,
         entityType: data.entityType,
-        metadata: data.metadata as Prisma.InputJsonValue,
+        metadata: (data.metadata ?? Prisma.JsonNull) as Prisma.InputJsonValue,
       },
     });
     return toActivityDto(log);

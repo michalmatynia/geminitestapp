@@ -21,7 +21,7 @@ const productParameterUpdateSchema = z.object({
  */
 async function PUT_handler(_req: NextRequest, ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const id = params.id;
-  const data = productParameterUpdateSchema.parse(ctx.body);
+  const data = ctx.body as z.infer<typeof productParameterUpdateSchema>;
   const { name_en, catalogId } = data;
 
   const repository = await getParameterRepository();

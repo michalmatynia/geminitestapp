@@ -19,7 +19,7 @@ const productTagUpdateSchema = z.object({
  * Updates a product tag.
  */
 async function PUT_handler(_req: NextRequest, ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
-  const data = productTagUpdateSchema.parse(ctx.body);
+  const data = ctx.body as z.infer<typeof productTagUpdateSchema>;
   const { name, catalogId } = data;
 
   const repository = await getTagRepository();

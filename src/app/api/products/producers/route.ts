@@ -29,7 +29,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
  * Creates a new producer.
  */
 async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  const data = producerCreateSchema.parse(ctx.body);
+  const data = ctx.body as z.infer<typeof producerCreateSchema>;
   const { name } = data;
   const trimmedName = name.trim();
 

@@ -3,8 +3,9 @@ export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { productService } from '@/features/products/server';
 import { parseJsonBody } from '@/features/products/server';
+import { productService } from '@/features/products/services/productService'; // Direct import
+import type { ProductWithImages } from '@/features/products/types';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api';
@@ -29,7 +30,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     return parsed.response;
   }
   const sku = parsed.data.sku ?? '';
-  const product = await productService.duplicateProduct(id, sku, { userId: _ctx.userId ?? undefined });
+  const product: ProductWithImages | null = await productService.duplicateProduct(id, sku, { userId: _ctx.userId ?? undefined });
   if (!product) {
     throw notFoundError('Product not found', { productId: id });
   }

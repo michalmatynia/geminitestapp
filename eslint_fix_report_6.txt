@@ -1,0 +1,124 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/route.ts
+   70:9   warning  Unexpected console statement  no-console
+   87:7   warning  Unexpected console statement  no-console
+  201:7   warning  Unexpected console statement  no-console
+  272:9   warning  Unexpected console statement  no-console
+  393:7   warning  Unexpected console statement  no-console
+  414:7   warning  Unexpected console statement  no-console
+  458:11  warning  Unexpected console statement  no-console
+  473:11  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/sessions/[sessionId]/messages/route.ts
+  39:5  warning  Unexpected console statement  no-console
+  74:5  warning  Unexpected console statement  no-console
+  92:5  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/sessions/[sessionId]/route.ts
+  21:5  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/sessions/route.ts
+   55:5  warning  Unexpected console statement  no-console
+   66:5  warning  Unexpected console statement  no-console
+   81:5  warning  Unexpected console statement  no-console
+  102:5  warning  Unexpected console statement  no-console
+  120:5  warning  Unexpected console statement  no-console
+  141:5  warning  Unexpected console statement  no-console
+  153:5  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/client-errors/route.ts
+  22:5  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/images/sync-base/all/route.ts
+  32:9  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/imports/base/parameters/route.ts
+  342:7  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/[id]/route.ts
+  150:3  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+  154:3  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+  158:3  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+  162:3  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/ai-jobs/enqueue/route.ts
+  28:3  warning  Unexpected console statement  no-console
+  31:3  warning  Unexpected console statement  no-console
+  40:5  warning  Unexpected console statement  no-console
+  45:9  warning  Unexpected console statement  no-console
+  60:3  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/ai-jobs/route.ts
+  16:7  warning  Unexpected console statement  no-console
+  24:7  warning  Unexpected console statement  no-console
+  46:7  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/categories/route.ts
+  58:5  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/images/base64/all/route.ts
+  32:9  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/route.ts
+   82:7  warning  Unexpected console statement               no-console
+   93:7  warning  Unexpected console statement               no-console
+  153:3  error    Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/settings/database/sync/route.ts
+  67:9  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/settings/lite/route.ts
+   98:7  warning  Unexpected console statement  no-console
+  101:5  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/settings/route.ts
+   59:9  warning  Unexpected console statement  no-console
+  276:5  warning  Unexpected console statement  no-console
+  303:9  warning  Unexpected console statement  no-console
+  323:5  warning  Unexpected console statement  no-console
+  354:5  warning  Unexpected console statement  no-console
+  380:7  warning  Unexpected console statement  no-console
+  393:7  warning  Unexpected console statement  no-console
+  406:7  warning  Unexpected console statement  no-console
+  435:5  warning  Unexpected console statement  no-console
+  502:9  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/internationalization/services/currency-repository/mongo-currency-repository.ts
+  76:9   error  Unsafe argument of type `any` assigned to a parameter of type `Document[] | UpdateFilter<Document>`  @typescript-eslint/no-unsafe-argument
+  80:14  error  Unexpected any. Specify a different type                                                             @typescript-eslint/no-explicit-any
+  84:16  error  Unexpected any. Specify a different type                                                             @typescript-eslint/no-explicit-any
+  86:11  error  Unsafe member access .id on an `any` value                                                           @typescript-eslint/no-unsafe-member-access
+  87:11  error  Unsafe member access .code on an `any` value                                                         @typescript-eslint/no-unsafe-member-access
+  89:38  error  Unsafe member access .name on an `any` value                                                         @typescript-eslint/no-unsafe-member-access
+  90:40  error  Unsafe member access .symbol on an `any` value                                                       @typescript-eslint/no-unsafe-member-access
+  92:42  error  Unsafe assignment of an `any` value                                                                  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/internationalization/services/currency-repository/prisma-currency-repository.ts
+   1:10  warning  'Prisma' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   8:37  error    Unexpected any. Specify a different type                                  @typescript-eslint/no-explicit-any
+   9:3   error    Unsafe assignment of an `any` value                                       @typescript-eslint/no-unsafe-assignment
+   9:16  error    Unsafe member access .id on an `any` value                                @typescript-eslint/no-unsafe-member-access
+  10:3   error    Unsafe assignment of an `any` value                                       @typescript-eslint/no-unsafe-assignment
+  10:18  error    Unsafe member access .code on an `any` value                              @typescript-eslint/no-unsafe-member-access
+  11:3   error    Unsafe assignment of an `any` value                                       @typescript-eslint/no-unsafe-assignment
+  11:18  error    Unsafe member access .name on an `any` value                              @typescript-eslint/no-unsafe-member-access
+  12:3   error    Unsafe assignment of an `any` value                                       @typescript-eslint/no-unsafe-assignment
+  12:20  error    Unsafe member access .symbol on an `any` value                            @typescript-eslint/no-unsafe-member-access
+  13:3   error    Unsafe assignment of an `any` value                                       @typescript-eslint/no-unsafe-assignment
+  13:14  error    Unsafe call of an `any` typed value                                       @typescript-eslint/no-unsafe-call
+  13:23  error    Unsafe member access .createdAt on an `any` value                         @typescript-eslint/no-unsafe-member-access
+  14:3   error    Unsafe assignment of an `any` value                                       @typescript-eslint/no-unsafe-assignment
+  14:14  error    Unsafe call of an `any` typed value                                       @typescript-eslint/no-unsafe-call
+  14:23  error    Unsafe member access .updatedAt on an `any` value                         @typescript-eslint/no-unsafe-member-access
+  27:16  error    Unsafe assignment of an `any` value                                       @typescript-eslint/no-unsafe-assignment
+  27:30  error    Unexpected any. Specify a different type                                  @typescript-eslint/no-explicit-any
+  41:7   error    Unsafe assignment of an `any` value                                       @typescript-eslint/no-unsafe-assignment
+  41:21  error    Unexpected any. Specify a different type                                  @typescript-eslint/no-explicit-any
+  49:7   error    Unsafe assignment of an `any` value                                       @typescript-eslint/no-unsafe-assignment
+  49:21  error    Unexpected any. Specify a different type                                  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/utils/logger.ts
+  16:9  warning  'structuredData' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+✖ 83 problems (34 errors, 49 warnings)
+

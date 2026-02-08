@@ -19,7 +19,7 @@ async function PUT_handler(
   params: { id: string },
 ): Promise<Response> {
   const id = params.id;
-  const data = producerUpdateSchema.parse(ctx.body);
+  const data = ctx.body as z.infer<typeof producerUpdateSchema>;
   const name = typeof data.name === 'string' ? data.name.trim() : undefined;
 
   const repository = await getProducerRepository();

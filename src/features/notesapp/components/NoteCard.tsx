@@ -14,7 +14,7 @@ import type {
   NoteWithRelations,
 } from '@/shared/types/notes';
 import { BreadcrumbScroller, Button, CopyButton, Tag, Badge, SectionPanel } from '@/shared/ui';
-import { cn, setNoteDragData } from '@/shared/utils';
+import { cn, setNoteDragData, sanitizeHtml } from '@/shared/utils';
 
 
 
@@ -83,7 +83,7 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
       html = html.replace(/<img[^>]*>/g, '');
       // Also remove image paragraphs (markdown renders images in <p> tags)
       html = html.replace(/<p>\s*<\/p>/g, '');
-      return html;
+      return sanitizeHtml(html);
     },
     [note.content, note.editorType]
   );

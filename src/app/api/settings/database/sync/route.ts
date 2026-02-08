@@ -49,9 +49,10 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     metadata: { direction, jobId: job.id }
   }).catch(() => {});
 
+  const { env } = await import('@/shared/lib/env');
   const inlineJobs =
-    process.env['AI_JOBS_INLINE'] === 'true' ||
-    process.env['NODE_ENV'] !== 'production';
+    env.AI_JOBS_INLINE ||
+    env.NODE_ENV !== 'production';
 
   if (inlineJobs) {
     processSingleJob(job.id).catch(async (error: unknown) => {

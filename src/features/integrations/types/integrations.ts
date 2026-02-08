@@ -7,7 +7,12 @@ export type {
   CreateIntegrationDto,
   UpdateIntegrationDto,
   CreateIntegrationConnectionDto as CreateConnectionDto,
-  UpdateIntegrationConnectionDto as UpdateConnectionDto
+  UpdateIntegrationConnectionDto as UpdateConnectionDto,
+  TemplateMappingDto,
+  TemplateDto as Template,
+  BaseInventoryDto as BaseInventory,
+  BaseWarehouseDto as BaseWarehouse,
+  BaseCategoryDto as BaseCategory,
 } from '@/shared/dtos';
 
 // Legacy types for backward compatibility
@@ -119,7 +124,8 @@ export type TemplateMapping = {
   transform?: string;
 };
 
-export type Template = {
+export type ImportTemplateMapping = TemplateMapping;
+export type ImportTemplate = {
   id: string;
   name: string;
   description?: string;
@@ -130,25 +136,10 @@ export type Template = {
   updatedAt: Date;
 };
 
-export type ImportTemplateMapping = TemplateMapping;
-export type ImportTemplate = Template;
-
 export type ImportParameterCache = {
   key: string;
   value: unknown;
   expiresAt: number;
-};
-
-export type BaseInventory = {
-  inventory_id: string;
-  name: string;
-  is_default: boolean;
-};
-
-export type BaseWarehouse = {
-  warehouse_id: string;
-  name: string;
-  is_default: boolean;
 };
 
 export type BaseProductRecord = Record<string, unknown>;
@@ -158,14 +149,8 @@ export type BaseApiRawResult = {
   [key: string]: unknown;
 };
 
-export type BaseCategory = {
-  category_id: string;
-  name: string;
-  parent_id: string;
-};
-
 export type ExternalCategoryRepository = {
-  listCategories: (integrationId: string) => Promise<BaseCategory[]>;
+  listCategories: (integrationId: string) => Promise<{ category_id: string; name: string; parent_id: string }[]>;
   syncCategories: (integrationId: string) => Promise<void>;
 };
 

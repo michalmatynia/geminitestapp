@@ -30,7 +30,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     products = await productRepository.getProducts(
       productName ? { search: productName } : {}
     );
-  } catch (error) {
+  } catch (_error) {
     productRepoAvailable = false;
   }
   const filteredProducts = productId

@@ -1,0 +1,8 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts
+  1913:5  error  Promise-returning function provided to property where a void return was expected  @typescript-eslint/no-misused-promises
+  1914:5  error  Promise-returning function provided to property where a void return was expected  @typescript-eslint/no-misused-promises
+  1915:5  error  Promise-returning function provided to property where a void return was expected  @typescript-eslint/no-misused-promises
+
+✖ 3 problems (3 errors, 0 warnings)
+

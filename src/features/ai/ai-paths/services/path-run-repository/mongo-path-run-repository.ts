@@ -283,17 +283,17 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     const db = await getMongoDb();
     const now = new Date();
     const updateData = { ...data, updatedAt: now } as Record<string, unknown>;
-    if (updateData.nextRetryAt && typeof updateData.nextRetryAt === 'string') {
-      updateData.nextRetryAt = new Date(updateData.nextRetryAt);
+    if (updateData['nextRetryAt'] && typeof updateData['nextRetryAt'] === 'string') {
+      updateData['nextRetryAt'] = new Date(updateData['nextRetryAt']);
     }
-    if (updateData.deadLetteredAt && typeof updateData.deadLetteredAt === 'string') {
-      updateData.deadLetteredAt = new Date(updateData.deadLetteredAt);
+    if (updateData['deadLetteredAt'] && typeof updateData['deadLetteredAt'] === 'string') {
+      updateData['deadLetteredAt'] = new Date(updateData['deadLetteredAt']);
     }
-    if (updateData.startedAt && typeof updateData.startedAt === 'string') {
-      updateData.startedAt = new Date(updateData.startedAt);
+    if (updateData['startedAt'] && typeof updateData['startedAt'] === 'string') {
+      updateData['startedAt'] = new Date(updateData['startedAt']);
     }
-    if (updateData.finishedAt && typeof updateData.finishedAt === 'string') {
-      updateData.finishedAt = new Date(updateData.finishedAt);
+    if (updateData['finishedAt'] && typeof updateData['finishedAt'] === 'string') {
+      updateData['finishedAt'] = new Date(updateData['finishedAt']);
     }
     const result = await db
       .collection<RunDocument>(RUNS_COLLECTION)
@@ -504,7 +504,7 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     const since =
       sinceValue && !Number.isNaN(sinceValue.getTime()) ? sinceValue : null;
     if (since) {
-      filter.createdAt = { $gt: since };
+      filter['createdAt'] = { $gt: since };
     }
     const cursor = db
       .collection<EventDocument>(EVENTS_COLLECTION)

@@ -1,6 +1,6 @@
 import { getProductRepository } from '@/features/products/services/product-repository';
 import type { ProductRecord } from '@/features/products/types';
-import { validateProductCreate, type ProductCreateInput } from '@/features/products/validations';
+import { validateProductCreate } from '@/features/products/validations';
 
 
 export async function createMockProduct(productData: {
@@ -44,6 +44,6 @@ export async function createMockProduct(productData: {
     throw new Error(`Mock product validation failed: ${JSON.stringify(validationResult.errors)}`);
   }
   
-  const product = await productRepository.createProduct(validationResult.data as ProductCreateInput);
+  const product = await productRepository.createProduct(validationResult.data);
   return product;
 }

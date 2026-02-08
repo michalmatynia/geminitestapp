@@ -25,8 +25,6 @@ import type {
 import {
   validateProductCreate,
   validateProductUpdate,
-  type ProductCreateInput,
-  type ProductUpdateInput,
 } from '@/features/products/validations';
 import { badRequestError } from '@/shared/errors/app-error';
 
@@ -178,7 +176,7 @@ async function createProduct(
       });
     }
     
-    const validatedData = validationResult.data as ProductCreateInput;
+    const validatedData = validationResult.data;
     await ErrorSystem.logInfo('Validated data', { validatedData });
     const productRepository = await resolveProductRepository();
     const product = await productRepository.createProduct(validatedData);
@@ -234,7 +232,7 @@ async function updateProduct(
       });
     }
 
-    const validatedData = validationResult.data as ProductUpdateInput;
+    const validatedData = validationResult.data;
     await ErrorSystem.logInfo('Validated data', { validatedData });
     const productRepository = await resolveProductRepository();
     const updatedProduct = await productRepository.updateProduct(

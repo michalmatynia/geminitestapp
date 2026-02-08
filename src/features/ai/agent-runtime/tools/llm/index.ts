@@ -533,7 +533,7 @@ export const buildSearchQueryWithLLM = async (
     const content = extractMessageContent(payload);
     const parsed = parseJsonObject(content) as Record<string, unknown> | null;
     const query =
-      typeof parsed?.['query'] === 'string' ? (parsed?.['query']).trim() : '';
+      typeof parsed?.['query'] === 'string' ? parsed['query'].trim() : '';
     return query || null;
   } catch (error) {
     if (log) {
@@ -580,7 +580,7 @@ export const pickSearchResultWithLLM = async (
     const payload = (await response.json()) as unknown;
     const content = extractMessageContent(payload);
     const parsed = parseJsonObject(content) as Record<string, unknown> | null;
-    const url = typeof parsed?.['url'] === 'string' ? (parsed?.['url']).trim() : '';
+    const url = typeof parsed?.['url'] === 'string' ? parsed['url'].trim() : '';
     return url || null;
   } catch (error) {
     if (log) {
@@ -636,7 +636,7 @@ export const decideSearchFirstWithLLM = async (
     const content = extractMessageContent(payload);
     const parsed = parseJsonObject(content) as Record<string, unknown> | null;
     const useSearchFirst = Boolean(parsed?.['useSearchFirst']);
-    const query = typeof parsed?.['query'] === 'string' ? (parsed?.['query']).trim() : '';
+    const query = typeof parsed?.['query'] === 'string' ? parsed['query'].trim() : '';
     if (log) {
       await log('info', 'Tool selection decision.', {
         stepId: activeStepId ?? null,

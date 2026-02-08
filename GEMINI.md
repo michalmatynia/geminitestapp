@@ -1,9 +1,5 @@
 # GEMINI.md - Project Reference (Authoritative)
 
-## IMPORTANT: Read-Only Unless Asked
-
-Do not modify `GEMINI.md` unless a user explicitly requests it. When asked, keep edits minimal and scoped to the request. (Gemini CLI has been reverting changes.)
-
 ## Project Snapshot (Verified)
 
 This repo is an **AI-forward, multi-app platform** built on Next.js (App Router) with a

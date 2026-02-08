@@ -12,6 +12,7 @@ import {
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/types/api';
+import { logger } from '@/shared/utils/logger';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
@@ -61,7 +62,7 @@ async function POST_handler(
     finishedAt: new Date(),
   });
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][jobs][POST] Canceled', { 
+    logger.info('[chatbot][jobs][POST] Canceled', { 
       jobId,
       requestId: ctx.requestId 
     });
@@ -91,7 +92,7 @@ async function DELETE_handler(
   }
   await chatbotJobRepository.delete(jobId);
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][jobs][DELETE] Deleted', { 
+    logger.info('[chatbot][jobs][DELETE] Deleted', { 
       jobId,
       requestId: ctx.requestId 
     });

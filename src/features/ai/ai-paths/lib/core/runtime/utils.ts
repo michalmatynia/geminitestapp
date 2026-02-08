@@ -597,7 +597,7 @@ export const resolveContextPayload = async (
     : null;
   // Only extract images from entity when base images aren't already provided
   const resolvedImages =
-    baseImages && baseImages.length ? baseImages : extractImageUrls(entityForContext ?? rawEntity);
+    baseImages?.length ? baseImages : extractImageUrls(entityForContext ?? rawEntity);
   const baseContextRest = baseContext ? { ...baseContext } : {};
   delete (baseContextRest as Record<string, unknown>)['entity'];
   delete (baseContextRest as Record<string, unknown>)['entityJson'];

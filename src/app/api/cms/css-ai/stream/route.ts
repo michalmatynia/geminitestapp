@@ -28,7 +28,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   }
 
   const provider = body.provider ?? 'model';
-  const messages = Array.isArray(body.messages) ? body.messages : [];
+  const messages = (Array.isArray(body.messages) ? body.messages : []) as ChatMessage[];
   if (!isValidMessages(messages)) {
     throw badRequestError('Invalid messages payload.');
   }

@@ -250,14 +250,14 @@ function DatabasesContent(): React.JSX.Element {
             setIsRestoreModalOpen(false);
             setSelectedBackupForRestore(null);
           }}
-          onConfirm={(t: boolean): void => { void handleRestoreConfirm(t); }}
+          onConfirm={(t: boolean): void => { handleRestoreConfirm(t).catch(() => {}); }}
         />
       )}
 
       <ConfirmDialog
         open={!!backupToDelete}
         onOpenChange={(open: boolean) => !open && setBackupToDelete(null)}
-        onConfirm={(): void => { void handleConfirmDelete(); }}
+        onConfirm={(): void => { handleConfirmDelete().catch(() => {}); }}
         title='Delete Backup'
         description={`Are you sure you want to delete backup "${backupToDelete}"? This cannot be undone.`}
         confirmText='Delete'
@@ -274,7 +274,7 @@ function DatabasesContent(): React.JSX.Element {
           columns={getDatabaseColumns({
             onPreview: handlePreview,
             onRestoreRequest: handleRestoreRequest,
-            onDeleteRequest: (name: string): void => { void handleDeleteRequest(name); },
+            onDeleteRequest: (name: string): void => { handleDeleteRequest(name); },
           })}
           data={data}
           initialSorting={[{ id: 'lastModifiedAt', desc: true }]}

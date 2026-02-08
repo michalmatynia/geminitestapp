@@ -48,10 +48,10 @@ const optionalNonNegativeInt = z.preprocess((value: unknown) => {
 // Array validation helpers
 const stringArray = z.preprocess(jsonToValue, z.array(z.string()).default([]));
 const imageUrlArray = stringArray.transform((urls: string[]) => 
-  urls.filter((url: string) => url && !url.startsWith('data:'))
+  urls.filter(Boolean).filter((url: string) => url?.startsWith('data:') === false)
 );
 const base64Array = stringArray.transform((urls: string[]) => 
-  urls.filter((url: string) => url && url.startsWith('data:'))
+  urls.filter((url: string) => url?.startsWith('data:'))
 );
 
 // Parameter validation

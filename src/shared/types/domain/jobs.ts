@@ -1,4 +1,5 @@
 import type { Entity, Status } from '../core/base-types';
+import type { ProductAiJobDto } from '../../dtos/jobs';
 
 export type ProductAiJobType =
   | 'description_generation'
@@ -26,16 +27,15 @@ export type ProductAiJobResult = {
   [key: string]: unknown;
 };
 
-// Updated to use consolidated Status type
-export interface ProductAiJob extends Entity {
-  productId: string;
-  status: Status;
-  type: string;
-  payload: unknown;
+/**
+ * AI job record for a product.
+ * Inherits standard fields from ProductAiJobDto.
+ */
+export interface ProductAiJob extends Omit<ProductAiJobDto, 'createdAt' | 'updatedAt' | 'result'> {
+  id: string;
+  createdAt: Date | string;
+  updatedAt?: Date | string | null;
   result: ProductAiJobResult | null;
-  errorMessage: string | null;
-  startedAt: string | null;
-  finishedAt: string | null;
   product?: {
     name_en: string | null;
     sku: string | null;

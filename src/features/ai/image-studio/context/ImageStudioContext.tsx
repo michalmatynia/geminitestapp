@@ -414,10 +414,10 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
     setStudioSettings(defaultImageStudioSettings);
   }, []);
 
-  const handleRefreshSettings = useCallback(() => {
+  const handleRefreshSettings = useCallback((): void => {
     setSettingsLoaded(false);
-    void settingsStore.refetch();
-    void heavySettings.refetch();
+    settingsStore.refetch();
+    void heavySettings.refetch().catch(() => {});
   }, [settingsStore, heavySettings]);
 
   const compositeAssetOptions = useMemo(() => {
@@ -447,7 +447,8 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
     onParamChange: handleParamChange, onParamFlip: handleParamFlip, onParamUiControlChange: handleParamUiControlChange,
     extractReviewOpen, setExtractReviewOpen, extractDraftPrompt, setExtractDraftPrompt, extractPreviewUiOverrides, setExtractPreviewUiOverrides,
     extractResult, applyProgrammaticExtraction,
-    studioSettings, setStudioSettings, saveStudioSettings, resetStudioSettings, handleRefreshSettings, settingsLoaded
+    studioSettings, setStudioSettings, saveStudioSettings, resetStudioSettings, handleRefreshSettings,
+    settingsLoaded
   };
 
   return <ImageStudioContext.Provider value={value}>{children}</ImageStudioContext.Provider>;

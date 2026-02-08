@@ -6,6 +6,7 @@ import { internalError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import prisma from '@/shared/lib/db/prisma';
 import type { ApiHandlerContext } from '@/shared/types/api';
+import { logger } from '@/shared/utils/logger';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
@@ -45,7 +46,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
   });
 
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][memory][GET] Loaded', {
+    logger.info('[chatbot][memory][GET] Loaded', {
       count: items.length,
       durationMs: Date.now() - requestStart,
     });

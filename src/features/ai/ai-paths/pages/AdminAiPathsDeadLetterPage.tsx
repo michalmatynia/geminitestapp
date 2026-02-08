@@ -402,7 +402,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
       counts[node.status] = (counts[node.status] ?? 0) + 1;
     });
     const totalNodes = detail.nodes.length;
-    const completed = counts.completed ?? 0;
+    const completed = counts['completed'] ?? 0;
     const progress = totalNodes > 0 ? Math.round((completed / totalNodes) * 100) : 0;
     return { counts, totalNodes, completed, progress };
   }, [detail]);

@@ -167,7 +167,7 @@ export function MarkdownEditor({
                         copyButton.textContent = originalLabel ?? 'Copy';
                       }, 1500);
                     })
-                    .catch((): void => { void toast('Failed to copy code'); });
+                    .catch((): void => { toast('Failed to copy code'); });
                   return;
                 }
                 if (target instanceof HTMLImageElement && target.tagName === 'IMG') {

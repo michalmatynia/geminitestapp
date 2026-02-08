@@ -1,0 +1,47 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx
+  827:18  error  Placing a void expression inside another expression is forbidden. Move it to its own statement instead  @typescript-eslint/no-confusing-void-expression
+  881:54  error  Unsafe call of an `any` typed value                                                                     @typescript-eslint/no-unsafe-call
+  881:55  error  Unsafe call of an `any` typed value                                                                     @typescript-eslint/no-unsafe-call
+  881:78  error  Unexpected any. Specify a different type                                                                @typescript-eslint/no-explicit-any
+  881:89  error  Unsafe member access .catch on an `any` value                                                           @typescript-eslint/no-unsafe-member-access
+  882:51  error  Unsafe call of an `any` typed value                                                                     @typescript-eslint/no-unsafe-call
+  882:52  error  Unsafe call of an `any` typed value                                                                     @typescript-eslint/no-unsafe-call
+  882:70  error  Unexpected any. Specify a different type                                                                @typescript-eslint/no-explicit-any
+  882:87  error  Unsafe member access .catch on an `any` value                                                           @typescript-eslint/no-unsafe-member-access
+  891:25  error  Promise-returning function provided to attribute where a void return was expected                       @typescript-eslint/no-misused-promises
+  891:46  error  Unsafe call of an `any` typed value                                                                     @typescript-eslint/no-unsafe-call
+  891:47  error  Unsafe call of an `any` typed value                                                                     @typescript-eslint/no-unsafe-call
+  891:70  error  Unexpected any. Specify a different type                                                                @typescript-eslint/no-explicit-any
+  891:84  error  Unsafe member access .catch on an `any` value                                                           @typescript-eslint/no-unsafe-member-access
+  898:50  error  Unsafe call of an `any` typed value                                                                     @typescript-eslint/no-unsafe-call
+  898:51  error  Unsafe call of an `any` typed value                                                                     @typescript-eslint/no-unsafe-call
+  898:74  error  Unexpected any. Specify a different type                                                                @typescript-eslint/no-explicit-any
+  898:85  error  Unsafe member access .catch on an `any` value                                                           @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/context/ImageStudioContext.tsx
+  419:11  error  Unsafe call of an `any` typed value              @typescript-eslint/no-unsafe-call
+  419:11  error  Unsafe call of an `any` typed value              @typescript-eslint/no-unsafe-call
+  419:29  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  419:34  error  Unsafe member access .refetch on an `any` value  @typescript-eslint/no-unsafe-member-access
+  419:44  error  Unsafe member access .catch on an `any` value    @typescript-eslint/no-unsafe-member-access
+  420:11  error  Unsafe call of an `any` typed value              @typescript-eslint/no-unsafe-call
+  420:11  error  Unsafe call of an `any` typed value              @typescript-eslint/no-unsafe-call
+  420:29  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  420:34  error  Unsafe member access .refetch on an `any` value  @typescript-eslint/no-unsafe-member-access
+  420:44  error  Unsafe member access .catch on an `any` value    @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/pages/AdminImageStudioSettingsPage.tsx
+  104:11  error  Unsafe call of an `any` typed value              @typescript-eslint/no-unsafe-call
+  104:11  error  Unsafe call of an `any` typed value              @typescript-eslint/no-unsafe-call
+  104:29  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  104:34  error  Unsafe member access .refetch on an `any` value  @typescript-eslint/no-unsafe-member-access
+  104:44  error  Unsafe member access .catch on an `any` value    @typescript-eslint/no-unsafe-member-access
+  105:11  error  Unsafe call of an `any` typed value              @typescript-eslint/no-unsafe-call
+  105:11  error  Unsafe call of an `any` typed value              @typescript-eslint/no-unsafe-call
+  105:29  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  105:34  error  Unsafe member access .refetch on an `any` value  @typescript-eslint/no-unsafe-member-access
+  105:44  error  Unsafe member access .catch on an `any` value    @typescript-eslint/no-unsafe-member-access
+
+✖ 38 problems (38 errors, 0 warnings)
+

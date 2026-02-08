@@ -236,25 +236,28 @@ export function ImportTab(): React.JSX.Element {
           <div className='flex flex-wrap items-center gap-2'>
             <Input
               value={importNameSearch}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                (setImportNameSearch(event.target.value), setImportListPage(1))
-              }
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                setImportNameSearch(event.target.value);
+                setImportListPage(1);
+              }}
               placeholder='Search name...'
               className='h-8 w-48 border-border bg-gray-900 text-xs text-white placeholder:text-gray-500'
             />
             <Input
               value={importSkuSearch}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                (setImportSkuSearch(event.target.value), setImportListPage(1))
-              }
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                setImportSkuSearch(event.target.value);
+                setImportListPage(1);
+              }}
               placeholder='Search SKU...'
               className='h-8 w-40 border-border bg-gray-900 text-xs text-white placeholder:text-gray-500'
             />
             <UnifiedSelect
               value={uniqueOnly ? 'unique' : 'all'}
-              onValueChange={(v: string): void =>
-                (setUniqueOnly(v === 'unique'), setImportListPage(1))
-              }
+              onValueChange={(v: string): void => {
+                setUniqueOnly(v === 'unique');
+                setImportListPage(1);
+              }}
               options={[
                 { value: 'unique', label: 'Unique only' },
                 { value: 'all', label: 'All products' }

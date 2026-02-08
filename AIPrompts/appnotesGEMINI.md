@@ -38,9 +38,9 @@ npx prisma db push
 ---
 
  Scan the ****** feature and build logical try and Catch Blocks with error
-   explanantion around potential areas of failur
+   explanantion around potential areas of failure
 
-   consolodate UI search for similar components with a potential to apply a unifying pattern and UI cosolidation
+   consolodate UI and search for similar components with a potential to apply a unifying pattern and UI cosolidation
 
 scan the application for potential areas of props-drilling and apply useContext as a refactor
 

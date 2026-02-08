@@ -1,5 +1,12 @@
-Centralize Form validation
+Centralize Form validation (I also need info if I'm trying to create with duplicate SKU notification)
 
+Increment SKU Atomatically
+
+Database Query Node Reply can go inot Logical Condition node
+
+Fetch COllection names automatically
+
+Placeholder inference matrix
 
 W drafterze potrzebuje producenta, ikonek wiecej, modal as wide as other Product crete modals, Icon Matrix so that Icons are not spread everywhere, Check If I can Export Product with Producer, when the description is present a little text icon
 

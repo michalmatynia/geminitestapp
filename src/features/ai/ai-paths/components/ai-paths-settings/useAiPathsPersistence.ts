@@ -351,8 +351,8 @@ export function useAiPathsPersistence({
           typeof uiState?.['activePathId'] === 'string' ? uiState?.['activePathId'] : null;
         const preferredPathIdFromUser =
           typeof userPreferences?.['aiPathsActivePathId'] === 'string' &&
-          (userPreferences?.['aiPathsActivePathId']).trim().length > 0
-            ? (userPreferences?.['aiPathsActivePathId']).trim()
+          userPreferences['aiPathsActivePathId'].trim().length > 0
+            ? userPreferences['aiPathsActivePathId'].trim()
             : null;
         const preferredGroups = Array.isArray(uiState?.['expandedGroups'])
           ? (uiState?.['expandedGroups'] as unknown[]).filter(

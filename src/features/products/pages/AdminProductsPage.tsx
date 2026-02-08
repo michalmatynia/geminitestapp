@@ -497,7 +497,7 @@ export function AdminProductsPage(): React.JSX.Element {
             await handleSelectAllGlobal();
           },
           loadingGlobal: loadingGlobalSelection,
-          onDeleteSelected: async (): Promise<void> => { await Promise.resolve(setIsMassDeleteConfirmOpen(true)); },
+          onDeleteSelected: (): void => { setIsMassDeleteConfirmOpen(true); },
           onAddToMarketplace: handleAddToMarketplace,
           handleProductsTableRender,
           tableColumns: columns,

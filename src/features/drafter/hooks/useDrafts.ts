@@ -54,7 +54,7 @@ export function useDeleteDraft(): UseMutationResult<string, Error, string> {
     },
     onSuccess: (deletedId: string): void => {
       void queryClient.invalidateQueries({ queryKey: draftKeys.all });
-      void queryClient.removeQueries({ queryKey: draftKeys.detail(deletedId) });
+      queryClient.removeQueries({ queryKey: draftKeys.detail(deletedId) });
     },
   });
 }

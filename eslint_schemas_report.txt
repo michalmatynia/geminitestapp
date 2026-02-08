@@ -1,0 +1,6 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/validations/schemas.ts
+  54:32  error  Prefer using an optional chain expression instead, as it's more concise and easier to read  @typescript-eslint/prefer-optional-chain
+
+✖ 1 problem (1 error, 0 warnings)
+

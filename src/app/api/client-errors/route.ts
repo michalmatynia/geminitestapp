@@ -7,7 +7,8 @@ export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
-    const { error, context }: { error: unknown; context: ErrorContext } = await req.json();
+    const body = (await req.json()) as { error: unknown; context: ErrorContext };
+    const { error, context } = body;
 
     // Log the error using the server-only ErrorSystem
     await ErrorSystem.captureException(error, {

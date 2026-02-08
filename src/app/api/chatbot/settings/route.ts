@@ -10,6 +10,7 @@ import { apiHandler } from '@/shared/lib/api/api-handler';
 import prisma from '@/shared/lib/db/prisma';
 import type { ApiHandlerContext } from '@/shared/types/api';
 import type { ChatbotSettingsRecord } from '@/shared/types/settings';
+import { logger } from '@/shared/utils/logger';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 const DEFAULT_SETTINGS_KEY = 'default';
@@ -32,7 +33,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     where: { key },
   });
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][settings][GET] Loaded', {
+    logger.info('[chatbot][settings][GET] Loaded', {
       key,
       found: Boolean(settings),
       durationMs: Date.now() - requestStart,
@@ -64,7 +65,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     create: { key, settings: parsed.data.settings as Prisma.InputJsonValue },
   });
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][settings][POST] Saved', {
+    logger.info('[chatbot][settings][POST] Saved', {
       key,
       durationMs: Date.now() - requestStart,
     });

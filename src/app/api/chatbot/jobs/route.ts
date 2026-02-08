@@ -13,6 +13,7 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/types/api';
 import type { JsonParseResult } from '@/shared/types/api';
 import type { ChatbotJobStatus, ChatbotJob } from '@/shared/types/chatbot';
+import { logger } from '@/shared/utils/logger';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
@@ -32,7 +33,7 @@ async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<R
   const jobs: ChatbotJob[] = await chatbotJobRepository.findAll(50);
 
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][jobs][GET] Listed', { 
+    logger.info('[chatbot][jobs][GET] Listed', { 
       count: jobs.length,
       requestId: ctx.requestId 
     });
@@ -85,7 +86,7 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
   startChatbotJobQueue();
 
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][jobs][POST] Queued', {
+    logger.info('[chatbot][jobs][POST] Queued', {
       jobId: job.id,
       sessionId: job.sessionId,
       requestId: ctx.requestId,
@@ -108,7 +109,7 @@ async function DELETE_handler(req: NextRequest, ctx: ApiHandlerContext): Promise
   const deletedCount: number = await chatbotJobRepository.deleteMany(terminalStatuses);
 
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][jobs][DELETE] Deleted', { 
+    logger.info('[chatbot][jobs][DELETE] Deleted', { 
       count: deletedCount,
       requestId: ctx.requestId 
     });

@@ -206,7 +206,7 @@ export function ParametersSettings({
                       </Button>
                       <Button
                         type='button'
-                        onClick={(): void => { void handleDelete(parameter); }}
+                        onClick={(): void => { handleDelete(parameter); }}
                         className='rounded bg-red-600/80 px-2 py-1 text-xs text-white hover:bg-red-600'
                         title='Delete parameter'
                       >
@@ -231,7 +231,7 @@ export function ParametersSettings({
       <ConfirmDialog
         open={!!parameterToDelete}
         onOpenChange={(open: boolean) => !open && setParameterToDelete(null)}
-        onConfirm={(): void => { void handleConfirmDelete(); }}
+        onConfirm={(): void => { handleConfirmDelete().catch(() => {}); }}
         title='Delete Parameter'
         description={`Are you sure you want to delete parameter "${parameterToDelete?.name_en}"? This action cannot be undone.`}
         confirmText='Delete'

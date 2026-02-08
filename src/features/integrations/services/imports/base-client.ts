@@ -648,7 +648,7 @@ export async function fetchBaseCategories(
     const inventories = await fetchBaseInventories(token);
     inventoryIds = inventories
       .map((inventory: BaseInventory): string => inventory.id)
-      .filter((id: string): boolean => Boolean(id && id.trim()));
+      .filter((id: string): boolean => Boolean(id?.trim()));
   } catch (error: unknown) {
     lastError = error instanceof Error ? error : new Error('Base API error.');
   }

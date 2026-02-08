@@ -1,0 +1,178 @@
+
+> libapp2@0.1.0 lint
+> eslint src __tests__
+
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/assets3d/categories/route.ts
+  20:7  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/assets3d/route.ts
+  37:7  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/assets3d/tags/route.ts
+  20:7  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/jobs/[jobId]/route.ts
+  64:5  warning  Unexpected console statement  no-console
+  94:5  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/jobs/route.ts
+   35:5  warning  Unexpected console statement  no-console
+   88:5  warning  Unexpected console statement  no-console
+  111:5  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/memory/route.ts
+  48:5  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/route.ts
+   70:9   warning  Unexpected console statement  no-console
+   87:7   warning  Unexpected console statement  no-console
+  201:7   warning  Unexpected console statement  no-console
+  272:9   warning  Unexpected console statement  no-console
+  393:7   warning  Unexpected console statement  no-console
+  414:7   warning  Unexpected console statement  no-console
+  458:11  warning  Unexpected console statement  no-console
+  473:11  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/sessions/[sessionId]/messages/route.ts
+  39:5  warning  Unexpected console statement  no-console
+  74:5  warning  Unexpected console statement  no-console
+  92:5  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/sessions/[sessionId]/route.ts
+  21:5  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/sessions/route.ts
+   55:5  warning  Unexpected console statement  no-console
+   66:5  warning  Unexpected console statement  no-console
+   81:5  warning  Unexpected console statement  no-console
+  102:5  warning  Unexpected console statement  no-console
+  120:5  warning  Unexpected console statement  no-console
+  141:5  warning  Unexpected console statement  no-console
+  153:5  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/settings/route.ts
+  35:5  warning  Unexpected console statement  no-console
+  67:5  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/client-errors/route.ts
+  22:5  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/files/route.ts
+  33:12  warning  'error' is defined but never used. Allowed unused caught errors must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/images/sync-base/all/route.ts
+  32:9  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/imports/base/parameters/route.ts
+  342:7  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/ai-jobs/enqueue/route.ts
+  28:3  warning  Unexpected console statement  no-console
+  31:3  warning  Unexpected console statement  no-console
+  40:5  warning  Unexpected console statement  no-console
+  45:9  warning  Unexpected console statement  no-console
+  60:3  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/ai-jobs/route.ts
+  16:7  warning  Unexpected console statement  no-console
+  24:7  warning  Unexpected console statement  no-console
+  46:7  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/categories/route.ts
+   84:7  warning  Unexpected console statement  no-console
+  103:5  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/images/base64/all/route.ts
+  32:9  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/route.ts
+  61:7  warning  Unexpected console statement  no-console
+  72:7  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/settings/database/sync/route.ts
+  57:9  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/settings/lite/route.ts
+   98:7  warning  Unexpected console statement  no-console
+  101:5  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/settings/route.ts
+   59:9  warning  Unexpected console statement  no-console
+  276:5  warning  Unexpected console statement  no-console
+  303:9  warning  Unexpected console statement  no-console
+  323:5  warning  Unexpected console statement  no-console
+  354:5  warning  Unexpected console statement  no-console
+  380:7  warning  Unexpected console statement  no-console
+  393:7  warning  Unexpected console statement  no-console
+  406:7  warning  Unexpected console statement  no-console
+  435:5  warning  Unexpected console statement  no-console
+  502:9  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx
+  827:18  error  Placing a void expression inside another expression is forbidden. Move it to its own statement instead  @typescript-eslint/no-confusing-void-expression
+  881:54  error  Unsafe call of an `any` typed value                                                                     @typescript-eslint/no-unsafe-call
+  881:55  error  Unsafe call of an `any` typed value                                                                     @typescript-eslint/no-unsafe-call
+  881:78  error  Unexpected any. Specify a different type                                                                @typescript-eslint/no-explicit-any
+  881:89  error  Unsafe member access .catch on an `any` value                                                           @typescript-eslint/no-unsafe-member-access
+  882:51  error  Unsafe call of an `any` typed value                                                                     @typescript-eslint/no-unsafe-call
+  882:52  error  Unsafe call of an `any` typed value                                                                     @typescript-eslint/no-unsafe-call
+  882:70  error  Unexpected any. Specify a different type                                                                @typescript-eslint/no-explicit-any
+  882:87  error  Unsafe member access .catch on an `any` value                                                           @typescript-eslint/no-unsafe-member-access
+  891:25  error  Promise-returning function provided to attribute where a void return was expected                       @typescript-eslint/no-misused-promises
+  891:46  error  Unsafe call of an `any` typed value                                                                     @typescript-eslint/no-unsafe-call
+  891:47  error  Unsafe call of an `any` typed value                                                                     @typescript-eslint/no-unsafe-call
+  891:70  error  Unexpected any. Specify a different type                                                                @typescript-eslint/no-explicit-any
+  891:84  error  Unsafe member access .catch on an `any` value                                                           @typescript-eslint/no-unsafe-member-access
+  898:50  error  Unsafe call of an `any` typed value                                                                     @typescript-eslint/no-unsafe-call
+  898:51  error  Unsafe call of an `any` typed value                                                                     @typescript-eslint/no-unsafe-call
+  898:74  error  Unexpected any. Specify a different type                                                                @typescript-eslint/no-explicit-any
+  898:85  error  Unsafe member access .catch on an `any` value                                                           @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/context/ImageStudioContext.tsx
+  419:11  error  Unsafe call of an `any` typed value              @typescript-eslint/no-unsafe-call
+  419:11  error  Unsafe call of an `any` typed value              @typescript-eslint/no-unsafe-call
+  419:29  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  419:34  error  Unsafe member access .await h on an `any` value  @typescript-eslint/no-unsafe-member-access
+  419:44  error  Unsafe member access .ySett on an `any` value    @typescript-eslint/no-unsafe-member-access
+  420:1   error  Expected indentation of 4 spaces but found 0     indent
+  420:11  error  Unsafe call of an `any` typed value              @typescript-eslint/no-unsafe-call
+  420:11  error  Unsafe call of an `any` typed value              @typescript-eslint/no-unsafe-call
+  420:29  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  420:34  error  Unsafe member access .sStore, on an `any` value  @typescript-eslint/no-unsafe-member-access
+  420:44  error  Unsafe member access .avySe on an `any` value    @typescript-eslint/no-unsafe-member-access
+  421:1   error  Expected indentation of 2 spaces but found 1     indent
+  423:1   error  Expected indentation of 2 spaces but found 0     indent
+  424:1   error  Expected indentation of 4 spaces but found 0     indent
+  425:1   error  Expected indentation of 4 spaces but found 0     indent
+  426:1   error  Expected indentation of 6 spaces but found 2     indent
+  427:1   error  Expected indentation of 6 spaces but found 0     indent
+  428:1   error  Expected indentation of 2 spaces but found 0     indent
+  430:1   error  Expected indentation of 2 spaces but found 1     indent
+  431:1   error  Expected indentation of 4 spaces but found 0     indent
+  432:1   error  Expected indentation of 2 spaces but found 0     indent
+  434:1   error  Expected indentation of 2 spaces but found 0     indent
+  435:1   error  Expected indentation of 4 spaces but found 0     indent
+  436:1   error  Expected indentation of 4 spaces but found 1     indent
+  437:1   error  Expected indentation of 4 spaces but found 0     indent
+  438:1   error  Expected indentation of 4 spaces but found 0     indent
+  439:1   error  Expected indentation of 4 spaces but found 1     indent
+  440:1   error  Expected indentation of 4 spaces but found 0     indent
+  441:1   error  Expected indentation of 4 spaces but found 0     indent
+  442:1   error  Expected indentation of 4 spaces but found 0     indent
+  443:1   error  Expected indentation of 4 spaces but found 0     indent
+  444:1   error  Expected indentation of 4 spaces but found 0     indent
+  445:1   error  Expected indentation of 4 spaces but found 0     indent
+  446:1   error  Expected indentation of 4 spaces but found 1     indent
+  447:1   error  Expected indentation of 4 spaces but found 0     indent
+  448:1   error  Expected indentation of 4 spaces but found 0     indent
+  449:1   error  Expected indentation of 4 spaces but found 0     indent
+  450:1   error  Expected indentation of 4 spaces but found 0     indent
+  451:1   error  Expected indentation of 4 spaces but found 0     indent
+  452:1   error  Expected indentation of 4 spaces but found 0     indent
+  453:1   error  Expected indentation of 2 spaces but found 0     indent
+  455:1   error  Expected indentation of 2 spaces but found 0     indent
+
+✖ 120 problems (60 errors, 60 warnings)
+  32 errors and 0 warnings potentially fixable with the `--fix` option.
+

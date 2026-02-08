@@ -8,7 +8,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ADMIN_MENU_COLOR_MAP,
   ADMIN_MENU_COLORS,
-  AdminMenuCustomNode,
   AdminNavLeaf,
   buildAdminMenuFromCustomNav,
   buildAdminNav,
@@ -17,6 +16,7 @@ import {
   getAdminMenuSections,
   normalizeAdminMenuCustomNav,
   type NavItem,
+  type AdminMenuCustomNode,
 } from '@/features/admin/components/Menu';
 import {
   ADMIN_MENU_CUSTOM_ENABLED_KEY,

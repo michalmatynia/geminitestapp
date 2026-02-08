@@ -54,7 +54,7 @@ export function StudioModals(): React.JSX.Element {
         <FileManager
           mode='select'
           selectionMode='multiple'
-          onSelectFile={handleDriveSelection}
+          onSelectFile={(files) => { handleDriveSelection(files).catch(() => {}); }}
         />
       </SharedModal>
 
@@ -66,7 +66,7 @@ export function StudioModals(): React.JSX.Element {
       >
         <div className='space-y-4 text-sm text-gray-200'>
           <div className='grid gap-2'>
-            <Button variant='outline' onClick={handleCreateEmptySlot} disabled={!projectId}>
+            <Button variant='outline' onClick={() => { handleCreateEmptySlot().catch(() => {}); }} disabled={!projectId}>
               Create empty slot
             </Button>
           </div>

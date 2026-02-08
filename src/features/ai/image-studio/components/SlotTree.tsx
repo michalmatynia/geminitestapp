@@ -181,7 +181,7 @@ export function SlotTree(): React.JSX.Element {
                   setDragOverPath(null);
                   if (slotId) {
                     const slot = slots.find((item: ImageStudioSlotRecord) => item.id === slotId);
-                    if (slot) void onMoveSlot(slot, node.path);
+                    if (slot) { onMoveSlot(slot, node.path); }
                     return;
                   }
                   if (folderPath) {
@@ -283,7 +283,7 @@ export function SlotTree(): React.JSX.Element {
         setDragOverPath(null);
         if (slotId) {
           const slot = slots.find((item: ImageStudioSlotRecord) => item.id === slotId);
-          if (slot) void onMoveSlot(slot, '');
+          if (slot) { onMoveSlot(slot, ''); }
           return;
         }
         if (folderPath) {

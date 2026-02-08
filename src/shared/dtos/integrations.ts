@@ -129,3 +129,49 @@ export interface UpdateIntegrationConnectionDto extends Partial<CreateIntegratio
   baseApiToken?: string | null;
   baseLastInventoryId?: string | null;
 }
+
+/**
+ * Field mapping for a data template.
+ */
+export interface TemplateMappingDto {
+  sourceField: string;
+  targetField: string;
+  transform?: string;
+}
+
+/**
+ * Template for data import/export between system and external providers.
+ */
+export interface TemplateDto extends NamedDto {
+  description?: string;
+  provider: string;
+  mapping: TemplateMappingDto[];
+  config: Record<string, unknown>;
+}
+
+/**
+ * Base.com Inventory metadata.
+ */
+export interface BaseInventoryDto {
+  inventory_id: string;
+  name: string;
+  is_default: boolean;
+}
+
+/**
+ * Base.com Warehouse metadata.
+ */
+export interface BaseWarehouseDto {
+  warehouse_id: string;
+  name: string;
+  is_default: boolean;
+}
+
+/**
+ * Base.com Category metadata.
+ */
+export interface BaseCategoryDto {
+  category_id: string;
+  name: string;
+  parent_id: string;
+}

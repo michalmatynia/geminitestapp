@@ -48,20 +48,11 @@ export type CurrencyRecord = Entity & {
   symbol: string | null;
 };
 
-export type PriceGroupRecord = Entity & {
-  groupId: string;
-  isDefault: boolean;
-  name: string;
-  description: string | null;
-  currencyId: string;
-  currencyCode: string;
-  groupType: PriceGroupType;
-  type: string;
-  basePriceField: string;
-  sourceGroupId: string | null;
-  priceMultiplier: number;
-  addToPrice: number;
-};
+/**
+ * Domain record for a price group.
+ * Extends PriceGroupDto with strict Entity base.
+ */
+export type PriceGroupRecord = Entity & Omit<PriceGroupDto, 'id' | 'createdAt' | 'updatedAt'>;
 
 export type PriceGroupWithDetails = PriceGroupRecord & {
   currency: CurrencyRecord;
@@ -81,43 +72,20 @@ export type PriceGroupForCalculation = {
   currencyCode?: string;
 };
 
-export type CatalogRecord = Entity & {
-  name: string;
-  description: string | null;
-  isDefault: boolean;
-  defaultLanguageId?: string | null;
-  defaultPriceGroupId?: string | null;
-  priceGroupIds: string[];
-  languageIds: string[];
-};
+/**
+ * Domain record for a catalog.
+ * Extends CatalogDto with strict Entity base.
+ */
+export type CatalogRecord = Entity & Omit<CatalogDto, 'id' | 'createdAt' | 'updatedAt'>;
 
 export type Catalog = CatalogRecord;
 
-export type ProductRecord = Entity & {
-  sku: string | null;
-  baseProductId: string | null;
-  defaultPriceGroupId: string | null;
-  ean: string | null;
-  gtin: string | null;
-  asin: string | null;
-  name_en: string | null;
-  name_pl: string | null;
-  name_de: string | null;
-  description_en: string | null;
-  description_pl: string | null;
-  description_de: string | null;
-  supplierName: string | null;
-  supplierLink: string | null;
-  priceComment: string | null;
-  stock: number | null;
-  price: number | null;
-  sizeLength: number | null;
-  sizeWidth: number | null;
-  weight: number | null;
-  length: number | null;
+/**
+ * Domain record for a product.
+ * Extends ProductDto with strict Entity base and extra domain-only fields.
+ */
+export type ProductRecord = Entity & Omit<ProductDto, 'id' | 'createdAt' | 'updatedAt' | 'images' | 'tags' | 'catalogId' | 'published'> & {
   parameters?: ProductParameterValue[];
-  imageLinks: string[];
-  imageBase64s: string[];
   noteIds: string[];
 };
 
@@ -143,23 +111,27 @@ export type ProductWithImages = ProductRecord & {
   producers?: { producerId: string }[];
 };
 
-export type ProductCategory = Entity & {
-  name: string;
+/**
+ * Domain record for a product category.
+ * Extends ProductCategoryDto.
+ */
+export type ProductCategory = Entity & Omit<ProductCategoryDto, 'id' | 'createdAt' | 'updatedAt'> & {
   description: string | null;
-  color: string | null;
-  parentId: string | null;
-  catalogId: string;
 };
 
 export type ProductCategoryWithChildren = ProductCategory & {
   children: ProductCategoryWithChildren[];
 };
 
-export type ProductTag = {
-  id: string;
+/**
+ * Domain record for a product tag.
+ * Extends ProductTagDto.
+ */
+export type ProductTag = Entity & Omit<ProductTagDto, 'id' | 'createdAt' | 'updatedAt'>;
+
+export type Producer = Entity & {
   name: string;
-  color: string | null;
-  catalogId: string;
+  website: string | null;
 };
 
 export type Producer = Entity & {

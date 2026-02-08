@@ -18,38 +18,13 @@ import {
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import type { ApiHandlerContext } from '@/shared/types/api';
-
-type ProviderValue = 'prisma' | 'mongodb';
-type ProviderSource =
-  | 'env'
-  | 'prisma-setting'
-  | 'mongo-setting'
-  | 'app-setting'
-  | 'default'
-  | 'derived';
-type ProviderService = 'app' | 'auth' | 'product' | 'integrations' | 'cms';
-
-type ProviderServiceStatus = {
-  service: ProviderService;
-  configured: ProviderValue | null;
-  configuredSource: ProviderSource | null;
-  effective: ProviderValue;
-  driftFromApp: boolean;
-  notes: string[];
-};
-
-type ProviderDiagnosticsResponse = {
-  timestamp: string;
-  env: {
-    hasDatabaseUrl: boolean;
-    hasMongoUri: boolean;
-    appDbProviderEnv: string | null;
-  };
-  services: ProviderServiceStatus[];
-  driftCount: number;
-  warningCount: number;
-  warnings: string[];
-};
+import type {
+  AppProviderValueDto as ProviderValue,
+  AppProviderSourceDto as ProviderSource,
+  AppProviderServiceDto as ProviderService,
+  AppProviderServiceStatusDto as ProviderServiceStatus,
+  AppProviderDiagnosticsDto as ProviderDiagnosticsResponse,
+} from '@/shared/dtos/system';
 
 const normalizeAppProvider = (value?: string | null): AppDbProvider | null => {
   if (!value) return null;

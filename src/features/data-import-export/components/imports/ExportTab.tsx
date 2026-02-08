@@ -468,7 +468,7 @@ export function ExportTab(): React.JSX.Element {
           <div className='flex flex-wrap gap-3'>
             <Button
               onClick={(): void => {
-                void handleLoadInventories();
+                handleLoadInventories().catch(() => {});
               }}
               disabled={loadingInventories}
               variant='outline'
@@ -479,7 +479,7 @@ export function ExportTab(): React.JSX.Element {
             </Button>
             <Button
               onClick={(): void => {
-                void handleLoadWarehouses();
+                handleLoadWarehouses().catch(() => {});
               }}
               disabled={loadingWarehouses}
               variant='outline'
@@ -490,7 +490,7 @@ export function ExportTab(): React.JSX.Element {
             </Button>
             <Button
               onClick={(): void => {
-                void handleDebugWarehouses();
+                handleDebugWarehouses();
               }}
               disabled={loadingDebugWarehouses}
               variant='outline'
@@ -514,7 +514,7 @@ export function ExportTab(): React.JSX.Element {
             </div>
             <Button
               onClick={(): void => {
-                void handleSaveExportSettings();
+                handleSaveExportSettings().catch(() => {});
               }}
               disabled={savingExportSettings}
               size='sm'

@@ -244,7 +244,7 @@ function NoteFormInner({
   );
 }
 
-export function NoteForm(props: NoteFormProps & { formRef?: React.RefObject<HTMLFormElement | null> }): React.JSX.Element {
+export function NoteForm(props: NoteFormProps & { formRef?: React.RefObject<HTMLFormElement | null> | undefined }): React.JSX.Element {
   return (
     <NoteFormProvider note={props.note ?? null} onSuccess={props.onSuccess}>
       <NoteFormInner formRef={props.formRef ?? undefined} />

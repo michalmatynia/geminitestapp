@@ -804,7 +804,7 @@ export const handleIterator: NodeHandler = ({ nodeInputs, prevOutputs, now }: No
   const itemsHash = hashRuntimeValue(items);
 
   const prevItemsHash = typeof prevOutputs['itemsHash'] === 'string' ? prevOutputs['itemsHash'] : '';
-  const prevIndex = typeof prevOutputs['index'] === 'number' && Number.isFinite(prevOutputs['index']) ? prevOutputs['index'] as number : 0;
+  const prevIndex = typeof prevOutputs['index'] === 'number' && Number.isFinite(prevOutputs['index']) ? prevOutputs['index'] : 0;
   const prevLastAckHash = typeof prevOutputs['lastAckHash'] === 'string' ? prevOutputs['lastAckHash'] : '';
   const prevAdvanceStamp = typeof prevOutputs['advanceStamp'] === 'string' ? prevOutputs['advanceStamp'] : '';
 

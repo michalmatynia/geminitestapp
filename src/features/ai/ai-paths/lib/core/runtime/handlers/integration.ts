@@ -898,7 +898,7 @@ export const handleDatabase: NodeHandler = async ({
           };
         }
         const readResult: ApiResponse<DbActionResult> = await dbApi.action<DbActionResult>({ 
-          ...(queryPayload['provider'] ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' } : {}),
+          ...(queryPayload['provider'] ? { provider: queryPayload['provider'] } : {}),
           action,
           collection,
           filter,
@@ -997,7 +997,7 @@ export const handleDatabase: NodeHandler = async ({
           };
         }
         const insertActionPayload = {
-          ...(queryPayload['provider'] ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' } : {}),
+          ...(queryPayload['provider'] ? { provider: queryPayload['provider'] } : {}),
           action,
           collection,
           ...(action === 'insertOne' && payloadObject
@@ -1384,12 +1384,12 @@ export const handleDatabase: NodeHandler = async ({
           }
         }
         const updateResult: ApiResponse<unknown> = await dbApi.action({
-          ...(queryPayload['provider'] ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' } : {}),
+          ...(queryPayload['provider'] ? { provider: queryPayload['provider'] } : {}),
           action,
           collection,
           filter: resolvedFilter,
           update: updateDoc,
-          ...(idType !== undefined ? { idType: idType as 'string' | 'objectId' } : {}),
+          ...(idType !== undefined ? { idType: idType } : {}),
         });
         executed.updater.add(node.id);
         if (!updateResult.ok) {
@@ -1441,11 +1441,11 @@ export const handleDatabase: NodeHandler = async ({
           };
         }
         const deleteResult: ApiResponse<unknown> = await dbApi.action({
-          ...(queryPayload['provider'] ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' } : {}),
+          ...(queryPayload['provider'] ? { provider: queryPayload['provider'] } : {}),
           action,
           collection,
           filter,
-          ...(idType !== undefined ? { idType: idType as 'string' | 'objectId' } : {}),
+          ...(idType !== undefined ? { idType: idType } : {}),
         });
         executed.updater.add(node.id);
         if (!deleteResult.ok) {
@@ -1694,7 +1694,7 @@ export const handleDatabase: NodeHandler = async ({
     }
 
     if (operation === 'update') {
-      const fallbackTarget: string = (dbConfig.mappings as any)?.[0]?.['targetPath'] ?? 'content_en';
+      const fallbackTarget: string = dbConfig.mappings?.[0]?.targetPath ?? 'content_en';
       const fallbackSourcePort: string = node.inputs.includes('result')
         ? 'result'
         : 'content_en';
@@ -2141,10 +2141,7 @@ export const handleDatabase: NodeHandler = async ({
             const customInsertPayload = {
               ...(queryPayload.provider
                 ? {
-                  provider: queryPayload.provider as
-                  | 'auto'
-                  | 'mongodb'
-                  | 'prisma',
+                  provider: queryPayload.provider,
                 }
                 : {}),
               action: 'insertOne' as const,
@@ -2215,10 +2212,7 @@ export const handleDatabase: NodeHandler = async ({
             const customInsertPayload = {
               ...(queryPayload.provider
                 ? {
-                  provider: queryPayload.provider as
-                  | 'auto'
-                  | 'mongodb'
-                  | 'prisma',
+                  provider: queryPayload.provider,
                 }
                 : {}),
               action: 'insertOne' as const,

@@ -99,10 +99,10 @@ export function AdminImageStudioSettingsPage(): React.JSX.Element {
     setSettingsLoaded(true);
   }, [heavySettings.data, prevSettingsData, settingsLoaded, settingsStore]);
 
-  const handleRefresh = useCallback((): void => {
+  const handleRefresh = useCallback(async (): Promise<void> => {
     setSettingsLoaded(false);
-    void settingsStore.refetch();
-    void heavySettings.refetch();
+    settingsStore.refetch();
+    await heavySettings.refetch().catch(() => {});
   }, [settingsStore, heavySettings]);
 
   const handleAdvancedOverridesChange = useCallback((raw: string): void => {
@@ -232,7 +232,7 @@ export function AdminImageStudioSettingsPage(): React.JSX.Element {
             <Button
               type='button'
               variant='outline'
-              onClick={() => void handleRefresh()}
+              onClick={() => { void handleRefresh(); }}
               disabled={settingsStore.isFetching}
               title='Reload settings'
             >
@@ -257,7 +257,7 @@ export function AdminImageStudioSettingsPage(): React.JSX.Element {
             </Button>
             <Button
               size='sm'
-              onClick={() => void saveStudioSettings()}
+              onClick={() => { saveStudioSettings().catch(() => {}); }}
               disabled={updateSetting.isPending || Boolean(advancedOverridesError) || Boolean(promptValidationRulesError)}
             >
               {updateSetting.isPending ? 'Saving...' : 'Save'}

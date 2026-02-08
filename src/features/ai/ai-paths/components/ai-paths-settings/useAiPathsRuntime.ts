@@ -1595,12 +1595,12 @@ export function useAiPathsRuntime({
           }));
         }
         const entityId =
-          typeof ((meta['triggerContext'] ?? {}))?.['entityId'] === 'string'
-            ? (((meta['triggerContext'] ?? {}))['entityId'] as string)
+          typeof meta.triggerContext?.['entityId'] === 'string'
+            ? meta.triggerContext['entityId']
             : null;
         const entityType =
-          typeof ((meta['triggerContext'] ?? {}))?.['entityType'] === 'string'
-            ? (((meta['triggerContext'] ?? {}))['entityType'] as string)
+          typeof meta.triggerContext?.['entityType'] === 'string'
+            ? meta.triggerContext['entityType']
             : null;
         void appendLocalRun({
           pathId: activePathId ?? null,

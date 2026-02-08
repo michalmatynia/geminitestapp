@@ -61,3 +61,38 @@ export interface UpdateAdminSettingsDto {
     config: Record<string, unknown>;
   };
 }
+
+/**
+ * Navigation item for the admin menu.
+ */
+export interface AdminNavItemDto {
+  id: string;
+  label: string;
+  href?: string;
+  exact?: boolean;
+  keywords?: string[];
+  sectionColor?: string;
+  children?: AdminNavItemDto[];
+}
+
+/**
+ * Custom node for user-defined admin menu layout.
+ */
+export interface AdminMenuCustomNodeDto {
+  id: string;
+  label?: string;
+  href?: string;
+  children?: AdminMenuCustomNodeDto[];
+}
+
+/**
+ * Flattened representation of a navigation item for searching and pinning.
+ */
+export interface AdminNavLeafDto {
+  id: string;
+  label: string;
+  href?: string;
+  keywords?: string[];
+  parents: string[];
+  item: AdminNavItemDto;
+}

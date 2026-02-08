@@ -8,6 +8,13 @@ import { PRODUCT_DB_PROVIDER_SETTING_KEY } from '@/features/products/constants';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useToast, Button, Label } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import type {
+  AppProviderValueDto as ProviderValueStatus,
+  AppProviderSourceDto as ProviderSourceStatus,
+  AppProviderServiceDto as ProviderService,
+  AppProviderServiceStatusDto as ProviderServiceStatus,
+  AppProviderDiagnosticsDto as ProviderDiagnosticsResponse,
+} from '@/shared/dtos/system';
 
 const providerOptions = [
   {
@@ -59,38 +66,6 @@ type SettingsBackfillResult = {
   modified: number;
   remaining: number;
   sampleIds?: string[];
-};
-
-type ProviderService = 'app' | 'auth' | 'product' | 'integrations' | 'cms';
-type ProviderValueStatus = 'prisma' | 'mongodb';
-type ProviderSourceStatus =
-  | 'env'
-  | 'prisma-setting'
-  | 'mongo-setting'
-  | 'app-setting'
-  | 'default'
-  | 'derived';
-
-type ProviderServiceStatus = {
-  service: ProviderService;
-  configured: ProviderValueStatus | null;
-  configuredSource: ProviderSourceStatus | null;
-  effective: ProviderValueStatus;
-  driftFromApp: boolean;
-  notes: string[];
-};
-
-type ProviderDiagnosticsResponse = {
-  timestamp: string;
-  env: {
-    hasDatabaseUrl: boolean;
-    hasMongoUri: boolean;
-    appDbProviderEnv: string | null;
-  };
-  services: ProviderServiceStatus[];
-  driftCount: number;
-  warningCount: number;
-  warnings: string[];
 };
 
 const providerServiceLabel: Record<ProviderService, string> = {

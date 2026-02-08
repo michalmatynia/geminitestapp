@@ -38,25 +38,17 @@ import { useChatbotSessions } from '@/features/ai/chatbot/hooks/useChatbotQuerie
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, SearchInput, Tooltip, TreeContextMenu, TreeHeader } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+import type { 
+  AdminNavItemDto, 
+  AdminMenuCustomNodeDto as AdminMenuCustomNode,
+  AdminNavLeafDto as AdminNavLeaf
+} from '@/shared/dtos/admin';
 
-export type NavItem = {
-  id: string;
-  label: string;
-  href?: string;
-  exact?: boolean;
+export type NavItem = Omit<AdminNavItemDto, 'children'> & {
   icon?: React.ReactNode;
-  keywords?: string[];
   onClick?: React.MouseEventHandler<HTMLAnchorElement>;
   action?: () => void;
   children?: NavItem[];
-  sectionColor?: string;
-};
-
-export type AdminMenuCustomNode = {
-  id: string;
-  label?: string;
-  href?: string;
-  children?: AdminMenuCustomNode[];
 };
 
 export type AdminMenuColorOption = {
@@ -82,16 +74,7 @@ export const ADMIN_MENU_COLOR_MAP: Record<string, AdminMenuColorOption> = Object
   ADMIN_MENU_COLORS.map((option: AdminMenuColorOption) => [option.value, option])
 );
 
-export type FlattenedNavItem = {
-  id: string;
-  label: string;
-  href?: string;
-  keywords?: string[];
-  parents: string[];
-  item: NavItem;
-};
-
-export type AdminNavLeaf = FlattenedNavItem;
+export type FlattenedNavItem = AdminNavLeaf;
 
 export const flattenAdminNav = (items: NavItem[], parents: string[] = []): FlattenedNavItem[] => {
   const entries: FlattenedNavItem[] = [];

@@ -630,13 +630,15 @@ export function AiPathsSettingsView({
             >
               <CanvasSidebarWrapper
                 palette={palette}
-                onDragStart={(e: React.DragEvent<HTMLDivElement>, node: NodeDefinition) => { handleDragStart(e, node); }}
+                onDragStart={(e: React.DragEvent<HTMLDivElement>, node: NodeDefinition) => {
+                  handleDragStart(e, node);
+                }}
                 onFireTrigger={(node: AiNode) => { handleFireTrigger(node); }}
-                onFireTriggerPersistent={(node: AiNode) => { handleFireTriggerPersistent(node); }}
-                onUpdateSelectedNode={(patch, options) => updateSelectedNode(patch, options)}
+                onFireTriggerPersistent={(node: AiNode) => { handleFireTriggerPersistent(node).catch(() => {}); }}
+                onUpdateSelectedNode={(patch, options) => { updateSelectedNode(patch, options); }}
                 onDeleteSelectedNode={() => { handleDeleteSelectedNode(); }}
                 onRemoveEdge={(edgeId: string) => { handleRemoveEdge(edgeId); }}
-                onClearWires={() => { void handleClearWires(); }}
+                onClearWires={() => { handleClearWires().catch(() => {}); }}
                 runStatus={runtimeRunStatus}
                 onPauseRun={handlePauseActiveRun}
                 onResumeRun={handleResumeActiveRun}
@@ -646,9 +648,9 @@ export function AiPathsSettingsView({
               />
               <ClusterPresetsPanelMigrated
                 onPresetFromSelection={handlePresetFromSelection}
-                onSavePreset={() => { void handleSavePreset(); }}
-                onApplyPreset={(preset: ClusterPreset) => { void handleApplyPreset(preset); }}
-                onDeletePreset={(presetId: string) => { void handleDeletePreset(presetId); }}
+                onSavePreset={() => { handleSavePreset().catch(() => {}); }}
+                onApplyPreset={(preset: ClusterPreset) => { handleApplyPreset(preset); }}
+                onDeletePreset={(presetId: string) => { handleDeletePreset(presetId).catch(() => {}); }}
                 onExportPresets={handleExportPresets}
                 presetDraft={presetDraft}
                 setPresetDraft={setPresetDraft}
@@ -657,11 +659,11 @@ export function AiPathsSettingsView({
               <RunHistoryPanelMigrated
                 runs={runList}
                 isRefreshing={runsQuery.isFetching}
-                onRefresh={() => { void runsQuery.refetch(); }}
-                onOpenRunDetail={(runId: string) => { void handleOpenRunDetail(runId); }}
-                onResumeRun={(runId: string, mode: 'resume' | 'replay') => { void handleResumeRun(runId, mode); }}
-                onCancelRun={(runId: string) => { void handleCancelRun(runId); }}
-                onRequeueDeadLetter={(runId: string) => { void handleRequeueDeadLetter(runId); }}
+                onRefresh={() => { runsQuery.refetch().catch(() => {}); }}
+                onOpenRunDetail={(runId: string) => { handleOpenRunDetail(runId).catch(() => {}); }}
+                onResumeRun={(runId: string, mode: 'resume' | 'replay') => { handleResumeRun(runId, mode).catch(() => {}); }}
+                onCancelRun={(runId: string) => { handleCancelRun(runId).catch(() => {}); }}
+                onRequeueDeadLetter={(runId: string) => { handleRequeueDeadLetter(runId).catch(() => {}); }}
                 runFilter={runFilter}
                 setRunFilter={setRunFilter}
                 expandedRunHistory={expandedRunHistory}
@@ -674,7 +676,7 @@ export function AiPathsSettingsView({
               <CanvasBoardMigrated
                 runtimeRunStatus={runtimeRunStatus}
                 viewportClassName={isFocusMode ? 'h-full min-h-0 rounded-none border-0' : undefined}
-                onFireTrigger={(node) => { void handleFireTrigger(node); }}
+                onFireTrigger={(node) => { handleFireTrigger(node); }}
               />
             </div>
           </div>
@@ -691,9 +693,7 @@ export function AiPathsSettingsView({
                   <Button
                     type='button'
                     className='rounded-md border border-border px-2 py-1 text-[10px] text-gray-200 hover:bg-card/70'
-                    onClick={() => {
-                      void runtimeAnalyticsQuery.refetch();
-                    }}
+                    onClick={() => { runtimeAnalyticsQuery.refetch().catch(() => {}); }}
                     disabled={runtimeAnalyticsQuery.isFetching}
                   >
                     {runtimeAnalyticsQuery.isFetching ? 'Refreshing...' : 'Refresh'}
@@ -806,7 +806,7 @@ export function AiPathsSettingsView({
             <div className='mt-4 flex justify-end'>
               <Button
                 className='rounded-md border border-rose-500/40 text-sm text-rose-200 hover:bg-rose-500/10'
-                onClick={() => void handleDeletePath()}
+                onClick={() => { void handleDeletePath(); }}
                 type='button'
                 disabled={!activePathId}
               >
@@ -821,14 +821,14 @@ export function AiPathsSettingsView({
         <PathsTabPanel
           paths={paths}
           pathFlagsById={pathFlagsById}
-          onCreatePath={() => { void handleCreatePath(); }}
-          onSaveList={() => { void savePathIndex(paths); }}
+          onCreatePath={() => { handleCreatePath(); }}
+          onSaveList={() => { void savePathIndex(paths).catch(() => {}); }}
           onEditPath={(pathId: string): void => {
             handleSwitchPath(pathId);
             onTabChange?.('canvas');
           }}
           onDeletePath={(pathId: string): void => {
-            void handleDeletePath(pathId);
+            void handleDeletePath(pathId).catch(() => {});
           }}
         />
       )}
@@ -840,22 +840,34 @@ export function AiPathsSettingsView({
           docsDescriptionSnippet={DOCS_DESCRIPTION_SNIPPET}
           docsJobsSnippet={DOCS_JOBS_SNIPPET}
           onCopyDocsWiring={() => {
-            void navigator.clipboard.writeText(DOCS_WIRING_SNIPPET).then(
+            const promise = navigator.clipboard.writeText(DOCS_WIRING_SNIPPET);
+            promise.then(
               () => toast('Wiring copied to clipboard.', { variant: 'success' }),
-              (err) => { reportAiPathsError(err, { action: 'copyDocsWiring' }, 'Failed to copy wiring:'); toast('Failed to copy wiring.', { variant: 'error' }); }
-            );
+              (err: unknown) => { 
+                reportAiPathsError(err, { action: 'copyDocsWiring' }, 'Failed to copy wiring:'); 
+                toast('Failed to copy wiring.', { variant: 'error' }); 
+              }
+            ).catch(() => {});
           }}
           onCopyDocsDescription={() => {
-            void navigator.clipboard.writeText(DOCS_DESCRIPTION_SNIPPET).then(
+            const promise = navigator.clipboard.writeText(DOCS_DESCRIPTION_SNIPPET);
+            promise.then(
               () => toast('AI Description wiring copied.', { variant: 'success' }),
-              (err) => { reportAiPathsError(err, { action: 'copyDocsDescription' }, 'Failed to copy wiring:'); toast('Failed to copy wiring.', { variant: 'error' }); }
-            );
+              (err: unknown) => { 
+                reportAiPathsError(err, { action: 'copyDocsDescription' }, 'Failed to copy wiring:'); 
+                toast('Failed to copy wiring.', { variant: 'error' }); 
+              }
+            ).catch(() => {});
           }}
           onCopyDocsJobs={() => {
-            void navigator.clipboard.writeText(DOCS_JOBS_SNIPPET).then(
+            const promise = navigator.clipboard.writeText(DOCS_JOBS_SNIPPET);
+            promise.then(
               () => toast('AI job wiring copied.', { variant: 'success' }),
-              (err) => { reportAiPathsError(err, { action: 'copyDocsJobs' }, 'Failed to copy wiring:'); toast('Failed to copy wiring.', { variant: 'error' }); }
-            );
+              (err: unknown) => { 
+                reportAiPathsError(err, { action: 'copyDocsJobs' }, 'Failed to copy wiring:'); 
+                toast('Failed to copy wiring.', { variant: 'error' }); 
+              }
+            ).catch(() => {});
           }}
         />
       )}
@@ -866,8 +878,8 @@ export function AiPathsSettingsView({
         updateSelectedNodeConfig={updateSelectedNodeConfig}
         handleFetchParserSample={handleFetchParserSample}
         handleFetchUpdaterSample={handleFetchUpdaterSample}
-        handleRunSimulation={(node) => void handleRunSimulation(node)}
-        onSendToAi={(id, prompt) => handleSendToAi(id, prompt)}
+        handleRunSimulation={(node) => { handleRunSimulation(node); }}
+        onSendToAi={(id, prompt) => { void handleSendToAi(id, prompt).catch(() => {}); }}
         saveDbQueryPresets={saveDbQueryPresets}
         saveDbNodePresets={saveDbNodePresets}
         toast={toast}
@@ -876,14 +888,14 @@ export function AiPathsSettingsView({
       />
       <RunDetailDialogWithContext />
       <PresetsDialogWithContext
-        onImportPresets={() => void handleImportPresets('merge')}
+        onImportPresets={() => { void handleImportPresets('merge').catch(() => {}); }}
         toast={toast}
         reportAiPathsError={reportAiPathsError}
       />
 
       <SimulationDialogMigrated
         setNodes={setNodesFromUser}
-        onRunSimulation={(node) => void handleRunSimulation(node)}
+        onRunSimulation={(node) => { handleRunSimulation(node); }}
         openNodeId={simulationOpenNodeId}
         onClose={() => setSimulationOpenNodeId(null)}
         nodes={nodes}

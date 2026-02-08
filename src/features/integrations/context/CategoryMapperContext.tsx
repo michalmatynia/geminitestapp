@@ -1,13 +1,14 @@
 'use client';
 
 import React, { createContext, useContext, useState, useMemo, useEffect, useRef, useCallback } from 'react';
+
 import { useFetchExternalCategoriesMutation, useSaveMappingsMutation } from '@/features/integrations/hooks/useMarketplaceMutations';
 import { useExternalCategories, useCategoryMappings } from '@/features/integrations/hooks/useMarketplaceQueries';
 import type { ExternalCategory, CategoryMappingWithDetails } from '@/features/integrations/types/category-mapping';
 import { logClientError } from '@/features/observability';
-import type { Catalog, ProductCategoryDto, CatalogOption } from '@/features/products/types';
 import { useCatalogs } from '@/features/products/hooks/useCatalogQueries';
 import { useProductCategories } from '@/features/products/hooks/useCategoryQueries';
+import type { Catalog, ProductCategoryDto } from '@/features/products/types';
 import { useToast } from '@/shared/ui';
 
 interface InternalCategoryOption {
@@ -37,8 +38,16 @@ interface CategoryMapperContextValue {
   mappingsLoading: boolean;
   
   // Mutations
-  fetchMutation: any;
-  saveMutation: any;
+  fetchMutation: UseMutationResult<
+    { fetched: number; message: string },
+    Error,
+    { connectionId: string }
+  >;
+  saveMutation: UseMutationResult<
+    { upserted: number; message: string },
+    Error,
+    { connectionId: string; catalogId: string; mappings: { externalCategoryId: string; internalCategoryId: string | null }[] }
+  >;
   
   // UI State
   pendingMappings: Map<string, string | null>;

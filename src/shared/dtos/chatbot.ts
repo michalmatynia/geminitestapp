@@ -182,6 +182,16 @@ export interface ChatbotJobPayloadDto {
 }
 
 /**
+ * DTO for enqueuing a chatbot job
+ */
+export interface EnqueueChatbotJobRequestDto {
+  sessionId: string;
+  model: string;
+  messages: ChatMessageDto[];
+  userMessage?: string;
+}
+
+/**
  * DTO for a chatbot job (AI processing)
  */
 export interface ChatbotJobDto extends DtoBase {

@@ -41,6 +41,17 @@ export interface IntegrationConnectionDto extends NamedDto {
   baseLastInventoryId?: string | null;
 }
 
+export interface ProductListingExportEventDto {
+  exportedAt: string;
+  status?: string | null;
+  inventoryId?: string | null;
+  templateId?: string | null;
+  warehouseId?: string | null;
+  externalListingId?: string | null;
+  fields?: string[] | null;
+  requestId?: string | null;
+}
+
 export interface ProductListingDto extends DtoBase {
   productId: string;
   integrationId: string;
@@ -49,7 +60,7 @@ export interface ProductListingDto extends DtoBase {
   inventoryId: string | null;
   status: string;
   listedAt: string | null;
-  exportHistory: any;
+  exportHistory: ProductListingExportEventDto[] | null;
 }
 
 export interface CategoryMappingDto extends DtoBase {
@@ -58,6 +69,21 @@ export interface CategoryMappingDto extends DtoBase {
   internalCategoryId: string;
   catalogId: string;
   isActive: boolean;
+}
+
+export interface CategoryMappingInputDto {
+  externalCategoryId: string;
+  internalCategoryId: string | null;
+}
+
+export interface BulkCategoryMappingRequestDto {
+  connectionId: string;
+  catalogId: string;
+  mappings: CategoryMappingInputDto[];
+}
+
+export interface FetchMarketplaceCategoriesRequestDto {
+  connectionId: string;
 }
 
 export interface CreateIntegrationDto {

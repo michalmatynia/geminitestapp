@@ -43,8 +43,15 @@ export interface CmsPageDto extends DtoBase {
   robotsMeta?: string;
   themeId: string | null;
   showMenu: boolean;
-  components: any[];
-  slugs: any[];
+  components: CmsPageComponentDto[];
+  slugs: CmsSlugDto[];
+}
+
+export interface CmsPageComponentDto extends DtoBase {
+  type: string;
+  order: number;
+  content: Record<string, unknown>;
+  pageId: string;
 }
 
 export interface CmsSlugDto extends DtoBase {
@@ -58,6 +65,13 @@ export interface CmsDomainDto extends NamedDto {
   aliasOf?: string | null;
 }
 
+export interface CmsCssAiRequestDto {
+  provider?: 'model' | 'agent';
+  modelId?: string;
+  agentId?: string;
+  messages?: any[]; // Using any[] here to avoid circular dependency with ChatMessageDto if not careful, but typically these are ChatMessageDto
+}
+
 export interface CreateCmsPageDto {
   name: string;
   status?: 'draft' | 'published' | 'scheduled';
@@ -65,7 +79,7 @@ export interface CreateCmsPageDto {
   seoDescription?: string;
   themeId?: string;
   showMenu?: boolean;
-  components?: any[];
+  components?: Partial<CmsPageComponentDto>[];
   slugs?: string[];
 }
 

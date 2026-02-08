@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext } from 'react';
 
+import { useOptionalCmsPageContext } from '../CmsPageContext';
+
 import type { ColorSchemeColors } from '../theme-styles';
 
 interface SectionData {
@@ -13,9 +15,12 @@ const SectionDataContext = createContext<SectionData | null>(null);
 
 export function SectionDataProvider({
   settings,
-  colorSchemes,
+  colorSchemes: propColorSchemes,
   children,
 }: SectionData & { children: React.ReactNode }): React.ReactNode {
+  const pageContext = useOptionalCmsPageContext();
+  const colorSchemes = propColorSchemes ?? pageContext?.colorSchemes;
+
   return (
     <SectionDataContext.Provider value={{ settings, colorSchemes }}>
       {children}

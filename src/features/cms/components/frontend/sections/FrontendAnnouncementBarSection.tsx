@@ -1,22 +1,20 @@
 
-import { getSectionContainerClass, getSectionStyles, getTextAlign, type ColorSchemeColors } from '../theme-styles';
+import { getSectionContainerClass, getSectionStyles, getTextAlign } from '../theme-styles';
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
+import { useCmsPageContext } from '../CmsPageContext';
 
 import type { BlockInstance } from '../../../types/page-builder';
 
 interface FrontendAnnouncementBarSectionProps {
   settings: Record<string, unknown>;
   blocks: BlockInstance[];
-  colorSchemes?: Record<string, ColorSchemeColors> | undefined;
-  layout?: { fullWidth?: boolean | undefined } | undefined;
 }
 
 export function FrontendAnnouncementBarSection({
   settings,
   blocks,
-  colorSchemes,
-  layout,
 }: FrontendAnnouncementBarSectionProps): React.ReactNode {
+  const { colorSchemes, layout } = useCmsPageContext();
   const sectionStyles = {
     ...getSectionStyles(settings, colorSchemes),
     ...getTextAlign(settings['contentAlignment']),

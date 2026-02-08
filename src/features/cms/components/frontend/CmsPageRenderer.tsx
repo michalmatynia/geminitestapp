@@ -3,6 +3,7 @@ import type { CssAnimationConfig } from '@/features/cms/types/css-animations';
 import type { ColorSchemeColors } from '@/features/cms/types/theme-settings';
 import type { GsapAnimationConfig } from '@/features/gsap';
 
+import { CmsPageProvider } from './CmsPageContext';
 import { CssAnimationWrapper } from './CssAnimationWrapper';
 import { GsapAnimationWrapper } from './GsapAnimationWrapper';
 import { MediaStylesProvider } from './media-styles-context';
@@ -82,33 +83,33 @@ export function CmsPageRenderer({
 
   return (
     <MediaStylesProvider value={mediaStyles ?? null}>
-      <div className="cms-page cms-hover-scope" style={{ ...hoverVars, ...(mediaVars ?? {}) }}>
-        {ZONE_ORDER.map((zone: PageZone) =>
-          sectionsByZone[zone].map((section: typeof sections[number]) => {
-            return (
-              <GsapAnimationWrapper
-                key={section.key}
-                config={section.settings['gsapAnimation'] as Partial<GsapAnimationConfig> | undefined}
-              >
-                <CssAnimationWrapper
-                  config={section.settings['cssAnimation'] as CssAnimationConfig | undefined}
+      <CmsPageProvider colorSchemes={colorSchemes ?? {}} layout={layout ?? {}}>
+        <div className="cms-page cms-hover-scope" style={{ ...hoverVars, ...(mediaVars ?? {}) }}>
+          {ZONE_ORDER.map((zone: PageZone) =>
+            sectionsByZone[zone].map((section: typeof sections[number]) => {
+              return (
+                <GsapAnimationWrapper
+                  key={section.key}
+                  config={section.settings['gsapAnimation'] as Partial<GsapAnimationConfig> | undefined}
                 >
-                  <EventEffectsWrapper settings={section.settings}>
-                    <SectionRenderer
-                      type={section.type}
-                      sectionId={section.id}
-                      settings={section.settings}
-                      blocks={section.blocks}
-                      colorSchemes={colorSchemes ?? {}}
-                      layout={layout ?? {}}
-                    />
-                  </EventEffectsWrapper>
-                </CssAnimationWrapper>
-              </GsapAnimationWrapper>
-            );
-          })
-        )}
-      </div>
+                  <CssAnimationWrapper
+                    config={section.settings['cssAnimation'] as CssAnimationConfig | undefined}
+                  >
+                    <EventEffectsWrapper settings={section.settings}>
+                      <SectionRenderer
+                        type={section.type}
+                        sectionId={section.id}
+                        settings={section.settings}
+                        blocks={section.blocks}
+                      />
+                    </EventEffectsWrapper>
+                  </CssAnimationWrapper>
+                </GsapAnimationWrapper>
+              );
+            })
+          )}
+        </div>
+      </CmsPageProvider>
     </MediaStylesProvider>
   );
 }
@@ -118,16 +119,14 @@ interface SectionRendererProps {
   sectionId: string;
   settings: Record<string, unknown>;
   blocks: BlockInstance[];
-  colorSchemes: Record<string, ColorSchemeColors>;
-  layout: { fullWidth?: boolean };
 }
 
-function SectionRenderer({ type, sectionId, settings, blocks, colorSchemes, layout }: SectionRendererProps): React.ReactNode {
+function SectionRenderer({ type, sectionId, settings, blocks }: SectionRendererProps): React.ReactNode {
   switch (type) {
     case 'AnnouncementBar':
-      return <FrontendAnnouncementBarSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
+      return <FrontendAnnouncementBarSection settings={settings} blocks={blocks} />;
     case 'Block':
-      return <FrontendBlockSection sectionId={sectionId} settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
+      return <FrontendBlockSection sectionId={sectionId} settings={settings} blocks={blocks} />;
     case 'TextElement':
       return <FrontendTextElementSection settings={settings} />;
     case 'TextAtom':
@@ -139,25 +138,25 @@ function SectionRenderer({ type, sectionId, settings, blocks, colorSchemes, layo
     case 'ButtonElement':
       return <FrontendButtonElementSection settings={settings} />;
     case 'Hero':
-      return <FrontendHeroSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
+      return <FrontendHeroSection settings={settings} blocks={blocks} />;
     case 'ImageWithText':
-      return <FrontendImageWithTextSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
+      return <FrontendImageWithTextSection settings={settings} blocks={blocks} />;
     case 'RichText':
-      return <FrontendRichTextSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
+      return <FrontendRichTextSection settings={settings} blocks={blocks} />;
     case 'Grid':
-      return <FrontendGridSection sectionId={sectionId} settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
+      return <FrontendGridSection sectionId={sectionId} settings={settings} blocks={blocks} />;
     case 'Accordion':
-      return <FrontendAccordionSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
+      return <FrontendAccordionSection settings={settings} blocks={blocks} />;
     case 'Testimonials':
-      return <FrontendTestimonialsSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
+      return <FrontendTestimonialsSection settings={settings} blocks={blocks} />;
     case 'Video':
-      return <FrontendVideoSection settings={settings} colorSchemes={colorSchemes} layout={layout} />;
+      return <FrontendVideoSection settings={settings} />;
     case 'Slideshow':
-      return <FrontendSlideshowSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
+      return <FrontendSlideshowSection settings={settings} blocks={blocks} />;
     case 'Newsletter':
-      return <FrontendNewsletterSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
+      return <FrontendNewsletterSection settings={settings} blocks={blocks} />;
     case 'ContactForm':
-      return <FrontendContactFormSection settings={settings} colorSchemes={colorSchemes} layout={layout} />;
+      return <FrontendContactFormSection settings={settings} />;
     default:
       return null;
   }

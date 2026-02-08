@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-import type { ChatMessage } from "@/shared/types/chatbot";
+import type { ChatMessageDto as ChatMessage } from "@/shared/dtos/chatbot";
+import type { CmsCssAiRequestDto as CssAiRequest } from "@/shared/dtos/cms";
 import { badRequestError } from "@/shared/errors/app-error";
 import { runTeachingChat } from "@/features/ai/agentcreator/teaching/server/chat";
 
@@ -9,13 +10,6 @@ export const runtime = "nodejs";
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL ?? "http://localhost:11434";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL ?? "";
-
-type CssAiRequest = {
-  provider?: "model" | "agent";
-  modelId?: string;
-  agentId?: string;
-  messages?: ChatMessage[];
-};
 
 const isValidMessages = (messages: ChatMessage[]): boolean =>
   messages.length > 0 &&

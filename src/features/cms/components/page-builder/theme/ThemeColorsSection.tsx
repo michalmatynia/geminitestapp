@@ -1,88 +1,40 @@
 'use client';
 
 import { ArrowLeft, ChevronDown } from 'lucide-react';
-import React from 'react';
+import React, { useCallback } from 'react';
 
-import type { ColorScheme, ColorSchemeColors, ThemeSettings } from '@/features/cms/types/theme-settings';
+import type { ColorScheme, ThemeSettings } from '@/features/cms/types/theme-settings';
 import { Button } from '@/shared/ui';
 
-import {
-  ColorField,
-  TextField,
-} from '../shared-fields';
+import { useThemeColors } from './ThemeColorsContext';
+import { ColorField, TextField } from '../shared-fields';
+import { useThemeSettings } from '../ThemeSettingsContext';
 import { ThemeAiSection } from './ThemeAiSection';
 
-export function ThemeColorsSection({
-  theme,
-  update,
-  updateSetting,
-  schemeView,
-  setSchemeView,
-  editingSchemeId,
-  setEditingSchemeId,
-  activeScheme,
-  startAddScheme,
-  startEditScheme,
-  handleSaveScheme,
-  newSchemeName,
-  setNewSchemeName,
-  newSchemeColors,
-  updateSchemeColor,
-  isGlobalPaletteOpen,
-  toggleGlobalPalette,
-  schemeAiProvider,
-  setSchemeAiProvider,
-  schemeProviderOptions,
-  schemeAiModelId,
-  setSchemeAiModelId,
-  modelOptions,
-  schemeAiAgentId,
-  setSchemeAiAgentId,
-  agentOptions,
-  schemeAiPrompt,
-  setSchemeAiPrompt,
-  schemeAiLoading,
-  schemeAiError,
-  schemeAiOutput,
-  schemeAiPreview,
-  handleGenerateScheme,
-  handleCancelSchemeAi,
-}: {
-  theme: ThemeSettings;
-  update: <K extends keyof ThemeSettings>(key: K, value: ThemeSettings[K]) => void;
-  updateSetting: <K extends keyof ThemeSettings>(key: K) => (value: ThemeSettings[K]) => void;
-  schemeView: 'list' | 'edit';
-  setSchemeView: (view: 'list' | 'edit') => void;
-  editingSchemeId: string | null;
-  setEditingSchemeId: (id: string | null) => void;
-  activeScheme: { id: string; name: string; colors: ColorSchemeColors } | null;
-  startAddScheme: () => void;
-  startEditScheme: (schemeId: string) => void;
-  handleSaveScheme: () => void;
-  newSchemeName: string;
-  setNewSchemeName: (value: string) => void;
-  newSchemeColors: ColorSchemeColors;
-  updateSchemeColor: (key: keyof ColorSchemeColors) => (value: string) => void;
-  isGlobalPaletteOpen: boolean;
-  toggleGlobalPalette: () => void;
-  schemeAiProvider: 'model' | 'agent';
-  setSchemeAiProvider: (value: 'model' | 'agent') => void;
-  schemeProviderOptions: Array<{ label: string; value: string }>;
-  schemeAiModelId: string;
-  setSchemeAiModelId: (value: string) => void;
-  modelOptions: string[];
-  schemeAiAgentId: string;
-  setSchemeAiAgentId: (value: string) => void;
-  agentOptions: Array<{ label: string; value: string }>;
-  schemeAiPrompt: string;
-  setSchemeAiPrompt: (value: string) => void;
-  schemeAiLoading: boolean;
-  schemeAiError: string | null;
-  schemeAiOutput: string;
-  schemeAiPreview: { name?: string | undefined; colors: Partial<ColorSchemeColors> } | null;
-  handleGenerateScheme: () => Promise<void>;
-  handleCancelSchemeAi: () => void;
-}): React.JSX.Element {
+
+export function ThemeColorsSection(): React.JSX.Element {
+  const { theme, update } = useThemeSettings();
+  const {
+    schemeView,
+    setSchemeView,
+    editingSchemeId,
+    setEditingSchemeId,
+    activeScheme,
+    startAddScheme,
+    startEditScheme,
+    handleSaveScheme,
+    newSchemeName,
+    setNewSchemeName,
+    newSchemeColors,
+    updateSchemeColor,
+    isGlobalPaletteOpen,
+    toggleGlobalPalette,
+  } = useThemeColors();
+
+  const updateSetting = useCallback(<K extends keyof ThemeSettings>(key: K) => (value: ThemeSettings[K]) => {
+    update(key, value);
+  }, [update]);
+
   return (
     <div className="space-y-4">
       <div className="rounded border border-border/40 bg-gray-900/60 p-3">
@@ -278,26 +230,7 @@ export function ThemeColorsSection({
                 onChange={updateSchemeColor('border')}
               />
             </div>
-            <ThemeAiSection
-              schemeAiProvider={schemeAiProvider}
-              setSchemeAiProvider={setSchemeAiProvider}
-              schemeProviderOptions={schemeProviderOptions}
-              schemeAiModelId={schemeAiModelId}
-              setSchemeAiModelId={setSchemeAiModelId}
-              modelOptions={modelOptions}
-              schemeAiAgentId={schemeAiAgentId}
-              setSchemeAiAgentId={setSchemeAiAgentId}
-              agentOptions={agentOptions}
-              schemeAiPrompt={schemeAiPrompt}
-              setSchemeAiPrompt={setSchemeAiPrompt}
-              schemeAiLoading={schemeAiLoading}
-              schemeAiError={schemeAiError}
-              schemeAiOutput={schemeAiOutput}
-              schemeAiPreview={schemeAiPreview}
-              newSchemeColors={newSchemeColors}
-              handleGenerateScheme={handleGenerateScheme}
-              handleCancelSchemeAi={handleCancelSchemeAi}
-            />
+            <ThemeAiSection />
           </div>
         )}
       </div>

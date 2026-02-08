@@ -7,13 +7,14 @@ import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils
 import type { GsapAnimationConfig } from '@/features/gsap';
 
 
-import { getSectionContainerClass, getSectionStyles, getTextAlign, type ColorSchemeColors } from '../theme-styles';
+import { getSectionContainerClass, getSectionStyles, getTextAlign } from '../theme-styles';
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
 import { FrontendCarousel } from './FrontendCarousel';
 import { FrontendHeroBlock } from './FrontendHeroBlock';
 import { FrontendImageWithTextBlock } from './FrontendImageWithTextBlock';
 import { FrontendSlideshowSection } from './FrontendSlideshowSection';
 import { SectionDataProvider, useSectionData } from './SectionDataContext';
+import { useCmsPageContext } from '../CmsPageContext';
 import { CssAnimationWrapper } from '../CssAnimationWrapper';
 import { GsapAnimationWrapper } from '../GsapAnimationWrapper';
 
@@ -27,8 +28,6 @@ interface FrontendGridSectionProps {
   sectionId?: string | undefined;
   settings: Record<string, unknown>;
   blocks: BlockInstance[];
-  colorSchemes?: Record<string, ColorSchemeColors> | undefined;
-  layout?: { fullWidth?: boolean | undefined } | undefined;
 }
 
 const getGapClass = (gap?: string): string => {
@@ -253,7 +252,8 @@ function collectBackgroundImages(blocks: BlockInstance[], target: 'grid' | 'row'
   return result;
 }
 
-export function FrontendGridSection({ sectionId, settings, blocks, colorSchemes, layout }: FrontendGridSectionProps): React.ReactNode {
+export function FrontendGridSection({ sectionId, settings, blocks }: FrontendGridSectionProps): React.ReactNode {
+  const { colorSchemes, layout } = useCmsPageContext();
   const sectionStyles = getSectionStyles(settings, colorSchemes);
   const sectionSelector = sectionId ? getCustomCssSelector(sectionId) : null;
   const sectionCustomCss = buildScopedCustomCss(settings['customCss'], sectionSelector);
@@ -289,7 +289,7 @@ export function FrontendGridSection({ sectionId, settings, blocks, colorSchemes,
   if (rowsToRender.length === 0) return null;
 
   return (
-    <SectionDataProvider settings={settings} colorSchemes={colorSchemes}>
+    <SectionDataProvider settings={settings}>
       <section
         style={sectionStyles}
         className={`relative${sectionId ? ` cms-node-${sectionId}` : ''} ${hasGridBackground ? 'overflow-hidden' : ''}`}

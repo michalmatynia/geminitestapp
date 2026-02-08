@@ -1,5 +1,5 @@
 import "dotenv/config";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import { vi, beforeAll, afterEach, afterAll } from "vitest";
 import React from "react";
 import { server } from "./src/mocks/server";

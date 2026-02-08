@@ -8,7 +8,6 @@ import Credentials from 'next-auth/providers/credentials';
 import Facebook from 'next-auth/providers/facebook';
 import Google from 'next-auth/providers/google';
 
-import { findAuthUserByEmail, findAuthUserById } from '@/features/auth/server';
 import { getAuthAccessForUser } from '@/features/auth/services/auth-access';
 import { consumeLoginChallenge } from '@/features/auth/services/auth-login-challenge';
 import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/services/auth-provider';
@@ -27,6 +26,7 @@ import { getMongoClient } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
 import { authConfig } from './auth.config';
+import { findAuthUserByEmail, findAuthUserById } from './services/auth-user-service';
 
 import type { JWT } from 'next-auth/jwt';
 import type { Provider } from 'next-auth/providers';

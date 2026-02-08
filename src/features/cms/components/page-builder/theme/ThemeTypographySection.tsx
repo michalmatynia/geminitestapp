@@ -10,14 +10,17 @@ import {
   SelectField,
 } from '../shared-fields';
 import { FONT_OPTIONS, WEIGHT_OPTIONS } from './theme-constants';
+import { useThemeSettings } from '../ThemeSettingsContext';
 
-export function ThemeTypographySection({
-  theme,
-  updateSetting,
-}: {
-  theme: ThemeSettings;
-  updateSetting: <K extends keyof ThemeSettings>(key: K) => (value: ThemeSettings[K]) => void;
-}): React.JSX.Element {
+export function ThemeTypographySection(): React.JSX.Element {
+  const { theme, update } = useThemeSettings();
+
+  const updateSetting = <K extends keyof ThemeSettings>(key: K): ((value: ThemeSettings[K]) => void) => {
+    return (value: ThemeSettings[K]): void => {
+      update(key, value);
+    };
+  };
+
   return (
     <div className="space-y-3">
       <NumberField label="Base size" value={theme.baseSize} onChange={updateSetting('baseSize')} suffix="px" min={12} max={24} />

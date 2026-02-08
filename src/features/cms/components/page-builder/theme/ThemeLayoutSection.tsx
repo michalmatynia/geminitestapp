@@ -10,14 +10,17 @@ import {
   NumberField,
   RangeField,
 } from '../shared-fields';
+import { useThemeSettings } from '../ThemeSettingsContext';
 
-export function ThemeLayoutSection({
-  theme,
-  updateSetting,
-}: {
-  theme: ThemeSettings;
-  updateSetting: <K extends keyof ThemeSettings>(key: K) => (value: ThemeSettings[K]) => void;
-}): React.JSX.Element {
+export function ThemeLayoutSection(): React.JSX.Element {
+  const { theme, update } = useThemeSettings();
+
+  const updateSetting = <K extends keyof ThemeSettings>(key: K): ((value: ThemeSettings[K]) => void) => {
+    return (value: ThemeSettings[K]): void => {
+      update(key, value);
+    };
+  };
+
   return (
     <div className="space-y-3">
       <CheckboxField label="Full width page" checked={theme.fullWidth} onChange={updateSetting('fullWidth')} />

@@ -12,16 +12,17 @@ import {
   RangeField,
   SelectField,
 } from '../shared-fields';
+import { useThemeSettings } from '../ThemeSettingsContext';
 
-export function ThemeProductCardsSection({
-  theme,
-  update,
-  updateSetting,
-}: {
-  theme: ThemeSettings;
-  update: <K extends keyof ThemeSettings>(key: K, value: ThemeSettings[K]) => void;
-  updateSetting: <K extends keyof ThemeSettings>(key: K) => (value: ThemeSettings[K]) => void;
-}): React.JSX.Element {
+export function ThemeProductCardsSection(): React.JSX.Element {
+  const { theme, update } = useThemeSettings();
+  
+  const updateSetting = <K extends keyof ThemeSettings>(key: K): ((value: ThemeSettings[K]) => void) => {
+    return (value: ThemeSettings[K]): void => {
+      update(key, value);
+    };
+  };
+
   return (
     <div className="space-y-3">
       <SelectField label="Style" value={theme.cardStyle} onChange={updateSetting('cardStyle')} options={[
@@ -76,15 +77,15 @@ export function ThemeProductCardsSection({
   );
 }
 
-export function ThemeCollectionCardsSection({
-  theme,
-  update,
-  updateSetting,
-}: {
-  theme: ThemeSettings;
-  update: <K extends keyof ThemeSettings>(key: K, value: ThemeSettings[K]) => void;
-  updateSetting: <K extends keyof ThemeSettings>(key: K) => (value: ThemeSettings[K]) => void;
-}): React.JSX.Element {
+export function ThemeCollectionCardsSection(): React.JSX.Element {
+  const { theme, update } = useThemeSettings();
+
+  const updateSetting = <K extends keyof ThemeSettings>(key: K): ((value: ThemeSettings[K]) => void) => {
+    return (value: ThemeSettings[K]): void => {
+      update(key, value);
+    };
+  };
+
   return (
     <div className="space-y-3">
       <SelectField label="Style" value={theme.collectionStyle} onChange={updateSetting('collectionStyle')} options={[
@@ -128,15 +129,15 @@ export function ThemeCollectionCardsSection({
   );
 }
 
-export function ThemeBlogCardsSection({
-  theme,
-  update,
-  updateSetting,
-}: {
-  theme: ThemeSettings;
-  update: <K extends keyof ThemeSettings>(key: K, value: ThemeSettings[K]) => void;
-  updateSetting: <K extends keyof ThemeSettings>(key: K) => (value: ThemeSettings[K]) => void;
-}): React.JSX.Element {
+export function ThemeBlogCardsSection(): React.JSX.Element {
+  const { theme, update } = useThemeSettings();
+
+  const updateSetting = <K extends keyof ThemeSettings>(key: K): ((value: ThemeSettings[K]) => void) => {
+    return (value: ThemeSettings[K]): void => {
+      update(key, value);
+    };
+  };
+
   return (
     <div className="space-y-3">
       <SelectField label="Style" value={theme.blogStyle} onChange={updateSetting('blogStyle')} options={[

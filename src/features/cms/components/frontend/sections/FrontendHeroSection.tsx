@@ -1,21 +1,21 @@
 'use client';
 
 
-import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from '../theme-styles';
+import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
 import { useMediaStyles } from '../media-styles-context';
 import { SectionDataProvider } from './SectionDataContext';
+import { useCmsPageContext } from '../CmsPageContext';
 
 import type { BlockInstance } from '../../../types/page-builder';
 
 interface FrontendHeroSectionProps {
   settings: Record<string, unknown>;
   blocks: BlockInstance[];
-  colorSchemes?: Record<string, ColorSchemeColors> | undefined;
-  layout?: { fullWidth?: boolean | undefined } | undefined;
 }
 
-export function FrontendHeroSection({ settings, blocks, colorSchemes, layout }: FrontendHeroSectionProps): React.ReactNode {
+export function FrontendHeroSection({ settings, blocks }: FrontendHeroSectionProps): React.ReactNode {
+  const { colorSchemes, layout } = useCmsPageContext();
   const sectionStyles = getSectionStyles(settings, colorSchemes);
   const image = settings['image'] as string | undefined;
   const imageHeight = (settings['imageHeight'] as string) || 'large';
@@ -27,7 +27,7 @@ export function FrontendHeroSection({ settings, blocks, colorSchemes, layout }: 
         : 'min-h-[450px]'; // medium or adapt
 
   return (
-    <SectionDataProvider settings={settings} colorSchemes={colorSchemes}>
+    <SectionDataProvider settings={settings}>
       <section
         className={`cms-media relative w-full ${heightClass} flex items-center justify-center overflow-hidden`}
         style={{ ...sectionStyles, ...(mediaStyles ?? {}) }}

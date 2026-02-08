@@ -10,7 +10,8 @@ import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import type { JsonParseResult } from "@/shared/types/api";
-import type { ChatMessage, ChatbotJobStatus, ChatbotJob } from "@/shared/types/chatbot";
+import type { EnqueueChatbotJobRequestDto as EnqueueJobRequest } from "@/shared/dtos/chatbot";
+import type { ChatbotJobStatus, ChatbotJob } from "@/shared/types/chatbot";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
@@ -18,13 +19,6 @@ const chatMessageSchema = z.object({
   role: z.enum(["user", "assistant", "system"]),
   content: z.string(),
 });
-
-interface EnqueueJobRequest {
-  sessionId: string;
-  model: string;
-  messages: ChatMessage[];
-  userMessage?: string;
-}
 
 const enqueueJobSchema = z.object({
   sessionId: z.string().trim().min(1),

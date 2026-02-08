@@ -1,13 +1,12 @@
 'use client';
 
 
+import { useCmsPageContext } from '../CmsPageContext';
 import { useMediaStyles } from '../media-styles-context';
-import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from '../theme-styles';
+import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
 
 interface FrontendVideoSectionProps {
   settings: Record<string, unknown>;
-  colorSchemes?: Record<string, ColorSchemeColors> | undefined;
-  layout?: { fullWidth?: boolean | undefined } | undefined;
 }
 
 function getEmbedUrl(url: string): string | null {
@@ -38,7 +37,8 @@ function getAspectPadding(ratio: string): string {
   }
 }
 
-export function FrontendVideoSection({ settings, colorSchemes, layout }: FrontendVideoSectionProps): React.ReactNode {
+export function FrontendVideoSection({ settings }: FrontendVideoSectionProps): React.ReactNode {
+  const { colorSchemes, layout } = useCmsPageContext();
   const sectionStyles = getSectionStyles(settings, colorSchemes);
   const videoUrl = (settings['videoUrl'] as string) || '';
   const aspectRatio = (settings['aspectRatio'] as string) || '16:9';

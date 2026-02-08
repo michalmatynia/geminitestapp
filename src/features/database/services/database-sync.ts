@@ -3022,7 +3022,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
       ])
     );
     const docs = rows.map((product) => {
-      const categoryId = product.categories[0]?.categoryId ?? null;
+      const categoryId = product.categories?.categoryId ?? null;
       return {
         _id: product.id,
         id: product.id,

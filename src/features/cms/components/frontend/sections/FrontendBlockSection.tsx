@@ -1,7 +1,8 @@
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
 
-import { getSectionContainerClass, getSectionStyles, getTextAlign, type ColorSchemeColors } from '../theme-styles';
+import { getSectionContainerClass, getSectionStyles, getTextAlign } from '../theme-styles';
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
+import { useCmsPageContext } from '../CmsPageContext';
 import { SectionDataProvider } from './SectionDataContext';
 
 import type { BlockInstance } from '../../../types/page-builder';
@@ -31,17 +32,14 @@ interface FrontendBlockSectionProps {
   sectionId?: string | undefined;
   settings: Record<string, unknown>;
   blocks: BlockInstance[];
-  colorSchemes?: Record<string, ColorSchemeColors> | undefined;
-  layout?: { fullWidth?: boolean | undefined } | undefined;
 }
 
 export function FrontendBlockSection({
   sectionId,
   settings,
   blocks,
-  colorSchemes,
-  layout,
 }: FrontendBlockSectionProps): React.ReactNode {
+  const { colorSchemes, layout } = useCmsPageContext();
   const sectionStyles = {
     ...getSectionStyles(settings, colorSchemes),
     ...getTextAlign(settings['contentAlignment']),
@@ -75,7 +73,7 @@ export function FrontendBlockSection({
   );
 
   return (
-    <SectionDataProvider settings={settings} colorSchemes={colorSchemes}>
+    <SectionDataProvider settings={settings}>
       <section
         className={`w-full${sectionId ? ` cms-node-${sectionId}` : ''}`}
         style={sectionStyles}

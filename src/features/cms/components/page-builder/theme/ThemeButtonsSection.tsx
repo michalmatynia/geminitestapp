@@ -12,14 +12,17 @@ import {
   SelectField,
 } from '../shared-fields';
 import { WEIGHT_OPTIONS } from './theme-constants';
+import { useThemeSettings } from '../ThemeSettingsContext';
 
-export function ThemeButtonsSection({
-  theme,
-  updateSetting,
-}: {
-  theme: ThemeSettings;
-  updateSetting: <K extends keyof ThemeSettings>(key: K) => (value: ThemeSettings[K]) => void;
-}): React.JSX.Element {
+export function ThemeButtonsSection(): React.JSX.Element {
+  const { theme, update } = useThemeSettings();
+
+  const updateSetting = <K extends keyof ThemeSettings>(key: K): ((value: ThemeSettings[K]) => void) => {
+    return (value: ThemeSettings[K]): void => {
+      update(key, value);
+    };
+  };
+
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2">

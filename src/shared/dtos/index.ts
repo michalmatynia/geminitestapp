@@ -1,5 +1,6 @@
 // Export all DTOs
 export * from './common';
+export * from './base-ai';
 export * from './admin';
 export * from './agent-runtime';
 export * from './agent-teaching';

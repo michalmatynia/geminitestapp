@@ -1,17 +1,17 @@
 
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
-import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from '../theme-styles';
+import { useCmsPageContext } from '../CmsPageContext';
+import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
 
 import type { BlockInstance } from '../../../types/page-builder';
 
 interface FrontendNewsletterSectionProps {
   settings: Record<string, unknown>;
   blocks: BlockInstance[];
-  colorSchemes?: Record<string, ColorSchemeColors> | undefined;
-  layout?: { fullWidth?: boolean | undefined } | undefined;
 }
 
-export function FrontendNewsletterSection({ settings, blocks, colorSchemes, layout }: FrontendNewsletterSectionProps): React.ReactNode {
+export function FrontendNewsletterSection({ settings, blocks }: FrontendNewsletterSectionProps): React.ReactNode {
+  const { colorSchemes, layout } = useCmsPageContext();
   const sectionStyles = getSectionStyles(settings, colorSchemes);
   const buttonText = (settings['buttonText'] as string) || 'Subscribe';
   const placeholder = (settings['placeholder'] as string) || 'Enter your email';

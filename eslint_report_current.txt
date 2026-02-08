@@ -1,0 +1,50 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/auth/auth.ts
+  11:1  error  There should be at least one empty line between import groups                       import/order
+  11:1  error  `./services/auth-user-service` import should occur after import of `./auth.config`  import/order
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/ThemeSettingsPanel.tsx
+  53:1  error  `./theme/ThemeColorsContext` import should occur before import of `./theme/ThemeColorsSection`  import/order
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/theme/ThemeAiSection.tsx
+   5:1  error  There should be at least one empty line between import groups                                  import/order
+  11:1  error  There should be at least one empty line between import groups                                  import/order
+  12:1  error  `@/features/cms/types/theme-settings` type import should occur before import of `@/shared/ui`  import/order
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/theme/ThemeButtonsSection.tsx
+  14:1  error  There should be no empty line within import group  import/order
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/theme/ThemeCardsSection.tsx
+  8:1  error  There should be no empty line within import group  import/order
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/theme/ThemeColorsContext.tsx
+    3:1   error  There should be at least one empty line between import groups                                                    import/order
+    5:1   error  `@/features/ai/chatbot/hooks/useChatbotQueries` import should occur before import of `@/shared/ui`               import/order
+    6:1   error  `@/features/ai/agentcreator/teaching/hooks/useAgentTeaching` import should occur before import of `@/shared/ui`  import/order
+    7:1   error  `@/shared/providers/SettingsStoreProvider` import should occur before import of `@/shared/ui`                    import/order
+    8:1   error  There should be at least one empty line between import groups                                                    import/order
+    8:1   error  `@/features/ai/brain` import should occur before import of `@/shared/ui`                                         import/order
+   11:1   error  There should be at least one empty line between import groups                                                    import/order
+   12:1   error  `@/features/cms/types/theme-settings` type import should occur before import of `@/shared/ui`                    import/order
+   13:1   error  `@/shared/types/chatbot` type import should occur before import of `@/shared/ui`                                 import/order
+   14:1   error  `@/shared/types/agent-teaching` type import should occur before import of `@/shared/ui`                          import/order
+  231:47  error  Unnecessary escape character: \s                                                                                 no-useless-escape
+  231:54  error  Unnecessary escape character: \s                                                                                 no-useless-escape
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/theme/ThemeColorsSection.tsx
+   7:1  error  There should be at least one empty line between import groups                                           import/order
+   8:1  error  There should be at least one empty line between import groups                                           import/order
+   8:1  error  `@/shared/ui` import should occur before import of `./ThemeColorsContext`                               import/order
+   9:1  error  `../shared-fields` import should occur before import of `../ThemeSettingsContext`                       import/order
+  10:1  error  There should be at least one empty line between import groups                                           import/order
+  11:1  error  `@/features/cms/types/theme-settings` type import should occur before import of `./ThemeColorsContext`  import/order
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/theme/ThemeLayoutSection.tsx
+  8:1  error  There should be no empty line within import group  import/order
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/theme/ThemeTypographySection.tsx
+  12:1  error  There should be no empty line within import group  import/order
+
+✖ 28 problems (28 errors, 0 warnings)
+  26 errors and 0 warnings potentially fixable with the `--fix` option.
+

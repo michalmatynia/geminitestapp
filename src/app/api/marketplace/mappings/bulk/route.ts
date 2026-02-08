@@ -5,15 +5,7 @@ import { getCategoryMappingRepository } from "@/features/integrations/server";
 import { badRequestError, validationError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-
-type BulkMappingRequest = {
-  connectionId: string;
-  catalogId: string;
-  mappings: {
-    externalCategoryId: string;
-    internalCategoryId: string | null;
-  }[];
-};
+import type { BulkCategoryMappingRequestDto as BulkMappingRequest } from "@/shared/dtos/integrations";
 
 /**
  * POST /api/marketplace/mappings/bulk

@@ -10,45 +10,30 @@ import {
   UnifiedSelect,
 } from '@/shared/ui';
 
-export function ThemeAiSection({
-  schemeAiProvider,
-  setSchemeAiProvider,
-  schemeProviderOptions,
-  schemeAiModelId,
-  setSchemeAiModelId,
-  modelOptions,
-  schemeAiAgentId,
-  setSchemeAiAgentId,
-  agentOptions,
-  schemeAiPrompt,
-  setSchemeAiPrompt,
-  schemeAiLoading,
-  schemeAiError,
-  schemeAiOutput,
-  schemeAiPreview,
-  newSchemeColors,
-  handleGenerateScheme,
-  handleCancelSchemeAi,
-}: {
-  schemeAiProvider: 'model' | 'agent';
-  setSchemeAiProvider: (value: 'model' | 'agent') => void;
-  schemeProviderOptions: Array<{ label: string; value: string }>;
-  schemeAiModelId: string;
-  setSchemeAiModelId: (value: string) => void;
-  modelOptions: string[];
-  schemeAiAgentId: string;
-  setSchemeAiAgentId: (value: string) => void;
-  agentOptions: Array<{ label: string; value: string }>;
-  schemeAiPrompt: string;
-  setSchemeAiPrompt: (value: string) => void;
-  schemeAiLoading: boolean;
-  schemeAiError: string | null;
-  schemeAiOutput: string;
-  schemeAiPreview: { name?: string | undefined; colors: Partial<ColorSchemeColors> } | null;
-  newSchemeColors: ColorSchemeColors;
-  handleGenerateScheme: () => Promise<void>;
-  handleCancelSchemeAi: () => void;
-}): React.JSX.Element {
+import { useThemeColors } from './ThemeColorsContext';
+
+export function ThemeAiSection(): React.JSX.Element {
+  const {
+    schemeAiProvider,
+    setSchemeAiProvider,
+    schemeProviderOptions,
+    schemeAiModelId,
+    setSchemeAiModelId,
+    modelOptions,
+    schemeAiAgentId,
+    setSchemeAiAgentId,
+    agentOptions,
+    schemeAiPrompt,
+    setSchemeAiPrompt,
+    schemeAiLoading,
+    schemeAiError,
+    schemeAiOutput,
+    schemeAiPreview,
+    newSchemeColors,
+    handleGenerateScheme,
+    handleCancelSchemeAi,
+  } = useThemeColors();
+
   return (
     <div className="rounded border border-border/40 bg-gray-900/40 p-3 space-y-3">
       <div className="flex items-center justify-between">

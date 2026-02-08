@@ -1,17 +1,17 @@
 
-import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from '../theme-styles';
+import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
+import { useCmsPageContext } from '../CmsPageContext';
 
 import type { BlockInstance } from '../../../types/page-builder';
 
 interface FrontendRichTextSectionProps {
   settings: Record<string, unknown>;
   blocks: BlockInstance[];
-  colorSchemes?: Record<string, ColorSchemeColors> | undefined;
-  layout?: { fullWidth?: boolean | undefined } | undefined;
 }
 
-export function FrontendRichTextSection({ settings, blocks, colorSchemes, layout }: FrontendRichTextSectionProps): React.ReactNode {
+export function FrontendRichTextSection({ settings, blocks }: FrontendRichTextSectionProps): React.ReactNode {
+  const { colorSchemes, layout } = useCmsPageContext();
   const sectionStyles = getSectionStyles(settings, colorSchemes);
 
   return (

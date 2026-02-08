@@ -9,37 +9,13 @@ import prisma from "@/shared/lib/db/prisma";
 
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-
-type FieldInfo = {
-  name: string;
-  type: string;
-  isRequired?: boolean | undefined;
-  isId?: boolean | undefined;
-  isUnique?: boolean | undefined;
-  hasDefault?: boolean | undefined;
-  relationTo?: string | undefined;
-};
-
-type CollectionSchema = {
-  name: string;
-  fields: FieldInfo[];
-  relations?: string[] | undefined;
-};
-
-type SchemaProvider = "mongodb" | "prisma";
-
-type SchemaResponse = {
-  provider: SchemaProvider;
-  collections: CollectionSchema[];
-};
-
-type MultiSchemaResponse = {
-  provider: "multi";
-  collections: Array<CollectionSchema & { provider: SchemaProvider }>;
-  sources: Partial<Record<SchemaProvider, SchemaResponse>>;
-};
-
-type SchemaResponsePayload = SchemaResponse | MultiSchemaResponse;
+import type { 
+  FieldInfoDto as FieldInfo, 
+  CollectionSchemaDto as CollectionSchema, 
+  SchemaProviderDto as SchemaProvider,
+  SchemaResponseDto as SchemaResponse,
+  SchemaResponsePayloadDto as SchemaResponsePayload
+} from "@/shared/dtos/database";
 
 // Prisma DMMF types for internal use
 type DmmfField = {
@@ -217,11 +193,11 @@ function getPrismaSchema(): SchemaResponse {
       const fields: FieldInfo[] = model.fields.map((field: DmmfField) => ({
         name: field.name,
         type: field.type,
-        isRequired: field.isRequired,
-        isId: field.isId,
-        isUnique: field.isUnique,
-        hasDefault: field.hasDefaultValue,
-        relationTo: field.relationName,
+        isRequired: field.isRequired ?? null,
+        isId: field.isId ?? null,
+        isUnique: field.isUnique ?? null,
+        hasDefault: field.hasDefaultValue ?? null,
+        relationTo: field.relationName ?? null,
       }));
 
       collections.push({

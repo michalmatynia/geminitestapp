@@ -176,6 +176,7 @@ Explicit mapping of features to their test locations to aid AI context.
 - Frontend CMS rendering supports GSAP animations via `GsapAnimationWrapper`.
 - App embeds are supported (e.g., chatbot blocks).
 - Grid/row/column backgrounds can use ImageElement settings stored as `backgroundImage` for layered backgrounds.
+- Prop-drilling for global page settings (layout, color schemes) eliminated via `CmsPageContext`.
 
 ## AI + Automation
 

@@ -275,7 +275,7 @@ export const prismaProductRepository: ProductRepository = {
         ...product,
         imageBase64s: [],
       }),
-      images: product.images
+      images: (product.images || [])
         .map((image: typeof product.images[number]) => toProductImageRecord(image))
         .filter(
           (
@@ -283,15 +283,15 @@ export const prismaProductRepository: ProductRepository = {
           ): image is NonNullable<ReturnType<typeof toProductImageRecord>> =>
             image !== null
         ),
-      catalogs: product.catalogs.map((entry: typeof product.catalogs[number]) => ({
+      catalogs: (product.catalogs || []).map((entry: typeof product.catalogs[number]) => ({
         productId: entry.productId,
         catalogId: entry.catalogId,
         assignedAt: entry.assignedAt,
         catalog: toCatalogRecord(entry.catalog),
       })),
-      categoryId: product.categories[0]?.categoryId ?? null,
-      tags: product.tags.map((t: { tagId: string }) => ({ tagId: t.tagId })),
-      producers: product.producers.map((p: { producerId: string }) => ({
+      categoryId: product.categories?.categoryId ?? null,
+      tags: (product.tags || []).map((t: { tagId: string }) => ({ tagId: t.tagId })),
+      producers: (product.producers || []).map((p: { producerId: string }) => ({
         producerId: p.producerId,
       })),
     }));
@@ -332,7 +332,7 @@ export const prismaProductRepository: ProductRepository = {
         ...product,
         imageBase64s: [],
       }),
-      images: product.images
+      images: (product.images || [])
         .map((image: typeof product.images[number]) => toProductImageRecord(image))
         .filter(
           (
@@ -340,15 +340,15 @@ export const prismaProductRepository: ProductRepository = {
           ): image is NonNullable<ReturnType<typeof toProductImageRecord>> =>
             image !== null
         ),
-      catalogs: product.catalogs.map((entry: typeof product.catalogs[number]) => ({
+      catalogs: (product.catalogs || []).map((entry: typeof product.catalogs[number]) => ({
         productId: entry.productId,
         catalogId: entry.catalogId,
         assignedAt: entry.assignedAt,
         catalog: toCatalogRecord(entry.catalog),
       })),
-      categoryId: product.categories[0]?.categoryId ?? null,
-      tags: product.tags.map((t: { tagId: string }) => ({ tagId: t.tagId })),
-      producers: product.producers.map((p: { producerId: string }) => ({
+      categoryId: product.categories?.categoryId ?? null,
+      tags: (product.tags || []).map((t: { tagId: string }) => ({ tagId: t.tagId })),
+      producers: (product.producers || []).map((p: { producerId: string }) => ({
         producerId: p.producerId,
       })),
     };

@@ -596,11 +596,13 @@ export const getIntegrationsWithConnections = async (): Promise<IntegrationWithC
     include: {
       connections: {
         select: { id: true, name: true, integrationId: true },
-        orderBy: { createdAt: 'desc' },
       },
     },
     orderBy: { name: 'asc' },
   });
 
-  return integrations as IntegrationWithConnectionsBasic[];
+  return integrations.map((integration) => ({
+    ...integration,
+    connections: integration.connections ? [integration.connections] : [],
+  })) as IntegrationWithConnectionsBasic[];
 };

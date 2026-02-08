@@ -3,6 +3,9 @@ W drafterze potrzebuje producenta, ikonek wiecej, modal as wide as other Product
 
 Back up restore note working
 
+
+Prisma to mongdo i w drugę musi byc flawless, rowniez obsluga path przez Mongo i Auto w zaleznosci jaka baza jest wybrana jako glowna
+
 Run the project on newest node
 
 Some things are still connected to MongoDB, that's an issue, they have to respect the Provider

@@ -1,17 +1,17 @@
 
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
-import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from '../theme-styles';
+import { useCmsPageContext } from '../CmsPageContext';
+import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
 
 import type { BlockInstance } from '../../../types/page-builder';
 
 interface FrontendTestimonialsSectionProps {
   settings: Record<string, unknown>;
   blocks: BlockInstance[];
-  colorSchemes?: Record<string, ColorSchemeColors> | undefined;
-  layout?: { fullWidth?: boolean | undefined } | undefined;
 }
 
-export function FrontendTestimonialsSection({ settings, blocks, colorSchemes, layout }: FrontendTestimonialsSectionProps): React.ReactNode {
+export function FrontendTestimonialsSection({ settings, blocks }: FrontendTestimonialsSectionProps): React.ReactNode {
+  const { colorSchemes, layout } = useCmsPageContext();
   const sectionStyles = getSectionStyles(settings, colorSchemes);
   const columns = (settings['columns'] as number) || 3;
 

@@ -9,22 +9,7 @@ import { badRequestError } from "@/shared/errors/app-error";
 import { ErrorSystem } from "@/features/observability/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-
-type BrowseParams = {
-  collection: string;
-  limit?: number;
-  skip?: number;
-  query?: string;
-};
-
-type BrowseResponse = {
-  provider: "mongodb" | "prisma";
-  collection: string;
-  documents: Record<string, unknown>[];
-  total: number;
-  limit: number;
-  skip: number;
-};
+import type { DatabaseBrowseParamsDto as BrowseParams, DatabaseBrowseDto as BrowseResponse } from "@/shared/dtos/database";
 
 async function browseMongoCollection(params: BrowseParams): Promise<BrowseResponse> {
   const db = await getMongoDb();

@@ -60,21 +60,20 @@ const CircleIconButton = ({
 
 interface ColumnActionsProps {
   row: Row<ProductWithImages>;
-  onProductEditClick?: ((row: ProductWithImages) => void) | undefined;
-  onProductDeleteClick?: ((row: ProductWithImages) => void) | undefined;
-  setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>> | undefined;
 }
 
 const ActionsCell: React.FC<ColumnActionsProps> = ({
   row,
-  onProductEditClick,
-  onProductDeleteClick,
-  setRefreshTrigger,
 }: ColumnActionsProps) => {
   const product: ProductWithImages = row.original;
   const router = useRouter();
   const { toast } = useToast();
   const { mutateAsync: duplicateProduct } = useDuplicateProduct();
+  const {
+    onProductEditClick,
+    onProductDeleteClick,
+    setRefreshTrigger,
+  } = useProductListContext();
 
   const handleDuplicate = async (): Promise<void> => {
     const sku: string | null = window.prompt('Enter a new unique SKU for the duplicate:');
@@ -523,18 +522,9 @@ export const getProductColumns = (
   {
     id: 'actions',
     cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element | null => {
-      const {
-        onProductEditClick,
-        onProductDeleteClick,
-        setRefreshTrigger,
-      } = useProductListContext();
-
       return (
         <ActionsCell
           row={row}
-          onProductEditClick={onProductEditClick}
-          onProductDeleteClick={onProductDeleteClick}
-          setRefreshTrigger={setRefreshTrigger}
         />
       );
     },

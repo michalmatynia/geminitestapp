@@ -2,9 +2,10 @@
 
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
 
-import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from '../theme-styles';
+import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
 import { SectionDataProvider } from './SectionDataContext';
+import { useCmsPageContext } from '../CmsPageContext';
 
 import type { BlockInstance } from '../../../types/page-builder';
 
@@ -12,7 +13,6 @@ interface FrontendSlideshowSectionProps {
   sectionId?: string | undefined;
   settings: Record<string, unknown>;
   blocks: BlockInstance[];
-  colorSchemes?: Record<string, ColorSchemeColors> | undefined;
   layout?: { fullWidth?: boolean | undefined } | undefined;
 }
 
@@ -20,9 +20,10 @@ export function FrontendSlideshowSection({
   sectionId,
   settings,
   blocks,
-  colorSchemes,
-  layout,
+  layout: propLayout,
 }: FrontendSlideshowSectionProps): React.ReactNode {
+  const { colorSchemes, layout: contextLayout } = useCmsPageContext();
+  const layout = propLayout ?? contextLayout;
   const sectionStyles = getSectionStyles(settings, colorSchemes);
   const sectionSelector = sectionId ? getCustomCssSelector(sectionId) : null;
   const sectionCustomCss = buildScopedCustomCss(settings['customCss'], sectionSelector);
@@ -31,7 +32,7 @@ export function FrontendSlideshowSection({
   // For now, it renders blocks similar to a regular section but could be enhanced
 
   return (
-    <SectionDataProvider settings={settings} colorSchemes={colorSchemes}>
+    <SectionDataProvider settings={settings}>
       <section
         className={`w-full relative overflow-hidden${sectionId ? ` cms-node-${sectionId}` : ''}`}
         style={sectionStyles}

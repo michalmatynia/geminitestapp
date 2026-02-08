@@ -1,13 +1,13 @@
 
-import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from '../theme-styles';
+import { useCmsPageContext } from '../CmsPageContext';
+import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
 
 interface FrontendContactFormSectionProps {
   settings: Record<string, unknown>;
-  colorSchemes?: Record<string, ColorSchemeColors> | undefined;
-  layout?: { fullWidth?: boolean | undefined } | undefined;
 }
 
-export function FrontendContactFormSection({ settings, colorSchemes, layout }: FrontendContactFormSectionProps): React.ReactNode {
+export function FrontendContactFormSection({ settings }: FrontendContactFormSectionProps): React.ReactNode {
+  const { colorSchemes, layout } = useCmsPageContext();
   const sectionStyles = getSectionStyles(settings, colorSchemes);
   const fields = ((settings['fields'] as string) || 'name,email,message')
     .split(',')

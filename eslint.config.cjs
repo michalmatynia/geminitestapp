@@ -17,7 +17,7 @@ module.exports = tseslint.config(
       'build/',
       'temp/',
       'tmp/',
-      '__tests__/mocks/',
+      '__tests__/mocks/**/*',
       '*.cjs',
       '*.mjs',
       'auto-keep-trying.js',

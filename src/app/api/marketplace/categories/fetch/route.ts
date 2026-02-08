@@ -8,10 +8,7 @@ import { resolveBaseConnectionToken } from "@/features/integrations/services/bas
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-
-type FetchCategoriesRequest = {
-  connectionId: string;
-};
+import type { FetchMarketplaceCategoriesRequestDto as FetchCategoriesRequest } from "@/shared/dtos/integrations";
 
 /**
  * POST /api/marketplace/categories/fetch

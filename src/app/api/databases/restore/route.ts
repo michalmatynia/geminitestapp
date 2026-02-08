@@ -149,7 +149,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
     if (truncateBeforeRestore) {
       stage = "truncate";
-      const dbUrl = process.env.DATABASE_URL ?? "";
+      const dbUrl = process.env["DATABASE_URL"] ?? "";
       if (
         !dbUrl.startsWith("postgres://") &&
         !dbUrl.startsWith("postgresql://")

@@ -36,7 +36,7 @@ const createId = (): string => {
 
 let warnedNoMongo = false;
 const isMongoAvailable = (): boolean => {
-  if (process.env.MONGODB_URI) return true;
+  if (process.env["MONGODB_URI"]) return true;
   if (!warnedNoMongo) {
     console.warn('[agent-teaching] MONGODB_URI missing; agent teaching data will be empty.');
     warnedNoMongo = true;

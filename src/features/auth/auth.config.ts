@@ -3,17 +3,17 @@ import type { JWT } from 'next-auth/jwt';
 
 const devFallbackSecret = 'dev-secret-change-me';
 const secret =
-  process.env.AUTH_SECRET ||
-  process.env.NEXTAUTH_SECRET ||
-  (process.env.NODE_ENV === 'development' ? devFallbackSecret : undefined);
-const isProd = process.env.NODE_ENV === 'production';
+  process.env["AUTH_SECRET"] ||
+  process.env["NEXTAUTH_SECRET"] ||
+  (process.env["NODE_ENV"] === 'development' ? devFallbackSecret : undefined);
+const isProd = process.env["NODE_ENV"] === 'production';
 const securePrefix = isProd ? '__Secure-' : '';
 const hostPrefix = isProd ? '__Host-' : '';
 
 if (
-  process.env.NODE_ENV === 'development' &&
-  !process.env.AUTH_SECRET &&
-  !process.env.NEXTAUTH_SECRET
+  process.env["NODE_ENV"] === 'development' &&
+  !process.env["AUTH_SECRET"] &&
+  !process.env["NEXTAUTH_SECRET"]
 ) {
   console.warn(
     '[AUTH] AUTH_SECRET/NEXTAUTH_SECRET not set. Using dev fallback secret.'

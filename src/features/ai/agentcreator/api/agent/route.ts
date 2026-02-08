@@ -11,7 +11,7 @@ import { apiHandler } from '@/shared/lib/api/api-handler';
 import prisma from '@/shared/lib/db/prisma';
 import type { ApiHandlerContext } from '@/shared/types/api';
 
-const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === 'true';
+const DEBUG_CHATBOT = process.env["DEBUG_CHATBOT"] === 'true';
 
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();

@@ -34,7 +34,7 @@ type NotificationConfig = {
 type SettingRecord = { _id: string; key?: string; value?: string };
 
 const canUsePrismaSettings = () =>
-  Boolean(process.env.DATABASE_URL) && 'setting' in prisma;
+  Boolean(process.env["DATABASE_URL"]) && 'setting' in prisma;
 
 const readPrismaSetting = async (key: string): Promise<string | null> => {
   if (!canUsePrismaSettings()) return null;
@@ -50,7 +50,7 @@ const readPrismaSetting = async (key: string): Promise<string | null> => {
 };
 
 const readMongoSetting = async (key: string): Promise<string | null> => {
-  if (!process.env.MONGODB_URI) return null;
+  if (!process.env["MONGODB_URI"]) return null;
   const mongo = await getMongoDb();
   const doc = await mongo
     .collection<SettingRecord>(SETTINGS_COLLECTION)
@@ -106,14 +106,14 @@ const getNotificationConfig = async (): Promise<NotificationConfig> => {
 
   const enabled =
     parseBoolean(enabledSetting) ||
-    parseBoolean(process.env.CRITICAL_ERROR_NOTIFICATIONS_ENABLED);
+    parseBoolean(process.env["CRITICAL_ERROR_NOTIFICATIONS_ENABLED"]);
   const webhookUrl =
-    webhookSetting ?? process.env.CRITICAL_ERROR_WEBHOOK_URL ?? null;
+    webhookSetting ?? process.env["CRITICAL_ERROR_WEBHOOK_URL"] ?? null;
   const minLevel = parseMinLevel(
-    minLevelSetting ?? process.env.CRITICAL_ERROR_MIN_LEVEL,
+    minLevelSetting ?? process.env["CRITICAL_ERROR_MIN_LEVEL"],
   );
   const throttleSeconds = parseNumber(
-    throttleSetting ?? process.env.CRITICAL_ERROR_THROTTLE_SECONDS,
+    throttleSetting ?? process.env["CRITICAL_ERROR_THROTTLE_SECONDS"],
     DEFAULT_THROTTLE_SECONDS,
   );
 
@@ -170,8 +170,8 @@ const buildPayload = (log: SystemLogRecord, critical: boolean): Record<string, u
     log.createdAt instanceof Date ? log.createdAt.toISOString() : log.createdAt,
   context: log.context ?? null,
   stack: log.stack ?? null,
-  environment: process.env.NODE_ENV ?? 'development',
-  appUrl: process.env.NEXT_PUBLIC_APP_URL ?? null,
+  environment: process.env["NODE_ENV"] ?? 'development',
+  appUrl: process.env["NEXT_PUBLIC_APP_URL"] ?? null,
 });
 
 export const notifyCriticalError = async (

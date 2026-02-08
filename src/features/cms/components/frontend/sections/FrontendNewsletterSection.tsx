@@ -1,4 +1,6 @@
 
+'use client';
+
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
 import { useCmsPageContext } from '../CmsPageContext';
 import { getSectionContainerClass, getSectionStyles } from '../theme-styles';

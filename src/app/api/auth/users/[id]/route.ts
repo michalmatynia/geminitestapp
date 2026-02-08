@@ -59,7 +59,7 @@ async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext, params: {
   const provider = requireAuthProvider(await getAuthDataProvider());
 
   if (provider === "prisma") {
-    if (!process.env.DATABASE_URL) {
+    if (!process.env["DATABASE_URL"]) {
       throw internalError("Prisma is not configured.");
     }
     const existing = await prisma.user.findUnique({
@@ -130,7 +130,7 @@ async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext, params: {
     return NextResponse.json(payload);
   }
 
-  if (!process.env.MONGODB_URI) {
+  if (!process.env["MONGODB_URI"]) {
     throw internalError("MongoDB is not configured.");
   }
   if (!ObjectId.isValid(userId)) {

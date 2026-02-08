@@ -37,7 +37,7 @@ type DmmfDatamodel = {
   models: DmmfModel[];
 };
 
-const PRISMA_SCHEMA_ENV_PATH = process.env.PRISMA_SCHEMA_PATH;
+const PRISMA_SCHEMA_ENV_PATH = process.env["PRISMA_SCHEMA_PATH"];
 const PRISMA_SCHEMA_DEFAULT_PATH = path.join(process.cwd(), "prisma", "schema.prisma");
 
 const readPrismaSchemaFile = (): string | null => {
@@ -109,7 +109,7 @@ const parsePrismaSchemaModels = (schemaText: string): CollectionSchema[] => {
 };
 
 const getPrismaDmmf = (): DmmfDatamodel | null => {
-  if (!process.env.DATABASE_URL) return null;
+  if (!process.env["DATABASE_URL"]) return null;
   try {
     return (prisma as unknown as { _dmmf?: { datamodel?: DmmfDatamodel } })._dmmf?.datamodel ?? null;
   } catch {

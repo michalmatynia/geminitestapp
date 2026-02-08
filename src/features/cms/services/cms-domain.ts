@@ -47,8 +47,8 @@ type SlugDocument = {
 
 const getFallbackDomain = (): string => {
   const url =
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.NEXTAUTH_URL ||
+    process.env["NEXT_PUBLIC_APP_URL"] ||
+    process.env["NEXTAUTH_URL"] ||
     'http://localhost';
   try {
     return new URL(url).hostname.toLowerCase();
@@ -103,10 +103,10 @@ const getHostFromHeaders = (
 };
 
 const canUsePrismaSlugs = (): boolean =>
-  Boolean(process.env.DATABASE_URL) && 'slug' in prisma;
+  Boolean(process.env["DATABASE_URL"]) && 'slug' in prisma;
 
 export async function isDomainZoningEnabled(): Promise<boolean> {
-  if (!process.env.MONGODB_URI) return false;
+  if (!process.env["MONGODB_URI"]) return false;
   const settings = await getCmsDomainSettings();
   return settings.zoningEnabled;
 }
@@ -114,7 +114,7 @@ export async function isDomainZoningEnabled(): Promise<boolean> {
 export async function setGlobalDefaultSlug(slugId: string | null): Promise<void> {
   const provider = await getCmsDataProvider();
   if (provider === 'mongodb') {
-    if (!process.env.MONGODB_URI) return;
+    if (!process.env["MONGODB_URI"]) return;
     const db = await getMongoDb();
     const now = new Date();
     await (db.collection<SlugDocument>(SLUGS_COLLECTION)).updateMany(
@@ -161,7 +161,7 @@ export async function resolveCmsDomainFromHeaders(
 }
 
 const getDomainRecordById = async (domainId: string): Promise<CmsDomainRecord | null> => {
-  if (!process.env.MONGODB_URI) return null;
+  if (!process.env["MONGODB_URI"]) return null;
   const db = await getMongoDb();
   return db
     .collection<CmsDomainRecord>(DOMAIN_COLLECTION)
@@ -427,7 +427,7 @@ export async function getSlugForDomainById(
   if (!slug) return null;
   const links = await getDomainSlugLinks(domainId);
   const link = links.find((item: CmsDomainSlugLink) => item.slugId === slugId);
-  if (!link && process.env.MONGODB_URI) return null;
+  if (!link && process.env["MONGODB_URI"]) return null;
   return {
     ...slug,
     isDefault: link?.isDefault ?? false,

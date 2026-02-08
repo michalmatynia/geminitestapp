@@ -42,9 +42,9 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
   const errors: Record<string, string> = {};
 
-  const aiPathsProvider = process.env.DATABASE_URL
+  const aiPathsProvider = process.env['DATABASE_URL']
     ? "prisma"
-    : process.env.MONGODB_URI
+    : process.env['MONGODB_URI']
       ? "mongodb"
       : "unknown";
 
@@ -73,7 +73,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
         latest,
       };
     } catch (error) {
-      errors.aiPaths = error instanceof Error ? error.message : "Failed to load AI Paths counts.";
+      errors['aiPaths'] = error instanceof Error ? error.message : "Failed to load AI Paths counts.";
       return {
         provider: aiPathsProvider,
         total: null,
@@ -106,11 +106,11 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
           byStatus: Object.fromEntries(totals) as Record<ProductAiJobStatus, number>,
           latest: latest
             ? {
-                id: (latest as unknown as { id?: string; _id?: string }).id ?? String(latest._id),
-                status: latest.status as ProductAiJobStatus,
-                createdAt: toIso(latest.createdAt as Date | string | null),
-                productId: latest.productId as string | null,
-                type: latest.type as string | null,
+                id: (latest as unknown as { id?: string; _id?: string }).id ?? String(latest['_id']),
+                status: latest['status'] as ProductAiJobStatus,
+                createdAt: toIso(latest['createdAt'] as Date | string | null),
+                productId: latest['productId'] as string | null,
+                type: latest['type'] as string | null,
               }
             : null,
         };
@@ -148,7 +148,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
         latest: null,
       };
     } catch (error) {
-      errors.aiJobs = error instanceof Error ? error.message : "Failed to load AI Jobs counts.";
+      errors['aiJobs'] = error instanceof Error ? error.message : "Failed to load AI Jobs counts.";
       return {
         provider: getProductAiJobProvider() ?? "unknown",
         total: null,

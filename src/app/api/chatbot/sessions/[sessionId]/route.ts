@@ -6,7 +6,7 @@ import { notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
-const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
+const DEBUG_CHATBOT = process.env["DEBUG_CHATBOT"] === "true";
 
 // GET /api/chatbot/sessions/[sessionId] - Get session by ID
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { sessionId: string }): Promise<Response> {

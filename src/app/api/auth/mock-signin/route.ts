@@ -53,7 +53,7 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
     body: { email: data.email },
   });
 
-  if (!process.env.MONGODB_URI) {
+  if (!process.env["MONGODB_URI"]) {
     throw internalError("MongoDB is not configured.");
   }
 

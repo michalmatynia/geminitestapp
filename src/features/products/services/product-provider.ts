@@ -24,7 +24,7 @@ const warnProviderDrift = (
 };
 
 const readMongoProductProvider = async (): Promise<ProductDbProvider | null> => {
-  if (!process.env.MONGODB_URI) return null;
+  if (!process.env["MONGODB_URI"]) return null;
   try {
     const mongo = await getMongoDb();
     const doc = await mongo
@@ -37,7 +37,7 @@ const readMongoProductProvider = async (): Promise<ProductDbProvider | null> => 
 };
 
 const readPrismaProductProvider = async (): Promise<ProductDbProvider | null> => {
-  if (!process.env.DATABASE_URL) return null;
+  if (!process.env["DATABASE_URL"]) return null;
   try {
     const setting = await prisma.setting.findUnique({
       where: { key: PRODUCT_DB_PROVIDER_SETTING_KEY },
@@ -55,8 +55,8 @@ export const getProductDataProvider = async (): Promise<ProductDbProvider> => {
   if (appProvider === 'prisma') {
     const prismaSetting = await readPrismaProductProvider();
     if (prismaSetting) {
-      if (prismaSetting === 'prisma' && !process.env.DATABASE_URL) return 'mongodb';
-      if (prismaSetting === 'mongodb' && !process.env.MONGODB_URI) return 'prisma';
+      if (prismaSetting === 'prisma' && !process.env["DATABASE_URL"]) return 'mongodb';
+      if (prismaSetting === 'mongodb' && !process.env["MONGODB_URI"]) return 'prisma';
       warnProviderDrift(appProvider, prismaSetting, 'prisma-setting');
       return prismaSetting;
     }
@@ -65,14 +65,14 @@ export const getProductDataProvider = async (): Promise<ProductDbProvider> => {
 
   const mongoSetting = await readMongoProductProvider();
   if (mongoSetting) {
-    if (mongoSetting === 'mongodb' && !process.env.MONGODB_URI) return 'prisma';
+    if (mongoSetting === 'mongodb' && !process.env["MONGODB_URI"]) return 'prisma';
     warnProviderDrift(appProvider, mongoSetting, 'mongo-setting');
     return mongoSetting;
   }
   const prismaSetting = await readPrismaProductProvider();
   if (prismaSetting) {
-    if (prismaSetting === 'prisma' && !process.env.DATABASE_URL) return 'mongodb';
-    if (prismaSetting === 'mongodb' && !process.env.MONGODB_URI) return 'prisma';
+    if (prismaSetting === 'prisma' && !process.env["DATABASE_URL"]) return 'mongodb';
+    if (prismaSetting === 'mongodb' && !process.env["MONGODB_URI"]) return 'prisma';
     warnProviderDrift(appProvider, prismaSetting, 'prisma-setting');
     return prismaSetting;
   }

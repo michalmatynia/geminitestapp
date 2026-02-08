@@ -2,7 +2,7 @@ import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job
 import { processJob } from '@/features/jobs/processors/chatbot-job-processor';
 import { createManagedQueue } from '@/shared/lib/queue';
 
-const DEBUG_CHATBOT = process.env.NODE_ENV !== 'production';
+const DEBUG_CHATBOT = process.env["NODE_ENV"] !== 'production';
 
 const logDebug = (message: string, meta?: Record<string, unknown>): void => {
   if (!DEBUG_CHATBOT) return;

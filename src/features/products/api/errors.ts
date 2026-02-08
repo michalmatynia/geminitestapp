@@ -217,7 +217,7 @@ export function createVersionedErrorResponse(
   }
 
   // In development, include error details
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env["NODE_ENV"] === 'development') {
     builder.withDetails([{
       message: error.message,
       code: 'INTERNAL_ERROR'

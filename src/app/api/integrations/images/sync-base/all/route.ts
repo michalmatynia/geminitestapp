@@ -14,8 +14,8 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise
   );
 
   const inlineJobs =
-    process.env.AI_JOBS_INLINE === "true" ||
-    process.env.NODE_ENV !== "production";
+    process.env["AI_JOBS_INLINE"] === "true" ||
+    process.env["NODE_ENV"] !== "production";
 
   if (inlineJobs) {
     processSingleJob(job.id).catch(async (error: unknown) => {

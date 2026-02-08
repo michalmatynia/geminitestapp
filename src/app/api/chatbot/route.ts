@@ -14,9 +14,9 @@ import { getSettingValue } from "@/features/products/services/aiDescriptionServi
 
 export const runtime = "nodejs";
 
-const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL;
-const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
+const OLLAMA_BASE_URL = process.env["OLLAMA_BASE_URL"] || "http://localhost:11434";
+const OLLAMA_MODEL = process.env["OLLAMA_MODEL"];
+const DEBUG_CHATBOT = process.env["DEBUG_CHATBOT"] === "true";
 const OLLAMA_MODELS_TIMEOUT_MS = 2500;
 
 const MODEL_PRESETS = {
@@ -29,11 +29,11 @@ const buildProviderFallbackModels = async (): Promise<string[]> => {
   const models = new Set<string>();
 
   const openaiKey =
-    (await getSettingValue("openai_api_key")) ?? process.env.OPENAI_API_KEY ?? "";
+    (await getSettingValue("openai_api_key")) ?? process.env["OPENAI_API_KEY"] ?? "";
   const anthropicKey =
-    (await getSettingValue("anthropic_api_key")) ?? process.env.ANTHROPIC_API_KEY ?? "";
+    (await getSettingValue("anthropic_api_key")) ?? process.env["ANTHROPIC_API_KEY"] ?? "";
   const geminiKey =
-    (await getSettingValue("gemini_api_key")) ?? process.env.GEMINI_API_KEY ?? "";
+    (await getSettingValue("gemini_api_key")) ?? process.env["GEMINI_API_KEY"] ?? "";
 
   if (openaiKey) {
     MODEL_PRESETS.openai.forEach((model) => models.add(model));

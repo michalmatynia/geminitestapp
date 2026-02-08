@@ -135,7 +135,7 @@ const normalizeCountryResponse = (
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const provider = await getInternationalizationProvider();
   if (provider === "mongodb") {
-    if (!process.env.MONGODB_URI) {
+    if (!process.env["MONGODB_URI"]) {
       throw internalError("MongoDB is not configured.");
     }
     const db = await getMongoDb();
@@ -163,7 +163,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
     return NextResponse.json(normalized);
   }
 
-  if (!process.env.DATABASE_URL) {
+  if (!process.env["DATABASE_URL"]) {
     return NextResponse.json(fallbackCountries);
   }
   await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
@@ -199,7 +199,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
   const provider = await getInternationalizationProvider();
   if (provider === "mongodb") {
-    if (!process.env.MONGODB_URI) {
+    if (!process.env["MONGODB_URI"]) {
       throw internalError("MongoDB is not configured.");
     }
     const db = await getMongoDb();
@@ -243,7 +243,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     );
   }
 
-  if (!process.env.DATABASE_URL) {
+  if (!process.env["DATABASE_URL"]) {
     throw internalError("Postgres product store is not configured.");
   }
 

@@ -6,7 +6,7 @@ Loaded Prisma config from prisma.config.ts.
 
 Prisma schema loaded from prisma/schema.prisma.
 
-✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 176ms
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 195ms
 
 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
 
@@ -24,5 +24,76 @@ Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
   · proxyClientMaxBodySize: "50mb"
 
   Creating an optimized production build ...
-✓ Compiled successfully in 17.5s
+Turbopack build encountered 3 warnings:
+./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/instrumentation.ts:33:24
+Ecmascript file had an error
+[0m [90m 31 |[39m       }
+ [90m 32 |[39m       [90m// Give some time for logging to complete before exiting[39m
+[31m[1m>[22m[39m[90m 33 |[39m       setTimeout(() [33m=>[39m process[33m.[39mexit([35m1[39m)[33m,[39m [35m1000[39m)[33m;[39m
+ [90m    |[39m                        [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 34 |[39m     })[33m;[39m
+ [90m 35 |[39m   }
+ [90m 36 |[39m }[0m
+
+A Node.js API is used (process.exit at line: 33) which is not supported in the Edge Runtime.
+Learn more: https://nextjs.org/docs/api-reference/edge-runtime
+
+Import trace:
+  App Route:
+    ./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/instrumentation.ts
+    ./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/restore/route.ts
+
+
+./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/instrumentation.ts:20:5
+Ecmascript file had an error
+[0m [90m 18 |[39m     })[33m;[39m
+ [90m 19 |[39m
+[31m[1m>[22m[39m[90m 20 |[39m     process[33m.[39mon([32m'uncaughtException'[39m[33m,[39m [36masync[39m (error[33m:[39m [33mError[39m) [33m=>[39m {
+ [90m    |[39m     [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 21 |[39m       [36mtry[39m {
+ [90m 22 |[39m         [36mconst[39m { logSystemError } [33m=[39m [36mawait[39m [36mimport[39m([32m'@/features/observability/server'[39m)[33m;[39m
+ [90m 23 |[39m         [36mawait[39m logSystemError({[0m
+
+A Node.js API is used (process.on at line: 20) which is not supported in the Edge Runtime.
+Learn more: https://nextjs.org/docs/api-reference/edge-runtime
+
+Import trace:
+  App Route:
+    ./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/instrumentation.ts
+    ./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/restore/route.ts
+
+
+./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/instrumentation.ts:7:5
+Ecmascript file had an error
+[0m [90m  5 |[39m
+ [90m  6 |[39m     [90m// Set up global error handlers for the Node.js process[39m
+[31m[1m>[22m[39m[90m  7 |[39m     process[33m.[39mon([32m'unhandledRejection'[39m[33m,[39m [36masync[39m (reason[33m:[39m unknown) [33m=>[39m {
+ [90m    |[39m     [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  8 |[39m       [36mtry[39m {
+ [90m  9 |[39m         [36mconst[39m { logSystemError } [33m=[39m [36mawait[39m [36mimport[39m([32m'@/features/observability/server'[39m)[33m;[39m
+ [90m 10 |[39m         [36mawait[39m logSystemError({[0m
+
+A Node.js API is used (process.on at line: 7) which is not supported in the Edge Runtime.
+Learn more: https://nextjs.org/docs/api-reference/edge-runtime
+
+Import trace:
+  App Route:
+    ./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/instrumentation.ts
+    ./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/restore/route.ts
+
+
+✓ Compiled successfully in 19.2s
   Running TypeScript ...
+Failed to compile.
+
+./src/app/api/integrations/[id]/connections/[connectionId]/base/request/route.ts:91:39
+Type error: Property 'inventory_id' comes from an index signature, so it must be accessed with ['inventory_id'].
+
+[0m [90m 89 |[39m
+ [90m 90 |[39m   [36mif[39m (method [33m===[39m [32m"getInventoryProductDetailed"[39m) {
+[31m[1m>[22m[39m[90m 91 |[39m     [36mconst[39m inventoryValue [33m=[39m parameters[33m.[39minventory_id[33m;[39m
+ [90m    |[39m                                       [31m[1m^[22m[39m
+ [90m 92 |[39m     [36mconst[39m inventoryId [33m=[39m
+ [90m 93 |[39m       [36mtypeof[39m inventoryValue [33m===[39m [32m"string"[39m
+ [90m 94 |[39m         [33m?[39m inventoryValue[33m.[39mtrim()[0m
+Next.js build worker exited with code: 1 and signal: null

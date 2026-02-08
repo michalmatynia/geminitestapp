@@ -25,7 +25,7 @@ const cacheKey = (scope?: SettingsScope | null): string =>
   `settings:${normalizeScope(scope)}`;
 
 export const isSettingsCacheDebugEnabled = (): boolean =>
-  process.env.NODE_ENV !== 'production' || process.env.DEBUG_SETTINGS === 'true';
+  process.env["NODE_ENV"] !== 'production' || process.env["DEBUG_SETTINGS"] === 'true';
 
 interface SettingsCacheStats {
   size: number;

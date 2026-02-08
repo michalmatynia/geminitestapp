@@ -14,7 +14,7 @@ const normalizeProvider = (value?: string | null): AuthDbProvider | null => {
 };
 
 const readMongoAuthProvider = async (): Promise<AuthDbProvider | null> => {
-  if (!process.env.MONGODB_URI) return null;
+  if (!process.env["MONGODB_URI"]) return null;
   try {
     const mongo = await getMongoDb();
     const doc = await mongo
@@ -27,7 +27,7 @@ const readMongoAuthProvider = async (): Promise<AuthDbProvider | null> => {
 };
 
 const readPrismaAuthProvider = async (): Promise<AuthDbProvider | null> => {
-  if (!process.env.DATABASE_URL) return null;
+  if (!process.env["DATABASE_URL"]) return null;
   try {
     const setting = await prisma.setting.findUnique({
       where: { key: AUTH_SETTINGS_KEYS.provider },
@@ -65,14 +65,14 @@ export const getAuthDataProvider = async (): Promise<AuthDbProvider> => {
     warnAuthProviderDrift(appProvider, prismaSetting, 'prisma-setting');
     return prismaSetting;
   }
-  const fallbackProvider: AuthDbProvider = process.env.MONGODB_URI ? 'mongodb' : 'prisma';
+  const fallbackProvider: AuthDbProvider = process.env["MONGODB_URI"] ? 'mongodb' : 'prisma';
   warnAuthProviderDrift(appProvider, fallbackProvider, 'fallback');
   return fallbackProvider;
 };
 
 export const requireAuthProvider = (provider: AuthDbProvider): AuthDbProvider => {
   if (provider === 'prisma') {
-    if (!process.env.DATABASE_URL) {
+    if (!process.env["DATABASE_URL"]) {
       void ErrorSystem.logWarning('[auth-provider] DATABASE_URL missing; falling back to MongoDB.', {
         service: 'auth-provider',
         requestedProvider: 'prisma'
@@ -81,7 +81,7 @@ export const requireAuthProvider = (provider: AuthDbProvider): AuthDbProvider =>
     }
     return 'prisma';
   }
-  if (!process.env.MONGODB_URI) {
+  if (!process.env["MONGODB_URI"]) {
     void ErrorSystem.logWarning('[auth-provider] MONGODB_URI missing; falling back to Prisma.', {
       service: 'auth-provider',
       requestedProvider: 'mongodb'

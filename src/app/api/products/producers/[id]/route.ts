@@ -41,7 +41,7 @@ async function PUT_handler(
         : undefined;
 
   if (provider === "mongodb") {
-    if (!process.env.MONGODB_URI) {
+    if (!process.env["MONGODB_URI"]) {
       throw internalError("MongoDB is not configured.");
     }
     const db = await getMongoDb();
@@ -70,7 +70,7 @@ async function PUT_handler(
     return NextResponse.json(doc as unknown as Producer);
   }
 
-  if (!process.env.DATABASE_URL) {
+  if (!process.env["DATABASE_URL"]) {
     throw badRequestError("Producers require the Postgres product store.");
   }
 
@@ -108,7 +108,7 @@ async function DELETE_handler(
   const provider = await getProductDataProvider();
 
   if (provider === "mongodb") {
-    if (!process.env.MONGODB_URI) {
+    if (!process.env["MONGODB_URI"]) {
       throw internalError("MongoDB is not configured.");
     }
     const db = await getMongoDb();
@@ -119,7 +119,7 @@ async function DELETE_handler(
     return new Response(null, { status: 204 });
   }
 
-  if (!process.env.DATABASE_URL) {
+  if (!process.env["DATABASE_URL"]) {
     throw badRequestError("Producers require the Postgres product store.");
   }
   await prisma.producer.delete({ where: { id } });

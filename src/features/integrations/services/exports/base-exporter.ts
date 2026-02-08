@@ -17,11 +17,11 @@ type ExportTemplateMapping = {
 };
 
 const IMAGE_BASE_URL =
-  process.env.NEXT_PUBLIC_APP_URL ||
-  process.env.NEXT_PUBLIC_BASE_URL ||
-  process.env.PUBLIC_BASE_URL ||
-  process.env.APP_URL ||
-  process.env.NEXTAUTH_URL ||
+  process.env["NEXT_PUBLIC_APP_URL"] ||
+  process.env["NEXT_PUBLIC_BASE_URL"] ||
+  process.env["PUBLIC_BASE_URL"] ||
+  process.env["APP_URL"] ||
+  process.env["NEXTAUTH_URL"] ||
   '';
 
 const hasScheme = (value: string): boolean => /^[a-z][a-z0-9+.-]*:/i.test(value);

@@ -16,14 +16,14 @@ let prismaReadyCache: { value: boolean; ts: number } | null = null;
 let prismaReadyInflight: Promise<boolean> | null = null;
 
 const PRISMA_READY_TTL_MS = 60_000;
-const shouldLogCms = (): boolean => process.env.DEBUG_CMS === 'true';
+const shouldLogCms = (): boolean => process.env["DEBUG_CMS"] === 'true';
 
 const isMissingTableError = (error: unknown): boolean =>
   error instanceof Prisma.PrismaClientKnownRequestError &&
   (error.code === 'P2021' || error.code === 'P2022');
 
 const canUsePrismaCms = async (): Promise<boolean> => {
-  if (!process.env.DATABASE_URL) return false;
+  if (!process.env["DATABASE_URL"]) return false;
   if (!('page' in prisma)) return false;
   const now = Date.now();
   if (prismaReadyCache && now - prismaReadyCache.ts < PRISMA_READY_TTL_MS) {
@@ -69,7 +69,7 @@ export async function getCmsRepository(): Promise<CmsRepository> {
     return cachedRepository;
   }
 
-  if (process.env.MONGODB_URI) {
+  if (process.env["MONGODB_URI"]) {
     console.warn('[cms] Prisma CMS tables missing; falling back to MongoDB.');
     cachedRepository = mongoCmsRepository;
     cachedProvider = 'mongodb';

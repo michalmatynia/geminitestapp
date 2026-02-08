@@ -5,9 +5,9 @@ import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-r
 import { ErrorSystem } from '@/features/observability/services/error-system';
 import type { AiPathRunRecord } from '@/shared/types/ai-paths';
 
-const DEFAULT_MAX_ATTEMPTS = Number(process.env.AI_PATHS_RUN_MAX_ATTEMPTS ?? '3');
-const DEFAULT_BACKOFF_MS = Number(process.env.AI_PATHS_RUN_BACKOFF_MS ?? '5000');
-const DEFAULT_BACKOFF_MAX_MS = Number(process.env.AI_PATHS_RUN_BACKOFF_MAX_MS ?? '60000');
+const DEFAULT_MAX_ATTEMPTS = Number(process.env["AI_PATHS_RUN_MAX_ATTEMPTS"] ?? '3');
+const DEFAULT_BACKOFF_MS = Number(process.env["AI_PATHS_RUN_BACKOFF_MS"] ?? '5000');
+const DEFAULT_BACKOFF_MAX_MS = Number(process.env["AI_PATHS_RUN_BACKOFF_MAX_MS"] ?? '60000');
 const TERMINAL_RUN_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
 
 const normalizeNumber = (value: number, fallback: number, min: number = 0): number => {

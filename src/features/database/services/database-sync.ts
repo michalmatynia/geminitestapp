@@ -455,10 +455,10 @@ const listMongoCollections = async (): Promise<string[]> => {
 };
 
 const requireDatabases = (): void => {
-  if (!process.env.MONGODB_URI) {
+  if (!process.env["MONGODB_URI"]) {
     throw operationFailedError('MongoDB is not configured.');
   }
-  if (!process.env.DATABASE_URL) {
+  if (!process.env["DATABASE_URL"]) {
     throw operationFailedError('Prisma database is not configured.');
   }
 };

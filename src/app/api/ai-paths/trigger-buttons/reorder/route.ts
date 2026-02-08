@@ -61,10 +61,10 @@ type SettingDoc = {
 };
 
 const canUsePrismaSettings = (): boolean =>
-  Boolean(process.env.DATABASE_URL) && "setting" in prisma;
+  Boolean(process.env["DATABASE_URL"]) && "setting" in prisma;
 
 const readMongoSetting = async (key: string): Promise<string | null> => {
-  if (!process.env.MONGODB_URI) return null;
+  if (!process.env["MONGODB_URI"]) return null;
   const mongo = await getMongoDb();
   const doc = await mongo
     .collection<SettingDoc>(SETTINGS_COLLECTION)
@@ -74,7 +74,7 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
 };
 
 const writeMongoSetting = async (key: string, value: string): Promise<boolean> => {
-  if (!process.env.MONGODB_URI) return false;
+  if (!process.env["MONGODB_URI"]) return false;
   const mongo = await getMongoDb();
   const now = new Date();
   await mongo.collection<SettingDoc>(SETTINGS_COLLECTION).updateOne(

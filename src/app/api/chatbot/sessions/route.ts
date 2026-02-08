@@ -9,7 +9,7 @@ import { notFoundError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
-const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
+const DEBUG_CHATBOT = process.env["DEBUG_CHATBOT"] === "true";
 
 type CreateSessionBody = {
   title?: string;

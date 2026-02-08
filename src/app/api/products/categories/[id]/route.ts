@@ -47,7 +47,7 @@ async function GET_handler(
   }
   const provider = await getProductDataProvider();
   if (provider === "mongodb") {
-    if (!process.env.MONGODB_URI) {
+    if (!process.env["MONGODB_URI"]) {
       throw internalError("MongoDB is not configured.");
     }
     const db = await getMongoDb();
@@ -90,7 +90,7 @@ async function GET_handler(
     });
   }
 
-  if (!process.env.DATABASE_URL) {
+  if (!process.env["DATABASE_URL"]) {
     throw badRequestError("Product categories require the Postgres product store.");
   }
 
@@ -133,7 +133,7 @@ async function PUT_handler(
   const { name, description, color, parentId, catalogId } = parsed.data;
 
   if (provider === "mongodb") {
-    if (!process.env.MONGODB_URI) {
+    if (!process.env["MONGODB_URI"]) {
       throw internalError("MongoDB is not configured.");
     }
     const db = await getMongoDb();
@@ -220,7 +220,7 @@ async function PUT_handler(
     return NextResponse.json(updated as unknown as ProductCategoryDto);
   }
 
-  if (!process.env.DATABASE_URL) {
+  if (!process.env["DATABASE_URL"]) {
     throw badRequestError("Product categories require the Postgres product store.");
   }
 
@@ -314,7 +314,7 @@ async function DELETE_handler(
   }
   const provider = await getProductDataProvider();
   if (provider === "mongodb") {
-    if (!process.env.MONGODB_URI) {
+    if (!process.env["MONGODB_URI"]) {
       throw internalError("MongoDB is not configured.");
     }
     const db = await getMongoDb();
@@ -325,7 +325,7 @@ async function DELETE_handler(
     return NextResponse.json({ success: true });
   }
 
-  if (!process.env.DATABASE_URL) {
+  if (!process.env["DATABASE_URL"]) {
     throw badRequestError("Product categories require the Postgres product store.");
   }
 

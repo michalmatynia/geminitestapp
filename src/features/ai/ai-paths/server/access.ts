@@ -12,10 +12,10 @@ const AI_PATHS_RUNNER_PERMISSION = 'products.manage';
 const DEV_INTERNAL_TOKEN = 'dev-secret-change-me';
 
 const getInternalToken = (): string | null => {
-  if (process.env.AI_PATHS_INTERNAL_TOKEN) return process.env.AI_PATHS_INTERNAL_TOKEN;
-  if (process.env.AUTH_SECRET) return process.env.AUTH_SECRET;
-  if (process.env.NEXTAUTH_SECRET) return process.env.NEXTAUTH_SECRET;
-  if (process.env.NODE_ENV === 'development') return DEV_INTERNAL_TOKEN;
+  if (process.env["AI_PATHS_INTERNAL_TOKEN"]) return process.env["AI_PATHS_INTERNAL_TOKEN"];
+  if (process.env["AUTH_SECRET"]) return process.env["AUTH_SECRET"];
+  if (process.env["NEXTAUTH_SECRET"]) return process.env["NEXTAUTH_SECRET"];
+  if (process.env["NODE_ENV"] === 'development') return DEV_INTERNAL_TOKEN;
   return null;
 };
 
@@ -39,23 +39,23 @@ const parseNumber = (value: string | undefined, fallback: number): number => {
 };
 
 const RUN_RATE_WINDOW_SECONDS = parseNumber(
-  process.env.AI_PATHS_RUN_RATE_LIMIT_WINDOW_SECONDS,
+  process.env["AI_PATHS_RUN_RATE_LIMIT_WINDOW_SECONDS"],
   60
 );
 const RUN_RATE_MAX = parseNumber(
-  process.env.AI_PATHS_RUN_RATE_LIMIT_MAX,
+  process.env["AI_PATHS_RUN_RATE_LIMIT_MAX"],
   20
 );
 const RUN_ACTIVE_MAX = parseNumber(
-  process.env.AI_PATHS_RUN_ACTIVE_LIMIT,
+  process.env["AI_PATHS_RUN_ACTIVE_LIMIT"],
   5
 );
 const ACTION_RATE_WINDOW_SECONDS = parseNumber(
-  process.env.AI_PATHS_ACTION_RATE_LIMIT_WINDOW_SECONDS,
+  process.env["AI_PATHS_ACTION_RATE_LIMIT_WINDOW_SECONDS"],
   60
 );
 const ACTION_RATE_MAX = parseNumber(
-  process.env.AI_PATHS_ACTION_RATE_LIMIT_MAX,
+  process.env["AI_PATHS_ACTION_RATE_LIMIT_MAX"],
   120
 );
 

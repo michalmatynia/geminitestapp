@@ -159,8 +159,8 @@ const looksLikeObjectId = (value: string): boolean => /^[0-9a-fA-F]{24}$/.test(v
 const normalizeObjectId = (query: Record<string, unknown>, idType?: string): Record<string, unknown> => {
   if (idType !== "objectId") return query;
   const next = { ...query };
-  if (typeof next._id === "string" && looksLikeObjectId(next._id)) {
-    next._id = new ObjectId(next._id);
+  if (typeof next['_id'] === "string" && looksLikeObjectId(next['_id'] as string)) {
+    next['_id'] = new ObjectId(next['_id'] as string);
   }
   return next;
 };
@@ -236,7 +236,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         : await getAppDbProvider();
 
   if (provider === "prisma") {
-    if (!process.env.DATABASE_URL) {
+    if (!process.env['DATABASE_URL']) {
       throw internalError("Prisma is not configured");
     }
     const resolvedCollection = resolvePrismaCollectionKey(collection);
@@ -274,7 +274,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     return NextResponse.json({ items, count });
   }
 
-  if (!process.env.MONGODB_URI) {
+  if (!process.env['MONGODB_URI']) {
     throw internalError("MongoDB is not configured");
   }
 

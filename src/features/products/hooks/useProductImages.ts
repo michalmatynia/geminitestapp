@@ -379,7 +379,7 @@ export function useProductImages(
     (savedProduct: ProductWithImages): void => {
       if (isReorderingRef.current) {
         pendingRefreshRef.current = savedProduct;
-        if (process.env.NODE_ENV !== 'production') {
+        if (process.env["NODE_ENV"] !== 'production') {
           console.info('[product-images] Refresh deferred during reorder');
         }
         return;

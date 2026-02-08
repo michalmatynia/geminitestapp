@@ -15,7 +15,7 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
  * GET /api/products
  * Fetches a list of products with caching and performance monitoring.
  */
-const shouldLogTiming = () => process.env.DEBUG_API_TIMING === "true";
+const shouldLogTiming = () => process.env["DEBUG_API_TIMING"] === "true";
 
 const isLikelyPayloadTooLarge = (error: unknown): boolean => {
   const message = error instanceof Error ? error.message : String(error ?? "");

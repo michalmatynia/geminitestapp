@@ -25,10 +25,10 @@ const resolveFallbackRepository = (
   primary: AiPathRunRepository
 ): AiPathRunRepository | null => {
   if (primary === prismaPathRunRepository) {
-    return process.env.MONGODB_URI ? mongoPathRunRepository : null;
+    return process.env['MONGODB_URI'] ? mongoPathRunRepository : null;
   }
   if (primary === mongoPathRunRepository) {
-    return process.env.DATABASE_URL ? prismaPathRunRepository : null;
+    return process.env['DATABASE_URL'] ? prismaPathRunRepository : null;
   }
   return null;
 };

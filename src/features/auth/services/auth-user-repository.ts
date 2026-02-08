@@ -49,7 +49,7 @@ export const findAuthUserByEmail = async (
       emailVerified: user.emailVerified ?? null,
     };
   }
-  if (!process.env.MONGODB_URI) {
+  if (!process.env["MONGODB_URI"]) {
     console.log('[AUTH-REPO] MONGODB_URI missing');
     return null;
   }
@@ -95,7 +95,7 @@ export const findAuthUserById = async (
       emailVerified: user.emailVerified ?? null,
     };
   }
-  if (!process.env.MONGODB_URI) return null;
+  if (!process.env["MONGODB_URI"]) return null;
   const db = await getMongoDb();
   const { ObjectId } = await import('mongodb');
   if (!ObjectId.isValid(userId)) return null;

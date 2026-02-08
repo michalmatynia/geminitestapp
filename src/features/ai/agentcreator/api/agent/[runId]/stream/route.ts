@@ -5,7 +5,7 @@ import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import prisma from '@/shared/lib/db/prisma';
 
 export const runtime = 'nodejs';
-const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === 'true';
+const DEBUG_CHATBOT = process.env["DEBUG_CHATBOT"] === 'true';
 
 async function GET_handler(req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }

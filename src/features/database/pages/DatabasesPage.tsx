@@ -39,7 +39,7 @@ function DatabasesContent(): React.JSX.Element {
   const [backupToDelete, setBackupToDelete] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const isProd = process.env.NODE_ENV === 'production';
+  const isProd = process.env["NODE_ENV"] === 'production';
 
   const backupsQuery = useDatabaseBackups(activeTab);
   const data = backupsQuery.data ?? [];

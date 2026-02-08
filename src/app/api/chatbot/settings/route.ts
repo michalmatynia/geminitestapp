@@ -10,7 +10,7 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import type { ChatbotSettingsRecord } from "@/shared/types/settings";
 
-const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
+const DEBUG_CHATBOT = process.env["DEBUG_CHATBOT"] === "true";
 const DEFAULT_SETTINGS_KEY = "default";
 
 const settingsSchema = z.object({

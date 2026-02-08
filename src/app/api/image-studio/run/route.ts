@@ -200,7 +200,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   }
 
   const apiKey =
-    (await getSettingValue("openai_api_key")) ?? process.env.OPENAI_API_KEY ?? null;
+    (await getSettingValue("openai_api_key")) ?? process.env["OPENAI_API_KEY"] ?? null;
   if (!apiKey) {
     throw configurationError("OpenAI API key is missing. Set it in /admin/settings/brain.");
   }

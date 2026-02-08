@@ -11,7 +11,7 @@ import { badRequestError, conflictError, internalError } from "@/shared/errors/a
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
-const shouldLogTiming = () => process.env.DEBUG_API_TIMING === "true";
+const shouldLogTiming = () => process.env["DEBUG_API_TIMING"] === "true";
 
 const buildServerTiming = (entries: Record<string, number | null | undefined>): string => {
   const parts = Object.entries(entries)
@@ -56,7 +56,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
   timings.provider = performance.now() - providerStart;
 
   if (provider === "mongodb") {
-    if (!process.env.MONGODB_URI) {
+    if (!process.env["MONGODB_URI"]) {
       throw internalError("MongoDB is not configured.");
     }
     const mongoStart = performance.now();
@@ -86,7 +86,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     return response;
   }
 
-  if (!process.env.DATABASE_URL) {
+  if (!process.env["DATABASE_URL"]) {
     throw badRequestError("Product categories require the Postgres product store.");
   }
 
@@ -121,7 +121,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const { name, description, color, parentId, catalogId } = parsed.data;
 
   if (provider === "mongodb") {
-    if (!process.env.MONGODB_URI) {
+    if (!process.env["MONGODB_URI"]) {
       throw internalError("MongoDB is not configured.");
     }
     const db = await getMongoDb();
@@ -152,7 +152,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     return NextResponse.json(category, { status: 201 });
   }
 
-  if (!process.env.DATABASE_URL) {
+  if (!process.env["DATABASE_URL"]) {
     throw badRequestError("Product categories require the Postgres product store.");
   }
 

@@ -21,7 +21,7 @@ const normalizeLimit = (value: number, fallback: number): number => {
   return Math.floor(value);
 };
 const EVENT_BATCH_LIMIT = normalizeLimit(
-  Number(process.env.AI_PATHS_STREAM_EVENT_LIMIT ?? "200"),
+  Number(process.env['AI_PATHS_STREAM_EVENT_LIMIT'] ?? '200'),
   200
 );
 

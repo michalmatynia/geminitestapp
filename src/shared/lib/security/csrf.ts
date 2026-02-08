@@ -76,7 +76,7 @@ export const ensureCsrfCookie = (
       httpOnly: false,
       sameSite: 'lax',
       path: '/',
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env["NODE_ENV"] === 'production',
       maxAge: 60 * 60 * 12,
     });
   }

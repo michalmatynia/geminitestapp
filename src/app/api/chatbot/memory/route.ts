@@ -6,7 +6,7 @@ import { internalError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
-const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
+const DEBUG_CHATBOT = process.env["DEBUG_CHATBOT"] === "true";
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();

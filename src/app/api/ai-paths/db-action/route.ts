@@ -248,8 +248,8 @@ const normalizePrismaOrderBy = (
 const extractFlatUpdates = (update: unknown): Record<string, unknown> | null => {
   if (!update || typeof update !== "object" || Array.isArray(update)) return null;
   const doc = update as Record<string, unknown>;
-  if (doc.$set && typeof doc.$set === "object" && !Array.isArray(doc.$set)) {
-    return doc.$set as Record<string, unknown>;
+  if (doc['$set'] && typeof doc['$set'] === "object" && !Array.isArray(doc['$set'])) {
+    return doc['$set'] as Record<string, unknown>;
   }
   const hasOperators = Object.keys(doc).some((key) => key.startsWith("$"));
   if (hasOperators) return null;
@@ -424,7 +424,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         throw badRequestError("Document is required");
       }
       const result = await delegate.create({ data: doc });
-      const insertedId = (result as Record<string, unknown>)?.id ?? null;
+      const insertedId = (result as Record<string, unknown>)?.[ 'id' ] ?? null;
       return NextResponse.json({ insertedId, insertedCount: 1 });
     }
 

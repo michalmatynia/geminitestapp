@@ -38,7 +38,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
   });
   const provider = requireAuthProvider(await getAuthDataProvider());
   if (provider === "prisma") {
-    if (!process.env.DATABASE_URL) {
+    if (!process.env["DATABASE_URL"]) {
       throw internalError("Prisma is not configured.");
     }
     const rows = await prisma.user.findMany({
@@ -74,7 +74,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     return NextResponse.json({ provider, users });
   }
 
-  if (!process.env.MONGODB_URI) {
+  if (!process.env["MONGODB_URI"]) {
     throw internalError("MongoDB is not configured.");
   }
   const db = await getMongoDb();

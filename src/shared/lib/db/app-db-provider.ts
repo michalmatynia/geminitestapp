@@ -17,7 +17,7 @@ const normalizeProvider = (value?: string | null): AppDbProvider | null => {
 };
 
 const readMongoAppProviderSetting = async (): Promise<AppDbProvider | null> => {
-  if (!process.env.MONGODB_URI) return null;
+  if (!process.env["MONGODB_URI"]) return null;
   try {
     const mongo = await getMongoDb();
     const doc = await mongo
@@ -35,7 +35,7 @@ const readMongoAppProviderSetting = async (): Promise<AppDbProvider | null> => {
 };
 
 const readPrismaAppProviderSetting = async (): Promise<AppDbProvider | null> => {
-  if (!process.env.DATABASE_URL) return null;
+  if (!process.env["DATABASE_URL"]) return null;
   try {
     const setting = await prisma.setting.findUnique({
       where: { key: APP_DB_PROVIDER_SETTING_KEY },
@@ -56,8 +56,8 @@ export const getAppDbProviderSetting = async (): Promise<AppDbProvider | null> =
     return providerInflight;
   }
   providerInflight = (async (): Promise<AppDbProvider | null> => {
-    if (process.env.APP_DB_PROVIDER) {
-      return normalizeProvider(process.env.APP_DB_PROVIDER);
+    if (process.env["APP_DB_PROVIDER"]) {
+      return normalizeProvider(process.env["APP_DB_PROVIDER"]);
     }
     const prismaSetting = await readPrismaAppProviderSetting();
     if (prismaSetting) return prismaSetting;
@@ -74,13 +74,13 @@ export const getAppDbProviderSetting = async (): Promise<AppDbProvider | null> =
 export const getAppDbProvider = async (): Promise<AppDbProvider> => {
   const setting = await getAppDbProviderSetting();
   if (setting === 'mongodb') {
-    if (process.env.MONGODB_URI) return 'mongodb';
+    if (process.env["MONGODB_URI"]) return 'mongodb';
     console.warn('[app-db-provider] MONGODB_URI missing; falling back to Prisma.');
     return 'prisma';
   }
   if (setting === 'prisma') {
-    if (process.env.DATABASE_URL) return 'prisma';
-    if (process.env.MONGODB_URI) {
+    if (process.env["DATABASE_URL"]) return 'prisma';
+    if (process.env["MONGODB_URI"]) {
       console.warn('[app-db-provider] DATABASE_URL missing; falling back to MongoDB.');
       return 'mongodb';
     }
@@ -89,13 +89,13 @@ export const getAppDbProvider = async (): Promise<AppDbProvider> => {
   }
   // No explicit setting found — detect from available connections.
   // Prefer Prisma when both are configured to avoid accidental MongoDB drift.
-  if (process.env.DATABASE_URL && process.env.MONGODB_URI) {
+  if (process.env["DATABASE_URL"] && process.env["MONGODB_URI"]) {
     console.warn(
       '[app-db-provider] Both DATABASE_URL and MONGODB_URI are set without explicit provider; defaulting to Prisma.'
     );
     return 'prisma';
   }
-  if (process.env.MONGODB_URI) return 'mongodb';
+  if (process.env["MONGODB_URI"]) return 'mongodb';
   return 'prisma';
 };
 

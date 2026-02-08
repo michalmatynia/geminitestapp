@@ -163,7 +163,7 @@ const defaultPreferences = (userId: string): Omit<UserPreferences, 'id' | 'creat
  * Creates default preferences if they don't exist
  */
 export async function getUserPreferences(userId: string): Promise<UserPreferences> {
-  if (!process.env.MONGODB_URI) {
+  if (!process.env["MONGODB_URI"]) {
     throw operationFailedError('MongoDB is not configured.');
   }
   const db = await getMongoDb();
@@ -195,7 +195,7 @@ export async function updateUserPreferences(
   userId: string,
   data: Partial<UserPreferencesData>
 ): Promise<UserPreferences> {
-  if (!process.env.MONGODB_URI) {
+  if (!process.env["MONGODB_URI"]) {
     throw operationFailedError('MongoDB is not configured.');
   }
   const db = await getMongoDb();

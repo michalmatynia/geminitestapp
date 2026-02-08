@@ -46,7 +46,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
   const { name, color, catalogId } = parsed.data;
 
   if (provider === "mongodb") {
-    if (!process.env.MONGODB_URI) {
+    if (!process.env["MONGODB_URI"]) {
       throw internalError("MongoDB is not configured.");
     }
     const db = await getMongoDb();
@@ -109,7 +109,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
     return NextResponse.json(dto);
   }
 
-  if (!process.env.DATABASE_URL) {
+  if (!process.env["DATABASE_URL"]) {
     throw badRequestError("Product tags require the Postgres product store.");
   }
 
@@ -169,7 +169,7 @@ async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params
   }
   const provider = await getProductDataProvider();
   if (provider === "mongodb") {
-    if (!process.env.MONGODB_URI) {
+    if (!process.env["MONGODB_URI"]) {
       throw internalError("MongoDB is not configured.");
     }
     const db = await getMongoDb();
@@ -177,7 +177,7 @@ async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params
     return NextResponse.json({ success: true } as DeleteResponse);
   }
 
-  if (!process.env.DATABASE_URL) {
+  if (!process.env["DATABASE_URL"]) {
     throw badRequestError("Product tags require the Postgres product store.");
   }
 

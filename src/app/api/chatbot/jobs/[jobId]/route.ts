@@ -12,7 +12,7 @@ import {
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
-const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
+const DEBUG_CHATBOT = process.env["DEBUG_CHATBOT"] === "true";
 
 const jobActionSchema = z.object({
   action: z.string().trim().optional(),

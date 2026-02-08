@@ -61,7 +61,7 @@ async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Re
         }
       });
 
-      if (missingIds.size > 0 && process.env.DATABASE_URL) {
+      if (missingIds.size > 0 && process.env["DATABASE_URL"]) {
         const legacyIds = Array.from(missingIds);
         try {
           const legacyLanguages = await prisma.language.findMany({

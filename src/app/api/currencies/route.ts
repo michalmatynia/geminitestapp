@@ -63,7 +63,7 @@ const seedMongoCurrencies = async (db: Awaited<ReturnType<typeof getMongoDb>>): 
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const provider = await getInternationalizationProvider();
   if (provider === "mongodb") {
-    if (!process.env.MONGODB_URI) {
+    if (!process.env["MONGODB_URI"]) {
       throw internalError("MongoDB is not configured.");
     }
     const mongo = await getMongoDb();
@@ -75,7 +75,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
       .toArray();
     return NextResponse.json(currencies as unknown as CurrencyRecord[]);
   }
-  if (!process.env.DATABASE_URL) {
+  if (!process.env["DATABASE_URL"]) {
     return NextResponse.json(fallbackCurrencies);
   }
   await prisma.currency.createMany({
@@ -105,7 +105,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
   const provider = await getInternationalizationProvider();
   if (provider === "mongodb") {
-    if (!process.env.MONGODB_URI) {
+    if (!process.env["MONGODB_URI"]) {
       throw internalError("MongoDB is not configured.");
     }
     const mongo = await getMongoDb();
@@ -128,7 +128,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     return NextResponse.json(doc);
   }
 
-  if (!process.env.DATABASE_URL) {
+  if (!process.env["DATABASE_URL"]) {
     throw internalError("Postgres product store is not configured.");
   }
 

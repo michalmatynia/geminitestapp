@@ -1,6 +1,6 @@
 import type { AgentPlanPreferences, AgentPlanSettings } from '@/features/ai/agent-runtime/types/agent';
 
-export const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === 'true';
+export const DEBUG_CHATBOT = process.env["DEBUG_CHATBOT"] === 'true';
 export const MAX_PLAN_STEPS = 12;
 export const MAX_STEP_ATTEMPTS = 2;
 export const MAX_REPLAN_CALLS = 2;
@@ -10,8 +10,8 @@ export const LOOP_GUARD_THRESHOLD = 2;
 export const LOOP_BACKOFF_BASE_MS = 2000;
 export const LOOP_BACKOFF_MAX_MS = 12000;
 export const OLLAMA_BASE_URL =
-  process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
-export const DEFAULT_OLLAMA_MODEL = process.env.OLLAMA_MODEL ?? 'qwen3-vl:30b';
+  process.env["OLLAMA_BASE_URL"] ?? 'http://localhost:11434';
+export const DEFAULT_OLLAMA_MODEL = process.env["OLLAMA_MODEL"] ?? 'qwen3-vl:30b';
 export const DEFAULT_AGENT_SETTINGS: AgentPlanSettings = {
   maxSteps: MAX_PLAN_STEPS,
   maxStepAttempts: MAX_STEP_ATTEMPTS,

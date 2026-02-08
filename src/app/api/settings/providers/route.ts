@@ -73,7 +73,7 @@ const isPrismaMissingTableError = (
   (error.code === "P2021" || error.code === "P2022");
 
 const readPrismaSetting = async (key: string): Promise<string | null> => {
-  if (!process.env.DATABASE_URL || !("setting" in prisma)) return null;
+  if (!process.env["DATABASE_URL"] || !("setting" in prisma)) return null;
   try {
     const setting = await prisma.setting.findUnique({
       where: { key },
@@ -87,7 +87,7 @@ const readPrismaSetting = async (key: string): Promise<string | null> => {
 };
 
 const readMongoSetting = async (key: string): Promise<string | null> => {
-  if (!process.env.MONGODB_URI) return null;
+  if (!process.env["MONGODB_URI"]) return null;
   try {
     const mongo = await getMongoDb();
     const doc = await mongo
@@ -124,9 +124,9 @@ const isIntentionalServiceOverride = (
 };
 
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const hasDatabaseUrl = Boolean(process.env.DATABASE_URL);
-  const hasMongoUri = Boolean(process.env.MONGODB_URI);
-  const appDbProviderEnv = process.env.APP_DB_PROVIDER?.trim() || null;
+  const hasDatabaseUrl = Boolean(process.env["DATABASE_URL"]);
+  const hasMongoUri = Boolean(process.env["MONGODB_URI"]);
+  const appDbProviderEnv = process.env["APP_DB_PROVIDER"]?.trim() || null;
 
   const appPrismaSetting = normalizeAppProvider(await readPrismaSetting(APP_DB_PROVIDER_SETTING_KEY));
   const appMongoSetting = normalizeAppProvider(await readMongoSetting(APP_DB_PROVIDER_SETTING_KEY));

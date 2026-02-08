@@ -230,7 +230,7 @@ export async function createFileUploadEvent(
       createdAt: created.createdAt,
     });
   } catch (error) {
-    if (isMissingPrismaTable(error) && process.env.MONGODB_URI) {
+    if (isMissingPrismaTable(error) && process.env["MONGODB_URI"]) {
       const mongo = await getMongoDb();
       await mongo
         .collection<MongoFileUploadEventDoc>(FILE_UPLOAD_EVENTS_COLLECTION)
@@ -299,7 +299,7 @@ export async function listFileUploadEvents(
 
     return { events, total, page, pageSize };
   } catch (error) {
-    if (isMissingPrismaTable(error) && process.env.MONGODB_URI) {
+    if (isMissingPrismaTable(error) && process.env["MONGODB_URI"]) {
       const mongo = await getMongoDb();
       const filter = buildMongoFilter(input);
       const total = await mongo

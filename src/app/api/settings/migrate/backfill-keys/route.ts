@@ -39,7 +39,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     return parsed.response;
   }
 
-  if (!process.env.MONGODB_URI) {
+  if (!process.env["MONGODB_URI"]) {
     throw internalError("MongoDB is not configured.");
   }
 

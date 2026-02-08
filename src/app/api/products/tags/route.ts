@@ -35,7 +35,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
   const provider = await getProductDataProvider();
 
   if (provider === "mongodb") {
-    if (!process.env.MONGODB_URI) {
+    if (!process.env["MONGODB_URI"]) {
       throw internalError("MongoDB is not configured.");
     }
     const db = await getMongoDb();
@@ -61,7 +61,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     return NextResponse.json(normalized as ProductTag[]);
   }
 
-  if (!process.env.DATABASE_URL) {
+  if (!process.env["DATABASE_URL"]) {
     throw badRequestError("Product tags require the Postgres product store.");
   }
 
@@ -92,7 +92,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const { name, color, catalogId } = parsed.data;
 
   if (provider === "mongodb") {
-    if (!process.env.MONGODB_URI) {
+    if (!process.env["MONGODB_URI"]) {
       throw internalError("MongoDB is not configured.");
     }
     const db = await getMongoDb();
@@ -128,7 +128,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     return NextResponse.json(dto, { status: 201 });
   }
 
-  if (!process.env.DATABASE_URL) {
+  if (!process.env["DATABASE_URL"]) {
     throw badRequestError("Product tags require the Postgres product store.");
   }
 

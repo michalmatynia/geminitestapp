@@ -41,10 +41,10 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   let normalizedMeta = rest.meta ?? null;
   if (normalizedMeta && typeof normalizedMeta === "object") {
     const metaRecord = normalizedMeta as Record<string, unknown>;
-    const sourceValue = metaRecord.source;
+    const sourceValue = metaRecord["source"];
     if (sourceValue && typeof sourceValue === "object") {
-      const triggerEventId = typeof metaRecord.triggerEventId === "string"
-        ? metaRecord.triggerEventId
+      const triggerEventId = typeof metaRecord["triggerEventId"] === "string"
+        ? metaRecord["triggerEventId"]
         : null;
       normalizedMeta = {
         ...metaRecord,

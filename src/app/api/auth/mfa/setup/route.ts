@@ -38,9 +38,9 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   });
 
   let issuer = "App";
-  if (process.env.NEXT_PUBLIC_APP_URL) {
+  if (process.env["NEXT_PUBLIC_APP_URL"]) {
     try {
-      issuer = new URL(process.env.NEXT_PUBLIC_APP_URL).hostname || issuer;
+      issuer = new URL(process.env["NEXT_PUBLIC_APP_URL"]).hostname || issuer;
     } catch {
       issuer = "App";
     }

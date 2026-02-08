@@ -20,7 +20,7 @@ import type { ImageFileRecord } from '@/shared/types/files';
 import type { ProductFormData } from '../types/forms';
 import type { ChatCompletionContentPart } from 'openai/resources/chat/completions';
 
-const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
+const OLLAMA_BASE_URL = process.env["OLLAMA_BASE_URL"] || 'http://localhost:11434';
 
 // AI-related settings that should be read from MongoDB when available
 const AI_SETTINGS_KEYS = new Set([
@@ -42,10 +42,10 @@ interface MongoSetting {
 }
 
 const canUsePrismaSettings = (): boolean =>
-  Boolean(process.env.DATABASE_URL) && 'setting' in prisma;
+  Boolean(process.env["DATABASE_URL"]) && 'setting' in prisma;
 
 const readMongoSettingValue = async (key: string): Promise<string | null> => {
-  if (!process.env.MONGODB_URI) return null;
+  if (!process.env["MONGODB_URI"]) return null;
   const mongo = await getMongoDb();
   const doc = await mongo
     .collection<MongoSetting>('settings')
@@ -65,7 +65,7 @@ const readPrismaSettingValue = async (key: string): Promise<string | null> => {
 export async function getSettingValue(key: string): Promise<string | null> {
   const provider = await getAppDbProvider();
   const preferMongo =
-    Boolean(process.env.MONGODB_URI) &&
+    Boolean(process.env["MONGODB_URI"]) &&
     (provider === 'mongodb' || AI_SETTINGS_KEYS.has(key));
 
   if (preferMongo) {
@@ -102,7 +102,7 @@ export async function getSettingValue(key: string): Promise<string | null> {
     });
   }
 
-  if (process.env.MONGODB_URI) {
+  if (process.env["MONGODB_URI"]) {
     try {
       return await readMongoSettingValue(key);
     } catch (err) {
@@ -197,7 +197,7 @@ export async function generateProductDescription(params: {
     getSettingValue('ai_generation_output_enabled'),
   ]);
 
-  const apiKey = apiKeySetting ?? process.env.OPENAI_API_KEY ?? null;
+  const apiKey = apiKeySetting ?? process.env["OPENAI_API_KEY"] ?? null;
   const visionModel = visionModelSetting?.trim() || 'gemma3:27b';
   const visionInputPrompt =
     visionInputPromptSetting?.trim() || 'Analyze these product images...';

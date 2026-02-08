@@ -1,12 +1,12 @@
-const BRAVE_SEARCH_API_KEY = process.env.BRAVE_SEARCH_API_KEY;
+const BRAVE_SEARCH_API_KEY = process.env["BRAVE_SEARCH_API_KEY"];
 const BRAVE_SEARCH_API_URL =
-  process.env.BRAVE_SEARCH_API_URL || 'https://api.search.brave.com/res/v1/web/search';
-const GOOGLE_SEARCH_API_KEY = process.env.GOOGLE_SEARCH_API_KEY;
-const GOOGLE_SEARCH_ENGINE_ID = process.env.GOOGLE_SEARCH_ENGINE_ID;
+  process.env["BRAVE_SEARCH_API_URL"] || 'https://api.search.brave.com/res/v1/web/search';
+const GOOGLE_SEARCH_API_KEY = process.env["GOOGLE_SEARCH_API_KEY"];
+const GOOGLE_SEARCH_ENGINE_ID = process.env["GOOGLE_SEARCH_ENGINE_ID"];
 const GOOGLE_SEARCH_API_URL =
-  process.env.GOOGLE_SEARCH_API_URL || 'https://www.googleapis.com/customsearch/v1';
-const SERPAPI_API_KEY = process.env.SERPAPI_API_KEY;
-const SERPAPI_API_URL = process.env.SERPAPI_API_URL || 'https://serpapi.com/search.json';
+  process.env["GOOGLE_SEARCH_API_URL"] || 'https://www.googleapis.com/customsearch/v1';
+const SERPAPI_API_KEY = process.env["SERPAPI_API_KEY"];
+const SERPAPI_API_URL = process.env["SERPAPI_API_URL"] || 'https://serpapi.com/search.json';
 
 export const fetchDuckDuckGoResults = async (query: string): Promise<Array<{ title: string; url: string; snippet?: string }>> => {
   const searchUrl = `https://duckduckgo.com/html/?q=${encodeURIComponent(query)}`;

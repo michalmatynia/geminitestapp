@@ -110,12 +110,12 @@ const normalizeUtm = (utm: AnalyticsUtm | null | undefined): AnalyticsUtmDoc | u
 };
 
 const hashIp = (ip: string): string => {
-  const salt = process.env.ANALYTICS_IP_SALT ?? process.env.NEXTAUTH_SECRET ?? '';
+  const salt = process.env["ANALYTICS_IP_SALT"] ?? process.env["NEXTAUTH_SECRET"] ?? '';
   return createHash('sha256').update(`${salt}:${ip}`).digest('hex');
 };
 
 const normalizeIpMode = (): 'full' | 'masked' | 'hash' | 'none' => {
-  const raw = process.env.ANALYTICS_IP_MODE?.toLowerCase().trim();
+  const raw = process.env["ANALYTICS_IP_MODE"]?.toLowerCase().trim();
   if (raw === 'full' || raw === 'masked' || raw === 'hash' || raw === 'none') {
     return raw;
   }

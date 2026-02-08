@@ -8,7 +8,7 @@ import prisma from '@/shared/lib/db/prisma';
 const STUCK_RUN_THRESHOLD_MS = 10 * 60 * 1000;
 
 export async function processAgentRun(runId: string): Promise<void> {
-  const debugEnabled = process.env.DEBUG_CHATBOT === 'true';
+  const debugEnabled = process.env["DEBUG_CHATBOT"] === 'true';
 
   if (!('chatbotAgentRun' in prisma)) {
     if (debugEnabled) {

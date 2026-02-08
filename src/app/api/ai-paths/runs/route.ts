@@ -55,7 +55,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     Number.isFinite(offsetRaw) && offsetRaw >= 0 ? offsetRaw : undefined;
   const repo = getPathRunRepository();
   const staleRunningMaxAgeMsRaw = Number.parseInt(
-    process.env.AI_PATHS_STALE_RUNNING_MAX_AGE_MS ?? "",
+    process.env["AI_PATHS_STALE_RUNNING_MAX_AGE_MS"] ?? "",
     10
   );
   const staleRunningMaxAgeMs =

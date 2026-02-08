@@ -137,7 +137,7 @@ export const initClientErrorReporting = (): void => {
   handlerAttached = true;
 
   // Expose for Playwright tests in non-production environments
-  if (process.env.NODE_ENV !== 'production') {
+  if (process.env["NODE_ENV"] !== 'production') {
     (window as Window & { _logClientError?: typeof logClientError })._logClientError = logClientError;
   }
 

@@ -58,7 +58,7 @@ async function fetchLiteSettingsFromApi(bypassCache: boolean): Promise<SettingRe
       cache: bypassCache ? 'no-store' : 'default',
       credentials: 'include',
     });
-    if (process.env.NODE_ENV === 'development' || process.env.DEBUG_SETTINGS === 'true') {
+    if (process.env["NODE_ENV"] === 'development' || process.env["DEBUG_SETTINGS"] === 'true') {
       const cacheHeader = res.headers.get('X-Cache');
       const cacheControl = res.headers.get('Cache-Control');
       console.log('[settings.lite] response', {

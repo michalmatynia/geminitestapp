@@ -39,7 +39,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
   let categories: CategoryFromDb[] = [];
 
   if (provider === "mongodb") {
-    if (!process.env.MONGODB_URI) {
+    if (!process.env["MONGODB_URI"]) {
       throw internalError("MongoDB is not configured.");
     }
     const db = await getMongoDb();
@@ -59,7 +59,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       };
     });
   } else {
-    if (!process.env.DATABASE_URL) {
+    if (!process.env["DATABASE_URL"]) {
       throw badRequestError("Product categories require the Postgres product store.");
     }
     categories = await prisma.productCategory.findMany({

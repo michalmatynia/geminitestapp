@@ -21,7 +21,7 @@ import type { DatabaseType } from '../types';
 
 function DatabaseOperationsContent(): React.JSX.Element {
   const { dbType, setDbType, tableDetails, isLoading: previewLoading } = useDatabase();
-  const isProduction = process.env.NODE_ENV === 'production';
+  const isProduction = process.env["NODE_ENV"] === 'production';
 
   return (
     <AdminPageLayout

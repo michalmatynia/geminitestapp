@@ -12,7 +12,7 @@ export const getProductAiJobRepository = async (): Promise<ProductAiJobRepositor
   if (cachedRepository) return cachedRepository;
   const provider = await getProductDataProvider();
   cachedProvider = provider;
-  if (provider === 'mongodb' && process.env.MONGODB_URI) {
+  if (provider === 'mongodb' && process.env["MONGODB_URI"]) {
     cachedRepository = mongoProductAiJobRepository;
     return cachedRepository;
   }

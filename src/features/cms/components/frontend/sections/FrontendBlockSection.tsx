@@ -1,3 +1,5 @@
+'use client';
+
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
 
 import { getSectionContainerClass, getSectionStyles, getTextAlign } from '../theme-styles';

@@ -14,12 +14,12 @@ const parseMsFromEnv = (raw: string | undefined, fallback: number, min: number):
 };
 
 const AI_INSIGHTS_REPEAT_EVERY_MS = parseMsFromEnv(
-  process.env.AI_INSIGHTS_REPEAT_EVERY_MS,
+  process.env["AI_INSIGHTS_REPEAT_EVERY_MS"],
   180_000,
   60_000,
 );
 const AI_INSIGHTS_LOCK_DURATION_MS = parseMsFromEnv(
-  process.env.AI_INSIGHTS_LOCK_DURATION_MS,
+  process.env["AI_INSIGHTS_LOCK_DURATION_MS"],
   180_000,
   60_000,
 );

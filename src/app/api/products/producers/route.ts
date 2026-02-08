@@ -26,7 +26,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const provider = await getProductDataProvider();
 
   if (provider === "mongodb") {
-    if (!process.env.MONGODB_URI) {
+    if (!process.env["MONGODB_URI"]) {
       throw internalError("MongoDB is not configured.");
     }
     const db = await getMongoDb();
@@ -48,7 +48,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
     return NextResponse.json(normalized as Producer[]);
   }
 
-  if (!process.env.DATABASE_URL) {
+  if (!process.env["DATABASE_URL"]) {
     throw badRequestError("Producers require the Postgres product store.");
   }
 
@@ -77,7 +77,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     typeof website === "string" && website.trim() ? website.trim() : null;
 
   if (provider === "mongodb") {
-    if (!process.env.MONGODB_URI) {
+    if (!process.env["MONGODB_URI"]) {
       throw internalError("MongoDB is not configured.");
     }
     const db = await getMongoDb();
@@ -101,7 +101,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     return NextResponse.json(producer as unknown as Producer, { status: 201 });
   }
 
-  if (!process.env.DATABASE_URL) {
+  if (!process.env["DATABASE_URL"]) {
     throw badRequestError("Producers require the Postgres product store.");
   }
 

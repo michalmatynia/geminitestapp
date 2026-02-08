@@ -72,7 +72,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const parsed = await parseJsonBody(req, payloadSchema, { logPrefix: "image-studio.ui-extractor.POST" });
   if (!parsed.ok) return parsed.response;
 
-  const apiKey = (await getSettingValue("openai_api_key")) ?? process.env.OPENAI_API_KEY ?? null;
+  const apiKey = (await getSettingValue("openai_api_key")) ?? process.env["OPENAI_API_KEY"] ?? null;
   if (!apiKey) {
     throw configurationError("OpenAI API key is missing. Set it in /admin/settings/brain.");
   }

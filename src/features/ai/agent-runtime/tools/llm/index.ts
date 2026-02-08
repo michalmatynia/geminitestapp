@@ -2,7 +2,7 @@ import 'server-only';
 
 import prisma from '@/shared/lib/db/prisma';
 
-const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
+const OLLAMA_BASE_URL = process.env["OLLAMA_BASE_URL"] ?? 'http://localhost:11434';
 
 type LLMContext = {
   model: string;

@@ -7,7 +7,7 @@ import type { ApiHandlerContext } from "@/shared/types/api";
 export const runtime = "nodejs";
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  if (process.env.NODE_ENV === "production") {
+  if (process.env["NODE_ENV"] === "production") {
     throw forbiddenError("Database backups are disabled in production.");
   }
   const { searchParams } = new URL(req.url);

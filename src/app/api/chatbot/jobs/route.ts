@@ -13,7 +13,7 @@ import type { JsonParseResult } from "@/shared/types/api";
 import type { EnqueueChatbotJobRequestDto as EnqueueJobRequest } from "@/shared/dtos/chatbot";
 import type { ChatbotJobStatus, ChatbotJob } from "@/shared/types/chatbot";
 
-const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
+const DEBUG_CHATBOT = process.env["DEBUG_CHATBOT"] === "true";
 
 const chatMessageSchema = z.object({
   role: z.enum(["user", "assistant", "system"]),

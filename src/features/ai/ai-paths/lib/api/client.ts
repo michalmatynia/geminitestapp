@@ -139,8 +139,8 @@ const resolveApiUrl = (url: string): string => {
     return url;
   }
   const base =
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.NEXTAUTH_URL ||
+    process.env["NEXT_PUBLIC_APP_URL"] ||
+    process.env["NEXTAUTH_URL"] ||
     'http://localhost:3000';
   const trimmedBase = base.endsWith('/') ? base.slice(0, -1) : base;
   const path = url.startsWith('/') ? url : `/${url}`;
@@ -180,10 +180,10 @@ const generateServerCsrfToken = (): string => {
 
 const getServerInternalToken = (): string | null => {
   if (typeof window !== 'undefined') return null;
-  if (process.env.AI_PATHS_INTERNAL_TOKEN) return process.env.AI_PATHS_INTERNAL_TOKEN;
-  if (process.env.AUTH_SECRET) return process.env.AUTH_SECRET;
-  if (process.env.NEXTAUTH_SECRET) return process.env.NEXTAUTH_SECRET;
-  if (process.env.NODE_ENV === 'development') return 'dev-secret-change-me';
+  if (process.env["AI_PATHS_INTERNAL_TOKEN"]) return process.env["AI_PATHS_INTERNAL_TOKEN"];
+  if (process.env["AUTH_SECRET"]) return process.env["AUTH_SECRET"];
+  if (process.env["NEXTAUTH_SECRET"]) return process.env["NEXTAUTH_SECRET"];
+  if (process.env["NODE_ENV"] === 'development') return 'dev-secret-change-me';
   return null;
 };
 

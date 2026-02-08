@@ -8,7 +8,7 @@ import { badRequestError, internalError, notFoundError } from "@/shared/errors/a
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
-const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
+const DEBUG_CHATBOT = process.env["DEBUG_CHATBOT"] === "true";
 
 const messageSchema = z.object({
   role: z.string().trim().min(1),

@@ -59,7 +59,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
 
   const provider = await getInternationalizationProvider();
   if (provider === "mongodb") {
-    if (!process.env.MONGODB_URI) {
+    if (!process.env["MONGODB_URI"]) {
       throw internalError("MongoDB is not configured.");
     }
     const mongo = await getMongoDb();
@@ -191,7 +191,7 @@ async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params
 
   const provider = await getInternationalizationProvider();
   if (provider === "mongodb") {
-    if (!process.env.MONGODB_URI) {
+    if (!process.env["MONGODB_URI"]) {
       throw internalError("MongoDB is not configured.");
     }
     const mongo = await getMongoDb();

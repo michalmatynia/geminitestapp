@@ -57,7 +57,7 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
 
   const provider = requireAuthProvider(await getAuthDataProvider());
   if (provider === "prisma") {
-    if (!process.env.DATABASE_URL) {
+    if (!process.env["DATABASE_URL"]) {
       throw internalError("Prisma is not configured.");
     }
     const existing = await prisma.user.findUnique({
@@ -92,7 +92,7 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
     );
   }
 
-  if (!process.env.MONGODB_URI) {
+  if (!process.env["MONGODB_URI"]) {
     throw internalError("MongoDB is not configured.");
   }
   const db = await getMongoDb();

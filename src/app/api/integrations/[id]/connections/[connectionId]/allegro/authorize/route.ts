@@ -8,9 +8,9 @@ import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
 const PROD_AUTH_URL =
-  process.env.ALLEGRO_AUTH_URL ?? "https://allegro.pl/auth/oauth/authorize";
+  process.env["ALLEGRO_AUTH_URL"] ?? "https://allegro.pl/auth/oauth/authorize";
 const SANDBOX_AUTH_URL =
-  process.env.ALLEGRO_SANDBOX_AUTH_URL ??
+  process.env["ALLEGRO_SANDBOX_AUTH_URL"] ??
   "https://allegro.pl.allegrosandbox.pl/auth/oauth/authorize";
 
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> {

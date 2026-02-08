@@ -10,7 +10,7 @@ export const runtime = "nodejs";
 // For now, we'll use a hardcoded user ID
 // In a real app, this would come from the session
 const DEFAULT_USER_ID = "default-user";
-const isDatabaseConfigured = Boolean(process.env.MONGODB_URI);
+const isDatabaseConfigured = Boolean(process.env["MONGODB_URI"]);
 
 const updatePreferencesSchema = z.object({
   productListNameLocale: z.enum(["name_en", "name_pl", "name_de"]).optional().nullable(),

@@ -118,7 +118,7 @@ type FailureRecoveryPlan = {
   notes: string | null;
 };
 
-const DEFAULT_OLLAMA_MODEL = process.env.OLLAMA_MODEL ?? 'qwen3-vl:30b';
+const DEFAULT_OLLAMA_MODEL = process.env["OLLAMA_MODEL"] ?? 'qwen3-vl:30b';
 
 const resolveIgnoreRobotsTxt = (planState: unknown): boolean => {
   if (!planState || typeof planState !== 'object') return false;
@@ -129,7 +129,7 @@ const resolveIgnoreRobotsTxt = (planState: unknown): boolean => {
 
 export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: Browser, injectedContext?: BrowserContext): Promise<AgentToolResult> {
   const { runId, prompt, browser, runHeadless, stepId, stepLabel } = request.input;
-  const debugEnabled = process.env.DEBUG_CHATBOT === 'true';
+  const debugEnabled = process.env["DEBUG_CHATBOT"] === 'true';
   if (!runId) {
     return { ok: false, error: 'Missing runId for tool execution.' };
   }
@@ -1718,7 +1718,7 @@ export async function runAgentBrowserControl({
   stepId?: string | undefined;
   stepLabel?: string | undefined;
 }): Promise<AgentToolResult> {
-  const debugEnabled = process.env.DEBUG_CHATBOT === 'true';
+  const debugEnabled = process.env["DEBUG_CHATBOT"] === 'true';
   if (!('agentBrowserLog' in prisma) || !('agentBrowserSnapshot' in prisma)) {
     void ErrorSystem.logWarning('[chatbot][agent][tool] Agent browser tables not initialized.', {
       service: 'agent-control',

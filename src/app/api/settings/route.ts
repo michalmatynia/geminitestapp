@@ -31,7 +31,7 @@ import {
   type SettingsScope,
 } from "@/shared/lib/settings-cache";
 
-const shouldLog = () => process.env.DEBUG_SETTINGS === "true";
+const shouldLog = () => process.env["DEBUG_SETTINGS"] === "true";
 
 type SettingDocument = {
   key: string;
@@ -49,7 +49,7 @@ const DEFAULT_SCOPE: SettingsScope = "light";
 let settingsIndexesEnsured: Promise<void> | null = null;
 
 const ensureSettingsIndexes = async (): Promise<void> => {
-  if (!process.env.MONGODB_URI) return;
+  if (!process.env["MONGODB_URI"]) return;
   if (!settingsIndexesEnsured) {
     settingsIndexesEnsured = (async (): Promise<void> => {
       try {
@@ -68,7 +68,7 @@ const isHeavySettingKey = (key: string): boolean =>
   HEAVY_KEYS.has(key) || HEAVY_PREFIXES.some((prefix) => key.startsWith(prefix));
 
 const canUsePrismaSettings = (provider: "prisma" | "mongodb") =>
-  provider === "prisma" && Boolean(process.env.DATABASE_URL) && "setting" in prisma;
+  provider === "prisma" && Boolean(process.env["DATABASE_URL"]) && "setting" in prisma;
 
 const isPrismaMissingTableError = (
   error: unknown
@@ -138,7 +138,7 @@ const readCurrentSettingValue = async (
   key: string,
   provider: "prisma" | "mongodb"
 ): Promise<string | null> => {
-  const hasMongo = Boolean(process.env.MONGODB_URI);
+  const hasMongo = Boolean(process.env["MONGODB_URI"]);
   const canUsePrisma = canUsePrismaSettings(provider);
 
   const readPrisma = async (): Promise<string | null> => {
@@ -220,7 +220,7 @@ const buildMongoScopeQuery = (scope: SettingsScope): Record<string, unknown> => 
 };
 
 const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]> => {
-  if (!process.env.MONGODB_URI) return [];
+  if (!process.env["MONGODB_URI"]) return [];
   await ensureSettingsIndexes();
   const mongo = await getMongoDb();
   const query = buildMongoScopeQuery(scope);
@@ -237,7 +237,7 @@ const upsertMongoSetting = async (
   key: string,
   value: string
 ): Promise<SettingRecord | null> => {
-  if (!process.env.MONGODB_URI) return null;
+  if (!process.env["MONGODB_URI"]) return null;
   const mongo = await getMongoDb();
   const now = new Date();
   await mongo.collection<SettingDocument>(SETTINGS_COLLECTION).updateOne(
@@ -252,7 +252,7 @@ const upsertMongoSetting = async (
 };
 
 const SETTINGS_CACHE_CONTROL = "private, max-age=120, stale-while-revalidate=600";
-const shouldLogTiming = () => process.env.DEBUG_API_TIMING === "true";
+const shouldLogTiming = () => process.env["DEBUG_API_TIMING"] === "true";
 
 const buildServerTiming = (entries: Record<string, number | null | undefined>): string => {
   const parts = Object.entries(entries)
@@ -284,8 +284,8 @@ const fetchAndCacheSettings = async (
   const totalStart = performance.now();
   const provider = await getAppDbProvider();
   if (timings) timings.provider = performance.now() - totalStart;
-  const hasMongo = Boolean(process.env.MONGODB_URI);
-  const envProvider = process.env.APP_DB_PROVIDER?.toLowerCase().trim();
+  const hasMongo = Boolean(process.env["MONGODB_URI"]);
+  const envProvider = process.env["APP_DB_PROVIDER"]?.toLowerCase().trim();
   const forcePrisma = envProvider === "prisma";
   const prismaSettings: SettingRecord[] = [];
   let prismaMissing = false;
@@ -479,7 +479,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       }
     }
   }
-  const hasMongo = Boolean(process.env.MONGODB_URI);
+  const hasMongo = Boolean(process.env["MONGODB_URI"]);
   const shouldWriteMongo =
     hasMongo &&
     (provider === "mongodb" || isMongoPreferredSettingKey(key) || !canUsePrismaSettings(provider));
@@ -524,7 +524,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   return NextResponse.json(setting);
 }
 
-const disableSettingsRateLimit = process.env.NODE_ENV !== "production";
+const disableSettingsRateLimit = process.env["NODE_ENV"] !== "production";
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),

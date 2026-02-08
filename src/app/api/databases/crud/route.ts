@@ -12,7 +12,7 @@ import { ObjectId } from "mongodb";
 const SAFE_NAME_RE = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  if (process.env.NODE_ENV === "production") {
+  if (process.env["NODE_ENV"] === "production") {
     throw forbiddenError("Database operations are disabled in production.");
   }
 
@@ -47,7 +47,7 @@ async function handlePostgresCrud(
   data?: Record<string, unknown>,
   primaryKey?: Record<string, unknown>
 ): Promise<Response> {
-  const dbUrl = process.env.DATABASE_URL ?? "";
+  const dbUrl = process.env["DATABASE_URL"] ?? "";
   if (!dbUrl.startsWith("postgres://") && !dbUrl.startsWith("postgresql://")) {
     throw badRequestError("No PostgreSQL database configured.");
   }
@@ -140,7 +140,7 @@ async function handleMongoCrud(
   primaryKey?: Record<string, unknown>
 ): Promise<Response> {
   const mongoClient = await getMongoClient();
-  const dbName = process.env.MONGODB_DB ?? "stardb";
+  const dbName = process.env["MONGODB_DB"] ?? "stardb";
   const db = mongoClient.db(dbName);
   const collection = db.collection(collectionName);
 

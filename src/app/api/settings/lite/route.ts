@@ -17,7 +17,7 @@ type SettingDocument = { _id?: string; key?: string; value?: string };
 const SETTINGS_COLLECTION = "settings";
 const CACHE_CONTROL = "private, max-age=120, stale-while-revalidate=600";
 const LITE_CACHE_TTL_MS = 60_000;
-const disableSettingsRateLimit = process.env.NODE_ENV !== "production";
+const disableSettingsRateLimit = process.env["NODE_ENV"] !== "production";
 
 const LITE_SETTINGS_KEYS = [
   APP_FONT_SET_SETTING_KEY,
@@ -33,7 +33,7 @@ let liteCache: { data: SettingRecord[]; fetchedAt: number } | null = null;
 let liteInflight: Promise<SettingRecord[]> | null = null;
 
 const canUsePrismaSettings = (): boolean =>
-  Boolean(process.env.DATABASE_URL) && "setting" in prisma;
+  Boolean(process.env["DATABASE_URL"]) && "setting" in prisma;
 
 const isPrismaMissingTableError = (
   error: unknown
@@ -60,7 +60,7 @@ const readPrismaSettings = async (
 };
 
 const readMongoSettings = async (keys: string[]): Promise<SettingRecord[]> => {
-  if (!process.env.MONGODB_URI) return [];
+  if (!process.env["MONGODB_URI"]) return [];
   const mongo = await getMongoDb();
   const docs = await mongo
     .collection<SettingDocument>(SETTINGS_COLLECTION)
@@ -81,10 +81,10 @@ const readMongoSettings = async (keys: string[]): Promise<SettingRecord[]> => {
 };
 
 const fetchLiteSettings = async (): Promise<SettingRecord[]> => {
-  const envProvider = process.env.APP_DB_PROVIDER?.toLowerCase().trim();
+  const envProvider = process.env["APP_DB_PROVIDER"]?.toLowerCase().trim();
   const provider =
     envProvider === "mongodb" || envProvider === "prisma" ? envProvider : await getAppDbProvider();
-  const hasMongo = Boolean(process.env.MONGODB_URI);
+  const hasMongo = Boolean(process.env["MONGODB_URI"]);
 
   if (provider === "mongodb") {
     return readMongoSettings(LITE_SETTINGS_KEYS);

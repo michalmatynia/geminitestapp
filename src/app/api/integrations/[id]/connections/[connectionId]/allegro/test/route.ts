@@ -14,14 +14,14 @@ type TestLogEntry = {
   detail: string;
 };
 
-const PROD_BASE_URL = process.env.ALLEGRO_API_URL ?? "https://api.allegro.pl";
+const PROD_BASE_URL = process.env["ALLEGRO_API_URL"] ?? "https://api.allegro.pl";
 const SANDBOX_BASE_URL =
-  process.env.ALLEGRO_SANDBOX_API_URL ??
+  process.env["ALLEGRO_SANDBOX_API_URL"] ??
   "https://api.allegro.pl.allegrosandbox.pl";
 const PROD_TOKEN_URL =
-  process.env.ALLEGRO_TOKEN_URL ?? "https://allegro.pl/auth/oauth/token";
+  process.env["ALLEGRO_TOKEN_URL"] ?? "https://allegro.pl/auth/oauth/token";
 const SANDBOX_TOKEN_URL =
-  process.env.ALLEGRO_SANDBOX_TOKEN_URL ??
+  process.env["ALLEGRO_SANDBOX_TOKEN_URL"] ??
   "https://allegro.pl.allegrosandbox.pl/auth/oauth/token";
 
 /**

@@ -30,7 +30,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   let previewDbName: string | null = null;
   let safePage = 1;
   let safePageSize = 20;
-  const dbUrl = process.env.DATABASE_URL ?? "";
+  const dbUrl = process.env["DATABASE_URL"] ?? "";
 
   const body = (await req.json()) as {
     backupName?: string;
@@ -199,7 +199,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     }
 
     previewDbName = `stardb_preview_${Date.now()}`;
-    const adminUrl = new URL(process.env.DATABASE_URL ?? "");
+    const adminUrl = new URL(process.env["DATABASE_URL"] ?? "");
     adminUrl.pathname = "/postgres";
     adminUrl.searchParams.delete("schema");
     const adminClient =
@@ -235,7 +235,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     let databaseSize = "";
 
     try {
-      const previewUrl = new URL(process.env.DATABASE_URL ?? "");
+      const previewUrl = new URL(process.env["DATABASE_URL"] ?? "");
       if (previewMode === "backup") {
         await adminClient?.connect();
         await adminClient?.query(`CREATE DATABASE "${previewDbName}"`);

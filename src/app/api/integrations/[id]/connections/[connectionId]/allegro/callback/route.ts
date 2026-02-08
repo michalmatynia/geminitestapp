@@ -9,9 +9,9 @@ import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
 const PROD_TOKEN_URL =
-  process.env.ALLEGRO_TOKEN_URL ?? "https://allegro.pl/auth/oauth/token";
+  process.env["ALLEGRO_TOKEN_URL"] ?? "https://allegro.pl/auth/oauth/token";
 const SANDBOX_TOKEN_URL =
-  process.env.ALLEGRO_SANDBOX_TOKEN_URL ??
+  process.env["ALLEGRO_SANDBOX_TOKEN_URL"] ??
   "https://allegro.pl.allegrosandbox.pl/auth/oauth/token";
 
 type AllegroTokenResponse = {

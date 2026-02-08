@@ -6,6 +6,12 @@ Back up restore note working
 
 Prisma to mongdo i w drugę musi byc flawless, rowniez obsluga path przez Mongo i Auto w zaleznosci jaka baza jest wybrana jako glowna
 
+I want database query to work on both Prisma AND MongoDB, currently it doesn't work on MongoDB
+
+I want databases to be drilled on import export, I want to choose exactly which collections should be moved to prisma which to mongo db
+
+AI Paths, when the button is in two paths, only the first path runs, is trigged (I think they should be running concurrently)
+
 Run the project on newest node
 
 Some things are still connected to MongoDB, that's an issue, they have to respect the Provider

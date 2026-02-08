@@ -25,9 +25,9 @@ import type { ZodSchema } from 'zod';
 
 
 const shouldEnforceRateLimit = (): boolean => {
-  if (process.env.DISABLE_RATE_LIMITS === 'true') return false;
-  if (process.env.NODE_ENV === 'development') {
-    return process.env.ENABLE_RATE_LIMITS === 'true';
+  if (process.env["DISABLE_RATE_LIMITS"] === 'true') return false;
+  if (process.env["NODE_ENV"] === 'development') {
+    return process.env["ENABLE_RATE_LIMITS"] === 'true';
   }
   return true;
 };

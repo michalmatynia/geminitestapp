@@ -42,7 +42,7 @@ const resolveImageFileRepository = async (): Promise<ImageFileRepository> =>
  * @param filters - The filter criteria.
  * @returns A list of products.
  */
-const shouldLogTiming = (): boolean => process.env.DEBUG_API_TIMING === 'true';
+const shouldLogTiming = (): boolean => process.env["DEBUG_API_TIMING"] === 'true';
 
 type ProductQueryTimings = Record<string, number | null | undefined>;
 

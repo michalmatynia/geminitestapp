@@ -30,7 +30,7 @@ function QueryProviderInner({ children }: QueryProviderProps): React.JSX.Element
 
   // Query middleware system
   useQueryMiddleware(
-    process.env.NODE_ENV === 'development' 
+    process.env["NODE_ENV"] === 'development' 
       ? developmentMiddlewares 
       : productionMiddlewares
   );

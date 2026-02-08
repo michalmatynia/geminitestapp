@@ -66,7 +66,7 @@ type PriceGroupDoc = {
 const PRICE_GROUPS_COLLECTION = "price_groups";
 
 const buildCurrencyMap = async (): Promise<Map<string, CurrencyRecord>> => {
-  if (process.env.DATABASE_URL) {
+  if (process.env["DATABASE_URL"]) {
     try {
       const currencies = await prisma.currency.findMany({
         select: { id: true, code: true, name: true, symbol: true },
@@ -114,7 +114,7 @@ const resolveCurrency = (
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const provider = await getProductDataProvider();
   if (provider === "mongodb") {
-    if (!process.env.MONGODB_URI) {
+    if (!process.env["MONGODB_URI"]) {
       throw internalError("MongoDB is not configured.");
     }
     const db = await getMongoDb();
@@ -233,7 +233,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
   const provider = await getProductDataProvider();
   if (provider === "mongodb") {
-    if (!process.env.MONGODB_URI) {
+    if (!process.env["MONGODB_URI"]) {
       throw internalError("MongoDB is not configured.");
     }
     const db = await getMongoDb();

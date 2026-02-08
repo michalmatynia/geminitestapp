@@ -64,7 +64,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
 
   const isOrdersLogRequest = method === "getOrdersLog";
   if (method === "getInventoryProductsDetailed") {
-    const inventoryValue = parameters.inventory_id;
+    const inventoryValue = parameters["inventory_id"];
     const inventoryId =
       typeof inventoryValue === "string"
         ? inventoryValue.trim()
@@ -74,7 +74,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     if (!inventoryId || inventoryId === "0") {
       throw badRequestError("inventory_id is required.");
     }
-    const limitRaw = parameters.limit;
+    const limitRaw = parameters["limit"];
     const limit =
       typeof limitRaw === "number" && Number.isFinite(limitRaw)
         ? limitRaw
@@ -98,7 +98,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     if (!inventoryId || inventoryId === "0") {
       throw badRequestError("inventory_id is required.");
     }
-    const productValue = parameters.product_id ?? parameters.id;
+    const productValue = parameters["product_id"] ?? parameters["id"];
     const productId =
       typeof productValue === "string"
         ? productValue.trim()
@@ -120,9 +120,9 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
           if (!entry || typeof entry !== "object") return false;
           const record = entry as Record<string, unknown>;
           return (
-            record.product_id === productId ||
-            record.id === productId ||
-            record.base_product_id === productId
+            record["product_id"] === productId ||
+            record["id"] === productId ||
+            record["base_product_id"] === productId
           );
         }) ?? rawProducts[0];
     } else if (rawProducts && typeof rawProducts === "object") {

@@ -10,7 +10,7 @@ import type { ApiHandlerContext } from "@/shared/types/api";
 const QUERY_TIMEOUT_MS = 30_000;
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  if (process.env.NODE_ENV === "production") {
+  if (process.env["NODE_ENV"] === "production") {
     throw forbiddenError("Database operations are disabled in production.");
   }
 
@@ -41,7 +41,7 @@ async function handlePostgresQuery(sql: string | undefined): Promise<Response> {
     throw badRequestError("SQL query is required.");
   }
 
-  const dbUrl = process.env.DATABASE_URL ?? "";
+  const dbUrl = process.env["DATABASE_URL"] ?? "";
   if (!dbUrl.startsWith("postgres://") && !dbUrl.startsWith("postgresql://")) {
     throw badRequestError("No PostgreSQL database configured.");
   }
@@ -91,7 +91,7 @@ async function handleMongoOperation(
   }
 
   const mongoClient = await getMongoClient();
-  const dbName = process.env.MONGODB_DB ?? "stardb";
+  const dbName = process.env["MONGODB_DB"] ?? "stardb";
   const db = mongoClient.db(dbName);
   const collection = db.collection(collName);
   const startTime = Date.now();

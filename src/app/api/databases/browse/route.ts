@@ -1,15 +1,16 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import prisma from "@/shared/lib/db/prisma";
-import { ObjectId } from "mongodb";
-import { badRequestError } from "@/shared/errors/app-error";
-import { ErrorSystem } from "@/features/observability/server";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import type { DatabaseBrowseParamsDto as BrowseParams, DatabaseBrowseDto as BrowseResponse } from "@/shared/dtos/database";
+import { ObjectId } from 'mongodb';
+import { NextRequest, NextResponse } from 'next/server';
+
+import { ErrorSystem } from '@/features/observability/server';
+import type { DatabaseBrowseParamsDto as BrowseParams, DatabaseBrowseDto as BrowseResponse } from '@/shared/dtos/database';
+import { badRequestError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 async function browseMongoCollection(params: BrowseParams): Promise<BrowseResponse> {
   const db = await getMongoDb();
@@ -26,8 +27,8 @@ async function browseMongoCollection(params: BrowseParams): Promise<BrowseRespon
       // If not valid JSON, try text search on common fields
       filter = {
         $or: [
-          { name: { $regex: query, $options: "i" } },
-          { title: { $regex: query, $options: "i" } },
+          { name: { $regex: query, $options: 'i' } },
+          { title: { $regex: query, $options: 'i' } },
           { _id: query },
         ],
       };
@@ -62,7 +63,7 @@ async function browseMongoCollection(params: BrowseParams): Promise<BrowseRespon
   });
 
   return {
-    provider: "mongodb",
+    provider: 'mongodb',
     collection,
     documents: serializedDocs,
     total,
@@ -83,7 +84,7 @@ async function browsePrismaCollection(params: BrowseParams): Promise<BrowseRespo
 
   if (!model) {
     return {
-      provider: "prisma",
+      provider: 'prisma',
       collection,
       documents: [],
       total: 0,
@@ -101,8 +102,8 @@ async function browsePrismaCollection(params: BrowseParams): Promise<BrowseRespo
       // Try to search by common fields
       where = {
         OR: [
-          { name: { contains: query, mode: "insensitive" } },
-          { title: { contains: query, mode: "insensitive" } },
+          { name: { contains: query, mode: 'insensitive' } },
+          { title: { contains: query, mode: 'insensitive' } },
           { id: query },
         ],
       };
@@ -120,7 +121,7 @@ async function browsePrismaCollection(params: BrowseParams): Promise<BrowseRespo
     ]);
 
     return {
-      provider: "prisma",
+      provider: 'prisma',
       collection,
       documents: documents as Record<string, unknown>[],
       total,
@@ -128,9 +129,9 @@ async function browsePrismaCollection(params: BrowseParams): Promise<BrowseRespo
       skip,
     };
   } catch (error) {
-    void ErrorSystem.captureException(error, { service: "api/databases/browse", collection });
+    void ErrorSystem.captureException(error, { service: 'api/databases/browse', collection });
     return {
-      provider: "prisma",
+      provider: 'prisma',
       collection,
       documents: [],
       total: 0,
@@ -142,18 +143,18 @@ async function browsePrismaCollection(params: BrowseParams): Promise<BrowseRespo
 
 async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { searchParams } = new URL(request.url);
-  const collection = searchParams.get("collection");
-  const limit = parseInt(searchParams.get("limit") ?? "20", 10);
-  const skip = parseInt(searchParams.get("skip") ?? "0", 10);
-  const query = searchParams.get("query") ?? undefined;
-  const providerParam = (searchParams.get("provider") ?? "").toLowerCase();
+  const collection = searchParams.get('collection');
+  const limit = parseInt(searchParams.get('limit') ?? '20', 10);
+  const skip = parseInt(searchParams.get('skip') ?? '0', 10);
+  const query = searchParams.get('query') ?? undefined;
+  const providerParam = (searchParams.get('provider') ?? '').toLowerCase();
 
   if (!collection) {
-    throw badRequestError("Collection parameter is required");
+    throw badRequestError('Collection parameter is required');
   }
 
   const provider =
-    providerParam === "mongodb" || providerParam === "prisma"
+    providerParam === 'mongodb' || providerParam === 'prisma'
       ? providerParam
       : await getAppDbProvider();
 
@@ -162,7 +163,7 @@ async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext): Promi
     params.query = query;
   }
 
-  if (provider === "mongodb") {
+  if (provider === 'mongodb') {
     const result = await browseMongoCollection(params);
     return NextResponse.json(result);
   } else {
@@ -171,4 +172,4 @@ async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext): Promi
   }
 }
 
-export const GET = apiHandler(GET_handler, { source: "databases.browse.GET" });
+export const GET = apiHandler(GET_handler, { source: 'databases.browse.GET' });

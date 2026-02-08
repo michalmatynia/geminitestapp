@@ -1,15 +1,16 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { enqueueProductAiJob } from "@/features/jobs/server";
-import type { ProductAiJobType } from "@/shared/types/jobs";
-import { startProductAiJobQueue } from "@/features/jobs/server";
-import { getProductRepository } from "@/features/products/server";
-import { parseJsonBody } from "@/features/products/server";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import type { ProductWithImages } from "@/shared/types/domain/products";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { enqueueProductAiJob } from '@/features/jobs/server';
+import { startProductAiJobQueue } from '@/features/jobs/server';
+import { getProductRepository } from '@/features/products/server';
+import { parseJsonBody } from '@/features/products/server';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ProductWithImages } from '@/shared/types/domain/products';
+import type { ProductAiJobType } from '@/shared/types/jobs';
 
 
 const bulkJobSchema = z.object({
@@ -19,7 +20,7 @@ const bulkJobSchema = z.object({
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, bulkJobSchema, {
-    logPrefix: "products.ai-jobs.bulk.POST",
+    logPrefix: 'products.ai-jobs.bulk.POST',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -29,12 +30,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   // Get all product IDs using repository
   const productRepository = await getProductRepository();
   const products = await productRepository.getProducts({
-    pageSize: "10000", // Large limit to get all products
-    page: "1",
+    pageSize: '10000', // Large limit to get all products
+    page: '1',
   });
 
   if (products.length === 0) {
-    return NextResponse.json({ message: "No products found to process", count: 0 });
+    return NextResponse.json({ message: 'No products found to process', count: 0 });
   }
 
   // Create jobs in bulk (using a transaction or loop)
@@ -60,4 +61,4 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "products.ai-jobs.bulk.POST" });
+  { source: 'products.ai-jobs.bulk.POST' });

@@ -1,13 +1,14 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { noteService } from "@/features/notesapp/server";
-import { parseJsonBody } from "@/features/products/server";
-import { notebookCreateSchema } from "@/features/notesapp";
-import { removeUndefined } from "@/shared/utils";
-import type { NotebookCreateInput } from "@/shared/types/notes";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+
+import { notebookCreateSchema } from '@/features/notesapp';
+import { noteService } from '@/features/notesapp/server';
+import { parseJsonBody } from '@/features/products/server';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
+import type { NotebookCreateInput } from '@/shared/types/notes';
+import { removeUndefined } from '@/shared/utils';
 
 /**
  * GET /api/notes/notebooks
@@ -24,7 +25,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
  */
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, notebookCreateSchema, {
-    logPrefix: "notebooks.POST",
+    logPrefix: 'notebooks.POST',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -35,7 +36,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "notes.notebooks.GET" });
+  { source: 'notes.notebooks.GET' });
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "notes.notebooks.POST" });
+  { source: 'notes.notebooks.POST' });

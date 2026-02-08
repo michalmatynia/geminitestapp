@@ -1,9 +1,10 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { productService } from "@/features/products/server";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+
+import { productService } from '@/features/products/server';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 /**
  * GET /api/products/count
@@ -16,10 +17,10 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
   const count = await productService.countProducts(filters);
   return NextResponse.json(
     { count },
-    { headers: { "Cache-Control": "no-store" } }
+    { headers: { 'Cache-Control': 'no-store' } }
   );
 }
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "products.count.GET" });
+  { source: 'products.count.GET' });

@@ -1,17 +1,18 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { getIntegrationRepository } from "@/features/integrations/server";
-import { callBaseApi, fetchBaseProducts } from "@/features/integrations/server";
-import { resolveBaseConnectionToken } from "@/features/integrations/services/base-token-resolver";
-import { parseJsonBody } from "@/features/products/server";
-import { badRequestError, notFoundError } from "@/shared/errors/app-error";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { getIntegrationRepository } from '@/features/integrations/server';
+import { callBaseApi, fetchBaseProducts } from '@/features/integrations/server';
+import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
+import { parseJsonBody } from '@/features/products/server';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const normalizeParameters = (value: unknown): Record<string, unknown> => {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return {};
   }
   return value as Record<string, unknown>;
@@ -20,7 +21,7 @@ const normalizeParameters = (value: unknown): Record<string, unknown> => {
 const requestSchema = z
   .object({
     method: z.string().trim().min(1),
-    parameters: z.record(z.string(), z["unknown"]()).optional()
+    parameters: z.record(z.string(), z['unknown']()).optional()
   })
   .passthrough();
 
@@ -31,10 +32,10 @@ const requestSchema = z
 async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> {
   const { id, connectionId } = params;
   if (!id || !connectionId) {
-    throw badRequestError("Integration id and connection id are required");
+    throw badRequestError('Integration id and connection id are required');
   }
   const parsed = await parseJsonBody(_req, requestSchema, {
-    logPrefix: "integrations.base.request.POST"
+    logPrefix: 'integrations.base.request.POST'
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -44,8 +45,8 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
 
   const repo = await getIntegrationRepository();
   const integration = await repo.getIntegrationById(id);
-  if (!integration || integration.slug !== "baselinker") {
-    throw notFoundError("Base.com integration not found.", { integrationId: id });
+  if (integration?.slug !== 'baselinker') {
+    throw notFoundError('Base.com integration not found.', { integrationId: id });
   }
 
   const connection = await repo.getConnectionByIdAndIntegration(
@@ -53,32 +54,32 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     id
   );
   if (!connection) {
-    throw notFoundError("Connection not found.", { connectionId });
+    throw notFoundError('Connection not found.', { connectionId });
   }
 
   const tokenResolution = resolveBaseConnectionToken(connection);
   if (!tokenResolution.token) {
-    throw badRequestError(tokenResolution.error ?? "No Base API token configured.");
+    throw badRequestError(tokenResolution.error ?? 'No Base API token configured.');
   }
   const baseToken = tokenResolution.token;
 
-  const isOrdersLogRequest = method === "getOrdersLog";
-  if (method === "getInventoryProductsDetailed") {
-    const inventoryValue = parameters["inventory_id"];
+  const isOrdersLogRequest = method === 'getOrdersLog';
+  if (method === 'getInventoryProductsDetailed') {
+    const inventoryValue = parameters['inventory_id'];
     const inventoryId =
-      typeof inventoryValue === "string"
+      typeof inventoryValue === 'string'
         ? inventoryValue.trim()
-      : typeof inventoryValue === "number"
-        ? String(inventoryValue)
-        : "";
-    if (!inventoryId || inventoryId === "0") {
-      throw badRequestError("inventory_id is required.");
+        : typeof inventoryValue === 'number'
+          ? String(inventoryValue)
+          : '';
+    if (!inventoryId || inventoryId === '0') {
+      throw badRequestError('inventory_id is required.');
     }
-    const limitRaw = parameters["limit"];
+    const limitRaw = parameters['limit'];
     const limit =
-      typeof limitRaw === "number" && Number.isFinite(limitRaw)
+      typeof limitRaw === 'number' && Number.isFinite(limitRaw)
         ? limitRaw
-        : typeof limitRaw === "string"
+        : typeof limitRaw === 'string'
           ? Number(limitRaw)
           : undefined;
     const products = await fetchBaseProducts(baseToken, inventoryId, limit);
@@ -87,28 +88,28 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     });
   }
 
-  if (method === "getInventoryProductDetailed") {
-    const inventoryValue = parameters["inventory_id"];
+  if (method === 'getInventoryProductDetailed') {
+    const inventoryValue = parameters['inventory_id'];
     const inventoryId =
-      typeof inventoryValue === "string"
+      typeof inventoryValue === 'string'
         ? inventoryValue.trim()
-        : typeof inventoryValue === "number"
+        : typeof inventoryValue === 'number'
           ? String(inventoryValue)
-          : "";
-    if (!inventoryId || inventoryId === "0") {
-      throw badRequestError("inventory_id is required.");
+          : '';
+    if (!inventoryId || inventoryId === '0') {
+      throw badRequestError('inventory_id is required.');
     }
-    const productValue = parameters["product_id"] ?? parameters["id"];
+    const productValue = parameters['product_id'] ?? parameters['id'];
     const productId =
-      typeof productValue === "string"
+      typeof productValue === 'string'
         ? productValue.trim()
-        : typeof productValue === "number"
+        : typeof productValue === 'number'
           ? String(productValue)
-          : "";
+          : '';
     if (!productId) {
-      throw badRequestError("product_id is required.");
+      throw badRequestError('product_id is required.');
     }
-    const payload = await callBaseApi(baseToken, "getInventoryProductsData", {
+    const payload = await callBaseApi(baseToken, 'getInventoryProductsData', {
       inventory_id: inventoryId,
       products: [productId]
     });
@@ -117,15 +118,15 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     if (Array.isArray(rawProducts)) {
       product =
         rawProducts.find((entry) => {
-          if (!entry || typeof entry !== "object") return false;
+          if (!entry || typeof entry !== 'object') return false;
           const record = entry as Record<string, unknown>;
           return (
-            record["product_id"] === productId ||
-            record["id"] === productId ||
-            record["base_product_id"] === productId
+            record['product_id'] === productId ||
+            record['id'] === productId ||
+            record['base_product_id'] === productId
           );
         }) ?? rawProducts[0];
-    } else if (rawProducts && typeof rawProducts === "object") {
+    } else if (rawProducts && typeof rawProducts === 'object') {
       const recordMap = rawProducts as Record<string, unknown>;
       product =
         recordMap[productId] ??
@@ -143,7 +144,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
   }
 
   const methodCandidates = isOrdersLogRequest
-    ? ["getOrdersLog", "getOrdersLogs", "getOrdersHistory", "getOrdersChanges"]
+    ? ['getOrdersLog', 'getOrdersLogs', 'getOrdersHistory', 'getOrdersChanges']
     : [method];
   let payload: unknown;
   let lastError: Error | null = null;
@@ -154,8 +155,8 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       lastError = null;
       break;
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      if (message.toLowerCase().includes("unknown method")) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      if (message.toLowerCase().includes('unknown method')) {
         sawUnknownMethod = true;
         lastError = error instanceof Error ? error : new Error(message);
         continue;
@@ -164,15 +165,15 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     }
   }
   if (!payload && isOrdersLogRequest && sawUnknownMethod) {
-    payload = await callBaseApi(baseToken, "getOrders", parameters);
+    payload = await callBaseApi(baseToken, 'getOrders', parameters);
   }
   if (!payload) {
-    throw lastError ?? new Error("Base API request failed.");
+    throw lastError ?? new Error('Base API request failed.');
   }
 
   return NextResponse.json({ data: payload });
 }
 export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(
   POST_handler,
-  { source: "integrations.[id].connections.[connectionId].base.request.POST", requireCsrf: false }
+  { source: 'integrations.[id].connections.[connectionId].base.request.POST', requireCsrf: false }
 );

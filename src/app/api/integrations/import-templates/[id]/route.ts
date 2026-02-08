@@ -1,17 +1,18 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
 import {
   deleteImportTemplate,
   getImportTemplate,
   updateImportTemplate
-} from "@/features/integrations/server";
-import { removeUndefined } from "@/shared/utils";
-import { parseJsonBody } from "@/features/products/server";
-import { badRequestError, notFoundError } from "@/shared/errors/app-error";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+} from '@/features/integrations/server';
+import { parseJsonBody } from '@/features/products/server';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
+import { removeUndefined } from '@/shared/utils';
 
 const mappingSchema = z.object({
   sourceKey: z.string().trim().min(1),
@@ -27,11 +28,11 @@ const templateSchema = z.object({
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const { id } = params;
   if (!id) {
-    throw badRequestError("Template id is required");
+    throw badRequestError('Template id is required');
   }
   const template = await getImportTemplate(id);
   if (!template) {
-    throw notFoundError("Template not found.", { templateId: id });
+    throw notFoundError('Template not found.', { templateId: id });
   }
   return NextResponse.json(template);
 }
@@ -39,10 +40,10 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: {
 async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const { id } = params;
   if (!id) {
-    throw badRequestError("Template id is required");
+    throw badRequestError('Template id is required');
   }
   const parsed = await parseJsonBody(req, templateSchema, {
-    logPrefix: "import-templates.PUT"
+    logPrefix: 'import-templates.PUT'
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -54,7 +55,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
     mappings: data.mappings
   }));
   if (!template) {
-    throw notFoundError("Template not found.", { templateId: id });
+    throw notFoundError('Template not found.', { templateId: id });
   }
   return NextResponse.json(template);
 }
@@ -62,24 +63,24 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
 async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const { id } = params;
   if (!id) {
-    throw badRequestError("Template id is required");
+    throw badRequestError('Template id is required');
   }
   const deleted = await deleteImportTemplate(id);
   if (!deleted) {
-    throw notFoundError("Template not found.", { templateId: id });
+    throw notFoundError('Template not found.', { templateId: id });
   }
   return NextResponse.json({ ok: true });
 }
 
 export const GET = apiHandlerWithParams<{ id: string }>(
   GET_handler,
-  { source: "products.import-templates.[id].GET", requireCsrf: false }
+  { source: 'products.import-templates.[id].GET', requireCsrf: false }
 );
 export const PUT = apiHandlerWithParams<{ id: string }>(
   PUT_handler,
-  { source: "products.import-templates.[id].PUT", requireCsrf: false }
+  { source: 'products.import-templates.[id].PUT', requireCsrf: false }
 );
 export const DELETE = apiHandlerWithParams<{ id: string }>(
   DELETE_handler,
-  { source: "products.import-templates.[id].DELETE", requireCsrf: false }
+  { source: 'products.import-templates.[id].DELETE', requireCsrf: false }
 );

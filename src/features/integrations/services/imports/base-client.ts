@@ -33,7 +33,7 @@ export type BaseApiRawResult = {
 const DEFAULT_BASE_API_URL = 'https://api.baselinker.com/connector.php';
 
 const buildBaseApiUrl = (): string => {
-  const raw = process.env["BASE_API_URL"] || DEFAULT_BASE_API_URL;
+  const raw = process.env['BASE_API_URL'] || DEFAULT_BASE_API_URL;
   if (raw.includes('connector.php')) return raw;
   return `${raw.replace(/\/$/, '')}/connector.php`;
 };

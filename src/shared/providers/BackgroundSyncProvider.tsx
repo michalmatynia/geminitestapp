@@ -56,7 +56,7 @@ export function BackgroundSyncProvider({ children }: { children: React.ReactNode
   });
 
   useEffect(() => {
-    if (process.env["NODE_ENV"] === 'development') {
+    if (process.env['NODE_ENV'] === 'development') {
       console.log('Background sync status:', { isOnline, lastSync });
     }
   }, [isOnline, lastSync]);

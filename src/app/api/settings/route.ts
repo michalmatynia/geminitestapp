@@ -1,23 +1,22 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
-import { z } from "zod";
-import { WithId } from "mongodb";
+import { Prisma } from '@prisma/client';
+import { WithId } from 'mongodb';
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
-import prisma from "@/shared/lib/db/prisma";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import { AUTH_SETTINGS_KEYS } from '@/features/auth/utils/auth-management';
+import { ErrorSystem } from '@/features/observability/server';
+import { internalError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import {
   APP_DB_PROVIDER_SETTING_KEY,
   getAppDbProvider,
   invalidateAppDbProviderCache,
-} from "@/shared/lib/db/app-db-provider";
-import { parseJsonBody } from "@/shared/lib/api/parse-json";
-import { internalError } from "@/shared/errors/app-error";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { ErrorSystem } from "@/features/observability/server";
-import { AUTH_SETTINGS_KEYS } from "@/features/auth/utils/auth-management";
+} from '@/shared/lib/db/app-db-provider';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
 import {
   SettingRecord,
   getCachedSettings,
@@ -29,9 +28,10 @@ import {
   setSettingsInflight,
   getStaleSettings,
   type SettingsScope,
-} from "@/shared/lib/settings-cache";
+} from '@/shared/lib/settings-cache';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
-const shouldLog = () => process.env["DEBUG_SETTINGS"] === "true";
+const shouldLog = () => process.env['DEBUG_SETTINGS'] === 'true';
 
 type SettingDocument = {
   key: string;
@@ -40,23 +40,23 @@ type SettingDocument = {
   updatedAt: Date;
 };
 
-const SETTINGS_COLLECTION = "settings";
-const AI_PATHS_CONFIG_PREFIX = "ai_paths_config_";
-const HEAVY_PREFIXES = ["ai_paths_", "image_studio_", "base_import_", "base_export_"];
-const HEAVY_KEYS = new Set<string>(["agent_personas"]);
-const HEAVY_PREFIX_REGEX = new RegExp(`^(${HEAVY_PREFIXES.map((p) => p.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")).join("|")})`);
-const DEFAULT_SCOPE: SettingsScope = "light";
+const SETTINGS_COLLECTION = 'settings';
+const AI_PATHS_CONFIG_PREFIX = 'ai_paths_config_';
+const HEAVY_PREFIXES = ['ai_paths_', 'image_studio_', 'base_import_', 'base_export_'];
+const HEAVY_KEYS = new Set<string>(['agent_personas']);
+const HEAVY_PREFIX_REGEX = new RegExp(`^(${HEAVY_PREFIXES.map((p) => p.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|')})`);
+const DEFAULT_SCOPE: SettingsScope = 'light';
 let settingsIndexesEnsured: Promise<void> | null = null;
 
 const ensureSettingsIndexes = async (): Promise<void> => {
-  if (!process.env["MONGODB_URI"]) return;
+  if (!process.env['MONGODB_URI']) return;
   if (!settingsIndexesEnsured) {
     settingsIndexesEnsured = (async (): Promise<void> => {
       try {
         const mongo = await getMongoDb();
-        await mongo.collection(SETTINGS_COLLECTION).createIndex({ key: 1 }, { name: "settings_key" });
+        await mongo.collection(SETTINGS_COLLECTION).createIndex({ key: 1 }, { name: 'settings_key' });
       } catch (error) {
-        console.warn("[settings] Failed to ensure settings indexes.", error);
+        console.warn('[settings] Failed to ensure settings indexes.', error);
       }
     })();
   }
@@ -67,19 +67,19 @@ const isMongoPreferredSettingKey = (key: string) => authSettingKeys.has(key);
 const isHeavySettingKey = (key: string): boolean =>
   HEAVY_KEYS.has(key) || HEAVY_PREFIXES.some((prefix) => key.startsWith(prefix));
 
-const canUsePrismaSettings = (provider: "prisma" | "mongodb") =>
-  provider === "prisma" && Boolean(process.env["DATABASE_URL"]) && "setting" in prisma;
+const canUsePrismaSettings = (provider: 'prisma' | 'mongodb') =>
+  provider === 'prisma' && Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
 
 const isPrismaMissingTableError = (
   error: unknown
 ): error is Prisma.PrismaClientKnownRequestError =>
   error instanceof Prisma.PrismaClientKnownRequestError &&
-  (error.code === "P2021" || error.code === "P2022");
+  (error.code === 'P2021' || error.code === 'P2022');
 
 const parseUpdatedAtMsFromPathConfig = (raw: string): number | null => {
   try {
     const parsed = JSON.parse(raw) as { updatedAt?: unknown };
-    if (typeof parsed?.updatedAt !== "string") return null;
+    if (typeof parsed?.updatedAt !== 'string') return null;
     const ms = Date.parse(parsed.updatedAt);
     return Number.isFinite(ms) ? ms : null;
   } catch {
@@ -90,7 +90,7 @@ const parseUpdatedAtMsFromPathConfig = (raw: string): number | null => {
 const parsePathConfigObject = (raw: string): Record<string, unknown> | null => {
   try {
     const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
     return parsed as Record<string, unknown>;
   } catch {
     return null;
@@ -107,14 +107,14 @@ const mergeRuntimeOnlyPathConfigWrite = (
 
   const merged: Record<string, unknown> = {
     ...current,
-    ...(Object.prototype.hasOwnProperty.call(incoming, "runtimeState")
-      ? { runtimeState: incoming["runtimeState"] }
+    ...(Object.prototype.hasOwnProperty.call(incoming, 'runtimeState')
+      ? { runtimeState: incoming['runtimeState'] }
       : {}),
-    ...(Object.prototype.hasOwnProperty.call(incoming, "lastRunAt")
-      ? { lastRunAt: incoming["lastRunAt"] }
+    ...(Object.prototype.hasOwnProperty.call(incoming, 'lastRunAt')
+      ? { lastRunAt: incoming['lastRunAt'] }
       : {}),
-    ...(Object.prototype.hasOwnProperty.call(incoming, "updatedAt")
-      ? { updatedAt: incoming["updatedAt"] }
+    ...(Object.prototype.hasOwnProperty.call(incoming, 'updatedAt')
+      ? { updatedAt: incoming['updatedAt'] }
       : {}),
   };
   return JSON.stringify(merged);
@@ -124,21 +124,21 @@ const isRuntimeOnlyPathConfigPayload = (raw: string): boolean => {
   const parsed = parsePathConfigObject(raw);
   if (!parsed) return false;
   const hasRuntimeFields =
-    Object.prototype.hasOwnProperty.call(parsed, "runtimeState") ||
-    Object.prototype.hasOwnProperty.call(parsed, "lastRunAt") ||
-    Object.prototype.hasOwnProperty.call(parsed, "updatedAt");
+    Object.prototype.hasOwnProperty.call(parsed, 'runtimeState') ||
+    Object.prototype.hasOwnProperty.call(parsed, 'lastRunAt') ||
+    Object.prototype.hasOwnProperty.call(parsed, 'updatedAt');
   if (!hasRuntimeFields) return false;
   const hasGraphFields =
-    Object.prototype.hasOwnProperty.call(parsed, "nodes") ||
-    Object.prototype.hasOwnProperty.call(parsed, "edges");
+    Object.prototype.hasOwnProperty.call(parsed, 'nodes') ||
+    Object.prototype.hasOwnProperty.call(parsed, 'edges');
   return !hasGraphFields;
 };
 
 const readCurrentSettingValue = async (
   key: string,
-  provider: "prisma" | "mongodb"
+  provider: 'prisma' | 'mongodb'
 ): Promise<string | null> => {
-  const hasMongo = Boolean(process.env["MONGODB_URI"]);
+  const hasMongo = Boolean(process.env['MONGODB_URI']);
   const canUsePrisma = canUsePrismaSettings(provider);
 
   const readPrisma = async (): Promise<string | null> => {
@@ -162,10 +162,10 @@ const readCurrentSettingValue = async (
     const doc = await mongo
       .collection<SettingDocument>(SETTINGS_COLLECTION)
       .findOne({ key }, { projection: { value: 1 } });
-    return typeof doc?.value === "string" ? doc.value : null;
+    return typeof doc?.value === 'string' ? doc.value : null;
   };
 
-  if (provider === "mongodb") {
+  if (provider === 'mongodb') {
     const mongoValue = await readMongo();
     if (mongoValue !== null) return mongoValue;
     return await readPrisma();
@@ -183,44 +183,44 @@ const settingSchema = z.object({
 
 
 const normalizeScope = (scope?: string | null): SettingsScope => {
-  if (scope === "heavy" || scope === "light" || scope === "all") return scope;
+  if (scope === 'heavy' || scope === 'light' || scope === 'all') return scope;
   return DEFAULT_SCOPE;
 };
 
 const applyScopeFilter = (settings: SettingRecord[], scope: SettingsScope): SettingRecord[] => {
-  if (scope === "all") return settings;
-  if (scope === "heavy") return settings.filter((setting: SettingRecord) => isHeavySettingKey(setting.key));
+  if (scope === 'all') return settings;
+  if (scope === 'heavy') return settings.filter((setting: SettingRecord) => isHeavySettingKey(setting.key));
   return settings.filter((setting: SettingRecord) => !isHeavySettingKey(setting.key));
 };
 
 const buildPrismaScopeWhere = (scope: SettingsScope): Record<string, unknown> => {
-  if (scope === "all") return {};
+  if (scope === 'all') return {};
   const heavyOr = [
     ...HEAVY_PREFIXES.map((prefix) => ({ key: { startsWith: prefix } })),
     { key: { in: Array.from(HEAVY_KEYS) } },
   ];
-  if (scope === "heavy") {
+  if (scope === 'heavy') {
     return { OR: heavyOr };
   }
   return { NOT: { OR: heavyOr } };
 };
 
 const buildMongoScopeQuery = (scope: SettingsScope): Record<string, unknown> => {
-  if (scope === "all") return {};
+  if (scope === 'all') return {};
   const heavyOr = [
     { key: { $regex: HEAVY_PREFIX_REGEX } },
     { key: { $in: Array.from(HEAVY_KEYS) } },
     { _id: { $in: Array.from(HEAVY_KEYS) } },
-    { _id: { $type: "string", $regex: HEAVY_PREFIX_REGEX } },
+    { _id: { $type: 'string', $regex: HEAVY_PREFIX_REGEX } },
   ];
-  if (scope === "heavy") {
+  if (scope === 'heavy') {
     return { $or: heavyOr };
   }
   return { $nor: heavyOr };
 };
 
 const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]> => {
-  if (!process.env["MONGODB_URI"]) return [];
+  if (!process.env['MONGODB_URI']) return [];
   await ensureSettingsIndexes();
   const mongo = await getMongoDb();
   const query = buildMongoScopeQuery(scope);
@@ -230,14 +230,14 @@ const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]>
     .toArray();
   return docs
     .map((doc: WithId<SettingDocument>) => ({ key: doc.key ?? String(doc._id), value: doc.value }))
-    .filter((doc: SettingRecord) => typeof doc.key === "string" && typeof doc.value === "string");
+    .filter((doc: SettingRecord) => typeof doc.key === 'string' && typeof doc.value === 'string');
 };
 
 const upsertMongoSetting = async (
   key: string,
   value: string
 ): Promise<SettingRecord | null> => {
-  if (!process.env["MONGODB_URI"]) return null;
+  if (!process.env['MONGODB_URI']) return null;
   const mongo = await getMongoDb();
   const now = new Date();
   await mongo.collection<SettingDocument>(SETTINGS_COLLECTION).updateOne(
@@ -251,29 +251,29 @@ const upsertMongoSetting = async (
   return { key, value };
 };
 
-const SETTINGS_CACHE_CONTROL = "private, max-age=120, stale-while-revalidate=600";
-const shouldLogTiming = () => process.env["DEBUG_API_TIMING"] === "true";
+const SETTINGS_CACHE_CONTROL = 'private, max-age=120, stale-while-revalidate=600';
+const shouldLogTiming = () => process.env['DEBUG_API_TIMING'] === 'true';
 
 const buildServerTiming = (entries: Record<string, number | null | undefined>): string => {
   const parts = Object.entries(entries)
-    .filter(([, value]) => typeof value === "number" && Number.isFinite(value) && value >= 0)
+    .filter(([, value]) => typeof value === 'number' && Number.isFinite(value) && value >= 0)
     .map(([name, value]) => `${name};dur=${Math.round(value as number)}`);
-  return parts.join(", ");
+  return parts.join(', ');
 };
 
 const attachTimingHeaders = (response: Response, entries: Record<string, number | null | undefined>): void => {
   const value = buildServerTiming(entries);
   if (value) {
-    response.headers.set("Server-Timing", value);
+    response.headers.set('Server-Timing', value);
   }
 };
 
 const attachProviderHeader = async (response: Response): Promise<void> => {
   try {
     const provider = await getAppDbProvider();
-    response.headers.set("X-App-Db-Provider", provider);
+    response.headers.set('X-App-Db-Provider', provider);
   } catch (error) {
-    console.warn("[settings] Failed to resolve app DB provider.", error);
+    console.warn('[settings] Failed to resolve app DB provider.', error);
   }
 };
 
@@ -283,10 +283,10 @@ const fetchAndCacheSettings = async (
 ): Promise<SettingRecord[]> => {
   const totalStart = performance.now();
   const provider = await getAppDbProvider();
-  if (timings) timings["provider"] = performance.now() - totalStart;
-  const hasMongo = Boolean(process.env["MONGODB_URI"]);
-  const envProvider = process.env["APP_DB_PROVIDER"]?.toLowerCase().trim();
-  const forcePrisma = envProvider === "prisma";
+  if (timings) timings['provider'] = performance.now() - totalStart;
+  const hasMongo = Boolean(process.env['MONGODB_URI']);
+  const envProvider = process.env['APP_DB_PROVIDER']?.toLowerCase().trim();
+  const forcePrisma = envProvider === 'prisma';
   const prismaSettings: SettingRecord[] = [];
   let prismaMissing = false;
   if (canUsePrismaSettings(provider)) {
@@ -300,30 +300,30 @@ const fetchAndCacheSettings = async (
     } catch (error) {
       if (isPrismaMissingTableError(error)) {
         prismaMissing = true;
-        console.warn("[settings] Prisma settings table missing; falling back to Mongo.", {
+        console.warn('[settings] Prisma settings table missing; falling back to Mongo.', {
           code: error.code,
         });
       } else {
         throw error;
       }
     } finally {
-      if (timings) timings["prisma"] = performance.now() - prismaStart;
+      if (timings) timings['prisma'] = performance.now() - prismaStart;
     }
   }
   const shouldReadMongoSettings = hasMongo && (!forcePrisma || prismaMissing);
   const mongoSettings = shouldReadMongoSettings
     ? await (async (): Promise<SettingRecord[]> => {
-        const mongoStart = performance.now();
-        const settings = await listMongoSettings(scope);
-        if (timings) timings["mongo"] = performance.now() - mongoStart;
-        return settings;
-      })()
+      const mongoStart = performance.now();
+      const settings = await listMongoSettings(scope);
+      if (timings) timings['mongo'] = performance.now() - mongoStart;
+      return settings;
+    })()
     : [];
   if (prismaMissing && !hasMongo) {
-    console.warn("[settings] Prisma settings table missing and no Mongo fallback; returning empty settings.");
+    console.warn('[settings] Prisma settings table missing and no Mongo fallback; returning empty settings.');
   }
   const settingsMap = new Map<string, SettingRecord>();
-  if (provider === "mongodb") {
+  if (provider === 'mongodb') {
     mongoSettings.forEach((setting: SettingRecord) => {
       settingsMap.set(setting.key, setting);
     });
@@ -342,16 +342,16 @@ const fetchAndCacheSettings = async (
   }
   const settings = Array.from(settingsMap.values());
   if (shouldLog()) {
-    await ErrorSystem.logInfo("[settings] fetched", {
-      service: "api/settings",
+    await ErrorSystem.logInfo('[settings] fetched', {
+      service: 'api/settings',
       count: settings.length,
       keys: settings.map((setting: SettingRecord) => setting.key),
     });
   }
   setCachedSettings(settings, scope);
-  if (timings) timings["total"] = performance.now() - totalStart;
+  if (timings) timings['total'] = performance.now() - totalStart;
   if (timings && shouldLogTiming()) {
-    console.log("[timing] settings.fetch", { scope, ...timings });
+    console.log('[timing] settings.fetch', { scope, ...timings });
   }
   return settings;
 };
@@ -363,12 +363,12 @@ async function GET_handler(
 ): Promise<Response> {
   const requestStart = performance.now();
   if (shouldLog()) {
-    await ErrorSystem.logInfo("[settings] GET /api/settings", { service: "api/settings" });
+    await ErrorSystem.logInfo('[settings] GET /api/settings', { service: 'api/settings' });
   }
-  const scope = scopeOverride ?? normalizeScope(req.nextUrl.searchParams.get("scope"));
-  if (req.nextUrl.searchParams.get("debug") === "1" && isSettingsCacheDebugEnabled()) {
+  const scope = scopeOverride ?? normalizeScope(req.nextUrl.searchParams.get('scope'));
+  if (req.nextUrl.searchParams.get('debug') === '1' && isSettingsCacheDebugEnabled()) {
     const response = NextResponse.json(getSettingsCacheStats(), {
-      headers: { "Cache-Control": "no-store" },
+      headers: { 'Cache-Control': 'no-store' },
     });
     await attachProviderHeader(response);
     attachTimingHeaders(response, { total: performance.now() - requestStart, cache: 0 });
@@ -377,10 +377,10 @@ async function GET_handler(
   const cached = getCachedSettings(scope);
   if (cached) {
     if (shouldLogTiming()) {
-      console.log("[settings] cache", { scope, status: "hit" });
+      console.log('[settings] cache', { scope, status: 'hit' });
     }
     const response = NextResponse.json(cached, {
-      headers: { "Cache-Control": SETTINGS_CACHE_CONTROL, "X-Cache": "hit" },
+      headers: { 'Cache-Control': SETTINGS_CACHE_CONTROL, 'X-Cache': 'hit' },
     });
     await attachProviderHeader(response);
     attachTimingHeaders(response, { total: performance.now() - requestStart, cache: 0 });
@@ -390,10 +390,10 @@ async function GET_handler(
   if (inflight) {
     const data = await inflight;
     if (shouldLogTiming()) {
-      console.log("[settings] cache", { scope, status: "wait" });
+      console.log('[settings] cache', { scope, status: 'wait' });
     }
     const response = NextResponse.json(data, {
-      headers: { "Cache-Control": SETTINGS_CACHE_CONTROL, "X-Cache": "wait" },
+      headers: { 'Cache-Control': SETTINGS_CACHE_CONTROL, 'X-Cache': 'wait' },
     });
     await attachProviderHeader(response);
     attachTimingHeaders(response, { total: performance.now() - requestStart, cache: 0 });
@@ -403,13 +403,13 @@ async function GET_handler(
   const stale = getStaleSettings(scope);
   if (stale) {
     if (shouldLogTiming()) {
-      console.log("[settings] cache", { scope, status: "stale" });
+      console.log('[settings] cache', { scope, status: 'stale' });
     }
     const timings: Record<string, number | null | undefined> = {};
     const refreshPromise = fetchAndCacheSettings(scope, timings)
       .catch((error) => {
         // Log refresh error but return stale data to keep app running
-        void ErrorSystem.captureException(error, { service: "api/settings", action: "stale_refresh" });
+        void ErrorSystem.captureException(error, { service: 'api/settings', action: 'stale_refresh' });
         return stale;
       })
       .finally(() => {
@@ -417,7 +417,7 @@ async function GET_handler(
       });
     setSettingsInflight(refreshPromise, scope);
     const response = NextResponse.json(stale, {
-      headers: { "Cache-Control": SETTINGS_CACHE_CONTROL, "X-Cache": "stale" },
+      headers: { 'Cache-Control': SETTINGS_CACHE_CONTROL, 'X-Cache': 'stale' },
     });
     await attachProviderHeader(response);
     attachTimingHeaders(response, { total: performance.now() - requestStart, cache: 0 });
@@ -432,10 +432,10 @@ async function GET_handler(
   setSettingsInflight(inflightPromise, scope);
   const data = await inflightPromise;
   if (shouldLogTiming()) {
-    console.log("[settings] cache", { scope, status: "miss" });
+    console.log('[settings] cache', { scope, status: 'miss' });
   }
   const response = NextResponse.json(data, {
-    headers: { "Cache-Control": SETTINGS_CACHE_CONTROL, "X-Cache": "miss" },
+    headers: { 'Cache-Control': SETTINGS_CACHE_CONTROL, 'X-Cache': 'miss' },
   });
   await attachProviderHeader(response);
   attachTimingHeaders(response, { total: performance.now() - requestStart, cache: 0, ...timings });
@@ -444,11 +444,11 @@ async function GET_handler(
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   if (shouldLog()) {
-    await ErrorSystem.logInfo("[settings] POST /api/settings", { service: "api/settings" });
+    await ErrorSystem.logInfo('[settings] POST /api/settings', { service: 'api/settings' });
   }
   clearSettingsCache();
   const parsed = await parseJsonBody(req, settingSchema, {
-    logPrefix: "settings.POST",
+    logPrefix: 'settings.POST',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -456,7 +456,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const { key } = parsed.data;
   let value = parsed.data.value;
   if (shouldLog()) {
-    await ErrorSystem.logInfo("[settings] upserting", { service: "api/settings", key, valuePreview: value.slice(0, 40) });
+    await ErrorSystem.logInfo('[settings] upserting', { service: 'api/settings', key, valuePreview: value.slice(0, 40) });
   }
   const provider = await getAppDbProvider();
   let currentValueForPathConfig: string | null = null;
@@ -479,10 +479,10 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       }
     }
   }
-  const hasMongo = Boolean(process.env["MONGODB_URI"]);
+  const hasMongo = Boolean(process.env['MONGODB_URI']);
   const shouldWriteMongo =
     hasMongo &&
-    (provider === "mongodb" || isMongoPreferredSettingKey(key) || !canUsePrismaSettings(provider));
+    (provider === 'mongodb' || isMongoPreferredSettingKey(key) || !canUsePrismaSettings(provider));
   const shouldWritePrisma =
     canUsePrismaSettings(provider) && (!authSettingKeys.has(key) || !hasMongo);
   let prismaSetting: SettingRecord | null = null;
@@ -499,7 +499,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     } catch (error) {
       if (isPrismaMissingTableError(error)) {
         prismaMissing = true;
-        console.warn("[settings] Prisma settings table missing; falling back to Mongo.", {
+        console.warn('[settings] Prisma settings table missing; falling back to Mongo.', {
           code: error.code,
         });
       } else {
@@ -514,8 +514,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const setting = prismaSetting ?? mongoSetting;
   if (!setting) {
     const message = prismaMissing
-      ? "Settings table is missing in Prisma. Run prisma db push or configure MongoDB."
-      : "No settings store configured";
+      ? 'Settings table is missing in Prisma. Run prisma db push or configure MongoDB.'
+      : 'No settings store configured';
     throw internalError(message);
   }
   if (setting.key === APP_DB_PROVIDER_SETTING_KEY) {
@@ -524,15 +524,15 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   return NextResponse.json(setting);
 }
 
-const disableSettingsRateLimit = process.env["NODE_ENV"] !== "production";
+const disableSettingsRateLimit = process.env['NODE_ENV'] !== 'production';
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
-  { source: "settings.GET", rateLimitKey: disableSettingsRateLimit ? false : "api" }
+  { source: 'settings.GET', rateLimitKey: disableSettingsRateLimit ? false : 'api' }
 );
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
-  { source: "settings.POST", rateLimitKey: disableSettingsRateLimit ? false : "write" }
+  { source: 'settings.POST', rateLimitKey: disableSettingsRateLimit ? false : 'write' }
 );
 
 export { GET_handler };

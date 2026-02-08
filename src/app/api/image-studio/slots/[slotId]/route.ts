@@ -1,21 +1,22 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { badRequestError, notFoundError } from "@/shared/errors/app-error";
-import { deleteImageStudioSlot, updateImageStudioSlot } from "@/features/ai/image-studio/server/slot-repository";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { deleteImageStudioSlot, updateImageStudioSlot } from '@/features/ai/image-studio/server/slot-repository';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const sanitizeFolderPath = (value: string): string => {
-  const normalized = value.replace(/\\/g, "/").trim();
+  const normalized = value.replace(/\\/g, '/').trim();
   const parts = normalized
-    .split("/")
+    .split('/')
     .map((part) => part.trim())
-    .filter((part) => part && part !== "." && part !== "..")
-    .map((part) => part.replace(/[^a-zA-Z0-9-_]/g, "_"))
+    .filter((part) => part && part !== '.' && part !== '..')
+    .map((part) => part.replace(/[^a-zA-Z0-9-_]/g, '_'))
     .filter(Boolean);
-  return parts.join("/");
+  return parts.join('/');
 };
 
 const patchSchema = z.object({
@@ -34,18 +35,18 @@ async function PATCH_handler(
   _ctx: ApiHandlerContext,
   params: { slotId: string }
 ): Promise<Response> {
-  const slotId = params.slotId?.trim() ?? "";
-  if (!slotId) throw badRequestError("Slot id is required");
+  const slotId = params.slotId?.trim() ?? '';
+  if (!slotId) throw badRequestError('Slot id is required');
 
   const body = (await req.json().catch(() => null)) as unknown;
   const parsed = patchSchema.safeParse(body);
   if (!parsed.success) {
-    throw badRequestError("Invalid payload", { errors: parsed.error.format() });
+    throw badRequestError('Invalid payload', { errors: parsed.error.format() });
   }
 
   const data = {
     ...(parsed.data.name ? { name: parsed.data.name } : {}),
-    ...(parsed.data.folderPath !== undefined ? { folderPath: sanitizeFolderPath(parsed.data.folderPath ?? "") } : {}),
+    ...(parsed.data.folderPath !== undefined ? { folderPath: sanitizeFolderPath(parsed.data.folderPath ?? '') } : {}),
     ...(parsed.data.imageUrl !== undefined ? { imageUrl: parsed.data.imageUrl ?? null } : {}),
     ...(parsed.data.imageBase64 !== undefined ? { imageBase64: parsed.data.imageBase64 ?? null } : {}),
     ...(parsed.data.imageFileId !== undefined ? { imageFileId: parsed.data.imageFileId ?? null } : {}),
@@ -55,7 +56,7 @@ async function PATCH_handler(
   };
 
   const updated = await updateImageStudioSlot(slotId, data);
-  if (!updated) throw notFoundError("Slot not found");
+  if (!updated) throw notFoundError('Slot not found');
 
   return NextResponse.json({ slot: updated });
 }
@@ -65,22 +66,22 @@ async function DELETE_handler(
   _ctx: ApiHandlerContext,
   params: { slotId: string }
 ): Promise<Response> {
-  const slotId = params.slotId?.trim() ?? "";
-  if (!slotId) throw badRequestError("Slot id is required");
+  const slotId = params.slotId?.trim() ?? '';
+  if (!slotId) throw badRequestError('Slot id is required');
 
   const deleted = await deleteImageStudioSlot(slotId);
-  if (!deleted) throw notFoundError("Slot not found");
+  if (!deleted) throw notFoundError('Slot not found');
   return NextResponse.json({ ok: true });
 }
 
 export const PATCH = apiHandlerWithParams<{ slotId: string }>(
   async (req: NextRequest, ctx: ApiHandlerContext, params: { slotId: string }): Promise<Response> =>
     PATCH_handler(req, ctx, params),
-  { source: "image-studio.slots.[slotId].PATCH" }
+  { source: 'image-studio.slots.[slotId].PATCH' }
 );
 
 export const DELETE = apiHandlerWithParams<{ slotId: string }>(
   async (req: NextRequest, ctx: ApiHandlerContext, params: { slotId: string }): Promise<Response> =>
     DELETE_handler(req, ctx, params),
-  { source: "image-studio.slots.[slotId].DELETE" }
+  { source: 'image-studio.slots.[slotId].DELETE' }
 );

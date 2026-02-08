@@ -30,7 +30,7 @@ const CACHE_TTL_MS = 30000;
 let cached: CacheState | null = null;
 
 const canUsePrismaSettings = (): boolean =>
-  Boolean(process.env["DATABASE_URL"]) && 'setting' in prisma;
+  Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
 
 const readPrismaSetting = async (key: string): Promise<string | null> => {
   if (!canUsePrismaSettings()) return null;
@@ -46,7 +46,7 @@ const readPrismaSetting = async (key: string): Promise<string | null> => {
 };
 
 const readMongoSetting = async (key: string): Promise<string | null> => {
-  if (!process.env["MONGODB_URI"]) return null;
+  if (!process.env['MONGODB_URI']) return null;
   const mongo = await getMongoDb();
   const doc = await mongo
     .collection<SettingRecord>('settings')

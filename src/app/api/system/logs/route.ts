@@ -1,17 +1,18 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
 import {
   clearSystemLogs,
   createSystemLog,
   listSystemLogs,
-} from "@/features/observability/server";
-import { parseJsonBody } from "@/features/products/server";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+} from '@/features/observability/server';
+import { parseJsonBody } from '@/features/products/server';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
-const levelSchema = z.enum(["info", "warn", "error"]);
+const levelSchema = z.enum(['info', 'warn', 'error']);
 
 const listSchema = z.object({
   page: z.coerce.number().int().positive().optional(),
@@ -27,7 +28,7 @@ const createSchema = z.object({
   level: levelSchema.optional(),
   message: z.string().min(1),
   source: z.string().trim().optional(),
-  context: z.record(z.string(), z["unknown"]()).optional(),
+  context: z.record(z.string(), z['unknown']()).optional(),
   stack: z.string().optional(),
   path: z.string().optional(),
   method: z.string().optional(),
@@ -57,7 +58,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, createSchema, {
-    logPrefix: "systemLogs.POST",
+    logPrefix: 'systemLogs.POST',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -88,10 +89,10 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promis
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "system.logs.GET" });
+  { source: 'system.logs.GET' });
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "system.logs.POST" });
+  { source: 'system.logs.POST' });
 export const DELETE = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => DELETE_handler(req, ctx),
- { source: "system.logs.DELETE" });
+  { source: 'system.logs.DELETE' });

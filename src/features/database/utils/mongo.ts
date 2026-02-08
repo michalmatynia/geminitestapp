@@ -11,7 +11,7 @@ export const ensureBackupsDir = async (): Promise<void> => {
 };
 
 export const getMongoConnectionUrl = (): string => {
-  const mongoUri = process.env["MONGODB_URI"];
+  const mongoUri = process.env['MONGODB_URI'];
   if (!mongoUri) {
     throw new Error('MONGODB_URI is not set.');
   }
@@ -19,7 +19,7 @@ export const getMongoConnectionUrl = (): string => {
 };
 
 export const getMongoDatabaseName = (): string => {
-  const dbName = process.env["MONGODB_DB"];
+  const dbName = process.env['MONGODB_DB'];
   if (!dbName) {
     throw new Error('MONGODB_DB is not set.');
   }
@@ -27,10 +27,10 @@ export const getMongoDatabaseName = (): string => {
 };
 
 export const getMongoDumpCommand = (): string =>
-  process.env["MONGODUMP_PATH"] ?? 'mongodump';
+  process.env['MONGODUMP_PATH'] ?? 'mongodump';
 
 export const getMongoRestoreCommand = (): string =>
-  process.env["MONGORESTORE_PATH"] ?? 'mongorestore';
+  process.env['MONGORESTORE_PATH'] ?? 'mongorestore';
 
 export const execFileAsync = (
   command: string,

@@ -1,15 +1,16 @@
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { auth } from "@/features/auth/server";
-import { authError, badRequestError, validationError } from "@/shared/errors/app-error";
-import { getAuthSecurityProfile, updateAuthSecurityProfile } from "@/features/auth/server";
-import { decryptAuthSecret } from "@/features/auth/server";
-import { hashRecoveryCode, verifyTotpToken } from "@/features/auth/server";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { logAuthEvent } from "@/features/auth/utils/auth-request-logger";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
-export const runtime = "nodejs";
+import { auth } from '@/features/auth/server';
+import { getAuthSecurityProfile, updateAuthSecurityProfile } from '@/features/auth/server';
+import { decryptAuthSecret } from '@/features/auth/server';
+import { hashRecoveryCode, verifyTotpToken } from '@/features/auth/server';
+import { logAuthEvent } from '@/features/auth/utils/auth-request-logger';
+import { authError, badRequestError, validationError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
+
+export const runtime = 'nodejs';
 
 const payloadSchema = z.object({
   token: z.string().trim().optional(),
@@ -20,17 +21,17 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) {
-    throw authError("Unauthorized.");
+    throw authError('Unauthorized.');
   }
 
   const data = ctx.body as z.infer<typeof payloadSchema> | undefined;
   if (!data) {
-    throw badRequestError("Invalid payload");
+    throw badRequestError('Invalid payload');
   }
   await logAuthEvent({
     req,
-    action: "auth.mfa.disable",
-    stage: "start",
+    action: 'auth.mfa.disable',
+    stage: 'start',
     userId,
     body: {
       hasToken: Boolean(data?.token?.trim()),
@@ -40,13 +41,13 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
 
   const profile = await getAuthSecurityProfile(userId);
   if (!profile.mfaEnabled) {
-    return NextResponse.json({ ok: true, message: "MFA already disabled." });
+    return NextResponse.json({ ok: true, message: 'MFA already disabled.' });
   }
 
-  const token = data?.token?.trim() ?? "";
-  const recovery = data?.recoveryCode?.trim() ?? "";
+  const token = data?.token?.trim() ?? '';
+  const recovery = data?.recoveryCode?.trim() ?? '';
   if (!token && !recovery) {
-    throw validationError("Provide a token or recovery code.");
+    throw validationError('Provide a token or recovery code.');
   }
 
   let valid = false;
@@ -60,7 +61,7 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
   }
 
   if (!valid) {
-    throw validationError("Invalid token or recovery code.");
+    throw validationError('Invalid token or recovery code.');
   }
 
   await updateAuthSecurityProfile(userId, {
@@ -71,8 +72,8 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
 
   await logAuthEvent({
     req,
-    action: "auth.mfa.disable",
-    stage: "success",
+    action: 'auth.mfa.disable',
+    stage: 'success',
     userId,
     status: 200,
   });
@@ -81,12 +82,12 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- {
-   source: "auth.mfa.disable.POST",
-   parseJsonBody: true,
-   bodySchema: payloadSchema,
-   rateLimitKey: "auth",
-   maxBodyBytes: 10_000,
-   allowedMethods: ["POST"],
-   requireCsrf: false,
- });
+  {
+    source: 'auth.mfa.disable.POST',
+    parseJsonBody: true,
+    bodySchema: payloadSchema,
+    rateLimitKey: 'auth',
+    maxBodyBytes: 10_000,
+    allowedMethods: ['POST'],
+    requireCsrf: false,
+  });

@@ -1,22 +1,23 @@
-import { handlers } from "@/features/auth/server";
-import { NextRequest, NextResponse } from "next/server";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { logAuthEvent } from "@/features/auth/utils/auth-request-logger";
+import { NextRequest, NextResponse } from 'next/server';
 
-export const runtime = "nodejs";
+import { handlers } from '@/features/auth/server';
+import { logAuthEvent } from '@/features/auth/utils/auth-request-logger';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
+
+export const runtime = 'nodejs';
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  await logAuthEvent({ req, action: "auth.nextauth", stage: "start" });
+  await logAuthEvent({ req, action: 'auth.nextauth', stage: 'start' });
   try {
     const response = await handlers.GET(req);
-    await logAuthEvent({ req, action: "auth.nextauth", stage: "success", status: response.status });
+    await logAuthEvent({ req, action: 'auth.nextauth', stage: 'success', status: response.status });
     return response;
   } catch (error) {
-    if (req.nextUrl.pathname.endsWith("/session")) {
+    if (req.nextUrl.pathname.endsWith('/session')) {
       const response = NextResponse.json(null, { status: 200 });
-      response.headers.set("Cache-Control", "no-store");
-      await logAuthEvent({ req, action: "auth.nextauth", stage: "failure", status: 200, outcome: "session-fallback" });
+      response.headers.set('Cache-Control', 'no-store');
+      await logAuthEvent({ req, action: 'auth.nextauth', stage: 'failure', status: 200, outcome: 'session-fallback' });
       return response;
     }
     throw error;
@@ -24,15 +25,15 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 }
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  await logAuthEvent({ req, action: "auth.nextauth", stage: "start" });
+  await logAuthEvent({ req, action: 'auth.nextauth', stage: 'start' });
   const response = await handlers.POST(req);
-  await logAuthEvent({ req, action: "auth.nextauth", stage: "success", status: response.status });
+  await logAuthEvent({ req, action: 'auth.nextauth', stage: 'success', status: response.status });
   return response;
 }
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "auth.[...nextauth].GET", requireCsrf: false });
+  { source: 'auth.[...nextauth].GET', requireCsrf: false });
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "auth.[...nextauth].POST", requireCsrf: false });
+  { source: 'auth.[...nextauth].POST', requireCsrf: false });

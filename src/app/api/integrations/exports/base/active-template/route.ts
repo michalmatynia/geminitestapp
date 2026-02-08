@@ -1,14 +1,15 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
 import {
   getExportActiveTemplateId,
   setExportActiveTemplateId
-} from "@/features/integrations/server";
-import { parseJsonBody } from "@/features/products/server";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+} from '@/features/integrations/server';
+import { parseJsonBody } from '@/features/products/server';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const requestSchema = z.object({
   templateId: z.string().trim().min(1).nullable().optional()
@@ -21,7 +22,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, requestSchema, {
-    logPrefix: "exports.base.active-template.POST"
+    logPrefix: 'exports.base.active-template.POST'
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -33,7 +34,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "products.exports.base.active-template.GET", requireCsrf: false });
+  { source: 'products.exports.base.active-template.GET', requireCsrf: false });
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "products.exports.base.active-template.POST", requireCsrf: false });
+  { source: 'products.exports.base.active-template.POST', requireCsrf: false });

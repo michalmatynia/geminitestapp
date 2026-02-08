@@ -1,14 +1,15 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { noteService } from "@/features/notesapp/server";
-import { parseJsonBody } from "@/features/products/server";
-import { noteUpdateSchema } from "@/features/notesapp";
-import { removeUndefined } from "@/shared/utils";
-import type { NoteUpdateInput } from "@/shared/types/notes";
-import { notFoundError } from "@/shared/errors/app-error";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+
+import { noteUpdateSchema } from '@/features/notesapp';
+import { noteService } from '@/features/notesapp/server';
+import { parseJsonBody } from '@/features/products/server';
+import { notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
+import type { NoteUpdateInput } from '@/shared/types/notes';
+import { removeUndefined } from '@/shared/utils';
 
 /**
  * GET /api/notes/[id]
@@ -23,7 +24,7 @@ async function GET_handler(
   const note = await noteService.getById(id);
 
   if (!note) {
-    throw notFoundError("Note not found", { noteId: id });
+    throw notFoundError('Note not found', { noteId: id });
   }
 
   return NextResponse.json(note);
@@ -40,7 +41,7 @@ async function PATCH_handler(
 ): Promise<Response> {
   const id = params.id;
   const parsed = await parseJsonBody(req, noteUpdateSchema, {
-    logPrefix: "notes.PATCH",
+    logPrefix: 'notes.PATCH',
     allowEmpty: true,
   });
   if (!parsed.ok) {
@@ -70,11 +71,11 @@ async function DELETE_handler(
 }
 
 export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {
-  source: "notes.[id].GET",
+  source: 'notes.[id].GET',
 });
 export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, {
-  source: "notes.[id].PATCH",
+  source: 'notes.[id].PATCH',
 });
 export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, {
-  source: "notes.[id].DELETE",
+  source: 'notes.[id].DELETE',
 });

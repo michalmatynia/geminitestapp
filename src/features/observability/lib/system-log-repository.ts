@@ -326,7 +326,7 @@ export async function createSystemLog(
       createdAt: created.createdAt,
     } as SystemLogRecord);
   } catch (error) {
-    if (isMissingPrismaTable(error) && process.env["MONGODB_URI"]) {
+    if (isMissingPrismaTable(error) && process.env['MONGODB_URI']) {
       const mongo = await getMongoDb();
       await mongo
         .collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION)
@@ -405,7 +405,7 @@ export async function listSystemLogs(
 
     return { logs, total, page, pageSize };
   } catch (error) {
-    if (isMissingPrismaTable(error) && process.env["MONGODB_URI"]) {
+    if (isMissingPrismaTable(error) && process.env['MONGODB_URI']) {
       const mongo = await getMongoDb();
       const filter = buildMongoFilter(input);
       const total = await mongo
@@ -449,7 +449,7 @@ export async function getSystemLogById(id: string): Promise<SystemLogRecord | nu
       context: (row.context as Record<string, unknown> | null) ?? null,
     } as SystemLogRecord);
   } catch (error) {
-    if (isMissingPrismaTable(error) && process.env["MONGODB_URI"]) {
+    if (isMissingPrismaTable(error) && process.env['MONGODB_URI']) {
       const mongo = await getMongoDb();
       const doc = await mongo
         .collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION)
@@ -562,7 +562,7 @@ export async function getSystemLogMetrics(
       generatedAt: now,
     };
   } catch (error) {
-    if (isMissingPrismaTable(error) && process.env["MONGODB_URI"]) {
+    if (isMissingPrismaTable(error) && process.env['MONGODB_URI']) {
       const filter = buildMongoFilter(input);
       return getMongoSystemLogMetrics(filter);
     }
@@ -588,7 +588,7 @@ export async function clearSystemLogs(
     const result = await prisma.systemLog.deleteMany({ where });
     return { deleted: result.count };
   } catch (error) {
-    if (isMissingPrismaTable(error) && process.env["MONGODB_URI"]) {
+    if (isMissingPrismaTable(error) && process.env['MONGODB_URI']) {
       const mongo = await getMongoDb();
       const filter = before ? { createdAt: { $lte: before } } : {};
       const result = await mongo

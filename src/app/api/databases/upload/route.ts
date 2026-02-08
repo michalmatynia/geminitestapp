@@ -1,8 +1,9 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import path from "path";
-import fs from "fs/promises";
-import { NextRequest, NextResponse } from "next/server";
+import fs from 'fs/promises';
+import path from 'path';
+
+import { NextRequest, NextResponse } from 'next/server';
 
 import {
   pgBackupsDir,
@@ -11,27 +12,27 @@ import {
   mongoBackupsDir,
   ensureMongoBackupsDir,
   assertValidMongoBackupName,
-} from "@/features/database/server";
-import { badRequestError, forbiddenError } from "@/shared/errors/app-error";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+} from '@/features/database/server';
+import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  if (process.env["NODE_ENV"] === "production") {
-    throw forbiddenError("Database backups are disabled in production.");
+  if (process.env['NODE_ENV'] === 'production') {
+    throw forbiddenError('Database backups are disabled in production.');
   }
   const formData = await req.formData();
-  const file = formData.get("file") as File | null;
-  const type = formData.get("type") as string | null;
+  const file = formData.get('file') as File | null;
+  const type = formData.get('type') as string | null;
 
   if (!file) {
-    throw badRequestError("No file provided");
+    throw badRequestError('No file provided');
   }
 
-  const dbType = type === "mongodb" ? "mongodb" : "postgresql";
+  const dbType = type === 'mongodb' ? 'mongodb' : 'postgresql';
   const backupsDir =
-    dbType === "mongodb" ? mongoBackupsDir : pgBackupsDir;
-  if (dbType === "mongodb") {
+    dbType === 'mongodb' ? mongoBackupsDir : pgBackupsDir;
+  if (dbType === 'mongodb') {
     assertValidMongoBackupName(file.name);
     await ensureMongoBackupsDir();
   } else {
@@ -44,9 +45,9 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
   await fs.writeFile(backupPath, fileBuffer);
 
-  return NextResponse.json({ message: "Backup uploaded" });
+  return NextResponse.json({ message: 'Backup uploaded' });
 }
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "databases.upload.POST" });
+  { source: 'databases.upload.POST' });

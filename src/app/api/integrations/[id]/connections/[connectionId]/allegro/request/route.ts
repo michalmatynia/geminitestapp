@@ -1,29 +1,30 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { getIntegrationRepository } from "@/features/integrations/server";
-import { decryptSecret, encryptSecret } from "@/features/integrations/server";
-import { parseJsonBody } from "@/features/products/server";
-import { badRequestError, notFoundError } from "@/shared/errors/app-error";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { getIntegrationRepository } from '@/features/integrations/server';
+import { decryptSecret, encryptSecret } from '@/features/integrations/server';
+import { parseJsonBody } from '@/features/products/server';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const requestSchema = z.object({
-  method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]).default("GET"),
+  method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']).default('GET'),
   path: z.string().trim().min(1),
-  body: z["unknown"]().optional()
+  body: z['unknown']().optional()
 });
 
-const PROD_BASE_URL = process.env["ALLEGRO_API_URL"] ?? "https://api.allegro.pl";
+const PROD_BASE_URL = process.env['ALLEGRO_API_URL'] ?? 'https://api.allegro.pl';
 const SANDBOX_BASE_URL =
-  process.env["ALLEGRO_SANDBOX_API_URL"] ??
-  "https://api.allegro.pl.allegrosandbox.pl";
+  process.env['ALLEGRO_SANDBOX_API_URL'] ??
+  'https://api.allegro.pl.allegrosandbox.pl';
 const PROD_TOKEN_URL =
-  process.env["ALLEGRO_TOKEN_URL"] ?? "https://allegro.pl/auth/oauth/token";
+  process.env['ALLEGRO_TOKEN_URL'] ?? 'https://allegro.pl/auth/oauth/token';
 const SANDBOX_TOKEN_URL =
-  process.env["ALLEGRO_SANDBOX_TOKEN_URL"] ??
-  "https://allegro.pl.allegrosandbox.pl/auth/oauth/token";
+  process.env['ALLEGRO_SANDBOX_TOKEN_URL'] ??
+  'https://allegro.pl.allegrosandbox.pl/auth/oauth/token';
 
 /**
  * POST /api/integrations/[id]/connections/[connectionId]/allegro/request
@@ -32,28 +33,28 @@ const SANDBOX_TOKEN_URL =
 async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> {
   const { id, connectionId } = params;
   if (!id || !connectionId) {
-    throw badRequestError("Integration id and connection id are required");
+    throw badRequestError('Integration id and connection id are required');
   }
   const parsed = await parseJsonBody(_req, requestSchema, {
-    logPrefix: "integrations.allegro.request.POST"
+    logPrefix: 'integrations.allegro.request.POST'
   });
   if (!parsed.ok) {
     return parsed.response;
   }
   const data = parsed.data;
 
-  if (data.path.includes("://")) {
-    throw badRequestError("Path must be relative to the Allegro API base URL.");
+  if (data.path.includes('://')) {
+    throw badRequestError('Path must be relative to the Allegro API base URL.');
   }
 
-  if (!data.path.startsWith("/")) {
-    throw badRequestError("Path must start with /");
+  if (!data.path.startsWith('/')) {
+    throw badRequestError('Path must start with /');
   }
 
   const repo = await getIntegrationRepository();
   const integration = await repo.getIntegrationById(id);
-  if (!integration || integration.slug !== "allegro") {
-    throw notFoundError("Allegro integration not found.", {
+  if (integration?.slug !== 'allegro') {
+    throw notFoundError('Allegro integration not found.', {
       integrationId: id
     });
   }
@@ -63,11 +64,11 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     id
   );
   if (!connection) {
-    throw notFoundError("Connection not found.", { connectionId });
+    throw notFoundError('Connection not found.', { connectionId });
   }
 
   if (!connection.allegroAccessToken) {
-    throw badRequestError("Allegro access token missing. Connect first.");
+    throw badRequestError('Allegro access token missing. Connect first.');
   }
 
   const clientId = connection.username?.trim();
@@ -92,13 +93,13 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       method: data.method,
       headers: {
         Authorization: `Bearer ${token}`,
-        Accept: "application/vnd.allegro.public.v1+json"
+        Accept: 'application/vnd.allegro.public.v1+json'
       }
     };
-    if (data.method !== "GET" && data.body !== undefined) {
+    if (data.method !== 'GET' && data.body !== undefined) {
       options.headers = {
         ...options.headers,
-        "Content-Type": "application/json"
+        'Content-Type': 'application/json'
       };
       options.body = JSON.stringify(data.body);
     }
@@ -107,18 +108,18 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
 
   const refreshAccessToken = async (): Promise<string> => {
     if (!refreshToken || !clientId || !clientSecret) {
-      throw new Error("Missing refresh token or client credentials.");
+      throw new Error('Missing refresh token or client credentials.');
     }
-    const auth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+    const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
     const body = new URLSearchParams({
-      grant_type: "refresh_token",
+      grant_type: 'refresh_token',
       refresh_token: refreshToken
     });
     const tokenRes = await fetch(tokenUrl, {
-      method: "POST",
+      method: 'POST',
       headers: {
         Authorization: `Basic ${auth}`,
-        "Content-Type": "application/x-www-form-urlencoded"
+        'Content-Type': 'application/x-www-form-urlencoded'
       },
       body
     });
@@ -159,10 +160,10 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     refreshed = true;
     response = await fetch(url.toString(), buildFetchOptions(newAccessToken));
   }
-  const contentType = response.headers.get("content-type") ?? "";
+  const contentType = response.headers.get('content-type') ?? '';
   const raw = await response.text();
   let apiResponseData: unknown = raw;
-  if (contentType.includes("application/json") && raw) {
+  if (contentType.includes('application/json') && raw) {
     try {
       apiResponseData = JSON.parse(raw) as unknown;
     } catch {
@@ -180,5 +181,5 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
 
 export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(
   POST_handler,
-  { source: "integrations.[id].connections.[connectionId].allegro.request.POST", requireCsrf: false }
+  { source: 'integrations.[id].connections.[connectionId].allegro.request.POST', requireCsrf: false }
 );

@@ -1,22 +1,24 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { randomUUID } from "crypto";
-import { z } from "zod";
-import prisma from "@/shared/lib/db/prisma";
-import { parseJsonBody } from "@/features/products/server";
-import { getProductDataProvider } from "@/features/products/server";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { badRequestError, conflictError, internalError } from "@/shared/errors/app-error";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import type { ProductParameter } from "@/features/products/types";
+import { randomUUID } from 'crypto';
+
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { parseJsonBody } from '@/features/products/server';
+import { getProductDataProvider } from '@/features/products/server';
+import type { ProductParameter } from '@/features/products/types';
+import { badRequestError, conflictError, internalError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const productParameterCreateSchema = z.object({
-  name_en: z.string().min(1, "English name is required"),
+  name_en: z.string().min(1, 'English name is required'),
   name_pl: z.string().optional().nullable(),
   name_de: z.string().optional().nullable(),
-  catalogId: z.string().min(1, "Catalog ID is required"),
+  catalogId: z.string().min(1, 'Catalog ID is required'),
 });
 
 /**
@@ -27,21 +29,21 @@ const productParameterCreateSchema = z.object({
  */
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { searchParams } = new URL(req.url);
-  const catalogId = searchParams.get("catalogId");
+  const catalogId = searchParams.get('catalogId');
 
   if (!catalogId) {
-    throw badRequestError("catalogId query parameter is required");
+    throw badRequestError('catalogId query parameter is required');
   }
 
   const provider = await getProductDataProvider();
 
-  if (provider === "mongodb") {
-    if (!process.env["MONGODB_URI"]) {
-      throw internalError("MongoDB is not configured.");
+  if (provider === 'mongodb') {
+    if (!process.env['MONGODB_URI']) {
+      throw internalError('MongoDB is not configured.');
     }
     const db = await getMongoDb();
     const parameters = await db
-      .collection("product_parameters")
+      .collection('product_parameters')
       .find({ catalogId })
       .sort({ name_en: 1 })
       .toArray();
@@ -58,13 +60,13 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     return NextResponse.json(normalized);
   }
 
-  if (!process.env["DATABASE_URL"]) {
-    throw badRequestError("Product parameters require the Postgres product store.");
+  if (!process.env['DATABASE_URL']) {
+    throw badRequestError('Product parameters require the Postgres product store.');
   }
 
   const parameters = await prisma.productParameter.findMany({
     where: { catalogId },
-    orderBy: { name_en: "asc" },
+    orderBy: { name_en: 'asc' },
   });
   return NextResponse.json(parameters);
 }
@@ -76,7 +78,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const provider = await getProductDataProvider();
   const parsed = await parseJsonBody(req, productParameterCreateSchema, {
-    logPrefix: "product-parameters.POST",
+    logPrefix: 'product-parameters.POST',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -84,18 +86,18 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
   const { name_en, name_pl, name_de, catalogId } = parsed.data;
 
-  if (provider === "mongodb") {
-    if (!process.env["MONGODB_URI"]) {
-      throw internalError("MongoDB is not configured.");
+  if (provider === 'mongodb') {
+    if (!process.env['MONGODB_URI']) {
+      throw internalError('MongoDB is not configured.');
     }
     const db = await getMongoDb();
-    const existing = await db.collection("product_parameters").findOne({
+    const existing = await db.collection('product_parameters').findOne({
       name_en,
       catalogId,
     });
     if (existing) {
       throw conflictError(
-        "A parameter with this name already exists in this catalog",
+        'A parameter with this name already exists in this catalog',
         { name_en, catalogId }
       );
     }
@@ -109,12 +111,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       createdAt: now,
       updatedAt: now,
     };
-    await db.collection("product_parameters").insertOne(parameter);
+    await db.collection('product_parameters').insertOne(parameter);
     return NextResponse.json(parameter as unknown as ProductParameter, { status: 201 });
   }
 
-  if (!process.env["DATABASE_URL"]) {
-    throw badRequestError("Product parameters require the Postgres product store.");
+  if (!process.env['DATABASE_URL']) {
+    throw badRequestError('Product parameters require the Postgres product store.');
   }
 
   const existing = await prisma.productParameter.findFirst({
@@ -122,7 +124,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   });
   if (existing) {
     throw conflictError(
-      "A parameter with this name already exists in this catalog",
+      'A parameter with this name already exists in this catalog',
       { name_en, catalogId }
     );
   }
@@ -141,7 +143,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "products.parameters.GET" });
+  { source: 'products.parameters.GET' });
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "products.parameters.POST" });
+  { source: 'products.parameters.POST' });

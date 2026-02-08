@@ -40,10 +40,10 @@ export default function ClientErrorReporter(): null {
   useEffect(() => {
     const context = {
       app: {
-        version: process.env["NEXT_PUBLIC_APP_VERSION"] ?? 'unknown',
-        buildId: process.env["NEXT_PUBLIC_BUILD_ID"] ?? null,
-        releaseChannel: process.env["NEXT_PUBLIC_RELEASE_CHANNEL"] ?? null,
-        environment: process.env["NODE_ENV"] ?? null,
+        version: process.env['NEXT_PUBLIC_APP_VERSION'] ?? 'unknown',
+        buildId: process.env['NEXT_PUBLIC_BUILD_ID'] ?? null,
+        releaseChannel: process.env['NEXT_PUBLIC_RELEASE_CHANNEL'] ?? null,
+        environment: process.env['NODE_ENV'] ?? null,
       },
       route: pathname,
       query: searchParams?.toString() ?? '',

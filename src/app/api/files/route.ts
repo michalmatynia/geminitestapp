@@ -1,27 +1,27 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { imageFileService } from "@/features/files/server";
-import { getProductRepository } from "@/features/products/server";
+import { NextRequest, NextResponse } from 'next/server';
 
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import type { ImageFileRecord } from "@/shared/types/files";
-import type { ProductWithImages } from "@/shared/types/domain/products";
+import { imageFileService } from '@/features/files/server';
+import { getProductRepository } from '@/features/products/server';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ProductWithImages } from '@/shared/types/domain/products';
+import type { ImageFileRecord } from '@/shared/types/files';
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { searchParams } = new URL(req.url);
 
-  const filename = searchParams.get("filename")?.trim() || null;
-  const productId = searchParams.get("productId")?.trim() || null;
-  const productName = searchParams.get("productName")?.trim() || null;
-  const tagsParam = searchParams.get("tags")?.trim() || null;
-  const tags = tagsParam ? tagsParam.split(",").map((tag) => tag.trim()).filter(Boolean) : [];
+  const filename = searchParams.get('filename')?.trim() || null;
+  const productId = searchParams.get('productId')?.trim() || null;
+  const productName = searchParams.get('productName')?.trim() || null;
+  const tagsParam = searchParams.get('tags')?.trim() || null;
+  const tags = tagsParam ? tagsParam.split(',').map((tag) => tag.trim()).filter(Boolean) : [];
 
   const files = await imageFileService.listImageFiles({ filename, tags });
 
   const getProductDisplayName = (product: ProductWithImages): string =>
-    product.name_en ?? product.name_pl ?? product.name_de ?? "Product";
+    product.name_en ?? product.name_pl ?? product.name_de ?? 'Product';
 
   let products: ProductWithImages[] = [];
   let productRepoAvailable = true;
@@ -70,4 +70,4 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
   return NextResponse.json(result);
 }
 
-export const GET = apiHandler(GET_handler, { source: "files.GET" });
+export const GET = apiHandler(GET_handler, { source: 'files.GET' });

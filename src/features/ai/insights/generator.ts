@@ -27,7 +27,7 @@ import {
   DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
 } from './settings';
 
-const OLLAMA_BASE_URL = process.env["OLLAMA_BASE_URL"] || 'http://localhost:11434';
+const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] || 'http://localhost:11434';
 
 const parseBooleanSetting = (value: string | null | undefined, fallback: boolean): boolean => {
   if (value == null) return fallback;
@@ -282,7 +282,7 @@ const runInsightModel = async (params: {
   if (!modelId) throw new Error('Model id is required.');
   if (isAnthropicModel(modelId)) {
     const anthropicKey =
-      (await getSettingValue('anthropic_api_key')) ?? process.env["ANTHROPIC_API_KEY"] ?? null;
+      (await getSettingValue('anthropic_api_key')) ?? process.env['ANTHROPIC_API_KEY'] ?? null;
     if (!anthropicKey) {
       throw new Error('Anthropic API key is missing.');
     }
@@ -291,7 +291,7 @@ const runInsightModel = async (params: {
 
   if (isGeminiModel(modelId)) {
     const geminiKey =
-      (await getSettingValue('gemini_api_key')) ?? process.env["GEMINI_API_KEY"] ?? null;
+      (await getSettingValue('gemini_api_key')) ?? process.env['GEMINI_API_KEY'] ?? null;
     if (!geminiKey) {
       throw new Error('Gemini API key is missing.');
     }
@@ -299,7 +299,7 @@ const runInsightModel = async (params: {
   }
 
   const apiKey =
-    (await getSettingValue('openai_api_key')) ?? process.env["OPENAI_API_KEY"] ?? null;
+    (await getSettingValue('openai_api_key')) ?? process.env['OPENAI_API_KEY'] ?? null;
   const { openai } = getClient(modelId, apiKey);
   const response = await openai.chat.completions.create({
     model: modelId,

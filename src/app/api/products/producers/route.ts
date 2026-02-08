@@ -1,20 +1,21 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { randomUUID } from "crypto";
-import { z } from "zod";
-import prisma from "@/shared/lib/db/prisma";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { parseJsonBody } from "@/features/products/server";
-import { getProductDataProvider } from "@/features/products/server";
-import { badRequestError, conflictError, internalError } from "@/shared/errors/app-error";
+import { randomUUID } from 'crypto';
 
-import type { Producer } from "@/features/products/types";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { parseJsonBody } from '@/features/products/server';
+import { getProductDataProvider } from '@/features/products/server';
+import type { Producer } from '@/features/products/types';
+import { badRequestError, conflictError, internalError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const producerCreateSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(1, 'Name is required'),
   website: z.string().trim().nullable().optional(),
 });
 
@@ -25,13 +26,13 @@ const producerCreateSchema = z.object({
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const provider = await getProductDataProvider();
 
-  if (provider === "mongodb") {
-    if (!process.env["MONGODB_URI"]) {
-      throw internalError("MongoDB is not configured.");
+  if (provider === 'mongodb') {
+    if (!process.env['MONGODB_URI']) {
+      throw internalError('MongoDB is not configured.');
     }
     const db = await getMongoDb();
     const docs = await db
-      .collection("product_producers")
+      .collection('product_producers')
       .find({})
       .sort({ name: 1 })
       .toArray();
@@ -48,12 +49,12 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
     return NextResponse.json(normalized as Producer[]);
   }
 
-  if (!process.env["DATABASE_URL"]) {
-    throw badRequestError("Producers require the Postgres product store.");
+  if (!process.env['DATABASE_URL']) {
+    throw badRequestError('Producers require the Postgres product store.');
   }
 
   const producers = await prisma.producer.findMany({
-    orderBy: { name: "asc" },
+    orderBy: { name: 'asc' },
   });
   return NextResponse.json(producers as unknown as Producer[]);
 }
@@ -65,7 +66,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const provider = await getProductDataProvider();
   const parsed = await parseJsonBody(req, producerCreateSchema, {
-    logPrefix: "producers.POST",
+    logPrefix: 'producers.POST',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -74,18 +75,18 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const { name, website } = parsed.data;
   const trimmedName = name.trim();
   const trimmedWebsite =
-    typeof website === "string" && website.trim() ? website.trim() : null;
+    typeof website === 'string' && website.trim() ? website.trim() : null;
 
-  if (provider === "mongodb") {
-    if (!process.env["MONGODB_URI"]) {
-      throw internalError("MongoDB is not configured.");
+  if (provider === 'mongodb') {
+    if (!process.env['MONGODB_URI']) {
+      throw internalError('MongoDB is not configured.');
     }
     const db = await getMongoDb();
-    const existing = await db.collection("product_producers").findOne({
+    const existing = await db.collection('product_producers').findOne({
       name: trimmedName,
     });
     if (existing) {
-      throw conflictError("A producer with this name already exists", {
+      throw conflictError('A producer with this name already exists', {
         name: trimmedName,
       });
     }
@@ -97,12 +98,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       createdAt: now,
       updatedAt: now,
     };
-    await db.collection("product_producers").insertOne(producer);
+    await db.collection('product_producers').insertOne(producer);
     return NextResponse.json(producer as unknown as Producer, { status: 201 });
   }
 
-  if (!process.env["DATABASE_URL"]) {
-    throw badRequestError("Producers require the Postgres product store.");
+  if (!process.env['DATABASE_URL']) {
+    throw badRequestError('Producers require the Postgres product store.');
   }
 
   const existing = await prisma.producer.findFirst({
@@ -110,7 +111,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     select: { id: true },
   });
   if (existing) {
-    throw conflictError("A producer with this name already exists", {
+    throw conflictError('A producer with this name already exists', {
       name: trimmedName,
       producerId: existing.id,
     });
@@ -127,11 +128,11 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
-  { source: "products.producers.GET" },
+  { source: 'products.producers.GET' },
 );
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
-  { source: "products.producers.POST" },
+  { source: 'products.producers.POST' },
 );
 

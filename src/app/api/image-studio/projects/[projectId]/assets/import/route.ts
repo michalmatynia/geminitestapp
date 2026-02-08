@@ -1,43 +1,43 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import path from "path";
-import fs from "fs/promises";
-import { randomUUID } from "crypto";
-import { z } from "zod";
+import { randomUUID } from 'crypto';
+import fs from 'fs/promises';
+import path from 'path';
 
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { badRequestError } from "@/shared/errors/app-error";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
-import { getImageFileRepository } from "@/features/files/server";
-import type { ImageFileRecord } from "@/shared/types/files";
+import { getImageFileRepository } from '@/features/files/server';
+import { badRequestError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ImageFileRecord } from '@/shared/types/files';
 
-const projectsRoot = path.join(process.cwd(), "public", "uploads", "studio");
-const uploadsRoot = path.join(process.cwd(), "public", "uploads");
+const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
+const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');
 const MAX_REMOTE_IMPORT_BYTES = 15 * 1024 * 1024;
 const REMOTE_FETCH_TIMEOUT_MS = 15_000;
 
 const sanitizeProjectId = (value: string): string =>
-  value.trim().replace(/[^a-zA-Z0-9-_]/g, "_");
+  value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
 const sanitizeFolderPath = (value: string): string => {
-  const normalized = value.replace(/\\/g, "/").trim();
+  const normalized = value.replace(/\\/g, '/').trim();
   const parts = normalized
-    .split("/")
+    .split('/')
     .map((part) => part.trim())
-    .filter((part) => part && part !== "." && part !== "..")
-    .map((part) => part.replace(/[^a-zA-Z0-9-_]/g, "_"))
+    .filter((part) => part && part !== '.' && part !== '..')
+    .map((part) => part.replace(/[^a-zA-Z0-9-_]/g, '_'))
     .filter(Boolean);
 
-  return parts.join("/");
+  return parts.join('/');
 };
 
 function resolveDiskPathFromPublicUploadPath(filepath: string): string | null {
   const clean = filepath.trim();
   if (!clean) return null;
-  let normalized = clean.replace(/\\/g, "/");
-  if (normalized.startsWith("public/")) {
+  let normalized = clean.replace(/\\/g, '/');
+  if (normalized.startsWith('public/')) {
     normalized = `/${normalized}`;
   }
   if (/^https?:\/\//i.test(normalized)) {
@@ -48,18 +48,18 @@ function resolveDiskPathFromPublicUploadPath(filepath: string): string | null {
       // Keep original if parsing fails.
     }
   }
-  const publicIndex = normalized.indexOf("/public/");
+  const publicIndex = normalized.indexOf('/public/');
   if (publicIndex >= 0) {
-    normalized = normalized.slice(publicIndex + "/public".length);
+    normalized = normalized.slice(publicIndex + '/public'.length);
   }
-  const uploadsIndex = normalized.indexOf("/uploads/");
+  const uploadsIndex = normalized.indexOf('/uploads/');
   if (uploadsIndex >= 0) {
     normalized = normalized.slice(uploadsIndex);
-  } else if (normalized.startsWith("uploads/")) {
+  } else if (normalized.startsWith('uploads/')) {
     normalized = `/${normalized}`;
   }
-  if (!normalized.startsWith("/uploads/")) return null;
-  const resolved = path.resolve(process.cwd(), "public", normalized.replace(/^\/+/, ""));
+  if (!normalized.startsWith('/uploads/')) return null;
+  const resolved = path.resolve(process.cwd(), 'public', normalized.replace(/^\/+/, ''));
   const uploadsResolved = path.resolve(uploadsRoot);
   if (!resolved.startsWith(`${uploadsResolved}${path.sep}`)) return null;
   return resolved;
@@ -67,8 +67,8 @@ function resolveDiskPathFromPublicUploadPath(filepath: string): string | null {
 
 function sanitizeFilename(filename: string): string {
   const base = path.basename(filename);
-  const sanitized = base.replace(/[^a-zA-Z0-9._-]/g, "_").replace(/^_+/, "");
-  return sanitized || "import.bin";
+  const sanitized = base.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/^_+/, '');
+  return sanitized || 'import.bin';
 }
 
 function isHttpUrl(value: string): boolean {
@@ -76,17 +76,17 @@ function isHttpUrl(value: string): boolean {
 }
 
 function isDataUrl(value: string): boolean {
-  return value.trim().startsWith("data:");
+  return value.trim().startsWith('data:');
 }
 
 function guessExtensionFromMime(mime: string | null | undefined): string | null {
-  const clean = (mime ?? "").toLowerCase();
+  const clean = (mime ?? '').toLowerCase();
   if (!clean) return null;
-  if (clean.includes("jpeg")) return ".jpg";
-  if (clean.includes("png")) return ".png";
-  if (clean.includes("webp")) return ".webp";
-  if (clean.includes("gif")) return ".gif";
-  if (clean.includes("svg")) return ".svg";
+  if (clean.includes('jpeg')) return '.jpg';
+  if (clean.includes('png')) return '.png';
+  if (clean.includes('webp')) return '.webp';
+  if (clean.includes('gif')) return '.gif';
+  if (clean.includes('svg')) return '.svg';
   return null;
 }
 
@@ -100,7 +100,7 @@ function parseDataUrl(dataUrl: string): { buffer: Buffer; mime: string | null } 
   const match = dataUrl.trim().match(/^data:([^;]+);base64,(.+)$/i);
   if (!match) return null;
   try {
-    const buffer = Buffer.from(match[2] ?? "", "base64");
+    const buffer = Buffer.from(match[2] ?? '', 'base64');
     return { buffer, mime: match[1] ?? null };
   } catch {
     return null;
@@ -115,16 +115,16 @@ async function fetchRemoteFile(url: string): Promise<{ buffer: Buffer; mime: str
     if (!response.ok) {
       throw new Error(`Remote fetch failed (${response.status})`);
     }
-    const mime = response.headers.get("content-type");
-    const lengthHeader = response.headers.get("content-length");
+    const mime = response.headers.get('content-type');
+    const lengthHeader = response.headers.get('content-length');
     if (lengthHeader && Number(lengthHeader) > MAX_REMOTE_IMPORT_BYTES) {
-      throw new Error("Remote file is too large");
+      throw new Error('Remote file is too large');
     }
     const buffer = Buffer.from(await response.arrayBuffer());
     if (buffer.length > MAX_REMOTE_IMPORT_BYTES) {
-      throw new Error("Remote file is too large");
+      throw new Error('Remote file is too large');
     }
-    let filename = "remote-file";
+    let filename = 'remote-file';
     try {
       const pathname = new URL(url).pathname;
       filename = path.basename(pathname) || filename;
@@ -157,18 +157,18 @@ async function POST_handler(
   params: { projectId: string }
 ): Promise<Response> {
   const projectId = sanitizeProjectId(params.projectId);
-  if (!projectId) throw badRequestError("Project id is required");
+  if (!projectId) throw badRequestError('Project id is required');
 
   const body = (await req.json().catch(() => null)) as unknown;
   const parsed = importSchema.safeParse(body);
   if (!parsed.success) {
-    throw badRequestError("Invalid payload", { errors: parsed.error.format() });
+    throw badRequestError('Invalid payload', { errors: parsed.error.format() });
   }
 
   const safeFolder =
-    parsed.data.folder && parsed.data.folder.trim()
+    parsed.data.folder?.trim()
       ? sanitizeFolderPath(parsed.data.folder)
-      : "";
+      : '';
 
   const diskDir = safeFolder
     ? path.join(projectsRoot, projectId, safeFolder)
@@ -200,20 +200,20 @@ async function POST_handler(
   for (const item of parsed.data.files) {
     const sourceRecord = item.id ? sourceById.get(item.id) ?? null : null;
     const sourcePath = item.id ? sourceRecord?.filepath ?? item.filepath : item.filepath;
-    const rawSource = sourcePath ?? "";
+    const rawSource = sourcePath ?? '';
 
     if (isDataUrl(rawSource)) {
       const parsedData = parseDataUrl(rawSource);
       if (!parsedData) {
-        failures.push({ filepath: rawSource, error: "Invalid base64 data URL" });
+        failures.push({ filepath: rawSource, error: 'Invalid base64 data URL' });
         continue;
       }
       if (parsedData.buffer.length > MAX_REMOTE_IMPORT_BYTES) {
-        failures.push({ filepath: rawSource, error: "Base64 data is too large" });
+        failures.push({ filepath: rawSource, error: 'Base64 data is too large' });
         continue;
       }
-      const mime = parsedData.mime || item.mimetype || sourceRecord?.mimetype || "application/octet-stream";
-      const baseName = sourceRecord?.filename || item.filename || "base64-image";
+      const mime = parsedData.mime || item.mimetype || sourceRecord?.mimetype || 'application/octet-stream';
+      const baseName = sourceRecord?.filename || item.filename || 'base64-image';
       const safeName = sanitizeFilename(ensureFilenameExtension(baseName, mime));
       const filename = `${Date.now()}-${randomUUID().slice(0, 8)}-${safeName}`;
       const destDiskPath = path.join(diskDir, filename);
@@ -255,8 +255,8 @@ async function POST_handler(
     if (isHttpUrl(rawSource)) {
       try {
         const remote = await fetchRemoteFile(rawSource);
-        const mime = remote.mime || item.mimetype || sourceRecord?.mimetype || "application/octet-stream";
-        const baseName = sourceRecord?.filename || item.filename || remote.filename || "remote-image";
+        const mime = remote.mime || item.mimetype || sourceRecord?.mimetype || 'application/octet-stream';
+        const baseName = sourceRecord?.filename || item.filename || remote.filename || 'remote-image';
         const safeName = sanitizeFilename(ensureFilenameExtension(baseName, mime));
         const filename = `${Date.now()}-${randomUUID().slice(0, 8)}-${safeName}`;
         const destDiskPath = path.join(diskDir, filename);
@@ -294,20 +294,20 @@ async function POST_handler(
         });
         continue;
       } catch (error) {
-        failures.push({ filepath: rawSource, error: error instanceof Error ? error.message : "Failed to fetch remote file" });
+        failures.push({ filepath: rawSource, error: error instanceof Error ? error.message : 'Failed to fetch remote file' });
         continue;
       }
     }
 
     const diskSource = resolveDiskPathFromPublicUploadPath(rawSource);
     if (!diskSource) {
-      failures.push({ filepath: rawSource, error: "Unsupported file path (must be under /uploads/)" });
+      failures.push({ filepath: rawSource, error: 'Unsupported file path (must be under /uploads/)' });
       continue;
     }
 
     const stats = await fs.stat(diskSource).catch(() => null);
-    if (!stats || !stats.isFile()) {
-      failures.push({ filepath: rawSource, error: "File not found on disk" });
+    if (!stats?.isFile()) {
+      failures.push({ filepath: rawSource, error: 'File not found on disk' });
       continue;
     }
 
@@ -321,7 +321,7 @@ async function POST_handler(
     const recordInput = {
       filename,
       filepath: `${publicDir}/${filename}`,
-      mimetype: sourceRecord?.mimetype || item.mimetype || "application/octet-stream",
+      mimetype: sourceRecord?.mimetype || item.mimetype || 'application/octet-stream',
       size: stats.size,
       tags: [],
     };
@@ -351,7 +351,7 @@ async function POST_handler(
   }
 
   if (uploaded.length === 0) {
-    throw badRequestError("No files imported", { failures });
+    throw badRequestError('No files imported', { failures });
   }
 
   return NextResponse.json({ uploaded, failures }, { status: 201 });
@@ -360,5 +360,5 @@ async function POST_handler(
 export const POST = apiHandlerWithParams<{ projectId: string }>(
   async (req: NextRequest, ctx: ApiHandlerContext, params: { projectId: string }): Promise<Response> =>
     POST_handler(req, ctx, params),
-  { source: "image-studio.projects.[projectId].assets.import.POST" }
+  { source: 'image-studio.projects.[projectId].assets.import.POST' }
 );

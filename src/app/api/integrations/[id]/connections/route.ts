@@ -1,13 +1,14 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { getIntegrationRepository } from "@/features/integrations/server";
-import { encryptSecret } from "@/features/integrations/server";
-import { parseJsonBody } from "@/features/products/server";
-import { badRequestError, conflictError, notFoundError } from "@/shared/errors/app-error";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { getIntegrationRepository } from '@/features/integrations/server';
+import { encryptSecret } from '@/features/integrations/server';
+import { parseJsonBody } from '@/features/products/server';
+import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const createConnectionSchema = z
   .object({
@@ -24,7 +25,7 @@ const createConnectionSchema = z
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const { id: integrationId } = params;
   if (!integrationId) {
-    throw badRequestError("Integration id is required");
+    throw badRequestError('Integration id is required');
   }
 
   const repo = await getIntegrationRepository();
@@ -80,11 +81,11 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: {
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const { id: integrationId } = params;
   if (!integrationId) {
-    throw badRequestError("Integration id is required");
+    throw badRequestError('Integration id is required');
   }
 
   const parsed = await parseJsonBody(req, createConnectionSchema, {
-    logPrefix: "integrations.connections.POST"
+    logPrefix: 'integrations.connections.POST'
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -94,12 +95,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
   const repo = await getIntegrationRepository();
   const integration = await repo.getIntegrationById(integrationId);
   if (!integration) {
-    throw notFoundError("Integration not found", { integrationId });
+    throw notFoundError('Integration not found', { integrationId });
   }
 
   const existing = await repo.listConnections(integrationId);
   if (existing.length > 0) {
-    throw conflictError("Connection already exists", { integrationId });
+    throw conflictError('Connection already exists', { integrationId });
   }
 
   const created = await repo.createConnection(integrationId, {
@@ -144,9 +145,9 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
 
 export const GET = apiHandlerWithParams<{ id: string }>(
   GET_handler,
-  { source: "integrations.[id].connections.GET", requireCsrf: false }
+  { source: 'integrations.[id].connections.GET', requireCsrf: false }
 );
 export const POST = apiHandlerWithParams<{ id: string }>(
   POST_handler,
-  { source: "integrations.[id].connections.POST", requireCsrf: false }
+  { source: 'integrations.[id].connections.POST', requireCsrf: false }
 );

@@ -1,22 +1,24 @@
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import prisma from "@/shared/lib/db/prisma";
-import type { Prisma } from "@prisma/client";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
 import {
   ensureInternationalizationDefaults,
   fallbackLanguages,
   defaultLanguages,
   countryMappings,
-} from "@/features/internationalization/server";
-import { getInternationalizationProvider } from "@/features/internationalization/services/internationalization-provider";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { parseJsonBody } from "@/features/products/server";
-import { conflictError, internalError } from "@/shared/errors/app-error";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+} from '@/features/internationalization/server';
+import { getInternationalizationProvider } from '@/features/internationalization/services/internationalization-provider';
+import { parseJsonBody } from '@/features/products/server';
+import { conflictError, internalError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import type { ApiHandlerContext } from '@/shared/types/api';
+
+import type { Prisma } from '@prisma/client';
 
 
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
 const languageCreateSchema = z.object({
   code: z.string().trim().min(1),
@@ -50,11 +52,11 @@ type LanguageDoc = {
   updatedAt: Date;
 };
 
-const LANGUAGES_COLLECTION = "languages";
+const LANGUAGES_COLLECTION = 'languages';
 
 const seedMongoLanguages = async (db: Awaited<ReturnType<typeof getMongoDb>>) => {
   const now = new Date();
-  const countriesCollection = db.collection("countries");
+  const countriesCollection = db.collection('countries');
 
   for (const language of defaultLanguages) {
     const matchingMappings = countryMappings.filter((mapping: (typeof countryMappings)[number]) =>
@@ -102,9 +104,9 @@ const seedMongoLanguages = async (db: Awaited<ReturnType<typeof getMongoDb>>) =>
  */
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const provider = await getInternationalizationProvider();
-  if (provider === "mongodb") {
-    if (!process.env["MONGODB_URI"]) {
-      throw internalError("MongoDB is not configured.");
+  if (provider === 'mongodb') {
+    if (!process.env['MONGODB_URI']) {
+      throw internalError('MongoDB is not configured.');
     }
     const mongo = await getMongoDb();
     await seedMongoLanguages(mongo);
@@ -121,14 +123,14 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
     return NextResponse.json(formattedLanguages);
   }
 
-  if (!process.env["DATABASE_URL"]) {
+  if (!process.env['DATABASE_URL']) {
     return NextResponse.json(fallbackLanguages);
   }
   await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     await ensureInternationalizationDefaults(tx);
   });
   const languages = await prisma.language.findMany({
-    orderBy: { code: "asc" },
+    orderBy: { code: 'asc' },
     include: {
       countries: {
         include: {
@@ -160,7 +162,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
  */
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, languageCreateSchema, {
-    logPrefix: "languages.POST",
+    logPrefix: 'languages.POST',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -169,16 +171,16 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const code = data.code.toUpperCase();
 
   const provider = await getInternationalizationProvider();
-  if (provider === "mongodb") {
-    if (!process.env["MONGODB_URI"]) {
-      throw internalError("MongoDB is not configured.");
+  if (provider === 'mongodb') {
+    if (!process.env['MONGODB_URI']) {
+      throw internalError('MongoDB is not configured.');
     }
     const mongo = await getMongoDb();
     const existing = await mongo
       .collection<LanguageDoc>(LANGUAGES_COLLECTION)
       .findOne({ code });
     if (existing) {
-      throw conflictError("Language code already exists.", { code });
+      throw conflictError('Language code already exists.', { code });
     }
 
     const countryIds = data.countryIds ?? [];
@@ -186,7 +188,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     const countries: LanguageCountryDoc[] = [];
 
     if (uniqueIds.length > 0) {
-      const countriesCollection = mongo.collection("countries");
+      const countriesCollection = mongo.collection('countries');
       for (const countryId of uniqueIds) {
         const country = (await countriesCollection.findOne({ id: countryId })) as unknown as CountryDoc | null;
         if (country) {
@@ -223,7 +225,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     select: { id: true },
   });
   if (existingLanguage) {
-    throw conflictError("Language code already exists.", { code });
+    throw conflictError('Language code already exists.', { code });
   }
   const existing = await prisma.country.findMany({
     where: { id: { in: uniqueIds } },
@@ -260,7 +262,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "languages.GET" });
+  { source: 'languages.GET' });
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "languages.POST" });
+  { source: 'languages.POST' });

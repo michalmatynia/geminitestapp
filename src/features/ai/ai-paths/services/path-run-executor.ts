@@ -285,7 +285,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     await saveIntermediateState();
   };
 
-  const historyLimit = Number.parseInt(process.env["AI_PATHS_HISTORY_LIMIT"] ?? '', 10);
+  const historyLimit = Number.parseInt(process.env['AI_PATHS_HISTORY_LIMIT'] ?? '', 10);
   const resolvedHistoryLimit =
     Number.isFinite(historyLimit) && historyLimit > 0 ? historyLimit : 50;
   const nodeRecords = await repo.listRunNodes(run.id);

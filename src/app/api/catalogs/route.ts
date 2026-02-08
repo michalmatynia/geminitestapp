@@ -1,18 +1,19 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { getCatalogRepository } from "@/features/products/server";
-import { getProductDataProvider } from "@/features/products/server";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import prisma from "@/shared/lib/db/prisma";
-import { parseJsonBody } from "@/shared/lib/api/parse-json";
-import { badRequestError } from "@/shared/errors/app-error";
-import { logSystemEvent } from "@/features/observability/server";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import type { CatalogRecord } from "@/features/products/types";
-import { type Filter } from "mongodb";
+import { type Filter } from 'mongodb';
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { logSystemEvent } from '@/features/observability/server';
+import { getCatalogRepository } from '@/features/products/server';
+import { getProductDataProvider } from '@/features/products/server';
+import type { CatalogRecord } from '@/features/products/types';
+import { badRequestError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const catalogSchema = z.object({
   name: z.string().trim().min(1),
@@ -33,11 +34,11 @@ async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Re
   let catalogs = await catalogRepository.listCatalogs();
   const provider = await getProductDataProvider();
 
-  if (provider === "mongodb" && catalogs.length > 0) {
+  if (provider === 'mongodb' && catalogs.length > 0) {
     try {
       const mongo = await getMongoDb();
       const mongoLanguages = await mongo
-        .collection<{ id: string; code: string }>("languages")
+        .collection<{ id: string; code: string }>('languages')
         .find({}, { projection: { id: 1, code: 1 } })
         .toArray();
       const languageCodeById = new Map<string, string>();
@@ -61,7 +62,7 @@ async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Re
         }
       });
 
-      if (missingIds.size > 0 && process.env["DATABASE_URL"]) {
+      if (missingIds.size > 0 && process.env['DATABASE_URL']) {
         const legacyIds = Array.from(missingIds);
         try {
           const legacyLanguages = await prisma.language.findMany({
@@ -73,9 +74,9 @@ async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Re
           });
         } catch (error: unknown) {
           void logSystemEvent({
-            level: "warn",
-            message: "Failed to load legacy languages from Prisma",
-            source: "catalogs.GET",
+            level: 'warn',
+            message: 'Failed to load legacy languages from Prisma',
+            source: 'catalogs.GET',
             error,
             request: req,
             requestId: ctx.requestId,
@@ -84,7 +85,7 @@ async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Re
         }
       }
 
-      const collection = mongo.collection<{ _id: string; id: string }>("catalogs");
+      const collection = mongo.collection<{ _id: string; id: string }>('catalogs');
       catalogs = await Promise.all(
         catalogs.map(async (catalog: CatalogRecord) => {
           const nextLanguageIds =
@@ -127,9 +128,9 @@ async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Re
       );
     } catch (error: unknown) {
       void logSystemEvent({
-        level: "warn",
-        message: "Failed to normalize catalog language IDs",
-        source: "catalogs.GET",
+        level: 'warn',
+        message: 'Failed to normalize catalog language IDs',
+        source: 'catalogs.GET',
         error,
         request: req,
         requestId: ctx.requestId,
@@ -146,15 +147,15 @@ async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Re
  */
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, catalogSchema, {
-    logPrefix: "catalogs.POST",
+    logPrefix: 'catalogs.POST',
   });
   if (!parsed.ok) {
     return parsed.response;
   }
   const data = parsed.data;
   if (!data.languageIds || data.languageIds.length === 0) {
-    throw badRequestError("Select at least one language.", {
-      field: "languageIds",
+    throw badRequestError('Select at least one language.', {
+      field: 'languageIds',
     });
   }
   if (
@@ -162,13 +163,13 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     !data.languageIds.includes(data.defaultLanguageId)
   ) {
     throw badRequestError(
-      "Default language must be one of the selected languages.",
-      { field: "defaultLanguageId" }
+      'Default language must be one of the selected languages.',
+      { field: 'defaultLanguageId' }
     );
   }
   if (!data.priceGroupIds || data.priceGroupIds.length === 0) {
-    throw badRequestError("Select at least one price group.", {
-      field: "priceGroupIds",
+    throw badRequestError('Select at least one price group.', {
+      field: 'priceGroupIds',
     });
   }
   if (
@@ -176,8 +177,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     !data.priceGroupIds.includes(data.defaultPriceGroupId)
   ) {
     throw badRequestError(
-      "Default price group must be one of the selected price groups.",
-      { field: "defaultPriceGroupId" }
+      'Default price group must be one of the selected price groups.',
+      { field: 'defaultPriceGroupId' }
     );
   }
   const catalogRepository = await getCatalogRepository();
@@ -198,7 +199,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "catalogs.GET" });
+  { source: 'catalogs.GET' });
 export const POST = apiHandler(
   async (req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, _ctx),
- { source: "catalogs.POST" });
+  { source: 'catalogs.POST' });

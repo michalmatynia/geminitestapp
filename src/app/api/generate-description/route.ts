@@ -1,11 +1,12 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { generateProductDescription } from "@/features/products/services/aiDescriptionService";
-import { validationError } from "@/shared/errors/app-error";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { productCreateSchema } from "@/features/products/validations/schemas"; // Import schema
+import { NextRequest, NextResponse } from 'next/server';
+
+import { generateProductDescription } from '@/features/products/services/aiDescriptionService';
+import { productCreateSchema } from '@/features/products/validations/schemas'; // Import schema
+import { validationError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 interface GenerateDescriptionBody {
   productData?: {
@@ -25,11 +26,11 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
   const rawProductData = body.productData;
   const imageUrls = Array.isArray(body.imageUrls)
-    ? body.imageUrls.filter((item: unknown): item is string => typeof item === "string")
+    ? body.imageUrls.filter((item: unknown): item is string => typeof item === 'string')
     : [];
 
   if (!rawProductData?.name_en) {
-    throw validationError("Product name is required", { field: "name_en" });
+    throw validationError('Product name is required', { field: 'name_en' });
   }
 
   // Validate and transform rawProductData to ProductFormData
@@ -47,4 +48,4 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "generate-description.POST" });
+  { source: 'generate-description.POST' });

@@ -143,7 +143,7 @@ export const ErrorSystem = {
         userMessage: undefined,
         category: undefined
       },
-      debug: process.env["NODE_ENV"] !== 'production' ? { stack } : undefined
+      debug: process.env['NODE_ENV'] !== 'production' ? { stack } : undefined
     };
   }
 };

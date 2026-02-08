@@ -1,23 +1,25 @@
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import prisma from "@/shared/lib/db/prisma";
-import type { Prisma } from "@prisma/client";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
 import {
   defaultCurrencies,
   fallbackCurrencies,
-} from "@/features/internationalization/server";
-import { getInternationalizationProvider } from "@/features/internationalization/services/internationalization-provider";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { parseJsonBody } from "@/features/products/server";
-import { conflictError, internalError } from "@/shared/errors/app-error";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import type { CurrencyRecord } from "@/shared/types/internationalization";
+} from '@/features/internationalization/server';
+import { getInternationalizationProvider } from '@/features/internationalization/services/internationalization-provider';
+import { parseJsonBody } from '@/features/products/server';
+import { conflictError, internalError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import type { ApiHandlerContext } from '@/shared/types/api';
+import type { CurrencyRecord } from '@/shared/types/internationalization';
 
-export const runtime = "nodejs";
+import type { Prisma } from '@prisma/client';
+
+export const runtime = 'nodejs';
 
 const currencySchema = z.object({
-  code: z.enum(["USD", "EUR", "PLN", "GBP", "SEK"]),
+  code: z.enum(['USD', 'EUR', 'PLN', 'GBP', 'SEK']),
   name: z.string().trim().min(1),
   symbol: z.string().trim().min(1).optional(),
 });
@@ -31,7 +33,7 @@ type CurrencyDoc = {
   updatedAt: Date;
 };
 
-const CURRENCIES_COLLECTION = "currencies";
+const CURRENCIES_COLLECTION = 'currencies';
 
 const seedMongoCurrencies = async (db: Awaited<ReturnType<typeof getMongoDb>>): Promise<void> => {
   const now = new Date();
@@ -62,9 +64,9 @@ const seedMongoCurrencies = async (db: Awaited<ReturnType<typeof getMongoDb>>): 
  */
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const provider = await getInternationalizationProvider();
-  if (provider === "mongodb") {
-    if (!process.env["MONGODB_URI"]) {
-      throw internalError("MongoDB is not configured.");
+  if (provider === 'mongodb') {
+    if (!process.env['MONGODB_URI']) {
+      throw internalError('MongoDB is not configured.');
     }
     const mongo = await getMongoDb();
     await seedMongoCurrencies(mongo);
@@ -75,7 +77,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
       .toArray();
     return NextResponse.json(currencies as unknown as CurrencyRecord[]);
   }
-  if (!process.env["DATABASE_URL"]) {
+  if (!process.env['DATABASE_URL']) {
     return NextResponse.json(fallbackCurrencies);
   }
   await prisma.currency.createMany({
@@ -84,7 +86,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
   });
 
   const currencies = await prisma.currency.findMany({
-    orderBy: { code: "asc" },
+    orderBy: { code: 'asc' },
   });
 
   return NextResponse.json(currencies as unknown as CurrencyRecord[]);
@@ -96,7 +98,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
  */
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, currencySchema, {
-    logPrefix: "currencies.POST",
+    logPrefix: 'currencies.POST',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -104,16 +106,16 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const data = parsed.data;
 
   const provider = await getInternationalizationProvider();
-  if (provider === "mongodb") {
-    if (!process.env["MONGODB_URI"]) {
-      throw internalError("MongoDB is not configured.");
+  if (provider === 'mongodb') {
+    if (!process.env['MONGODB_URI']) {
+      throw internalError('MongoDB is not configured.');
     }
     const mongo = await getMongoDb();
     const existing = await mongo
       .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
       .findOne({ code: data.code });
     if (existing) {
-      throw conflictError("Currency code already exists.", { code: data.code });
+      throw conflictError('Currency code already exists.', { code: data.code });
     }
     const now = new Date();
     const doc: CurrencyDoc = {
@@ -128,8 +130,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     return NextResponse.json(doc);
   }
 
-  if (!process.env["DATABASE_URL"]) {
-    throw internalError("Postgres product store is not configured.");
+  if (!process.env['DATABASE_URL']) {
+    throw internalError('Postgres product store is not configured.');
   }
 
   const existing = await prisma.currency.findUnique({
@@ -137,7 +139,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     select: { id: true },
   });
   if (existing) {
-    throw conflictError("Currency code already exists.", { code: data.code });
+    throw conflictError('Currency code already exists.', { code: data.code });
   }
 
   // Ensure TS sees `code` as Prisma's enum type (matches schema)
@@ -150,7 +152,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "currencies.GET" });
+  { source: 'currencies.GET' });
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "currencies.POST" });
+  { source: 'currencies.POST' });

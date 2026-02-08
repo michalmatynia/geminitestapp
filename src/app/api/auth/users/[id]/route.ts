@@ -1,18 +1,19 @@
-import { NextRequest, NextResponse } from "next/server";
-import { ObjectId } from "mongodb";
-import { z } from "zod";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import prisma from "@/shared/lib/db/prisma";
-import { normalizeAuthEmail } from "@/features/auth/server";
-import { auth } from "@/features/auth/server";
-import { authError, badRequestError, conflictError, internalError, notFoundError } from "@/shared/errors/app-error";
-import type { AuthUserDto } from "@/shared/dtos/auth";
-import { getAuthDataProvider, requireAuthProvider } from "@/features/auth/services/auth-provider";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { logAuthEvent } from "@/features/auth/utils/auth-request-logger";
+import { ObjectId } from 'mongodb';
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
-export const runtime = "nodejs";
+import { normalizeAuthEmail } from '@/features/auth/server';
+import { auth } from '@/features/auth/server';
+import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/services/auth-provider';
+import { logAuthEvent } from '@/features/auth/utils/auth-request-logger';
+import type { AuthUserDto } from '@/shared/dtos/auth';
+import { authError, badRequestError, conflictError, internalError, notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import type { ApiHandlerContext } from '@/shared/types/api';
+
+export const runtime = 'nodejs';
 
 const updateSchema = z.object({
   name: z.string().trim().min(1).max(200).optional().nullable(),
@@ -34,33 +35,33 @@ async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext, params: {
   const session = await auth();
   const hasAccess =
     session?.user?.isElevated ||
-    session?.user?.permissions?.includes("auth.users.write");
+    session?.user?.permissions?.includes('auth.users.write');
   if (!hasAccess) {
-    throw authError("Unauthorized.");
+    throw authError('Unauthorized.');
   }
   const data = ctx.body as z.infer<typeof updateSchema> | undefined;
   if (!data) {
-    throw badRequestError("Invalid payload");
+    throw badRequestError('Invalid payload');
   }
   await logAuthEvent({
     req,
-    action: "auth.users.update",
-    stage: "start",
+    action: 'auth.users.update',
+    stage: 'start',
     userId: session?.user?.id ?? null,
     body: { targetUserId: params.id },
   });
 
   const { name, email, emailVerified } = data;
   if (name === undefined && email === undefined && emailVerified === undefined) {
-    throw badRequestError("No updates provided.");
+    throw badRequestError('No updates provided.');
   }
 
   const { id: userId } = params;
   const provider = requireAuthProvider(await getAuthDataProvider());
 
-  if (provider === "prisma") {
-    if (!process.env["DATABASE_URL"]) {
-      throw internalError("Prisma is not configured.");
+  if (provider === 'prisma') {
+    if (!process.env['DATABASE_URL']) {
+      throw internalError('Prisma is not configured.');
     }
     const existing = await prisma.user.findUnique({
       where: { id: userId },
@@ -73,27 +74,27 @@ async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext, params: {
       },
     });
     if (!existing) {
-      throw notFoundError("User not found.");
+      throw notFoundError('User not found.');
     }
 
     const nextEmail =
-      typeof email === "string" ? normalizeAuthEmail(email) : undefined;
+      typeof email === 'string' ? normalizeAuthEmail(email) : undefined;
     if (nextEmail && nextEmail !== existing.email) {
       const conflict = await prisma.user.findUnique({
         where: { email: nextEmail },
         select: { id: true },
       });
       if (conflict && conflict.id !== userId) {
-        throw conflictError("Email already in use.");
+        throw conflictError('Email already in use.');
       }
     }
 
     const updated = await prisma.user.update({
       where: { id: userId },
       data: {
-        ...(typeof name === "string" ? { name } : {}),
-        ...(typeof nextEmail === "string" ? { email: nextEmail } : {}),
-        ...(typeof emailVerified === "boolean"
+        ...(typeof name === 'string' ? { name } : {}),
+        ...(typeof nextEmail === 'string' ? { email: nextEmail } : {}),
+        ...(typeof emailVerified === 'boolean'
           ? { emailVerified: emailVerified ? new Date() : null }
           : {}),
       },
@@ -121,8 +122,8 @@ async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext, params: {
     };
     await logAuthEvent({
       req,
-      action: "auth.users.update",
-      stage: "success",
+      action: 'auth.users.update',
+      stage: 'success',
       userId: session?.user?.id ?? null,
       body: { targetUserId: params.id },
       status: 200,
@@ -130,51 +131,51 @@ async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext, params: {
     return NextResponse.json(payload);
   }
 
-  if (!process.env["MONGODB_URI"]) {
-    throw internalError("MongoDB is not configured.");
+  if (!process.env['MONGODB_URI']) {
+    throw internalError('MongoDB is not configured.');
   }
   if (!ObjectId.isValid(userId)) {
-    throw notFoundError("User not found.");
+    throw notFoundError('User not found.');
   }
   const db = await getMongoDb();
   const objectId = new ObjectId(userId);
   const existing = await db
-    .collection<MongoUserDoc>("users")
+    .collection<MongoUserDoc>('users')
     .findOne({ _id: objectId });
   if (!existing) {
-    throw notFoundError("User not found.");
+    throw notFoundError('User not found.');
   }
 
   const nextEmail =
-    typeof email === "string" ? normalizeAuthEmail(email) : undefined;
+    typeof email === 'string' ? normalizeAuthEmail(email) : undefined;
   if (nextEmail && nextEmail !== existing.email) {
     const conflict = await db
-      .collection<MongoUserDoc>("users")
+      .collection<MongoUserDoc>('users')
       .findOne({ email: nextEmail });
     if (conflict && conflict._id.toString() !== userId) {
-      throw conflictError("Email already in use.");
+      throw conflictError('Email already in use.');
     }
   }
 
   const updateDoc: Partial<MongoUserDoc> = {
-    ...(typeof name === "string" ? { name } : {}),
-    ...(typeof nextEmail === "string" ? { email: nextEmail } : {}),
-    ...(typeof emailVerified === "boolean"
+    ...(typeof name === 'string' ? { name } : {}),
+    ...(typeof nextEmail === 'string' ? { email: nextEmail } : {}),
+    ...(typeof emailVerified === 'boolean'
       ? { emailVerified: emailVerified ? new Date() : null }
       : {}),
     updatedAt: new Date(),
   };
 
-  await db.collection<MongoUserDoc>("users").updateOne(
+  await db.collection<MongoUserDoc>('users').updateOne(
     { _id: objectId },
     { $set: updateDoc }
   );
 
   const updated = await db
-    .collection<MongoUserDoc>("users")
+    .collection<MongoUserDoc>('users')
     .findOne({ _id: objectId });
   if (!updated) {
-    throw notFoundError("User not found.");
+    throw notFoundError('User not found.');
   }
 
   const payload: AuthUserDto = {
@@ -185,14 +186,14 @@ async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext, params: {
     emailVerified: updated.emailVerified
       ? updated.emailVerified.toISOString()
       : null,
-    provider: "mongodb",
+    provider: 'mongodb',
     createdAt: updated.createdAt?.toISOString() ?? new Date().toISOString(),
     updatedAt: updated.updatedAt?.toISOString() ?? new Date().toISOString(),
   };
   await logAuthEvent({
     req,
-    action: "auth.users.update",
-    stage: "success",
+    action: 'auth.users.update',
+    stage: 'success',
     userId: session?.user?.id ?? null,
     body: { targetUserId: params.id },
     status: 200,
@@ -201,11 +202,11 @@ async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext, params: {
 }
 
 export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, {
-  source: "auth.users.[id].PATCH",
+  source: 'auth.users.[id].PATCH',
   parseJsonBody: true,
   bodySchema: updateSchema,
-  rateLimitKey: "write",
+  rateLimitKey: 'write',
   maxBodyBytes: 20_000,
-  allowedMethods: ["PATCH"],
+  allowedMethods: ['PATCH'],
   requireCsrf: false,
 });

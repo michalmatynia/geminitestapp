@@ -1,22 +1,23 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import path from "path";
-import fs from "fs/promises";
+import fs from 'fs/promises';
+import path from 'path';
 
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { badRequestError, notFoundError } from "@/shared/errors/app-error";
+import { NextRequest, NextResponse } from 'next/server';
 
-const projectsRoot = path.join(process.cwd(), "public", "uploads", "studio");
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
+
+const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
 const projectsRootResolved = path.resolve(projectsRoot);
 
 const sanitizeProjectId = (value: string): string =>
-  value.trim().replace(/[^a-zA-Z0-9-_]/g, "_");
+  value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
 const resolveProjectDir = (candidate: string): string | null => {
   if (!candidate) return null;
-  if (candidate.includes("/") || candidate.includes("\\")) return null;
+  if (candidate.includes('/') || candidate.includes('\\')) return null;
   const resolved = path.resolve(projectsRootResolved, candidate);
   if (!resolved.startsWith(`${projectsRootResolved}${path.sep}`)) return null;
   return resolved;
@@ -27,8 +28,8 @@ async function DELETE_handler(
   _ctx: ApiHandlerContext,
   params: { projectId: string }
 ): Promise<Response> {
-  const rawProjectId = params.projectId?.trim() ?? "";
-  if (!rawProjectId) throw badRequestError("Project id is required");
+  const rawProjectId = params.projectId?.trim() ?? '';
+  if (!rawProjectId) throw badRequestError('Project id is required');
   const candidates = Array.from(
     new Set([rawProjectId, sanitizeProjectId(rawProjectId)].filter(Boolean))
   );
@@ -44,7 +45,7 @@ async function DELETE_handler(
   }
 
   if (!deleted) {
-    throw notFoundError("Project not found", { projectId: rawProjectId });
+    throw notFoundError('Project not found', { projectId: rawProjectId });
   }
 
   return NextResponse.json({ projectId: rawProjectId, deleted: true });
@@ -53,5 +54,5 @@ async function DELETE_handler(
 export const DELETE = apiHandlerWithParams(
   async (req: NextRequest, ctx: ApiHandlerContext, params: { projectId: string }): Promise<Response> =>
     DELETE_handler(req, ctx, params),
-  { source: "image-studio.projects.DELETE" }
+  { source: 'image-studio.projects.DELETE' }
 );

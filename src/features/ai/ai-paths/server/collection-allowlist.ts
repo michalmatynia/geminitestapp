@@ -104,7 +104,7 @@ type AllowlistConfig = {
 };
 
 const buildAllowlist = (): AllowlistConfig => {
-  const raw = process.env["AI_PATHS_DB_COLLECTION_ALLOWLIST"];
+  const raw = process.env['AI_PATHS_DB_COLLECTION_ALLOWLIST'];
   if (!raw?.trim()) {
     return {
       allowAll: false,

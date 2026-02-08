@@ -1,24 +1,27 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { getIntegrationRepository } from "@/features/integrations/server";
-import { decryptSecret, encryptSecret } from "@/features/integrations/server";
-import { chromium, devices } from "playwright";
-import { mkdir, readdir, stat, unlink, writeFile } from "fs/promises";
-import path from "path";
+import { mkdir, readdir, stat, unlink, writeFile } from 'fs/promises';
+import path from 'path';
+
+import { NextRequest, NextResponse } from 'next/server';
+import { chromium, devices } from 'playwright';
+
+import { decryptSecret, encryptSecret } from '@/features/integrations/server';
+import { getIntegrationRepository } from '@/features/integrations/server';
+import { mapStatusToAppError } from '@/shared/errors/error-mapper';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
+
 import type {
   Browser,
   BrowserContext,
   Page,
   BrowserContextOptions
-} from "playwright";
-import { mapStatusToAppError } from "@/shared/errors/error-mapper";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+} from 'playwright';
 
 type TestLogEntry = {
   step: string;
-  status: "pending" | "ok" | "failed";
+  status: 'pending' | 'ok' | 'failed';
   timestamp: string;
   detail: string;
 };
@@ -34,7 +37,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
   
   const pushStep = (
     step: string,
-    status: "pending" | "ok" | "failed",
+    status: 'pending' | 'ok' | 'failed',
     detail: string
   ) => {
     steps.push({
@@ -46,8 +49,8 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
   };
 
   const fail = async (step: string, detail: string, status = 400) => {
-    const safeDetail = detail?.trim() ? detail : "Unknown error";
-    pushStep(step, "failed", safeDetail);
+    const safeDetail = detail?.trim() ? detail : 'Unknown error';
+    pushStep(step, 'failed', safeDetail);
     
     throw mapStatusToAppError(safeDetail, status);
   };
@@ -56,25 +59,25 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
   integrationId = id;
   integrationConnectionId = connectionId;
   if (!integrationId || !integrationConnectionId) {
-    return fail("Loading connection", "Integration id and connection id are required", 400);
+    return fail('Loading connection', 'Integration id and connection id are required', 400);
   }
 
-  pushStep("Loading connection", "pending", "Fetching stored credentials");
+  pushStep('Loading connection', 'pending', 'Fetching stored credentials');
   const repo = await getIntegrationRepository();
   const connection = await repo.getConnectionByIdAndIntegration(connectionId, id);
 
   if (!connection) {
-    return fail("Loading connection", "Connection not found", 404);
+    return fail('Loading connection', 'Connection not found', 404);
   }
-  pushStep("Loading connection", "ok", "Connection loaded");
+  pushStep('Loading connection', 'ok', 'Connection loaded');
 
   const integration = await repo.getIntegrationById(id);
 
   if (!integration) {
-    return fail("Loading integration", "Integration not found", 404);
+    return fail('Loading integration', 'Integration not found', 404);
   }
 
-  if (integration.slug === "baselinker") {
+  if (integration.slug === 'baselinker') {
     // Redirect to Base-specific test endpoint
     const baseTestUrl = `/api/integrations/${id}/connections/${connectionId}/base/test`;
     return NextResponse.json(
@@ -86,9 +89,9 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     );
   }
 
-  if (integration.slug !== "tradera") {
+  if (integration.slug !== 'tradera') {
     return fail(
-      "Connection test",
+      'Connection test',
       `${integration.name} connection tests are not configured yet.`,
       400
     );
@@ -96,20 +99,20 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
 
   // Decrypt to ensure credentials are readable with the configured key.
   pushStep(
-    "Decrypting credentials",
-    "pending",
-    "Validating encryption key and decrypting password"
+    'Decrypting credentials',
+    'pending',
+    'Validating encryption key and decrypting password'
   );
   const decryptedPassword = decryptSecret(connection.password);
-  pushStep("Decrypting credentials", "ok", "Password decrypted successfully");
+  pushStep('Decrypting credentials', 'ok', 'Password decrypted successfully');
 
   const storedState = null;
 
   if (connection.playwrightStorageState) {
     pushStep(
-      "Loading session",
-      "pending",
-      "Loading stored Playwright session"
+      'Loading session',
+      'pending',
+      'Loading stored Playwright session'
     );
     try {
       const raw = decryptSecret(connection.playwrightStorageState);
@@ -117,20 +120,20 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
 
       // minimal validation so TS + runtime both stay sane
       if (Array.isArray(parsed.cookies) && Array.isArray(parsed.origins)) {
-        pushStep("Loading session", "ok", "Stored session loaded");
+        pushStep('Loading session', 'ok', 'Stored session loaded');
       } else {
         pushStep(
-          "Loading session",
-          "failed",
-          "Stored session has invalid shape"
+          'Loading session',
+          'failed',
+          'Stored session has invalid shape'
         );
       }
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Unknown error";
+        error instanceof Error ? error.message : 'Unknown error';
       pushStep(
-        "Loading session",
-        "failed",
+        'Loading session',
+        'failed',
         `Failed to load session: ${message}`
       );
     }
@@ -158,33 +161,33 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     connection.playwrightActionDelayMax ?? actionDelayMin
   );
   const proxyEnabled = connection.playwrightProxyEnabled ?? false;
-  const proxyServer = connection.playwrightProxyServer?.trim() ?? "";
-  const proxyUsername = connection.playwrightProxyUsername?.trim() ?? "";
-  let proxyPassword = "";
+  const proxyServer = connection.playwrightProxyServer?.trim() ?? '';
+  const proxyUsername = connection.playwrightProxyUsername?.trim() ?? '';
+  let proxyPassword = '';
   if (connection.playwrightProxyPassword) {
     try {
       proxyPassword = decryptSecret(connection.playwrightProxyPassword);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Unknown error";
+        error instanceof Error ? error.message : 'Unknown error';
       pushStep(
-        "Proxy setup",
-        "failed",
+        'Proxy setup',
+        'failed',
         `Failed to decrypt proxy password: ${message}`
       );
     }
   }
   const emulateDevice = connection.playwrightEmulateDevice ?? false;
-  const deviceName = connection.playwrightDeviceName ?? "";
+  const deviceName = connection.playwrightDeviceName ?? '';
 
   if (proxyEnabled && !proxyServer) {
     return fail(
-      "Proxy setup",
-      "Proxy is enabled but no proxy server is set."
+      'Proxy setup',
+      'Proxy is enabled but no proxy server is set.'
     );
   }
   if (proxyEnabled && proxyServer) {
-    pushStep("Proxy setup", "ok", `Using proxy ${proxyServer}`);
+    pushStep('Proxy setup', 'ok', `Using proxy ${proxyServer}`);
   }
 
   const deviceProfile =
@@ -193,12 +196,12 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       : null;
   if (emulateDevice && deviceName && !deviceProfile) {
     pushStep(
-      "Device emulation",
-      "failed",
+      'Device emulation',
+      'failed',
       `Unknown device profile: ${deviceName}`
     );
   } else if (emulateDevice && deviceProfile) {
-    pushStep("Device emulation", "ok", `Using ${deviceName}`);
+    pushStep('Device emulation', 'ok', `Using ${deviceName}`);
   }
   let browser: Browser | null = null;
   let context: BrowserContext | null = null;
@@ -206,21 +209,21 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
   try {
     try {
       pushStep(
-        "Launching Playwright",
-        "pending",
-        `Starting Chromium (headless=${headless ? "on" : "off"}, slowMo=${slowMo}ms)`
+        'Launching Playwright',
+        'pending',
+        `Starting Chromium (headless=${headless ? 'on' : 'off'}, slowMo=${slowMo}ms)`
       );
       browser = await chromium.launch({
         headless,
         slowMo,
         ...(proxyEnabled && proxyServer
           ? {
-              proxy: {
-                server: proxyServer,
-                ...(proxyUsername && { username: proxyUsername }),
-                ...(proxyPassword && { password: proxyPassword })
-              }
+            proxy: {
+              server: proxyServer,
+              ...(proxyUsername && { username: proxyUsername }),
+              ...(proxyPassword && { password: proxyPassword })
             }
+          }
           : {})
       });
 
@@ -238,112 +241,112 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       context.setDefaultNavigationTimeout(navigationTimeout);
       page = await context.newPage();
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      return fail("Launching Playwright", message);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return fail('Launching Playwright', message);
     }
     
     const randomBetween = (min: number, max: number) =>
       Math.floor(Math.random() * (max - min + 1)) + min;
     const safeWaitForSelector = async (
       selector: string,
-      options: Parameters<NonNullable<typeof page>["waitForSelector"]>[1],
+      options: Parameters<NonNullable<typeof page>['waitForSelector']>[1],
       label: string
     ) => {
-      if (!page) throw new Error("Browser page not initialized");
+      if (!page) throw new Error('Browser page not initialized');
       try {
         return await page.waitForSelector(selector, options);
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Unknown error";
+          error instanceof Error ? error.message : 'Unknown error';
         throw new Error(`${label} wait failed: ${message}`);
       }
     };
     const safeWaitFor = async (
-      locator: ReturnType<NonNullable<typeof page>["locator"]>,
-      options: Parameters<ReturnType<NonNullable<typeof page>["locator"]>["waitFor"]>[0],
+      locator: ReturnType<NonNullable<typeof page>['locator']>,
+      options: Parameters<ReturnType<NonNullable<typeof page>['locator']>['waitFor']>[0],
       label: string
     ) => {
       try {
-        return await locator.waitFor(options);
+        await locator.waitFor(options); return;
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Unknown error";
+          error instanceof Error ? error.message : 'Unknown error';
         throw new Error(`${label} wait failed: ${message}`);
       }
     };
     const safeCount = async (
-      locator: ReturnType<NonNullable<typeof page>["locator"]>,
+      locator: ReturnType<NonNullable<typeof page>['locator']>,
       label: string
     ) => {
       try {
         return await locator.count();
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Unknown error";
+          error instanceof Error ? error.message : 'Unknown error';
         throw new Error(`${label} count failed: ${message}`);
       }
     };
     const safeIsVisible = async (
-      locator: ReturnType<NonNullable<typeof page>["locator"]>,
+      locator: ReturnType<NonNullable<typeof page>['locator']>,
       label: string
     ) => {
       try {
         return await locator.isVisible();
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Unknown error";
+          error instanceof Error ? error.message : 'Unknown error';
         throw new Error(`${label} visibility check failed: ${message}`);
       }
     };
     const safeInnerText = async (
-      locator: ReturnType<NonNullable<typeof page>["locator"]>,
+      locator: ReturnType<NonNullable<typeof page>['locator']>,
       label: string
     ) => {
       try {
         return await locator.innerText();
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Unknown error";
+          error instanceof Error ? error.message : 'Unknown error';
         throw new Error(`${label} text read failed: ${message}`);
       }
     };
     const safeGoto = async (
       url: string,
-      options: Parameters<NonNullable<typeof page>["goto"]>[1],
+      options: Parameters<NonNullable<typeof page>['goto']>[1],
       label: string
     ) => {
-      if (!page) throw new Error("Browser page not initialized");
+      if (!page) throw new Error('Browser page not initialized');
       try {
         return await page.goto(url, options);
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Unknown error";
+          error instanceof Error ? error.message : 'Unknown error';
         throw new Error(`${label} navigation failed: ${message}`);
       }
     };
     const safeWaitForLoadState = async (
-      state: Parameters<NonNullable<typeof page>["waitForLoadState"]>[0],
-      options: Parameters<NonNullable<typeof page>["waitForLoadState"]>[1],
+      state: Parameters<NonNullable<typeof page>['waitForLoadState']>[0],
+      options: Parameters<NonNullable<typeof page>['waitForLoadState']>[1],
       label: string
     ) => {
-      if (!page) throw new Error("Browser page not initialized");
+      if (!page) throw new Error('Browser page not initialized');
       try {
-        return await page.waitForLoadState(state, options);
+        await page.waitForLoadState(state, options); return;
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Unknown error";
+          error instanceof Error ? error.message : 'Unknown error';
         throw new Error(`${label} load state failed: ${message}`);
       }
     };
     const captureDebugArtifacts = async (label: string) => {
-      if (!page) return "";
+      if (!page) return '';
       try {
-        const now = new Date().toISOString().replace(/[:.]/g, "-");
+        const now = new Date().toISOString().replace(/[:.]/g, '-');
         const safeLabel = label
           .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/[^a-z0-9]+/g, '-')
           .slice(0, 40);
-        const baseDir = path.join(process.cwd(), "playwright-debug");
+        const baseDir = path.join(process.cwd(), 'playwright-debug');
         await mkdir(baseDir, { recursive: true });
         try {
           const entries = await readdir(baseDir);
@@ -360,19 +363,19 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
         } catch {
           // best-effort cleanup only
         }
-        const prefix = `${connection.id}-${now}-${safeLabel || "debug"}`;
+        const prefix = `${connection.id}-${now}-${safeLabel || 'debug'}`;
         const screenshotPath = path.join(baseDir, `${prefix}.png`);
         const htmlPath = path.join(baseDir, `${prefix}.html`);
         await page
           .screenshot({ path: screenshotPath, fullPage: true })
           .catch(() => undefined);
-        const html = await page.content().catch(() => "");
+        const html = await page.content().catch(() => '');
         if (html) {
-          await writeFile(htmlPath, html, "utf8");
+          await writeFile(htmlPath, html, 'utf8');
         }
         return `Screenshot: ${screenshotPath}\nHTML: ${htmlPath}`;
       } catch {
-        return "";
+        return '';
       }
     };
     const failWithDebug = async (
@@ -397,7 +400,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       }
     };
     const humanizedClick = async (
-      locator: ReturnType<NonNullable<typeof page>["locator"]>
+      locator: ReturnType<NonNullable<typeof page>['locator']>
     ) => {
       if (!humanizeMouse) {
         await locator.click();
@@ -422,7 +425,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       await page.mouse.click(targetX, targetY, { delay });
     };
     const humanizedFill = async (
-      locator: ReturnType<NonNullable<typeof page>["locator"]>,
+      locator: ReturnType<NonNullable<typeof page>['locator']>,
       value: string
     ) => {
       await locator.fill(value);
@@ -442,84 +445,84 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       'button[aria-label*="Profile"]',
       'a[href*="/profile"]',
       'a[href*="/my"]'
-    ].join(", ");
+    ].join(', ');
     const errorSelector = [
       '[data-testid*="error"]',
       '[data-test*="error"]',
       '[role="alert"]',
-      ".alert",
-      ".form-error",
-      ".error",
-      ".text-red-500"
-    ].join(", ");
+      '.alert',
+      '.form-error',
+      '.error',
+      '.text-red-500'
+    ].join(', ');
 
     let sessionReused = false;
     if (storedState) {
-      pushStep("Reusing session", "pending", "Checking existing session");
+      pushStep('Reusing session', 'pending', 'Checking existing session');
       try {
         await safeGoto(
-          "https://www.tradera.com/en",
+          'https://www.tradera.com/en',
           {
-            waitUntil: "domcontentloaded",
+            waitUntil: 'domcontentloaded',
             timeout: 30000
           },
-          "Session check"
+          'Session check'
         );
         await humanizedPause();
-        if (!page) throw new Error("Page not found");
+        if (!page) throw new Error('Page not found');
         const loggedIn = await safeIsVisible(
           page.locator(successSelector).first(),
-          "Session check"
+          'Session check'
         ).catch(() => false);
         if (loggedIn) {
-          pushStep("Reusing session", "ok", "Session still valid");
+          pushStep('Reusing session', 'ok', 'Session still valid');
           sessionReused = true;
         } else {
-          pushStep("Reusing session", "failed", "Session invalid or expired");
+          pushStep('Reusing session', 'failed', 'Session invalid or expired');
         }
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Unknown error";
+          error instanceof Error ? error.message : 'Unknown error';
         pushStep(
-          "Reusing session",
-          "failed",
+          'Reusing session',
+          'failed',
           `Failed to check session: ${message}`
         );
       }
     }
 
     const loginUrls = [
-      "https://www.tradera.com/login",
-      "https://www.tradera.com/en/login",
-      "https://www.tradera.com/en"
+      'https://www.tradera.com/login',
+      'https://www.tradera.com/en/login',
+      'https://www.tradera.com/en'
     ];
     const openLoginPage = async () => {
-      if (!page) throw new Error("Page not found");
+      if (!page) throw new Error('Page not found');
       for (const url of loginUrls) {
-        pushStep("Opening login page", "pending", url);
+        pushStep('Opening login page', 'pending', url);
         try {
           await safeGoto(
             url,
-            { waitUntil: "domcontentloaded", timeout: 30000 },
-            "Opening login page"
+            { waitUntil: 'domcontentloaded', timeout: 30000 },
+            'Opening login page'
           );
           await safeWaitForLoadState(
-            "networkidle",
+            'networkidle',
             { timeout: 15000 },
-            "Opening login page"
+            'Opening login page'
           ).catch(() => undefined);
           await humanizedPause();
-          const formLocator = page.locator("#sign-in-form").first();
-          if ((await safeCount(formLocator, "Login form")) > 0) {
-            pushStep("Opening login page", "ok", `Login page loaded: ${url}`);
+          const formLocator = page.locator('#sign-in-form').first();
+          if ((await safeCount(formLocator, 'Login form')) > 0) {
+            pushStep('Opening login page', 'ok', `Login page loaded: ${url}`);
             return url;
           }
         } catch (error) {
           const message =
-            error instanceof Error ? error.message : "Unknown error";
+            error instanceof Error ? error.message : 'Unknown error';
           pushStep(
-            "Opening login page",
-            "failed",
+            'Opening login page',
+            'failed',
             `${url} failed: ${message}`
           );
         }
@@ -529,16 +532,16 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     const loginUrl = sessionReused ? loginUrls[0]! : await openLoginPage();
 
     const formSelector = [
-      "#sign-in-form",
+      '#sign-in-form',
       'form[data-sign-in-form="true"]',
       'form[data-sentry-component="LoginForm"]'
-    ].join(", ");
+    ].join(', ');
     const emailSelector = '#email, input[name="email"], input[type="email"]';
     const passwordSelector =
       '#password, input[name="password"], input[type="password"]';
 
     const findInput = async (selectors: string[]) => {
-      if (!page) throw new Error("Page not found");
+      if (!page) throw new Error('Page not found');
       for (const selector of selectors) {
         const locator = page.locator(selector).first();
         if ((await safeCount(locator, `Find input ${selector}`)) > 0) {
@@ -555,31 +558,31 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     };
 
     if (!sessionReused) {
-      pushStep("Locating login form", "pending", "Waiting for sign-in form");
+      pushStep('Locating login form', 'pending', 'Waiting for sign-in form');
       try {
         await safeWaitForSelector(
           formSelector,
-          { state: "attached", timeout: 15000 },
-          "Login form"
+          { state: 'attached', timeout: 15000 },
+          'Login form'
         );
-        if (!page) throw new Error("Page not found");
+        if (!page) throw new Error('Page not found');
         const formLocator = page.locator(formSelector).first();
         const isVisible = await safeIsVisible(
           formLocator,
-          "Login form"
+          'Login form'
         ).catch(() => false);
         if (!isVisible) {
-          throw new Error("Login form not visible yet");
+          throw new Error('Login form not visible yet');
         }
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Unknown error";
+          error instanceof Error ? error.message : 'Unknown error';
         pushStep(
-          "Locating login form",
-          "failed",
+          'Locating login form',
+          'failed',
           `Form not ready: ${message}`
         );
-        if (!page) throw new Error("Page not found");
+        if (!page) throw new Error('Page not found');
         const signInTrigger = page
           .locator(
             [
@@ -591,11 +594,11 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
               'a[href*="login"]',
               'button[aria-label*="Sign in"]',
               'button[aria-label*="Logga in"]'
-            ].join(", ")
+            ].join(', ')
           )
           .first();
-        if ((await safeCount(signInTrigger, "Sign-in trigger")) > 0) {
-          pushStep("Locating login form", "pending", "Opening sign-in modal");
+        if ((await safeCount(signInTrigger, 'Sign-in trigger')) > 0) {
+          pushStep('Locating login form', 'pending', 'Opening sign-in modal');
           try {
             await humanizedClick(signInTrigger);
             await humanizedPause();
@@ -603,10 +606,10 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
             const clickMessage =
               clickError instanceof Error
                 ? clickError.message
-                : "Unknown error";
+                : 'Unknown error';
             pushStep(
-              "Locating login form",
-              "failed",
+              'Locating login form',
+              'failed',
               `Failed to open sign-in modal: ${clickMessage}`
             );
           }
@@ -614,59 +617,59 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
         try {
           await safeWaitForSelector(
             formSelector,
-            { state: "attached", timeout: 20000 },
-            "Login form"
+            { state: 'attached', timeout: 20000 },
+            'Login form'
           );
           await safeWaitFor(
             page.locator(formSelector).first(),
-            { state: "visible", timeout: 20000 },
-            "Login form"
+            { state: 'visible', timeout: 20000 },
+            'Login form'
           );
         } catch (waitError) {
           const waitMessage =
-            waitError instanceof Error ? waitError.message : "Unknown error";
+            waitError instanceof Error ? waitError.message : 'Unknown error';
           return await failWithDebug(
-            "Locating login form",
+            'Locating login form',
             `Form still not visible: ${waitMessage}`
           );
         }
       }
       try {
-        if (!page) throw new Error("Page not found");
+        if (!page) throw new Error('Page not found');
         await safeWaitFor(
           page.locator(emailSelector).first(),
-          { state: "visible", timeout: 15000 },
-          "Email field"
+          { state: 'visible', timeout: 15000 },
+          'Email field'
         );
         await safeWaitFor(
           page.locator(passwordSelector).first(),
-          { state: "visible", timeout: 15000 },
-          "Password field"
+          { state: 'visible', timeout: 15000 },
+          'Password field'
         );
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Unknown error";
+          error instanceof Error ? error.message : 'Unknown error';
         return await failWithDebug(
-          "Locating login form",
+          'Locating login form',
           `Input fields not visible: ${message}`
         );
       }
-      pushStep("Locating login form", "ok", "Sign-in form detected");
+      pushStep('Locating login form', 'ok', 'Sign-in form detected');
 
-      pushStep("Filling credentials", "pending", "Locating login fields");
+      pushStep('Filling credentials', 'pending', 'Locating login fields');
       const usernameSelectors = [
-        "#email",
+        '#email',
         'input[name="email"]',
         'input[type="email"]'
       ];
       const passwordSelectors = [
-        "#password",
+        '#password',
         'input[type="password"]',
         'input[name="password"]'
       ];
 
       const findInputInForm = async (selectors: string[]) => {
-        if (!page) throw new Error("Page not found");
+        if (!page) throw new Error('Page not found');
         for (const selector of selectors) {
           const locator = page.locator(formSelector).first().locator(selector).first();
           if ((await safeCount(locator, `Find form input ${selector}`)) > 0) {
@@ -686,8 +689,8 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       const passwordField = await findInputInForm(passwordSelectors);
       if (!usernameField || !passwordField) {
         return await failWithDebug(
-          "Filling credentials",
-          "Login fields not found on Tradera page"
+          'Filling credentials',
+          'Login fields not found on Tradera page'
         );
       }
       try {
@@ -696,42 +699,42 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
         await humanizedPause();
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Unknown error";
+          error instanceof Error ? error.message : 'Unknown error';
         return await failWithDebug(
-          "Filling credentials",
+          'Filling credentials',
           `Failed to fill fields: ${message}`
         );
       }
       pushStep(
-        "Filling credentials",
-        "ok",
+        'Filling credentials',
+        'ok',
         `Filled fields (${usernameField.selector}, ${passwordField.selector})`
       );
     }
 
     if (!sessionReused) {
-      pushStep("Submitting login", "pending", "Attempting to submit form");
-      if (!page) throw new Error("Page not found");
+      pushStep('Submitting login', 'pending', 'Attempting to submit form');
+      if (!page) throw new Error('Page not found');
       const stayLoggedIn = page
         .locator('input[name="keepMeLoggedIn"]')
         .first();
       try {
-        if ((await safeCount(stayLoggedIn, "Stay logged in")) > 0) {
+        if ((await safeCount(stayLoggedIn, 'Stay logged in')) > 0) {
           const isChecked = await stayLoggedIn.isChecked().catch(() => false);
           if (!isChecked) {
             await humanizedClick(stayLoggedIn);
             await humanizedPause();
-            pushStep("Keep me logged in", "ok", "Enabled stay logged in");
+            pushStep('Keep me logged in', 'ok', 'Enabled stay logged in');
           } else {
-            pushStep("Keep me logged in", "ok", "Already enabled");
+            pushStep('Keep me logged in', 'ok', 'Already enabled');
           }
         } else {
-          pushStep("Keep me logged in", "failed", "Checkbox not found");
+          pushStep('Keep me logged in', 'failed', 'Checkbox not found');
         }
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Unknown error";
-        pushStep("Keep me logged in", "failed", `Checkbox error: ${message}`);
+          error instanceof Error ? error.message : 'Unknown error';
+        pushStep('Keep me logged in', 'failed', `Checkbox error: ${message}`);
       }
       const submitSelectors = [
         'button[data-login-submit="true"]',
@@ -742,14 +745,14 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       const submitButton = await findInput(submitSelectors);
       if (!submitButton) {
         return await failWithDebug(
-          "Submitting login",
-          "Submit button not found"
+          'Submitting login',
+          'Submit button not found'
         );
       }
       try {
         await Promise.allSettled([
           page.waitForNavigation({
-            waitUntil: "domcontentloaded",
+            waitUntil: 'domcontentloaded',
             timeout: 15000
           }),
           humanizedClick(submitButton.locator)
@@ -757,172 +760,172 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
         await humanizedPause();
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Unknown error";
+          error instanceof Error ? error.message : 'Unknown error';
         return await failWithDebug(
-          "Submitting login",
+          'Submitting login',
           `Submit failed: ${message}`
         );
       }
-      pushStep("Submitting login", "ok", `Clicked ${submitButton.selector}`);
+      pushStep('Submitting login', 'ok', `Clicked ${submitButton.selector}`);
 
       try {
-        if (!page) throw new Error("Page not found");
+        if (!page) throw new Error('Page not found');
         await page.waitForTimeout(1000);
         const postSubmitUrl = page.url();
         const postSubmitError = await safeInnerText(
           page.locator(errorSelector).first(),
-          "Post-submit error"
-        ).catch(() => "");
+          'Post-submit error'
+        ).catch(() => '');
         const postSubmitDetail = `URL: ${postSubmitUrl}${
           postSubmitError?.trim()
             ? `\nError: ${postSubmitError}`
-            : "\nError: (none visible)"
+            : '\nError: (none visible)'
         }`;
-        pushStep("Post-submit debug", "ok", postSubmitDetail);
+        pushStep('Post-submit debug', 'ok', postSubmitDetail);
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Unknown error";
-        pushStep("Post-submit debug", "failed", `Debug failed: ${message}`);
+          error instanceof Error ? error.message : 'Unknown error';
+        pushStep('Post-submit debug', 'failed', `Debug failed: ${message}`);
       }
 
       const captchaHints = [
-        "captcha",
-        "recaptcha",
-        "fylla i captcha",
-        "captcha:n"
+        'captcha',
+        'recaptcha',
+        'fylla i captcha',
+        'captcha:n'
       ];
       try {
-        if (!page) throw new Error("Page not found");
+        if (!page) throw new Error('Page not found');
         const postSubmitErrorLower = (
           await safeInnerText(
             page.locator(errorSelector).first(),
-            "Post-submit error"
-          ).catch(() => "")
+            'Post-submit error'
+          ).catch(() => '')
         ).toLowerCase();
         const captchaDetected = captchaHints.some((hint) =>
           postSubmitErrorLower.includes(hint)
         );
         if (captchaDetected) {
           pushStep(
-            "Captcha required",
-            "pending",
-            "Solve the captcha in the opened browser window to continue."
+            'Captcha required',
+            'pending',
+            'Solve the captcha in the opened browser window to continue.'
           );
           const captchaResult = await Promise.race([
             safeWaitFor(
               page.locator(successSelector).first(),
-              { state: "visible", timeout: 120000 },
-              "Captcha success"
-            ).then(() => "success"),
+              { state: 'visible', timeout: 120000 },
+              'Captcha success'
+            ).then(() => 'success'),
             safeWaitFor(
               page.locator(formSelector).first(),
-              { state: "hidden", timeout: 120000 },
-              "Captcha form hide"
-            ).then(() => "form-hidden")
-          ]).catch(() => "timeout");
+              { state: 'hidden', timeout: 120000 },
+              'Captcha form hide'
+            ).then(() => 'form-hidden')
+          ]).catch(() => 'timeout');
 
-          if (captchaResult === "timeout") {
+          if (captchaResult === 'timeout') {
             return await failWithDebug(
-              "Captcha required",
-              "Captcha not solved within 2 minutes."
+              'Captcha required',
+              'Captcha not solved within 2 minutes.'
             );
           }
-          pushStep("Captcha required", "ok", "Captcha solved.");
+          pushStep('Captcha required', 'ok', 'Captcha solved.');
         }
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Unknown error";
+          error instanceof Error ? error.message : 'Unknown error';
         pushStep(
-          "Captcha required",
-          "failed",
+          'Captcha required',
+          'failed',
           `Captcha check failed: ${message}`
         );
       }
 
       pushStep(
-        "Verifying session",
-        "pending",
-        "Checking for logged-in state"
+        'Verifying session',
+        'pending',
+        'Checking for logged-in state'
       );
       try {
-        if (!page) throw new Error("Page not found");
+        if (!page) throw new Error('Page not found');
         const formLocator = page.locator(formSelector).first();
         const result = await Promise.race([
           safeWaitFor(
             page.locator(successSelector).first(),
-            { state: "visible", timeout: 12000 },
-            "Login success"
-          ).then(() => "success"),
+            { state: 'visible', timeout: 12000 },
+            'Login success'
+          ).then(() => 'success'),
           safeWaitFor(
             formLocator,
-            { state: "hidden", timeout: 12000 },
-            "Login form hide"
-          ).then(() => "form-hidden"),
+            { state: 'hidden', timeout: 12000 },
+            'Login form hide'
+          ).then(() => 'form-hidden'),
           safeWaitFor(
             page.locator(errorSelector).first(),
-            { state: "visible", timeout: 12000 },
-            "Login error"
-          ).then(() => "error")
-        ]).catch(() => "timeout");
+            { state: 'visible', timeout: 12000 },
+            'Login error'
+          ).then(() => 'error')
+        ]).catch(() => 'timeout');
 
-        if (result === "error") {
+        if (result === 'error') {
           const errorText = await safeInnerText(
             page.locator(errorSelector).first(),
-            "Login error"
-          ).catch(() => "Login error displayed.");
+            'Login error'
+          ).catch(() => 'Login error displayed.');
           const safeErrorText = errorText?.trim()
             ? errorText
-            : "Login error displayed but no message was found.";
-          return await failWithDebug("Verifying session", safeErrorText);
+            : 'Login error displayed but no message was found.';
+          return await failWithDebug('Verifying session', safeErrorText);
         }
 
-        if (result === "timeout") {
+        if (result === 'timeout') {
           const currentUrl = page.url();
           const hint =
-            currentUrl === loginUrl || currentUrl.includes("/login")
-              ? "Still on login page (invalid credentials, CAPTCHA, or extra verification required)."
+            currentUrl === loginUrl || currentUrl.includes('/login')
+              ? 'Still on login page (invalid credentials, CAPTCHA, or extra verification required).'
               : `Current URL: ${currentUrl}`;
           return await failWithDebug(
-            "Verifying session",
+            'Verifying session',
             `Login verification timed out. ${hint}`
           );
         }
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Unknown error";
+          error instanceof Error ? error.message : 'Unknown error';
         return await failWithDebug(
-          "Verifying session",
+          'Verifying session',
           `Verification failed: ${message}`
         );
       }
     } else {
-      pushStep("Verifying session", "ok", "Session restored from storage");
+      pushStep('Verifying session', 'ok', 'Session restored from storage');
     }
 
     pushStep(
-      "Saving session",
-      "pending",
-      "Storing Playwright session cookies"
+      'Saving session',
+      'pending',
+      'Storing Playwright session cookies'
     );
     try {
-      if (!page) throw new Error("Page not found");
+      if (!page) throw new Error('Page not found');
       const storageStateResult = await page.context().storageState();
       await repo.updateConnection(connection.id, {
         playwrightStorageState: encryptSecret(JSON.stringify(storageStateResult)),
         playwrightStorageStateUpdatedAt: new Date()
       });
-      pushStep("Saving session", "ok", "Session stored for reuse");
+      pushStep('Saving session', 'ok', 'Session stored for reuse');
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Unknown error";
+        error instanceof Error ? error.message : 'Unknown error';
       pushStep(
-        "Saving session",
-        "failed",
+        'Saving session',
+        'failed',
         `Failed to store session: ${message}`
       );
     }
 
-    pushStep("Verifying session", "ok", "Login appears successful");
+    pushStep('Verifying session', 'ok', 'Login appears successful');
   } finally {
     await page?.close().catch(() => undefined);
     await context?.close().catch(() => undefined);
@@ -934,5 +937,5 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
 
 export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(
   POST_handler,
-  { source: "integrations.[id].connections.[connectionId].test.POST", requireCsrf: false }
+  { source: 'integrations.[id].connections.[connectionId].test.POST', requireCsrf: false }
 );

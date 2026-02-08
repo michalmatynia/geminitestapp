@@ -1,21 +1,22 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { readFileSync } from "node:fs";
-import path from "node:path";
-import { NextRequest, NextResponse } from "next/server";
-import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import prisma from "@/shared/lib/db/prisma";
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+
 import type { 
   FieldInfoDto as FieldInfo, 
   CollectionSchemaDto as CollectionSchema, 
   SchemaProviderDto as SchemaProvider,
   SchemaResponseDto as SchemaResponse,
   SchemaResponsePayloadDto as SchemaResponsePayload
-} from "@/shared/dtos/database";
+} from '@/shared/dtos/database';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 // Prisma DMMF types for internal use
 type DmmfField = {
@@ -37,8 +38,8 @@ type DmmfDatamodel = {
   models: DmmfModel[];
 };
 
-const PRISMA_SCHEMA_ENV_PATH = process.env["PRISMA_SCHEMA_PATH"];
-const PRISMA_SCHEMA_DEFAULT_PATH = path.join(process.cwd(), "prisma", "schema.prisma");
+const PRISMA_SCHEMA_ENV_PATH = process.env['PRISMA_SCHEMA_PATH'];
+const PRISMA_SCHEMA_DEFAULT_PATH = path.join(process.cwd(), 'prisma', 'schema.prisma');
 
 const readPrismaSchemaFile = (): string | null => {
   const schemaPath = PRISMA_SCHEMA_ENV_PATH
@@ -47,26 +48,26 @@ const readPrismaSchemaFile = (): string | null => {
       : path.join(process.cwd(), PRISMA_SCHEMA_ENV_PATH)
     : PRISMA_SCHEMA_DEFAULT_PATH;
   try {
-    return readFileSync(schemaPath, "utf8");
+    return readFileSync(schemaPath, 'utf8');
   } catch {
     return null;
   }
 };
 
 const stripSchemaComments = (schema: string): string => {
-  const withoutBlock = schema.replace(/\/\*[\s\S]*?\*\//g, "");
+  const withoutBlock = schema.replace(/\/\*[\s\S]*?\*\//g, '');
   return withoutBlock
-    .split("\n")
-    .map((line: string) => line.replace(/\/\/.*$/, ""))
-    .join("\n");
+    .split('\n')
+    .map((line: string) => line.replace(/\/\/.*$/, ''))
+    .join('\n');
 };
 
 const normalizePrismaFieldType = (
   rawType: string
 ): { type: string; isRequired: boolean } => {
-  const isList = rawType.endsWith("[]");
-  const isOptional = rawType.endsWith("?");
-  const baseType = rawType.replace(/\?|\[\]/g, "");
+  const isList = rawType.endsWith('[]');
+  const isOptional = rawType.endsWith('?');
+  const baseType = rawType.replace(/\?|\[\]/g, '');
   const type = isList ? `${baseType}[]` : baseType;
   return { type, isRequired: !isOptional };
 };
@@ -80,13 +81,13 @@ const parsePrismaSchemaModels = (schemaText: string): CollectionSchema[] => {
   while ((match = modelRegex.exec(cleaned)) !== null) {
     const modelName = match[1];
     if (!modelName) continue;
-    const body = match[2] ?? "";
+    const body = match[2] ?? '';
     const fields: FieldInfo[] = [];
 
-    body.split("\n").forEach((line: string) => {
+    body.split('\n').forEach((line: string) => {
       const trimmed = line.trim();
       if (!trimmed) return;
-      if (trimmed.startsWith("@@") || trimmed.startsWith("@")) return;
+      if (trimmed.startsWith('@@') || trimmed.startsWith('@')) return;
       const [fieldName, fieldTypeRaw] = trimmed.split(/\s+/);
       if (!fieldName || !fieldTypeRaw) return;
       const { type, isRequired } = normalizePrismaFieldType(fieldTypeRaw);
@@ -95,9 +96,9 @@ const parsePrismaSchemaModels = (schemaText: string): CollectionSchema[] => {
         type,
         isRequired,
       };
-      if (trimmed.includes("@id")) fieldInfo.isId = true;
-      if (trimmed.includes("@unique")) fieldInfo.isUnique = true;
-      if (trimmed.includes("@default")) fieldInfo.hasDefault = true;
+      if (trimmed.includes('@id')) fieldInfo.isId = true;
+      if (trimmed.includes('@unique')) fieldInfo.isUnique = true;
+      if (trimmed.includes('@default')) fieldInfo.hasDefault = true;
       fields.push(fieldInfo);
     });
 
@@ -109,7 +110,7 @@ const parsePrismaSchemaModels = (schemaText: string): CollectionSchema[] => {
 };
 
 const getPrismaDmmf = (): DmmfDatamodel | null => {
-  if (!process.env["DATABASE_URL"]) return null;
+  if (!process.env['DATABASE_URL']) return null;
   try {
     return (prisma as unknown as { _dmmf?: { datamodel?: DmmfDatamodel } })._dmmf?.datamodel ?? null;
   } catch {
@@ -124,7 +125,7 @@ async function getMongoSchema(): Promise<SchemaResponse> {
 
   for (const info of collectionInfos) {
     const collName = info.name;
-    if (collName.startsWith("system.")) continue;
+    if (collName.startsWith('system.')) continue;
 
     const coll = db.collection(collName);
     const sample = await coll.find({}).limit(10).toArray();
@@ -138,16 +139,16 @@ async function getMongoSchema(): Promise<SchemaResponse> {
         }
         const typeSet = fieldTypes.get(key)!;
         if (value === null) {
-          typeSet.add("null");
+          typeSet.add('null');
         } else if (Array.isArray(value)) {
-          typeSet.add("array");
+          typeSet.add('array');
         } else if (value instanceof Date) {
-          typeSet.add("date");
+          typeSet.add('date');
         } else if (
-          typeof value === "object" &&
-          (value as { constructor?: { name?: string } })?.constructor?.name === "ObjectId"
+          typeof value === 'object' &&
+          (value as { constructor?: { name?: string } })?.constructor?.name === 'ObjectId'
         ) {
-          typeSet.add("ObjectId");
+          typeSet.add('ObjectId');
         } else {
           typeSet.add(typeof value);
         }
@@ -158,12 +159,12 @@ async function getMongoSchema(): Promise<SchemaResponse> {
     for (const [name, types] of fieldTypes) {
       const typeArray = Array.from(types);
       const fieldType =
-        typeArray.length === 1 ? (typeArray[0] ?? "unknown") : typeArray.join(" | ");
+        typeArray.length === 1 ? (typeArray[0] ?? 'unknown') : typeArray.join(' | ');
       const fieldInfo: FieldInfo = {
         name,
         type: fieldType,
       };
-      if (name === "_id") {
+      if (name === '_id') {
         fieldInfo.isId = true;
       }
       fields.push(fieldInfo);
@@ -171,8 +172,8 @@ async function getMongoSchema(): Promise<SchemaResponse> {
 
     // Sort fields: _id first, then alphabetically
     fields.sort((a: FieldInfo, b: FieldInfo) => {
-      if (a.name === "_id") return -1;
-      if (b.name === "_id") return 1;
+      if (a.name === '_id') return -1;
+      if (b.name === '_id') return 1;
       return a.name.localeCompare(b.name);
     });
 
@@ -180,7 +181,7 @@ async function getMongoSchema(): Promise<SchemaResponse> {
   }
 
   collections.sort((a: CollectionSchema, b: CollectionSchema) => a.name.localeCompare(b.name));
-  return { provider: "mongodb", collections };
+  return { provider: 'mongodb', collections };
 }
 
 function getPrismaSchema(): SchemaResponse {
@@ -214,7 +215,7 @@ function getPrismaSchema(): SchemaResponse {
   }
 
   collections.sort((a: CollectionSchema, b: CollectionSchema) => a.name.localeCompare(b.name));
-  return { provider: "prisma", collections };
+  return { provider: 'prisma', collections };
 }
 
 const enrichCollections = (
@@ -228,25 +229,25 @@ const enrichCollections = (
 
 async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { searchParams } = new URL(request.url);
-  const providerParam = (searchParams.get("provider") ?? "auto").toLowerCase();
+  const providerParam = (searchParams.get('provider') ?? 'auto').toLowerCase();
 
-  if (providerParam === "mongodb") {
+  if (providerParam === 'mongodb') {
     const schema = await getMongoSchema();
     return NextResponse.json(schema);
   }
-  if (providerParam === "prisma") {
+  if (providerParam === 'prisma') {
     const schema = getPrismaSchema();
     return NextResponse.json(schema);
   }
 
-  if (providerParam === "all") {
+  if (providerParam === 'all') {
     const sources: Partial<Record<SchemaProvider, SchemaResponse>> = {};
     const collections: Array<CollectionSchema & { provider: SchemaProvider }> = [];
 
     try {
       const mongoSchema = await getMongoSchema();
       sources.mongodb = mongoSchema;
-      collections.push(...enrichCollections(mongoSchema, "mongodb"));
+      collections.push(...enrichCollections(mongoSchema, 'mongodb'));
     } catch {
       // Ignore if Mongo is not configured.
     }
@@ -254,13 +255,13 @@ async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext): Promi
     try {
       const prismaSchema = getPrismaSchema();
       sources.prisma = prismaSchema;
-      collections.push(...enrichCollections(prismaSchema, "prisma"));
+      collections.push(...enrichCollections(prismaSchema, 'prisma'));
     } catch {
       // Ignore if Prisma is not configured.
     }
 
     const payload: SchemaResponsePayload = {
-      provider: "multi",
+      provider: 'multi',
       collections,
       sources,
     };
@@ -268,7 +269,7 @@ async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext): Promi
   }
 
   const provider = await getAppDbProvider();
-  if (provider === "mongodb") {
+  if (provider === 'mongodb') {
     const schema = await getMongoSchema();
     return NextResponse.json(schema);
   }
@@ -276,4 +277,4 @@ async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext): Promi
   return NextResponse.json(schema);
 }
 
-export const GET = apiHandler(GET_handler, { source: "databases.schema.GET" });
+export const GET = apiHandler(GET_handler, { source: 'databases.schema.GET' });

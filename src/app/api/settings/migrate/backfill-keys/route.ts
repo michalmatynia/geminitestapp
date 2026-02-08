@@ -1,15 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import type { Filter } from "mongodb";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
-import { auth } from "@/features/auth/server";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { parseJsonBody } from "@/shared/lib/api/parse-json";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { authError, internalError } from "@/shared/errors/app-error";
 
-export const runtime = "nodejs";
+import { auth } from '@/features/auth/server';
+import { authError, internalError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import type { ApiHandlerContext } from '@/shared/types/api';
+
+import type { Filter } from 'mongodb';
+
+export const runtime = 'nodejs';
 
 const backfillSchema = z.object({
   dryRun: z.boolean().optional(),
@@ -27,38 +29,38 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const session = await auth();
   const hasAccess =
     session?.user?.isElevated ||
-    session?.user?.permissions?.includes("settings.manage");
+    session?.user?.permissions?.includes('settings.manage');
   if (!hasAccess) {
-    throw authError("Unauthorized.");
+    throw authError('Unauthorized.');
   }
 
   const parsed = await parseJsonBody(req, backfillSchema, {
-    logPrefix: "settings.migrate.backfill-keys.POST",
+    logPrefix: 'settings.migrate.backfill-keys.POST',
   });
   if (!parsed.ok) {
     return parsed.response;
   }
 
-  if (!process.env["MONGODB_URI"]) {
-    throw internalError("MongoDB is not configured.");
+  if (!process.env['MONGODB_URI']) {
+    throw internalError('MongoDB is not configured.');
   }
 
   const limit = parsed.data.limit ?? 500;
   const filter: Filter<{ _id: string; key?: string | null }> = {
     $and: [
-      { _id: { $type: "string" as const } },
+      { _id: { $type: 'string' as const } },
       {
         $or: [
           { key: { $exists: false } },
           { key: null },
-          { key: "" },
+          { key: '' },
         ],
       },
     ],
   };
 
   const mongo = await getMongoDb();
-  const collection = mongo.collection<{ _id: string; key?: string | null }>("settings");
+  const collection = mongo.collection<{ _id: string; key?: string | null }>('settings');
 
   if (parsed.data.dryRun) {
     const total = await collection.countDocuments(filter);
@@ -108,5 +110,5 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
-  { source: "settings.migrate.backfill-keys.POST" }
+  { source: 'settings.migrate.backfill-keys.POST' }
 );

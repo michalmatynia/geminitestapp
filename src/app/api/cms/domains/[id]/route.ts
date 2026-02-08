@@ -1,12 +1,13 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { parseJsonBody } from "@/features/products/server";
-import { deleteCmsDomain, setCmsDomainAlias } from "@/features/cms/services/cms-domain";
-import { ApiParams } from "@/shared/types/base-types";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { deleteCmsDomain, setCmsDomainAlias } from '@/features/cms/services/cms-domain';
+import { parseJsonBody } from '@/features/products/server';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
+import { ApiParams } from '@/shared/types/base-types';
 
 const domainUpdateSchema = z.object({
   aliasOf: z.string().trim().min(1).nullable().optional(),
@@ -18,7 +19,7 @@ async function PUT_handler(
   params: ApiParams
 ): Promise<Response> {
   const parsed = await parseJsonBody(req, domainUpdateSchema, {
-    logPrefix: "cms-domains",
+    logPrefix: 'cms-domains',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -38,9 +39,9 @@ async function DELETE_handler(
 }
 
 export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, {
-  source: "cms.domains.[id].DELETE",
+  source: 'cms.domains.[id].DELETE',
 });
 
 export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, {
-  source: "cms.domains.[id].PUT",
+  source: 'cms.domains.[id].PUT',
 });

@@ -81,7 +81,7 @@ export function SettingsStoreProvider({
 export function useSettingsStore(): SettingsStoreValue {
   const context = useContext(SettingsStoreContext);
   if (!context) {
-    if (process.env["NODE_ENV"] !== 'production') {
+    if (process.env['NODE_ENV'] !== 'production') {
       console.warn('[settings-store] Missing provider; returning defaults.');
     }
     return fallbackStore;

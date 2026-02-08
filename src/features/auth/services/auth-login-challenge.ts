@@ -26,7 +26,7 @@ const nowPlusMinutes = (minutes: number): Date =>
   new Date(Date.now() + minutes * 60 * 1000);
 
 const getMongoChallenge = async (id: string): Promise<ChallengeRecord | null> => {
-  if (!process.env["MONGODB_URI"]) return null;
+  if (!process.env['MONGODB_URI']) return null;
   const mongo = await getMongoDb();
   return mongo.collection<ChallengeRecord>(CHALLENGES_COLLECTION).findOne({ _id: id });
 };
@@ -41,7 +41,7 @@ const getPrismaChallenge = async (id: string): Promise<ChallengeRecord | null> =
 };
 
 const setMongoChallenge = async (record: ChallengeRecord): Promise<void> => {
-  if (!process.env["MONGODB_URI"]) return;
+  if (!process.env['MONGODB_URI']) return;
   const mongo = await getMongoDb();
   await mongo
     .collection<ChallengeRecord>(CHALLENGES_COLLECTION)
@@ -57,7 +57,7 @@ const setPrismaChallenge = async (record: ChallengeRecord): Promise<void> => {
 };
 
 const deleteMongoChallenge = async (id: string): Promise<void> => {
-  if (!process.env["MONGODB_URI"]) return;
+  if (!process.env['MONGODB_URI']) return;
   const mongo = await getMongoDb();
   await mongo.collection<ChallengeRecord>(CHALLENGES_COLLECTION).deleteOne({ _id: id });
 };
@@ -75,7 +75,7 @@ const getChallenge = async (id: string): Promise<ChallengeRecord | null> => {
   if (provider === 'prisma') {
     return getPrismaChallenge(id);
   }
-  if (process.env["MONGODB_URI"]) {
+  if (process.env['MONGODB_URI']) {
     return getMongoChallenge(id);
   }
   return getMemoryChallenge(id);
@@ -87,7 +87,7 @@ const setChallenge = async (record: ChallengeRecord): Promise<void> => {
     await setPrismaChallenge(record);
     return;
   }
-  if (process.env["MONGODB_URI"]) {
+  if (process.env['MONGODB_URI']) {
     if (!challengeIndexesReady) {
       challengeIndexesReady = (async (): Promise<void> => {
         const mongo = await getMongoDb();
@@ -109,7 +109,7 @@ const deleteChallenge = async (id: string): Promise<void> => {
     await deletePrismaChallenge(id);
     return;
   }
-  if (process.env["MONGODB_URI"]) {
+  if (process.env['MONGODB_URI']) {
     await deleteMongoChallenge(id);
     return;
   }

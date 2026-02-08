@@ -1,18 +1,19 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { parseJsonBody } from "@/features/products/server";
-import { notFoundError } from "@/shared/errors/app-error";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import { getCmsRepository } from "@/features/cms/services/cms-repository";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { getCmsRepository } from '@/features/cms/services/cms-repository';
+import { parseJsonBody } from '@/features/products/server';
+import { notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 type Params = { id: string };
 
 const pageUpdateSchema = z.object({
   name: z.string().trim().min(1),
-  status: z.enum(["draft", "published", "scheduled"]).optional(),
+  status: z.enum(['draft', 'published', 'scheduled']).optional(),
   publishedAt: z.string().nullable().optional(),
   seoTitle: z.string().nullable().optional(),
   seoDescription: z.string().nullable().optional(),
@@ -40,7 +41,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: P
   const page = await cmsRepository.getPageById(id);
 
   if (!page) {
-    throw notFoundError("Page not found");
+    throw notFoundError('Page not found');
   }
 
   return NextResponse.json(page);
@@ -54,7 +55,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Pa
   const { id } = params;
 
   const parsed = await parseJsonBody(req, pageUpdateSchema, {
-    logPrefix: "cms-pages",
+    logPrefix: 'cms-pages',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -79,7 +80,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Pa
   });
 
   if (!updatedPage) {
-    throw notFoundError("Page not found");
+    throw notFoundError('Page not found');
   }
 
   // Update slugs only when provided
@@ -103,8 +104,8 @@ async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params
   return new Response(null, { status: 204 });
 }
 
-export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, { source: "cms.pages.[id].GET" });
+export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, { source: 'cms.pages.[id].GET' });
 
-export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, { source: "cms.pages.[id].PUT" });
+export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, { source: 'cms.pages.[id].PUT' });
 
-export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, { source: "cms.pages.[id].DELETE" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, { source: 'cms.pages.[id].DELETE' });

@@ -1,15 +1,16 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { parseJsonBody } from "@/features/products/server";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
 import {
   createCmsDomain,
   listCmsDomains,
   resolveCmsDomainFromRequest,
-} from "@/features/cms/services/cms-domain";
+} from '@/features/cms/services/cms-domain';
+import { parseJsonBody } from '@/features/products/server';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const domainSchema = z.object({
   domain: z.string().trim().min(1),
@@ -23,7 +24,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, domainSchema, {
-    logPrefix: "cms-domains",
+    logPrefix: 'cms-domains',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -33,5 +34,5 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   return NextResponse.json(domain);
 }
 
-export const GET = apiHandler(GET_handler, { source: "cms.domains.GET" });
-export const POST = apiHandler(POST_handler, { source: "cms.domains.POST" });
+export const GET = apiHandler(GET_handler, { source: 'cms.domains.GET' });
+export const POST = apiHandler(POST_handler, { source: 'cms.domains.POST' });

@@ -16,7 +16,7 @@ import prisma from '@/shared/lib/db/prisma';
 
 import type { Prisma } from '@prisma/client';
 
-const DEBUG_CHATBOT = process.env["DEBUG_CHATBOT"] === 'true';
+const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
 async function GET_handler(_req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }

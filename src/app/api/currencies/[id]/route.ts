@@ -1,19 +1,20 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import prisma from "@/shared/lib/db/prisma";
-import { getInternationalizationProvider } from "@/features/internationalization/services/internationalization-provider";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { getInternationalizationProvider } from '@/features/internationalization/services/internationalization-provider';
 import {
   badRequestError,
   configurationError,
   notFoundError,
   duplicateEntryError,
-} from "@/shared/errors/app-error";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import type { CurrencyRecord } from "@/shared/types/internationalization";
+} from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import type { ApiHandlerContext } from '@/shared/types/api';
+import type { CurrencyRecord } from '@/shared/types/internationalization';
 
 type CurrencyDoc = {
   id: string;
@@ -33,12 +34,12 @@ type CountryDoc = {
   updatedAt: Date;
 };
 
-const CURRENCIES_COLLECTION = "currencies";
-const PRICE_GROUPS_COLLECTION = "price_groups";
-const COUNTRIES_COLLECTION = "countries";
+const CURRENCIES_COLLECTION = 'currencies';
+const PRICE_GROUPS_COLLECTION = 'price_groups';
+const COUNTRIES_COLLECTION = 'countries';
 
 const currencySchema = z.object({
-  code: z.enum(["USD", "EUR", "PLN", "GBP", "SEK"]),
+  code: z.enum(['USD', 'EUR', 'PLN', 'GBP', 'SEK']),
   name: z.string().trim().min(1),
   symbol: z.string().trim().min(1).optional(),
 });
@@ -56,20 +57,20 @@ async function PUT_handler(
   const data = ctx.body as z.infer<typeof currencySchema>;
 
   const provider = await getInternationalizationProvider();
-  if (provider === "mongodb") {
-    if (!process.env["MONGODB_URI"]) {
-      throw configurationError("MongoDB is not configured");
+  if (provider === 'mongodb') {
+    if (!process.env['MONGODB_URI']) {
+      throw configurationError('MongoDB is not configured');
     }
     const db = await getMongoDb();
     const collection = db.collection<CurrencyDoc>(CURRENCIES_COLLECTION);
     const existing = await collection.findOne({ id });
     if (!existing) {
-      throw notFoundError("Currency not found");
+      throw notFoundError('Currency not found');
     }
     if (data.code !== id) {
       const collision = await collection.findOne({ id: data.code });
       if (collision) {
-        throw duplicateEntryError("Currency code already exists");
+        throw duplicateEntryError('Currency code already exists');
       }
       const now = new Date();
       await db
@@ -96,7 +97,7 @@ async function PUT_handler(
           updatedAt: now,
         },
       },
-      { returnDocument: "after" }
+      { returnDocument: 'after' }
     );
     return NextResponse.json((updated ?? null) as CurrencyRecord | null);
   }
@@ -124,9 +125,9 @@ async function DELETE_handler(
   const id = params.id;
 
   const provider = await getInternationalizationProvider();
-  if (provider === "mongodb") {
-    if (!process.env["MONGODB_URI"]) {
-      throw configurationError("MongoDB is not configured");
+  if (provider === 'mongodb') {
+    if (!process.env['MONGODB_URI']) {
+      throw configurationError('MongoDB is not configured');
     }
     const db = await getMongoDb();
     const priceGroupCount = await db
@@ -136,7 +137,7 @@ async function DELETE_handler(
       .collection(COUNTRIES_COLLECTION)
       .countDocuments({ currencyIds: id });
     if (priceGroupCount > 0 || countryCount > 0) {
-      throw badRequestError("Currency is in use and cannot be deleted", {
+      throw badRequestError('Currency is in use and cannot be deleted', {
         priceGroupCount,
         countryCount,
       });
@@ -150,11 +151,11 @@ async function DELETE_handler(
 }
 
 export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, {
-  source: "currencies.[id].PUT",
+  source: 'currencies.[id].PUT',
   parseJsonBody: true,
   bodySchema: currencySchema,
 });
 
 export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, {
-  source: "currencies.[id].DELETE",
+  source: 'currencies.[id].DELETE',
 });

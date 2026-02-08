@@ -1,19 +1,20 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { parseJsonBody } from "@/features/products/server";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import { notFoundError } from "@/shared/errors/app-error";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { getCmsRepository } from "@/features/cms/services/cms-repository";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
 import {
   ensureDomainSlug,
   getDomainIdsForSlug,
   isDomainZoningEnabled,
   removeDomainSlug,
   resolveCmsDomainScopeById,
-} from "@/features/cms/services/cms-domain";
+} from '@/features/cms/services/cms-domain';
+import { getCmsRepository } from '@/features/cms/services/cms-repository';
+import { parseJsonBody } from '@/features/products/server';
+import { notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 type Params = { id: string };
 
@@ -30,7 +31,7 @@ async function GET_handler(
   const cmsRepository = await getCmsRepository();
   const slug = await cmsRepository.getSlugById(id);
   if (!slug) {
-    throw notFoundError("Slug not found");
+    throw notFoundError('Slug not found');
   }
   const zoningEnabled = await isDomainZoningEnabled();
   if (!zoningEnabled) {
@@ -47,7 +48,7 @@ async function PUT_handler(
 ): Promise<NextResponse | Response> {
   const { id } = params;
   const parsed = await parseJsonBody(req, domainsSchema, {
-    logPrefix: "cms-slug-domains",
+    logPrefix: 'cms-slug-domains',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -56,7 +57,7 @@ async function PUT_handler(
   const cmsRepository = await getCmsRepository();
   const slug = await cmsRepository.getSlugById(id);
   if (!slug) {
-    throw notFoundError("Slug not found");
+    throw notFoundError('Slug not found');
   }
 
   const zoningEnabled = await isDomainZoningEnabled();
@@ -88,9 +89,9 @@ async function PUT_handler(
 }
 
 export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {
-  source: "cms.slugs.[id].domains.GET",
+  source: 'cms.slugs.[id].domains.GET',
 });
 
 export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, {
-  source: "cms.slugs.[id].domains.PUT",
+  source: 'cms.slugs.[id].domains.PUT',
 });

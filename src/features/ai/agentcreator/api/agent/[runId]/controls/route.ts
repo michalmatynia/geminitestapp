@@ -5,7 +5,7 @@ import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import prisma from '@/shared/lib/db/prisma';
 
-const DEBUG_CHATBOT = process.env["DEBUG_CHATBOT"] === 'true';
+const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
 async function POST_handler(req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }

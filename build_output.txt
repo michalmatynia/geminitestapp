@@ -6,7 +6,7 @@ Loaded Prisma config from prisma.config.ts.
 
 Prisma schema loaded from prisma/schema.prisma.
 
-✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 161ms
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 162ms
 
 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
 
@@ -82,18 +82,5 @@ Import trace:
     ./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/restore/route.ts
 
 
-✓ Compiled successfully in 15.3s
+✓ Compiled successfully in 14.5s
   Running TypeScript ...
-Failed to compile.
-
-./src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsRuntime.ts:1795:29
-Type error: Property 'entityId' comes from an index signature, so it must be accessed with ['entityId'].
-
-[0m [90m 1793 |[39m     pendingSimulationContextRef[33m.[39mcurrent [33m=[39m [36mnull[39m[33m;[39m
- [90m 1794 |[39m     [36mconst[39m immediateEntityId [33m=[39m
-[31m[1m>[22m[39m[90m 1795 |[39m       [36mtypeof[39m triggerContext[33m.[39mentityId [33m===[39m [32m'string'[39m
- [90m      |[39m                             [31m[1m^[22m[39m
- [90m 1796 |[39m         [33m?[39m triggerContext[33m.[39mentityId
- [90m 1797 |[39m         [33m:[39m [36mtypeof[39m triggerContext[33m.[39mproductId [33m===[39m [32m'string'[39m
- [90m 1798 |[39m           [33m?[39m triggerContext[33m.[39mproductId[0m
-Next.js build worker exited with code: 1 and signal: null

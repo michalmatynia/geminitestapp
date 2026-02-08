@@ -1,14 +1,15 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { fetchBaseCategories } from "@/features/integrations/server";
-import { getExternalCategoryRepository } from "@/features/integrations/server";
-import { getIntegrationRepository } from "@/features/integrations/server";
-import { resolveBaseConnectionToken } from "@/features/integrations/services/base-token-resolver";
-import { badRequestError, notFoundError } from "@/shared/errors/app-error";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import type { FetchMarketplaceCategoriesRequestDto as FetchCategoriesRequest } from "@/shared/dtos/integrations";
+import { NextRequest, NextResponse } from 'next/server';
+
+import { fetchBaseCategories } from '@/features/integrations/server';
+import { getExternalCategoryRepository } from '@/features/integrations/server';
+import { getIntegrationRepository } from '@/features/integrations/server';
+import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
+import type { FetchMarketplaceCategoriesRequestDto as FetchCategoriesRequest } from '@/shared/dtos/integrations';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 /**
  * POST /api/marketplace/categories/fetch
@@ -20,31 +21,31 @@ async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext): Prom
   const { connectionId } = body;
 
   if (!connectionId) {
-    throw badRequestError("connectionId is required");
+    throw badRequestError('connectionId is required');
   }
 
   const repo = await getIntegrationRepository();
   const connection = await repo.getConnectionById(connectionId);
 
   if (!connection) {
-    throw notFoundError("Connection not found");
+    throw notFoundError('Connection not found');
   }
 
   const integration = await repo.getIntegrationById(connection.integrationId);
   if (!integration) {
-    throw notFoundError("Integration not found");
+    throw notFoundError('Integration not found');
   }
 
   // Check if this is a Base.com connection
   const integrationSlug = integration.slug?.toLowerCase();
-  if (integrationSlug !== "baselinker" && integrationSlug !== "base") {
-    throw badRequestError("Only Base.com connections are supported for category fetch");
+  if (integrationSlug !== 'baselinker' && integrationSlug !== 'base') {
+    throw badRequestError('Only Base.com connections are supported for category fetch');
   }
 
   const tokenResolution = resolveBaseConnectionToken(connection);
   if (!tokenResolution.token) {
     throw badRequestError(
-      tokenResolution.error ?? "Base.com API token not configured for this connection"
+      tokenResolution.error ?? 'Base.com API token not configured for this connection'
     );
   }
 
@@ -58,7 +59,7 @@ async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext): Prom
       fetched: 0,
       total: 0,
       message:
-        "No categories found in Base.com. Verify categories exist in the selected inventory and test the connection again.",
+        'No categories found in Base.com. Verify categories exist in the selected inventory and test the connection again.',
     });
   }
 
@@ -75,4 +76,4 @@ async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext): Prom
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "marketplace.categories.fetch.POST" });
+  { source: 'marketplace.categories.fetch.POST' });

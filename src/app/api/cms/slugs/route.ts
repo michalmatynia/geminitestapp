@@ -1,30 +1,31 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { parseJsonBody } from "@/features/products/server";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { notFoundError } from "@/shared/errors/app-error";
-import { getCmsRepository } from "@/features/cms/services/cms-repository";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
 import {
   ensureDomainSlug,
   getSlugsForDomain,
   getSlugForDomainById,
   resolveCmsDomainFromRequest,
   resolveCmsDomainScopeById,
-} from "@/features/cms/services/cms-domain";
+} from '@/features/cms/services/cms-domain';
+import { getCmsRepository } from '@/features/cms/services/cms-repository';
+import { parseJsonBody } from '@/features/products/server';
+import { notFoundError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const slugSchema = z.object({
   slug: z.string().trim().min(1),
 });
 
 const resolveDomainFromRequest = async (req: NextRequest) => {
-  const domainId = req.nextUrl.searchParams.get("domainId");
+  const domainId = req.nextUrl.searchParams.get('domainId');
   if (domainId) {
     const domain = await resolveCmsDomainScopeById(domainId);
     if (!domain) {
-      throw notFoundError("Domain not found");
+      throw notFoundError('Domain not found');
     }
     return domain;
   }
@@ -37,8 +38,8 @@ const resolveDomainFromRequest = async (req: NextRequest) => {
  */
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<NextResponse | Response> {
   const cmsRepository = await getCmsRepository();
-  const scope = req.nextUrl.searchParams.get("scope");
-  if (scope === "all") {
+  const scope = req.nextUrl.searchParams.get('scope');
+  if (scope === 'all') {
     await resolveCmsDomainFromRequest(req);
     const slugs = await cmsRepository.getSlugs();
     return NextResponse.json(slugs);
@@ -54,7 +55,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<N
  */
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, slugSchema, {
-    logPrefix: "cms-slugs",
+    logPrefix: 'cms-slugs',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -69,5 +70,5 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   return NextResponse.json(domainSlug ?? { ...record, isDefault: false });
 }
 
-export const GET = apiHandler(GET_handler, { source: "cms.slugs.GET" });
-export const POST = apiHandler(POST_handler, { source: "cms.slugs.POST" });
+export const GET = apiHandler(GET_handler, { source: 'cms.slugs.GET' });
+export const POST = apiHandler(POST_handler, { source: 'cms.slugs.POST' });

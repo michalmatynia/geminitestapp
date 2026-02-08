@@ -169,7 +169,7 @@ export function useQueryAnalytics(config: AnalyticsConfig = {}): {
 // Hook for real-time performance monitoring
 export function usePerformanceMonitor(): ReturnType<typeof useQueryAnalytics> {
   const analytics = useQueryAnalytics({
-    enabled: process.env["NODE_ENV"] === 'development',
+    enabled: process.env['NODE_ENV'] === 'development',
     sampleRate: 1,
   });
 
@@ -187,7 +187,7 @@ export function usePerformanceMonitor(): ReturnType<typeof useQueryAnalytics> {
 
   // Log report every 30 seconds in development
   useEffect((): (() => void) | void => {
-    if (process.env["NODE_ENV"] !== 'development') return;
+    if (process.env['NODE_ENV'] !== 'development') return;
 
     const interval = setInterval(logPerformanceReport, 30000);
     return (): void => clearInterval(interval);

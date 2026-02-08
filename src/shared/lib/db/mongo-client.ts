@@ -18,7 +18,7 @@ const getMongoClientCtor = (): { MongoClient: new (uri: string) => MongoClient }
 };
 
 const getMongoUri = (): string => {
-  const uri = process.env["MONGODB_URI"];
+  const uri = process.env['MONGODB_URI'];
   if (!uri) {
     throw new Error('MONGODB_URI is not set.');
   }
@@ -36,7 +36,7 @@ export async function getMongoClient(): Promise<MongoClient> {
 }
 
 export async function getMongoDb(): Promise<Db> {
-  const dbName = process.env["MONGODB_DB"] || 'app';
+  const dbName = process.env['MONGODB_DB'] || 'app';
   const mongoClient = await getMongoClient();
   return mongoClient.db(dbName);
 }

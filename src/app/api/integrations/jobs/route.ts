@@ -1,10 +1,11 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { getProductListingRepository } from "@/features/integrations/server";
-import { getProductRepository } from "@/features/products/server";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+
+import { getProductListingRepository } from '@/features/integrations/server';
+import { getProductRepository } from '@/features/products/server';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 /**
  * GET /api/integrations/jobs
@@ -27,7 +28,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
       return {
         productId,
-        productName: product?.name_en || product?.name_pl || product?.name_de || "Unknown",
+        productName: product?.name_en || product?.name_pl || product?.name_de || 'Unknown',
         productSku: product?.sku || null,
         listings: listings.map((listing) => ({
           id: listing.id,
@@ -57,4 +58,4 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "integrations.jobs.GET", requireCsrf: false });
+  { source: 'integrations.jobs.GET', requireCsrf: false });

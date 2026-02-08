@@ -1,43 +1,45 @@
-import { NextRequest, NextResponse } from "next/server";
-import fs from "fs/promises";
-import path from "path";
-import { chatbotSessionRepository } from "@/features/ai/chatbot/server";
-import type { ChatMessage } from "@/shared/types/chatbot";
+import fs from 'fs/promises';
+import path from 'path';
+
+import { NextRequest, NextResponse } from 'next/server';
+
+import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
+import { getSettingValue } from '@/features/products/services/aiDescriptionService';
 import {
   badRequestError,
   externalServiceError,
   internalError,
-} from "@/shared/errors/app-error";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { getSettingValue } from "@/features/products/services/aiDescriptionService";
+} from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ChatMessage } from '@/shared/types/chatbot';
 
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-const OLLAMA_BASE_URL = process.env["OLLAMA_BASE_URL"] || "http://localhost:11434";
-const OLLAMA_MODEL = process.env["OLLAMA_MODEL"];
-const DEBUG_CHATBOT = process.env["DEBUG_CHATBOT"] === "true";
+const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] || 'http://localhost:11434';
+const OLLAMA_MODEL = process.env['OLLAMA_MODEL'];
+const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 const OLLAMA_MODELS_TIMEOUT_MS = 2500;
 
 const MODEL_PRESETS = {
-  openai: ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo", "o1-mini", "o1-preview"],
-  anthropic: ["claude-3-5-sonnet-20240620", "claude-3-opus-20240229", "claude-3-haiku-20240307"],
-  gemini: ["gemini-1.5-pro-latest", "gemini-1.5-flash-latest"],
+  openai: ['gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo', 'o1-mini', 'o1-preview'],
+  anthropic: ['claude-3-5-sonnet-20240620', 'claude-3-opus-20240229', 'claude-3-haiku-20240307'],
+  gemini: ['gemini-1.5-pro-latest', 'gemini-1.5-flash-latest'],
 } as const;
 
 const buildProviderFallbackModels = async (): Promise<string[]> => {
   const models = new Set<string>();
 
   const openaiKey =
-    (await getSettingValue("openai_api_key")) ?? process.env["OPENAI_API_KEY"] ?? "";
+    (await getSettingValue('openai_api_key')) ?? process.env['OPENAI_API_KEY'] ?? '';
   const anthropicKey =
-    (await getSettingValue("anthropic_api_key")) ?? process.env["ANTHROPIC_API_KEY"] ?? "";
+    (await getSettingValue('anthropic_api_key')) ?? process.env['ANTHROPIC_API_KEY'] ?? '';
   const geminiKey =
-    (await getSettingValue("gemini_api_key")) ?? process.env["GEMINI_API_KEY"] ?? "";
+    (await getSettingValue('gemini_api_key')) ?? process.env['GEMINI_API_KEY'] ?? '';
 
   if (openaiKey) {
     MODEL_PRESETS.openai.forEach((model) => models.add(model));
-    const openaiModel = (await getSettingValue("openai_model"))?.trim();
+    const openaiModel = (await getSettingValue('openai_model'))?.trim();
     if (openaiModel) models.add(openaiModel);
   }
   if (anthropicKey) {
@@ -58,14 +60,14 @@ const fetchOllamaModels = async (
   const timeoutId = setTimeout(() => controller.abort(), OLLAMA_MODELS_TIMEOUT_MS);
   try {
     const res = await fetch(`${OLLAMA_BASE_URL}/api/tags`, {
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
       signal: controller.signal,
     });
 
     if (!res.ok) {
       const errorText = await res.text();
       if (DEBUG_CHATBOT) {
-        console.warn("[chatbot][models] Upstream error", {
+        console.warn('[chatbot][models] Upstream error', {
           status: res.status,
           statusText: res.statusText,
           errorText,
@@ -82,7 +84,7 @@ const fetchOllamaModels = async (
       .filter((name: string | undefined): name is string => Boolean(name));
   } catch (error) {
     if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][models] Upstream fetch failed", {
+      console.warn('[chatbot][models] Upstream fetch failed', {
         error,
         durationMs: Date.now() - requestStart,
         requestId: ctx.requestId,
@@ -96,10 +98,10 @@ const fetchOllamaModels = async (
 
 const chatbotTempRoot = path.join(
   process.cwd(),
-  "public",
-  "uploads",
-  "chatbot",
-  "temp"
+  'public',
+  'uploads',
+  'chatbot',
+  'temp'
 );
 
 const TEMP_CLEANUP_TTL_MS = 1000 * 60 * 60 * 24;
@@ -108,7 +110,7 @@ let lastTempCleanupAt = 0;
 
 const createErrorId = (): string => {
 
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
 
     return crypto.randomUUID();
 
@@ -148,7 +150,7 @@ const cleanupChatbotTemp = async (): Promise<void> => {
 
     await Promise.all(
 
-      entries.map(async (entry: import("fs").Dirent) => {
+      entries.map(async (entry: import('fs').Dirent) => {
 
         const fullPath = path.join(chatbotTempRoot, entry.name);
 
@@ -196,7 +198,7 @@ async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<R
   const ollamaModels = await fetchOllamaModels(ctx, requestStart);
   if (ollamaModels && ollamaModels.length > 0) {
     if (DEBUG_CHATBOT) {
-      console.info("[chatbot][models] Loaded", {
+      console.info('[chatbot][models] Loaded', {
         count: ollamaModels.length,
         durationMs: Date.now() - requestStart,
         requestId: ctx.requestId,
@@ -209,8 +211,8 @@ async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<R
   return NextResponse.json({
     models: fallbackModels,
     warning: {
-      code: "OLLAMA_UNAVAILABLE",
-      message: "Ollama models unavailable. Returned provider presets instead.",
+      code: 'OLLAMA_UNAVAILABLE',
+      message: 'Ollama models unavailable. Returned provider presets instead.',
     },
   });
 }
@@ -222,12 +224,12 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
 
   try {
     if (!OLLAMA_MODEL) {
-      throw internalError("OLLAMA_MODEL is not configured.");
+      throw internalError('OLLAMA_MODEL is not configured.');
     }
 
     await cleanupChatbotTemp();
 
-    const contentType = req.headers.get("content-type") || "";
+    const contentType = req.headers.get('content-type') || '';
     let messages: ChatMessage[] = [];
     let requestedModel: string | null = null;
     let sessionId: string | null = null;
@@ -236,38 +238,38 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
     // Multipart is used by browsers; JSON by third-party integrations. Images must be
     // base64-encoded in the message body for Ollama's vision capability. Other files
     // are too large to embed, so we just mention their names in the message content.
-    if (contentType.includes("multipart/form-data")) {
+    if (contentType.includes('multipart/form-data')) {
       const formData = await req.formData();
 
-      const rawMessages = formData.get("messages");
-      if (rawMessages && typeof rawMessages === "string") {
+      const rawMessages = formData.get('messages');
+      if (rawMessages && typeof rawMessages === 'string') {
         try {
           messages = JSON.parse(rawMessages) as unknown as ChatMessage[];
         } catch (_error) {
-          throw badRequestError("Invalid messages payload.");
+          throw badRequestError('Invalid messages payload.');
         }
       }
 
-      const rawModel = formData.get("model");
-      requestedModel = typeof rawModel === "string" ? rawModel : null;
+      const rawModel = formData.get('model');
+      requestedModel = typeof rawModel === 'string' ? rawModel : null;
 
-      const rawSessionId = formData.get("sessionId");
-      sessionId = typeof rawSessionId === "string" ? rawSessionId : null;
+      const rawSessionId = formData.get('sessionId');
+      sessionId = typeof rawSessionId === 'string' ? rawSessionId : null;
 
-      const files = formData.getAll("files");
+      const files = formData.getAll('files');
 
       const imageFiles = files.filter(
         (file: FormDataEntryValue): file is File =>
-          file instanceof File && file.type.startsWith("image/")
+          file instanceof File && file.type.startsWith('image/')
       );
 
       const otherFiles = files.filter(
         (file: FormDataEntryValue): file is File =>
-          file instanceof File && !file.type.startsWith("image/")
+          file instanceof File && !file.type.startsWith('image/')
       );
 
       if (DEBUG_CHATBOT) {
-        console.info("[chatbot][chat] Multipart payload", {
+        console.info('[chatbot][chat] Multipart payload', {
           fileCount: files.length,
           imageCount: imageFiles.length,
           otherCount: otherFiles.length,
@@ -286,7 +288,7 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
           files
             .filter((file: FormDataEntryValue): file is File => file instanceof File)
             .map(async (file: File) => {
-              const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+              const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
               const targetPath = path.join(
                 requestDir,
                 `${Date.now()}-${safeName}`
@@ -305,7 +307,7 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
       if (imageFiles.length > 0 && messages.length > 0) {
         const lastIndex = [...messages]
           .reverse()
-          .findIndex((msg: ChatMessage) => msg.role === "user");
+          .findIndex((msg: ChatMessage) => msg.role === 'user');
         const targetIndex =
           lastIndex === -1
             ? messages.length - 1
@@ -314,7 +316,7 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
         const base64Images = await Promise.all(
           imageFiles.map(async (file: File) => {
             const buffer = await file.arrayBuffer();
-            return Buffer.from(buffer).toString("base64");
+            return Buffer.from(buffer).toString('base64');
           })
         );
 
@@ -331,15 +333,15 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
       if (otherFiles.length > 0 && messages.length > 0) {
         const lastUserIndex = [...messages]
           .reverse()
-          .findIndex((msg: ChatMessage) => msg.role === "user");
+          .findIndex((msg: ChatMessage) => msg.role === 'user');
         const targetIndex =
           lastUserIndex === -1
             ? messages.length - 1
             : messages.length - 1 - lastUserIndex;
 
-        const fileList = otherFiles.map((file: File) => file.name).join(", ");
+        const fileList = otherFiles.map((file: File) => file.name).join(', ');
         const targetMessage = messages[targetIndex];
-        const existing = targetMessage?.content?.trim() || "";
+        const existing = targetMessage?.content?.trim() || '';
 
         if (targetMessage) {
           messages[targetIndex] = {
@@ -357,7 +359,7 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
       try {
         body = (await req.json()) as unknown as typeof body;
       } catch (_error) {
-        throw badRequestError("Invalid JSON payload.");
+        throw badRequestError('Invalid JSON payload.');
       }
       messages = body.messages ?? [];
       requestedModel = body.model ?? null;
@@ -365,37 +367,37 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
     }
 
     if (!Array.isArray(messages) || messages.length === 0) {
-      throw badRequestError("No messages provided.");
+      throw badRequestError('No messages provided.');
     }
 
     if (messages.length > 60) {
-      throw badRequestError("Too many messages provided.");
+      throw badRequestError('Too many messages provided.');
     }
 
     const hasValidMessages = messages.every(
       (message: ChatMessage) =>
-        typeof message?.role === "string" &&
-        typeof message?.content === "string" &&
+        typeof message?.role === 'string' &&
+        typeof message?.content === 'string' &&
         message.content.trim().length > 0
     );
 
     if (!hasValidMessages) {
-      throw badRequestError("Invalid message payload.");
+      throw badRequestError('Invalid message payload.');
     }
 
     if (messages.some((message: ChatMessage) => message.content.length > 10000)) {
-      throw badRequestError("Message content too large.");
+      throw badRequestError('Message content too large.');
     }
 
     if (DEBUG_CHATBOT) {
-      console.info("[chatbot][chat] Request summary", {
+      console.info('[chatbot][chat] Request summary', {
         messageCount: messages.length,
         roles: messages.map((message: ChatMessage) => message.role),
         hasImages: messages.some((message: ChatMessage) => Boolean(message.images?.length)),
         model: requestedModel || OLLAMA_MODEL,
         contentType,
         userContentChars: messages
-          .filter((message: ChatMessage) => message.role === "user")
+          .filter((message: ChatMessage) => message.role === 'user')
           .reduce((sum: number, message: ChatMessage) => sum + message.content.length, 0),
         durationMs: Date.now() - requestStart,
         requestId: ctx.requestId,
@@ -409,7 +411,7 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
     };
 
     if (DEBUG_CHATBOT) {
-      console.info("[chatbot][chat] Sending to Ollama", {
+      console.info('[chatbot][chat] Sending to Ollama', {
         url: `${OLLAMA_BASE_URL}/api/chat`,
         model: requestPayload.model,
         messageCount: requestPayload.messages.length,
@@ -418,8 +420,8 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
     }
 
     const res = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestPayload),
     });
 
@@ -447,28 +449,28 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
         const assistantReply = data.message?.content || data.response;
         if (assistantReply) {
           await chatbotSessionRepository.addMessage(sessionId, {
-            role: "assistant",
+            role: 'assistant',
             content: assistantReply,
           });
         }
 
         if (DEBUG_CHATBOT) {
-          console.info("[chatbot][chat] Saved to session", { 
+          console.info('[chatbot][chat] Saved to session', { 
             sessionId,
             requestId: ctx.requestId
           });
         }
       } catch (error) {
         try {
-          const { logSystemError } = await import("@/features/observability/server");
+          const { logSystemError } = await import('@/features/observability/server');
           await logSystemError({ 
-            message: "[chatbot][chat] Failed to save session messages",
+            message: '[chatbot][chat] Failed to save session messages',
             error,
-            source: "api/chatbot",
-            context: { action: "save_session_messages", sessionId, requestId: ctx.requestId }
+            source: 'api/chatbot',
+            context: { action: 'save_session_messages', sessionId, requestId: ctx.requestId }
           });
         } catch (logError) {
-          console.error("[chatbot][chat] Failed to save session messages (and logging failed)", error, logError);
+          console.error('[chatbot][chat] Failed to save session messages (and logging failed)', error, logError);
         }
       }
     }
@@ -506,7 +508,7 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "chatbot.GET" });
+  { source: 'chatbot.GET' });
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "chatbot.POST" });
+  { source: 'chatbot.POST' });

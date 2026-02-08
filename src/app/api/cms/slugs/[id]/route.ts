@@ -1,12 +1,8 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { parseJsonBody } from "@/features/products/server";
-import { notFoundError } from "@/shared/errors/app-error";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import { getCmsRepository } from "@/features/cms/services/cms-repository";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
 import {
   getDomainSlugLinks,
   getSlugForDomainById,
@@ -17,7 +13,12 @@ import {
   resolveCmsDomainScopeById,
   setDomainDefaultSlug,
   setGlobalDefaultSlug,
-} from "@/features/cms/services/cms-domain";
+} from '@/features/cms/services/cms-domain';
+import { getCmsRepository } from '@/features/cms/services/cms-repository';
+import { parseJsonBody } from '@/features/products/server';
+import { notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 type Params = { id: string };
 
@@ -27,11 +28,11 @@ const slugUpdateSchema = z.object({
 });
 
 const resolveDomainFromRequest = async (req: NextRequest) => {
-  const domainId = req.nextUrl.searchParams.get("domainId");
+  const domainId = req.nextUrl.searchParams.get('domainId');
   if (domainId) {
     const domain = await resolveCmsDomainScopeById(domainId);
     if (!domain) {
-      throw notFoundError("Domain not found");
+      throw notFoundError('Domain not found');
     }
     return domain;
   }
@@ -49,7 +50,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Pa
   const slug = await getSlugForDomainById(domain.id, id, cmsRepository);
 
   if (!slug) {
-    throw notFoundError("Slug not found");
+    throw notFoundError('Slug not found');
   }
 
   return NextResponse.json(slug);
@@ -81,7 +82,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Pa
   const { id } = params;
 
   const parsed = await parseJsonBody(req, slugUpdateSchema, {
-    logPrefix: "cms-slugs",
+    logPrefix: 'cms-slugs',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -98,10 +99,10 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Pa
   });
 
   if (!updatedSlug) {
-    throw notFoundError("Slug not found");
+    throw notFoundError('Slug not found');
   }
 
-  if (typeof isDefault === "boolean") {
+  if (typeof isDefault === 'boolean') {
     if (zoningEnabled) {
       if (isDefault) {
         await setDomainDefaultSlug(domain.id, id);
@@ -130,8 +131,8 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Pa
   return NextResponse.json(refreshed ?? updatedSlug);
 }
 
-export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, { source: "cms.slugs.[id].GET" });
+export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, { source: 'cms.slugs.[id].GET' });
 
-export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, { source: "cms.slugs.[id].DELETE" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, { source: 'cms.slugs.[id].DELETE' });
 
-export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, { source: "cms.slugs.[id].PUT" });
+export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, { source: 'cms.slugs.[id].PUT' });

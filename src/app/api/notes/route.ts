@@ -1,12 +1,13 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { noteService } from "@/features/notesapp/server";
-import { parseJsonBody } from "@/features/products/server";
-import { noteCreateSchema } from "@/features/notesapp";
-import type { NoteFilters } from "@/shared/types/notes";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+
+import { noteCreateSchema } from '@/features/notesapp';
+import { noteService } from '@/features/notesapp/server';
+import { parseJsonBody } from '@/features/products/server';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
+import type { NoteFilters } from '@/shared/types/notes';
 
 /**
  * GET /api/notes
@@ -16,9 +17,9 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const { searchParams } = new URL(_req.url);
 
   const filters: NoteFilters = {
-    truncateContent: searchParams.get("truncateContent") === "true",
+    truncateContent: searchParams.get('truncateContent') === 'true',
   };
-  const notebookIdParam = searchParams.get("notebookId");
+  const notebookIdParam = searchParams.get('notebookId');
   if (notebookIdParam) {
     filters.notebookId = notebookIdParam;
   } else {
@@ -26,35 +27,35 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
     filters.notebookId = notebook.id;
   }
 
-  if (searchParams.has("search")) {
-    filters.search = searchParams.get("search")!;
+  if (searchParams.has('search')) {
+    filters.search = searchParams.get('search')!;
   }
 
-  if (searchParams.has("searchScope")) {
-    const scope = searchParams.get("searchScope");
-    if (scope === "both" || scope === "title" || scope === "content") {
+  if (searchParams.has('searchScope')) {
+    const scope = searchParams.get('searchScope');
+    if (scope === 'both' || scope === 'title' || scope === 'content') {
       filters.searchScope = scope;
     }
   }
 
-  if (searchParams.has("isPinned")) {
-    filters.isPinned = searchParams.get("isPinned") === "true";
+  if (searchParams.has('isPinned')) {
+    filters.isPinned = searchParams.get('isPinned') === 'true';
   }
 
-  if (searchParams.has("isArchived")) {
-    filters.isArchived = searchParams.get("isArchived") === "true";
+  if (searchParams.has('isArchived')) {
+    filters.isArchived = searchParams.get('isArchived') === 'true';
   }
 
-  if (searchParams.has("isFavorite")) {
-    filters.isFavorite = searchParams.get("isFavorite") === "true";
+  if (searchParams.has('isFavorite')) {
+    filters.isFavorite = searchParams.get('isFavorite') === 'true';
   }
 
-  if (searchParams.has("tagIds")) {
-    filters.tagIds = searchParams.get("tagIds")!.split(",");
+  if (searchParams.has('tagIds')) {
+    filters.tagIds = searchParams.get('tagIds')!.split(',');
   }
 
-  if (searchParams.has("categoryIds")) {
-    filters.categoryIds = searchParams.get("categoryIds")!.split(",");
+  if (searchParams.has('categoryIds')) {
+    filters.categoryIds = searchParams.get('categoryIds')!.split(',');
   }
 
   const notes = await noteService.getAll(filters);
@@ -67,7 +68,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
  */
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, noteCreateSchema, {
-    logPrefix: "notes.POST",
+    logPrefix: 'notes.POST',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -84,7 +85,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "notes.GET" });
+  { source: 'notes.GET' });
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "notes.POST" });
+  { source: 'notes.POST' });

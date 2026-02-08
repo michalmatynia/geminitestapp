@@ -1,22 +1,24 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { WithId } from "mongodb";
-import prisma from "@/shared/lib/db/prisma";
-import type { Prisma } from "@prisma/client";
-import { getInternationalizationProvider } from "@/features/internationalization/services/internationalization-provider";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import { WithId } from 'mongodb';
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { getInternationalizationProvider } from '@/features/internationalization/services/internationalization-provider';
 import {
   configurationError,
   notFoundError,
   duplicateEntryError,
-} from "@/shared/errors/app-error";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+} from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import type { ApiHandlerContext } from '@/shared/types/api';
+
+import type { Prisma } from '@prisma/client';
 
 const countrySchema = z.object({
-  code: z.enum(["PL", "DE", "GB", "US", "SE"]),
+  code: z.enum(['PL', 'DE', 'GB', 'US', 'SE']),
   name: z.string().trim().min(1),
   currencyIds: z.array(z.string()).optional(),
 });
@@ -39,8 +41,8 @@ type CountryDoc = {
   updatedAt: Date;
 };
 
-const CURRENCIES_COLLECTION = "currencies";
-const COUNTRIES_COLLECTION = "countries";
+const CURRENCIES_COLLECTION = 'currencies';
+const COUNTRIES_COLLECTION = 'countries';
 
 const normalizeCountryResponse = (
   country: CountryDoc,
@@ -75,20 +77,20 @@ async function PUT_handler(_req: NextRequest, ctx: ApiHandlerContext, params: { 
   const { currencyIds, ...countryData } = data;
 
   const provider = await getInternationalizationProvider();
-  if (provider === "mongodb") {
-    if (!process.env["MONGODB_URI"]) {
-      throw configurationError("MongoDB is not configured");
+  if (provider === 'mongodb') {
+    if (!process.env['MONGODB_URI']) {
+      throw configurationError('MongoDB is not configured');
     }
     const db = await getMongoDb();
     const countries = db.collection<CountryDoc>(COUNTRIES_COLLECTION);
     const existing = await countries.findOne({ id });
     if (!existing) {
-      throw notFoundError("Country not found");
+      throw notFoundError('Country not found');
     }
     if (countryData.code !== id) {
       const collision = await countries.findOne({ id: countryData.code });
       if (collision) {
-        throw duplicateEntryError("Country code already exists");
+        throw duplicateEntryError('Country code already exists');
       }
     }
     let nextCurrencyIds = existing.currencyIds ?? [];
@@ -97,9 +99,9 @@ async function PUT_handler(_req: NextRequest, ctx: ApiHandlerContext, params: { 
       const requestedCurrencyIds = Array.from(new Set(currencyIds));
       currencyDocs = requestedCurrencyIds.length
         ? await db
-            .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
-            .find({ id: { $in: requestedCurrencyIds } })
-            .toArray()
+          .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
+          .find({ id: { $in: requestedCurrencyIds } })
+          .toArray()
         : [];
       const validCurrencyIds = new Set(
         currencyDocs.map((currency: CurrencyDoc | WithId<CurrencyDoc>) => currency.id)
@@ -125,7 +127,7 @@ async function PUT_handler(_req: NextRequest, ctx: ApiHandlerContext, params: { 
           updatedAt: now,
         },
       },
-      { returnDocument: "after" }
+      { returnDocument: 'after' }
     );
     const currencyMap = new Map(
       currencyDocs.map((currency: CurrencyDoc | WithId<CurrencyDoc>) => [currency.id, currency])
@@ -174,9 +176,9 @@ async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params
   const { id } = params;
 
   const provider = await getInternationalizationProvider();
-  if (provider === "mongodb") {
-    if (!process.env["MONGODB_URI"]) {
-      throw configurationError("MongoDB is not configured");
+  if (provider === 'mongodb') {
+    if (!process.env['MONGODB_URI']) {
+      throw configurationError('MongoDB is not configured');
     }
     const db = await getMongoDb();
     await db.collection(COUNTRIES_COLLECTION).deleteOne({ id });
@@ -188,8 +190,8 @@ async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params
 }
 
 export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, {
-  source: "countries.[id].PUT",
+  source: 'countries.[id].PUT',
   parseJsonBody: true,
   bodySchema: countrySchema,
 });
-export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, { source: "countries.[id].DELETE" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, { source: 'countries.[id].DELETE' });

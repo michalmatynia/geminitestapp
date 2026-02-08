@@ -1,11 +1,9 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import path from "path";
-import { NextRequest, NextResponse } from "next/server";
-import { Client } from "pg";
-import { badRequestError, internalError } from "@/shared/errors/app-error";
-import { getMongoClient } from "@/shared/lib/db/mongo-client";
-import { ErrorSystem } from "@/features/observability/server";
+import path from 'path';
+
+import { NextRequest, NextResponse } from 'next/server';
+import { Client } from 'pg';
 
 import {
   pgBackupsDir,
@@ -20,194 +18,58 @@ import {
   getMongoDatabaseName,
   getMongoRestoreCommand,
   mongoExecFileAsync,
-} from "@/features/database/server";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+} from '@/features/database/server';
+import { ErrorSystem } from '@/features/observability/server';
+import { badRequestError, internalError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import { getMongoClient } from '@/shared/lib/db/mongo-client';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   let backupName: string | undefined;
-  let previewMode: "backup" | "current" = "backup";
+  let previewMode: 'backup' | 'current' = 'backup';
   let previewDbName: string | null = null;
   let safePage = 1;
   let safePageSize = 20;
-  const dbUrl = process.env["DATABASE_URL"] ?? "";
+  const dbUrl = process.env['DATABASE_URL'] ?? '';
 
   const body = (await req.json()) as {
     backupName?: string;
-    mode?: "backup" | "current";
-    type?: "postgresql" | "mongodb";
+    mode?: 'backup' | 'current';
+    type?: 'postgresql' | 'mongodb';
     page?: number;
     pageSize?: number;
   };
   backupName = body.backupName;
-  previewMode = body.mode === "current" ? "current" : "backup";
-  const previewType = body.type === "mongodb" ? "mongodb" : "postgresql";
+  previewMode = body.mode === 'current' ? 'current' : 'backup';
+  const previewType = body.type === 'mongodb' ? 'mongodb' : 'postgresql';
   const page = body.page;
   const pageSize = body.pageSize;
 
-  if (previewMode === "backup" && !backupName) {
-    throw badRequestError("Backup name is required");
+  if (previewMode === 'backup' && !backupName) {
+    throw badRequestError('Backup name is required');
   }
 
-    if (previewType === "mongodb") {
-      if (previewMode === "backup") {
-        assertValidMongoBackupName(backupName ?? "");
-        await ensureMongoBackupsDir();
-      }
-    } else {
-      if (previewMode === "backup") {
-        assertValidPgBackupName(backupName ?? "");
-        await ensurePgBackupsDir();
-      }
+  if (previewType === 'mongodb') {
+    if (previewMode === 'backup') {
+      assertValidMongoBackupName(backupName ?? '');
+      await ensureMongoBackupsDir();
+    }
+  } else {
+    if (previewMode === 'backup') {
+      assertValidPgBackupName(backupName ?? '');
+      await ensurePgBackupsDir();
+    }
       
-      if (!dbUrl.startsWith("postgres://") && !dbUrl.startsWith("postgresql://")) {
-        throw badRequestError("Preview is only supported for PostgreSQL backups.");
-      }
+    if (!dbUrl.startsWith('postgres://') && !dbUrl.startsWith('postgresql://')) {
+      throw badRequestError('Preview is only supported for PostgreSQL backups.');
     }
+  }
 
-    if (previewType === "mongodb") {
-      const mongoUri = getMongoConnectionUrl();
-      const sourceDbName = getMongoDatabaseName();
-      const previewDb = previewMode === "backup" ? `stardb_preview_${Date.now()}` : sourceDbName;
-      safePage = Math.max(1, Number.isFinite(page) ? Number(page) : 1);
-      safePageSize = Math.min(
-        200,
-        Math.max(1, Number.isFinite(pageSize) ? Number(pageSize) : 20)
-      );
-      const offset = (safePage - 1) * safePageSize;
-
-      if (previewMode === "backup") {
-        const backupPath = path.join(mongoBackupsDir, backupName ?? "");
-        await mongoExecFileAsync(getMongoRestoreCommand(), [
-          "--uri",
-          mongoUri,
-          "--archive=" + backupPath,
-          "--gzip",
-          "--nsFrom",
-          `${sourceDbName}.*`,
-          "--nsTo",
-          `${previewDb}.*`,
-          "--drop",
-        ]);
-      }
-
-      const mongoClient = await getMongoClient();
-      const db = mongoClient.db(previewDb);
-      let collections: string[] = [];
-      let tableRows: { name: string; rows: Record<string, unknown>[]; totalRows: number }[] = [];
-      let tableStats: { name: string; rowEstimate: number }[] = [];
-
-      try {
-        const collectionInfos = await db.listCollections().toArray();
-        collections = collectionInfos.map((info: { name: string }) => info.name);
-
-        const rowsResults = await Promise.all(
-          collections.map(async (collectionName: string) => {
-            const collection = db.collection(collectionName);
-            const totalRows = await collection.countDocuments();
-            const rows = await collection
-              .find({})
-              .skip(offset)
-              .limit(safePageSize)
-              .toArray();
-            return { name: collectionName, rows: rows as Record<string, unknown>[], totalRows };
-          })
-        );
-        tableRows = rowsResults;
-
-        tableStats = await Promise.all(
-          collections.map(async (collectionName: string) => {
-            const collection = db.collection(collectionName);
-            const estimate = await collection.estimatedDocumentCount();
-            return { name: collectionName, rowEstimate: estimate };
-          })
-        );
-      } finally {
-        if (previewMode === "backup") {
-          await db.dropDatabase();
-        }
-      }
-
-      return NextResponse.json({
-        stats: {
-          tables: tableStats,
-          groups: collections.length ? { COLLECTION: collections } : {},
-        },
-        data: tableRows,
-        page: safePage,
-        pageSize: safePageSize,
-      });
-    }
-
-    let output = "";
-    if (previewMode === "backup") {
-      const backupPath = path.join(pgBackupsDir, backupName ?? "");
-      let stdout = "";
-      let stderr = "";
-      try {
-        const result = await pgExecFileAsync(getPgRestoreCommand(), [
-          "--list",
-          backupPath,
-        ]);
-        stdout = result.stdout;
-        stderr = result.stderr;
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Unknown error";
-        throw internalError(`Failed to inspect backup: ${message}`);
-      }
-      output = [stdout.trim(), stderr.trim()].filter(Boolean).join("\n");
-    }
-    const tableSet = new Set<string>();
-    const groups = new Map<string, Set<string>>();
-    const knownTypes = [
-      "TABLE DATA",
-      "TABLE",
-      "SEQUENCE SET",
-      "SEQUENCE",
-      "VIEW",
-      "MATERIALIZED VIEW",
-      "INDEX",
-      "FUNCTION",
-      "TYPE",
-      "TRIGGER",
-      "CONSTRAINT",
-      "SCHEMA",
-      "EXTENSION",
-    ];
-    if (previewMode === "backup") {
-      const lines = output.split("\n");
-      for (const line of lines) {
-        const type = knownTypes.find((candidate: string) =>
-          line.includes(` ${candidate} `)
-        );
-        if (!type) continue;
-        const parts = line.split(` ${type} `);
-        if (parts.length < 2) continue;
-        const rest = parts[1]!.trim().split(/\s+/);
-        if (rest.length < 2) continue;
-        const [schema, name] = rest;
-        if (!name) continue;
-        const entry = `${schema}.${name}`;
-        if (!groups.has(type)) {
-          groups.set(type, new Set());
-        }
-        groups.get(type)?.add(entry);
-        if (type === "TABLE DATA" && schema === "public") {
-          tableSet.add(name);
-        }
-      }
-    }
-
-    previewDbName = `stardb_preview_${Date.now()}`;
-    const adminUrl = new URL(process.env["DATABASE_URL"] ?? "");
-    adminUrl.pathname = "/postgres";
-    adminUrl.searchParams.delete("schema");
-    const adminClient =
-      previewMode === "backup"
-        ? new Client({ connectionString: adminUrl.toString() })
-        : null;
-    let previewClient: Client | null = null;
-    let tableStats: { name: string; rowEstimate: number }[] = [];
+  if (previewType === 'mongodb') {
+    const mongoUri = getMongoConnectionUrl();
+    const sourceDbName = getMongoDatabaseName();
+    const previewDb = previewMode === 'backup' ? `stardb_preview_${Date.now()}` : sourceDbName;
     safePage = Math.max(1, Number.isFinite(page) ? Number(page) : 1);
     safePageSize = Math.min(
       200,
@@ -215,7 +77,146 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     );
     const offset = (safePage - 1) * safePageSize;
 
-    const tableRows: {
+    if (previewMode === 'backup') {
+      const backupPath = path.join(mongoBackupsDir, backupName ?? '');
+      await mongoExecFileAsync(getMongoRestoreCommand(), [
+        '--uri',
+        mongoUri,
+        '--archive=' + backupPath,
+        '--gzip',
+        '--nsFrom',
+        `${sourceDbName}.*`,
+        '--nsTo',
+        `${previewDb}.*`,
+        '--drop',
+      ]);
+    }
+
+    const mongoClient = await getMongoClient();
+    const db = mongoClient.db(previewDb);
+    let collections: string[] = [];
+    let tableRows: { name: string; rows: Record<string, unknown>[]; totalRows: number }[] = [];
+    let tableStats: { name: string; rowEstimate: number }[] = [];
+
+    try {
+      const collectionInfos = await db.listCollections().toArray();
+      collections = collectionInfos.map((info: { name: string }) => info.name);
+
+      const rowsResults = await Promise.all(
+        collections.map(async (collectionName: string) => {
+          const collection = db.collection(collectionName);
+          const totalRows = await collection.countDocuments();
+          const rows = await collection
+            .find({})
+            .skip(offset)
+            .limit(safePageSize)
+            .toArray();
+          return { name: collectionName, rows: rows as Record<string, unknown>[], totalRows };
+        })
+      );
+      tableRows = rowsResults;
+
+      tableStats = await Promise.all(
+        collections.map(async (collectionName: string) => {
+          const collection = db.collection(collectionName);
+          const estimate = await collection.estimatedDocumentCount();
+          return { name: collectionName, rowEstimate: estimate };
+        })
+      );
+    } finally {
+      if (previewMode === 'backup') {
+        await db.dropDatabase();
+      }
+    }
+
+    return NextResponse.json({
+      stats: {
+        tables: tableStats,
+        groups: collections.length ? { COLLECTION: collections } : {},
+      },
+      data: tableRows,
+      page: safePage,
+      pageSize: safePageSize,
+    });
+  }
+
+  let output = '';
+  if (previewMode === 'backup') {
+    const backupPath = path.join(pgBackupsDir, backupName ?? '');
+    let stdout = '';
+    let stderr = '';
+    try {
+      const result = await pgExecFileAsync(getPgRestoreCommand(), [
+        '--list',
+        backupPath,
+      ]);
+      stdout = result.stdout;
+      stderr = result.stderr;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw internalError(`Failed to inspect backup: ${message}`);
+    }
+    output = [stdout.trim(), stderr.trim()].filter(Boolean).join('\n');
+  }
+  const tableSet = new Set<string>();
+  const groups = new Map<string, Set<string>>();
+  const knownTypes = [
+    'TABLE DATA',
+    'TABLE',
+    'SEQUENCE SET',
+    'SEQUENCE',
+    'VIEW',
+    'MATERIALIZED VIEW',
+    'INDEX',
+    'FUNCTION',
+    'TYPE',
+    'TRIGGER',
+    'CONSTRAINT',
+    'SCHEMA',
+    'EXTENSION',
+  ];
+  if (previewMode === 'backup') {
+    const lines = output.split('\n');
+    for (const line of lines) {
+      const type = knownTypes.find((candidate: string) =>
+        line.includes(` ${candidate} `)
+      );
+      if (!type) continue;
+      const parts = line.split(` ${type} `);
+      if (parts.length < 2) continue;
+      const rest = parts[1]!.trim().split(/\s+/);
+      if (rest.length < 2) continue;
+      const [schema, name] = rest;
+      if (!name) continue;
+      const entry = `${schema}.${name}`;
+      if (!groups.has(type)) {
+        groups.set(type, new Set());
+      }
+      groups.get(type)?.add(entry);
+      if (type === 'TABLE DATA' && schema === 'public') {
+        tableSet.add(name);
+      }
+    }
+  }
+
+  previewDbName = `stardb_preview_${Date.now()}`;
+  const adminUrl = new URL(process.env['DATABASE_URL'] ?? '');
+  adminUrl.pathname = '/postgres';
+  adminUrl.searchParams.delete('schema');
+  const adminClient =
+      previewMode === 'backup'
+        ? new Client({ connectionString: adminUrl.toString() })
+        : null;
+  let previewClient: Client | null = null;
+  let tableStats: { name: string; rowEstimate: number }[] = [];
+  safePage = Math.max(1, Number.isFinite(page) ? Number(page) : 1);
+  safePageSize = Math.min(
+    200,
+    Math.max(1, Number.isFinite(pageSize) ? Number(pageSize) : 20)
+  );
+  const offset = (safePage - 1) * safePageSize;
+
+  const tableRows: {
       name: string;
       rows: Record<string, unknown>[];
       totalRows: number;
@@ -232,24 +233,24 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     };
     let tableDetails: TableDetailEntry[] = [];
     let enumTypes: { name: string; values: string[] }[] = [];
-    let databaseSize = "";
+    let databaseSize = '';
 
     try {
-      const previewUrl = new URL(process.env["DATABASE_URL"] ?? "");
-      if (previewMode === "backup") {
+      const previewUrl = new URL(process.env['DATABASE_URL'] ?? '');
+      if (previewMode === 'backup') {
         await adminClient?.connect();
         await adminClient?.query(`CREATE DATABASE "${previewDbName}"`);
         previewUrl.pathname = `/${previewDbName}`;
       }
-      previewUrl.searchParams.delete("schema");
+      previewUrl.searchParams.delete('schema');
 
-      if (previewMode === "backup") {
-        const backupPath = path.join(pgBackupsDir, backupName ?? "");
+      if (previewMode === 'backup') {
+        const backupPath = path.join(pgBackupsDir, backupName ?? '');
         await pgExecFileAsync(getPgRestoreCommand(), [
-          "--no-owner",
-          "--no-privileges",
-          "--single-transaction",
-          "--dbname",
+          '--no-owner',
+          '--no-privileges',
+          '--single-transaction',
+          '--dbname',
           previewUrl.toString(),
           backupPath,
         ]);
@@ -259,10 +260,10 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       await previewClient.connect();
 
       const tablesResult = await previewClient.query<{ tablename: string }>(
-        "SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename"
+        'SELECT tablename FROM pg_tables WHERE schemaname = \'public\' ORDER BY tablename'
       );
       const tables = tablesResult.rows.map((row: { tablename: string }) => row.tablename);
-      if (previewMode === "current") {
+      if (previewMode === 'current') {
         tableSet.clear();
         tables.forEach((table: string) => tableSet.add(table));
       }
@@ -326,7 +327,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         indexname: string;
         indexdef: string;
       }>(
-        `SELECT tablename, indexname, indexdef FROM pg_indexes WHERE schemaname = 'public' ORDER BY tablename, indexname`
+        'SELECT tablename, indexname, indexdef FROM pg_indexes WHERE schemaname = \'public\' ORDER BY tablename, indexname'
       );
       const uniqueIndexResult = await previewClient.query<{
         indexname: string;
@@ -419,9 +420,9 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       );
 
       const dbSizeResult = await previewClient.query<{ size: string }>(
-        `SELECT pg_size_pretty(pg_database_size(current_database())) AS size`
+        'SELECT pg_size_pretty(pg_database_size(current_database())) AS size'
       );
-      databaseSize = dbSizeResult.rows[0]?.size ?? "";
+      databaseSize = dbSizeResult.rows[0]?.size ?? '';
 
       // ── Build tableDetails ──
 
@@ -459,20 +460,20 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         const cols = colsByTable.get(tableName) ?? [];
         const idxs = idxByTable.get(tableName) ?? [];
         const fks = fkByTable.get(tableName) ?? [];
-        const size = sizeMap.get(tableName) ?? { sizeBytes: 0, sizeFormatted: "0 bytes" };
+        const size = sizeMap.get(tableName) ?? { sizeBytes: 0, sizeFormatted: '0 bytes' };
 
         return {
           name: tableName,
           columns: cols.map((c) => ({
             name: c.column_name,
-            type: c.data_type === "USER-DEFINED" ? c.udt_name : c.data_type,
-            nullable: c.is_nullable === "YES",
+            type: c.data_type === 'USER-DEFINED' ? c.udt_name : c.data_type,
+            nullable: c.is_nullable === 'YES',
             defaultValue: c.column_default,
             isPrimaryKey: pkSet.has(`${tableName}.${c.column_name}`),
           })),
           indexes: idxs.map((i) => {
             const colMatch = i.indexdef.match(/\(([^)]+)\)/);
-            const columns = colMatch ? colMatch[1]!.split(",").map((s: string) => s.trim()) : [];
+            const columns = colMatch ? colMatch[1]!.split(',').map((s: string) => s.trim()) : [];
             return {
               name: i.indexname,
               columns,
@@ -515,34 +516,34 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       }
     } finally {
       await previewClient?.end();
-      if (previewMode === "backup" && previewDbName && adminClient) {
+      if (previewMode === 'backup' && previewDbName && adminClient) {
         try {
           await adminClient.query(
             `DROP DATABASE IF EXISTS "${previewDbName}" WITH (FORCE)`
           );
         } catch (e) {
-          void ErrorSystem.captureException(e, { service: "api/databases/preview", action: "drop_preview_db" });
+          void ErrorSystem.captureException(e, { service: 'api/databases/preview', action: 'drop_preview_db' });
         }
         await adminClient.end();
       }
     }
 
-      const groupObj: Record<string, string[]> = {};
-      for (const [key, val] of Array.from(groups.entries())) {
-        groupObj[key] = Array.from(val);
-      }
-    
-      return NextResponse.json({
-        stats: {
-          tables: tableStats,
-          groups: groupObj,
-        },
-        data: tableRows,
-        tableDetails,
-        enums: enumTypes,
-        databaseSize,
-      });
+    const groupObj: Record<string, string[]> = {};
+    for (const [key, val] of Array.from(groups.entries())) {
+      groupObj[key] = Array.from(val);
     }
+    
+    return NextResponse.json({
+      stats: {
+        tables: tableStats,
+        groups: groupObj,
+      },
+      data: tableRows,
+      tableDetails,
+      enums: enumTypes,
+      databaseSize,
+    });
+}
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "databases.preview.POST" });
+  { source: 'databases.preview.POST' });

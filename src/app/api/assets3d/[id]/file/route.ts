@@ -1,14 +1,15 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { getAsset3DRepository } from "@/features/viewer3d/server";
-import { readFile } from "fs/promises";
-import { join } from "path";
-import { existsSync } from "fs";
-import { notFoundError } from "@/shared/errors/app-error";
+import { existsSync } from 'fs';
+import { readFile } from 'fs/promises';
+import { join } from 'path';
 
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+
+import { getAsset3DRepository } from '@/features/viewer3d/server';
+import { notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 async function GET_handler(
   _request: NextRequest,
@@ -23,7 +24,7 @@ async function GET_handler(
     throw notFoundError(`Asset not found in database: ${id}`);
   }
 
-  const diskPath = join(process.cwd(), "public", asset.filepath.replace(/^\/+/, ""));
+  const diskPath = join(process.cwd(), 'public', asset.filepath.replace(/^\/+/, ''));
   
   if (!existsSync(diskPath)) {
     throw notFoundError(`File not found on disk: ${diskPath}`);
@@ -33,12 +34,12 @@ async function GET_handler(
   
   return new NextResponse(fileBuffer, {
     headers: {
-      "Content-Type": asset.mimetype || "application/octet-stream",
-      "Cache-Control": "public, max-age=31536000",
+      'Content-Type': asset.mimetype || 'application/octet-stream',
+      'Cache-Control': 'public, max-age=31536000',
     },
   });
 }
 
 export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {
-  source: "assets3d.file.GET",
+  source: 'assets3d.file.GET',
 });

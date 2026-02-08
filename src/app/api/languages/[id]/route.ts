@@ -1,16 +1,18 @@
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import prisma from "@/shared/lib/db/prisma";
-import type { Prisma } from "@prisma/client";
-import { getInternationalizationProvider } from "@/features/internationalization/services/internationalization-provider";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { parseJsonBody } from "@/features/products/server";
-import { badRequestError, internalError, notFoundError } from "@/shared/errors/app-error";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import type { LanguageWithCountries } from "@/shared/types/internationalization";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
-export const runtime = "nodejs";
+import { getInternationalizationProvider } from '@/features/internationalization/services/internationalization-provider';
+import { parseJsonBody } from '@/features/products/server';
+import { badRequestError, internalError, notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import type { ApiHandlerContext } from '@/shared/types/api';
+import type { LanguageWithCountries } from '@/shared/types/internationalization';
+
+import type { Prisma } from '@prisma/client';
+
+export const runtime = 'nodejs';
 
 const languageUpdateSchema = z.object({
   code: z.string().trim().min(1).optional(),
@@ -38,7 +40,7 @@ type LanguageDoc = {
   updatedAt: Date;
 };
 
-const LANGUAGES_COLLECTION = "languages";
+const LANGUAGES_COLLECTION = 'languages';
 
 /**
  * PUT /api/languages/[id]
@@ -47,10 +49,10 @@ const LANGUAGES_COLLECTION = "languages";
 async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const { id } = params;
   if (!id) {
-    throw badRequestError("Language id is required");
+    throw badRequestError('Language id is required');
   }
   const parsed = await parseJsonBody(req, languageUpdateSchema, {
-    logPrefix: "languages.PUT",
+    logPrefix: 'languages.PUT',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -58,9 +60,9 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
   const data = parsed.data;
 
   const provider = await getInternationalizationProvider();
-  if (provider === "mongodb") {
-    if (!process.env["MONGODB_URI"]) {
-      throw internalError("MongoDB is not configured.");
+  if (provider === 'mongodb') {
+    if (!process.env['MONGODB_URI']) {
+      throw internalError('MongoDB is not configured.');
     }
     const mongo = await getMongoDb();
     const existingLang = await mongo
@@ -68,7 +70,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
       .findOne({ id });
 
     if (!existingLang) {
-      throw notFoundError("Language not found.", { languageId: id });
+      throw notFoundError('Language not found.', { languageId: id });
     }
 
     const updateFields: Partial<LanguageDoc> = {
@@ -90,7 +92,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
       const countries: LanguageCountryDoc[] = [];
 
       if (uniqueIds.length > 0) {
-        const countriesCollection = mongo.collection("countries");
+        const countriesCollection = mongo.collection('countries');
         for (const countryId of uniqueIds) {
           const country = (await countriesCollection.findOne({ id: countryId })) as { id: string; code: string; name: string } | null;
           if (country) {
@@ -116,7 +118,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
       .collection<LanguageDoc>(LANGUAGES_COLLECTION)
       .findOne({ id });
     if (!updated) {
-      throw notFoundError("Language not found.", { languageId: id });
+      throw notFoundError('Language not found.', { languageId: id });
     }
 
     return NextResponse.json(updated as unknown as LanguageWithCountries);
@@ -128,7 +130,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
       select: { id: true },
     });
     if (!existingLanguage) {
-      throw notFoundError("Language not found.", { languageId: id });
+      throw notFoundError('Language not found.', { languageId: id });
     }
     if (data.code || data.name || data.nativeName !== undefined) {
       await tx.language.update({
@@ -174,7 +176,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
     });
   });
   if (!language) {
-    throw notFoundError("Language not found.", { languageId: id });
+    throw notFoundError('Language not found.', { languageId: id });
   }
   return NextResponse.json(language as unknown as LanguageWithCountries);
 }
@@ -186,22 +188,22 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
 async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const { id } = params;
   if (!id) {
-    throw badRequestError("Language id is required");
+    throw badRequestError('Language id is required');
   }
 
   const provider = await getInternationalizationProvider();
-  if (provider === "mongodb") {
-    if (!process.env["MONGODB_URI"]) {
-      throw internalError("MongoDB is not configured.");
+  if (provider === 'mongodb') {
+    if (!process.env['MONGODB_URI']) {
+      throw internalError('MongoDB is not configured.');
     }
     const mongo = await getMongoDb();
 
     // Remove language from any catalogs that reference it
-    await mongo.collection("catalogs").updateMany(
+    await mongo.collection('catalogs').updateMany(
       { languageIds: id },
       { 
         $pull: { languageIds: id } 
-      } as unknown as import("mongodb").UpdateFilter<import("mongodb").Document>
+      } as unknown as import('mongodb').UpdateFilter<import('mongodb').Document>
     );
 
     // Delete the language
@@ -210,7 +212,7 @@ async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params
       .deleteOne({ id });
 
     if (result.deletedCount === 0) {
-      throw notFoundError("Language not found.", { languageId: id });
+      throw notFoundError('Language not found.', { languageId: id });
     }
 
     return new Response(null, { status: 204 });
@@ -222,7 +224,7 @@ async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params
       select: { id: true },
     });
     if (!existingLanguage) {
-      throw notFoundError("Language not found.", { languageId: id });
+      throw notFoundError('Language not found.', { languageId: id });
     }
     await tx.languageCountry.deleteMany({ where: { languageId: id } });
     await tx.catalogLanguage.deleteMany({ where: { languageId: id } });
@@ -232,5 +234,5 @@ async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params
   return new Response(null, { status: 204 });
 }
 
-export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, { source: "languages.[id].PUT" });
-export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, { source: "languages.[id].DELETE" });
+export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, { source: 'languages.[id].PUT' });
+export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, { source: 'languages.[id].DELETE' });

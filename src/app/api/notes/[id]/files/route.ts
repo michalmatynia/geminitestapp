@@ -1,11 +1,12 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { uploadNoteFile } from "@/features/files/server";
-import { noteService } from "@/features/notesapp/server";
-import { badRequestError, conflictError, notFoundError } from "@/shared/errors/app-error";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+
+import { uploadNoteFile } from '@/features/files/server';
+import { noteService } from '@/features/notesapp/server';
+import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_SLOT_INDEX = 9;
@@ -31,18 +32,18 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
   try {
     formData = await req.formData();
   } catch (error) {
-    throw badRequestError("Invalid form data", { error });
+    throw badRequestError('Invalid form data', { error });
   }
 
-  const file = formData.get("file") as File | null;
-  const slotIndexStr = formData.get("slotIndex") as string | null;
+  const file = formData.get('file') as File | null;
+  const slotIndexStr = formData.get('slotIndex') as string | null;
 
   if (!file) {
-    throw badRequestError("No file provided");
+    throw badRequestError('No file provided');
   }
 
   if (!slotIndexStr) {
-    throw badRequestError("No slot index provided");
+    throw badRequestError('No slot index provided');
   }
 
   const slotIndex = parseInt(slotIndexStr, 10);
@@ -53,7 +54,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
   }
 
   if (file.size > MAX_FILE_SIZE) {
-    throw badRequestError("File size exceeds 10MB limit", {
+    throw badRequestError('File size exceeds 10MB limit', {
       size: file.size,
       maxSize: MAX_FILE_SIZE,
     });
@@ -62,7 +63,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
   // Check if note exists
   const note = await noteService.getById(noteId);
   if (!note) {
-    throw notFoundError("Note not found", { noteId });
+    throw notFoundError('Note not found', { noteId });
   }
 
   // Check if slot is already occupied
@@ -79,5 +80,5 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
   return NextResponse.json(noteFile, { status: 201 });
 }
 
-export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, { source: "notes.[id].files.GET" });
-export const POST = apiHandlerWithParams<{ id: string }>(POST_handler, { source: "notes.[id].files.POST" });
+export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, { source: 'notes.[id].files.GET' });
+export const POST = apiHandlerWithParams<{ id: string }>(POST_handler, { source: 'notes.[id].files.POST' });

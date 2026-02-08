@@ -1,11 +1,12 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { parseJsonBody } from "@/features/products/server";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { cmsService } from "@/features/cms/services/cms-service";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { cmsService } from '@/features/cms/services/cms-service';
+import { parseJsonBody } from '@/features/products/server';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const createPageSchema = z.object({
   name: z.string().trim().min(1),
@@ -27,7 +28,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
  */
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<NextResponse | Response> {
   const parsed = await parseJsonBody(req, createPageSchema, {
-    logPrefix: "cms-pages",
+    logPrefix: 'cms-pages',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -44,5 +45,5 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   return NextResponse.json(page ?? created);
 }
 
-export const GET = apiHandler(GET_handler, { source: "cms.pages.GET" });
-export const POST = apiHandler(POST_handler, { source: "cms.pages.POST" });
+export const GET = apiHandler(GET_handler, { source: 'cms.pages.GET' });
+export const POST = apiHandler(POST_handler, { source: 'cms.pages.POST' });

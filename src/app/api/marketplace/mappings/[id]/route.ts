@@ -1,10 +1,11 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { getCategoryMappingRepository } from "@/features/integrations/server";
-import { notFoundError } from "@/shared/errors/app-error";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+
+import { getCategoryMappingRepository } from '@/features/integrations/server';
+import { notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 type UpdateMappingRequest = {
   internalCategoryId?: string;
@@ -24,7 +25,7 @@ async function GET_handler(_request: NextRequest, _ctx: ApiHandlerContext, param
   const mapping = await repo.getById(id);
 
   if (!mapping) {
-    throw notFoundError("Mapping not found");
+    throw notFoundError('Mapping not found');
   }
 
   return NextResponse.json(mapping);
@@ -43,7 +44,7 @@ async function PUT_handler(request: NextRequest, _ctx: ApiHandlerContext, params
   // Check if mapping exists
   const existing = await repo.getById(id);
   if (!existing) {
-    throw notFoundError("Mapping not found");
+    throw notFoundError('Mapping not found');
   }
 
   const updated = await repo.update(id, {
@@ -68,7 +69,7 @@ async function DELETE_handler(_request: NextRequest, _ctx: ApiHandlerContext, pa
   // Check if mapping exists
   const existing = await repo.getById(id);
   if (!existing) {
-    throw notFoundError("Mapping not found");
+    throw notFoundError('Mapping not found');
   }
 
   await repo.delete(id);
@@ -76,6 +77,6 @@ async function DELETE_handler(_request: NextRequest, _ctx: ApiHandlerContext, pa
   return NextResponse.json({ success: true });
 }
 
-export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, { source: "marketplace.mappings.[id].GET" });
-export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, { source: "marketplace.mappings.[id].PUT" });
-export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, { source: "marketplace.mappings.[id].DELETE" });
+export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, { source: 'marketplace.mappings.[id].GET' });
+export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, { source: 'marketplace.mappings.[id].PUT' });
+export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, { source: 'marketplace.mappings.[id].DELETE' });

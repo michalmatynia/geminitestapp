@@ -1,12 +1,13 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { productService } from "@/features/products/server";
-import { parseJsonBody } from "@/features/products/server";
-import { badRequestError, notFoundError } from "@/shared/errors/app-error";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { productService } from '@/features/products/server';
+import { parseJsonBody } from '@/features/products/server';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const duplicateSchema = z.object({
   sku: z.string().trim().optional(),
@@ -19,20 +20,20 @@ const duplicateSchema = z.object({
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const { id } = params;
   if (!id) {
-    throw badRequestError("Product id is required");
+    throw badRequestError('Product id is required');
   }
   const parsed = await parseJsonBody(req, duplicateSchema, {
-    logPrefix: "products.DUPLICATE",
+    logPrefix: 'products.DUPLICATE',
   });
   if (!parsed.ok) {
     return parsed.response;
   }
-  const sku = parsed.data.sku ?? "";
+  const sku = parsed.data.sku ?? '';
   const product = await productService.duplicateProduct(id, sku);
   if (!product) {
-    throw notFoundError("Product not found", { productId: id });
+    throw notFoundError('Product not found', { productId: id });
   }
   return NextResponse.json(product);
 }
 
-export const POST = apiHandlerWithParams<{ id: string }>(POST_handler, { source: "products.[id].duplicate.POST" });
+export const POST = apiHandlerWithParams<{ id: string }>(POST_handler, { source: 'products.[id].duplicate.POST' });

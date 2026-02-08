@@ -161,18 +161,18 @@ const resolveRunSource = (run: AiPathRunRecord): string | null => {
   const meta = readMetaRecord(run.meta);
   if (!meta) return null;
 
-  const sourceRaw = meta.source;
+  const sourceRaw = meta['source'];
   const directSource = readStringValue(sourceRaw);
   if (directSource) return directSource.toLowerCase();
 
   if (sourceRaw && typeof sourceRaw === 'object' && !Array.isArray(sourceRaw)) {
-    const sourceTab = readStringValue((sourceRaw as Record<string, unknown>).tab);
+    const sourceTab = readStringValue((sourceRaw as Record<string, unknown>)['tab']);
     if (sourceTab) return `tab:${sourceTab.toLowerCase()}`;
   }
 
-  const sourceInfoRaw = meta.sourceInfo;
+  const sourceInfoRaw = meta['sourceInfo'];
   if (sourceInfoRaw && typeof sourceInfoRaw === 'object' && !Array.isArray(sourceInfoRaw)) {
-    const sourceInfoTab = readStringValue((sourceInfoRaw as Record<string, unknown>).tab);
+    const sourceInfoTab = readStringValue((sourceInfoRaw as Record<string, unknown>)['tab']);
     if (sourceInfoTab) return `tab:${sourceInfoTab.toLowerCase()}`;
   }
 
@@ -183,15 +183,15 @@ const resolveRunSourceDebug = (run: AiPathRunRecord): string => {
   const meta = readMetaRecord(run.meta);
   if (!meta) return 'src=- infoTab=-';
 
-  const sourceRaw = meta.source;
+  const sourceRaw = meta['source'];
   const sourceValue = readStringValue(sourceRaw)?.toLowerCase() ?? (
     sourceRaw && typeof sourceRaw === 'object' && !Array.isArray(sourceRaw) ? 'object' : '-'
   );
 
-  const sourceInfoRaw = meta.sourceInfo;
+  const sourceInfoRaw = meta['sourceInfo'];
   const sourceInfoTab =
     sourceInfoRaw && typeof sourceInfoRaw === 'object' && !Array.isArray(sourceInfoRaw)
-      ? readStringValue((sourceInfoRaw as Record<string, unknown>).tab)?.toLowerCase() ?? '-'
+      ? readStringValue((sourceInfoRaw as Record<string, unknown>)['tab'])?.toLowerCase() ?? '-'
       : '-';
 
   return `src=${sourceValue} infoTab=${sourceInfoTab}`;
@@ -236,24 +236,24 @@ const resolveRunExecutionKind = (run: AiPathRunRecord): RunExecutionKind => {
   if (!meta) return 'unknown';
 
   const runtimeMeta =
-    meta.runtime && typeof meta.runtime === 'object' && !Array.isArray(meta.runtime)
-      ? (meta.runtime as Record<string, unknown>)
+    meta['runtime'] && typeof meta['runtime'] === 'object' && !Array.isArray(meta['runtime'])
+      ? (meta['runtime'] as Record<string, unknown>)
       : null;
   const sourceInfoMeta =
-    meta.sourceInfo && typeof meta.sourceInfo === 'object' && !Array.isArray(meta.sourceInfo)
-      ? (meta.sourceInfo as Record<string, unknown>)
+    meta['sourceInfo'] && typeof meta['sourceInfo'] === 'object' && !Array.isArray(meta['sourceInfo'])
+      ? (meta['sourceInfo'] as Record<string, unknown>)
       : null;
 
   const candidates: unknown[] = [
-    meta.executionMode,
-    meta.execution_mode,
-    meta.runMode,
-    meta.run_mode,
-    meta.mode,
-    runtimeMeta?.executionMode,
-    runtimeMeta?.mode,
-    sourceInfoMeta?.executionMode,
-    sourceInfoMeta?.mode,
+    meta['executionMode'],
+    meta['execution_mode'],
+    meta['runMode'],
+    meta['run_mode'],
+    meta['mode'],
+    runtimeMeta?.['executionMode'],
+    runtimeMeta?.['mode'],
+    sourceInfoMeta?.['executionMode'],
+    sourceInfoMeta?.['mode'],
   ];
   for (const candidate of candidates) {
     const resolved = resolveExecutionCandidate(candidate);

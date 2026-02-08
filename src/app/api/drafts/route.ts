@@ -1,15 +1,16 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { listDrafts, createDraft } from "@/features/drafter/server";
-import type { CreateProductDraftInput } from "@/features/products/server";
-import { parseJsonBody } from "@/features/products/server";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { listDrafts, createDraft } from '@/features/drafter/server';
+import type { CreateProductDraftInput } from '@/features/products/server';
+import { parseJsonBody } from '@/features/products/server';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const createDraftSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(1, 'Name is required'),
   description: z.string().optional().nullable(),
   sku: z.string().optional().nullable(),
   ean: z.string().optional().nullable(),
@@ -64,14 +65,14 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
  */
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, createDraftSchema, {
-    logPrefix: "drafts.POST",
+    logPrefix: 'drafts.POST',
   });
   if (!parsed.ok) {
     return parsed.response;
   }
   const data = parsed.data;
   const categoryId =
-    (typeof data.categoryId === "string" && data.categoryId.trim()) ||
+    (typeof data.categoryId === 'string' && data.categoryId.trim()) ||
     (Array.isArray(data.categoryIds) ? data.categoryIds.find((id: string) => id.trim()) : null) ||
     null;
   const draft = await createDraft({
@@ -83,7 +84,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "drafts.GET" });
+  { source: 'drafts.GET' });
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "drafts.POST" });
+  { source: 'drafts.POST' });

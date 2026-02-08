@@ -241,8 +241,8 @@ export type EvaluateGraphOptions = {
 };
 
 const CACHE_VERSION = 1;
-const DEFAULT_NODE_TIMEOUT_MS = Math.max(5_000, Number.parseInt(process.env["AI_PATHS_NODE_TIMEOUT_MS"] ?? '', 10) || 120_000);
-const DEFAULT_RETRY_BACKOFF_MS = Math.max(250, Number.parseInt(process.env["AI_PATHS_NODE_RETRY_BACKOFF_MS"] ?? '', 10) || 750);
+const DEFAULT_NODE_TIMEOUT_MS = Math.max(5_000, Number.parseInt(process.env['AI_PATHS_NODE_TIMEOUT_MS'] ?? '', 10) || 120_000);
+const DEFAULT_RETRY_BACKOFF_MS = Math.max(250, Number.parseInt(process.env['AI_PATHS_NODE_RETRY_BACKOFF_MS'] ?? '', 10) || 750);
 
 const nowMs = (): number =>
   typeof performance !== 'undefined' && typeof performance.now === 'function'

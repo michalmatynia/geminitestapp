@@ -1,14 +1,15 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import prisma from "@/shared/lib/db/prisma";
-import { parseJsonBody } from "@/features/products/server";
-import { badRequestError, internalError, notFoundError } from "@/shared/errors/app-error";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
-const DEBUG_CHATBOT = process.env["DEBUG_CHATBOT"] === "true";
+import { parseJsonBody } from '@/features/products/server';
+import { badRequestError, internalError, notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import prisma from '@/shared/lib/db/prisma';
+import type { ApiHandlerContext } from '@/shared/types/api';
+
+const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
 const messageSchema = z.object({
   role: z.string().trim().min(1),
@@ -17,9 +18,9 @@ const messageSchema = z.object({
 
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { sessionId: string }): Promise<Response> {
   const requestStart = Date.now();
-  if (!("chatbotMessage" in prisma) || !("chatbotSession" in prisma)) {
+  if (!('chatbotMessage' in prisma) || !('chatbotSession' in prisma)) {
     throw internalError(
-      "Chat sessions not initialized. Run prisma generate/db push."
+      'Chat sessions not initialized. Run prisma generate/db push.'
     );
   }
   const { sessionId } = params;
@@ -28,14 +29,14 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: {
     select: { id: true },
   });
   if (!session) {
-    throw notFoundError("Session not found.");
+    throw notFoundError('Session not found.');
   }
   const messages = await prisma.chatbotMessage.findMany({
     where: { sessionId },
-    orderBy: { createdAt: "asc" },
+    orderBy: { createdAt: 'asc' },
   });
   if (DEBUG_CHATBOT) {
-    console.info("[chatbot][sessions][GET] Messages loaded", {
+    console.info('[chatbot][sessions][GET] Messages loaded', {
       sessionId,
       count: messages.length,
       durationMs: Date.now() - requestStart,
@@ -46,9 +47,9 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: {
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { sessionId: string }): Promise<Response> {
   const requestStart = Date.now();
-  if (!("chatbotMessage" in prisma) || !("chatbotSession" in prisma)) {
+  if (!('chatbotMessage' in prisma) || !('chatbotSession' in prisma)) {
     throw internalError(
-      "Chat sessions not initialized. Run prisma generate/db push."
+      'Chat sessions not initialized. Run prisma generate/db push.'
     );
   }
   const { sessionId } = params;
@@ -57,20 +58,20 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     select: { id: true },
   });
   if (!session) {
-    throw notFoundError("Session not found.");
+    throw notFoundError('Session not found.');
   }
   const parsed = await parseJsonBody(req, messageSchema, {
-    logPrefix: "chatbot.sessions.messages.POST",
+    logPrefix: 'chatbot.sessions.messages.POST',
   });
   if (!parsed.ok) {
     return parsed.response;
   }
   const body = parsed.data;
   if (!body.role || !body.content?.trim()) {
-    throw badRequestError("Role and content are required.");
+    throw badRequestError('Role and content are required.');
   }
   if (DEBUG_CHATBOT) {
-    console.info("[chatbot][sessions][POST] Request", {
+    console.info('[chatbot][sessions][POST] Request', {
       sessionId,
       role: body.role,
       contentLength: body.content.trim().length,
@@ -88,7 +89,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     data: { updatedAt: new Date() },
   });
   if (DEBUG_CHATBOT) {
-    console.info("[chatbot][sessions][POST] Created", {
+    console.info('[chatbot][sessions][POST] Created', {
       messageId: message.id,
       sessionId,
       durationMs: Date.now() - requestStart,
@@ -97,5 +98,5 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
   return NextResponse.json({ message });
 }
 
-export const GET = apiHandlerWithParams<{ sessionId: string }>(GET_handler, { source: "chatbot.sessions.[sessionId].messages.GET" });
-export const POST = apiHandlerWithParams<{ sessionId: string }>(POST_handler, { source: "chatbot.sessions.[sessionId].messages.POST" });
+export const GET = apiHandlerWithParams<{ sessionId: string }>(GET_handler, { source: 'chatbot.sessions.[sessionId].messages.GET' });
+export const POST = apiHandlerWithParams<{ sessionId: string }>(POST_handler, { source: 'chatbot.sessions.[sessionId].messages.POST' });

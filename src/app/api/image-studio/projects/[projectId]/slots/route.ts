@@ -1,28 +1,29 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { badRequestError, quotaExceededError } from "@/shared/errors/app-error";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
 import {
   countImageStudioSlots,
   createImageStudioSlots,
   listImageStudioSlots,
-} from "@/features/ai/image-studio/server/slot-repository";
+} from '@/features/ai/image-studio/server/slot-repository';
+import { badRequestError, quotaExceededError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const sanitizeProjectId = (value: string): string =>
-  value.trim().replace(/[^a-zA-Z0-9-_]/g, "_");
+  value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
 const sanitizeFolderPath = (value: string): string => {
-  const normalized = value.replace(/\\/g, "/").trim();
+  const normalized = value.replace(/\\/g, '/').trim();
   const parts = normalized
-    .split("/")
+    .split('/')
     .map((part) => part.trim())
-    .filter((part) => part && part !== "." && part !== "..")
-    .map((part) => part.replace(/[^a-zA-Z0-9-_]/g, "_"))
+    .filter((part) => part && part !== '.' && part !== '..')
+    .map((part) => part.replace(/[^a-zA-Z0-9-_]/g, '_'))
     .filter(Boolean);
-  return parts.join("/");
+  return parts.join('/');
 };
 
 const slotSchema = z.object({
@@ -46,7 +47,7 @@ async function GET_handler(
   params: { projectId: string }
 ): Promise<Response> {
   const projectId = sanitizeProjectId(params.projectId);
-  if (!projectId) throw badRequestError("Project id is required");
+  if (!projectId) throw badRequestError('Project id is required');
 
   const slots = await listImageStudioSlots(projectId);
 
@@ -59,12 +60,12 @@ async function POST_handler(
   params: { projectId: string }
 ): Promise<Response> {
   const projectId = sanitizeProjectId(params.projectId);
-  if (!projectId) throw badRequestError("Project id is required");
+  if (!projectId) throw badRequestError('Project id is required');
 
   const body = (await req.json().catch(() => null)) as unknown;
   const parsed = createSchema.safeParse(body);
   if (!parsed.success) {
-    throw badRequestError("Invalid payload", { errors: parsed.error.format() });
+    throw badRequestError('Invalid payload', { errors: parsed.error.format() });
   }
 
   const existingCount = await countImageStudioSlots(projectId);
@@ -72,7 +73,7 @@ async function POST_handler(
   const count = parsed.data.count ?? incomingSlots.length;
   const maxCreate = Math.max(0, Math.min(100 - existingCount, count));
   if (maxCreate <= 0) {
-    throw quotaExceededError("Slot limit reached");
+    throw quotaExceededError('Slot limit reached');
   }
 
   const baseName = Date.now().toString();
@@ -91,7 +92,7 @@ async function POST_handler(
     .map((slot: SlotInput, index: number) => ({
       projectId,
       name: slot.name?.trim() || `Slot ${baseName}-${index + 1}`,
-      folderPath: slot.folderPath ? sanitizeFolderPath(slot.folderPath) : "",
+      folderPath: slot.folderPath ? sanitizeFolderPath(slot.folderPath) : '',
       imageUrl: slot.imageUrl?.trim() || null,
       imageBase64: slot.imageBase64?.trim() || null,
       imageFileId: slot.imageFileId?.trim() || null,
@@ -107,11 +108,11 @@ async function POST_handler(
 export const GET = apiHandlerWithParams<{ projectId: string }>(
   async (req: NextRequest, ctx: ApiHandlerContext, params: { projectId: string }): Promise<Response> =>
     GET_handler(req, ctx, params),
-  { source: "image-studio.projects.[projectId].slots.GET", rateLimitKey: "search" }
+  { source: 'image-studio.projects.[projectId].slots.GET', rateLimitKey: 'search' }
 );
 
 export const POST = apiHandlerWithParams<{ projectId: string }>(
   async (req: NextRequest, ctx: ApiHandlerContext, params: { projectId: string }): Promise<Response> =>
     POST_handler(req, ctx, params),
-  { source: "image-studio.projects.[projectId].slots.POST" }
+  { source: 'image-studio.projects.[projectId].slots.POST' }
 );

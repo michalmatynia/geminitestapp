@@ -29,7 +29,7 @@ interface TranslationResult {
   sourceLanguage?: string;
 }
 
-const OLLAMA_BASE_URL = process.env["OLLAMA_BASE_URL"] || 'http://localhost:11434';
+const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] || 'http://localhost:11434';
 
 function getClient(modelName: string, apiKey: string | null): { openai: OpenAI; isOllama: boolean } {
   const modelLower = modelName.toLowerCase();
@@ -98,7 +98,7 @@ export async function translateProduct(params: TranslateProductParams): Promise<
   ]);
 
   const translationModel = translationModelSetting?.trim() || 'gpt-4o';
-  const apiKey = apiKeySetting ?? process.env["OPENAI_API_KEY"] ?? null;
+  const apiKey = apiKeySetting ?? process.env['OPENAI_API_KEY'] ?? null;
 
   await ErrorSystem.logInfo(`[aiTranslationService] Using model: ${translationModel}`, {
     service: 'ai-translation-service',

@@ -366,8 +366,8 @@ export const getProductListingRepository = async (): Promise<ProductListingRepos
 
 const isProviderConfigured = (provider: ListingProvider): boolean =>
   provider === 'mongodb'
-    ? Boolean(process.env["MONGODB_URI"])
-    : Boolean(process.env["DATABASE_URL"]);
+    ? Boolean(process.env['MONGODB_URI'])
+    : Boolean(process.env['DATABASE_URL']);
 
 const repositoryByProvider = (provider: ListingProvider): ProductListingRepository =>
   provider === 'mongodb' ? mongoRepository : prismaRepository;

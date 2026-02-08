@@ -1,12 +1,12 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { noteService } from "@/features/notesapp/server";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { badRequestError } from "@/shared/errors/app-error";
+import { NextRequest, NextResponse } from 'next/server';
 
-import type { RelatedNote } from "@/shared/types/notes";
+import { noteService } from '@/features/notesapp/server';
+import { badRequestError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
+import type { RelatedNote } from '@/shared/types/notes';
 
 /**
  * GET /api/notes/lookup
@@ -16,16 +16,16 @@ import type { RelatedNote } from "@/shared/types/notes";
  */
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { searchParams } = new URL(req.url);
-  const idsParam = searchParams.get("ids");
+  const idsParam = searchParams.get('ids');
   if (!idsParam) {
-    throw badRequestError("ids query parameter is required");
+    throw badRequestError('ids query parameter is required');
   }
   const ids = idsParam
-    .split(",")
+    .split(',')
     .map((id: string) => id.trim())
     .filter((id: string) => id.length > 0);
   if (ids.length === 0) {
-    throw badRequestError("ids query parameter is empty");
+    throw badRequestError('ids query parameter is empty');
   }
 
   // Keep order stable and dedupe to avoid redundant work.
@@ -58,6 +58,6 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
-  { source: "notes.lookup.GET" },
+  { source: 'notes.lookup.GET' },
 );
 

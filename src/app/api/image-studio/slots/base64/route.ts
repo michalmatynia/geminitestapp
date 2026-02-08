@@ -1,26 +1,26 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { badRequestError } from "@/shared/errors/app-error";
+import { badRequestError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const payloadSchema = z.object({
   url: z.string().trim().min(1),
 });
 
-const isDataUrl = (value: string): boolean => value.startsWith("data:");
+const isDataUrl = (value: string): boolean => value.startsWith('data:');
 
 const toDataUrl = (buffer: Buffer, mimetype: string): string =>
-  `data:${mimetype};base64,${buffer.toString("base64")}`;
+  `data:${mimetype};base64,${buffer.toString('base64')}`;
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const body = (await req.json().catch(() => null)) as unknown;
   const parsed = payloadSchema.safeParse(body);
   if (!parsed.success) {
-    throw badRequestError("Invalid payload", { errors: parsed.error.format() });
+    throw badRequestError('Invalid payload', { errors: parsed.error.format() });
   }
 
   const url = parsed.data.url.trim();
@@ -33,7 +33,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     throw badRequestError(`Failed to fetch (${res.status})`);
   }
   const buffer = Buffer.from(await res.arrayBuffer());
-  const contentType = res.headers.get("content-type") || "image/jpeg";
+  const contentType = res.headers.get('content-type') || 'image/jpeg';
   const dataUrl = toDataUrl(buffer, contentType);
 
   return NextResponse.json({ dataUrl });
@@ -41,5 +41,5 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
-  { source: "image-studio.slots.base64.POST" }
+  { source: 'image-studio.slots.base64.POST' }
 );

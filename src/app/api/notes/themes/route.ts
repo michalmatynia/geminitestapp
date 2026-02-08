@@ -1,13 +1,14 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { noteService } from "@/features/notesapp/server";
-import { parseJsonBody } from "@/features/products/server";
-import { themeCreateSchema } from "@/features/notesapp";
-import type { ThemeCreateInput } from "@/shared/types/notes";
-import { removeUndefined } from "@/shared/utils";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+
+import { themeCreateSchema } from '@/features/notesapp';
+import { noteService } from '@/features/notesapp/server';
+import { parseJsonBody } from '@/features/products/server';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ThemeCreateInput } from '@/shared/types/notes';
+import { removeUndefined } from '@/shared/utils';
 
 /**
  * GET /api/notes/themes
@@ -15,7 +16,7 @@ import type { ApiHandlerContext } from "@/shared/types/api";
  */
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { searchParams } = new URL(req.url);
-  const notebookIdParam = searchParams.get("notebookId");
+  const notebookIdParam = searchParams.get('notebookId');
   const notebookId = notebookIdParam
     ? notebookIdParam
     : (await noteService.getOrCreateDefaultNotebook()).id;
@@ -29,7 +30,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
  */
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, themeCreateSchema, {
-    logPrefix: "themes.POST",
+    logPrefix: 'themes.POST',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -45,7 +46,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "notes.themes.GET" });
+  { source: 'notes.themes.GET' });
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "notes.themes.POST" });
+  { source: 'notes.themes.POST' });

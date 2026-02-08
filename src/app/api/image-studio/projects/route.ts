@@ -1,18 +1,19 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import path from "path";
-import fs from "fs/promises";
-import { z } from "zod";
+import fs from 'fs/promises';
+import path from 'path';
 
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { badRequestError } from "@/shared/errors/app-error";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
-const projectsRoot = path.join(process.cwd(), "public", "uploads", "studio");
+import { badRequestError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
+
+const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
 
 const sanitizeProjectId = (value: string): string =>
-  value.trim().replace(/[^a-zA-Z0-9-_]/g, "_");
+  value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
 const createProjectSchema = z.object({
   projectId: z.string().min(1).max(120),
@@ -33,12 +34,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const body = (await req.json().catch(() => null)) as unknown;
   const parsed = createProjectSchema.safeParse(body);
   if (!parsed.success) {
-    throw badRequestError("Invalid payload", { errors: parsed.error.format() });
+    throw badRequestError('Invalid payload', { errors: parsed.error.format() });
   }
 
   const sanitized = sanitizeProjectId(parsed.data.projectId);
   if (!sanitized) {
-    throw badRequestError("Project id is required");
+    throw badRequestError('Project id is required');
   }
 
   const projectDir = path.join(projectsRoot, sanitized);
@@ -48,10 +49,10 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 }
 
 export const GET = apiHandler(async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx), {
-  source: "image-studio.projects.GET",
+  source: 'image-studio.projects.GET',
 });
 
 export const POST = apiHandler(async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx), {
-  source: "image-studio.projects.POST",
+  source: 'image-studio.projects.POST',
 });
 

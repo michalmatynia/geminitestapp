@@ -1,14 +1,15 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { noteService } from "@/features/notesapp/server";
-import { parseJsonBody } from "@/features/products/server";
-import { themeUpdateSchema } from "@/features/notesapp";
-import { removeUndefined } from "@/shared/utils";
-import type { ThemeUpdateInput } from "@/shared/types/notes";
-import { notFoundError } from "@/shared/errors/app-error";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+
+import { themeUpdateSchema } from '@/features/notesapp';
+import { noteService } from '@/features/notesapp/server';
+import { parseJsonBody } from '@/features/products/server';
+import { notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ThemeUpdateInput } from '@/shared/types/notes';
+import { removeUndefined } from '@/shared/utils';
 
 /**
  * GET /api/notes/themes/[id]
@@ -18,7 +19,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: {
   const { id } = params;
   const theme = await noteService.getThemeById(id);
   if (!theme) {
-    throw notFoundError("Theme not found", { themeId: id });
+    throw notFoundError('Theme not found', { themeId: id });
   }
   return NextResponse.json(theme);
 }
@@ -30,7 +31,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: {
 async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const { id } = params;
   const parsed = await parseJsonBody(req, themeUpdateSchema, {
-    logPrefix: "themes.PATCH",
+    logPrefix: 'themes.PATCH',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -40,7 +41,7 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext, params: 
     removeUndefined(parsed.data) as ThemeUpdateInput
   );
   if (!updated) {
-    throw notFoundError("Theme not found", { themeId: id });
+    throw notFoundError('Theme not found', { themeId: id });
   }
   return NextResponse.json(updated);
 }
@@ -53,11 +54,11 @@ async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params
   const { id } = params;
   const success = await noteService.deleteTheme(id);
   if (!success) {
-    throw notFoundError("Theme not found", { themeId: id });
+    throw notFoundError('Theme not found', { themeId: id });
   }
   return NextResponse.json({ success: true });
 }
 
-export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, { source: "notes.themes.[id].GET" });
-export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, { source: "notes.themes.[id].PATCH" });
-export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, { source: "notes.themes.[id].DELETE" });
+export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, { source: 'notes.themes.[id].GET' });
+export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, { source: 'notes.themes.[id].PATCH' });
+export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, { source: 'notes.themes.[id].DELETE' });

@@ -1,13 +1,14 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { getIntegrationRepository } from "@/features/integrations/server";
-import { encryptSecret } from "@/features/integrations/server";
-import { parseJsonBody } from "@/features/products/server";
-import { badRequestError } from "@/shared/errors/app-error";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { getIntegrationRepository } from '@/features/integrations/server';
+import { encryptSecret } from '@/features/integrations/server';
+import { parseJsonBody } from '@/features/products/server';
+import { badRequestError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const connectionSchema = z.object({
   name: z.string().trim().min(1),
@@ -41,11 +42,11 @@ const connectionSchema = z.object({
 async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const { id } = params;
   if (!id) {
-    throw badRequestError("Connection id is required");
+    throw badRequestError('Connection id is required');
   }
 
   const parsed = await parseJsonBody(req, connectionSchema, {
-    logPrefix: "integrations.connection.PUT"
+    logPrefix: 'integrations.connection.PUT'
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -58,66 +59,66 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
     username: data.username,
     ...(data.password ? { password: encryptSecret(data.password) } : {}),
 
-    ...(typeof data.playwrightHeadless === "boolean"
+    ...(typeof data.playwrightHeadless === 'boolean'
       ? { playwrightHeadless: data.playwrightHeadless }
       : {}),
-    ...(typeof data.playwrightSlowMo === "number"
+    ...(typeof data.playwrightSlowMo === 'number'
       ? { playwrightSlowMo: data.playwrightSlowMo }
       : {}),
-    ...(typeof data.playwrightTimeout === "number"
+    ...(typeof data.playwrightTimeout === 'number'
       ? { playwrightTimeout: data.playwrightTimeout }
       : {}),
-    ...(typeof data.playwrightNavigationTimeout === "number"
+    ...(typeof data.playwrightNavigationTimeout === 'number'
       ? { playwrightNavigationTimeout: data.playwrightNavigationTimeout }
       : {}),
-    ...(typeof data.playwrightHumanizeMouse === "boolean"
+    ...(typeof data.playwrightHumanizeMouse === 'boolean'
       ? { playwrightHumanizeMouse: data.playwrightHumanizeMouse }
       : {}),
-    ...(typeof data.playwrightMouseJitter === "number"
+    ...(typeof data.playwrightMouseJitter === 'number'
       ? { playwrightMouseJitter: data.playwrightMouseJitter }
       : {}),
-    ...(typeof data.playwrightClickDelayMin === "number"
+    ...(typeof data.playwrightClickDelayMin === 'number'
       ? { playwrightClickDelayMin: data.playwrightClickDelayMin }
       : {}),
-    ...(typeof data.playwrightClickDelayMax === "number"
+    ...(typeof data.playwrightClickDelayMax === 'number'
       ? { playwrightClickDelayMax: data.playwrightClickDelayMax }
       : {}),
-    ...(typeof data.playwrightInputDelayMin === "number"
+    ...(typeof data.playwrightInputDelayMin === 'number'
       ? { playwrightInputDelayMin: data.playwrightInputDelayMin }
       : {}),
-    ...(typeof data.playwrightInputDelayMax === "number"
+    ...(typeof data.playwrightInputDelayMax === 'number'
       ? { playwrightInputDelayMax: data.playwrightInputDelayMax }
       : {}),
-    ...(typeof data.playwrightActionDelayMin === "number"
+    ...(typeof data.playwrightActionDelayMin === 'number'
       ? { playwrightActionDelayMin: data.playwrightActionDelayMin }
       : {}),
-    ...(typeof data.playwrightActionDelayMax === "number"
+    ...(typeof data.playwrightActionDelayMax === 'number'
       ? { playwrightActionDelayMax: data.playwrightActionDelayMax }
       : {}),
-    ...(typeof data.playwrightProxyEnabled === "boolean"
+    ...(typeof data.playwrightProxyEnabled === 'boolean'
       ? { playwrightProxyEnabled: data.playwrightProxyEnabled }
       : {}),
-    ...(typeof data.playwrightProxyServer === "string"
+    ...(typeof data.playwrightProxyServer === 'string'
       ? { playwrightProxyServer: data.playwrightProxyServer }
       : {}),
-    ...(typeof data.playwrightProxyUsername === "string"
+    ...(typeof data.playwrightProxyUsername === 'string'
       ? { playwrightProxyUsername: data.playwrightProxyUsername }
       : {}),
-    ...(typeof data.playwrightProxyPassword === "string" &&
+    ...(typeof data.playwrightProxyPassword === 'string' &&
     data.playwrightProxyPassword.trim()
       ? {
-          playwrightProxyPassword: encryptSecret(
-            data.playwrightProxyPassword.trim()
-          )
-        }
+        playwrightProxyPassword: encryptSecret(
+          data.playwrightProxyPassword.trim()
+        )
+      }
       : {}),
-    ...(typeof data.playwrightEmulateDevice === "boolean"
+    ...(typeof data.playwrightEmulateDevice === 'boolean'
       ? { playwrightEmulateDevice: data.playwrightEmulateDevice }
       : {}),
-    ...(typeof data.playwrightDeviceName === "string"
+    ...(typeof data.playwrightDeviceName === 'string'
       ? { playwrightDeviceName: data.playwrightDeviceName }
       : {}),
-    ...(typeof data.allegroUseSandbox === "boolean"
+    ...(typeof data.allegroUseSandbox === 'boolean'
       ? { allegroUseSandbox: data.allegroUseSandbox }
       : {})
   });
@@ -162,7 +163,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
 async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const { id } = params;
   if (!id) {
-    throw badRequestError("Connection id is required");
+    throw badRequestError('Connection id is required');
   }
 
   const repo = await getIntegrationRepository();
@@ -172,9 +173,9 @@ async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params
 
 export const PUT = apiHandlerWithParams<{ id: string }>(
   PUT_handler,
-  { source: "integrations.connections.[id].PUT", requireCsrf: false }
+  { source: 'integrations.connections.[id].PUT', requireCsrf: false }
 );
 export const DELETE = apiHandlerWithParams<{ id: string }>(
   DELETE_handler,
-  { source: "integrations.connections.[id].DELETE", requireCsrf: false }
+  { source: 'integrations.connections.[id].DELETE', requireCsrf: false }
 );

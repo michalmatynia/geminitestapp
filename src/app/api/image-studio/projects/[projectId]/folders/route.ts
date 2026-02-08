@@ -1,29 +1,30 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import path from "path";
-import fs from "fs/promises";
-import { z } from "zod";
+import fs from 'fs/promises';
+import path from 'path';
 
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { badRequestError } from "@/shared/errors/app-error";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
-const projectsRoot = path.join(process.cwd(), "public", "uploads", "studio");
+import { badRequestError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
+
+const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
 
 const sanitizeProjectId = (value: string): string =>
-  value.trim().replace(/[^a-zA-Z0-9-_]/g, "_");
+  value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
 const sanitizeFolderPath = (value: string): string => {
-  const normalized = value.replace(/\\/g, "/").trim();
+  const normalized = value.replace(/\\/g, '/').trim();
   const parts = normalized
-    .split("/")
+    .split('/')
     .map((part) => part.trim())
-    .filter((part) => part && part !== "." && part !== "..")
-    .map((part) => part.replace(/[^a-zA-Z0-9-_]/g, "_"))
+    .filter((part) => part && part !== '.' && part !== '..')
+    .map((part) => part.replace(/[^a-zA-Z0-9-_]/g, '_'))
     .filter(Boolean);
 
-  return parts.join("/");
+  return parts.join('/');
 };
 
 const createFolderSchema = z.object({
@@ -36,17 +37,17 @@ async function POST_handler(
   params: { projectId: string }
 ): Promise<Response> {
   const projectId = sanitizeProjectId(params.projectId);
-  if (!projectId) throw badRequestError("Project id is required");
+  if (!projectId) throw badRequestError('Project id is required');
 
   const body = (await req.json().catch(() => null)) as unknown;
   const parsed = createFolderSchema.safeParse(body);
   if (!parsed.success) {
-    throw badRequestError("Invalid payload", { errors: parsed.error.format() });
+    throw badRequestError('Invalid payload', { errors: parsed.error.format() });
   }
 
   const safeFolder = sanitizeFolderPath(parsed.data.folder);
   if (!safeFolder) {
-    throw badRequestError("Folder name is required");
+    throw badRequestError('Folder name is required');
   }
 
   const folderPath = path.join(projectsRoot, projectId, safeFolder);
@@ -58,5 +59,5 @@ async function POST_handler(
 export const POST = apiHandlerWithParams<{ projectId: string }>(
   async (req: NextRequest, ctx: ApiHandlerContext, params: { projectId: string }): Promise<Response> =>
     POST_handler(req, ctx, params),
-  { source: "image-studio.projects.[projectId].folders.POST" }
+  { source: 'image-studio.projects.[projectId].folders.POST' }
 );

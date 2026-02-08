@@ -34,7 +34,7 @@ let indexesReady: Promise<void> | null = null;
 const ensureAuthSecurityIndexes = async (): Promise<void> => {
   const provider = requireAuthProvider(await getAuthDataProvider());
   if (provider !== 'mongodb') return;
-  if (!process.env["MONGODB_URI"]) return;
+  if (!process.env['MONGODB_URI']) return;
   if (!indexesReady) {
     indexesReady = (async (): Promise<void> => {
       const mongo = await getMongoDb();
@@ -47,7 +47,7 @@ const ensureAuthSecurityIndexes = async (): Promise<void> => {
 };
 
 const readMongoSetting = async (key: string): Promise<string | null> => {
-  if (!process.env["MONGODB_URI"]) return null;
+  if (!process.env['MONGODB_URI']) return null;
   const mongo = await getMongoDb();
   const doc = await mongo
     .collection<MongoSettingRecord>('settings')
@@ -56,7 +56,7 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
 };
 
 const canUsePrismaSettings = (): boolean =>
-  Boolean(process.env["DATABASE_URL"]) && 'setting' in prisma;
+  Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
 
 const readPrismaSetting = async (key: string): Promise<string | null> => {
   if (!canUsePrismaSettings()) return null;
@@ -72,7 +72,7 @@ const readPrismaSetting = async (key: string): Promise<string | null> => {
 };
 
 const readSettingValue = async (key: string): Promise<string | null> => {
-  if (process.env["MONGODB_URI"]) {
+  if (process.env['MONGODB_URI']) {
     return readMongoSetting(key);
   }
   return readPrismaSetting(key);
@@ -153,7 +153,7 @@ const clearMemoryAttempt = (key: string): void => {
 };
 
 const getMongoAttempt = async (key: string): Promise<AttemptRecord | null> => {
-  if (!process.env["MONGODB_URI"]) return null;
+  if (!process.env['MONGODB_URI']) return null;
   const mongo = await getMongoDb();
   const doc = await mongo
     .collection<AttemptRecord>(ATTEMPTS_COLLECTION)
@@ -171,7 +171,7 @@ const getPrismaAttempt = async (key: string): Promise<AttemptRecord | null> => {
 };
 
 const setMongoAttempt = async (record: AttemptRecord): Promise<void> => {
-  if (!process.env["MONGODB_URI"]) return;
+  if (!process.env['MONGODB_URI']) return;
   const mongo = await getMongoDb();
   await mongo
     .collection<AttemptRecord>(ATTEMPTS_COLLECTION)
@@ -187,7 +187,7 @@ const setPrismaAttempt = async (record: AttemptRecord): Promise<void> => {
 };
 
 const clearMongoAttempt = async (key: string): Promise<void> => {
-  if (!process.env["MONGODB_URI"]) return;
+  if (!process.env['MONGODB_URI']) return;
   const mongo = await getMongoDb();
   await mongo
     .collection<AttemptRecord>(ATTEMPTS_COLLECTION)
@@ -203,7 +203,7 @@ const getAttempt = async (key: string): Promise<AttemptRecord | null> => {
   if (provider === 'prisma') {
     return await getPrismaAttempt(key);
   }
-  if (process.env["MONGODB_URI"]) {
+  if (process.env['MONGODB_URI']) {
     return await getMongoAttempt(key);
   }
   return getMemoryAttempt(key);
@@ -215,7 +215,7 @@ const saveAttempt = async (record: AttemptRecord): Promise<void> => {
     await setPrismaAttempt(record);
     return;
   }
-  if (process.env["MONGODB_URI"]) {
+  if (process.env['MONGODB_URI']) {
     await setMongoAttempt(record);
     return;
   }
@@ -228,7 +228,7 @@ const clearAttempt = async (key: string): Promise<void> => {
     await clearPrismaAttempt(key);
     return;
   }
-  if (process.env["MONGODB_URI"]) {
+  if (process.env['MONGODB_URI']) {
     await clearMongoAttempt(key);
     return;
   }

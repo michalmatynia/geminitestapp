@@ -1,13 +1,14 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { listFileUploadEvents } from "@/features/files/server";
+import { NextRequest, NextResponse } from 'next/server';
+
+import { listFileUploadEvents } from '@/features/files/server';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const parseDateParam = (value: string | null, endOfDay: boolean = false): Date | null => {
   if (!value) return null;
-  const suffix = endOfDay ? "T23:59:59.999" : "T00:00:00.000";
+  const suffix = endOfDay ? 'T23:59:59.999' : 'T00:00:00.000';
   const date = new Date(`${value}${suffix}`);
   if (Number.isNaN(date.getTime())) return null;
   return date;
@@ -15,17 +16,17 @@ const parseDateParam = (value: string | null, endOfDay: boolean = false): Date |
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const url = new URL(req.url);
-  const page = Number(url.searchParams.get("page") ?? 1);
-  const pageSize = Number(url.searchParams.get("pageSize") ?? 50);
-  const statusParam = url.searchParams.get("status");
-  const category = url.searchParams.get("category");
-  const projectId = url.searchParams.get("projectId");
-  const query = url.searchParams.get("query");
-  const from = parseDateParam(url.searchParams.get("from"));
-  const to = parseDateParam(url.searchParams.get("to"), true);
+  const page = Number(url.searchParams.get('page') ?? 1);
+  const pageSize = Number(url.searchParams.get('pageSize') ?? 50);
+  const statusParam = url.searchParams.get('status');
+  const category = url.searchParams.get('category');
+  const projectId = url.searchParams.get('projectId');
+  const query = url.searchParams.get('query');
+  const from = parseDateParam(url.searchParams.get('from'));
+  const to = parseDateParam(url.searchParams.get('to'), true);
 
   const status =
-    statusParam === "success" || statusParam === "error" ? statusParam : null;
+    statusParam === 'success' || statusParam === 'error' ? statusParam : null;
 
   const result = await listFileUploadEvents({
     page,
@@ -43,5 +44,5 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
-  { source: "system.upload-events.GET" }
+  { source: 'system.upload-events.GET' }
 );

@@ -1,11 +1,12 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { getIntegrationRepository } from "@/features/integrations/server";
-import { decryptSecret } from "@/features/integrations/server";
-import { badRequestError, notFoundError } from "@/shared/errors/app-error";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+
+import { getIntegrationRepository } from '@/features/integrations/server';
+import { decryptSecret } from '@/features/integrations/server';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 /**
  * GET /api/integrations/connections/[id]/session
@@ -14,18 +15,18 @@ import type { ApiHandlerContext } from "@/shared/types/api";
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const { id: connectionId } = params;
   if (!connectionId) {
-    throw badRequestError("Connection id is required");
+    throw badRequestError('Connection id is required');
   }
 
   const repo = await getIntegrationRepository();
   const connection = await repo.getConnectionById(connectionId);
 
   if (!connection) {
-    throw notFoundError("Connection not found", { connectionId });
+    throw notFoundError('Connection not found', { connectionId });
   }
 
   if (!connection.playwrightStorageState) {
-    throw notFoundError("No stored Playwright session.", { connectionId });
+    throw notFoundError('No stored Playwright session.', { connectionId });
   }
 
   const decrypted = decryptSecret(connection.playwrightStorageState);
@@ -43,5 +44,5 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: {
 
 export const GET = apiHandlerWithParams<{ id: string }>(
   GET_handler,
-  { source: "integrations.connections.[id].session.GET", requireCsrf: false }
+  { source: 'integrations.connections.[id].session.GET', requireCsrf: false }
 );

@@ -1,31 +1,31 @@
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
-import { auth } from "@/features/auth/server";
-import { enqueueProductAiJob, processSingleJob, startProductAiJobQueue } from "@/features/jobs/server";
-import type { ProductAiJobType } from "@/shared/types/jobs";
-import { parseJsonBody } from "@/shared/lib/api/parse-json";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { authError } from "@/shared/errors/app-error";
+import { auth } from '@/features/auth/server';
+import { enqueueProductAiJob, processSingleJob, startProductAiJobQueue } from '@/features/jobs/server';
+import { authError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ProductAiJobType } from '@/shared/types/jobs';
 
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
 const syncSchema = z.object({
-  direction: z.enum(["mongo_to_prisma", "prisma_to_mongo"]),
+  direction: z.enum(['mongo_to_prisma', 'prisma_to_mongo']),
 });
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
   const hasAccess =
     session?.user?.isElevated ||
-    session?.user?.permissions?.includes("settings.manage");
+    session?.user?.permissions?.includes('settings.manage');
   if (!hasAccess) {
-    throw authError("Unauthorized.");
+    throw authError('Unauthorized.');
   }
 
   const parsed = await parseJsonBody(req, syncSchema, {
-    logPrefix: "settings.database.sync.POST",
+    logPrefix: 'settings.database.sync.POST',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -34,27 +34,27 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const { direction } = parsed.data;
 
   const job = await enqueueProductAiJob(
-    "system",
-    "db_sync" as ProductAiJobType,
-    { direction, entityType: "system", source: "db_sync" }
+    'system',
+    'db_sync' as ProductAiJobType,
+    { direction, entityType: 'system', source: 'db_sync' }
   );
 
   const inlineJobs =
-    process.env["AI_JOBS_INLINE"] === "true" ||
-    process.env["NODE_ENV"] !== "production";
+    process.env['AI_JOBS_INLINE'] === 'true' ||
+    process.env['NODE_ENV'] !== 'production';
 
   if (inlineJobs) {
     processSingleJob(job.id).catch(async (error: unknown) => {
       try {
-        const { logSystemError } = await import("@/features/observability/server");
+        const { logSystemError } = await import('@/features/observability/server');
         await logSystemError({ 
-          message: "[settings.database.sync] Failed to run db sync job",
+          message: '[settings.database.sync] Failed to run db sync job',
           error,
-          source: "api/settings/database/sync",
+          source: 'api/settings/database/sync',
           context: { jobId: job.id }
         });
       } catch (logError) {
-        console.error("[settings.database.sync] Failed to run db sync job (and logging failed)", error, logError);
+        console.error('[settings.database.sync] Failed to run db sync job (and logging failed)', error, logError);
       }
     });
   } else {
@@ -66,5 +66,5 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
-  { source: "settings.database.sync.POST" }
+  { source: 'settings.database.sync.POST' }
 );

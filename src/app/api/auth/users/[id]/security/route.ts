@@ -1,13 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { updateAuthSecurityProfile, getAuthSecurityProfile } from "@/features/auth/server";
-import { internalError, authError, badRequestError } from "@/shared/errors/app-error";
-import { auth } from "@/features/auth/server";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { logAuthEvent } from "@/features/auth/utils/auth-request-logger";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
-export const runtime = "nodejs";
+import { updateAuthSecurityProfile, getAuthSecurityProfile } from '@/features/auth/server';
+import { auth } from '@/features/auth/server';
+import { logAuthEvent } from '@/features/auth/utils/auth-request-logger';
+import { internalError, authError, badRequestError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
+
+export const runtime = 'nodejs';
 
 const updateSchema = z.object({
   disabled: z.boolean().optional(),
@@ -20,13 +21,13 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: {
   const session = await auth();
   const hasAccess =
     session?.user?.isElevated ||
-    session?.user?.permissions?.includes("auth.users.write");
+    session?.user?.permissions?.includes('auth.users.write');
   if (!hasAccess) {
-    throw authError("Unauthorized.");
+    throw authError('Unauthorized.');
   }
   const id = params.id;
   if (!id) {
-    throw internalError("Missing user id.");
+    throw internalError('Missing user id.');
   }
   const profile = await getAuthSecurityProfile(id);
   return NextResponse.json({
@@ -42,22 +43,22 @@ async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext, params: {
   const session = await auth();
   const hasAccess =
     session?.user?.isElevated ||
-    session?.user?.permissions?.includes("auth.users.write");
+    session?.user?.permissions?.includes('auth.users.write');
   if (!hasAccess) {
-    throw authError("Unauthorized.");
+    throw authError('Unauthorized.');
   }
   const { id } = params;
   if (!id) {
-    throw internalError("Missing user id.");
+    throw internalError('Missing user id.');
   }
   const data = ctx.body as z.infer<typeof updateSchema> | undefined;
   if (!data) {
-    throw badRequestError("Invalid payload");
+    throw badRequestError('Invalid payload');
   }
   await logAuthEvent({
     req,
-    action: "auth.users.security.update",
-    stage: "start",
+    action: 'auth.users.security.update',
+    stage: 'start',
     userId: session?.user?.id ?? null,
     body: { targetUserId: id },
   });
@@ -69,10 +70,10 @@ async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext, params: {
     : undefined;
 
   const profile = await updateAuthSecurityProfile(id, {
-    ...(typeof updates.disabled === "boolean"
+    ...(typeof updates.disabled === 'boolean'
       ? { disabledAt: updates.disabled ? now : null }
       : {}),
-    ...(typeof updates.banned === "boolean"
+    ...(typeof updates.banned === 'boolean'
       ? { bannedAt: updates.banned ? now : null }
       : {}),
     ...(allowedIps ? { allowedIps } : {}),
@@ -83,8 +84,8 @@ async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext, params: {
 
   await logAuthEvent({
     req,
-    action: "auth.users.security.update",
-    stage: "success",
+    action: 'auth.users.security.update',
+    stage: 'success',
     userId: session?.user?.id ?? null,
     body: { targetUserId: id },
     status: 200,
@@ -99,15 +100,15 @@ async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext, params: {
 }
 
 export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {
-  source: "auth.users.[id].security.GET",
+  source: 'auth.users.[id].security.GET',
   requireCsrf: false,
 });
 export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, {
-  source: "auth.users.[id].security.PATCH",
+  source: 'auth.users.[id].security.PATCH',
   parseJsonBody: true,
   bodySchema: updateSchema,
-  rateLimitKey: "write",
+  rateLimitKey: 'write',
   maxBodyBytes: 20_000,
-  allowedMethods: ["PATCH"],
+  allowedMethods: ['PATCH'],
   requireCsrf: false,
 });

@@ -61,7 +61,7 @@ export type Job = ProductAiJobRecord & {
   payload: JobPayload;
 };
 
-const OLLAMA_BASE_URL = process.env["OLLAMA_BASE_URL"] || 'http://localhost:11434';
+const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] || 'http://localhost:11434';
 
 const getClient = (modelName: string, apiKey: string | null): { openai: OpenAI; isOllama: boolean } => {
   const modelLower = modelName.toLowerCase();
@@ -146,7 +146,7 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
     ? payload.imageUrls.filter((url: unknown): url is string => typeof url === 'string' && url.trim() !== '')
     : [];
   const attachImages = Boolean(payload.vision) && imageUrls.length > 0;
-  const apiKey = (await getSettingValue('openai_api_key')) ?? process.env["OPENAI_API_KEY"] ?? null;
+  const apiKey = (await getSettingValue('openai_api_key')) ?? process.env['OPENAI_API_KEY'] ?? null;
   const modelLower = modelId.toLowerCase();
   const isOpenAIModel =
     (modelLower.startsWith('gpt-') && !modelLower.includes('oss')) ||

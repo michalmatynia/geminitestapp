@@ -109,8 +109,8 @@ describe('AI Paths Runtime Engine', () => {
     // It 1: 1+1 = 2
     // It 2: 2+1 = 3
     // It 3: 3+1 = 4
-    expect(result.outputs['node-1']?.value).toBeLessThan(10); 
-    expect(result.outputs['node-1']?.value).toBeDefined();
+    expect(result.outputs['node-1']?.['value']).toBeLessThan(10); 
+    expect(result.outputs['node-1']?.['value']).toBeDefined();
   });
 
   it('should skip nodes provided in skipNodeIds', async () => {
@@ -136,7 +136,7 @@ describe('AI Paths Runtime Engine', () => {
     });
 
     // Should keep the seeded value and not run the handler
-    expect(result.outputs['node-1']?.value).toBe('seeded');
+    expect(result.outputs['node-1']?.['value']).toBe('seeded');
   });
 
   it('should use cache when hashes match', async () => {

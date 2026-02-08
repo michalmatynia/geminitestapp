@@ -1,41 +1,44 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { randomUUID } from "crypto";
-import { z } from "zod";
-import { WithId } from "mongodb";
-import prisma from "@/shared/lib/db/prisma";
-import type { Prisma } from "@prisma/client";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { getProductDataProvider } from "@/features/products/server";
-import { fallbackCurrencies } from "@/features/internationalization/server";
-import { parseJsonBody } from "@/features/products/server";
-import { conflictError, internalError } from "@/shared/errors/app-error";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import type { PriceGroupWithDetails } from "@/features/products/types";
+import { randomUUID } from 'crypto';
+
+import { WithId } from 'mongodb';
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { fallbackCurrencies } from '@/features/internationalization/server';
+import { getProductDataProvider } from '@/features/products/server';
+import { parseJsonBody } from '@/features/products/server';
+import type { PriceGroupWithDetails } from '@/features/products/types';
+import { conflictError, internalError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import type { ApiHandlerContext } from '@/shared/types/api';
+
+import type { Prisma } from '@prisma/client';
 
 const priceGroupSchema = z
   .object({
-  groupId: z.string().trim().min(1),
-  isDefault: z.boolean().optional(),
-  name: z.string().trim().min(1),
-  description: z.string().trim().optional().default(""),
-  currencyId: z.string().trim().min(1),
-  type: z.enum(["standard", "dependent"]),
-  basePriceField: z.string().trim().min(1),
-  sourceGroupId: z.string().trim().optional().transform((value) => {
-    if (!value) return undefined;
-    return value;
-  }),
-  priceMultiplier: z.coerce.number().nonnegative(),
-  addToPrice: z.coerce.number().int(),
-})
+    groupId: z.string().trim().min(1),
+    isDefault: z.boolean().optional(),
+    name: z.string().trim().min(1),
+    description: z.string().trim().optional().default(''),
+    currencyId: z.string().trim().min(1),
+    type: z.enum(['standard', 'dependent']),
+    basePriceField: z.string().trim().min(1),
+    sourceGroupId: z.string().trim().optional().transform((value) => {
+      if (!value) return undefined;
+      return value;
+    }),
+    priceMultiplier: z.coerce.number().nonnegative(),
+    addToPrice: z.coerce.number().int(),
+  })
   .refine(
-    (data) => data.type === "standard" || !!data["sourceGroupId"],
+    (data) => data.type === 'standard' || !!data['sourceGroupId'],
     {
-      message: "Source price group is required for dependent groups",
-      path: ["sourceGroupId"],
+      message: 'Source price group is required for dependent groups',
+      path: ['sourceGroupId'],
     }
   );
 
@@ -54,7 +57,7 @@ type PriceGroupDoc = {
   description: string | null;
   currencyId: string;
   currencyCode?: string | null;
-  type: "standard" | "dependent";
+  type: 'standard' | 'dependent';
   basePriceField: string;
   sourceGroupId: string | null;
   priceMultiplier: number;
@@ -63,10 +66,10 @@ type PriceGroupDoc = {
   updatedAt: Date;
 };
 
-const PRICE_GROUPS_COLLECTION = "price_groups";
+const PRICE_GROUPS_COLLECTION = 'price_groups';
 
 const buildCurrencyMap = async (): Promise<Map<string, CurrencyRecord>> => {
-  if (process.env["DATABASE_URL"]) {
+  if (process.env['DATABASE_URL']) {
     try {
       const currencies = await prisma.currency.findMany({
         select: { id: true, code: true, name: true, symbol: true },
@@ -113,9 +116,9 @@ const resolveCurrency = (
  */
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const provider = await getProductDataProvider();
-  if (provider === "mongodb") {
-    if (!process.env["MONGODB_URI"]) {
-      throw internalError("MongoDB is not configured.");
+  if (provider === 'mongodb') {
+    if (!process.env['MONGODB_URI']) {
+      throw internalError('MongoDB is not configured.');
     }
     const db = await getMongoDb();
     const currencyMap = await buildCurrencyMap();
@@ -127,23 +130,23 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
     );
     const existingPln = await db
       .collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION)
-      .findOne({ groupId: "PLN" });
+      .findOne({ groupId: 'PLN' });
     if (!existingPln) {
       const existingDefault = await db
         .collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION)
         .findOne({ isDefault: true });
-      const currency = currencyByCode.get("PLN");
+      const currency = currencyByCode.get('PLN');
       const now = new Date();
       const plnGroup: PriceGroupDoc = {
         id: randomUUID(),
-        groupId: "PLN",
+        groupId: 'PLN',
         isDefault: !existingDefault,
-        name: "PLN",
+        name: 'PLN',
         description: null,
-        currencyId: currency?.id ?? "PLN",
-        currencyCode: currency?.code ?? "PLN",
-        type: "standard",
-        basePriceField: "price",
+        currencyId: currency?.id ?? 'PLN',
+        currencyCode: currency?.code ?? 'PLN',
+        type: 'standard',
+        basePriceField: 'price',
         sourceGroupId: null,
         priceMultiplier: 1,
         addToPrice: 0,
@@ -178,12 +181,12 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
   await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const plnCurrency = await tx.currency.findUnique({
-      where: { code: "PLN" },
+      where: { code: 'PLN' },
     });
     if (!plnCurrency) return;
 
     const existingPln = await tx.priceGroup.findUnique({
-      where: { groupId: "PLN" },
+      where: { groupId: 'PLN' },
     });
 
     if (!existingPln) {
@@ -193,13 +196,13 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
       });
       await tx.priceGroup.create({
         data: {
-          groupId: "PLN",
+          groupId: 'PLN',
           isDefault: !existingDefault,
-          name: "PLN",
+          name: 'PLN',
           description: null,
           currencyId: plnCurrency.id,
-          type: "standard",
-          basePriceField: "price",
+          type: 'standard',
+          basePriceField: 'price',
           sourceGroupId: null,
           priceMultiplier: 1,
           addToPrice: 0,
@@ -213,7 +216,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
       currency: true,
       sourceGroup: true,
     },
-    orderBy: [{ name: "asc" }],
+    orderBy: [{ name: 'asc' }],
   });
   return NextResponse.json(groups as unknown as PriceGroupWithDetails[]);
 }
@@ -224,7 +227,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
  */
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, priceGroupSchema, {
-    logPrefix: "priceGroups.POST",
+    logPrefix: 'priceGroups.POST',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -232,16 +235,16 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const data = parsed.data;
 
   const provider = await getProductDataProvider();
-  if (provider === "mongodb") {
-    if (!process.env["MONGODB_URI"]) {
-      throw internalError("MongoDB is not configured.");
+  if (provider === 'mongodb') {
+    if (!process.env['MONGODB_URI']) {
+      throw internalError('MongoDB is not configured.');
     }
     const db = await getMongoDb();
     const existingGroupId = await db
       .collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION)
       .findOne({ groupId: data.groupId });
     if (existingGroupId) {
-      throw conflictError("A price group with this ID already exists.", {
+      throw conflictError('A price group with this ID already exists.', {
         groupId: data.groupId,
       });
     }
@@ -263,7 +266,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       currencyCode: currency.code,
       type: data.type,
       basePriceField: data.basePriceField,
-      sourceGroupId: data["sourceGroupId"] ?? null,
+      sourceGroupId: data['sourceGroupId'] ?? null,
       priceMultiplier: data.priceMultiplier,
       addToPrice: data.addToPrice,
       createdAt: now,
@@ -294,7 +297,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         currencyId: data.currencyId,
         type: data.type,
         basePriceField: data.basePriceField,
-        ...(data["sourceGroupId"] !== undefined && { sourceGroupId: data["sourceGroupId"] }),
+        ...(data['sourceGroupId'] !== undefined && { sourceGroupId: data['sourceGroupId'] }),
         priceMultiplier: data.priceMultiplier,
         addToPrice: data.addToPrice,
       },
@@ -306,7 +309,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "price-groups.GET" });
+  { source: 'price-groups.GET' });
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "price-groups.POST" });
+  { source: 'price-groups.POST' });

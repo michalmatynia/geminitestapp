@@ -202,7 +202,7 @@ describe('Transform Handlers', () => {
         nodeInputs: { value: 'Your ID-123 is ready' }
       });
       const result = await handleRegex(ctx);
-      expect(result.value).toBe('123');
+      expect(result['value']).toBe('123');
     });
   });
 
@@ -215,9 +215,9 @@ describe('Transform Handlers', () => {
       });
       
       let result = await handleIterator(ctx);
-      expect(result.value).toBe('a');
-      expect(result.index).toBe(0);
-      expect(result.status).toBe('waiting_callback');
+      expect(result['value']).toBe('a');
+      expect(result['index']).toBe(0);
+      expect(result['status']).toBe('waiting_callback');
 
       // Simulate callback
       ctx = createMockContext({
@@ -226,8 +226,8 @@ describe('Transform Handlers', () => {
         now: 'step-2'
       });
       result = await handleIterator(ctx);
-      expect(result.status).toBe('advance_pending');
-      expect(result.index).toBe(1);
+      expect(result['status']).toBe('advance_pending');
+      expect(result['index']).toBe(1);
 
       // Next evaluateGraph call (different 'now')
       ctx = createMockContext({
@@ -236,9 +236,9 @@ describe('Transform Handlers', () => {
         now: 'step-3'
       });
       result = await handleIterator(ctx);
-      expect(result.value).toBe('b');
-      expect(result.index).toBe(1);
-      expect(result.status).toBe('waiting_callback');
+      expect(result['value']).toBe('b');
+      expect(result['index']).toBe(1);
+      expect(result['status']).toBe('waiting_callback');
     });
   });
 });

@@ -565,11 +565,11 @@ export function useAiPathsRuntime({
     (simulationNode: AiNode, simulationContext: Record<string, unknown>): void => {
       if (executionMode !== 'local') return;
       const entityId =
-        typeof simulationContext['entityId'] === 'string' ? (simulationContext['entityId'] as string) : null;
+        typeof simulationContext['entityId'] === 'string' ? (simulationContext['entityId']) : null;
       const entityType =
-        typeof simulationContext['entityType'] === 'string' ? (simulationContext['entityType'] as string) : null;
+        typeof simulationContext['entityType'] === 'string' ? (simulationContext['entityType']) : null;
       const productId =
-        typeof simulationContext['productId'] === 'string' ? (simulationContext['productId'] as string) : null;
+        typeof simulationContext['productId'] === 'string' ? (simulationContext['productId']) : null;
       const simulationOutputs: RuntimePortValues = {
         context: simulationContext,
         ...(entityId ? { entityId } : {}),
@@ -876,7 +876,7 @@ export function useAiPathsRuntime({
         };
         const eventBatch = Array.isArray(payload.events) ? payload.events : [];
         eventBatch.forEach((item: AiPathRunEventRecord) => {
-          const metadata = (item.metadata ?? {}) as Record<string, unknown>;
+          const metadata = (item.metadata ?? {});
           const nodeId = typeof metadata['nodeId'] === 'string' ? metadata['nodeId'] : undefined;
           const status = typeof metadata['status'] === 'string' ? metadata['status'] : undefined;
           const iteration =
@@ -1595,24 +1595,24 @@ export function useAiPathsRuntime({
           }));
         }
         const entityId =
-          typeof ((meta['triggerContext'] ?? {}) as Record<string, unknown>)?.['entityId'] === 'string'
-            ? (((meta['triggerContext'] ?? {}) as Record<string, unknown>)['entityId'] as string)
+          typeof ((meta['triggerContext'] ?? {}))?.['entityId'] === 'string'
+            ? (((meta['triggerContext'] ?? {}))['entityId'] as string)
             : null;
         const entityType =
-          typeof ((meta['triggerContext'] ?? {}) as Record<string, unknown>)?.['entityType'] === 'string'
-            ? (((meta['triggerContext'] ?? {}) as Record<string, unknown>)['entityType'] as string)
+          typeof ((meta['triggerContext'] ?? {}))?.['entityType'] === 'string'
+            ? (((meta['triggerContext'] ?? {}))['entityType'] as string)
             : null;
         void appendLocalRun({
           pathId: activePathId ?? null,
           pathName: pathName ?? null,
-          triggerEvent: (meta['triggerEvent'] ?? null) as string | null,
+          triggerEvent: (meta['triggerEvent'] ?? null),
           triggerLabel: activeTrigger ?? null,
           entityId,
           entityType,
           status: 'success',
-          startedAt: (meta['startedAt'] ?? '') as string,
+          startedAt: (meta['startedAt'] ?? ''),
           finishedAt,
-          durationMs: Date.now() - ((meta['startedAtMs'] ?? 0) as number),
+          durationMs: Date.now() - ((meta['startedAtMs'] ?? 0)),
           nodeCount: normalizedNodes.length,
           source: 'ai_paths_ui',
         });
@@ -1647,12 +1647,12 @@ export function useAiPathsRuntime({
         void appendLocalRun({
           pathId: activePathId ?? null,
           pathName: pathName ?? null,
-          triggerEvent: (meta['triggerEvent'] ?? null) as string | null,
+          triggerEvent: (meta['triggerEvent'] ?? null),
           triggerLabel: activeTrigger ?? null,
           status: 'error',
-          startedAt: (meta['startedAt'] ?? '') as string,
+          startedAt: (meta['startedAt'] ?? ''),
           finishedAt,
-          durationMs: Date.now() - ((meta['startedAtMs'] ?? 0) as number),
+          durationMs: Date.now() - ((meta['startedAtMs'] ?? 0)),
           nodeCount: normalizedNodes.length,
           error: outcome.error instanceof Error ? outcome.error.message : 'Local run failed',
           source: 'ai_paths_ui',
@@ -1675,12 +1675,12 @@ export function useAiPathsRuntime({
         void appendLocalRun({
           pathId: activePathId ?? null,
           pathName: pathName ?? null,
-          triggerEvent: (meta['triggerEvent'] ?? null) as string | null,
+          triggerEvent: (meta['triggerEvent'] ?? null),
           triggerLabel: activeTrigger ?? null,
           status: 'error',
-          startedAt: (meta['startedAt'] ?? '') as string,
+          startedAt: (meta['startedAt'] ?? ''),
           finishedAt,
-          durationMs: Date.now() - ((meta['startedAtMs'] ?? 0) as number),
+          durationMs: Date.now() - ((meta['startedAtMs'] ?? 0)),
           nodeCount: normalizedNodes.length,
           error: 'Run cancelled',
           source: 'ai_paths_ui',
@@ -1793,13 +1793,13 @@ export function useAiPathsRuntime({
     pendingSimulationContextRef.current = null;
     const immediateEntityId =
       typeof triggerContext['entityId'] === 'string'
-        ? (triggerContext['entityId'] as string)
+        ? (triggerContext['entityId'])
         : typeof triggerContext['productId'] === 'string'
-          ? (triggerContext['productId'] as string)
+          ? (triggerContext['productId'])
           : null;
     const immediateEntityType =
       typeof triggerContext['entityType'] === 'string'
-        ? (triggerContext['entityType'] as string)
+        ? (triggerContext['entityType'])
         : null;
     const immediateContext = {
       ...triggerContext,
@@ -2147,7 +2147,9 @@ export function useAiPathsRuntime({
           };
         }
         const resolvedJobId =
-          typeof pollOutput?.jobId === 'string' ? pollOutput.jobId : fallbackJobId;
+          typeof (pollOutput as Record<string, unknown> | null)?.['jobId'] === 'string'
+            ? ((pollOutput as Record<string, unknown>)['jobId'] as string)
+            : fallbackJobId;
         const updatedOutputs: Record<string, RuntimePortValues> = {
           ...runtimeStateRef.current.outputs,
           [node.id]: pollOutput ?? runtimeStateRef.current.outputs[node.id] ?? {},
@@ -2159,13 +2161,13 @@ export function useAiPathsRuntime({
               const modelOutput = updatedOutputs[modelNode.id] as
                 | { jobId?: string; status?: string; result?: unknown; debugPayload?: unknown }
                 | undefined;
-              if (modelOutput?.jobId !== resolvedJobId) return;
+              if ((modelOutput as Record<string, unknown> | undefined)?.['jobId'] !== resolvedJobId) return;
               updatedOutputs[modelNode.id] = {
                 ...modelOutput,
-                status: pollOutput?.status ?? 'completed',
+                status: (pollOutput as Record<string, unknown> | null)?.['status'] as string ?? 'completed',
                 result:
-                  pollOutput?.result !== undefined ? pollOutput.result : modelOutput.result,
-              };
+                  (pollOutput as Record<string, unknown> | null)?.['result'] !== undefined ? (pollOutput as Record<string, unknown>)['result'] : (modelOutput as Record<string, unknown> | undefined)?.['result'],
+              } as RuntimePortValues;
             });
         }
         setRuntimeState((prev: RuntimeState): RuntimeState => ({
@@ -2222,7 +2224,7 @@ export function useAiPathsRuntime({
         const shouldContinueIterators = normalizedNodes.some((n: AiNode): boolean => {
           if (n.type !== 'iterator') return false;
           if (n.config?.iterator?.autoContinue === false) return false;
-          const status = downstreamState.outputs[n.id]?.status;
+          const status = (downstreamState.outputs[n.id] as Record<string, unknown> | undefined)?.['status'];
           return status === 'advance_pending';
         });
         if (shouldContinueIterators && !iteratorContinueInFlightRef.current) {
@@ -2321,16 +2323,16 @@ export function useAiPathsRuntime({
         .forEach((node: AiNode) => {
           const pollConfig = node.config?.poll;
           const output = state.outputs[node.id] as
-            | { status?: string; jobId?: string }
+            | Record<string, unknown>
             | undefined;
-          const nodeInputs = state.inputs[node.id] ?? {};
-          const inputJobId = coerceInput(nodeInputs.jobId);
+          const nodeInputs = (state.inputs[node.id] ?? {}) as Record<string, unknown>;
+          const inputJobId = coerceInput(nodeInputs['jobId']);
           const jobId =
-            output?.jobId ??
+            (output?.['jobId'] as string | undefined) ??
             (typeof inputJobId === 'string' || typeof inputJobId === 'number'
               ? String(inputJobId).trim()
               : '');
-          const status = output?.status ?? 'polling';
+          const status = (output?.['status'] as string | undefined) ?? 'polling';
           if (status === 'completed' || status === 'failed') return;
           if (pollConfig?.mode !== 'database' && !jobId) return;
           void runPollUpdate(node, { jobId, nodeInputs });

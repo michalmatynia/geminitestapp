@@ -1,23 +1,24 @@
-import { NextRequest, NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
-import { z } from "zod";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { normalizeAuthEmail } from "@/features/auth/server";
-import { auth } from "@/features/auth/server";
+import bcrypt from 'bcryptjs';
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { normalizeAuthEmail } from '@/features/auth/server';
+import { auth } from '@/features/auth/server';
 import {
   checkLoginAllowed,
   extractClientIp,
   recordLoginFailure,
   recordLoginSuccess,
-} from "@/features/auth/server";
-import { getAuthSecurityProfile } from "@/features/auth/server";
-import { getAuthUserPageSettings } from "@/features/auth/server";
-import { badRequestError, internalError } from "@/shared/errors/app-error";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { logAuthEvent } from "@/features/auth/utils/auth-request-logger";
+} from '@/features/auth/server';
+import { getAuthSecurityProfile } from '@/features/auth/server';
+import { getAuthUserPageSettings } from '@/features/auth/server';
+import { logAuthEvent } from '@/features/auth/utils/auth-request-logger';
+import { badRequestError, internalError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
 const payloadSchema = z.object({
   email: z.string().trim().email(),
@@ -34,27 +35,27 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
   const session = await auth();
   const hasAccess =
     session?.user?.isElevated ||
-    session?.user?.permissions?.includes("auth.users.write");
+    session?.user?.permissions?.includes('auth.users.write');
   if (!hasAccess) {
     return NextResponse.json(
-      { ok: false, message: "Unauthorized." },
+      { ok: false, message: 'Unauthorized.' },
       { status: 401 }
     );
   }
   const data = ctx.body as z.infer<typeof payloadSchema> | undefined;
   if (!data) {
-    throw badRequestError("Invalid payload");
+    throw badRequestError('Invalid payload');
   }
   await logAuthEvent({
     req,
-    action: "auth.mock-signin",
-    stage: "start",
+    action: 'auth.mock-signin',
+    stage: 'start',
     userId: session?.user?.id ?? null,
     body: { email: data.email },
   });
 
-  if (!process.env["MONGODB_URI"]) {
-    throw internalError("MongoDB is not configured.");
+  if (!process.env['MONGODB_URI']) {
+    throw internalError('MongoDB is not configured.');
   }
 
   const email = normalizeAuthEmail(data.email);
@@ -63,38 +64,38 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
   if (!allowed.allowed) {
     await logAuthEvent({
       req,
-      action: "auth.mock-signin",
-      stage: "failure",
-      outcome: "rate_limited",
+      action: 'auth.mock-signin',
+      stage: 'failure',
+      outcome: 'rate_limited',
       body: { email },
       status: 429,
     });
     return NextResponse.json(
       {
         ok: false,
-        message: "Too many attempts. Please try again later.",
+        message: 'Too many attempts. Please try again later.',
       },
       { status: 429 }
     );
   }
   const db = await getMongoDb();
   const user = await db
-    .collection<MongoUserDoc>("users")
+    .collection<MongoUserDoc>('users')
     .findOne({ email }, { projection: { passwordHash: 1, emailVerified: 1 } });
 
   if (!user?.passwordHash) {
     await recordLoginFailure({ email, ip, request: req });
     await logAuthEvent({
       req,
-      action: "auth.mock-signin",
-      stage: "failure",
-      outcome: "invalid_credentials",
+      action: 'auth.mock-signin',
+      stage: 'failure',
+      outcome: 'invalid_credentials',
       body: { email },
       status: 200,
     });
     return NextResponse.json({
       ok: false,
-      message: "User not found or password is not set.",
+      message: 'User not found or password is not set.',
     });
   }
 
@@ -105,38 +106,38 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
     await recordLoginFailure({ email, ip, request: req });
     await logAuthEvent({
       req,
-      action: "auth.mock-signin",
-      stage: "failure",
-      outcome: "account_banned",
+      action: 'auth.mock-signin',
+      stage: 'failure',
+      outcome: 'account_banned',
       body: { email },
       status: 200,
     });
-    return NextResponse.json({ ok: false, message: "Account is banned." });
+    return NextResponse.json({ ok: false, message: 'Account is banned.' });
   }
   if (security.disabledAt) {
     await recordLoginFailure({ email, ip, request: req });
     await logAuthEvent({
       req,
-      action: "auth.mock-signin",
-      stage: "failure",
-      outcome: "account_disabled",
+      action: 'auth.mock-signin',
+      stage: 'failure',
+      outcome: 'account_disabled',
       body: { email },
       status: 200,
     });
-    return NextResponse.json({ ok: false, message: "Account is disabled." });
+    return NextResponse.json({ ok: false, message: 'Account is disabled.' });
   }
   if (settings.requireEmailVerification) {
     if (!user.emailVerified) {
       await recordLoginFailure({ email, ip, request: req });
       await logAuthEvent({
         req,
-        action: "auth.mock-signin",
-        stage: "failure",
-        outcome: "email_unverified",
+        action: 'auth.mock-signin',
+        stage: 'failure',
+        outcome: 'email_unverified',
         body: { email },
         status: 200,
       });
-      return NextResponse.json({ ok: false, message: "Email verification required." });
+      return NextResponse.json({ ok: false, message: 'Email verification required.' });
     }
   }
   if (security.allowedIps.length > 0 && ip) {
@@ -145,25 +146,25 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
       await recordLoginFailure({ email, ip, request: req });
       await logAuthEvent({
         req,
-        action: "auth.mock-signin",
-        stage: "failure",
-        outcome: "ip_not_allowed",
+        action: 'auth.mock-signin',
+        stage: 'failure',
+        outcome: 'ip_not_allowed',
         body: { email },
         status: 200,
       });
-      return NextResponse.json({ ok: false, message: "IP not allowed." });
+      return NextResponse.json({ ok: false, message: 'IP not allowed.' });
     }
   }
   if (security.mfaEnabled) {
     await logAuthEvent({
       req,
-      action: "auth.mock-signin",
-      stage: "failure",
-      outcome: "mfa_required",
+      action: 'auth.mock-signin',
+      stage: 'failure',
+      outcome: 'mfa_required',
       body: { email },
       status: 200,
     });
-    return NextResponse.json({ ok: false, message: "MFA is enabled. Use MFA login." });
+    return NextResponse.json({ ok: false, message: 'MFA is enabled. Use MFA login.' });
   }
 
   const isValid = await bcrypt.compare(data.password, user.passwordHash);
@@ -174,26 +175,26 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
   }
   await logAuthEvent({
     req,
-    action: "auth.mock-signin",
-    stage: isValid ? "success" : "failure",
-    outcome: isValid ? "ok" : "invalid_credentials",
+    action: 'auth.mock-signin',
+    stage: isValid ? 'success' : 'failure',
+    outcome: isValid ? 'ok' : 'invalid_credentials',
     body: { email },
     status: 200,
   });
   return NextResponse.json({
     ok: isValid,
-    message: isValid ? "Credentials are valid." : "Invalid credentials.",
+    message: isValid ? 'Credentials are valid.' : 'Invalid credentials.',
   });
 }
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- {
-   source: "auth.mock-signin.POST",
-   parseJsonBody: true,
-   bodySchema: payloadSchema,
-   rateLimitKey: "auth",
-   maxBodyBytes: 20_000,
-   allowedMethods: ["POST"],
-   requireCsrf: false,
- });
+  {
+    source: 'auth.mock-signin.POST',
+    parseJsonBody: true,
+    bodySchema: payloadSchema,
+    rateLimitKey: 'auth',
+    maxBodyBytes: 20_000,
+    allowedMethods: ['POST'],
+    requireCsrf: false,
+  });

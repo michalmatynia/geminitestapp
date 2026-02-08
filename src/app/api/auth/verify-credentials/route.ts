@@ -1,21 +1,22 @@
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import bcrypt from "bcryptjs";
-import { badRequestError } from "@/shared/errors/app-error";
-import { findAuthUserByEmail } from "@/features/auth/server";
-import { getAuthSecurityProfile } from "@/features/auth/server";
+import bcrypt from 'bcryptjs';
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { findAuthUserByEmail } from '@/features/auth/server';
+import { getAuthSecurityProfile } from '@/features/auth/server';
 import {
   checkLoginAllowed,
   extractClientIp,
   recordLoginFailure,
-} from "@/features/auth/server";
-import { getAuthUserPageSettings } from "@/features/auth/server";
-import { createLoginChallenge } from "@/features/auth/server";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { logAuthEvent } from "@/features/auth/utils/auth-request-logger";
+} from '@/features/auth/server';
+import { getAuthUserPageSettings } from '@/features/auth/server';
+import { createLoginChallenge } from '@/features/auth/server';
+import { logAuthEvent } from '@/features/auth/utils/auth-request-logger';
+import { badRequestError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
 const payloadSchema = z.object({
   email: z.string().trim().email(),
@@ -24,15 +25,15 @@ const payloadSchema = z.object({
 
 async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const data = ctx.body as z.infer<typeof payloadSchema> | undefined;
-  if (!data) throw badRequestError("Invalid payload");
+  if (!data) throw badRequestError('Invalid payload');
 
   const email = data.email;
   const password = data.password;
   const ip = extractClientIp(req);
   await logAuthEvent({
     req,
-    action: "auth.verify-credentials",
-    stage: "start",
+    action: 'auth.verify-credentials',
+    stage: 'start',
     body: { email },
   });
 
@@ -40,9 +41,9 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
   if (!allowed.allowed) {
     await logAuthEvent({
       req,
-      action: "auth.verify-credentials",
-      stage: "failure",
-      outcome: "rate_limited",
+      action: 'auth.verify-credentials',
+      stage: 'failure',
+      outcome: 'rate_limited',
       body: { email },
       status: 429,
     });
@@ -50,7 +51,7 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
       {
         ok: false,
         code: allowed.reason,
-        message: "Too many attempts. Please try again later.",
+        message: 'Too many attempts. Please try again later.',
         lockedUntil: allowed.lockedUntil?.toISOString() ?? null,
       },
       { status: 429 }
@@ -58,20 +59,20 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
   }
 
   const user = await findAuthUserByEmail(email);
-  if (!user || !user.passwordHash) {
+  if (!user?.passwordHash) {
     await recordLoginFailure({ email, ip, request: req });
     await logAuthEvent({
       req,
-      action: "auth.verify-credentials",
-      stage: "failure",
-      outcome: "invalid_credentials",
+      action: 'auth.verify-credentials',
+      stage: 'failure',
+      outcome: 'invalid_credentials',
       body: { email },
       status: 200,
     });
     return NextResponse.json({
       ok: false,
-      code: "INVALID_CREDENTIALS",
-      message: "Invalid email or password.",
+      code: 'INVALID_CREDENTIALS',
+      message: 'Invalid email or password.',
     });
   }
 
@@ -82,48 +83,48 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
     await recordLoginFailure({ email, ip, request: req });
     await logAuthEvent({
       req,
-      action: "auth.verify-credentials",
-      stage: "failure",
-      outcome: "account_banned",
+      action: 'auth.verify-credentials',
+      stage: 'failure',
+      outcome: 'account_banned',
       body: { email },
       status: 200,
     });
     return NextResponse.json({
       ok: false,
-      code: "ACCOUNT_BANNED",
-      message: "This account is banned.",
+      code: 'ACCOUNT_BANNED',
+      message: 'This account is banned.',
     });
   }
   if (security.disabledAt) {
     await recordLoginFailure({ email, ip, request: req });
     await logAuthEvent({
       req,
-      action: "auth.verify-credentials",
-      stage: "failure",
-      outcome: "account_disabled",
+      action: 'auth.verify-credentials',
+      stage: 'failure',
+      outcome: 'account_disabled',
       body: { email },
       status: 200,
     });
     return NextResponse.json({
       ok: false,
-      code: "ACCOUNT_DISABLED",
-      message: "This account is disabled.",
+      code: 'ACCOUNT_DISABLED',
+      message: 'This account is disabled.',
     });
   }
   if (settings.requireEmailVerification && !user.emailVerified) {
     await recordLoginFailure({ email, ip, request: req });
     await logAuthEvent({
       req,
-      action: "auth.verify-credentials",
-      stage: "failure",
-      outcome: "email_unverified",
+      action: 'auth.verify-credentials',
+      stage: 'failure',
+      outcome: 'email_unverified',
       body: { email },
       status: 200,
     });
     return NextResponse.json({
       ok: false,
-      code: "EMAIL_UNVERIFIED",
-      message: "Email verification is required.",
+      code: 'EMAIL_UNVERIFIED',
+      message: 'Email verification is required.',
     });
   }
   if (security.allowedIps.length > 0 && ip) {
@@ -132,16 +133,16 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
       await recordLoginFailure({ email, ip, request: req });
       await logAuthEvent({
         req,
-        action: "auth.verify-credentials",
-        stage: "failure",
-        outcome: "ip_not_allowed",
+        action: 'auth.verify-credentials',
+        stage: 'failure',
+        outcome: 'ip_not_allowed',
         body: { email },
         status: 200,
       });
       return NextResponse.json({
         ok: false,
-        code: "IP_NOT_ALLOWED",
-        message: "This IP is not allowed for the account.",
+        code: 'IP_NOT_ALLOWED',
+        message: 'This IP is not allowed for the account.',
       });
     }
   }
@@ -151,16 +152,16 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
     await recordLoginFailure({ email, ip, request: req });
     await logAuthEvent({
       req,
-      action: "auth.verify-credentials",
-      stage: "failure",
-      outcome: "invalid_credentials",
+      action: 'auth.verify-credentials',
+      stage: 'failure',
+      outcome: 'invalid_credentials',
       body: { email },
       status: 200,
     });
     return NextResponse.json({
       ok: false,
-      code: "INVALID_CREDENTIALS",
-      message: "Invalid email or password.",
+      code: 'INVALID_CREDENTIALS',
+      message: 'Invalid email or password.',
     });
   }
 
@@ -172,12 +173,12 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
   });
   await logAuthEvent({
     req,
-    action: "auth.verify-credentials",
-    stage: "success",
+    action: 'auth.verify-credentials',
+    stage: 'success',
     userId: user.id,
     body: { email },
     status: 200,
-    outcome: security.mfaEnabled ? "mfa_required" : "ok",
+    outcome: security.mfaEnabled ? 'mfa_required' : 'ok',
   });
 
   return NextResponse.json({
@@ -190,12 +191,12 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- {
-   source: "auth.verify-credentials.POST",
-   parseJsonBody: true,
-   bodySchema: payloadSchema,
-   rateLimitKey: "auth",
-   maxBodyBytes: 20_000,
-   allowedMethods: ["POST"],
-   requireCsrf: false,
- });
+  {
+    source: 'auth.verify-credentials.POST',
+    parseJsonBody: true,
+    bodySchema: payloadSchema,
+    rateLimitKey: 'auth',
+    maxBodyBytes: 20_000,
+    allowedMethods: ['POST'],
+    requireCsrf: false,
+  });

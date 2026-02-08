@@ -1,14 +1,15 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import prisma from "@/shared/lib/db/prisma";
-import { parseJsonBody } from "@/features/products/server";
-import { getProductDataProvider } from "@/features/products/server";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { badRequestError, conflictError, internalError, notFoundError } from "@/shared/errors/app-error";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { parseJsonBody } from '@/features/products/server';
+import { getProductDataProvider } from '@/features/products/server';
+import { badRequestError, conflictError, internalError, notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const productParameterUpdateSchema = z.object({
   name_en: z.string().min(1).optional(),
@@ -23,11 +24,11 @@ const productParameterUpdateSchema = z.object({
  */
 async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   if (!params.id) {
-    throw badRequestError("Parameter id is required");
+    throw badRequestError('Parameter id is required');
   }
   const provider = await getProductDataProvider();
   const parsed = await parseJsonBody(req, productParameterUpdateSchema, {
-    logPrefix: "product-parameters.PUT",
+    logPrefix: 'product-parameters.PUT',
     allowEmpty: true,
   });
   if (!parsed.ok) {
@@ -36,31 +37,31 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
 
   const { name_en, name_pl, name_de, catalogId } = parsed.data;
 
-  if (provider === "mongodb") {
-    if (!process.env["MONGODB_URI"]) {
-      throw internalError("MongoDB is not configured.");
+  if (provider === 'mongodb') {
+    if (!process.env['MONGODB_URI']) {
+      throw internalError('MongoDB is not configured.');
     }
     const db = await getMongoDb();
     const current = await db
-      .collection("product_parameters")
+      .collection('product_parameters')
       .findOne({ id: params.id });
     if (!current) {
-      throw notFoundError("Parameter not found", { parameterId: params.id });
+      throw notFoundError('Parameter not found', { parameterId: params.id });
     }
     const nextCatalogId =
       catalogId ?? (current as { catalogId?: string }).catalogId;
     if (!nextCatalogId) {
-      throw badRequestError("Catalog ID is required.");
+      throw badRequestError('Catalog ID is required.');
     }
     if (name_en !== undefined) {
-      const existing = await db.collection("product_parameters").findOne({
+      const existing = await db.collection('product_parameters').findOne({
         name_en,
         catalogId: nextCatalogId,
         id: { $ne: params.id },
       });
       if (existing) {
         throw conflictError(
-          "A parameter with this name already exists in this catalog",
+          'A parameter with this name already exists in this catalog',
           { name_en, catalogId: nextCatalogId }
         );
       }
@@ -75,16 +76,16 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
     };
 
     await db
-      .collection("product_parameters")
+      .collection('product_parameters')
       .updateOne({ id: params.id }, { $set: updateDoc });
     const updated = await db
-      .collection("product_parameters")
+      .collection('product_parameters')
       .findOne({ id: params.id });
     return NextResponse.json(updated);
   }
 
-  if (!process.env["DATABASE_URL"]) {
-    throw badRequestError("Product parameters require the Postgres product store.");
+  if (!process.env['DATABASE_URL']) {
+    throw badRequestError('Product parameters require the Postgres product store.');
   }
 
   const current = await prisma.productParameter.findUnique({
@@ -92,7 +93,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
     select: { catalogId: true },
   });
   if (!current) {
-    throw notFoundError("Parameter not found", { parameterId: params.id });
+    throw notFoundError('Parameter not found', { parameterId: params.id });
   }
   const nextCatalogId = catalogId ?? current.catalogId;
 
@@ -106,7 +107,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
     });
     if (existing) {
       throw conflictError(
-        "A parameter with this name already exists in this catalog",
+        'A parameter with this name already exists in this catalog',
         { name_en, catalogId: nextCatalogId }
       );
     }
@@ -131,25 +132,25 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
  */
 async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   if (!params.id) {
-    throw badRequestError("Parameter id is required");
+    throw badRequestError('Parameter id is required');
   }
   const provider = await getProductDataProvider();
-  if (provider === "mongodb") {
-    if (!process.env["MONGODB_URI"]) {
-      throw internalError("MongoDB is not configured.");
+  if (provider === 'mongodb') {
+    if (!process.env['MONGODB_URI']) {
+      throw internalError('MongoDB is not configured.');
     }
     const db = await getMongoDb();
-    await db.collection("product_parameters").deleteOne({ id: params.id });
+    await db.collection('product_parameters').deleteOne({ id: params.id });
     return NextResponse.json({ success: true });
   }
 
-  if (!process.env["DATABASE_URL"]) {
-    throw badRequestError("Product parameters require the Postgres product store.");
+  if (!process.env['DATABASE_URL']) {
+    throw badRequestError('Product parameters require the Postgres product store.');
   }
 
   await prisma.productParameter.delete({ where: { id: params.id } });
   return NextResponse.json({ success: true });
 }
 
-export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, { source: "products.parameters.[id].PUT" });
-export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, { source: "products.parameters.[id].DELETE" });
+export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, { source: 'products.parameters.[id].PUT' });
+export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, { source: 'products.parameters.[id].DELETE' });

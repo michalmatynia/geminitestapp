@@ -1,18 +1,19 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
 import {
   getProductListingRepository,
   listingExistsAcrossProviders,
   listProductListingsByProductIdAcrossProviders,
-} from "@/features/integrations/server";
-import { getProductRepository } from "@/features/products/server";
-import { getIntegrationRepository } from "@/features/integrations/server";
-import { parseJsonBody } from "@/features/products/server";
-import { badRequestError, conflictError, notFoundError } from "@/shared/errors/app-error";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+} from '@/features/integrations/server';
+import { getIntegrationRepository } from '@/features/integrations/server';
+import { getProductRepository } from '@/features/products/server';
+import { parseJsonBody } from '@/features/products/server';
+import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const createListingSchema = z.object({
   integrationId: z.string().min(1),
@@ -26,7 +27,7 @@ const createListingSchema = z.object({
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const { id: productId } = params;
   if (!productId) {
-    throw badRequestError("Product id is required");
+    throw badRequestError('Product id is required');
   }
   const listings = await listProductListingsByProductIdAcrossProviders(productId);
   return NextResponse.json(listings);
@@ -39,11 +40,11 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: {
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const { id: productId } = params;
   if (!productId) {
-    throw badRequestError("Product id is required");
+    throw badRequestError('Product id is required');
   }
 
   const parsed = await parseJsonBody(req, createListingSchema, {
-    logPrefix: "integrations.products.listings.POST"
+    logPrefix: 'integrations.products.listings.POST'
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -54,14 +55,14 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
   const productRepo = await getProductRepository();
   const product = await productRepo.getProductById(productId);
   if (!product) {
-    throw notFoundError("Product not found", { productId });
+    throw notFoundError('Product not found', { productId });
   }
 
   // Verify integration exists
   const integrationRepo = await getIntegrationRepository();
   const integration = await integrationRepo.getIntegrationById(data.integrationId);
   if (!integration) {
-    throw notFoundError("Integration not found", {
+    throw notFoundError('Integration not found', {
       integrationId: data.integrationId
     });
   }
@@ -73,7 +74,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
   );
   if (!connection) {
     throw notFoundError(
-      "Connection not found or does not belong to the integration",
+      'Connection not found or does not belong to the integration',
       { connectionId: data.connectionId, integrationId: data.integrationId }
     );
   }
@@ -82,7 +83,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
   const listingRepo = await getProductListingRepository();
   const exists = await listingExistsAcrossProviders(productId, data.connectionId);
   if (exists) {
-    throw conflictError("Product is already listed on this account", {
+    throw conflictError('Product is already listed on this account', {
       productId,
       connectionId: data.connectionId
     });
@@ -98,9 +99,9 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
 }
 
 export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {
-  source: "integrations.products.[id].listings.GET", requireCsrf: false
+  source: 'integrations.products.[id].listings.GET', requireCsrf: false
 });
 
 export const POST = apiHandlerWithParams<{ id: string }>(POST_handler, {
-  source: "integrations.products.[id].listings.POST", requireCsrf: false
+  source: 'integrations.products.[id].listings.POST', requireCsrf: false
 });

@@ -1,28 +1,29 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { getIntegrationRepository } from "@/features/integrations/server";
-import { decryptSecret, encryptSecret } from "@/features/integrations/server";
-import { mapStatusToAppError } from "@/shared/errors/error-mapper";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+
+import { getIntegrationRepository } from '@/features/integrations/server';
+import { decryptSecret, encryptSecret } from '@/features/integrations/server';
+import { mapStatusToAppError } from '@/shared/errors/error-mapper';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 type TestLogEntry = {
   step: string;
-  status: "pending" | "ok" | "failed";
+  status: 'pending' | 'ok' | 'failed';
   timestamp: string;
   detail: string;
 };
 
-const PROD_BASE_URL = process.env["ALLEGRO_API_URL"] ?? "https://api.allegro.pl";
+const PROD_BASE_URL = process.env['ALLEGRO_API_URL'] ?? 'https://api.allegro.pl';
 const SANDBOX_BASE_URL =
-  process.env["ALLEGRO_SANDBOX_API_URL"] ??
-  "https://api.allegro.pl.allegrosandbox.pl";
+  process.env['ALLEGRO_SANDBOX_API_URL'] ??
+  'https://api.allegro.pl.allegrosandbox.pl';
 const PROD_TOKEN_URL =
-  process.env["ALLEGRO_TOKEN_URL"] ?? "https://allegro.pl/auth/oauth/token";
+  process.env['ALLEGRO_TOKEN_URL'] ?? 'https://allegro.pl/auth/oauth/token';
 const SANDBOX_TOKEN_URL =
-  process.env["ALLEGRO_SANDBOX_TOKEN_URL"] ??
-  "https://allegro.pl.allegrosandbox.pl/auth/oauth/token";
+  process.env['ALLEGRO_SANDBOX_TOKEN_URL'] ??
+  'https://allegro.pl.allegrosandbox.pl/auth/oauth/token';
 
 /**
  * POST /api/integrations/[id]/connections/[connectionId]/allegro/test
@@ -35,7 +36,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
 
   const pushStep = (
     step: string,
-    status: "pending" | "ok" | "failed",
+    status: 'pending' | 'ok' | 'failed',
     detail: string
   ): void => {
     steps.push({
@@ -47,8 +48,8 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
   };
 
   const fail = async (step: string, detail: string, status: number = 400): Promise<Response> => {
-    const safeDetail = detail?.trim() ? detail : "Unknown error";
-    pushStep(step, "failed", safeDetail);
+    const safeDetail = detail?.trim() ? detail : 'Unknown error';
+    pushStep(step, 'failed', safeDetail);
     
     throw mapStatusToAppError(safeDetail, status);
   };
@@ -57,10 +58,10 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
   integrationId = id;
   integrationConnectionId = connectionId;
   if (!integrationId || !integrationConnectionId) {
-    return await fail("Loading connection", "Integration id and connection id are required", 400);
+    return await fail('Loading connection', 'Integration id and connection id are required', 400);
   }
 
-  pushStep("Loading connection", "pending", "Fetching stored credentials");
+  pushStep('Loading connection', 'pending', 'Fetching stored credentials');
   const repo = await getIntegrationRepository();
   const connection = await repo.getConnectionByIdAndIntegration(
     connectionId,
@@ -68,19 +69,19 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
   );
 
   if (!connection) {
-    return await fail("Loading connection", "Connection not found", 404);
+    return await fail('Loading connection', 'Connection not found', 404);
   }
-  pushStep("Loading connection", "ok", "Connection loaded");
+  pushStep('Loading connection', 'ok', 'Connection loaded');
 
   const integration = await repo.getIntegrationById(id);
 
   if (!integration) {
-    return await fail("Loading integration", "Integration not found", 404);
+    return await fail('Loading integration', 'Integration not found', 404);
   }
 
-  if (integration.slug !== "allegro") {
+  if (integration.slug !== 'allegro') {
     return await fail(
-      "Connection test",
+      'Connection test',
       `This endpoint is for Allegro connections only. Got: ${integration.name}`,
       400
     );
@@ -88,8 +89,8 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
 
   if (!connection.allegroAccessToken) {
     return await fail(
-      "Token validation",
-      "Allegro access token not configured. Connect first."
+      'Token validation',
+      'Allegro access token not configured. Connect first.'
     );
   }
 
@@ -110,27 +111,27 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
 
   const buildRequest = (token: string): Promise<Response> =>
     fetch(`${baseUrl}/me`, {
-      method: "GET",
+      method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
-        Accept: "application/vnd.allegro.public.v1+json"
+        Accept: 'application/vnd.allegro.public.v1+json'
       }
     });
 
   const refreshAccessToken = async (): Promise<string> => {
     if (!refreshToken || !clientId || !clientSecret) {
-      throw new Error("Missing refresh token or client credentials.");
+      throw new Error('Missing refresh token or client credentials.');
     }
-    const auth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+    const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
     const body = new URLSearchParams({
-      grant_type: "refresh_token",
+      grant_type: 'refresh_token',
       refresh_token: refreshToken
     });
     const tokenRes = await fetch(tokenUrl, {
-      method: "POST",
+      method: 'POST',
       headers: {
         Authorization: `Basic ${auth}`,
-        "Content-Type": "application/x-www-form-urlencoded"
+        'Content-Type': 'application/x-www-form-urlencoded'
       },
       body
     });
@@ -163,36 +164,36 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     return payload.access_token;
   };
 
-  pushStep("Testing API connection", "pending", "Calling Allegro /me");
+  pushStep('Testing API connection', 'pending', 'Calling Allegro /me');
   let accessToken = decryptSecret(connection.allegroAccessToken);
   let response = await buildRequest(accessToken);
   let refreshed = false;
 
   if (response.status === 401 && refreshToken) {
-    pushStep("Refreshing token", "pending", "Refreshing Allegro access token");
+    pushStep('Refreshing token', 'pending', 'Refreshing Allegro access token');
     try {
       accessToken = await refreshAccessToken();
       refreshed = true;
-      pushStep("Refreshing token", "ok", "Allegro token refreshed");
+      pushStep('Refreshing token', 'ok', 'Allegro token refreshed');
       response = await buildRequest(accessToken);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      return await fail("Refreshing token", message);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return await fail('Refreshing token', message);
     }
   }
 
   const raw = await response.text();
   if (!response.ok) {
     const detail = raw || `${response.status} ${response.statusText}`.trim();
-    return await fail("Testing API connection", detail, response.status);
+    return await fail('Testing API connection', detail, response.status);
   }
 
   pushStep(
-    "Testing API connection",
-    "ok",
+    'Testing API connection',
+    'ok',
     refreshed
-      ? "API connection successful. Token refreshed."
-      : "API connection successful."
+      ? 'API connection successful. Token refreshed.'
+      : 'API connection successful.'
   );
 
   await repo.updateConnection(connection.id, {
@@ -216,6 +217,6 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
 export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(
   POST_handler,
   {
-    source: "integrations.[id].connections.[connectionId].allegro.test.POST", requireCsrf: false
+    source: 'integrations.[id].connections.[connectionId].allegro.test.POST', requireCsrf: false
   }
 );

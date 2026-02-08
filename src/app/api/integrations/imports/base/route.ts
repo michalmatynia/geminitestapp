@@ -1,17 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import path from "path";
-import fs from "fs/promises";
-import prisma from "@/shared/lib/db/prisma";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { getProductDataProvider } from "@/features/products/services/product-provider";
-import { getCatalogRepository } from "@/features/products/services/catalog-repository";
-import { getImageFileRepository } from "@/features/files/server";
-import { getProductRepository } from "@/features/products/services/product-repository";
-import { getImportTemplate } from "@/features/integrations/services/import-template-repository";
-import { getIntegrationRepository } from "@/features/integrations/services/integration-repository";
-import { decryptSecret } from "@/features/integrations/utils/encryption";
-import { badRequestError, notFoundError } from "@/shared/errors/app-error";
+import fs from 'fs/promises';
+import path from 'path';
+
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { getImageFileRepository } from '@/features/files/server';
+import { getImportTemplate } from '@/features/integrations/services/import-template-repository';
 import {
   fetchBaseAllWarehouses,
   fetchBaseAllWarehousesDebug,
@@ -22,20 +16,28 @@ import {
   fetchBaseProducts,
   fetchBaseProductIds,
   fetchBaseProductDetails
-} from "@/features/integrations/services/imports/base-client";
-import type { BaseProductRecord } from "@/features/integrations/services/imports/base-client";
-import { extractBaseImageUrls, mapBaseProduct } from "@/features/integrations/services/imports/base-mapper";
-import { validateProductCreate } from "@/features/products/validations";
-import type { ProductCreateInput } from "@/features/products/validations/schemas";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import type { ProductWithImages } from "@/features/products/types/records";
+} from '@/features/integrations/services/imports/base-client';
+import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
+import { extractBaseImageUrls, mapBaseProduct } from '@/features/integrations/services/imports/base-mapper';
+import { getIntegrationRepository } from '@/features/integrations/services/integration-repository';
+import { decryptSecret } from '@/features/integrations/utils/encryption';
+import { getCatalogRepository } from '@/features/products/services/catalog-repository';
+import { getProductDataProvider } from '@/features/products/services/product-provider';
+import { getProductRepository } from '@/features/products/services/product-repository';
+import type { ProductWithImages } from '@/features/products/types/records';
+import { validateProductCreate } from '@/features/products/validations';
+import type { ProductCreateInput } from '@/features/products/validations/schemas';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
 const requestSchema = z.object({
   token: z.string().trim().min(1).optional(),
-  action: z.enum(["inventories", "warehouses", "warehouses_debug", "import", "list"]),
+  action: z.enum(['inventories', 'warehouses', 'warehouses_debug', 'import', 'list']),
   connectionId: z.string().trim().min(1).optional(),
   inventoryId: z.string().trim().min(1).optional(),
   includeAllWarehouses: z.boolean().optional(),
@@ -46,7 +48,7 @@ const requestSchema = z.object({
   pageSize: z.coerce.number().int().positive().optional(),
   searchName: z.string().trim().optional(),
   searchSku: z.string().trim().optional(),
-  imageMode: z.enum(["links", "download"]).optional(),
+  imageMode: z.enum(['links', 'download']).optional(),
   uniqueOnly: z.boolean().optional(),
   allowDuplicateSku: z.boolean().optional(), // Allow importing products with duplicate SKUs
   selectedIds: z.array(z.string().trim().min(1)).optional()
@@ -80,7 +82,7 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
     const integrationRepo = await getIntegrationRepository();
     const integrations = await integrationRepo.listIntegrations();
     const baseIntegration = integrations.find((i) =>
-      ["baselinker", "base-com"].includes(i.slug)
+      ['baselinker', 'base-com'].includes(i.slug)
     );
 
     if (baseIntegration) {
@@ -114,17 +116,17 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
   }
 
   if (!token) {
-    throw badRequestError("Base.com API token is required (or connect integration).");
+    throw badRequestError('Base.com API token is required (or connect integration).');
   }
 
-  if (data.action === "inventories") {
+  if (data.action === 'inventories') {
     const inventories = await fetchBaseInventories(token);
     return NextResponse.json({ inventories });
   }
 
-  if (data.action === "warehouses") {
+  if (data.action === 'warehouses') {
     if (!data.inventoryId) {
-      throw badRequestError("Inventory ID is required.");
+      throw badRequestError('Inventory ID is required.');
     }
     const warehouses = await fetchBaseWarehouses(token, data.inventoryId);
     let allWarehouses: { id: string; name: string }[] = [];
@@ -138,9 +140,9 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
     return NextResponse.json({ warehouses, allWarehouses });
   }
 
-  if (data.action === "warehouses_debug") {
+  if (data.action === 'warehouses_debug') {
     if (!data.inventoryId) {
-      throw badRequestError("Inventory ID is required.");
+      throw badRequestError('Inventory ID is required.');
     }
     const inventoryResult = await fetchBaseWarehousesDebug(
       token,
@@ -169,33 +171,33 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
   }
 
   if (!data.inventoryId) {
-    throw badRequestError("Inventory ID is required.");
+    throw badRequestError('Inventory ID is required.');
   }
 
-  if (data.action === "list") {
+  if (data.action === 'list') {
     const allBaseIds = await fetchBaseProductIds(token, data.inventoryId);
 
     // Get existing products using repository to check for baseProductIds and SKUs
     const productRepository = await getProductRepository();
     const allProducts = await productRepository.getProducts({
-      pageSize: "10000", // Get all products
-      page: "0"
+      pageSize: '10000', // Get all products
+      page: '0'
     });
     const existingIds = new Set(
       allProducts
         .map((product: ProductWithImages) => product.baseProductId)
-        .filter((id): id is string => typeof id === "string")
+        .filter((id): id is string => typeof id === 'string')
     );
     const existingSkus = new Set(
       allProducts
         .map((product: ProductWithImages) => product.sku)
-        .filter((sku): sku is string => typeof sku === "string" && sku.trim() !== "")
+        .filter((sku): sku is string => typeof sku === 'string' && sku.trim() !== '')
     );
 
-            const listItems = allBaseIds.map((id: string) => ({
-              id,
-              exists: existingIds.has(id)
-            }));
+    const listItems = allBaseIds.map((id: string) => ({
+      id,
+      exists: existingIds.has(id)
+    }));
     const filteredItems = data.uniqueOnly
       ? listItems.filter((item: { id: string; exists: boolean }) => !item.exists)
       : listItems;
@@ -225,8 +227,8 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
     );
 
     const toStringId = (value: unknown): string | null => {
-      if (typeof value === "string" && value.trim()) return value.trim();
-      if (typeof value === "number" && Number.isFinite(value)) {
+      if (typeof value === 'string' && value.trim()) return value.trim();
+      if (typeof value === 'number' && Number.isFinite(value)) {
         return String(value);
       }
       return null;
@@ -247,13 +249,13 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
           mapped.name_en ??
           mapped.name_pl ??
           mapped.name_de ??
-          (typeof record['name'] === "string" ? record['name'] : "Unnamed");
+          (typeof record['name'] === 'string' ? record['name'] : 'Unnamed');
 
         const description =
           mapped.description_en ??
           mapped.description_pl ??
           mapped.description_de ??
-          "";
+          '';
 
         const sku = mapped.sku ?? null;
         const skuExists = sku ? existingSkus.has(sku) : false;
@@ -272,11 +274,11 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
       })
       .filter((item) => Boolean(item.baseProductId && item.sku));
 
-    const normalizedName = (data.searchName ?? "").trim().toLowerCase();
-    const normalizedSku = (data.searchSku ?? "").trim().toLowerCase();
+    const normalizedName = (data.searchName ?? '').trim().toLowerCase();
+    const normalizedSku = (data.searchSku ?? '').trim().toLowerCase();
     const searchedList = mappedList.filter((item: MappedItem) => {
       const nameOk = normalizedName.length === 0 ? true : item.name.toLowerCase().includes(normalizedName);
-      const skuOk = normalizedSku.length === 0 ? true : (item.sku ?? "").toLowerCase().includes(normalizedSku);
+      const skuOk = normalizedSku.length === 0 ? true : (item.sku ?? '').toLowerCase().includes(normalizedSku);
       return nameOk && skuOk;
     });
 
@@ -319,20 +321,20 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
   // Pre-fetch existing products for filtering
   if (data.uniqueOnly || !allowDuplicateSku) {
     const allProducts = await productRepository.getProducts({
-      pageSize: "10000",
-      page: "0"
+      pageSize: '10000',
+      page: '0'
     });
 
     if (data.uniqueOnly) {
       const existingIds = new Set(
         allProducts
           .map((product: ProductWithImages) => product.baseProductId)
-          .filter((id): id is string => typeof id === "string")
+          .filter((id): id is string => typeof id === 'string')
       );
 
       const toStringId = (value: unknown): string | null => {
-        if (typeof value === "string" && value.trim()) return value.trim();
-        if (typeof value === "number" && Number.isFinite(value)) {
+        if (typeof value === 'string' && value.trim()) return value.trim();
+        if (typeof value === 'number' && Number.isFinite(value)) {
           return String(value);
         }
         return null;
@@ -351,7 +353,7 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
       existingSkus = new Set(
         allProducts
           .map((product: ProductWithImages) => product.sku)
-          .filter((sku): sku is string => typeof sku === "string" && sku.trim() !== "")
+          .filter((sku): sku is string => typeof sku === 'string' && sku.trim() !== '')
       );
     }
   }
@@ -360,7 +362,7 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
     ? await getImportTemplate(data.templateId)
     : null;
   if (data.templateId && !template) {
-    throw notFoundError("Import template not found.");
+    throw notFoundError('Import template not found.');
   }
 
   const catalogs = await catalogRepository.listCatalogs();
@@ -369,31 +371,31 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
     ? catalogs.find((catalog) => catalog.id === data.catalogId)
     : defaultCatalog;
   if (!targetCatalog) {
-    throw notFoundError("Selected catalog not found.");
+    throw notFoundError('Selected catalog not found.');
   }
 
   const defaultPriceGroupId = targetCatalog.defaultPriceGroupId;
   const provider = await getProductDataProvider();
   const defaultPriceGroup = defaultPriceGroupId
     ? { id: defaultPriceGroupId }
-    : provider === "mongodb"
+    : provider === 'mongodb'
       ? (() => {
-          const mongoDefault = getMongoDb()
-            .then((mongo) =>
-              mongo
-                .collection<{ id: string }>("price_groups")
-                .findOne({ isDefault: true }, { projection: { id: 1 } })
-            )
-            .catch(() => null);
-          return mongoDefault;
-        })()
+        const mongoDefault = getMongoDb()
+          .then((mongo) =>
+            mongo
+              .collection<{ id: string }>('price_groups')
+              .findOne({ isDefault: true }, { projection: { id: 1 } })
+          )
+          .catch(() => null);
+        return mongoDefault;
+      })()
       : prisma.priceGroup.findFirst({
-          where: { isDefault: true },
-          select: { id: true }
-        });
+        where: { isDefault: true },
+        select: { id: true }
+      });
   const resolvedDefault = (await defaultPriceGroup) as { id: string } | null;
   if (!resolvedDefault?.id) {
-    throw badRequestError("Default price group is required before importing products.");
+    throw badRequestError('Default price group is required before importing products.');
   }
   let imported = 0;
   let failed = 0;
@@ -405,19 +407,19 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
     return /sku/i.test(error.message) && /unique|duplicate/i.test(error.message);
   };
 
-  const imageMode = data.imageMode ?? "links";
+  const imageMode = data.imageMode ?? 'links';
   const maxImages = 15;
 
   const sanitizeSku = (value: string) =>
-    value.trim().replace(/[^a-zA-Z0-9-_]/g, "_");
+    value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
   const guessMimeType = (url: string) => {
     const lower = url.toLowerCase();
-    if (lower.endsWith(".png")) return "image/png";
-    if (lower.endsWith(".webp")) return "image/webp";
-    if (lower.endsWith(".gif")) return "image/gif";
-    if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
-    return "image/jpeg";
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.webp')) return 'image/webp';
+    if (lower.endsWith('.gif')) return 'image/gif';
+    if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
+    return 'image/jpeg';
   };
 
   const extractFilename = (url: string, fallback: string) => {
@@ -435,11 +437,11 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
     if (!res.ok) {
       throw new Error(`Failed to download image (${res.status})`);
     }
-    const contentType = res.headers.get("content-type") || guessMimeType(url);
+    const contentType = res.headers.get('content-type') || guessMimeType(url);
     const buffer = Buffer.from(await res.arrayBuffer());
-    const folderName = sku ? sanitizeSku(sku) : "temp";
-    const filename = `${Date.now()}-${index}-${extractFilename(url, "image.jpg")}`;
-    const diskDir = path.join(process.cwd(), "public", "uploads", "products", folderName);
+    const folderName = sku ? sanitizeSku(sku) : 'temp';
+    const filename = `${Date.now()}-${index}-${extractFilename(url, 'image.jpg')}`;
+    const diskDir = path.join(process.cwd(), 'public', 'uploads', 'products', folderName);
     const publicPath = `/uploads/products/${folderName}/${filename}`;
     await fs.mkdir(diskDir, { recursive: true });
     await fs.writeFile(path.join(diskDir, filename), buffer);
@@ -479,7 +481,7 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
       const payload = validationResult.data as any;
       const created = (await productRepository.createProduct(payload)) as ProductWithImages | null;
       if (!created && payload.sku) {
-        throw new Error("Failed to create product.");
+        throw new Error('Failed to create product.');
       }
 
       // Track newly added SKU to prevent duplicates within this import batch
@@ -498,7 +500,7 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
           const url = imageUrls[i];
           if (!url) continue;
           try {
-            if (imageMode === "download") {
+            if (imageMode === 'download') {
               const file = await downloadImage(url, payload.sku ?? (created?.id || 'unknown'), i + 1);
               imageFileIds.push(file.id);
             } else {
@@ -515,7 +517,7 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
             const message =
               imageError instanceof Error
                 ? imageError.message
-                : "Failed to import image.";
+                : 'Failed to import image.';
             if (errors.length < 10) {
               errors.push(message);
             }
@@ -560,7 +562,7 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
               const url = imageUrls[i];
               if (!url) continue;
               try {
-                if (imageMode === "download") {
+                if (imageMode === 'download') {
                   const file = await downloadImage(
                     url,
                     payload.sku ?? (created?.id || 'unknown'),
@@ -581,7 +583,7 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
                 const message =
                   imageError instanceof Error
                     ? imageError.message
-                    : "Failed to import image.";
+                    : 'Failed to import image.';
                 if (errors.length < 10) {
                   errors.push(message);
                 }
@@ -600,7 +602,7 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
       }
       failed += 1;
       const message =
-        error instanceof Error ? error.message : "Failed to import product.";
+        error instanceof Error ? error.message : 'Failed to import product.';
       if (errors.length < 10) {
         errors.push(message);
       }
@@ -618,9 +620,9 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { 
-   source: "products.imports.base.POST", 
-   requireCsrf: false,
-   parseJsonBody: true,
-   bodySchema: requestSchema
- });
+  { 
+    source: 'products.imports.base.POST', 
+    requireCsrf: false,
+    parseJsonBody: true,
+    bodySchema: requestSchema
+  });

@@ -1,14 +1,15 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/shared/lib/db/prisma";
+import { NextRequest, NextResponse } from 'next/server';
 
-import { getProductDataProvider } from "@/features/products/server";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { badRequestError, internalError } from "@/shared/errors/app-error";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import type { ProductCategoryWithChildren } from "@/shared/types/domain/products";
+
+import { getProductDataProvider } from '@/features/products/server';
+import { badRequestError, internalError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ProductCategoryWithChildren } from '@/shared/types/domain/products';
 
 type CategoryFromDb = {
   id: string;
@@ -29,22 +30,22 @@ type CategoryFromDb = {
  */
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { searchParams } = new URL(req.url);
-  const catalogId = searchParams.get("catalogId");
+  const catalogId = searchParams.get('catalogId');
 
   if (!catalogId) {
-    throw badRequestError("catalogId query parameter is required");
+    throw badRequestError('catalogId query parameter is required');
   }
 
   const provider = await getProductDataProvider();
   let categories: CategoryFromDb[] = [];
 
-  if (provider === "mongodb") {
-    if (!process.env["MONGODB_URI"]) {
-      throw internalError("MongoDB is not configured.");
+  if (provider === 'mongodb') {
+    if (!process.env['MONGODB_URI']) {
+      throw internalError('MongoDB is not configured.');
     }
     const db = await getMongoDb();
     const docs = await db
-      .collection<CategoryFromDb>("product_categories")
+      .collection<CategoryFromDb>('product_categories')
       .find({ catalogId })
       .sort({ name: 1 })
       .toArray();
@@ -52,19 +53,19 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       const { _id, ...rest } = doc as unknown as {
         _id?: { toString?: () => string };
       } & CategoryFromDb;
-      const fallbackId = _id?.toString ? _id.toString() : "";
+      const fallbackId = _id?.toString ? _id.toString() : '';
       return {
         ...rest,
         id: rest.id ?? fallbackId,
       };
     });
   } else {
-    if (!process.env["DATABASE_URL"]) {
-      throw badRequestError("Product categories require the Postgres product store.");
+    if (!process.env['DATABASE_URL']) {
+      throw badRequestError('Product categories require the Postgres product store.');
     }
     categories = await prisma.productCategory.findMany({
       where: { catalogId },
-      orderBy: { name: "asc" },
+      orderBy: { name: 'asc' },
     });
   }
 
@@ -86,4 +87,4 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "products.categories.tree.GET" });
+  { source: 'products.categories.tree.GET' });

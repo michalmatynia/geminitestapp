@@ -610,8 +610,8 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
           const payload = result.data;
           const resolvedSample = payload?.item ?? (payload?.items?.[0] ?? null);
           if (resolvedSample) {
-            const rawId = (resolvedSample as Record<string, unknown>)?._id
-              ?? (resolvedSample as Record<string, unknown>)?.id;
+            const rawId = (resolvedSample as Record<string, unknown>)?.[ '_id' ]
+              ?? (resolvedSample as Record<string, unknown>)?.[ 'id' ];
             const nextId = (rawId as { toString?: () => string })?.toString?.() ?? id ?? '';
             return { sample: resolvedSample, fetchedId: nextId };
           }

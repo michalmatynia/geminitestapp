@@ -1,23 +1,24 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { productService } from "@/features/products/server";
-import { getProductRepository } from "@/features/products/services/product-repository";
-import { z } from "zod";
-import { badRequestError, notFoundError, payloadTooLargeError } from "@/shared/errors/app-error";
-import { parseJsonBody } from "@/features/products/server";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { validateProductUpdateMiddleware } from "@/features/products/validations/middleware";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { productService } from '@/features/products/server';
+import { parseJsonBody } from '@/features/products/server';
+import { getProductRepository } from '@/features/products/services/product-repository';
+import { validateProductUpdateMiddleware } from '@/features/products/validations/middleware';
+import { badRequestError, notFoundError, payloadTooLargeError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const isLikelyPayloadTooLarge = (error: unknown): boolean => {
-  const message = error instanceof Error ? error.message : String(error ?? "");
+  const message = error instanceof Error ? error.message : String(error ?? '');
   const normalized = message.toLowerCase();
   return (
-    normalized.includes("exceeded") ||
-    normalized.includes("too large") ||
-    normalized.includes("body limit") ||
-    normalized.includes("request entity too large")
+    normalized.includes('exceeded') ||
+    normalized.includes('too large') ||
+    normalized.includes('body limit') ||
+    normalized.includes('request entity too large')
   );
 };
 
@@ -32,12 +33,12 @@ async function GET_handler(
 ): Promise<Response> {
   const id = params.id;
   if (!id) {
-    throw badRequestError("Product id is required");
+    throw badRequestError('Product id is required');
   }
 
   const product = await productService.getProductById(id);
   if (!product) {
-    throw notFoundError("Product not found", { productId: id });
+    throw notFoundError('Product not found', { productId: id });
   }
 
   return NextResponse.json(product);
@@ -54,7 +55,7 @@ async function PUT_handler(
 ): Promise<Response> {
   const id = params.id;
   if (!id) {
-    throw badRequestError("Product id is required");
+    throw badRequestError('Product id is required');
   }
   let formData: FormData;
   try {
@@ -62,11 +63,11 @@ async function PUT_handler(
   } catch (error) {
     if (isLikelyPayloadTooLarge(error)) {
       throw payloadTooLargeError(
-        "Upload payload too large. Reduce image sizes/count or increase proxyClientMaxBodySize.",
+        'Upload payload too large. Reduce image sizes/count or increase proxyClientMaxBodySize.',
         { productId: id }
       );
     }
-    throw badRequestError("Invalid form data payload", {
+    throw badRequestError('Invalid form data payload', {
       productId: id,
       error,
     });
@@ -80,7 +81,7 @@ async function PUT_handler(
 
   const product = await productService.updateProduct(id, formData);
   if (!product) {
-    throw notFoundError("Product not found", { productId: id });
+    throw notFoundError('Product not found', { productId: id });
   }
   return NextResponse.json(product);
 }
@@ -101,11 +102,11 @@ async function PATCH_handler(
 ): Promise<Response> {
   const id = params.id;
   if (!id) {
-    throw badRequestError("Product id is required");
+    throw badRequestError('Product id is required');
   }
 
   const parsed = await parseJsonBody(req, patchProductSchema, {
-    logPrefix: "products.PATCH",
+    logPrefix: 'products.PATCH',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -119,7 +120,7 @@ async function PATCH_handler(
   const productRepository = await getProductRepository();
   const product = await productRepository.updateProduct(id, updateData);
   if (!product) {
-    throw notFoundError("Product not found", { productId: id });
+    throw notFoundError('Product not found', { productId: id });
   }
 
   return NextResponse.json(product);
@@ -136,24 +137,24 @@ async function DELETE_handler(
 ): Promise<Response> {
   const id = params.id;
   if (!id) {
-    throw badRequestError("Product id is required");
+    throw badRequestError('Product id is required');
   }
   const product = await productService.deleteProduct(id);
   if (!product) {
-    throw notFoundError("Product not found", { productId: id });
+    throw notFoundError('Product not found', { productId: id });
   }
   return new Response(null, { status: 204 });
 }
 
 export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {
-  source: "products.[id].GET",
+  source: 'products.[id].GET',
 });
 export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, {
-  source: "products.[id].PUT",
+  source: 'products.[id].PUT',
 });
 export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, {
-  source: "products.[id].PATCH",
+  source: 'products.[id].PATCH',
 });
 export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, {
-  source: "products.[id].DELETE",
+  source: 'products.[id].DELETE',
 });

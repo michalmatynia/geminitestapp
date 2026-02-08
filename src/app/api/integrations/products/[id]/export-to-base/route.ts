@@ -1,21 +1,23 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { getProductRepository } from "@/features/products/server";
-import { getIntegrationRepository } from "@/features/integrations/server";
-import { getProductListingRepository } from "@/features/integrations/server";
-import { findProductListingByIdAcrossProviders } from "@/features/integrations/server";
-import { findProductListingByProductAndConnectionAcrossProviders } from "@/features/integrations/server";
-import { getCategoryMappingRepository } from "@/features/integrations/server";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { auth } from '@/features/auth/server';
+import { getIntegrationRepository } from '@/features/integrations/server';
+import { getProductListingRepository } from '@/features/integrations/server';
+import { findProductListingByIdAcrossProviders } from '@/features/integrations/server';
+import { findProductListingByProductAndConnectionAcrossProviders } from '@/features/integrations/server';
+import { getCategoryMappingRepository } from '@/features/integrations/server';
 import {
   getExportWarehouseId
-} from "@/features/integrations/server";
+} from '@/features/integrations/server';
 import {
   getExportDefaultInventoryId,
   getExportStockFallbackEnabled,
   listExportTemplates
-} from "@/features/integrations/server";
+} from '@/features/integrations/server';
 import {
   buildBaseProductData,
   collectProductImageDiagnostics,
@@ -26,22 +28,21 @@ import {
   type ImageBase64Mode,
   type ImageExportDiagnostics,
   type ImageTransformOptions
-} from "@/features/integrations/server";
-import { checkBaseSkuExists, fetchBaseWarehouses } from "@/features/integrations/server";
-import { decryptSecret } from "@/features/integrations/server";
-import { LogCapture } from "@/features/integrations/server";
-import { auth } from "@/features/auth/server";
-import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";
-import { parseJsonBody } from "@/features/products/server";
-import { ErrorSystem } from "@/features/observability/server";
+} from '@/features/integrations/server';
+import { checkBaseSkuExists, fetchBaseWarehouses } from '@/features/integrations/server';
+import { decryptSecret } from '@/features/integrations/server';
+import { LogCapture } from '@/features/integrations/server';
+import { ErrorSystem } from '@/features/observability/server';
+import { parseJsonBody } from '@/features/products/server';
+import { getProductRepository } from '@/features/products/server';
 import {
   badRequestError,
   conflictError,
   externalServiceError,
   notFoundError
-} from "@/shared/errors/app-error";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+} from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const exportSchema = z.object({
   connectionId: z.string().min(1),
@@ -49,7 +50,7 @@ const exportSchema = z.object({
   templateId: z.string().optional(),
   allowDuplicateSku: z.boolean().optional(), // Allow exporting even if SKU exists in Base.com
   exportImagesAsBase64: z.boolean().optional(), // Export images as base64 data blobs instead of URLs
-  imageBase64Mode: z.enum(["base-only", "full-data-uri"]).optional(),
+  imageBase64Mode: z.enum(['base-only', 'full-data-uri']).optional(),
   imagesOnly: z.boolean().optional(),
   listingId: z.string().optional(),
   externalListingId: z.string().optional(),
@@ -63,15 +64,15 @@ const exportSchema = z.object({
 });
 
 const normalizeSearchText = (value: string) =>
-  value.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  value.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
 const isBaseImageError = (message: string | undefined) => {
   if (!message) return false;
   const normalized = normalizeSearchText(message.toLowerCase());
   return (
-    normalized.includes("zdjec") ||
-    normalized.includes("image") ||
-    normalized.includes("photo")
+    normalized.includes('zdjec') ||
+    normalized.includes('image') ||
+    normalized.includes('photo')
   );
 };
 
@@ -102,7 +103,7 @@ const logImageDiagnostics = async ({
   context: Record<string, unknown>;
 }) => {
   const urlDiagnostics = collectProductImageDiagnostics(product, imageBaseUrl);
-  void ErrorSystem.logWarning("[export-to-base][images] Image candidates", {
+  void ErrorSystem.logWarning('[export-to-base][images] Image candidates', {
     ...context,
     images: urlDiagnostics
   });
@@ -117,7 +118,7 @@ const logImageDiagnostics = async ({
       transform: transform ?? null
     });
   } catch (error) {
-    void ErrorSystem.logWarning("[export-to-base][images] Failed to gather base64 diagnostics", {
+    void ErrorSystem.logWarning('[export-to-base][images] Failed to gather base64 diagnostics', {
       ...context,
       error: error instanceof Error ? error.message : String(error)
     });
@@ -125,14 +126,14 @@ const logImageDiagnostics = async ({
 };
 
 const CATEGORY_TEMPLATE_PRODUCT_FIELDS = new Set([
-  "categoryid",
-  "category_id",
-  "category",
+  'categoryid',
+  'category_id',
+  'category',
 ]);
 
-const BASE_EXPORT_RUN_PATH_ID = "integration-base-export";
-const BASE_EXPORT_RUN_PATH_NAME = "Base.com Export Jobs";
-const BASE_EXPORT_SOURCE = "integration_base_export";
+const BASE_EXPORT_RUN_PATH_ID = 'integration-base-export';
+const BASE_EXPORT_RUN_PATH_NAME = 'Base.com Export Jobs';
+const BASE_EXPORT_SOURCE = 'integration_base_export';
 
 /**
  * POST /api/integrations/products/[id]/export-to-base
@@ -146,19 +147,19 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
   let runMeta: Record<string, unknown> = {
     source: BASE_EXPORT_SOURCE,
     sourceInfo: {
-      tab: "products",
-      location: "product-listing",
-      action: "export_to_base",
+      tab: 'products',
+      location: 'product-listing',
+      action: 'export_to_base',
     },
-    executionMode: "server",
-    runMode: "api",
-    integration: "base.com",
+    executionMode: 'server',
+    runMode: 'api',
+    integration: 'base.com',
   };
 
   try {
     const { id: productId } = params;
     const parsed = await parseJsonBody(_req, exportSchema, {
-      logPrefix: "export-to-base"
+      logPrefix: 'export-to-base'
     });
     if (!parsed.ok) {
       logCapture.stop();
@@ -166,15 +167,15 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     }
     const data = parsed.data;
     const requestId =
-      _req.headers.get("idempotency-key") ??
-      _req.headers.get("x-idempotency-key") ??
-      _req.headers.get("x-request-id") ??
+      _req.headers.get('idempotency-key') ??
+      _req.headers.get('x-idempotency-key') ??
+      _req.headers.get('x-request-id') ??
       undefined;
     const imagesOnly = data.imagesOnly ?? false;
     const forwardedHost =
-      _req.headers.get("x-forwarded-host") ?? _req.headers.get("host");
+      _req.headers.get('x-forwarded-host') ?? _req.headers.get('host');
     const forwardedProto =
-      _req.headers.get("x-forwarded-proto") ?? "http";
+      _req.headers.get('x-forwarded-proto') ?? 'http';
     const imageBaseUrl = forwardedHost
       ? `${forwardedProto}://${forwardedHost}`
       : new URL(_req.url).origin;
@@ -185,9 +186,9 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     runMeta = {
       ...runMeta,
       sourceInfo: {
-        tab: "products",
-        location: "product-listing",
-        action: "export_to_base",
+        tab: 'products',
+        location: 'product-listing',
+        action: 'export_to_base',
         productId,
         connectionId: data.connectionId,
         inventoryId: resolvedInventoryId,
@@ -201,24 +202,24 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
         userId,
         pathId: BASE_EXPORT_RUN_PATH_ID,
         pathName: BASE_EXPORT_RUN_PATH_NAME,
-        triggerEvent: "export_to_base",
+        triggerEvent: 'export_to_base',
         triggerNodeId: `product:${productId}`,
         entityId: productId,
-        entityType: "product",
+        entityType: 'product',
         meta: runMeta,
         maxAttempts: 1,
         retryCount: 0,
       });
       runId = createdRun.id;
       await runRepository.updateRun(runId, {
-        status: "running",
+        status: 'running',
         startedAt: new Date(),
         meta: runMeta,
       });
       await runRepository.createRunEvent({
         runId,
-        level: "info",
-        message: "Export to Base.com started.",
+        level: 'info',
+        message: 'Export to Base.com started.',
         metadata: {
           productId,
           connectionId: data.connectionId,
@@ -230,13 +231,13 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       // Keep export flow resilient if runtime-run logging fails.
     }
 
-    await ErrorSystem.logInfo("[export-to-base] Starting export", {
+    await ErrorSystem.logInfo('[export-to-base] Starting export', {
       productId,
       connectionId: data.connectionId,
       inventoryId: resolvedInventoryId,
       requestedInventoryId: data.inventoryId,
       defaultInventoryId,
-      templateId: data.templateId || "none",
+      templateId: data.templateId || 'none',
       imagesOnly
     });
 
@@ -244,13 +245,13 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     const productRepo = await getProductRepository();
     const product = await productRepo.getProductById(productId);
     if (!product) {
-      throw notFoundError("Product not found", { productId });
+      throw notFoundError('Product not found', { productId });
     }
 
-    await ErrorSystem.logInfo("[export-to-base] Product loaded", {
+    await ErrorSystem.logInfo('[export-to-base] Product loaded', {
       productId,
       sku: product.sku,
-      name: product.name_en || product.name_pl || "unnamed"
+      name: product.name_en || product.name_pl || 'unnamed'
     });
 
     let imageDiagnosticsContext = {
@@ -266,12 +267,12 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       data.connectionId
     );
     if (!connection) {
-      throw notFoundError("Connection not found", {
+      throw notFoundError('Connection not found', {
         connectionId: data.connectionId
       });
     }
 
-    await ErrorSystem.logInfo("[export-to-base] Connection loaded", {
+    await ErrorSystem.logInfo('[export-to-base] Connection loaded', {
       connectionId: data.connectionId,
       connectionName: connection.name,
       hasToken: Boolean(connection.baseApiToken || connection.password)
@@ -287,7 +288,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       }
     } catch (_error) {
       throw badRequestError(
-        "Failed to decrypt Base.com API token. Please re-save the connection token.",
+        'Failed to decrypt Base.com API token. Please re-save the connection token.',
         {
           connectionId: data.connectionId,
           connectionName: connection.name
@@ -297,7 +298,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
 
     if (!token) {
       throw badRequestError(
-        "Base.com API token not found in connection. Please configure the API token in the connection settings.",
+        'Base.com API token not found in connection. Please configure the API token in the connection settings.',
         {
           connectionId: data.connectionId,
           connectionName: connection.name
@@ -311,7 +312,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     let exportImagesAsBase64 = imagesOnly
       ? true
       : data.exportImagesAsBase64 ?? hasImageOverrides;
-    let imageBase64Mode: ImageBase64Mode = data.imageBase64Mode ?? "base-only";
+    let imageBase64Mode: ImageBase64Mode = data.imageBase64Mode ?? 'base-only';
     let imageTransform: ImageTransformOptions | null = null;
     if (data.imageTransform) {
       imageTransform = {};
@@ -342,16 +343,16 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     if (!imagesOnly) {
       const hasCategoryTemplateMapping = mappings.some((mapping) =>
         CATEGORY_TEMPLATE_PRODUCT_FIELDS.has(
-          mapping["targetField"].trim().toLowerCase()
+          mapping['targetField'].trim().toLowerCase()
         )
       );
 
       if (hasCategoryTemplateMapping) {
         const internalCategoryId =
-          typeof product.categoryId === "string" ? product.categoryId.trim() : "";
+          typeof product.categoryId === 'string' ? product.categoryId.trim() : '';
         if (!internalCategoryId) {
           throw badRequestError(
-            "Product has no internal category assigned. Assign a category before exporting with category mapping."
+            'Product has no internal category assigned. Assign a category before exporting with category mapping.'
           );
         }
 
@@ -384,7 +385,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
         };
 
         await ErrorSystem.logInfo(
-          "[export-to-base] Resolved category mapping for export",
+          '[export-to-base] Resolved category mapping for export',
           {
             productId,
             connectionId: data.connectionId,
@@ -399,7 +400,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     // Check for duplicate SKU in Base.com if not allowed
     const allowDuplicateSku = imagesOnly ? true : data.allowDuplicateSku ?? false;
     if (!allowDuplicateSku && product.sku) {
-      await ErrorSystem.logInfo("[export-to-base] Checking if SKU exists in Base.com", {
+      await ErrorSystem.logInfo('[export-to-base] Checking if SKU exists in Base.com', {
         sku: product.sku,
         inventoryId: resolvedInventoryId
       });
@@ -412,7 +413,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
         skuVal
       );
       if (skuCheck.exists) {
-        await ErrorSystem.logWarning("[export-to-base] SKU already exists in Base.com", {
+        await ErrorSystem.logWarning('[export-to-base] SKU already exists in Base.com', {
           sku: product.sku,
           existingProductId: skuCheck.productId
         });
@@ -431,12 +432,12 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     let listingRepo = primaryListingRepo;
     const integrations = await integrationRepo.listIntegrations();
     const baseIntegration = integrations.find((i) =>
-      ["baselinker", "base-com"].includes(i.slug)
+      ['baselinker', 'base-com'].includes(i.slug)
     );
     const baseIntegrationId = baseIntegration?.id ?? connection.integrationId ?? null;
     if (!baseIntegration && baseIntegrationId) {
       await ErrorSystem.logWarning(
-        "[export-to-base] Base integration slug not found while resolving listing badge integration; falling back to connection.integrationId.",
+        '[export-to-base] Base integration slug not found while resolving listing badge integration; falling back to connection.integrationId.',
         {
           productId,
           connectionId: data.connectionId,
@@ -458,7 +459,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
         } | null = null;
         if (data.listingId) {
           const resolvedById = await findProductListingByIdAcrossProviders(data.listingId);
-          if (resolvedById && resolvedById.listing.productId === productId) {
+          if (resolvedById?.listing.productId === productId) {
             existingListing = resolvedById.listing;
             listingRepo = resolvedById.repository;
           }
@@ -478,7 +479,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
           listingId = existingListing.id;
           listingExternalId = existingListing.externalListingId ?? listingExternalId;
           listingInventoryId = existingListing.inventoryId ?? null;
-          await listingRepo.updateListingStatus(existingListing.id, "pending");
+          await listingRepo.updateListingStatus(existingListing.id, 'pending');
           if (
             listingExternalId &&
             existingListing.externalListingId !== listingExternalId
@@ -491,7 +492,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
         }
         if (!listingExternalId) {
           throw badRequestError(
-            "Images-only export requires an existing Base.com listing. Export the product first."
+            'Images-only export requires an existing Base.com listing. Export the product first.'
           );
         }
       } else {
@@ -514,7 +515,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
           const existingListing = resolvedByConnection.listing;
           listingRepo = resolvedByConnection.repository;
           listingId = existingListing.id;
-          await listingRepo.updateListingStatus(existingListing.id, "pending");
+          await listingRepo.updateListingStatus(existingListing.id, 'pending');
           if (existingListing.inventoryId !== resolvedInventoryId) {
             await listingRepo.updateListingInventoryId(
               existingListing.id,
@@ -529,15 +530,15 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       const existingListing = await listingRepo.getListingById(listingId);
       const history = existingListing?.exportHistory ?? [];
       const prior = history.find(
-        (event) => event.requestId === requestId && event.status === "success"
+        (event) => event.requestId === requestId && event.status === 'success'
       );
       if (prior) {
         if (runId) {
           await runRepository
             .createRunEvent({
               runId,
-              level: "info",
-              message: "Export already completed (idempotent).",
+              level: 'info',
+              message: 'Export already completed (idempotent).',
               metadata: {
                 productId,
                 listingId,
@@ -550,7 +551,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
             .catch(() => undefined);
           await runRepository
             .updateRun(runId, {
-              status: "completed",
+              status: 'completed',
               finishedAt: new Date(),
               meta: {
                 ...runMeta,
@@ -564,7 +565,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
         const logs = logCapture.getLogs();
         return NextResponse.json({
           success: true,
-          message: "Export already completed",
+          message: 'Export already completed',
           externalProductId:
             prior.externalListingId ?? existingListing?.externalListingId ?? null,
           idempotent: true,
@@ -596,21 +597,21 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
           return { typed, numeric: match[2] };
         };
         for (const warehouse of warehouses) {
-          warehouseIdSet.add(warehouse["id"]);
-          const inferred = warehouse["typedId"] ?? inferTypedWarehouseId(warehouse["id"])?.typed;
+          warehouseIdSet.add(warehouse['id']);
+          const inferred = warehouse['typedId'] ?? inferTypedWarehouseId(warehouse['id'])?.typed;
           if (inferred) {
             warehouseIdSet.add(inferred);
-            if (inferred !== warehouse["id"]) {
+            if (inferred !== warehouse['id']) {
               const numeric = inferTypedWarehouseId(inferred)?.numeric;
               if (numeric) {
                 warehouseAliases[numeric] = inferred;
               } else {
-                warehouseAliases[warehouse["id"]] = inferred;
+                warehouseAliases[warehouse['id']] = inferred;
               }
             }
           }
-          if (warehouse["typedId"] && warehouse["typedId"] !== warehouse["id"]) {
-            warehouseAliases[warehouse["id"]] = warehouse["typedId"];
+          if (warehouse['typedId'] && warehouse['typedId'] !== warehouse['id']) {
+            warehouseAliases[warehouse['id']] = warehouse['typedId'];
           }
         }
         if (warehouseId) {
@@ -623,12 +624,12 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
         stockWarehouseAliases =
           Object.keys(warehouseAliases).length > 0 ? warehouseAliases : null;
         validWarehouseIds = warehouseIdSet;
-        if (warehouseId && stockWarehouseAliases && stockWarehouseAliases[warehouseId]) {
+        if (warehouseId && stockWarehouseAliases?.[warehouseId]) {
           warehouseId = stockWarehouseAliases[warehouseId] ?? null;
         } else if (warehouseId) {
           const match = warehouses.find(
             (warehouse) =>
-              warehouse["id"] === warehouseId || warehouse["typedId"] === warehouseId
+              warehouse['id'] === warehouseId || warehouse['typedId'] === warehouseId
           );
           if (match?.typedId) {
             warehouseId = match.typedId ?? null;
@@ -638,7 +639,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
           if (!validWarehouseIds.has(warehouseId)) {
             const fallbackWarehouseId =
               warehouses[0]?.typedId ?? warehouses[0]?.id ?? null;
-            await ErrorSystem.logWarning("[export-to-base] Warehouse not in inventory, using fallback", {
+            await ErrorSystem.logWarning('[export-to-base] Warehouse not in inventory, using fallback', {
               warehouseId,
               fallbackWarehouseId,
               inventoryId: targetInventoryId
@@ -649,7 +650,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
           warehouseId = warehouses[0]?.typedId ?? warehouses[0]?.id ?? null;
         }
       } catch (error) {
-        await ErrorSystem.logWarning("[export-to-base] Failed to verify warehouse, skipping stock export", {
+        await ErrorSystem.logWarning('[export-to-base] Failed to verify warehouse, skipping stock export', {
           warehouseId,
           inventoryId: targetInventoryId,
           error
@@ -660,16 +661,16 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
 
     const normalizeStockMappingKey = (value: string) => {
       const trimmed = value.trim();
-      const withoutPrefix = trimmed.replace(/^stock[._-]?/i, "");
+      const withoutPrefix = trimmed.replace(/^stock[._-]?/i, '');
       return normalizeStockKey(withoutPrefix);
     };
 
     const filterStockMappings = (entries: typeof mappings) => {
       if (!validWarehouseIds) return entries;
       return entries.filter((mapping) => {
-        const key = mapping["sourceKey"].trim();
+        const key = mapping['sourceKey'].trim();
         const lowered = key.toLowerCase();
-        if (!lowered.startsWith("stock")) return true;
+        if (!lowered.startsWith('stock')) return true;
         const normalized = normalizeStockMappingKey(key);
         if (!normalized) return true;
         return validWarehouseIds.has(normalized);
@@ -679,7 +680,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     let effectiveMappings = imagesOnly ? [] : filterStockMappings(mappings);
 
     // Export to Base.com
-    await ErrorSystem.logInfo("[export-to-base] Calling Base.com API", {
+    await ErrorSystem.logInfo('[export-to-base] Calling Base.com API', {
       productId,
       inventoryId: targetInventoryId,
       mappingsCount: effectiveMappings.length
@@ -687,11 +688,11 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
 
     const baseImageDiagnostics = exportImagesAsBase64
       ? buildImageDiagnosticsLogger({
-          ...imageDiagnosticsContext,
-          exportImagesAsBase64,
-          imageBase64Mode,
-          imageTransform
-        })
+        ...imageDiagnosticsContext,
+        exportImagesAsBase64,
+        imageBase64Mode,
+        imageTransform
+      })
       : undefined;
 
     const buildExportSnapshot = async (
@@ -718,13 +719,13 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
         stock?: Record<string, unknown>;
       };
       const exportFields = Object.keys(exportData).flatMap((key) => {
-        if (key === "text_fields" && exportData.text_fields && typeof exportData.text_fields === "object") {
+        if (key === 'text_fields' && exportData.text_fields && typeof exportData.text_fields === 'object') {
           return Object.keys(exportData.text_fields).map((field) => `text_fields.${field}`);
         }
-        if (key === "prices" && exportData.prices && typeof exportData.prices === "object") {
+        if (key === 'prices' && exportData.prices && typeof exportData.prices === 'object') {
           return Object.keys(exportData.prices).map((field) => `prices.${field}`);
         }
-        if (key === "stock" && exportData.stock && typeof exportData.stock === "object") {
+        if (key === 'stock' && exportData.stock && typeof exportData.stock === 'object') {
           return Object.keys(exportData.stock).map((field) => `stock.${field}`);
         }
         return [key];
@@ -737,7 +738,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       : await getExportStockFallbackEnabled();
     let includeStockWithoutWarehouse =
       !imagesOnly && !warehouseId && product.stock !== null;
-    let exportFields = imagesOnly ? ["images"] : [];
+    let exportFields = imagesOnly ? ['images'] : [];
     if (!imagesOnly) {
       ({ exportFields } = await buildExportSnapshot(
         warehouseId,
@@ -747,9 +748,9 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     }
     let result = imagesOnly
       ? await exportProductImagesToBase(
-          token,
-          targetInventoryId,
-          exportProduct,
+        token,
+        targetInventoryId,
+        exportProduct,
           listingExternalId as string,
           {
             imageBaseUrl,
@@ -758,38 +759,38 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
             imageBase64Mode,
             imageTransform
           }
-        )
+      )
       : await exportProductToBase(
-          token,
-          targetInventoryId,
-          exportProduct,
-          effectiveMappings,
-          warehouseId,
-          {
-            imageBaseUrl,
-            includeStockWithoutWarehouse,
-            ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
-            exportImagesAsBase64: exportImagesAsBase64,
-            ...(baseImageDiagnostics ? { imageDiagnostics: baseImageDiagnostics } : {}),
-            imageBase64Mode,
-            imageTransform
-          }
-        );
+        token,
+        targetInventoryId,
+        exportProduct,
+        effectiveMappings,
+        warehouseId,
+        {
+          imageBaseUrl,
+          includeStockWithoutWarehouse,
+          ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
+          exportImagesAsBase64: exportImagesAsBase64,
+          ...(baseImageDiagnostics ? { imageDiagnostics: baseImageDiagnostics } : {}),
+          imageBase64Mode,
+          imageTransform
+        }
+      );
 
     const isWarehouseMismatch = (message: string | undefined) =>
-      typeof message === "string" &&
-      message.toLowerCase().includes("warehouse") &&
-      message.toLowerCase().includes("not included");
+      typeof message === 'string' &&
+      message.toLowerCase().includes('warehouse') &&
+      message.toLowerCase().includes('not included');
 
     const isStockMismatch = (message: string | undefined) =>
-      typeof message === "string" &&
-      (message.toLowerCase().includes("stock") ||
-        message.toLowerCase().includes("quantity"));
+      typeof message === 'string' &&
+      (message.toLowerCase().includes('stock') ||
+        message.toLowerCase().includes('quantity'));
 
     const warehouseMismatch = !imagesOnly && isWarehouseMismatch(result.error);
 
     if (!imagesOnly && !result.success && warehouseMismatch && allowStockFallback) {
-      await ErrorSystem.logWarning("[export-to-base] Warehouse mismatch, retrying without stock", {
+      await ErrorSystem.logWarning('[export-to-base] Warehouse mismatch, retrying without stock', {
         productId,
         inventoryId: targetInventoryId,
         warehouseId,
@@ -797,7 +798,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       });
       warehouseId = null;
       effectiveMappings = effectiveMappings.filter(
-        (mapping) => !mapping["sourceKey"].trim().toLowerCase().startsWith("stock")
+        (mapping) => !mapping['sourceKey'].trim().toLowerCase().startsWith('stock')
       );
       includeStockWithoutWarehouse = false;
       ({ exportFields } = await buildExportSnapshot(
@@ -821,7 +822,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
         }
       );
     } else if (!imagesOnly && !result.success && warehouseMismatch) {
-      await ErrorSystem.logWarning("[export-to-base] Warehouse mismatch, failing export", {
+      await ErrorSystem.logWarning('[export-to-base] Warehouse mismatch, failing export', {
         productId,
         inventoryId: targetInventoryId,
         warehouseId,
@@ -836,7 +837,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       includeStockWithoutWarehouse &&
       isStockMismatch(result.error)
     ) {
-      await ErrorSystem.logWarning("[export-to-base] Retrying without stock export", {
+      await ErrorSystem.logWarning('[export-to-base] Retrying without stock export', {
         productId,
         inventoryId: targetInventoryId,
         warehouseId,
@@ -844,7 +845,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       });
       warehouseId = null;
       effectiveMappings = effectiveMappings.filter(
-        (mapping) => !mapping["sourceKey"].trim().toLowerCase().startsWith("stock")
+        (mapping) => !mapping['sourceKey'].trim().toLowerCase().startsWith('stock')
       );
       includeStockWithoutWarehouse = false;
       ({ exportFields } = await buildExportSnapshot(
@@ -886,12 +887,12 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       });
 
       if (!exportImagesAsBase64 || !imageTransform) {
-        void ErrorSystem.logWarning("[export-to-base] Image export failed, retrying with base64 + JPEG resize", {
+        void ErrorSystem.logWarning('[export-to-base] Image export failed, retrying with base64 + JPEG resize', {
           ...imageDiagnosticsContext,
           error: result.error
         });
         exportImagesAsBase64 = true;
-        imageBase64Mode = "base-only";
+        imageBase64Mode = 'base-only';
         imageTransform = {
           forceJpeg: true,
           maxDimension: 1600,
@@ -912,9 +913,9 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
         }
         result = imagesOnly
           ? await exportProductImagesToBase(
-              token,
-              targetInventoryId,
-              exportProduct,
+            token,
+            targetInventoryId,
+            exportProduct,
               listingExternalId as string,
               {
                 imageBaseUrl,
@@ -923,32 +924,32 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
                 imageBase64Mode,
                 imageTransform
               }
-            )
+          )
           : await exportProductToBase(
-              token,
-              targetInventoryId,
-              exportProduct,
-              effectiveMappings,
-              warehouseId,
-              {
-                imageBaseUrl,
-                includeStockWithoutWarehouse,
-                ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
-                exportImagesAsBase64: exportImagesAsBase64,
-                imageDiagnostics,
-                imageBase64Mode,
-                imageTransform
-              }
-            );
+            token,
+            targetInventoryId,
+            exportProduct,
+            effectiveMappings,
+            warehouseId,
+            {
+              imageBaseUrl,
+              includeStockWithoutWarehouse,
+              ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
+              exportImagesAsBase64: exportImagesAsBase64,
+              imageDiagnostics,
+              imageBase64Mode,
+              imageTransform
+            }
+          );
       }
     }
 
     if (!result.success) {
       if (listingId) {
-        await listingRepo.updateListingStatus(listingId, "failed");
+        await listingRepo.updateListingStatus(listingId, 'failed');
         await listingRepo.appendExportHistory(listingId, {
           exportedAt: new Date(),
-          status: "failed",
+          status: 'failed',
           inventoryId: targetInventoryId,
           templateId: data.templateId ?? null,
           warehouseId,
@@ -957,13 +958,13 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
           requestId: requestId ?? null
         });
       }
-      throw externalServiceError(result.error || "Failed to export product", {
+      throw externalServiceError(result.error || 'Failed to export product', {
         productId,
         inventoryId: targetInventoryId
       });
     }
 
-    await ErrorSystem.logInfo("[export-to-base] Export successful", {
+    await ErrorSystem.logInfo('[export-to-base] Export successful', {
       productId,
       externalProductId: result.productId
     });
@@ -972,10 +973,10 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       if (result.productId) {
         await listingRepo.updateListingExternalId(listingId, result.productId);
       }
-      await listingRepo.updateListingStatus(listingId, "active");
+      await listingRepo.updateListingStatus(listingId, 'active');
       await listingRepo.appendExportHistory(listingId, {
         exportedAt: new Date(),
-        status: "success",
+        status: 'success',
         inventoryId: targetInventoryId,
         templateId: data.templateId ?? null,
         warehouseId,
@@ -991,8 +992,8 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       await runRepository
         .createRunEvent({
           runId,
-          level: "info",
-          message: "Export to Base.com completed.",
+          level: 'info',
+          message: 'Export to Base.com completed.',
           metadata: {
             productId,
             inventoryId: targetInventoryId,
@@ -1004,7 +1005,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
         .catch(() => undefined);
       await runRepository
         .updateRun(runId, {
-          status: "completed",
+          status: 'completed',
           finishedAt: new Date(),
           meta: {
             ...runMeta,
@@ -1019,7 +1020,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
 
     return NextResponse.json({
       success: true,
-      message: "Product successfully exported to Base.com",
+      message: 'Product successfully exported to Base.com',
       externalProductId: result.productId,
       runId,
       logs
@@ -1028,12 +1029,12 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     logCapture.stop();
     const logs = logCapture.getLogs();
     const errorMessage =
-      error instanceof Error ? error.message : "Failed to export product to Base.com.";
+      error instanceof Error ? error.message : 'Failed to export product to Base.com.';
     if (runId) {
       await runRepository
         .createRunEvent({
           runId,
-          level: "error",
+          level: 'error',
           message: `Export failed: ${errorMessage}`,
           metadata: {
             logsCount: logs.length,
@@ -1042,7 +1043,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
         .catch(() => undefined);
       await runRepository
         .updateRun(runId, {
-          status: "failed",
+          status: 'failed',
           finishedAt: new Date(),
           errorMessage,
           meta: {
@@ -1054,7 +1055,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
         .catch(() => undefined);
     }
     // Re-throw with extra logs context
-    if (error instanceof Error && "meta" in error) {
+    if (error instanceof Error && 'meta' in error) {
       (error as any).meta = { ...(error as any).meta, logs };
     }
     throw error;
@@ -1063,5 +1064,5 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
 
 export const POST = apiHandlerWithParams<{ id: string }>(
   POST_handler,
-  { source: "integrations.products.[id].export-to-base.POST", requireCsrf: false }
+  { source: 'integrations.products.[id].export-to-base.POST', requireCsrf: false }
 );

@@ -234,11 +234,11 @@ const credentialsProvider = Credentials({
 const buildProviders = (): Provider[] => {
   const providers: Provider[] = [credentialsProvider];
   
-  if (process.env["GOOGLE_CLIENT_ID"] && process.env["GOOGLE_CLIENT_SECRET"]) {
+  if (process.env['GOOGLE_CLIENT_ID'] && process.env['GOOGLE_CLIENT_SECRET']) {
     providers.push(
       Google({
-        clientId: process.env["GOOGLE_CLIENT_ID"],
-        clientSecret: process.env["GOOGLE_CLIENT_SECRET"],
+        clientId: process.env['GOOGLE_CLIENT_ID'],
+        clientSecret: process.env['GOOGLE_CLIENT_SECRET'],
       })
     );
   } else {
@@ -249,11 +249,11 @@ const buildProviders = (): Provider[] => {
     });
   }
 
-  if (process.env["FACEBOOK_CLIENT_ID"] && process.env["FACEBOOK_CLIENT_SECRET"]) {
+  if (process.env['FACEBOOK_CLIENT_ID'] && process.env['FACEBOOK_CLIENT_SECRET']) {
     providers.push(
       Facebook({
-        clientId: process.env["FACEBOOK_CLIENT_ID"],
-        clientSecret: process.env["FACEBOOK_CLIENT_SECRET"],
+        clientId: process.env['FACEBOOK_CLIENT_ID'],
+        clientSecret: process.env['FACEBOOK_CLIENT_SECRET'],
       })
     );
   } else {
@@ -268,7 +268,7 @@ const buildProviders = (): Provider[] => {
 
 const buildAuthConfig = async (): Promise<NextAuthConfig> => {
   try {
-    const authLoggingEnabled = process.env["AUTH_LOGGING"] === 'true';
+    const authLoggingEnabled = process.env['AUTH_LOGGING'] === 'true';
     if (authLoggingEnabled) {
       await ErrorSystem.logInfo('[AUTH] Starting configuration...', { service: 'auth' });
     }
@@ -279,14 +279,14 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
       adapter =
         provider === 'prisma'
           ? PrismaAdapter(prisma)
-          : MongoDBAdapter(getMongoClient(), { databaseName: process.env["MONGODB_DB"] ?? 'app' });
+          : MongoDBAdapter(getMongoClient(), { databaseName: process.env['MONGODB_DB'] ?? 'app' });
     } catch (error) {
       await ErrorSystem.logWarning('[AUTH] Adapter initialization failed; attempting fallback.', {
         service: 'auth',
         provider,
         error,
       });
-      if (provider === 'mongodb' && process.env["DATABASE_URL"]) {
+      if (provider === 'mongodb' && process.env['DATABASE_URL']) {
         try {
           adapter = PrismaAdapter(prisma);
         } catch (fallbackError) {
@@ -296,9 +296,9 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
             error: fallbackError,
           });
         }
-      } else if (provider === 'prisma' && process.env["MONGODB_URI"]) {
+      } else if (provider === 'prisma' && process.env['MONGODB_URI']) {
         try {
-          adapter = MongoDBAdapter(getMongoClient(), { databaseName: process.env["MONGODB_DB"] ?? 'app' });
+          adapter = MongoDBAdapter(getMongoClient(), { databaseName: process.env['MONGODB_DB'] ?? 'app' });
         } catch (fallbackError) {
           await ErrorSystem.logWarning('[AUTH] Mongo adapter fallback failed.', {
             service: 'auth',
@@ -324,7 +324,7 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
 
           const tokenMeta = token as JWT & { authRefreshedAt?: number };
           const now = Date.now();
-          const refreshTtlMs = Number.parseInt(process.env["AUTH_TOKEN_REFRESH_TTL_MS"] ?? '60000', 10);
+          const refreshTtlMs = Number.parseInt(process.env['AUTH_TOKEN_REFRESH_TTL_MS'] ?? '60000', 10);
           const lastRefresh = typeof tokenMeta.authRefreshedAt === 'number' ? tokenMeta.authRefreshedAt : 0;
           const hasRole = typeof tokenMeta.role === 'string' && tokenMeta.role.length > 0;
           const shouldRefresh = Boolean(user) || !hasRole || now - lastRefresh > refreshTtlMs;
@@ -365,7 +365,7 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
           return session;
         },
       },
-      debug: process.env["AUTH_DEBUG"] === 'true',
+      debug: process.env['AUTH_DEBUG'] === 'true',
     };
   } catch (error: unknown) {
     await ErrorSystem.captureException(error, {

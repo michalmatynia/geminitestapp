@@ -1,14 +1,15 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { badRequestError, configurationError } from "@/shared/errors/app-error";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+
+import { badRequestError, configurationError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const chunkText = (text: string, maxChars: number): string[] => {
   const chunks: string[] = [];
   let cursor = 0;
-  const cleaned = text.replace(/\r/g, "").trim();
+  const cleaned = text.replace(/\r/g, '').trim();
   if (!cleaned) return chunks;
 
   while (cursor < cleaned.length) {
@@ -20,30 +21,30 @@ const chunkText = (text: string, maxChars: number): string[] => {
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const formData = await req.formData();
-  const file = formData.get("file");
+  const file = formData.get('file');
   if (!(file instanceof File)) {
-    throw badRequestError("Missing PDF file.");
+    throw badRequestError('Missing PDF file.');
   }
 
-  if (file.type !== "application/pdf") {
-    throw badRequestError("Only PDF files are supported.");
+  if (file.type !== 'application/pdf') {
+    throw badRequestError('Only PDF files are supported.');
   }
 
   let pdfParse: ((buffer: Buffer) => Promise<{ text: string }>) | null = null;
   try {
-    const pdfModule = await import("pdf-parse");
+    const pdfModule = await import('pdf-parse');
     pdfParse = pdfModule.default;
   } catch {
-    throw configurationError("PDF parser not installed. Run `npm install pdf-parse`.");
+    throw configurationError('PDF parser not installed. Run `npm install pdf-parse`.');
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
   const result = await pdfParse(buffer);
-  const rawText = result.text || "";
-  const pages = rawText.split("\f").map((chunk: string) => chunk.trim());
+  const rawText = result.text || '';
+  const pages = rawText.split('\f').map((chunk: string) => chunk.trim());
   const segments: Array<{ title: string; content: string }> = [];
 
-  const baseName = file.name.replace(/\.pdf$/i, "");
+  const baseName = file.name.replace(/\.pdf$/i, '');
   if (pages.length > 1) {
     pages.forEach((pageText: string, index: number) => {
       if (!pageText) return;
@@ -77,4 +78,4 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "chatbot.context.POST" });
+  { source: 'chatbot.context.POST' });

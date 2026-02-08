@@ -29,10 +29,10 @@ export type DatabaseBackupResult = {
   warning?: string | undefined;
 };
 
-const shouldSkipBackups = (): boolean => process.env["SKIP_DB_BACKUP"] === 'true';
+const shouldSkipBackups = (): boolean => process.env['SKIP_DB_BACKUP'] === 'true';
 
 const assertBackupsAllowed = (): void => {
-  if (process.env["NODE_ENV"] === 'production') {
+  if (process.env['NODE_ENV'] === 'production') {
     throw forbiddenError('Database backups are disabled in production.');
   }
 };

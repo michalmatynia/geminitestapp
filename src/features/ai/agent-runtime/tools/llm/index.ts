@@ -2,7 +2,7 @@ import 'server-only';
 
 import prisma from '@/shared/lib/db/prisma';
 
-const OLLAMA_BASE_URL = process.env["OLLAMA_BASE_URL"] ?? 'http://localhost:11434';
+const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] ?? 'http://localhost:11434';
 
 type LLMContext = {
   model: string;
@@ -111,11 +111,11 @@ export const validateExtractionWithLLM = async (
       : [];
     const missingCount =
       typeof parsed?.['missingCount'] === 'number'
-        ? (parsed?.['missingCount'] as number)
+        ? (parsed?.['missingCount'])
         : Math.max(0, requiredCount - acceptedItems.length);
     const valid =
       typeof parsed?.['valid'] === 'boolean'
-        ? (parsed?.['valid'] as boolean)
+        ? (parsed?.['valid'])
         : acceptedItems.length >= requiredCount;
     return {
       valid,
@@ -449,23 +449,23 @@ export const buildFailureRecoveryPlan = async (
       ? (parsed?.['listingUrls'] as unknown[]).filter((item: unknown) => typeof item === 'string')
       : [];
     const plan = {
-      reason: typeof parsed?.['reason'] === 'string' ? (parsed?.['reason'] as string) : null,
+      reason: typeof parsed?.['reason'] === 'string' ? (parsed?.['reason']) : null,
       selectors,
       listingUrls,
       clickSelector:
-        typeof parsed?.['clickSelector'] === 'string' ? (parsed?.['clickSelector'] as string) : null,
-      loginUrl: typeof parsed?.['loginUrl'] === 'string' ? (parsed?.['loginUrl'] as string) : null,
+        typeof parsed?.['clickSelector'] === 'string' ? (parsed?.['clickSelector']) : null,
+      loginUrl: typeof parsed?.['loginUrl'] === 'string' ? (parsed?.['loginUrl']) : null,
       usernameSelector:
         typeof parsed?.['usernameSelector'] === 'string'
-          ? (parsed?.['usernameSelector'] as string)
+          ? (parsed?.['usernameSelector'])
           : null,
       passwordSelector:
         typeof parsed?.['passwordSelector'] === 'string'
-          ? (parsed?.['passwordSelector'] as string)
+          ? (parsed?.['passwordSelector'])
           : null,
       submitSelector:
-        typeof parsed?.['submitSelector'] === 'string' ? (parsed?.['submitSelector'] as string) : null,
-      notes: typeof parsed?.['notes'] === 'string' ? (parsed?.['notes'] as string) : null,
+        typeof parsed?.['submitSelector'] === 'string' ? (parsed?.['submitSelector']) : null,
+      notes: typeof parsed?.['notes'] === 'string' ? (parsed?.['notes']) : null,
     };
     if (log) {
       await log('info', 'LLM failure recovery plan created.', {
@@ -533,7 +533,7 @@ export const buildSearchQueryWithLLM = async (
     const content = extractMessageContent(payload);
     const parsed = parseJsonObject(content) as Record<string, unknown> | null;
     const query =
-      typeof parsed?.['query'] === 'string' ? (parsed?.['query'] as string).trim() : '';
+      typeof parsed?.['query'] === 'string' ? (parsed?.['query']).trim() : '';
     return query || null;
   } catch (error) {
     if (log) {
@@ -580,7 +580,7 @@ export const pickSearchResultWithLLM = async (
     const payload = (await response.json()) as unknown;
     const content = extractMessageContent(payload);
     const parsed = parseJsonObject(content) as Record<string, unknown> | null;
-    const url = typeof parsed?.['url'] === 'string' ? (parsed?.['url'] as string).trim() : '';
+    const url = typeof parsed?.['url'] === 'string' ? (parsed?.['url']).trim() : '';
     return url || null;
   } catch (error) {
     if (log) {
@@ -636,7 +636,7 @@ export const decideSearchFirstWithLLM = async (
     const content = extractMessageContent(payload);
     const parsed = parseJsonObject(content) as Record<string, unknown> | null;
     const useSearchFirst = Boolean(parsed?.['useSearchFirst']);
-    const query = typeof parsed?.['query'] === 'string' ? (parsed?.['query'] as string).trim() : '';
+    const query = typeof parsed?.['query'] === 'string' ? (parsed?.['query']).trim() : '';
     if (log) {
       await log('info', 'Tool selection decision.', {
         stepId: activeStepId ?? null,

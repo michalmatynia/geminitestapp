@@ -1,9 +1,10 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { getIntegrationsWithConnections } from "@/features/integrations/server";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+
+import { getIntegrationsWithConnections } from '@/features/integrations/server';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 /**
  * GET /api/integrations/with-connections
@@ -18,4 +19,4 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "integrations.with-connections.GET", requireCsrf: false });
+  { source: 'integrations.with-connections.GET', requireCsrf: false });

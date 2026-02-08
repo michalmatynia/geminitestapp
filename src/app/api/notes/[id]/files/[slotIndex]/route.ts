@@ -1,11 +1,12 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { deleteNoteFile } from "@/features/files/server";
-import { noteService } from "@/features/notesapp/server";
-import { badRequestError, internalError, notFoundError } from "@/shared/errors/app-error";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+
+import { deleteNoteFile } from '@/features/files/server';
+import { noteService } from '@/features/notesapp/server';
+import { badRequestError, internalError, notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const MAX_SLOT_INDEX = 9;
 
@@ -28,15 +29,15 @@ async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params
   const file = files.find((f) => f.slotIndex === slotIndex);
 
   if (!file) {
-    throw notFoundError("File not found in this slot", { noteId, slotIndex });
+    throw notFoundError('File not found in this slot', { noteId, slotIndex });
   }
 
   const success = await deleteNoteFile(noteId, slotIndex, file.filepath);
   if (!success) {
-    throw internalError("Failed to delete file", { noteId, slotIndex });
+    throw internalError('Failed to delete file', { noteId, slotIndex });
   }
 
   return NextResponse.json({ success: true });
 }
 
-export const DELETE = apiHandlerWithParams<{ id: string; slotIndex: string }>(DELETE_handler, { source: "notes.[id].files.[slotIndex].DELETE" });
+export const DELETE = apiHandlerWithParams<{ id: string; slotIndex: string }>(DELETE_handler, { source: 'notes.[id].files.[slotIndex].DELETE' });

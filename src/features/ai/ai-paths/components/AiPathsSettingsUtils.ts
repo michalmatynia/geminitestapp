@@ -152,7 +152,7 @@ export const buildPersistedRuntimeState = (
       ]);
       const result = Object.fromEntries(trimmedEntries) as Record<string, unknown>;
       if (entries.length > 40) {
-        result.__truncated__ = `…${entries.length - 40} more keys`;
+        result['__truncated__'] = `…${entries.length - 40} more keys`;
       }
       return result;
     }
@@ -202,7 +202,7 @@ export const buildPersistedRuntimeState = (
     ...(state.runStartedAt ? { runStartedAt: state.runStartedAt } : {}),
   };
   if (Object.keys(history).length > 0) {
-    payload.history = history;
+    payload['history'] = history;
   }
   const safe = toJsonSafe(payload);
   return safe ? JSON.stringify(safe) : '';
@@ -235,10 +235,10 @@ export const buildDbQueryPayload = (
   nodeInputs: RuntimePortValues,
   queryConfig: DbQueryConfig
 ): DbQueryPayload => {
-  const inputQuery = coerceInput(nodeInputs.query);
-  const inputValue = coerceInput(nodeInputs.value) ?? coerceInput(nodeInputs.jobId);
-  const entityIdInput = coerceInput(nodeInputs.entityId);
-  const productIdInput = coerceInput(nodeInputs.productId);
+  const inputQuery = coerceInput(nodeInputs['query']);
+  const inputValue = coerceInput(nodeInputs['value']) ?? coerceInput(nodeInputs['jobId']);
+  const entityIdInput = coerceInput(nodeInputs['entityId']);
+  const productIdInput = coerceInput(nodeInputs['productId']);
   let query: Record<string, unknown> = {};
   if (queryConfig.mode === 'preset') {
     const presetValue =

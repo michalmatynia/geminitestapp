@@ -1,40 +1,41 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { Client } from "pg";
-import { badRequestError, forbiddenError } from "@/shared/errors/app-error";
-import { getMongoClient } from "@/shared/lib/db/mongo-client";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { ObjectId } from "mongodb";
+import { ObjectId } from 'mongodb';
+import { NextRequest, NextResponse } from 'next/server';
+import { Client } from 'pg';
+
+import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import { getMongoClient } from '@/shared/lib/db/mongo-client';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 // Validate table/collection name to prevent injection
 const SAFE_NAME_RE = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  if (process.env["NODE_ENV"] === "production") {
-    throw forbiddenError("Database operations are disabled in production.");
+  if (process.env['NODE_ENV'] === 'production') {
+    throw forbiddenError('Database operations are disabled in production.');
   }
 
   const parsed = await req.json() as {
     table?: string;
-    operation?: "insert" | "update" | "delete";
-    type?: "postgresql" | "mongodb";
+    operation?: 'insert' | 'update' | 'delete';
+    type?: 'postgresql' | 'mongodb';
     data?: Record<string, unknown>;
     primaryKey?: Record<string, unknown>;
   };
 
   const { table, operation, data, primaryKey } = parsed;
-  const dbType = parsed.type ?? "postgresql";
+  const dbType = parsed.type ?? 'postgresql';
 
   if (!table || !SAFE_NAME_RE.test(table)) {
-    throw badRequestError("Valid table/collection name is required.");
+    throw badRequestError('Valid table/collection name is required.');
   }
-  if (!operation || !["insert", "update", "delete"].includes(operation)) {
-    throw badRequestError("Operation must be insert, update, or delete.");
+  if (!operation || !['insert', 'update', 'delete'].includes(operation)) {
+    throw badRequestError('Operation must be insert, update, or delete.');
   }
 
-  if (dbType === "mongodb") {
+  if (dbType === 'mongodb') {
     return handleMongoCrud(table, operation, data, primaryKey);
   }
 
@@ -43,13 +44,13 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 async function handlePostgresCrud(
   table: string,
-  operation: "insert" | "update" | "delete",
+  operation: 'insert' | 'update' | 'delete',
   data?: Record<string, unknown>,
   primaryKey?: Record<string, unknown>
 ): Promise<Response> {
-  const dbUrl = process.env["DATABASE_URL"] ?? "";
-  if (!dbUrl.startsWith("postgres://") && !dbUrl.startsWith("postgresql://")) {
-    throw badRequestError("No PostgreSQL database configured.");
+  const dbUrl = process.env['DATABASE_URL'] ?? '';
+  if (!dbUrl.startsWith('postgres://') && !dbUrl.startsWith('postgresql://')) {
+    throw badRequestError('No PostgreSQL database configured.');
   }
 
   const client = new Client({ connectionString: dbUrl });
@@ -57,16 +58,16 @@ async function handlePostgresCrud(
   try {
     await client.connect();
 
-    if (operation === "insert") {
+    if (operation === 'insert') {
       if (!data || Object.keys(data).length === 0) {
-        throw badRequestError("Data is required for insert.");
+        throw badRequestError('Data is required for insert.');
       }
       const columns = Object.keys(data);
       const values = Object.values(data);
       const placeholders = columns.map((_: string, i: number) => `$${i + 1}`);
       const quotedColumns = columns.map((c: string) => `"${c}"`);
 
-      const sql = `INSERT INTO "${table}" (${quotedColumns.join(", ")}) VALUES (${placeholders.join(", ")}) RETURNING *`;
+      const sql = `INSERT INTO "${table}" (${quotedColumns.join(', ')}) VALUES (${placeholders.join(', ')}) RETURNING *`;
       const result = await client.query(sql, values);
 
       return NextResponse.json({
@@ -76,12 +77,12 @@ async function handlePostgresCrud(
       });
     }
 
-    if (operation === "update") {
+    if (operation === 'update') {
       if (!data || Object.keys(data).length === 0) {
-        throw badRequestError("Data is required for update.");
+        throw badRequestError('Data is required for update.');
       }
       if (!primaryKey || Object.keys(primaryKey).length === 0) {
-        throw badRequestError("Primary key is required for update.");
+        throw badRequestError('Primary key is required for update.');
       }
 
       const setCols = Object.keys(data);
@@ -90,8 +91,8 @@ async function handlePostgresCrud(
       const whereValues = Object.values(primaryKey);
 
       let paramIndex = 1;
-      const setClause = setCols.map((c: string) => `"${c}" = $${paramIndex++}`).join(", ");
-      const whereClause = whereCols.map((c: string) => `"${c}" = $${paramIndex++}`).join(" AND ");
+      const setClause = setCols.map((c: string) => `"${c}" = $${paramIndex++}`).join(', ');
+      const whereClause = whereCols.map((c: string) => `"${c}" = $${paramIndex++}`).join(' AND ');
 
       const sql = `UPDATE "${table}" SET ${setClause} WHERE ${whereClause} RETURNING *`;
       const result = await client.query(sql, [...setValues, ...whereValues]);
@@ -105,13 +106,13 @@ async function handlePostgresCrud(
 
     // delete
     if (!primaryKey || Object.keys(primaryKey).length === 0) {
-      throw badRequestError("Primary key is required for delete.");
+      throw badRequestError('Primary key is required for delete.');
     }
 
     const whereCols = Object.keys(primaryKey);
     const whereValues = Object.values(primaryKey);
     let paramIndex = 1;
-    const whereClause = whereCols.map((c: string) => `"${c}" = $${paramIndex++}`).join(" AND ");
+    const whereClause = whereCols.map((c: string) => `"${c}" = $${paramIndex++}`).join(' AND ');
 
     const sql = `DELETE FROM "${table}" WHERE ${whereClause} RETURNING *`;
     const result = await client.query(sql, whereValues);
@@ -127,7 +128,7 @@ async function handlePostgresCrud(
 }
 
 function toObjectId(value: unknown): ObjectId | unknown {
-  if (typeof value === "string" && /^[a-f0-9]{24}$/i.test(value)) {
+  if (typeof value === 'string' && /^[a-f0-9]{24}$/i.test(value)) {
     try { return new ObjectId(value); } catch { return value; }
   }
   return value;
@@ -135,18 +136,18 @@ function toObjectId(value: unknown): ObjectId | unknown {
 
 async function handleMongoCrud(
   collectionName: string,
-  operation: "insert" | "update" | "delete",
+  operation: 'insert' | 'update' | 'delete',
   data?: Record<string, unknown>,
   primaryKey?: Record<string, unknown>
 ): Promise<Response> {
   const mongoClient = await getMongoClient();
-  const dbName = process.env["MONGODB_DB"] ?? "stardb";
+  const dbName = process.env['MONGODB_DB'] ?? 'stardb';
   const db = mongoClient.db(dbName);
   const collection = db.collection(collectionName);
 
-  if (operation === "insert") {
+  if (operation === 'insert') {
     if (!data || Object.keys(data).length === 0) {
-      throw badRequestError("Data is required for insert.");
+      throw badRequestError('Data is required for insert.');
     }
     const result = await collection.insertOne(data);
     return NextResponse.json({
@@ -156,16 +157,16 @@ async function handleMongoCrud(
     });
   }
 
-  if (operation === "update") {
+  if (operation === 'update') {
     if (!data || Object.keys(data).length === 0) {
-      throw badRequestError("Data is required for update.");
+      throw badRequestError('Data is required for update.');
     }
     if (!primaryKey || Object.keys(primaryKey).length === 0) {
-      throw badRequestError("Primary key is required for update.");
+      throw badRequestError('Primary key is required for update.');
     }
     const filter: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(primaryKey)) {
-      filter[k] = k === "_id" ? toObjectId(v) : v;
+      filter[k] = k === '_id' ? toObjectId(v) : v;
     }
     const result = await collection.updateOne(filter, { $set: data });
     return NextResponse.json({
@@ -176,11 +177,11 @@ async function handleMongoCrud(
 
   // delete
   if (!primaryKey || Object.keys(primaryKey).length === 0) {
-    throw badRequestError("Primary key is required for delete.");
+    throw badRequestError('Primary key is required for delete.');
   }
   const filter: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(primaryKey)) {
-    filter[k] = k === "_id" ? toObjectId(v) : v;
+    filter[k] = k === '_id' ? toObjectId(v) : v;
   }
   const result = await collection.deleteOne(filter);
   return NextResponse.json({
@@ -191,5 +192,5 @@ async function handleMongoCrud(
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
-  { source: "databases.crud.POST" }
+  { source: 'databases.crud.POST' }
 );

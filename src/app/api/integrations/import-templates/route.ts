@@ -1,15 +1,16 @@
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
 import {
   createImportTemplate,
   listImportTemplates
-} from "@/features/integrations/server";
-import { parseJsonBody } from "@/features/products/server";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+} from '@/features/integrations/server';
+import { parseJsonBody } from '@/features/products/server';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 const mappingSchema = z.object({
   sourceKey: z.string().trim().min(1),
@@ -29,7 +30,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, templateSchema, {
-    logPrefix: "import-templates.POST"
+    logPrefix: 'import-templates.POST'
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -45,7 +46,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "products.import-templates.GET", requireCsrf: false });
+  { source: 'products.import-templates.GET', requireCsrf: false });
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "products.import-templates.POST", requireCsrf: false });
+  { source: 'products.import-templates.POST', requireCsrf: false });

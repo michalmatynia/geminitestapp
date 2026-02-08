@@ -6,11 +6,11 @@ import prisma from '@/shared/lib/db/prisma';
 import type { Prisma } from '@prisma/client';
 
 const DEFAULT_MEMORY_VALIDATION_MODEL =
-  process.env["MEMORY_VALIDATION_MODEL"] ?? process.env["OLLAMA_MODEL"];
-const OLLAMA_BASE_URL = process.env["OLLAMA_BASE_URL"] ?? 'http://localhost:11434';
+  process.env['MEMORY_VALIDATION_MODEL'] ?? process.env['OLLAMA_MODEL'];
+const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] ?? 'http://localhost:11434';
 
 export type MemoryScope = 'session' | 'longterm';
-const DEBUG_CHATBOT = process.env["DEBUG_CHATBOT"] === 'true';
+const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
 const extractMessageContent = (payload: unknown): string => {
   if (!payload || typeof payload !== 'object') return '';

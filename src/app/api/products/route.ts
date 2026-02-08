@@ -1,44 +1,43 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { productService } from "@/features/products/server";
-import { getProductDataProvider } from "@/features/products/server";
-import { badRequestError, payloadTooLargeError } from "@/shared/errors/app-error";
+import { NextRequest, NextResponse } from 'next/server';
 
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { validateProductCreateMiddleware } from "@/features/products/validations/middleware";
-import { CachedProductService, performanceMonitor } from "@/features/products/performance";
-
-import { apiHandler } from "@/shared/lib/api/api-handler";
+import { CachedProductService, performanceMonitor } from '@/features/products/performance';
+import { productService } from '@/features/products/server';
+import { getProductDataProvider } from '@/features/products/server';
+import { validateProductCreateMiddleware } from '@/features/products/validations/middleware';
+import { badRequestError, payloadTooLargeError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 /**
  * GET /api/products
  * Fetches a list of products with caching and performance monitoring.
  */
-const shouldLogTiming = () => process.env["DEBUG_API_TIMING"] === "true";
+const shouldLogTiming = () => process.env['DEBUG_API_TIMING'] === 'true';
 
 const isLikelyPayloadTooLarge = (error: unknown): boolean => {
-  const message = error instanceof Error ? error.message : String(error ?? "");
+  const message = error instanceof Error ? error.message : String(error ?? '');
   const normalized = message.toLowerCase();
   return (
-    normalized.includes("exceeded") ||
-    normalized.includes("too large") ||
-    normalized.includes("body limit") ||
-    normalized.includes("request entity too large")
+    normalized.includes('exceeded') ||
+    normalized.includes('too large') ||
+    normalized.includes('body limit') ||
+    normalized.includes('request entity too large')
   );
 };
 
 const buildServerTiming = (entries: Record<string, number | null | undefined>): string => {
   const parts = Object.entries(entries)
-    .filter(([, value]) => typeof value === "number" && Number.isFinite(value) && value >= 0)
+    .filter(([, value]) => typeof value === 'number' && Number.isFinite(value) && value >= 0)
     .map(([name, value]) => `${name};dur=${Math.round(value as number)}`);
-  return parts.join(", ");
+  return parts.join(', ');
 };
 
 const attachTimingHeaders = (response: Response, entries: Record<string, number | null | undefined>): void => {
   const value = buildServerTiming(entries);
   if (value) {
-    response.headers.set("Server-Timing", value);
+    response.headers.set('Server-Timing', value);
   }
 };
 
@@ -59,20 +58,20 @@ async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Re
     timings['total'] = ctx.getElapsedMs();
 
     if (shouldLogTiming()) {
-      console.log("[timing] products.GET", { provider, ...timings });
+      console.log('[timing] products.GET', { provider, ...timings });
     }
 
     const response = NextResponse.json(products, {
-      headers: { "Cache-Control": "no-store" },
+      headers: { 'Cache-Control': 'no-store' },
     });
     attachTimingHeaders(response, timings);
     return response;
   } catch (error) {
     timings['total'] = ctx.getElapsedMs();
     if (shouldLogTiming()) {
-      console.log("[timing] products.GET error", timings);
+      console.log('[timing] products.GET error', timings);
     }
-    performanceMonitor.record("db.error", 1, { operation: "getProducts" });
+    performanceMonitor.record('db.error', 1, { operation: 'getProducts' });
     throw error; // Let apiHandler handle logging and response
   }
 }
@@ -88,10 +87,10 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   } catch (error) {
     if (isLikelyPayloadTooLarge(error)) {
       throw payloadTooLargeError(
-        "Upload payload too large. Reduce image sizes/count or increase proxyClientMaxBodySize."
+        'Upload payload too large. Reduce image sizes/count or increase proxyClientMaxBodySize.'
       );
     }
-    throw badRequestError("Invalid form data payload", { error });
+    throw badRequestError('Invalid form data payload', { error });
   }
 
   // Validate the form data
@@ -101,10 +100,10 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   }
 
   const idempotencyKey =
-    req.headers.get("idempotency-key") ??
-    req.headers.get("x-idempotency-key");
-  const skuField = formData.get("sku");
-  if (idempotencyKey && typeof skuField === "string" && skuField.trim()) {
+    req.headers.get('idempotency-key') ??
+    req.headers.get('x-idempotency-key');
+  const skuField = formData.get('sku');
+  if (idempotencyKey && typeof skuField === 'string' && skuField.trim()) {
     const existing = await CachedProductService.getProductBySku(skuField.trim());
     if (existing) {
       return NextResponse.json({
@@ -122,6 +121,6 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   return NextResponse.json(product);
 }
 
-export const GET = apiHandler(GET_handler, { source: "products.GET" });
+export const GET = apiHandler(GET_handler, { source: 'products.GET' });
 
-export const POST = apiHandler(POST_handler, { source: "products.POST" });
+export const POST = apiHandler(POST_handler, { source: 'products.POST' });

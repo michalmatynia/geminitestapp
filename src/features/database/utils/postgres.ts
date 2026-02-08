@@ -11,7 +11,7 @@ export const ensureBackupsDir = async (): Promise<void> => {
 };
 
 export const getDatabaseUrl = (): string => {
-  const databaseUrl = process.env["DATABASE_URL"];
+  const databaseUrl = process.env['DATABASE_URL'];
   if (!databaseUrl) {
     throw new Error('DATABASE_URL is not set.');
   }
@@ -39,10 +39,10 @@ export const getDatabaseName = (databaseUrl: string): string => {
 };
 
 export const getPgDumpCommand = (): string =>
-  process.env["PG_DUMP_PATH"] ?? 'pg_dump';
+  process.env['PG_DUMP_PATH'] ?? 'pg_dump';
 
 export const getPgRestoreCommand = (): string =>
-  process.env["PG_RESTORE_PATH"] ?? 'pg_restore';
+  process.env['PG_RESTORE_PATH'] ?? 'pg_restore';
 
 export const execFileAsync = (
   command: string,

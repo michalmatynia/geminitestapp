@@ -56,7 +56,7 @@ const parseNumber = (value: string | undefined, fallback: number): number => {
 };
 
 const AUTH_SECURITY_CACHE_TTL_MS = parseNumber(
-  process.env["AUTH_SECURITY_CACHE_TTL_MS"] ?? process.env["AUTH_TOKEN_REFRESH_TTL_MS"],
+  process.env['AUTH_SECURITY_CACHE_TTL_MS'] ?? process.env['AUTH_TOKEN_REFRESH_TTL_MS'],
   60_000
 );
 
@@ -103,7 +103,7 @@ export const getAuthSecurityProfile = async (
         updatedAt: profile.updatedAt,
       });
     }
-    if (!process.env["MONGODB_URI"]) return buildDefaultProfile(userId);
+    if (!process.env['MONGODB_URI']) return buildDefaultProfile(userId);
     const mongo = await getMongoDb();
     const doc = await mongo
       .collection<MongoProfileDoc>(PROFILES_COLLECTION)
@@ -179,7 +179,7 @@ export const updateAuthSecurityProfile = async (
     invalidateAuthSecurityProfileCache(userId);
     return getAuthSecurityProfile(userId);
   }
-  if (!process.env["MONGODB_URI"]) return buildDefaultProfile(userId);
+  if (!process.env['MONGODB_URI']) return buildDefaultProfile(userId);
   const mongo = await getMongoDb();
   await mongo.collection<MongoProfileDoc>(PROFILES_COLLECTION).updateOne(
     { _id: userId },

@@ -1,11 +1,12 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { noteService } from "@/features/notesapp/server";
-import { parseJsonBody } from "@/features/products/server";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { noteService } from '@/features/notesapp/server';
+import { parseJsonBody } from '@/features/products/server';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 interface FolderNode {
   name: string;
@@ -29,7 +30,7 @@ interface ImportRequest {
 
 const noteImportSchema = z.object({
   title: z.string().trim().min(1),
-  content: z.string().default(""),
+  content: z.string().default(''),
   path: z.string().trim().min(1),
 });
 
@@ -54,8 +55,8 @@ const importSchema: z.ZodSchema<ImportRequest> = z
       Boolean(data.structure) ||
       Boolean(data.structures && data.structures.length > 0),
     {
-      message: "Missing required field: structure or structures",
-      path: ["structures"],
+      message: 'Missing required field: structure or structures',
+      path: ['structures'],
     }
   );
 
@@ -95,7 +96,7 @@ async function createFolderStructure(
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, importSchema, {
-    logPrefix: "notes.import-folder",
+    logPrefix: 'notes.import-folder',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -127,11 +128,11 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
   return NextResponse.json({
     success: true,
-    message: "Folder structure imported successfully",
+    message: 'Folder structure imported successfully',
     categoriesCreated: categoryMap.size,
   });
 }
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "notes.import-folder.POST" });
+  { source: 'notes.import-folder.POST' });

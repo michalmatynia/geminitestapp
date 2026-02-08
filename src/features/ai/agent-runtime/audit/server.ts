@@ -3,7 +3,7 @@ import prisma from '@/shared/lib/db/prisma';
 import type { Prisma } from '@prisma/client';
 
 export type AuditLevel = 'info' | 'warning' | 'error';
-const DEBUG_CHATBOT = process.env["DEBUG_CHATBOT"] === 'true';
+const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
 /**
  * Convert "unknown-ish" objects into something Prisma JSON accepts.

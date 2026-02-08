@@ -1,15 +1,16 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { normalizeImageRetryPresets } from '@/features/data-import-export';
 import {
   getExportImageRetryPresets,
   setExportImageRetryPresets
-} from "@/features/integrations/server";
-import { normalizeImageRetryPresets } from "@/features/data-import-export";
-import { parseJsonBody } from "@/features/products/server";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+} from '@/features/integrations/server';
+import { parseJsonBody } from '@/features/products/server';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 const transformSchema = z.object({
   forceJpeg: z.boolean().optional(),
@@ -21,7 +22,7 @@ const presetSchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
   description: z.string().min(1),
-  imageBase64Mode: z.enum(["base-only", "full-data-uri"]).optional(),
+  imageBase64Mode: z.enum(['base-only', 'full-data-uri']).optional(),
   transform: transformSchema
 });
 
@@ -36,7 +37,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, requestSchema, {
-    logPrefix: "exports.base.image-retry-presets.POST"
+    logPrefix: 'exports.base.image-retry-presets.POST'
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -49,7 +50,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "products.exports.base.image-retry-presets.GET", requireCsrf: false });
+  { source: 'products.exports.base.image-retry-presets.GET', requireCsrf: false });
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "products.exports.base.image-retry-presets.POST", requireCsrf: false });
+  { source: 'products.exports.base.image-retry-presets.POST', requireCsrf: false });

@@ -1,12 +1,13 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { getSystemLogMetrics } from "@/features/observability/server";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
-const levelSchema = z.enum(["info", "warn", "error"]);
+import { getSystemLogMetrics } from '@/features/observability/server';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
+
+const levelSchema = z.enum(['info', 'warn', 'error']);
 
 const metricsSchema = z.object({
   level: levelSchema.optional(),
@@ -31,4 +32,4 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "system.logs.metrics.GET" });
+  { source: 'system.logs.metrics.GET' });

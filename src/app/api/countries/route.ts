@@ -1,28 +1,30 @@
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { WithId } from "mongodb";
-import prisma from "@/shared/lib/db/prisma";
-import type { Prisma } from "@prisma/client";
+import { WithId } from 'mongodb';
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
 import {
   ensureInternationalizationDefaults,
   fallbackCountries,
   countryMappings,
   defaultCountries,
   defaultCurrencies,
-} from "@/features/internationalization/server";
-import { getInternationalizationProvider } from "@/features/internationalization/services/internationalization-provider";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { parseJsonBody } from "@/features/products/server";
-import { conflictError, internalError } from "@/shared/errors/app-error";
-import type { CountryCode } from "@prisma/client";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import type { CountryWithCurrencies } from "@/shared/types/internationalization";
+} from '@/features/internationalization/server';
+import { getInternationalizationProvider } from '@/features/internationalization/services/internationalization-provider';
+import { parseJsonBody } from '@/features/products/server';
+import { conflictError, internalError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import type { ApiHandlerContext } from '@/shared/types/api';
+import type { CountryWithCurrencies } from '@/shared/types/internationalization';
 
-export const runtime = "nodejs";
+import type { CountryCode } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
+
+export const runtime = 'nodejs';
 
 const countrySchema = z.object({
-  code: z.enum(["PL", "DE", "GB", "US", "SE"]),
+  code: z.enum(['PL', 'DE', 'GB', 'US', 'SE']),
   name: z.string().trim().min(1),
   currencyIds: z.array(z.string()).optional(),
 });
@@ -45,8 +47,8 @@ type CountryDoc = {
   updatedAt: Date;
 };
 
-const CURRENCIES_COLLECTION = "currencies";
-const COUNTRIES_COLLECTION = "countries";
+const CURRENCIES_COLLECTION = 'currencies';
+const COUNTRIES_COLLECTION = 'countries';
 
 const seedMongoInternationalization = async (
   db: Awaited<ReturnType<typeof getMongoDb>>
@@ -125,7 +127,7 @@ const normalizeCountryResponse = (
         },
       };
     })
-    .filter(Boolean) as CountryWithCurrencies["currencies"],
+    .filter(Boolean) as CountryWithCurrencies['currencies'],
 });
 
 /**
@@ -134,9 +136,9 @@ const normalizeCountryResponse = (
  */
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const provider = await getInternationalizationProvider();
-  if (provider === "mongodb") {
-    if (!process.env["MONGODB_URI"]) {
-      throw internalError("MongoDB is not configured.");
+  if (provider === 'mongodb') {
+    if (!process.env['MONGODB_URI']) {
+      throw internalError('MongoDB is not configured.');
     }
     const db = await getMongoDb();
     await seedMongoInternationalization(db);
@@ -150,9 +152,9 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
     );
     const currencies = currencyIds.length
       ? await db
-          .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
-          .find({ id: { $in: currencyIds } })
-          .toArray()
+        .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
+        .find({ id: { $in: currencyIds } })
+        .toArray()
       : [];
     const currencyMap = new Map(
       currencies.map((currency: WithId<CurrencyDoc>) => [currency.id, currency])
@@ -163,7 +165,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
     return NextResponse.json(normalized);
   }
 
-  if (!process.env["DATABASE_URL"]) {
+  if (!process.env['DATABASE_URL']) {
     return NextResponse.json(fallbackCountries);
   }
   await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
@@ -171,7 +173,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
   });
 
   const countries = await prisma.country.findMany({
-    orderBy: { name: "asc" },
+    orderBy: { name: 'asc' },
     include: {
       currencies: {
         include: { currency: true },
@@ -188,7 +190,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
  */
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, countrySchema, {
-    logPrefix: "countries.POST",
+    logPrefix: 'countries.POST',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -198,16 +200,16 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const { currencyIds, ...countryData } = data;
 
   const provider = await getInternationalizationProvider();
-  if (provider === "mongodb") {
-    if (!process.env["MONGODB_URI"]) {
-      throw internalError("MongoDB is not configured.");
+  if (provider === 'mongodb') {
+    if (!process.env['MONGODB_URI']) {
+      throw internalError('MongoDB is not configured.');
     }
     const db = await getMongoDb();
     const existing = await db
       .collection<CountryDoc>(COUNTRIES_COLLECTION)
       .findOne({ id: countryData.code });
     if (existing) {
-      throw conflictError("Country code already exists.", {
+      throw conflictError('Country code already exists.', {
         code: countryData.code,
       });
     }
@@ -216,9 +218,9 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     );
     const currencyDocs = requestedCurrencyIds.length
       ? await db
-          .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
-          .find({ id: { $in: requestedCurrencyIds } })
-          .toArray()
+        .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
+        .find({ id: { $in: requestedCurrencyIds } })
+        .toArray()
       : [];
     const validCurrencyIds = new Set(
       currencyDocs.map((currency: WithId<CurrencyDoc>) => currency.id)
@@ -243,8 +245,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     );
   }
 
-  if (!process.env["DATABASE_URL"]) {
-    throw internalError("Postgres product store is not configured.");
+  if (!process.env['DATABASE_URL']) {
+    throw internalError('Postgres product store is not configured.');
   }
 
   const country = await prisma.country.create({
@@ -269,5 +271,5 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   return NextResponse.json(country);
 }
 
-export const GET = apiHandler(GET_handler, { source: "countries.GET" });
-export const POST = apiHandler(POST_handler, { source: "countries.POST" });
+export const GET = apiHandler(GET_handler, { source: 'countries.GET' });
+export const POST = apiHandler(POST_handler, { source: 'countries.POST' });

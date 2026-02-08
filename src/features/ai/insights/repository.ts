@@ -22,12 +22,12 @@ const getHistoryKey = (type: AiInsightType): string =>
       : AI_INSIGHTS_SETTINGS_KEYS.logsHistory;
 
 const canUsePrismaSettings = (): boolean =>
-  Boolean(process.env["DATABASE_URL"]) && 'setting' in prisma;
+  Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
 
 const readSettingValue = async (key: string): Promise<string | null> => {
   const provider = await getAppDbProvider();
   if (provider === 'mongodb') {
-    if (!process.env["MONGODB_URI"]) return null;
+    if (!process.env['MONGODB_URI']) return null;
     const mongo = await getMongoDb();
     const doc = await mongo
       .collection<SettingDoc>(SETTINGS_COLLECTION)
@@ -47,7 +47,7 @@ const readSettingValue = async (key: string): Promise<string | null> => {
 
 const upsertSettingValue = async (key: string, value: string): Promise<void> => {
   const provider = await getAppDbProvider();
-  const hasMongo = Boolean(process.env["MONGODB_URI"]);
+  const hasMongo = Boolean(process.env['MONGODB_URI']);
   if (provider === 'mongodb' || !canUsePrismaSettings()) {
     if (!hasMongo) return;
     const mongo = await getMongoDb();

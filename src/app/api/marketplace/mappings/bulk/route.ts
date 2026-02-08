@@ -1,11 +1,12 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { getCategoryMappingRepository } from "@/features/integrations/server";
-import { badRequestError, validationError } from "@/shared/errors/app-error";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import type { BulkCategoryMappingRequestDto as BulkMappingRequest } from "@/shared/dtos/integrations";
+import { NextRequest, NextResponse } from 'next/server';
+
+import { getCategoryMappingRepository } from '@/features/integrations/server';
+import type { BulkCategoryMappingRequestDto as BulkMappingRequest } from '@/shared/dtos/integrations';
+import { badRequestError, validationError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 /**
  * POST /api/marketplace/mappings/bulk
@@ -16,27 +17,27 @@ async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext): Prom
   const { connectionId, catalogId, mappings } = body;
 
   if (!connectionId || !catalogId) {
-    throw badRequestError("connectionId and catalogId are required");
+    throw badRequestError('connectionId and catalogId are required');
   }
 
   if (!Array.isArray(mappings) || mappings.length === 0) {
-    throw validationError("mappings array is required and must not be empty");
+    throw validationError('mappings array is required and must not be empty');
   }
 
   // Validate each mapping
   for (const mapping of mappings) {
     if (!mapping.externalCategoryId || mapping.internalCategoryId === undefined) {
       throw validationError(
-        "Each mapping must have externalCategoryId and internalCategoryId (or null to unmap)"
+        'Each mapping must have externalCategoryId and internalCategoryId (or null to unmap)'
       );
     }
 
     if (
       mapping.internalCategoryId !== null &&
-      typeof mapping.internalCategoryId === "string" &&
+      typeof mapping.internalCategoryId === 'string' &&
       mapping.internalCategoryId.trim().length === 0
     ) {
-      throw validationError("internalCategoryId cannot be an empty string");
+      throw validationError('internalCategoryId cannot be an empty string');
     }
   }
 
@@ -52,4 +53,4 @@ async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext): Prom
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "marketplace.mappings.bulk.POST" });
+  { source: 'marketplace.mappings.bulk.POST' });

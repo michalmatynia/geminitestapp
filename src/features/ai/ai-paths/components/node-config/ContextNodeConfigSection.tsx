@@ -91,12 +91,12 @@ export function ContextNodeConfigSection({
   const receivedInputsText = stringifyPayload(sanitizedInputs);
   const resolvedOutputsText = stringifyPayload(sanitizedOutputs);
   const resolvedEntityId =
-    typeof sanitizedOutputs?.entityId === 'string'
-      ? (sanitizedOutputs.entityId)
+    typeof sanitizedOutputs?.['entityId'] === 'string'
+      ? (sanitizedOutputs['entityId'])
       : '';
   const resolvedEntityType =
-    typeof sanitizedOutputs?.entityType === 'string'
-      ? (sanitizedOutputs.entityType)
+    typeof sanitizedOutputs?.['entityType'] === 'string'
+      ? (sanitizedOutputs['entityType'])
       : '';
   const diffInputs = sanitizedInputs ?? {};
   const diffOutputs = sanitizedOutputs ?? {};
@@ -464,7 +464,7 @@ export function ContextNodeConfigSection({
       <div>
         <Label className='text-xs text-gray-400'>Target Fields</Label>
         <div className='mt-2 flex flex-wrap gap-2'>
-          {presetSet.suggested?.map((field: string) => {
+          {presetSet['suggested']?.map((field: string) => {
             const active = contextConfig.includePaths?.includes(field);
             return (
               <button

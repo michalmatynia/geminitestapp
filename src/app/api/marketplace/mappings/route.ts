@@ -1,10 +1,11 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { getCategoryMappingRepository } from "@/features/integrations/server";
-import { badRequestError } from "@/shared/errors/app-error";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
+
+import { getCategoryMappingRepository } from '@/features/integrations/server';
+import { badRequestError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 type CreateMappingRequest = {
   connectionId: string;
@@ -22,11 +23,11 @@ type CreateMappingRequest = {
  */
 async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { searchParams } = new URL(request.url);
-  const connectionId = searchParams.get("connectionId");
-  const catalogId = searchParams.get("catalogId") ?? undefined;
+  const connectionId = searchParams.get('connectionId');
+  const catalogId = searchParams.get('catalogId') ?? undefined;
 
   if (!connectionId) {
-    throw badRequestError("connectionId is required");
+    throw badRequestError('connectionId is required');
   }
 
   const repo = getCategoryMappingRepository();
@@ -45,7 +46,7 @@ async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext): Prom
 
   if (!connectionId || !externalCategoryId || !internalCategoryId || !catalogId) {
     throw badRequestError(
-      "connectionId, externalCategoryId, internalCategoryId, and catalogId are required"
+      'connectionId, externalCategoryId, internalCategoryId, and catalogId are required'
     );
   }
 
@@ -77,7 +78,7 @@ async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext): Prom
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "marketplace.mappings.GET" });
+  { source: 'marketplace.mappings.GET' });
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "marketplace.mappings.POST" });
+  { source: 'marketplace.mappings.POST' });

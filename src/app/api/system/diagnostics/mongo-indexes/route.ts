@@ -1,12 +1,14 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import type { IndexSpecification } from "mongodb";
+import { NextRequest, NextResponse } from 'next/server';
 
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { AI_PATHS_MONGO_INDEXES } from "@/features/ai/ai-paths/services/path-run-repository/mongo-path-run-repository";
+import { AI_PATHS_MONGO_INDEXES } from '@/features/ai/ai-paths/services/path-run-repository/mongo-path-run-repository';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import type { ApiHandlerContext } from '@/shared/types/api';
+
+import type { IndexSpecification } from 'mongodb';
+
 
 type IndexInfo = {
   name?: string;
@@ -54,7 +56,7 @@ const buildDiagnostics = async (db: Awaited<ReturnType<typeof getMongoDb>>) => {
         };
       });
     } catch (error) {
-      errorMessage = error instanceof Error ? error.message : "Failed to load indexes";
+      errorMessage = error instanceof Error ? error.message : 'Failed to load indexes';
     }
     const expectedSet = new Set(expected.map((item) => serializeKey(item.key)));
     const existingSet = new Set(existing.map((item) => serializeKey(item.key)));
@@ -62,7 +64,7 @@ const buildDiagnostics = async (db: Awaited<ReturnType<typeof getMongoDb>>) => {
     const missing = expected.filter((item) => !existingSet.has(serializeKey(item.key)));
     const extra = existing.filter(
       (item) =>
-        item.name !== "_id_" && !expectedSet.has(serializeKey(item.key))
+        item.name !== '_id_' && !expectedSet.has(serializeKey(item.key))
     );
 
     collections.push({
@@ -114,7 +116,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
   {
-    source: "system.diagnostics.mongo-indexes",
+    source: 'system.diagnostics.mongo-indexes',
     logSuccess: false,
   }
 );
@@ -122,7 +124,7 @@ export const GET = apiHandler(
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
   {
-    source: "system.diagnostics.mongo-indexes.rebuild",
+    source: 'system.diagnostics.mongo-indexes.rebuild',
     logSuccess: true,
   }
 );

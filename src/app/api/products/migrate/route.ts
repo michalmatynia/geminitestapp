@@ -1,20 +1,21 @@
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { createFullDatabaseBackup } from '@/features/database/server';
 import {
   getProductMigrationTotal,
   migrateProductBatch,
   type MigrationDirection,
-} from "@/features/products/server";
-import { createFullDatabaseBackup } from "@/features/database/server";
-import { parseJsonBody } from "@/features/products/server";
-import { removeUndefined } from "@/shared/utils";
-import { badRequestError } from "@/shared/errors/app-error";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+} from '@/features/products/server';
+import { parseJsonBody } from '@/features/products/server';
+import { badRequestError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
+import { removeUndefined } from '@/shared/utils';
 
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-const migrationDirectionSchema = z.enum(["prisma-to-mongo", "mongo-to-prisma"]);
+const migrationDirectionSchema = z.enum(['prisma-to-mongo', 'mongo-to-prisma']);
 
 const migrationSchema = z.object({
   direction: migrationDirectionSchema,
@@ -26,10 +27,10 @@ const migrationSchema = z.object({
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { searchParams } = new URL(req.url);
   const parsedDirection = migrationDirectionSchema.safeParse(
-    searchParams.get("direction")
+    searchParams.get('direction')
   );
   if (!parsedDirection.success) {
-    throw badRequestError("Invalid migration direction.");
+    throw badRequestError('Invalid migration direction.');
   }
   const total = await getProductMigrationTotal(parsedDirection.data);
   return NextResponse.json({ total });
@@ -37,17 +38,17 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, migrationSchema, {
-    logPrefix: "products.migrate.POST",
+    logPrefix: 'products.migrate.POST',
   });
   if (!parsed.ok) {
     return parsed.response;
   }
   const shouldBackup =
-    !parsed.data.dryRun && (!parsed.data.cursor || parsed.data.cursor === "");
+    !parsed.data.dryRun && (!parsed.data.cursor || parsed.data.cursor === '');
   if (shouldBackup) {
     const backupResult = await createFullDatabaseBackup();
     if (!backupResult.mongo || !backupResult.postgres) {
-      throw new Error("Failed to create full database backup.");
+      throw new Error('Failed to create full database backup.');
     }
   }
   const result = await migrateProductBatch(removeUndefined({
@@ -61,7 +62,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "products.migrate.GET" });
+  { source: 'products.migrate.GET' });
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "products.migrate.POST" });
+  { source: 'products.migrate.POST' });

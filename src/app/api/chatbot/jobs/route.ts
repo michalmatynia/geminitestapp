@@ -1,22 +1,23 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { chatbotJobRepository } from "@/features/ai/chatbot/services/chatbot-job-repository";
-import { chatbotSessionRepository } from "@/features/ai/chatbot/services/chatbot-session-repository";
-import { startChatbotJobQueue } from "@/features/jobs/server";
-import { parseJsonBody } from "@/shared/lib/api/parse-json";
-import { badRequestError, notFoundError } from "@/shared/errors/app-error";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
-import type { JsonParseResult } from "@/shared/types/api";
-import type { EnqueueChatbotJobRequestDto as EnqueueJobRequest } from "@/shared/dtos/chatbot";
-import type { ChatbotJobStatus, ChatbotJob } from "@/shared/types/chatbot";
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
-const DEBUG_CHATBOT = process.env["DEBUG_CHATBOT"] === "true";
+import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
+import { chatbotSessionRepository } from '@/features/ai/chatbot/services/chatbot-session-repository';
+import { startChatbotJobQueue } from '@/features/jobs/server';
+import type { EnqueueChatbotJobRequestDto as EnqueueJobRequest } from '@/shared/dtos/chatbot';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import type { ApiHandlerContext } from '@/shared/types/api';
+import type { JsonParseResult } from '@/shared/types/api';
+import type { ChatbotJobStatus, ChatbotJob } from '@/shared/types/chatbot';
+
+const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
 const chatMessageSchema = z.object({
-  role: z.enum(["user", "assistant", "system"]),
+  role: z.enum(['user', 'assistant', 'system']),
   content: z.string(),
 });
 
@@ -31,7 +32,7 @@ async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<R
   const jobs: ChatbotJob[] = await chatbotJobRepository.findAll(50);
 
   if (DEBUG_CHATBOT) {
-    console.info("[chatbot][jobs][GET] Listed", { 
+    console.info('[chatbot][jobs][GET] Listed', { 
       count: jobs.length,
       requestId: ctx.requestId 
     });
@@ -42,7 +43,7 @@ async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<R
 
 async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const result: JsonParseResult<EnqueueJobRequest> = await parseJsonBody<EnqueueJobRequest>(req, enqueueJobSchema, {
-    logPrefix: "chatbot.jobs.POST",
+    logPrefix: 'chatbot.jobs.POST',
   });
   
   if (!result.ok) {
@@ -53,7 +54,7 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
   const session = await chatbotSessionRepository.findById(data.sessionId);
 
   if (!session) {
-    throw notFoundError("Session not found.");
+    throw notFoundError('Session not found.');
   }
 
   const trimmedUserMessage: string | undefined = data.userMessage?.trim();
@@ -61,12 +62,11 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
     const latest = session.messages[session.messages.length - 1];
 
     if (
-      !latest ||
-      latest.role !== "user" ||
+      latest?.role !== 'user' ||
       latest.content !== trimmedUserMessage
     ) {
       await chatbotSessionRepository.addMessage(session.id, {
-        role: "user",
+        role: 'user',
         content: trimmedUserMessage,
         timestamp: new Date().toISOString(),
       });
@@ -85,7 +85,7 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
   startChatbotJobQueue();
 
   if (DEBUG_CHATBOT) {
-    console.info("[chatbot][jobs][POST] Queued", {
+    console.info('[chatbot][jobs][POST] Queued', {
       jobId: job.id,
       sessionId: job.sessionId,
       requestId: ctx.requestId,
@@ -97,18 +97,18 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
 }
 
 async function DELETE_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  const scope = req.nextUrl.searchParams.get("scope") ?? "terminal";
+  const scope = req.nextUrl.searchParams.get('scope') ?? 'terminal';
 
-  const terminalStatuses: ChatbotJobStatus[] = ["completed", "failed", "canceled"];
+  const terminalStatuses: ChatbotJobStatus[] = ['completed', 'failed', 'canceled'];
 
-  if (scope !== "terminal") {
-    throw badRequestError("Unsupported delete scope.");
+  if (scope !== 'terminal') {
+    throw badRequestError('Unsupported delete scope.');
   }
 
   const deletedCount: number = await chatbotJobRepository.deleteMany(terminalStatuses);
 
   if (DEBUG_CHATBOT) {
-    console.info("[chatbot][jobs][DELETE] Deleted", { 
+    console.info('[chatbot][jobs][DELETE] Deleted', { 
       count: deletedCount,
       requestId: ctx.requestId 
     });
@@ -119,10 +119,10 @@ async function DELETE_handler(req: NextRequest, ctx: ApiHandlerContext): Promise
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "chatbot.jobs.GET" });
+  { source: 'chatbot.jobs.GET' });
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "chatbot.jobs.POST" });
+  { source: 'chatbot.jobs.POST' });
 export const DELETE = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => DELETE_handler(req, ctx),
- { source: "chatbot.jobs.DELETE" });
+  { source: 'chatbot.jobs.DELETE' });

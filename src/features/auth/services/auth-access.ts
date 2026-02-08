@@ -17,7 +17,7 @@ import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 
 const canUsePrismaSettings = (): boolean =>
-  Boolean(process.env["DATABASE_URL"]) && 'setting' in prisma;
+  Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
 
 const readPrismaSetting = async (key: string): Promise<string | null> => {
   if (!canUsePrismaSettings()) return null;
@@ -33,7 +33,7 @@ const readPrismaSetting = async (key: string): Promise<string | null> => {
 };
 
 const readMongoSetting = async (key: string): Promise<string | null> => {
-  if (!process.env["MONGODB_URI"]) return null;
+  if (!process.env['MONGODB_URI']) return null;
   const mongo = await getMongoDb();
   const doc = await mongo
     .collection<MongoSettingRecord>('settings')
@@ -42,7 +42,7 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
 };
 
 const readSettingValue = async (key: string): Promise<string | null> => {
-  if (process.env["MONGODB_URI"]) {
+  if (process.env['MONGODB_URI']) {
     return readMongoSetting(key);
   }
   return readPrismaSetting(key);
@@ -84,7 +84,7 @@ const parseNumber = (value: string | undefined, fallback: number): number => {
 };
 
 const AUTH_ACCESS_CACHE_TTL_MS = parseNumber(
-  process.env["AUTH_ACCESS_CACHE_TTL_MS"] ?? process.env["AUTH_TOKEN_REFRESH_TTL_MS"],
+  process.env['AUTH_ACCESS_CACHE_TTL_MS'] ?? process.env['AUTH_TOKEN_REFRESH_TTL_MS'],
   60_000
 );
 

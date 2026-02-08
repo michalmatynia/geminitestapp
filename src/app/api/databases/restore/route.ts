@@ -1,11 +1,9 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import path from "path";
-import { promises as fs } from "fs";
-import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/shared/lib/db/prisma";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { badRequestError, internalError } from "@/shared/errors/app-error";
+import { promises as fs } from 'fs';
+import path from 'path';
+
+import { NextRequest, NextResponse } from 'next/server';
 
 import {
   pgBackupsDir,
@@ -21,9 +19,12 @@ import {
   getMongoDatabaseName,
   getMongoRestoreCommand,
   mongoExecFileAsync,
-} from "@/features/database/server";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+} from '@/features/database/server';
+import { badRequestError, internalError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import type { ApiHandlerContext } from '@/shared/types/api';
 
 type ExecOutputishError = {
   stdout?: string;
@@ -35,12 +36,12 @@ type ExecOutputishError = {
 };
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  let stage = "parse";
+  let stage = 'parse';
   let backupName: string | null = null;
   let truncateBeforeRestore = false;
 
   const { searchParams } = new URL(req.url);
-  const type = searchParams.get("type") || "postgresql";
+  const type = searchParams.get('type') || 'postgresql';
 
   const body = await req.json() as {
     backupName: string;
@@ -51,12 +52,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   truncateBeforeRestore = Boolean(body.truncateBeforeRestore);
 
   if (!backupName) {
-    throw badRequestError("Backup name is required");
+    throw badRequestError('Backup name is required');
   }
 
-  if (type === "mongodb") {
+  if (type === 'mongodb') {
     // MongoDB restore
-    stage = "validate";
+    stage = 'validate';
     assertValidMongoBackupName(backupName);
     await ensureMongoBackupsDir();
 
@@ -65,7 +66,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     const databaseName = getMongoDatabaseName();
 
     if (truncateBeforeRestore) {
-      stage = "truncate";
+      stage = 'truncate';
       const db = await getMongoDb();
       const collections = await db.listCollections().toArray();
 
@@ -74,24 +75,24 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       }
     }
 
-    stage = "mongorestore";
+    stage = 'mongorestore';
     const logPath = path.join(mongoBackupsDir, `${backupName}.restore.log`);
     const command = getMongoRestoreCommand();
 
     const args = [
-      "--uri",
+      '--uri',
       mongoUri,
-      "--db",
+      '--db',
       databaseName,
-      "--archive=" + backupPath,
-      "--gzip",
-      "--drop",
+      '--archive=' + backupPath,
+      '--gzip',
+      '--drop',
     ];
 
-    const commandString = `${command} ${args.join(" ")}`;
+    const commandString = `${command} ${args.join(' ')}`;
 
-    let stdout = "";
-    let stderr = "";
+    let stdout = '';
+    let stderr = '';
 
     try {
       const result = await mongoExecFileAsync(command, args);
@@ -100,12 +101,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     } catch (error) {
       const err = error as ExecOutputishError;
 
-      stdout = err.stdout ?? err.cause?.stdout ?? "";
-      stderr = err.stderr ?? err.cause?.stderr ?? "";
+      stdout = err.stdout ?? err.cause?.stdout ?? '';
+      stderr = err.stderr ?? err.cause?.stderr ?? '';
 
       const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}`;
       await fs.writeFile(logPath, logContent);
-      throw internalError("Failed to restore backup", {
+      throw internalError('Failed to restore backup', {
         stage, backupName, log: logContent
       });
     }
@@ -113,12 +114,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}`;
     await fs.writeFile(logPath, logContent);
 
-    stage = "log";
-    const restoreLogPath = path.join(mongoBackupsDir, "restore-log.json");
+    stage = 'log';
+    const restoreLogPath = path.join(mongoBackupsDir, 'restore-log.json');
     let logData: Record<string, { date: string; logFile: string }> = {};
 
     try {
-      const logFile = await fs.readFile(restoreLogPath, "utf-8");
+      const logFile = await fs.readFile(restoreLogPath, 'utf-8');
       logData = JSON.parse(logFile) as Record<
         string,
         { date: string; logFile: string }
@@ -135,12 +136,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     await fs.writeFile(restoreLogPath, JSON.stringify(logData, null, 2));
 
     return NextResponse.json({
-      message: "Backup restored",
+      message: 'Backup restored',
       log: logContent,
     });
   } else {
     // PostgreSQL restore
-    stage = "validate";
+    stage = 'validate';
     assertValidPgBackupName(backupName);
     await ensurePgBackupsDir();
 
@@ -148,14 +149,14 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     const databaseUrl = getPgConnectionUrl();
 
     if (truncateBeforeRestore) {
-      stage = "truncate";
-      const dbUrl = process.env["DATABASE_URL"] ?? "";
+      stage = 'truncate';
+      const dbUrl = process.env['DATABASE_URL'] ?? '';
       if (
-        !dbUrl.startsWith("postgres://") &&
-        !dbUrl.startsWith("postgresql://")
+        !dbUrl.startsWith('postgres://') &&
+        !dbUrl.startsWith('postgresql://')
       ) {
         throw badRequestError(
-          "Truncate before restore is only supported for PostgreSQL."
+          'Truncate before restore is only supported for PostgreSQL.'
         );
       }
 
@@ -173,7 +174,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       if (tables.length > 0) {
         const quotedTables = tables
           .map((name: string) => `"${name.replace(/"/g, '""')}"`)
-          .join(", ");
+          .join(', ');
 
         await prisma.$executeRawUnsafe(
           `TRUNCATE TABLE ${quotedTables} RESTART IDENTITY CASCADE`
@@ -181,25 +182,25 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       }
     }
 
-    stage = "pg_restore";
+    stage = 'pg_restore';
     const logPath = path.join(pgBackupsDir, `${backupName}.restore.log`);
     const command = getPgRestoreCommand();
 
     const args = [
-      "--data-only",
-      "--disable-triggers",
-      "--no-owner",
-      "--no-privileges",
-      "--single-transaction",
-      "--dbname",
+      '--data-only',
+      '--disable-triggers',
+      '--no-owner',
+      '--no-privileges',
+      '--single-transaction',
+      '--dbname',
       databaseUrl,
       backupPath,
     ];
 
-    const commandString = `${command} ${args.join(" ")}`;
+    const commandString = `${command} ${args.join(' ')}`;
 
-    let stdout = "";
-    let stderr = "";
+    let stdout = '';
+    let stderr = '';
 
     try {
       const result = await pgExecFileAsync(command, args);
@@ -209,12 +210,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       const err = error as ExecOutputishError;
 
       // Capture output from either the error itself (common) or its cause (some wrappers)
-      stdout = err.stdout ?? err.cause?.stdout ?? "";
-      stderr = err.stderr ?? err.cause?.stderr ?? "";
+      stdout = err.stdout ?? err.cause?.stdout ?? '';
+      stderr = err.stderr ?? err.cause?.stderr ?? '';
 
       const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}`;
       await fs.writeFile(logPath, logContent);
-      throw internalError("Failed to restore backup", {
+      throw internalError('Failed to restore backup', {
         stage, backupName, log: logContent
       });
     }
@@ -222,12 +223,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}`;
     await fs.writeFile(logPath, logContent);
 
-    stage = "log";
-    const restoreLogPath = path.join(pgBackupsDir, "restore-log.json");
+    stage = 'log';
+    const restoreLogPath = path.join(pgBackupsDir, 'restore-log.json');
     let logData: Record<string, { date: string; logFile: string }> = {};
 
     try {
-      const logFile = await fs.readFile(restoreLogPath, "utf-8");
+      const logFile = await fs.readFile(restoreLogPath, 'utf-8');
       logData = JSON.parse(logFile) as Record<
         string,
         { date: string; logFile: string }
@@ -244,7 +245,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     await fs.writeFile(restoreLogPath, JSON.stringify(logData, null, 2));
 
     return NextResponse.json({
-      message: "Backup restored",
+      message: 'Backup restored',
       log: logContent,
     });
   }
@@ -252,4 +253,4 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "databases.restore.POST" });
+  { source: 'databases.restore.POST' });

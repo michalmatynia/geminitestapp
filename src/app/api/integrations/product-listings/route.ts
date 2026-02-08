@@ -1,14 +1,15 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from "next/server";
-import { getIntegrationRepository, listAllProductListingsAcrossProviders } from "@/features/integrations/server";
-import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import { NextRequest, NextResponse } from 'next/server';
 
-const BASE_INTEGRATION_SLUGS = new Set(["baselinker", "base-com"]);
+import { getIntegrationRepository, listAllProductListingsAcrossProviders } from '@/features/integrations/server';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api';
+
+const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com']);
 
 const normalizeStatus = (value: string | null | undefined): string =>
-  (value ?? "").trim().toLowerCase();
+  (value ?? '').trim().toLowerCase();
 
 /**
  * GET /api/integrations/product-listings
@@ -22,7 +23,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
   const baseIntegrationIds = new Set(
     integrations
-      .filter((integration) => BASE_INTEGRATION_SLUGS.has((integration.slug ?? "").trim().toLowerCase()))
+      .filter((integration) => BASE_INTEGRATION_SLUGS.has((integration.slug ?? '').trim().toLowerCase()))
       .map((integration) => integration.id)
   );
 
@@ -53,13 +54,13 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
     const normalizedStatus = normalizeStatus(listing.status);
     const current = byProduct.get(listing.productId);
     if (!current) {
-      byProduct.set(listing.productId, normalizedStatus || "unknown");
+      byProduct.set(listing.productId, normalizedStatus || 'unknown');
       continue;
     }
     const currentRank = statusRank[current] ?? -1;
     const nextRank = statusRank[normalizedStatus] ?? -1;
     if (nextRank > currentRank) {
-      byProduct.set(listing.productId, normalizedStatus || "unknown");
+      byProduct.set(listing.productId, normalizedStatus || 'unknown');
     }
   }
 
@@ -68,8 +69,8 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- {
-   source: "products.listings.GET",
-   requireCsrf: false,
-   cacheControl: "no-store",
- });
+  {
+    source: 'products.listings.GET',
+    requireCsrf: false,
+    cacheControl: 'no-store',
+  });

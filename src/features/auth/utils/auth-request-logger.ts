@@ -29,7 +29,7 @@ const safeHeaderKeys = new Set([
   'x-request-id',
 ]);
 
-const AUTH_LOGGING_ENABLED = process.env["AUTH_LOGGING"] === 'true';
+const AUTH_LOGGING_ENABLED = process.env['AUTH_LOGGING'] === 'true';
 
 const getClientIp = (req: Request): string | null => {
   const forwarded = req.headers.get('x-forwarded-for');

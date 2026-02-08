@@ -21,7 +21,7 @@ async function main() {
   let providerUsed = "";
 
   // 1. Create User
-  if (process.env.MONGODB_URI) {
+  if (process.env['MONGODB_URI']) {
     // Try MongoDB first if configured
     console.log("Checking MongoDB...");
     try {
@@ -53,7 +53,7 @@ async function main() {
     }
   }
 
-  if (!userId && process.env.DATABASE_URL) {
+  if (!userId && process.env['DATABASE_URL']) {
     // Fallback to Prisma
     console.log("Checking Prisma (Postgres)...");
     try {
@@ -95,7 +95,7 @@ async function main() {
       ] 
     });
     
-    const userRoles = parseJsonSetting<Record<string, string>>(rolesDoc?.value as string, {});
+    const userRoles = parseJsonSetting<Record<string, string>>(rolesDoc?.['value'] as string, {});
     userRoles[userId] = "super_admin";
     
     const value = serializeSetting(userRoles);

@@ -7,7 +7,7 @@ const LEGACY_KEYS = [
 ];
 
 async function cleanupPrisma() {
-  if (!process.env.DATABASE_URL) {
+  if (!process.env['DATABASE_URL']) {
     console.log("[cleanup] Prisma skipped (DATABASE_URL not set)");
     return { count: 0 };
   }
@@ -25,7 +25,7 @@ async function cleanupPrisma() {
 }
 
 async function cleanupMongo() {
-  if (!process.env.MONGODB_URI) {
+  if (!process.env['MONGODB_URI']) {
     console.log("[cleanup] Mongo skipped (MONGODB_URI not set)");
     return { count: 0 };
   }

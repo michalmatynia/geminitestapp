@@ -61,12 +61,12 @@ type SettingDocument = {
 };
 
 const canUsePrismaSettings = (): boolean =>
-  Boolean(process.env.DATABASE_URL) && 'setting' in prisma;
+  Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
 
-const shouldLogTiming = (): boolean => process.env.DEBUG_API_TIMING === 'true';
+const shouldLogTiming = (): boolean => process.env['DEBUG_API_TIMING'] === 'true';
 
 const readMongoFrontPageSetting = async (): Promise<string | null> => {
-  if (!process.env.MONGODB_URI) return null;
+  if (!process.env['MONGODB_URI']) return null;
   try {
     const mongo = await getMongoDb();
     const doc = await mongo
@@ -171,7 +171,7 @@ export default async function Home(): Promise<JSX.Element> {
     const showMenu = cmsPage?.showMenu !== false;
     if (shouldLogTiming()) {
        
-      timings.total = performance.now() - totalStart;
+      timings['total'] = performance.now() - totalStart;
       console.log('[timing] home', timings);
     }
     return (
@@ -212,7 +212,7 @@ export default async function Home(): Promise<JSX.Element> {
   const showFallbackHeader = !menuSettings.showMenu;
   if (shouldLogTiming()) {
      
-    timings.total = performance.now() - totalStart;
+    timings['total'] = performance.now() - totalStart;
     console.log('[timing] home', timings);
   }
   return (

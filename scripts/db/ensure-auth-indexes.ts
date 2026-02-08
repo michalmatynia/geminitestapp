@@ -2,7 +2,7 @@ import "dotenv/config";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 
 async function main() {
-  if (!process.env.MONGODB_URI) {
+  if (!process.env['MONGODB_URI']) {
     console.error("MONGODB_URI is not set.");
     process.exit(1);
   }

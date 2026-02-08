@@ -5,8 +5,8 @@ import { DtoBase } from '../types/base';
 export interface JobDto extends DtoBase {
   type: string;
   status: Status;
-  progress: number;
-  data: Record<string, unknown>;
+  progress?: number;
+  data?: Record<string, unknown>;
   result: Record<string, unknown> | null;
   error: string | null;
   startedAt: string | null;
@@ -15,9 +15,9 @@ export interface JobDto extends DtoBase {
 
 export interface ProductAiJobDto extends JobDto {
   productId: string;
-  operation: 'generate_description' | 'optimize_images' | 'categorize' | 'tag_generation';
-  aiModel: string;
-  parameters: Record<string, unknown>;
+  operation?: 'generate_description' | 'optimize_images' | 'categorize' | 'tag_generation';
+  aiModel?: string;
+  parameters?: Record<string, unknown>;
 }
 
 export interface CreateJobDto {

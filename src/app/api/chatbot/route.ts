@@ -13,7 +13,6 @@ import {
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api';
 import type { ChatMessage } from '@/shared/types/chatbot';
-import { logger } from '@/shared/utils/logger';
 
 export const runtime = 'nodejs';
 

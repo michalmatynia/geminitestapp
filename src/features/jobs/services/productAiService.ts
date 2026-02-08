@@ -30,10 +30,12 @@ const toProductAiJob = (record: ProductAiJobRecord): ProductAiJob => ({
   payload: record.payload,
   result: toJobResult(record.result),
   errorMessage: record.errorMessage ?? null,
+  error: record.errorMessage ?? null,
   createdAt: record.createdAt.toISOString(),
   updatedAt: record.updatedAt.toISOString(),
   startedAt: toIsoString(record.startedAt),
   finishedAt: toIsoString(record.finishedAt),
+  completedAt: toIsoString(record.finishedAt),
 });
 
 const toProductSummary = (product: Record<string, unknown> | null): ProductSummary | null => {

@@ -3,12 +3,9 @@ export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { parseJsonBody } from '@/features/products/server';
-import { getProductDataProvider } from '@/features/products/server';
-import { badRequestError, conflictError, internalError, notFoundError } from '@/shared/errors/app-error';
+import { getParameterRepository } from '@/features/products/server';
+import { conflictError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import type { ApiHandlerContext } from '@/shared/types/api';
 
 const productParameterUpdateSchema = z.object({
@@ -22,90 +19,23 @@ const productParameterUpdateSchema = z.object({
  * PUT /api/products/parameters/[id]
  * Updates a product parameter.
  */
-async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
-  if (!params.id) {
-    throw badRequestError('Parameter id is required');
-  }
-  const provider = await getProductDataProvider();
-  const parsed = await parseJsonBody(req, productParameterUpdateSchema, {
-    logPrefix: 'product-parameters.PUT',
-    allowEmpty: true,
-  });
-  if (!parsed.ok) {
-    return parsed.response;
-  }
+async function PUT_handler(_req: NextRequest, ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+  const id = params.id;
+  const data = productParameterUpdateSchema.parse(ctx.body);
+  const { name_en, catalogId } = data;
 
-  const { name_en, name_pl, name_de, catalogId } = parsed.data;
-
-  if (provider === 'mongodb') {
-    if (!process.env['MONGODB_URI']) {
-      throw internalError('MongoDB is not configured.');
-    }
-    const db = await getMongoDb();
-    const current = await db
-      .collection('product_parameters')
-      .findOne({ id: params.id });
-    if (!current) {
-      throw notFoundError('Parameter not found', { parameterId: params.id });
-    }
-    const nextCatalogId =
-      catalogId ?? (current as { catalogId?: string }).catalogId;
-    if (!nextCatalogId) {
-      throw badRequestError('Catalog ID is required.');
-    }
-    if (name_en !== undefined) {
-      const existing = await db.collection('product_parameters').findOne({
-        name_en,
-        catalogId: nextCatalogId,
-        id: { $ne: params.id },
-      });
-      if (existing) {
-        throw conflictError(
-          'A parameter with this name already exists in this catalog',
-          { name_en, catalogId: nextCatalogId }
-        );
-      }
-    }
-
-    const updateDoc = {
-      ...(name_en !== undefined ? { name_en } : {}),
-      ...(name_pl !== undefined ? { name_pl } : {}),
-      ...(name_de !== undefined ? { name_de } : {}),
-      ...(catalogId !== undefined ? { catalogId: nextCatalogId } : {}),
-      updatedAt: new Date(),
-    };
-
-    await db
-      .collection('product_parameters')
-      .updateOne({ id: params.id }, { $set: updateDoc });
-    const updated = await db
-      .collection('product_parameters')
-      .findOne({ id: params.id });
-    return NextResponse.json(updated);
-  }
-
-  if (!process.env['DATABASE_URL']) {
-    throw badRequestError('Product parameters require the Postgres product store.');
-  }
-
-  const current = await prisma.productParameter.findUnique({
-    where: { id: params.id },
-    select: { catalogId: true },
-  });
+  const repository = await getParameterRepository();
+  const current = await repository.getParameterById(id);
+  
   if (!current) {
-    throw notFoundError('Parameter not found', { parameterId: params.id });
+    throw notFoundError('Parameter not found', { parameterId: id });
   }
+  
   const nextCatalogId = catalogId ?? current.catalogId;
-
+  
   if (name_en !== undefined) {
-    const existing = await prisma.productParameter.findFirst({
-      where: {
-        name_en,
-        catalogId: nextCatalogId,
-        NOT: { id: params.id },
-      },
-    });
-    if (existing) {
+    const existing = await repository.findByName(nextCatalogId, name_en);
+    if (existing && existing.id !== id) {
       throw conflictError(
         'A parameter with this name already exists in this catalog',
         { name_en, catalogId: nextCatalogId }
@@ -113,14 +43,10 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
     }
   }
 
-  const parameter = await prisma.productParameter.update({
-    where: { id: params.id },
-    data: {
-      ...(name_en !== undefined && { name_en }),
-      ...(name_pl !== undefined && { name_pl }),
-      ...(name_de !== undefined && { name_de }),
-      ...(catalogId !== undefined && { catalogId: nextCatalogId }),
-    },
+  const parameter = await repository.updateParameter(id, {
+    ...(data.name_en !== undefined && { name_en: data.name_en }),
+    ...(data.name_pl !== undefined && { name_pl: data.name_pl }),
+    ...(data.name_de !== undefined && { name_de: data.name_de }),
   });
 
   return NextResponse.json(parameter);
@@ -131,26 +57,16 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
  * Deletes a product parameter.
  */
 async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
-  if (!params.id) {
-    throw badRequestError('Parameter id is required');
-  }
-  const provider = await getProductDataProvider();
-  if (provider === 'mongodb') {
-    if (!process.env['MONGODB_URI']) {
-      throw internalError('MongoDB is not configured.');
-    }
-    const db = await getMongoDb();
-    await db.collection('product_parameters').deleteOne({ id: params.id });
-    return NextResponse.json({ success: true });
-  }
-
-  if (!process.env['DATABASE_URL']) {
-    throw badRequestError('Product parameters require the Postgres product store.');
-  }
-
-  await prisma.productParameter.delete({ where: { id: params.id } });
+  const repository = await getParameterRepository();
+  await repository.deleteParameter(params.id);
   return NextResponse.json({ success: true });
 }
 
-export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, { source: 'products.parameters.[id].PUT' });
-export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, { source: 'products.parameters.[id].DELETE' });
+export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, { 
+  source: 'products.parameters.[id].PUT',
+  parseJsonBody: true,
+  bodySchema: productParameterUpdateSchema,
+});
+export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, { 
+  source: 'products.parameters.[id].DELETE' 
+});

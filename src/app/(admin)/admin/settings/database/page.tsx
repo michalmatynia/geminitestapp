@@ -5,16 +5,15 @@ import { useMemo, useState, ChangeEvent } from 'react';
 
 import { AUTH_SETTINGS_KEYS } from '@/features/auth/utils/auth-management';
 import { PRODUCT_DB_PROVIDER_SETTING_KEY } from '@/features/products/constants';
-import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { useToast, Button, Label } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type {
   AppProviderValueDto as ProviderValueStatus,
-  AppProviderSourceDto as ProviderSourceStatus,
   AppProviderServiceDto as ProviderService,
   AppProviderServiceStatusDto as ProviderServiceStatus,
   AppProviderDiagnosticsDto as ProviderDiagnosticsResponse,
 } from '@/shared/dtos/system';
+import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { useToast, Button, Label } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 const providerOptions = [
   {

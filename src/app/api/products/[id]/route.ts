@@ -3,6 +3,7 @@ export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { ActivityTypes, logActivity } from '@/features/observability/server';
 import { productService } from '@/features/products/server';
 import { parseJsonBody } from '@/features/products/server';
 import { getProductRepository } from '@/features/products/services/product-repository';
@@ -32,9 +33,6 @@ async function GET_handler(
   params: { id: string }
 ): Promise<Response> {
   const id = params.id;
-  if (!id) {
-    throw badRequestError('Product id is required');
-  }
 
   const product = await productService.getProductById(id);
   if (!product) {
@@ -54,9 +52,6 @@ async function PUT_handler(
   params: { id: string }
 ): Promise<Response> {
   const id = params.id;
-  if (!id) {
-    throw badRequestError('Product id is required');
-  }
   let formData: FormData;
   try {
     formData = await req.formData();
@@ -79,7 +74,7 @@ async function PUT_handler(
     return validation.response;
   }
 
-  const product = await productService.updateProduct(id, formData);
+  const product = await productService.updateProduct(id, formData, { userId: _ctx.userId ?? undefined });
   if (!product) {
     throw notFoundError('Product not found', { productId: id });
   }
@@ -101,9 +96,6 @@ async function PATCH_handler(
   params: { id: string }
 ): Promise<Response> {
   const id = params.id;
-  if (!id) {
-    throw badRequestError('Product id is required');
-  }
 
   const parsed = await parseJsonBody(req, patchProductSchema, {
     logPrefix: 'products.PATCH',
@@ -123,6 +115,16 @@ async function PATCH_handler(
     throw notFoundError('Product not found', { productId: id });
   }
 
+  // Manually log activity for PATCH as it uses repository directly for now
+  void logActivity({
+    type: ActivityTypes.PRODUCT.UPDATED,
+    description: `Quick updated product ${id}`,
+    userId: _ctx.userId,
+    entityId: id,
+    entityType: 'product',
+    metadata: { changes: updateData }
+  }).catch(() => {});
+
   return NextResponse.json(product);
 }
 
@@ -136,10 +138,7 @@ async function DELETE_handler(
   params: { id: string }
 ): Promise<Response> {
   const id = params.id;
-  if (!id) {
-    throw badRequestError('Product id is required');
-  }
-  const product = await productService.deleteProduct(id);
+  const product = await productService.deleteProduct(id, { userId: _ctx.userId ?? undefined });
   if (!product) {
     throw notFoundError('Product not found', { productId: id });
   }
@@ -148,13 +147,17 @@ async function DELETE_handler(
 
 export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {
   source: 'products.[id].GET',
+  paramsSchema: idParamSchema,
 });
 export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, {
   source: 'products.[id].PUT',
+  paramsSchema: idParamSchema,
 });
 export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, {
   source: 'products.[id].PATCH',
+  paramsSchema: idParamSchema,
 });
 export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, {
   source: 'products.[id].DELETE',
+  paramsSchema: idParamSchema,
 });

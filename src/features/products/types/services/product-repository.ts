@@ -2,20 +2,10 @@ import type { ProductWithImages, ProductRecord } from '@/features/products/types
 import type {
   ProductCreateData,
   ProductUpdateData,
+  ProductFiltersParsed,
 } from '@/features/products/validations';
 
-export type ProductFilters = {
-  search?: string;
-  sku?: string;
-  minPrice?: string;
-  maxPrice?: string;
-  startDate?: string;
-  endDate?: string;
-  page?: string;
-  pageSize?: string;
-  catalogId?: string;
-  searchLanguage?: string; // "name_en" | "name_pl" | "name_de" - limits search to specific language
-};
+export type ProductFilters = ProductFiltersParsed;
 
 export type CreateProductInput = ProductCreateData;
 export type UpdateProductInput = ProductUpdateData;

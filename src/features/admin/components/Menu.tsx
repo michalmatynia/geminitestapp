@@ -35,14 +35,17 @@ import {
 import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 import { useCreateChatbotSession } from '@/features/ai/chatbot/hooks/useChatbotMutations';
 import { useChatbotSessions } from '@/features/ai/chatbot/hooks/useChatbotQueries';
+import type { 
+  AdminNavItemDto, 
+  AdminMenuCustomNodeDto,
+  AdminNavLeafDto
+} from '@/shared/dtos/admin';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, SearchInput, Tooltip, TreeContextMenu, TreeHeader } from '@/shared/ui';
 import { cn } from '@/shared/utils';
-import type { 
-  AdminNavItemDto, 
-  AdminMenuCustomNodeDto as AdminMenuCustomNode,
-  AdminNavLeafDto as AdminNavLeaf
-} from '@/shared/dtos/admin';
+
+export type AdminMenuCustomNode = AdminMenuCustomNodeDto;
+export type AdminNavLeaf = AdminNavLeafDto;
 
 export type NavItem = Omit<AdminNavItemDto, 'children'> & {
   icon?: React.ReactNode;

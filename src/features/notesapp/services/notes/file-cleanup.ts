@@ -3,12 +3,10 @@ import 'server-only';
 import fs from 'fs/promises';
 import path from 'path';
 
+import { getDiskPathFromPublicPath } from '@/features/files/server';
+
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');
 const notesRoot = path.join(uploadsRoot, 'notes');
-
-export function getDiskPathFromPublicPath(publicPath: string): string {
-  return path.join(process.cwd(), 'public', publicPath.replace(/^\/+/, ''));
-}
 
 export async function cleanupNoteFile(noteId: string, filepath: string): Promise<void> {
   try {

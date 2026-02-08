@@ -1922,7 +1922,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     handleCreateAiDescriptionPath,
     handleSave,
     handleReset,
-    handleDeletePath: (pathId?: string): void => { void handleDeletePath(pathId); }, // Wrap async in void
+    handleDeletePath,
     activePathId,
     activeTrigger,
     executionMode,

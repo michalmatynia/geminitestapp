@@ -21,7 +21,7 @@ import { getAuthSecurityProfile, updateAuthSecurityProfile } from '@/features/au
 import { getAuthUserPageSettings } from '@/features/auth/services/auth-settings';
 import { hashRecoveryCode, verifyTotpToken } from '@/features/auth/services/totp';
 import { decryptAuthSecret } from '@/features/auth/utils/auth-encryption';
-import { ErrorSystem } from '@/features/observability/server';
+import { ActivityTypes, ErrorSystem, logActivity } from '@/features/observability/server';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
@@ -366,6 +366,28 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
         },
       },
       debug: process.env['AUTH_DEBUG'] === 'true',
+      events: {
+        async signIn({ user }) {
+          if (user?.id) {
+            void logActivity({
+              type: ActivityTypes.AUTH.LOGIN,
+              description: `User logged in: ${user.email}`,
+              userId: user.id,
+              entityId: user.id,
+              entityType: 'user',
+            }).catch(() => {});
+          }
+        },
+        async signOut({ token }) {
+          if (token?.sub) {
+            void logActivity({
+              type: ActivityTypes.AUTH.LOGOUT,
+              description: 'User logged out',
+              userId: token.sub,
+            }).catch(() => {});
+          }
+        },
+      },
     };
   } catch (error: unknown) {
     await ErrorSystem.captureException(error, {

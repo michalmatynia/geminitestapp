@@ -134,11 +134,6 @@ export type Producer = Entity & {
   website: string | null;
 };
 
-export type Producer = Entity & {
-  name: string;
-  website: string | null;
-};
-
 export interface CreateProductDraftInput extends Partial<CreateProductDto> {
   sku: string;
 }

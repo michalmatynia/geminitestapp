@@ -75,6 +75,17 @@ const getErrorFingerprint = async (params: ErrorFingerprintParams): Promise<stri
   }
 };
 
+const getSessionUser = async (): Promise<{ id?: string | null } | null> => {
+  try {
+    // eslint-disable-next-line import/no-restricted-paths
+    const { auth } = await import('@/features/auth/auth');
+    const session = await auth();
+    return session?.user ?? null;
+  } catch {
+    return null;
+  }
+};
+
 export type {
   ApiHandlerOptions,
   ApiHandlerContext,
@@ -190,10 +201,12 @@ export function apiHandler(
 
     const requestId = request.headers.get('x-request-id') ?? randomUUID();
     const startTime = performance.now();
+    const user = await getSessionUser();
 
     const context: ApiHandlerContext = {
       requestId,
       startTime,
+      userId: user?.id ?? null,
       getElapsedMs: (): number => Math.round(performance.now() - startTime),
     };
 
@@ -302,10 +315,12 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
 
     const requestId = request.headers.get('x-request-id') ?? randomUUID();
     const startTime = performance.now();
+    const user = await getSessionUser();
 
     const handlerContext: ApiHandlerContext = {
       requestId,
       startTime,
+      userId: user?.id ?? null,
       getElapsedMs: () => Math.round(performance.now() - startTime),
     };
 
@@ -338,6 +353,14 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
       }
 
       const params = await routeContext.params;
+      
+      if (options.paramsSchema) {
+        const validation = options.paramsSchema.safeParse(params);
+        if (!validation.success) {
+          throw validationError('Parameter validation failed', { issues: validation.error.flatten() });
+        }
+      }
+
       const response = await handler(request, handlerContext, params);
 
       if (options.logSuccess) {

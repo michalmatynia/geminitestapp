@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 
+import { getDiskPathFromPublicPath } from '@/features/files/server';
 import { ErrorSystem } from '@/features/observability/server';
 import { getAsset3DRepository } from '@/features/viewer3d/services/asset3d-repository';
 import type { Asset3DRecord } from '@/features/viewer3d/types';
@@ -9,10 +10,6 @@ import { isValid3DAsset, validate3DFileAsync } from './validateAsset3d';
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');
 const assets3dRoot = path.join(uploadsRoot, 'assets3d');
-
-export function getDiskPathFromPublicPath(publicPath: string): string {
-  return path.join(process.cwd(), 'public', publicPath.replace(/^\/+/, ''));
-}
 
 export async function uploadAsset3D(
   file: File,

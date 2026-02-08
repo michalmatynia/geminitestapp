@@ -7,6 +7,7 @@ import { getAuthSecurityPolicy, validatePasswordStrength } from '@/features/auth
 import { getAuthUserPageSettings } from '@/features/auth/server';
 import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/services/auth-provider';
 import { logAuthEvent } from '@/features/auth/utils/auth-request-logger';
+import { ActivityTypes, logActivity } from '@/features/observability/server';
 import { conflictError, internalError, validationError, forbiddenError } from '@/shared/errors/app-error';
 import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
@@ -87,6 +88,14 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
       body: { email: user.email, name: user.name },
       status: 201,
     });
+    void logActivity({
+      type: ActivityTypes.AUTH.REGISTERED,
+      description: `User registered: ${user.email}`,
+      userId: user.id,
+      entityId: user.id,
+      entityType: 'user',
+      metadata: { email: user.email }
+    }).catch(() => {});
     return NextResponse.json(
       { id: user.id, email: user.email, name: user.name },
       { status: 201 }
@@ -122,11 +131,18 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
     body: { email: doc.email, name: doc.name },
     status: 201,
   });
+  void logActivity({
+    type: ActivityTypes.AUTH.REGISTERED,
+    description: `User registered: ${doc.email}`,
+    userId: result.insertedId.toString(),
+    entityId: result.insertedId.toString(),
+    entityType: 'user',
+    metadata: { email: doc.email }
+  }).catch(() => {});
   return NextResponse.json(
     { id: result.insertedId.toString(), email: doc.email, name: doc.name },
     { status: 201 }
-  );
-}
+  );}
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),

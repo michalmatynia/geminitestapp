@@ -9,6 +9,12 @@ import { getCmsDataProvider } from '@/features/cms/services/cms-provider';
 import { getIntegrationDataProvider } from '@/features/integrations/services/integration-provider';
 import { PRODUCT_DB_PROVIDER_SETTING_KEY } from '@/features/products/constants';
 import { getProductDataProvider } from '@/features/products/services/product-provider';
+import type {
+  AppProviderValueDto as ProviderValue,
+  AppProviderSourceDto as ProviderSource,
+  AppProviderServiceStatusDto as ProviderServiceStatus,
+  AppProviderDiagnosticsDto as ProviderDiagnosticsResponse,
+} from '@/shared/dtos/system';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import {
   APP_DB_PROVIDER_SETTING_KEY,
@@ -18,13 +24,6 @@ import {
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import type { ApiHandlerContext } from '@/shared/types/api';
-import type {
-  AppProviderValueDto as ProviderValue,
-  AppProviderSourceDto as ProviderSource,
-  AppProviderServiceDto as ProviderService,
-  AppProviderServiceStatusDto as ProviderServiceStatus,
-  AppProviderDiagnosticsDto as ProviderDiagnosticsResponse,
-} from '@/shared/dtos/system';
 
 const normalizeAppProvider = (value?: string | null): AppDbProvider | null => {
   if (!value) return null;

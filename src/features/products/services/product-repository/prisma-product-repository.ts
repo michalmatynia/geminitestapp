@@ -68,13 +68,13 @@ const buildProductWhere = (filters: ProductFilters): Prisma.ProductWhereInput =>
   if (filters.minPrice !== undefined) {
     where.price = {
       ...(where.price as Prisma.IntFilter),
-      gte: typeof filters.minPrice === 'string' ? parseInt(filters.minPrice, 10) : filters.minPrice,
+      gte: filters.minPrice,
     };
   }
   if (filters.maxPrice !== undefined) {
     where.price = {
       ...(where.price as Prisma.IntFilter),
-      lte: typeof filters.maxPrice === 'string' ? parseInt(filters.maxPrice, 10) : filters.maxPrice,
+      lte: filters.maxPrice,
     };
   }
   if (filters.startDate) {
@@ -235,13 +235,14 @@ const toProductRecord = (product: {
   noteIds: Array.isArray(product.noteIds) ? product.noteIds : [],
   createdAt: product.createdAt.toISOString(),
   updatedAt: product.updatedAt.toISOString(),
+  categoryId: (product as unknown as { categories?: { categoryId: string } | null }).categories?.categoryId ?? null,
 });
 
 export const prismaProductRepository: ProductRepository = {
   async getProducts(filters: ProductFilters) {
     const where = buildProductWhere(filters);
-    const page = filters.page ? parseInt(filters.page, 10) : 1;
-    const pageSize = filters.pageSize ? parseInt(filters.pageSize, 10) : 50;
+    const page = filters.page ?? 1;
+    const pageSize = filters.pageSize ?? 20;
 
     const products = await prisma.product.findMany({
       where,

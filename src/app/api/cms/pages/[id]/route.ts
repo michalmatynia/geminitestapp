@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
+import { ActivityTypes, logActivity } from '@/features/observability/server';
 import { parseJsonBody } from '@/features/products/server';
 import { notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
@@ -51,7 +52,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: P
  * PUT /api/cms/pages/[id]
  * Updates a page.
  */
-async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Params): Promise<NextResponse | Response> {
+async function PUT_handler(req: NextRequest, ctx: ApiHandlerContext, params: Params): Promise<NextResponse | Response> {
   const { id } = params;
 
   const parsed = await parseJsonBody(req, pageUpdateSchema, {
@@ -88,18 +89,43 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Pa
     await cmsRepository.replacePageSlugs(id, slugIds);
   }
 
+  void logActivity({
+    type: ActivityTypes.CMS.PAGE_UPDATED,
+    description: `Updated CMS page: ${updatedPage.name}`,
+    userId: ctx.userId,
+    entityId: id,
+    entityType: 'cms_page',
+    metadata: { name: updatedPage.name, status }
+  }).catch(() => {});
+
   return NextResponse.json(updatedPage);
 }
 
 /**
+ * DELETE /api/products/categories/[id]
+ * Deletes a product category and all its children (cascade).
+ */
+/**
  * DELETE /api/cms/pages/[id]
  * Deletes a page.
  */
-async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: Params): Promise<NextResponse | Response> {
+async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext, params: Params): Promise<NextResponse | Response> {
   const { id } = params;
   const cmsRepository = await getCmsRepository();
   
+  const page = await cmsRepository.getPageById(id);
   await cmsRepository.deletePage(id);
+
+  if (page) {
+    void logActivity({
+      type: ActivityTypes.CMS.PAGE_DELETED,
+      description: `Deleted CMS page: ${page.name}`,
+      userId: ctx.userId,
+      entityId: id,
+      entityType: 'cms_page',
+      metadata: { name: page.name }
+    }).catch(() => {});
+  }
 
   return new Response(null, { status: 204 });
 }

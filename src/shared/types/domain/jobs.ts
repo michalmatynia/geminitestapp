@@ -1,4 +1,3 @@
-import type { Entity, Status } from '../core/base-types';
 import type { ProductAiJobDto } from '../../dtos/jobs';
 
 export type ProductAiJobType =
@@ -36,6 +35,9 @@ export interface ProductAiJob extends Omit<ProductAiJobDto, 'createdAt' | 'updat
   createdAt: Date | string;
   updatedAt?: Date | string | null;
   result: ProductAiJobResult | null;
+  payload: unknown;
+  errorMessage?: string | null;
+  finishedAt?: string | null;
   product?: {
     name_en: string | null;
     sku: string | null;

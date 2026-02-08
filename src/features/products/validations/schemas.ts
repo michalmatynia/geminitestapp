@@ -1,9 +1,24 @@
 import { z } from 'zod';
 
+import { commonListQuerySchema } from '@/shared/validations/api-schemas';
+
 // Base validation helpers
 const trimmedString = z.string().trim();
 const optionalTrimmedString = trimmedString.optional();
 const nullishTrimmedString = trimmedString.nullish();
+
+/**
+ * Schema for filtering product lists.
+ */
+export const productFilterSchema = commonListQuerySchema.extend({
+  sku: z.string().trim().optional(),
+  minPrice: z.coerce.number().min(0).optional(),
+  maxPrice: z.coerce.number().min(0).optional(),
+  catalogId: z.string().trim().optional(),
+  searchLanguage: z.enum(['name_en', 'name_pl', 'name_de']).optional(),
+});
+
+export type ProductFiltersParsed = z.infer<typeof productFilterSchema>;
 
 function tryParseJson(value: string): unknown {
   try {
@@ -98,6 +113,7 @@ const productBaseSchema = z.object({
   sizeWidth: optionalNonNegativeInt,
   weight: optionalNonNegativeInt,
   length: optionalNonNegativeInt,
+  categoryId: nullishTrimmedString,
   
   // Media and metadata
   imageLinks: imageUrlArray.optional(),

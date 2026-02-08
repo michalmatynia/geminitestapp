@@ -1,5 +1,6 @@
 'use client';
 
+import { UseMutationResult } from '@tanstack/react-query';
 import React, { createContext, useContext, useState, useMemo, useEffect, useRef, useCallback } from 'react';
 
 import { useFetchExternalCategoriesMutation, useSaveMappingsMutation } from '@/features/integrations/hooks/useMarketplaceMutations';

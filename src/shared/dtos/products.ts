@@ -1,6 +1,6 @@
-import { NamedDto } from '../types/base';
+import { DtoBase, NamedDto } from '../types/base';
 
-export interface ProductDto extends NamedDto {
+export interface ProductDto extends DtoBase {
   sku: string | null;
   baseProductId: string | null;
   defaultPriceGroupId: string | null;
@@ -57,6 +57,7 @@ export interface PriceGroupDto extends NamedDto {
   currencyCode: string;
   isDefault: boolean;
   groupType: 'standard' | 'dependent';
+  type: string;
   basePriceField: string;
   sourceGroupId: string | null;
   priceMultiplier: number;

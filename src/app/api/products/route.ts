@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { CachedProductService, performanceMonitor } from '@/features/products/performance';
 import { productService } from '@/features/products/server';
 import { getProductDataProvider } from '@/features/products/server';
+import { ProductFiltersParsed, productFilterSchema } from '@/features/products/validations';
 import { validateProductCreateMiddleware } from '@/features/products/validations/middleware';
 import { badRequestError, payloadTooLargeError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
@@ -42,8 +43,7 @@ const attachTimingHeaders = (response: Response, entries: Record<string, number 
 };
 
 async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  const { searchParams } = new URL(req.url);
-  const filters = Object.fromEntries(searchParams.entries());
+  const filters = ctx.query as ProductFiltersParsed;
   const timings: Record<string, number | null | undefined> = {};
 
   try {
@@ -52,8 +52,6 @@ async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Re
     timings['provider'] = performance.now() - providerStart;
 
     // Read directly from the product service.
-    // Why: this route is the source of truth for the admin list and must never
-    // return stale empty cache entries.
     const products = await productService.getProducts(filters, { timings, provider });
     timings['total'] = ctx.getElapsedMs();
 
@@ -113,7 +111,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     }
   }
   
-  const product = await productService.createProduct(formData);
+  const product = await productService.createProduct(formData, { userId: _ctx.userId ?? undefined });
   
   // Invalidate relevant caches
   CachedProductService.invalidateAll();
@@ -121,6 +119,9 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   return NextResponse.json(product);
 }
 
-export const GET = apiHandler(GET_handler, { source: 'products.GET' });
+export const GET = apiHandler(GET_handler, { 
+  source: 'products.GET',
+  querySchema: productFilterSchema
+});
 
 export const POST = apiHandler(POST_handler, { source: 'products.POST' });

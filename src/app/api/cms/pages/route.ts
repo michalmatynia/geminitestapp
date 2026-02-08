@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { cmsService } from '@/features/cms/services/cms-service';
+import { ActivityTypes, logActivity } from '@/features/observability/server';
 import { parseJsonBody } from '@/features/products/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api';
@@ -26,7 +27,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
  * POST /api/cms/pages
  * Creates a new page.
  */
-async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<NextResponse | Response> {
+async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<NextResponse | Response> {
   const parsed = await parseJsonBody(req, createPageSchema, {
     logPrefix: 'cms-pages',
   });
@@ -40,6 +41,15 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   if (slugIds && slugIds.length > 0) {
     await cmsService.replacePageSlugs(created.id, slugIds);
   }
+
+  void logActivity({
+    type: ActivityTypes.CMS.PAGE_CREATED,
+    description: `Created CMS page: ${name}`,
+    userId: ctx.userId,
+    entityId: created.id,
+    entityType: 'cms_page',
+    metadata: { name }
+  }).catch(() => {});
 
   const page = await cmsService.getPageById(created.id);
   return NextResponse.json(page ?? created);

@@ -879,7 +879,7 @@ export function AiPathsSettingsView({
         handleFetchParserSample={handleFetchParserSample}
         handleFetchUpdaterSample={handleFetchUpdaterSample}
         handleRunSimulation={(node) => { handleRunSimulation(node); }}
-        onSendToAi={(id, prompt) => { void handleSendToAi(id, prompt).catch(() => {}); }}
+        onSendToAi={async (id, prompt) => { await handleSendToAi(id, prompt).catch(() => {}); }}
         saveDbQueryPresets={saveDbQueryPresets}
         saveDbNodePresets={saveDbNodePresets}
         toast={toast}

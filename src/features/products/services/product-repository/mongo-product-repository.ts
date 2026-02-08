@@ -127,6 +127,7 @@ const toProductBase = (doc: ProductDocument): ProductRecord => ({
     : [],
   createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : (doc.createdAt as unknown as string),
   updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : (doc.updatedAt as unknown as string),
+  categoryId: typeof doc.categoryId === 'string' ? doc.categoryId : null,
 });
 
 const buildSearchFilter = (filters: ProductFilters): Filter<ProductDocument> => {
@@ -158,13 +159,13 @@ const buildSearchFilter = (filters: ProductFilters): Filter<ProductDocument> => 
     }
   }
 
-  if (filters.minPrice || filters.maxPrice) {
+  if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
     filter.price = {};
-    if (filters.minPrice) {
-      filter.price.$gte = parseInt(filters.minPrice, 10);
+    if (filters.minPrice !== undefined) {
+      filter.price.$gte = filters.minPrice;
     }
-    if (filters.maxPrice) {
-      filter.price.$lte = parseInt(filters.maxPrice, 10);
+    if (filters.maxPrice !== undefined) {
+      filter.price.$lte = filters.maxPrice;
     }
   }
 
@@ -223,9 +224,9 @@ const buildSearchFilter = (filters: ProductFilters): Filter<ProductDocument> => 
 export const mongoProductRepository: ProductRepository = {
   async getProducts(filters: ProductFilters) {
     const db = await getMongoDb();
-    const page = filters.page ? parseInt(filters.page, 10) : undefined;
-    const pageSize = filters.pageSize ? parseInt(filters.pageSize, 10) : undefined;
-    const skip = page && pageSize ? (page - 1) * pageSize : undefined;
+    const page = filters.page ?? 1;
+    const pageSize = filters.pageSize ?? 20;
+    const skip = (page - 1) * pageSize;
     const limit = pageSize;
 
     let cursor = db
@@ -233,10 +234,8 @@ export const mongoProductRepository: ProductRepository = {
       .find(buildSearchFilter(filters))
       .sort({ createdAt: -1 });
 
-    if (skip !== undefined) {
-      cursor = cursor.skip(skip);
-    }
-    if (limit !== undefined) {
+    cursor = cursor.skip(skip);
+    cursor = cursor.limit(limit);
       cursor = cursor.limit(limit);
     }
 
@@ -320,6 +319,7 @@ export const mongoProductRepository: ProductRepository = {
         typeof data.priceComment === 'string' ? data.priceComment : null,
       stock: typeof data.stock === 'number' ? data.stock : null,
       price: typeof data.price === 'number' ? data.price : null,
+      categoryId: typeof data.categoryId === 'string' ? data.categoryId : null,
       sizeLength: typeof data.sizeLength === 'number' ? data.sizeLength : null,
       sizeWidth: typeof data.sizeWidth === 'number' ? data.sizeWidth : null,
       weight: typeof data.weight === 'number' ? data.weight : null,
@@ -469,6 +469,7 @@ export const mongoProductRepository: ProductRepository = {
       priceComment: existing.priceComment ?? null,
       stock: existing.stock ?? null,
       price: existing.price ?? null,
+      categoryId: existing.categoryId ?? null,
       sizeLength: existing.sizeLength ?? null,
       sizeWidth: existing.sizeWidth ?? null,
       weight: existing.weight ?? null,

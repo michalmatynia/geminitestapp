@@ -29,7 +29,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     return parsed.response;
   }
   const sku = parsed.data.sku ?? '';
-  const product = await productService.duplicateProduct(id, sku);
+  const product = await productService.duplicateProduct(id, sku, { userId: _ctx.userId ?? undefined });
   if (!product) {
     throw notFoundError('Product not found', { productId: id });
   }

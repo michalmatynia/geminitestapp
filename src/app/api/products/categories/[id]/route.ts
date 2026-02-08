@@ -3,28 +3,14 @@ export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { parseJsonBody } from '@/features/products/server';
-import { getProductDataProvider } from '@/features/products/server';
-import type { ProductCategoryDto } from '@/features/products/types';
+import { getCategoryRepository } from '@/features/products/server';
 import {
   badRequestError,
   conflictError,
-  internalError,
   notFoundError,
 } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import type { ApiHandlerContext } from '@/shared/types/api';
-
-interface MongoCategory {
-  id: string;
-  _id?: unknown;
-  parentId?: string | null;
-  catalogId?: string;
-  name?: string;
-  [key: string]: unknown;
-}
 
 const productCategoryUpdateSchema = z.object({
   name: z.string().min(1).optional(),
@@ -43,65 +29,8 @@ async function GET_handler(
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
-  if (!params.id) {
-    throw badRequestError('Category id is required');
-  }
-  const provider = await getProductDataProvider();
-  if (provider === 'mongodb') {
-    if (!process.env['MONGODB_URI']) {
-      throw internalError('MongoDB is not configured.');
-    }
-    const db = await getMongoDb();
-    const category = await db
-      .collection<MongoCategory>('product_categories')
-      .findOne({ id: params.id });
-    if (!category) {
-      throw notFoundError('Category not found', { categoryId: params.id });
-    }
-    const children = await db
-      .collection<MongoCategory>('product_categories')
-      .find({ parentId: params.id })
-      .toArray();
-    const parent = category.parentId
-      ? await db
-        .collection<MongoCategory>('product_categories')
-        .findOne({ id: category.parentId })
-      : null;
-    return NextResponse.json({
-      ...category,
-      id: category.id ?? String(category._id),
-      children: children.map((child) => {
-        const { _id, ...rest } = child;
-        const fallbackId = _id ? String(_id) : undefined;
-        return {
-          ...rest,
-          id: (rest as { id?: string }).id ?? fallbackId,
-        };
-      }),
-      parent: parent
-        ? (() => {
-          const { _id, ...rest } = parent;
-          const fallbackId = _id ? String(_id) : undefined;
-          return {
-            ...rest,
-            id: (rest as { id?: string }).id ?? fallbackId,
-          };
-        })()
-        : null,
-    });
-  }
-
-  if (!process.env['DATABASE_URL']) {
-    throw badRequestError('Product categories require the Postgres product store.');
-  }
-
-  const category = await prisma.productCategory.findUnique({
-    where: { id: params.id },
-    include: {
-      children: true,
-      parent: true,
-    },
-  });
+  const repository = await getCategoryRepository();
+  const category = await repository.getCategoryWithChildren(params.id);
 
   if (!category) {
     throw notFoundError('Category not found', { categoryId: params.id });
@@ -115,120 +44,15 @@ async function GET_handler(
  * Updates a product category.
  */
 async function PUT_handler(
-  req: NextRequest,
-  _ctx: ApiHandlerContext,
+  _req: NextRequest,
+  ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
-  if (!params.id) {
-    throw badRequestError('Category id is required');
-  }
-  const provider = await getProductDataProvider();
-  const parsed = await parseJsonBody(req, productCategoryUpdateSchema, {
-    logPrefix: 'product-categories.PUT',
-    allowEmpty: true,
-  });
-  if (!parsed.ok) {
-    return parsed.response;
-  }
+  const data = productCategoryUpdateSchema.parse(ctx.body);
+  const { name, parentId, catalogId } = data;
 
-  const { name, description, color, parentId, catalogId } = parsed.data;
-
-  if (provider === 'mongodb') {
-    if (!process.env['MONGODB_URI']) {
-      throw internalError('MongoDB is not configured.');
-    }
-    const db = await getMongoDb();
-    const current = await db
-      .collection<MongoCategory>('product_categories')
-      .findOne({ id: params.id });
-    if (!current) {
-      throw notFoundError('Category not found', { categoryId: params.id });
-    }
-
-    const nextCatalogId =
-      catalogId ?? current.catalogId;
-    const nextParentId =
-      parentId !== undefined
-        ? parentId
-        : catalogId && catalogId !== current.catalogId
-          ? null
-          : current.parentId ?? null;
-
-    if (!nextCatalogId) {
-      throw badRequestError('Catalog ID is required.');
-    }
-
-    if (nextParentId) {
-      const parent = await db
-        .collection<MongoCategory>('product_categories')
-        .findOne({ id: nextParentId });
-      if (!parent || parent.catalogId !== nextCatalogId) {
-        throw badRequestError('Parent category must be in the same catalog.', {
-          parentId: nextParentId,
-          catalogId: nextCatalogId,
-        });
-      }
-    }
-
-    // Prevent moving category to itself or its descendants
-    if (
-      nextParentId !== null &&
-      (catalogId === undefined ||
-        catalogId === current.catalogId)
-    ) {
-      const isDescendant = await checkIsDescendantMongo(
-        db,
-        params.id,
-        nextParentId
-      );
-      if (isDescendant) {
-        throw badRequestError('Cannot move category into itself or its descendants');
-      }
-    }
-
-    if (name !== undefined) {
-      const existing = await db.collection<MongoCategory>('product_categories').findOne({
-        name,
-        parentId: nextParentId,
-        catalogId: nextCatalogId,
-        id: { $ne: params.id },
-      });
-
-      if (existing) {
-        throw conflictError('A category with this name already exists at this level', {
-          name,
-          parentId: nextParentId,
-          catalogId: nextCatalogId,
-        });
-      }
-    }
-
-    const updateDoc = {
-      ...(name !== undefined ? { name } : {}),
-      ...(description !== undefined ? { description } : {}),
-      ...(color !== undefined ? { color } : {}),
-      ...(catalogId !== undefined ? { catalogId } : {}),
-      ...(parentId !== undefined || catalogId ? { parentId: nextParentId } : {}),
-      updatedAt: new Date(),
-    };
-
-    await db
-      .collection<MongoCategory>('product_categories')
-      .updateOne({ id: params.id }, { $set: updateDoc });
-    const updated = await db
-      .collection<MongoCategory>('product_categories')
-      .findOne({ id: params.id });
-    return NextResponse.json(updated as unknown as ProductCategoryDto);
-  }
-
-  if (!process.env['DATABASE_URL']) {
-    throw badRequestError('Product categories require the Postgres product store.');
-  }
-
-  const current = await prisma.productCategory.findUnique({
-    where: { id: params.id },
-    select: { catalogId: true, parentId: true },
-  });
+  const repository = await getCategoryRepository();
+  const current = await repository.getCategoryById(params.id);
 
   if (!current) {
     throw notFoundError('Category not found', { categoryId: params.id });
@@ -243,11 +67,8 @@ async function PUT_handler(
         : current.parentId ?? null;
 
   if (nextParentId) {
-    const parent = await prisma.productCategory.findUnique({
-      where: { id: nextParentId },
-      select: { catalogId: true },
-    });
-    if (parent?.catalogId !== nextCatalogId) {
+    const parent = await repository.getCategoryById(nextParentId);
+    if (!parent || parent.catalogId !== nextCatalogId) {
       throw badRequestError('Parent category must be in the same catalog.', {
         parentId: nextParentId,
         catalogId: nextCatalogId,
@@ -261,7 +82,7 @@ async function PUT_handler(
     (catalogId === undefined ||
       catalogId === current.catalogId)
   ) {
-    const isDescendant = await checkIsDescendant(params.id, nextParentId);
+    const isDescendant = await repository.isDescendant(params.id, nextParentId);
     if (isDescendant) {
       throw badRequestError('Cannot move category into itself or its descendants');
     }
@@ -269,16 +90,9 @@ async function PUT_handler(
 
   // Check for duplicate name under the new parent
   if (name !== undefined) {
-    const existing = await prisma.productCategory.findFirst({
-      where: {
-        name,
-        parentId: nextParentId,
-        catalogId: nextCatalogId,
-        NOT: { id: params.id },
-      },
-    });
+    const existing = await repository.findByName(nextCatalogId, name, nextParentId);
 
-    if (existing) {
+    if (existing && existing.id !== params.id) {
       throw conflictError('A category with this name already exists at this level', {
         name,
         parentId: nextParentId,
@@ -287,18 +101,14 @@ async function PUT_handler(
     }
   }
 
-  const category = await prisma.productCategory.update({
-    where: { id: params.id },
-    data: {
-      ...(name !== undefined && { name }),
-      ...(description !== undefined && { description }),
-      ...(color !== undefined && { color }),
-      ...(catalogId !== undefined && { catalogId }),
-      ...(parentId !== undefined || catalogId ? { parentId: nextParentId } : {}),
-    },
+  const category = await repository.updateCategory(params.id, {
+    ...(data.name && { name: data.name }),
+    ...(data.description && { description: data.description }),
+    ...(data.color && { color: data.color }),
+    ...(data.parentId && { parentId: data.parentId }),
   });
 
-  return NextResponse.json(category as unknown as ProductCategoryDto);
+  return NextResponse.json(category);
 }
 
 /**
@@ -310,95 +120,9 @@ async function DELETE_handler(
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
-  if (!params.id) {
-    throw badRequestError('Category id is required');
-  }
-  const provider = await getProductDataProvider();
-  if (provider === 'mongodb') {
-    if (!process.env['MONGODB_URI']) {
-      throw internalError('MongoDB is not configured.');
-    }
-    const db = await getMongoDb();
-    const idsToDelete = await collectCategoryIds(db, params.id);
-    await db
-      .collection('product_categories')
-      .deleteMany({ id: { $in: idsToDelete } });
-    return NextResponse.json({ success: true });
-  }
-
-  if (!process.env['DATABASE_URL']) {
-    throw badRequestError('Product categories require the Postgres product store.');
-  }
-
-  // The schema has onDelete: Cascade, so children will be deleted automatically
-  await prisma.productCategory.delete({
-    where: { id: params.id },
-  });
-
+  const repository = await getCategoryRepository();
+  await repository.deleteCategory(params.id);
   return NextResponse.json({ success: true });
-}
-
-/**
- * Helper: Check if targetId is the same as or a descendant of categoryId
- */
-async function checkIsDescendant(categoryId: string, targetId: string): Promise<boolean> {
-  if (categoryId === targetId) return true;
-
-  const children = (await prisma.productCategory.findMany({
-    where: { parentId: categoryId },
-    select: { id: true },
-  })) as Array<{ id: string }>;
-
-  for (const child of children) {
-    if (await checkIsDescendant(child.id, targetId)) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-async function checkIsDescendantMongo(
-  db: Awaited<ReturnType<typeof getMongoDb>>,
-  categoryId: string,
-  targetId: string
-): Promise<boolean> {
-  if (categoryId === targetId) return true;
-  const children = (await db
-    .collection<MongoCategory>('product_categories')
-    .find({ parentId: categoryId })
-    .project({ id: 1 })
-    .toArray()) as unknown as Array<{ id: string }>;
-  for (const child of children) {
-    if (await checkIsDescendantMongo(db, child.id, targetId)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-async function collectCategoryIds(
-  db: Awaited<ReturnType<typeof getMongoDb>>,
-  rootId: string
-): Promise<string[]> {
-  const ids: string[] = [rootId];
-  const queue: string[] = [rootId];
-  while (queue.length > 0) {
-    const current = queue.shift();
-    if (!current) continue;
-    const children = (await db
-      .collection<MongoCategory>('product_categories')
-      .find({ parentId: current })
-      .project({ id: 1 })
-      .toArray()) as unknown as Array<{ id: string }>;
-    for (const child of children) {
-      if (!ids.includes(child.id)) {
-        ids.push(child.id);
-        queue.push(child.id);
-      }
-    }
-  }
-  return ids;
 }
 
 export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {
@@ -406,6 +130,8 @@ export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {
 });
 export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, {
   source: 'products.categories.[id].PUT',
+  parseJsonBody: true,
+  bodySchema: productCategoryUpdateSchema,
 });
 export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, {
   source: 'products.categories.[id].DELETE',

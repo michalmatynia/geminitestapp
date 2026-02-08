@@ -17,7 +17,7 @@ import { WysiwygEditor } from './editor/WysiwygEditor';
 function NoteFormInner({ 
   formRef 
 }: { 
-  formRef?: React.RefObject<HTMLFormElement | null> 
+  formRef?: React.RefObject<HTMLFormElement | null> | undefined 
 }): React.JSX.Element {
   const {
     note,

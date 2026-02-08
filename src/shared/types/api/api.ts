@@ -23,6 +23,7 @@ export interface ApiHandlerContext {
   params?: Record<string, string | string[]>;
   body?: unknown;
   query?: unknown;
+  userId?: string | null;
   rateLimitHeaders?: Record<string, string>;
 }
 
@@ -55,6 +56,10 @@ export interface ApiHandlerOptions {
    * Optional Zod schema to validate parsed JSON body.
    */
   bodySchema?: ZodSchema;
+  /**
+   * Optional Zod schema to validate route parameters.
+   */
+  paramsSchema?: ZodSchema;
   /**
    * Optional Zod schema to validate query parameters.
    */

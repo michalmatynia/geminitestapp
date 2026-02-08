@@ -23,6 +23,7 @@ export const AppErrorCodes = {
   rateLimited: 'RATE_LIMITED',
   payloadTooLarge: 'PAYLOAD_TOO_LARGE',
   unprocessableEntity: 'UNPROCESSABLE_ENTITY',
+  methodNotAllowed: 'METHOD_NOT_ALLOWED',
   resourceLocked: 'RESOURCE_LOCKED',
   quotaExceeded: 'QUOTA_EXCEEDED',
   
@@ -221,7 +222,7 @@ export const methodNotAllowedError = (
   meta?: Record<string, unknown>
 ): AppError =>
   new AppError(message, {
-    code: 'METHOD_NOT_ALLOWED',
+    code: AppErrorCodes.methodNotAllowed,
     httpStatus: 405,
     meta,
     expected: true,

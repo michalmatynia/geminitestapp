@@ -18,8 +18,18 @@ const notesRoot = path.join(uploadsRoot, 'notes');
 const studioRoot = path.join(uploadsRoot, 'studio');
 const tempFolderName = 'temp';
 
+const publicRoot = path.resolve(process.cwd(), 'public');
+const MAX_IMAGE_BYTES = 15 * 1024 * 1024; // 15MB
+const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf']);
+
 export function getDiskPathFromPublicPath(publicPath: string): string {
-  return path.join(process.cwd(), 'public', publicPath.replace(/^\/+/, ''));
+  const cleaned = publicPath.replace(/^\/+/, '');
+  const resolved = path.resolve(publicRoot, cleaned);
+
+  if (!resolved.startsWith(publicRoot + path.sep) && resolved !== publicRoot) {
+    throw new Error('Security Error: Invalid path traversal attempt detected.');
+  }
+  return resolved;
 }
 
 function sanitizeSku(sku: string): string {
@@ -43,9 +53,8 @@ function sanitizeFolderPath(value: string): string {
 }
 
 function sanitizeFilename(filename: string): string {
-  const base = path.basename(filename);
-  const sanitized = base.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/^_+/, '');
-  return sanitized || 'upload.bin';
+  const ext = path.extname(filename).toLowerCase();
+  return `${randomUUID()}${ext}`;
 }
 
 function getUploadTarget({
@@ -110,6 +119,13 @@ export async function uploadFile(
     filenameOverride?: string | null | undefined;
   }
 ): Promise<ImageFileRecord> {
+  if (file.size > MAX_IMAGE_BYTES) {
+    throw new Error(`File too large. Max size allowed is ${MAX_IMAGE_BYTES / 1024 / 1024}MB.`);
+  }
+  if (!ALLOWED_MIME.has(file.type)) {
+    throw new Error(`Unsupported file type: ${file.type}`);
+  }
+
   const fileBuffer = Buffer.from(await file.arrayBuffer());
   const rawName =
     options?.filenameOverride && options.filenameOverride.trim().length > 0
@@ -117,7 +133,7 @@ export async function uploadFile(
       : typeof file.name === 'string' && file.name.trim().length > 0
         ? file.name
         : 'upload.bin';
-  const filename = `${Date.now()}-${sanitizeFilename(rawName)}`;
+  const filename = sanitizeFilename(rawName);
   const { diskDir, publicDir } = getUploadTarget({
     category: options?.category,
     sku: options?.sku,
@@ -196,8 +212,15 @@ export async function uploadNoteFile(
   noteId: string,
   slotIndex: number
 ): Promise<NoteFileRecord> {
+  if (file.size > MAX_IMAGE_BYTES) {
+    throw new Error(`File too large. Max size allowed is ${MAX_IMAGE_BYTES / 1024 / 1024}MB.`);
+  }
+  if (!ALLOWED_MIME.has(file.type)) {
+    throw new Error(`Unsupported file type: ${file.type}`);
+  }
+
   const fileBuffer = Buffer.from(await file.arrayBuffer());
-  const filename = `slot-${slotIndex}-${Date.now()}-${path.basename(file.name)}`;
+  const filename = `slot-${slotIndex}-${sanitizeFilename(file.name)}`;
   const diskDir = path.join(notesRoot, noteId);
   const publicDir = `/uploads/notes/${noteId}`;
   const filepath = path.join(diskDir, filename);

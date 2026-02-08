@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { auth } from '@/features/auth/server';
 import { enqueueProductAiJob, processSingleJob, startProductAiJobQueue } from '@/features/jobs/server';
+import { ActivityTypes, logActivity } from '@/features/observability/server';
 import { authError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -38,6 +39,15 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     'db_sync' as ProductAiJobType,
     { direction, entityType: 'system', source: 'db_sync' }
   );
+
+  void logActivity({
+    type: ActivityTypes.SYSTEM.DATABASE_SYNC,
+    description: `Database sync started: ${direction}`,
+    userId: session?.user?.id,
+    entityId: job.id,
+    entityType: 'job',
+    metadata: { direction, jobId: job.id }
+  }).catch(() => {});
 
   const inlineJobs =
     process.env['AI_JOBS_INLINE'] === 'true' ||

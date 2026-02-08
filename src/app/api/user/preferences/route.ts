@@ -115,21 +115,21 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise
 
   // Type assertion to handle exactOptionalPropertyTypes
   const partial: Record<string, unknown> = {};
-  if (parsed.productListNameLocale !== undefined) partial.productListNameLocale = parsed.productListNameLocale;
-  if (parsed.productListCatalogFilter !== undefined) partial.productListCatalogFilter = parsed.productListCatalogFilter;
-  if (parsed.productListCurrencyCode !== undefined) partial.productListCurrencyCode = parsed.productListCurrencyCode;
-  if (parsed.productListPageSize !== undefined) partial.productListPageSize = parsed.productListPageSize;
-  if (parsed.productListThumbnailSource !== undefined) partial.productListThumbnailSource = parsed.productListThumbnailSource;
-  if (parsed.aiPathsActivePathId !== undefined) partial.aiPathsActivePathId = parsed.aiPathsActivePathId;
-  if (parsed.adminMenuCollapsed !== undefined) partial.adminMenuCollapsed = parsed.adminMenuCollapsed;
-  if (parsed.cmsLastPageId !== undefined) partial.cmsLastPageId = parsed.cmsLastPageId;
-  if (parsed.cmsActiveDomainId !== undefined) partial.cmsActiveDomainId = parsed.cmsActiveDomainId;
-  if (parsed.cmsThemeOpenSections !== undefined) partial.cmsThemeOpenSections = parsed.cmsThemeOpenSections ?? [];
-  if (parsed.cmsThemeLogoWidth !== undefined) partial.cmsThemeLogoWidth = parsed.cmsThemeLogoWidth;
-  if (parsed.cmsThemeLogoUrl !== undefined) partial.cmsThemeLogoUrl = parsed.cmsThemeLogoUrl;
-  if (parsed.cmsPreviewEnabled !== undefined) partial.cmsPreviewEnabled = parsed.cmsPreviewEnabled;
+  if (parsed.productListNameLocale !== undefined) partial["productListNameLocale"] = parsed.productListNameLocale;
+  if (parsed.productListCatalogFilter !== undefined) partial["productListCatalogFilter"] = parsed.productListCatalogFilter;
+  if (parsed.productListCurrencyCode !== undefined) partial["productListCurrencyCode"] = parsed.productListCurrencyCode;
+  if (parsed.productListPageSize !== undefined) partial["productListPageSize"] = parsed.productListPageSize;
+  if (parsed.productListThumbnailSource !== undefined) partial['productListThumbnailSource'] = parsed.productListThumbnailSource;
+  if (parsed.aiPathsActivePathId !== undefined) partial['aiPathsActivePathId'] = parsed.aiPathsActivePathId;
+  if (parsed.adminMenuCollapsed !== undefined) partial['adminMenuCollapsed'] = parsed.adminMenuCollapsed;
+  if (parsed.cmsLastPageId !== undefined) partial['cmsLastPageId'] = parsed.cmsLastPageId;
+  if (parsed.cmsActiveDomainId !== undefined) partial['cmsActiveDomainId'] = parsed.cmsActiveDomainId;
+  if (parsed.cmsThemeOpenSections !== undefined) partial['cmsThemeOpenSections'] = parsed.cmsThemeOpenSections ?? [];
+  if (parsed.cmsThemeLogoWidth !== undefined) partial['cmsThemeLogoWidth'] = parsed.cmsThemeLogoWidth;
+  if (parsed.cmsThemeLogoUrl !== undefined) partial['cmsThemeLogoUrl'] = parsed.cmsThemeLogoUrl;
+  if (parsed.cmsPreviewEnabled !== undefined) partial['cmsPreviewEnabled'] = parsed.cmsPreviewEnabled;
   if (parsed.cmsSlideshowPauseOnHoverInEditor !== undefined) {
-    partial.cmsSlideshowPauseOnHoverInEditor = parsed.cmsSlideshowPauseOnHoverInEditor;
+    partial['cmsSlideshowPauseOnHoverInEditor'] = parsed.cmsSlideshowPauseOnHoverInEditor;
   }
   const data = partial as Partial<UserPreferencesData>;
 

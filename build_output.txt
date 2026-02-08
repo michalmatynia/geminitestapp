@@ -6,7 +6,7 @@ Loaded Prisma config from prisma.config.ts.
 
 Prisma schema loaded from prisma/schema.prisma.
 
-✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 168ms
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 163ms
 
 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
 
@@ -82,18 +82,18 @@ Import trace:
     ./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/restore/route.ts
 
 
-✓ Compiled successfully in 14.8s
+✓ Compiled successfully in 14.1s
   Running TypeScript ...
 Failed to compile.
 
-./src/app/api/products/categories/route.ts:56:11
-Type error: Property 'provider' comes from an index signature, so it must be accessed with ['provider'].
+./src/features/ai/agent-runtime/tools/llm/index.ts:343:52
+Type error: Property 'primarySelectors' comes from an index signature, so it must be accessed with ['primarySelectors'].
 
-[0m [90m 54 |[39m   [36mconst[39m providerStart [33m=[39m performance[33m.[39mnow()[33m;[39m
- [90m 55 |[39m   [36mconst[39m provider [33m=[39m [36mawait[39m getProductDataProvider()[33m;[39m
-[31m[1m>[22m[39m[90m 56 |[39m   timings[33m.[39mprovider [33m=[39m performance[33m.[39mnow() [33m-[39m providerStart[33m;[39m
- [90m    |[39m           [31m[1m^[22m[39m
- [90m 57 |[39m
- [90m 58 |[39m   [36mif[39m (provider [33m===[39m [32m"mongodb"[39m) {
- [90m 59 |[39m     [36mif[39m ([33m![39mprocess[33m.[39menv[[32m"MONGODB_URI"[39m]) {[0m
+[0m [90m 341 |[39m     [36mconst[39m content [33m=[39m extractMessageContent(json)[33m;[39m
+ [90m 342 |[39m     [36mconst[39m parsed [33m=[39m parseJsonObject(content) [36mas[39m [33mRecord[39m[33m<[39m[33mstring[39m[33m,[39m unknown[33m>[39m [33m|[39m [36mnull[39m[33m;[39m
+[31m[1m>[22m[39m[90m 343 |[39m     [36mconst[39m primarySelectors [33m=[39m [33mArray[39m[33m.[39misArray(parsed[33m?[39m[33m.[39mprimarySelectors)
+ [90m     |[39m                                                    [31m[1m^[22m[39m
+ [90m 344 |[39m       [33m?[39m parsed[33m.[39mprimarySelectors[33m.[39mfilter(
+ [90m 345 |[39m         (selector[33m:[39m unknown) [33m=>[39m [36mtypeof[39m selector [33m===[39m [32m'string'[39m
+ [90m 346 |[39m       )[0m
 Next.js build worker exited with code: 1 and signal: null

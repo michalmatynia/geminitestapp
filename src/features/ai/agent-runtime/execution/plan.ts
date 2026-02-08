@@ -63,31 +63,31 @@ export async function initializePlanState(
     planSteps = checkpoint.steps;
     taskType = checkpoint.taskType ?? null;
     const checkpointPreferences = checkpoint.preferences ?? null;
-    if (checkpointPreferences?.ignoreRobotsTxt !== undefined) {
-      nextPreferences.ignoreRobotsTxt = Boolean(
-        checkpointPreferences.ignoreRobotsTxt
+    if (checkpointPreferences?.['ignoreRobotsTxt'] !== undefined) {
+      nextPreferences['ignoreRobotsTxt'] = Boolean(
+        checkpointPreferences['ignoreRobotsTxt']
       );
     }
     if (checkpointPreferences?.requireHumanApproval !== undefined) {
-      nextPreferences.requireHumanApproval = Boolean(
+      nextPreferences['requireHumanApproval'] = Boolean(
         checkpointPreferences.requireHumanApproval
       );
     }
-    if (typeof checkpointPreferences?.plannerModel === 'string') {
-      nextPreferences.plannerModel = checkpointPreferences.plannerModel;
+    if (typeof checkpointPreferences?.['plannerModel'] === 'string') {
+      nextPreferences['plannerModel'] = checkpointPreferences['plannerModel'];
     }
-    if (typeof checkpointPreferences?.selfCheckModel === 'string') {
-      nextPreferences.selfCheckModel = checkpointPreferences.selfCheckModel;
+    if (typeof checkpointPreferences?.['selfCheckModel'] === 'string') {
+      nextPreferences['selfCheckModel'] = checkpointPreferences['selfCheckModel'];
     }
-    if (typeof checkpointPreferences?.loopGuardModel === 'string') {
-      nextPreferences.loopGuardModel = checkpointPreferences.loopGuardModel;
+    if (typeof checkpointPreferences?.['loopGuardModel'] === 'string') {
+      nextPreferences['loopGuardModel'] = checkpointPreferences['loopGuardModel'];
     }
-    if (typeof checkpointPreferences?.approvalGateModel === 'string') {
-      nextPreferences.approvalGateModel = checkpointPreferences.approvalGateModel;
+    if (typeof checkpointPreferences?.['approvalGateModel'] === 'string') {
+      nextPreferences['approvalGateModel'] = checkpointPreferences['approvalGateModel'];
     }
-    if (typeof checkpointPreferences?.memorySummarizationModel === 'string') {
-      nextPreferences.memorySummarizationModel =
-        checkpointPreferences.memorySummarizationModel;
+    if (typeof checkpointPreferences?.['memorySummarizationModel'] === 'string') {
+      nextPreferences['memorySummarizationModel'] =
+        checkpointPreferences['memorySummarizationModel'];
     }
     if (typeof checkpoint.summaryCheckpoint === 'number') {
       summaryCheckpoint = checkpoint.summaryCheckpoint;

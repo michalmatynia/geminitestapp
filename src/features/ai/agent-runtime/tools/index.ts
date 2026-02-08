@@ -210,7 +210,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
     ): Promise<void> => {
       const normalizeLogMetadata = async (payload?: Record<string, unknown>): Promise<Record<string, unknown> | undefined> => {
         if (!payload || !outputNormalizationModel) return payload;
-        const extractionType = payload.extractionType;
+        const extractionType = payload['extractionType'];
         if (extractionType !== 'product_names' && extractionType !== 'emails') {
           return payload;
         }

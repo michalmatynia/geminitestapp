@@ -99,30 +99,23 @@ export const validateExtractionWithLLM = async (
     }
     const payload = (await response.json()) as unknown;
     const content = extractMessageContent(payload);
-    const parsed = parseJsonObject(content) as {
-      acceptedItems?: unknown;
-      rejectedItems?: unknown;
-      issues?: unknown;
-      missingCount?: unknown;
-      valid?: unknown;
-      evidence?: unknown;
-    } | null;
-    const acceptedItems = Array.isArray(parsed?.acceptedItems)
-      ? parsed.acceptedItems.filter((item: unknown) => typeof item === 'string')
+    const parsed = parseJsonObject(content) as Record<string, unknown> | null;
+    const acceptedItems = Array.isArray(parsed?.['acceptedItems'])
+      ? (parsed?.['acceptedItems'] as unknown[]).filter((item: unknown) => typeof item === 'string')
       : [];
-    const rejectedItems = Array.isArray(parsed?.rejectedItems)
-      ? parsed.rejectedItems.filter((item: unknown) => typeof item === 'string')
+    const rejectedItems = Array.isArray(parsed?.['rejectedItems'])
+      ? (parsed?.['rejectedItems'] as unknown[]).filter((item: unknown) => typeof item === 'string')
       : [];
-    const issues = Array.isArray(parsed?.issues)
-      ? parsed.issues.filter((item: unknown) => typeof item === 'string')
+    const issues = Array.isArray(parsed?.['issues'])
+      ? (parsed?.['issues'] as unknown[]).filter((item: unknown) => typeof item === 'string')
       : [];
     const missingCount =
-      typeof parsed?.missingCount === 'number'
-        ? parsed.missingCount
+      typeof parsed?.['missingCount'] === 'number'
+        ? (parsed?.['missingCount'] as number)
         : Math.max(0, requiredCount - acceptedItems.length);
     const valid =
-      typeof parsed?.valid === 'boolean'
-        ? parsed.valid
+      typeof parsed?.['valid'] === 'boolean'
+        ? (parsed?.['valid'] as boolean)
         : acceptedItems.length >= requiredCount;
     return {
       valid,
@@ -130,15 +123,15 @@ export const validateExtractionWithLLM = async (
       rejectedItems,
       issues,
       missingCount,
-      evidence: Array.isArray(parsed?.evidence)
-        ? parsed.evidence.filter(
+      evidence: Array.isArray(parsed?.['evidence'])
+        ? (parsed?.['evidence'] as unknown[]).filter(
           (item: unknown): item is { item: string; snippet: string } =>
             typeof item === 'object' &&
               item !== null &&
               'item' in item &&
-              typeof item.item === 'string' &&
+              typeof (item as Record<string, unknown>).item === 'string' &&
               'snippet' in item &&
-              typeof item.snippet === 'string'
+              typeof (item as Record<string, unknown>).snippet === 'string'
         )
         : [],
     };
@@ -202,9 +195,9 @@ export const normalizeExtractionItemsWithLLM = async (
     }
     const payload = (await response.json()) as unknown;
     const content = extractMessageContent(payload).trim();
-    const parsed = parseJsonObject(content) as { items?: unknown } | null;
-    const cleaned = Array.isArray(parsed?.items)
-      ? parsed.items.filter((item: unknown) => typeof item === 'string')
+    const parsed = parseJsonObject(content) as Record<string, unknown> | null;
+    const cleaned = Array.isArray(parsed?.['items'])
+      ? (parsed?.['items'] as unknown[]).filter((item: unknown) => typeof item === 'string')
       : [];
     return cleaned.length > 0 ? cleaned : items;
   } catch {
@@ -252,9 +245,9 @@ export const inferSelectorsFromLLM = async (
     }
     const json = (await response.json()) as unknown;
     const content = extractMessageContent(json);
-    const parsed = parseJsonObject(content) as { selectors?: unknown } | null;
-    const selectors = Array.isArray(parsed?.selectors)
-      ? parsed.selectors.filter((selector: unknown) => typeof selector === 'string')
+    const parsed = parseJsonObject(content) as Record<string, unknown> | null;
+    const selectors = Array.isArray(parsed?.['selectors'])
+      ? (parsed?.['selectors'] as unknown[]).filter((selector: unknown) => typeof selector === 'string')
       : [];
     if (log) {
       await log('info', 'LLM selector inference completed.', {
@@ -340,24 +333,24 @@ export const buildExtractionPlan = async (
     const json = (await response.json()) as unknown;
     const content = extractMessageContent(json);
     const parsed = parseJsonObject(content) as Record<string, unknown> | null;
-    const primarySelectors = Array.isArray(parsed?.primarySelectors)
-      ? parsed.primarySelectors.filter(
+    const primarySelectors = Array.isArray(parsed?.['primarySelectors'])
+      ? (parsed?.['primarySelectors'] as unknown[]).filter(
         (selector: unknown) => typeof selector === 'string'
       )
       : [];
-    const fallbackSelectors = Array.isArray(parsed?.fallbackSelectors)
-      ? parsed.fallbackSelectors.filter(
+    const fallbackSelectors = Array.isArray(parsed?.['fallbackSelectors'])
+      ? (parsed?.['fallbackSelectors'] as unknown[]).filter(
         (selector: unknown) => typeof selector === 'string'
       )
       : [];
     const plan = {
-      target: typeof parsed?.target === 'string' ? parsed.target : null,
-      fields: Array.isArray(parsed?.fields)
-        ? parsed.fields.filter((field: unknown) => typeof field === 'string')
+      target: typeof parsed?.['target'] === 'string' ? parsed?.['target'] : null,
+      fields: Array.isArray(parsed?.['fields'])
+        ? (parsed?.['fields'] as unknown[]).filter((field: unknown) => typeof field === 'string')
         : [],
       primarySelectors,
       fallbackSelectors,
-      notes: typeof parsed?.notes === 'string' ? parsed.notes : null,
+      notes: typeof parsed?.['notes'] === 'string' ? parsed?.['notes'] : null,
     };
     if (log) {
       await log('info', 'LLM extraction plan created.', {
@@ -449,30 +442,30 @@ export const buildFailureRecoveryPlan = async (
     const json = (await response.json()) as unknown;
     const content = extractMessageContent(json);
     const parsed = parseJsonObject(content) as Record<string, unknown> | null;
-    const selectors = Array.isArray(parsed?.selectors)
-      ? parsed.selectors.filter((selector: unknown) => typeof selector === 'string')
+    const selectors = Array.isArray(parsed?.['selectors'])
+      ? (parsed?.['selectors'] as unknown[]).filter((selector: unknown) => typeof selector === 'string')
       : [];
-    const listingUrls = Array.isArray(parsed?.listingUrls)
-      ? parsed.listingUrls.filter((item: unknown) => typeof item === 'string')
+    const listingUrls = Array.isArray(parsed?.['listingUrls'])
+      ? (parsed?.['listingUrls'] as unknown[]).filter((item: unknown) => typeof item === 'string')
       : [];
     const plan = {
-      reason: typeof parsed?.reason === 'string' ? parsed.reason : null,
+      reason: typeof parsed?.['reason'] === 'string' ? (parsed?.['reason'] as string) : null,
       selectors,
       listingUrls,
       clickSelector:
-        typeof parsed?.clickSelector === 'string' ? parsed.clickSelector : null,
-      loginUrl: typeof parsed?.loginUrl === 'string' ? parsed.loginUrl : null,
+        typeof parsed?.['clickSelector'] === 'string' ? (parsed?.['clickSelector'] as string) : null,
+      loginUrl: typeof parsed?.['loginUrl'] === 'string' ? (parsed?.['loginUrl'] as string) : null,
       usernameSelector:
-        typeof parsed?.usernameSelector === 'string'
-          ? parsed.usernameSelector
+        typeof parsed?.['usernameSelector'] === 'string'
+          ? (parsed?.['usernameSelector'] as string)
           : null,
       passwordSelector:
-        typeof parsed?.passwordSelector === 'string'
-          ? parsed.passwordSelector
+        typeof parsed?.['passwordSelector'] === 'string'
+          ? (parsed?.['passwordSelector'] as string)
           : null,
       submitSelector:
-        typeof parsed?.submitSelector === 'string' ? parsed.submitSelector : null,
-      notes: typeof parsed?.notes === 'string' ? parsed.notes : null,
+        typeof parsed?.['submitSelector'] === 'string' ? (parsed?.['submitSelector'] as string) : null,
+      notes: typeof parsed?.['notes'] === 'string' ? (parsed?.['notes'] as string) : null,
     };
     if (log) {
       await log('info', 'LLM failure recovery plan created.', {

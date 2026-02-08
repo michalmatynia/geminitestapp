@@ -80,7 +80,7 @@ async function handleCreateProduct(req: NextRequest, version: ApiVersion): Promi
     }
 
     const body = (await req.json()) as Record<string, unknown>;
-    const sku = typeof body.sku === 'string' ? body.sku : null;
+    const sku = typeof body['sku'] === 'string' ? body['sku'] : null;
     
     // Basic validation
     if (!sku) {

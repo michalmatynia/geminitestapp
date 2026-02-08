@@ -82,18 +82,18 @@ Import trace:
     ./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/restore/route.ts
 
 
-✓ Compiled successfully in 13.6s
+✓ Compiled successfully in 14.1s
   Running TypeScript ...
 Failed to compile.
 
-./src/features/ai/ai-paths/lib/core/runtime/handlers/transform.ts:26:45
-Type error: Property 'context' comes from an index signature, so it must be accessed with ['context'].
+./src/features/ai/ai-paths/lib/regex-templates.ts:60:99
+Type error: Property 'templates' comes from an index signature, so it must be accessed with ['templates'].
 
-[0m [90m 24 |[39m   simulationEntityType[33m,[39m
- [90m 25 |[39m }[33m:[39m [33mNodeHandlerContext[39m)[33m:[39m [33mPromise[39m[33m<[39m[33mRuntimePortValues[39m[33m>[39m [33m=>[39m {
-[31m[1m>[22m[39m[90m 26 |[39m   [36mconst[39m rawContext [33m=[39m coerceInput(nodeInputs[33m.[39mcontext)[33m;[39m
- [90m    |[39m                                             [31m[1m^[22m[39m
- [90m 27 |[39m   [36mconst[39m inputContext [33m=[39m
- [90m 28 |[39m     rawContext [33m&&[39m [36mtypeof[39m rawContext [33m===[39m [32m'object'[39m
- [90m 29 |[39m       [33m?[39m (rawContext [36mas[39m [33mRecord[39m[33m<[39m[33mstring[39m[33m,[39m unknown[33m>[39m)[0m
+[0m [90m 58 |[39m       [36mreturn[39m { version[33m:[39m [35m1[39m[33m,[39m templates[33m:[39m normalizeTemplates(parsed) }[33m;[39m
+ [90m 59 |[39m     }
+[31m[1m>[22m[39m[90m 60 |[39m     [36mif[39m (parsed [33m&&[39m [36mtypeof[39m parsed [33m===[39m [32m'object'[39m [33m&&[39m [33mArray[39m[33m.[39misArray((parsed [36mas[39m [33mRecord[39m[33m<[39m[33mstring[39m[33m,[39m unknown[33m>[39m)[33m.[39mtemplates)) {
+ [90m    |[39m                                                                                                   [31m[1m^[22m[39m
+ [90m 61 |[39m       [36mreturn[39m { version[33m:[39m [35m1[39m[33m,[39m templates[33m:[39m normalizeTemplates((parsed [36mas[39m [33mRecord[39m[33m<[39m[33mstring[39m[33m,[39m unknown[33m>[39m)[33m.[39mtemplates) }[33m;[39m
+ [90m 62 |[39m     }
+ [90m 63 |[39m     [36mreturn[39m defaultStore[33m;[39m[0m
 Next.js build worker exited with code: 1 and signal: null

@@ -478,7 +478,7 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
         throw new Error(`Validation failed for product ${mapped.sku}: ${JSON.stringify(validationResult.errors)}`);
       }
       
-      const payload = validationResult.data as any;
+      const payload = validationResult.data;
       const created = (await productRepository.createProduct(payload)) as ProductWithImages | null;
       if (!created && payload.sku) {
         throw new Error('Failed to create product.');
@@ -530,7 +530,8 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
 
       imported += 1;
     } catch (error: unknown) {
-      if (isSkuConflict(error)) {
+      let currentError = error;
+      if (isSkuConflict(currentError)) {
         try {
           const mapped: ProductCreateInput = mapBaseProduct(raw, template?.mappings ?? []);
           const imageUrls = (mapped.imageLinks ?? []).slice(0, maxImages);
@@ -548,7 +549,7 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
             throw new Error(`Validation failed for fallback product: ${JSON.stringify(validationResult.errors)}`);
           }
           
-          const payload = validationResult.data as any;
+          const payload = validationResult.data;
           const created = (await productRepository.createProduct(payload)) as ProductWithImages | null;
           if (created) {
             await productRepository.replaceProductCatalogs(created.id, [
@@ -597,12 +598,12 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
           imported += 1;
           continue;
         } catch (fallbackError) {
-          error = fallbackError;
+          currentError = fallbackError;
         }
       }
       failed += 1;
       const message =
-        error instanceof Error ? error.message : 'Failed to import product.';
+        currentError instanceof Error ? currentError.message : 'Failed to import product.';
       if (errors.length < 10) {
         errors.push(message);
       }

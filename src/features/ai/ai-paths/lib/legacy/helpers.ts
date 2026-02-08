@@ -1573,7 +1573,7 @@ const inferImageMappingPath = (value: unknown, depth: number): string | null => 
 
 const getContextPresetSet = (entityType?: string): { light: string[]; medium: string[]; full: string[]; suggested: string[] } => {
   const key: string = entityType === 'auto' ? '' : entityType ?? '';
-  return CONTEXT_PRESET_FIELDS[key] ?? CONTEXT_PRESET_FIELDS.default ?? { light: [], medium: [], full: [], suggested: [] };
+  return CONTEXT_PRESET_FIELDS[key] ?? CONTEXT_PRESET_FIELDS['default'] ?? { light: [], medium: [], full: [], suggested: [] };
 };
 
 const applyContextPreset = (

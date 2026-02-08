@@ -316,11 +316,11 @@ export const buildDbQueryPayload = (
   query: Record<string, unknown>;
   projection?: Record<string, unknown>;
   sort?: Record<string, unknown>;
-  provider: string;
+  provider: 'auto' | 'mongodb' | 'prisma';
   collection: string;
   limit?: number;
   single?: boolean;
-  idType?: string;
+  idType?: 'string' | 'objectId';
 } => {
   const inputQuery = coerceInput(nodeInputs['query']);
   const aiQueryInput = coerceInput(nodeInputs['aiQuery'] ?? nodeInputs['queryCallback']);

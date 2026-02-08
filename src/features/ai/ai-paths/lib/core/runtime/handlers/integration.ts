@@ -1117,8 +1117,7 @@ export const handleDatabase: NodeHandler = async ({
             !mapping.sourcePath
             ) {
               const resultValue: unknown = (value as Record<string, unknown>)['result'];
-              const descriptionValue: unknown = (value as Record<string, unknown>)
-                ['description'];
+              const descriptionValue: unknown = (value as Record<string, unknown>)['description'];
               const contentValue: unknown = (value as Record<string, unknown>)['content_en'];
               value = resultValue ?? descriptionValue ?? contentValue ?? value;
             }
@@ -1254,7 +1253,7 @@ export const handleDatabase: NodeHandler = async ({
             : typeof resolvedInputs['productId'] === 'string'
               ? (resolvedInputs['productId'])
               : null;
-          if (entityIdValue && entityIdValue.trim()) return entityIdValue;
+          if (entityIdValue?.trim()) return entityIdValue;
           const fallbackEntityId: string = resolveEntityIdFromInputs(
           resolvedInputs as RuntimePortValues,
           dbConfig.idField ?? 'entityId',
@@ -1268,7 +1267,7 @@ export const handleDatabase: NodeHandler = async ({
             : typeof resolvedFilter['_id'] === 'string'
               ? (resolvedFilter['_id'])
               : null;
-          return filterId && filterId.trim() ? filterId : null;
+          return filterId?.trim() ? filterId : null;
         };
         const normalizedCollection: string = collection.trim().toLowerCase();
         const normalizedEntityType: string = (dbConfig.entityType ?? '').trim().toLowerCase();
@@ -1845,12 +1844,12 @@ export const handleDatabase: NodeHandler = async ({
             executed.updater.add(node.id);
           } else {
             const dbUpdateResult: ApiResponse<DbActionResult> = await dbApi.update<DbActionResult>({ 
-              provider: (queryPayload['provider'] as any),
-              collection: queryPayload['collection'],
+              provider: queryPayload.provider,
+              collection: queryPayload.collection,
               query,
               updates,
               single: false,
-              ...(queryPayload['idType'] !== undefined ? { idType: queryPayload['idType'] as any } : {}),
+              ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
             });
             executed.updater.add(node.id);
             if (!dbUpdateResult.ok) {
@@ -1923,7 +1922,7 @@ export const handleDatabase: NodeHandler = async ({
           }
           try {
             const entityUpdateResult = await entityApi.update({
-              entityType: entityType as any,
+              entityType,
               entityId,
               updates,
               mode: dbConfig.mode ?? 'replace',
@@ -1981,12 +1980,12 @@ export const handleDatabase: NodeHandler = async ({
             executed.updater.add(node.id);
           } else {
             const dbUpdateResult: ApiResponse<DbActionResult> = await dbApi.update<DbActionResult>({
-              provider: (queryPayload['provider'] as any),
+              provider: queryPayload.provider,
               collection,
               query,
               updates,
               single: true,
-              ...(queryPayload['idType'] !== undefined ? { idType: queryPayload['idType'] as any } : {}),
+              ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
             });
             executed.updater.add(node.id);
             if (!dbUpdateResult.ok) {

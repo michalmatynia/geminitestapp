@@ -630,9 +630,9 @@ export function AiPathsSettingsView({
             >
               <CanvasSidebarWrapper
                 palette={palette}
-                onDragStart={(e: React.DragEvent<HTMLDivElement>, node: NodeDefinition) => { void handleDragStart(e, node); }}
-                onFireTrigger={(node: AiNode) => { void handleFireTrigger(node); }}
-                onFireTriggerPersistent={(node: AiNode) => { void handleFireTriggerPersistent(node); }}
+                onDragStart={(e: React.DragEvent<HTMLDivElement>, node: NodeDefinition) => { handleDragStart(e, node); }}
+                onFireTrigger={(node: AiNode) => { handleFireTrigger(node); }}
+                onFireTriggerPersistent={(node: AiNode) => { handleFireTriggerPersistent(node); }}
                 onUpdateSelectedNode={(patch, options) => updateSelectedNode(patch, options)}
                 onDeleteSelectedNode={() => { handleDeleteSelectedNode(); }}
                 onRemoveEdge={(edgeId: string) => { handleRemoveEdge(edgeId); }}

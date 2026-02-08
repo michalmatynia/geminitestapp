@@ -89,7 +89,7 @@ const parseUpdatedAtMsFromPathConfig = (raw: string): number | null => {
 
 const parsePathConfigObject = (raw: string): Record<string, unknown> | null => {
   try {
-    const parsed = JSON.parse(raw);
+    const parsed: unknown = JSON.parse(raw);
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
     return parsed as Record<string, unknown>;
   } catch {

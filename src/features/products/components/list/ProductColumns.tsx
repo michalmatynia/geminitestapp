@@ -352,7 +352,7 @@ export const getProductColumns = (
         return (
           <div className='flex flex-col items-start'>
             <span className='text-foreground'>
-              {displayPrice !== null && displayPrice.toFixed(2)}
+              {displayPrice?.toFixed(2)}
             </span>
             <span className='text-xs text-muted-foreground'>
               Base: {product.price?.toFixed(2)} {baseCurrencyCode}

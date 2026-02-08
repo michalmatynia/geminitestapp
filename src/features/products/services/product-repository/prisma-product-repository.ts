@@ -572,7 +572,7 @@ export const prismaProductRepository: ProductRepository = {
   },
 
   async replaceProductNotes(productId: string, noteIds: string[]) {
-    const uniqueIds = Array.from(new Set(noteIds.filter((id: string) => id && id.trim()))).map((id: string) =>
+    const uniqueIds = Array.from(new Set(noteIds.filter((id: string) => id?.trim()))).map((id: string) =>
       id.trim()
     );
     await prisma.product.update({

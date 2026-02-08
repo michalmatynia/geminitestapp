@@ -6,7 +6,16 @@ import React, { createContext, useContext, useState, useMemo, useEffect, useRef,
 import { useUndo } from '@/shared/hooks/use-undo';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { NoteWithRelations, TagRecord, NoteFileRecord, ThemeRecord, CategoryWithChildren } from '@/shared/types/notes';
+import type { 
+  NoteWithRelations, 
+  TagRecord, 
+  NoteFileRecord, 
+  ThemeRecord, 
+  CategoryWithChildren,
+  RelatedNote,
+  NoteRelationWithTarget,
+  NoteRelationWithSource
+} from '@/shared/types/notes';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -288,9 +297,9 @@ export function NoteFormProvider({
   const initialCombinedRelations = useMemo((): RelatedNoteItem[] => {
     if (!note) return [];
     return [
-      ...(note.relations ?? []).map((rel: any) => ({ id: rel.id, title: rel.title, color: rel.color ?? null, content: '' })),
-      ...(note.relationsFrom ?? []).map((rel: any) => ({ id: rel.targetNote.id, title: rel.targetNote.title, color: rel.targetNote.color ?? null, content: '' })),
-      ...(note.relationsTo ?? []).map((rel: any) => ({ id: rel.sourceNote.id, title: rel.sourceNote.title, color: rel.sourceNote.color ?? null, content: '' })),
+      ...(note.relations ?? []).map((rel: RelatedNote) => ({ id: rel.id, title: rel.title, color: rel.color ?? null, content: '' })),
+      ...(note.relationsFrom ?? []).map((rel: NoteRelationWithTarget) => ({ id: rel.targetNote.id, title: rel.targetNote.title, color: rel.targetNote.color ?? null, content: '' })),
+      ...(note.relationsTo ?? []).map((rel: NoteRelationWithSource) => ({ id: rel.sourceNote.id, title: rel.sourceNote.title, color: rel.sourceNote.color ?? null, content: '' })),
     ].filter((item: RelatedNoteItem, index: number, array: RelatedNoteItem[]) => array.findIndex((entry: RelatedNoteItem) => entry.id === item.id) === index);
   }, [note]);
 
@@ -542,7 +551,7 @@ export function NoteFormProvider({
 
     for (let i: number = 0; i < items.length; i++) {
       const item: DataTransferItem | null = items[i] ?? null;
-      if (item && item.type.startsWith('image/')) {
+      if (item?.type.startsWith('image/')) {
         e.preventDefault();
         const file: File | null = item.getAsFile();
         if (!file) return;
@@ -554,7 +563,7 @@ export function NoteFormProvider({
     const pastedFiles: FileList | undefined = e.clipboardData?.files;
     if (pastedFiles && pastedFiles.length > 0) {
       const file: File | null = pastedFiles[0] ?? null;
-      if (file && file.type.startsWith('image/')) {
+      if (file?.type.startsWith('image/')) {
         e.preventDefault();
         await uploadPastedImage(file);
         return;

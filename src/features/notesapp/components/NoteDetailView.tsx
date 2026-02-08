@@ -270,7 +270,7 @@ export function NoteDetailView(): React.JSX.Element | null {
         </Button>
         <Button
           type='button'
-          onClick={(): void => void onToggleFavorite(selectedNote)}
+          onClick={(): void => { onToggleFavorite(selectedNote); }}
           className='flex items-center gap-2 border border-white/20 hover:border-white/40'
         >
           <Star

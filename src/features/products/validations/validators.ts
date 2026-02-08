@@ -1,4 +1,4 @@
-import { productCreateSchema, productUpdateSchema } from './schemas';
+import { productCreateSchema, productUpdateSchema, type ProductCreateInput, type ProductUpdateInput } from './schemas';
 
 import type { ZodIssue } from 'zod';
 const reportValidationError = async (
@@ -82,7 +82,7 @@ function createMetadata(startTime: number): ValidationMetadata {
 export async function validateProductCreate(
   data: unknown,
   report: boolean = false,
-): Promise<ValidationResult<unknown>> {
+): Promise<ValidationResult<ProductCreateInput>> {
   const startTime = performance.now();
   const result = productCreateSchema.safeParse(data);
   const metadata = createMetadata(startTime);
@@ -105,7 +105,7 @@ export async function validateProductCreate(
 export async function validateProductUpdate(
   data: unknown,
   report: boolean = false,
-): Promise<ValidationResult<unknown>> {
+): Promise<ValidationResult<ProductUpdateInput>> {
   const startTime = performance.now();
   const result = productUpdateSchema.safeParse(data);
   const metadata = createMetadata(startTime);

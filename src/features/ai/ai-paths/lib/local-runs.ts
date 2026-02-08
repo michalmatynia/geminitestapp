@@ -38,18 +38,18 @@ const toIsoString = (value: unknown): string | null => {
 const normalizeRecord = (value: unknown): AiPathLocalRunRecord | null => {
   if (!value || typeof value !== 'object') return null;
   const raw = value as Record<string, unknown>;
-  const id = typeof raw.id === 'string' && raw.id.trim().length > 0 ? raw.id.trim() : null;
-  const status = raw.status === 'success' || raw.status === 'error' ? raw.status : null;
-  const startedAt = toIsoString(raw.startedAt);
-  const finishedAt = toIsoString(raw.finishedAt);
+  const id = typeof raw['id'] === 'string' && (raw['id'] as string).trim().length > 0 ? (raw['id'] as string).trim() : null;
+  const status = raw['status'] === 'success' || raw['status'] === 'error' ? (raw['status'] as AiPathLocalRunStatus) : null;
+  const startedAt = toIsoString(raw['startedAt']);
+  const finishedAt = toIsoString(raw['finishedAt']);
   if (!id || !status || !startedAt || !finishedAt) return null;
   const durationMs =
-    typeof raw.durationMs === 'number' && Number.isFinite(raw.durationMs)
-      ? raw.durationMs
+    typeof raw['durationMs'] === 'number' && Number.isFinite(raw['durationMs'])
+      ? (raw['durationMs'] as number)
       : null;
   const nodeCount =
-    typeof raw.nodeCount === 'number' && Number.isFinite(raw.nodeCount)
-      ? raw.nodeCount
+    typeof raw['nodeCount'] === 'number' && Number.isFinite(raw['nodeCount'])
+      ? (raw['nodeCount'] as number)
       : null;
   return {
     id,
@@ -58,14 +58,14 @@ const normalizeRecord = (value: unknown): AiPathLocalRunRecord | null => {
     finishedAt,
     durationMs,
     nodeCount,
-    pathId: typeof raw.pathId === 'string' ? raw.pathId : null,
-    pathName: typeof raw.pathName === 'string' ? raw.pathName : null,
-    triggerEvent: typeof raw.triggerEvent === 'string' ? raw.triggerEvent : null,
-    triggerLabel: typeof raw.triggerLabel === 'string' ? raw.triggerLabel : null,
-    entityType: typeof raw.entityType === 'string' ? raw.entityType : null,
-    entityId: typeof raw.entityId === 'string' ? raw.entityId : null,
-    error: typeof raw.error === 'string' ? raw.error : null,
-    source: typeof raw.source === 'string' ? raw.source : null,
+    pathId: typeof raw['pathId'] === 'string' ? (raw['pathId'] as string) : null,
+    pathName: typeof raw['pathName'] === 'string' ? (raw['pathName'] as string) : null,
+    triggerEvent: typeof raw['triggerEvent'] === 'string' ? (raw['triggerEvent'] as string) : null,
+    triggerLabel: typeof raw['triggerLabel'] === 'string' ? (raw['triggerLabel'] as string) : null,
+    entityType: typeof raw['entityType'] === 'string' ? (raw['entityType'] as string) : null,
+    entityId: typeof raw['entityId'] === 'string' ? (raw['entityId'] as string) : null,
+    error: typeof raw['error'] === 'string' ? (raw['error'] as string) : null,
+    source: typeof raw['source'] === 'string' ? (raw['source'] as string) : null,
   };
 };
 

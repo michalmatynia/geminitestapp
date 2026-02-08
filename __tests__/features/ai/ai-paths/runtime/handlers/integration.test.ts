@@ -52,11 +52,11 @@ describe('Integration Handlers', () => {
   });
 
   describe('handleNotification', () => {
-    it('should call toast with message', () => {
+    it('should call toast with message', async () => {
       const ctx = createMockContext({
         nodeInputs: { value: 'Operation successful' }
       });
-      handleNotification(ctx);
+      await handleNotification(ctx);
       expect(ctx.toast).toHaveBeenCalledWith('Operation successful', expect.anything());
     });
   });

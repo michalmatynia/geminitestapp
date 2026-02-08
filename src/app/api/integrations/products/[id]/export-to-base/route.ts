@@ -1056,7 +1056,8 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     }
     // Re-throw with extra logs context
     if (error instanceof Error && 'meta' in error) {
-      (error as any).meta = { ...(error as any).meta, logs };
+      const errorWithMeta = error as Error & { meta?: Record<string, unknown> };
+      errorWithMeta.meta = { ...(errorWithMeta.meta ?? {}), logs };
     }
     throw error;
   }

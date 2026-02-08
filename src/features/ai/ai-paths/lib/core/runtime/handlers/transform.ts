@@ -38,7 +38,7 @@ export const handleContext: NodeHandler = async ({
   );
   const resolvedContext = {
     ...payload.context,
-    source: (payload.context?.source as string | undefined) ?? node.title,
+    source: (payload.context?.['source'] as string | undefined) ?? node.title,
   };
   return {
     context: resolvedContext,

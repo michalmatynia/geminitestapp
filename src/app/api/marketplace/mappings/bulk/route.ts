@@ -11,7 +11,7 @@ type BulkMappingRequest = {
   catalogId: string;
   mappings: {
     externalCategoryId: string;
-    internalCategoryId: string;
+    internalCategoryId: string | null;
   }[];
 };
 
@@ -33,10 +33,18 @@ async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext): Prom
 
   // Validate each mapping
   for (const mapping of mappings) {
-    if (!mapping.externalCategoryId || !mapping.internalCategoryId) {
+    if (!mapping.externalCategoryId || mapping.internalCategoryId === undefined) {
       throw validationError(
-        "Each mapping must have externalCategoryId and internalCategoryId"
+        "Each mapping must have externalCategoryId and internalCategoryId (or null to unmap)"
       );
+    }
+
+    if (
+      mapping.internalCategoryId !== null &&
+      typeof mapping.internalCategoryId === "string" &&
+      mapping.internalCategoryId.trim().length === 0
+    ) {
+      throw validationError("internalCategoryId cannot be an empty string");
     }
   }
 

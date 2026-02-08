@@ -1,7 +1,7 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { getImageFileRepository } from "@/features/files/server";
+import { imageFileService } from "@/features/files/server";
 import { getProductRepository } from "@/features/products/server";
 
 import { apiHandler } from "@/shared/lib/api/api-handler";
@@ -18,8 +18,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
   const tagsParam = searchParams.get("tags")?.trim() || null;
   const tags = tagsParam ? tagsParam.split(",").map((tag) => tag.trim()).filter(Boolean) : [];
 
-  const imageFileRepository = await getImageFileRepository();
-  const files = await imageFileRepository.listImageFiles({ filename, tags });
+  const files = await imageFileService.listImageFiles({ filename, tags });
 
   const getProductDisplayName = (product: ProductWithImages): string =>
     product.name_en ?? product.name_pl ?? product.name_de ?? "Product";

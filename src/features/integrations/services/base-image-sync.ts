@@ -4,10 +4,11 @@
 import 'server-only';
 
 import { getProductListingRepository } from '@/features/integrations/server';
-import { getIntegrationRepository, decryptSecret } from '@/features/integrations/server';
+import { integrationService, decryptSecret } from '@/features/integrations/server';
 import { fetchBaseProductDetails } from '@/features/integrations/services/imports/base-client';
 import { extractBaseImageUrls } from '@/features/integrations/services/imports/base-mapper';
 import type { ProductListingExportEvent } from '@/features/integrations/types/listings';
+import { ErrorSystem } from '@/features/observability/server';
 import { getProductDataProvider, getProductRepository } from '@/features/products/server';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -91,87 +92,95 @@ export const syncBaseImagesForListing = async (
   productId: string,
   inventoryIdOverride?: string | null,
 ): Promise<{ productId: string; listingId: string; count: number; added: number }> => {
-  const productRepo = await getProductRepository();
-  const product = await productRepo.getProductById(productId);
-  if (!product) {
-    throw notFoundError('Product not found', { productId });
-  }
-
-  const listingRepo = await getProductListingRepository();
-  const listing = await listingRepo.getListingById(listingId);
-  if (!listing || listing.productId !== productId) {
-    throw notFoundError('Listing not found', { listingId, productId });
-  }
-
-  let inventoryId =
-    inventoryIdOverride ||
-    listing.inventoryId ||
-    listing.exportHistory
-      ?.slice()
-      .reverse()
-      .find((event: ProductListingExportEvent) => event.inventoryId)?.inventoryId ||
-    null;
-
-  if (!inventoryId) {
-    const integrationRepo = await getIntegrationRepository();
-    const connectionForInventory = await integrationRepo.getConnectionById(
-      listing.connectionId
-    );
-    if (connectionForInventory?.baseLastInventoryId) {
-      inventoryId = connectionForInventory.baseLastInventoryId;
+  try {
+    const productRepo = await getProductRepository();
+    const product = await productRepo.getProductById(productId);
+    if (!product) {
+      throw notFoundError('Product not found', { productId });
     }
-  }
 
-  if (!inventoryId) {
-    throw badRequestError(
-      'Missing inventoryId for Base.com sync. Please set an inventory ID in the connection settings or provide one manually.'
-    );
-  }
+    const listingRepo = await getProductListingRepository();
+    const listing = await listingRepo.getListingById(listingId);
+    if (!listing || listing.productId !== productId) {
+      throw notFoundError('Listing not found', { listingId, productId });
+    }
 
-  const baseProductId = listing.externalListingId || product.baseProductId;
-  if (!baseProductId) {
-    throw badRequestError('Missing Base.com product id for image sync.');
-  }
+    let inventoryId =
+      inventoryIdOverride ||
+      listing.inventoryId ||
+      listing.exportHistory
+        ?.slice()
+        .reverse()
+        .find((event: ProductListingExportEvent) => event.inventoryId)?.inventoryId ||
+      null;
 
-  const integrationRepo = await getIntegrationRepository();
-  const connection = await integrationRepo.getConnectionById(listing.connectionId);
-  if (!connection) {
-    throw notFoundError('Connection not found', {
-      connectionId: listing.connectionId,
+    if (!inventoryId) {
+      const connectionForInventory = await integrationService.getConnectionById(
+        listing.connectionId
+      );
+      if (connectionForInventory?.baseLastInventoryId) {
+        inventoryId = connectionForInventory.baseLastInventoryId;
+      }
+    }
+
+    if (!inventoryId) {
+      throw badRequestError(
+        'Missing inventoryId for Base.com sync. Please set an inventory ID in the connection settings or provide one manually.'
+      );
+    }
+
+    const baseProductId = listing.externalListingId || product.baseProductId;
+    if (!baseProductId) {
+      throw badRequestError('Missing Base.com product id for image sync.');
+    }
+
+    const connection = await integrationService.getConnectionById(listing.connectionId);
+    if (!connection) {
+      throw notFoundError('Connection not found', {
+        connectionId: listing.connectionId,
+      });
+    }
+
+    let token: string | null = null;
+    if (connection.baseApiToken) {
+      token = decryptSecret(connection.baseApiToken);
+    } else if (connection.password) {
+      token = decryptSecret(connection.password);
+    }
+
+    if (!token) {
+      throw badRequestError('Base.com API token not found in connection.', {
+        connectionId: listing.connectionId,
+      });
+    }
+
+    const records = await fetchBaseProductDetails(token, inventoryId, [baseProductId]);
+    if (!records.length) {
+      throw notFoundError('Base.com product not found', { baseProductId, inventoryId });
+    }
+
+    const urls = extractBaseImageUrls(records[0] ?? {}).filter(Boolean);
+    if (urls.length === 0) {
+      throw badRequestError('No image URLs found in Base.com product data.');
+    }
+
+    const existingLinks = Array.isArray(product.imageLinks) ? product.imageLinks : [];
+    const nextLinks = mergeImageLinks(existingLinks, urls);
+    await productRepo.updateProduct(productId, { imageLinks: nextLinks });
+
+    return {
+      productId,
+      listingId,
+      count: nextLinks.length,
+      added: urls.length,
+    };
+  } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: 'base-image-sync',
+      action: 'syncBaseImagesForListing',
+      listingId,
+      productId,
     });
+    throw error;
   }
-
-  let token: string | null = null;
-  if (connection.baseApiToken) {
-    token = decryptSecret(connection.baseApiToken);
-  } else if (connection.password) {
-    token = decryptSecret(connection.password);
-  }
-
-  if (!token) {
-    throw badRequestError('Base.com API token not found in connection.', {
-      connectionId: listing.connectionId,
-    });
-  }
-
-  const records = await fetchBaseProductDetails(token, inventoryId, [baseProductId]);
-  if (!records.length) {
-    throw notFoundError('Base.com product not found', { baseProductId, inventoryId });
-  }
-
-  const urls = extractBaseImageUrls(records[0] ?? {}).filter(Boolean);
-  if (urls.length === 0) {
-    throw badRequestError('No image URLs found in Base.com product data.');
-  }
-
-  const existingLinks = Array.isArray(product.imageLinks) ? product.imageLinks : [];
-  const nextLinks = mergeImageLinks(existingLinks, urls);
-  await productRepo.updateProduct(productId, { imageLinks: nextLinks });
-
-  return {
-    productId,
-    listingId,
-    count: nextLinks.length,
-    added: urls.length,
-  };
 };

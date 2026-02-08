@@ -67,5 +67,5 @@ export type ProductListingRepository = {
   appendExportHistory: (id: string, event: ProductListingExportEvent) => Promise<void>;
   deleteListing: (id: string) => Promise<void>;
   listingExists: (productId: string, connectionId: string) => Promise<boolean>;
-  listAllListings: () => Promise<Array<Pick<ProductListingRecord, 'productId' | 'status'>>>;
+  listAllListings: () => Promise<Array<Pick<ProductListingRecord, 'productId' | 'status' | 'integrationId'>>>;
 };

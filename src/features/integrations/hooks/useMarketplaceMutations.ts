@@ -25,14 +25,14 @@ export function useFetchExternalCategoriesMutation(): UseMutationResult<
 export function useSaveMappingsMutation(): UseMutationResult<
   { upserted: number; message: string },
   Error,
-  { connectionId: string; catalogId: string; mappings: { externalCategoryId: string; internalCategoryId: string }[] }
+  { connectionId: string; catalogId: string; mappings: { externalCategoryId: string; internalCategoryId: string | null }[] }
   > {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: { connectionId: string; catalogId: string; mappings: { externalCategoryId: string; internalCategoryId: string }[] }) => 
+    mutationFn: (payload: { connectionId: string; catalogId: string; mappings: { externalCategoryId: string; internalCategoryId: string | null }[] }) => 
       api.post<{ upserted: number; message: string }>('/api/marketplace/mappings/bulk', payload),
-    onSuccess: (_: { upserted: number; message: string }, { connectionId, catalogId }: { connectionId: string; catalogId: string; mappings: { externalCategoryId: string; internalCategoryId: string }[] }) => {
+    onSuccess: (_: { upserted: number; message: string }, { connectionId, catalogId }: { connectionId: string; catalogId: string; mappings: { externalCategoryId: string; internalCategoryId: string | null }[] }) => {
       void queryClient.invalidateQueries({ queryKey: marketplaceKeys.mappings(connectionId, catalogId) });
     },
   });

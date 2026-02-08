@@ -1,0 +1,4 @@
+src/features/auth/server.ts(12,1): error TS2308: Module './services/auth-user-repository' has already exported a member named 'findAuthUserByEmail'. Consider explicitly re-exporting to resolve the ambiguity.
+src/features/auth/server.ts(12,1): error TS2308: Module './services/auth-user-repository' has already exported a member named 'findAuthUserById'. Consider explicitly re-exporting to resolve the ambiguity.
+vitest.setup.ts(18,7): error TS6133: 'MODEL_DEFAULTS' is declared but its value is never read.
+vitest.setup.ts(30,7): error TS6133: 'RELATION_MAP' is declared but its value is never read.

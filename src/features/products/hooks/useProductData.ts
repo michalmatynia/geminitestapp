@@ -45,7 +45,7 @@ export function useProducts(
     queryFn: () => getProducts(filters),
     enabled,
     staleTime: PRODUCTS_STALE_MS,
-    refetchOnMount: false,
+    refetchOnMount: 'always',
     refetchOnWindowFocus: true,
     networkMode: 'always',
   });
@@ -62,7 +62,7 @@ export function useProductsCount(
     queryFn: () => countProducts(filters),
     enabled,
     staleTime: PRODUCTS_STALE_MS,
-    refetchOnMount: false,
+    refetchOnMount: 'always',
     refetchOnWindowFocus: true,
     networkMode: 'always',
   });
@@ -83,32 +83,85 @@ export function useCreateProductMutation(): UseMutationResult<unknown, Error, Fo
   );
 }
 
-export function useUpdateProductMutation(): UseMutationResult<ProductWithImages | null, Error, { id: string; data: Partial<ProductWithImages> | FormData }, unknown> {
+export function useUpdateProductMutation(): UseMutationResult<
+  ProductWithImages | null,
+  Error,
+  { id: string; data: Partial<ProductWithImages> | FormData; originalSku?: string | null },
+  unknown
+> {
+  const parseUpdateError = async (response: Response): Promise<string> => {
+    const errorData = (await response.json().catch(() => ({}))) as {
+      error?: string;
+      details?: unknown;
+    };
+    let message = errorData.error || 'Failed to update product';
+    if (Array.isArray(errorData.details) && errorData.details.length > 0) {
+      const detailMessages = errorData.details
+        .slice(0, 3)
+        .map((d: { field?: unknown; message?: unknown }) => {
+          const field = typeof d.field === 'string' && d.field ? d.field : 'field';
+          const msg = typeof d.message === 'string' && d.message ? d.message : 'invalid';
+          return `${field}: ${msg}`;
+        })
+        .join(', ');
+      if (detailMessages) message = `${message} (${detailMessages})`;
+    }
+    return message;
+  };
+
+  const resolveProductIdBySku = async (originalSku?: string | null): Promise<string | null> => {
+    const normalizedSku =
+      typeof originalSku === 'string' ? originalSku.trim().toUpperCase() : '';
+    if (!normalizedSku) return null;
+
+    const response = await fetch(`/api/products?sku=${encodeURIComponent(normalizedSku)}`, {
+      cache: 'no-store',
+    });
+    if (!response.ok) return null;
+
+    const products = (await response.json().catch(() => [])) as ProductWithImages[];
+    const exactMatches = products.filter((product: ProductWithImages): boolean =>
+      typeof product.sku === 'string' && product.sku.trim().toUpperCase() === normalizedSku
+    );
+
+    return exactMatches.length === 1 ? exactMatches[0]!.id : null;
+  };
+
   return useOfflineMutation(
-    async ({ id, data }: { id: string; data: Partial<ProductWithImages> | FormData }): Promise<ProductWithImages> => {
+    async ({
+      id,
+      data,
+      originalSku,
+    }: {
+      id: string;
+      data: Partial<ProductWithImages> | FormData;
+      originalSku?: string | null;
+    }): Promise<ProductWithImages> => {
       if (data instanceof FormData) {
-        const response = await fetch(`/api/products/${id}`, {
+        let targetId = id;
+        let response = await fetch(`/api/products/${targetId}`, {
           method: 'PUT',
           body: data,
         });
-        if (!response.ok) {
-          const errorData = (await response.json().catch(() => ({}))) as {
-            error?: string;
-            details?: unknown;
-          };
-          let message = errorData.error || 'Failed to update product';
-          if (Array.isArray(errorData.details) && errorData.details.length > 0) {
-            const detailMessages = errorData.details
-              .slice(0, 3)
-              .map((d: { field?: unknown; message?: unknown }) => {
-                const field = typeof d.field === 'string' && d.field ? d.field : 'field';
-                const msg = typeof d.message === 'string' && d.message ? d.message : 'invalid';
-                return `${field}: ${msg}`;
-              })
-              .join(', ');
-            if (detailMessages) message = `${message} (${detailMessages})`;
+
+        if (response.status === 404) {
+          const resolvedId = await resolveProductIdBySku(originalSku);
+          if (resolvedId && resolvedId !== targetId) {
+            targetId = resolvedId;
+            response = await fetch(`/api/products/${targetId}`, {
+              method: 'PUT',
+              body: data,
+            });
           }
-          throw new Error(message);
+        }
+
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error(
+              'Product not found. It may have been moved or deleted. Refresh the product list and try again.'
+            );
+          }
+          throw new Error(await parseUpdateError(response));
         }
         return response.json() as Promise<ProductWithImages>;
       }
@@ -116,12 +169,24 @@ export function useUpdateProductMutation(): UseMutationResult<ProductWithImages 
     },
     {
       queryKey: ['products'],
-      extraInvalidateKeys: (variables: { id: string; data: Partial<ProductWithImages> | FormData }) => [['products', variables.id]],
+      extraInvalidateKeys: (variables: {
+        id: string;
+        data: Partial<ProductWithImages> | FormData;
+        originalSku?: string | null;
+      }) => [['products', variables.id]],
       queuedMessage: 'Product update queued in runtime queue.',
       processedMessage: 'Queued product update completed.',
       errorMessage: 'Failed to update product',
-      onQueued: (variables: { id: string; data: Partial<ProductWithImages> | FormData }) => addQueuedProductId(variables.id),
-      onProcessed: (variables: { id: string; data: Partial<ProductWithImages> | FormData }) => removeQueuedProductId(variables.id),
+      onQueued: (variables: {
+        id: string;
+        data: Partial<ProductWithImages> | FormData;
+        originalSku?: string | null;
+      }) => addQueuedProductId(variables.id),
+      onProcessed: (variables: {
+        id: string;
+        data: Partial<ProductWithImages> | FormData;
+        originalSku?: string | null;
+      }) => removeQueuedProductId(variables.id),
     }
   );
 }

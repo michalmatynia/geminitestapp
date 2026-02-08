@@ -28,6 +28,9 @@ const formatTimestamp = (value: string | Date | null | undefined): string => {
 const formatListValue = (value: string | null | undefined): string =>
   value ? value : '—';
 
+const normalizeIntegrationSlug = (value: string | null | undefined): string =>
+  (value ?? '').trim().toLowerCase();
+
 export function ProductListingItem({ listing }: { listing: ProductListingWithDetails }): React.JSX.Element {
   const {
     product,
@@ -45,6 +48,7 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
   } = useProductListingsContext();
 
   const imageRetryPresets = useImageRetryPresets();
+  const isBaseListing = ['baselinker', 'base-com'].includes(normalizeIntegrationSlug(listing.integration.slug));
 
   const getExportFieldsLabel = (): string => {
     const fields: string[] = [];
@@ -84,7 +88,7 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
           <p>Last export: {formatTimestamp(listing.listedAt)}</p>
           <p>Created: {formatTimestamp(listing.createdAt)}</p>
           <p>Updated: {formatTimestamp(listing.updatedAt)}</p>
-          {['baselinker', 'base-com'].includes(listing.integration.slug) && (
+          {isBaseListing && (
             <p>Exported fields: {getExportFieldsLabel()}</p>
           )}
         </div>
@@ -142,7 +146,7 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
         )}
       </div>
       <div className="ml-4 flex flex-col gap-2">
-        {['baselinker', 'base-com'].includes(listing.integration.slug) && (
+        {isBaseListing && (
           <>
             {listing.status === 'failed' && (
               <Button

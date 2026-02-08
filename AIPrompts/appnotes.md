@@ -1,6 +1,7 @@
 
 W drafterze potrzebuje producenta, ikonek wiecej, modal as wide as other Product crete modals, Icon Matrix so that Icons are not spread everywhere, Check If I can Export Product with Producer, when the description is present a little text icon
 
+Back up restore note working
 
 Run the project on newest node
 

@@ -5,6 +5,9 @@ import React from 'react';
 import { useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
 import { ConfirmDialog } from '@/shared/ui';
 
+const normalizeIntegrationSlug = (value: string | null | undefined): string =>
+  (value ?? '').trim().toLowerCase();
+
 export function ProductListingsConfirmDialogs(): React.JSX.Element {
   const {
     listingToDelete,
@@ -20,7 +23,7 @@ export function ProductListingsConfirmDialogs(): React.JSX.Element {
   } = useProductListingsContext();
 
   const baseListing = listings.find(
-    (listing) => ['baselinker', 'base-com'].includes(listing.integration.slug)
+    (listing) => ['baselinker', 'base-com'].includes(normalizeIntegrationSlug(listing.integration.slug))
   ) ?? null;
 
   return (

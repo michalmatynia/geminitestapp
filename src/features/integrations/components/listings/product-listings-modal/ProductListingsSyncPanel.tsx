@@ -10,11 +10,14 @@ import {
   SectionPanel,
 } from '@/shared/ui';
 
+const normalizeIntegrationSlug = (value: string | null | undefined): string =>
+  (value ?? '').trim().toLowerCase();
+
 export function ProductListingsSyncPanel(): React.JSX.Element {
   const { product, listings, syncingImages, setIsSyncImagesConfirmOpen } = useProductListingsContext();
 
   const baseListing = listings.find(
-    (listing) => ['baselinker', 'base-com'].includes(listing.integration.slug)
+    (listing) => ['baselinker', 'base-com'].includes(normalizeIntegrationSlug(listing.integration.slug))
   );
 
   const getSyncFields = () => {

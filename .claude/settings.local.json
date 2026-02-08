@@ -68,7 +68,9 @@
       "Bash(psql:*)",
       "Bash(npx tsx:*)",
       "Bash(brew list:*)",
-      "Bash(kill:*)"
+      "Bash(kill:*)",
+      "Bash(pg_isready:*)",
+      "Bash(/usr/local/opt/postgresql@16/bin/pg_isready:*)"
     ]
   }
 }

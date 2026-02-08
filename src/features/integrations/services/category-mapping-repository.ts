@@ -22,7 +22,7 @@ export type CategoryMappingRepository = {
   bulkUpsert: (
     connectionId: string,
     catalogId: string,
-    mappings: { externalCategoryId: string; internalCategoryId: string }[]
+    mappings: { externalCategoryId: string; internalCategoryId: string | null }[]
   ) => Promise<number>;
   deleteByConnection: (connectionId: string) => Promise<number>;
 };
@@ -171,11 +171,25 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
     async bulkUpsert(
       connectionId: string,
       catalogId: string,
-      mappings: { externalCategoryId: string; internalCategoryId: string }[]
+      mappings: { externalCategoryId: string; internalCategoryId: string | null }[]
     ): Promise<number> {
       let count = 0;
       await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         for (const mapping of mappings) {
+          if (mapping.internalCategoryId === null) {
+            const deactivated = await tx.categoryMapping.updateMany({
+              where: {
+                connectionId,
+                externalCategoryId: mapping.externalCategoryId,
+                catalogId,
+                isActive: true,
+              },
+              data: { isActive: false },
+            });
+            count += deactivated.count;
+            continue;
+          }
+
           await tx.categoryMapping.upsert({
             where: {
               connectionId_externalCategoryId_catalogId: {
@@ -192,6 +206,7 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
             },
             update: {
               internalCategoryId: mapping.internalCategoryId,
+              isActive: true,
             },
           });
           count++;

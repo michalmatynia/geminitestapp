@@ -60,7 +60,7 @@ async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext): Prom
 
   if (existing) {
     // Update existing mapping
-    const updated = await repo.update(existing.id, { internalCategoryId });
+    const updated = await repo.update(existing.id, { internalCategoryId, isActive: true });
     return NextResponse.json(updated);
   }
 

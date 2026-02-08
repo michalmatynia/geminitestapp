@@ -8,6 +8,7 @@ import Credentials from 'next-auth/providers/credentials';
 import Facebook from 'next-auth/providers/facebook';
 import Google from 'next-auth/providers/google';
 
+import { findAuthUserByEmail, findAuthUserById } from '@/features/auth/server';
 import { getAuthAccessForUser } from '@/features/auth/services/auth-access';
 import { consumeLoginChallenge } from '@/features/auth/services/auth-login-challenge';
 import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/services/auth-provider';
@@ -19,7 +20,6 @@ import {
 } from '@/features/auth/services/auth-security';
 import { getAuthSecurityProfile, updateAuthSecurityProfile } from '@/features/auth/services/auth-security-profile';
 import { getAuthUserPageSettings } from '@/features/auth/services/auth-settings';
-import { findAuthUserByEmail, findAuthUserById } from '@/features/auth/services/auth-user-repository';
 import { hashRecoveryCode, verifyTotpToken } from '@/features/auth/services/totp';
 import { decryptAuthSecret } from '@/features/auth/utils/auth-encryption';
 import { ErrorSystem } from '@/features/observability/server';

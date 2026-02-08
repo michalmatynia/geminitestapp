@@ -146,7 +146,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
   const fetchMutation = useFetchExternalCategoriesMutation();
   const saveMutation = useSaveMappingsMutation();
 
-  const [pendingMappings, setPendingMappings] = useState<Map<string, string>>(new Map());
+  const [pendingMappings, setPendingMappings] = useState<Map<string, string | null>>(new Map());
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const hasInitializedExpansion = useRef(false);
 
@@ -213,19 +213,24 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
       }
       // Check saved mappings
       const mapping = mappings.find((m: CategoryMappingWithDetails) => m.externalCategoryId === externalCategoryId);
-      return mapping?.internalCategoryId ?? null;
+      if (!mapping || !mapping.isActive) return null;
+      return mapping.internalCategoryId;
     },
     [mappings, pendingMappings]
   );
 
   // Handle mapping change
   const handleMappingChange = (externalCategoryId: string, internalCategoryId: string | null): void => {
-    setPendingMappings((prev: Map<string, string>) => {
+    setPendingMappings((prev: Map<string, string | null>) => {
       const next = new Map(prev);
-      if (internalCategoryId) {
-        next.set(externalCategoryId, internalCategoryId);
-      } else {
+
+      const savedMapping = mappings.find((m: CategoryMappingWithDetails) => m.externalCategoryId === externalCategoryId);
+      const savedValue = savedMapping?.isActive ? savedMapping.internalCategoryId : null;
+
+      if (savedValue === internalCategoryId) {
         next.delete(externalCategoryId);
+      } else {
+        next.set(externalCategoryId, internalCategoryId);
       }
       return next;
     });
@@ -240,7 +245,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
 
     try {
       const mappingsToSave = Array.from(pendingMappings.entries()).map(
-        ([externalCategoryId, internalCategoryId]: [string, string]) => ({
+        ([externalCategoryId, internalCategoryId]: [string, string | null]) => ({
           externalCategoryId,
           internalCategoryId,
         })

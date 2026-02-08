@@ -173,9 +173,9 @@ const prismaRepository: ProductListingRepository = {
     return existing !== null;
   },
 
-  listAllListings: async (): Promise<Array<{ productId: string; status: string }>> => {
+  listAllListings: async (): Promise<Array<{ productId: string; status: string; integrationId: string }>> => {
     return prisma.productListing.findMany({
-      select: { productId: true, status: true },
+      select: { productId: true, status: true, integrationId: true },
     });
   },
 };
@@ -342,14 +342,18 @@ const mongoRepository: ProductListingRepository = {
     return existing !== null;
   },
 
-  listAllListings: async (): Promise<Array<{ productId: string; status: string }>> => {
+  listAllListings: async (): Promise<Array<{ productId: string; status: string; integrationId: string }>> => {
     const db = await getMongoDb();
     return db
       .collection<ProductListingDocument>(LISTINGS_COLLECTION)
-      .find({}, { projection: { productId: 1, status: 1 } })
+      .find({}, { projection: { productId: 1, status: 1, integrationId: 1 } })
       .toArray()
       .then((docs: ProductListingDocument[]) =>
-        docs.map((doc: ProductListingDocument) => ({ productId: doc.productId, status: doc.status }))
+        docs.map((doc: ProductListingDocument) => ({
+          productId: doc.productId,
+          status: doc.status,
+          integrationId: doc.integrationId,
+        }))
       );
   },
 };
@@ -463,7 +467,7 @@ export const listProductListingsByProductIdAcrossProviders = async (
 };
 
 export const listAllProductListingsAcrossProviders = async (): Promise<
-  Array<Pick<ProductListingRecord, 'productId' | 'status'>>
+  Array<Pick<ProductListingRecord, 'productId' | 'status' | 'integrationId'>>
 > => {
   const repositories = await getProductListingRepositoriesForRead();
   const all = await Promise.all(
@@ -471,7 +475,7 @@ export const listAllProductListingsAcrossProviders = async (): Promise<
       try {
         return await repository.listAllListings();
       } catch {
-        return [] as Array<Pick<ProductListingRecord, 'productId' | 'status'>>;
+        return [] as Array<Pick<ProductListingRecord, 'productId' | 'status' | 'integrationId'>>;
       }
     })
   );

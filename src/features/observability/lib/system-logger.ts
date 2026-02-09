@@ -184,8 +184,8 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
     const critical =
       typeof input.critical === 'boolean'
         ? input.critical
-        : typeof input.context?.critical === 'boolean'
-          ? Boolean(input.context?.critical)
+        : typeof input.context?.['critical'] === 'boolean'
+          ? Boolean(input.context?.['critical'])
           : false;
 
     // Emit to console for standard logging and capture tools

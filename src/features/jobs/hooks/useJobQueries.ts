@@ -47,7 +47,7 @@ const hasScheduledMarker = (payload: unknown): boolean => {
   const record = payload as Record<string, unknown>;
   const keys = ['runAt', 'scheduledAt', 'scheduleAt', 'nextRunAt', 'schedule', 'scheduled', 'cron'];
   if (keys.some((key: string) => record[key])) return true;
-  const context = record.context;
+  const context = record['context'];
   if (context && typeof context === 'object') {
     const ctx = context as Record<string, unknown>;
     if (keys.some((key: string) => ctx[key])) return true;

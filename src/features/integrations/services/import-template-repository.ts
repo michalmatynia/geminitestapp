@@ -124,7 +124,7 @@ const readTemplatesValue = async (): Promise<string | null> => {
       .findOne({
         $or: [{ _id: SETTINGS_KEY }, { key: SETTINGS_KEY }],
       } as Filter<Document>);
-    const val = doc && typeof doc.value === 'string' ? doc.value : null;
+    const val = doc && typeof doc['value'] === 'string' ? (doc['value'] as string) : null;
     console.log('[ImportTemplateRepository] Read templates (Mongo):', val ? `${val.length} chars` : 'null');
     return val;
   }
@@ -145,7 +145,7 @@ const readSampleProductValue = async (): Promise<string | null> => {
       .findOne({
         $or: [{ _id: SAMPLE_PRODUCT_KEY }, { key: SAMPLE_PRODUCT_KEY }],
       } as Filter<Document>);
-    return doc && typeof doc.value === 'string' ? doc.value : null;
+    return doc && typeof doc['value'] === 'string' ? (doc['value'] as string) : null;
   }
   const setting = await prisma.setting.findUnique({
     where: { key: SAMPLE_PRODUCT_KEY },
@@ -163,7 +163,7 @@ const readSampleInventoryValue = async (): Promise<string | null> => {
       .findOne({
         $or: [{ _id: SAMPLE_INVENTORY_KEY }, { key: SAMPLE_INVENTORY_KEY }],
       } as Filter<Document>);
-    return doc && typeof doc.value === 'string' ? doc.value : null;
+    return doc && typeof doc['value'] === 'string' ? (doc['value'] as string) : null;
   }
   const setting = await prisma.setting.findUnique({
     where: { key: SAMPLE_INVENTORY_KEY },
@@ -181,7 +181,7 @@ const readLastTemplateValue = async (): Promise<string | null> => {
       .findOne({
         $or: [{ _id: LAST_TEMPLATE_KEY }, { key: LAST_TEMPLATE_KEY }],
       } as Filter<Document>);
-    return doc && typeof doc.value === 'string' ? doc.value : null;
+    return doc && typeof doc['value'] === 'string' ? (doc['value'] as string) : null;
   }
   const setting = await prisma.setting.findUnique({
     where: { key: LAST_TEMPLATE_KEY },
@@ -199,7 +199,7 @@ const readActiveTemplateValue = async (): Promise<string | null> => {
       .findOne({
         $or: [{ _id: ACTIVE_TEMPLATE_KEY }, { key: ACTIVE_TEMPLATE_KEY }],
       } as Filter<Document>);
-    return doc && typeof doc.value === 'string' ? doc.value : null;
+    return doc && typeof doc['value'] === 'string' ? (doc['value'] as string) : null;
   }
   const setting = await prisma.setting.findUnique({
     where: { key: ACTIVE_TEMPLATE_KEY },
@@ -217,7 +217,7 @@ const readParameterCacheValue = async (): Promise<string | null> => {
       .findOne({
         $or: [{ _id: PARAMETER_CACHE_KEY }, { key: PARAMETER_CACHE_KEY }],
       } as Filter<Document>);
-    return doc && typeof doc.value === 'string' ? doc.value : null;
+    return doc && typeof doc['value'] === 'string' ? (doc['value'] as string) : null;
   }
   const setting = await prisma.setting.findUnique({
     where: { key: PARAMETER_CACHE_KEY },
@@ -235,7 +235,7 @@ const readExportWarehouseValue = async (): Promise<string | null> => {
       .findOne({
         $or: [{ _id: EXPORT_WAREHOUSE_KEY }, { key: EXPORT_WAREHOUSE_KEY }],
       } as Filter<Document>);
-    return doc && typeof doc.value === 'string' ? doc.value : null;
+    return doc && typeof doc['value'] === 'string' ? (doc['value'] as string) : null;
   }
   const setting = await prisma.setting.findUnique({
     where: { key: EXPORT_WAREHOUSE_KEY },
@@ -253,7 +253,7 @@ const readExportWarehouseMapValue = async (): Promise<string | null> => {
       .findOne({
         $or: [{ _id: EXPORT_WAREHOUSE_MAP_KEY }, { key: EXPORT_WAREHOUSE_MAP_KEY }],
       } as Filter<Document>);
-    return doc && typeof doc.value === 'string' ? doc.value : null;
+    return doc && typeof doc['value'] === 'string' ? (doc['value'] as string) : null;
   }
   const setting = await prisma.setting.findUnique({
     where: { key: EXPORT_WAREHOUSE_MAP_KEY },

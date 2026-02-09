@@ -13,15 +13,6 @@ const formatMessage = (level: LogLevel, message: string, context?: Record<string
   const requestId = requestContext?.requestId ? ` [RID:${requestContext.requestId}]` : '';
   const userId = requestContext?.userId ? ` [UID:${requestContext.userId}]` : '';
   
-  const _structuredData = {
-    timestamp,
-    level: level.toUpperCase(),
-    message,
-    requestId: requestContext?.requestId,
-    userId: requestContext?.userId,
-    ...context,
-  };
-
   // For human readable console output while maintaining parsability
   return `[${timestamp}] [${level.toUpperCase()}]${requestId}${userId} ${message}`;
 };

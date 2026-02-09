@@ -1,1 +1,9 @@
-error TS5025: Unknown compiler option '--noIncremental'. Did you mean 'incremental'?
+src/features/internationalization/services/currency-repository/mongo-currency-repository.ts(2,40): error TS6133: 'UpdateFilter' is declared but its value is never read.
+src/features/internationalization/services/currency-repository/prisma-currency-repository.ts(54,7): error TS2375: Type '{ code?: string; id: string; name?: string; symbol?: string | null; }' is not assignable to type '(Without<CurrencyUpdateInput, CurrencyUncheckedUpdateInput> & CurrencyUncheckedUpdateInput) | (Without<...> & CurrencyUpdateInput)' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type '{ code?: string; id: string; name?: string; symbol?: string | null; }' is not assignable to type 'Without<CurrencyUncheckedUpdateInput, CurrencyUpdateInput> & CurrencyUpdateInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'code' are incompatible.
+      Type 'string' is not assignable to type 'CurrencyCode | EnumCurrencyCodeFieldUpdateOperationsInput'.
+src/features/products/api/versioning.ts(182,14): error TS2352: Conversion of type '{ tagId: string; }[] | undefined' to type 'string[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ tagId: string; }[]' is not comparable to type 'string[]'.
+    Type '{ tagId: string; }' is not comparable to type 'string'.
+src/shared/utils/logger.ts(16,9): error TS6133: '_structuredData' is declared but its value is never read.

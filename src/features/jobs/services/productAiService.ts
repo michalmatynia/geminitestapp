@@ -41,8 +41,8 @@ const toProductAiJob = (record: ProductAiJobRecord): ProductAiJob => ({
 const toProductSummary = (product: Record<string, unknown> | null): ProductSummary | null => {
   if (!product) return null;
   const record = product;
-  const name = typeof record.name_en === 'string' ? record.name_en : null;
-  const sku = typeof record.sku === 'string' ? record.sku : null;
+  const name = typeof record['name_en'] === 'string' ? (record['name_en'] as string) : null;
+  const sku = typeof record['sku'] === 'string' ? (record['sku'] as string) : null;
   return { name_en: name, sku };
 };
 
@@ -89,12 +89,12 @@ export async function getProductAiJobs(
         ? (job.payload as Record<string, unknown>)
         : null;
     const entityType =
-      (payload?.entityType as string | undefined) ??
-      ((payload?.context as Record<string, unknown> | undefined)?.entityType as
+      (payload?.['entityType'] as string | undefined) ??
+      ((payload?.['context'] as Record<string, unknown> | undefined)?.['entityType'] as
         | string
         | undefined);
-    const source = payload?.source as string | undefined;
-    const graph = payload?.graph as Record<string, unknown> | undefined;
+    const source = payload?.['source'] as string | undefined;
+    const graph = payload?.['graph'] as Record<string, unknown> | undefined;
     if (entityType && entityType !== 'product') return false;
     if (source === 'ai_paths' && graph) return false;
     if (job.productId.startsWith('path_')) return false;
@@ -158,12 +158,12 @@ export async function getProductAiJob(
       ? (job.payload as Record<string, unknown>)
       : null;
   const entityType =
-    (payload?.entityType as string | undefined) ??
-    ((payload?.context as Record<string, unknown> | undefined)?.entityType as
+    (payload?.['entityType'] as string | undefined) ??
+    ((payload?.['context'] as Record<string, unknown> | undefined)?.['entityType'] as
       | string
       | undefined);
-  const source = payload?.source as string | undefined;
-  const graph = payload?.graph as Record<string, unknown> | undefined;
+  const source = payload?.['source'] as string | undefined;
+  const graph = payload?.['graph'] as Record<string, unknown> | undefined;
   const shouldFetch =
     !job.productId.startsWith('path_') &&
     entityType !== 'note' &&

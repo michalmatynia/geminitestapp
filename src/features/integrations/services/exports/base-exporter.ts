@@ -952,38 +952,38 @@ export async function buildBaseProductData(
   const baseData: BaseProductRecord = {};
 
   // SKU is required
-  if (product.sku) baseData.sku = product.sku;
+  if (product.sku) baseData['sku'] = product.sku;
 
   const imagesOnly = options?.imagesOnly ?? false;
 
   // EAN (optional)
-  if (!imagesOnly && product.ean) baseData.ean = product.ean;
+  if (!imagesOnly && product.ean) baseData['ean'] = product.ean;
 
   // Weight (optional)
-  if (!imagesOnly && product.weight !== null) baseData.weight = product.weight;
+  if (!imagesOnly && product.weight !== null) baseData['weight'] = product.weight;
 
   // Text fields (name, description, etc.) go in text_fields object
   if (!imagesOnly) {
     const textFields: Record<string, string> = {};
-    if (product.name_en) textFields.name = product.name_en;
-    if (product.description_en) textFields.description = product.description_en;
+    if (product.name_en) textFields['name'] = product.name_en;
+    if (product.description_en) textFields['description'] = product.description_en;
     if (Object.keys(textFields).length > 0) {
-      baseData.text_fields = textFields;
+      baseData['text_fields'] = textFields;
     }
   }
 
   // Prices need to be in format: { "price_group_id": price_value }
   // Using a default price group - this may need configuration
   if (!imagesOnly && product.price !== null) {
-    baseData.prices = { '0': product.price };
+    baseData['prices'] = { '0': product.price };
   }
 
   // Stock needs to be in format: { "warehouse_id": quantity }
   if (!imagesOnly && product.stock !== null) {
     if (warehouseId) {
-      baseData.stock = { [warehouseId]: product.stock };
+      baseData['stock'] = { [warehouseId]: product.stock };
     } else if (options?.includeStockWithoutWarehouse) {
-      baseData.stock = product.stock;
+      baseData['stock'] = product.stock;
     }
   }
 
@@ -995,7 +995,7 @@ export async function buildBaseProductData(
       transform: options.imageTransform ?? null,
     });
     if (Object.keys(base64Images).length > 0) {
-      baseData.images = base64Images;
+      baseData['images'] = base64Images;
     }
   } else {
     const urlImages = getAllImageUrls(
@@ -1004,7 +1004,7 @@ export async function buildBaseProductData(
       options?.imageDiagnostics
     );
     if (urlImages.length > 0) {
-      baseData.images = urlImages;
+      baseData['images'] = urlImages;
     }
   }
 
@@ -1030,31 +1030,31 @@ export async function buildBaseProductData(
       return stockAliases?.[normalized] ?? normalized;
     };
     mergeNumericFields(templateData, 'stock', normalizeStockKeyWithAliases);
-    const templateStock = templateData.stock;
+    const templateStock = templateData['stock'];
     if (templateStock !== undefined) {
       const hasWarehouse = Boolean(warehouseId);
-      const baseStock = baseData.stock ?? null;
+      const baseStock = baseData['stock'] ?? null;
       if (typeof templateStock === 'string' || typeof templateStock === 'number') {
         const numeric = Number(templateStock);
         if (hasWarehouse && Number.isFinite(numeric)) {
-          templateData.stock = {
+          templateData['stock'] = {
             ...((baseStock as Record<string, number>) ?? {}),
             [warehouseId as string]: numeric,
           };
         } else if (baseStock) {
-          delete templateData.stock;
+          delete templateData['stock'];
         }
       } else if (
         templateStock &&
         typeof templateStock === 'object' &&
         !Array.isArray(templateStock)
       ) {
-        templateData.stock = {
+        templateData['stock'] = {
           ...(templateStock as Record<string, unknown>),
           ...((baseStock as Record<string, number>) ?? {}),
         };
         if (stockAliases) {
-          const nextStock = templateData.stock as Record<string, unknown>;
+          const nextStock = templateData['stock'] as Record<string, unknown>;
           for (const [key, value] of Object.entries(nextStock)) {
             const normalized = normalizeStockKey(key);
             if (!normalized) continue;
@@ -1067,13 +1067,13 @@ export async function buildBaseProductData(
           }
         }
       } else if (baseStock) {
-        delete templateData.stock;
+        delete templateData['stock'];
       }
     }
 
     // If exporting images as base64, don't let template mappings override them
-    if (options?.exportImagesAsBase64 && baseData.images) {
-      delete templateData.images;
+    if (options?.exportImagesAsBase64 && baseData['images']) {
+      delete templateData['images'];
     }
 
     Object.assign(baseData, templateData);

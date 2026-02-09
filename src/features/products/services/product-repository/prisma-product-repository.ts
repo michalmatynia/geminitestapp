@@ -384,8 +384,8 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002' &&
-        Array.isArray(error.meta?.target) &&
-        error.meta?.target.includes('sku')
+        Array.isArray(error.meta?.['target']) &&
+        (error.meta?.['target'] as string[]).includes('sku')
       ) {
         throw conflictError('A product with this SKU already exists.', {
           sku: data.sku ?? null,
@@ -566,7 +566,7 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
   },
   
   createProductInTransaction: async <T>(
-    callback: (txClient: ProductRepository & Prisma.TransactionClient) => Promise<T>
+    _callback: (txClient: ProductRepository & Prisma.TransactionClient) => Promise<T>
   ): Promise<T> => {
     // This method should not be called directly on the transactional repository,
     // but only on the main repository. Throw an error if it is.
@@ -736,8 +736,8 @@ export const prismaProductRepository: ProductRepository = {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002' &&
-        Array.isArray(error.meta?.target) &&
-        error.meta?.target.includes('sku')
+        Array.isArray(error.meta?.['target']) &&
+        (error.meta?.['target'] as string[]).includes('sku')
       ) {
         throw conflictError('A product with this SKU already exists.', {
           sku: data.sku ?? null,

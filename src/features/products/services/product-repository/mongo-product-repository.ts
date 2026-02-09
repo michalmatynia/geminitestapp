@@ -729,4 +729,12 @@ export const mongoProductRepository: ProductRepository = {
       .collection<ProductDocument>(productCollectionName)
       .countDocuments({ 'images.imageFileId': imageFileId });
   },
+
+  async createProductInTransaction<T>(
+    callback: (txClient: any) => Promise<T>
+  ): Promise<T> {
+    // MongoDB transactions are not natively supported in this setup.
+    // Call the callback with the repository itself.
+    return callback(this);
+  },
 };

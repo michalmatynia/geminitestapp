@@ -14,7 +14,7 @@ export async function reportValidationError(
 
   if (isServer) {
      
-    console.warn(`[ValidationReporter] ${message}`, { service: (context as Record<string, unknown>).service || 'validation', ...context });
+    console.warn(`[ValidationReporter] ${message}`, { service: (context as Record<string, unknown>)['service'] || 'validation', ...context });
   } else {
     try {
       await reportClientError(message, {

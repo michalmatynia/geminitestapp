@@ -221,9 +221,9 @@ export function useCatalogSync(catalogFilter: string): UseCatalogSyncResult {
     });
 
     if (options.length === 0) {
-      options.push(supportedLanguageMap.EN!);
-      options.push(supportedLanguageMap.PL!);
-      options.push(supportedLanguageMap.DE!);
+      options.push(supportedLanguageMap['EN']!);
+      options.push(supportedLanguageMap['PL']!);
+      options.push(supportedLanguageMap['DE']!);
     }
 
     const defaultLanguageId = catalog?.defaultLanguageId ?? null;

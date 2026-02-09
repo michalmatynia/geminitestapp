@@ -127,17 +127,17 @@ export const createErrorResponse = async (
 
   // Include retry information for retryable errors
   if (resolved.retryable) {
-    payload.retryable = true;
+    payload['retryable'] = true;
     if (resolved.retryAfterMs) {
-      payload.retryAfterMs = resolved.retryAfterMs;
+      payload['retryAfterMs'] = resolved.retryAfterMs;
     }
   }
 
   // Include details for expected errors or when explicitly requested
   if (resolved.expected && resolved.meta) {
-    payload.details = resolved.meta;
+    payload['details'] = resolved.meta;
   } else if (options?.includeDetails && resolved.meta) {
-    payload.details = resolved.meta;
+    payload['details'] = resolved.meta;
   }
 
   // Merge any extra payload fields

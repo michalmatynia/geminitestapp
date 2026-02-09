@@ -28,9 +28,9 @@ describe('MSW Handlers', () => {
       const data = (await response.json()) as Record<string, any>;
 
       expect(response.status).toBe(200);
-      expect(data.id).toBe('1');
-      expect(data.name_en).toBe('Sample Product 1');
-      expect(data.sku).toBe('SKU-001');
+      expect(data['id']).toBe('1');
+      expect(data['name_en']).toBe('Sample Product 1');
+      expect(data['sku']).toBe('SKU-001');
     });
 
     it('should return 404 for non-existent product', async () => {
@@ -56,8 +56,8 @@ describe('MSW Handlers', () => {
 
       expect(response.status).toBe(201);
       const data = (await response.json()) as Record<string, any>;
-      expect(data.name_en).toBe('New Product');
-      expect(data.id).toBeDefined();
+      expect(data['name_en']).toBe('New Product');
+      expect(data['id']).toBeDefined();
     });
 
     it('should update a product', async () => {
@@ -74,8 +74,8 @@ describe('MSW Handlers', () => {
 
       expect(response.status).toBe(200);
       const data = (await response.json()) as Record<string, any>;
-      expect(data.name_en).toBe('Updated Product');
-      expect(data.price).toBe(39.99);
+      expect(data['name_en']).toBe('Updated Product');
+      expect(data['price']).toBe(39.99);
     });
 
     it('should delete a product', async () => {
@@ -85,7 +85,7 @@ describe('MSW Handlers', () => {
 
       expect(response.status).toBe(200);
       const data = (await response.json()) as Record<string, any>;
-      expect(data.success).toBe(true);
+      expect(data['success']).toBe(true);
     });
   });
 
@@ -104,8 +104,8 @@ describe('MSW Handlers', () => {
       const data = (await response.json()) as Record<string, any>;
 
       expect(response.status).toBe(200);
-      expect(data.id).toBe('1');
-      expect(data.name).toBe('Main Catalog');
+      expect(data['id']).toBe('1');
+      expect(data['name']).toBe('Main Catalog');
     });
   });
 
@@ -123,8 +123,8 @@ describe('MSW Handlers', () => {
       const data = (await response.json()) as Record<string, any>;
 
       expect(response.status).toBe(200);
-      expect(data.key).toBe('SITE_NAME');
-      expect(data.value).toBe('My Store');
+      expect(data['key']).toBe('SITE_NAME');
+      expect(data['value']).toBe('My Store');
     });
   });
 
@@ -134,8 +134,8 @@ describe('MSW Handlers', () => {
       const data = (await response.json()) as Record<string, any>;
 
       expect(response.status).toBe(200);
-      expect(data.status).toBe('ok');
-      expect(data.timestamp).toBeDefined();
+      expect(data['status']).toBe('ok');
+      expect(data['timestamp']).toBeDefined();
     });
   });
 
@@ -151,7 +151,7 @@ describe('MSW Handlers', () => {
       const response = await fetch('/api/products');
       const data = (await response.json()) as Record<string, unknown>[];
 
-      expect((data[0] as Record<string, unknown>).name_en).toBe('Test Override');
+      expect((data[0] as Record<string, unknown>)['name_en']).toBe('Test Override');
     });
   });
 });

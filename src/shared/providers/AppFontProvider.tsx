@@ -13,7 +13,7 @@ const LOCAL_STORAGE_KEY = 'app_font_set_id';
 
 function applyFontSet(id: AppFontSetId): void {
   if (typeof document === 'undefined') return;
-  document.documentElement.dataset.appFontSet = id;
+  document.documentElement.dataset['appFontSet'] = id;
 }
 
 export function AppFontProvider(): null {

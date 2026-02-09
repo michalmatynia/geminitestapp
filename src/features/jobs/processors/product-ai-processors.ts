@@ -209,7 +209,7 @@ export async function processDatabaseSync(job: Job): Promise<Record<string, unkn
 
 export async function processBase64ConvertAll(job: Job): Promise<Record<string, unknown>> {
   const productRepo = await getProductRepository();
-  const pageSize = typeof job.payload.pageSize === 'number' ? job.payload.pageSize : 100;
+  const pageSize = typeof job.payload['pageSize'] === 'number' ? (job.payload['pageSize'] as number) : 100;
   let page = 1;
   let requested = 0;
   let succeeded = 0;
@@ -217,8 +217,8 @@ export async function processBase64ConvertAll(job: Job): Promise<Record<string, 
 
   for (;;) {
     const products = await productRepo.getProducts({
-      page: String(page),
-      pageSize: String(pageSize),
+      page: page,
+      pageSize: pageSize,
     });
     if (!products.length) break;
     requested += products.length;
@@ -286,9 +286,9 @@ export async function processBaseImageSyncAll(job: Job): Promise<Record<string, 
 }
 
 const normalizeLanguageDoc = (doc: Record<string, unknown>): LanguageRecord | null => {
-  const rawId = doc.id ?? doc._id;
-  const rawCode = doc.code ?? doc.languageCode ?? doc.isoCode;
-  const rawName = doc.name ?? doc.languageName;
+  const rawId = doc['id'] ?? doc['_id'];
+  const rawCode = doc['code'] ?? doc['languageCode'] ?? doc['isoCode'];
+  const rawName = doc['name'] ?? doc['languageName'];
 
   const id = typeof rawId === 'string' ? rawId : (typeof rawId === 'number' ? String(rawId) : '');
   const code = typeof rawCode === 'string' ? rawCode.trim() : (typeof rawCode === 'number' ? String(rawCode) : '');
@@ -575,14 +575,14 @@ export async function processTranslation(job: Job): Promise<Record<string, unkno
   for (const [langName, translation] of Object.entries(result.translations)) {
     const nameLower = langName.toLowerCase();
     if (nameLower === 'polish' || nameLower === 'pl' || nameLower.includes('polsk')) {
-      updateData.name_pl = translation.name;
-      updateData.description_pl = translation.description;
+      updateData['name_pl'] = translation.name;
+      updateData['description_pl'] = translation.description;
     } else if (nameLower === 'german' || nameLower === 'de' || nameLower.includes('deutsch')) {
-      updateData.name_de = translation.name;
-      updateData.description_de = translation.description;
+      updateData['name_de'] = translation.name;
+      updateData['description_de'] = translation.description;
     } else if (nameLower === 'english' || nameLower === 'en') {
-      updateData.name_en = translation.name;
-      updateData.description_en = translation.description;
+      updateData['name_en'] = translation.name;
+      updateData['description_en'] = translation.description;
     }
   }
 

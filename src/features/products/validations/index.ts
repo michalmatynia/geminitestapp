@@ -2,6 +2,7 @@
 import {
   productCreateSchema,
   productUpdateSchema,
+  productFilterSchema,
   type ProductCreateInput,
   type ProductUpdateInput,
   type ProductFiltersParsed,

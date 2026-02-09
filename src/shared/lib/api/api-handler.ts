@@ -211,7 +211,7 @@ export function apiHandler(
       getElapsedMs: (): number => Math.round(performance.now() - startTime),
     };
 
-    return runWithContext({ requestId, startTime, userId: context.userId }, async () => {
+    return runWithContext({ requestId, startTime, userId: context.userId ?? null }, async () => {
       try {
         enforceCsrf(request, options);
 
@@ -326,7 +326,7 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
       getElapsedMs: () => Math.round(performance.now() - startTime),
     };
 
-    return runWithContext({ requestId, startTime, userId: handlerContext.userId }, async () => {
+    return runWithContext({ requestId, startTime, userId: handlerContext.userId ?? null }, async () => {
       try {
         enforceCsrf(request, options);
 
@@ -478,19 +478,19 @@ async function createErrorResponseWithTiming(
     error,
   });
 
-  payload.fingerprint = fingerprint;
+  payload['fingerprint'] = fingerprint;
 
   if (resolved.retryable) {
-    payload.retryable = true;
+    payload['retryable'] = true;
     if (resolved.retryAfterMs) {
-      payload.retryAfterMs = resolved.retryAfterMs;
+      payload['retryAfterMs'] = resolved.retryAfterMs;
     }
   }
 
   if (resolved.expected && resolved.meta) {
-    payload.details = resolved.meta;
+    payload['details'] = resolved.meta;
   } else if (options.includeDetails && resolved.meta) {
-    payload.details = resolved.meta;
+    payload['details'] = resolved.meta;
   }
 
   const response = NextResponse.json(payload, { status: resolved.httpStatus });

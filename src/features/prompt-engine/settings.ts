@@ -277,11 +277,11 @@ export function parsePromptEngineSettings(raw: string | null | undefined): Promp
     if (!result.success) return defaultPromptEngineSettings;
 
     const rawRules = (parsed && typeof parsed === 'object' && !Array.isArray(parsed))
-      ? (parsed as Record<string, unknown>)?.promptValidation
+      ? (parsed as Record<string, unknown>)?.['promptValidation']
       : null;
     const rawRulesArray =
       rawRules && typeof rawRules === 'object' && !Array.isArray(rawRules)
-        ? (rawRules as Record<string, unknown>)?.rules
+        ? (rawRules as Record<string, unknown>)?.['rules']
         : null;
     const hadAutofixInStorage = Array.isArray(rawRulesArray)
       ? rawRulesArray.some((rule: unknown) => Boolean(rule) && typeof rule === 'object' && 'autofix' in (rule as Record<string, unknown>))

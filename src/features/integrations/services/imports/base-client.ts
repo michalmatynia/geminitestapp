@@ -531,11 +531,11 @@ export async function checkBaseSkuExists(
           // Verify by fetching details
           const details = await fetchBaseProductDetails(token, inventoryId, ids);
           const match = details.find((p: BaseProductRecord) => {
-            const pSku = p.sku ?? p.SKU ?? p.Sku;
-            return typeof pSku === 'string' && pSku.toLowerCase() === sku.toLowerCase();
+            const pSku = p['sku'] ?? p['SKU'] ?? p['Sku'];
+            return typeof pSku === 'string' && (pSku as string).toLowerCase() === sku.toLowerCase();
           });
           if (match) {
-            const productId = toStringId(match.product_id ?? match.id);
+            const productId = toStringId(match['product_id'] ?? match['id']);
             return productId ? { exists: true, productId } : { exists: true };
           }
         }
@@ -554,11 +554,11 @@ export async function checkBaseSkuExists(
       const batch = allIds.slice(i, i + batchSize);
       const products = await fetchBaseProductDetails(token, inventoryId, batch);
       const match = products.find((p: BaseProductRecord) => {
-        const pSku = p.sku ?? p.SKU ?? p.Sku;
-        return typeof pSku === 'string' && pSku.toLowerCase() === sku.toLowerCase();
+        const pSku = p['sku'] ?? p['SKU'] ?? p['Sku'];
+        return typeof pSku === 'string' && (pSku as string).toLowerCase() === sku.toLowerCase();
       });
       if (match) {
-        const productId = toStringId(match.product_id ?? match.id);
+        const productId = toStringId(match['product_id'] ?? match['id']);
         return productId ? { exists: true, productId } : { exists: true };
       }
     }
@@ -696,8 +696,8 @@ export async function fetchBaseCategoriesDebug(token: string): Promise<BaseApiRa
 
 function fetchBaseCategoriesFromPayload(payload: BaseApiResponse): BaseCategory[] {
   const rawCategories =
-    payload.categories ??
-    (payload.data as Record<string, unknown> | undefined)?.categories ??
+    payload['categories'] ??
+    (payload['data'] as Record<string, unknown> | undefined)?.['categories'] ??
     payload;
 
   if (rawCategories && typeof rawCategories === 'object' && !Array.isArray(rawCategories)) {
@@ -705,24 +705,24 @@ function fetchBaseCategoriesFromPayload(payload: BaseApiResponse): BaseCategory[
       .filter(([key]: [string, unknown]) => key !== 'status' && key !== 'error_code' && key !== 'error_message')
       .map(([key, value]: [string, unknown]) => {
         const cat = value as Record<string, unknown>;
-        const id = toStringId(cat.category_id) ?? toStringId(cat.id) ?? key;
+        const id = toStringId(cat['category_id']) ?? toStringId(cat['id']) ?? key;
         const name =
-          (typeof cat.name === 'string' && cat.name.trim()) ||
-          (typeof cat.label === 'string' && cat.label.trim()) ||
+          (typeof cat['name'] === 'string' && (cat['name'] as string).trim()) ||
+          (typeof cat['label'] === 'string' && (cat['label'] as string).trim()) ||
           id;
-        const parentId = normalizeBaseParentId(cat.parent_id ?? cat.parent_category_id);
+        const parentId = normalizeBaseParentId(cat['parent_id'] ?? cat['parent_category_id']);
         return { id, name, parentId };
       });
   }
 
   if (Array.isArray(rawCategories)) {
     return rawCategories.map((cat: Record<string, unknown>) => {
-      const id = toStringId(cat.category_id) ?? toStringId(cat.id) ?? '';
+      const id = toStringId(cat['category_id']) ?? toStringId(cat['id']) ?? '';
       const name =
-        (typeof cat.name === 'string' && cat.name.trim()) ||
-        (typeof cat.label === 'string' && cat.label.trim()) ||
+        (typeof cat['name'] === 'string' && (cat['name'] as string).trim()) ||
+        (typeof cat['label'] === 'string' && (cat['label'] as string).trim()) ||
         id;
-      const parentId = normalizeBaseParentId(cat.parent_id ?? cat.parent_category_id);
+      const parentId = normalizeBaseParentId(cat['parent_id'] ?? cat['parent_category_id']);
       return { id, name, parentId };
     });
   }

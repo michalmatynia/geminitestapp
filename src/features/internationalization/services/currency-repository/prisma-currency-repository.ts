@@ -1,4 +1,4 @@
-import { Prisma as _Prisma, type Currency } from '@prisma/client';
+import { Prisma as _Prisma, type Currency, CurrencyCode } from '@prisma/client';
 
 import { defaultCurrencies } from '@/features/internationalization/server';
 import type { CurrencyRepository } from '@/features/internationalization/types/services/currency-repository';
@@ -24,7 +24,7 @@ export const prismaCurrencyRepository: CurrencyRepository = {
 
   async getCurrencyByCode(code: string): Promise<CurrencyRecord | null> {
     const currency = await prisma.currency.findUnique({
-      where: { code },
+      where: { code: code as CurrencyCode },
     });
     return currency ? toCurrencyDomain(currency) : null;
   },
@@ -40,7 +40,7 @@ export const prismaCurrencyRepository: CurrencyRepository = {
     const currency = await prisma.currency.create({
       data: {
         id: data.code,
-        code: data.code,
+        code: data.code as CurrencyCode,
         name: data.name,
         symbol: data.symbol ?? null,
       },
@@ -52,8 +52,9 @@ export const prismaCurrencyRepository: CurrencyRepository = {
     const currency = await prisma.currency.update({
       where: { id },
       data: {
-        ...data,
+        ...(data as any),
         id: data.code ?? id, // Allow changing ID if code changes
+        ...(data.code ? { code: data.code as CurrencyCode } : {}),
       },
     });
     return toCurrencyDomain(currency);
@@ -75,7 +76,7 @@ export const prismaCurrencyRepository: CurrencyRepository = {
     await prisma.currency.createMany({
       data: defaultCurrencies.map(c => ({
         id: c.code,
-        code: c.code,
+        code: c.code as CurrencyCode,
         name: c.name,
         symbol: c.symbol ?? null
       })),

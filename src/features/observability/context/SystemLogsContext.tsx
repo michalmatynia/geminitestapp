@@ -190,7 +190,7 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
     try {
       const data = await interpretLogMutation.mutateAsync(logId);
       if (!data.insight) return;
-      const key = typeof data.insight.context?.logId === 'string' ? data.insight.context.logId : data.insight.id;
+      const key = typeof data.insight.context?.['logId'] === 'string' ? (data.insight.context?.['logId'] as string) : data.insight.id;
       setLogInterpretations((prev: Record<string, AiInsightRecord>) => ({
         ...prev,
         [key]: data.insight,

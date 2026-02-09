@@ -149,11 +149,11 @@ export function createManagedQueue<TJobData>(
     return {
       running: workerStarted,
       healthy: workerStarted && (lastProcessTime === 0 || now - lastProcessTime < 120_000),
-      processing: (counts.active ?? 0) > 0,
-      activeCount: counts.active ?? 0,
-      waitingCount: counts.waiting ?? 0,
-      failedCount: counts.failed ?? 0,
-      completedCount: counts.completed ?? 0,
+      processing: (counts['active'] ?? 0) > 0,
+      activeCount: counts['active'] ?? 0,
+      waitingCount: counts['waiting'] ?? 0,
+      failedCount: counts['failed'] ?? 0,
+      completedCount: counts['completed'] ?? 0,
       lastPollTime: lastProcessTime,
       timeSinceLastPoll: lastProcessTime > 0 ? now - lastProcessTime : 0,
     };

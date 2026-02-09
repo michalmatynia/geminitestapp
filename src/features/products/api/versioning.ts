@@ -177,13 +177,13 @@ export class ProductTransformer {
           : null;
     return {
       ...this.transformToV2(data),
-      variants: data.variants || [],
+      variants: (data['variants'] as unknown[]) || [],
       categoryId: resolvedCategoryId,
-      tags: data.tags || [],
+      tags: (data['tags'] as Array<{ tagId: string }>)?.map((t: { tagId: string }) => t.tagId) || [],
       seo: {
-        slug: data.slug,
-        metaTitle: data.metaTitle,
-        metaDescription: data.metaDescription
+        slug: data['slug'] as string | undefined,
+        metaTitle: data['metaTitle'] as string | undefined,
+        metaDescription: data['metaDescription'] as string | undefined
       }
     };
   }

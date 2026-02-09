@@ -15,7 +15,7 @@ export const normalizeSteps = (value: unknown): TestLogEntry[] => {
   return value.map((raw: unknown): TestLogEntry => {
     const s =
       raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
-    const stepValue = s?.step;
+    const stepValue = s?.['step'];
     return {
       step:
         typeof stepValue === 'string'
@@ -25,12 +25,12 @@ export const normalizeSteps = (value: unknown): TestLogEntry[] => {
             : typeof stepValue === 'number' || typeof stepValue === 'boolean'
               ? String(stepValue)
               : JSON.stringify(stepValue),
-      status: coerceStatus(s?.status),
+      status: coerceStatus(s?.['status']),
       timestamp:
-        typeof s?.timestamp === 'string'
-          ? s.timestamp
+        typeof s?.['timestamp'] === 'string'
+          ? (s['timestamp'] as string)
           : new Date().toISOString(),
-      ...(typeof s?.detail === 'string' && { detail: s.detail }),
+      ...(typeof s?.['detail'] === 'string' && { detail: s['detail'] as string }),
     };
   });
 };

@@ -133,7 +133,7 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
           const logPayload: Record<string, unknown> = { message, queryKey };
           const loggableError = getLoggableError(error);
           if (loggableError !== undefined) {
-            logPayload.error = loggableError;
+            logPayload['error'] = loggableError;
           }
           logClientError(loggableError || message, { context: logPayload });
         }

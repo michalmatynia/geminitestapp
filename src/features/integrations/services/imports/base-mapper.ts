@@ -79,7 +79,7 @@ const pickFirstIntFromObject = (record: BaseProductRecord, key: string): number 
     if (typeof v === 'object' && v) {
       const pObj = v as Record<string, unknown>;
       const p = toInt(
-        pObj.price ?? pObj.price_brutto ?? pObj.price_gross
+        pObj['price'] ?? pObj['price_brutto'] ?? pObj['price_gross']
       );
       if (p !== null) return p;
     }
@@ -102,15 +102,15 @@ const collectUrls = (value: unknown, urls: string[]): void => {
   if (typeof value === 'object') {
     const record = value as Record<string, unknown>;
     const candidates = [
-      record.url,
-      record.href,
-      record.src,
-      record.image,
-      record.imageUrl,
-      record.image_url,
-      record.link,
-      record.photo,
-      record.thumbnail,
+      record['url'],
+      record['href'],
+      record['src'],
+      record['image'],
+      record['imageUrl'],
+      record['image_url'],
+      record['link'],
+      record['photo'],
+      record['thumbnail'],
     ];
     candidates.forEach((candidate: unknown) => collectUrls(candidate, urls));
     Object.values(record).forEach((candidate: unknown) => collectUrls(candidate, urls));
@@ -277,17 +277,17 @@ const findParameterValue = (
     for (const entry of params) {
       if (!entry || typeof entry !== 'object') continue;
       const record = entry as Record<string, unknown>;
-      const name = toTrimmedString(record.name ?? record.parameter ?? record.code);
+      const name = toTrimmedString(record['name'] ?? record['parameter'] ?? record['code']);
       const id = toTrimmedString(
-        record.id ?? record.parameter_id ?? record.param_id
+        record['id'] ?? record['parameter_id'] ?? record['param_id']
       );
       if (name === sourceKey || id === sourceKey) {
         return (
-          record.value ??
-          record.values ??
-          record.value_id ??
-          record.label ??
-          record.text
+          record['value'] ??
+          record['values'] ??
+          record['value_id'] ??
+          record['label'] ??
+          record['text']
         );
       }
     }
@@ -347,12 +347,12 @@ const resolveTemplateValue = (
     return record[sourceKey];
   }
   const parameters =
-    record.parameters ?? record.params ?? record.attributes ?? null;
+    record['parameters'] ?? record['params'] ?? record['attributes'] ?? null;
   const parameterValue = findParameterValue(parameters, sourceKey);
   if (parameterValue !== null && parameterValue !== undefined) {
     return parameterValue;
   }
-  const features = record.features ?? record.feature ?? null;
+  const features = record['features'] ?? record['feature'] ?? null;
   return findParameterValue(features, sourceKey);
 };
 

@@ -149,7 +149,7 @@ export const handlers = [
   }),
 
   http.get('/api/products/:id', ({ params }: ParamsContext) => {
-    const product = mockProducts.find((p: (typeof mockProducts)[number]) => p.id === params.id);
+    const product = mockProducts.find((p: (typeof mockProducts)[number]) => p.id === params['id']);
     if (!product) {
       return HttpResponse.json({ error: 'Product not found' }, { status: 404 });
     }
@@ -168,7 +168,7 @@ export const handlers = [
   }),
 
   http.put('/api/products/:id', async ({ params, request }: RequestParamsContext) => {
-    const product = mockProducts.find((p: (typeof mockProducts)[number]) => p.id === params.id);
+    const product = mockProducts.find((p: (typeof mockProducts)[number]) => p.id === params['id']);
     if (!product) {
       return HttpResponse.json({ error: 'Product not found' }, { status: 404 });
     }
@@ -182,7 +182,7 @@ export const handlers = [
   }),
 
   http.delete('/api/products/:id', ({ params }: ParamsContext) => {
-    const product = mockProducts.find((p: (typeof mockProducts)[number]) => p.id === params.id);
+    const product = mockProducts.find((p: (typeof mockProducts)[number]) => p.id === params['id']);
     if (!product) {
       return HttpResponse.json({ error: 'Product not found' }, { status: 404 });
     }
@@ -195,7 +195,7 @@ export const handlers = [
   }),
 
   http.get('/api/catalogs/:id', ({ params }: ParamsContext) => {
-    const catalog = mockCatalogs.find((c: (typeof mockCatalogs)[number]) => c.id === params.id);
+    const catalog = mockCatalogs.find((c: (typeof mockCatalogs)[number]) => c.id === params['id']);
     if (!catalog) {
       return HttpResponse.json({ error: 'Catalog not found' }, { status: 404 });
     }
@@ -208,7 +208,7 @@ export const handlers = [
   }),
 
   http.get('/api/settings/:key', ({ params }: ParamsContext) => {
-    const setting = mockSettings.find((s: (typeof mockSettings)[number]) => s.key === params.key);
+    const setting = mockSettings.find((s: (typeof mockSettings)[number]) => s.key === params['key']);
     if (!setting) {
       return HttpResponse.json({ error: 'Setting not found' }, { status: 404 });
     }

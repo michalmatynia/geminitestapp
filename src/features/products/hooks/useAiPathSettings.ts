@@ -142,8 +142,8 @@ export function findTriggerPath(
   );
 
   const activePathId =
-    typeof uiState?.activePathId === 'string' && uiState.activePathId.trim().length > 0
-      ? uiState.activePathId.trim()
+    typeof uiState?.['activePathId'] === 'string' && (uiState['activePathId'] as string).trim().length > 0
+      ? (uiState['activePathId'] as string).trim()
       : null;
 
   const activeTriggerCandidate = activePathId

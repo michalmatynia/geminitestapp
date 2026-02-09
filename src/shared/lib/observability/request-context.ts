@@ -15,7 +15,7 @@ class MockAsyncLocalStorage<T> implements IAsyncLocalStorage<T> {
   getStore(): T | undefined {
     return undefined;
   }
-  run<R>(store: T, callback: () => R): R {
+  run<R>(_store: T, callback: () => R): R {
     return callback();
   }
 }

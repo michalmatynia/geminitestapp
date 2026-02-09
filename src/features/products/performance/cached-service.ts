@@ -19,36 +19,38 @@ function toOptionalString(value: unknown): string | undefined {
   return undefined;
 }
 
+function toOptionalNumber(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === 'string') {
+    const parsed = Number(value.replace(',', '.'));
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return undefined;
+}
+
 function normalizeFilters(filters: ProductFilterInput = {}): ProductFilters {
-  const pageSize = toOptionalString(filters.pageSize) ?? toOptionalString(filters.limit);
-  let page = toOptionalString(filters.page);
+  const pageSize = toOptionalNumber(filters['pageSize']) ?? toOptionalNumber(filters['limit']);
+  let page = toOptionalNumber(filters['page']);
 
   // Support offset+limit payloads used by API v2.
   if (!page && pageSize) {
-    const offsetRaw = toOptionalString(filters.offset);
-    if (offsetRaw) {
-      const parsedPageSize = Number(pageSize);
-      const parsedOffset = Number(offsetRaw);
-      if (
-        Number.isFinite(parsedPageSize) &&
-        parsedPageSize > 0 &&
-        Number.isFinite(parsedOffset) &&
-        parsedOffset >= 0
-      ) {
-        page = String(Math.floor(parsedOffset / parsedPageSize) + 1);
-      }
+    const offsetRaw = toOptionalNumber(filters['offset']);
+    if (offsetRaw !== undefined) {
+      page = Math.floor(offsetRaw / pageSize) + 1;
     }
   }
 
   const normalized: ProductFilters = {};
-  const search = toOptionalString(filters.search);
-  const sku = toOptionalString(filters.sku);
-  const minPrice = toOptionalString(filters.minPrice);
-  const maxPrice = toOptionalString(filters.maxPrice);
-  const startDate = toOptionalString(filters.startDate);
-  const endDate = toOptionalString(filters.endDate);
-  const catalogId = toOptionalString(filters.catalogId);
-  const searchLanguage = toOptionalString(filters.searchLanguage);
+  const search = toOptionalString(filters['search']);
+  const sku = toOptionalString(filters['sku']);
+  const minPrice = toOptionalNumber(filters['minPrice']);
+  const maxPrice = toOptionalNumber(filters['maxPrice']);
+  const startDate = toOptionalString(filters['startDate']);
+  const endDate = toOptionalString(filters['endDate']);
+  const catalogId = toOptionalString(filters['catalogId']);
+  const searchLanguage = toOptionalString(filters['searchLanguage']);
 
   if (search !== undefined) normalized.search = search;
   if (sku !== undefined) normalized.sku = sku;
@@ -59,7 +61,7 @@ function normalizeFilters(filters: ProductFilterInput = {}): ProductFilters {
   if (page !== undefined) normalized.page = page;
   if (pageSize !== undefined) normalized.pageSize = pageSize;
   if (catalogId !== undefined) normalized.catalogId = catalogId;
-  if (searchLanguage !== undefined) normalized.searchLanguage = searchLanguage;
+  if (searchLanguage !== undefined) normalized.searchLanguage = searchLanguage as any;
 
   return normalized;
 }
@@ -116,7 +118,7 @@ export class CachedProductService {
     async (categoryId: string, limit?: number) => {
       const categoryFilters: ProductFilters = {};
       if (typeof limit === 'number' && Number.isFinite(limit) && limit > 0) {
-        categoryFilters.pageSize = String(limit);
+        categoryFilters.pageSize = limit;
       }
       const products = await productService.getProducts(categoryFilters);
       const filtered = products.filter(

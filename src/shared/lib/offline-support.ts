@@ -14,7 +14,7 @@ export function setupOfflineSupport(queryClient: QueryClient): void {
       const queries = parsed?.clientState?.queries;
       if (Array.isArray(queries)) {
         parsed.clientState!.queries = queries
-          .filter((query: Record<string, unknown>) => query?.state && (query.state as { status?: string }).status === 'success')
+          .filter((query: Record<string, unknown>) => query?.['state'] && (query['state'] as { status?: string }).status === 'success')
           .map((query: Record<string, unknown>) => {
             if (query && typeof query === 'object' && 'promise' in query) {
               const { promise: _ignored, ...rest } = query;
@@ -23,7 +23,7 @@ export function setupOfflineSupport(queryClient: QueryClient): void {
             return query;
           })
           // Drop any persisted queries with non-array keys (legacy v3 format)
-          .filter((query: Record<string, unknown>) => Array.isArray(query?.queryKey));
+          .filter((query: Record<string, unknown>) => Array.isArray(query?.['queryKey']));
       }
       return parsed as unknown as PersistedClient;
     },

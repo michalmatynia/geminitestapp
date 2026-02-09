@@ -299,7 +299,7 @@ const mongoRepository: ProductListingRepository = {
     const db = await getMongoDb();
     const updateData: Record<string, unknown> = { status, updatedAt: new Date() };
     if (status === 'active') {
-      updateData.listedAt = new Date();
+      updateData['listedAt'] = new Date();
     }
     await db
       .collection<ProductListingDocument>(LISTINGS_COLLECTION)

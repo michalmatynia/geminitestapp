@@ -103,7 +103,7 @@ async function getProducts(
   const products = await productRepository.getProducts(filters);
   const repoMs = performance.now() - repoStart;
   if (timings) {
-    timings.repo = repoMs;
+    timings['repo'] = repoMs;
   }
   performanceMonitor.record('db.query', repoMs, { operation: 'getProducts', provider });
 
@@ -127,9 +127,9 @@ async function getProducts(
 
   const imagesMs = performance.now() - imagesStart;
   if (timings) {
-    timings.images = imagesMs;
-    timings.fsChecks = 0;
-    timings.total = performance.now() - totalStart;
+    timings['images'] = imagesMs;
+    timings['fsChecks'] = 0;
+    timings['total'] = performance.now() - totalStart;
   }
   if (shouldLogTiming()) {
     console.log('[timing] productService.getProducts', {
@@ -238,7 +238,7 @@ async function createProduct(
       void logActivity({
         type: ActivityTypes.PRODUCT.CREATED,
         description: `Created product ${fullProduct.sku || fullProduct.id}`,
-        userId: options?.userId,
+        userId: options?.userId ?? null,
         entityId: fullProduct.id,
         entityType: 'product',
         metadata: { sku: fullProduct.sku }
@@ -342,7 +342,7 @@ async function updateProduct(
       void logActivity({
         type: ActivityTypes.PRODUCT.UPDATED,
         description: `Updated product ${fullProduct.sku || fullProduct.id}`,
-        userId: options?.userId,
+        userId: options?.userId ?? null,
         entityId: fullProduct.id,
         entityType: 'product',
         metadata: { sku: fullProduct.sku, changes: validatedData }
@@ -376,7 +376,7 @@ async function deleteProduct(id: string, options?: { userId?: string }): Promise
       void logActivity({
         type: ActivityTypes.PRODUCT.DELETED,
         description: `Deleted product ${deletedProduct.sku || deletedProduct.id}`,
-        userId: options?.userId,
+        userId: options?.userId ?? null,
         entityId: deletedProduct.id,
         entityType: 'product',
         metadata: { sku: deletedProduct.sku }
@@ -426,7 +426,7 @@ async function duplicateProduct(
       void logActivity({
         type: ActivityTypes.PRODUCT.DUPLICATED,
         description: `Duplicated product ${id} to new SKU ${trimmedSku}`,
-        userId: options?.userId,
+        userId: options?.userId ?? null,
         entityId: fullProduct.id,
         entityType: 'product',
         metadata: { sourceId: id, newSku: trimmedSku }

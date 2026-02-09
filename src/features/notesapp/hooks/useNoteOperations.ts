@@ -256,7 +256,7 @@ export function useNoteOperations({
         filtered.map((sibling: CategoryWithChildren, index: number) => {
           const update: Record<string, unknown> = { sortIndex: index };
           if (sibling.id === folderId && draggedParentId !== targetParentId) {
-            update.parentId = targetParentId;
+            update['parentId'] = targetParentId;
           }
           // Using mutation for each update
           return updateCategoryMutation.mutateAsync({

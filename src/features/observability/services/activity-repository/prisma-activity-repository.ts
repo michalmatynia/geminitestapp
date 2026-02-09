@@ -54,9 +54,9 @@ export const prismaActivityRepository: ActivityRepository = {
       data: {
         type: data.type,
         description: data.description,
-        userId: data.userId,
-        entityId: data.entityId,
-        entityType: data.entityType,
+        userId: data.userId ?? null,
+        entityId: data.entityId ?? null,
+        entityType: data.entityType ?? null,
         metadata: (data.metadata ?? Prisma.JsonNull) as Prisma.InputJsonValue,
       },
     });

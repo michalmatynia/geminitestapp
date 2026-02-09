@@ -13,11 +13,11 @@ import {
   useToast,
 } from '@/shared/ui';
 
-import { LogModal } from '../components/LogModal';
 import {
   getControlPanelColumns,
   type UnifiedCollectionRow,
 } from '../components/ControlPanelColumns';
+import { LogModal } from '../components/LogModal';
 import {
   useAllCollectionsSchema,
   useCopyCollectionMutation,
@@ -134,11 +134,11 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
 
   // Copy handlers
   const handleCopyToMongo = useCallback((name: string) => {
-    setPendingCopy({ collection: name, direction: 'prisma_to_mongo', label: `Prisma → MongoDB` });
+    setPendingCopy({ collection: name, direction: 'prisma_to_mongo', label: 'Prisma → MongoDB' });
   }, []);
 
   const handleCopyToPrisma = useCallback((name: string) => {
-    setPendingCopy({ collection: name, direction: 'mongo_to_prisma', label: `MongoDB → Prisma` });
+    setPendingCopy({ collection: name, direction: 'mongo_to_prisma', label: 'MongoDB → Prisma' });
   }, []);
 
   const handleConfirmCopy = useCallback(async () => {

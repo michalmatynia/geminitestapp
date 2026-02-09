@@ -103,6 +103,9 @@ type UserPreferencesDocument = {
 
 const USER_PREFERENCES_COLLECTION = 'user_preferences';
 
+const getCanonicalPreferencesId = (userId: string): ObjectId | string =>
+  toMongoId(userId);
+
 const toUserPreferences = (doc: UserPreferencesDocument): UserPreferences => ({
   id: String(doc._id),
   userId: doc.userId,
@@ -167,24 +170,42 @@ export async function getUserPreferences(userId: string): Promise<UserPreference
     throw operationFailedError('MongoDB is not configured.');
   }
   const db = await getMongoDb();
-  const doc = await db
-    .collection<UserPreferencesDocument>(USER_PREFERENCES_COLLECTION)
-    .findOne({ $or: [{ _id: toMongoId(userId) }, { userId }] });
+  const collection = db.collection<UserPreferencesDocument>(USER_PREFERENCES_COLLECTION);
+  const canonicalId = getCanonicalPreferencesId(userId);
+  const doc = await collection.findOne({ _id: canonicalId });
 
   if (doc) {
     return toUserPreferences(doc);
   }
 
+  // Backward compatibility: older records may have used a different _id and stored userId separately.
+  const legacy = await collection.findOne({ userId });
+  if (legacy) {
+    const migratedDoc: UserPreferencesDocument = {
+      ...legacy,
+      _id: canonicalId,
+      userId,
+      updatedAt: legacy.updatedAt ?? new Date(),
+    };
+    await collection.replaceOne(
+      { _id: canonicalId },
+      migratedDoc,
+      { upsert: true }
+    );
+    if (String(legacy._id) !== String(canonicalId)) {
+      void collection.deleteOne({ _id: legacy._id }).catch(() => {});
+    }
+    return toUserPreferences(migratedDoc);
+  }
+
   const now = new Date();
   const document: UserPreferencesDocument = {
-    _id: userId,
+    _id: canonicalId,
     ...defaultPreferences(userId),
     createdAt: now,
     updatedAt: now,
   };
-  await db
-    .collection<UserPreferencesDocument>(USER_PREFERENCES_COLLECTION)
-    .insertOne(document);
+  await collection.insertOne(document);
   return toUserPreferences(document);
 }
 
@@ -199,30 +220,31 @@ export async function updateUserPreferences(
     throw operationFailedError('MongoDB is not configured.');
   }
   const db = await getMongoDb();
+  const collection = db.collection<UserPreferencesDocument>(USER_PREFERENCES_COLLECTION);
+  const canonicalId = getCanonicalPreferencesId(userId);
   const now = new Date();
   const insertDefaults = {
-    _id: userId,
+    _id: canonicalId,
     ...defaultPreferences(userId),
     createdAt: now,
   } as Record<string, unknown>;
   for (const key of Object.keys(data)) {
     delete insertDefaults[key];
   }
-  const result = await db
-    .collection<UserPreferencesDocument>(USER_PREFERENCES_COLLECTION)
-    .findOneAndUpdate(
-      { $or: [{ _id: toMongoId(userId) }, { userId }] },
-      {
-        $set: {
-          ...data,
-          updatedAt: now,
-        } as Record<string, unknown>,
-        $setOnInsert: {
-          ...insertDefaults,
-        },
+  const result = await collection.findOneAndUpdate(
+    { _id: canonicalId },
+    {
+      $set: {
+        ...data,
+        userId,
+        updatedAt: now,
+      } as Record<string, unknown>,
+      $setOnInsert: {
+        ...insertDefaults,
       },
-      { upsert: true, returnDocument: 'after' }
-    );
+    },
+    { upsert: true, returnDocument: 'after' }
+  );
 
   if (result && 'value' in result && result.value) {
     return toUserPreferences(result.value as UserPreferencesDocument);
@@ -231,9 +253,7 @@ export async function updateUserPreferences(
     return toUserPreferences(result as unknown as UserPreferencesDocument);
   }
 
-  const fallbackDoc = await db
-    .collection<UserPreferencesDocument>(USER_PREFERENCES_COLLECTION)
-    .findOne({ $or: [{ _id: toMongoId(userId) }, { userId }] });
+  const fallbackDoc = await collection.findOne({ _id: canonicalId });
 
   if (!fallbackDoc) {
     throw operationFailedError('Failed to update preferences', undefined, {

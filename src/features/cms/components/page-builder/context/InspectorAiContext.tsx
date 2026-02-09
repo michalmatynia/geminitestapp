@@ -138,6 +138,7 @@ export interface InspectorAiProviderProps {
   onUpdateSettings: (settings: Record<string, unknown>) => void;
   onUpdateCustomCssAiConfig: (patch: Partial<CustomCssAiConfig>) => void;
   contentAiAllowedKeys?: string[];
+  aiQueriesEnabled?: boolean;
 }
 
 export function InspectorAiProvider({
@@ -148,6 +149,7 @@ export function InspectorAiProvider({
   onUpdateSettings,
   onUpdateCustomCssAiConfig,
   contentAiAllowedKeys = [],
+  aiQueriesEnabled = false,
 }: InspectorAiProviderProps): React.JSX.Element {
   const {
     state,
@@ -186,8 +188,13 @@ export function InspectorAiProvider({
   const [contextPreviewNonce, setContextPreviewNonce] = useState<number>(0);
 
   // --- Data Loading ---
-  const modelsQuery = useChatbotModels({ enabled: true });
-  const teachingAgentsQuery = useTeachingAgents();
+  const cssProvider = customCssAiConfig.provider ?? 'model';
+  const modelsQuery = useChatbotModels({
+    enabled: aiQueriesEnabled && (cssProvider === 'model' || contentAiProvider === 'model'),
+  });
+  const teachingAgentsQuery = useTeachingAgents({
+    enabled: aiQueriesEnabled && (cssProvider === 'agent' || contentAiProvider === 'agent'),
+  });
 
   const modelOptions = useMemo((): string[] => {
     const fromApi = (modelsQuery.data ?? []).filter((value: string) => value.trim().length > 0);

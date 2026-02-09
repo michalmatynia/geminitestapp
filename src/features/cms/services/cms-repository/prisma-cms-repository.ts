@@ -28,7 +28,7 @@ export const prismaCmsRepository: CmsRepository = {
           },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { updatedAt: 'desc' },
     });
     return pages as unknown as Page[];
   },

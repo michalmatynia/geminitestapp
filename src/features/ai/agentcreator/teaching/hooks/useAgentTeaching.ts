@@ -11,7 +11,7 @@ export const agentTeachingKeys = {
   documents: (collectionId: string) => [...agentTeachingKeys.all, 'collections', collectionId, 'documents'] as const,
 };
 
-export function useTeachingAgents(): UseQueryResult<AgentTeachingAgentRecord[], Error> {
+export function useTeachingAgents(options?: { enabled?: boolean }): UseQueryResult<AgentTeachingAgentRecord[], Error> {
   return useQuery({
     queryKey: agentTeachingKeys.agents(),
     queryFn: async (): Promise<AgentTeachingAgentRecord[]> => {
@@ -29,6 +29,7 @@ export function useTeachingAgents(): UseQueryResult<AgentTeachingAgentRecord[], 
         return [];
       }
     },
+    enabled: options?.enabled ?? true,
   });
 }
 

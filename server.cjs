@@ -6,6 +6,13 @@ const dev = process.env.NODE_ENV !== 'production';
 if (dev && !process.env.NEXT_DISABLE_TURBOPACK) {
   process.env.NEXT_DISABLE_TURBOPACK = '1';
 }
+if (dev && !process.env.WATCHPACK_POLLING) {
+  // Use polling in local dev to avoid "too many open files" watcher failures.
+  process.env.WATCHPACK_POLLING = 'true';
+}
+if (dev && !process.env.CHOKIDAR_USEPOLLING) {
+  process.env.CHOKIDAR_USEPOLLING = '1';
+}
 
 const next = require('next');
 const app = next({ dev });

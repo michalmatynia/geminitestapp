@@ -70,7 +70,9 @@
       "Bash(brew list:*)",
       "Bash(kill:*)",
       "Bash(pg_isready:*)",
-      "Bash(/usr/local/opt/postgresql@16/bin/pg_isready:*)"
+      "Bash(/usr/local/opt/postgresql@16/bin/pg_isready:*)",
+      "Bash(python3:*)",
+      "Bash(timeout 30 npx next dev:*)"
     ]
   }
 }

@@ -41,6 +41,9 @@ export function PageSelectorBar({ variant = 'bar' }: PageSelectorBarProps): Reac
     if (preferredId && pagesQuery.data?.some((page: PageSummary) => page.id === preferredId)) {
       return preferredId;
     }
+    if (pagesQuery.data && pagesQuery.data.length > 0) {
+      return pagesQuery.data[0]!.id;
+    }
     return '';
   }, [pageIdParam, pagesQuery.data, state.currentPage?.id, userPreferences?.cmsLastPageId]);
 

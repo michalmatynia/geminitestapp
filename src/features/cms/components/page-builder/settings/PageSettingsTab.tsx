@@ -40,14 +40,19 @@ function PageSettingsTab(): React.ReactNode {
   const [pageAiAgentId, setPageAiAgentId] = useState<string>('');
   const [pageAiPrompt, setPageAiPrompt] = useState<string>('');
   const [pageAiTask, setPageAiTask] = useState<'layout' | 'seo'>('layout');
+  const [activeTab, setActiveTab] = useState<'page' | 'seo' | 'ai'>('page');
   const [pageAiOutput, setPageAiOutput] = useState<string>('');
   const [pageAiError, setPageAiError] = useState<string | null>(null);
   const [pageAiLoading, setPageAiLoading] = useState<boolean>(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const pageAiAbortRef = useRef<AbortController | null>(null);
   const nameInputRef = useRef<HTMLInputElement | null>(null);
-  const modelsQuery = useChatbotModels();
-  const teachingAgentsQuery = useTeachingAgents();
+  const modelsQuery = useChatbotModels({
+    enabled: activeTab === 'ai' && pageAiProvider === 'model',
+  });
+  const teachingAgentsQuery = useTeachingAgents({
+    enabled: activeTab === 'ai' && pageAiProvider === 'agent',
+  });
 
   const allSlugs = useMemo((): Slug[] => allSlugsQuery.data ?? [], [allSlugsQuery.data]);
   const domainSlugs = useMemo((): Slug[] => slugsQuery.data ?? [], [slugsQuery.data]);
@@ -468,7 +473,11 @@ function PageSettingsTab(): React.ReactNode {
   if (!page) return null;
 
   return (
-    <Tabs defaultValue='page' className='flex flex-1 flex-col overflow-hidden'>
+    <Tabs
+      value={activeTab}
+      onValueChange={(value: string): void => setActiveTab(value as 'page' | 'seo' | 'ai')}
+      className='flex flex-1 flex-col overflow-hidden'
+    >
       <div className='space-y-4 px-4 pt-4'>
         <div className='rounded border border-border/40 bg-gray-800/30 px-3 py-2'>
           <div className='flex items-center gap-2'>

@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { getUserPreferences, updateUserPreferences, type UserPreferencesData } from '@/features/auth/server';
 import { auth } from '@/features/auth/server';
+import { logSystemEvent } from '@/features/observability/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api';
 
@@ -12,6 +13,7 @@ export const runtime = 'nodejs';
 // In a real app, this would come from the session
 const DEFAULT_USER_ID = 'default-user';
 const isDatabaseConfigured = Boolean(process.env['MONGODB_URI']);
+const shouldLogTiming = (): boolean => process.env['DEBUG_API_TIMING'] === 'true';
 
 const updatePreferencesSchema = z.object({
   productListNameLocale: z.enum(['name_en', 'name_pl', 'name_de']).optional().nullable(),
@@ -35,11 +37,29 @@ const updatePreferencesSchema = z.object({
  * Get current user preferences
  */
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const logTiming = shouldLogTiming();
+  const timings: Record<string, number> = {};
+  const totalStart = performance.now();
+  const withTiming = async <T,>(label: string, fn: () => Promise<T>): Promise<T> => {
+    const start = performance.now();
+    const result = await fn();
+    timings[label] = performance.now() - start;
+    return result;
+  };
+
   const include = _req.nextUrl.searchParams.get('include') ?? '';
   const includeAdminMenu = include.split(',').map((value: string) => value.trim()).includes('admin-menu');
-  const session = await auth();
+  const session = await withTiming('auth', () => auth());
   const userId = session?.user?.id ?? DEFAULT_USER_ID;
   if (!isDatabaseConfigured) {
+    if (logTiming) {
+      timings['total'] = performance.now() - totalStart;
+      await logSystemEvent({
+        level: 'info',
+        message: '[timing] user.preferences.GET',
+        context: { ...timings, databaseConfigured: false },
+      });
+    }
     return NextResponse.json({
       productListNameLocale: 'name_en',
       productListCatalogFilter: 'all',
@@ -62,11 +82,11 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
           adminMenuCustomEnabled: false,
           adminMenuCustomNav: [],
         }
-        : {}),
+      : {}),
     });
   }
-  const preferences = await getUserPreferences(userId);
-  return NextResponse.json({
+  const preferences = await withTiming('repository', () => getUserPreferences(userId));
+  const response = NextResponse.json({
     productListNameLocale: preferences.productListNameLocale ?? 'name_en',
     productListCatalogFilter: preferences.productListCatalogFilter ?? 'all',
     productListCurrencyCode: preferences.productListCurrencyCode ?? 'PLN',
@@ -90,6 +110,15 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
       }
       : {}),
   });
+  if (logTiming) {
+    timings['total'] = performance.now() - totalStart;
+    await logSystemEvent({
+      level: 'info',
+      message: '[timing] user.preferences.GET',
+      context: { ...timings, databaseConfigured: true },
+    });
+  }
+  return response;
 }
 
 /**
@@ -97,9 +126,19 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
  * Update user preferences
  */
 async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const session = await auth();
+  const logTiming = shouldLogTiming();
+  const timings: Record<string, number> = {};
+  const totalStart = performance.now();
+  const withTiming = async <T,>(label: string, fn: () => Promise<T>): Promise<T> => {
+    const start = performance.now();
+    const result = await fn();
+    timings[label] = performance.now() - start;
+    return result;
+  };
+
+  const session = await withTiming('auth', () => auth());
   const userId = session?.user?.id ?? DEFAULT_USER_ID;
-  const rawBody = await req.text();
+  const rawBody = await withTiming('readBody', () => req.text());
   let body: unknown = {};
   if (rawBody) {
     try {
@@ -112,7 +151,7 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise
       }
     }
   }
-  const parsed = updatePreferencesSchema.parse(body);
+  const parsed = await withTiming('parseBody', async () => updatePreferencesSchema.parse(body));
 
   // Type assertion to handle exactOptionalPropertyTypes
   const partial: Record<string, unknown> = {};
@@ -135,6 +174,14 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise
   const data = partial as Partial<UserPreferencesData>;
 
   if (!isDatabaseConfigured) {
+    if (logTiming) {
+      timings['total'] = performance.now() - totalStart;
+      await logSystemEvent({
+        level: 'info',
+        message: '[timing] user.preferences.PATCH',
+        context: { ...timings, databaseConfigured: false },
+      });
+    }
     return NextResponse.json({
       id: 'mock',
       userId,
@@ -144,8 +191,17 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise
     });
   }
 
-  const updated = await updateUserPreferences(userId, data);
-  return NextResponse.json(updated);
+  const updated = await withTiming('repository', () => updateUserPreferences(userId, data));
+  const response = NextResponse.json(updated);
+  if (logTiming) {
+    timings['total'] = performance.now() - totalStart;
+    await logSystemEvent({
+      level: 'info',
+      message: '[timing] user.preferences.PATCH',
+      context: { ...timings, databaseConfigured: true },
+    });
+  }
+  return response;
 }
 
 export const GET = apiHandler(

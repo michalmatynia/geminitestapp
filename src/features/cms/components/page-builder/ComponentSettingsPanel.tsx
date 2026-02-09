@@ -258,6 +258,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
       onUpdateSettings={handleApplyAiSettings}
       onUpdateCustomCssAiConfig={handleCustomCssAiChange}
       contentAiAllowedKeys={contentAiAllowedKeys}
+      aiQueriesEnabled={activeTab === 'ai' || activeTab === 'customCss'}
     >
       <aside className='flex w-80 min-h-0 flex-col border-l border-border bg-gray-900'>
         <PanelHeader

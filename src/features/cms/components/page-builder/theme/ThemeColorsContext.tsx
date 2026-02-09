@@ -78,8 +78,8 @@ export function ThemeColorsProvider({ children }: { children: React.ReactNode })
   
   const [isGlobalPaletteOpen, setIsGlobalPaletteOpen] = useState(false);
 
-  const modelsQuery = useChatbotModels({ enabled: schemeView === 'edit' });
-  const teachingAgentsQuery = useTeachingAgents();
+  const modelsQuery = useChatbotModels({ enabled: schemeView === 'edit' && schemeAiProvider === 'model' });
+  const teachingAgentsQuery = useTeachingAgents({ enabled: schemeView === 'edit' && schemeAiProvider === 'agent' });
   
   const modelOptions = useMemo((): string[] => {
     const fromApi = (modelsQuery.data ?? []).filter((value: string) => value.trim().length > 0);

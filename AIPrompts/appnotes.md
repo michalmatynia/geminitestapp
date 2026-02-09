@@ -1,5 +1,19 @@
 I need a reliable database control for my Mixed Provider setup. I need a working database restore for Prisma (the current one is not working). I also need to be able to fetch collections from both MongoDB and Prisma. I would to be able to convert/copy a collection from Prisma to MongoDB and vice versa. I also want to be able to choose on a per collection basis, which collections are to be fetched from which Provider.
 
+I would  like to continue developing my database control Page. I would like a page where I can see one Panel for Each Connected Database Prisma, Redis and MongoDB. Through these panels, I should be able to see all the collections in each database and designate which are my primary collections when the Page Loads and which are Fallback, in case a primary collection doesn't load.
+
+I should also be able to synchronise collections between databases and if the collection exists in one database, but doesn't exist in the other, Copy a collection from one database to the other.
+
+I had AiTranslation and AI Description functionalities that were configured through my Products Settings, these functionalities have been taken over by the AI-Paths, so any remainder code from them can be removed.
+
+
+Move all database operations into one Page, so System - Settings -  Database to Workspace - Databases Page
+
+
+Restore Prisma still not working, still databases are not fetching info
+
+---
+
 Centralize Form validation (I also need info if I'm trying to create with duplicate SKU notification)
 
 I need promper importer in my Base.com
@@ -50,11 +64,6 @@ Warning notification when Ollama is not present, no generation
 
  GET /api/chatbot/sessions 200 in 464ms (compile: 56ms, proxy.ts: 121ms, render: 288ms)
 shouldn't start when I start product
-
-[7747:0x735400000]   905459 ms: Scavenge (interleaved) 3933.8 (4028.9) -> 3925.3 (4096.9) MB, pooled: 0 MB, 38.08 / 0.00 ms  (average mu = 0.399, current mu = 0.476) allocation failure; 
-[7747:0x735400000]   907563 ms: Mark-Compact (reduce) 3934.3 (4097.1) -> 3876.1 (3964.4) MB, pooled: 0 MB, 1611.46 / 6.00 ms  (+ 420.7 ms in 138 steps since start of marking, biggest step 7.0 ms, walltime since start of marking 2104 ms) (average mu = 0.30
-FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
------ Native stack trace ---
 
 I need another node, check if service (Ollama Server) is running if running pass if not notification
 

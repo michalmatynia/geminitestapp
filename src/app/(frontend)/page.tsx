@@ -65,6 +65,8 @@ const canUsePrismaSettings = (): boolean =>
   Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
 
 const shouldLogTiming = (): boolean => process.env['DEBUG_API_TIMING'] === 'true';
+const shouldUseFrontPageAppRedirect = (): boolean =>
+  process.env['ENABLE_FRONT_PAGE_APP_REDIRECT'] === 'true';
 
 const readMongoFrontPageSetting = async (): Promise<string | null> => {
   if (!process.env['MONGODB_URI']) return null;
@@ -120,12 +122,15 @@ export default async function Home(): Promise<JSX.Element> {
     return result;
   };
 
-  const [frontPageApp, cmsRepository] = await Promise.all([
-    withTiming('frontPageSetting', getFrontPageSetting),
+  const frontPageRedirectEnabled = shouldUseFrontPageAppRedirect();
+  const [cmsRepository, frontPageApp] = await Promise.all([
     withTiming('cmsRepository', getCmsRepository),
+    frontPageRedirectEnabled
+      ? withTiming('frontPageSetting', getFrontPageSetting)
+      : Promise.resolve<string | null>(null),
   ]);
 
-  if (frontPageApp && FRONT_PAGE_ALLOWED.has(frontPageApp)) {
+  if (frontPageRedirectEnabled && frontPageApp && FRONT_PAGE_ALLOWED.has(frontPageApp)) {
     if (frontPageApp === 'chatbot') {
       redirect('/admin/chatbot');
     }

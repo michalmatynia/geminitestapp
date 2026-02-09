@@ -1,3 +1,9 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 /** @type {import('next').NextConfig} */
 const isDev = process.env.NODE_ENV !== "production";
 const csp = [
@@ -18,6 +24,7 @@ const nextConfig = {
   reactStrictMode: true,
   devIndicators: false,
   output: "standalone", // Docker-friendly build output
+  outputFileTracingRoot: __dirname,
   experimental: {
     // Default proxy body clone limit (~10MB) is too low for multi-image product forms.
     // Raise it so multipart requests don't fail before route handlers read formData().
@@ -33,7 +40,9 @@ const nextConfig = {
     // MongoDB driver pulls in Node built-ins that Turbopack currently struggles to bundle.
     'mongodb',
   ],
-  turbopack: {},
+  turbopack: {
+    root: __dirname,
+  },
   images: {
     qualities: [75, 90],
     remotePatterns: [

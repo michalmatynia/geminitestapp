@@ -166,7 +166,6 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         SELECT tablename
         FROM pg_tables
         WHERE schemaname = 'public'
-          AND tablename != '_prisma_migrations'
       `
     )
       .map((row: { tablename: string }) => row.tablename)

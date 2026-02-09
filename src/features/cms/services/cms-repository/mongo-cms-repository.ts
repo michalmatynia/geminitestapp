@@ -93,7 +93,7 @@ export const mongoCmsRepository: CmsRepository = {
   // Pages
   async getPages(): Promise<Page[]> {
     const db = await getMongoDb();
-    const docs = await db.collection<PageDocument>(pagesCollection).find().sort({ createdAt: -1 }).toArray();
+    const docs = await db.collection<PageDocument>(pagesCollection).find().sort({ updatedAt: -1 }).toArray();
     
     return Promise.all(docs.map(async (doc: PageDocument): Promise<Page> => {
       const pageId = doc.id;

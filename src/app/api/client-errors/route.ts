@@ -8,8 +8,24 @@ export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
-    const body = (await req.json()) as { error: unknown; context: ErrorContext };
-    const { error, context } = body;
+    const body = (await req.json()) as {
+      error?: unknown;
+      context?: ErrorContext;
+      message?: string;
+      name?: string;
+      stack?: string | null;
+    };
+    const wrappedError = body.error;
+    const directPayload =
+      (body.message || body.name || body.stack)
+        ? {
+          message: body.message ?? 'Unknown client error',
+          name: body.name ?? 'ClientError',
+          stack: body.stack ?? undefined,
+        }
+        : null;
+    const error = wrappedError ?? directPayload ?? body;
+    const context = body.context ?? {};
 
     // Log the error using the server-only ErrorSystem
     await ErrorSystem.captureException(error, {

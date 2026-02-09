@@ -7,7 +7,6 @@ import { APP_EMBED_SETTING_KEY, type AppEmbedId, APP_EMBED_OPTIONS } from '@/fea
 import type { CssAnimationConfig } from '@/features/cms/types/css-animations';
 import type { CustomCssAiConfig } from '@/features/cms/types/custom-css-ai';
 import { DEFAULT_CUSTOM_CSS_AI_CONFIG } from '@/features/cms/types/custom-css-ai';
-
 import type { GsapAnimationConfig } from '@/features/gsap';
 import { logClientError } from '@/features/observability';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';

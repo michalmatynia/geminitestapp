@@ -4,22 +4,15 @@
 
 
 
-import type { AiNode, NodeConfig } from '@/features/ai/ai-paths/lib';
 import { DB_COLLECTION_OPTIONS } from '@/features/ai/ai-paths/lib';
 import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
-type SimulationNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-  handleRunSimulation: (node: AiNode) => void | Promise<void>;
-};
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
-export function SimulationNodeConfigSection({
-  selectedNode,
-  updateSelectedNodeConfig,
-  handleRunSimulation,
-}: SimulationNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== 'simulation') return null;
+export function SimulationNodeConfigSection(): React.JSX.Element | null {
+  const { selectedNode, updateSelectedNodeConfig, handleRunSimulation } = useAiPathConfig();
+
+  if (!selectedNode || selectedNode.type !== 'simulation') return null;
 
   const simulationConfig = selectedNode.config?.simulation ?? {
     productId: '',

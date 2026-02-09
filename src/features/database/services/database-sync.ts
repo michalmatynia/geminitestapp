@@ -9,7 +9,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
+ 
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 import 'server-only';
 
@@ -25,6 +25,7 @@ import {
 import { ObjectId } from 'mongodb';
 
 import { createFullDatabaseBackup } from '@/features/database/services/database-backup';
+import { isObjectIdString, toObjectIdMaybe, toDate, toJsonValue, normalizeId } from '@/features/database/services/sync-utils';
 import { ErrorSystem } from '@/features/observability/server';
 import { operationFailedError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -396,50 +397,8 @@ interface MongoProductDoc {
 
 
 
-const isObjectIdString = (value: string): boolean =>
-  /^[a-fA-F0-9]{24}$/.test(value);
-
-const toObjectIdMaybe = (value: string): ObjectId | string =>
-  isObjectIdString(value) ? new ObjectId(value) : value;
-
-const toDate = (value: unknown): Date | null => {
-  if (!value) return null;
-  if (value instanceof Date) return value;
-  if (typeof value === 'string' || typeof value === 'number') {
-    const parsed = new Date(value);
-    return Number.isNaN(parsed.valueOf()) ? null : parsed;
-  }
-  return null;
-};
-
-const toJsonValue = (value: unknown): any => {
-  if (value === undefined || value === null) return null;
-  if (value instanceof Date) return value.toISOString();
-  if (value instanceof ObjectId) return value.toString();
-  if (Array.isArray(value)) {
-    return value.map((entry: unknown) => toJsonValue(entry));
-  }
-  if (typeof value === 'object') {
-    const record = value as Record<string, unknown>;
-    const entries = Object.entries(record).map(([key, entry]) => [
-      key,
-      toJsonValue(entry),
-    ]);
-    return Object.fromEntries(entries);
-  }
-  return value;
-};
-
-const normalizeId = (doc: any): string => {
-  const direct = doc.id;
-  if (typeof direct === 'string' && direct.trim()) return direct;
-  const raw = doc._id;
-  if (typeof raw === 'string') return raw;
-  if (raw && typeof raw === 'object' && 'toString' in raw) {
-    return (raw as { toString: () => string }).toString();
-  }
-  return '';
-};
+// Utility functions (isObjectIdString, toObjectIdMaybe, toDate, toJsonValue, normalizeId)
+// are imported from ./sync-utils.ts
 
 const recordResult = (
   results: DatabaseSyncCollectionResult[],

@@ -7,6 +7,8 @@ import { DEFAULT_ANIMATION_CONFIG, PARALLAX_DEFAULTS } from '@/features/gsap';
 import { getGsapFromVars } from '@/features/gsap/utils/presets';
 import { vectorShapesToPathWithBounds } from '@/shared/ui';
 
+import { useBlockSettings } from './sections/FrontendBlockRenderer';
+
 type GSAPTweenVars = Record<string, unknown>;
 type GSAPStaggerVars = Record<string, unknown>;
 
@@ -229,11 +231,21 @@ const computeParallaxOffset = (
 };
 
 export function GsapAnimationWrapper({
-  config,
+  config: propConfig,
   children,
   className,
 }: GsapAnimationWrapperProps): React.ReactNode {
   const ref = useRef<HTMLDivElement>(null);
+  const blockSettings = useBlockSettings();
+  
+  const config = useMemo(() => {
+    if (propConfig) return propConfig;
+    if (blockSettings?.['gsapAnimation']) {
+      return blockSettings['gsapAnimation'] as Partial<GsapAnimationConfig>;
+    }
+    return undefined;
+  }, [propConfig, blockSettings]);
+
   const configSignature = useMemo(() => JSON.stringify(config ?? null), [config]);
   const mergedConfig: GsapAnimationConfig | null = useMemo(() => {
     if (!config) return null;

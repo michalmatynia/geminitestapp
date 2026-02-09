@@ -3,7 +3,6 @@
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import React from 'react';
 
-import type { AiNode, Edge, NodeConfig, RegexConfig, RegexTemplate, RuntimeState } from '@/features/ai/ai-paths/lib';
 import {
   AI_PATHS_REGEX_TEMPLATES_KEY,
   buildRegexTemplatesStore,
@@ -12,6 +11,7 @@ import {
   parseJsonSafe,
   renderTemplate,
 } from '@/features/ai/ai-paths/lib';
+import type { AiNode, Edge, RegexConfig, RegexTemplate } from '@/features/ai/ai-paths/lib';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
   Button,
@@ -29,9 +29,10 @@ import {
   TabsTrigger,
   Textarea,
   Tooltip,
-  useToast,
 } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
+
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
 type RegexCandidate = {
   pattern: string;
@@ -230,28 +231,21 @@ const parseRegexExtractedJson = (value: unknown): unknown => {
   return parsed === undefined ? value : parsed;
 };
 
-type RegexNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  nodes: AiNode[];
-  edges: Edge[];
-  runtimeState: RuntimeState;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-  onSendToAi?: (sourceNodeId: string, prompt: string) => Promise<void>;
-  sendingToAi?: boolean;
-};
+export function RegexNodeConfigSection(): React.JSX.Element | null {
+  const {
+    selectedNode,
+    nodes,
+    edges,
+    runtimeState,
+    updateSelectedNodeConfig,
+    onSendToAi,
+    sendingToAi,
+    toast,
+  } = useAiPathConfig();
 
-export function RegexNodeConfigSection({
-  selectedNode,
-  nodes,
-  edges,
-  runtimeState,
-  updateSelectedNodeConfig,
-  onSendToAi,
-  sendingToAi,
-}: RegexNodeConfigSectionProps): React.JSX.Element | null {
-  const { toast } = useToast();
+  if (!selectedNode || selectedNode.type !== 'regex') return null;
 
-  const isRegexNode = selectedNode.type === 'regex';
+  const isRegexNode = true;
 
   const regexConfig = React.useMemo((): RegexConfig => {
     return (isRegexNode ? selectedNode.config?.regex : undefined) ?? {

@@ -8,34 +8,26 @@ import React from 'react';
 import type { AiNode, Edge, NodeConfig, PromptConfig, RuntimeState } from '@/features/ai/ai-paths/lib';
 import { buildPromptOutput, createParserMappings, formatRuntimeValue } from '@/features/ai/ai-paths/lib';
 import { formatPlaceholderLabel, formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
-import { Button, Label, Textarea, useToast } from '@/shared/ui';
+import { Button, Label, Textarea } from '@/shared/ui';
 
+import { useAiPathConfig } from '../../AiPathConfigContext';
 import {
   PlaceholderMatrixDialog,
   type PlaceholderGroup,
   type PlaceholderTarget,
 } from '../database/PlaceholderMatrixDialog';
 
-type PromptNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  nodes: AiNode[];
-  edges: Edge[];
-  runtimeState: RuntimeState;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-  onSendToAi?: (databaseNodeId: string, prompt: string) => Promise<void>;
-  sendingToAi?: boolean;
-};
-
-export function PromptNodeConfigSection({
-  selectedNode,
-  nodes,
-  edges,
-  runtimeState,
-  updateSelectedNodeConfig,
-  onSendToAi,
-  sendingToAi,
-}: PromptNodeConfigSectionProps): React.JSX.Element | null {
-  const { toast } = useToast();
+export function PromptNodeConfigSection(): React.JSX.Element | null {
+  const {
+    selectedNode,
+    nodes,
+    edges,
+    runtimeState,
+    updateSelectedNodeConfig,
+    onSendToAi,
+    sendingToAi,
+    toast,
+  } = useAiPathConfig();
   const promptTemplateRef = React.useRef<HTMLTextAreaElement | null>(null);
   const [placeholderMatrixOpen, setPlaceholderMatrixOpen] = React.useState<boolean>(false);
   const [placeholderTarget, setPlaceholderTarget] = React.useState<PlaceholderTarget>('prompt');

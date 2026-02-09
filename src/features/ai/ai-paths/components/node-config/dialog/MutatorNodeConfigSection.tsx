@@ -6,16 +6,12 @@
 import type { AiNode, NodeConfig } from '@/features/ai/ai-paths/lib';
 import { Input, Label, Textarea } from '@/shared/ui';
 
-type MutatorNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-};
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
-export function MutatorNodeConfigSection({
-  selectedNode,
-  updateSelectedNodeConfig,
-}: MutatorNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== 'mutator') return null;
+export function MutatorNodeConfigSection(): React.JSX.Element | null {
+  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+
+  if (!selectedNode || selectedNode.type !== 'mutator') return null;
 
   const mutatorConfig = selectedNode.config?.mutator ?? {
     path: 'entity.title',

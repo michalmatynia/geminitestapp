@@ -170,3 +170,97 @@ export const executeCrudOperation = async (
   });
   return safeJson<CrudResult>(res);
 };
+
+// ── Control Panel APIs ──
+
+export type MultiSchemaResponse = {
+  provider: 'multi';
+  collections: Array<{
+    name: string;
+    fields: { name: string; type: string }[];
+    provider: 'mongodb' | 'prisma';
+    documentCount?: number | undefined;
+  }>;
+  sources: Partial<Record<'mongodb' | 'prisma', { provider: string; collections: unknown[] }>>;
+};
+
+export type CollectionCopyResult = {
+  name: string;
+  status: 'completed' | 'skipped' | 'failed';
+  sourceCount: number;
+  targetDeleted: number;
+  targetInserted: number;
+  warnings?: string[];
+  error?: string;
+};
+
+export const fetchAllCollectionsSchema = async (): Promise<MultiSchemaResponse> => {
+  const res = await fetch('/api/databases/schema?provider=all&includeCounts=true');
+  if (!res.ok) {
+    throw new Error('Failed to fetch collections schema');
+  }
+  return res.json() as Promise<MultiSchemaResponse>;
+};
+
+export const copyCollectionBetweenProviders = async (
+  collection: string,
+  direction: 'mongo_to_prisma' | 'prisma_to_mongo'
+): Promise<CollectionCopyResult> => {
+  const res = await fetch('/api/databases/copy-collection', {
+    method: 'POST',
+    headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ collection, direction }),
+  });
+  return safeJson<CollectionCopyResult>(res);
+};
+
+export const fetchSupportedCollections = async (): Promise<{ collections: string[] }> => {
+  const res = await fetch('/api/databases/copy-collection');
+  if (!res.ok) {
+    throw new Error('Failed to fetch supported collections');
+  }
+  return res.json() as Promise<{ collections: string[] }>;
+};
+
+export const createJsonBackup = async (): Promise<DatabaseBackupResponse> => {
+  const res = await fetch('/api/databases/json-backup', {
+    method: 'POST',
+    headers: withCsrfHeaders(),
+  });
+  return safeJson<DatabaseBackupResponse>(res);
+};
+
+export const restoreJsonBackup = async (
+  backupName: string
+): Promise<DatabaseRestoreResponse> => {
+  const res = await fetch('/api/databases/json-restore', {
+    method: 'POST',
+    headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ backupName }),
+  });
+  return safeJson<DatabaseRestoreResponse>(res);
+};
+
+export const fetchJsonBackups = async (): Promise<{ backups: string[] }> => {
+  const res = await fetch('/api/databases/json-backup');
+  if (!res.ok) {
+    throw new Error('Failed to fetch JSON backups');
+  }
+  return res.json() as Promise<{ backups: string[] }>;
+};
+
+export const updateCollectionProviderMap = async (
+  map: Record<string, string>
+): Promise<void> => {
+  const res = await fetch('/api/settings', {
+    method: 'PUT',
+    headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({
+      key: 'collection_provider_map',
+      value: JSON.stringify(map),
+    }),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to update collection provider map');
+  }
+};

@@ -1,4 +1,11 @@
+I need a reliable database control for my Mixed Provider setup. I need a working database restore for Prisma (the current one is not working). I also need to be able to fetch collections from both MongoDB and Prisma. I would to be able to convert/copy a collection from Prisma to MongoDB and vice versa. I also want to be able to choose on a per collection basis, which collections are to be fetched from which Provider.
+
 Centralize Form validation (I also need info if I'm trying to create with duplicate SKU notification)
+
+I need promper importer in my Base.com
+I need clear logs to work
+
+I need prisma mock in test to work and I need to move my product and related to mongodb, I need my AI paths to work on MongoDB
 
 I need a connection collection for each product, they are not getting retrieved when database is removed and I need retrieve connections button
 
@@ -22,7 +29,6 @@ Category name not visible immediately after update, same for database backup
 
 One Click Base Export
 
-Back up restore note working
 
 I want to include Redis in My Database management
 

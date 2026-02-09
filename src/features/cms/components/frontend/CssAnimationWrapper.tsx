@@ -6,6 +6,8 @@ import type { CssAnimationConfig } from '@/features/cms/types/css-animations';
 import { DEFAULT_CSS_ANIMATION_CONFIG } from '@/features/cms/types/css-animations';
 import { cn } from '@/shared/utils';
 
+import { useBlockSettings } from './sections/FrontendBlockRenderer';
+
 interface CssAnimationWrapperProps {
   config?: CssAnimationConfig | undefined;
   children: React.ReactNode;
@@ -13,10 +15,20 @@ interface CssAnimationWrapperProps {
 }
 
 export function CssAnimationWrapper({
-  config,
+  config: propConfig,
   children,
   className,
 }: CssAnimationWrapperProps): React.ReactNode {
+  const blockSettings = useBlockSettings();
+  
+  const config = useMemo(() => {
+    if (propConfig) return propConfig;
+    if (blockSettings?.['cssAnimation']) {
+      return blockSettings['cssAnimation'] as CssAnimationConfig;
+    }
+    return undefined;
+  }, [propConfig, blockSettings]);
+
   const merged = useMemo(
     () => ({ ...DEFAULT_CSS_ANIMATION_CONFIG, ...(config ?? {}) }),
     [config]

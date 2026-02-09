@@ -5,12 +5,7 @@ import { createParserMappings, formatRuntimeValue, getValueAtMappingPath, parseP
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import { Input, Label, Textarea } from '@/shared/ui';
 
-type MapperNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  runtimeState: RuntimeState;
-  updateSelectedNode: (patch: Partial<AiNode>, options?: { nodeId?: string }) => void;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-};
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
 type MapperSources = {
   context: unknown;
@@ -77,13 +72,15 @@ const buildLivePreview = (
   return { values, unresolved };
 };
 
-export function MapperNodeConfigSection({
-  selectedNode,
-  runtimeState,
-  updateSelectedNode,
-  updateSelectedNodeConfig,
-}: MapperNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== 'mapper') return null;
+export function MapperNodeConfigSection(): React.JSX.Element | null {
+  const {
+    selectedNode,
+    runtimeState,
+    updateSelectedNode,
+    updateSelectedNodeConfig,
+  } = useAiPathConfig();
+
+  if (!selectedNode || selectedNode.type !== 'mapper') return null;
 
   const mapperConfig = selectedNode.config?.mapper ?? {
     outputs: selectedNode.outputs.length ? selectedNode.outputs : ['value'],

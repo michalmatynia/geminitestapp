@@ -4,8 +4,8 @@ import React from 'react';
 
 import { Button, Label, Textarea, SectionPanel, UnifiedSelect } from '@/shared/ui';
 
-import { useInspectorAi } from '../context/InspectorAiContext';
 import { useComponentSettings } from '../context/ComponentSettingsContext';
+import { useInspectorAi } from '../context/InspectorAiContext';
 
 function ContentAiSection(): React.JSX.Element {
   const { selectedLabel } = useComponentSettings();

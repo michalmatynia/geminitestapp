@@ -5,6 +5,7 @@ import { Dispatch, SetStateAction, useState, useEffect } from 'react';
 
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 import type { PlaywrightPersona, PlaywrightSettings } from '@/features/playwright';
+import { PlaywrightSettingsProvider } from '@/features/playwright/context/PlaywrightSettingsContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger, Button, SharedModal, Label, UnifiedSelect, SectionPanel } from '@/shared/ui';
 
 import { AllegroApiConsole } from './AllegroApiConsole';
@@ -16,19 +17,14 @@ import { SessionModal } from './SessionModal';
 import { TestLogModal } from './TestLogModal';
 import { TestResultModal } from './TestResultModal';
 
-type PlaywrightSettingsFormProps = {
-  settings: PlaywrightSettings;
-  setSettings: Dispatch<SetStateAction<PlaywrightSettings>>;
-  onSave: () => void;
-};
-
-function DynamicPlaywrightSettingsForm(props: PlaywrightSettingsFormProps): React.JSX.Element {
-  const [Component, setComponent] = useState<React.ComponentType<PlaywrightSettingsFormProps> | null>(null);
+function DynamicPlaywrightSettingsForm(): React.JSX.Element {
+  const { playwrightSettings, setPlaywrightSettings, handleSavePlaywrightSettings } = useIntegrationsContext();
+  const [Component, setComponent] = useState<React.ComponentType<any> | null>(null);
 
   useEffect(() => {
     const loadComponent = async (): Promise<void> => {
-      const { PlaywrightSettingsForm } = await import('@/features/playwright');
-      setComponent(() => PlaywrightSettingsForm);
+      const { PlaywrightSettingsFormContent } = await import('@/features/playwright');
+      setComponent(() => PlaywrightSettingsFormContent);
     };
     void loadComponent();
   }, []);
@@ -37,7 +33,16 @@ function DynamicPlaywrightSettingsForm(props: PlaywrightSettingsFormProps): Reac
     return <div className='p-4 text-gray-400'>Loading...</div>;
   }
 
-  return <Component {...props} />;
+  return (
+    <PlaywrightSettingsProvider 
+      settings={playwrightSettings} 
+      setSettings={setPlaywrightSettings}
+    >
+      <Component
+        onSave={() => { void handleSavePlaywrightSettings(); }}
+      />
+    </PlaywrightSettingsProvider>
+  );
 }
 
 export function IntegrationModal(): React.JSX.Element {
@@ -308,11 +313,7 @@ export function IntegrationModal(): React.JSX.Element {
               )}
             </SectionPanel>
 
-            <DynamicPlaywrightSettingsForm
-              settings={playwrightSettings}
-              setSettings={setPlaywrightSettings}
-              onSave={() => { void handleSavePlaywrightSettings(); }}
-            />
+            <DynamicPlaywrightSettingsForm />
           </TabsContent>
         )}
       </Tabs>

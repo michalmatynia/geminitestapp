@@ -80,6 +80,18 @@ export interface CollectionSchemaDto {
   name: string;
   fields: FieldInfoDto[];
   relations?: string[];
+  documentCount?: number | undefined;
+}
+
+export interface UnifiedCollectionDto {
+  name: string;
+  mongoFieldCount: number | null;
+  prismaFieldCount: number | null;
+  mongoDocumentCount: number | null;
+  prismaRowCount: number | null;
+  existsInMongo: boolean;
+  existsInPrisma: boolean;
+  assignedProvider: SchemaProviderDto | 'auto';
 }
 
 export type SchemaProviderDto = 'mongodb' | 'prisma';

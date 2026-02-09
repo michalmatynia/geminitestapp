@@ -13,6 +13,13 @@ import {
   deleteDatabaseBackup,
   executeSqlQuery,
   executeCrudOperation,
+  fetchAllCollectionsSchema,
+  copyCollectionBetweenProviders,
+  createJsonBackup,
+  restoreJsonBackup,
+  fetchJsonBackups,
+  type MultiSchemaResponse,
+  type CollectionCopyResult,
 } from '../api';
 
 import type {
@@ -147,4 +154,60 @@ export function useCrudMutation(): UseMutationResult<CrudResult, Error, CrudRequ
 
   });
 
+}
+
+// ── Control Panel hooks ──
+
+export function useAllCollectionsSchema(): UseQueryResult<MultiSchemaResponse, Error> {
+  return useQuery({
+    queryKey: dbKeys.schema({ provider: 'all', includeCounts: true }),
+    queryFn: () => fetchAllCollectionsSchema(),
+    staleTime: 30_000,
+  });
+}
+
+export function useCopyCollectionMutation(): UseMutationResult<
+  CollectionCopyResult,
+  Error,
+  { collection: string; direction: 'mongo_to_prisma' | 'prisma_to_mongo' }
+  > {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ collection, direction }) =>
+      copyCollectionBetweenProviders(collection, direction),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: dbKeys.schema({ provider: 'all', includeCounts: true }) });
+    },
+  });
+}
+
+export function useCreateJsonBackupMutation(): UseMutationResult<
+  DatabaseBackupResponse,
+  Error,
+  void
+  > {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => createJsonBackup(),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: dbKeys.jsonBackups });
+    },
+  });
+}
+
+export function useRestoreJsonBackupMutation(): UseMutationResult<
+  DatabaseRestoreResponse,
+  Error,
+  string
+  > {
+  return useMutation({
+    mutationFn: (backupName: string) => restoreJsonBackup(backupName),
+  });
+}
+
+export function useJsonBackups(): UseQueryResult<{ backups: string[] }, Error> {
+  return useQuery({
+    queryKey: dbKeys.jsonBackups,
+    queryFn: () => fetchJsonBackups(),
+  });
 }

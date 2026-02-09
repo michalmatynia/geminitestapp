@@ -3,15 +3,11 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import type { AiNode, NodeConfig } from '@/features/ai/ai-paths/lib';
 import { TRIGGER_EVENTS, triggerButtonsApi } from '@/features/ai/ai-paths/lib';
 import type { AiTriggerButtonRecord } from '@/shared/types/ai-trigger-buttons';
 import { Label, UnifiedSelect } from '@/shared/ui';
 
-type TriggerNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-};
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
 // Query for trigger buttons (always called)
 const useTriggerButtonsQuery = (): UseQueryResult<AiTriggerButtonRecord[], Error> => useQuery({
@@ -24,10 +20,8 @@ const useTriggerButtonsQuery = (): UseQueryResult<AiTriggerButtonRecord[], Error
   staleTime: 10_000,
 });
 
-export function TriggerNodeConfigSection({
-  selectedNode,
-  updateSelectedNodeConfig,
-}: TriggerNodeConfigSectionProps): React.JSX.Element | null {
+export function TriggerNodeConfigSection(): React.JSX.Element | null {
+  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
   const triggerButtonsQuery = useTriggerButtonsQuery();
 
   const triggerEventOptions = useMemo(() => {
@@ -43,7 +37,7 @@ export function TriggerNodeConfigSection({
     return Array.from(byId.values());
   }, [triggerButtonsQuery.data]);
 
-  if (selectedNode.type !== 'trigger') return null;
+  if (!selectedNode || selectedNode.type !== 'trigger') return null;
 
   const triggerConfig = selectedNode.config?.trigger ?? {
     event: TRIGGER_EVENTS[0]?.id ?? 'manual',

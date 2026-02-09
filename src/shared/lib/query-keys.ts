@@ -142,6 +142,9 @@ export const QUERY_KEYS = {
       all: ['system', 'databases'] as const,
       backups: (dbType: string) => [...QUERY_KEYS.system.databases.all, 'backups', dbType] as const,
       preview: (params: Record<string, unknown>) => [...QUERY_KEYS.system.databases.all, 'preview', params] as const,
+      schema: (params: Record<string, unknown>) => [...QUERY_KEYS.system.databases.all, 'schema', params] as const,
+      controlPanel: [...['system', 'databases'], 'control-panel'] as const,
+      jsonBackups: [...['system', 'databases'], 'json-backups'] as const,
     },
   },
   internationalization: {

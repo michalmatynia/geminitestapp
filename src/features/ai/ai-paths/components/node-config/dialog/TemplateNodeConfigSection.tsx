@@ -7,28 +7,23 @@ import { createParserMappings, formatRuntimeValue } from '@/features/ai/ai-paths
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import { Button, Label, Textarea } from '@/shared/ui';
 
+import { useAiPathConfig } from '../../AiPathConfigContext';
 import {
   PlaceholderMatrixDialog,
   type PlaceholderGroup,
   type PlaceholderTarget,
 } from '../database/PlaceholderMatrixDialog';
 
-type TemplateNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  nodes: AiNode[];
-  edges: Edge[];
-  runtimeState: RuntimeState;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-};
+export function TemplateNodeConfigSection(): React.JSX.Element | null {
+  const {
+    selectedNode,
+    nodes,
+    edges,
+    runtimeState,
+    updateSelectedNodeConfig,
+  } = useAiPathConfig();
 
-export function TemplateNodeConfigSection({
-  selectedNode,
-  nodes,
-  edges,
-  runtimeState,
-  updateSelectedNodeConfig,
-}: TemplateNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== 'template') return null;
+  if (!selectedNode || selectedNode.type !== 'template') return null;
 
   const templateConfig: TemplateConfig = selectedNode.config?.template ?? {
     template: '',

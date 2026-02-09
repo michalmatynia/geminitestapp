@@ -1,13 +1,7 @@
 GEMINI INVESTIGATION 
 
-1. CMS Section Rendering Chain (`FrontendGridSection`, `ColumnRenderer`,
-      `SectionBlockRenderer`, `FrontendBlockRenderer`):
-       * Drilled Props: rowHeightMode, rowHeight, stretch.
-       * Recommendation: Introduce a LayoutContext or SectionLayoutContext to
-         provide these layout-related properties to ColumnRenderer,
-         SectionBlockRenderer, and FrontendBlockRenderer. This would remove the
-         need to pass them down explicitly through each component level.
 
+-inprogress
 
    2. AI Paths Configuration (`NodeConfigurationSections.tsx`):
        * Drilled Props: selectedNode, nodes, edges, runtimeState,
@@ -23,7 +17,11 @@ GEMINI INVESTIGATION
          handlers to all child configuration sections. This would significantly
          clean up the NodeConfigurationSectionsProps interface.
 
+ updating NodeConfigurationSections.tsx to include AiPathConfigProvider,
+  wrapping its content to enable context usage. I'll then refactor a few child
+  sections
 
+-in progress
    3. Animation Configuration (`GsapAnimationWrapper`, `CssAnimationWrapper`):
        * Drilled Props: animConfig, cssAnimConfig (derived from block.settings).
        * Recommendation: Since FrontendBlockRenderer already wraps its content
@@ -34,7 +32,7 @@ GEMINI INVESTIGATION
          used within a block's rendering context. This would remove the need to
          explicitly pass config down.
 
-
+-in progress
    4. Integration Settings (`IntegrationModal.tsx`, `PlaywrightPersonasPage.tsx`
       -> `PlaywrightSettingsForm`):
        * Drilled Props: settings (of type PlaywrightSettings), setSettings
@@ -90,6 +88,12 @@ INNESTIGATION AN PLANNING
 ERROR DETECTION
 Scan the ****** feature and build logical try and Catch Blocks with error explanantion around potential areas of failure
 Add Error Boundary components to catch uncaught UI errors and forward them to your logger (via componentDidCatch)
+-Replace ad-hoc try/catch patterns with a consistent error boundary: server action wrapper + route handler wrapper + job wrapper. Each wrapper must: normalize errors, attach context, log centrally, and return a typed result.
+-Find all console.* usage; replace with structured logger calls. Enforce: log levels, stable event names, correlation ID, and redaction of secrets.
+-Implement UI Error Boundaries for React trees and ensure boundary events flow into the centralized error pipeline (including component stack, route, and last user action).
+-Add a ‘safe error serializer’ for client responses: keep user-facing error codes/messages stable; never include raw stack traces or DB error strings.
+
+
 
 STATE MANAGEMENT
 -Scan the application for potential areas of props-drilling and apply useContext as a refactor
@@ -147,6 +151,10 @@ connect all API to Error logging and handling system
 -Replace ad-hoc console.log calls with a logging library (e.g. Winston or Pino) to produce structured log output
 -Integrate an error-tracking service to capture exceptions in both client and server code
 -Audit code for bare console.error/console.log and replace with our centralized logger” and “Wrap top-level React components in Error Boundaries that send exceptions to the log service
+-Add OpenTelemetry instrumentation via instrumentation.ts and export traces/logs/metrics. Ensure server spans include route, requestId, userId (if available), and DB timing.
+-Instrument Prisma query timings, Redis timings, and external API timings into traces + structured logs. Produce a ‘top 10 slow operations’ report from local runs.
+-Implement a ‘diagnostic mode’ for production troubleshooting: enable additional logging/tracing via feature flag and auto-disable after TTL.
+
 
 TESTING
 Prepare a suite tests in vitests for feature ***
@@ -165,6 +173,15 @@ WEB NETWORK PERFORMANCE
 - Run Lighthouse audit; fix any high severity issues (e.g. large images, slow scripts)
 -Enable reportWebVitals in Next.js to log core web vitals (TTFB, FID, CLS)
 -Review bundle size (e.g. via next build --profile) and code-split large modules or use dynamic imports where beneficial.
+-Scan all server-side network calls (fetch/axios/db/redis) and enforce defaults: timeout, abort support, retry policy, and correlation IDs. Ensure retries are safe (idempotent) and add idempotency keys for mutations.
+-Audit all async workflows for failure modes (DB/Redis/network). Add ‘typed errors’ (AppError subclasses) and map them to consistent HTTP responses and user-safe messages. Ensure stack traces are kept for logs but not leaked to clients.
+-Implement circuit-breaker behavior for flaky downstream dependencies: detect repeated failures, short-circuit for a cooldown, and return degraded responses + log structured events.
+-Add concurrency guards for expensive endpoints: request coalescing (single-flight) so concurrent identical requests share one in-flight computation.
+-Add a global request context (requestId, userId, route, build version) that is attached to every log, error report, and tracing span.
+-Run bundle analysis and remove/replace heavy dependencies. Apply dynamic imports and optimize package imports where possible.
+-Adopt next/font for all fonts and remove runtime Google Fonts requests. Verify reduced layout shift and improved privacy.
+-Find and fix React render hotspots: memoize derived props, remove unnecessary state, stabilize callbacks, and measure rerenders before/after.
+-Audit images: ensure next/image usage, correct sizing, responsive formats, and remove oversized assets.
 
 FILE & MODULE SPLITTING
 -Break up large files and components
@@ -173,97 +190,45 @@ Splitting a component into smaller ones is the best way to spread that complexit
 Locate any component or file over ~300 lines and split it: separate presentation vs logic
 Extract complex logic or JSX branches into child components
 
+CACHING
+-Audit all data fetching paths and explicitly choose caching semantics: force-cache, no-store, or next.revalidate. Document the rationale for each route.
+-Introduce tag-based cache invalidation and wire it to mutations (Server Actions / Route Handlers): when data changes, call revalidateTag for impacted tags.
+-Identify endpoints/pages with repeated identical reads; implement server-side caching (Next Data Cache + Redis) with TTL and invalidation rules.
 
+DATABASE - REDIS
+-Implement cache stampede prevention for hot keys: mutex locking (SET NX PX) + safe unlock token. Ensure only one worker rebuilds cache on miss.
+-Add a cache policy registry: every cached key must define TTL, stale strategy, invalidation triggers, and max payload size.
+
+DATABASE - PRISMA
+-Scan Prisma queries for over-fetching and missing indexes; add indexes in schema for where/orderBy hot paths. Provide before/after timings.
+-Ensure PrismaClient is instantiated once per runtime and reused to avoid connection exhaustion; refactor any per-request instantiation.
+-Introduce bulk operations (createMany, updateMany, etc.) for heavy write paths; verify correctness with tests.
+-Add query monitoring/optimization workflow (Prisma Optimize or equivalent): record slow queries, group by pattern, and fix the highest-impact items first.
+
+DATABASE - MONGODB
+
+SECURITY
+-Ensure dependencies are up-to-date and secure. 
+-Run npm audit fix (or Snyk scan) and resolve any critical vulnerabilities in dependencies
+- Use HTTPS and environment variable checks.
+-add Vulnerability scanning to CI.
+-Implement baseline security headers in next.config.js (HSTS, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, etc.) and document why each is set.
+-Add a strict Content Security Policy with nonces; ensure compatibility with Next.js scripts and remove unsafe inline scripts where possible.
+-Scan for secrets leakage: ensure no sensitive data is logged, no tokens in URLs, and all config is via env vars with validation on boot.
+-Add rate limiting / abuse protection (especially auth + write endpoints), ideally backed by Redis, with clear error responses and logging.
+
+CODE QUALITY
+-Add CI gates: typecheck, lint, test, build. Fail fast and surface the first actionable error. Enforce consistent node version + lockfile integrity.
+-Create performance budgets: bundle size thresholds, API latency targets, DB query count per request. Fail CI if budgets regress.
+-Add integration tests for the error/logging pipeline: simulate failures in server actions, route handlers, queries, and UI boundaries; assert the central logger receives normalized events.
+
+DOCUMENTATION & TOOLING
+-Maintain clear docs and pipeline
+-Generate/update API documentation (e.g. Swagger/OpenAPI) for backend routes
+-Document key architectural decisions and patterns in a central README
+Set up automated code formatting and pre-commit hooks (Prettier)
 
 ---
-
-
-Security & Dependencies: Ensure dependencies are up-to-date and secure. Add a prompt like: “Run npm audit fix (or Snyk scan) and resolve any critical vulnerabilities in dependencies”. Use HTTPS and environment variable checks. Optionally, add vulnerability scanning to CI.
-
-Documentation & Tooling: Maintain clear docs and pipeline. Prompts could include: “Generate/update API documentation (e.g. Swagger/OpenAPI) for backend routes” and “Set up automated code formatting and pre-commit hooks (Prettier, Husky)”. Also consider accessibility and i18n audits if relevant.
-
-1) Reliability & Resilience (timeouts, retries, idempotency)
-
-“Scan all server-side network calls (fetch/axios/db/redis) and enforce defaults: timeout, abort support, retry policy, and correlation IDs. Ensure retries are safe (idempotent) and add idempotency keys for mutations.”
-
-“Audit all async workflows for failure modes (DB/Redis/network). Add ‘typed errors’ (AppError subclasses) and map them to consistent HTTP responses and user-safe messages. Ensure stack traces are kept for logs but not leaked to clients.”
-
-“Implement circuit-breaker behavior for flaky downstream dependencies: detect repeated failures, short-circuit for a cooldown, and return degraded responses + log structured events.”
-
-“Add concurrency guards for expensive endpoints: request coalescing (single-flight) so concurrent identical requests share one in-flight computation.”
-
-“Add a global request context (requestId, userId, route, build version) that is attached to every log, error report, and tracing span.”
-
-2) Centralized Error Handling (full coverage, zero ‘random try/catch’)
-
-“Replace ad-hoc try/catch patterns with a consistent error boundary: server action wrapper + route handler wrapper + job wrapper. Each wrapper must: normalize errors, attach context, log centrally, and return a typed result.”
-
-“Find all console.* usage; replace with structured logger calls. Enforce: log levels, stable event names, correlation ID, and redaction of secrets.”
-
-“Implement UI Error Boundaries for React trees and ensure boundary events flow into the centralized error pipeline (including component stack, route, and last user action).”
-
-“Add a ‘safe error serializer’ for client responses: keep user-facing error codes/messages stable; never include raw stack traces or DB error strings.”
-
-3) Observability & Debuggability (traces + metrics + logs)
-
-“Add OpenTelemetry instrumentation via instrumentation.ts and export traces/logs/metrics. Ensure server spans include route, requestId, userId (if available), and DB timing.”
-
-“Instrument Prisma query timings, Redis timings, and external API timings into traces + structured logs. Produce a ‘top 10 slow operations’ report from local runs.”
-
-“Implement a ‘diagnostic mode’ for production troubleshooting: enable additional logging/tracing via feature flag and auto-disable after TTL.”
-
-
-5) Next.js caching strategy (faster pages, fewer DB hits)
-
-“Audit all data fetching paths and explicitly choose caching semantics: force-cache, no-store, or next.revalidate. Document the rationale for each route.”
-
-“Introduce tag-based cache invalidation and wire it to mutations (Server Actions / Route Handlers): when data changes, call revalidateTag for impacted tags.”
-
-“Identify endpoints/pages with repeated identical reads; implement server-side caching (Next Data Cache + Redis) with TTL and invalidation rules.”
-
-6) Redis performance & correctness (stampede protection)
-
-“Implement cache stampede prevention for hot keys: mutex locking (SET NX PX) + safe unlock token. Ensure only one worker rebuilds cache on miss.”
-
-“Add a cache policy registry: every cached key must define TTL, stale strategy, invalidation triggers, and max payload size.”
-
-7) Prisma/Mongo performance (indexes, pooling, query shape)
-
-“Scan Prisma queries for over-fetching and missing indexes; add indexes in schema for where/orderBy hot paths. Provide before/after timings.”
-
-“Ensure PrismaClient is instantiated once per runtime and reused to avoid connection exhaustion; refactor any per-request instantiation.”
-
-“Introduce bulk operations (createMany, updateMany, etc.) for heavy write paths; verify correctness with tests.”
-
-“Add query monitoring/optimization workflow (Prisma Optimize or equivalent): record slow queries, group by pattern, and fix the highest-impact items first.”
-
-8) Frontend performance (bundle size, fonts, rendering)
-
-“Run bundle analysis and remove/replace heavy dependencies. Apply dynamic imports and optimize package imports where possible.”
-
-“Adopt next/font for all fonts and remove runtime Google Fonts requests. Verify reduced layout shift and improved privacy.”
-
-“Find and fix React render hotspots: memoize derived props, remove unnecessary state, stabilize callbacks, and measure rerenders before/after.”
-
-“Audit images: ensure next/image usage, correct sizing, responsive formats, and remove oversized assets.”
-
-9) Security hardening (headers, CSP, secrets, abuse prevention)
-
-“Implement baseline security headers in next.config.js (HSTS, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, etc.) and document why each is set.”
-
-“Add a strict Content Security Policy with nonces; ensure compatibility with Next.js scripts and remove unsafe inline scripts where possible.”
-
-“Scan for secrets leakage: ensure no sensitive data is logged, no tokens in URLs, and all config is via env vars with validation on boot.”
-
-“Add rate limiting / abuse protection (especially auth + write endpoints), ideally backed by Redis, with clear error responses and logging.”
-
-10) Quality gates & “never regress” automation
-
-“Add CI gates: typecheck, lint, test, build. Fail fast and surface the first actionable error. Enforce consistent node version + lockfile integrity.”
-
-“Create performance budgets: bundle size thresholds, API latency targets, DB query count per request. Fail CI if budgets regress.”
-
-“Add integration tests for the error/logging pipeline: simulate failures in server actions, route handlers, queries, and UI boundaries; assert the central logger receives normalized events.”
 
 GOLD STANDARD
 “You are the senior engineer responsible for reliability and performance. Implement [CHANGE]. Constraints: (1) do not change external behavior except to fix bugs, (2) add/adjust tests, (3) keep types strict, (4) no new deps unless justified, (5) update docs. Deliverables: (a) code changes, (b) brief design notes, (c) verification steps + commands run, (d) risks and rollout plan.”

@@ -10,25 +10,19 @@ import { createViewerOutputs, formatRuntimeValue } from '@/features/ai/ai-paths/
 import { extractImageUrls, formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import { Button, Label, Textarea } from '@/shared/ui';
 
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
-type ViewerNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  nodes: AiNode[];
-  edges: Edge[];
-  runtimeState: RuntimeState;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-  clearRuntimeForNode?: (nodeId: string) => void;
-};
+export function ViewerNodeConfigSection(): React.JSX.Element | null {
+  const {
+    selectedNode,
+    nodes,
+    edges,
+    runtimeState,
+    updateSelectedNodeConfig,
+    clearRuntimeForNode,
+  } = useAiPathConfig();
 
-export function ViewerNodeConfigSection({
-  selectedNode,
-  nodes,
-  edges,
-  runtimeState,
-  updateSelectedNodeConfig,
-  clearRuntimeForNode,
-}: ViewerNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== 'viewer') return null;
+  if (!selectedNode || selectedNode.type !== 'viewer') return null;
 
   const viewerConfig = selectedNode.config?.viewer ?? {
     outputs: createViewerOutputs(selectedNode.inputs),

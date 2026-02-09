@@ -8,21 +8,16 @@ import { AI_BRAIN_SETTINGS_KEY, parseBrainSettings, resolveBrainAssignment } fro
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, Input, Label, UnifiedSelect, SectionPanel } from '@/shared/ui';
 
-type ModelNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  nodes: AiNode[];
-  edges: Edge[];
-  modelOptions: string[];
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-};
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
-export function ModelNodeConfigSection({
-  selectedNode,
-  nodes,
-  edges,
-  modelOptions,
-  updateSelectedNodeConfig,
-}: ModelNodeConfigSectionProps): React.JSX.Element | null {
+export function ModelNodeConfigSection(): React.JSX.Element | null {
+  const {
+    selectedNode,
+    nodes,
+    edges,
+    modelOptions,
+    updateSelectedNodeConfig,
+  } = useAiPathConfig();
   const settingsStore = useSettingsStore();
   const brainSettingsRaw = settingsStore.get(AI_BRAIN_SETTINGS_KEY);
   const brainSettings = useMemo(

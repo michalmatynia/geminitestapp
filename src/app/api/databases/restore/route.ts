@@ -148,38 +148,38 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     const backupPath = path.join(pgBackupsDir, backupName);
     const databaseUrl = getPgConnectionUrl();
 
-    if (truncateBeforeRestore) {
-      stage = 'truncate';
-      const dbUrl = process.env['DATABASE_URL'] ?? '';
-      if (
-        !dbUrl.startsWith('postgres://') &&
-        !dbUrl.startsWith('postgresql://')
-      ) {
-        throw badRequestError(
-          'Truncate before restore is only supported for PostgreSQL.'
-        );
-      }
+    // Data-only restore requires empty tables to avoid FK constraint violations.
+    // Always truncate before restoring PostgreSQL data.
+    stage = 'truncate';
+    const dbUrl = process.env['DATABASE_URL'] ?? '';
+    if (
+      !dbUrl.startsWith('postgres://') &&
+      !dbUrl.startsWith('postgresql://')
+    ) {
+      throw badRequestError(
+        'Truncate before restore is only supported for PostgreSQL.'
+      );
+    }
 
-      const tables = (
-        await prisma.$queryRaw<{ tablename: string }[]>`
-          SELECT tablename
-          FROM pg_tables
-          WHERE schemaname = 'public'
-            AND tablename != '_prisma_migrations'
-        `
-      )
-        .map((row: { tablename: string }) => row.tablename)
-        .filter(Boolean);
+    const tables = (
+      await prisma.$queryRaw<{ tablename: string }[]>`
+        SELECT tablename
+        FROM pg_tables
+        WHERE schemaname = 'public'
+          AND tablename != '_prisma_migrations'
+      `
+    )
+      .map((row: { tablename: string }) => row.tablename)
+      .filter(Boolean);
 
-      if (tables.length > 0) {
-        const quotedTables = tables
-          .map((name: string) => `"${name.replace(/"/g, '""')}"`)
-          .join(', ');
+    if (tables.length > 0) {
+      const quotedTables = tables
+        .map((name: string) => `"${name.replace(/"/g, '""')}"`)
+        .join(', ');
 
-        await prisma.$executeRawUnsafe(
-          `TRUNCATE TABLE ${quotedTables} RESTART IDENTITY CASCADE`
-        );
-      }
+      await prisma.$executeRawUnsafe(
+        `TRUNCATE TABLE ${quotedTables} RESTART IDENTITY CASCADE`
+      );
     }
 
     stage = 'pg_restore';
@@ -209,15 +209,45 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     } catch (error) {
       const err = error as ExecOutputishError;
 
-      // Capture output from either the error itself (common) or its cause (some wrappers)
       stdout = err.stdout ?? err.cause?.stdout ?? '';
       stderr = err.stderr ?? err.cause?.stderr ?? '';
 
       const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}`;
       await fs.writeFile(logPath, logContent);
-      throw internalError('Failed to restore backup', {
+
+      const hint = stderr.includes('foreign key')
+        ? ' Try using JSON Restore as an alternative.'
+        : '';
+      throw internalError(`Failed to restore backup.${hint}`, {
         stage, backupName, log: logContent
       });
+    }
+
+    // Reset all sequences so auto-increment IDs continue from the max restored value
+    stage = 'sequence_reset';
+    try {
+      await prisma.$executeRawUnsafe(`
+        DO $$ DECLARE r RECORD; BEGIN
+          FOR r IN (
+            SELECT c.oid::regclass AS seq_name,
+                   t.relname AS table_name,
+                   a.attname AS column_name
+            FROM pg_class c
+            JOIN pg_depend d ON d.objid = c.oid AND d.deptype = 'a'
+            JOIN pg_class t ON t.oid = d.refobjid
+            JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = d.refobjsubid
+            WHERE c.relkind = 'S'
+          ) LOOP
+            EXECUTE format(
+              'SELECT setval(%L, COALESCE((SELECT MAX(%I) FROM %I), 1))',
+              r.seq_name, r.column_name, r.table_name
+            );
+          END LOOP;
+        END $$;
+      `);
+    } catch {
+      // Sequence reset is best-effort; log but don't fail the restore
+      stderr += '\n[WARNING] Sequence reset failed. Auto-increment columns may need manual adjustment.';
     }
 
     const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}`;

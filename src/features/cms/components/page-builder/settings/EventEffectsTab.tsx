@@ -10,8 +10,8 @@ import {
 } from '@/features/cms/utils/event-effects';
 import { Input, Label } from '@/shared/ui';
 
-import { RangeField, SelectField } from '../shared-fields';
 import { useComponentSettings } from '../context/ComponentSettingsContext';
+import { RangeField, SelectField } from '../shared-fields';
 
 function EventEffectsTab(): React.ReactNode {
   const { eventConfig, selectedLabel, handleEventSettingChange } = useComponentSettings();

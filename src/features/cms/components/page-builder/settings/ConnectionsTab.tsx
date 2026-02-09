@@ -3,6 +3,7 @@
 import React from 'react';
 
 import { Input, Label, Checkbox } from '@/shared/ui';
+
 import { useComponentSettings } from '../context/ComponentSettingsContext';
 
 function ConnectionsTab(): React.ReactNode {

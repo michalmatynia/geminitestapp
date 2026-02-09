@@ -7,18 +7,12 @@ import type { AiNode, IteratorConfig, NodeConfig, RuntimeState } from '@/feature
 import { formatRuntimeValue } from '@/features/ai/ai-paths/lib';
 import { Input, Label, Switch, Textarea } from '@/shared/ui';
 
-type IteratorNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  runtimeState: RuntimeState;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-};
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
-export function IteratorNodeConfigSection({
-  selectedNode,
-  runtimeState,
-  updateSelectedNodeConfig,
-}: IteratorNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== 'iterator') return null;
+export function IteratorNodeConfigSection(): React.JSX.Element | null {
+  const { selectedNode, runtimeState, updateSelectedNodeConfig } = useAiPathConfig();
+
+  if (!selectedNode || selectedNode.type !== 'iterator') return null;
 
   const iteratorConfig: IteratorConfig = selectedNode.config?.iterator ?? {
     autoContinue: true,

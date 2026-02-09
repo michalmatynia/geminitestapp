@@ -254,54 +254,28 @@ type SchemaConfig = {
   includeFields?: boolean;
 };
 
-type DatabaseNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  nodes: AiNode[];
-  edges: Edge[];
-  runtimeState: RuntimeState;
-  pathDebugSnapshot?: PathDebugSnapshot | null;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-  onSendToAi?: (databaseNodeId: string, prompt: string) => Promise<void>;
-  sendingToAi?: boolean;
-  updaterSamples: Record<string, UpdaterSampleState>;
-  setUpdaterSamples: React.Dispatch<React.SetStateAction<Record<string, UpdaterSampleState>>>;
-  updaterSampleLoading: boolean;
-  handleFetchUpdaterSample: (
-    nodeId: string,
-    entityType: string,
-    entityId: string,
-    options?: { notify?: boolean }
-  ) => Promise<void>;
-  dbQueryPresets: DbQueryPreset[];
-  setDbQueryPresets: React.Dispatch<React.SetStateAction<DbQueryPreset[]>>;
-  saveDbQueryPresets: (nextPresets: DbQueryPreset[]) => Promise<void>;
-  dbNodePresets: DbNodePreset[];
-  setDbNodePresets: React.Dispatch<React.SetStateAction<DbNodePreset[]>>;
-  saveDbNodePresets: (nextPresets: DbNodePreset[]) => Promise<void>;
-  toast: (message: string, options?: { variant?: 'success' | 'error' }) => void;
-};
-
-export function DatabaseNodeConfigSection({
-  selectedNode,
-  nodes,
-  edges,
-  runtimeState,
-  pathDebugSnapshot,
-  updateSelectedNodeConfig,
-  onSendToAi,
-  sendingToAi,
-  updaterSamples,
-  setUpdaterSamples,
-  updaterSampleLoading,
-  handleFetchUpdaterSample,
-  dbQueryPresets,
-  setDbQueryPresets,
-  saveDbQueryPresets,
-  dbNodePresets: _dbNodePresets,
-  setDbNodePresets: _setDbNodePresets,
-  saveDbNodePresets: _saveDbNodePresets,
-  toast,
-}: DatabaseNodeConfigSectionProps): React.JSX.Element | null {
+export function DatabaseNodeConfigSection(): React.JSX.Element | null {
+  const {
+    selectedNode,
+    nodes,
+    edges,
+    runtimeState,
+    pathDebugSnapshot,
+    updateSelectedNodeConfig,
+    onSendToAi,
+    sendingToAi,
+    updaterSamples,
+    setUpdaterSamples,
+    updaterSampleLoading,
+    handleFetchUpdaterSample,
+    dbQueryPresets,
+    setDbQueryPresets,
+    saveDbQueryPresets,
+    dbNodePresets: _dbNodePresets,
+    setDbNodePresets: _setDbNodePresets,
+    saveDbNodePresets: _saveDbNodePresets,
+    toast,
+  } = useAiPathConfig();
   const [queryValidatorEnabled, setQueryValidatorEnabled] = React.useState(false);
   const [queryFormatterEnabled, setQueryFormatterEnabled] = React.useState(true);
   const [selectedQueryPresetId, setSelectedQueryPresetId] = React.useState<string>('');

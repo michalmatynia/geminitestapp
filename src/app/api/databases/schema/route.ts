@@ -118,7 +118,7 @@ const getPrismaDmmf = (): DmmfDatamodel | null => {
   }
 };
 
-async function getMongoSchema(): Promise<SchemaResponse> {
+async function getMongoSchema(includeCounts = false): Promise<SchemaResponse> {
   const db = await getMongoDb();
   const collectionInfos = await db.listCollections().toArray();
   const collections: CollectionSchema[] = [];
@@ -177,14 +177,24 @@ async function getMongoSchema(): Promise<SchemaResponse> {
       return a.name.localeCompare(b.name);
     });
 
-    collections.push({ name: collName, fields });
+    const entry: CollectionSchema = { name: collName, fields };
+
+    if (includeCounts) {
+      try {
+        entry.documentCount = await coll.estimatedDocumentCount();
+      } catch {
+        // Best-effort count
+      }
+    }
+
+    collections.push(entry);
   }
 
   collections.sort((a: CollectionSchema, b: CollectionSchema) => a.name.localeCompare(b.name));
   return { provider: 'mongodb', collections };
 }
 
-function getPrismaSchema(): SchemaResponse {
+async function getPrismaSchema(includeCounts = false): Promise<SchemaResponse> {
   // Accessing internal DMMF for schema introspection
   const dmmf = getPrismaDmmf();
   const collections: CollectionSchema[] = [];
@@ -201,10 +211,21 @@ function getPrismaSchema(): SchemaResponse {
         relationTo: field.relationName ?? null,
       }));
 
-      collections.push({
-        name: model.name,
-        fields,
-      });
+      const entry: CollectionSchema = { name: model.name, fields };
+
+      if (includeCounts) {
+        const key = model.name.charAt(0).toLowerCase() + model.name.slice(1);
+        const prismaModel = (prisma as unknown as Record<string, { count?: (args?: unknown) => Promise<number> }>)[key];
+        if (prismaModel?.count) {
+          try {
+            entry.documentCount = await prismaModel.count();
+          } catch {
+            // Best-effort count
+          }
+        }
+      }
+
+      collections.push(entry);
     }
   }
   if (collections.length === 0) {
@@ -230,13 +251,14 @@ const enrichCollections = (
 async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { searchParams } = new URL(request.url);
   const providerParam = (searchParams.get('provider') ?? 'auto').toLowerCase();
+  const includeCounts = searchParams.get('includeCounts') === 'true';
 
   if (providerParam === 'mongodb') {
-    const schema = await getMongoSchema();
+    const schema = await getMongoSchema(includeCounts);
     return NextResponse.json(schema);
   }
   if (providerParam === 'prisma') {
-    const schema = getPrismaSchema();
+    const schema = await getPrismaSchema(includeCounts);
     return NextResponse.json(schema);
   }
 
@@ -245,7 +267,7 @@ async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext): Promi
     const collections: Array<CollectionSchema & { provider: SchemaProvider }> = [];
 
     try {
-      const mongoSchema = await getMongoSchema();
+      const mongoSchema = await getMongoSchema(includeCounts);
       sources.mongodb = mongoSchema;
       collections.push(...enrichCollections(mongoSchema, 'mongodb'));
     } catch {
@@ -253,7 +275,7 @@ async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext): Promi
     }
 
     try {
-      const prismaSchema = getPrismaSchema();
+      const prismaSchema = await getPrismaSchema(includeCounts);
       sources.prisma = prismaSchema;
       collections.push(...enrichCollections(prismaSchema, 'prisma'));
     } catch {
@@ -270,10 +292,10 @@ async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext): Promi
 
   const provider = await getAppDbProvider();
   if (provider === 'mongodb') {
-    const schema = await getMongoSchema();
+    const schema = await getMongoSchema(includeCounts);
     return NextResponse.json(schema);
   }
-  const schema = getPrismaSchema();
+  const schema = await getPrismaSchema(includeCounts);
   return NextResponse.json(schema);
 }
 

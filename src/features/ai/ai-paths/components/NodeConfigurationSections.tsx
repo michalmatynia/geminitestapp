@@ -14,6 +14,7 @@ import type {
   UpdaterSampleState,
 } from '@/features/ai/ai-paths/lib';
 
+import { AiPathConfigProvider } from './AiPathConfigContext';
 import { ContextNodeConfigSection } from './node-config/ContextNodeConfigSection';
 import { DatabaseNodeConfigSection } from './node-config/DatabaseNodeConfigSection';
 import { DbSchemaNodeConfigSection } from './node-config/DbSchemaNodeConfigSection';
@@ -83,209 +84,172 @@ type NodeConfigurationSectionsProps = {
   ) => void;
 };
 
-export function NodeConfigurationSections({
-  selectedNode,
-  nodes,
-  edges,
-  modelOptions,
-  parserSamples,
-  setParserSamples,
-  parserSampleLoading,
-  updaterSamples,
-  setUpdaterSamples,
-  updaterSampleLoading,
-  runtimeState,
-  pathDebugSnapshot,
-  updateSelectedNode,
-  updateSelectedNodeConfig,
-  handleFetchParserSample,
-  handleFetchUpdaterSample,
-  handleRunSimulation,
-  clearRuntimeForNode,
-  onSendToAi,
-  sendingToAi,
-  dbQueryPresets,
-  setDbQueryPresets,
-  saveDbQueryPresets,
-  dbNodePresets,
-  setDbNodePresets,
-  saveDbNodePresets,
-  toast,
-}: NodeConfigurationSectionsProps): React.JSX.Element | null {
+export function NodeConfigurationSections(props: NodeConfigurationSectionsProps): React.JSX.Element | null {
+  const { selectedNode } = props;
   if (!selectedNode) return null;
 
   return (
-    <div className='space-y-6'>
-      <TriggerNodeConfigSection
-        selectedNode={selectedNode}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-      />
-      <SimulationNodeConfigSection
-        selectedNode={selectedNode}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-        handleRunSimulation={handleRunSimulation}
-      />
-      <ContextNodeConfigSection
-        selectedNode={selectedNode}
-        runtimeState={runtimeState}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-        toast={toast}
-      />
-      <ParserNodeConfigSection
-        selectedNode={selectedNode}
-        nodes={nodes}
-        runtimeState={runtimeState}
-        parserSamples={parserSamples}
-        setParserSamples={setParserSamples}
-        parserSampleLoading={parserSampleLoading}
-        updateSelectedNode={updateSelectedNode}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-        handleFetchParserSample={handleFetchParserSample}
-        toast={toast}
-      />
-      <RegexNodeConfigSection
-        selectedNode={selectedNode}
-        nodes={nodes}
-        edges={edges}
-        runtimeState={runtimeState}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-        {...(onSendToAi && { onSendToAi })}
-        {...(sendingToAi !== undefined && { sendingToAi })}
-      />
-      <IteratorNodeConfigSection
-        selectedNode={selectedNode}
-        runtimeState={runtimeState}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-      />
-      <MapperNodeConfigSection
-        selectedNode={selectedNode}
-        runtimeState={runtimeState}
-        updateSelectedNode={updateSelectedNode}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-      />
-      <MutatorNodeConfigSection
-        selectedNode={selectedNode}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-      />
-      <StringMutatorNodeConfigSection
-        selectedNode={selectedNode}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-      />
-      <ValidatorNodeConfigSection
-        selectedNode={selectedNode}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-      />
-      <ConstantNodeConfigSection
-        selectedNode={selectedNode}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-      />
-      <MathNodeConfigSection
-        selectedNode={selectedNode}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-      />
-      <TemplateNodeConfigSection
-        selectedNode={selectedNode}
-        nodes={nodes}
-        edges={edges}
-        runtimeState={runtimeState}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-      />
-      <BundleNodeConfigSection
-        selectedNode={selectedNode}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-      />
-      <GateNodeConfigSection
-        selectedNode={selectedNode}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-      />
-      <CompareNodeConfigSection
-        selectedNode={selectedNode}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-      />
-      <RouterNodeConfigSection
-        selectedNode={selectedNode}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-      />
-      <DelayNodeConfigSection
-        selectedNode={selectedNode}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-      />
-      <PollNodeConfigSection
-        selectedNode={selectedNode}
-        edges={edges}
-        runtimeState={runtimeState}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-      />
-      <HttpNodeConfigSection
-        selectedNode={selectedNode}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-      />
-      <PromptNodeConfigSection
-        selectedNode={selectedNode}
-        nodes={nodes}
-        edges={edges}
-        runtimeState={runtimeState}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-        {...(onSendToAi && { onSendToAi })}
-        {...(sendingToAi !== undefined && { sendingToAi })}
-      />
-      <ModelNodeConfigSection
-        selectedNode={selectedNode}
-        nodes={nodes}
-        edges={edges}
-        modelOptions={modelOptions}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-      />
-      <AgentNodeConfigSection
-        selectedNode={selectedNode}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-      />
-      <LearnerAgentNodeConfigSection
-        selectedNode={selectedNode}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-      />
-      <DatabaseNodeConfigSection
-        selectedNode={selectedNode}
-        nodes={nodes}
-        edges={edges}
-        runtimeState={runtimeState}
-        pathDebugSnapshot={pathDebugSnapshot ?? null}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-        {...(onSendToAi && { onSendToAi })}
-        {...(sendingToAi !== undefined && { sendingToAi })}
-        updaterSamples={updaterSamples}
-        setUpdaterSamples={setUpdaterSamples}
-        updaterSampleLoading={updaterSampleLoading}
-        handleFetchUpdaterSample={handleFetchUpdaterSample}
-        dbQueryPresets={dbQueryPresets}
-        setDbQueryPresets={setDbQueryPresets}
-        saveDbQueryPresets={saveDbQueryPresets}
-        dbNodePresets={dbNodePresets}
-        setDbNodePresets={setDbNodePresets}
-        saveDbNodePresets={saveDbNodePresets}
-        toast={toast}
-      />
-      <DbSchemaNodeConfigSection
-        selectedNode={selectedNode}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-      />
-      <ViewerNodeConfigSection
-        selectedNode={selectedNode}
-        nodes={nodes}
-        edges={edges}
-        runtimeState={runtimeState}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-        {...(clearRuntimeForNode && { clearRuntimeForNode })}
-      />
-      <RuntimeNodeConfigSection
-        selectedNode={selectedNode}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-      />
-      <AiDescriptionNodeConfigSection
-        selectedNode={selectedNode}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-      />
-      <UnsupportedNodeConfigNotice selectedNode={selectedNode} />
-    </div>
+    <AiPathConfigProvider {...props}>
+      <div className='space-y-6'>
+        <TriggerNodeConfigSection />
+        <SimulationNodeConfigSection />
+        <ContextNodeConfigSection />
+        <ParserNodeConfigSection
+          selectedNode={selectedNode}
+          nodes={props.nodes}
+          runtimeState={props.runtimeState}
+          parserSamples={props.parserSamples}
+          setParserSamples={props.setParserSamples}
+          parserSampleLoading={props.parserSampleLoading}
+          updateSelectedNode={props.updateSelectedNode}
+          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
+          handleFetchParserSample={props.handleFetchParserSample}
+          toast={props.toast}
+        />
+        <RegexNodeConfigSection
+          selectedNode={selectedNode}
+          nodes={props.nodes}
+          edges={props.edges}
+          runtimeState={props.runtimeState}
+          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
+          {...(props.onSendToAi && { onSendToAi: props.onSendToAi })}
+          {...(props.sendingToAi !== undefined && { sendingToAi: props.sendingToAi })}
+        />
+        <IteratorNodeConfigSection
+          selectedNode={selectedNode}
+          runtimeState={props.runtimeState}
+          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
+        />
+        <MapperNodeConfigSection
+          selectedNode={selectedNode}
+          runtimeState={props.runtimeState}
+          updateSelectedNode={props.updateSelectedNode}
+          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
+        />
+        <MutatorNodeConfigSection
+          selectedNode={selectedNode}
+          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
+        />
+        <StringMutatorNodeConfigSection
+          selectedNode={selectedNode}
+          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
+        />
+        <ValidatorNodeConfigSection
+          selectedNode={selectedNode}
+          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
+        />
+        <ConstantNodeConfigSection
+          selectedNode={selectedNode}
+          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
+        />
+        <MathNodeConfigSection
+          selectedNode={selectedNode}
+          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
+        />
+        <TemplateNodeConfigSection
+          selectedNode={selectedNode}
+          nodes={props.nodes}
+          edges={props.edges}
+          runtimeState={props.runtimeState}
+          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
+        />
+        <BundleNodeConfigSection
+          selectedNode={selectedNode}
+          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
+        />
+        <GateNodeConfigSection
+          selectedNode={selectedNode}
+          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
+        />
+        <CompareNodeConfigSection
+          selectedNode={selectedNode}
+          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
+        />
+        <RouterNodeConfigSection
+          selectedNode={selectedNode}
+          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
+        />
+        <DelayNodeConfigSection
+          selectedNode={selectedNode}
+          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
+        />
+        <PollNodeConfigSection
+          selectedNode={selectedNode}
+          edges={props.edges}
+          runtimeState={props.runtimeState}
+          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
+        />
+        <HttpNodeConfigSection
+          selectedNode={selectedNode}
+          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
+        />
+        <PromptNodeConfigSection
+          selectedNode={selectedNode}
+          nodes={props.nodes}
+          edges={props.edges}
+          runtimeState={props.runtimeState}
+          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
+          {...(props.onSendToAi && { onSendToAi: props.onSendToAi })}
+          {...(props.sendingToAi !== undefined && { sendingToAi: props.sendingToAi })}
+        />
+        <ModelNodeConfigSection
+          selectedNode={selectedNode}
+          nodes={props.nodes}
+          edges={props.edges}
+          modelOptions={props.modelOptions}
+          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
+        />
+        <AgentNodeConfigSection
+          selectedNode={selectedNode}
+          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
+        />
+        <LearnerAgentNodeConfigSection
+          selectedNode={selectedNode}
+          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
+        />
+        <DatabaseNodeConfigSection
+          selectedNode={selectedNode}
+          nodes={props.nodes}
+          edges={props.edges}
+          runtimeState={props.runtimeState}
+          pathDebugSnapshot={props.pathDebugSnapshot ?? null}
+          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
+          {...(props.onSendToAi && { onSendToAi: props.onSendToAi })}
+          {...(props.sendingToAi !== undefined && { sendingToAi: props.sendingToAi })}
+          updaterSamples={props.updaterSamples}
+          setUpdaterSamples={props.setUpdaterSamples}
+          updaterSampleLoading={props.updaterSampleLoading}
+          handleFetchUpdaterSample={props.handleFetchUpdaterSample}
+          dbQueryPresets={props.dbQueryPresets}
+          setDbQueryPresets={props.setDbQueryPresets}
+          saveDbQueryPresets={props.saveDbQueryPresets}
+          dbNodePresets={props.dbNodePresets}
+          setDbNodePresets={props.setDbNodePresets}
+          saveDbNodePresets={props.saveDbNodePresets}
+          toast={props.toast}
+        />
+        <DbSchemaNodeConfigSection
+          selectedNode={selectedNode}
+          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
+        />
+        <ViewerNodeConfigSection
+          selectedNode={selectedNode}
+          nodes={props.nodes}
+          edges={props.edges}
+          runtimeState={props.runtimeState}
+          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
+          {...(props.clearRuntimeForNode && { clearRuntimeForNode: props.clearRuntimeForNode })}
+        />
+        <RuntimeNodeConfigSection
+          selectedNode={selectedNode}
+          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
+        />
+        <AiDescriptionNodeConfigSection
+          selectedNode={selectedNode}
+          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
+        />
+        <UnsupportedNodeConfigNotice selectedNode={selectedNode} />
+      </div>
+    </AiPathConfigProvider>
   );
 }

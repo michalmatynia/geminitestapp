@@ -8,7 +8,7 @@ import React from 'react';
 
 
 
-import type { AiNode, NodeConfig, RuntimeState } from '@/features/ai/ai-paths/lib';
+
 import {
   DEFAULT_CONTEXT_ROLE,
   applyContextPreset,
@@ -19,6 +19,8 @@ import {
   toggleContextTarget,
 } from '@/features/ai/ai-paths/lib';
 import { Button, Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+
+import { useAiPathConfig } from '../AiPathConfigContext';
 
 function pruneLargeFields(value: unknown, seen: Set<object> = new Set<object>()): unknown {
   if (!value || typeof value !== 'object') return value;
@@ -42,24 +44,13 @@ function sanitizePayload(value: unknown, hideLargeFields: boolean): unknown {
   return hideLargeFields ? pruneLargeFields(value) : value;
 }
 
-type ContextNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  runtimeState: RuntimeState;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-  toast: (message: string, options?: { variant?: 'success' | 'error' }) => void;
-};
-
-export function ContextNodeConfigSection({
-  selectedNode,
-  runtimeState,
-  updateSelectedNodeConfig,
-  toast,
-}: ContextNodeConfigSectionProps): React.JSX.Element | null {
+export function ContextNodeConfigSection(): React.JSX.Element | null {
+  const { selectedNode, runtimeState, updateSelectedNodeConfig, toast } = useAiPathConfig();
   const [hideLargeFields, setHideLargeFields] = React.useState(true);
   const [showDiff, setShowDiff] = React.useState(true);
   const [diffOnlyChanges, setDiffOnlyChanges] = React.useState(true);
 
-  if (selectedNode.type !== 'context') return null;
+  if (!selectedNode || selectedNode.type !== 'context') return null;
 
   const contextConfig = selectedNode.config?.context ?? {
     role: DEFAULT_CONTEXT_ROLE,

@@ -9,7 +9,7 @@ import { Button, Input, Label, Checkbox, SectionPanel, UnifiedSelect } from '@/s
 
 import type { Dispatch, SetStateAction } from 'react';
 
-type PlaywrightSettingsProps = {
+export type PlaywrightSettingsFormProps = {
   settings: PlaywrightSettings;
   setSettings: Dispatch<SetStateAction<PlaywrightSettings>>;
   onSave?: () => void;
@@ -354,54 +354,104 @@ function AdvancedSettingsSection(): ReactElement {
   );
 }
 
-function PlaywrightSettingsFormContent({
+export function PlaywrightSettingsFormContent({
+
   onSave,
+
   saveLabel,
+
   showSave,
+
   title,
+
   description,
-}: Omit<PlaywrightSettingsProps, 'settings' | 'setSettings'>): ReactElement {
+
+}: Omit<PlaywrightSettingsFormProps, 'settings' | 'setSettings'>): ReactElement {
+
   const shouldShowSave = showSave ?? Boolean(onSave);
 
+
+
   return (
+
     <SectionPanel
+
       variant='subtle'
+
       className='max-h-[70vh] overflow-y-auto p-4'
+
     >
+
       <h3 className='text-sm font-semibold text-white'>
+
         {title ?? 'Playwright settings'}
+
       </h3>
+
       <p className='mt-1 text-xs text-gray-400'>
+
         {description ?? 'Control how the browser behaves during crosslisting.'}
+
       </p>
 
+
+
       <div className='mt-4 space-y-4'>
+
         <HeadlessModeSection />
+
         <EmulationSection />
+
         <TimeoutsSection />
+
         <HumanizeSection />
+
         <AdvancedSettingsSection />
 
+
+
         {shouldShowSave && onSave ? (
+
           <div className='flex justify-end'>
+
             <Button
+
               type='button'
+
               className='rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200'
+
               onClick={onSave}
+
             >
+
               {saveLabel ?? 'Save Playwright Settings'}
+
             </Button>
+
           </div>
+
         ) : null}
+
       </div>
+
     </SectionPanel>
+
   );
+
 }
 
-export function PlaywrightSettingsForm(props: PlaywrightSettingsProps): ReactElement {
+
+
+export function PlaywrightSettingsForm(props: PlaywrightSettingsFormProps): ReactElement {
+
   return (
+
     <PlaywrightSettingsProvider settings={props.settings} setSettings={props.setSettings}>
+
       <PlaywrightSettingsFormContent {...props} />
+
     </PlaywrightSettingsProvider>
+
   );
+
 }

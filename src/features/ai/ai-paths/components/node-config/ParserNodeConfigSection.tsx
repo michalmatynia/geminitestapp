@@ -10,7 +10,6 @@ import React from 'react';
 
 import type {
   AiNode,
-  NodeConfig,
   ParserConfig,
   ParserSampleState,
   RuntimeState,
@@ -27,36 +26,29 @@ import {
 } from '@/features/ai/ai-paths/lib';
 import { Button, Input, Label, Textarea, UnifiedSelect, SectionPanel } from '@/shared/ui';
 
-type ParserNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  nodes: AiNode[];
-  runtimeState: RuntimeState;
-  parserSamples: Record<string, ParserSampleState>;
-  setParserSamples: React.Dispatch<React.SetStateAction<Record<string, ParserSampleState>>>;
-  parserSampleLoading: boolean;
-  updateSelectedNode: (patch: Partial<AiNode>, options?: { nodeId?: string }) => void;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-  handleFetchParserSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
-  toast: (message: string, options?: { variant?: 'success' | 'error' }) => void;
-};
+import { useAiPathConfig } from '../AiPathConfigContext';
 
-export function ParserNodeConfigSection({
-  selectedNode,
-  nodes,
-  runtimeState,
-  parserSamples,
-  setParserSamples,
-  parserSampleLoading,
-  updateSelectedNode,
-  updateSelectedNodeConfig: _updateSelectedNodeConfig,
-  handleFetchParserSample,
-  toast,
-}: ParserNodeConfigSectionProps): React.JSX.Element | null {
+export function ParserNodeConfigSection(): React.JSX.Element | null {
+  const {
+    selectedNode,
+    nodes,
+    runtimeState,
+    parserSamples,
+    setParserSamples,
+    parserSampleLoading,
+    updateSelectedNode,
+    updateSelectedNodeConfig: _updateSelectedNodeConfig,
+    handleFetchParserSample,
+    toast,
+  } = useAiPathConfig();
+
   const [parserDraftMappings, setParserDraftMappings] = React.useState<Record<string, string>>({});
   const [parserDraftNodeId, setParserDraftNodeId] = React.useState<string | null>(null);
   const parserDraftTimerRef = React.useRef<number | null>(null);
 
-  const isParserNode = selectedNode.type === 'parser';
+  if (!selectedNode || selectedNode.type !== 'parser') return null;
+
+  const isParserNode = true;
 
   React.useEffect((): void | (() => void) => {
     if (!isParserNode) return;

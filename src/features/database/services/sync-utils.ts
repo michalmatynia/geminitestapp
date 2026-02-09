@@ -1,0 +1,52 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+import 'server-only';
+
+import { ObjectId } from 'mongodb';
+
+export const isObjectIdString = (value: string): boolean =>
+  /^[a-fA-F0-9]{24}$/.test(value);
+
+export const toObjectIdMaybe = (value: string): ObjectId | string =>
+  isObjectIdString(value) ? new ObjectId(value) : value;
+
+export const toDate = (value: unknown): Date | null => {
+  if (!value) return null;
+  if (value instanceof Date) return value;
+  if (typeof value === 'string' || typeof value === 'number') {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.valueOf()) ? null : parsed;
+  }
+  return null;
+};
+
+export const toJsonValue = (value: unknown): any => {
+  if (value === undefined || value === null) return null;
+  if (value instanceof Date) return value.toISOString();
+  if (value instanceof ObjectId) return value.toString();
+  if (Array.isArray(value)) {
+    return value.map((entry: unknown) => toJsonValue(entry));
+  }
+  if (typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    const entries = Object.entries(record).map(([key, entry]) => [
+      key,
+      toJsonValue(entry),
+    ]);
+    return Object.fromEntries(entries);
+  }
+  return value;
+};
+
+export const normalizeId = (doc: any): string => {
+  const direct = doc.id;
+  if (typeof direct === 'string' && direct.trim()) return direct;
+  const raw = doc._id;
+  if (typeof raw === 'string') return raw;
+  if (raw && typeof raw === 'object' && 'toString' in raw) {
+    return (raw as { toString: () => string }).toString();
+  }
+  return '';
+};

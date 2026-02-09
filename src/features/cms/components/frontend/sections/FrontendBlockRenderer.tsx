@@ -5,8 +5,6 @@ import React, { createContext, useContext } from 'react';
 
 import { APP_EMBED_OPTIONS, type AppEmbedId } from '@/features/app-embeds/lib/constants';
 import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
-import type { CssAnimationConfig } from '@/features/cms/types/css-animations';
-import type { GsapAnimationConfig } from '@/features/gsap';
 import { Viewer3D, type EnvironmentPreset, type LightingPreset } from '@/features/viewer3d';
 
 import { CssAnimationWrapper } from '../CssAnimationWrapper';
@@ -14,6 +12,7 @@ import { GsapAnimationWrapper } from '../GsapAnimationWrapper';
 import { useMediaStyles } from '../media-styles-context';
 import { getBlockTypographyStyles } from '../theme-styles';
 import { useSectionData } from './SectionDataContext';
+import { useSectionLayout } from './SectionLayoutContext';
 
 import type { BlockInstance } from '../../../types/page-builder';
 
@@ -21,9 +20,13 @@ import type { BlockInstance } from '../../../types/page-builder';
 // Block settings context to avoid drilling settings to each sub-component
 // ---------------------------------------------------------------------------
 
-const BlockSettingsContext = createContext<Record<string, unknown> | null>(null);
+export const BlockSettingsContext = createContext<Record<string, unknown> | null>(null);
 
-function useBlockSettings(): Record<string, unknown> {
+export function useBlockSettings(): Record<string, unknown> | null {
+  return useContext(BlockSettingsContext);
+}
+
+function useRequiredBlockSettings(): Record<string, unknown> {
   const context = useContext(BlockSettingsContext);
   if (!context) {
     throw new Error('Block sub-components must be used within a BlockSettingsContext.Provider');
@@ -37,28 +40,26 @@ function useBlockSettings(): Record<string, unknown> {
 
 interface FrontendBlockRendererProps {
   block: BlockInstance;
-  stretch?: boolean;
 }
 
-export function FrontendBlockRenderer({ block, stretch = false }: FrontendBlockRendererProps): React.ReactNode {
-  const animConfig = block.settings['gsapAnimation'] as GsapAnimationConfig | undefined;
-  const cssAnimConfig = block.settings['cssAnimation'] as CssAnimationConfig | undefined;
+export function FrontendBlockRenderer({ block }: FrontendBlockRendererProps): React.ReactNode {
   const mediaStyles = useMediaStyles();
+  const { stretch } = useSectionLayout();
 
   return (
-    <GsapAnimationWrapper config={animConfig}>
-      <CssAnimationWrapper config={cssAnimConfig}>
-        <EventEffectsWrapper
-          settings={block.settings}
-          nodeId={block.id}
-          customCss={block.settings['customCss']}
-        >
-          <BlockSettingsContext.Provider value={block.settings}>
-            <BlockContent block={block} mediaStyles={mediaStyles} stretch={stretch} />
-          </BlockSettingsContext.Provider>
-        </EventEffectsWrapper>
-      </CssAnimationWrapper>
-    </GsapAnimationWrapper>
+    <BlockSettingsContext.Provider value={block.settings}>
+      <GsapAnimationWrapper>
+        <CssAnimationWrapper>
+          <EventEffectsWrapper
+            settings={block.settings}
+            nodeId={block.id}
+            customCss={block.settings['customCss']}
+          >
+            <BlockContent block={block} mediaStyles={mediaStyles} stretch={stretch ?? false} />
+          </EventEffectsWrapper>
+        </CssAnimationWrapper>
+      </GsapAnimationWrapper>
+    </BlockSettingsContext.Provider>
   );
 }
 
@@ -114,7 +115,7 @@ function BlockContent({
 // ---------------------------------------------------------------------------
 
 function HeadingBlock(): React.ReactNode {
-  const settings = useBlockSettings();
+  const settings = useRequiredBlockSettings();
   const text = (settings['headingText'] as string) || 'Heading';
   const size = (settings['headingSize'] as string) || 'medium';
   const typoStyles = getBlockTypographyStyles(settings);
@@ -130,7 +131,7 @@ function HeadingBlock(): React.ReactNode {
 }
 
 function TextBlock(): React.ReactNode {
-  const settings = useBlockSettings();
+  const settings = useRequiredBlockSettings();
   const text = (settings['textContent'] as string) || '';
   if (!text) return null;
   const typoStyles = getBlockTypographyStyles(settings);
@@ -138,7 +139,7 @@ function TextBlock(): React.ReactNode {
 }
 
 function TextElementBlock(): React.ReactNode {
-  const settings = useBlockSettings();
+  const settings = useRequiredBlockSettings();
   const text = (settings['textContent'] as string) || '';
   if (!text) return null;
   const typoStyles = getBlockTypographyStyles(settings);
@@ -146,7 +147,7 @@ function TextElementBlock(): React.ReactNode {
 }
 
 function TextAtomBlock({ block }: { block: BlockInstance }): React.ReactNode {
-  const settings = useBlockSettings();
+  const settings = useRequiredBlockSettings();
   const text = (settings['text'] as string) || '';
   const alignment = (settings['alignment'] as string) || 'left';
   const letterGap = (settings['letterGap'] as number) || 0;
@@ -189,7 +190,7 @@ function TextAtomBlock({ block }: { block: BlockInstance }): React.ReactNode {
 }
 
 function TextAtomLetterBlock(): React.ReactNode {
-  const settings = useBlockSettings();
+  const settings = useRequiredBlockSettings();
   const text = (settings['textContent'] as string) ?? '';
   const typoStyles = getBlockTypographyStyles(settings);
   return (
@@ -214,7 +215,7 @@ const toBoolean = (value: unknown, fallback: boolean): boolean => {
 const toRadians = (degrees: number): number => (degrees * Math.PI) / 180;
 
 function Model3DBlock(): React.ReactNode {
-  const settings = useBlockSettings();
+  const settings = useRequiredBlockSettings();
   const assetId = (settings['assetId'] as string) || '';
   if (!assetId) return null;
 
@@ -277,7 +278,7 @@ function Model3DBlock(): React.ReactNode {
 }
 
 function AnnouncementBlock(): React.ReactNode {
-  const settings = useBlockSettings();
+  const settings = useRequiredBlockSettings();
   const text = (settings['text'] as string) || '';
   const link = (settings['link'] as string) || '';
   if (!text) return null;
@@ -303,7 +304,7 @@ function AnnouncementBlock(): React.ReactNode {
 }
 
 function ButtonBlock(): React.ReactNode {
-  const settings = useBlockSettings();
+  const settings = useRequiredBlockSettings();
   const label = (settings['buttonLabel'] as string) || 'Button';
   const link = (settings['buttonLink'] as string) || '#';
   const style = (settings['buttonStyle'] as string) || 'solid';
@@ -353,7 +354,7 @@ function ButtonBlock(): React.ReactNode {
 }
 
 function RichTextBlock(): React.ReactNode {
-  const settings = useBlockSettings();
+  const settings = useRequiredBlockSettings();
   const { colorSchemes } = useSectionData();
   
   // RichText currently stores no editable text content, just renders as a placeholder area
@@ -380,7 +381,7 @@ function ImageElementBlock({
   mediaStyles: React.CSSProperties | null;
   stretch?: boolean;
 }): React.ReactNode {
-  const settings = useBlockSettings();
+  const settings = useRequiredBlockSettings();
   const src = (settings['src'] as string) || '';
   const alt = (settings['alt'] as string) || 'Image';
   const width = (settings['width'] as number) || 100;
@@ -533,7 +534,7 @@ function ImageBlock({
   mediaStyles: React.CSSProperties | null;
   stretch?: boolean;
 }): React.ReactNode {
-  const settings = useBlockSettings();
+  const settings = useRequiredBlockSettings();
   const src = (settings['src'] as string) || '';
   const alt = (settings['alt'] as string) || '';
   const width = (settings['width'] as number) || 100;
@@ -641,7 +642,7 @@ function VideoEmbedBlock({
 }: {
   mediaStyles: React.CSSProperties | null;
 }): React.ReactNode {
-  const settings = useBlockSettings();
+  const settings = useRequiredBlockSettings();
   const url = (settings['url'] as string) || '';
   const aspectRatio = (settings['aspectRatio'] as string) || '16:9';
   const autoplay = (settings['autoplay'] as string) === 'yes';
@@ -686,7 +687,7 @@ function VideoEmbedBlock({
 }
 
 function DividerBlock(): React.ReactNode {
-  const settings = useBlockSettings();
+  const settings = useRequiredBlockSettings();
   const style = (settings['dividerStyle'] as string) || 'solid';
   const thickness = (settings['thickness'] as number) || 1;
   const color = (settings['dividerColor'] as string) || '#4b5563';
@@ -695,7 +696,7 @@ function DividerBlock(): React.ReactNode {
 }
 
 function SocialLinksBlock(): React.ReactNode {
-  const settings = useBlockSettings();
+  const settings = useRequiredBlockSettings();
   const platforms = (settings['platforms'] as string) || '';
   const links = platforms.split(',').map((l: string) => l.trim()).filter(Boolean);
 
@@ -729,7 +730,7 @@ function SocialLinksBlock(): React.ReactNode {
 }
 
 function IconBlock(): React.ReactNode {
-  const settings = useBlockSettings();
+  const settings = useRequiredBlockSettings();
   const iconName = (settings['iconName'] as string) || 'Star';
   const iconSize = (settings['iconSize'] as number) || 24;
   const iconColor = (settings['iconColor'] as string) || '#ffffff';
@@ -744,7 +745,7 @@ function IconBlock(): React.ReactNode {
 }
 
 function AppEmbedBlock(): React.ReactNode {
-  const settings = useBlockSettings();
+  const settings = useRequiredBlockSettings();
   const appId = (settings['appId'] as AppEmbedId) || 'chatbot';
   const title = (settings['title'] as string) || '';
   const embedUrl = (settings['embedUrl'] as string) || '';

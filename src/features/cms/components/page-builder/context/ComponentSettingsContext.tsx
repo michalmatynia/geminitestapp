@@ -1,9 +1,11 @@
 'use client';
 
 import React, { createContext, useContext, useMemo, useCallback } from 'react';
+
+import { getEventEffectsConfig } from '@/features/cms/utils/event-effects';
+
 import { usePageBuilder } from '../../hooks/usePageBuilderContext';
 import { getSectionDefinition, getBlockDefinition } from '../section-registry';
-import { getEventEffectsConfig } from '@/features/cms/utils/event-effects';
 
 
 interface ConnectionSettings {

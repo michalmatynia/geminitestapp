@@ -5,14 +5,10 @@ import React from 'react';
 import { Button, Label, Textarea, SectionPanel, UnifiedSelect } from '@/shared/ui';
 
 import { useInspectorAi } from '../context/InspectorAiContext';
+import { useComponentSettings } from '../context/ComponentSettingsContext';
 
-interface ContentAiSectionProps {
-  selectedLabel: string;
-}
-
-function ContentAiSection({
-  selectedLabel,
-}: ContentAiSectionProps): React.JSX.Element {
+function ContentAiSection(): React.JSX.Element {
+  const { selectedLabel } = useComponentSettings();
   const {
     contentAiProvider,
     setContentAiProvider,

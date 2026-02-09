@@ -8,24 +8,14 @@ import {
   EVENT_HOVER_EFFECT_OPTIONS,
   EVENT_SCROLL_BEHAVIOR_OPTIONS,
 } from '@/features/cms/utils/event-effects';
-import type { getEventEffectsConfig } from '@/features/cms/utils/event-effects';
 import { Input, Label } from '@/shared/ui';
 
 import { RangeField, SelectField } from '../shared-fields';
+import { useComponentSettings } from '../context/ComponentSettingsContext';
 
-interface EventEffectsTabProps {
-  eventConfig: ReturnType<typeof getEventEffectsConfig> | null;
-  selectedBlockLabel: string | null;
-  selectedSectionLabel: string | null;
-  onEventSettingChange: (key: string, value: unknown) => void;
-}
+function EventEffectsTab(): React.ReactNode {
+  const { eventConfig, selectedLabel, handleEventSettingChange } = useComponentSettings();
 
-function EventEffectsTab({
-  eventConfig,
-  selectedBlockLabel,
-  selectedSectionLabel,
-  onEventSettingChange,
-}: EventEffectsTabProps): React.ReactNode {
   if (!eventConfig) {
     return (
       <div className='text-xs text-gray-500'>Select a block or section to configure event effects.</div>
@@ -37,7 +27,7 @@ function EventEffectsTab({
       <div className='rounded border border-border/40 bg-gray-800/30 px-3 py-2 text-xs text-gray-400'>
         Event effects for{' '}
         <span className='text-gray-200'>
-          {selectedBlockLabel ?? selectedSectionLabel ?? 'Element'}
+          {selectedLabel ?? 'Element'}
         </span>
       </div>
 
@@ -46,13 +36,13 @@ function EventEffectsTab({
         <SelectField
           label='Hover effect'
           value={eventConfig.hoverEffect}
-          onChange={(value: string): void => onEventSettingChange('eventHoverEffect', value)}
+          onChange={(value: string): void => handleEventSettingChange('eventHoverEffect', value)}
           options={EVENT_HOVER_EFFECT_OPTIONS}
         />
         <RangeField
           label='Hover scale'
           value={eventConfig.hoverScale}
-          onChange={(value: number): void => onEventSettingChange('eventHoverScale', value)}
+          onChange={(value: number): void => handleEventSettingChange('eventHoverScale', value)}
           min={1}
           max={1.2}
           step={0.01}
@@ -69,7 +59,7 @@ function EventEffectsTab({
         <SelectField
           label='Click action'
           value={eventConfig.clickAction}
-          onChange={(value: string): void => onEventSettingChange('eventClickAction', value)}
+          onChange={(value: string): void => handleEventSettingChange('eventClickAction', value)}
           options={EVENT_CLICK_ACTION_OPTIONS}
         />
 
@@ -81,7 +71,7 @@ function EventEffectsTab({
             <Input
               value={eventConfig.clickUrl}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                onEventSettingChange('eventClickUrl', e.target.value)
+                handleEventSettingChange('eventClickUrl', e.target.value)
               }
               placeholder='https://example.com'
               className='h-8 text-xs'
@@ -89,7 +79,7 @@ function EventEffectsTab({
             <SelectField
               label='Open link'
               value={eventConfig.clickTarget}
-              onChange={(value: string): void => onEventSettingChange('eventClickTarget', value)}
+              onChange={(value: string): void => handleEventSettingChange('eventClickTarget', value)}
               options={EVENT_CLICK_TARGET_OPTIONS}
             />
           </div>
@@ -103,7 +93,7 @@ function EventEffectsTab({
             <Input
               value={eventConfig.clickScrollTarget}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                onEventSettingChange('eventClickScrollTarget', e.target.value)
+                handleEventSettingChange('eventClickScrollTarget', e.target.value)
               }
               placeholder='hero-section'
               className='h-8 text-xs'
@@ -111,7 +101,7 @@ function EventEffectsTab({
             <SelectField
               label='Scroll behavior'
               value={eventConfig.clickScrollBehavior}
-              onChange={(value: string): void => onEventSettingChange('eventClickScrollBehavior', value)}
+              onChange={(value: string): void => handleEventSettingChange('eventClickScrollBehavior', value)}
               options={EVENT_SCROLL_BEHAVIOR_OPTIONS}
             />
             <p className='text-[11px] text-gray-500'>

@@ -15,6 +15,15 @@ vi.mock('@/shared/lib/db/prisma', () => ({
       deleteMany: vi.fn(),
       count: vi.fn(),
     },
+    activityLog: {
+      create: vi.fn().mockImplementation((args) => Promise.resolve({
+        id: 'mock-activity-id',
+        createdAt: new Date(),
+        ...args.data
+      })),
+      findMany: vi.fn().mockResolvedValue([]),
+      count: vi.fn().mockResolvedValue(0),
+    },
     productImage: {
       deleteMany: vi.fn(),
       create: vi.fn(),

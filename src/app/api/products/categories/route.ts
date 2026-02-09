@@ -3,6 +3,7 @@ export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { logSystemEvent } from '@/features/observability/server';
 import { getCategoryRepository } from '@/features/products/server';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
@@ -55,7 +56,11 @@ async function getHandlerInternal(req: NextRequest, _ctx: ApiHandlerContext): Pr
   
   timings['total'] = performance.now() - requestStart;
   if (shouldLogTiming()) {
-    console.log('[timing] products.categories.GET', timings);
+    await logSystemEvent({
+      level: 'info',
+      message: '[timing] products.categories.GET',
+      context: { timings },
+    });
   }
   
   const response = NextResponse.json(categories);

@@ -10,6 +10,7 @@ import {
   getImportParameterCache,
   setImportParameterCache
 } from '@/features/integrations/server';
+import { ErrorSystem } from '@/features/observability/server';
 import { parseJsonBody } from '@/features/products/server';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
@@ -331,16 +332,11 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       values
     });
   } catch (cacheError) {
-    try {
-      const { ErrorSystem } = await import('@/features/observability/services/error-system');
-      void ErrorSystem.captureException(cacheError, { 
-        service: 'api/integrations/imports/base/parameters',
-        inventoryId: data.inventoryId,
-        productId: data.productId
-      });
-    } catch (logError) {
-      console.error('Failed to cache parameters (and logging failed)', cacheError, logError);
-    }
+    void ErrorSystem.captureException(cacheError, {
+      service: 'api/integrations/imports/base/parameters',
+      inventoryId: data.inventoryId,
+      productId: data.productId,
+    });
   }
 
   return NextResponse.json({ keys, values });

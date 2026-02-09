@@ -2,6 +2,7 @@
 
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
+import type { ActivityLogDto } from '@/shared/dtos/system';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { SystemLogMetrics, SystemLogRecord, AiInsightRecord } from '@/shared/types';
@@ -17,12 +18,20 @@ export type LogFilters = {
 };
 
 const logKeys = QUERY_KEYS.system.logs;
+const activityKeys = QUERY_KEYS.system.activity;
 
 export interface SystemLogsResponse {
   logs?: SystemLogRecord[];
   total?: number;
   page?: number;
   pageSize?: number;
+}
+
+export interface SystemActivityResponse {
+  data: ActivityLogDto[];
+  total: number;
+  page: number;
+  pageSize: number;
 }
 
 export function useSystemLogs(filters: LogFilters): UseQueryResult<SystemLogsResponse, Error> {
@@ -39,6 +48,17 @@ export function useSystemLogs(filters: LogFilters): UseQueryResult<SystemLogsRes
           from: filters.from || undefined,
           to: filters.to || undefined,
         }
+      }),
+  });
+}
+
+export function useSystemActivity(params: { page?: number; pageSize?: number; search?: string } = {}): UseQueryResult<SystemActivityResponse, Error> {
+  const { page = 1, pageSize = 10, search } = params;
+  return useQuery({
+    queryKey: activityKeys.list({ page, pageSize, search }),
+    queryFn: () => 
+      api.get<SystemActivityResponse>('/api/system/activity', {
+        params: { page, pageSize, search }
       }),
   });
 }

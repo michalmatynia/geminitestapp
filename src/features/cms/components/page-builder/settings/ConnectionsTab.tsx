@@ -3,25 +3,11 @@
 import React from 'react';
 
 import { Input, Label, Checkbox } from '@/shared/ui';
+import { useComponentSettings } from '../context/ComponentSettingsContext';
 
-interface ConnectionsTabProps {
-  hasSelection: boolean;
-  selectedLabel: string;
-  connectionSettings: {
-    enabled: boolean;
-    source: string;
-    path: string;
-    fallback: string;
-  };
-  updateConnectionSetting: (patch: Partial<{ enabled: boolean; source: string; path: string; fallback: string }>) => void;
-}
+function ConnectionsTab(): React.ReactNode {
+  const { hasSelection, selectedLabel, connectionSettings, updateConnectionSetting } = useComponentSettings();
 
-function ConnectionsTab({
-  hasSelection,
-  selectedLabel,
-  connectionSettings,
-  updateConnectionSetting,
-}: ConnectionsTabProps): React.ReactNode {
   if (!hasSelection) {
     return (
       <div className='text-xs text-gray-500'>Select an element to configure connections.</div>

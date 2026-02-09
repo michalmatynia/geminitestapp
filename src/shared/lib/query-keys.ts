@@ -134,6 +134,10 @@ export const QUERY_KEYS = {
       all: ['system', 'diagnostics'] as const,
       mongo: ['system', 'diagnostics', 'mongo'] as const,
     },
+    activity: {
+      all: ['system', 'activity'] as const,
+      list: (filters: unknown) => [...QUERY_KEYS.system.activity.all, 'list', filters] as const,
+    },
     databases: {
       all: ['system', 'databases'] as const,
       backups: (dbType: string) => [...QUERY_KEYS.system.databases.all, 'backups', dbType] as const,

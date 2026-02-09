@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { logSystemEvent } from '@/features/observability/server';
 import {
   CachedProductService,
   performanceMonitor,
@@ -79,8 +80,11 @@ async function GET_handler(
     timings['total'] = ctx.getElapsedMs();
 
     if (shouldLogTiming()) {
-      // eslint-disable-next-line no-console
-      console.log('[timing] products.GET', { provider, ...timings });
+      await logSystemEvent({
+        level: 'info',
+        message: '[timing] products.GET',
+        context: { provider, ...timings },
+      });
     }
 
     const response = NextResponse.json(products, {
@@ -91,8 +95,11 @@ async function GET_handler(
   } catch (error) {
     timings['total'] = ctx.getElapsedMs();
     if (shouldLogTiming()) {
-      // eslint-disable-next-line no-console
-      console.log('[timing] products.GET error', timings);
+      await logSystemEvent({
+        level: 'info',
+        message: '[timing] products.GET error',
+        context: timings,
+      });
     }
     performanceMonitor.record('db.error', 1, { operation: 'getProducts' });
     throw error; // Let apiHandler handle logging and response

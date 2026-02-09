@@ -4,6 +4,7 @@ import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
 import Link from 'next/link';
 import { JSX, useState } from 'react';
 
+import { useSystemActivity } from '@/features/observability/hooks/useLogQueries';
 import { useHealthStatus } from '@/shared/hooks/useHealthStatus';
 import { Button } from '@/shared/ui';
 
@@ -11,6 +12,7 @@ import { Button } from '@/shared/ui';
 export default function AdminDashboard(): JSX.Element {
   const [recentActivityOpen, setRecentActivityOpen] = useState(true);
   const { data, isLoading, error } = useHealthStatus();
+  const { data: activityData, isLoading: activityLoading } = useSystemActivity({ pageSize: 5 });
 
   // useEffect(() => {
   //   const ws = new WebSocket("ws://localhost:3000");
@@ -68,7 +70,28 @@ export default function AdminDashboard(): JSX.Element {
             )}
           </Collapsible.Trigger>
           <Collapsible.Content className='p-6'>
-            <p>Placeholder for recent activity...</p>
+            {activityLoading ? (
+              <p className='text-sm text-gray-400'>Loading activity...</p>
+            ) : activityData?.data && activityData.data.length > 0 ? (
+              <div className='space-y-3'>
+                {activityData.data.map((log) => (
+                  <div key={log.id} className='flex flex-col gap-1 border-b border-gray-800 pb-2 last:border-0'>
+                    <div className='flex justify-between items-start'>
+                      <span className='text-sm font-medium text-blue-400'>{log.type}</span>
+                      <span className='text-xs text-gray-500'>{new Date(log.createdAt).toLocaleString()}</span>
+                    </div>
+                    <p className='text-sm text-gray-300'>{log.description}</p>
+                  </div>
+                ))}
+                <div className='pt-2'>
+                  <Button asChild variant='link' size='sm' className='px-0 text-blue-400'>
+                    <Link href='/admin/system/logs'>View Full Audit Log</Link>
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <p className='text-sm text-gray-400'>No recent activity found.</p>
+            )}
           </Collapsible.Content>
         </Collapsible.Root>
       </div>

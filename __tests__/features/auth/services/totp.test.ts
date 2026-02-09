@@ -14,29 +14,42 @@ import {
 // Mock crypto module
 vi.mock('crypto', async (importOriginal) => {
   const actual = await importOriginal() as any;
+  
+  const randomBytes = vi.fn((size: number) => {
+    if (size === 20) return Buffer.from('01234567890123456789');
+    if (size === 6) return Buffer.from('ABCDEF');
+    return Buffer.alloc(size);
+  });
+
+  const createHmac = vi.fn(() => ({
+    update: vi.fn().mockReturnThis(),
+    digest: vi.fn(() => {
+      const res = Buffer.alloc(20);
+      res[19] = 0x0f; // offset 15
+      res[15] = 0;
+      res[16] = 0;
+      res[17] = 0;
+      res[18] = 0;
+      return res;
+    }),
+  }));
+
+  const createHash = vi.fn(() => ({
+    update: vi.fn().mockReturnThis(),
+    digest: vi.fn(() => 'mockhash'),
+  }));
+
   return {
     ...actual,
-    randomBytes: vi.fn((size: number) => {
-      if (size === 20) return Buffer.from('01234567890123456789');
-      if (size === 6) return Buffer.from('ABCDEF');
-      return actual.randomBytes(size);
-    }),
-    createHmac: vi.fn(() => ({
-      update: vi.fn().mockReturnThis(),
-      digest: vi.fn(() => {
-        const res = Buffer.alloc(20);
-        res[19] = 0x0f; // offset 15
-        res[15] = 0;
-        res[16] = 0;
-        res[17] = 0;
-        res[18] = 0;
-        return res;
-      }),
-    })),
-    createHash: vi.fn(() => ({
-      update: vi.fn().mockReturnThis(),
-      digest: vi.fn(() => 'mockhash'),
-    })),
+    randomBytes,
+    createHmac,
+    createHash,
+    default: {
+      ...actual.default,
+      randomBytes,
+      createHmac,
+      createHash,
+    }
   };
 });
 

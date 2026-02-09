@@ -16,7 +16,7 @@ import path from 'path';
 import { getDiskPathFromPublicPath, uploadFile } from '@/features/files/server';
 import { getImageFileRepository } from '@/features/files/server';
 import type { ImageFileRepository } from '@/features/files/types/services/image-file-repository';
-import { ErrorSystem, logActivity, ActivityTypes } from '@/features/observability/server';
+import { ErrorSystem, logActivity, ActivityTypes, logSystemEvent } from '@/features/observability/server';
 import { performanceMonitor } from '@/features/products/performance';
 import { getCatalogRepository } from '@/features/products/services/catalog-repository';
 import { getProductDataProvider, type ProductDbProvider } from '@/features/products/services/product-provider';
@@ -132,12 +132,16 @@ async function getProducts(
     timings['total'] = performance.now() - totalStart;
   }
   if (shouldLogTiming()) {
-    console.log('[timing] productService.getProducts', {
-      provider,
-      repoMs: Math.round(repoMs),
-      imagesMs: Math.round(imagesMs),
-      fsChecks: 0,
-      totalMs: Math.round(performance.now() - totalStart),
+    await logSystemEvent({
+      level: 'info',
+      message: '[timing] productService.getProducts',
+      context: {
+        provider,
+        repoMs: Math.round(repoMs),
+        imagesMs: Math.round(imagesMs),
+        fsChecks: 0,
+        totalMs: Math.round(performance.now() - totalStart),
+      },
     });
   }
   return result;

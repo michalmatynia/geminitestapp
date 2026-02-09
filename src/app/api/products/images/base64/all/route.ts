@@ -3,6 +3,7 @@ export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { enqueueProductAiJob, processSingleJob, startProductAiJobQueue } from '@/features/jobs/server';
+import { logSystemError } from '@/features/observability/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api';
 import type { ProductAiJobType } from '@/shared/types/jobs';
@@ -20,17 +21,12 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise
 
   if (inlineJobs) {
     processSingleJob(job.id).catch(async (error: unknown) => {
-      try {
-        const { logSystemError } = await import('@/features/observability/server');
-        await logSystemError({ 
-          message: '[products.images.base64.all] Failed to run base64 job',
-          error,
-          source: 'api/products/images/base64/all',
-          context: { jobId: job.id }
-        });
-      } catch (logError) {
-        console.error('[products.images.base64.all] Failed to run base64 job (and logging failed)', error, logError);
-      }
+      await logSystemError({
+        message: '[products.images.base64.all] Failed to run base64 job',
+        error,
+        source: 'api/products/images/base64/all',
+        context: { jobId: job.id },
+      });
     });
   } else {
     startProductAiJobQueue();

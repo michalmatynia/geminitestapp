@@ -3,6 +3,7 @@ export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { logSystemEvent } from '@/features/observability/server';
 import { parseJsonBody } from '@/features/products/server';
 import { badRequestError, internalError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
@@ -36,10 +37,14 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: {
     orderBy: { createdAt: 'asc' },
   });
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][sessions][GET] Messages loaded', {
-      sessionId,
-      count: messages.length,
-      durationMs: Date.now() - requestStart,
+    await logSystemEvent({
+      level: 'info',
+      message: '[chatbot][sessions][GET] Messages loaded',
+      context: {
+        sessionId,
+        count: messages.length,
+        durationMs: Date.now() - requestStart,
+      },
     });
   }
   return NextResponse.json({ messages });
@@ -71,10 +76,14 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     throw badRequestError('Role and content are required.');
   }
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][sessions][POST] Request', {
-      sessionId,
-      role: body.role,
-      contentLength: body.content.trim().length,
+    await logSystemEvent({
+      level: 'info',
+      message: '[chatbot][sessions][POST] Request',
+      context: {
+        sessionId,
+        role: body.role,
+        contentLength: body.content.trim().length,
+      },
     });
   }
   const message = await prisma.chatbotMessage.create({
@@ -89,10 +98,14 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     data: { updatedAt: new Date() },
   });
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][sessions][POST] Created', {
-      messageId: message.id,
-      sessionId,
-      durationMs: Date.now() - requestStart,
+    await logSystemEvent({
+      level: 'info',
+      message: '[chatbot][sessions][POST] Created',
+      context: {
+        messageId: message.id,
+        sessionId,
+        durationMs: Date.now() - requestStart,
+      },
     });
   }
   return NextResponse.json({ message });

@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { AUTH_SETTINGS_KEYS } from '@/features/auth/utils/auth-management';
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
 import { internalError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -56,7 +56,11 @@ const ensureSettingsIndexes = async (): Promise<void> => {
         const mongo = await getMongoDb();
         await mongo.collection(SETTINGS_COLLECTION).createIndex({ key: 1 }, { name: 'settings_key' });
       } catch (error) {
-        console.warn('[settings] Failed to ensure settings indexes.', error);
+        await logSystemEvent({
+          level: 'warn',
+          message: '[settings] Failed to ensure settings indexes.',
+          error,
+        });
       }
     })();
   }
@@ -273,7 +277,11 @@ const attachProviderHeader = async (response: Response): Promise<void> => {
     const provider = await getAppDbProvider();
     response.headers.set('X-App-Db-Provider', provider);
   } catch (error) {
-    console.warn('[settings] Failed to resolve app DB provider.', error);
+    await logSystemEvent({
+      level: 'warn',
+      message: '[settings] Failed to resolve app DB provider.',
+      error,
+    });
   }
 };
 
@@ -300,8 +308,10 @@ const fetchAndCacheSettings = async (
     } catch (error) {
       if (isPrismaMissingTableError(error)) {
         prismaMissing = true;
-        console.warn('[settings] Prisma settings table missing; falling back to Mongo.', {
-          code: error.code,
+        await logSystemEvent({
+          level: 'warn',
+          message: '[settings] Prisma settings table missing; falling back to Mongo.',
+          context: { code: error.code },
         });
       } else {
         throw error;
@@ -320,7 +330,10 @@ const fetchAndCacheSettings = async (
     })()
     : [];
   if (prismaMissing && !hasMongo) {
-    console.warn('[settings] Prisma settings table missing and no Mongo fallback; returning empty settings.');
+    await logSystemEvent({
+      level: 'warn',
+      message: '[settings] Prisma settings table missing and no Mongo fallback; returning empty settings.',
+    });
   }
   const settingsMap = new Map<string, SettingRecord>();
   if (provider === 'mongodb') {
@@ -351,7 +364,11 @@ const fetchAndCacheSettings = async (
   setCachedSettings(settings, scope);
   if (timings) timings['total'] = performance.now() - totalStart;
   if (timings && shouldLogTiming()) {
-    console.log('[timing] settings.fetch', { scope, ...timings });
+    await logSystemEvent({
+      level: 'info',
+      message: '[timing] settings.fetch',
+      context: { scope, ...timings },
+    });
   }
   return settings;
 };
@@ -377,7 +394,11 @@ async function GET_handler(
   const cached = getCachedSettings(scope);
   if (cached) {
     if (shouldLogTiming()) {
-      console.log('[settings] cache', { scope, status: 'hit' });
+      await logSystemEvent({
+        level: 'info',
+        message: '[settings] cache',
+        context: { scope, status: 'hit' },
+      });
     }
     const response = NextResponse.json(cached, {
       headers: { 'Cache-Control': SETTINGS_CACHE_CONTROL, 'X-Cache': 'hit' },
@@ -390,7 +411,11 @@ async function GET_handler(
   if (inflight) {
     const data = await inflight;
     if (shouldLogTiming()) {
-      console.log('[settings] cache', { scope, status: 'wait' });
+      await logSystemEvent({
+        level: 'info',
+        message: '[settings] cache',
+        context: { scope, status: 'wait' },
+      });
     }
     const response = NextResponse.json(data, {
       headers: { 'Cache-Control': SETTINGS_CACHE_CONTROL, 'X-Cache': 'wait' },
@@ -403,7 +428,11 @@ async function GET_handler(
   const stale = getStaleSettings(scope);
   if (stale) {
     if (shouldLogTiming()) {
-      console.log('[settings] cache', { scope, status: 'stale' });
+      await logSystemEvent({
+        level: 'info',
+        message: '[settings] cache',
+        context: { scope, status: 'stale' },
+      });
     }
     const timings: Record<string, number | null | undefined> = {};
     const refreshPromise = fetchAndCacheSettings(scope, timings)
@@ -432,7 +461,11 @@ async function GET_handler(
   setSettingsInflight(inflightPromise, scope);
   const data = await inflightPromise;
   if (shouldLogTiming()) {
-    console.log('[settings] cache', { scope, status: 'miss' });
+    await logSystemEvent({
+      level: 'info',
+      message: '[settings] cache',
+      context: { scope, status: 'miss' },
+    });
   }
   const response = NextResponse.json(data, {
     headers: { 'Cache-Control': SETTINGS_CACHE_CONTROL, 'X-Cache': 'miss' },
@@ -499,8 +532,10 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     } catch (error) {
       if (isPrismaMissingTableError(error)) {
         prismaMissing = true;
-        console.warn('[settings] Prisma settings table missing; falling back to Mongo.', {
-          code: error.code,
+        await logSystemEvent({
+          level: 'warn',
+          message: '[settings] Prisma settings table missing; falling back to Mongo.',
+          context: { code: error.code },
         });
       } else {
         throw error;

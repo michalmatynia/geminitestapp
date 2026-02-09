@@ -14,7 +14,6 @@ export default function FrontendError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error(error);
     logClientError(error, {
       ...(error.digest ? { digest: error.digest } : {}),
       context: { source: 'frontend-error-boundary' },

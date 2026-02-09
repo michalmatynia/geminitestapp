@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
+import { logSystemEvent } from '@/features/observability/server';
 import { parseJsonBody } from '@/features/products/server';
 import { notFoundError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
@@ -52,8 +53,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const { title, settings } = parsed.data as CreateSessionBody;
 
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][sessions][POST] Request', {
-      titleProvided: Boolean(title?.trim()),
+    await logSystemEvent({
+      level: 'info',
+      message: '[chatbot][sessions][POST] Request',
+      context: {
+        titleProvided: Boolean(title?.trim()),
+      },
     });
   }
 
@@ -63,9 +68,13 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   });
 
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][sessions][POST] Created', {
-      sessionId: session.id,
-      durationMs: Date.now() - requestStart,
+    await logSystemEvent({
+      level: 'info',
+      message: '[chatbot][sessions][POST] Created',
+      context: {
+        sessionId: session.id,
+        durationMs: Date.now() - requestStart,
+      },
     });
   }
 
@@ -78,9 +87,13 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const sessions = await chatbotSessionRepository.findAll();
 
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][sessions][GET] Listed', {
-      count: sessions.length,
-      durationMs: Date.now() - requestStart,
+    await logSystemEvent({
+      level: 'info',
+      message: '[chatbot][sessions][GET] Listed',
+      context: {
+        count: sessions.length,
+        durationMs: Date.now() - requestStart,
+      },
     });
   }
 
@@ -99,9 +112,13 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise
   const { sessionId, title } = parsed.data as UpdateSessionBody;
 
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][sessions][PATCH] Request', {
-      sessionId,
-      titleProvided: Boolean(title?.trim()),
+    await logSystemEvent({
+      level: 'info',
+      message: '[chatbot][sessions][PATCH] Request',
+      context: {
+        sessionId,
+        titleProvided: Boolean(title?.trim()),
+      },
     });
   }
 
@@ -117,9 +134,13 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise
   }
 
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][sessions][PATCH] Updated', {
-      sessionId: updated.id,
-      durationMs: Date.now() - requestStart,
+    await logSystemEvent({
+      level: 'info',
+      message: '[chatbot][sessions][PATCH] Updated',
+      context: {
+        sessionId: updated.id,
+        durationMs: Date.now() - requestStart,
+      },
     });
   }
 
@@ -138,8 +159,12 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promis
   const { sessionId } = parsed.data as DeleteSessionBody;
 
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][sessions][DELETE] Request', {
-      sessionId,
+    await logSystemEvent({
+      level: 'info',
+      message: '[chatbot][sessions][DELETE] Request',
+      context: {
+        sessionId,
+      },
     });
   }
 
@@ -150,9 +175,13 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promis
   }
 
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][sessions][DELETE] Deleted', {
-      sessionId,
-      durationMs: Date.now() - requestStart,
+    await logSystemEvent({
+      level: 'info',
+      message: '[chatbot][sessions][DELETE] Deleted',
+      context: {
+        sessionId,
+        durationMs: Date.now() - requestStart,
+      },
     });
   }
 

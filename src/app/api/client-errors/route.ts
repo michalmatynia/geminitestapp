@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { logSystemEvent } from '@/features/observability/server';
 import { ErrorSystem } from '@/features/observability/services/error-system';
 import type { ErrorContext } from '@/features/observability/services/error-system';
 
@@ -19,7 +20,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (err) {
-    console.error('Failed to log client error:', err);
+    await logSystemEvent({
+      level: 'error',
+      message: 'Failed to log client error',
+      error: err,
+      context: {
+        source: 'api/client-errors',
+      },
+    });
     return NextResponse.json({ success: false, error: 'Failed to process error report' }, { status: 500 });
   }
 }

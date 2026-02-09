@@ -13,7 +13,6 @@ export default function AdminError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error(error);
     logClientError(error, {
       ...(error.digest ? { digest: error.digest } : {}),
     });

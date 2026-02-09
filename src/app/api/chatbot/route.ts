@@ -4,6 +4,7 @@ import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
+import { logSystemError, logSystemEvent } from '@/features/observability/server';
 import { getSettingValue } from '@/features/products/services/aiDescriptionService';
 import {
   badRequestError,
@@ -67,12 +68,16 @@ const fetchOllamaModels = async (
     if (!res.ok) {
       const errorText = await res.text();
       if (DEBUG_CHATBOT) {
-        console.warn('[chatbot][models] Upstream error', {
-          status: res.status,
-          statusText: res.statusText,
-          errorText,
-          durationMs: Date.now() - requestStart,
-          requestId: ctx.requestId,
+        await logSystemEvent({
+          level: 'warn',
+          message: '[chatbot][models] Upstream error',
+          context: {
+            status: res.status,
+            statusText: res.statusText,
+            errorText,
+            durationMs: Date.now() - requestStart,
+            requestId: ctx.requestId,
+          },
         });
       }
       return null;
@@ -84,10 +89,14 @@ const fetchOllamaModels = async (
       .filter((name: string | undefined): name is string => Boolean(name));
   } catch (error) {
     if (DEBUG_CHATBOT) {
-      console.warn('[chatbot][models] Upstream fetch failed', {
+      await logSystemEvent({
+        level: 'warn',
+        message: '[chatbot][models] Upstream fetch failed',
         error,
-        durationMs: Date.now() - requestStart,
-        requestId: ctx.requestId,
+        context: {
+          durationMs: Date.now() - requestStart,
+          requestId: ctx.requestId,
+        },
       });
     }
     return null;
@@ -198,10 +207,14 @@ async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<R
   const ollamaModels = await fetchOllamaModels(ctx, requestStart);
   if (ollamaModels && ollamaModels.length > 0) {
     if (DEBUG_CHATBOT) {
-      console.info('[chatbot][models] Loaded', {
-        count: ollamaModels.length,
-        durationMs: Date.now() - requestStart,
-        requestId: ctx.requestId,
+      await logSystemEvent({
+        level: 'info',
+        message: '[chatbot][models] Loaded',
+        context: {
+          count: ollamaModels.length,
+          durationMs: Date.now() - requestStart,
+          requestId: ctx.requestId,
+        },
       });
     }
     return NextResponse.json({ models: ollamaModels });
@@ -269,11 +282,15 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
       );
 
       if (DEBUG_CHATBOT) {
-        console.info('[chatbot][chat] Multipart payload', {
-          fileCount: files.length,
-          imageCount: imageFiles.length,
-          otherCount: otherFiles.length,
-          requestId: ctx.requestId,
+        await logSystemEvent({
+          level: 'info',
+          message: '[chatbot][chat] Multipart payload',
+          context: {
+            fileCount: files.length,
+            imageCount: imageFiles.length,
+            otherCount: otherFiles.length,
+            requestId: ctx.requestId,
+          },
         });
       }
 
@@ -390,17 +407,21 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
     }
 
     if (DEBUG_CHATBOT) {
-      console.info('[chatbot][chat] Request summary', {
-        messageCount: messages.length,
-        roles: messages.map((message: ChatMessage) => message.role),
-        hasImages: messages.some((message: ChatMessage) => Boolean(message.images?.length)),
-        model: requestedModel || OLLAMA_MODEL,
-        contentType,
-        userContentChars: messages
-          .filter((message: ChatMessage) => message.role === 'user')
-          .reduce((sum: number, message: ChatMessage) => sum + message.content.length, 0),
-        durationMs: Date.now() - requestStart,
-        requestId: ctx.requestId,
+      await logSystemEvent({
+        level: 'info',
+        message: '[chatbot][chat] Request summary',
+        context: {
+          messageCount: messages.length,
+          roles: messages.map((message: ChatMessage) => message.role),
+          hasImages: messages.some((message: ChatMessage) => Boolean(message.images?.length)),
+          model: requestedModel || OLLAMA_MODEL,
+          contentType,
+          userContentChars: messages
+            .filter((message: ChatMessage) => message.role === 'user')
+            .reduce((sum: number, message: ChatMessage) => sum + message.content.length, 0),
+          durationMs: Date.now() - requestStart,
+          requestId: ctx.requestId,
+        },
       });
     }
 
@@ -411,11 +432,15 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
     };
 
     if (DEBUG_CHATBOT) {
-      console.info('[chatbot][chat] Sending to Ollama', {
-        url: `${OLLAMA_BASE_URL}/api/chat`,
-        model: requestPayload.model,
-        messageCount: requestPayload.messages.length,
-        requestId: ctx.requestId,
+      await logSystemEvent({
+        level: 'info',
+        message: '[chatbot][chat] Sending to Ollama',
+        context: {
+          url: `${OLLAMA_BASE_URL}/api/chat`,
+          model: requestPayload.model,
+          messageCount: requestPayload.messages.length,
+          requestId: ctx.requestId,
+        },
       });
     }
 
@@ -455,23 +480,22 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
         }
 
         if (DEBUG_CHATBOT) {
-          console.info('[chatbot][chat] Saved to session', { 
-            sessionId,
-            requestId: ctx.requestId
+          await logSystemEvent({
+            level: 'info',
+            message: '[chatbot][chat] Saved to session',
+            context: {
+              sessionId,
+              requestId: ctx.requestId,
+            },
           });
         }
       } catch (error) {
-        try {
-          const { logSystemError } = await import('@/features/observability/server');
-          await logSystemError({ 
-            message: '[chatbot][chat] Failed to save session messages',
-            error,
-            source: 'api/chatbot',
-            context: { action: 'save_session_messages', sessionId, requestId: ctx.requestId }
-          });
-        } catch (logError) {
-          console.error('[chatbot][chat] Failed to save session messages (and logging failed)', error, logError);
-        }
+        await logSystemError({
+          message: '[chatbot][chat] Failed to save session messages',
+          error,
+          source: 'api/chatbot',
+          context: { action: 'save_session_messages', sessionId, requestId: ctx.requestId },
+        });
       }
     }
 

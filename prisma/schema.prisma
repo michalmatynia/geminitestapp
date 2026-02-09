@@ -72,6 +72,23 @@ model SystemLog {
   @@index([createdAt])
 }
 
+model ActivityLog {
+  id          String   @id @default(cuid())
+  type        String
+  description String
+  userId      String?
+  entityId    String?
+  entityType  String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([type])
+  @@index([entityId, entityType])
+  @@index([createdAt])
+}
+
 model FileUploadEvent {
   id           String   @id @default(cuid())
   status       String

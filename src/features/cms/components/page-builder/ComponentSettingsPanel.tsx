@@ -7,7 +7,7 @@ import { APP_EMBED_SETTING_KEY, type AppEmbedId, APP_EMBED_OPTIONS } from '@/fea
 import type { CssAnimationConfig } from '@/features/cms/types/css-animations';
 import type { CustomCssAiConfig } from '@/features/cms/types/custom-css-ai';
 import { DEFAULT_CUSTOM_CSS_AI_CONFIG } from '@/features/cms/types/custom-css-ai';
-import { getEventEffectsConfig } from '@/features/cms/utils/event-effects';
+
 import type { GsapAnimationConfig } from '@/features/gsap';
 import { logClientError } from '@/features/observability';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
@@ -31,12 +31,7 @@ import { usePageBuilder } from '../../hooks/usePageBuilderContext';
 
 import type { SettingsField, InspectorSettings, BlockInstance } from '../../types/page-builder';
 
-interface ConnectionSettings {
-  enabled: boolean;
-  source: string;
-  path: string;
-  fallback: string;
-}
+
 
 type TabValue = 'settings' | 'animation' | 'cssAnimation' | 'events' | 'connections' | 'customCss' | 'ai';
 
@@ -181,10 +176,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
 
   const handleRemoveRow = useCallback(() => isRowBlock && selectedParentSection && selectedBlock && dispatch({ type: 'REMOVE_GRID_ROW', sectionId: selectedParentSection.id, rowId: selectedBlock.id }), [isRowBlock, selectedParentSection, selectedBlock, dispatch]);
 
-  const handleEventSettingChange = useCallback((key: string, value: unknown): void => {
-    if (selectedBlock) handleBlockSettingChange(key, value);
-    else if (selectedSection) handleSectionSettingChange(key, value);
-  }, [selectedBlock, selectedSection, handleBlockSettingChange, handleSectionSettingChange]);
+
 
   const handleAnimationChange = useCallback((config: GsapAnimationConfig): void => {
     if (selectedSection && !selectedBlock && !selectedColumn) handleSectionSettingChange('gsapAnimation', config);
@@ -225,8 +217,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
   const hasSelection = !!(selectedSection || selectedBlock || selectedColumn);
   const showConnectionsTab = state.inspectorEnabled;
   const showEventsTab = Boolean(selectedBlock || selectedSection);
-  const eventSettingsSource = selectedBlock?.settings ?? selectedSection?.settings ?? null;
-  const eventConfig = useMemo(() => (eventSettingsSource ? getEventEffectsConfig(eventSettingsSource) : null), [eventSettingsSource]);
+
 
   const appEmbedOptions = useMemo((): { label: string; value: string }[] => {
     const enabled = parseJsonSetting<AppEmbedId[]>(settingsStore.get(APP_EMBED_SETTING_KEY), []);
@@ -234,17 +225,9 @@ export function ComponentSettingsPanel(): React.ReactNode {
     return options.length > 0 ? options : [{ label: 'No app embeds enabled', value: '' }];
   }, [settingsStore]);
 
-  const connectionSettings = useMemo((): ConnectionSettings => {
-    const raw = ((selectedSection?.settings ?? selectedColumn?.settings ?? selectedBlock?.settings ?? null)?.['connection'] ?? {}) as Partial<ConnectionSettings>;
-    return { enabled: raw.enabled ?? false, source: raw.source ?? '', path: raw.path ?? '', fallback: raw.fallback ?? '' };
-  }, [selectedSection, selectedColumn, selectedBlock]);
 
-  const updateConnectionSetting = useCallback((patch: Partial<ConnectionSettings>): void => {
-    const next = { ...connectionSettings, ...patch };
-    if (selectedSection && !selectedBlock && !selectedColumn) handleSectionSettingChange('connection', next);
-    else if (selectedColumn) handleColumnSettingChange('connection', next);
-    else if (selectedBlock) handleBlockSettingChange('connection', next);
-  }, [connectionSettings, selectedSection, selectedBlock, selectedColumn, handleSectionSettingChange, handleColumnSettingChange, handleBlockSettingChange]);
+
+
 
   const updateInspectorSetting = useCallback((patch: Partial<InspectorSettings>): void => dispatch({ type: 'UPDATE_INSPECTOR_SETTINGS', settings: patch }), [dispatch]);
   const handleToggleInspector = useCallback((): void => {
@@ -359,15 +342,15 @@ export function ComponentSettingsPanel(): React.ReactNode {
             </TabsContent>
             <TabsContent value='animation' className='flex-1 overflow-y-auto p-4 mt-0'><AnimationConfigPanel value={currentAnimationConfig} onChange={handleAnimationChange} /></TabsContent>
             <TabsContent value='cssAnimation' className='flex-1 overflow-y-auto p-4 mt-0'><CssAnimationConfigPanel value={currentCssAnimationConfig ?? {}} onChange={handleCssAnimationChange} /></TabsContent>
-            <TabsContent value='ai' className='flex-1 overflow-y-auto p-4 mt-0'><ContentAiSection selectedLabel={selectedLabel} /></TabsContent>
+            <TabsContent value='ai' className='flex-1 overflow-y-auto p-4 mt-0'><ContentAiSection /></TabsContent>
             {showCustomCssTab && (
               <TabsContent value='customCss' className='flex-1 overflow-y-auto p-4 mt-0 space-y-3'>
                 <CssAiSection />
                 <Textarea value={customCssValue} onChange={(e) => handleCustomCssChange(e.target.value)} placeholder={'parent { \\n  outline: 1px dashed #4ade80;\\n}\\n\\nchildren { \\n  gap: 12px;\\n}'} className='min-h-[160px] font-mono text-xs' spellCheck={false} />
               </TabsContent>
             )}
-            {showEventsTab && (<TabsContent value='events' className='flex-1 overflow-y-auto p-4 mt-0'><EventEffectsTab eventConfig={eventConfig} selectedBlockLabel={selectedBlock ? blockDef?.label ?? 'Block' : null} selectedSectionLabel={selectedSection ? sectionDef?.label ?? 'Section' : null} onEventSettingChange={handleEventSettingChange} /></TabsContent>)}
-            {showConnectionsTab && (<TabsContent value='connections' className='flex-1 overflow-y-auto p-4 mt-0'><ConnectionsTab hasSelection={hasSelection} selectedLabel={selectedLabel} connectionSettings={connectionSettings} updateConnectionSetting={updateConnectionSetting} /></TabsContent>)}
+            {showEventsTab && (<TabsContent value='events' className='flex-1 overflow-y-auto p-4 mt-0'><EventEffectsTab /></TabsContent>)}
+            {showConnectionsTab && (<TabsContent value='connections' className='flex-1 overflow-y-auto p-4 mt-0'><ConnectionsTab /></TabsContent>)}
           </Tabs>
         )}
       </aside>

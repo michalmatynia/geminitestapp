@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { CLIENT_LOGGING_KEYS } from '@/features/observability/constants/client-logging';
+import { logSystemEvent } from '@/features/observability/server';
 import { APP_FONT_SET_SETTING_KEY } from '@/shared/constants/typography';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
@@ -95,10 +96,16 @@ const fetchLiteSettings = async (): Promise<SettingRecord[]> => {
   );
   if (prismaMissing) {
     if (hasMongo) {
-      console.warn('[settings.lite] Prisma settings table missing; falling back to Mongo.');
+      await logSystemEvent({
+        level: 'warn',
+        message: '[settings.lite] Prisma settings table missing; falling back to Mongo.',
+      });
       return readMongoSettings(LITE_SETTINGS_KEYS);
     }
-    console.warn('[settings.lite] Prisma settings table missing and no Mongo fallback; returning empty settings.');
+    await logSystemEvent({
+      level: 'warn',
+      message: '[settings.lite] Prisma settings table missing and no Mongo fallback; returning empty settings.',
+    });
     return [];
   }
   return prismaSettings;

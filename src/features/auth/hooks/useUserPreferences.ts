@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from '@tanstack/react-query';
 
+import { logClientError } from '@/features/observability';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
 export interface UserPreferences {
@@ -19,7 +20,9 @@ export function useUserPreferences(): UseQueryResult<UserPreferences, Error> {
         credentials: 'include',
       });
       if (!res.ok) {
-        console.warn('[user-preferences] Failed to load user preferences', res.status);
+        logClientError(new Error(`[user-preferences] Failed to load user preferences: ${res.status}`), {
+          context: { status: res.status, source: 'useUserPreferences' },
+        });
         return {};
       }
       return (await res.json()) as UserPreferences;

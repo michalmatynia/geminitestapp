@@ -3,6 +3,7 @@ export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
+import { logSystemEvent } from '@/features/observability/server';
 import { notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api';
@@ -18,9 +19,13 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: {
   }
 
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][sessions][GET:sessionId] Found', {
-      sessionId: session.id,
-      messageCount: session.messages.length,
+    await logSystemEvent({
+      level: 'info',
+      message: '[chatbot][sessions][GET:sessionId] Found',
+      context: {
+        sessionId: session.id,
+        messageCount: session.messages.length,
+      },
     });
   }
 

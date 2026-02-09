@@ -5,6 +5,7 @@ import { z } from 'zod';
 
 import { enqueueProductAiJob } from '@/features/jobs/server';
 import { startProductAiJobQueue, processSingleJob } from '@/features/jobs/server';
+import { logSystemEvent, ErrorSystem } from '@/features/observability/server';
 import { parseJsonBody } from '@/features/products/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api';
@@ -25,10 +26,18 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   }
   const { productId, type, payload } = parsed.data;
 
-  console.log(`[api/products/ai-jobs/enqueue] Received request - productId: ${productId}, type: ${type}`);
+  await logSystemEvent({
+    level: 'info',
+    message: '[api/products/ai-jobs/enqueue] Received request',
+    context: { productId, type },
+  });
 
   const job = await enqueueProductAiJob(productId, type as ProductAiJobType, payload);
-  console.log(`[api/products/ai-jobs/enqueue] Job ${job.id} created`);
+  await logSystemEvent({
+    level: 'info',
+    message: `[api/products/ai-jobs/enqueue] Job ${job.id} created`,
+    context: { jobId: job.id },
+  });
 
   const inlineJobs =
     process.env['AI_JOBS_INLINE'] === 'true' ||
@@ -37,19 +46,26 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   if (inlineJobs) {
     // WORKAROUND: In serverless/development, immediately process this job
     // since setInterval doesn't persist across function invocations
-    console.log(`[api/products/ai-jobs/enqueue] About to call processSingleJob for job ${job.id}`);
+    await logSystemEvent({
+      level: 'info',
+      message: `[api/products/ai-jobs/enqueue] About to call processSingleJob for job ${job.id}`,
+      context: { jobId: job.id },
+    });
 
     // Process the job asynchronously but log any errors
     processSingleJob(job.id)
-      .then((): void => {
-        console.log(`[api/products/ai-jobs/enqueue] Job ${job.id} processing initiated successfully`);
+      .then(async (): Promise<void> => {
+        await logSystemEvent({
+          level: 'info',
+          message: `[api/products/ai-jobs/enqueue] Job ${job.id} processing initiated successfully`,
+          context: { jobId: job.id },
+        });
       })
-      .catch(async (err: unknown) => {
-        const { ErrorSystem } = await import('@/features/observability/services/error-system');
-        void ErrorSystem.captureException(err, { 
+      .catch((err: unknown) => {
+        void ErrorSystem.captureException(err, {
           service: 'api/products/ai-jobs/enqueue',
           jobId: job.id,
-          productId: productId
+          productId: productId,
         });
       });
   } else {
@@ -57,7 +73,10 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     startProductAiJobQueue();
   }
 
-  console.log('[api/products/ai-jobs/enqueue] Returning response to client');
+  await logSystemEvent({
+    level: 'info',
+    message: '[api/products/ai-jobs/enqueue] Returning response to client',
+  });
   return NextResponse.json({ success: true, jobId: job.id });
 }
 

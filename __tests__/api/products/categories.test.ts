@@ -24,21 +24,25 @@ vi.mock('@/shared/lib/db/prisma', () => ({
 }));
 
 // Mock data provider
-vi.mock('@/features/products/server', () => ({
-  getProductDataProvider: vi.fn().mockResolvedValue('prisma'),
-  parseJsonBody: async (req: any, schema: any) => {
-    try {
-      const body = await req.json();
-      const result = schema.safeParse(body);
-      if (!result.success) {
-        return { ok: false, response: new Response(JSON.stringify(result.error), { status: 400 }) };
+vi.mock('@/features/products/server', async (importOriginal) => {
+  const actual = await importOriginal() as any;
+  return {
+    ...actual,
+    getProductDataProvider: vi.fn().mockResolvedValue('prisma'),
+    parseJsonBody: async (req: any, schema: any) => {
+      try {
+        const body = await req.json();
+        const result = schema.safeParse(body);
+        if (!result.success) {
+          return { ok: false, response: new Response(JSON.stringify(result.error), { status: 400 }) };
+        }
+        return { ok: true, data: result.data };
+      } catch {
+        return { ok: false, response: new Response('Invalid JSON', { status: 400 }) };
       }
-      return { ok: true, data: result.data };
-    } catch {
-      return { ok: false, response: new Response('Invalid JSON', { status: 400 }) };
-    }
-  },
-}));
+    },
+  };
+});
 
 describe('Product Categories API', () => {
   beforeEach(() => {
@@ -53,9 +57,14 @@ describe('Product Categories API', () => {
 
   describe('GET /api/products/categories/tree', () => {
     it('should return categories as a tree', async () => {
+      const now = new Date();
       const mockCategories = [
-        { id: '1', name: 'Parent', catalogId: 'cat1', parentId: null },
-        { id: '2', name: 'Child', catalogId: 'cat1', parentId: '1' },
+        { 
+          id: '1', name: 'Parent', catalogId: 'cat1', parentId: null, createdAt: now, updatedAt: now,
+          children: [
+            { id: '2', name: 'Child', catalogId: 'cat1', parentId: '1', createdAt: now, updatedAt: now, children: [] }
+          ]
+        },
       ];
       vi.mocked(prisma.productCategory.findMany).mockResolvedValue(mockCategories as any);
 

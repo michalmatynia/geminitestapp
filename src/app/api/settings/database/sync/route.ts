@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { auth } from '@/features/auth/server';
 import { enqueueProductAiJob, processSingleJob, startProductAiJobQueue } from '@/features/jobs/server';
-import { ActivityTypes, logActivity } from '@/features/observability/server';
+import { ActivityTypes, logActivity, logSystemError } from '@/features/observability/server';
 import { authError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -56,17 +56,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
   if (inlineJobs) {
     processSingleJob(job.id).catch(async (error: unknown) => {
-      try {
-        const { logSystemError } = await import('@/features/observability/server');
-        await logSystemError({ 
-          message: '[settings.database.sync] Failed to run db sync job',
-          error,
-          source: 'api/settings/database/sync',
-          context: { jobId: job.id }
-        });
-      } catch (logError) {
-        console.error('[settings.database.sync] Failed to run db sync job (and logging failed)', error, logError);
-      }
+      await logSystemError({
+        message: '[settings.database.sync] Failed to run db sync job',
+        error,
+        source: 'api/settings/database/sync',
+        context: { jobId: job.id },
+      });
     });
   } else {
     startProductAiJobQueue();

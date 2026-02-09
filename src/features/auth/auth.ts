@@ -49,7 +49,7 @@ const credentialsProvider = Credentials({
       const recoveryCode = credentials?.['recoveryCode']?.toString() ?? '';
       const challengeId = credentials?.['challengeId']?.toString() ?? '';
       if (!email || !password) {
-        console.log('[AUTH] Missing email or password');
+        await ErrorSystem.logInfo('[AUTH] Missing email or password', { service: 'auth' });
         return null;
       }
       const ip = extractClientIp(request);
@@ -174,14 +174,14 @@ const credentialsProvider = Credentials({
       }
       
       if (!user.passwordHash) {
-        console.log('[AUTH] User has no password hash');
+        await ErrorSystem.logWarning('[AUTH] User has no password hash', { service: 'auth', userId: user.id });
         await recordLoginFailure({ email, ip, request });
         return null;
       }
 
-      console.log(`[AUTH] User found: ${user.id}. Hash len: ${user.passwordHash.length}. Input pass len: ${password.length}`);
+      await ErrorSystem.logInfo(`[AUTH] User found: ${user.id}. Hash len: ${user.passwordHash.length}. Input pass len: ${password.length}`, { service: 'auth', userId: user.id });
       const isValid = await bcrypt.compare(password, user.passwordHash);
-      console.log('[AUTH] Password valid:', isValid);
+      await ErrorSystem.logInfo('[AUTH] Password valid:', { isValid, service: 'auth', userId: user.id });
       
       if (!isValid) {
         await recordLoginFailure({ email, ip, request });
@@ -310,7 +310,7 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
       }
     }
     if (authLoggingEnabled) {
-      console.log(`[AUTH] Adapter configured for ${provider}.`);
+      await ErrorSystem.logInfo(`[AUTH] Adapter configured for ${provider}.`, { service: 'auth', provider });
     }
 
     return {

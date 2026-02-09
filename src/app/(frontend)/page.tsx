@@ -15,6 +15,7 @@ import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import { getCmsThemeSettings } from '@/features/cms/services/cms-theme-settings';
 import type { Slug } from '@/features/cms/types';
 import { buildColorSchemeMap, type ThemeSettings } from '@/features/cms/types/theme-settings';
+import { logSystemEvent } from '@/features/observability/server';
 import { ProductCard } from '@/features/products';
 import type { ProductWithImages } from '@/features/products';
 import { productService } from '@/features/products/server';
@@ -172,7 +173,11 @@ export default async function Home(): Promise<JSX.Element> {
     if (shouldLogTiming()) {
        
       timings['total'] = performance.now() - totalStart;
-      console.log('[timing] home', timings);
+      await logSystemEvent({
+        level: 'info',
+        message: '[timing] home',
+        context: timings,
+      });
     }
     return (
       <CmsPageShell
@@ -213,7 +218,11 @@ export default async function Home(): Promise<JSX.Element> {
   if (shouldLogTiming()) {
      
     timings['total'] = performance.now() - totalStart;
-    console.log('[timing] home', timings);
+    await logSystemEvent({
+      level: 'info',
+      message: '[timing] home',
+      context: timings,
+    });
   }
   return (
     <CmsPageShell

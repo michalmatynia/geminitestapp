@@ -13,7 +13,6 @@ export default function NotesError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error(error);
     logClientError(error, {
       ...(error.digest ? { digest: error.digest } : {}),
       context: { source: 'admin-notes-error-boundary' },

@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getProductAiJobs, deleteTerminalProductAiJobs, deleteAllProductAiJobs, cleanupStaleRunningProductAiJobs } from '@/features/jobs/server';
 import { startProductAiJobQueue, getQueueStatus } from '@/features/jobs/server';
+import { logSystemEvent } from '@/features/observability/server';
 import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api';
@@ -13,7 +14,11 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
   try {
     const staleCount = await cleanupStaleRunningProductAiJobs(1000 * 60 * 10);
     if (staleCount > 0) {
-      console.log(`[api/products/ai-jobs] Marked ${staleCount} stale running jobs as failed`);
+      await logSystemEvent({
+        level: 'info',
+        message: `[api/products/ai-jobs] Marked ${staleCount} stale running jobs as failed`,
+        context: { staleCount },
+      });
     }
     const { searchParams } = new URL(req.url);
 
@@ -21,7 +26,11 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     const checkStatus = searchParams.get('status');
     if (checkStatus === 'true') {
       const status = await getQueueStatus();
-      console.log('[api/products/ai-jobs] Queue status:', status);
+      await logSystemEvent({
+        level: 'info',
+        message: '[api/products/ai-jobs] Queue status',
+        context: { status },
+      });
       return NextResponse.json({ status });
     }
 
@@ -43,8 +52,10 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       error instanceof Prisma.PrismaClientKnownRequestError &&
       (error.code === 'P2021' || error.code === 'P2022')
     ) {
-      console.warn('[api/products/ai-jobs] Prisma schema mismatch; returning empty job list.', {
-        code: error.code,
+      await logSystemEvent({
+        level: 'warn',
+        message: '[api/products/ai-jobs] Prisma schema mismatch; returning empty job list.',
+        context: { code: error.code },
       });
       return NextResponse.json({ jobs: [] });
     }

@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { logSystemEvent } from '@/features/observability/server';
 import { PRODUCT_DB_PROVIDER_SETTING_KEY } from '@/features/products/constants';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -18,9 +19,11 @@ const warnProviderDrift = (
   source: 'prisma-setting' | 'mongo-setting'
 ): void => {
   if (appProvider === productProvider) return;
-  console.warn(
-    `[product-provider] Product provider "${productProvider}" from ${source} differs from app provider "${appProvider}".`
-  );
+  void logSystemEvent({
+    level: 'warn',
+    message: `[product-provider] Product provider "${productProvider}" from ${source} differs from app provider "${appProvider}".`,
+    context: { appProvider, productProvider, source },
+  });
 };
 
 const readMongoProductProvider = async (): Promise<ProductDbProvider | null> => {

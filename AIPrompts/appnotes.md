@@ -4,7 +4,11 @@ I need a connection collection for each product, they are not getting retrieved 
 
 Increment SKU Atomatically
 
-Database Query Node Reply can go inot Logical Condition node
+Connect Validator to product description
+When My application is starting, it loads chatbot, agent creator
+
+
+Database Query Node Reply (like success:ok), so it can go into Logical Condition node
 
 Fetch COllection names automatically
 

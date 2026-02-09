@@ -62,7 +62,7 @@ describe('prismaProductRepository', () => {
     expect(apple.length).toBe(1);
     expect(apple[0]?.name_en).toBe('Apple');
 
-    const expensive = await prismaProductRepository.getProducts({ minPrice: '15' });
+    const expensive = await prismaProductRepository.getProducts({ minPrice: 15 });
     expect(expensive.length).toBe(1);
     expect(expensive[0]?.name_en).toBe('Banana');
   });

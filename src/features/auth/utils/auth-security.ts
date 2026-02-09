@@ -39,63 +39,63 @@ export const normalizeAuthSecurityPolicy = (
   const data = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
   return {
     minPasswordLength: clampNumber(
-      data.minPasswordLength,
+      data['minPasswordLength'],
       DEFAULT_AUTH_SECURITY_POLICY.minPasswordLength,
       6,
       64
     ),
     requireStrongPassword:
-      typeof data.requireStrongPassword === 'boolean'
-        ? data.requireStrongPassword
+      typeof data['requireStrongPassword'] === 'boolean'
+        ? data['requireStrongPassword']
         : DEFAULT_AUTH_SECURITY_POLICY.requireStrongPassword,
     requireUppercase:
-      typeof data.requireUppercase === 'boolean'
-        ? data.requireUppercase
+      typeof data['requireUppercase'] === 'boolean'
+        ? data['requireUppercase']
         : DEFAULT_AUTH_SECURITY_POLICY.requireUppercase,
     requireLowercase:
-      typeof data.requireLowercase === 'boolean'
-        ? data.requireLowercase
+      typeof data['requireLowercase'] === 'boolean'
+        ? data['requireLowercase']
         : DEFAULT_AUTH_SECURITY_POLICY.requireLowercase,
     requireNumber:
-      typeof data.requireNumber === 'boolean'
-        ? data.requireNumber
+      typeof data['requireNumber'] === 'boolean'
+        ? data['requireNumber']
         : DEFAULT_AUTH_SECURITY_POLICY.requireNumber,
     requireSymbol:
-      typeof data.requireSymbol === 'boolean'
-        ? data.requireSymbol
+      typeof data['requireSymbol'] === 'boolean'
+        ? data['requireSymbol']
         : DEFAULT_AUTH_SECURITY_POLICY.requireSymbol,
     lockoutMaxAttempts: clampNumber(
-      data.lockoutMaxAttempts,
+      data['lockoutMaxAttempts'],
       DEFAULT_AUTH_SECURITY_POLICY.lockoutMaxAttempts,
       1,
       50
     ),
     lockoutWindowMinutes: clampNumber(
-      data.lockoutWindowMinutes,
+      data['lockoutWindowMinutes'],
       DEFAULT_AUTH_SECURITY_POLICY.lockoutWindowMinutes,
       1,
       120
     ),
     lockoutDurationMinutes: clampNumber(
-      data.lockoutDurationMinutes,
+      data['lockoutDurationMinutes'],
       DEFAULT_AUTH_SECURITY_POLICY.lockoutDurationMinutes,
       1,
       120
     ),
     ipRateLimitMaxAttempts: clampNumber(
-      data.ipRateLimitMaxAttempts,
+      data['ipRateLimitMaxAttempts'],
       DEFAULT_AUTH_SECURITY_POLICY.ipRateLimitMaxAttempts,
       1,
       200
     ),
     ipRateLimitWindowMinutes: clampNumber(
-      data.ipRateLimitWindowMinutes,
+      data['ipRateLimitWindowMinutes'],
       DEFAULT_AUTH_SECURITY_POLICY.ipRateLimitWindowMinutes,
       1,
       120
     ),
     ipRateLimitDurationMinutes: clampNumber(
-      data.ipRateLimitDurationMinutes,
+      data['ipRateLimitDurationMinutes'],
       DEFAULT_AUTH_SECURITY_POLICY.ipRateLimitDurationMinutes,
       1,
       120

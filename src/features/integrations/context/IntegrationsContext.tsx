@@ -218,13 +218,13 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
   const sessionQuery = useConnectionSession(activeConnection?.id, {
     enabled: showSessionModal,
   });
-  const sessionPayload = sessionQuery.data;
-  const sessionCookies = (sessionPayload?.cookies as SessionCookie[]) ?? [];
-  const sessionOrigins = (sessionPayload?.origins as unknown[]) ?? [];
-  const sessionUpdatedAt = (sessionPayload?.updatedAt as string) ?? null;
+  const sessionPayload = sessionQuery.data as Record<string, unknown> | undefined;
+  const sessionCookies = (sessionPayload?.['cookies'] as SessionCookie[]) ?? [];
+  const sessionOrigins = (sessionPayload?.['origins'] as unknown[]) ?? [];
+  const sessionUpdatedAt = (sessionPayload?.['updatedAt'] as string) ?? null;
   const sessionError = sessionQuery.isError
     ? (sessionQuery.error)?.message ?? 'Failed to load session cookies.'
-    : (sessionPayload?.error as string) ?? null;
+    : (sessionPayload?.['error'] as string) ?? null;
 
   // Playwright State
   const [playwrightSettings, setPlaywrightSettings] = useState(defaultPlaywrightSettings);
@@ -452,23 +452,23 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
         integrationId: activeIntegration.id,
         connectionId: connection.id,
         type,
-      }));
+      })) as Record<string, unknown>;
 
-      const normalizedSteps = normalizeSteps((payload.steps as unknown[]) || []);
+      const normalizedSteps = normalizeSteps((payload['steps'] as unknown[]) || []);
       if (normalizedSteps.length) setTestLog(normalizedSteps);
 
       const durationMs = Math.round(performance.now() - startedAt);
       let extraInfo = '';
-      if (type === 'base/test' && payload.inventoryCount !== undefined) {
+      if (type === 'base/test' && payload['inventoryCount'] !== undefined) {
         extraInfo = `
-Inventories found: ${String(payload.inventoryCount)}`;
-      } else if (type === 'allegro/test' && payload.profile) {
-        const profile = payload.profile as Record<string, unknown>;
-        const login = (profile.login as string) ?? '';
-        const name = (profile.name as string) ?? '';
+Inventories found: \${String(payload['inventoryCount'])}`;
+      } else if (type === 'allegro/test' && payload['profile']) {
+        const profile = payload['profile'] as Record<string, unknown>;
+        const login = (profile['login'] as string) ?? '';
+        const name = (profile['name'] as string) ?? '';
         const identifier = name || login;
         if (identifier) extraInfo = `
-Account: ${identifier}`;
+Account: \${identifier}`;
       }
 
       setTestSuccessMessage(`${title} succeeded.
@@ -487,26 +487,26 @@ Duration: ${durationMs}ms
 Error: ${message}`;
       
       if (data) {
-        const normalizedSteps = normalizeSteps((data.steps as unknown[]) || []);
+        const normalizedSteps = normalizeSteps((data['steps'] as unknown[]) || []);
         const failedStep = normalizedSteps.find((s: TestLogEntry) => s.status === 'failed');
         const failedStepDetail = failedStep?.detail || '';
-        const errorBody = (data.error as string) || failedStepDetail || 'No response body';
-        errorMessage = `${title} failed.
-URL: ${requestUrl}
-Duration: ${durationMs}ms
+        const errorBody = (data['error'] as string) || failedStepDetail || 'No response body';
+        errorMessage = `\${title} failed.
+URL: \${requestUrl}
+Duration: \${durationMs}ms
 
 Response:
-${errorBody}`;
+\${errorBody}`;
 
         const steps = normalizedSteps.length
           ? normalizedSteps.map((s: TestLogEntry) => s.status === 'failed' && !s.detail ? { ...s, detail: errorMessage } : s)
-          : [{ step: `${title} failed`, status: 'failed' as const, timestamp: new Date().toISOString(), detail: errorMessage }];
+          : [{ step: `\${title} failed`, status: 'failed' as const, timestamp: new Date().toISOString(), detail: errorMessage }];
           
         setTestLog(steps);
         setTestErrorMeta({
-          errorId: data.errorId as string,
-          integrationId: data.integrationId as string,
-          connectionId: data.connectionId as string,
+          errorId: data['errorId'] as string,
+          integrationId: data['integrationId'] as string,
+          connectionId: data['connectionId'] as string,
         });
       } else {
         setTestLog([{ step: `${title} failed`, status: 'failed' as const, timestamp: new Date().toISOString(), detail: errorMessage }]);

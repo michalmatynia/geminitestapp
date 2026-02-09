@@ -1,201 +1,15 @@
-__tests__/features/ai/ai-paths/runtime/evaluate-graph.test.ts(370,34): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
-__tests__/features/ai/ai-paths/runtime/evaluate-graph.test.ts(371,34): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
-__tests__/features/ai/ai-paths/runtime/handlers/agent.test.ts(46,21): error TS4111: Property 'jobId' comes from an index signature, so it must be accessed with ['jobId'].
-__tests__/features/ai/ai-paths/runtime/handlers/agent.test.ts(67,21): error TS4111: Property 'result' comes from an index signature, so it must be accessed with ['result'].
-__tests__/features/ai/ai-paths/runtime/handlers/common.test.ts(105,21): error TS4111: Property 'valid' comes from an index signature, so it must be accessed with ['valid'].
-__tests__/features/ai/ai-paths/runtime/handlers/common.test.ts(118,21): error TS4111: Property 'valid' comes from an index signature, so it must be accessed with ['valid'].
-__tests__/features/ai/ai-paths/runtime/handlers/common.test.ts(133,21): error TS4111: Property 'valid' comes from an index signature, so it must be accessed with ['valid'].
-__tests__/features/ai/ai-paths/runtime/handlers/common.test.ts(134,21): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
-__tests__/features/ai/ai-paths/runtime/handlers/common.test.ts(147,21): error TS4111: Property 'valid' comes from an index signature, so it must be accessed with ['valid'].
-__tests__/features/ai/ai-paths/runtime/handlers/common.test.ts(148,21): error TS4111: Property 'errors' comes from an index signature, so it must be accessed with ['errors'].
-__tests__/features/ai/ai-paths/runtime/handlers/common.test.ts(163,21): error TS4111: Property 'valid' comes from an index signature, so it must be accessed with ['valid'].
-__tests__/features/ai/ai-paths/runtime/handlers/common.test.ts(164,21): error TS4111: Property 'context' comes from an index signature, so it must be accessed with ['context'].
-__tests__/features/ai/ai-paths/runtime/handlers/common.test.ts(177,21): error TS4111: Property 'valid' comes from an index signature, so it must be accessed with ['valid'].
-__tests__/features/ai/ai-paths/runtime/handlers/common.test.ts(178,21): error TS4111: Property 'context' comes from an index signature, so it must be accessed with ['context'].
-__tests__/features/ai/ai-paths/runtime/handlers/common.test.ts(179,21): error TS4111: Property 'errors' comes from an index signature, so it must be accessed with ['errors'].
-__tests__/features/ai/ai-paths/runtime/handlers/common.test.ts(194,21): error TS4111: Property 'bundle' comes from an index signature, so it must be accessed with ['bundle'].
-__tests__/features/ai/ai-paths/runtime/handlers/generation.test.ts(41,21): error TS4111: Property 'prompt' comes from an index signature, so it must be accessed with ['prompt'].
-__tests__/features/ai/ai-paths/runtime/handlers/generation.test.ts(56,21): error TS4111: Property 'prompt' comes from an index signature, so it must be accessed with ['prompt'].
-__tests__/features/ai/ai-paths/runtime/handlers/generation.test.ts(77,21): error TS4111: Property 'jobId' comes from an index signature, so it must be accessed with ['jobId'].
-__tests__/features/ai/ai-paths/runtime/handlers/generation.test.ts(78,21): error TS4111: Property 'status' comes from an index signature, so it must be accessed with ['status'].
-__tests__/features/ai/ai-paths/runtime/handlers/generation.test.ts(94,21): error TS4111: Property 'description_en' comes from an index signature, so it must be accessed with ['description_en'].
-__tests__/features/ai/ai-paths/runtime/handlers/generation.test.ts(109,21): error TS4111: Property 'description_en' comes from an index signature, so it must be accessed with ['description_en'].
-__tests__/features/ai/ai-paths/runtime/handlers/integration.test.ts(49,21): error TS4111: Property 'trigger' comes from an index signature, so it must be accessed with ['trigger'].
-__tests__/features/ai/ai-paths/runtime/handlers/integration.test.ts(50,22): error TS4111: Property 'context' comes from an index signature, so it must be accessed with ['context'].
-__tests__/features/ai/ai-paths/runtime/handlers/integration.test.ts(85,21): error TS4111: Property 'result' comes from an index signature, so it must be accessed with ['result'].
-__tests__/features/ai/ai-paths/runtime/handlers/integration.test.ts(124,21): error TS4111: Property 'result' comes from an index signature, so it must be accessed with ['result'].
-__tests__/features/ai/ai-paths/runtime/handlers/integration.test.ts(164,21): error TS4111: Property 'result' comes from an index signature, so it must be accessed with ['result'].
-__tests__/features/ai/ai-paths/runtime/handlers/integration.test.ts(190,21): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
-__tests__/features/ai/ai-paths/runtime/handlers/integration.test.ts(219,22): error TS4111: Property 'context' comes from an index signature, so it must be accessed with ['context'].
-__tests__/features/ai/ai-paths/runtime/handlers/integration.test.ts(220,22): error TS4111: Property 'context' comes from an index signature, so it must be accessed with ['context'].
-__tests__/features/ai/ai-paths/runtime/handlers/integration.test.ts(240,21): error TS4111: Property 'status' comes from an index signature, so it must be accessed with ['status'].
-__tests__/features/ai/ai-paths/runtime/handlers/integration.test.ts(241,21): error TS4111: Property 'result' comes from an index signature, so it must be accessed with ['result'].
-__tests__/features/cms/hooks/usePageBuilderContext.test.tsx(137,55): error TS4111: Property 'text' comes from an index signature, so it must be accessed with ['text'].
-__tests__/features/cms/hooks/usePageBuilderContext.test.tsx(158,55): error TS4111: Property 'columns' comes from an index signature, so it must be accessed with ['columns'].
-__tests__/features/cms/services/page-builder-reducer.test.ts(110,40): error TS4111: Property 'imageHeight' comes from an index signature, so it must be accessed with ['imageHeight'].
-__tests__/features/cms/services/page-builder-reducer.test.ts(169,51): error TS4111: Property 'content' comes from an index signature, so it must be accessed with ['content'].
-__tests__/features/cms/services/page-builder-reducer.test.ts(179,42): error TS4111: Property 'columns' comes from an index signature, so it must be accessed with ['columns'].
-__tests__/features/cms/services/page-builder-reducer.test.ts(182,42): error TS4111: Property 'columns' comes from an index signature, so it must be accessed with ['columns'].
-__tests__/features/cms/services/page-builder-reducer.test.ts(194,42): error TS4111: Property 'rows' comes from an index signature, so it must be accessed with ['rows'].
-__tests__/features/notesapp/pages/notes-advanced.test.tsx(74,54): error TS4111: Property 'id' comes from an index signature, so it must be accessed with ['id'].
-__tests__/features/notesapp/pages/notes-advanced.test.tsx(79,60): error TS4111: Property 'id' comes from an index signature, so it must be accessed with ['id'].
-__tests__/features/notesapp/pages/notes-advanced.test.tsx(87,51): error TS4111: Property 'id' comes from an index signature, so it must be accessed with ['id'].
-__tests__/features/products/services/aiTranslationService.test.ts(52,32): error TS4111: Property 'polish' comes from an index signature, so it must be accessed with ['polish'].
-__tests__/features/products/services/aiTranslationService.test.ts(56,32): error TS4111: Property 'german' comes from an index signature, so it must be accessed with ['german'].
-__tests__/features/products/services/aiTranslationService.test.ts(76,32): error TS4111: Property 'english' comes from an index signature, so it must be accessed with ['english'].
-__tests__/features/products/services/aiTranslationService.test.ts(77,32): error TS4111: Property 'polish' comes from an index signature, so it must be accessed with ['polish'].
-src/app/(admin)/admin/settings/database/page.tsx(13,27): error TS6196: 'ProviderSourceStatus' is declared but never used.
-src/app/api/chatbot/route.ts(16,1): error TS6133: 'logger' is declared but its value is never read.
-src/app/api/products/ai-jobs/route.ts(35,74): error TS2339: Property 'payload' does not exist on type 'Omit<ProductAiJob, "product"> & { product: ProductSummary | null; }'.
-src/app/api/settings/providers/route.ts(24,28): error TS6196: 'ProviderService' is declared but never used.
-src/features/admin/pages/AdminMenuSettingsPage.tsx(11,3): error TS2614: Module '"@/features/admin/components/Menu"' has no exported member 'AdminNavLeaf'. Did you mean to use 'import AdminNavLeaf from "@/features/admin/components/Menu"' instead?
-src/features/admin/pages/AdminMenuSettingsPage.tsx(19,8): error TS2614: Module '"@/features/admin/components/Menu"' has no exported member 'AdminMenuCustomNode'. Did you mean to use 'import AdminMenuCustomNode from "@/features/admin/components/Menu"' instead?
-src/features/admin/pages/AdminRouteMapPage.tsx(11,8): error TS2614: Module '"@/features/admin/components/Menu"' has no exported member 'AdminMenuCustomNode'. Did you mean to use 'import AdminMenuCustomNode from "@/features/admin/components/Menu"' instead?
-src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx(882,9): error TS2322: Type '(id: string, prompt: string) => void' is not assignable to type '(databaseNodeId: string, prompt: string) => Promise<void>'.
-  Type 'void' is not assignable to type 'Promise<void>'.
-src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts(1925,5): error TS2322: Type '(pathId?: string) => void' is not assignable to type '(pathId?: string | undefined) => Promise<void>'.
-  Type 'void' is not assignable to type 'Promise<void>'.
-src/features/analytics/components/PageAnalyticsTracker.tsx(85,19): error TS4111: Property 'source' comes from an index signature, so it must be accessed with ['source'].
-src/features/analytics/components/PageAnalyticsTracker.tsx(86,19): error TS4111: Property 'medium' comes from an index signature, so it must be accessed with ['medium'].
-src/features/analytics/components/PageAnalyticsTracker.tsx(87,21): error TS4111: Property 'campaign' comes from an index signature, so it must be accessed with ['campaign'].
-src/features/analytics/components/PageAnalyticsTracker.tsx(88,17): error TS4111: Property 'term' comes from an index signature, so it must be accessed with ['term'].
-src/features/analytics/components/PageAnalyticsTracker.tsx(89,20): error TS4111: Property 'content' comes from an index signature, so it must be accessed with ['content'].
-src/features/analytics/server/repository.ts(298,11): error TS4111: Property 'scope' comes from an index signature, so it must be accessed with ['scope'].
-src/features/analytics/server/repository.ts(342,11): error TS4111: Property 'scope' comes from an index signature, so it must be accessed with ['scope'].
-src/features/auth/auth.ts(45,34): error TS4111: Property 'email' comes from an index signature, so it must be accessed with ['email'].
-src/features/auth/auth.ts(46,37): error TS4111: Property 'password' comes from an index signature, so it must be accessed with ['password'].
-src/features/auth/auth.ts(47,32): error TS4111: Property 'otp' comes from an index signature, so it must be accessed with ['otp'].
-src/features/auth/auth.ts(48,41): error TS4111: Property 'recoveryCode' comes from an index signature, so it must be accessed with ['recoveryCode'].
-src/features/auth/auth.ts(49,40): error TS4111: Property 'challengeId' comes from an index signature, so it must be accessed with ['challengeId'].
-src/features/auth/utils/auth-security.ts(42,12): error TS4111: Property 'minPasswordLength' comes from an index signature, so it must be accessed with ['minPasswordLength'].
-src/features/auth/utils/auth-security.ts(48,19): error TS4111: Property 'requireStrongPassword' comes from an index signature, so it must be accessed with ['requireStrongPassword'].
-src/features/auth/utils/auth-security.ts(49,16): error TS4111: Property 'requireStrongPassword' comes from an index signature, so it must be accessed with ['requireStrongPassword'].
-src/features/auth/utils/auth-security.ts(52,19): error TS4111: Property 'requireUppercase' comes from an index signature, so it must be accessed with ['requireUppercase'].
-src/features/auth/utils/auth-security.ts(53,16): error TS4111: Property 'requireUppercase' comes from an index signature, so it must be accessed with ['requireUppercase'].
-src/features/auth/utils/auth-security.ts(56,19): error TS4111: Property 'requireLowercase' comes from an index signature, so it must be accessed with ['requireLowercase'].
-src/features/auth/utils/auth-security.ts(57,16): error TS4111: Property 'requireLowercase' comes from an index signature, so it must be accessed with ['requireLowercase'].
-src/features/auth/utils/auth-security.ts(60,19): error TS4111: Property 'requireNumber' comes from an index signature, so it must be accessed with ['requireNumber'].
-src/features/auth/utils/auth-security.ts(61,16): error TS4111: Property 'requireNumber' comes from an index signature, so it must be accessed with ['requireNumber'].
-src/features/auth/utils/auth-security.ts(64,19): error TS4111: Property 'requireSymbol' comes from an index signature, so it must be accessed with ['requireSymbol'].
-src/features/auth/utils/auth-security.ts(65,16): error TS4111: Property 'requireSymbol' comes from an index signature, so it must be accessed with ['requireSymbol'].
-src/features/auth/utils/auth-security.ts(68,12): error TS4111: Property 'lockoutMaxAttempts' comes from an index signature, so it must be accessed with ['lockoutMaxAttempts'].
-src/features/auth/utils/auth-security.ts(74,12): error TS4111: Property 'lockoutWindowMinutes' comes from an index signature, so it must be accessed with ['lockoutWindowMinutes'].
-src/features/auth/utils/auth-security.ts(80,12): error TS4111: Property 'lockoutDurationMinutes' comes from an index signature, so it must be accessed with ['lockoutDurationMinutes'].
-src/features/auth/utils/auth-security.ts(86,12): error TS4111: Property 'ipRateLimitMaxAttempts' comes from an index signature, so it must be accessed with ['ipRateLimitMaxAttempts'].
-src/features/auth/utils/auth-security.ts(92,12): error TS4111: Property 'ipRateLimitWindowMinutes' comes from an index signature, so it must be accessed with ['ipRateLimitWindowMinutes'].
-src/features/auth/utils/auth-security.ts(98,12): error TS4111: Property 'ipRateLimitDurationMinutes' comes from an index signature, so it must be accessed with ['ipRateLimitDurationMinutes'].
-src/features/cms/components/frontend/GsapAnimationWrapper.tsx(365,26): error TS4111: Property 'scale' comes from an index signature, so it must be accessed with ['scale'].
-src/features/cms/components/frontend/GsapAnimationWrapper.tsx(366,24): error TS4111: Property 'scale' comes from an index signature, so it must be accessed with ['scale'].
-src/features/cms/components/frontend/GsapAnimationWrapper.tsx(369,26): error TS4111: Property 'rotation' comes from an index signature, so it must be accessed with ['rotation'].
-src/features/cms/components/frontend/GsapAnimationWrapper.tsx(370,24): error TS4111: Property 'rotation' comes from an index signature, so it must be accessed with ['rotation'].
-src/features/cms/components/frontend/GsapAnimationWrapper.tsx(373,26): error TS4111: Property 'opacity' comes from an index signature, so it must be accessed with ['opacity'].
-src/features/cms/components/frontend/GsapAnimationWrapper.tsx(374,24): error TS4111: Property 'opacity' comes from an index signature, so it must be accessed with ['opacity'].
-src/features/cms/components/frontend/GsapAnimationWrapper.tsx(377,26): error TS4111: Property 'filter' comes from an index signature, so it must be accessed with ['filter'].
-src/features/cms/components/frontend/GsapAnimationWrapper.tsx(378,24): error TS4111: Property 'filter' comes from an index signature, so it must be accessed with ['filter'].
-src/features/cms/components/frontend/sections/FrontendBlockRenderer.tsx(442,23): error TS4111: Property 'x' comes from an index signature, so it must be accessed with ['x'].
-src/features/cms/components/frontend/sections/FrontendBlockRenderer.tsx(443,23): error TS4111: Property 'y' comes from an index signature, so it must be accessed with ['y'].
-src/features/cms/components/frontend/sections/FrontendBlockRenderer.tsx(444,32): error TS4111: Property 'blur' comes from an index signature, so it must be accessed with ['blur'].
-src/features/cms/components/frontend/sections/FrontendBlockRenderer.tsx(445,28): error TS4111: Property 'spread' comes from an index signature, so it must be accessed with ['spread'].
-src/features/cms/components/frontend/sections/FrontendBlockRenderer.tsx(446,26): error TS4111: Property 'color' comes from an index signature, so it must be accessed with ['color'].
-src/features/cms/components/frontend/sections/FrontendGridSection.tsx(150,23): error TS4111: Property 'x' comes from an index signature, so it must be accessed with ['x'].
-src/features/cms/components/frontend/sections/FrontendGridSection.tsx(151,23): error TS4111: Property 'y' comes from an index signature, so it must be accessed with ['y'].
-src/features/cms/components/frontend/sections/FrontendGridSection.tsx(152,32): error TS4111: Property 'blur' comes from an index signature, so it must be accessed with ['blur'].
-src/features/cms/components/frontend/sections/FrontendGridSection.tsx(153,28): error TS4111: Property 'spread' comes from an index signature, so it must be accessed with ['spread'].
-src/features/cms/components/frontend/sections/FrontendGridSection.tsx(154,26): error TS4111: Property 'color' comes from an index signature, so it must be accessed with ['color'].
-src/features/cms/components/frontend/theme-styles.ts(274,24): error TS4111: Property 'width' comes from an index signature, so it must be accessed with ['width'].
-src/features/cms/components/frontend/theme-styles.ts(275,30): error TS4111: Property 'style' comes from an index signature, so it must be accessed with ['style'].
-src/features/cms/components/frontend/theme-styles.ts(276,24): error TS4111: Property 'color' comes from an index signature, so it must be accessed with ['color'].
-src/features/cms/components/frontend/theme-styles.ts(277,25): error TS4111: Property 'radius' comes from an index signature, so it must be accessed with ['radius'].
-src/features/cms/components/frontend/theme-styles.ts(298,20): error TS4111: Property 'x' comes from an index signature, so it must be accessed with ['x'].
-src/features/cms/components/frontend/theme-styles.ts(299,20): error TS4111: Property 'y' comes from an index signature, so it must be accessed with ['y'].
-src/features/cms/components/frontend/theme-styles.ts(300,23): error TS4111: Property 'blur' comes from an index signature, so it must be accessed with ['blur'].
-src/features/cms/components/frontend/theme-styles.ts(301,25): error TS4111: Property 'spread' comes from an index signature, so it must be accessed with ['spread'].
-src/features/cms/components/frontend/theme-styles.ts(302,24): error TS4111: Property 'color' comes from an index signature, so it must be accessed with ['color'].
-src/features/cms/components/frontend/theme-styles.ts(337,29): error TS4111: Property 'type' comes from an index signature, so it must be accessed with ['type'].
-src/features/cms/components/frontend/theme-styles.ts(342,34): error TS4111: Property 'color' comes from an index signature, so it must be accessed with ['color'].
-src/features/cms/components/frontend/theme-styles.ts(349,57): error TS4111: Property 'gradientFrom' comes from an index signature, so it must be accessed with ['gradientFrom'].
-src/features/cms/components/frontend/theme-styles.ts(349,82): error TS4111: Property 'gradientFromOpacity' comes from an index signature, so it must be accessed with ['gradientFromOpacity'].
-src/features/cms/components/frontend/theme-styles.ts(350,55): error TS4111: Property 'gradientTo' comes from an index signature, so it must be accessed with ['gradientTo'].
-src/features/cms/components/frontend/theme-styles.ts(350,78): error TS4111: Property 'gradientToOpacity' comes from an index signature, so it must be accessed with ['gradientToOpacity'].
-src/features/cms/components/frontend/theme-styles.ts(351,37): error TS4111: Property 'gradientAngle' comes from an index signature, so it must be accessed with ['gradientAngle'].
-src/features/cms/components/frontend/theme-styles.ts(362,39): error TS4111: Property 'imageUrl' comes from an index signature, so it must be accessed with ['imageUrl'].
-src/features/cms/components/frontend/theme-styles.ts(362,74): error TS4111: Property 'imageUrl' comes from an index signature, so it must be accessed with ['imageUrl'].
-src/features/cms/components/page-builder/ComponentSettingsPanel.tsx(238,110): error TS4111: Property 'connection' comes from an index signature, so it must be accessed with ['connection'].
-src/features/cms/components/page-builder/context/InspectorAiContext.tsx(689,21): error TS4111: Property 'settings' comes from an index signature, so it must be accessed with ['settings'].
-src/features/cms/components/page-builder/context/InspectorAiContext.tsx(689,53): error TS4111: Property 'settings' comes from an index signature, so it must be accessed with ['settings'].
-src/features/cms/components/page-builder/context/InspectorAiContext.tsx(690,19): error TS4111: Property 'settings' comes from an index signature, so it must be accessed with ['settings'].
-src/features/cms/components/page-builder/preview/image-utils.tsx(78,23): error TS4111: Property 'x' comes from an index signature, so it must be accessed with ['x'].
-src/features/cms/components/page-builder/preview/image-utils.tsx(79,23): error TS4111: Property 'y' comes from an index signature, so it must be accessed with ['y'].
-src/features/cms/components/page-builder/preview/image-utils.tsx(80,32): error TS4111: Property 'blur' comes from an index signature, so it must be accessed with ['blur'].
-src/features/cms/components/page-builder/preview/image-utils.tsx(81,28): error TS4111: Property 'spread' comes from an index signature, so it must be accessed with ['spread'].
-src/features/cms/components/page-builder/preview/image-utils.tsx(82,26): error TS4111: Property 'color' comes from an index signature, so it must be accessed with ['color'].
-src/features/cms/components/page-builder/registry/section-definitions.ts(225,45): error TS4111: Property 'TextAtom' comes from an index signature, so it must be accessed with ['TextAtom'].
-src/features/cms/components/page-builder/registry/section-definitions.ts(226,43): error TS4111: Property 'TextAtom' comes from an index signature, so it must be accessed with ['TextAtom'].
-src/features/cms/components/page-builder/registry/section-definitions.ts(233,45): error TS4111: Property 'ImageElement' comes from an index signature, so it must be accessed with ['ImageElement'].
-src/features/cms/components/page-builder/registry/section-definitions.ts(234,43): error TS4111: Property 'ImageElement' comes from an index signature, so it must be accessed with ['ImageElement'].
-src/features/cms/components/page-builder/registry/section-definitions.ts(241,45): error TS4111: Property 'Model3D' comes from an index signature, so it must be accessed with ['Model3D'].
-src/features/cms/components/page-builder/registry/section-definitions.ts(242,43): error TS4111: Property 'Model3D' comes from an index signature, so it must be accessed with ['Model3D'].
-src/features/cms/components/page-builder/registry/section-definitions.ts(249,45): error TS4111: Property 'Button' comes from an index signature, so it must be accessed with ['Button'].
-src/features/cms/components/page-builder/registry/section-definitions.ts(250,43): error TS4111: Property 'Button' comes from an index signature, so it must be accessed with ['Button'].
-src/features/cms/components/page-builder/registry/section-definitions.ts(573,45): error TS4111: Property 'Slideshow' comes from an index signature, so it must be accessed with ['Slideshow'].
-src/features/cms/components/page-builder/registry/section-definitions.ts(574,43): error TS4111: Property 'Slideshow' comes from an index signature, so it must be accessed with ['Slideshow'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(397,23): error TS4111: Property 'seo' comes from an index signature, so it must be accessed with ['seo'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(397,50): error TS4111: Property 'seo' comes from an index signature, so it must be accessed with ['seo'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(398,21): error TS4111: Property 'seo' comes from an index signature, so it must be accessed with ['seo'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(401,25): error TS4111: Property 'seoTitle' comes from an index signature, so it must be accessed with ['seoTitle'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(401,57): error TS4111: Property 'seoTitle' comes from an index signature, so it must be accessed with ['seoTitle'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(401,75): error TS4111: Property 'seoTitle' comes from an index signature, so it must be accessed with ['seoTitle'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(402,25): error TS4111: Property 'seoDescription' comes from an index signature, so it must be accessed with ['seoDescription'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(402,63): error TS4111: Property 'seoDescription' comes from an index signature, so it must be accessed with ['seoDescription'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(402,87): error TS4111: Property 'seoDescription' comes from an index signature, so it must be accessed with ['seoDescription'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(403,25): error TS4111: Property 'seoCanonical' comes from an index signature, so it must be accessed with ['seoCanonical'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(403,61): error TS4111: Property 'seoCanonical' comes from an index signature, so it must be accessed with ['seoCanonical'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(403,83): error TS4111: Property 'seoCanonical' comes from an index signature, so it must be accessed with ['seoCanonical'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(404,25): error TS4111: Property 'seoOgImage' comes from an index signature, so it must be accessed with ['seoOgImage'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(404,59): error TS4111: Property 'seoOgImage' comes from an index signature, so it must be accessed with ['seoOgImage'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(404,79): error TS4111: Property 'seoOgImage' comes from an index signature, so it must be accessed with ['seoOgImage'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(405,25): error TS4111: Property 'robotsMeta' comes from an index signature, so it must be accessed with ['robotsMeta'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(405,59): error TS4111: Property 'robotsMeta' comes from an index signature, so it must be accessed with ['robotsMeta'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(405,79): error TS4111: Property 'robotsMeta' comes from an index signature, so it must be accessed with ['robotsMeta'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(418,18): error TS4111: Property 'sections' comes from an index signature, so it must be accessed with ['sections'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(418,37): error TS4111: Property 'layout' comes from an index signature, so it must be accessed with ['layout'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(418,54): error TS4111: Property 'plan' comes from an index signature, so it must be accessed with ['plan'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(429,41): error TS4111: Property 'template' comes from an index signature, so it must be accessed with ['template'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(429,71): error TS4111: Property 'template' comes from an index signature, so it must be accessed with ['template'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(429,95): error TS4111: Property 'name' comes from an index signature, so it must be accessed with ['name'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(429,121): error TS4111: Property 'name' comes from an index signature, so it must be accessed with ['name'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(430,37): error TS4111: Property 'type' comes from an index signature, so it must be accessed with ['type'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(430,63): error TS4111: Property 'type' comes from an index signature, so it must be accessed with ['type'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(431,42): error TS4111: Property 'zone' comes from an index signature, so it must be accessed with ['zone'].
-src/features/cms/components/page-builder/settings/PageSettingsTab.tsx(431,68): error TS4111: Property 'zone' comes from an index signature, so it must be accessed with ['zone'].
-src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(431,28): error TS4111: Property 'width' comes from an index signature, so it must be accessed with ['width'].
-src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(441,28): error TS4111: Property 'radius' comes from an index signature, so it must be accessed with ['radius'].
-src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(452,28): error TS4111: Property 'style' comes from an index signature, so it must be accessed with ['style'].
-src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(463,30): error TS4111: Property 'color' comes from an index signature, so it must be accessed with ['color'].
-src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(468,30): error TS4111: Property 'color' comes from an index signature, so it must be accessed with ['color'].
-src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(504,26): error TS4111: Property 'color' comes from an index signature, so it must be accessed with ['color'].
-src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(509,26): error TS4111: Property 'color' comes from an index signature, so it must be accessed with ['color'].
-src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(522,28): error TS4111: Property 'type' comes from an index signature, so it must be accessed with ['type'].
-src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(522,51): error TS4111: Property 'type' comes from an index signature, so it must be accessed with ['type'].
-src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(531,42): error TS4111: Property 'gradientAngle' comes from an index signature, so it must be accessed with ['gradientAngle'].
-src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(536,33): error TS4111: Property 'gradientFromOpacity' comes from an index signature, so it must be accessed with ['gradientFromOpacity'].
-src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(536,71): error TS4111: Property 'gradientFromOpacity' comes from an index signature, so it must be accessed with ['gradientFromOpacity'].
-src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(537,31): error TS4111: Property 'gradientToOpacity' comes from an index signature, so it must be accessed with ['gradientToOpacity'].
-src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(537,67): error TS4111: Property 'gradientToOpacity' comes from an index signature, so it must be accessed with ['gradientToOpacity'].
-src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(558,24): error TS4111: Property 'color' comes from an index signature, so it must be accessed with ['color'].
-src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(563,24): error TS4111: Property 'color' comes from an index signature, so it must be accessed with ['color'].
-src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(590,26): error TS4111: Property 'gradientFrom' comes from an index signature, so it must be accessed with ['gradientFrom'].
-src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(595,26): error TS4111: Property 'gradientFrom' comes from an index signature, so it must be accessed with ['gradientFrom'].
-src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(614,26): error TS4111: Property 'gradientTo' comes from an index signature, so it must be accessed with ['gradientTo'].
-src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(619,26): error TS4111: Property 'gradientTo' comes from an index signature, so it must be accessed with ['gradientTo'].
-src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(654,22): error TS4111: Property 'imageUrl' comes from an index signature, so it must be accessed with ['imageUrl'].
-src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(674,24): error TS4111: Property 'fontFamily' comes from an index signature, so it must be accessed with ['fontFamily'].
-src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(684,33): error TS4111: Property 'fontWeight' comes from an index signature, so it must be accessed with ['fontWeight'].
-src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(694,26): error TS4111: Property 'fontSize' comes from an index signature, so it must be accessed with ['fontSize'].
-src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(707,26): error TS4111: Property 'lineHeight' comes from an index signature, so it must be accessed with ['lineHeight'].
-src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(719,26): error TS4111: Property 'letterSpacing' comes from an index signature, so it must be accessed with ['letterSpacing'].
-src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(731,26): error TS4111: Property 'textColor' comes from an index signature, so it must be accessed with ['textColor'].
-src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(736,26): error TS4111: Property 'textColor' comes from an index signature, so it must be accessed with ['textColor'].
+src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(1,10): error TS6133: 'Link2' is declared but its value is never read.
+src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(1,17): error TS6133: 'Search' is declared but its value is never read.
+src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(2,39): error TS6133: 'useState' is declared but its value is never read.
+src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(11,3): error TS6133: 'Dialog' is declared but its value is never read.
+src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(12,3): error TS6133: 'DialogContent' is declared but its value is never read.
+src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(13,3): error TS6133: 'DialogHeader' is declared but its value is never read.
+src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(14,3): error TS6133: 'DialogTitle' is declared but its value is never read.
+src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(15,3): error TS6133: 'DialogTrigger' is declared but its value is never read.
+src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(30,1): error TS6133: 'useCmsDomainSelection' is declared but its value is never read.
+src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(31,1): error TS6133: 'useCmsSlugs' is declared but its value is never read.
+src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(33,1): error TS6133: 'Slug' is declared but its value is never read.
+src/features/cms/components/page-builder/SettingsFieldRenderer.tsx(165,12): error TS2304: Cannot find name 'LinkField'.
 src/features/cms/components/page-builder/theme/theme-utils.ts(33,27): error TS4111: Property 'name' comes from an index signature, so it must be accessed with ['name'].
 src/features/cms/components/page-builder/theme/theme-utils.ts(34,27): error TS4111: Property 'schemeName' comes from an index signature, so it must be accessed with ['schemeName'].
 src/features/cms/components/page-builder/theme/theme-utils.ts(35,27): error TS4111: Property 'title' comes from an index signature, so it must be accessed with ['title'].
@@ -252,8 +66,6 @@ src/features/integrations/components/listings/ExportLogViewer.tsx(56,24): error 
 src/features/integrations/components/listings/ExportLogViewer.tsx(56,58): error TS4111: Property 'outputFormat' comes from an index signature, so it must be accessed with ['outputFormat'].
 src/features/integrations/components/listings/ExportLogViewer.tsx(60,94): error TS4111: Property 'converted' comes from an index signature, so it must be accessed with ['converted'].
 src/features/integrations/components/listings/ExportLogViewer.tsx(61,92): error TS4111: Property 'resized' comes from an index signature, so it must be accessed with ['resized'].
-src/features/integrations/context/CategoryMapperContext.tsx(41,18): error TS2304: Cannot find name 'UseMutationResult'.
-src/features/integrations/context/CategoryMapperContext.tsx(46,17): error TS2304: Cannot find name 'UseMutationResult'.
 src/features/integrations/context/IntegrationsContext.tsx(222,43): error TS4111: Property 'cookies' comes from an index signature, so it must be accessed with ['cookies'].
 src/features/integrations/context/IntegrationsContext.tsx(223,43): error TS4111: Property 'origins' comes from an index signature, so it must be accessed with ['origins'].
 src/features/integrations/context/IntegrationsContext.tsx(224,45): error TS4111: Property 'updatedAt' comes from an index signature, so it must be accessed with ['updatedAt'].
@@ -432,7 +244,19 @@ src/features/integrations/utils/connections.ts(30,19): error TS4111: Property 't
 src/features/integrations/utils/connections.ts(31,15): error TS4111: Property 'timestamp' comes from an index signature, so it must be accessed with ['timestamp'].
 src/features/integrations/utils/connections.ts(33,21): error TS4111: Property 'detail' comes from an index signature, so it must be accessed with ['detail'].
 src/features/integrations/utils/connections.ts(33,56): error TS4111: Property 'detail' comes from an index signature, so it must be accessed with ['detail'].
-src/features/jobs/hooks/useJobQueries.ts(38,89): error TS2339: Property 'payload' does not exist on type 'ProductAiJob'.
+src/features/internationalization/services/currency-repository/mongo-currency-repository.ts(80,9): error TS2352: Conversion of type '{ $pull: { currencyIds: string; }; $addToSet: { currencyIds: string; }; $set: { updatedAt: Date; }; }' to type 'UpdateFilter<CurrencyDoc>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ $pull: { currencyIds: string; }; $addToSet: { currencyIds: string; }; $set: { updatedAt: Date; }; }' is not comparable to type '{ $currentDate?: Record<string, true> | Record<string, { $type: "date" | "timestamp"; }>; $inc?: Record<string, NumericType | undefined>; ... 12 more ...; $bit?: Record<...> | ... 1 more ... | Record<...>; }'.
+    Types of property '$pull' are incompatible.
+      Type '{ currencyIds: string; }' is not comparable to type 'PullOperator<CurrencyDoc>'.
+        Type '{ currencyIds: string; }' is not comparable to type '{ readonly [x: string]: Partial<any> | FilterOperators<any> | { [x: string]: FilterOperators<any> | undefined; } | undefined; }'.
+          Property 'currencyIds' is incompatible with index signature.
+            Type 'string' is not comparable to type 'Partial<any> | FilterOperators<any> | { [x: string]: FilterOperators<any> | undefined; } | undefined'.
+src/features/internationalization/services/currency-repository/prisma-currency-repository.ts(27,16): error TS2322: Type 'string' is not assignable to type 'CurrencyCode'.
+src/features/internationalization/services/currency-repository/prisma-currency-repository.ts(43,9): error TS2322: Type 'string' is not assignable to type 'CurrencyCode'.
+src/features/internationalization/services/currency-repository/prisma-currency-repository.ts(54,7): error TS2375: Type '{ id: string; code?: string; name?: string; symbol?: string | null; }' is not assignable to type '(Without<CurrencyUpdateInput, CurrencyUncheckedUpdateInput> & CurrencyUncheckedUpdateInput) | (Without<...> & CurrencyUpdateInput)' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type '{ id: string; code?: string; name?: string; symbol?: string | null; }' is not assignable to type 'Without<CurrencyUncheckedUpdateInput, CurrencyUpdateInput> & CurrencyUpdateInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'code' are incompatible.
+      Type 'string' is not assignable to type 'CurrencyCode | EnumCurrencyCodeFieldUpdateOperationsInput'.
 src/features/jobs/hooks/useJobQueries.ts(50,26): error TS4111: Property 'context' comes from an index signature, so it must be accessed with ['context'].
 src/features/jobs/processors/ai-path-run-processor.ts(71,18): error TS4111: Property 'backoffMs' comes from an index signature, so it must be accessed with ['backoffMs'].
 src/features/jobs/processors/ai-path-run-processor.ts(71,48): error TS4111: Property 'backoffMs' comes from an index signature, so it must be accessed with ['backoffMs'].
@@ -440,6 +264,8 @@ src/features/jobs/processors/ai-path-run-processor.ts(73,18): error TS4111: Prop
 src/features/jobs/processors/ai-path-run-processor.ts(74,14): error TS4111: Property 'backoffMaxMs' comes from an index signature, so it must be accessed with ['backoffMaxMs'].
 src/features/jobs/processors/product-ai-processors.ts(212,39): error TS4111: Property 'pageSize' comes from an index signature, so it must be accessed with ['pageSize'].
 src/features/jobs/processors/product-ai-processors.ts(212,75): error TS4111: Property 'pageSize' comes from an index signature, so it must be accessed with ['pageSize'].
+src/features/jobs/processors/product-ai-processors.ts(220,7): error TS2322: Type 'string' is not assignable to type 'number'.
+src/features/jobs/processors/product-ai-processors.ts(221,7): error TS2322: Type 'string' is not assignable to type 'number'.
 src/features/jobs/processors/product-ai-processors.ts(289,21): error TS4111: Property 'id' comes from an index signature, so it must be accessed with ['id'].
 src/features/jobs/processors/product-ai-processors.ts(289,31): error TS4111: Property '_id' comes from an index signature, so it must be accessed with ['_id'].
 src/features/jobs/processors/product-ai-processors.ts(290,23): error TS4111: Property 'code' comes from an index signature, so it must be accessed with ['code'].
@@ -453,57 +279,51 @@ src/features/jobs/processors/product-ai-processors.ts(581,18): error TS4111: Pro
 src/features/jobs/processors/product-ai-processors.ts(582,18): error TS4111: Property 'description_de' comes from an index signature, so it must be accessed with ['description_de'].
 src/features/jobs/processors/product-ai-processors.ts(584,18): error TS4111: Property 'name_en' comes from an index signature, so it must be accessed with ['name_en'].
 src/features/jobs/processors/product-ai-processors.ts(585,18): error TS4111: Property 'description_en' comes from an index signature, so it must be accessed with ['description_en'].
-src/features/jobs/services/productAiService.ts(30,3): error TS2353: Object literal may only specify known properties, and 'payload' does not exist in type 'ProductAiJob'.
-src/features/jobs/services/productAiService.ts(42,30): error TS4111: Property 'name_en' comes from an index signature, so it must be accessed with ['name_en'].
-src/features/jobs/services/productAiService.ts(42,60): error TS4111: Property 'name_en' comes from an index signature, so it must be accessed with ['name_en'].
-src/features/jobs/services/productAiService.ts(43,29): error TS4111: Property 'sku' comes from an index signature, so it must be accessed with ['sku'].
-src/features/jobs/services/productAiService.ts(43,55): error TS4111: Property 'sku' comes from an index signature, so it must be accessed with ['sku'].
-src/features/jobs/services/productAiService.ts(90,17): error TS4111: Property 'entityType' comes from an index signature, so it must be accessed with ['entityType'].
-src/features/jobs/services/productAiService.ts(91,18): error TS4111: Property 'context' comes from an index signature, so it must be accessed with ['context'].
-src/features/jobs/services/productAiService.ts(91,67): error TS4111: Property 'entityType' comes from an index signature, so it must be accessed with ['entityType'].
-src/features/jobs/services/productAiService.ts(94,29): error TS4111: Property 'source' comes from an index signature, so it must be accessed with ['source'].
-src/features/jobs/services/productAiService.ts(95,28): error TS4111: Property 'graph' comes from an index signature, so it must be accessed with ['graph'].
-src/features/jobs/services/productAiService.ts(104,28): error TS2769: No overload matches this call.
-  Overload 1 of 2, '(predicate: (value: ProductAiJob, index: number, array: ProductAiJob[]) => value is ProductAiJob, thisArg?: any): ProductAiJob[]', gave the following error.
-    Argument of type '(job: { productId: string; payload: unknown; }) => boolean' is not assignable to parameter of type '(value: ProductAiJob, index: number, array: ProductAiJob[]) => value is ProductAiJob'.
-      Types of parameters 'job' and 'value' are incompatible.
-        Property 'payload' is missing in type 'ProductAiJob' but required in type '{ productId: string; payload: unknown; }'.
-  Overload 2 of 2, '(predicate: (value: ProductAiJob, index: number, array: ProductAiJob[]) => unknown, thisArg?: any): ProductAiJob[]', gave the following error.
-    Argument of type '(job: { productId: string; payload: unknown; }) => boolean' is not assignable to parameter of type '(value: ProductAiJob, index: number, array: ProductAiJob[]) => unknown'.
-      Types of parameters 'job' and 'value' are incompatible.
-        Property 'payload' is missing in type 'ProductAiJob' but required in type '{ productId: string; payload: unknown; }'.
-src/features/jobs/services/productAiService.ts(155,9): error TS2339: Property 'payload' does not exist on type 'ProductAiJob'.
-src/features/jobs/services/productAiService.ts(155,31): error TS2339: Property 'payload' does not exist on type 'ProductAiJob'.
-src/features/jobs/services/productAiService.ts(156,14): error TS2339: Property 'payload' does not exist on type 'ProductAiJob'.
-src/features/jobs/services/productAiService.ts(159,15): error TS4111: Property 'entityType' comes from an index signature, so it must be accessed with ['entityType'].
-src/features/jobs/services/productAiService.ts(160,16): error TS4111: Property 'context' comes from an index signature, so it must be accessed with ['context'].
-src/features/jobs/services/productAiService.ts(160,65): error TS4111: Property 'entityType' comes from an index signature, so it must be accessed with ['entityType'].
-src/features/jobs/services/productAiService.ts(163,27): error TS4111: Property 'source' comes from an index signature, so it must be accessed with ['source'].
-src/features/jobs/services/productAiService.ts(164,26): error TS4111: Property 'graph' comes from an index signature, so it must be accessed with ['graph'].
-src/features/notesapp/components/NoteForm.tsx(250,8): error TS2375: Type '{ formRef: RefObject<HTMLFormElement | null> | undefined; }' is not assignable to type '{ formRef?: RefObject<HTMLFormElement | null>; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'formRef' are incompatible.
-    Type 'RefObject<HTMLFormElement | null> | undefined' is not assignable to type 'RefObject<HTMLFormElement | null>'.
-      Type 'undefined' is not assignable to type 'RefObject<HTMLFormElement | null>'.
+src/features/jobs/services/productAiService.ts(44,30): error TS4111: Property 'name_en' comes from an index signature, so it must be accessed with ['name_en'].
+src/features/jobs/services/productAiService.ts(44,60): error TS4111: Property 'name_en' comes from an index signature, so it must be accessed with ['name_en'].
+src/features/jobs/services/productAiService.ts(45,29): error TS4111: Property 'sku' comes from an index signature, so it must be accessed with ['sku'].
+src/features/jobs/services/productAiService.ts(45,55): error TS4111: Property 'sku' comes from an index signature, so it must be accessed with ['sku'].
+src/features/jobs/services/productAiService.ts(92,17): error TS4111: Property 'entityType' comes from an index signature, so it must be accessed with ['entityType'].
+src/features/jobs/services/productAiService.ts(93,18): error TS4111: Property 'context' comes from an index signature, so it must be accessed with ['context'].
+src/features/jobs/services/productAiService.ts(93,67): error TS4111: Property 'entityType' comes from an index signature, so it must be accessed with ['entityType'].
+src/features/jobs/services/productAiService.ts(96,29): error TS4111: Property 'source' comes from an index signature, so it must be accessed with ['source'].
+src/features/jobs/services/productAiService.ts(97,28): error TS4111: Property 'graph' comes from an index signature, so it must be accessed with ['graph'].
+src/features/jobs/services/productAiService.ts(161,15): error TS4111: Property 'entityType' comes from an index signature, so it must be accessed with ['entityType'].
+src/features/jobs/services/productAiService.ts(162,16): error TS4111: Property 'context' comes from an index signature, so it must be accessed with ['context'].
+src/features/jobs/services/productAiService.ts(162,65): error TS4111: Property 'entityType' comes from an index signature, so it must be accessed with ['entityType'].
+src/features/jobs/services/productAiService.ts(165,27): error TS4111: Property 'source' comes from an index signature, so it must be accessed with ['source'].
+src/features/jobs/services/productAiService.ts(166,26): error TS4111: Property 'graph' comes from an index signature, so it must be accessed with ['graph'].
 src/features/notesapp/hooks/useNoteOperations.ts(259,20): error TS4111: Property 'parentId' comes from an index signature, so it must be accessed with ['parentId'].
 src/features/observability/context/SystemLogsContext.tsx(193,48): error TS4111: Property 'logId' comes from an index signature, so it must be accessed with ['logId'].
 src/features/observability/context/SystemLogsContext.tsx(193,90): error TS4111: Property 'logId' comes from an index signature, so it must be accessed with ['logId'].
 src/features/observability/lib/system-logger.ts(187,33): error TS4111: Property 'critical' comes from an index signature, so it must be accessed with ['critical'].
 src/features/observability/lib/system-logger.ts(188,36): error TS4111: Property 'critical' comes from an index signature, so it must be accessed with ['critical'].
+src/features/observability/services/activity-repository/mongo-activity-repository.ts(67,53): error TS2345: Argument of type 'Filter<ActivityLogDoc>' is not assignable to parameter of type 'Filter<Document> | undefined'.
+  Type 'Filter<ActivityLogDoc>' is not assignable to type 'Filter<Document>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Type 'Filter<ActivityLogDoc>' is not assignable to type 'RootFilterOperators<WithId<Document>>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Types of property '$where' are incompatible.
+        Type 'string | ((this: WithId<ActivityLogDoc>) => boolean)' is not assignable to type 'string | ((this: WithId<Document>) => boolean)'.
+          Type '(this: WithId<ActivityLogDoc>) => boolean' is not assignable to type 'string | ((this: WithId<Document>) => boolean)'.
+            Type '(this: WithId<ActivityLogDoc>) => boolean' is not assignable to type '(this: WithId<Document>) => boolean'.
+              The 'this' types of each signature are incompatible.
+                Type 'WithId<Document>' is not assignable to type 'WithId<ActivityLogDoc>'.
+                  Type 'WithId<Document>' is missing the following properties from type 'Pick<ActivityLogDoc, "type" | "createdAt" | "description" | "userId" | "metadata" | "entityId" | "entityType">': type, createdAt, description, userId, and 3 more.
+src/features/observability/services/activity-repository/prisma-activity-repository.ts(54,7): error TS2375: Type '{ type: string; description: string; userId: string | null | undefined; entityId: string | null | undefined; entityType: string | null | undefined; metadata: Prisma.InputJsonValue; }' is not assignable to type '(Without<ActivityLogCreateInput, ActivityLogUncheckedCreateInput> & ActivityLogUncheckedCreateInput) | (Without<...> & ActivityLogCreateInput)' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type '{ type: string; description: string; userId: string | null | undefined; entityId: string | null | undefined; entityType: string | null | undefined; metadata: Prisma.InputJsonValue; }' is not assignable to type 'Without<ActivityLogUncheckedCreateInput, ActivityLogCreateInput> & ActivityLogCreateInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Type '{ type: string; description: string; userId: string | null | undefined; entityId: string | null | undefined; entityType: string | null | undefined; metadata: Prisma.InputJsonValue; }' is not assignable to type 'ActivityLogCreateInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Types of property 'userId' are incompatible.
+        Type 'string | null | undefined' is not assignable to type 'string | null'.
+          Type 'undefined' is not assignable to type 'string | null'.
 src/features/products/api/versioning.ts(180,22): error TS4111: Property 'variants' comes from an index signature, so it must be accessed with ['variants'].
 src/features/products/api/versioning.ts(184,20): error TS4111: Property 'slug' comes from an index signature, so it must be accessed with ['slug'].
 src/features/products/api/versioning.ts(185,25): error TS4111: Property 'metaTitle' comes from an index signature, so it must be accessed with ['metaTitle'].
 src/features/products/api/versioning.ts(186,31): error TS4111: Property 'metaDescription' comes from an index signature, so it must be accessed with ['metaDescription'].
-src/features/products/components/list/ProductColumns.tsx(328,9): error TS2345: Argument of type 'PriceGroupWithDetails[]' is not assignable to parameter of type 'PriceGroupForCalculation[]'.
-  Property 'type' is missing in type 'PriceGroupWithDetails' but required in type 'PriceGroupForCalculation'.
 src/features/products/hooks/useAiPathSettings.ts(145,21): error TS4111: Property 'activePathId' comes from an index signature, so it must be accessed with ['activePathId'].
 src/features/products/hooks/useAiPathSettings.ts(145,58): error TS4111: Property 'activePathId' comes from an index signature, so it must be accessed with ['activePathId'].
 src/features/products/hooks/useAiPathSettings.ts(146,17): error TS4111: Property 'activePathId' comes from an index signature, so it must be accessed with ['activePathId'].
 src/features/products/hooks/useCatalogSync.ts(224,41): error TS4111: Property 'EN' comes from an index signature, so it must be accessed with ['EN'].
 src/features/products/hooks/useCatalogSync.ts(225,41): error TS4111: Property 'PL' comes from an index signature, so it must be accessed with ['PL'].
 src/features/products/hooks/useCatalogSync.ts(226,41): error TS4111: Property 'DE' comes from an index signature, so it must be accessed with ['DE'].
-src/features/products/hooks/useDescriptionGeneration.ts(58,31): error TS2339: Property 'errorMessage' does not exist on type 'ProductAiJob'.
-src/features/products/pages/AdminProductsPage.tsx(500,11): error TS2322: Type '() => void' is not assignable to type '() => Promise<void>'.
-  Type 'void' is not assignable to type 'Promise<void>'.
 src/features/products/performance/cached-service.ts(23,45): error TS4111: Property 'pageSize' comes from an index signature, so it must be accessed with ['pageSize'].
 src/features/products/performance/cached-service.ts(23,83): error TS4111: Property 'limit' comes from an index signature, so it must be accessed with ['limit'].
 src/features/products/performance/cached-service.ts(24,39): error TS4111: Property 'page' comes from an index signature, so it must be accessed with ['page'].
@@ -516,22 +336,39 @@ src/features/products/performance/cached-service.ts(48,46): error TS4111: Proper
 src/features/products/performance/cached-service.ts(49,44): error TS4111: Property 'endDate' comes from an index signature, so it must be accessed with ['endDate'].
 src/features/products/performance/cached-service.ts(50,46): error TS4111: Property 'catalogId' comes from an index signature, so it must be accessed with ['catalogId'].
 src/features/products/performance/cached-service.ts(51,51): error TS4111: Property 'searchLanguage' comes from an index signature, so it must be accessed with ['searchLanguage'].
-src/features/products/services/product-repository/mongo-product-repository.ts(56,81): error TS2322: Type '{ id: string; sku: string | null; baseProductId: string | null; defaultPriceGroupId: string | null; ean: string | null; gtin: string | null; asin: string | null; name_en: string | null; ... 24 more ...; producers: { ...; }[]; }' is not assignable to type 'ProductWithImages'.
-  Property 'name' is missing in type '{ id: string; sku: string | null; baseProductId: string | null; defaultPriceGroupId: string | null; ean: string | null; gtin: string | null; asin: string | null; name_en: string | null; ... 24 more ...; producers: { ...; }[]; }' but required in type 'Omit<ProductDto, "published" | "tags" | "id" | "createdAt" | "updatedAt" | "images" | "catalogId">'.
-src/features/products/services/product-repository/mongo-product-repository.ts(99,65): error TS2322: Type '{ id: string; sku: string | null; baseProductId: string | null; defaultPriceGroupId: string | null; ean: string | null; gtin: string | null; asin: string | null; name_en: string | null; ... 19 more ...; updatedAt: string; }' is not assignable to type 'ProductRecord'.
-  Type '{ id: string; sku: string | null; baseProductId: string | null; defaultPriceGroupId: string | null; ean: string | null; gtin: string | null; asin: string | null; name_en: string | null; ... 19 more ...; updatedAt: string; }' is missing the following properties from type 'Omit<ProductDto, "published" | "tags" | "id" | "createdAt" | "updatedAt" | "images" | "catalogId">': name, categoryId
-src/features/products/services/product-repository/mongo-product-repository.ts(293,11): error TS2322: Type '{ _id: `${string}-${string}-${string}-${string}-${string}`; id: `${string}-${string}-${string}-${string}-${string}`; sku: string | null; baseProductId: string | null; defaultPriceGroupId: string | null; ean: string | null; ... 24 more ...; catalogs: never[]; }' is not assignable to type 'ProductDocument'.
-  Type '{ _id: `${string}-${string}-${string}-${string}-${string}`; id: `${string}-${string}-${string}-${string}-${string}`; sku: string | null; baseProductId: string | null; defaultPriceGroupId: string | null; ean: string | null; ... 24 more ...; catalogs: never[]; }' is missing the following properties from type 'Omit<ProductRecord, "createdAt" | "updatedAt">': name, categoryId
-src/features/products/services/product-repository/mongo-product-repository.ts(452,11): error TS2322: Type '{ _id: `${string}-${string}-${string}-${string}-${string}`; id: `${string}-${string}-${string}-${string}-${string}`; sku: string; baseProductId: null; defaultPriceGroupId: string | null; ean: string | null; gtin: string | null; ... 23 more ...; catalogs: never[]; }' is not assignable to type 'ProductDocument'.
-  Type '{ _id: `${string}-${string}-${string}-${string}-${string}`; id: `${string}-${string}-${string}-${string}-${string}`; sku: string; baseProductId: null; defaultPriceGroupId: string | null; ean: string | null; gtin: string | null; ... 23 more ...; catalogs: never[]; }' is missing the following properties from type 'Omit<ProductRecord, "createdAt" | "updatedAt">': name, categoryId
-src/features/products/services/product-repository/prisma-product-repository.ts(209,23): error TS2322: Type '{ id: string; sku: string | null; baseProductId: string | null; defaultPriceGroupId: string | null; ean: string | null; gtin: string | null; asin: string | null; name_en: string | null; ... 19 more ...; updatedAt: string; }' is not assignable to type 'ProductRecord'.
-  Type '{ id: string; sku: string | null; baseProductId: string | null; defaultPriceGroupId: string | null; ean: string | null; gtin: string | null; asin: string | null; name_en: string | null; ... 19 more ...; updatedAt: string; }' is missing the following properties from type 'Omit<ProductDto, "published" | "tags" | "id" | "createdAt" | "updatedAt" | "images" | "catalogId">': name, categoryId
-src/features/products/services/product-repository/prisma-product-repository.ts(402,35): error TS4111: Property 'target' comes from an index signature, so it must be accessed with ['target'].
-src/features/products/services/product-repository/prisma-product-repository.ts(403,21): error TS4111: Property 'target' comes from an index signature, so it must be accessed with ['target'].
-src/features/products/services/productService.ts(60,13): error TS4111: Property 'repo' comes from an index signature, so it must be accessed with ['repo'].
-src/features/products/services/productService.ts(117,13): error TS4111: Property 'images' comes from an index signature, so it must be accessed with ['images'].
-src/features/products/services/productService.ts(118,13): error TS4111: Property 'fsChecks' comes from an index signature, so it must be accessed with ['fsChecks'].
-src/features/products/services/productService.ts(119,13): error TS4111: Property 'total' comes from an index signature, so it must be accessed with ['total'].
+src/features/products/performance/cached-service.ts(55,31): error TS2322: Type 'string' is not assignable to type 'number'.
+src/features/products/performance/cached-service.ts(56,31): error TS2322: Type 'string' is not assignable to type 'number'.
+src/features/products/performance/cached-service.ts(59,27): error TS2322: Type 'string' is not assignable to type 'number'.
+src/features/products/performance/cached-service.ts(60,31): error TS2322: Type 'string' is not assignable to type 'number'.
+src/features/products/performance/cached-service.ts(62,37): error TS2322: Type 'string' is not assignable to type '"name_en" | "name_pl" | "name_de" | undefined'.
+src/features/products/performance/cached-service.ts(119,9): error TS2322: Type 'string' is not assignable to type 'number'.
+src/features/products/services/product-repository/mongo-product-repository.ts(224,14): error TS2741: Property 'createProductInTransaction' is missing in type '{ getProducts(filters: Partial<{ page: number; pageSize: number; search?: string | undefined; startDate?: string | undefined; endDate?: string | undefined; sku?: string | undefined; minPrice?: number | undefined; maxPrice?: number | undefined; catalogId?: string | undefined; searchLanguage?: "name_en" | ... 2 more ....' but required in type 'ProductRepository'.
+src/features/products/services/product-repository/prisma-product-repository.ts(387,35): error TS4111: Property 'target' comes from an index signature, so it must be accessed with ['target'].
+src/features/products/services/product-repository/prisma-product-repository.ts(388,21): error TS4111: Property 'target' comes from an index signature, so it must be accessed with ['target'].
+src/features/products/services/product-repository/prisma-product-repository.ts(569,5): error TS6133: 'callback' is declared but its value is never read.
+src/features/products/services/product-repository/prisma-product-repository.ts(739,35): error TS4111: Property 'target' comes from an index signature, so it must be accessed with ['target'].
+src/features/products/services/product-repository/prisma-product-repository.ts(740,21): error TS4111: Property 'target' comes from an index signature, so it must be accessed with ['target'].
+src/features/products/services/productService.ts(106,13): error TS4111: Property 'repo' comes from an index signature, so it must be accessed with ['repo'].
+src/features/products/services/productService.ts(130,13): error TS4111: Property 'images' comes from an index signature, so it must be accessed with ['images'].
+src/features/products/services/productService.ts(131,13): error TS4111: Property 'fsChecks' comes from an index signature, so it must be accessed with ['fsChecks'].
+src/features/products/services/productService.ts(132,13): error TS4111: Property 'total' comes from an index signature, so it must be accessed with ['total'].
+src/features/products/services/productService.ts(238,24): error TS2379: Argument of type '{ type: "product.created"; description: string; userId: string | undefined; entityId: string; entityType: string; metadata: { sku: string | null; }; }' is not assignable to parameter of type 'CreateActivityLogDto' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'userId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+src/features/products/services/productService.ts(342,24): error TS2379: Argument of type '{ type: "product.updated"; description: string; userId: string | undefined; entityId: string; entityType: string; metadata: { sku: string | null; changes: { id?: string | null | undefined; ... 24 more ...; parameters?: { ...; }[] | undefined; }; }; }' is not assignable to parameter of type 'CreateActivityLogDto' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'userId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+src/features/products/services/productService.ts(376,24): error TS2379: Argument of type '{ type: "product.deleted"; description: string; userId: string | undefined; entityId: string; entityType: string; metadata: { sku: string | null; }; }' is not assignable to parameter of type 'CreateActivityLogDto' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'userId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+src/features/products/services/productService.ts(426,24): error TS2379: Argument of type '{ type: "product.duplicated"; description: string; userId: string | undefined; entityId: string; entityType: string; metadata: { sourceId: string; newSku: string; }; }' is not assignable to parameter of type 'CreateActivityLogDto' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'userId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+src/features/products/validations/index.ts(13,3): error TS2304: Cannot find name 'productFilterSchema'.
 src/features/prompt-engine/settings.ts(280,46): error TS4111: Property 'promptValidation' comes from an index signature, so it must be accessed with ['promptValidation'].
 src/features/prompt-engine/settings.ts(284,50): error TS4111: Property 'rules' comes from an index signature, so it must be accessed with ['rules'].
 src/mocks/__tests__/handlers.test.ts(31,19): error TS4111: Property 'id' comes from an index signature, so it must be accessed with ['id'].
@@ -559,15 +396,24 @@ src/shared/lib/api-client.ts(76,37): error TS4111: Property 'error' comes from a
 src/shared/lib/api-client.ts(76,54): error TS4111: Property 'message' comes from an index signature, so it must be accessed with ['message'].
 src/shared/lib/api-client.ts(77,26): error TS4111: Property 'errorId' comes from an index signature, so it must be accessed with ['errorId'].
 src/shared/lib/api-client.ts(78,27): error TS4111: Property 'errorId' comes from an index signature, so it must be accessed with ['errorId'].
-src/shared/lib/api/api-handler.ts(455,11): error TS4111: Property 'fingerprint' comes from an index signature, so it must be accessed with ['fingerprint'].
-src/shared/lib/api/api-handler.ts(458,13): error TS4111: Property 'retryable' comes from an index signature, so it must be accessed with ['retryable'].
-src/shared/lib/api/api-handler.ts(460,15): error TS4111: Property 'retryAfterMs' comes from an index signature, so it must be accessed with ['retryAfterMs'].
-src/shared/lib/api/api-handler.ts(465,13): error TS4111: Property 'details' comes from an index signature, so it must be accessed with ['details'].
-src/shared/lib/api/api-handler.ts(467,13): error TS4111: Property 'details' comes from an index signature, so it must be accessed with ['details'].
+src/shared/lib/api/api-handler.ts(214,27): error TS2379: Argument of type '{ requestId: string; startTime: number; userId: string | null | undefined; }' is not assignable to parameter of type 'RequestContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'userId' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+src/shared/lib/api/api-handler.ts(329,27): error TS2379: Argument of type '{ requestId: string; startTime: number; userId: string | null | undefined; }' is not assignable to parameter of type 'RequestContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'userId' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+src/shared/lib/api/api-handler.ts(481,11): error TS4111: Property 'fingerprint' comes from an index signature, so it must be accessed with ['fingerprint'].
+src/shared/lib/api/api-handler.ts(484,13): error TS4111: Property 'retryable' comes from an index signature, so it must be accessed with ['retryable'].
+src/shared/lib/api/api-handler.ts(486,15): error TS4111: Property 'retryAfterMs' comes from an index signature, so it must be accessed with ['retryAfterMs'].
+src/shared/lib/api/api-handler.ts(491,13): error TS4111: Property 'details' comes from an index signature, so it must be accessed with ['details'].
+src/shared/lib/api/api-handler.ts(493,13): error TS4111: Property 'details' comes from an index signature, so it must be accessed with ['details'].
 src/shared/lib/api/handle-api-error.ts(130,13): error TS4111: Property 'retryable' comes from an index signature, so it must be accessed with ['retryable'].
 src/shared/lib/api/handle-api-error.ts(132,15): error TS4111: Property 'retryAfterMs' comes from an index signature, so it must be accessed with ['retryAfterMs'].
 src/shared/lib/api/handle-api-error.ts(138,13): error TS4111: Property 'details' comes from an index signature, so it must be accessed with ['details'].
 src/shared/lib/api/handle-api-error.ts(140,13): error TS4111: Property 'details' comes from an index signature, so it must be accessed with ['details'].
+src/shared/lib/observability/request-context.ts(18,10): error TS6133: 'store' is declared but its value is never read.
 src/shared/lib/offline-support.ts(17,62): error TS4111: Property 'state' comes from an index signature, so it must be accessed with ['state'].
 src/shared/lib/offline-support.ts(17,78): error TS4111: Property 'state' comes from an index signature, so it must be accessed with ['state'].
 src/shared/lib/offline-support.ts(26,76): error TS4111: Property 'queryKey' comes from an index signature, so it must be accessed with ['queryKey'].
@@ -577,9 +423,6 @@ src/shared/lib/queue/queue-factory.ts(154,28): error TS4111: Property 'waiting' 
 src/shared/lib/queue/queue-factory.ts(155,27): error TS4111: Property 'failed' comes from an index signature, so it must be accessed with ['failed'].
 src/shared/lib/queue/queue-factory.ts(156,30): error TS4111: Property 'completed' comes from an index signature, so it must be accessed with ['completed'].
 src/shared/providers/AppFontProvider.tsx(16,36): error TS4111: Property 'appFontSet' comes from an index signature, so it must be accessed with ['appFontSet'].
-src/shared/types/domain/jobs.ts(1,1): error TS6192: All imports in import declaration are unused.
-src/shared/types/domain/products.ts(132,13): error TS2300: Duplicate identifier 'Producer'.
-src/shared/types/domain/products.ts(137,13): error TS2300: Duplicate identifier 'Producer'.
 src/shared/ui/select.tsx(48,55): error TS4111: Property 'placeholder' comes from an index signature, so it must be accessed with ['placeholder'].
 src/shared/ui/select.tsx(49,29): error TS4111: Property 'placeholder' comes from an index signature, so it must be accessed with ['placeholder'].
 src/shared/ui/select.tsx(52,20): error TS4111: Property 'children' comes from an index signature, so it must be accessed with ['children'].
@@ -591,4 +434,5 @@ src/shared/ui/select.tsx(60,36): error TS4111: Property 'children' comes from an
 src/shared/ui/select.tsx(61,35): error TS4111: Property 'disabled' comes from an index signature, so it must be accessed with ['disabled'].
 src/shared/ui/select.tsx(65,17): error TS4111: Property 'children' comes from an index signature, so it must be accessed with ['children'].
 src/shared/ui/select.tsx(66,20): error TS4111: Property 'children' comes from an index signature, so it must be accessed with ['children'].
+src/shared/utils/logger.ts(16,9): error TS6133: '_structuredData' is declared but its value is never read.
 src/shared/utils/observability/validation-reporter.ts(17,101): error TS4111: Property 'service' comes from an index signature, so it must be accessed with ['service'].

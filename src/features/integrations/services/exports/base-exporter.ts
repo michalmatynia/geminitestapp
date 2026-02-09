@@ -696,7 +696,7 @@ const getProductValue = (
 
   const normalized = sourceKey.trim().toLowerCase();
   if (normalized === 'category' || normalized === 'category_id' || normalized === 'categoryid') {
-    return (product as unknown as Record<string, unknown>).categoryId ?? null;
+    return (product as unknown as Record<string, unknown>)['categoryId'] ?? null;
   }
   const slotMatch = normalized.match(/^image_(slot|file|link)_(\d+)$/);
   if (slotMatch) {
@@ -831,18 +831,18 @@ const mergeTextFields = (
   };
 
   if (
-    templateData.text_fields &&
-    typeof templateData.text_fields === 'object' &&
-    !Array.isArray(templateData.text_fields)
+    templateData['text_fields'] &&
+    typeof templateData['text_fields'] === 'object' &&
+    !Array.isArray(templateData['text_fields'])
   ) {
     for (const [key, value] of Object.entries(
-      templateData.text_fields as Record<string, unknown>
+      templateData['text_fields'] as Record<string, unknown>
     )) {
       const trimmedKey = key.trim();
       if (!trimmedKey) continue;
       pushValue(trimmedKey, value);
     }
-    delete templateData.text_fields;
+    delete templateData['text_fields'];
   }
 
   for (const [key, value] of Object.entries(templateData)) {
@@ -871,11 +871,11 @@ const mergeTextFields = (
   if (Object.keys(nextTextFields).length === 0) return;
 
   const baseTextFields =
-    baseData.text_fields && typeof baseData.text_fields === 'object'
-      ? (baseData.text_fields as Record<string, string>)
+    baseData['text_fields'] && typeof baseData['text_fields'] === 'object'
+      ? (baseData['text_fields'] as Record<string, string>)
       : {};
 
-  baseData.text_fields = {
+  baseData['text_fields'] = {
     ...baseTextFields,
     ...nextTextFields,
   };
@@ -1115,7 +1115,7 @@ export async function exportProductToBase(
 
     // Extract product ID from response
     // Baselinker API returns { status: "SUCCESS", product_id: "..." }
-    const productIdValue = response.product_id;
+    const productIdValue = response['product_id'];
     const productId = (typeof productIdValue === 'string' || typeof productIdValue === 'number')
       ? String(productIdValue)
       : null;
@@ -1167,7 +1167,7 @@ export async function exportProductImagesToBase(
     };
 
     const response = await callBaseApi(token, 'updateInventoryProduct', apiParams);
-    const productIdValue = response.product_id;
+    const productIdValue = response['product_id'];
     const productId = (typeof productIdValue === 'string' || typeof productIdValue === 'number')
       ? String(productIdValue)
       : externalProductId;

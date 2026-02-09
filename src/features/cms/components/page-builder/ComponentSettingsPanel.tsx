@@ -235,7 +235,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
   }, [settingsStore]);
 
   const connectionSettings = useMemo((): ConnectionSettings => {
-    const raw = ((selectedSection?.settings ?? selectedColumn?.settings ?? selectedBlock?.settings ?? null)?.connection ?? {}) as Partial<ConnectionSettings>;
+    const raw = ((selectedSection?.settings ?? selectedColumn?.settings ?? selectedBlock?.settings ?? null)?.['connection'] ?? {}) as Partial<ConnectionSettings>;
     return { enabled: raw.enabled ?? false, source: raw.source ?? '', path: raw.path ?? '', fallback: raw.fallback ?? '' };
   }, [selectedSection, selectedColumn, selectedBlock]);
 

@@ -394,15 +394,15 @@ function PageSettingsTab(): React.ReactNode {
 
     if (pageAiTask === 'seo') {
       const source =
-        typeof parsed.seo === 'object' && parsed.seo
-          ? (parsed.seo as Record<string, unknown>)
+        typeof parsed['seo'] === 'object' && parsed['seo']
+          ? (parsed['seo'] as Record<string, unknown>)
           : parsed;
       const seoPatch: Record<string, string> = {};
-      if (typeof source.seoTitle === 'string') seoPatch.seoTitle = source.seoTitle;
-      if (typeof source.seoDescription === 'string') seoPatch.seoDescription = source.seoDescription;
-      if (typeof source.seoCanonical === 'string') seoPatch.seoCanonical = source.seoCanonical;
-      if (typeof source.seoOgImage === 'string') seoPatch.seoOgImage = source.seoOgImage;
-      if (typeof source.robotsMeta === 'string') seoPatch.robotsMeta = source.robotsMeta;
+      if (typeof source['seoTitle'] === 'string') seoPatch['seoTitle'] = (source['seoTitle'] as string);
+      if (typeof source['seoDescription'] === 'string') seoPatch['seoDescription'] = (source['seoDescription'] as string);
+      if (typeof source['seoCanonical'] === 'string') seoPatch['seoCanonical'] = (source['seoCanonical'] as string);
+      if (typeof source['seoOgImage'] === 'string') seoPatch['seoOgImage'] = (source['seoOgImage'] as string);
+      if (typeof source['robotsMeta'] === 'string') seoPatch['robotsMeta'] = (source['robotsMeta'] as string);
       if (Object.keys(seoPatch).length === 0) {
         setPageAiError('No SEO fields found in AI output.');
         return;
@@ -415,7 +415,7 @@ function PageSettingsTab(): React.ReactNode {
     const sectionsRaw =
       Array.isArray(parsed)
         ? parsed
-        : parsed.sections ?? parsed.layout ?? parsed.plan;
+        : (parsed['sections'] ?? parsed['layout'] ?? parsed['plan']);
     const sections = Array.isArray(sectionsRaw) ? sectionsRaw : [];
     if (!sections.length) {
       setPageAiError('No sections found in AI output.');
@@ -426,9 +426,9 @@ function PageSettingsTab(): React.ReactNode {
     let inserted = 0;
     sections.forEach((item: unknown) => {
       const entry = typeof item === 'string' ? { template: item } : (item as Record<string, unknown>);
-      const templateName = typeof entry.template === 'string' ? entry.template : typeof entry.name === 'string' ? entry.name : '';
-      const typeName = typeof entry.type === 'string' ? entry.type : '';
-      const zoneCandidate = typeof entry.zone === 'string' ? entry.zone : 'template';
+      const templateName = typeof entry['template'] === 'string' ? entry['template'] : typeof entry['name'] === 'string' ? entry['name'] : '';
+      const typeName = typeof entry['type'] === 'string' ? entry['type'] : '';
+      const zoneCandidate = typeof entry['zone'] === 'string' ? entry['zone'] : 'template';
       const zone = validZones.has(zoneCandidate as PageZone) ? (zoneCandidate as PageZone) : 'template';
 
       if (templateName) {

@@ -250,7 +250,7 @@ export function CrudPanel({
                 },
                 {
                   onSuccess: (countData: SqlQueryResult) => {
-                    const total = Number((countData.rows[0] as Record<string, unknown>)?.total ?? 0);
+                    const total = Number((countData.rows[0] as Record<string, unknown>)?.[ 'total' ] ?? 0);
                     setTotalRows(total);
                     setLoading(false);
                   },
@@ -306,7 +306,7 @@ export function CrudPanel({
   const getPrimaryKey = (row: Record<string, unknown>): Record<string, unknown> => {
     const pk: Record<string, unknown> = {};
     if (dbType === 'mongodb') {
-      pk._id = row._id;
+      pk['_id'] = row['_id'];
     } else {
       for (const col of primaryKeyColumns) {
         pk[col.name] = row[col.name];

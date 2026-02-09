@@ -28,12 +28,7 @@ export function ExportLogViewer({
     const entries = logs
       .map((log: ExportLog) => log.context)
       .filter((context: Record<string, unknown> | undefined): context is Record<string, unknown> => !!context)
-      .filter(
-        (context: Record<string, unknown>) =>
-          typeof context.outputBytes === 'number' ||
-          typeof context.originalBytes === 'number' ||
-          typeof context.base64Length === 'number'
-      );
+      .filter((context: Record<string, unknown>) => typeof context['outputBytes'] === 'number' || typeof context['originalBytes'] === 'number' || typeof context['base64Length'] === 'number');
     if (entries.length === 0) return null;
     const sum = (key: 'outputBytes' | 'originalBytes' | 'base64Length'): number =>
       entries.reduce(
@@ -46,19 +41,19 @@ export function ExportLogViewer({
     const outputModes = new Set(
       entries
         .map((entry: Record<string, unknown>): string | null =>
-          typeof entry.outputMode === 'string' ? entry.outputMode : null
+          typeof entry['outputMode'] === 'string' ? (entry['outputMode'] as string) : null
         )
         .filter((mode: string | null): mode is string => !!mode)
     );
     const outputFormats = new Set(
       entries
         .map((entry: Record<string, unknown>): string | null =>
-          typeof entry.outputFormat === 'string' ? entry.outputFormat : null
+          typeof entry['outputFormat'] === 'string' ? (entry['outputFormat'] as string) : null
         )
         .filter((format: string | null): format is string => !!format)
     );
-    const convertedCount = entries.filter((entry: Record<string, unknown>): boolean => entry.converted === true).length;
-    const resizedCount = entries.filter((entry: Record<string, unknown>): boolean => entry.resized === true).length;
+    const convertedCount = entries.filter((entry: Record<string, unknown>): boolean => entry['converted'] === true).length;
+    const resizedCount = entries.filter((entry: Record<string, unknown>): boolean => entry['resized'] === true).length;
     return {
       count: entries.length,
       totalOriginalBytes: sum('originalBytes'),

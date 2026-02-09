@@ -82,11 +82,11 @@ const getUtm = (searchParams: URLSearchParams): AnalyticsEventCreateInput['utm']
   const campaign = searchParams.get('utm_campaign');
   const term = searchParams.get('utm_term');
   const content = searchParams.get('utm_content');
-  if (source) utm.source = source;
-  if (medium) utm.medium = medium;
-  if (campaign) utm.campaign = campaign;
-  if (term) utm.term = term;
-  if (content) utm.content = content;
+  if (source) utm['source'] = source;
+  if (medium) utm['medium'] = medium;
+  if (campaign) utm['campaign'] = campaign;
+  if (term) utm['term'] = term;
+  if (content) utm['content'] = content;
   return Object.keys(utm).length > 0 ? (utm as AnalyticsEventCreateInput['utm']) : null;
 };
 

@@ -686,8 +686,8 @@ export function InspectorAiProvider({
       return;
     }
     const settingsSource =
-      typeof parsed.settings === 'object' && parsed.settings
-        ? (parsed.settings as Record<string, unknown>)
+      typeof parsed['settings'] === 'object' && parsed['settings']
+        ? (parsed['settings'] as Record<string, unknown>)
         : parsed;
     applyContentAiSettings(settingsSource);
   }, [contentAiOutput, applyContentAiSettings]);

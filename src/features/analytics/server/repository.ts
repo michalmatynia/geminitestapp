@@ -295,7 +295,7 @@ export async function listAnalyticsEvents(input: {
     ts: { $gte: input.from, $lt: input.to },
   };
   if (input.scope) {
-    match.scope = input.scope;
+    match['scope'] = input.scope;
   }
 
   const docs = await col
@@ -339,7 +339,7 @@ export async function getAnalyticsSummary(input: {
     ts: { $gte: input.from, $lt: input.to },
   };
   if (input.scope) {
-    match.scope = input.scope;
+    match['scope'] = input.scope;
   }
 
   const [result] = await col

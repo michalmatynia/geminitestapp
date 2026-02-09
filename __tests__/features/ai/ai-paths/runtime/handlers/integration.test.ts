@@ -46,8 +46,8 @@ describe('Integration Handlers', () => {
         triggerContext: { entityId: 'p1', entityType: 'product' }
       });
       const result = await handleTrigger(ctx);
-      expect(result.trigger).toBe(true);
-      expect((result.context as any).entityId).toBe('p1');
+      expect(result['trigger']).toBe(true);
+      expect((result['context'] as any).entityId).toBe('p1');
     });
   });
 
@@ -82,7 +82,7 @@ describe('Integration Handlers', () => {
         nodeInputs: { value: 'test' }
       });
       const result = await handleDatabase(ctx);
-      expect(result.result).toEqual([{ id: 1, name: 'Item 1' }]);
+      expect(result['result']).toEqual([{ id: 1, name: 'Item 1' }]);
       expect(api.dbApi.query).toHaveBeenCalled();
     });
 
@@ -121,7 +121,7 @@ describe('Integration Handlers', () => {
           query: { id: 'p-1' }
         })
       );
-      expect(result.result).toEqual({ id: 'p-1', name_en: 'Product 1' });
+      expect(result['result']).toEqual({ id: 'p-1', name_en: 'Product 1' });
     });
 
     it('should resolve placeholders in query input object payload', async () => {
@@ -161,7 +161,7 @@ describe('Integration Handlers', () => {
           query: { id: 'p-2' }
         })
       );
-      expect(result.result).toEqual({ id: 'p-2', name_en: 'Product 2' });
+      expect(result['result']).toEqual({ id: 'p-2', name_en: 'Product 2' });
     });
   });
 
@@ -187,7 +187,7 @@ describe('Integration Handlers', () => {
         } as any
       });
       const result = await handleHttp(ctx);
-      expect(result.value).toEqual({ data: 'success' });
+      expect(result['value']).toEqual({ data: 'success' });
       expect(global.fetch).toHaveBeenCalledWith('https://api.example.com', expect.anything());
     });
   });
@@ -216,8 +216,8 @@ describe('Integration Handlers', () => {
         } as any
       });
       const result = await handleDbSchema(ctx);
-      expect((result.context as any).schemaText).toContain('DATABASE SCHEMA');
-      expect((result.context as any).schemaText).toContain('Collection: products');
+      expect((result['context'] as any).schemaText).toContain('DATABASE SCHEMA');
+      expect((result['context'] as any).schemaText).toContain('Collection: products');
     });
   });
 
@@ -237,8 +237,8 @@ describe('Integration Handlers', () => {
         } as any
       });
       const result = await handlePoll(ctx);
-      expect(result.status).toBe('completed');
-      expect(result.result).toBe('Job done');
+      expect(result['status']).toBe('completed');
+      expect(result['result']).toBe('Job done');
     });
   });
 });

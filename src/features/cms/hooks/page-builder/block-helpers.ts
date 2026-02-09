@@ -179,11 +179,11 @@ export function createRowBlock(columnCount: number): BlockInstance {
   const rowDef = getBlockDefinition('Row');
   const defaultSettings = rowDef ? { ...rowDef.defaultSettings } : {};
   const minHeight =
-    typeof defaultSettings.minHeight === 'number' && Number.isFinite(defaultSettings.minHeight)
-      ? defaultSettings.minHeight
+    typeof defaultSettings['minHeight'] === 'number' && Number.isFinite(defaultSettings['minHeight'])
+      ? (defaultSettings['minHeight'] as number)
       : 0;
   if (minHeight <= 0) {
-    defaultSettings.minHeight = 120;
+    defaultSettings['minHeight'] = 120;
   }
   return {
     id: uid(),
@@ -578,8 +578,8 @@ export function buildSectionSettings(type: string, settings: Record<string, unkn
   if (!def) return settings;
   const merged = applySettingsDefaults(settings, def.settingsSchema, def.defaultSettings);
   if (type === 'AnnouncementBar') {
-    const left = typeof merged.paddingLeft === 'number' ? merged.paddingLeft : undefined;
-    const right = typeof merged.paddingRight === 'number' ? merged.paddingRight : undefined;
+    const left = typeof merged['paddingLeft'] === 'number' ? (merged['paddingLeft'] as number) : undefined;
+    const right = typeof merged['paddingRight'] === 'number' ? (merged['paddingRight'] as number) : undefined;
     return {
       ...merged,
       paddingLeft: left === 24 || left === undefined ? 0 : left,

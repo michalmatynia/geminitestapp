@@ -132,7 +132,7 @@ function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.
 
 export default function EditThemePage(): React.JSX.Element {
   const params = useParams();
-  const id = params.id as string;
+  const id = params['id'] as string;
   const themeQuery = useCmsTheme(id);
 
   if (themeQuery.isLoading) {

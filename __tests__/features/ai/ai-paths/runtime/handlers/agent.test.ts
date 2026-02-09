@@ -43,7 +43,7 @@ describe('Agent Handlers', () => {
         nodeInputs: { prompt: 'Do something' }
       });
       const result = await handleAgent(ctx);
-      expect(result.jobId).toBe('run-123');
+      expect(result['jobId']).toBe('run-123');
       expect(api.agentApi.enqueue).toHaveBeenCalled();
     });
   });
@@ -64,7 +64,7 @@ describe('Agent Handlers', () => {
         nodeInputs: { prompt: 'Question' }
       });
       const result = await handleLearnerAgent(ctx);
-      expect(result.result).toBe('Agent response');
+      expect(result['result']).toBe('Agent response');
       expect(api.learnerAgentsApi.chat).toHaveBeenCalledWith({
         agentId: 'agent-1',
         messages: [{ role: 'user', content: 'Question' }]

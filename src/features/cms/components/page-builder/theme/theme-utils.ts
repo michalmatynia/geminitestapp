@@ -30,24 +30,24 @@ export const parseColorSchemePayload = (payload: unknown): { name?: string; colo
   if (!payload || typeof payload !== 'object') return null;
   const raw = payload as Record<string, unknown>;
   const name =
-    normalizeAiString(raw.name) ??
-    normalizeAiString(raw.schemeName) ??
-    normalizeAiString(raw.title);
+    normalizeAiString(raw['name']) ??
+    normalizeAiString(raw['schemeName']) ??
+    normalizeAiString(raw['title']);
   const colorsSource =
-    (raw.colors as Record<string, unknown>) ||
-    (raw.palette as Record<string, unknown>) ||
-    (raw.scheme as Record<string, unknown>) ||
+    (raw['colors'] as Record<string, unknown>) ||
+    (raw['palette'] as Record<string, unknown>) ||
+    (raw['scheme'] as Record<string, unknown>) ||
     raw;
 
   if (!colorsSource || typeof colorsSource !== 'object') return null;
 
-  const colors = colorsSource;
+  const colors = colorsSource as Record<string, unknown>;
   const parsedRaw = {
-    background: normalizeAiString(colors.background) ?? normalizeAiString(colors.bg),
-    surface: normalizeAiString(colors.surface) ?? normalizeAiString(colors.layer) ?? normalizeAiString(colors.card),
-    text: normalizeAiString(colors.text) ?? normalizeAiString(colors.foreground),
-    accent: normalizeAiString(colors.accent) ?? normalizeAiString(colors.primary),
-    border: normalizeAiString(colors.border) ?? normalizeAiString(colors.outline),
+    background: normalizeAiString(colors['background']) ?? normalizeAiString(colors['bg']),
+    surface: normalizeAiString(colors['surface']) ?? normalizeAiString(colors['layer']) ?? normalizeAiString(colors['card']),
+    text: normalizeAiString(colors['text']) ?? normalizeAiString(colors['foreground']),
+    accent: normalizeAiString(colors['accent']) ?? normalizeAiString(colors['primary']),
+    border: normalizeAiString(colors['border']) ?? normalizeAiString(colors['outline']),
   };
   const parsed: Partial<ColorSchemeColors> = {};
   (Object.entries(parsedRaw) as Array<[keyof ColorSchemeColors, string | undefined]>).forEach(

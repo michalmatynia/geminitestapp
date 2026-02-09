@@ -75,11 +75,11 @@ export function buildImageElementPresentation(
 
   const shadow = settings['imageShadow'] as Record<string, unknown> | undefined;
   if (shadow) {
-    const x = (shadow.x as number) ?? 0;
-    const y = (shadow.y as number) ?? 0;
-    const blurShadow = (shadow.blur as number) ?? 0;
-    const spread = (shadow.spread as number) ?? 0;
-    const color = shadow.color as string | undefined;
+    const x = (shadow['x'] as number) ?? 0;
+    const y = (shadow['y'] as number) ?? 0;
+    const blurShadow = (shadow['blur'] as number) ?? 0;
+    const spread = (shadow['spread'] as number) ?? 0;
+    const color = shadow['color'] as string | undefined;
     if ((x || y || blurShadow || spread) && color) {
       wrapperStyles.boxShadow = `${x}px ${y}px ${blurShadow}px ${spread}px ${color}`;
     }

@@ -6,7 +6,7 @@ Loaded Prisma config from prisma.config.ts.
 
 Prisma schema loaded from prisma/schema.prisma.
 
-✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 187ms
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 189ms
 
 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
 
@@ -82,18 +82,16 @@ Import trace:
     ./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/restore/route.ts
 
 
-✓ Compiled successfully in 17.1s
+✓ Compiled successfully in 14.8s
   Running TypeScript ...
 Failed to compile.
 
-./src/app/api/v2/products/route.ts:43:7
-Type error: Type 'string' is not assignable to type 'number'.
+./src/features/cms/components/page-builder/SettingsFieldRenderer.tsx:1:10
+Type error: 'Link2' is declared but its value is never read.
 
-[0m [90m 41 |[39m     [36mconst[39m products [33m=[39m [36mawait[39m productService[33m.[39mgetProducts({
- [90m 42 |[39m       [33m...[39mfilters[33m,[39m
-[31m[1m>[22m[39m[90m 43 |[39m       page[33m:[39m [33mString[39m(page)[33m,[39m
- [90m    |[39m       [31m[1m^[22m[39m
- [90m 44 |[39m       pageSize[33m:[39m [33mString[39m(limit)[33m,[39m
- [90m 45 |[39m     })[33m;[39m
- [90m 46 |[39m[0m
+[0m[31m[1m>[22m[39m[90m 1 |[39m [36mimport[39m { [33mLink2[39m[33m,[39m [33mSearch[39m[33m,[39m [33mPalette[39m } [36mfrom[39m [32m'lucide-react'[39m[33m;[39m
+ [90m   |[39m          [31m[1m^[22m[39m
+ [90m 2 |[39m [36mimport[39m [33mReact[39m[33m,[39m { useCallback[33m,[39m useMemo[33m,[39m useState } [36mfrom[39m [32m'react'[39m[33m;[39m
+ [90m 3 |[39m
+ [90m 4 |[39m [36mimport[39m type { [33mColorScheme[39m } [36mfrom[39m [32m'@/features/cms/types/theme-settings'[39m[33m;[39m[0m
 Next.js build worker exited with code: 1 and signal: null

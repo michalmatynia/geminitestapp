@@ -367,8 +367,8 @@ describe('evaluateGraph', () => {
     // Iteration 2: inputs[n1].value=1, outputs[n1].value=2
     // Iteration 3: inputs[n1].value=2, outputs[n1].value=3
     // It should stop at 3 or 4 depending on loop logic.
-    expect(result.outputs['n1']!.value).toBeGreaterThanOrEqual(2);
-    expect(result.outputs['n1']!.value).toBeLessThanOrEqual(4);
+    expect(result.outputs['n1']!['value']).toBeGreaterThanOrEqual(2);
+    expect(result.outputs['n1']!['value']).toBeLessThanOrEqual(4);
   });
 
   describe('Graph Caching', () => {

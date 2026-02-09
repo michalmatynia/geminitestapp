@@ -141,12 +141,12 @@ const buildPrismaWhere = (input: ListFileUploadEventsInput): Prisma.FileUploadEv
 
 const buildMongoFilter = (input: ListFileUploadEventsInput): Record<string, unknown> => {
   const filter: Record<string, unknown> = {};
-  if (input.status) filter.status = input.status;
-  if (input.category) filter.category = { $regex: input.category, $options: 'i' };
-  if (input.projectId) filter.projectId = input.projectId;
+  if (input.status) filter['status'] = input.status;
+  if (input.category) filter['category'] = { $regex: input.category, $options: 'i' };
+  if (input.projectId) filter['projectId'] = input.projectId;
   if (input.query) {
     const regex = { $regex: input.query, $options: 'i' };
-    filter.$or = [
+    filter['$or'] = [
       { filename: regex },
       { filepath: regex },
       { errorMessage: regex },
@@ -154,7 +154,7 @@ const buildMongoFilter = (input: ListFileUploadEventsInput): Record<string, unkn
     ];
   }
   if (input.from || input.to) {
-    filter.createdAt = {
+    filter['createdAt'] = {
       ...(input.from ? { $gte: input.from } : {}),
       ...(input.to ? { $lte: input.to } : {}),
     };

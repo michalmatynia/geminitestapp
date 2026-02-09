@@ -107,7 +107,7 @@ describe('Page Builder Reducer', () => {
       settings: { imageHeight: 'small' } 
     });
 
-    expect(state.sections[0]!.settings.imageHeight).toBe('small');
+    expect(state.sections[0]!.settings['imageHeight']).toBe('small');
   });
 
   it('should handle MOVE_BLOCK', () => {
@@ -166,7 +166,7 @@ describe('Page Builder Reducer', () => {
       settings: { content: 'Updated Content' } 
     });
 
-    expect(state.sections[0]!.blocks[0]!.settings.content).toBe('Updated Content');
+    expect(state.sections[0]!.blocks[0]!.settings['content']).toBe('Updated Content');
   });
 
   describe('Grid Operations', () => {
@@ -176,10 +176,10 @@ describe('Page Builder Reducer', () => {
       const sectionId = state.sections[0]!.id;
 
       // Initial grid should have 2 columns (default)
-      expect(state.sections[0]!.settings.columns).toBe(2);
+      expect(state.sections[0]!.settings['columns']).toBe(2);
       
       state = pageBuilderReducer(state, { type: 'SET_GRID_COLUMNS', sectionId, columnCount: 4 });
-      expect(state.sections[0]!.settings.columns).toBe(4);
+      expect(state.sections[0]!.settings['columns']).toBe(4);
       // It should have 1 row with 4 columns
       expect(state.sections[0]!.blocks).toHaveLength(1);
       expect(state.sections[0]!.blocks[0]!.blocks).toHaveLength(4);
@@ -191,7 +191,7 @@ describe('Page Builder Reducer', () => {
       const sectionId = state.sections[0]!.id;
 
       state = pageBuilderReducer(state, { type: 'ADD_GRID_ROW', sectionId });
-      expect(state.sections[0]!.settings.rows).toBe(2);
+      expect(state.sections[0]!.settings['rows']).toBe(2);
       expect(state.sections[0]!.blocks).toHaveLength(2);
     });
   });

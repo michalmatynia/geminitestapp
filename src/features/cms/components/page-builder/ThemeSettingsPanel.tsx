@@ -170,7 +170,7 @@ function MiniRichTextEditor({
 
   const addLink = (): void => {
     if (!editor) return;
-    const previousUrl = editor.getAttributes('link').href as string | undefined;
+    const previousUrl = editor.getAttributes('link')['href'] as string | undefined;
     const url = window.prompt('Enter URL:', previousUrl ?? '');
     if (url === null) return;
     if (url.trim() === '') {
@@ -332,14 +332,14 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
     if (typeof window === 'undefined') return undefined;
     const handler = (event: Event): void => {
       const detail = (event as CustomEvent<Record<string, unknown>>).detail ?? {};
-      const section = typeof detail.section === 'string' ? detail.section : 'Colors';
+      const section = typeof detail['section'] === 'string' ? (detail['section'] as string) : 'Colors';
       setUserOpenSections((prev: Set<string> | null) => {
         const current = prev ?? initialOpenSections;
         const next = new Set(current);
         next.add(section);
         return next;
       });
-      if (section === 'Colors' && detail.action === 'createScheme') {
+      if (section === 'Colors' && detail['action'] === 'createScheme') {
         startAddScheme();
       }
       window.requestAnimationFrame((): void => {

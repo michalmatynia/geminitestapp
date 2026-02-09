@@ -38,7 +38,7 @@ describe('Generation Handlers', () => {
         nodeInputs: { name: 'World' }
       });
       const result = await handleTemplate(ctx);
-      expect(result.prompt).toBe('Hello World');
+      expect(result['prompt']).toBe('Hello World');
     });
   });
 
@@ -53,7 +53,7 @@ describe('Generation Handlers', () => {
         nodeInputs: { value: 'Translate this' }
       });
       const result = await handlePrompt(ctx);
-      expect(result.prompt).toBe('Task: Translate this');
+      expect(result['prompt']).toBe('Task: Translate this');
     });
   });
 
@@ -74,8 +74,8 @@ describe('Generation Handlers', () => {
         nodeInputs: { prompt: 'Do something' }
       });
       const result = await handleModel(ctx);
-      expect(result.jobId).toBe('job-123');
-      expect(result.status).toBe('queued');
+      expect(result['jobId']).toBe('job-123');
+      expect(result['status']).toBe('queued');
       expect(api.aiJobsApi.enqueue).toHaveBeenCalled();
     });
   });
@@ -91,7 +91,7 @@ describe('Generation Handlers', () => {
         nodeInputs: { entityJson: { id: 'p1' } }
       });
       const result = await handleAiDescription(ctx);
-      expect(result.description_en).toBe('Generated description');
+      expect(result['description_en']).toBe('Generated description');
       expect(api.aiGenerationApi.generateDescription).toHaveBeenCalled();
     });
   });
@@ -106,7 +106,7 @@ describe('Generation Handlers', () => {
         nodeInputs: { productId: 'p1', description_en: 'New description' }
       });
       const result = await handleDescriptionUpdater(ctx);
-      expect(result.description_en).toBe('New description');
+      expect(result['description_en']).toBe('New description');
       expect(api.aiGenerationApi.updateProductDescription).toHaveBeenCalledWith('p1', 'New description');
     });
   });

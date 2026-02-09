@@ -134,7 +134,7 @@ describe('usePageBuilder Hook', () => {
       });
     });
 
-    expect(result.current.state.sections[0]!.settings.text).toBe('Updated');
+    expect(result.current.state.sections[0]!.settings['text']).toBe('Updated');
   });
 
   it('should handle Grid columns (special case)', () => {
@@ -155,7 +155,7 @@ describe('usePageBuilder Hook', () => {
     });
 
     expect(result.current.state.sections[0]!.blocks[0]!.blocks?.length).toBe(3);
-    expect(result.current.state.sections[0]!.settings.columns).toBe(3);
+    expect(result.current.state.sections[0]!.settings['columns']).toBe(3);
   });
 
   it('should copy and paste sections', () => {

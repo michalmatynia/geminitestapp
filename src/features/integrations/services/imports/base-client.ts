@@ -63,12 +63,12 @@ const normalizeBaseParentId = (value: unknown): string | null => {
 
 const extractInventoryList = (payload: BaseApiResponse): BaseInventory[] => {
   const candidates = [
-    payload.inventories,
-    payload.inventory,
-    payload.storages,
-    payload.storage,
-    (payload.data as Record<string, unknown> | undefined)?.inventories,
-    (payload.data as Record<string, unknown> | undefined)?.storages,
+    payload['inventories'],
+    payload['inventory'],
+    payload['storages'],
+    payload['storage'],
+    (payload['data'] as Record<string, unknown> | undefined)?.['inventories'],
+    (payload['data'] as Record<string, unknown> | undefined)?.['storages'],
   ];
   const raw = candidates.map(toArray).find((list: unknown[]) => list.length > 0) ?? [];
   return raw
@@ -76,13 +76,13 @@ const extractInventoryList = (payload: BaseApiResponse): BaseInventory[] => {
       if (!entry || typeof entry !== 'object') return null;
       const record = entry as Record<string, unknown>;
       const id =
-        toStringId(record.inventory_id) ??
-        toStringId(record.storage_id) ??
-        toStringId(record.id);
+        toStringId(record['inventory_id']) ??
+        toStringId(record['storage_id']) ??
+        toStringId(record['id']);
       if (!id) return null;
       const name =
-        (typeof record.name === 'string' && record.name.trim()) ||
-        (typeof record.label === 'string' && record.label.trim()) ||
+        (typeof record['name'] === 'string' && record['name'].trim()) ||
+        (typeof record['label'] === 'string' && record['label'].trim()) ||
         id;
       return { id, name };
     })
@@ -91,28 +91,28 @@ const extractInventoryList = (payload: BaseApiResponse): BaseInventory[] => {
 
 const extractWarehouseList = (payload: BaseApiResponse): BaseWarehouse[] => {
   const candidates = [
-    payload.warehouses,
-    payload.warehouse,
-    (payload.data as Record<string, unknown> | undefined)?.warehouses,
+    payload['warehouses'],
+    payload['warehouse'],
+    (payload['data'] as Record<string, unknown> | undefined)?.['warehouses'],
   ];
   const raw = candidates.map(toArray).find((list: unknown[]) => list.length > 0) ?? [];
   return raw.reduce<BaseWarehouse[]>((acc: BaseWarehouse[], entry: unknown) => {
     if (!entry || typeof entry !== 'object') return acc;
     const record = entry as Record<string, unknown>;
     const id =
-      toStringId(record.warehouse_id) ??
-      toStringId(record.id) ??
-      toStringId(record.storage_id);
+      toStringId(record['warehouse_id']) ??
+      toStringId(record['id']) ??
+      toStringId(record['storage_id']);
     if (!id) return acc;
     const type =
-      typeof record.warehouse_type === 'string' && record.warehouse_type.trim()
-        ? record.warehouse_type.trim().toLowerCase()
+      typeof record['warehouse_type'] === 'string' && record['warehouse_type'].trim()
+        ? record['warehouse_type'].trim().toLowerCase()
         : null;
     const typedId =
       type && !id.startsWith(`${type}_`) ? `${type}_${id}` : type ? id : undefined;
     const name =
-      (typeof record.name === 'string' && record.name.trim()) ||
-      (typeof record.label === 'string' && record.label.trim()) ||
+      (typeof record['name'] === 'string' && record['name'].trim()) ||
+      (typeof record['label'] === 'string' && record['label'].trim()) ||
       id;
     acc.push(typedId ? { id, name, typedId } : { id, name });
     return acc;
@@ -121,19 +121,19 @@ const extractWarehouseList = (payload: BaseApiResponse): BaseWarehouse[] => {
 
 const extractProductIds = (payload: BaseApiResponse): string[] => {
   const rawProducts =
-    payload.products ??
-    payload.items ??
-    (payload.data as Record<string, unknown> | undefined)?.products ??
-    (payload.data as Record<string, unknown> | undefined)?.items;
+    payload['products'] ??
+    payload['items'] ??
+    (payload['data'] as Record<string, unknown> | undefined)?.['products'] ??
+    (payload['data'] as Record<string, unknown> | undefined)?.['items'];
   const ids = new Set<string>();
   if (Array.isArray(rawProducts)) {
     for (const entry of rawProducts as unknown[]) {
       if (entry && typeof entry === 'object') {
         const record = entry as Record<string, unknown>;
         const id =
-          toStringId(record.product_id) ??
-          toStringId(record.id) ??
-          toStringId(record.base_product_id);
+          toStringId(record['product_id']) ??
+          toStringId(record['id']) ??
+          toStringId(record['base_product_id']);
         if (id) ids.add(id);
       } else {
         const id = toStringId(entry);
@@ -144,11 +144,11 @@ const extractProductIds = (payload: BaseApiResponse): string[] => {
     for (const [key, value] of Object.entries(
       rawProducts as Record<string, unknown>
     )) {
-      const record = value && typeof value === 'object' ? value : null;
+      const record = value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
       const id =
-        (record as Record<string, unknown> | null)?.product_id ??
-        (record as Record<string, unknown> | null)?.id ??
-        (record as Record<string, unknown> | null)?.base_product_id ??
+        record?.['product_id'] ??
+        record?.['id'] ??
+        record?.['base_product_id'] ??
         key;
       const resolved = toStringId(id);
       if (resolved) ids.add(resolved);
@@ -159,10 +159,10 @@ const extractProductIds = (payload: BaseApiResponse): string[] => {
 
 const extractProducts = (payload: BaseApiResponse): BaseProductRecord[] => {
   const rawProducts =
-    payload.products ??
-    payload.items ??
-    (payload.data as Record<string, unknown> | undefined)?.products ??
-    (payload.data as Record<string, unknown> | undefined)?.items;
+    payload['products'] ??
+    payload['items'] ??
+    (payload['data'] as Record<string, unknown> | undefined)?.['products'] ??
+    (payload['data'] as Record<string, unknown> | undefined)?.['items'];
 
   if (Array.isArray(rawProducts)) {
     return rawProducts.map((entry: unknown) => {
@@ -180,8 +180,8 @@ const extractProducts = (payload: BaseApiResponse): BaseProductRecord[] => {
         if (value && typeof value === 'object') {
           const record = value as Record<string, unknown>;
           return {
-            product_id: record.product_id ?? key,
-            id: record.id ?? key,
+            product_id: record['product_id'] ?? key,
+            id: record['id'] ?? key,
             ...record,
           };
         }

@@ -13,7 +13,7 @@ import { Button, Input, Label, Switch, SectionHeader, Checkbox } from '@/shared/
 
 export default function EditSlugPageLoader(): React.JSX.Element {
   const params = useParams();
-  const id = params.id as string;
+  const id = params['id'] as string;
   const searchParams = useSearchParams();
   const domainId = searchParams.get('domainId') ?? undefined;
   const slugQuery = useCmsSlug(id, domainId);

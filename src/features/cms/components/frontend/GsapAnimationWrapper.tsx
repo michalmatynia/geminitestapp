@@ -362,20 +362,20 @@ export function GsapAnimationWrapper({
                 toVars[axis] = offset;
               }
               if (scaleFrom !== scaleTo) {
-                fromVars.scale = scaleFrom;
-                toVars.scale = scaleTo;
+                fromVars['scale'] = scaleFrom;
+                toVars['scale'] = scaleTo;
               }
               if (rotateFromSeed !== rotateToSeed) {
-                fromVars.rotation = rotateFromSeed;
-                toVars.rotation = rotateToSeed;
+                fromVars['rotation'] = rotateFromSeed;
+                toVars['rotation'] = rotateToSeed;
               }
               if (opacityFromSeed !== opacityToSeed) {
-                fromVars.opacity = opacityFromSeed;
-                toVars.opacity = opacityToSeed;
+                fromVars['opacity'] = opacityFromSeed;
+                toVars['opacity'] = opacityToSeed;
               }
               if (blurFromSeed !== blurToSeed) {
-                fromVars.filter = `blur(${blurFromSeed}px)`;
-                toVars.filter = `blur(${blurToSeed}px)`;
+                fromVars['filter'] = `blur(${blurFromSeed}px)`;
+                toVars['filter'] = `blur(${blurToSeed}px)`;
               }
               if (Object.keys(fromVars).length === 0 && Object.keys(toVars).length === 0) return;
 

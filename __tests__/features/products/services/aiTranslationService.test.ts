@@ -49,11 +49,11 @@ describe('aiTranslationService', () => {
     const result = await translateProduct(params);
 
     expect(result).toBeDefined();
-    expect(result.translations.polish).toEqual({
+    expect(result.translations['polish']).toEqual({
       name: 'Translated Name',
       description: 'Translated Description',
     });
-    expect(result.translations.german).toEqual({
+    expect(result.translations['german']).toEqual({
       name: 'Translated Name',
       description: 'Translated Description',
     });
@@ -73,8 +73,8 @@ describe('aiTranslationService', () => {
 
     const result = await translateProduct(params);
 
-    expect(result.translations.english).toBeUndefined();
-    expect(result.translations.polish).toBeDefined();
+    expect(result.translations['english']).toBeUndefined();
+    expect(result.translations['polish']).toBeDefined();
   });
 
   it('should throw error if no translations succeeded', async () => {

@@ -77,10 +77,10 @@ export const mongoImageFileRepository: ImageFileRepository = {
     const tags = (filters?.tags ?? []).filter(Boolean);
     const query: Record<string, unknown> = {};
     if (filename) {
-      query.filename = { $regex: filename, $options: 'i' };
+      query['filename'] = { $regex: filename, $options: 'i' };
     }
     if (tags.length > 0) {
-      query.tags = { $in: tags };
+      query['tags'] = { $in: tags };
     }
     const docs = await db
       .collection<ImageFileDocument>(IMAGE_FILE_COLLECTION)

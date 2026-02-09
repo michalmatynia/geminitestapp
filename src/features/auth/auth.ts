@@ -4,6 +4,7 @@ import { MongoDBAdapter } from '@auth/mongodb-adapter';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import bcrypt from 'bcryptjs';
 import NextAuth, { type NextAuthConfig, type Session, type User } from 'next-auth';
+import type { AdapterSession } from '@auth/core/adapters';
 import Credentials from 'next-auth/providers/credentials';
 import Facebook from 'next-auth/providers/facebook';
 import Google from 'next-auth/providers/google';
@@ -42,11 +43,11 @@ const credentialsProvider = Credentials({
   },
   async authorize(credentials: Record<string, unknown> | null, request: Request) {
     try {
-      const email = credentials?.email?.toString() ?? '';
-      const password = credentials?.password?.toString() ?? '';
-      const otp = credentials?.otp?.toString() ?? '';
-      const recoveryCode = credentials?.recoveryCode?.toString() ?? '';
-      const challengeId = credentials?.challengeId?.toString() ?? '';
+      const email = credentials?.['email']?.toString() ?? '';
+      const password = credentials?.['password']?.toString() ?? '';
+      const otp = credentials?.['otp']?.toString() ?? '';
+      const recoveryCode = credentials?.['recoveryCode']?.toString() ?? '';
+      const challengeId = credentials?.['challengeId']?.toString() ?? '';
       if (!email || !password) {
         console.log('[AUTH] Missing email or password');
         return null;
@@ -378,8 +379,8 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
             }).catch(() => {});
           }
         },
-        async signOut(message: { token?: JWT | null }) {
-          if (message.token?.sub) {
+        async signOut(message: { session: void | AdapterSession | null | undefined; } | { token: JWT | null; }) {
+          if ('token' in message && message.token?.sub) {
             void logActivity({
               type: ActivityTypes.AUTH.LOGOUT,
               description: 'User logged out',

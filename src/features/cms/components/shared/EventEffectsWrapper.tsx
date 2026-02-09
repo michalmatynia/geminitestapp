@@ -150,17 +150,17 @@ export function EventEffectsWrapper({
   if (clickEnabled && !isFragment) {
     const existingOnClick = (children.props as { onClick?: (event: React.MouseEvent) => void }).onClick;
     const existingOnKeyDown = (children.props as { onKeyDown?: (event: React.KeyboardEvent) => void }).onKeyDown;
-    nextProps.onClick = (event: React.MouseEvent): void => {
+    nextProps['onClick'] = (event: React.MouseEvent): void => {
       existingOnClick?.(event);
       if (!event.defaultPrevented) handleClick(event);
     };
-    nextProps.onKeyDown = (event: React.KeyboardEvent): void => {
+    nextProps['onKeyDown'] = (event: React.KeyboardEvent): void => {
       existingOnKeyDown?.(event);
       if (!event.defaultPrevented) handleKeyDown(event);
     };
     if (!childIsInteractive) {
-      nextProps.role = 'button';
-      nextProps.tabIndex = 0;
+      nextProps['role'] = 'button';
+      nextProps['tabIndex'] = 0;
     }
   }
 

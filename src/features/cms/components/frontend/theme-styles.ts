@@ -271,10 +271,10 @@ export function getBlockBorderStyles(settings: Record<string, unknown>): React.C
   const border = settings['sectionBorder'] as Record<string, unknown> | undefined;
   if (!border) return styles;
 
-  const width = border.width as number | undefined;
-  const borderStyle = border.style as string | undefined;
-  const color = border.color as string | undefined;
-  const radius = border.radius as number | undefined;
+  const width = border['width'] as number | undefined;
+  const borderStyle = border['style'] as string | undefined;
+  const color = border['color'] as string | undefined;
+  const radius = border['radius'] as number | undefined;
 
   if (width && width > 0 && borderStyle && borderStyle !== 'none') {
     styles.borderWidth = `${width}px`;
@@ -295,11 +295,11 @@ export function getBlockShadowStyles(settings: Record<string, unknown>): React.C
   const shadow = settings['sectionShadow'] as Record<string, unknown> | undefined;
   if (!shadow) return styles;
 
-  const x = shadow.x as number | undefined;
-  const y = shadow.y as number | undefined;
-  const blur = shadow.blur as number | undefined;
-  const spread = shadow.spread as number | undefined;
-  const color = shadow.color as string | undefined;
+  const x = shadow['x'] as number | undefined;
+  const y = shadow['y'] as number | undefined;
+  const blur = shadow['blur'] as number | undefined;
+  const spread = shadow['spread'] as number | undefined;
+  const color = shadow['color'] as string | undefined;
 
   if ((x || y || blur || spread) && color) {
     styles.boxShadow = `${x ?? 0}px ${y ?? 0}px ${blur ?? 0}px ${spread ?? 0}px ${color}`;
@@ -334,21 +334,21 @@ export function getBlockBackgroundStyles(settings: Record<string, unknown>): Rea
   const background = settings['background'];
   let appliedBackground = false;
   if (isRecord(background)) {
-    const type = background.type;
+    const type = background['type'];
     if (typeof type === 'string') {
       if (type === 'none') {
         appliedBackground = true;
       } else if (type === 'solid') {
-        const color = background.color;
+        const color = background['color'];
         const resolved = resolveColorWithOpacity(color, 100);
         if (resolved) {
           styles.backgroundColor = resolved;
         }
         appliedBackground = true;
       } else if (type === 'gradient') {
-        const from = resolveColorWithOpacity(background.gradientFrom, background.gradientFromOpacity);
-        const to = resolveColorWithOpacity(background.gradientTo, background.gradientToOpacity);
-        const angleRaw = background.gradientAngle;
+        const from = resolveColorWithOpacity(background['gradientFrom'], background['gradientFromOpacity']);
+        const to = resolveColorWithOpacity(background['gradientTo'], background['gradientToOpacity']);
+        const angleRaw = background['gradientAngle'];
         const angle =
           typeof angleRaw === 'number' && Number.isFinite(angleRaw)
             ? ((Math.round(angleRaw) % 360) + 360) % 360
@@ -359,7 +359,7 @@ export function getBlockBackgroundStyles(settings: Record<string, unknown>): Rea
         }
         appliedBackground = true;
       } else if (type === 'image') {
-        const url = typeof background.imageUrl === 'string' ? background.imageUrl.trim() : '';
+        const url = typeof background['imageUrl'] === 'string' ? background['imageUrl'].trim() : '';
         if (url) {
           styles.backgroundImage = `url(${url})`;
           styles.backgroundRepeat = 'no-repeat';

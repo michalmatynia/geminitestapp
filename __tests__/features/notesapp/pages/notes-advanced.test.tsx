@@ -71,12 +71,12 @@ describe('Notes Advanced UI', () => {
       http.get('/api/notes/categories/tree', () => HttpResponse.json([])),
       http.get('/api/notes', () => HttpResponse.json(notes)),
       http.get('/api/notes/:id', ({ params }) => {
-        const note = notes.find(n => n.id === params.id);
+        const note = notes.find(n => n.id === params['id']);
         return note ? HttpResponse.json(note) : HttpResponse.json({ error: 'Not found' }, { status: 404 });
       }),
       http.patch('/api/notes/:id', async ({ params, request }) => {
         const body = await request.json() as any;
-        const index = notes.findIndex(n => n.id === params.id);
+        const index = notes.findIndex(n => n.id === params['id']);
         if (index !== -1) {
           notes[index] = { ...notes[index], ...body };
           return HttpResponse.json(notes[index]);
@@ -84,7 +84,7 @@ describe('Notes Advanced UI', () => {
         return HttpResponse.json({ error: 'Not found' }, { status: 404 });
       }),
       http.delete('/api/notes/:id', ({ params }) => {
-        notes = notes.filter(n => n.id !== params.id);
+        notes = notes.filter(n => n.id !== params['id']);
         return HttpResponse.json({ success: true });
       })
     );

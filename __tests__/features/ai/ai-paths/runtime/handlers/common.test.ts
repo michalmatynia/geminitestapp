@@ -102,7 +102,7 @@ describe('Common Handlers', () => {
         nodeInputs: { value: 'test' }
       });
       const result = await handleCompare(ctx);
-      expect(result.valid).toBe(true);
+      expect(result['valid']).toBe(true);
     });
 
     it('should handle case insensitivity', async () => {
@@ -115,7 +115,7 @@ describe('Common Handlers', () => {
         nodeInputs: { value: 'test' }
       });
       const result = await handleCompare(ctx);
-      expect(result.valid).toBe(true);
+      expect(result['valid']).toBe(true);
     });
   });
 
@@ -130,8 +130,8 @@ describe('Common Handlers', () => {
         nodeInputs: { valid: true, value: 'some-value' }
       });
       const result = await handleRouter(ctx);
-      expect(result.valid).toBe(true);
-      expect(result.value).toBe('some-value');
+      expect(result['valid']).toBe(true);
+      expect(result['value']).toBe('some-value');
     });
 
     it('should block falsy value', async () => {
@@ -144,8 +144,8 @@ describe('Common Handlers', () => {
         nodeInputs: { valid: false }
       });
       const result = await handleRouter(ctx);
-      expect(result.valid).toBe(false);
-      expect(result.errors).toContain('Router blocked');
+      expect(result['valid']).toBe(false);
+      expect(result['errors']).toContain('Router blocked');
     });
   });
 
@@ -160,8 +160,8 @@ describe('Common Handlers', () => {
         nodeInputs: { valid: true, context: { user: 'admin' } }
       });
       const result = await handleGate(ctx);
-      expect(result.valid).toBe(true);
-      expect(result.context).toEqual({ user: 'admin' });
+      expect(result['valid']).toBe(true);
+      expect(result['context']).toEqual({ user: 'admin' });
     });
 
     it('should block when valid is false', async () => {
@@ -174,9 +174,9 @@ describe('Common Handlers', () => {
         nodeInputs: { valid: false }
       });
       const result = await handleGate(ctx);
-      expect(result.valid).toBe(false);
-      expect(result.context).toBeNull();
-      expect(result.errors).toContain('Denied');
+      expect(result['valid']).toBe(false);
+      expect(result['context']).toBeNull();
+      expect(result['errors']).toContain('Denied');
     });
   });
 
@@ -191,7 +191,7 @@ describe('Common Handlers', () => {
         nodeInputs: { a: 1, b: 2, c: 3 }
       });
       const result = await handleBundle(ctx);
-      expect(result.bundle).toEqual({ a: 1, b: 2 });
+      expect(result['bundle']).toEqual({ a: 1, b: 2 });
     });
   });
 

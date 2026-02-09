@@ -45,7 +45,7 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<N
   void logActivity({
     type: ActivityTypes.CMS.PAGE_CREATED,
     description: `Created CMS page: ${name}`,
-    userId: ctx.userId,
+    userId: ctx.userId ?? null,
     entityId: created.id,
     entityType: 'cms_page',
     metadata: { name }

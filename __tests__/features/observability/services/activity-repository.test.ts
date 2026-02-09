@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import { prismaActivityRepository } from '@/features/observability/services/activity-repository/prisma-activity-repository';
 import prisma from '@/shared/lib/db/prisma';
 

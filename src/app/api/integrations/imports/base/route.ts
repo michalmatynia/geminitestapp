@@ -180,8 +180,8 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
     // Get existing products using repository to check for baseProductIds and SKUs
     const productRepository = await getProductRepository();
     const allProducts = await productRepository.getProducts({
-      pageSize: '10000', // Get all products
-      page: '0'
+      pageSize: 10000, // Get all products
+      page: 0
     });
     const existingIds = new Set(
       allProducts
@@ -321,8 +321,8 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
   // Pre-fetch existing products for filtering
   if (data.uniqueOnly || !allowDuplicateSku) {
     const allProducts = await productRepository.getProducts({
-      pageSize: '10000',
-      page: '0'
+      pageSize: 10000,
+      page: 0
     });
 
     if (data.uniqueOnly) {

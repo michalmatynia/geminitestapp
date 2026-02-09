@@ -92,7 +92,7 @@ async function PUT_handler(req: NextRequest, ctx: ApiHandlerContext, params: Par
   void logActivity({
     type: ActivityTypes.CMS.PAGE_UPDATED,
     description: `Updated CMS page: ${updatedPage.name}`,
-    userId: ctx.userId,
+    userId: ctx.userId ?? null,
     entityId: id,
     entityType: 'cms_page',
     metadata: { name: updatedPage.name, status }
@@ -120,7 +120,7 @@ async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext, params:
     void logActivity({
       type: ActivityTypes.CMS.PAGE_DELETED,
       description: `Deleted CMS page: ${page.name}`,
-      userId: ctx.userId,
+      userId: ctx.userId ?? null,
       entityId: id,
       entityType: 'cms_page',
       metadata: { name: page.name }

@@ -77,7 +77,8 @@ async function PUT_handler(
     return validation.response;
   }
 
-  const product: ProductWithImages | null = await productService.updateProduct(id, formData, { userId: _ctx.userId ?? undefined });
+  const options = _ctx.userId ? { userId: _ctx.userId } : undefined;
+  const product: ProductWithImages | null = await productService.updateProduct(id, formData, options);
   if (!product) {
     throw notFoundError('Product not found', { productId: id });
   }
@@ -123,7 +124,7 @@ async function PATCH_handler(
   void (logActivity({
     type: ActivityTypes.PRODUCT.UPDATED,
     description: `Quick updated product ${id}`,
-    userId: _ctx.userId,
+    userId: _ctx.userId ?? null,
     entityId: id,
     entityType: 'product',
     metadata: { changes: updateData }
@@ -142,7 +143,8 @@ async function DELETE_handler(
   params: { id: string }
 ): Promise<Response> {
   const id = params.id;
-  const product: ProductRecord | null = await productService.deleteProduct(id, { userId: _ctx.userId ?? undefined });
+  const options = _ctx.userId ? { userId: _ctx.userId } : undefined;
+  const product: ProductRecord | null = await productService.deleteProduct(id, options);
   if (!product) {
     throw notFoundError('Product not found', { productId: id });
   }

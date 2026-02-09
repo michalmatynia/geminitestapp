@@ -48,7 +48,7 @@ async function PUT_handler(
   const updated = await repository.updateCurrency(id, {
     code: data.code,
     name: data.name,
-    symbol: data.symbol,
+    symbol: data.symbol ?? null,
   });
 
   return NextResponse.json(updated);

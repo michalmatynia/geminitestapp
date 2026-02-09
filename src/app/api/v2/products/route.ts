@@ -40,8 +40,8 @@ async function handleGetProducts(_req: NextRequest, version: ApiVersion, searchP
   try {
     const products = await productService.getProducts({
       ...filters,
-      page: String(page),
-      pageSize: String(limit),
+      page: page,
+      pageSize: limit,
     });
 
     if (!products || products.length === 0) {

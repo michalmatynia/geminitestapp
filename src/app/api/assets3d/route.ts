@@ -35,7 +35,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       error instanceof Prisma.PrismaClientKnownRequestError &&
       (error.code === 'P2021' || error.code === 'P2022' || error.code === 'P1001' || error.code === 'P1003')
     ) {
-      logger.warn('[assets3d] Falling back to empty list due to missing table or database.', error.code);
+      logger.warn('[assets3d] Falling back to empty list due to missing table or database.', { code: error.code });
       return NextResponse.json([]);
     }
     throw error;

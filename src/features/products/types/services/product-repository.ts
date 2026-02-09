@@ -7,7 +7,7 @@ import type {
 
 import type { Prisma } from '@prisma/client';
 
-export type ProductFilters = ProductFiltersParsed;
+export type ProductFilters = Partial<ProductFiltersParsed>;
 
 export type CreateProductInput = ProductCreateData;
 export type UpdateProductInput = ProductUpdateData;

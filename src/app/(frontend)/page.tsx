@@ -204,7 +204,7 @@ export default async function Home(): Promise<JSX.Element> {
     );
   }
 
-  const productsRaw = await withTiming('products', () => productService.getProducts({}));
+  const productsRaw = await withTiming('products', () => productService.getProducts({ page: 1, pageSize: 20 }));
   const products = (
     productsRaw as (ProductWithImages | (ProductWithImages & MaybeImages))[]
   ).map(normalizeProduct);

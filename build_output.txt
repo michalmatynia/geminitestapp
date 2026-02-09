@@ -6,7 +6,7 @@ Loaded Prisma config from prisma.config.ts.
 
 Prisma schema loaded from prisma/schema.prisma.
 
-✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 206ms
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 187ms
 
 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
 
@@ -25,17 +25,17 @@ Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
 
   Creating an optimized production build ...
 Turbopack build encountered 3 warnings:
-./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/instrumentation.ts:36:26
+./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/instrumentation.ts:39:26
 Ecmascript file had an error
-[0m [90m 34 |[39m         }
- [90m 35 |[39m         [90m// Give some time for logging to complete before exiting[39m
-[31m[1m>[22m[39m[90m 36 |[39m         setTimeout(() [33m=>[39m process[33m.[39mexit([35m1[39m)[33m,[39m [35m1000[39m)[33m;[39m
+[0m [90m 37 |[39m         }
+ [90m 38 |[39m         [90m// Give some time for logging to complete before exiting[39m
+[31m[1m>[22m[39m[90m 39 |[39m         setTimeout(() [33m=>[39m process[33m.[39mexit([35m1[39m)[33m,[39m [35m1000[39m)[33m;[39m
  [90m    |[39m                          [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
- [90m 37 |[39m       })()[33m;[39m
- [90m 38 |[39m     })[33m;[39m
- [90m 39 |[39m   }[0m
+ [90m 40 |[39m       })()[33m;[39m
+ [90m 41 |[39m     })[33m;[39m
+ [90m 42 |[39m   }[0m
 
-A Node.js API is used (process.exit at line: 36) which is not supported in the Edge Runtime.
+A Node.js API is used (process.exit at line: 39) which is not supported in the Edge Runtime.
 Learn more: https://nextjs.org/docs/api-reference/edge-runtime
 
 Import trace:
@@ -44,17 +44,17 @@ Import trace:
     ./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/restore/route.ts
 
 
-./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/instrumentation.ts:22:5
+./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/instrumentation.ts:10:5
 Ecmascript file had an error
-[0m [90m 20 |[39m     })[33m;[39m
- [90m 21 |[39m
-[31m[1m>[22m[39m[90m 22 |[39m     process[33m.[39mon([32m'uncaughtException'[39m[33m,[39m (error[33m:[39m [33mError[39m) [33m=>[39m {
+[0m [90m  8 |[39m
+ [90m  9 |[39m     [90m// Set up global error handlers for the Node.js process[39m
+[31m[1m>[22m[39m[90m 10 |[39m     process[33m.[39mon([32m'unhandledRejection'[39m[33m,[39m (reason[33m:[39m unknown) [33m=>[39m {
  [90m    |[39m     [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
- [90m 23 |[39m       [36mvoid[39m ([36masync[39m () [33m=>[39m {
- [90m 24 |[39m         [36mtry[39m {
- [90m 25 |[39m           [36mconst[39m { logSystemError } [33m=[39m [36mawait[39m [36mimport[39m([32m'@/features/observability/server'[39m)[33m;[39m[0m
+ [90m 11 |[39m       [36mvoid[39m ([36masync[39m () [33m=>[39m {
+ [90m 12 |[39m         [36mtry[39m {
+ [90m 13 |[39m           [36mconst[39m { logSystemError } [33m=[39m [36mawait[39m [36mimport[39m([32m'@/features/observability/server'[39m)[33m;[39m[0m
 
-A Node.js API is used (process.on at line: 22) which is not supported in the Edge Runtime.
+A Node.js API is used (process.on at line: 10) which is not supported in the Edge Runtime.
 Learn more: https://nextjs.org/docs/api-reference/edge-runtime
 
 Import trace:
@@ -63,17 +63,17 @@ Import trace:
     ./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/restore/route.ts
 
 
-./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/instrumentation.ts:7:5
+./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/instrumentation.ts:25:5
 Ecmascript file had an error
-[0m [90m  5 |[39m
- [90m  6 |[39m     [90m// Set up global error handlers for the Node.js process[39m
-[31m[1m>[22m[39m[90m  7 |[39m     process[33m.[39mon([32m'unhandledRejection'[39m[33m,[39m (reason[33m:[39m unknown) [33m=>[39m {
+[0m [90m 23 |[39m     })[33m;[39m
+ [90m 24 |[39m
+[31m[1m>[22m[39m[90m 25 |[39m     process[33m.[39mon([32m'uncaughtException'[39m[33m,[39m (error[33m:[39m [33mError[39m) [33m=>[39m {
  [90m    |[39m     [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
- [90m  8 |[39m       [36mvoid[39m ([36masync[39m () [33m=>[39m {
- [90m  9 |[39m         [36mtry[39m {
- [90m 10 |[39m           [36mconst[39m { logSystemError } [33m=[39m [36mawait[39m [36mimport[39m([32m'@/features/observability/server'[39m)[33m;[39m[0m
+ [90m 26 |[39m       [36mvoid[39m ([36masync[39m () [33m=>[39m {
+ [90m 27 |[39m         [36mtry[39m {
+ [90m 28 |[39m           [36mconst[39m { logSystemError } [33m=[39m [36mawait[39m [36mimport[39m([32m'@/features/observability/server'[39m)[33m;[39m[0m
 
-A Node.js API is used (process.on at line: 7) which is not supported in the Edge Runtime.
+A Node.js API is used (process.on at line: 25) which is not supported in the Edge Runtime.
 Learn more: https://nextjs.org/docs/api-reference/edge-runtime
 
 Import trace:
@@ -82,18 +82,18 @@ Import trace:
     ./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/restore/route.ts
 
 
-✓ Compiled successfully in 17.6s
+✓ Compiled successfully in 17.1s
   Running TypeScript ...
 Failed to compile.
 
-./src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx:869:68
-Type error: Property 'catch' does not exist on type 'void'.
+./src/app/api/v2/products/route.ts:43:7
+Type error: Type 'string' is not assignable to type 'number'.
 
-[0m [90m 867 |[39m         handleFetchParserSample[33m=[39m{handleFetchParserSample}
- [90m 868 |[39m         handleFetchUpdaterSample[33m=[39m{handleFetchUpdaterSample}
-[31m[1m>[22m[39m[90m 869 |[39m         handleRunSimulation[33m=[39m{(node) [33m=>[39m { handleRunSimulation(node)[33m.[39m[36mcatch[39m(() [33m=>[39m {})[33m;[39m }}
- [90m     |[39m                                                                    [31m[1m^[22m[39m
- [90m 870 |[39m         onSendToAi[33m=[39m{(id[33m,[39m prompt) [33m=>[39m handleSendToAi(id[33m,[39m prompt)}
- [90m 871 |[39m         saveDbQueryPresets[33m=[39m{saveDbQueryPresets}
- [90m 872 |[39m         saveDbNodePresets[33m=[39m{saveDbNodePresets}[0m
+[0m [90m 41 |[39m     [36mconst[39m products [33m=[39m [36mawait[39m productService[33m.[39mgetProducts({
+ [90m 42 |[39m       [33m...[39mfilters[33m,[39m
+[31m[1m>[22m[39m[90m 43 |[39m       page[33m:[39m [33mString[39m(page)[33m,[39m
+ [90m    |[39m       [31m[1m^[22m[39m
+ [90m 44 |[39m       pageSize[33m:[39m [33mString[39m(limit)[33m,[39m
+ [90m 45 |[39m     })[33m;[39m
+ [90m 46 |[39m[0m
 Next.js build worker exited with code: 1 and signal: null

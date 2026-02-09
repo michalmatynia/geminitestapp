@@ -30,8 +30,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   // Get all product IDs using repository
   const productRepository = await getProductRepository();
   const products = await productRepository.getProducts({
-    pageSize: '10000', // Large limit to get all products
-    page: '1',
+    pageSize: 10000, // Large limit to get all products
+    page: 1,
   });
 
   if (products.length === 0) {

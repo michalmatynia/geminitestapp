@@ -43,7 +43,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   void logActivity({
     type: ActivityTypes.SYSTEM.DATABASE_SYNC,
     description: `Database sync started: ${direction}`,
-    userId: session?.user?.id,
+    userId: session?.user?.id ?? null,
     entityId: job.id,
     entityType: 'job',
     metadata: { direction, jobId: job.id }

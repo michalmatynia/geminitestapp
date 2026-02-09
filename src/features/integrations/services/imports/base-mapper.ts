@@ -231,6 +231,14 @@ const NUMBER_FIELDS = new Set([
   'length',
 ]);
 
+const PRODUCER_TARGET_FIELDS = new Set([
+  'producerids',
+  'producer_ids',
+  'producerid',
+  'producer_id',
+  'producer',
+]);
+
 const toStringValue = (value: unknown): string | null => {
   if (Array.isArray(value)) {
     const parts = value
@@ -257,6 +265,48 @@ const toIntValue = (value: unknown): number | null => {
     return null;
   }
   return toInt(value);
+};
+
+const normalizeProducerIds = (value: unknown): string[] => {
+  const unique = new Set<string>();
+
+  const pushValue = (entry: unknown): void => {
+    if (typeof entry === 'string') {
+      entry
+        .split(/[,\n;|]/)
+        .map((part: string) => part.trim())
+        .filter(Boolean)
+        .forEach((part: string) => unique.add(part));
+      return;
+    }
+    if (typeof entry === 'number' && Number.isFinite(entry)) {
+      unique.add(String(entry));
+      return;
+    }
+    if (entry && typeof entry === 'object') {
+      const record = entry as Record<string, unknown>;
+      const candidate =
+        record['producerId'] ??
+        record['producer_id'] ??
+        record['id'] ??
+        record['name'] ??
+        record['label'] ??
+        record['value'];
+      if (candidate !== undefined && candidate !== null) {
+        pushValue(candidate);
+        return;
+      }
+      Object.values(record).forEach((nested: unknown) => pushValue(nested));
+    }
+  };
+
+  if (Array.isArray(value)) {
+    value.forEach((entry: unknown) => pushValue(entry));
+  } else {
+    pushValue(value);
+  }
+
+  return Array.from(unique);
 };
 
 const getByPath = (record: BaseProductRecord, path: string[]): unknown => {
@@ -364,9 +414,17 @@ const applyTemplateMappings = (
   for (const mapping of mappings) {
     const sourceKey = mapping.sourceKey.trim();
     const targetField = mapping.targetField.trim();
+    const normalizedTargetField = targetField.toLowerCase();
     if (!sourceKey || !targetField) continue;
     const rawValue = resolveTemplateValue(record, sourceKey);
     if (rawValue === null || rawValue === undefined) continue;
+    if (PRODUCER_TARGET_FIELDS.has(normalizedTargetField)) {
+      const producerIds = normalizeProducerIds(rawValue);
+      if (producerIds.length > 0) {
+        (mapped as ProductCreateData & { producerIds?: string[] }).producerIds = producerIds;
+      }
+      continue;
+    }
     if (NUMBER_FIELDS.has(targetField)) {
       const parsed = toIntValue(rawValue);
       if (parsed === null) continue;

@@ -17,9 +17,11 @@ import {
 } from '@/features/integrations/hooks/useProductListingMutations';
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import type { IntegrationWithConnections, IntegrationConnectionBasic } from '@/features/integrations/types/listings';
+import { listProductFormSchema } from '@/features/integrations/validations/listing-forms';
 import { logClientError } from '@/features/observability';
 import { ProductWithImages } from '@/features/products/types';
 import { Button, UnifiedSelect, Label, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, SectionPanel, FormModal } from '@/shared/ui';
+import { validateFormData } from '@/shared/validations/form-validation';
 
 import { BaseListingSettings } from './BaseListingSettings';
 import { ExportLogViewer } from './ExportLogViewer';
@@ -97,13 +99,18 @@ function ListProductModalContent({
   };
 
   const handleSubmit = async (): Promise<void> => {
-    if (!selectedIntegrationId || !selectedConnectionId) {
-      setError('Please select both a marketplace and an account');
-      return;
-    }
-
-    if (isBaseComIntegration && !selectedInventoryId) {
-      setError('Please select a Base.com inventory');
+    const validation = validateFormData(
+      listProductFormSchema,
+      {
+        selectedIntegrationId,
+        selectedConnectionId,
+        isBaseComIntegration,
+        selectedInventoryId,
+      },
+      'Please review required listing settings.',
+    );
+    if (!validation.success) {
+      setError(validation.firstError);
       return;
     }
 

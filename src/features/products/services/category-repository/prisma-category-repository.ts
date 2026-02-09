@@ -18,6 +18,69 @@ type PrismaCategoryWithChildren = PrismaProductCategory & {
   children?: PrismaCategoryWithChildren[];
 };
 
+const compareBySortIndexThenName = (
+  a: { sortIndex: number; name: string },
+  b: { sortIndex: number; name: string }
+): number => {
+  if (a.sortIndex !== b.sortIndex) return a.sortIndex - b.sortIndex;
+  return a.name.localeCompare(b.name);
+};
+
+const normalizeSiblingOrder = async (
+  tx: Prisma.TransactionClient,
+  catalogId: string,
+  parentId: string | null
+): Promise<void> => {
+  const siblings = await tx.productCategory.findMany({
+    where: { catalogId, parentId },
+    orderBy: [{ sortIndex: 'asc' }, { name: 'asc' }],
+    select: { id: true, sortIndex: true },
+  });
+
+  for (let index = 0; index < siblings.length; index += 1) {
+    const sibling = siblings[index];
+    if (!sibling || sibling.sortIndex === index) continue;
+    await tx.productCategory.update({
+      where: { id: sibling.id },
+      data: { sortIndex: index },
+    });
+  }
+};
+
+const reorderSiblingsForCategory = async (
+  tx: Prisma.TransactionClient,
+  categoryId: string,
+  catalogId: string,
+  parentId: string | null,
+  targetIndex?: number
+): Promise<void> => {
+  const siblings = await tx.productCategory.findMany({
+    where: { catalogId, parentId },
+    orderBy: [{ sortIndex: 'asc' }, { name: 'asc' }],
+    select: { id: true },
+  });
+
+  const ids = siblings
+    .map((entry: { id: string }): string => entry.id)
+    .filter((id: string): boolean => id !== categoryId);
+
+  if (targetIndex === undefined) {
+    ids.push(categoryId);
+  } else {
+    const clampedIndex = Math.max(0, Math.min(targetIndex, ids.length));
+    ids.splice(clampedIndex, 0, categoryId);
+  }
+
+  for (let index = 0; index < ids.length; index += 1) {
+    const siblingId = ids[index];
+    if (!siblingId) continue;
+    await tx.productCategory.update({
+      where: { id: siblingId },
+      data: { sortIndex: index },
+    });
+  }
+};
+
 const toCategoryDomain = (category: PrismaProductCategory): ProductCategory => ({
   id: category.id,
   name: category.name,
@@ -25,6 +88,7 @@ const toCategoryDomain = (category: PrismaProductCategory): ProductCategory => (
   color: category.color ?? null,
   parentId: category.parentId ?? null,
   catalogId: category.catalogId,
+  sortIndex: category.sortIndex,
   createdAt: category.createdAt.toISOString(),
   updatedAt: category.updatedAt.toISOString(),
 });
@@ -54,37 +118,46 @@ export const prismaCategoryRepository: CategoryRepository = {
 
     const categories = await prisma.productCategory.findMany({
       where,
-      orderBy: { name: 'asc' },
+      orderBy: [{ sortIndex: 'asc' }, { name: 'asc' }],
     });
 
     return categories.map(toCategoryDomain);
   },
 
   async getCategoryTree(catalogId?: string): Promise<ProductCategoryWithChildren[]> {
-    const where: Prisma.ProductCategoryWhereInput = {
-      parentId: null,
-    };
-    if (catalogId) {
-      where.catalogId = catalogId;
-    }
-
     const categories = await prisma.productCategory.findMany({
-      where,
-      include: {
-        children: {
-          include: {
-            children: {
-              include: {
-                children: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: { name: 'asc' },
-    }) as PrismaCategoryWithChildren[];
+      ...(catalogId ? { where: { catalogId } } : {}),
+      orderBy: [{ sortIndex: 'asc' }, { name: 'asc' }],
+    });
 
-    return categories.map(toCategoryWithChildrenDomain);
+    const byId = new Map<string, ProductCategoryWithChildren>();
+    categories.forEach((category: PrismaProductCategory): void => {
+      byId.set(category.id, { ...toCategoryDomain(category), children: [] });
+    });
+
+    const roots: ProductCategoryWithChildren[] = [];
+    byId.forEach((category: ProductCategoryWithChildren): void => {
+      if (category.parentId && byId.has(category.parentId)) {
+        byId.get(category.parentId)!.children.push(category);
+      } else {
+        roots.push(category);
+      }
+    });
+
+    const sortTree = (
+      nodes: ProductCategoryWithChildren[]
+    ): ProductCategoryWithChildren[] =>
+      nodes
+        .sort((a: ProductCategoryWithChildren, b: ProductCategoryWithChildren): number => compareBySortIndexThenName(
+          { sortIndex: a.sortIndex ?? 0, name: a.name },
+          { sortIndex: b.sortIndex ?? 0, name: b.name }
+        ))
+        .map((node: ProductCategoryWithChildren): ProductCategoryWithChildren => ({
+          ...node,
+          children: sortTree(node.children),
+        }));
+
+    return sortTree(roots);
   },
 
   async getCategoryById(id: string): Promise<ProductCategory | null> {
@@ -109,34 +182,94 @@ export const prismaCategoryRepository: CategoryRepository = {
   },
 
   async createCategory(data: CreateProductCategoryDto): Promise<ProductCategory> {
-    const category = await prisma.productCategory.create({
-      data: {
-        name: data.name,
-        catalogId: data.catalogId,
-        ...(data.description !== undefined && { description: data.description }),
-        ...(data.color !== undefined && { color: data.color }),
-        ...(data.parentId !== undefined && { parentId: data.parentId }),
-      },
+    const parentId = data.parentId ?? null;
+    return prisma.$transaction(async (tx: Prisma.TransactionClient): Promise<ProductCategory> => {
+      const category = await tx.productCategory.create({
+        data: {
+          name: data.name,
+          catalogId: data.catalogId,
+          parentId,
+          ...(data.description !== undefined && { description: data.description }),
+          ...(data.color !== undefined && { color: data.color }),
+          sortIndex: data.sortIndex ?? 0,
+        },
+      });
+
+      await reorderSiblingsForCategory(
+        tx,
+        category.id,
+        category.catalogId,
+        category.parentId ?? null,
+        data.sortIndex
+      );
+      return toCategoryDomain(category);
     });
-    return toCategoryDomain(category);
   },
 
   async updateCategory(id: string, data: UpdateProductCategoryDto): Promise<ProductCategory> {
-    const category = await prisma.productCategory.update({
-      where: { id },
-      data: {
-        ...(data.name !== undefined && { name: data.name }),
-        ...(data.description !== undefined && { description: data.description }),
-        ...(data.color !== undefined && { color: data.color }),
-        ...(data.parentId !== undefined && { parentId: data.parentId }),
-      },
+    return prisma.$transaction(async (tx: Prisma.TransactionClient): Promise<ProductCategory> => {
+      const current = await tx.productCategory.findUnique({
+        where: { id },
+        select: { id: true, catalogId: true, parentId: true },
+      });
+      if (!current) {
+        throw new Error('Category not found');
+      }
+
+      const nextCatalogId = data.catalogId ?? current.catalogId;
+      const nextParentId =
+        data.parentId !== undefined ? data.parentId : current.parentId ?? null;
+      const movedBucket =
+        nextCatalogId !== current.catalogId ||
+        nextParentId !== (current.parentId ?? null);
+
+      const category = await tx.productCategory.update({
+        where: { id },
+        data: {
+          ...(data.name !== undefined && { name: data.name }),
+          ...(data.description !== undefined && { description: data.description }),
+          ...(data.color !== undefined && { color: data.color }),
+          ...(data.parentId !== undefined && { parentId: data.parentId }),
+          ...(data.catalogId !== undefined && { catalogId: data.catalogId }),
+          ...(data.sortIndex !== undefined ? { sortIndex: data.sortIndex } : {}),
+        },
+      });
+
+      if (movedBucket) {
+        await normalizeSiblingOrder(
+          tx,
+          current.catalogId,
+          current.parentId ?? null
+        );
+      }
+
+      if (data.sortIndex !== undefined || movedBucket) {
+        await reorderSiblingsForCategory(
+          tx,
+          category.id,
+          nextCatalogId,
+          nextParentId,
+          data.sortIndex
+        );
+      }
+
+      return toCategoryDomain(category);
     });
-    return toCategoryDomain(category);
   },
 
   async deleteCategory(id: string): Promise<void> {
-    await prisma.productCategory.delete({
-      where: { id },
+    await prisma.$transaction(async (tx: Prisma.TransactionClient): Promise<void> => {
+      const current = await tx.productCategory.findUnique({
+        where: { id },
+        select: { catalogId: true, parentId: true },
+      });
+      if (!current) return;
+
+      await tx.productCategory.delete({
+        where: { id },
+      });
+
+      await normalizeSiblingOrder(tx, current.catalogId, current.parentId ?? null);
     });
   },
 

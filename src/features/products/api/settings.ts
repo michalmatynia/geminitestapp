@@ -70,6 +70,20 @@ export async function updateCategory(id: string, data: Partial<ProductCategory>)
   return api.put<ProductCategory>(`/api/products/categories/${id}`, data);
 }
 
+export type ReorderCategoryPayload = {
+  categoryId: string;
+  parentId: string | null;
+  position: 'inside' | 'before' | 'after';
+  targetId?: string | null;
+  catalogId?: string;
+};
+
+export async function reorderCategory(
+  payload: ReorderCategoryPayload
+): Promise<ProductCategory> {
+  return api.post<ProductCategory>('/api/products/categories/reorder', payload);
+}
+
 export async function deleteCategory(id: string): Promise<void> {
   return api.delete(`/api/products/categories/${id}`);
 }

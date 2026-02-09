@@ -18,6 +18,16 @@ interface ProductListHeaderProps {
   showHeader?: boolean;
 }
 
+const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
+
+const resolveDraftIconColor = (draft: ProductDraft): string | undefined => {
+  if (draft.iconColorMode !== 'custom') return undefined;
+  if (typeof draft.iconColor !== 'string') return undefined;
+  const normalized = draft.iconColor.trim();
+  if (!HEX_COLOR_PATTERN.test(normalized)) return undefined;
+  return normalized;
+};
+
 export const ProductListHeader = memo(function ProductListHeader({
   showHeader = true,
 }: ProductListHeaderProps) {
@@ -81,6 +91,7 @@ export const ProductListHeader = memo(function ProductListHeader({
               <div className='flex flex-wrap items-center gap-1.5'>
                 {activeDrafts.map((draft: ProductDraft) => {
                   const IconComponent = draft.icon ? ICON_LIBRARY_MAP[draft.icon] : null;
+                  const iconColor = resolveDraftIconColor(draft);
                   return (
                     <Button
                       key={draft.id}
@@ -90,9 +101,9 @@ export const ProductListHeader = memo(function ProductListHeader({
                       title={draft.name}
                     >
                       {IconComponent ? (
-                        <IconComponent className='h-3.5 w-3.5' />
+                        <IconComponent className='h-3.5 w-3.5' style={iconColor ? { color: iconColor } : undefined} />
                       ) : (
-                        <Package className='h-3.5 w-3.5' />
+                        <Package className='h-3.5 w-3.5' style={iconColor ? { color: iconColor } : undefined} />
                       )}
                     </Button>
                   );

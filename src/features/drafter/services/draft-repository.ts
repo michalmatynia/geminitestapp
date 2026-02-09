@@ -41,14 +41,41 @@ type MongoDraftDoc = {
   categoryId?: string | null;
   categoryIds?: string[];
   tagIds?: string[];
+  producerIds?: string[];
   parameters?: ProductParameterValue[];
   defaultPriceGroupId?: string | null;
   active?: boolean;
   icon?: string | null;
+  iconColorMode?: 'theme' | 'custom' | null;
+  iconColor?: string | null;
   imageLinks?: string[];
   baseProductId?: string | null;
   createdAt?: Date;
   updatedAt?: Date;
+};
+
+const normalizeStringArray = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  const unique = new Set<string>();
+  value.forEach((entry: unknown) => {
+    if (typeof entry !== 'string') return;
+    const trimmed = entry.trim();
+    if (!trimmed) return;
+    unique.add(trimmed);
+  });
+  return Array.from(unique);
+};
+
+const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
+
+const normalizeIconColorMode = (value: unknown): 'theme' | 'custom' =>
+  value === 'custom' ? 'custom' : 'theme';
+
+const normalizeIconColor = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!HEX_COLOR_PATTERN.test(trimmed)) return null;
+  return trimmed.toLowerCase();
 };
 
 const getDraftProvider = async (): Promise<DraftProvider> => {
@@ -96,12 +123,15 @@ const listDrafts_Mongo = async (): Promise<ProductDraft[]> => {
           ? draft.categoryIds[0] ?? null
           : null,
     tagIds: Array.isArray(draft.tagIds) ? draft.tagIds : [],
+    producerIds: normalizeStringArray(draft.producerIds),
     parameters: Array.isArray(draft.parameters)
       ? draft.parameters
       : [],
     defaultPriceGroupId: draft.defaultPriceGroupId || null,
     active: draft.active ?? true,
     icon: draft.icon || null,
+    iconColorMode: normalizeIconColorMode(draft.iconColorMode),
+    iconColor: normalizeIconColor(draft.iconColor),
     imageLinks: Array.isArray(draft.imageLinks) ? draft.imageLinks : [],
     baseProductId: draft.baseProductId || null,
     createdAt: draft.createdAt || new Date(),
@@ -146,12 +176,15 @@ const getDraft_Mongo = async (id: string): Promise<ProductDraft | null> => {
           ? draft.categoryIds[0] ?? null
           : null,
     tagIds: Array.isArray(draft.tagIds) ? draft.tagIds : [],
+    producerIds: normalizeStringArray(draft.producerIds),
     parameters: Array.isArray(draft.parameters)
       ? draft.parameters
       : [],
     defaultPriceGroupId: draft.defaultPriceGroupId || null,
     active: draft.active ?? true,
     icon: draft.icon || null,
+    iconColorMode: normalizeIconColorMode(draft.iconColorMode),
+    iconColor: normalizeIconColor(draft.iconColor),
     imageLinks: Array.isArray(draft.imageLinks) ? draft.imageLinks : [],
     baseProductId: draft.baseProductId || null,
     createdAt: draft.createdAt || new Date(),
@@ -193,8 +226,11 @@ const createDraft_Mongo = async (input: CreateProductDraftInput): Promise<Produc
     categoryId: input.categoryId || null,
     categoryIds: input.categoryId ? [input.categoryId] : [],
     tagIds: input.tagIds || [],
+    producerIds: normalizeStringArray(input.producerIds),
     parameters: input.parameters || [],
     icon: input.icon || null,
+    iconColorMode: normalizeIconColorMode(input.iconColorMode),
+    iconColor: normalizeIconColor(input.iconColor),
     imageLinks: input.imageLinks || [],
     active: input.active ?? true,
     createdAt: now,
@@ -229,10 +265,13 @@ const createDraft_Mongo = async (input: CreateProductDraftInput): Promise<Produc
     catalogIds: draft.catalogIds || [],
     categoryId: draft.categoryId || null,
     tagIds: draft.tagIds || [],
+    producerIds: normalizeStringArray(draft.producerIds),
     parameters: draft.parameters || [],
     defaultPriceGroupId: input.defaultPriceGroupId || null,
     active: draft.active ?? true,
     icon: draft.icon || null,
+    iconColorMode: normalizeIconColorMode(draft.iconColorMode),
+    iconColor: normalizeIconColor(draft.iconColor),
     imageLinks: draft.imageLinks || [],
     baseProductId: input.baseProductId || null,
     createdAt: now,
@@ -257,6 +296,18 @@ const updateDraft_Mongo = async (id: string, input: UpdateProductDraftInput): Pr
     const normalized = typeof input.categoryId === 'string' && input.categoryId.trim() ? input.categoryId.trim() : null;
     updatePayload.categoryId = normalized;
     updatePayload.categoryIds = normalized ? [normalized] : [];
+  }
+
+  if ('producerIds' in input) {
+    updatePayload.producerIds = normalizeStringArray(input.producerIds);
+  }
+
+  if ('iconColorMode' in input) {
+    updatePayload.iconColorMode = normalizeIconColorMode(input.iconColorMode);
+  }
+
+  if ('iconColor' in input) {
+    updatePayload.iconColor = normalizeIconColor(input.iconColor);
   }
 
   const result = await mongo.collection<MongoDraftDoc>('product_drafts').findOneAndUpdate(
@@ -310,12 +361,15 @@ const updateDraft_Mongo = async (id: string, input: UpdateProductDraftInput): Pr
           ? doc.categoryIds[0] ?? null
           : null,
     tagIds: Array.isArray(doc.tagIds) ? doc.tagIds : [],
+    producerIds: normalizeStringArray(doc.producerIds),
     parameters: Array.isArray(doc.parameters)
       ? doc.parameters
       : [],
     defaultPriceGroupId: doc.defaultPriceGroupId || null,
     active: doc.active ?? true,
     icon: doc.icon || null,
+    iconColorMode: normalizeIconColorMode(doc.iconColorMode),
+    iconColor: normalizeIconColor(doc.iconColor),
     imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
     baseProductId: doc.baseProductId || null,
     createdAt: doc.createdAt || now,
@@ -340,7 +394,10 @@ const listDrafts_Prisma = async (): Promise<ProductDraft[]> => {
     catalogIds: draft.catalogIds as string[],
     categoryId: typeof draft.categoryId === 'string' ? draft.categoryId : null,
     tagIds: draft.tagIds as string[],
+    producerIds: normalizeStringArray(draft.producerIds),
     parameters: draft.parameters as ProductParameterValue[],
+    iconColorMode: normalizeIconColorMode(draft.iconColorMode),
+    iconColor: normalizeIconColor(draft.iconColor),
     imageLinks: draft.imageLinks as string[],
   }));
 };
@@ -357,7 +414,10 @@ const getDraft_Prisma = async (id: string): Promise<ProductDraft | null> => {
     catalogIds: draft.catalogIds as string[],
     categoryId: typeof draft.categoryId === 'string' ? draft.categoryId : null,
     tagIds: draft.tagIds as string[],
+    producerIds: normalizeStringArray(draft.producerIds),
     parameters: draft.parameters as ProductParameterValue[],
+    iconColorMode: normalizeIconColorMode(draft.iconColorMode),
+    iconColor: normalizeIconColor(draft.iconColor),
     imageLinks: draft.imageLinks as string[],
   };
 };
@@ -389,10 +449,13 @@ const createDraft_Prisma = async (input: CreateProductDraftInput): Promise<Produ
       catalogIds: input.catalogIds || [],
       categoryId: input.categoryId || null,
       tagIds: input.tagIds || [],
+      producerIds: normalizeStringArray(input.producerIds),
       parameters: input.parameters || [],
       defaultPriceGroupId: input.defaultPriceGroupId,
       active: input.active ?? true,
       icon: input.icon,
+      iconColorMode: normalizeIconColorMode(input.iconColorMode),
+      iconColor: normalizeIconColor(input.iconColor),
       imageLinks: input.imageLinks || [],
       baseProductId: input.baseProductId,
     } as Prisma.ProductDraftCreateInput, // Type assertion needed due to exactOptionalPropertyTypes
@@ -403,16 +466,27 @@ const createDraft_Prisma = async (input: CreateProductDraftInput): Promise<Produ
     catalogIds: draft.catalogIds as string[],
     categoryId: typeof draft.categoryId === 'string' ? draft.categoryId : null,
     tagIds: draft.tagIds as string[],
+    producerIds: normalizeStringArray(draft.producerIds),
     parameters: draft.parameters as ProductParameterValue[],
+    iconColorMode: normalizeIconColorMode(draft.iconColorMode),
+    iconColor: normalizeIconColor(draft.iconColor),
     imageLinks: draft.imageLinks as string[],
   };
 };
 
 const updateDraft_Prisma = async (id: string, input: UpdateProductDraftInput): Promise<ProductDraft | null> => {
   try {
+    const updateData: UpdateProductDraftInput = { ...input };
+    if ('iconColorMode' in input) {
+      updateData.iconColorMode = normalizeIconColorMode(input.iconColorMode);
+    }
+    if ('iconColor' in input) {
+      updateData.iconColor = normalizeIconColor(input.iconColor);
+    }
+
     const draft = await prisma.productDraft.update({
       where: { id },
-      data: input as Prisma.ProductDraftUpdateInput, // Type assertion needed due to exactOptionalPropertyTypes
+      data: updateData as Prisma.ProductDraftUpdateInput, // Type assertion needed due to exactOptionalPropertyTypes
     });
 
     return {
@@ -420,7 +494,10 @@ const updateDraft_Prisma = async (id: string, input: UpdateProductDraftInput): P
       catalogIds: draft.catalogIds as string[],
       categoryId: typeof draft.categoryId === 'string' ? draft.categoryId : null,
       tagIds: draft.tagIds as string[],
+      producerIds: normalizeStringArray(draft.producerIds),
       parameters: draft.parameters as ProductParameterValue[],
+      iconColorMode: normalizeIconColorMode(draft.iconColorMode),
+      iconColor: normalizeIconColor(draft.iconColor),
       imageLinks: draft.imageLinks as string[],
     };
   } catch {

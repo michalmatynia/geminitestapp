@@ -108,7 +108,9 @@ export function useSaveCategoryMutation(): UseMutationResult<ProductCategory, Er
       id ? api.updateCategory(id, data) : api.createCategory(data),
     onSuccess: (_: ProductCategory, variables: { id: string | undefined; data: Partial<ProductCategory> }) => {
       const catalogId = variables.data.catalogId ?? null;
+      const treeCatalogId = variables.data.catalogId ?? undefined;
       void queryClient.invalidateQueries({ queryKey: productSettingsKeys.categories(catalogId) });
+      void queryClient.invalidateQueries({ queryKey: ['product-categories', 'tree', treeCatalogId] });
     },
   });
 }
@@ -119,6 +121,28 @@ export function useDeleteCategoryMutation(): UseMutationResult<void, Error, { id
     mutationFn: ({ id }: { id: string; catalogId: string | null }) => api.deleteCategory(id),
     onSuccess: (_: void, variables: { id: string; catalogId: string | null }) => {
       void queryClient.invalidateQueries({ queryKey: productSettingsKeys.categories(variables.catalogId) });
+      void queryClient.invalidateQueries({ queryKey: ['product-categories', 'tree', variables.catalogId ?? undefined] });
+    },
+  });
+}
+
+export function useReorderCategoryMutation(): UseMutationResult<ProductCategory, Error, api.ReorderCategoryPayload> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: api.ReorderCategoryPayload) =>
+      api.reorderCategory(payload),
+    onSuccess: (
+      _: ProductCategory,
+      variables: api.ReorderCategoryPayload
+    ) => {
+      const catalogId = variables.catalogId ?? null;
+      const treeCatalogId = variables.catalogId ?? undefined;
+      void queryClient.invalidateQueries({
+        queryKey: productSettingsKeys.categories(catalogId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ['product-categories', 'tree', treeCatalogId],
+      });
     },
   });
 }

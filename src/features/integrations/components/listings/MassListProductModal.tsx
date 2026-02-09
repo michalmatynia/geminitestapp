@@ -7,8 +7,10 @@ import {
   useListingSettingsContext,
 } from '@/features/integrations/context/ListingSettingsContext';
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
+import { massListProductFormSchema } from '@/features/integrations/validations/listing-forms';
 import { logClientError } from '@/features/observability';
 import { FormModal } from '@/shared/ui';
+import { validateFormData } from '@/shared/validations/form-validation';
 
 import { BaseListingSettings } from './BaseListingSettings';
 import { ExportLogViewer } from './ExportLogViewer';
@@ -56,8 +58,16 @@ function MassListProductModalContent({
   )?.name || '';
 
   const handleSubmit = async (): Promise<void> => {
-    if (isBaseComIntegration && !selectedInventoryId) {
-      setError('Please select a Base.com inventory');
+    const validation = validateFormData(
+      massListProductFormSchema,
+      {
+        isBaseComIntegration,
+        selectedInventoryId,
+      },
+      'Please review required listing settings.',
+    );
+    if (!validation.success) {
+      setError(validation.firstError);
       return;
     }
 

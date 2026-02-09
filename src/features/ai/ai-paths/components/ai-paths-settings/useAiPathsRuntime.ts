@@ -535,27 +535,42 @@ export function useAiPathsRuntime({
     []
   );
 
-  const seedConnectedInputsFromOutputs = useCallback(
+  const seedDownstreamInputsRecursive = useCallback(
     (
       inputs: Record<string, RuntimePortValues>,
-      fromNodeId: string,
-      nodeOutputs: RuntimePortValues
+      allOutputs: Record<string, RuntimePortValues>,
+      fromNodeId: string
     ): Record<string, RuntimePortValues> => {
-      const nextInputs: Record<string, RuntimePortValues> = {
-        ...inputs,
-      };
-      sanitizedEdges.forEach((edge: Edge): void => {
-        if (edge.from !== fromNodeId || !edge.to) return;
-        const rawFromPort = edge.fromPort?.trim() || 'context';
-        const fromPort = rawFromPort === 'simulation' ? 'context' : rawFromPort;
-        const toPort = edge.toPort?.trim() || fromPort;
-        const value = (nodeOutputs as Record<string, unknown>)[fromPort];
-        if (value === undefined) return;
-        nextInputs[edge.to] = {
-          ...(nextInputs[edge.to] ?? {}),
-          [toPort]: value,
-        };
-      });
+      const nextInputs: Record<string, RuntimePortValues> = { ...inputs };
+      const visited = new Set<string>();
+      const queue = [fromNodeId];
+
+      while (queue.length > 0) {
+        const currentNodeId = queue.shift()!;
+        if (visited.has(currentNodeId)) continue;
+        visited.add(currentNodeId);
+
+        const nodeOutputs = allOutputs[currentNodeId];
+        if (!nodeOutputs) continue;
+
+        sanitizedEdges.forEach((edge: Edge): void => {
+          if (edge.from !== currentNodeId || !edge.to) return;
+          const rawFromPort = edge.fromPort?.trim() || 'context';
+          const fromPort = rawFromPort === 'simulation' ? 'context' : rawFromPort;
+          const toPort = edge.toPort?.trim() || fromPort;
+          const value = (nodeOutputs as Record<string, unknown>)[fromPort];
+          if (value === undefined) return;
+          nextInputs[edge.to] = {
+            ...(nextInputs[edge.to] ?? {}),
+            [toPort]: value,
+          };
+          // Continue propagation through nodes that already have outputs
+          // (from a previous run), so the UI shows the full downstream chain.
+          if (allOutputs[edge.to] && !visited.has(edge.to)) {
+            queue.push(edge.to);
+          }
+        });
+      }
       return nextInputs;
     },
     [sanitizedEdges]
@@ -580,27 +595,30 @@ export function useAiPathsRuntime({
           : {}),
       };
       setRuntimeState((prev: RuntimeState): RuntimeState => {
-        const nextInputs = seedConnectedInputsFromOutputs(
+        const nextOutputs = {
+          ...prev.outputs,
+          [simulationNode.id]: {
+            ...((prev.outputs[simulationNode.id] ?? {}) as Record<string, unknown>),
+            ...simulationOutputs,
+          },
+        };
+        // Use recursive seeding to propagate through the entire downstream chain,
+        // so all downstream nodes (including multi-hop mappers) see data immediately.
+        const nextInputs = seedDownstreamInputsRecursive(
           prev.inputs,
-          simulationNode.id,
-          simulationOutputs
+          nextOutputs,
+          simulationNode.id
         );
         const next: RuntimeState = {
           ...prev,
           inputs: nextInputs,
-          outputs: {
-            ...prev.outputs,
-            [simulationNode.id]: {
-              ...((prev.outputs[simulationNode.id] ?? {}) as Record<string, unknown>),
-              ...simulationOutputs,
-            },
-          },
+          outputs: nextOutputs,
         };
         runtimeStateRef.current = next;
         return next;
       });
     },
-    [executionMode, seedConnectedInputsFromOutputs, setRuntimeState]
+    [executionMode, seedDownstreamInputsRecursive, setRuntimeState]
   );
 
   const buildActivePathConfig = useCallback(
@@ -1841,20 +1859,22 @@ export function useAiPathsRuntime({
             },
           }
           : { ...prev.inputs };
-        const nextInputs = seedConnectedInputsFromOutputs(
+        const nextOutputs = {
+          ...prev.outputs,
+          [triggerNode.id]: immediateOutputs,
+        };
+        // Use recursive seeding so multi-hop downstream nodes see data immediately.
+        const nextInputs = seedDownstreamInputsRecursive(
           seededInputs,
-          triggerNode.id,
-          immediateOutputs
+          nextOutputs,
+          triggerNode.id
         );
         const next: RuntimeState = {
           ...prev,
           runId,
           runStartedAt: startedAt,
           inputs: nextInputs,
-          outputs: {
-            ...prev.outputs,
-            [triggerNode.id]: immediateOutputs,
-          },
+          outputs: nextOutputs,
         };
         runtimeStateRef.current = next;
         return next;
@@ -1922,7 +1942,7 @@ export function useAiPathsRuntime({
     createRunId,
     executionMode,
     runLocalLoop,
-    seedConnectedInputsFromOutputs,
+    seedDownstreamInputsRecursive,
     updateRunStatus,
     finalizeLocalRunOutcome,
   ]);
@@ -2450,7 +2470,24 @@ export function useAiPathsRuntime({
           });
         }
       } else {
-        void enrichContext();
+        // Await enrichment so real entity data is available before the engine runs.
+        // Timeout prevents indefinite blocking if the fetch hangs.
+        const ENRICHMENT_TIMEOUT_MS = 3000;
+        let enrichedContext: Record<string, unknown> | null = null;
+        try {
+          enrichedContext = await Promise.race([
+            enrichContext(),
+            new Promise<null>((resolve) => setTimeout(() => resolve(null), ENRICHMENT_TIMEOUT_MS)),
+          ]);
+        } catch {
+          // Enrichment failed; fall through to use initialContext (fallback entity).
+        }
+        if (enrichedContext) {
+          pendingSimulationContextRef.current = {
+            ...(pendingSimulationContextRef.current ?? {}),
+            ...enrichedContext,
+          };
+        }
         dispatchTrigger(eventName, entityId, entityType);
       }
       toast(`Simulated ${eventName} for ${entityType} ${entityId}`, {

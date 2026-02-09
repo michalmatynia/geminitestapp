@@ -17,6 +17,16 @@ import { ConfirmDialog } from '@/shared/ui';
 
 import { useDrafterContext } from '../context/DrafterContext';
 
+const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
+
+const resolveDraftIconColor = (draft: ProductDraft): string | undefined => {
+  if (draft.iconColorMode !== 'custom') return undefined;
+  if (typeof draft.iconColor !== 'string') return undefined;
+  const normalized = draft.iconColor.trim();
+  if (!HEX_COLOR_PATTERN.test(normalized)) return undefined;
+  return normalized;
+};
+
 export function DraftList(): React.JSX.Element {
   const { openCreator } = useDrafterContext();
   const { data: drafts = [], isLoading: loading } = useDrafts();
@@ -90,9 +100,10 @@ export function DraftList(): React.JSX.Element {
                     {draft.icon &&
                       ((): React.JSX.Element | null => {
                         const IconComponent = ICON_LIBRARY_MAP[draft.icon];
+                        const iconColor = resolveDraftIconColor(draft);
                         return IconComponent ? (
                           <div className='flex h-8 w-8 items-center justify-center rounded-md border bg-gray-800 text-gray-400'>
-                            <IconComponent className='h-4 w-4' />
+                            <IconComponent className='h-4 w-4' style={iconColor ? { color: iconColor } : undefined} />
                           </div>
                         ) : null;
                       })()}

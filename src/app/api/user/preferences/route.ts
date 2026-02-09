@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { getUserPreferences, updateUserPreferences, type UserPreferencesData } from '@/features/auth/server';
 import { auth } from '@/features/auth/server';
 import { logSystemEvent } from '@/features/observability/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api';
+import { parseUserPreferencesUpdatePayload } from '@/shared/validations/user-preferences';
 
 export const runtime = 'nodejs';
 
@@ -22,30 +22,6 @@ const USER_PREFERENCES_REPOSITORY_TIMEOUT_MS = parsePositiveInt(
   process.env['USER_PREFERENCES_REPOSITORY_TIMEOUT_MS'],
   2500
 );
-const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
-
-const updatePreferencesSchema = z.object({
-  productListNameLocale: z.enum(['name_en', 'name_pl', 'name_de']).optional().nullable(),
-  productListCatalogFilter: z.string().optional().nullable(),
-  productListCurrencyCode: z.string().optional().nullable(),
-  productListPageSize: z.number().int().min(10).max(200).optional().nullable(),
-  productListThumbnailSource: z.enum(['file', 'link', 'base64']).optional().nullable(),
-  productListDraftIconColorMode: z.enum(['theme', 'custom']).optional().nullable(),
-  productListDraftIconColor: z
-    .string()
-    .regex(HEX_COLOR_PATTERN)
-    .optional()
-    .nullable(),
-  aiPathsActivePathId: z.string().optional().nullable(),
-  adminMenuCollapsed: z.boolean().optional().nullable(),
-  cmsLastPageId: z.string().optional().nullable(),
-  cmsActiveDomainId: z.string().optional().nullable(),
-  cmsThemeOpenSections: z.array(z.string()).optional().nullable(),
-  cmsThemeLogoWidth: z.number().int().min(50).max(300).optional().nullable(),
-  cmsThemeLogoUrl: z.string().optional().nullable(),
-  cmsPreviewEnabled: z.boolean().optional().nullable(),
-  cmsSlideshowPauseOnHoverInEditor: z.boolean().optional().nullable(),
-});
 
 const withTimeout = async <T,>(label: string, fn: () => Promise<T>): Promise<T> => {
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -74,6 +50,10 @@ const buildUserPreferencesResponse = (
   productListDraftIconColorMode: preferences?.productListDraftIconColorMode ?? 'theme',
   productListDraftIconColor: preferences?.productListDraftIconColor ?? '#60a5fa',
   aiPathsActivePathId: preferences?.aiPathsActivePathId ?? null,
+  aiPathsExpandedGroups: preferences?.aiPathsExpandedGroups ?? [],
+  aiPathsPaletteCollapsed: preferences?.aiPathsPaletteCollapsed ?? false,
+  aiPathsPathIndex: preferences?.aiPathsPathIndex ?? null,
+  aiPathsPathConfigs: preferences?.aiPathsPathConfigs ?? null,
   adminMenuCollapsed: preferences?.adminMenuCollapsed ?? false,
   cmsLastPageId: preferences?.cmsLastPageId ?? null,
   cmsActiveDomainId: preferences?.cmsActiveDomainId ?? null,
@@ -188,33 +168,10 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise
       }
     }
   }
-  const parsed = await withTiming('parseBody', async () => updatePreferencesSchema.parse(body));
-
-  // Type assertion to handle exactOptionalPropertyTypes
-  const partial: Record<string, unknown> = {};
-  if (parsed.productListNameLocale !== undefined) partial['productListNameLocale'] = parsed.productListNameLocale;
-  if (parsed.productListCatalogFilter !== undefined) partial['productListCatalogFilter'] = parsed.productListCatalogFilter;
-  if (parsed.productListCurrencyCode !== undefined) partial['productListCurrencyCode'] = parsed.productListCurrencyCode;
-  if (parsed.productListPageSize !== undefined) partial['productListPageSize'] = parsed.productListPageSize;
-  if (parsed.productListThumbnailSource !== undefined) partial['productListThumbnailSource'] = parsed.productListThumbnailSource;
-  if (parsed.productListDraftIconColorMode !== undefined) {
-    partial['productListDraftIconColorMode'] = parsed.productListDraftIconColorMode;
-  }
-  if (parsed.productListDraftIconColor !== undefined) {
-    partial['productListDraftIconColor'] = parsed.productListDraftIconColor;
-  }
-  if (parsed.aiPathsActivePathId !== undefined) partial['aiPathsActivePathId'] = parsed.aiPathsActivePathId;
-  if (parsed.adminMenuCollapsed !== undefined) partial['adminMenuCollapsed'] = parsed.adminMenuCollapsed;
-  if (parsed.cmsLastPageId !== undefined) partial['cmsLastPageId'] = parsed.cmsLastPageId;
-  if (parsed.cmsActiveDomainId !== undefined) partial['cmsActiveDomainId'] = parsed.cmsActiveDomainId;
-  if (parsed.cmsThemeOpenSections !== undefined) partial['cmsThemeOpenSections'] = parsed.cmsThemeOpenSections ?? [];
-  if (parsed.cmsThemeLogoWidth !== undefined) partial['cmsThemeLogoWidth'] = parsed.cmsThemeLogoWidth;
-  if (parsed.cmsThemeLogoUrl !== undefined) partial['cmsThemeLogoUrl'] = parsed.cmsThemeLogoUrl;
-  if (parsed.cmsPreviewEnabled !== undefined) partial['cmsPreviewEnabled'] = parsed.cmsPreviewEnabled;
-  if (parsed.cmsSlideshowPauseOnHoverInEditor !== undefined) {
-    partial['cmsSlideshowPauseOnHoverInEditor'] = parsed.cmsSlideshowPauseOnHoverInEditor;
-  }
-  const data = partial as Partial<UserPreferencesData>;
+  const data = await withTiming<Partial<UserPreferencesData>>(
+    'parseBody',
+    async () => parseUserPreferencesUpdatePayload(body) as Partial<UserPreferencesData>
+  );
 
   if (!isDatabaseConfigured) {
     if (logTiming) {

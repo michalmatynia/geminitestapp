@@ -108,6 +108,13 @@ type UserPreferencesDocument = {
 };
 
 const USER_PREFERENCES_COLLECTION = 'user_preferences';
+const IMMUTABLE_PREFERENCE_FIELDS = new Set([
+  'id',
+  '_id',
+  'userId',
+  'createdAt',
+  'updatedAt',
+]);
 
 const getCanonicalPreferencesId = (userId: string): ObjectId | string =>
   toMongoId(userId);
@@ -171,6 +178,18 @@ const defaultPreferences = (userId: string): Omit<UserPreferences, 'id' | 'creat
   cmsSlideshowPauseOnHoverInEditor: false,
 });
 
+const sanitizeUserPreferencesUpdateData = (
+  data: Partial<UserPreferencesData>
+): Record<string, unknown> => {
+  const sanitized: Record<string, unknown> = {};
+  Object.entries(data).forEach(([key, value]) => {
+    if (value === undefined) return;
+    if (IMMUTABLE_PREFERENCE_FIELDS.has(key)) return;
+    sanitized[key] = value;
+  });
+  return sanitized;
+};
+
 /**
  * Get user preferences by user ID
  * Creates default preferences if they don't exist
@@ -233,25 +252,32 @@ export async function updateUserPreferences(
   const collection = db.collection<UserPreferencesDocument>(USER_PREFERENCES_COLLECTION);
   const canonicalId = getCanonicalPreferencesId(userId);
   const now = new Date();
+  const setData = sanitizeUserPreferencesUpdateData(data);
   const insertDefaults = {
     _id: canonicalId,
     ...defaultPreferences(userId),
     createdAt: now,
   } as Record<string, unknown>;
-  for (const key of Object.keys(data)) {
+  for (const key of Object.keys(setData)) {
     delete insertDefaults[key];
+  }
+  const updateDoc: {
+    $set: Record<string, unknown>;
+    $setOnInsert?: Record<string, unknown>;
+  } = {
+    $set: {
+      ...setData,
+      updatedAt: now,
+    },
+  };
+  if (Object.keys(insertDefaults).length > 0) {
+    updateDoc.$setOnInsert = {
+      ...insertDefaults,
+    };
   }
   const result = await collection.findOneAndUpdate(
     { _id: canonicalId },
-    {
-      $set: {
-        ...data,
-        updatedAt: now,
-      } as Record<string, unknown>,
-      $setOnInsert: {
-        ...insertDefaults,
-      },
-    },
+    updateDoc,
     { upsert: true, returnDocument: 'after' }
   );
 

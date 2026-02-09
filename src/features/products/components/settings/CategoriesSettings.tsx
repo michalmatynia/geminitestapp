@@ -4,7 +4,11 @@ import { Plus } from 'lucide-react';
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 
 import { useProductCategoryTree } from '@/features/products/hooks/useCategoryQueries';
-import { useSaveCategoryMutation, useDeleteCategoryMutation } from '@/features/products/hooks/useProductSettingsQueries';
+import {
+  useSaveCategoryMutation,
+  useDeleteCategoryMutation,
+  useReorderCategoryMutation,
+} from '@/features/products/hooks/useProductSettingsQueries';
 import type { ProductCategoryWithChildren, Catalog, ProductCategory } from '@/features/products/types';
 import {
   Button,
@@ -13,6 +17,7 @@ import {
   EmptyState,
   ConfirmDialog,
   SectionPanel,
+  FolderTreePanel,
 } from '@/shared/ui';
 import { DRAG_KEYS, getFirstDragValue } from '@/shared/utils/drag-drop';
 
@@ -26,6 +31,12 @@ type CategoriesSettingsProps = {
   selectedCatalogId: string | null;
   onCatalogChange: (catalogId: string) => void;
   onRefresh: () => void;
+};
+
+type CategoryDropTarget = {
+  parentId: string | null;
+  position: 'inside' | 'before' | 'after';
+  targetId: string | null;
 };
 
 export function CategoriesSettings({
@@ -53,6 +64,7 @@ export function CategoriesSettings({
 
   const saveCategoryMutation = useSaveCategoryMutation();
   const deleteCategoryMutation = useDeleteCategoryMutation();
+  const reorderCategoryMutation = useReorderCategoryMutation();
 
   const [modalCatalogId, setModalCatalogId] = useState<string | null>(null);
   
@@ -187,16 +199,19 @@ export function CategoriesSettings({
     }
   };
 
-  const handleDrop = async (draggedCatId: string, targetId: string | null): Promise<void> => {
-    if (draggedCatId === targetId) return;
+  const handleDrop = async (
+    draggedCatId: string,
+    target: CategoryDropTarget
+  ): Promise<void> => {
+    if (draggedCatId === target.parentId) return;
 
     try {
-      await saveCategoryMutation.mutateAsync({
-        id: draggedCatId,
-        data: {
-          parentId: targetId,
-          ...(selectedCatalogId ? { catalogId: selectedCatalogId } : {})
-        },
+      await reorderCategoryMutation.mutateAsync({
+        categoryId: draggedCatId,
+        parentId: target.parentId,
+        position: target.position,
+        targetId: target.targetId,
+        ...(selectedCatalogId ? { catalogId: selectedCatalogId } : {})
       });
 
       toast('Category moved successfully', { variant: 'success' });
@@ -212,7 +227,7 @@ export function CategoriesSettings({
     e.preventDefault();
     const catId: string = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.CATEGORY_ID], draggedId ?? '') || '';
     if (catId) {
-      void handleDrop(catId, null);
+      void handleDrop(catId, { parentId: null, position: 'inside', targetId: null });
     }
   };
 
@@ -341,8 +356,9 @@ export function CategoriesSettings({
                 }
               />
             ) : (
-              <div
-                className='space-y-0.5 rounded-md border border-border bg-gray-900 p-2'
+              <FolderTreePanel
+                className='rounded-md border border-border bg-gray-900 p-2'
+                bodyClassName='space-y-0.5'
                 onDragOver={(e: React.DragEvent): void => {
                   e.preventDefault();
                 }}
@@ -380,11 +396,14 @@ export function CategoriesSettings({
                     draggedId={draggedId}
                     onDragStart={setDraggedId}
                     onDragEnd={(): void => setDraggedId(null)}
-                    onDrop={(e: string, targetId: string | null): void => void handleDrop(e, targetId)}
+                    onDrop={(
+                      e: string,
+                      target: CategoryDropTarget
+                    ): void => void handleDrop(e, target)}
                     allCategories={categories}
                   />
                 ))}
-              </div>
+              </FolderTreePanel>
             )}
           </SectionPanel>
         </>

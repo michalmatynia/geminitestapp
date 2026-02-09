@@ -156,6 +156,7 @@ export interface UseProductMetadataProps {
   initialCatalogIds?: string[] | undefined;
   initialCategoryId?: string | null | undefined;
   initialTagIds?: string[] | undefined;
+  initialProducerIds?: string[] | undefined;
   setValue?: UseFormSetValue<ProductFormData> | undefined;
   getValues?: UseFormGetValues<ProductFormData> | undefined;
 }
@@ -167,6 +168,7 @@ export function useProductMetadata({
   initialCatalogIds,
   initialCategoryId,
   initialTagIds,
+  initialProducerIds,
 }: UseProductMetadataProps): ProductMetadataHookResult {
   const catalogsQuery = useCatalogs();
   const languagesQuery = useLanguages();
@@ -207,8 +209,11 @@ export function useProductMetadata({
     if (product?.producers) {
       return product.producers.map((p: { producerId: string }) => p.producerId);
     }
+    if (initialProducerIds && initialProducerIds.length > 0) {
+      return initialProducerIds;
+    }
     return [];
-  }, [product]);
+  }, [product, initialProducerIds]);
   
   const [selectedCatalogIds, setSelectedCatalogIds] = React.useState<string[]>(initialCatalogSelection);
   const [selectedCategoryId, setSelectedCategoryId] = React.useState<string | null>(initialCategorySelection);

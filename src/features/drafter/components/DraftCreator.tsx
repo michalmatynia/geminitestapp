@@ -3,15 +3,27 @@ import { useQueries } from '@tanstack/react-query';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { useDraft, useCreateDraft, useUpdateDraft } from '@/features/drafter/hooks/useDrafts';
+import { draftSubmitSchema } from '@/features/drafter/validations/draft-form';
 import { IconSelector, ICON_LIBRARY_MAP } from '@/features/icons';
 import { CreateProductDraftInput, UpdateProductDraftInput } from '@/features/products';
 import type { CatalogRecord } from '@/features/products';
-import type { ProductCategoryDto, ProductTag, ProductParameter, ProductParameterValue } from '@/features/products';
-import { useCatalogs } from '@/features/products/hooks/useProductMetadata';
+import type { ProductCategoryDto, ProductTag, ProductParameter, ProductParameterValue, Producer } from '@/features/products';
+import { useCatalogs, useProducers } from '@/features/products/hooks/useProductMetadata';
 import { AppModal, Button, Input, Label, Textarea, Tabs, TabsContent, TabsList, TabsTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { validateFormData } from '@/shared/validations/form-validation';
 
 import { useOptionalDrafterContext } from '../context/DrafterContext';
+
+const DEFAULT_ICON_COLOR = '#60a5fa';
+const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
+
+const normalizeIconColor = (value: string | null | undefined): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!HEX_COLOR_PATTERN.test(trimmed)) return null;
+  return trimmed.toLowerCase();
+};
 
 export function DraftCreator({
   draftId: propDraftId,
@@ -35,6 +47,7 @@ export function DraftCreator({
 
   // Queries
   const { data: catalogs = [] } = useCatalogs();
+  const { data: producers = [] } = useProducers();
   const draftQuery = useDraft(draftId);
   const createDraftMutation = useCreateDraft();
   const updateDraftMutation = useUpdateDraft();
@@ -65,12 +78,15 @@ export function DraftCreator({
   const [baseProductId, setBaseProductId] = useState<string>('');
   const [activeState, setActiveState] = useState<boolean>(true);
   const [icon, setIcon] = useState<string | null>(null);
+  const [iconColorMode, setIconColorMode] = useState<'theme' | 'custom'>('theme');
+  const [iconColor, setIconColor] = useState<string>(DEFAULT_ICON_COLOR);
   const [isIconLibraryOpen, setIsIconLibraryOpen] = useState(false);
   const [imageLinks, setImageLinks] = useState<string[]>(Array(15).fill('') as string[]);
 
   const [selectedCatalogIds, setSelectedCatalogIds] = useState<string[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [selectedProducerIds, setSelectedProducerIds] = useState<string[]>([]);
   const [parameterValues, setParameterValues] = useState<ProductParameterValue[]>([]);
 
   // Metadata queries based on selected catalogs
@@ -149,11 +165,14 @@ export function DraftCreator({
         setBaseProductId(draft.baseProductId || '');
         setActive(draft.active ?? true);
         setIcon(draft.icon || null);
+        setIconColorMode(draft.iconColorMode === 'custom' ? 'custom' : 'theme');
+        setIconColor(normalizeIconColor(draft.iconColor) || DEFAULT_ICON_COLOR);
         const links: string[] = draft.imageLinks && draft.imageLinks.length > 0 ? draft.imageLinks : [];
         setImageLinks([...links, ...(Array(Math.max(0, 15 - links.length)).fill('') as string[])]);
         setSelectedCatalogIds(draft.catalogIds || []);
         setSelectedCategoryId(draft.categoryId ?? null);
         setSelectedTagIds(draft.tagIds || []);
+        setSelectedProducerIds(draft.producerIds || []);
         setParameterValues(draft.parameters || []);
       }, 0);
     } else if (!draftId) {
@@ -183,10 +202,13 @@ export function DraftCreator({
         setBaseProductId('');
         setActive(true);
         setIcon(null);
+        setIconColorMode('theme');
+        setIconColor(DEFAULT_ICON_COLOR);
         setImageLinks(Array(15).fill('') as string[]);
         setSelectedCatalogIds([]);
         setSelectedCategoryId(null);
         setSelectedTagIds([]);
+        setSelectedProducerIds([]);
         setParameterValues([]);
       }, 0);
     }
@@ -196,12 +218,18 @@ export function DraftCreator({
   }, [draftQuery.data, draftId]);
 
   const handleSave = async (): Promise<void> => {
-    if (!name.trim()) {
-      toast('Draft name is required', { variant: 'error' });
+    const validation = validateFormData(
+      draftSubmitSchema,
+      { name, iconColorMode, iconColor },
+      'Draft form is invalid.',
+    );
+    if (!validation.success) {
+      toast(validation.firstError, { variant: 'error' });
       return;
     }
 
     try {
+      const normalizedIconColor = normalizeIconColor(iconColor);
       const input: UpdateProductDraftInput = {
         name: name.trim(),
         description: description.trim() || null,
@@ -227,6 +255,7 @@ export function DraftCreator({
         catalogIds: selectedCatalogIds,
         categoryId: selectedCategoryId ?? null,
         tagIds: selectedTagIds,
+        producerIds: selectedProducerIds,
         parameters: parameterValues
           .map((entry: ProductParameterValue): { parameterId: string | undefined; value: string } => ({
             parameterId: entry.parameterId?.trim(),
@@ -235,6 +264,8 @@ export function DraftCreator({
           .filter((entry: { parameterId: string | undefined; value: string }): entry is { parameterId: string; value: string } => !!entry.parameterId),
         active,
         icon,
+        iconColorMode,
+        iconColor: iconColorMode === 'custom' ? (normalizedIconColor || DEFAULT_ICON_COLOR) : null,
         imageLinks: imageLinks.filter((link: string): boolean => !!link.trim()),
         baseProductId: baseProductId.trim() || null,
       };
@@ -273,6 +304,12 @@ export function DraftCreator({
     );
   };
 
+  const toggleProducer = (producerId: string): void => {
+    setSelectedProducerIds((prev: string[]): string[] =>
+      prev.includes(producerId) ? prev.filter((id: string): boolean => id !== producerId) : [...prev, producerId]
+    );
+  };
+
   const addParameterValue = (): void => {
     setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => [...prev, { parameterId: '', value: '' }]);
   };
@@ -308,6 +345,7 @@ export function DraftCreator({
     parameter.name_en || parameter.name_pl || parameter.name_de || 'Unnamed parameter';
 
   const SelectedIcon = icon ? ICON_LIBRARY_MAP[icon] : null;
+  const resolvedIconColor = normalizeIconColor(iconColor) || DEFAULT_ICON_COLOR;
   const handleSelectIcon = (nextIcon: string | null): void => {
     setIcon(nextIcon);
     setIsIconLibraryOpen(false);
@@ -368,7 +406,12 @@ export function DraftCreator({
                 <div className='space-y-2'>
                   <Label>Icon</Label>
                   <div className='flex items-center gap-3 rounded-md border border-border bg-gray-900 px-3 py-2'>
-                    <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-gray-800 text-gray-200'>
+                    <div
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-gray-800 ${
+                        iconColorMode === 'custom' ? '' : 'text-gray-200'
+                      }`}
+                      style={iconColorMode === 'custom' ? { color: resolvedIconColor } : undefined}
+                    >
                       {SelectedIcon ? (
                         <SelectedIcon className='h-4 w-4' />
                       ) : (
@@ -393,6 +436,48 @@ export function DraftCreator({
                         </Button>
                       ) : null}
                     </div>
+                  </div>
+                  <div className='grid grid-cols-1 gap-3 md:grid-cols-[12rem_minmax(0,1fr)]'>
+                    <div className='space-y-2'>
+                      <Label htmlFor='iconColorMode'>Icon Color</Label>
+                      <Select
+                        value={iconColorMode}
+                        onValueChange={(value: string): void =>
+                          setIconColorMode(value === 'custom' ? 'custom' : 'theme')
+                        }
+                      >
+                        <SelectTrigger id='iconColorMode'>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value='theme'>Match Theme</SelectItem>
+                          <SelectItem value='custom'>Custom Color</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {iconColorMode === 'custom' ? (
+                      <div className='space-y-2'>
+                        <Label htmlFor='iconColor'>Custom Icon Color</Label>
+                        <div className='flex items-center gap-2'>
+                          <Input
+                            id='iconColorPicker'
+                            type='color'
+                            value={resolvedIconColor}
+                            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setIconColor(event.target.value)}
+                            className='h-10 w-14 cursor-pointer p-1'
+                            aria-label='Pick icon color'
+                          />
+                          <Input
+                            id='iconColor'
+                            value={iconColor}
+                            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setIconColor(event.target.value)}
+                            onBlur={(): void => setIconColor((current: string): string => normalizeIconColor(current) || DEFAULT_ICON_COLOR)}
+                            placeholder='#60a5fa'
+                            className='font-mono uppercase'
+                          />
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                   <p className='text-xs text-gray-500'>
                     Icons are shown only after you click Choose Icon.
@@ -696,6 +781,31 @@ export function DraftCreator({
                   </div>
                 </div>
               )}
+
+              {/* Producers */}
+              <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
+                <h3 className='text-sm font-semibold text-white'>Producers</h3>
+                {producers.length === 0 ? (
+                  <p className='text-sm text-gray-400'>No producers available.</p>
+                ) : (
+                  <div className='flex flex-wrap gap-2'>
+                    {producers.map((producer: Producer): React.JSX.Element => (
+                      <Button
+                        key={producer.id}
+                        type='button'
+                        onClick={(): void => toggleProducer(producer.id)}
+                        className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
+                          selectedProducerIds.includes(producer.id)
+                            ? 'bg-amber-600 text-white'
+                            : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                        }`}
+                      >
+                        {producer.name}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* Price Group Info */}
               {selectedCatalogIds.length > 0 && (

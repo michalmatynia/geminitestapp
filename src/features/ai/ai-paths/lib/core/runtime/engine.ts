@@ -719,6 +719,45 @@ export async function evaluateGraph({
   };
   const now = resolvedRunStartedAt;
   const entityCache = new Map<string, Record<string, unknown> | null>();
+
+  // Prime entityCache from seed simulation outputs so subsequent fetchEntityCached
+  // calls hit the cache instead of re-fetching from the database.
+  if (seedOutputs) {
+    for (const node of nodes) {
+      if (node.type !== 'simulation') continue;
+      const seedOut = seedOutputs[node.id];
+      if (!seedOut) continue;
+      const seedCtx =
+        typeof (seedOut as Record<string, unknown>)['context'] === 'object' &&
+        (seedOut as Record<string, unknown>)['context'] !== null
+          ? ((seedOut as Record<string, unknown>)['context'] as Record<string, unknown>)
+          : null;
+      const seedEnt =
+        seedCtx &&
+        seedCtx['entity'] !== undefined &&
+        seedCtx['entity'] !== null &&
+        typeof seedCtx['entity'] === 'object' &&
+        Object.keys(seedCtx['entity'] as Record<string, unknown>).length > 1
+          ? (seedCtx['entity'] as Record<string, unknown>)
+          : null;
+      if (!seedEnt) continue;
+      const simEntityType =
+        node.config?.simulation?.entityType?.trim().toLowerCase() || 'product';
+      const normalizedType =
+        simEntityType === 'products' ? 'product' : simEntityType === 'notes' ? 'note' : simEntityType;
+      const simEntityId =
+        node.config?.simulation?.entityId?.trim() ||
+        node.config?.simulation?.productId?.trim() ||
+        null;
+      if (simEntityId && normalizedType) {
+        const cacheKey = `${normalizedType}:${simEntityId}`;
+        if (!entityCache.has(cacheKey)) {
+          entityCache.set(cacheKey, seedEnt);
+        }
+      }
+    }
+  }
+
   const activeNodeIds = new Set<string>();
   const nodeById = new Map(nodes.map((node: AiNode): [string, AiNode] => [node.id, node]));
   const incomingEdgesByNode = new Map<string, Edge[]>();
@@ -1278,40 +1317,70 @@ export async function evaluateGraph({
         node.config?.simulation?.entityId?.trim() ||
         node.config?.simulation?.productId?.trim() ||
         null;
-      const entity =
-        entityId && entityType ? await fetchEntityCached(entityType, entityId) : null;
-      const contextPayload: Record<string, unknown> = {
-        entityType,
-        entityId,
-        source: node.title,
-        timestamp: now,
-      };
-      if (entityId && !entity) {
-        const maybeUuid = entityId.includes('-');
-        const hint =
-          maybeUuid && entityId.length !== 36
-            ? ` (id looks like a UUID but length is ${entityId.length}; expected 36)`
-            : '';
-        contextPayload['error'] = `Entity not found: ${entityType} ${entityId}${hint}`;
-      }
-      if (entity) {
-        const imageUrls = extractImageUrls(entity);
-        if (imageUrls.length) {
-          contextPayload['images'] = imageUrls;
-          contextPayload['imageUrls'] = imageUrls;
+
+      // Check if seedOutputs already provided enriched simulation data for this node.
+      const existingSeed = outputs[node.id];
+      const existingContext =
+        existingSeed &&
+        typeof (existingSeed as Record<string, unknown>)['context'] === 'object' &&
+        (existingSeed as Record<string, unknown>)['context'] !== null
+          ? ((existingSeed as Record<string, unknown>)['context'] as Record<string, unknown>)
+          : null;
+      const seedEntity =
+        existingContext &&
+        existingContext['entity'] !== undefined &&
+        existingContext['entity'] !== null &&
+        typeof existingContext['entity'] === 'object'
+          ? (existingContext['entity'] as Record<string, unknown>)
+          : null;
+      const seedHasEntity = seedEntity !== null && Object.keys(seedEntity).length > 1;
+
+      if (seedHasEntity) {
+        // Seed data already has a fully-enriched entity — skip re-fetch.
+        // Prime the entityCache so downstream nodes can use fetchEntityCached.
+        if (entityId && entityType) {
+          const cacheKey = `${entityType}:${entityId}`;
+          if (!entityCache.has(cacheKey)) {
+            entityCache.set(cacheKey, seedEntity);
+          }
         }
-        contextPayload['entity'] = entity;
-        contextPayload['entityJson'] = entity;
-        if (entityType === 'product') {
-          contextPayload['product'] = entity;
+        // Keep outputs[node.id] as-is from the seed.
+      } else {
+        const entity =
+          entityId && entityType ? await fetchEntityCached(entityType, entityId) : null;
+        const contextPayload: Record<string, unknown> = {
+          entityType,
+          entityId,
+          source: node.title,
+          timestamp: now,
+        };
+        if (entityId && !entity) {
+          const maybeUuid = entityId.includes('-');
+          const hint =
+            maybeUuid && entityId.length !== 36
+              ? ` (id looks like a UUID but length is ${entityId.length}; expected 36)`
+              : '';
+          contextPayload['error'] = `Entity not found: ${entityType} ${entityId}${hint}`;
         }
+        if (entity) {
+          const imageUrls = extractImageUrls(entity);
+          if (imageUrls.length) {
+            contextPayload['images'] = imageUrls;
+            contextPayload['imageUrls'] = imageUrls;
+          }
+          contextPayload['entity'] = entity;
+          contextPayload['entityJson'] = entity;
+          if (entityType === 'product') {
+            contextPayload['product'] = entity;
+          }
+        }
+        outputs[node.id] = {
+          context: contextPayload,
+          entityId,
+          entityType,
+          productId: entityType === 'product' ? entityId : undefined,
+        };
       }
-      outputs[node.id] = {
-        context: contextPayload,
-        entityId,
-        entityType,
-        productId: entityType === 'product' ? entityId : undefined,
-      };
     }
   }
 

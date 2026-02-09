@@ -31,6 +31,7 @@ const productCategoryCreateSchema = z.object({
   color: z.string().nullable().optional(),
   parentId: z.string().nullable().optional(),
   catalogId: z.string().min(1, 'Catalog ID is required'),
+  sortIndex: z.number().int().min(0).optional(),
 });
 
 /**
@@ -75,26 +76,31 @@ async function getHandlerInternal(req: NextRequest, _ctx: ApiHandlerContext): Pr
 async function postHandlerInternal(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const data = ctx.body as z.infer<typeof productCategoryCreateSchema>;
   const { name, parentId, catalogId } = data;
+  const normalizedName = name.trim();
+  if (!normalizedName) {
+    throw badRequestError('Category name is required');
+  }
 
   const repository = await getCategoryRepository();
   
   // Check for duplicate name under the same parent within the same catalog
-  const existing = await repository.findByName(catalogId, name, parentId ?? null);
+  const existing = await repository.findByName(catalogId, normalizedName, parentId ?? null);
 
   if (existing) {
     throw conflictError('A category with this name already exists at this level', {
-      name,
+      name: normalizedName,
       parentId: parentId ?? null,
       catalogId,
     });
   }
 
   const category = await repository.createCategory({
-    name,
+    name: normalizedName,
     catalogId,
-    ...(data.description && { description: data.description }),
-    ...(data.color && { color: data.color }),
-    ...(data.parentId && { parentId: data.parentId }),
+    ...(data.description !== undefined ? { description: data.description } : {}),
+    ...(data.color !== undefined ? { color: data.color } : {}),
+    ...(data.parentId !== undefined ? { parentId: data.parentId } : {}),
+    ...(data.sortIndex !== undefined ? { sortIndex: data.sortIndex } : {}),
   });
 
   return NextResponse.json(category, { status: 201 });
@@ -106,4 +112,3 @@ export const GET = apiHandler(
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => postHandlerInternal(req, ctx),
   { source: 'products.categories.POST', parseJsonBody: true, bodySchema: productCategoryCreateSchema });
-

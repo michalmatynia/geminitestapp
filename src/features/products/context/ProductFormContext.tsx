@@ -216,6 +216,7 @@ export function ProductFormProvider({
           : undefined,
     initialCategoryId: draft?.categoryId ?? null,
     initialTagIds: draft?.tagIds,
+    initialProducerIds: draft?.producerIds,
     setValue,
     getValues,
   });

@@ -1,12 +1,14 @@
-Add a Producer Field to Drafter and also add it to import Export Template, as it's not showing there and Producer field can't be imported / exported.
+* Add a Producer Field to Drafter and also add it to import Export Template, as it's not showing there and Producer field can't be imported / exported.
 
-Repair Category Handling
-Add a one click export to Base.com button
+* Repair Category Handling in Products Feature. Adding and resorting categories is not working. Also, I would like to use folder tree component for unification purposes to handle the hierarchies of category section. The Category Folder tree needs little drag icons to the left like the folder tree in CMS Builder Page, I don't need any icons in the Category Folder tree, just the names of Categories
 
+ * Add a one click export to Base.com button
+
+* In my drafter Modal I was supposed to have coloring options for my Icons, I still don't see that.
 
 * I updated my drafter Draft Icon, but in the PRoduct List I see the old icon. The icon has not updated.
 
- My Export import template settings are not retained after save and page
+* My Export import template settings are not retained after save and page
   refresh.
 
  * In  draft page, I want Quick Create switch to be a simple  ON / OFF Button (like the ones used in Node Config For Validtaor,), which, when Draft Template is Active (On) has Green tint like the one in Node config, if it's off, Red tint, 
@@ -27,28 +29,26 @@ I had AiTranslation and AI Description functionalities that were configured thro
 
 ---
 
-Centralize Form validation (I also need info if I'm trying to create with duplicate SKU notification)
+
+(I also need info if I'm trying to create with duplicate SKU notification)
 
 I need promper importer in my Base.com
 I need clear logs to work
 
 I need prisma mock in test to work and I need to move my product and related to mongodb, I need my AI paths to work on MongoDB
 
-I need a connection collection for each product, they are not getting retrieved when database is removed and I need retrieve connections button
-
 Increment SKU Atomatically
 
 Connect Validator to product description
-When My application is starting, it loads chatbot, agent creator
-
 
 Database Query Node Reply (like success:ok), so it can go into Logical Condition node
+Database Query Node Doesn't work with MongoDB
 
-Fetch COllection names automatically
+Fetch COllection names automatically in Database Query Node
 
 Placeholder inference matrix
 
-W drafterze potrzebuje producenta, ikonek wiecej, modal as wide as other Product crete modals, Icon Matrix so that Icons are not spread everywhere, Check If I can Export Product with Producer, when the description is present a little text icon
+* W drafterze potrzebuje producenta, ikonek wiecej, modal as wide as other Product crete modals, Icon Matrix so that Icons are not spread everywhere, Check If I can Export Product with Producer, when the description is present a little text icon
 
 Daily Backups
 

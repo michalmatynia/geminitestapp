@@ -35,6 +35,7 @@ export type ProductDraft = {
   catalogIds?: string[];
   categoryId?: string | null;
   tagIds?: string[];
+  producerIds?: string[];
   parameters?: ProductParameterValue[];
 
   // Price group
@@ -45,6 +46,8 @@ export type ProductDraft = {
 
   // Icon
   icon?: string | null;
+  iconColorMode?: 'theme' | 'custom' | null;
+  iconColor?: string | null;
 
   // Image links
   imageLinks?: string[];
@@ -63,6 +66,8 @@ export interface CreateProductDraftInput extends Omit<CreateProductDto, 'sku'> {
   sku?: string | null; // Drafts might not have SKU yet or it might be optional
   active?: boolean;
   icon?: string | null;
+  iconColorMode?: 'theme' | 'custom' | null;
+  iconColor?: string | null;
   baseProductId?: string | null;
   parameters?: ProductParameterValue[];
   defaultPriceGroupId?: string | null;

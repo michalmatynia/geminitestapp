@@ -70,6 +70,7 @@ export function useSavePreferenceMutation(): UseMutationResult<unknown, Error, {
   return useMutation({
     mutationFn: ({ endpoint, data }: { endpoint: string; data: unknown }) => api.post<unknown>(endpoint, data),
     onSuccess: (_: unknown, { endpoint }: { endpoint: string; data: unknown }) => {
+      void queryClient.invalidateQueries({ queryKey: importKeys.preferences() });
       const key = endpoint.split('/').pop();
       if (key) {
         void queryClient.invalidateQueries({ queryKey: importKeys.pref(key) });

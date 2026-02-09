@@ -1,18 +1,11 @@
 'use client';
 
-import {
-  ChevronRight,
-  ChevronDown,
-  FolderPlus,
-  Trash2,
-} from 'lucide-react';
-import React, { useState, useMemo } from 'react';
+import { GripVertical } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
 
 import type { ProductCategoryWithChildren } from '@/features/products/types';
-import {
-  Button,
-} from '@/shared/ui';
-import { DRAG_KEYS, getFirstDragValue, setDragData } from '@/shared/utils/drag-drop';
+import { TreeActionButton, TreeActionSlot, TreeCaret, TreeRow } from '@/shared/ui';
+import { DRAG_KEYS, getFirstDragValue, resolveVerticalDropPosition, setDragData } from '@/shared/utils/drag-drop';
 
 export type CategoryNodeProps = {
   category: ProductCategoryWithChildren;
@@ -25,8 +18,39 @@ export type CategoryNodeProps = {
   draggedId: string | null;
   onDragStart: (id: string) => void;
   onDragEnd: () => void;
-  onDrop: (draggedId: string, targetId: string | null) => void;
+  onDrop: (
+    draggedId: string,
+    target: {
+      parentId: string | null;
+      position: 'inside' | 'before' | 'after';
+      targetId: string | null;
+    }
+  ) => void;
   allCategories: ProductCategoryWithChildren[];
+};
+
+type DropTarget = 'before' | 'inside' | 'after' | null;
+
+const findCategoryById = (
+  categories: ProductCategoryWithChildren[],
+  id: string
+): ProductCategoryWithChildren | null => {
+  for (const category of categories) {
+    if (category.id === id) return category;
+    const found = findCategoryById(category.children, id);
+    if (found) return found;
+  }
+  return null;
+};
+
+const isDescendant = (
+  category: ProductCategoryWithChildren,
+  targetId: string
+): boolean => {
+  if (category.id === targetId) return true;
+  return category.children.some((child: ProductCategoryWithChildren): boolean =>
+    isDescendant(child, targetId)
+  );
 };
 
 export function CategoryTreeItem({
@@ -43,135 +67,183 @@ export function CategoryTreeItem({
   onDrop,
   allCategories,
 }: CategoryNodeProps): React.JSX.Element {
-  const [isDragOver, setIsDragOver] = useState<boolean>(false);
+  const [dropTarget, setDropTarget] = useState<DropTarget>(null);
   const hasChildren: boolean = category.children.length > 0;
   const isExpanded: boolean = expandedIds.has(category.id);
 
-  const canDropHere: boolean = useMemo((): boolean => {
+  const draggedCategory = useMemo(
+    (): ProductCategoryWithChildren | null =>
+      draggedId ? findCategoryById(allCategories, draggedId) : null,
+    [allCategories, draggedId]
+  );
+
+  const canDropToParent = (targetParentId: string | null): boolean => {
     if (!draggedId) return true;
-    if (draggedId === category.id) return false;
-
-    const isDescendant = (
-      cat: ProductCategoryWithChildren,
-      targetId: string
-    ): boolean => {
-      if (cat.id === targetId) return true;
-      return cat.children.some((child: ProductCategoryWithChildren): boolean => isDescendant(child, targetId));
-    };
-
-    const findCategory = (
-      cats: ProductCategoryWithChildren[],
-      id: string
-    ): ProductCategoryWithChildren | null => {
-      for (const cat of cats) {
-        if (cat.id === id) return cat;
-        const found: ProductCategoryWithChildren | null = findCategory(cat.children, id);
-        if (found) return found;
-      }
-      return null;
-    };
-
-    const draggedCategory: ProductCategoryWithChildren | null = findCategory(allCategories, draggedId);
+    if (targetParentId === draggedId) return false;
     if (!draggedCategory) return true;
+    if (!targetParentId) return true;
+    return !isDescendant(draggedCategory, targetParentId);
+  };
 
-    return !isDescendant(draggedCategory, category.id);
-  }, [draggedId, category.id, allCategories]);
+  const canDropInside: boolean =
+    Boolean(draggedId) &&
+    draggedId !== category.id &&
+    canDropToParent(category.id);
+  const siblingParentId = category.parentId ?? null;
+  const canDropAsSibling: boolean = Boolean(draggedId) && canDropToParent(siblingParentId);
 
   return (
     <div>
-      <div
-        draggable
-        onDragStart={(e: React.DragEvent): void => {
-          e.stopPropagation();
-          setDragData(e.dataTransfer, { [DRAG_KEYS.CATEGORY_ID]: category.id }, { effectAllowed: 'move' });
-          onDragStart(category.id);
-          const target: HTMLElement = e.currentTarget as HTMLElement;
-          target.style.opacity = '0.5';
-        }}
-        onDragEnd={(e: React.DragEvent): void => {
-          const target: HTMLElement = e.currentTarget as HTMLElement;
-          target.style.opacity = '1';
-          onDragEnd();
-        }}
-        onDragOver={(e: React.DragEvent): void => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (canDropHere) {
-            setIsDragOver(true);
+      <TreeRow
+        tone='primary'
+        depth={level}
+        className='cursor-pointer active:cursor-grabbing gap-1'
+        dragOver={dropTarget === 'inside' && canDropInside}
+        dragOverClassName='bg-emerald-600 text-white'
+        onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
+          const droppedId =
+            getFirstDragValue(event.dataTransfer, [DRAG_KEYS.CATEGORY_ID], draggedId ?? '') || '';
+          if (!droppedId) return;
+
+          event.preventDefault();
+          event.stopPropagation();
+
+          const rect = event.currentTarget.getBoundingClientRect();
+          const position = resolveVerticalDropPosition(event.clientY, rect, {
+            thresholdRatio: 0.35,
+            thresholdPx: 10,
+          });
+
+          if (position === 'before' || position === 'after') {
+            setDropTarget(canDropAsSibling ? position : null);
+          } else {
+            setDropTarget(canDropInside ? 'inside' : null);
           }
+          event.dataTransfer.dropEffect = 'move';
         }}
-        onDragLeave={(e: React.DragEvent): void => {
-          e.stopPropagation();
-          setIsDragOver(false);
+        onDragLeave={(event: React.DragEvent<HTMLDivElement>): void => {
+          event.stopPropagation();
+          setDropTarget(null);
         }}
-        onDrop={(e: React.DragEvent): void => {
-          e.preventDefault();
-          e.stopPropagation();
-          setIsDragOver(false);
-          const droppedId: string = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.CATEGORY_ID], draggedId ?? '') || '';
-          if (droppedId && canDropHere) {
-            onDrop(droppedId, category.id);
+        onDrop={(event: React.DragEvent<HTMLDivElement>): void => {
+          event.preventDefault();
+          event.stopPropagation();
+          const droppedId =
+            getFirstDragValue(event.dataTransfer, [DRAG_KEYS.CATEGORY_ID], draggedId ?? '') || '';
+          if (!droppedId || droppedId === category.id) {
+            setDropTarget(null);
+            return;
           }
+
+          const target =
+            dropTarget === 'inside'
+              ? { parentId: category.id, position: 'inside' as const, targetId: category.id }
+              : dropTarget === 'before'
+                ? { parentId: siblingParentId, position: 'before' as const, targetId: category.id }
+                : dropTarget === 'after'
+                  ? { parentId: siblingParentId, position: 'after' as const, targetId: category.id }
+                  : null;
+
+          if (!target) {
+            setDropTarget(null);
+            return;
+          }
+
+          if (target.parentId === category.id && !canDropInside) {
+            setDropTarget(null);
+            return;
+          }
+
+          if (target.parentId === siblingParentId && (dropTarget === 'before' || dropTarget === 'after') && !canDropAsSibling) {
+            setDropTarget(null);
+            return;
+          }
+
+          onDrop(droppedId, target);
+          setDropTarget(null);
         }}
-        className={`group flex items-center gap-1 rounded px-2 py-1.5 cursor-pointer active:cursor-grabbing transition ${
-          isDragOver && canDropHere
-            ? 'bg-emerald-600 text-white'
-            : 'text-gray-300 hover:bg-muted/50'
-        }`}
-        style={{ paddingLeft: `${level * 16 + 8}px` }}
       >
-        {hasChildren ? (
-          <Button
-            onClick={(): void => onToggleExpand(category.id)}
-            className='p-0.5 hover:bg-gray-700 rounded'
-          >
-            {isExpanded ? (
-              <ChevronDown className='size-4' />
-            ) : (
-              <ChevronRight className='size-4' />
-            )}
-          </Button>
-        ) : (
-          <div className='w-5' />
+        {dropTarget === 'before' && (
+          <div className='pointer-events-none absolute inset-x-2 top-0 h-0.5 rounded bg-blue-400/90' />
+        )}
+        {dropTarget === 'after' && (
+          <div className='pointer-events-none absolute inset-x-2 bottom-0 h-0.5 rounded bg-blue-400/90' />
         )}
 
-        <div className='flex items-center gap-2 flex-1 min-w-0'>
-          <span className='text-sm truncate'>{category.name}</span>
+        <div
+          draggable
+          onDragStart={(event: React.DragEvent): void => {
+            event.stopPropagation();
+            setDragData(
+              event.dataTransfer,
+              { [DRAG_KEYS.CATEGORY_ID]: category.id },
+              { effectAllowed: 'move' }
+            );
+            onDragStart(category.id);
+          }}
+          onDragEnd={(): void => {
+            setDropTarget(null);
+            onDragEnd();
+          }}
+          onMouseDown={(event: React.MouseEvent): void => event.stopPropagation()}
+          onClick={(event: React.MouseEvent): void => event.stopPropagation()}
+          className='flex items-center justify-center opacity-0 group-hover:opacity-100'
+          aria-label='Drag category'
+        >
+          <GripVertical className='size-3 shrink-0 cursor-grab text-gray-600 active:cursor-grabbing' />
         </div>
 
-        <div className='flex items-center gap-1'>
-          <Button
-            onClick={(e: React.MouseEvent): void => {
-              e.stopPropagation();
+        <TreeCaret
+          isOpen={isExpanded}
+          hasChildren={hasChildren}
+          ariaLabel={isExpanded ? `Collapse ${category.name}` : `Expand ${category.name}`}
+          onToggle={hasChildren ? (): void => onToggleExpand(category.id) : undefined}
+          placeholderClassName='w-5'
+          iconClassName='size-4'
+          buttonClassName='hover:bg-gray-700'
+        />
+
+        <span className='flex-1 truncate text-sm'>{category.name}</span>
+
+        <TreeActionSlot show='hover' align='inline'>
+          <TreeActionButton
+            onClick={(event: React.MouseEvent): void => {
+              event.stopPropagation();
               onCreateChild(category.id);
             }}
-            className='p-1 hover:bg-gray-700 rounded'
+            size='sm'
+            tone='muted'
+            className='px-1.5 text-[11px]'
             title='Add subcategory'
           >
-            <FolderPlus className='size-3' />
-          </Button>
-          <Button
-            onClick={(e: React.MouseEvent): void => {
-              e.stopPropagation();
+            Add
+          </TreeActionButton>
+          <TreeActionButton
+            onClick={(event: React.MouseEvent): void => {
+              event.stopPropagation();
               onEdit(category);
             }}
-            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-100 hover:bg-gray-700'
+            size='sm'
+            tone='muted'
+            className='px-1.5 text-[11px]'
             title='Edit category'
           >
             Edit
-          </Button>
-          <Button
-            onClick={(e: React.MouseEvent): void => {
-              e.stopPropagation();
+          </TreeActionButton>
+          <TreeActionButton
+            onClick={(event: React.MouseEvent): void => {
+              event.stopPropagation();
               onDelete(category);
             }}
-            className='p-1 hover:bg-red-600 rounded'
+            size='sm'
+            tone='danger'
+            className='px-1.5 text-[11px]'
             title='Delete category'
           >
-            <Trash2 className='size-3' />
-          </Button>
-        </div>
-      </div>
+            Delete
+          </TreeActionButton>
+        </TreeActionSlot>
+      </TreeRow>
 
       {isExpanded && hasChildren && (
         <div>

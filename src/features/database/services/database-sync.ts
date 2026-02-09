@@ -1756,9 +1756,17 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
             ((doc as { categoryIds?: any[] }).categoryIds ?? [])[0] ??
             null,
           tagIds: (doc as { tagIds?: any[] }).tagIds ?? [],
+          producerIds: (doc as { producerIds?: any[] }).producerIds ?? [],
           parameters: (doc as { parameters?: any[] }).parameters ?? [],
           defaultPriceGroupId: (doc as { defaultPriceGroupId?: string | null }).defaultPriceGroupId ?? null,
           active: (doc as { active?: boolean | null }).active ?? true,
+          icon: (doc as { icon?: string | null }).icon ?? null,
+          iconColorMode: (doc as { iconColorMode?: string | null }).iconColorMode === 'custom' ? 'custom' : 'theme',
+          iconColor:
+            typeof (doc as { iconColor?: string | null }).iconColor === 'string'
+            && /^#[0-9a-fA-F]{6}$/.test(((doc as { iconColor?: string | null }).iconColor as string).trim())
+              ? ((doc as { iconColor?: string | null }).iconColor as string).trim().toLowerCase()
+              : null,
           imageLinks: (doc as { imageLinks?: any[] }).imageLinks ?? [],
           baseProductId: (doc as { baseProductId?: string | null }).baseProductId ?? null,
           createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
@@ -3190,9 +3198,13 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
       categoryId: row.categoryId ?? null,
       categoryIds: row.categoryId ? [row.categoryId] : [],
       tagIds: row.tagIds ?? [],
+      producerIds: row.producerIds ?? [],
       parameters: row.parameters ?? [],
       defaultPriceGroupId: row.defaultPriceGroupId ?? null,
       active: row.active ?? true,
+      icon: row.icon ?? null,
+      iconColorMode: row.iconColorMode ?? 'theme',
+      iconColor: row.iconColor ?? null,
       imageLinks: row.imageLinks ?? [],
       baseProductId: row.baseProductId ?? null,
       createdAt: row.createdAt,

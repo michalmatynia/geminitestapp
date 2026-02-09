@@ -185,6 +185,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
 
   const lastSavedImportTemplateId = useRef<string | null>(null);
   const lastSavedImportActiveTemplateId = useRef<string | null>(null);
+  const lastSavedExportActiveTemplateId = useRef<string | null>(null);
   const hasInitializedCatalog = useRef(false);
   const hasInitializedPrefs = useRef(false);
   const hasInitializedInventories = useRef(false);
@@ -357,16 +358,28 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   }, [importTemplateId, savePreferenceMutation]);
 
   useEffect(() => {
-    if (importActiveTemplateId) {
-      if (activeImportTemplatePref?.templateId === importActiveTemplateId) return;
-      if (lastSavedImportActiveTemplateId.current === importActiveTemplateId) return;
-      lastSavedImportActiveTemplateId.current = importActiveTemplateId;
-      savePreferenceMutation.mutate({
-        endpoint: '/api/integrations/imports/base/active-template',
-        data: { templateId: importActiveTemplateId },
-      });
-    }
+    const normalized = importActiveTemplateId.trim() || null;
+    const persisted = activeImportTemplatePref?.templateId?.trim() || null;
+    if (persisted === normalized) return;
+    if (lastSavedImportActiveTemplateId.current === normalized) return;
+    lastSavedImportActiveTemplateId.current = normalized;
+    savePreferenceMutation.mutate({
+      endpoint: '/api/integrations/imports/base/active-template',
+      data: { templateId: normalized },
+    });
   }, [importActiveTemplateId, activeImportTemplatePref?.templateId, savePreferenceMutation]);
+
+  useEffect(() => {
+    const normalized = exportActiveTemplateId.trim() || null;
+    const persisted = activeExportTemplatePref?.templateId?.trim() || null;
+    if (persisted === normalized) return;
+    if (lastSavedExportActiveTemplateId.current === normalized) return;
+    lastSavedExportActiveTemplateId.current = normalized;
+    savePreferenceMutation.mutate({
+      endpoint: '/api/integrations/exports/base/active-template',
+      data: { templateId: normalized },
+    });
+  }, [exportActiveTemplateId, activeExportTemplatePref?.templateId, savePreferenceMutation]);
 
   // Data loading hooks
   const inventoriesQuery = useInventories(selectedBaseConnectionId, isBaseConnected);

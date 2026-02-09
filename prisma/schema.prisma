@@ -681,6 +681,7 @@ model ProductCategory {
   description String?
   color       String?                     @default("#10b981")
   parentId    String?
+  sortIndex   Int                         @default(0)
   createdAt   DateTime                    @default(now())
   updatedAt   DateTime                    @updatedAt
   catalogId   String
@@ -969,10 +970,13 @@ model ProductDraft {
   catalogIds          Json     @default("[]")
   categoryId          String?
   tagIds              Json     @default("[]")
+  producerIds         Json     @default("[]")
   parameters          Json     @default("[]")
   defaultPriceGroupId String?
   active              Boolean  @default(true)
   icon                String?
+  iconColorMode       String?  @default("theme")
+  iconColor           String?
   imageLinks          Json     @default("[]")
   baseProductId       String?
   createdAt           DateTime @default(now())

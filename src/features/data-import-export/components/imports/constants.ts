@@ -13,6 +13,7 @@ export const PRODUCT_FIELDS = [
   { value: 'description_de', label: 'Description (DE)' },
   { value: 'supplierName', label: 'Supplier Name' },
   { value: 'supplierLink', label: 'Supplier Link' },
+  { value: 'producerIds', label: 'Producer IDs' },
   { value: 'price', label: 'Price' },
   { value: 'priceComment', label: 'Price Comment' },
   { value: 'stock', label: 'Stock' },
@@ -104,6 +105,8 @@ export const EXPORT_PARAMETER_DOCS: ExportParameterDoc[] = [
     description: 'Price for a specific price group.',
   },
   { key: 'stock', description: 'Inventory-level stock (no warehouse).' },
+  { key: 'producer', description: 'Producer value (name or ID).' },
+  { key: 'producer_ids', description: 'Producer identifiers.' },
   {
     key: 'stock.<warehouse_id>',
     description: 'Stock for a specific warehouse.',

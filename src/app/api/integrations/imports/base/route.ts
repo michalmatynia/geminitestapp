@@ -22,6 +22,7 @@ import { extractBaseImageUrls, mapBaseProduct } from '@/features/integrations/se
 import { getIntegrationRepository } from '@/features/integrations/services/integration-repository';
 import { decryptSecret } from '@/features/integrations/utils/encryption';
 import { getCatalogRepository } from '@/features/products/services/catalog-repository';
+import { getProducerRepository } from '@/features/products/services/producer-repository';
 import { getProductDataProvider } from '@/features/products/services/product-provider';
 import { getProductRepository } from '@/features/products/services/product-repository';
 import type { ProductWithImages } from '@/features/products/types/records';
@@ -397,6 +398,43 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
   if (!resolvedDefault?.id) {
     throw badRequestError('Default price group is required before importing products.');
   }
+
+  const producerRepository = await getProducerRepository();
+  const producers = await producerRepository.listProducers({});
+  const producerIdSet = new Set(
+    producers
+      .map((producer: { id: string }) => producer.id?.trim())
+      .filter((producerId: string | undefined): producerId is string => Boolean(producerId))
+  );
+  const producerNameToId = new Map(
+    producers
+      .map((producer: { id: string; name: string }) => {
+        const normalizedName = typeof producer.name === 'string' ? producer.name.trim().toLowerCase() : '';
+        const normalizedId = typeof producer.id === 'string' ? producer.id.trim() : '';
+        if (!normalizedName || !normalizedId) return null;
+        return [normalizedName, normalizedId] as const;
+      })
+      .filter((entry): entry is readonly [string, string] => entry !== null)
+  );
+
+  const resolveProducerIds = (values: string[] | undefined): string[] => {
+    if (!Array.isArray(values) || values.length === 0) return [];
+    const unique = new Set<string>();
+    values.forEach((rawValue: string) => {
+      const trimmed = rawValue.trim();
+      if (!trimmed) return;
+      if (producerIdSet.has(trimmed)) {
+        unique.add(trimmed);
+        return;
+      }
+      const byName = producerNameToId.get(trimmed.toLowerCase());
+      if (byName) {
+        unique.add(byName);
+      }
+    });
+    return Array.from(unique);
+  };
+
   let imported = 0;
   let failed = 0;
   let skipped = 0; // Skipped due to duplicate SKU
@@ -455,7 +493,10 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
 
   for (const raw of productsToImport) {
     try {
-      const mapped: ProductCreateInput = mapBaseProduct(raw, template?.mappings ?? []);
+      const mapped = mapBaseProduct(raw, template?.mappings ?? []) as ProductCreateInput & {
+        producerIds?: string[];
+      };
+      const mappedProducerIds = resolveProducerIds(mapped.producerIds);
 
       // Check for duplicate SKU if not allowed
       if (existingSkus && mapped.sku && existingSkus.has(mapped.sku)) {
@@ -492,6 +533,9 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
         await productRepository.replaceProductCatalogs(created.id, [
           targetCatalog.id
         ]);
+        if (mappedProducerIds.length > 0) {
+          await productRepository.replaceProductProducers(created.id, mappedProducerIds);
+        }
       }
 
       if (imageUrls.length > 0) {
@@ -533,7 +577,10 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
       let currentError = error;
       if (isSkuConflict(currentError)) {
         try {
-          const mapped: ProductCreateInput = mapBaseProduct(raw, template?.mappings ?? []);
+          const mapped = mapBaseProduct(raw, template?.mappings ?? []) as ProductCreateInput & {
+            producerIds?: string[];
+          };
+          const mappedProducerIds = resolveProducerIds(mapped.producerIds);
           const imageUrls = (mapped.imageLinks ?? []).slice(0, maxImages);
           const fallbackSku = mapped.baseProductId
             ? `BASE-${mapped.baseProductId}`
@@ -555,6 +602,9 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
             await productRepository.replaceProductCatalogs(created.id, [
               targetCatalog.id
             ]);
+            if (mappedProducerIds.length > 0) {
+              await productRepository.replaceProductProducers(created.id, mappedProducerIds);
+            }
           }
 
           if (imageUrls.length > 0) {

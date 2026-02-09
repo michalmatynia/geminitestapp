@@ -36,6 +36,7 @@ export interface ProductCategoryDto extends NamedDto {
   color: string | null;
   parentId: string | null;
   catalogId: string;
+  sortIndex?: number | null;
 }
 
 export interface ProductTagDto extends NamedDto {
@@ -120,15 +121,18 @@ export interface UpdateProductDto {
 
 export interface CreateProductCategoryDto {
   name: string;
-  description?: string;
-  color?: string;
-  parentId?: string;
+  description?: string | null;
+  color?: string | null;
+  parentId?: string | null;
   catalogId: string;
+  sortIndex?: number;
 }
 
 export interface UpdateProductCategoryDto {
   name?: string;
-  description?: string;
-  color?: string;
-  parentId?: string;
+  description?: string | null;
+  color?: string | null;
+  parentId?: string | null;
+  catalogId?: string;
+  sortIndex?: number;
 }

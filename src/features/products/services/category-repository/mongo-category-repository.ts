@@ -14,7 +14,7 @@ import type {
   ProductCategoryWithChildren 
 } from '@/shared/types/domain/products';
 
-import type { Filter, UpdateFilter, Document } from 'mongodb';
+import type { AnyBulkWriteOperation, Filter, UpdateFilter, Document } from 'mongodb';
 
 const COLLECTION = 'product_categories';
 
@@ -25,9 +25,89 @@ interface ProductCategoryDoc extends Document {
   color: string | null;
   parentId: ObjectId | null;
   catalogId: string;
+  sortIndex: number;
   createdAt: Date;
   updatedAt: Date;
 }
+
+const toObjectId = (id: string | null | undefined): ObjectId | null =>
+  id ? new ObjectId(id) : null;
+
+const compareBySortIndexThenName = (
+  a: { sortIndex: number; name: string },
+  b: { sortIndex: number; name: string }
+): number => {
+  if (a.sortIndex !== b.sortIndex) return a.sortIndex - b.sortIndex;
+  return a.name.localeCompare(b.name);
+};
+
+const normalizeSiblingOrder = async (
+  catalogId: string,
+  parentId: string | null
+): Promise<void> => {
+  const db = await getMongoDb();
+  const parentObjectId = toObjectId(parentId);
+  const siblings = await db
+    .collection<ProductCategoryDoc>(COLLECTION)
+    .find({ catalogId, parentId: parentObjectId })
+    .sort({ sortIndex: 1, name: 1 })
+    .project<{ _id: ObjectId; sortIndex: number }>({ _id: 1, sortIndex: 1 })
+    .toArray();
+
+  const operations: AnyBulkWriteOperation<ProductCategoryDoc>[] = [];
+  siblings.forEach((entry: { _id: ObjectId; sortIndex: number }, index: number): void => {
+    if (entry.sortIndex === index) return;
+    operations.push({
+      updateOne: {
+        filter: { _id: entry._id },
+        update: { $set: { sortIndex: index, updatedAt: new Date() } },
+      },
+    });
+  });
+
+  if (operations.length > 0) {
+    const collection = db.collection<ProductCategoryDoc>(COLLECTION);
+    await collection.bulkWrite(operations);
+  }
+};
+
+const reorderSiblingsForCategory = async (
+  categoryId: string,
+  catalogId: string,
+  parentId: string | null,
+  targetIndex?: number
+): Promise<void> => {
+  const db = await getMongoDb();
+  const parentObjectId = toObjectId(parentId);
+  const siblings = await db
+    .collection<ProductCategoryDoc>(COLLECTION)
+    .find({ catalogId, parentId: parentObjectId })
+    .sort({ sortIndex: 1, name: 1 })
+    .project<{ _id: ObjectId }>({ _id: 1 })
+    .toArray();
+
+  const ids = siblings
+    .map((entry: { _id: ObjectId }): string => entry._id.toString())
+    .filter((id: string): boolean => id !== categoryId);
+  if (targetIndex === undefined) {
+    ids.push(categoryId);
+  } else {
+    const clampedIndex = Math.max(0, Math.min(targetIndex, ids.length));
+    ids.splice(clampedIndex, 0, categoryId);
+  }
+
+  const operations = ids.map((id: string, index: number) => ({
+    updateOne: {
+      filter: { _id: new ObjectId(id) },
+      update: { $set: { sortIndex: index, updatedAt: new Date() } },
+    },
+  }));
+
+  if (operations.length > 0) {
+    const collection = db.collection<ProductCategoryDoc>(COLLECTION);
+    await collection.bulkWrite(operations);
+  }
+};
 
 const toCategoryDomain = (doc: ProductCategoryDoc): ProductCategory => ({
   id: doc._id.toString(),
@@ -36,6 +116,7 @@ const toCategoryDomain = (doc: ProductCategoryDoc): ProductCategory => ({
   color: doc.color ?? null,
   parentId: doc.parentId?.toString() ?? null,
   catalogId: doc.catalogId?.toString(),
+  sortIndex: doc.sortIndex ?? 0,
   createdAt: doc.createdAt?.toISOString() ?? new Date().toISOString(),
   updatedAt: doc.updatedAt?.toISOString() ?? new Date().toISOString(),
 });
@@ -60,14 +141,22 @@ export const mongoCategoryRepository: CategoryRepository = {
       ] as Filter<ProductCategoryDoc>[];
     }
 
-    const categories = await db.collection<ProductCategoryDoc>(COLLECTION).find(query).sort({ name: 1 }).toArray();
+    const categories = await db
+      .collection<ProductCategoryDoc>(COLLECTION)
+      .find(query)
+      .sort({ sortIndex: 1, name: 1 })
+      .toArray();
     return categories.map(toCategoryDomain);
   },
 
   async getCategoryTree(catalogId?: string): Promise<ProductCategoryWithChildren[]> {
     const db = await getMongoDb();
     const query: Filter<ProductCategoryDoc> = catalogId ? { catalogId } : {};
-    const allCategories = await db.collection<ProductCategoryDoc>(COLLECTION).find(query).toArray();
+    const allCategories = await db
+      .collection<ProductCategoryDoc>(COLLECTION)
+      .find(query)
+      .sort({ sortIndex: 1, name: 1 })
+      .toArray();
     
     const categoryMap = new Map<string, ProductCategoryWithChildren>();
     allCategories.forEach(cat => {
@@ -83,7 +172,20 @@ export const mongoCategoryRepository: CategoryRepository = {
       }
     });
 
-    return roots;
+    const sortTree = (
+      nodes: ProductCategoryWithChildren[]
+    ): ProductCategoryWithChildren[] =>
+      nodes
+        .sort((a: ProductCategoryWithChildren, b: ProductCategoryWithChildren): number => compareBySortIndexThenName(
+          { sortIndex: a.sortIndex ?? 0, name: a.name },
+          { sortIndex: b.sortIndex ?? 0, name: b.name }
+        ))
+        .map((node: ProductCategoryWithChildren): ProductCategoryWithChildren => ({
+          ...node,
+          children: sortTree(node.children),
+        }));
+
+    return sortTree(roots);
   },
 
   async getCategoryById(id: string): Promise<ProductCategory | null> {
@@ -97,7 +199,11 @@ export const mongoCategoryRepository: CategoryRepository = {
     const cat = await this.getCategoryById(id);
     if (!cat) return null;
 
-    const children = await db.collection<ProductCategoryDoc>(COLLECTION).find({ parentId: new ObjectId(id) }).toArray();
+    const children = await db
+      .collection<ProductCategoryDoc>(COLLECTION)
+      .find({ parentId: new ObjectId(id) })
+      .sort({ sortIndex: 1, name: 1 })
+      .toArray();
     return {
       ...cat,
       children: children.map(toCategoryDomain).map(c => ({ ...c, children: [] })),
@@ -111,17 +217,31 @@ export const mongoCategoryRepository: CategoryRepository = {
       name: data.name,
       description: data.description ?? null,
       color: data.color ?? null,
-      parentId: data.parentId ? new ObjectId(data.parentId) : null,
+      parentId: toObjectId(data.parentId),
       catalogId: data.catalogId,
+      sortIndex: data.sortIndex ?? 0,
       createdAt: now,
       updatedAt: now,
     };
     const result = await db.collection<Omit<ProductCategoryDoc, '_id'>>(COLLECTION).insertOne(doc);
-    return toCategoryDomain({ ...doc, _id: result.insertedId } as ProductCategoryDoc);
+    const created = toCategoryDomain({ ...doc, _id: result.insertedId } as ProductCategoryDoc);
+    await reorderSiblingsForCategory(
+      created.id,
+      created.catalogId,
+      created.parentId ?? null,
+      data.sortIndex
+    );
+    return created;
   },
 
   async updateCategory(id: string, data: UpdateProductCategoryDto): Promise<ProductCategory> {
     const db = await getMongoDb();
+    const current = await db
+      .collection<ProductCategoryDoc>(COLLECTION)
+      .findOne({ _id: new ObjectId(id) });
+    if (!current) {
+      throw new Error('Category not found');
+    }
     
     const set: Partial<ProductCategoryDoc> = {
       updatedAt: new Date(),
@@ -131,13 +251,38 @@ export const mongoCategoryRepository: CategoryRepository = {
     if (data.description !== undefined) set.description = data.description;
     if (data.color !== undefined) set.color = data.color;
     if (data.parentId !== undefined) {
-      set.parentId = data.parentId ? new ObjectId(data.parentId) : null;
+      set.parentId = toObjectId(data.parentId);
     }
+    if (data.catalogId !== undefined) {
+      set.catalogId = data.catalogId;
+    }
+    if (data.sortIndex !== undefined) {
+      set.sortIndex = data.sortIndex;
+    }
+
+    const nextCatalogId = data.catalogId ?? current.catalogId;
+    const nextParentId =
+      data.parentId !== undefined
+        ? data.parentId
+        : current.parentId?.toString() ?? null;
+    const movedBucket =
+      nextCatalogId !== current.catalogId ||
+      nextParentId !== (current.parentId?.toString() ?? null);
 
     await db.collection<ProductCategoryDoc>(COLLECTION).updateOne(
       { _id: new ObjectId(id) }, 
       { $set: set } as UpdateFilter<ProductCategoryDoc>
     );
+
+    if (movedBucket) {
+      await normalizeSiblingOrder(
+        current.catalogId,
+        current.parentId?.toString() ?? null
+      );
+    }
+    if (data.sortIndex !== undefined || movedBucket) {
+      await reorderSiblingsForCategory(id, nextCatalogId, nextParentId, data.sortIndex);
+    }
     
     const updated = await this.getCategoryById(id);
     if (!updated) throw new Error('Failed to update category');
@@ -146,7 +291,16 @@ export const mongoCategoryRepository: CategoryRepository = {
 
   async deleteCategory(id: string): Promise<void> {
     const db = await getMongoDb();
+    const current = await db
+      .collection<ProductCategoryDoc>(COLLECTION)
+      .findOne({ _id: new ObjectId(id) });
     await db.collection<ProductCategoryDoc>(COLLECTION).deleteOne({ _id: new ObjectId(id) });
+    if (current) {
+      await normalizeSiblingOrder(
+        current.catalogId,
+        current.parentId?.toString() ?? null
+      );
+    }
   },
 
   async findByName(catalogId: string, name: string, parentId: string | null = null): Promise<ProductCategory | null> {

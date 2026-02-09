@@ -12,6 +12,7 @@ import {
   type ExportToBaseVariables,
 } from '@/features/integrations/hooks/useProductListingMutations';
 import type { IntegrationConnectionBasic, IntegrationWithConnections } from '@/features/integrations/types/listings';
+import { selectProductForListingFormSchema } from '@/features/integrations/validations/listing-forms';
 import { logClientError } from '@/features/observability';
 import { useProductsWithCount } from '@/features/products/hooks/useProductsQuery';
 import type { ProductWithImages } from '@/features/products/types';
@@ -22,6 +23,7 @@ import {
   FormModal,
   SearchInput,
 } from '@/shared/ui';
+import { validateFormData } from '@/shared/validations/form-validation';
 
 import { BaseListingSettings } from './BaseListingSettings';
 
@@ -65,16 +67,19 @@ function SelectProductForListingModalContent({
   const submitting = exportToBaseMutation.isPending || createListingMutation.isPending;
 
   const handleSubmit = async (): Promise<void> => {
-    if (!selectedProductId) {
-      setError('Please select a product');
-      return;
-    }
-    if (!selectedIntegrationId || !selectedConnectionId) {
-      setError('Please select both a marketplace and an account');
-      return;
-    }
-    if (isBaseComIntegration && !selectedInventoryId) {
-      setError('Please select a Base.com inventory');
+    const validation = validateFormData(
+      selectProductForListingFormSchema,
+      {
+        selectedProductId,
+        selectedIntegrationId,
+        selectedConnectionId,
+        isBaseComIntegration,
+        selectedInventoryId,
+      },
+      'Please review required listing settings.',
+    );
+    if (!validation.success) {
+      setError(validation.firstError);
       return;
     }
 

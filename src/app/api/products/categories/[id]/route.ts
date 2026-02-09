@@ -18,6 +18,7 @@ const productCategoryUpdateSchema = z.object({
   color: z.string().nullable().optional(),
   parentId: z.string().nullable().optional(),
   catalogId: z.string().min(1).optional(),
+  sortIndex: z.number().int().min(0).optional(),
 });
 
 /**
@@ -49,7 +50,12 @@ async function PUT_handler(
   params: { id: string }
 ): Promise<Response> {
   const data = ctx.body as z.infer<typeof productCategoryUpdateSchema>;
-  const { name, parentId, catalogId } = data;
+  const { parentId, catalogId } = data;
+  const normalizedName =
+    data.name !== undefined ? data.name.trim() : undefined;
+  if (data.name !== undefined && !normalizedName) {
+    throw badRequestError('Category name is required');
+  }
 
   const repository = await getCategoryRepository();
   const current = await repository.getCategoryById(params.id);
@@ -65,6 +71,11 @@ async function PUT_handler(
       : catalogId && catalogId !== current.catalogId
         ? null
         : current.parentId ?? null;
+  const currentParentId = current.parentId ?? null;
+
+  if (nextParentId === params.id) {
+    throw badRequestError('Cannot move category into itself');
+  }
 
   if (nextParentId) {
     const parent = await repository.getCategoryById(nextParentId);
@@ -88,25 +99,38 @@ async function PUT_handler(
     }
   }
 
-  // Check for duplicate name under the new parent
-  if (name !== undefined) {
-    const existing = await repository.findByName(nextCatalogId, name, nextParentId);
+  const nextName = normalizedName ?? current.name;
+  const placementChanged =
+    nextCatalogId !== current.catalogId || nextParentId !== currentParentId;
+  if (normalizedName !== undefined || placementChanged) {
+    const existing = await repository.findByName(
+      nextCatalogId,
+      nextName,
+      nextParentId
+    );
 
     if (existing && existing.id !== params.id) {
-      throw conflictError('A category with this name already exists at this level', {
-        name,
-        parentId: nextParentId,
-        catalogId: nextCatalogId,
-      });
+      throw conflictError(
+        'A category with this name already exists at this level',
+        {
+          name: nextName,
+          parentId: nextParentId,
+          catalogId: nextCatalogId,
+        }
+      );
     }
   }
 
-  const category = await repository.updateCategory(params.id, {
-    ...(data.name && { name: data.name }),
-    ...(data.description && { description: data.description }),
-    ...(data.color && { color: data.color }),
-    ...(data.parentId && { parentId: data.parentId }),
-  });
+  const updatePayload = {
+    ...(normalizedName !== undefined ? { name: normalizedName } : {}),
+    ...(data.description !== undefined ? { description: data.description } : {}),
+    ...(data.color !== undefined ? { color: data.color } : {}),
+    ...(parentId !== undefined || placementChanged ? { parentId: nextParentId } : {}),
+    ...(catalogId !== undefined ? { catalogId: nextCatalogId } : {}),
+    ...(data.sortIndex !== undefined ? { sortIndex: data.sortIndex } : {}),
+  };
+
+  const category = await repository.updateCategory(params.id, updatePayload);
 
   return NextResponse.json(category);
 }

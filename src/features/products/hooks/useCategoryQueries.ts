@@ -3,7 +3,6 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
 import type { ProductCategoryWithChildren } from '@/features/products/types';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 /**
  * Hook to fetch product categories for a catalog
@@ -28,7 +27,7 @@ export function useProductCategories(catalogId?: string): UseQueryResult<Product
  */
 export function useProductCategoryTree(catalogId?: string): UseQueryResult<ProductCategoryWithChildren[]> {
   return useQuery({
-    queryKey: [...QUERY_KEYS.notes.categories, 'tree', catalogId],
+    queryKey: ['product-categories', 'tree', catalogId],
     queryFn: async (): Promise<ProductCategoryWithChildren[]> => {
       if (!catalogId) return [];
       const res = await fetch(`/api/products/categories/tree?catalogId=${catalogId}`);

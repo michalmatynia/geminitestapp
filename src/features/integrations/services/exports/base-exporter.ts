@@ -698,6 +698,24 @@ const getProductValue = (
   if (normalized === 'category' || normalized === 'category_id' || normalized === 'categoryid') {
     return (product as unknown as Record<string, unknown>)['categoryId'] ?? null;
   }
+  if (
+    normalized === 'producerids' ||
+    normalized === 'producer_ids' ||
+    normalized === 'producerid' ||
+    normalized === 'producer_id' ||
+    normalized === 'producers' ||
+    normalized === 'producer'
+  ) {
+    const producerIds = Array.isArray(product.producers)
+      ? product.producers
+        .map((entry: { producerId: string }) => entry.producerId?.trim())
+        .filter((entry: string | undefined): entry is string => Boolean(entry))
+      : [];
+    if (normalized === 'producerid' || normalized === 'producer_id' || normalized === 'producer') {
+      return producerIds[0] ?? null;
+    }
+    return producerIds;
+  }
   const slotMatch = normalized.match(/^image_(slot|file|link)_(\d+)$/);
   if (slotMatch) {
     const index = Number.parseInt(slotMatch[2] ?? '', 10) - 1;

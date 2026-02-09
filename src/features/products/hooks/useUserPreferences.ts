@@ -8,6 +8,11 @@ import type { ProductListPreferences } from '@/features/products/types/products-
 import { useOfflineMutation } from '@/shared/hooks/useOfflineMutation';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import {
+  normalizeUserPreferencesResponse,
+  normalizeUserPreferencesUpdatePayload,
+  userPreferencesUpdateSchema,
+} from '@/shared/validations/user-preferences';
 
 const DEFAULT_PREFERENCES: ProductListPreferences = {
   nameLocale: 'name_en',
@@ -17,23 +22,14 @@ const DEFAULT_PREFERENCES: ProductListPreferences = {
   thumbnailSource: 'file',
 };
 
-type PreferencesApiResponse = {
-  productListNameLocale?: string;
-  productListCatalogFilter?: string;
-  productListCurrencyCode?: string | null;
-  productListPageSize?: number;
-  productListThumbnailSource?: 'file' | 'link' | 'base64' | null;
-};
-
 const userPreferencesQueryKey = QUERY_KEYS.auth.preferences.detail('product-list');
 
 async function fetchUserPreferences(): Promise<ProductListPreferences> {
-  const data = await api.get<PreferencesApiResponse>('/api/user/preferences');
+  const data = normalizeUserPreferencesResponse(
+    await api.get<unknown>('/api/user/preferences')
+  );
   return {
-    nameLocale: (data.productListNameLocale || 'name_en') as
-      | 'name_en'
-      | 'name_pl'
-      | 'name_de',
+    nameLocale: data.productListNameLocale || 'name_en',
     catalogFilter: data.productListCatalogFilter || 'all',
     currencyCode: data.productListCurrencyCode ?? 'PLN',
     pageSize: data.productListPageSize || 12,
@@ -46,7 +42,12 @@ async function updateUserPreference(
   value: unknown,
 ): Promise<void> {
   const apiKey = `productList${key.charAt(0).toUpperCase()}${key.slice(1)}`;
-  await api.patch('/api/user/preferences', { [apiKey]: value });
+  const validation = userPreferencesUpdateSchema.safeParse({ [apiKey]: value });
+  if (!validation.success) {
+    throw new Error('Invalid user preference update payload.');
+  }
+  const payload = normalizeUserPreferencesUpdatePayload(validation.data);
+  await api.patch('/api/user/preferences', payload);
 }
 
 function getLocalStorageFallback(): Partial<ProductListPreferences> {
@@ -96,11 +97,16 @@ function updateLocalStorage(
 async function updateUserPreferences(
   data: Partial<ProductListPreferences>,
 ): Promise<void> {
-  const payload: Record<string, unknown> = {};
+  const rawPayload: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data)) {
     const apiKey = `productList${key.charAt(0).toUpperCase()}${key.slice(1)}`;
-    payload[apiKey] = value;
+    rawPayload[apiKey] = value;
   }
+  const validation = userPreferencesUpdateSchema.safeParse(rawPayload);
+  if (!validation.success) {
+    throw new Error('Invalid user preferences update payload.');
+  }
+  const payload = normalizeUserPreferencesUpdatePayload(validation.data);
   await api.patch('/api/user/preferences', payload);
 }
 

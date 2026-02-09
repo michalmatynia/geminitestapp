@@ -17,7 +17,13 @@ import { useProductListContext } from '@/features/products/context/ProductListCo
 import { useDuplicateProduct } from '@/features/products/hooks/useProductsMutations';
 import type { ProductWithImages } from '@/features/products/types';
 import { calculatePriceForCurrency, normalizeCurrencyCode } from '@/features/products/utils/priceCalculation';
+import {
+  fetchPreferredBaseConnection,
+  integrationSelectionQueryKeys,
+} from '@/features/integrations/components/listings/hooks/useIntegrationSelection';
+import { useGenericExportToBaseMutation } from '@/features/integrations/hooks/useProductListingMutations';
 import { fetchProductListings, productListingsQueryKey } from '@/features/integrations/hooks/useListingQueries';
+import { api } from '@/shared/lib/api-client';
 import { Button, Checkbox, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, useToast, Badge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -64,6 +70,132 @@ const CircleIconButton = ({
     {children}
   </Button>
 );
+
+const INTEGRATION_SELECTION_STALE_TIME_MS = 5 * 60 * 1000;
+const INTEGRATION_SELECTION_GC_TIME_MS = 30 * 60 * 1000;
+const defaultExportInventoryQueryKey = ['integrations', 'default-export-inventory'] as const;
+const activeExportTemplateQueryKey = ['integrations', 'active-export-template'] as const;
+
+const BaseQuickExportButton = ({
+  product,
+  status,
+  prefetchListings,
+  showMarketplaceBadge,
+}: {
+  product: ProductWithImages;
+  status: string;
+  prefetchListings: () => void;
+  showMarketplaceBadge: boolean;
+}): React.JSX.Element => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const quickExportMutation = useGenericExportToBaseMutation();
+
+  const getStatusToneClass = (value: string): string => {
+    const normalized = value.toLowerCase();
+    if (['active', 'success', 'completed', 'listed', 'ok'].includes(normalized)) {
+      return 'border-emerald-400/60 text-emerald-200 hover:border-emerald-300/70 hover:text-emerald-100';
+    }
+    if (['warning', 'pending', 'queued', 'processing', 'in_progress'].includes(normalized)) {
+      return 'border-amber-400/60 text-amber-200 hover:border-amber-300/70 hover:text-amber-100';
+    }
+    if (['failed', 'error'].includes(normalized)) {
+      return 'border-rose-400/60 text-rose-200 hover:border-rose-300/70 hover:text-rose-100';
+    }
+    return 'border-gray-500/50 text-gray-300 hover:border-gray-400/60 hover:text-gray-200';
+  };
+
+  const runQuickExport = async (): Promise<void> => {
+    if (quickExportMutation.isPending) return;
+
+    let connectionId = '';
+    let inventoryId = '';
+    let templateId = '';
+    try {
+      const [preferredConnection, defaultInventory, activeTemplate] = await Promise.all([
+        queryClient.fetchQuery({
+          queryKey: integrationSelectionQueryKeys.defaultConnection,
+          queryFn: fetchPreferredBaseConnection,
+          staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
+          gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
+        }),
+        queryClient.fetchQuery({
+          queryKey: defaultExportInventoryQueryKey,
+          queryFn: () => api.get<{ inventoryId?: string | null }>('/api/integrations/exports/base/default-inventory'),
+          staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
+          gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
+        }),
+        queryClient.fetchQuery({
+          queryKey: activeExportTemplateQueryKey,
+          queryFn: () => api.get<{ templateId?: string | null }>('/api/integrations/exports/base/active-template'),
+          staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
+          gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
+        }),
+      ]);
+      connectionId = preferredConnection?.connectionId?.trim() || '';
+      inventoryId = defaultInventory?.inventoryId?.trim() || '';
+      templateId = activeTemplate?.templateId?.trim() || '';
+    } catch {
+      toast('Failed to load Base.com export defaults.', { variant: 'error' });
+      return;
+    }
+
+    if (!connectionId) {
+      toast('Set a default Base.com connection first.', { variant: 'error' });
+      return;
+    }
+
+    if (!inventoryId) {
+      toast('Set a default Base.com inventory first.', { variant: 'error' });
+      return;
+    }
+
+    const payload: {
+      productId: string;
+      connectionId: string;
+      inventoryId: string;
+      templateId?: string;
+    } = {
+      productId: product.id,
+      connectionId,
+      inventoryId,
+    };
+    if (templateId) {
+      payload.templateId = templateId;
+    }
+
+    try {
+      await quickExportMutation.mutateAsync(payload);
+      prefetchListings();
+      void queryClient.invalidateQueries({ queryKey: productListingsQueryKey(product.id) });
+      toast('Base.com export started.', { variant: 'success' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to export to Base.com.';
+      toast(message, { variant: 'error' });
+    }
+  };
+
+  const label = showMarketplaceBadge
+    ? `Base.com export status: ${status}. Click to export now.`
+    : 'One-click export to Base.com';
+
+  return (
+    <CircleIconButton
+      onClick={(): void => {
+        void runQuickExport();
+      }}
+      onMouseEnter={prefetchListings}
+      onFocus={prefetchListings}
+      ariaLabel={label}
+      title={label}
+      className={getStatusToneClass(status)}
+    >
+      <span aria-hidden='true' className='text-[9px] font-black uppercase leading-none tracking-tight'>
+        {quickExportMutation.isPending ? '...' : 'BL'}
+      </span>
+    </CircleIconButton>
+  );
+};
 
 interface ColumnActionsProps {
   row: Row<ProductWithImages>;
@@ -469,7 +601,6 @@ export const getProductColumns = (
       const product: ProductWithImages = row.original;
       const {
         onIntegrationsClick: handleClick,
-        onExportSettingsClick: handleExportClick,
         integrationBadgeIds,
         integrationBadgeStatuses,
       } = useProductListContext();
@@ -486,25 +617,6 @@ export const getProductColumns = (
           staleTime: 30 * 1000,
         });
       };
-      const getStatusToneClass = (value: string): string => {
-        const normalized = value.toLowerCase();
-        if (['active', 'success', 'completed', 'listed', 'ok'].includes(normalized)) {
-          return 'border-emerald-400/60 text-emerald-200 hover:border-emerald-300/70 hover:text-emerald-100';
-        }
-        if (['warning', 'pending', 'queued', 'processing', 'in_progress'].includes(normalized)) {
-          return 'border-amber-400/60 text-amber-200 hover:border-amber-300/70 hover:text-amber-100';
-        }
-        if (['failed', 'error'].includes(normalized)) {
-          return 'border-rose-400/60 text-rose-200 hover:border-rose-300/70 hover:text-rose-100';
-        }
-        return 'border-gray-500/50 text-gray-300 hover:border-gray-400/60 hover:text-gray-200';
-      };
-      const baseIcon = (
-        <span aria-hidden='true' className='text-[9px] font-black uppercase leading-none tracking-tight'>
-          BL
-        </span>
-      );
-
       return (
         <div className='inline-flex items-center gap-1'>
           <CircleIconButton
@@ -521,18 +633,12 @@ export const getProductColumns = (
               +
             </span>
           </CircleIconButton>
-          {showMarketplaceBadge && (
-            <CircleIconButton
-              onClick={(): void => handleExportClick?.(product)}
-              onMouseEnter={prefetchListings}
-              onFocus={prefetchListings}
-              ariaLabel={`Base.com export settings - status: ${status}`}
-              title={`Base.com export status: ${status} - Click for export settings`}
-              className={getStatusToneClass(status)}
-            >
-              {baseIcon}
-            </CircleIconButton>
-          )}
+          <BaseQuickExportButton
+            product={product}
+            status={status}
+            prefetchListings={prefetchListings}
+            showMarketplaceBadge={showMarketplaceBadge}
+          />
         </div>
       );
     },

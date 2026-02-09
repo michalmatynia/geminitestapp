@@ -1,4 +1,147 @@
-GEMINI INVESTIGATION 
+CLAUDE INVESTIGATION 
+
+ Here is Claude's plan:
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+ Real-time Redis Pub/Sub for AI Paths Run Streaming                            
+                                                                                
+ Context                                                                       
+
+ Server-side AI Paths runs currently use a 500ms polling-based SSE mechanism:
+ the SSE route queries the database every 500ms for run/node/event updates,
+ diffs against previous state, and sends changes. This adds unnecessary latency
+  and database load. Since the executor already writes to the DB on each node
+ completion, we can publish notifications instantly via Redis pub/sub.
+
+ Current Architecture
+
+ - SSE route (src/app/api/ai-paths/runs/[runId]/stream/route.ts): Polls DB
+ every 500ms, queries pathRun + pathRunNodes + pathRunEvents, diffs, sends SSE
+ events (run, nodes, events, done, error).
+ - Executor (src/features/ai/ai-paths/services/path-run-executor.ts): Executes
+ graph server-side, writes node results/events to DB via callbacks.
+ - Client (useAiPathsRuntime.ts): Opens EventSource to SSE route, processes
+ messages.
+ - Redis (src/shared/lib/redis.ts): Singleton ioredis client via
+ getRedisClient(), isRedisEnabled() check.
+
+ Proposed Flow
+
+ Executor (writes DB) → PUBLISH to Redis → SSE Route (subscribed) → instant SSE
+  push → Client
+
+ Channel: ai-paths:run:{runId}
+
+ Files to Create
+
+ 1. src/shared/lib/redis-pubsub.ts (NEW)
+
+ Dedicated Redis subscriber connection + publish helper.
+
+ - getRedisSubscriber(): Redis — Lazy singleton, separate ioredis instance
+ (subscriber mode blocks all other commands). Same connection config as
+ getRedisClient().
+ - closeSubscriber(): Promise<void> — Graceful shutdown (disconnect + null
+ singleton).
+ - publishRunEvent(channel, data): void — Fire-and-forget PUBLISH via existing
+ getRedisClient() (PUBLISH is non-blocking, doesn't need dedicated connection).
+
+ 2. src/features/ai/ai-paths/services/run-stream-publisher.ts (NEW)
+
+ Convenience wrapper:
+
+ export function publishRunUpdate(
+   runId: string,
+   type: 'run' | 'nodes' | 'events' | 'done' | 'error',
+   data: unknown
+ ): void
+
+ - Calls publishRunEvent(ai-paths:run:${runId}, { type, data, ts })
+ - Fire-and-forget — errors caught and logged, never throws
+ - No-op if !isRedisEnabled()
+
+ Files to Modify
+
+ 3. src/features/ai/ai-paths/services/path-run-executor.ts
+
+ Add publishRunUpdate calls after each DB write callback:
+ Callback: onNodeStart (after upsert)
+ Publish: publishRunUpdate(runId, 'nodes', { nodeId, status: 'running' })
+ ────────────────────────────────────────
+ Callback: onNodeComplete (after update)
+ Publish: publishRunUpdate(runId, 'nodes', { nodeId, status, outputs })
+ ────────────────────────────────────────
+ Callback: onEvent (after create)
+ Publish: publishRunUpdate(runId, 'events', { event })
+ ────────────────────────────────────────
+ Callback: onRunComplete (after update)
+ Publish: publishRunUpdate(runId, 'done', { status, summary })
+ ────────────────────────────────────────
+ Callback: onRunError (after update)
+ Publish: publishRunUpdate(runId, 'error', { error })
+ All fire-and-forget — executor unchanged if Redis is down.
+
+ 4. src/app/api/ai-paths/runs/[runId]/stream/route.ts
+
+ Replace polling with Redis subscription + fallback:
+
+ 1. Subscribe to ai-paths:run:{runId}
+ 2. Catch-up query (fetch current DB state, send initial SSE burst)
+ 3. On Redis message → parse → send SSE event
+ 4. On done/error message → unsubscribe → close stream
+ 5. Fallback: If Redis unavailable → revert to existing 500ms polling
+ 6. Timeout: No message for 60s → unsubscribe → close
+
+ Subscribe-then-query order prevents race condition (events during catch-up are
+  buffered by subscription).
+
+ 5. src/features/ai/ai-paths/services/path-run-service.ts
+
+ Publish on cancel/resume/retry:
+ - cancelRun → publishRunUpdate(runId, 'done', { status: 'cancelled' })
+ - resumeRun → publishRunUpdate(runId, 'run', { status: 'running' })
+ - retryRun → publishRunUpdate(runId, 'run', { status: 'running' })
+
+ 6. src/features/jobs/processors/ai-path-run-processor.ts
+
+ Publish on failure/dead-letter:
+ - Failed job → publishRunUpdate(runId, 'error', { error: failedReason })
+ - Dead letter → publishRunUpdate(runId, 'error', { error: 'Max retries
+ exceeded' })
+
+ Key Design Decisions
+
+ - Publisher uses existing client: PUBLISH is non-blocking, no dedicated
+ connection needed
+ - Subscriber needs dedicated connection: SUBSCRIBE puts ioredis in subscriber
+ mode
+ - Fire-and-forget: Executor never awaits publish; DB is the source of truth
+ - Polling fallback: Zero breaking changes if Redis is unavailable
+ - No client changes: SSE event format stays identical — useAiPathsRuntime.ts
+ EventSource code unchanged
+ - Channel auto-cleanup: Redis channels expire when all subscribers disconnect
+
+ Implementation Order
+
+ 1. redis-pubsub.ts — Foundation
+ 2. run-stream-publisher.ts — Convenience wrapper
+ 3. path-run-executor.ts — Add publish calls
+ 4. stream/route.ts — Subscription-based SSE with fallback
+ 5. path-run-service.ts — Publish on cancel/resume/retry
+ 6. ai-path-run-processor.ts — Publish on failure/dead-letter
+
+ Verification
+
+ 1. Start a server-side path run → node updates arrive instantly (not 500ms
+ delayed)
+ 2. Open mapper config during run → live preview updates in real-time
+ 3. Cancel a run → client receives done event immediately
+ 4. Kill Redis → SSE falls back to polling transparently
+ 5. Multiple browser tabs watching same run → all receive updates
+ simultaneously
+ 6. Check Redis CLI: SUBSCRIBE ai-paths:run:{runId} shows messages flowing
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+
+
 
 ---
 

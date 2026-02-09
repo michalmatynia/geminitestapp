@@ -4,6 +4,11 @@ import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResul
 
 import { logClientError } from '@/features/observability';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
+import {
+  normalizeUserPreferencesResponse,
+  normalizeUserPreferencesUpdatePayload,
+  userPreferencesUpdateSchema,
+} from '@/shared/validations/user-preferences';
 
 export interface UserPreferences {
   adminMenuCollapsed?: boolean | null;
@@ -25,7 +30,8 @@ export function useUserPreferences(): UseQueryResult<UserPreferences, Error> {
         });
         return {};
       }
-      return (await res.json()) as UserPreferences;
+      const payload: unknown = await res.json();
+      return normalizeUserPreferencesResponse(payload) as UserPreferences;
     },
     staleTime: USER_PREFERENCES_STALE_MS,
     retry: 1,
@@ -36,17 +42,25 @@ export function useUpdateUserPreferencesMutation(): UseMutationResult<UserPrefer
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: UserPreferences): Promise<UserPreferences> => {
+      const validation = userPreferencesUpdateSchema.safeParse(data);
+      if (!validation.success) {
+        throw new Error('Invalid user preferences payload.');
+      }
+      const payload = normalizeUserPreferencesUpdatePayload(validation.data);
       const res = await fetch('/api/user/preferences', {
         method: 'PATCH',
         headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
         credentials: 'include',
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error('Failed to update user preferences.');
-      return (await res.json()) as UserPreferences;
+      return normalizeUserPreferencesResponse(await res.json()) as UserPreferences;
     },
     onSuccess: (data: UserPreferences) => {
-      queryClient.setQueryData(['user-preferences'], data);
+      queryClient.setQueryData(
+        ['user-preferences'],
+        normalizeUserPreferencesResponse(data) as UserPreferences
+      );
     },
   });
 }

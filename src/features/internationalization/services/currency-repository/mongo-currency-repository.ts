@@ -1,5 +1,5 @@
 
-import { ObjectId, type Document } from 'mongodb';
+import { ObjectId, type Document, type AnyBulkWriteOperation, type UpdateFilter } from 'mongodb';
 
 import { defaultCurrencies } from '@/features/internationalization/server';
 import type { CurrencyRepository } from '@/features/internationalization/types/services/currency-repository';
@@ -81,7 +81,7 @@ export const mongoCurrencyRepository: CurrencyRepository = {
           $pull: { currencyIds: id },
           $addToSet: { currencyIds: data.code },
           $set: { updatedAt: now },
-        } as any
+        } as UpdateFilter<Document>
       );
     }
 

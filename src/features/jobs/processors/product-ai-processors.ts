@@ -209,7 +209,7 @@ export async function processDatabaseSync(job: Job): Promise<Record<string, unkn
 
 export async function processBase64ConvertAll(job: Job): Promise<Record<string, unknown>> {
   const productRepo = await getProductRepository();
-  const pageSize = typeof job.payload['pageSize'] === 'number' ? (job.payload['pageSize'] as number) : 100;
+  const pageSize = typeof job.payload['pageSize'] === 'number' ? job.payload['pageSize'] : 100;
   let page = 1;
   let requested = 0;
   let succeeded = 0;

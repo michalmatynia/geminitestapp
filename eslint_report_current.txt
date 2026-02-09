@@ -1,50 +1,124 @@
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/auth/auth.ts
-  11:1  error  There should be at least one empty line between import groups                       import/order
-  11:1  error  `./services/auth-user-service` import should occur after import of `./auth.config`  import/order
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/route.ts
+   70:9   warning  Unexpected console statement  no-console
+   87:7   warning  Unexpected console statement  no-console
+  201:7   warning  Unexpected console statement  no-console
+  272:9   warning  Unexpected console statement  no-console
+  393:7   warning  Unexpected console statement  no-console
+  414:7   warning  Unexpected console statement  no-console
+  458:11  warning  Unexpected console statement  no-console
+  473:11  warning  Unexpected console statement  no-console
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/ThemeSettingsPanel.tsx
-  53:1  error  `./theme/ThemeColorsContext` import should occur before import of `./theme/ThemeColorsSection`  import/order
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/sessions/[sessionId]/messages/route.ts
+  39:5  warning  Unexpected console statement  no-console
+  74:5  warning  Unexpected console statement  no-console
+  92:5  warning  Unexpected console statement  no-console
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/theme/ThemeAiSection.tsx
-   5:1  error  There should be at least one empty line between import groups                                  import/order
-  11:1  error  There should be at least one empty line between import groups                                  import/order
-  12:1  error  `@/features/cms/types/theme-settings` type import should occur before import of `@/shared/ui`  import/order
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/sessions/[sessionId]/route.ts
+  21:5  warning  Unexpected console statement  no-console
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/theme/ThemeButtonsSection.tsx
-  14:1  error  There should be no empty line within import group  import/order
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/sessions/route.ts
+   55:5  warning  Unexpected console statement  no-console
+   66:5  warning  Unexpected console statement  no-console
+   81:5  warning  Unexpected console statement  no-console
+  102:5  warning  Unexpected console statement  no-console
+  120:5  warning  Unexpected console statement  no-console
+  141:5  warning  Unexpected console statement  no-console
+  153:5  warning  Unexpected console statement  no-console
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/theme/ThemeCardsSection.tsx
-  8:1  error  There should be no empty line within import group  import/order
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/client-errors/route.ts
+  22:5  warning  Unexpected console statement  no-console
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/theme/ThemeColorsContext.tsx
-    3:1   error  There should be at least one empty line between import groups                                                    import/order
-    5:1   error  `@/features/ai/chatbot/hooks/useChatbotQueries` import should occur before import of `@/shared/ui`               import/order
-    6:1   error  `@/features/ai/agentcreator/teaching/hooks/useAgentTeaching` import should occur before import of `@/shared/ui`  import/order
-    7:1   error  `@/shared/providers/SettingsStoreProvider` import should occur before import of `@/shared/ui`                    import/order
-    8:1   error  There should be at least one empty line between import groups                                                    import/order
-    8:1   error  `@/features/ai/brain` import should occur before import of `@/shared/ui`                                         import/order
-   11:1   error  There should be at least one empty line between import groups                                                    import/order
-   12:1   error  `@/features/cms/types/theme-settings` type import should occur before import of `@/shared/ui`                    import/order
-   13:1   error  `@/shared/types/chatbot` type import should occur before import of `@/shared/ui`                                 import/order
-   14:1   error  `@/shared/types/agent-teaching` type import should occur before import of `@/shared/ui`                          import/order
-  231:47  error  Unnecessary escape character: \s                                                                                 no-useless-escape
-  231:54  error  Unnecessary escape character: \s                                                                                 no-useless-escape
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/images/sync-base/all/route.ts
+  32:9  warning  Unexpected console statement  no-console
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/theme/ThemeColorsSection.tsx
-   7:1  error  There should be at least one empty line between import groups                                           import/order
-   8:1  error  There should be at least one empty line between import groups                                           import/order
-   8:1  error  `@/shared/ui` import should occur before import of `./ThemeColorsContext`                               import/order
-   9:1  error  `../shared-fields` import should occur before import of `../ThemeSettingsContext`                       import/order
-  10:1  error  There should be at least one empty line between import groups                                           import/order
-  11:1  error  `@/features/cms/types/theme-settings` type import should occur before import of `./ThemeColorsContext`  import/order
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/imports/base/parameters/route.ts
+  342:7  warning  Unexpected console statement  no-console
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/theme/ThemeLayoutSection.tsx
-  8:1  error  There should be no empty line within import group  import/order
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/ai-jobs/enqueue/route.ts
+  28:3  warning  Unexpected console statement  no-console
+  31:3  warning  Unexpected console statement  no-console
+  40:5  warning  Unexpected console statement  no-console
+  45:9  warning  Unexpected console statement  no-console
+  60:3  warning  Unexpected console statement  no-console
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/theme/ThemeTypographySection.tsx
-  12:1  error  There should be no empty line within import group  import/order
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/ai-jobs/route.ts
+  16:7  warning  Unexpected console statement  no-console
+  24:7  warning  Unexpected console statement  no-console
+  46:7  warning  Unexpected console statement  no-console
 
-✖ 28 problems (28 errors, 0 warnings)
-  26 errors and 0 warnings potentially fixable with the `--fix` option.
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/categories/route.ts
+  58:5  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/images/base64/all/route.ts
+  32:9  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/settings/database/sync/route.ts
+  68:9  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/settings/lite/route.ts
+   98:7  warning  Unexpected console statement  no-console
+  101:5  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/settings/route.ts
+   59:9  warning  Unexpected console statement  no-console
+  276:5  warning  Unexpected console statement  no-console
+  303:9  warning  Unexpected console statement  no-console
+  323:5  warning  Unexpected console statement  no-console
+  354:5  warning  Unexpected console statement  no-console
+  380:7  warning  Unexpected console statement  no-console
+  393:7  warning  Unexpected console statement  no-console
+  406:7  warning  Unexpected console statement  no-console
+  435:5  warning  Unexpected console statement  no-console
+  502:9  warning  Unexpected console statement  no-console
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/internationalization/services/currency-repository/prisma-currency-repository.ts
+  54:7   error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  55:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/jobs/processors/ai-path-run-processor.ts
+  71:48  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+  74:10  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/jobs/processors/product-ai-processors.ts
+  212:67  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/jobs/services/productAiService.ts
+  44:57  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+  45:52  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/context/SystemLogsContext.tsx
+  193:74  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/activity-repository/mongo-activity-repository.ts
+  67:53  error  Unsafe argument of type `any` assigned to a parameter of type `Filter<Document> | undefined`  @typescript-eslint/no-unsafe-argument
+  67:62  error  Unexpected any. Specify a different type                                                      @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/hooks/useAiPathSettings.ts
+  145:55  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+  146:10  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/performance/cached-service.ts
+  64:37  error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  64:83  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/product-repository/mongo-product-repository.ts
+  734:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/api-client.ts
+  78:19  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/observability/request-context.ts
+  25:72  error    Prefer using an optional chain expression instead, as it's more concise and easier to read  @typescript-eslint/prefer-optional-chain
+  29:11  error    Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+  30:5   error    Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+  30:15  error    Unsafe construction of an `any` typed value                                                 @typescript-eslint/no-unsafe-call
+  31:12  warning  'error' is defined but never used. Allowed unused caught errors must match /^_/u            @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/select.tsx
+  49:23  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+  56:61  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+
+✖ 68 problems (22 errors, 46 warnings)
+  11 errors and 0 warnings potentially fixable with the `--fix` option.
 

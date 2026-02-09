@@ -68,10 +68,10 @@ const isNonRetryableRunError = (error: unknown): boolean => {
 
 export const computeBackoffMs = (retryCount: number, meta?: Record<string, unknown>): number => {
   const base =
-    typeof meta?.['backoffMs'] === 'number' ? (meta['backoffMs'] as number) : DEFAULT_BACKOFF_MS;
+    typeof meta?.['backoffMs'] === 'number' ? meta['backoffMs'] : DEFAULT_BACKOFF_MS;
   const max =
     typeof meta?.['backoffMaxMs'] === 'number'
-      ? (meta['backoffMaxMs'] as number)
+      ? meta['backoffMaxMs']
       : DEFAULT_BACKOFF_MAX_MS;
   const exponent = Math.max(0, retryCount);
   const raw = normalizeNumber(base * Math.pow(2, exponent), DEFAULT_BACKOFF_MS, 0);

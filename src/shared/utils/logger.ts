@@ -7,7 +7,7 @@ import { getRequestContext } from '@/shared/lib/observability/request-context';
 
 type LogLevel = 'info' | 'warn' | 'error' | 'log';
 
-const formatMessage = (level: LogLevel, message: string, context?: Record<string, unknown>): string => {
+const formatMessage = (level: LogLevel, message: string, _context?: Record<string, unknown>): string => {
   const timestamp = new Date().toISOString();
   const requestContext = getRequestContext();
   const requestId = requestContext?.requestId ? ` [RID:${requestContext.requestId}]` : '';

@@ -28,9 +28,9 @@ export const normalizeSteps = (value: unknown): TestLogEntry[] => {
       status: coerceStatus(s?.['status']),
       timestamp:
         typeof s?.['timestamp'] === 'string'
-          ? (s['timestamp'] as string)
+          ? s['timestamp']
           : new Date().toISOString(),
-      ...(typeof s?.['detail'] === 'string' && { detail: s['detail'] as string }),
+      ...(typeof s?.['detail'] === 'string' && { detail: s['detail'] }),
     };
   });
 };

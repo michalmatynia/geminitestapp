@@ -46,14 +46,14 @@ const extractNativeOptions = (children: React.ReactNode): { options: NativeOptio
       const props = child.props as Record<string, unknown>;
       
       if (child.type === SelectValue && typeof props?.['placeholder'] === 'string') {
-        placeholder = props['placeholder'] as string;
+        placeholder = props['placeholder'];
       }
       if (child.type === SelectContent || child.type === SelectGroup) {
         walk(props['children'] as React.ReactNode);
         return;
       }
       if (child.type === SelectItem) {
-        const value = typeof props['value'] === 'string' ? (props['value'] as string) : (typeof props['value'] === 'number' ? String(props['value']) : '');
+        const value = typeof props['value'] === 'string' ? (props['value']) : (typeof props['value'] === 'number' ? String(props['value']) : '');
         if (!value) return;
         options.push({
           value,

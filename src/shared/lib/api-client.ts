@@ -75,7 +75,7 @@ export async function apiClient<T>(
       const dataObj = data as Record<string, unknown>;
       errorMessage = String(dataObj['error'] || dataObj['message'] || errorMessage);
       if (typeof dataObj['errorId'] === 'string') {
-        errorId = dataObj['errorId'] as string;
+        errorId = dataObj['errorId'];
       }
     }
 

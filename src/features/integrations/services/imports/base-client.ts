@@ -532,7 +532,7 @@ export async function checkBaseSkuExists(
           const details = await fetchBaseProductDetails(token, inventoryId, ids);
           const match = details.find((p: BaseProductRecord) => {
             const pSku = p['sku'] ?? p['SKU'] ?? p['Sku'];
-            return typeof pSku === 'string' && (pSku as string).toLowerCase() === sku.toLowerCase();
+            return typeof pSku === 'string' && pSku.toLowerCase() === sku.toLowerCase();
           });
           if (match) {
             const productId = toStringId(match['product_id'] ?? match['id']);
@@ -555,7 +555,7 @@ export async function checkBaseSkuExists(
       const products = await fetchBaseProductDetails(token, inventoryId, batch);
       const match = products.find((p: BaseProductRecord) => {
         const pSku = p['sku'] ?? p['SKU'] ?? p['Sku'];
-        return typeof pSku === 'string' && (pSku as string).toLowerCase() === sku.toLowerCase();
+        return typeof pSku === 'string' && pSku.toLowerCase() === sku.toLowerCase();
       });
       if (match) {
         const productId = toStringId(match['product_id'] ?? match['id']);
@@ -707,8 +707,8 @@ function fetchBaseCategoriesFromPayload(payload: BaseApiResponse): BaseCategory[
         const cat = value as Record<string, unknown>;
         const id = toStringId(cat['category_id']) ?? toStringId(cat['id']) ?? key;
         const name =
-          (typeof cat['name'] === 'string' && (cat['name'] as string).trim()) ||
-          (typeof cat['label'] === 'string' && (cat['label'] as string).trim()) ||
+          (typeof cat['name'] === 'string' && cat['name'].trim()) ||
+          (typeof cat['label'] === 'string' && cat['label'].trim()) ||
           id;
         const parentId = normalizeBaseParentId(cat['parent_id'] ?? cat['parent_category_id']);
         return { id, name, parentId };
@@ -719,8 +719,8 @@ function fetchBaseCategoriesFromPayload(payload: BaseApiResponse): BaseCategory[
     return rawCategories.map((cat: Record<string, unknown>) => {
       const id = toStringId(cat['category_id']) ?? toStringId(cat['id']) ?? '';
       const name =
-        (typeof cat['name'] === 'string' && (cat['name'] as string).trim()) ||
-        (typeof cat['label'] === 'string' && (cat['label'] as string).trim()) ||
+        (typeof cat['name'] === 'string' && cat['name'].trim()) ||
+        (typeof cat['label'] === 'string' && cat['label'].trim()) ||
         id;
       const parentId = normalizeBaseParentId(cat['parent_id'] ?? cat['parent_category_id']);
       return { id, name, parentId };

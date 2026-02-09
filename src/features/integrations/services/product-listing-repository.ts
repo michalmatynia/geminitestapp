@@ -601,8 +601,28 @@ export const getIntegrationsWithConnections = async (): Promise<IntegrationWithC
     orderBy: { name: 'asc' },
   });
 
-  return integrations.map((integration) => ({
-    ...integration,
-    connections: integration.connections ? [integration.connections] : [],
-  })) as IntegrationWithConnectionsBasic[];
+  return integrations.map((integration) => {
+    const rawConnections = (integration as { connections?: unknown }).connections;
+    const normalizedConnections = Array.isArray(rawConnections)
+      ? rawConnections
+      : rawConnections && typeof rawConnections === 'object'
+        ? [rawConnections]
+        : [];
+
+    return {
+      id: integration.id,
+      name: integration.name,
+      slug: integration.slug,
+      connections: normalizedConnections
+        .map((connection) => connection as { id?: string; name?: string; integrationId?: string })
+        .filter((connection): connection is { id: string; name: string; integrationId: string } =>
+          Boolean(connection.id && connection.name)
+        )
+        .map((connection) => ({
+          id: connection.id,
+          name: connection.name,
+          integrationId: connection.integrationId ?? integration.id,
+        })),
+    };
+  }) as IntegrationWithConnectionsBasic[];
 };

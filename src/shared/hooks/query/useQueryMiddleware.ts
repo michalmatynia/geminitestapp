@@ -74,12 +74,22 @@ export const loggingMiddleware: QueryMiddleware = {
 export const performanceMiddleware: QueryMiddleware = {
   name: 'performance',
   onQueryStart: (query: Query): void => {
-    (query as any)._startTime = performance.now();
+    if (typeof (query as any)._startTime !== 'number') {
+      (query as any)._startTime = performance.now();
+    }
   },
   onQuerySuccess: (query: Query): void => {
-    const duration = performance.now() - ((query as any)._startTime || 0);
+    const startTime = (query as any)._startTime;
+    if (typeof startTime !== 'number') return;
+    const duration = performance.now() - startTime;
+    delete (query as any)._startTime;
     if (duration > 1000) { // Log slow queries
       console.warn(`🐌 Slow query (${duration.toFixed(0)}ms): ${JSON.stringify(query.queryKey)}`);
+    }
+  },
+  onQueryError: (query: Query): void => {
+    if (typeof (query as any)._startTime === 'number') {
+      delete (query as any)._startTime;
     }
   },
 };

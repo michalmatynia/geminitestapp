@@ -74,6 +74,7 @@ import {
   mergeValidationIssues,
   type ValidationPaletteRule,
 } from './database/query-utils';
+import { useAiPathConfig } from '../AiPathConfigContext';
 
 import type { AiQuery, CollectionSchema, DatabasePresetOption, SchemaData } from './database/types';
 
@@ -312,16 +313,18 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
         };
       });
   }, [promptEngineSettings]);
+  const selectedNodeId = selectedNode?.id ?? '';
+  const isDatabaseSelected = selectedNode?.type === 'database';
   const incomingEdges = React.useMemo(
-    (): Edge[] => edges.filter((edge: Edge) => edge.to === selectedNode.id),
-    [edges, selectedNode.id]
+    (): Edge[] => edges.filter((edge: Edge) => edge.to === selectedNodeId),
+    [edges, selectedNodeId]
   );
   const schemaConnection = React.useMemo(() => {
-    if (selectedNode.type !== 'database') {
+    if (!isDatabaseSelected || !selectedNodeId) {
       return { hasSchemaConnection: false, schemaConfig: null as SchemaConfig | null };
     }
     const schemaEdge = edges.find((edge: Edge) => {
-      if (edge.to !== selectedNode.id) return false;
+      if (edge.to !== selectedNodeId) return false;
       const fromNode = nodes.find((node: AiNode) => node.id === edge.from);
       return fromNode?.type === 'db_schema';
     });
@@ -333,7 +336,7 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
       hasSchemaConnection: Boolean(schemaNode?.type === 'db_schema'),
       schemaConfig: (schemaNode?.config?.db_schema ?? null) as SchemaConfig | null,
     };
-  }, [edges, nodes, selectedNode.id, selectedNode.type]);
+  }, [edges, nodes, isDatabaseSelected, selectedNodeId]);
 
   const schemaProvider = schemaConnection.schemaConfig?.provider ?? 'auto';
 
@@ -346,7 +349,7 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
       }
       return result.data as SchemaData;
     },
-    enabled: schemaConnection.hasSchemaConnection && selectedNode.type === 'database',
+    enabled: schemaConnection.hasSchemaConnection && isDatabaseSelected,
   });
 
   const fetchedDbSchema = React.useMemo((): SchemaData | null => {
@@ -367,9 +370,9 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
 
   // Auto-intercept incoming signal data and fetch sample for Field Mapping
   React.useEffect(() => {
-    if (selectedNode.type !== 'database') return;
+    if (!isDatabaseSelected || !selectedNodeId) return;
 
-    const runtimeInputs = (runtimeState.inputs[selectedNode.id] ?? {}) as Record<string, unknown>;
+    const runtimeInputs = (runtimeState.inputs[selectedNodeId] ?? {}) as Record<string, unknown>;
 
     // Extract potential entityId/productId from various sources
     let detectedId: string | undefined;
@@ -406,7 +409,7 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
     }
 
     // Use the configured collection from queryConfig if not detected
-    const persistedDatabase = selectedNode.config?.database;
+    const persistedDatabase = selectedNode?.config?.database;
     const queryCollection = persistedDatabase?.query?.collection ?? 'products';
     const finalCollection = detectedCollection || queryCollection;
 
@@ -417,16 +420,16 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
     if (fetchKey === lastAutoFetchedRef.current) return;
 
     // Check if we already have a sample for this node
-    const existingSample = updaterSamples[selectedNode.id];
+    const existingSample = updaterSamples[selectedNodeId];
     if (existingSample?.entityId === detectedId && existingSample?.json?.trim()) return;
 
     lastAutoFetchedRef.current = fetchKey;
 
     // Auto-fetch the sample
-    void handleFetchUpdaterSample(selectedNode.id, finalCollection, detectedId, {
+    void handleFetchUpdaterSample(selectedNodeId, finalCollection, detectedId, {
       notify: false,
     });
-  }, [selectedNode.id, selectedNode.type, selectedNode.config?.database, runtimeState, updaterSamples, handleFetchUpdaterSample]);
+  }, [selectedNodeId, isDatabaseSelected, selectedNode?.config?.database, runtimeState, updaterSamples, handleFetchUpdaterSample]);
 
   React.useEffect(() => {
     setSelectedQueryPresetId('');
@@ -435,12 +438,12 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
     setQueryValidatorEnabled(false);
     setPendingAiQuery('');
     lastInjectedResponseRef.current = '';
-  }, [selectedNode.id]);
+  }, [selectedNodeId]);
 
   React.useEffect(() => {
-    if (selectedNode.type !== 'database') return;
-    const callbackValue = (runtimeState.inputs[selectedNode.id] as Record<string, unknown> | undefined)?.[ 'queryCallback' ]
-      ?? (runtimeState.outputs[selectedNode.id] as Record<string, unknown> | undefined)?.[ 'queryCallback' ];
+    if (!isDatabaseSelected || !selectedNodeId) return;
+    const callbackValue = (runtimeState.inputs[selectedNodeId] as Record<string, unknown> | undefined)?.[ 'queryCallback' ]
+      ?? (runtimeState.outputs[selectedNodeId] as Record<string, unknown> | undefined)?.[ 'queryCallback' ];
     if (typeof callbackValue === 'string' && callbackValue.trim().length > 0) {
       if (callbackValue !== lastInjectedResponseRef.current) {
         lastInjectedResponseRef.current = callbackValue;
@@ -449,7 +452,7 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
         toast('AI query ready for review.', { variant: 'success' });
       }
     }
-  }, [selectedNode.id, selectedNode.type, runtimeState, toast]);
+  }, [selectedNodeId, isDatabaseSelected, runtimeState, toast]);
 
   React.useEffect(() => {
     if (!selectedQueryPresetId) return;
@@ -459,7 +462,7 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
     }
   }, [selectedQueryPresetId, dbQueryPresets]);
 
-  if (selectedNode.type !== 'database') return null;
+  if (!selectedNode || selectedNode.type !== 'database') return null;
 
   const defaultQuery: DbQueryConfig = {
     provider: 'auto',

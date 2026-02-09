@@ -12,7 +12,6 @@ import type {
   AiNode,
   ParserConfig,
   ParserSampleState,
-  RuntimeState,
 } from '@/features/ai/ai-paths/lib';
 import {
   PARSER_PATH_OPTIONS,

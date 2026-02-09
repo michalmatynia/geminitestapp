@@ -3,7 +3,6 @@
 
 
 
-import type { AiNode, NodeConfig } from '@/features/ai/ai-paths/lib';
 import { Input, Label, Textarea } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';

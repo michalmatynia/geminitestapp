@@ -1,10 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { Dispatch, SetStateAction, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
-import type { PlaywrightPersona, PlaywrightSettings } from '@/features/playwright';
+import type { PlaywrightPersona } from '@/features/playwright';
 import { PlaywrightSettingsProvider } from '@/features/playwright/context/PlaywrightSettingsContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger, Button, SharedModal, Label, UnifiedSelect, SectionPanel } from '@/shared/ui';
 
@@ -68,8 +68,6 @@ export function IntegrationModal(): React.JSX.Element {
     playwrightPersonasLoading,
     playwrightPersonaId,
     handleSelectPlaywrightPersona,
-    playwrightSettings,
-    setPlaywrightSettings,
     handleSavePlaywrightSettings,
     showPlaywrightSaved,
     onOpenSessionModal,

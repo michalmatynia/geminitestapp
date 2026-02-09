@@ -1,4 +1,17 @@
-I need a reliable database control for my Mixed Provider setup. I need a working database restore for Prisma (the current one is not working). I also need to be able to fetch collections from both MongoDB and Prisma. I would to be able to convert/copy a collection from Prisma to MongoDB and vice versa. I also want to be able to choose on a per collection basis, which collections are to be fetched from which Provider.
+Add a Producer Field to Drafter and also add it to import Export Template, as it's not showing there and Producer field can't be imported / exported.
+
+Repair Category Handling
+Add a one click export to Base.com button
+
+
+* I updated my drafter Draft Icon, but in the PRoduct List I see the old icon. The icon has not updated.
+
+ My Export import template settings are not retained after save and page
+  refresh.
+
+ * In  draft page, I want Quick Create switch to be a simple  ON / OFF Button (like the ones used in Node Config For Validtaor,), which, when Draft Template is Active (On) has Green tint like the one in Node config, if it's off, Red tint, 
+
+* I need a reliable database control for my Mixed Provider setup. I need a working database restore for Prisma (the current one is not working). I also need to be able to fetch collections from both MongoDB and Prisma. I would to be able to convert/copy a collection from Prisma to MongoDB and vice versa. I also want to be able to choose on a per collection basis, which collections are to be fetched from which Provider.
 
 I would  like to continue developing my database control Page. I would like a page where I can see one Panel for Each Connected Database Prisma, Redis and MongoDB. Through these panels, I should be able to see all the collections in each database and designate which are my primary collections when the Page Loads and which are Fallback, in case a primary collection doesn't load.
 
@@ -7,10 +20,10 @@ I should also be able to synchronise collections between databases and if the co
 I had AiTranslation and AI Description functionalities that were configured through my Products Settings, these functionalities have been taken over by the AI-Paths, so any remainder code from them can be removed.
 
 
-Move all database operations into one Page, so System - Settings -  Database to Workspace - Databases Page
+* Move all database operations into one Page, so System - Settings -  Database to Workspace - Databases Page
 
 
-Restore Prisma still not working, still databases are not fetching info
+* Restore Prisma still not working, still databases are not fetching info
 
 ---
 

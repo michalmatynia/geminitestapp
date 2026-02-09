@@ -14,6 +14,15 @@ export const runtime = 'nodejs';
 const DEFAULT_USER_ID = 'default-user';
 const isDatabaseConfigured = Boolean(process.env['MONGODB_URI']);
 const shouldLogTiming = (): boolean => process.env['DEBUG_API_TIMING'] === 'true';
+const parsePositiveInt = (value: string | undefined, fallback: number): number => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
+};
+const USER_PREFERENCES_REPOSITORY_TIMEOUT_MS = parsePositiveInt(
+  process.env['USER_PREFERENCES_REPOSITORY_TIMEOUT_MS'],
+  2500
+);
+const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
 
 const updatePreferencesSchema = z.object({
   productListNameLocale: z.enum(['name_en', 'name_pl', 'name_de']).optional().nullable(),
@@ -21,6 +30,12 @@ const updatePreferencesSchema = z.object({
   productListCurrencyCode: z.string().optional().nullable(),
   productListPageSize: z.number().int().min(10).max(200).optional().nullable(),
   productListThumbnailSource: z.enum(['file', 'link', 'base64']).optional().nullable(),
+  productListDraftIconColorMode: z.enum(['theme', 'custom']).optional().nullable(),
+  productListDraftIconColor: z
+    .string()
+    .regex(HEX_COLOR_PATTERN)
+    .optional()
+    .nullable(),
   aiPathsActivePathId: z.string().optional().nullable(),
   adminMenuCollapsed: z.boolean().optional().nullable(),
   cmsLastPageId: z.string().optional().nullable(),
@@ -30,6 +45,51 @@ const updatePreferencesSchema = z.object({
   cmsThemeLogoUrl: z.string().optional().nullable(),
   cmsPreviewEnabled: z.boolean().optional().nullable(),
   cmsSlideshowPauseOnHoverInEditor: z.boolean().optional().nullable(),
+});
+
+const withTimeout = async <T,>(label: string, fn: () => Promise<T>): Promise<T> => {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  const timeoutPromise = new Promise<T>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error(`[user-preferences] ${label} timed out after ${USER_PREFERENCES_REPOSITORY_TIMEOUT_MS}ms`));
+    }, USER_PREFERENCES_REPOSITORY_TIMEOUT_MS);
+  });
+
+  try {
+    return await Promise.race([fn(), timeoutPromise]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+};
+
+const buildUserPreferencesResponse = (
+  preferences: Partial<UserPreferencesData> | null | undefined,
+  includeAdminMenu: boolean
+): Record<string, unknown> => ({
+  productListNameLocale: preferences?.productListNameLocale ?? 'name_en',
+  productListCatalogFilter: preferences?.productListCatalogFilter ?? 'all',
+  productListCurrencyCode: preferences?.productListCurrencyCode ?? 'PLN',
+  productListPageSize: preferences?.productListPageSize ?? 12,
+  productListThumbnailSource: preferences?.productListThumbnailSource ?? 'file',
+  productListDraftIconColorMode: preferences?.productListDraftIconColorMode ?? 'theme',
+  productListDraftIconColor: preferences?.productListDraftIconColor ?? '#60a5fa',
+  aiPathsActivePathId: preferences?.aiPathsActivePathId ?? null,
+  adminMenuCollapsed: preferences?.adminMenuCollapsed ?? false,
+  cmsLastPageId: preferences?.cmsLastPageId ?? null,
+  cmsActiveDomainId: preferences?.cmsActiveDomainId ?? null,
+  cmsThemeOpenSections: preferences?.cmsThemeOpenSections ?? [],
+  cmsThemeLogoWidth: preferences?.cmsThemeLogoWidth ?? null,
+  cmsThemeLogoUrl: preferences?.cmsThemeLogoUrl ?? null,
+  cmsPreviewEnabled: preferences?.cmsPreviewEnabled ?? false,
+  cmsSlideshowPauseOnHoverInEditor: preferences?.cmsSlideshowPauseOnHoverInEditor ?? false,
+  ...(includeAdminMenu
+    ? {
+      adminMenuFavorites: preferences?.adminMenuFavorites ?? [],
+      adminMenuSectionColors: preferences?.adminMenuSectionColors ?? {},
+      adminMenuCustomEnabled: preferences?.adminMenuCustomEnabled ?? false,
+      adminMenuCustomNav: preferences?.adminMenuCustomNav ?? [],
+    }
+    : {}),
 });
 
 /**
@@ -54,69 +114,46 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
   if (!isDatabaseConfigured) {
     if (logTiming) {
       timings['total'] = performance.now() - totalStart;
-      await logSystemEvent({
+      void logSystemEvent({
         level: 'info',
         message: '[timing] user.preferences.GET',
         context: { ...timings, databaseConfigured: false },
-      });
+      }).catch(() => {});
     }
-    return NextResponse.json({
-      productListNameLocale: 'name_en',
-      productListCatalogFilter: 'all',
-      productListCurrencyCode: 'PLN',
-      productListPageSize: 12,
-      productListThumbnailSource: 'file',
-      aiPathsActivePathId: null,
-      adminMenuCollapsed: false,
-      cmsLastPageId: null,
-      cmsActiveDomainId: null,
-      cmsThemeOpenSections: [],
-      cmsThemeLogoWidth: null,
-      cmsThemeLogoUrl: null,
-      cmsPreviewEnabled: false,
-      cmsSlideshowPauseOnHoverInEditor: false,
-      ...(includeAdminMenu
-        ? {
-          adminMenuFavorites: [],
-          adminMenuSectionColors: {},
-          adminMenuCustomEnabled: false,
-          adminMenuCustomNav: [],
-        }
-      : {}),
+    return NextResponse.json(buildUserPreferencesResponse(undefined, includeAdminMenu), {
+      headers: { 'x-user-preferences-fallback': 'true' },
     });
   }
-  const preferences = await withTiming('repository', () => getUserPreferences(userId));
-  const response = NextResponse.json({
-    productListNameLocale: preferences.productListNameLocale ?? 'name_en',
-    productListCatalogFilter: preferences.productListCatalogFilter ?? 'all',
-    productListCurrencyCode: preferences.productListCurrencyCode ?? 'PLN',
-    productListPageSize: preferences.productListPageSize ?? 12,
-    productListThumbnailSource: preferences.productListThumbnailSource ?? 'file',
-    aiPathsActivePathId: preferences.aiPathsActivePathId ?? null,
-    adminMenuCollapsed: preferences.adminMenuCollapsed ?? false,
-    cmsLastPageId: preferences.cmsLastPageId ?? null,
-    cmsActiveDomainId: preferences.cmsActiveDomainId ?? null,
-    cmsThemeOpenSections: preferences.cmsThemeOpenSections ?? [],
-    cmsThemeLogoWidth: preferences.cmsThemeLogoWidth ?? null,
-    cmsThemeLogoUrl: preferences.cmsThemeLogoUrl ?? null,
-    cmsPreviewEnabled: preferences.cmsPreviewEnabled ?? false,
-    cmsSlideshowPauseOnHoverInEditor: preferences.cmsSlideshowPauseOnHoverInEditor ?? false,
-    ...(includeAdminMenu
-      ? {
-        adminMenuFavorites: preferences.adminMenuFavorites ?? [],
-        adminMenuSectionColors: preferences.adminMenuSectionColors ?? {},
-        adminMenuCustomEnabled: preferences.adminMenuCustomEnabled ?? false,
-        adminMenuCustomNav: preferences.adminMenuCustomNav ?? [],
-      }
-      : {}),
-  });
+  let preferences: Partial<UserPreferencesData>;
+  try {
+    preferences = await withTiming('repository', () =>
+      withTimeout('repository.get', () => getUserPreferences(userId))
+    );
+  } catch (error) {
+    if (logTiming) {
+      timings['total'] = performance.now() - totalStart;
+      void logSystemEvent({
+        level: 'warn',
+        message: '[timing] user.preferences.GET.fallback',
+        context: {
+          ...timings,
+          databaseConfigured: true,
+          reason: error instanceof Error ? error.message : String(error),
+        },
+      }).catch(() => {});
+    }
+    return NextResponse.json(buildUserPreferencesResponse(undefined, includeAdminMenu), {
+      headers: { 'x-user-preferences-fallback': 'true' },
+    });
+  }
+  const response = NextResponse.json(buildUserPreferencesResponse(preferences, includeAdminMenu));
   if (logTiming) {
     timings['total'] = performance.now() - totalStart;
-    await logSystemEvent({
+    void logSystemEvent({
       level: 'info',
       message: '[timing] user.preferences.GET',
       context: { ...timings, databaseConfigured: true },
-    });
+    }).catch(() => {});
   }
   return response;
 }
@@ -160,6 +197,12 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise
   if (parsed.productListCurrencyCode !== undefined) partial['productListCurrencyCode'] = parsed.productListCurrencyCode;
   if (parsed.productListPageSize !== undefined) partial['productListPageSize'] = parsed.productListPageSize;
   if (parsed.productListThumbnailSource !== undefined) partial['productListThumbnailSource'] = parsed.productListThumbnailSource;
+  if (parsed.productListDraftIconColorMode !== undefined) {
+    partial['productListDraftIconColorMode'] = parsed.productListDraftIconColorMode;
+  }
+  if (parsed.productListDraftIconColor !== undefined) {
+    partial['productListDraftIconColor'] = parsed.productListDraftIconColor;
+  }
   if (parsed.aiPathsActivePathId !== undefined) partial['aiPathsActivePathId'] = parsed.aiPathsActivePathId;
   if (parsed.adminMenuCollapsed !== undefined) partial['adminMenuCollapsed'] = parsed.adminMenuCollapsed;
   if (parsed.cmsLastPageId !== undefined) partial['cmsLastPageId'] = parsed.cmsLastPageId;
@@ -176,30 +219,50 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise
   if (!isDatabaseConfigured) {
     if (logTiming) {
       timings['total'] = performance.now() - totalStart;
-      await logSystemEvent({
+      void logSystemEvent({
         level: 'info',
         message: '[timing] user.preferences.PATCH',
         context: { ...timings, databaseConfigured: false },
-      });
+      }).catch(() => {});
     }
-    return NextResponse.json({
-      id: 'mock',
-      userId,
-      ...data,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+    return NextResponse.json(buildUserPreferencesResponse(data, false), {
+      headers: { 'x-user-preferences-fallback': 'true' },
+    });
+  }
+  let updated: Partial<UserPreferencesData>;
+  try {
+    updated = await withTiming('repository', () =>
+      withTimeout('repository.patch', () => updateUserPreferences(userId, data))
+    );
+  } catch (error) {
+    if (logTiming) {
+      timings['total'] = performance.now() - totalStart;
+      void logSystemEvent({
+        level: 'warn',
+        message: '[timing] user.preferences.PATCH.fallback',
+        context: {
+          ...timings,
+          databaseConfigured: true,
+          reason: error instanceof Error ? error.message : String(error),
+        },
+      }).catch(() => {});
+    }
+    return NextResponse.json(buildUserPreferencesResponse(data, false), {
+      headers: {
+        'x-user-preferences-fallback': 'true',
+        'x-user-preferences-persisted': 'false',
+      },
     });
   }
 
-  const updated = await withTiming('repository', () => updateUserPreferences(userId, data));
-  const response = NextResponse.json(updated);
+  const response = NextResponse.json(buildUserPreferencesResponse(updated, false));
   if (logTiming) {
     timings['total'] = performance.now() - totalStart;
-    await logSystemEvent({
+    void logSystemEvent({
       level: 'info',
       message: '[timing] user.preferences.PATCH',
       context: { ...timings, databaseConfigured: true },
-    });
+    }).catch(() => {});
   }
   return response;
 }

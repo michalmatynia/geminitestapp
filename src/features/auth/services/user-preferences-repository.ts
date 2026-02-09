@@ -24,6 +24,8 @@ export type UserPreferencesData = {
   productListCurrencyCode?: string | null;
   productListPageSize?: number | null;
   productListThumbnailSource?: 'file' | 'link' | 'base64' | null;
+  productListDraftIconColorMode?: 'theme' | 'custom' | null;
+  productListDraftIconColor?: string | null;
   aiPathsActivePathId?: string | null;
   aiPathsExpandedGroups?: string[];
   aiPathsPaletteCollapsed?: boolean | null;
@@ -51,6 +53,8 @@ export type UserPreferences = {
   productListCurrencyCode: string | null;
   productListPageSize: number | null;
   productListThumbnailSource: 'file' | 'link' | 'base64' | null;
+  productListDraftIconColorMode: 'theme' | 'custom' | null;
+  productListDraftIconColor: string | null;
   aiPathsActivePathId: string | null;
   aiPathsExpandedGroups: string[];
   aiPathsPaletteCollapsed: boolean | null;
@@ -80,6 +84,8 @@ type UserPreferencesDocument = {
   productListCurrencyCode: string | null;
   productListPageSize: number | null;
   productListThumbnailSource: 'file' | 'link' | 'base64' | null;
+  productListDraftIconColorMode: 'theme' | 'custom' | null;
+  productListDraftIconColor: string | null;
   aiPathsActivePathId: string | null;
   aiPathsExpandedGroups: string[];
   aiPathsPaletteCollapsed: boolean | null;
@@ -114,6 +120,8 @@ const toUserPreferences = (doc: UserPreferencesDocument): UserPreferences => ({
   productListCurrencyCode: doc.productListCurrencyCode,
   productListPageSize: doc.productListPageSize,
   productListThumbnailSource: doc.productListThumbnailSource ?? 'file',
+  productListDraftIconColorMode: doc.productListDraftIconColorMode ?? 'theme',
+  productListDraftIconColor: doc.productListDraftIconColor ?? '#60a5fa',
   aiPathsActivePathId: doc.aiPathsActivePathId ?? null,
   aiPathsExpandedGroups: doc.aiPathsExpandedGroups ?? [],
   aiPathsPaletteCollapsed: doc.aiPathsPaletteCollapsed ?? false,
@@ -142,6 +150,8 @@ const defaultPreferences = (userId: string): Omit<UserPreferences, 'id' | 'creat
   productListCurrencyCode: 'PLN',
   productListPageSize: 12,
   productListThumbnailSource: 'file',
+  productListDraftIconColorMode: 'theme',
+  productListDraftIconColor: '#60a5fa',
   aiPathsActivePathId: null,
   aiPathsExpandedGroups: ['Triggers'],
   aiPathsPaletteCollapsed: false,
@@ -236,7 +246,6 @@ export async function updateUserPreferences(
     {
       $set: {
         ...data,
-        userId,
         updatedAt: now,
       } as Record<string, unknown>,
       $setOnInsert: {

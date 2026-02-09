@@ -5,7 +5,7 @@
 
 import React from 'react';
 
-import type { AiNode, Edge, NodeConfig, PromptConfig, RuntimeState } from '@/features/ai/ai-paths/lib';
+import type { AiNode, Edge, PromptConfig } from '@/features/ai/ai-paths/lib';
 import { buildPromptOutput, createParserMappings, formatRuntimeValue } from '@/features/ai/ai-paths/lib';
 import { formatPlaceholderLabel, formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import { Button, Label, Textarea } from '@/shared/ui';
@@ -32,18 +32,18 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
   const [placeholderMatrixOpen, setPlaceholderMatrixOpen] = React.useState<boolean>(false);
   const [placeholderTarget, setPlaceholderTarget] = React.useState<PlaceholderTarget>('prompt');
 
-  const promptConfig: PromptConfig = selectedNode.config?.prompt ?? {
+  const promptConfig: PromptConfig = selectedNode?.config?.prompt ?? {
     template: '',
   };
   const resolvedPrompt = React.useMemo((): string => {
-    if (selectedNode.type !== 'prompt') return '';
+    if (!selectedNode || selectedNode.type !== 'prompt') return '';
     const config = selectedNode.config?.prompt ?? { template: '' };
     const inputs = runtimeState.inputs[selectedNode.id] ?? {};
     const { promptOutput } = buildPromptOutput(config, inputs);
     return promptOutput;
-  }, [selectedNode.type, selectedNode.id, selectedNode.config?.prompt, runtimeState.inputs]);
+  }, [selectedNode?.type, selectedNode?.id, selectedNode?.config?.prompt, runtimeState.inputs]);
 
-  if (selectedNode.type !== 'prompt') return null;
+  if (!selectedNode || selectedNode.type !== 'prompt') return null;
   const insertPromptPlaceholder = (placeholder: string): void => {
     const currentTemplate = promptConfig.template ?? '';
     const textArea = promptTemplateRef.current;

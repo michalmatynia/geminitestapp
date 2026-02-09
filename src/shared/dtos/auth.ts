@@ -75,6 +75,8 @@ export interface UserPreferencesDto extends DtoBase {
   productListCurrencyCode: string | null;
   productListPageSize: number;
   productListThumbnailSource: 'file' | 'link' | 'base64';
+  productListDraftIconColorMode: 'theme' | 'custom';
+  productListDraftIconColor: string | null;
   aiPathsActivePathId: string | null;
   aiPathsExpandedGroups: string[];
   aiPathsPaletteCollapsed: boolean;
@@ -100,6 +102,8 @@ export interface UpdateUserPreferencesDto {
   productListCurrencyCode?: string | null;
   productListPageSize?: number;
   productListThumbnailSource?: 'file' | 'link' | 'base64';
+  productListDraftIconColorMode?: 'theme' | 'custom';
+  productListDraftIconColor?: string | null;
   aiPathsActivePathId?: string | null;
   aiPathsExpandedGroups?: string[];
   aiPathsPaletteCollapsed?: boolean;

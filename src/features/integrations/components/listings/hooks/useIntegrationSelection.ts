@@ -1,7 +1,33 @@
 import { useQuery } from '@tanstack/react-query';
-import { Dispatch, SetStateAction, useMemo, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { IntegrationWithConnections } from '@/features/integrations/types/listings';
+
+const INTEGRATION_SELECTION_STALE_TIME_MS = 5 * 60 * 1000;
+const INTEGRATION_SELECTION_GC_TIME_MS = 30 * 60 * 1000;
+
+export const integrationSelectionQueryKeys = {
+  defaultConnection: ['integrations', 'base', 'default-connection'] as const,
+  withConnections: ['integrations', 'with-connections', 'selector-v2'] as const,
+};
+
+export const fetchPreferredBaseConnection = async (): Promise<{ connectionId?: string | null }> => {
+  const res = await fetch('/api/integrations/exports/base/default-connection', {
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    throw new Error('Failed to load preferred connection');
+  }
+  return (await res.json()) as { connectionId?: string | null };
+};
+
+export const fetchIntegrationsWithConnections = async (): Promise<IntegrationWithConnections[]> => {
+  const res = await fetch('/api/integrations/with-connections', {
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error('Failed to load integrations');
+  return (await res.json()) as IntegrationWithConnections[];
+};
 
 // Why: Integration selection has complex side effects:
 // - Loading integrations on mount
@@ -21,31 +47,31 @@ export function useIntegrationSelection(
   setSelectedIntegrationId: Dispatch<SetStateAction<string>>;
   setSelectedConnectionId: Dispatch<SetStateAction<string>>;
 } {
-  const [selectedIntegrationId, setSelectedIntegrationId] = useState<string>('');
-  const [selectedConnectionId, setSelectedConnectionId] = useState<string>('');
-  const [appliedInitialSelection, setAppliedInitialSelection] = useState(false);
+  const [selectedIntegrationId, setSelectedIntegrationId] = useState<string>(
+    initialIntegrationId ?? ''
+  );
+  const [selectedConnectionId, setSelectedConnectionId] = useState<string>(
+    initialConnectionId ?? ''
+  );
+  const initializedRef = useRef(false);
 
   const preferredConnectionQuery = useQuery({
-    queryKey: ['integrations', 'base', 'default-connection'],
-    queryFn: async (): Promise<{ connectionId?: string | null }> => {
-      const res = await fetch('/api/integrations/exports/base/default-connection');
-      if (!res.ok) {
-        throw new Error('Failed to load preferred connection');
-      }
-      return (await res.json()) as { connectionId?: string | null };
-    },
+    queryKey: integrationSelectionQueryKeys.defaultConnection,
+    queryFn: fetchPreferredBaseConnection,
+    staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
+    gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
+    refetchOnWindowFocus: false,
   });
 
   const integrationsQuery = useQuery({
-    queryKey: ['integrations', 'with-connections'],
-    queryFn: async (): Promise<IntegrationWithConnections[]> => {
-      const res = await fetch('/api/integrations/with-connections');
-      if (!res.ok) throw new Error('Failed to load integrations');
-      return (await res.json()) as IntegrationWithConnections[];
-    },
+    queryKey: integrationSelectionQueryKeys.withConnections,
+    queryFn: fetchIntegrationsWithConnections,
+    staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
+    gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
+    refetchOnWindowFocus: false,
   });
 
-  const loading = integrationsQuery.isPending;
+  const loading = integrationsQuery.isPending && !integrationsQuery.data;
   const integrations = useMemo((): IntegrationWithConnections[] => {
     const data = integrationsQuery.data ?? [];
     return Array.isArray(data) ? data.filter((i: IntegrationWithConnections) => i.connections.length > 0) : [];
@@ -53,38 +79,64 @@ export function useIntegrationSelection(
 
   const preferredConnectionId = preferredConnectionQuery.data?.connectionId ?? null;
 
-  // Apply initial selection from props OR preferred connection
-  // We do this during render to avoid useEffect warnings
-  if (!loading && !appliedInitialSelection && integrations.length > 0) {
-    setAppliedInitialSelection(true);
-    
-    // If explicit initial values are provided, use them (takes precedence)
+  useEffect(() => {
+    if (initializedRef.current || loading || integrations.length === 0) return;
+
+    initializedRef.current = true;
+
     if (initialIntegrationId) {
       setSelectedIntegrationId(initialIntegrationId);
       if (initialConnectionId) {
         setSelectedConnectionId(initialConnectionId);
       }
+      return;
     }
-  }
 
-  // Auto-select preferred connection when integration is selected
-  // Perform check and update during render
-  if (selectedIntegrationId && integrations.length > 0) {
-    const integration = integrations.find((i: IntegrationWithConnections) => i.id === selectedIntegrationId);
-    if (integration) {
-      const connectionIds = integration.connections?.map((conn: { id: string }): string => conn.id) ?? [];
-      const selectedIsValid =
-        Boolean(selectedConnectionId) && connectionIds.includes(selectedConnectionId);
+    const firstIntegration = integrations[0];
+    if (!firstIntegration) return;
+    setSelectedIntegrationId(firstIntegration.id);
+  }, [initialConnectionId, initialIntegrationId, integrations, loading]);
 
-      if (!selectedIsValid) {
-        if (preferredConnectionId && connectionIds.includes(preferredConnectionId)) {
-          setSelectedConnectionId(preferredConnectionId);
-        } else if (selectedConnectionId) {
-          setSelectedConnectionId('');
-        }
-      }
+  useEffect(() => {
+    if (!selectedIntegrationId || integrations.length === 0) return;
+
+    const integration = integrations.find(
+      (entry: IntegrationWithConnections) => entry.id === selectedIntegrationId
+    );
+    if (!integration) return;
+
+    const connectionIds =
+      integration.connections?.map((conn: { id: string }): string => conn.id) ?? [];
+    if (connectionIds.length === 0) {
+      if (selectedConnectionId !== '') setSelectedConnectionId('');
+      return;
     }
-  }
+
+    if (selectedConnectionId && connectionIds.includes(selectedConnectionId)) {
+      return;
+    }
+
+    if (initialConnectionId && connectionIds.includes(initialConnectionId)) {
+      setSelectedConnectionId(initialConnectionId);
+      return;
+    }
+
+    if (preferredConnectionId && connectionIds.includes(preferredConnectionId)) {
+      setSelectedConnectionId(preferredConnectionId);
+      return;
+    }
+
+    const fallbackConnectionId = connectionIds[0] ?? '';
+    if (selectedConnectionId !== fallbackConnectionId) {
+      setSelectedConnectionId(fallbackConnectionId);
+    }
+  }, [
+    initialConnectionId,
+    integrations,
+    preferredConnectionId,
+    selectedConnectionId,
+    selectedIntegrationId,
+  ]);
 
   const selectedIntegration = (integrations || []).find((i: IntegrationWithConnections) => i.id === selectedIntegrationId);
   const isBaseComIntegration = ['baselinker', 'base-com'].includes(

@@ -154,6 +154,8 @@ export type UserPreferences = {
   productListCurrencyCode: string | null;
   productListPageSize: number | null;
   productListThumbnailSource?: 'file' | 'link' | 'base64' | null;
+  productListDraftIconColorMode?: 'theme' | 'custom' | null;
+  productListDraftIconColor?: string | null;
   aiPathsActivePathId?: string | null;
   aiPathsExpandedGroups?: string[] | null;
   aiPathsPaletteCollapsed?: boolean | null;

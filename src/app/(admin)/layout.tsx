@@ -6,6 +6,10 @@ import { auth, getUserPreferences } from '@/features/auth/server';
 import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider';
 
 export const dynamic = 'force-dynamic';
+const ADMIN_LAYOUT_USER_PREFERENCES_TIMEOUT_MS = (() => {
+  const parsed = Number(process.env['ADMIN_LAYOUT_USER_PREFERENCES_TIMEOUT_MS']);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1200;
+})();
 
 export default async function Layout({
   children,
@@ -23,8 +27,16 @@ export default async function Layout({
       redirect('/auth/signin?error=AccountDisabled');
     }
     try {
-      const preferences = await getUserPreferences(session.user.id);
-      if (typeof preferences.adminMenuCollapsed === 'boolean') {
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
+      const preferencesPromise = getUserPreferences(session.user.id).catch(() => null);
+      const preferences = await Promise.race([
+        preferencesPromise,
+        new Promise<null>((resolve) => {
+          timeoutId = setTimeout(() => resolve(null), ADMIN_LAYOUT_USER_PREFERENCES_TIMEOUT_MS);
+        }),
+      ]);
+      if (timeoutId) clearTimeout(timeoutId);
+      if (preferences && typeof preferences.adminMenuCollapsed === 'boolean') {
         initialMenuCollapsed = preferences.adminMenuCollapsed;
       }
     } catch {

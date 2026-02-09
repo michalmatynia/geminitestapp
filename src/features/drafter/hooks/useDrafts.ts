@@ -12,6 +12,8 @@ export function useDrafts(): UseQueryResult<ProductDraft[]> {
   return useQuery({
     queryKey: draftKeys.all,
     queryFn: () => api.get<ProductDraft[]>('/api/drafts'),
+    staleTime: 0,
+    refetchOnMount: true,
   });
 }
 
@@ -27,7 +29,12 @@ export function useCreateDraft(): UseMutationResult<ProductDraft, Error, CreateP
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: CreateProductDraftInput) => api.post<ProductDraft>('/api/drafts', input),
-    onSuccess: () => {
+    onSuccess: (created: ProductDraft) => {
+      queryClient.setQueryData<ProductDraft[]>(draftKeys.all, (current: ProductDraft[] | undefined) => {
+        if (!current) return [created];
+        return [created, ...current];
+      });
+      queryClient.setQueryData<ProductDraft>(draftKeys.detail(created.id), created);
       void queryClient.invalidateQueries({ queryKey: draftKeys.all });
     },
   });
@@ -39,6 +46,17 @@ export function useUpdateDraft(): UseMutationResult<ProductDraft, Error, { id: s
     mutationFn: ({ id, input }: { id: string; input: UpdateProductDraftInput }) => 
       api.put<ProductDraft>(`/api/drafts/${id}`, input),
     onSuccess: (data: ProductDraft) => {
+      queryClient.setQueryData<ProductDraft[]>(draftKeys.all, (current: ProductDraft[] | undefined) => {
+        if (!current) return [data];
+        const next = current.map((draft: ProductDraft) =>
+          draft.id === data.id ? { ...draft, ...data } : draft
+        );
+        if (next.some((draft: ProductDraft) => draft.id === data.id)) {
+          return next;
+        }
+        return [data, ...next];
+      });
+      queryClient.setQueryData<ProductDraft>(draftKeys.detail(data.id), data);
       void queryClient.invalidateQueries({ queryKey: draftKeys.all });
       void queryClient.invalidateQueries({ queryKey: draftKeys.detail(data.id) });
     },
@@ -53,6 +71,10 @@ export function useDeleteDraft(): UseMutationResult<string, Error, string> {
       return id;
     },
     onSuccess: (deletedId: string): void => {
+      queryClient.setQueryData<ProductDraft[]>(draftKeys.all, (current: ProductDraft[] | undefined) => {
+        if (!current) return current;
+        return current.filter((draft: ProductDraft) => draft.id !== deletedId);
+      });
       void queryClient.invalidateQueries({ queryKey: draftKeys.all });
       queryClient.removeQueries({ queryKey: draftKeys.detail(deletedId) });
     },

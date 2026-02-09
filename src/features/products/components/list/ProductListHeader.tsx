@@ -85,7 +85,7 @@ export const ProductListHeader = memo(function ProductListHeader({
                     <Button
                       key={draft.id}
                       onClick={() => onCreateFromDraft?.(draft.id)}
-                      className='h-8 w-8 rounded-full border border-white/20 bg-transparent p-0 text-white hover:border-white/40 hover:bg-white/10'
+                      className='h-8 w-8 rounded-full border border-white/20 bg-transparent p-0 text-white transition-colors hover:border-white/40 hover:bg-white/10'
                       aria-label={`Create product from ${draft.name}`}
                       title={draft.name}
                     >

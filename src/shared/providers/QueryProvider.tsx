@@ -71,8 +71,8 @@ function QueryProviderInner({ children }: QueryProviderProps): React.JSX.Element
   useQueryPersistence({
     key: 'app-queries',
     queryKeys: [
-      ['user', 'preferences'],
-      ['settings'],
+      ['user-preferences'],
+      ['settings', 'light'],
       ['settings', 'lite'],
     ],
     ttl: 1000 * 60 * 60, // 1 hour

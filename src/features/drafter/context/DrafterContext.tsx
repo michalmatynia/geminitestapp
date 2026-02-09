@@ -56,3 +56,7 @@ export function useDrafterContext(): DrafterContextType {
   }
   return context;
 }
+
+export function useOptionalDrafterContext(): DrafterContextType | null {
+  return useContext(DrafterContext) ?? null;
+}

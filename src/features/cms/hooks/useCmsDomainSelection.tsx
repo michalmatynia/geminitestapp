@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { useCmsDomains } from '@/features/cms/hooks/useCmsQueries';
 import type { CmsDomain } from '@/features/cms/types';
@@ -95,24 +95,12 @@ export function useCmsDomainSelection(options: CmsDomainSelectionOptions = {}): 
       if (!persist) return;
       if (!zoningEnabled) return;
       if (domainId === userPreferences?.cmsActiveDomainId) return;
+      if (updatePreferencesMutation.isPending) return;
       
       updatePreferencesMutation.mutate({ cmsActiveDomainId: domainId });
     },
     [persist, userPreferences?.cmsActiveDomainId, updatePreferencesMutation, zoningEnabled]
   );
-
-  useEffect((): void => {
-    if (!persist) return;
-    if (!zoningEnabled) return;
-    if (!preferencesQuery.isSuccess) return;
-    if (preferredDomainId && preferredDomainId !== userPreferences?.cmsActiveDomainId) {
-      updatePreferencesMutation.mutate({ cmsActiveDomainId: preferredDomainId });
-      return;
-    }
-    if (!preferredDomainId && hostDomainId) {
-      updatePreferencesMutation.mutate({ cmsActiveDomainId: hostDomainId });
-    }
-  }, [persist, preferredDomainId, hostDomainId, preferencesQuery.isSuccess, userPreferences?.cmsActiveDomainId, updatePreferencesMutation, zoningEnabled]);
 
   return {
     domains: zoningEnabled ? domains : [],
@@ -122,7 +110,7 @@ export function useCmsDomainSelection(options: CmsDomainSelectionOptions = {}): 
     sharedWithDomains,
     hostDomainId: zoningEnabled ? hostDomainId : null,
     zoningEnabled,
-    isLoading: domainsQuery.isLoading || preferencesQuery.isLoading || settingsQuery.isLoading,
+    isLoading: domainsQuery.isLoading || settingsQuery.isLoading,
     isSaving: updatePreferencesMutation.isPending,
     setActiveDomainId,
   };

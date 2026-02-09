@@ -10,7 +10,7 @@ export interface UserPreferences {
   aiPathsActivePathId?: string | null;
 }
 
-const USER_PREFERENCES_STALE_MS = 10_000;
+const USER_PREFERENCES_STALE_MS = 1000 * 60 * 5;
 
 export function useUserPreferences(): UseQueryResult<UserPreferences, Error> {
   return useQuery({

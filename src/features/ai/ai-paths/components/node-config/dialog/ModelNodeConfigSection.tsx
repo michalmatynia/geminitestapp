@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef } from 'react';
 
-import type { AiNode, Edge, ModelConfig, NodeConfig } from '@/features/ai/ai-paths/lib';
+import type { AiNode, Edge, ModelConfig } from '@/features/ai/ai-paths/lib';
 import { DEFAULT_MODELS, toNumber } from '@/features/ai/ai-paths/lib';
 import { AI_BRAIN_SETTINGS_KEY, parseBrainSettings, resolveBrainAssignment } from '@/features/ai/brain';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -32,19 +32,20 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
 
   const modelConfig: ModelConfig = useMemo(
     () =>
-      selectedNode.config?.model ?? {
+      selectedNode?.config?.model ?? {
         modelId: DEFAULT_MODELS[0] ?? 'gpt-4o',
         temperature: 0.7,
         maxTokens: 800,
-        vision: selectedNode.inputs.includes('images'),
+        vision: selectedNode?.inputs.includes('images') ?? false,
       },
-    [selectedNode.config?.model, selectedNode.inputs]
+    [selectedNode?.config?.model, selectedNode?.inputs]
   );
 
   const settingsReady = !settingsStore.isLoading && !settingsStore.error;
 
   useEffect(() => {
     if (!settingsReady) return;
+    if (!selectedNode) return;
     if (selectedNode.type !== 'model') return;
     if (!brainAssignment.enabled || brainAssignment.provider !== 'model') return;
     if (!brainAssignment.modelId) return;
@@ -66,13 +67,13 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
     brainAssignment.provider,
     brainAssignment.temperature,
     modelConfig,
-    selectedNode.id,
-    selectedNode.type,
+    selectedNode?.id,
+    selectedNode?.type,
     settingsReady,
     updateSelectedNodeConfig,
   ]);
 
-  if (selectedNode.type !== 'model') return null;
+  if (!selectedNode || selectedNode.type !== 'model') return null;
 
   const mergedModelOptions =
     modelConfig.modelId && !modelOptions.includes(modelConfig.modelId)

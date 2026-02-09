@@ -94,42 +94,11 @@ export function NodeConfigurationSections(props: NodeConfigurationSectionsProps)
         <TriggerNodeConfigSection />
         <SimulationNodeConfigSection />
         <ContextNodeConfigSection />
-        <ParserNodeConfigSection
-          selectedNode={selectedNode}
-          nodes={props.nodes}
-          runtimeState={props.runtimeState}
-          parserSamples={props.parserSamples}
-          setParserSamples={props.setParserSamples}
-          parserSampleLoading={props.parserSampleLoading}
-          updateSelectedNode={props.updateSelectedNode}
-          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
-          handleFetchParserSample={props.handleFetchParserSample}
-          toast={props.toast}
-        />
-        <RegexNodeConfigSection
-          selectedNode={selectedNode}
-          nodes={props.nodes}
-          edges={props.edges}
-          runtimeState={props.runtimeState}
-          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
-          {...(props.onSendToAi && { onSendToAi: props.onSendToAi })}
-          {...(props.sendingToAi !== undefined && { sendingToAi: props.sendingToAi })}
-        />
-        <IteratorNodeConfigSection
-          selectedNode={selectedNode}
-          runtimeState={props.runtimeState}
-          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
-        />
-        <MapperNodeConfigSection
-          selectedNode={selectedNode}
-          runtimeState={props.runtimeState}
-          updateSelectedNode={props.updateSelectedNode}
-          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
-        />
-        <MutatorNodeConfigSection
-          selectedNode={selectedNode}
-          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
-        />
+        <ParserNodeConfigSection />
+        <RegexNodeConfigSection />
+        <IteratorNodeConfigSection />
+        <MapperNodeConfigSection />
+        <MutatorNodeConfigSection />
         <StringMutatorNodeConfigSection
           selectedNode={selectedNode}
           updateSelectedNodeConfig={props.updateSelectedNodeConfig}
@@ -146,13 +115,7 @@ export function NodeConfigurationSections(props: NodeConfigurationSectionsProps)
           selectedNode={selectedNode}
           updateSelectedNodeConfig={props.updateSelectedNodeConfig}
         />
-        <TemplateNodeConfigSection
-          selectedNode={selectedNode}
-          nodes={props.nodes}
-          edges={props.edges}
-          runtimeState={props.runtimeState}
-          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
-        />
+        <TemplateNodeConfigSection />
         <BundleNodeConfigSection
           selectedNode={selectedNode}
           updateSelectedNodeConfig={props.updateSelectedNodeConfig}
@@ -183,22 +146,8 @@ export function NodeConfigurationSections(props: NodeConfigurationSectionsProps)
           selectedNode={selectedNode}
           updateSelectedNodeConfig={props.updateSelectedNodeConfig}
         />
-        <PromptNodeConfigSection
-          selectedNode={selectedNode}
-          nodes={props.nodes}
-          edges={props.edges}
-          runtimeState={props.runtimeState}
-          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
-          {...(props.onSendToAi && { onSendToAi: props.onSendToAi })}
-          {...(props.sendingToAi !== undefined && { sendingToAi: props.sendingToAi })}
-        />
-        <ModelNodeConfigSection
-          selectedNode={selectedNode}
-          nodes={props.nodes}
-          edges={props.edges}
-          modelOptions={props.modelOptions}
-          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
-        />
+        <PromptNodeConfigSection />
+        <ModelNodeConfigSection />
         <AgentNodeConfigSection
           selectedNode={selectedNode}
           updateSelectedNodeConfig={props.updateSelectedNodeConfig}
@@ -207,39 +156,12 @@ export function NodeConfigurationSections(props: NodeConfigurationSectionsProps)
           selectedNode={selectedNode}
           updateSelectedNodeConfig={props.updateSelectedNodeConfig}
         />
-        <DatabaseNodeConfigSection
-          selectedNode={selectedNode}
-          nodes={props.nodes}
-          edges={props.edges}
-          runtimeState={props.runtimeState}
-          pathDebugSnapshot={props.pathDebugSnapshot ?? null}
-          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
-          {...(props.onSendToAi && { onSendToAi: props.onSendToAi })}
-          {...(props.sendingToAi !== undefined && { sendingToAi: props.sendingToAi })}
-          updaterSamples={props.updaterSamples}
-          setUpdaterSamples={props.setUpdaterSamples}
-          updaterSampleLoading={props.updaterSampleLoading}
-          handleFetchUpdaterSample={props.handleFetchUpdaterSample}
-          dbQueryPresets={props.dbQueryPresets}
-          setDbQueryPresets={props.setDbQueryPresets}
-          saveDbQueryPresets={props.saveDbQueryPresets}
-          dbNodePresets={props.dbNodePresets}
-          setDbNodePresets={props.setDbNodePresets}
-          saveDbNodePresets={props.saveDbNodePresets}
-          toast={props.toast}
-        />
+        <DatabaseNodeConfigSection />
         <DbSchemaNodeConfigSection
           selectedNode={selectedNode}
           updateSelectedNodeConfig={props.updateSelectedNodeConfig}
         />
-        <ViewerNodeConfigSection
-          selectedNode={selectedNode}
-          nodes={props.nodes}
-          edges={props.edges}
-          runtimeState={props.runtimeState}
-          updateSelectedNodeConfig={props.updateSelectedNodeConfig}
-          {...(props.clearRuntimeForNode && { clearRuntimeForNode: props.clearRuntimeForNode })}
-        />
+        <ViewerNodeConfigSection />
         <RuntimeNodeConfigSection
           selectedNode={selectedNode}
           updateSelectedNodeConfig={props.updateSelectedNodeConfig}

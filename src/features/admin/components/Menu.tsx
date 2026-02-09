@@ -873,6 +873,7 @@ export default function Menu(): React.ReactNode {
   const { isMenuCollapsed, setIsMenuCollapsed, setIsProgrammaticallyCollapsed } = useAdminLayout();
   const router = useRouter();
   const pathname = usePathname();
+  const shouldPrefetchChatbotSessions = pathname.startsWith('/admin/chatbot');
 
   const [userOpenIds, setUserOpenIds] = useState<Set<string>>(new Set());
   const [openIdsLoaded, setOpenIdsLoaded] = useState(false);
@@ -880,7 +881,9 @@ export default function Menu(): React.ReactNode {
   const [query, setQuery] = useState('');
   const deferredQuery = useDeferredValue(query);
 
-  const { data: chatbotSessions = [] } = useChatbotSessions();
+  const { data: chatbotSessions = [], refetch: refetchChatbotSessions } = useChatbotSessions({
+    enabled: shouldPrefetchChatbotSessions,
+  });
   const { mutateAsync: createChatbotSession } = useCreateChatbotSession();
 
   useEffect(() => {
@@ -920,7 +923,11 @@ export default function Menu(): React.ReactNode {
         return;
       }
       try {
-        const latestId: string | undefined = chatbotSessions[0]?.id;
+        let latestId: string | undefined = chatbotSessions[0]?.id;
+        if (!latestId) {
+          const sessionsResult = await refetchChatbotSessions();
+          latestId = sessionsResult.data?.[0]?.id;
+        }
         if (latestId) {
           window.localStorage.setItem('chatbotSessionId', latestId);
           router.push(`/admin/chatbot?session=${latestId}`);
@@ -940,7 +947,7 @@ export default function Menu(): React.ReactNode {
     };
 
     void openChat();
-  }, [router, chatbotSessions, createChatbotSession]);
+  }, [router, chatbotSessions, createChatbotSession, refetchChatbotSessions]);
 
   const handleCreatePageClick = useCallback((): void => {
     setIsMenuCollapsed(true);

@@ -1,32 +1,70 @@
-import { Prisma, type ActivityLog } from '@prisma/client';
+import { Prisma, type SystemLog } from '@prisma/client';
 
 import type { ActivityRepository, ActivityFilters } from '@/features/observability/types/services/activity-repository';
 import type { ActivityLogDto, CreateActivityLogDto } from '@/shared/dtos/system';
 import prisma from '@/shared/lib/db/prisma';
 
-const toActivityDto = (log: ActivityLog): ActivityLogDto => ({
-  id: log.id,
-  type: log.type,
-  description: log.description,
-  userId: log.userId,
-  entityId: log.entityId,
-  entityType: log.entityType,
-  metadata: (log.metadata as Record<string, unknown>) || null,
-  createdAt: log.createdAt.toISOString(),
-});
+const ACTIVITY_SOURCE = 'activity';
+
+const toRecord = (value: unknown): Record<string, unknown> | null => {
+  if (value === null || value === undefined) return null;
+  if (typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+};
+
+const toNullableString = (value: unknown): string | null => {
+  if (typeof value === 'string') return value;
+  return null;
+};
+
+const toActivityDto = (log: SystemLog): ActivityLogDto => {
+  const context = toRecord(log.context) ?? {};
+  const rawMetadata = toRecord(context['metadata']);
+
+  return {
+    id: log.id,
+    type: log.category ?? 'activity.unknown',
+    description: log.message,
+    userId: log.userId ?? null,
+    entityId: toNullableString(context['entityId']),
+    entityType: toNullableString(context['entityType']),
+    metadata: rawMetadata,
+    createdAt: log.createdAt.toISOString(),
+  };
+};
+
+const matchesEntityFilters = (contextValue: Prisma.JsonValue | null, filters: ActivityFilters): boolean => {
+  if (!filters.entityId && !filters.entityType) return true;
+  const context = toRecord(contextValue) ?? {};
+  if (filters.entityId && toNullableString(context['entityId']) !== filters.entityId) return false;
+  if (filters.entityType && toNullableString(context['entityType']) !== filters.entityType) return false;
+  return true;
+};
 
 export const prismaActivityRepository: ActivityRepository = {
   async listActivity(filters: ActivityFilters): Promise<ActivityLogDto[]> {
-    const where: Prisma.ActivityLogWhereInput = {};
+    const where: Prisma.SystemLogWhereInput = {
+      source: ACTIVITY_SOURCE,
+    };
+
     if (filters.userId) where.userId = filters.userId;
-    if (filters.type) where.type = filters.type;
-    if (filters.entityId) where.entityId = filters.entityId;
-    if (filters.entityType) where.entityType = filters.entityType;
+    if (filters.type) where.category = filters.type;
     if (filters.search) {
-      where.description = { contains: filters.search, mode: 'insensitive' };
+      where.message = { contains: filters.search, mode: 'insensitive' };
     }
 
-    const logs = await prisma.activityLog.findMany({
+    if (filters.entityId || filters.entityType) {
+      const logs = await prisma.systemLog.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+      });
+      return logs
+        .filter((log) => matchesEntityFilters(log.context, filters))
+        .slice(filters.offset ?? 0, (filters.offset ?? 0) + (filters.limit ?? 50))
+        .map(toActivityDto);
+    }
+
+    const logs = await prisma.systemLog.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       take: filters.limit ?? 50,
@@ -37,33 +75,43 @@ export const prismaActivityRepository: ActivityRepository = {
   },
 
   async countActivity(filters: ActivityFilters): Promise<number> {
-    const where: Prisma.ActivityLogWhereInput = {};
+    const where: Prisma.SystemLogWhereInput = {
+      source: ACTIVITY_SOURCE,
+    };
+
     if (filters.userId) where.userId = filters.userId;
-    if (filters.type) where.type = filters.type;
-    if (filters.entityId) where.entityId = filters.entityId;
-    if (filters.entityType) where.entityType = filters.entityType;
+    if (filters.type) where.category = filters.type;
     if (filters.search) {
-      where.description = { contains: filters.search, mode: 'insensitive' };
+      where.message = { contains: filters.search, mode: 'insensitive' };
     }
 
-    return prisma.activityLog.count({ where });
+    if (filters.entityId || filters.entityType) {
+      const logs = await prisma.systemLog.findMany({ where, select: { context: true } });
+      return logs.filter((log) => matchesEntityFilters(log.context, filters)).length;
+    }
+
+    return prisma.systemLog.count({ where });
   },
 
   async createActivity(data: CreateActivityLogDto): Promise<ActivityLogDto> {
-    const log = await prisma.activityLog.create({
+    const log = await prisma.systemLog.create({
       data: {
-        type: data.type,
-        description: data.description,
+        level: 'info',
+        message: data.description,
+        category: data.type,
+        source: ACTIVITY_SOURCE,
         userId: data.userId ?? null,
-        entityId: data.entityId ?? null,
-        entityType: data.entityType ?? null,
-        metadata: (data.metadata ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+        context: {
+          entityId: data.entityId ?? null,
+          entityType: data.entityType ?? null,
+          metadata: (data.metadata ?? null) as Prisma.InputJsonValue | null,
+        } as Prisma.InputJsonValue,
       },
     });
     return toActivityDto(log);
   },
 
   async deleteActivity(id: string): Promise<void> {
-    await prisma.activityLog.delete({ where: { id } });
+    await prisma.systemLog.delete({ where: { id } });
   },
 };

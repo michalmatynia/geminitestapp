@@ -6,7 +6,16 @@ import { ProfilerOnRenderCallback, useCallback, useEffect, useMemo, useState } f
 
 
 import { useDrafts, draftKeys } from '@/features/drafter/hooks/useDrafts';
+import {
+  fetchIntegrationsWithConnections,
+  fetchPreferredBaseConnection,
+  integrationSelectionQueryKeys,
+} from '@/features/integrations/components/listings/hooks/useIntegrationSelection';
 import { useIntegrationOperations } from '@/features/integrations/hooks/useIntegrationOperations';
+import {
+  fetchProductListings,
+  productListingsQueryKey,
+} from '@/features/integrations/hooks/useListingQueries';
 import { getProducts } from '@/features/products/api';
 import DebugPanel from '@/features/products/components/DebugPanel';
 import { getProductColumns } from '@/features/products/components/list/ProductColumns';
@@ -51,6 +60,29 @@ export function AdminProductsPage(): React.JSX.Element {
   const [createDraft, setCreateDraft] = useState<ProductDraft | null>(null);
   const [productToDelete, setProductToDelete] = useState<ProductWithImages | null>(null);
   const queryClient = useQueryClient();
+
+  const prefetchIntegrationSelectionData = useCallback((): void => {
+    void import('@/features/integrations/components/listings/SelectIntegrationModal');
+    void queryClient.prefetchQuery({
+      queryKey: integrationSelectionQueryKeys.withConnections,
+      queryFn: fetchIntegrationsWithConnections,
+      staleTime: 5 * 60 * 1000,
+    });
+    void queryClient.prefetchQuery({
+      queryKey: integrationSelectionQueryKeys.defaultConnection,
+      queryFn: fetchPreferredBaseConnection,
+      staleTime: 5 * 60 * 1000,
+    });
+  }, [queryClient]);
+
+  const prefetchProductListingsData = useCallback((productId: string): void => {
+    if (!productId) return;
+    void queryClient.prefetchQuery({
+      queryKey: productListingsQueryKey(productId),
+      queryFn: () => fetchProductListings(productId),
+      staleTime: 30 * 1000,
+    });
+  }, [queryClient]);
 
   const { data: allDrafts = [] } = useDrafts();
   const activeDrafts = useMemo(() => allDrafts.filter((d: ProductDraft) => d.active !== false), [allDrafts]);
@@ -160,6 +192,10 @@ export function AdminProductsPage(): React.JSX.Element {
     handleListProductSuccess: baseHandleListProductSuccess,
   } = useIntegrationOperations();
 
+  useEffect(() => {
+    prefetchIntegrationSelectionData();
+  }, [prefetchIntegrationSelectionData]);
+
   // Initialize currency code from preferences
   useEffect(() => {
     if (!preferencesLoading && preferences.currencyCode) {
@@ -177,12 +213,15 @@ export function AdminProductsPage(): React.JSX.Element {
   }, [handleOpenCreateModal]);
 
   const handleOpenIntegrationsModal = useCallback((product: ProductWithImages) => {
+    prefetchIntegrationSelectionData();
+    prefetchProductListingsData(product.id);
     setIntegrationsProduct(product);
-  }, [setIntegrationsProduct]);
+  }, [prefetchIntegrationSelectionData, prefetchProductListingsData, setIntegrationsProduct]);
 
   const handleOpenExportSettings = useCallback((product: ProductWithImages) => {
+    prefetchProductListingsData(product.id);
     setExportSettingsProduct(product);
-  }, [setExportSettingsProduct]);
+  }, [prefetchProductListingsData, setExportSettingsProduct]);
 
   const handleSetPage = useCallback((p: number) => {
     setPage(p);
@@ -303,9 +342,10 @@ export function AdminProductsPage(): React.JSX.Element {
   }, [toast, refreshListingBadges]);
 
   const handleAddToMarketplace = useCallback(() => {
+    prefetchIntegrationSelectionData();
     setIsMassListing(true);
     setShowIntegrationModal(true);
-  }, []);
+  }, [prefetchIntegrationSelectionData]);
 
   const [loadingGlobalSelection, setLoadingGlobalSelection] = useState(false);
 

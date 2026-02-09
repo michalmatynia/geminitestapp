@@ -3,7 +3,7 @@
 import React from 'react';
 
 
-import type { AiNode, IteratorConfig, NodeConfig, RuntimeState } from '@/features/ai/ai-paths/lib';
+import type { IteratorConfig } from '@/features/ai/ai-paths/lib';
 import { formatRuntimeValue } from '@/features/ai/ai-paths/lib';
 import { Input, Label, Switch, Textarea } from '@/shared/ui';
 
@@ -128,4 +128,3 @@ export function IteratorNodeConfigSection(): React.JSX.Element | null {
     </div>
   );
 }
-

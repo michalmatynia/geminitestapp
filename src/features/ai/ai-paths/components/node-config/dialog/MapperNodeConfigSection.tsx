@@ -1,6 +1,5 @@
 'use client';
 
-import type { AiNode, NodeConfig, RuntimeState } from '@/features/ai/ai-paths/lib';
 import { createParserMappings, formatRuntimeValue, getValueAtMappingPath, parsePathList } from '@/features/ai/ai-paths/lib';
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import { Input, Label, Textarea } from '@/shared/ui';

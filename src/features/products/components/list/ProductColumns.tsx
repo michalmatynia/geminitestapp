@@ -17,6 +17,7 @@ import { useProductListContext } from '@/features/products/context/ProductListCo
 import { useDuplicateProduct } from '@/features/products/hooks/useProductsMutations';
 import type { ProductWithImages } from '@/features/products/types';
 import { calculatePriceForCurrency, normalizeCurrencyCode } from '@/features/products/utils/priceCalculation';
+import { fetchProductListings, productListingsQueryKey } from '@/features/integrations/hooks/useListingQueries';
 import { Button, Checkbox, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, useToast, Badge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -29,6 +30,8 @@ type ProductNameKey = 'name_en' | 'name_pl' | 'name_de';
 
 type CircleIconButtonProps = {
   onClick?: () => void;
+  onMouseEnter?: () => void;
+  onFocus?: () => void;
   ariaLabel: string;
   title?: string;
   className?: string;
@@ -37,6 +40,8 @@ type CircleIconButtonProps = {
 
 const CircleIconButton = ({
   onClick,
+  onMouseEnter,
+  onFocus,
   ariaLabel,
   title,
   className,
@@ -45,6 +50,8 @@ const CircleIconButton = ({
   <Button
     type='button'
     onClick={onClick}
+    onMouseEnter={onMouseEnter}
+    onFocus={onFocus}
     variant='ghost'
     size='icon'
     aria-label={ariaLabel}
@@ -466,11 +473,19 @@ export const getProductColumns = (
         integrationBadgeIds,
         integrationBadgeStatuses,
       } = useProductListContext();
+      const queryClient = useQueryClient();
 
       if (!handleClick) return null;
       const showMarketplaceBadge: boolean =
         integrationBadgeIds?.has(product.id) ?? false;
       const status: string = integrationBadgeStatuses?.get(product.id) ?? 'not_started';
+      const prefetchListings = (): void => {
+        void queryClient.prefetchQuery({
+          queryKey: productListingsQueryKey(product.id),
+          queryFn: () => fetchProductListings(product.id),
+          staleTime: 30 * 1000,
+        });
+      };
       const getStatusToneClass = (value: string): string => {
         const normalized = value.toLowerCase();
         if (['active', 'success', 'completed', 'listed', 'ok'].includes(normalized)) {
@@ -494,6 +509,8 @@ export const getProductColumns = (
         <div className='inline-flex items-center gap-1'>
           <CircleIconButton
             onClick={(): void => handleClick(product)}
+            onMouseEnter={prefetchListings}
+            onFocus={prefetchListings}
             ariaLabel='View integrations'
             className='border-gray-500/50 text-gray-300 hover:border-gray-400/60 hover:text-white transition-colors'
           >
@@ -507,6 +524,8 @@ export const getProductColumns = (
           {showMarketplaceBadge && (
             <CircleIconButton
               onClick={(): void => handleExportClick?.(product)}
+              onMouseEnter={prefetchListings}
+              onFocus={prefetchListings}
               ariaLabel={`Base.com export settings - status: ${status}`}
               title={`Base.com export status: ${status} - Click for export settings`}
               className={getStatusToneClass(status)}

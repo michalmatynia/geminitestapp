@@ -398,11 +398,11 @@ function PageSettingsTab(): React.ReactNode {
           ? (parsed['seo'] as Record<string, unknown>)
           : parsed;
       const seoPatch: Record<string, string> = {};
-      if (typeof source['seoTitle'] === 'string') seoPatch['seoTitle'] = (source['seoTitle'] as string);
-      if (typeof source['seoDescription'] === 'string') seoPatch['seoDescription'] = (source['seoDescription'] as string);
-      if (typeof source['seoCanonical'] === 'string') seoPatch['seoCanonical'] = (source['seoCanonical'] as string);
-      if (typeof source['seoOgImage'] === 'string') seoPatch['seoOgImage'] = (source['seoOgImage'] as string);
-      if (typeof source['robotsMeta'] === 'string') seoPatch['robotsMeta'] = (source['robotsMeta'] as string);
+      if (typeof source['seoTitle'] === 'string') seoPatch['seoTitle'] = (source['seoTitle']);
+      if (typeof source['seoDescription'] === 'string') seoPatch['seoDescription'] = (source['seoDescription']);
+      if (typeof source['seoCanonical'] === 'string') seoPatch['seoCanonical'] = (source['seoCanonical']);
+      if (typeof source['seoOgImage'] === 'string') seoPatch['seoOgImage'] = (source['seoOgImage']);
+      if (typeof source['robotsMeta'] === 'string') seoPatch['robotsMeta'] = (source['robotsMeta']);
       if (Object.keys(seoPatch).length === 0) {
         setPageAiError('No SEO fields found in AI output.');
         return;

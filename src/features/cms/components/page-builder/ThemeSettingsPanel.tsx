@@ -332,7 +332,7 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
     if (typeof window === 'undefined') return undefined;
     const handler = (event: Event): void => {
       const detail = (event as CustomEvent<Record<string, unknown>>).detail ?? {};
-      const section = typeof detail['section'] === 'string' ? (detail['section'] as string) : 'Colors';
+      const section = typeof detail['section'] === 'string' ? (detail['section']) : 'Colors';
       setUserOpenSections((prev: Set<string> | null) => {
         const current = prev ?? initialOpenSections;
         const next = new Set(current);

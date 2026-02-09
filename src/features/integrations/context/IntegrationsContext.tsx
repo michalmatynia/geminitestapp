@@ -452,7 +452,7 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
         integrationId: activeIntegration.id,
         connectionId: connection.id,
         type,
-      })) as Record<string, unknown>;
+      }));
 
       const normalizedSteps = normalizeSteps((payload['steps'] as unknown[]) || []);
       if (normalizedSteps.length) setTestLog(normalizedSteps);
@@ -479,7 +479,7 @@ Duration: ${durationMs}ms${extraInfo}`);
     } catch (error: unknown) {
       const durationMs = Math.round(performance.now() - startedAt);
       const message = (error as Error)?.message ?? 'Unknown error';
-      const data = (error as Record<string, unknown>).data as Record<string, unknown> | undefined;
+      const data = (error as Record<string, unknown>)['data'] as Record<string, unknown> | undefined;
       
       let errorMessage = `${title} failed.
 URL: ${requestUrl}
@@ -491,16 +491,16 @@ Error: ${message}`;
         const failedStep = normalizedSteps.find((s: TestLogEntry) => s.status === 'failed');
         const failedStepDetail = failedStep?.detail || '';
         const errorBody = (data['error'] as string) || failedStepDetail || 'No response body';
-        errorMessage = `\${title} failed.
-URL: \${requestUrl}
-Duration: \${durationMs}ms
+        errorMessage = `${title} failed.
+URL: ${requestUrl}
+Duration: ${durationMs}ms
 
 Response:
-\${errorBody}`;
+${errorBody}`;
 
         const steps = normalizedSteps.length
           ? normalizedSteps.map((s: TestLogEntry) => s.status === 'failed' && !s.detail ? { ...s, detail: errorMessage } : s)
-          : [{ step: `\${title} failed`, status: 'failed' as const, timestamp: new Date().toISOString(), detail: errorMessage }];
+          : [{ step: `${title} failed`, status: 'failed' as const, timestamp: new Date().toISOString(), detail: errorMessage }];
           
         setTestLog(steps);
         setTestErrorMeta({

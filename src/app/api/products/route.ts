@@ -143,7 +143,7 @@ async function POST_handler(
   }
   
   const options = _ctx.userId ? { userId: _ctx.userId } : undefined;
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+   
   const product: ProductWithImages | null = await productService.createProduct(formData, options);
   // Invalidate relevant caches
   CachedProductService.invalidateAll();

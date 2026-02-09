@@ -41,14 +41,14 @@ export function ExportLogViewer({
     const outputModes = new Set(
       entries
         .map((entry: Record<string, unknown>): string | null =>
-          typeof entry['outputMode'] === 'string' ? (entry['outputMode'] as string) : null
+          typeof entry['outputMode'] === 'string' ? (entry['outputMode']) : null
         )
         .filter((mode: string | null): mode is string => !!mode)
     );
     const outputFormats = new Set(
       entries
         .map((entry: Record<string, unknown>): string | null =>
-          typeof entry['outputFormat'] === 'string' ? (entry['outputFormat'] as string) : null
+          typeof entry['outputFormat'] === 'string' ? (entry['outputFormat']) : null
         )
         .filter((format: string | null): format is string => !!format)
     );

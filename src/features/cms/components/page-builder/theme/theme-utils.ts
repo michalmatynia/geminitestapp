@@ -41,7 +41,7 @@ export const parseColorSchemePayload = (payload: unknown): { name?: string; colo
 
   if (!colorsSource || typeof colorsSource !== 'object') return null;
 
-  const colors = colorsSource as Record<string, unknown>;
+  const colors = colorsSource;
   const parsedRaw = {
     background: normalizeAiString(colors['background']) ?? normalizeAiString(colors['bg']),
     surface: normalizeAiString(colors['surface']) ?? normalizeAiString(colors['layer']) ?? normalizeAiString(colors['card']),

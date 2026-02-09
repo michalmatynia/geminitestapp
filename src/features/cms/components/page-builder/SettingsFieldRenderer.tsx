@@ -27,7 +27,6 @@ import {
   Asset3DPickerField,
 } from './shared-fields';
 import { useThemeSettings } from './ThemeSettingsContext';
-import { useCmsDomainSelection } from '../../hooks/useCmsDomainSelection';
 import { useCmsSlugs } from '../../hooks/useCmsQueries';
 
 import type { SettingsField, SettingsFieldOption } from '../../types/page-builder';
@@ -750,7 +749,7 @@ function LinkField({ value, onChange }: { value: string; onChange: (v: string) =
 
   const filteredSlugs = useMemo(() =>
     slugs.filter(s => s.slug.toLowerCase().includes(search.toLowerCase())),
-    [slugs, search]
+  [slugs, search]
   );
 
   return (

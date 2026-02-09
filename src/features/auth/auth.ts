@@ -4,7 +4,6 @@ import { MongoDBAdapter } from '@auth/mongodb-adapter';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import bcrypt from 'bcryptjs';
 import NextAuth, { type NextAuthConfig, type Session, type User } from 'next-auth';
-import type { AdapterSession } from '@auth/core/adapters';
 import Credentials from 'next-auth/providers/credentials';
 import Facebook from 'next-auth/providers/facebook';
 import Google from 'next-auth/providers/google';
@@ -29,6 +28,7 @@ import prisma from '@/shared/lib/db/prisma';
 import { authConfig } from './auth.config';
 import { findAuthUserByEmail, findAuthUserById } from './services/auth-user-service';
 
+import type { AdapterSession } from '@auth/core/adapters';
 import type { JWT } from 'next-auth/jwt';
 import type { Provider } from 'next-auth/providers';
 

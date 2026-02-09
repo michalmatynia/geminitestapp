@@ -25,7 +25,7 @@ let storage: IAsyncLocalStorage<RequestContext>;
 if (typeof window === 'undefined' && typeof process !== 'undefined' && process.versions && process.versions['node']) {
   try {
     // Dynamically require async_hooks only in Node.js environment
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+     
     const { AsyncLocalStorage } = require('async_hooks');
     storage = new AsyncLocalStorage();
   } catch (error) {

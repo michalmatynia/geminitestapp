@@ -1,5 +1,7 @@
 Centralize Form validation (I also need info if I'm trying to create with duplicate SKU notification)
 
+I need a connection collection for each product, they are not getting retrieved when database is removed and I need retrieve connections button
+
 Increment SKU Atomatically
 
 Database Query Node Reply can go inot Logical Condition node

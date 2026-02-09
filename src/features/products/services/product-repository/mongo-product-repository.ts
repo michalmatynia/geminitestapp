@@ -11,11 +11,14 @@ import type {
   CreateProductInput,
   ProductFilters,
   ProductRepository,
+  TransactionalProductRepository,
   UpdateProductInput,
 } from '@/features/products/types/services/product-repository';
 import { conflictError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { ImageFileRecord } from '@/shared/types/files';
+
+import type { Prisma } from '@prisma/client';
 
 type ProductDocument = Omit<ProductRecord, 'createdAt' | 'updatedAt'> & {
   _id: string;
@@ -731,10 +734,10 @@ export const mongoProductRepository: ProductRepository = {
   },
 
   async createProductInTransaction<T>(
-    callback: (txClient: any) => Promise<T>
+    callback: (tx: TransactionalProductRepository & Prisma.TransactionClient) => Promise<T>
   ): Promise<T> {
     // MongoDB transactions are not natively supported in this setup.
     // Call the callback with the repository itself.
-    return callback(this);
+    return callback(this as unknown as TransactionalProductRepository & Prisma.TransactionClient);
   },
 };

@@ -49,13 +49,17 @@ export const prismaCurrencyRepository: CurrencyRepository = {
   },
 
   async updateCurrency(id: string, data: { code?: string; name?: string; symbol?: string | null }): Promise<CurrencyRecord> {
+    const updateData: _Prisma.CurrencyUpdateInput = {
+      id: data.code ?? id,
+    };
+
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.symbol !== undefined) updateData.symbol = data.symbol;
+    if (data.code !== undefined) updateData.code = data.code as CurrencyCode;
+
     const currency = await prisma.currency.update({
       where: { id },
-      data: {
-        ...(data as any),
-        id: data.code ?? id, // Allow changing ID if code changes
-        ...(data.code ? { code: data.code as CurrencyCode } : {}),
-      },
+      data: updateData,
     });
     return toCurrencyDomain(currency);
   },

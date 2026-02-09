@@ -30,6 +30,10 @@ function toOptionalNumber(value: unknown): number | undefined {
   return undefined;
 }
 
+function isValidLanguageCode(code?: string): code is 'name_en' | 'name_pl' | 'name_de' {
+  return code === 'name_en' || code === 'name_pl' || code === 'name_de';
+}
+
 function normalizeFilters(filters: ProductFilterInput = {}): ProductFilters {
   const pageSize = toOptionalNumber(filters['pageSize']) ?? toOptionalNumber(filters['limit']);
   let page = toOptionalNumber(filters['page']);
@@ -61,7 +65,7 @@ function normalizeFilters(filters: ProductFilterInput = {}): ProductFilters {
   if (page !== undefined) normalized.page = page;
   if (pageSize !== undefined) normalized.pageSize = pageSize;
   if (catalogId !== undefined) normalized.catalogId = catalogId;
-  if (searchLanguage !== undefined) normalized.searchLanguage = searchLanguage as any;
+  if (isValidLanguageCode(searchLanguage)) normalized.searchLanguage = searchLanguage;
 
   return normalized;
 }

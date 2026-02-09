@@ -81,7 +81,7 @@ export const mongoCurrencyRepository: CurrencyRepository = {
           $pull: { currencyIds: id },
           $addToSet: { currencyIds: data.code },
           $set: { updatedAt: now },
-        } as UpdateFilter<Document>
+        } as unknown as UpdateFilter<Document>
       );
     }
 

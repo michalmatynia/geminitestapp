@@ -64,7 +64,7 @@ export const mongoActivityRepository: ActivityRepository = {
       query.description = { $regex: filters.search, $options: 'i' };
     }
 
-    return db.collection(COLLECTION).countDocuments(query as any);
+    return db.collection<ActivityLogDoc>(COLLECTION).countDocuments(query);
   },
 
   async createActivity(data: CreateActivityLogDto): Promise<ActivityLogDto> {

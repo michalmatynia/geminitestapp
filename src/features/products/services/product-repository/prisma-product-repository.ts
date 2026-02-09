@@ -376,7 +376,13 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
       }
     }
 
-    const cleanData = removeUndefined(data) as Prisma.ProductCreateInput;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { categoryId, id, ...rest } = data;
+    const cleanData = removeUndefined({
+      ...rest,
+      ...(id ? { id } : {}),
+    }) as Prisma.ProductCreateInput;
+
     try {
       const product = await tx.product.create({ data: cleanData });
       return toProductRecord({ ...product, imageBase64s: [] });
@@ -398,7 +404,11 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
   updateProduct: async (id, data) => {
     const productExists = await tx.product.findUnique({ where: { id } });
     if (!productExists) return null;
-    const cleanData = removeUndefined(data) as Prisma.ProductUpdateInput;
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { categoryId, id: _id, ...rest } = data;
+    const cleanData = removeUndefined(rest) as Prisma.ProductUpdateInput;
+
     const product = await tx.product.update({ where: { id }, data: cleanData });
     return toProductRecord({ ...product, imageBase64s: [] });
   },
@@ -725,7 +735,13 @@ export const prismaProductRepository: ProductRepository = {
       }
     }
 
-    const cleanData = removeUndefined(data) as Prisma.ProductCreateInput;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { categoryId, id, ...rest } = data;
+    const cleanData = removeUndefined({
+      ...rest,
+      ...(id ? { id } : {}),
+    }) as Prisma.ProductCreateInput;
+
     try {
       const product = await prisma.product.create({ data: cleanData });
       return toProductRecord({
@@ -750,7 +766,11 @@ export const prismaProductRepository: ProductRepository = {
   async updateProduct(id: string, data: UpdateProductInput) {
     const productExists = await prisma.product.findUnique({ where: { id } });
     if (!productExists) return null;
-    const cleanData = removeUndefined(data) as Prisma.ProductUpdateInput;
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { categoryId, id: _id, ...rest } = data;
+    const cleanData = removeUndefined(rest) as Prisma.ProductUpdateInput;
+
     const product = await prisma.product.update({ where: { id }, data: cleanData });
     return toProductRecord({
       ...product,

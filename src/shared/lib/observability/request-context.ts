@@ -22,13 +22,13 @@ class MockAsyncLocalStorage<T> implements IAsyncLocalStorage<T> {
 
 let storage: IAsyncLocalStorage<RequestContext>;
 
-if (typeof window === 'undefined' && typeof process !== 'undefined' && process.versions && process.versions['node']) {
+if (typeof window === 'undefined' && process?.versions?.node) {
   try {
     // Dynamically require async_hooks only in Node.js environment
      
-    const { AsyncLocalStorage } = require('async_hooks');
-    storage = new AsyncLocalStorage();
-  } catch (error) {
+    const { AsyncLocalStorage } = require('async_hooks') as { AsyncLocalStorage: new <T>() => IAsyncLocalStorage<T> };
+    storage = new AsyncLocalStorage<RequestContext>();
+  } catch (_error) {
     storage = new MockAsyncLocalStorage<RequestContext>();
   }
 } else {

@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { logSystemEvent } from '@/features/observability/server';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type {
   AgentTeachingAgentRecord,
@@ -38,7 +39,11 @@ let warnedNoMongo = false;
 const isMongoAvailable = (): boolean => {
   if (process.env['MONGODB_URI']) return true;
   if (!warnedNoMongo) {
-    console.warn('[agent-teaching] MONGODB_URI missing; agent teaching data will be empty.');
+    void logSystemEvent({
+      level: 'warn',
+      message: 'MONGODB_URI missing; agent teaching data will be empty.',
+      source: 'agent-teaching'
+    });
     warnedNoMongo = true;
   }
   return false;

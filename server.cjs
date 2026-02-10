@@ -1,6 +1,22 @@
 const { createServer } = require('http');
 const { createHash } = require('crypto');
 
+// Dynamic import for ESM modules from src/features
+let loggingToolsCache = null;
+async function getLoggingTools() {
+  if (loggingToolsCache) return loggingToolsCache;
+  try {
+    const { ErrorSystem, logSystemEvent } = await import('./src/features/observability/server.js');
+    loggingToolsCache = { ErrorSystem, logSystemEvent };
+    return loggingToolsCache;
+  } catch (e) {
+    console.error('Failed to load logging modules:', e);
+    return {
+      ErrorSystem: { captureException: console.error, logWarning: console.warn, logInfo: console.log },
+      logSystemEvent: (params) => console.log(params.message, params.context),
+    };
+  }
+}
 
 const dev = process.env.NODE_ENV !== 'production';
 // Keep fast/default dev tooling unless explicitly opting into legacy polling watchers.
@@ -39,7 +55,8 @@ const SCRAPER_GUARD = createScraperGuard({
     : true,
 });
 
-app.prepare().then(() => {
+app.prepare().then(async () => {
+  const { ErrorSystem, logSystemEvent } = await getLoggingTools();
   const server = createServer((req, res) => {
     const debugResponseHeaders = process.env.DEBUG_RESPONSE_HEADERS === 'true';
     const debugUrlNormalize = process.env.DEBUG_URL_NORMALIZE === 'true';
@@ -62,7 +79,7 @@ app.prepare().then(() => {
         const key = name.toLowerCase();
         if (key === 'location' || key === 'refresh') {
           if (debugResponseHeaders) {
-            console.warn('[response-header]', { name, value, stack: new Error().stack });
+            logSystemEvent({ level: 'warn', message: '[response-header]', source: 'server', context: { name, value, stack: new Error().stack } });
           }
           if (key === 'refresh') {
             return;
@@ -100,11 +117,7 @@ app.prepare().then(() => {
         statusCode < 400 &&
         statusCode !== 304
       ) {
-        console.warn('[response-writeHead]', {
-          statusCode,
-          headers: nextHeaders,
-          stack: new Error().stack,
-        });
+        logSystemEvent({ level: 'warn', message: '[response-writeHead]', source: 'server', context: { statusCode, headers: nextHeaders, stack: new Error().stack } });
       }
       return originalWriteHead(statusCode, nextStatusMessage, nextHeaders);
     };
@@ -138,13 +151,7 @@ app.prepare().then(() => {
       originalRawUrl.startsWith(`${host}/`);
     if (shouldNormalize && normalizedUrl !== originalRawUrl) {
       if (debugUrlNormalize) {
-        console.warn('[url-normalize] rewrite', {
-          original: originalRawUrl,
-          normalized: normalizedUrl,
-          host,
-          referer: req.headers.referer,
-          userAgent: req.headers['user-agent'],
-        });
+        logSystemEvent({ level: 'warn', message: '[url-normalize] rewrite', source: 'server', context: { original: originalRawUrl, normalized: normalizedUrl, host, referer: req.headers.referer, userAgent: req.headers['user-agent'] } });
       }
       res.statusCode = 307;
       res.setHeader('Location', normalizedUrl);
@@ -155,21 +162,10 @@ app.prepare().then(() => {
       req.url = normalizedUrl;
     }
     if (debugUrlNormalize && (originalRawUrl.includes(hostPrefix) || originalRawUrl.includes(`//${host}`))) {
-      console.warn('[url-normalize] received', {
-        original: originalRawUrl,
-        host,
-        referer: req.headers.referer,
-        userAgent: req.headers['user-agent'],
-      });
+      logSystemEvent({ level: 'warn', message: '[url-normalize] received', source: 'server', context: { original: originalRawUrl, host, referer: req.headers.referer, userAgent: req.headers['user-agent'] } });
     }
     if (debugUrlNormalize && normalizedUrl === '/' && originalRawUrl !== '/') {
-      console.warn('[root-request]', {
-        url: originalRawUrl,
-        normalized: normalizedUrl,
-        host,
-        referer: req.headers.referer,
-        userAgent: req.headers['user-agent'],
-      });
+      logSystemEvent({ level: 'warn', message: '[root-request]', source: 'server', context: { url: originalRawUrl, normalized: normalizedUrl, host, referer: req.headers.referer, userAgent: req.headers['user-agent'] } });
     }
     const url = new URL(normalizedUrl, baseUrl);
     const parsedUrl = {
@@ -204,7 +200,7 @@ app.prepare().then(() => {
     }
     if (parsedUrl.pathname === '/') {
       app.render(req, res, '/').catch((error) => {
-        console.error('[root-render] failed', error);
+        ErrorSystem.captureException(error, { source: 'server', context: { action: 'root-render-failed' } });
         res.statusCode = 500;
         res.end('Internal Server Error');
       });
@@ -242,7 +238,7 @@ app.prepare().then(() => {
 
   // Graceful shutdown: drain BullMQ workers and close all Redis connections before exit
   const gracefulShutdown = async (signal) => {
-    console.log(`\n> Received ${signal}, shutting down gracefully...`);
+    logSystemEvent({ level: 'info', message: `Received ${signal}, shutting down gracefully...`, source: 'server', context: { signal } });
     try {
       const queueModule = await importCleanupModule('./src/shared/lib/queue/index.js');
       if (queueModule?.stopAllWorkers) {
@@ -252,7 +248,7 @@ app.prepare().then(() => {
         await queueModule.closeRedisConnection();
       }
     } catch (err) {
-      console.warn('[server] Queue cleanup error:', err.message);
+      logSystemEvent({ level: 'warn', message: `Queue cleanup error: ${err.message}`, source: 'server', context: { error: err.message, module: 'queue' } });
     }
     try {
       const redisPubSubModule = await importCleanupModule('./src/shared/lib/redis-pubsub.js');
@@ -260,7 +256,7 @@ app.prepare().then(() => {
         await redisPubSubModule.closeSubscriber();
       }
     } catch (err) {
-      console.warn('[server] Redis subscriber cleanup error:', err.message);
+      logSystemEvent({ level: 'warn', message: `Redis subscriber cleanup error: ${err.message}`, source: 'server', context: { error: err.message, module: 'redis-pubsub' } });
     }
     try {
       const redisModule = await importCleanupModule('./src/shared/lib/redis.js');
@@ -268,15 +264,15 @@ app.prepare().then(() => {
         await redisModule.closeRedisClient();
       }
     } catch (err) {
-      console.warn('[server] Redis client cleanup error:', err.message);
+      logSystemEvent({ level: 'warn', message: `Redis client cleanup error: ${err.message}`, source: 'server', context: { error: err.message, module: 'redis' } });
     }
     server.close(() => {
-      console.log('> Server closed');
+      logSystemEvent({ level: 'info', message: 'Server closed', source: 'server' });
       process.exit(0);
     });
     // Force exit after 10 seconds
     setTimeout(() => {
-      console.warn('> Forced exit after timeout');
+      logSystemEvent({ level: 'warn', message: 'Forced exit after timeout', source: 'server', context: { timeoutMs: 10000 } });
       process.exit(1);
     }, 10000);
   };
@@ -312,7 +308,7 @@ app.prepare().then(() => {
       }
       await listenWithOptions({ port, host: '0.0.0.0' });
     }
-    console.log(`> Ready on http://localhost:${port}`);
+    logSystemEvent({ level: 'info', message: `Ready on http://localhost:${port}`, source: 'server', context: { port, host } });
   };
 
   startServer().catch((error) => {
@@ -518,12 +514,7 @@ function createScraperGuard(config) {
     const blockedUntil = state.blocked.get(key);
     if (blockedUntil && blockedUntil > now) {
       if (config.logBlocked) {
-        console.warn('[SCRAPER_GUARD] blocked request', {
-          ip,
-          path,
-          scope,
-          blockedUntil: new Date(blockedUntil).toISOString(),
-        });
+        logSystemEvent({ level: 'warn', message: '[SCRAPER_GUARD] blocked request', source: 'scraper-guard', context: { ip, path, scope, blockedUntil: new Date(blockedUntil).toISOString() } });
       }
       const retryAfterSec = Math.ceil((blockedUntil - now) / 1000);
       return {
@@ -545,14 +536,7 @@ function createScraperGuard(config) {
       const until = now + blockMs;
       state.blocked.set(key, until);
       if (config.logBlocked) {
-        console.warn('[SCRAPER_GUARD] rate limit exceeded', {
-          ip,
-          path,
-          scope,
-          limit,
-          blockedUntil: new Date(until).toISOString(),
-          suspicious,
-        });
+        logSystemEvent({ level: 'warn', message: '[SCRAPER_GUARD] rate limit exceeded', source: 'scraper-guard', context: { ip, path, scope, limit, blockedUntil: new Date(until).toISOString(), suspicious } });
       }
       return {
         allowed: false,

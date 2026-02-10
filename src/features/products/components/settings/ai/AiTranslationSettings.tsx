@@ -15,7 +15,7 @@ const STATIC_TRANSLATION_MODELS = [
 
 export function AiTranslationSettings(): React.JSX.Element {
   const { toast } = useToast();
-  const { data: settingsMap, isLoading: settingsLoading } = useSettingsMap({ scope: 'all' });
+  const { data: settingsMap, isLoading: settingsLoading } = useSettingsMap({ scope: 'light' });
   const { data: chatbotModels = [] } = useChatbotModels();
   const { mutateAsync: updateSetting, isPending: saving } = useUpdateSetting();
 

@@ -46,7 +46,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
   const previousEditorModeRef = useRef<'markdown' | 'wysiwyg' | 'code'>('markdown');
 
   // Queries
-  const settingsQuery = useSettingsMap({ scope: 'all' });
+  const settingsQuery = useSettingsMap({ scope: 'light' });
   const updateSetting = useUpdateSetting();
 
   // Load settings from localStorage first (fast)

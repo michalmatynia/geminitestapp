@@ -27,6 +27,7 @@ import {
   getSettingsInflight,
   setSettingsInflight,
   getStaleSettings,
+  getLastKnownSettings,
   type SettingsScope,
 } from '@/shared/lib/settings-cache';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -47,6 +48,40 @@ const HEAVY_KEYS = new Set<string>(['agent_personas']);
 const HEAVY_PREFIX_REGEX = new RegExp(`^(${HEAVY_PREFIXES.map((p) => p.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|')})`);
 const DEFAULT_SCOPE: SettingsScope = 'light';
 let settingsIndexesEnsured: Promise<void> | null = null;
+
+const parsePositiveInt = (value: string | undefined, fallback: number): number => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
+};
+const SETTINGS_SLOW_SCOPE_TIMEOUT_MS = parsePositiveInt(
+  process.env['SETTINGS_SLOW_SCOPE_TIMEOUT_MS'],
+  3_000
+);
+const isSlowSettingsScope = (scope: SettingsScope): boolean =>
+  scope === 'all' || scope === 'heavy';
+const isSettingsTimeoutError = (error: unknown): error is Error =>
+  error instanceof Error &&
+  error.message.includes('[settings]') &&
+  error.message.includes('timed out');
+
+const withSettingsScopeTimeout = async <T,>(
+  scope: SettingsScope,
+  label: string,
+  promise: Promise<T>
+): Promise<T> => {
+  if (!isSlowSettingsScope(scope)) return await promise;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  const timeoutPromise = new Promise<T>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error(`[settings] ${label} timed out after ${SETTINGS_SLOW_SCOPE_TIMEOUT_MS}ms`));
+    }, SETTINGS_SLOW_SCOPE_TIMEOUT_MS);
+  });
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+};
 
 const ensureSettingsIndexes = async (): Promise<void> => {
   if (!process.env['MONGODB_URI']) return;
@@ -391,6 +426,53 @@ async function GET_handler(
     attachTimingHeaders(response, { total: performance.now() - requestStart, cache: 0 });
     return response;
   }
+  const stale = getStaleSettings(scope);
+  const lastKnown = getLastKnownSettings(scope);
+  const buildTimeoutFallbackResponse = async (
+    reason: string
+  ): Promise<Response> => {
+    const fallbackFromAll =
+      scope === 'heavy'
+        ? (() => {
+          const allKnown = getLastKnownSettings('all');
+          return allKnown ? applyScopeFilter(allKnown, 'heavy') : null;
+        })()
+        : null;
+    const fallbackFromLight =
+      scope === 'all' ? getLastKnownSettings('light') : null;
+    const fallbackData =
+      stale ??
+      lastKnown ??
+      fallbackFromAll ??
+      fallbackFromLight ??
+      [];
+    const cacheStatus = stale
+      ? 'timeout-stale'
+      : lastKnown
+        ? 'timeout-last-known'
+        : fallbackFromAll
+          ? 'timeout-all-fallback'
+          : fallbackFromLight
+            ? 'timeout-light-fallback'
+        : 'timeout-empty';
+    if (shouldLogTiming()) {
+      await logSystemEvent({
+        level: 'warn',
+        message: '[settings] cache',
+        context: { scope, status: cacheStatus, reason },
+      });
+    }
+    const response = NextResponse.json(fallbackData, {
+      headers: {
+        'Cache-Control': SETTINGS_CACHE_CONTROL,
+        'X-Cache': cacheStatus,
+        'X-Settings-Fallback': 'timeout',
+      },
+    });
+    await attachProviderHeader(response);
+    attachTimingHeaders(response, { total: performance.now() - requestStart, cache: 0 });
+    return response;
+  };
   const cached = getCachedSettings(scope);
   if (cached) {
     if (shouldLogTiming()) {
@@ -409,7 +491,15 @@ async function GET_handler(
   }
   const inflight = getSettingsInflight(scope);
   if (inflight) {
-    const data = await inflight;
+    let data: SettingRecord[];
+    try {
+      data = await withSettingsScopeTimeout(scope, 'inflight fetch', inflight);
+    } catch (error) {
+      if (isSettingsTimeoutError(error)) {
+        return await buildTimeoutFallbackResponse(error.message);
+      }
+      throw error;
+    }
     if (shouldLogTiming()) {
       await logSystemEvent({
         level: 'info',
@@ -425,7 +515,6 @@ async function GET_handler(
     return response;
   }
 
-  const stale = getStaleSettings(scope);
   if (stale) {
     if (shouldLogTiming()) {
       await logSystemEvent({
@@ -459,7 +548,15 @@ async function GET_handler(
       setSettingsInflight(null, scope);
     });
   setSettingsInflight(inflightPromise, scope);
-  const data = await inflightPromise;
+  let data: SettingRecord[];
+  try {
+    data = await withSettingsScopeTimeout(scope, 'cache miss fetch', inflightPromise);
+  } catch (error) {
+    if (isSettingsTimeoutError(error)) {
+      return await buildTimeoutFallbackResponse(error.message);
+    }
+    throw error;
+  }
   if (shouldLogTiming()) {
     await logSystemEvent({
       level: 'info',

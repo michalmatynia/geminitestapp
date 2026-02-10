@@ -1,3 +1,5 @@
+ in my Product List, the size of my image thumbnails and image preview has
+  become enourmous and covers the whole page, make it the same as before
 
 I can't monitor my singal in Ai Paths
 My Catalog has too many languages, I want an option to remove languages from
@@ -16,8 +18,6 @@ For my image rerouting, I would like an option to add different routes and
 Currency Doesn't change in product list
 
 Remove Patterns from product settings
-
-image spreads on first open
 
 In Category, the strike through line when I insert one category into another is not that great. Adjust it, so that the Line finished before the Category name begins
 

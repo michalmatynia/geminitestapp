@@ -18,6 +18,11 @@ const toMongoId = (id: string): ObjectId | string => {
   return id;
 };
 
+const parsePositiveInt = (value: string | undefined, fallback: number): number => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
+};
+
 export type UserPreferencesData = {
   productListNameLocale?: string | null;
   productListCatalogFilter?: string | null;
@@ -108,6 +113,10 @@ type UserPreferencesDocument = {
 };
 
 const USER_PREFERENCES_COLLECTION = 'user_preferences';
+const USER_PREFERENCES_CACHE_TTL_MS = parsePositiveInt(
+  process.env['USER_PREFERENCES_CACHE_TTL_MS'],
+  60_000
+);
 const IMMUTABLE_PREFERENCE_FIELDS = new Set([
   'id',
   '_id',
@@ -116,8 +125,47 @@ const IMMUTABLE_PREFERENCE_FIELDS = new Set([
   'updatedAt',
 ]);
 
+type CachedUserPreferences = {
+  value: UserPreferences;
+  fetchedAt: number;
+};
+
+const userPreferencesCache = new Map<string, CachedUserPreferences>();
+const userPreferencesInflight = new Map<string, Promise<UserPreferences>>();
+
 const getCanonicalPreferencesId = (userId: string): ObjectId | string =>
   toMongoId(userId);
+
+const getUserPreferencesCacheKey = (userId: string): string =>
+  String(getCanonicalPreferencesId(userId));
+
+const getCachedUserPreferences = (cacheKey: string): UserPreferences | null => {
+  const cached = userPreferencesCache.get(cacheKey);
+  if (!cached) return null;
+  if (Date.now() - cached.fetchedAt > USER_PREFERENCES_CACHE_TTL_MS) {
+    userPreferencesCache.delete(cacheKey);
+    return null;
+  }
+  return cached.value;
+};
+
+const setCachedUserPreferences = (cacheKey: string, value: UserPreferences): void => {
+  userPreferencesCache.set(cacheKey, {
+    value,
+    fetchedAt: Date.now(),
+  });
+};
+
+export const invalidateUserPreferencesCache = (userId?: string): void => {
+  if (userId) {
+    const cacheKey = getUserPreferencesCacheKey(userId);
+    userPreferencesCache.delete(cacheKey);
+    userPreferencesInflight.delete(cacheKey);
+    return;
+  }
+  userPreferencesCache.clear();
+  userPreferencesInflight.clear();
+};
 
 const toUserPreferences = (doc: UserPreferencesDocument): UserPreferences => ({
   id: String(doc._id),
@@ -198,24 +246,42 @@ export async function getUserPreferences(userId: string): Promise<UserPreference
   if (!process.env['MONGODB_URI']) {
     throw operationFailedError('MongoDB is not configured.');
   }
-  const db = await getMongoDb();
-  const collection = db.collection<UserPreferencesDocument>(USER_PREFERENCES_COLLECTION);
   const canonicalId = getCanonicalPreferencesId(userId);
-  const doc = await collection.findOne({ _id: canonicalId });
+  const cacheKey = getUserPreferencesCacheKey(userId);
+  const cached = getCachedUserPreferences(cacheKey);
+  if (cached) return cached;
 
-  if (doc) {
-    return toUserPreferences(doc);
-  }
+  const inflight = userPreferencesInflight.get(cacheKey);
+  if (inflight) return inflight;
 
-  const now = new Date();
-  const document: UserPreferencesDocument = {
-    _id: canonicalId,
-    ...defaultPreferences(userId),
-    createdAt: now,
-    updatedAt: now,
-  };
-  await collection.insertOne(document);
-  return toUserPreferences(document);
+  const loadPromise = (async (): Promise<UserPreferences> => {
+    const db = await getMongoDb();
+    const collection = db.collection<UserPreferencesDocument>(USER_PREFERENCES_COLLECTION);
+    const doc = await collection.findOne({ _id: canonicalId });
+
+    if (doc) {
+      const normalized = toUserPreferences(doc);
+      setCachedUserPreferences(cacheKey, normalized);
+      return normalized;
+    }
+
+    const now = new Date();
+    const document: UserPreferencesDocument = {
+      _id: canonicalId,
+      ...defaultPreferences(userId),
+      createdAt: now,
+      updatedAt: now,
+    };
+    await collection.insertOne(document);
+    const normalized = toUserPreferences(document);
+    setCachedUserPreferences(cacheKey, normalized);
+    return normalized;
+  })().finally(() => {
+    userPreferencesInflight.delete(cacheKey);
+  });
+
+  userPreferencesInflight.set(cacheKey, loadPromise);
+  return loadPromise;
 }
 
 /**
@@ -228,6 +294,7 @@ export async function updateUserPreferences(
   if (!process.env['MONGODB_URI']) {
     throw operationFailedError('MongoDB is not configured.');
   }
+  const cacheKey = getUserPreferencesCacheKey(userId);
   const db = await getMongoDb();
   const collection = db.collection<UserPreferencesDocument>(USER_PREFERENCES_COLLECTION);
   const canonicalId = getCanonicalPreferencesId(userId);
@@ -262,10 +329,14 @@ export async function updateUserPreferences(
   );
 
   if (result && 'value' in result && result.value) {
-    return toUserPreferences(result.value as UserPreferencesDocument);
+    const normalized = toUserPreferences(result.value as UserPreferencesDocument);
+    setCachedUserPreferences(cacheKey, normalized);
+    return normalized;
   }
   if (result && !('value' in result) && result) {
-    return toUserPreferences(result as unknown as UserPreferencesDocument);
+    const normalized = toUserPreferences(result as unknown as UserPreferencesDocument);
+    setCachedUserPreferences(cacheKey, normalized);
+    return normalized;
   }
 
   const fallbackDoc = await collection.findOne({ _id: canonicalId });
@@ -276,7 +347,9 @@ export async function updateUserPreferences(
     });
   }
 
-  return toUserPreferences(fallbackDoc);
+  const normalized = toUserPreferences(fallbackDoc);
+  setCachedUserPreferences(cacheKey, normalized);
+  return normalized;
 }
 
 /**

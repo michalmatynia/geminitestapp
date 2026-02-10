@@ -105,3 +105,8 @@ export const getStaleSettings = (scope?: SettingsScope | null): SettingRecord[] 
   if (Date.now() - entry.fetchedAt > SETTINGS_CACHE_STALE_TTL_MS) return null;
   return entry.data;
 };
+
+export const getLastKnownSettings = (scope?: SettingsScope | null): SettingRecord[] | null => {
+  const entry = lastKnownSettings.get(cacheKey(scope));
+  return entry?.data ?? null;
+};

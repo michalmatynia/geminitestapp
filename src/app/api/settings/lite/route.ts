@@ -26,6 +26,10 @@ const LITE_SETTINGS_KEYS = [
   'background_sync_interval_seconds',
   'query_status_panel_enabled',
   'query_status_panel_open',
+  'noteSettings:selectedFolderId',
+  'noteSettings:selectedNotebookId',
+  'noteSettings:autoformatOnPaste',
+  'noteSettings:editorMode',
   CLIENT_LOGGING_KEYS.featureFlags,
   CLIENT_LOGGING_KEYS.tags,
 ];

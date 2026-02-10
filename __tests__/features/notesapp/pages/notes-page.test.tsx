@@ -6,17 +6,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { vi } from 'vitest';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 import { AdminLayoutProvider } from '@/features/admin/context/AdminLayoutContext';
 import { NoteSettingsProvider } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { AdminNotesPage } from '@/features/notesapp/pages/AdminNotesPage';
-import { NoteCreateData } from '@/features/notesapp/validations/notes';
 import { server } from '@/mocks/server';
 import type { NoteWithRelations, TagRecord, CategoryRecord } from '@/shared/types/domain/notes';
 import { ToastProvider } from '@/shared/ui/toast';
-
-
 
 
 const now = new Date().toISOString();
@@ -127,15 +124,11 @@ describe('Notes page UI', () => {
     }
 
     server.use(
-      http.get('/api/settings', () => {
-        return HttpResponse.json([]);
-      }),
-      http.get('/api/notes/tags', () => {
-        return HttpResponse.json(tags);
-      }),
-      http.get('/api/notes/notebooks', () => {
-        return HttpResponse.json(notebooks);
-      }),
+      http.get('/api/settings', () => HttpResponse.json([])),
+      http.get('/api/notes/tags', () => HttpResponse.json(tags)),
+      http.get('/api/notes/themes', () => HttpResponse.json([])),
+      http.get('/api/ai-paths/trigger-buttons', () => HttpResponse.json([])),
+      http.get('/api/notes/notebooks', () => HttpResponse.json(notebooks)),
       http.get('/api/notes/categories/tree', () => {
         const tree = categories.map((category) => ({
           ...category,
@@ -158,7 +151,7 @@ describe('Notes page UI', () => {
         return HttpResponse.json(tree);
       }),
       http.post('/api/notes', async ({ request }) => {
-        const body = (await request.json()) as NoteCreateData;
+        const body = (await request.json()) as any;
         const tagIds = Array.isArray(body.tagIds) ? body.tagIds : [];
         const categoryIds = Array.isArray(body.categoryIds) ? body.categoryIds : [];
         const newNote = makeNote({
@@ -169,22 +162,11 @@ describe('Notes page UI', () => {
           isArchived: body.isArchived ?? false,
           tags: tagIds.map((tagId: string) => {
             const tag = tags.find((t) => t.id === tagId) ?? tags[0]!;
-            return {
-              noteId: 'temp',
-              tagId,
-              assignedAt: new Date(),
-              tag,
-            };
+            return { noteId: 'temp', tagId, assignedAt: new Date(), tag };
           }),
           categories: categoryIds.map((categoryId: string) => {
-            const category =
-              categories.find((c) => c.id === categoryId) ?? categories[0]!;
-            return {
-              noteId: 'temp',
-              categoryId,
-              assignedAt: new Date(),
-              category,
-            };
+            const category = categories.find((c) => c.id === categoryId) ?? categories[0]!;
+            return { noteId: 'temp', categoryId, assignedAt: new Date(), category };
           }),
         });
         notes.push(newNote);
@@ -194,11 +176,7 @@ describe('Notes page UI', () => {
         const url = new URL(request.url);
         let filtered = [...notes];
         const search = url.searchParams.get('search');
-        const isPinned = url.searchParams.get('isPinned');
-        const isArchived = url.searchParams.get('isArchived');
         const tagIds = url.searchParams.get('tagIds')?.split(',') ?? [];
-        const categoryIds =
-          url.searchParams.get('categoryIds')?.split(',') ?? [];
 
         if (search) {
           filtered = filtered.filter((note) => {
@@ -206,24 +184,9 @@ describe('Notes page UI', () => {
                    note.content.toLowerCase().includes(search.toLowerCase());
           });
         }
-        if (isPinned !== null && isPinned !== undefined) {
-          filtered = filtered.filter(
-            (note) => String(note.isPinned) === isPinned
-          );
-        }
-        if (isArchived !== null && isArchived !== undefined) {
-          filtered = filtered.filter(
-            (note) => String(note.isArchived) === isArchived
-          );
-        }
         if (tagIds.length > 0 && tagIds[0]) {
           filtered = filtered.filter((note) =>
             note.tags.some((tag: any) => tagIds.includes(tag.tagId))
-          );
-        }
-        if (categoryIds.length > 0 && categoryIds[0]) {
-          filtered = filtered.filter((note) =>
-            note.categories.some((cat: any) => categoryIds.includes(cat.categoryId))
           );
         }
         return HttpResponse.json(filtered);
@@ -256,10 +219,12 @@ describe('Notes page UI', () => {
       expect(screen.queryByRole('heading', { name: 'Beta' })).not.toBeInTheDocument();
     });
 
-    await user.selectOptions(
-      screen.getByDisplayValue('Filter by Tag...'),
-      screen.getByRole('option', { name: 'Work' })
-    );
+    const tagFilter = screen.getByRole('button', { name: /Filter by Tag/i });
+    await user.click(tagFilter);
+    
+    // MultiSelect items are CheckboxItems in DropdownMenu
+    const workOption = await screen.findByRole('menuitemcheckbox', { name: /Work/i });
+    await user.click(workOption);
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Alpha' })).toBeInTheDocument();

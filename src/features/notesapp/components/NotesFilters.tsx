@@ -100,6 +100,7 @@ export function NotesFilters(): React.JSX.Element {
             { value: 'content', label: 'Content Only' },
           ]}
           triggerClassName='h-8 w-40 text-xs bg-gray-800 border-border text-gray-300'
+          ariaLabel='Search scope'
         />
 
         <div className='ml-auto flex items-center gap-1'>
@@ -112,6 +113,7 @@ export function NotesFilters(): React.JSX.Element {
               { value: 'name', label: 'Name' },
             ]}
             triggerClassName='h-8 w-36 text-xs bg-gray-800 border-border text-gray-300'
+            ariaLabel='Sort by'
           />
           <Button
             onClick={(): void =>
@@ -187,6 +189,7 @@ export function NotesFilters(): React.JSX.Element {
               { value: 'grid-8', label: 'Grid (8)' },
             ]}
             triggerClassName='h-8 w-28 text-xs bg-gray-800 border-border text-gray-300'
+            ariaLabel='View mode'
           />
         </div>
       </div>

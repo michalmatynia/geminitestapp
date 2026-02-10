@@ -158,12 +158,15 @@ export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {
 export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, {
   source: 'products.[id].PUT',
   paramsSchema: idParamSchema,
+  logSuccess: true,
 });
 export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, {
   source: 'products.[id].PATCH',
   paramsSchema: idParamSchema,
+  logSuccess: true,
 });
 export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, {
   source: 'products.[id].DELETE',
   paramsSchema: idParamSchema,
+  logSuccess: true,
 });

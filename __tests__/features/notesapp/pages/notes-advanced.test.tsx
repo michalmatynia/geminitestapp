@@ -67,6 +67,8 @@ describe('Notes Advanced UI', () => {
     server.use(
       http.get('/api/settings', () => HttpResponse.json([])),
       http.get('/api/notes/tags', () => HttpResponse.json([])),
+      http.get('/api/notes/themes', () => HttpResponse.json([])),
+      http.get('/api/ai-paths/trigger-buttons', () => HttpResponse.json([])),
       http.get('/api/notes/notebooks', () => HttpResponse.json([{ id: 'nb-1', name: 'Default' }])),
       http.get('/api/notes/categories/tree', () => HttpResponse.json([])),
       http.get('/api/notes', () => HttpResponse.json(notes)),
@@ -109,39 +111,35 @@ describe('Notes Advanced UI', () => {
     renderNotesPage();
     const user = userEvent.setup();
 
-    const layoutBtn = await screen.findByTitle(/Layout options/i);
-    await user.click(layoutBtn);
+    const viewModeSelect = await screen.findByRole('combobox', { name: /view mode/i });
+    await user.click(viewModeSelect);
     
-    const listOption = await screen.findByText('List');
-    await user.click(listOption);
+    const gridOption = await screen.findByRole('option', { name: /Grid \(4\)/i });
+    await user.click(gridOption);
     
-    // Verify layout changed (the label in the button updates)
-    expect(await screen.findByText('List')).toBeInTheDocument();
+    expect(await screen.findByRole('combobox', { name: /view mode/i })).toHaveTextContent(/Grid \(4\)/i);
   });
 
   it('sorts notes by title', async () => {
     renderNotesPage();
     const user = userEvent.setup();
 
-    // Default sort is by Date (created desc usually). Banana (Jan 2) before Apple (Jan 1).
     const cards = await screen.findAllByRole('heading', { level: 3 });
     expect(cards[0]!.textContent).toBe('Banana');
     expect(cards[1]!.textContent).toBe('Apple');
 
-    // Change sort to name (ascending is usually default or we can toggle order)
-    const sortByNameBtn = screen.getByTitle('Sort by name');
-    await user.click(sortByNameBtn);
+    const sortBySelect = screen.getByRole('combobox', { name: /sort by/i });
+    await user.click(sortBySelect);
+    const nameOption = await screen.findByRole('option', { name: 'Name' });
+    await user.click(nameOption);
 
-    // After clicking Name, it sorts by Name. Sort order is still DESC by default.
-    // Banana (B) comes before Apple (A) in DESC order.
     await waitFor(async () => {
       const cardsAfterSort = await screen.findAllByRole('heading', { level: 3 });
       expect(cardsAfterSort[0]!.textContent).toBe('Banana');
       expect(cardsAfterSort[1]!.textContent).toBe('Apple');
     });
 
-    // Toggle to ASC
-    const orderBtn = screen.getByTitle(/Descending/);
+    const orderBtn = screen.getByTitle(/Descending \(click to change\)/);
     await user.click(orderBtn);
 
     await waitFor(async () => {
@@ -158,9 +156,10 @@ describe('Notes Advanced UI', () => {
     const appleNote = await screen.findByRole('heading', { name: 'Apple' });
     await user.click(appleNote);
 
-    expect(await screen.findByText('First note')).toBeInTheDocument();
+    // Use findByText to wait for the detail view to render
+    expect(await screen.findByText('First note', {}, { timeout: 3000 })).toBeInTheDocument();
     
-    const editBtn = screen.getByRole('button', { name: 'Edit' });
+    const editBtn = await screen.findByRole('button', { name: 'Edit' });
     await user.click(editBtn);
     
     const titleInput = screen.getByPlaceholderText('Enter note title');
@@ -181,7 +180,6 @@ describe('Notes Advanced UI', () => {
     await user.click(screen.getByRole('button', { name: 'Update' }));
 
     // Should be back in detail view with updated title. 
-    // Use h1 selector to be specific (breadcrumb also contains the title)
     expect(await screen.findByRole('heading', { level: 1, name: 'Updated Apple' })).toBeInTheDocument();
   });
 
@@ -208,7 +206,7 @@ describe('Notes Advanced UI', () => {
 
     // Use a more robust selector to find the card container
     const appleTitle = await screen.findByRole('heading', { name: 'Apple' });
-    const appleCard = appleTitle.closest('.rounded-lg.border.p-4'); 
+    const appleCard = appleTitle.closest('.rounded-lg.border.p-4') || appleTitle.parentElement; 
     
     const favBtn = await within(appleCard as HTMLElement).findByRole('button', { name: /Favorite note/i });
     

@@ -90,7 +90,7 @@ connect all API to Error logging and handling system
 -Search for action reporting code blocks and connect them to centralised Logging and handling system
 -Connect Activity logging to a centralised logging system 
 -Scan repository for error handling and centralized logging integration points.
--Replace ad-hoc console.log calls with a logging library (e.g. Winston or Pino) to produce structured log output
+-Replace ad-hoc console.log calls with a centralised logging library to produce structured log output
 -Integrate an error-tracking service to capture exceptions in both client and server code
 -Audit code for bare console.error/console.log and replace with our centralized logger” and “Wrap top-level React components in Error Boundaries that send exceptions to the log service
 -Add OpenTelemetry instrumentation via instrumentation.ts and export traces/logs/metrics. Ensure server spans include route, requestId, userId (if available), and DB timing.

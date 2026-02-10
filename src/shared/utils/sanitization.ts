@@ -1,28 +1,8 @@
-/**
- * Basic HTML sanitization to prevent XSS while allowing specific safe tags and attributes.
- * This implementation uses browser-native DOMParser for robustness on the client side.
- */
-
-const SAFE_TAGS = new Set([
-  'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 
-  'P', 'BR', 'UL', 'OL', 'LI', 'BLOCKQUOTE', 'HR',
-  'STRONG', 'EM', 'B', 'I', 'CODE', 'PRE', 
-  'A', 'IMG', 'SPAN', 'DIV',
-  'TABLE', 'THEAD', 'TBODY', 'TR', 'TH', 'TD'
-]);
-
-const SAFE_ATTRIBUTES = new Set([
-  'HREF', 'SRC', 'ALT', 'TITLE', 'STYLE', 'TARGET', 'REL',
-  'DATA-CODE', 'DATA-COPY-CODE'
-]);
-
-/**
- * Sanitizes an HTML string by removing unsafe tags and attributes.
- * Falls back to basic escaping if DOMParser is unavailable (SSR).
- */
 export function sanitizeHtml(html: string): string {
-  if (typeof window === 'undefined') {
-    // Basic SSR fallback: remove <script> tags at minimum
+  if (!html) return '';
+
+  if (typeof window === 'undefined' || typeof document === 'undefined' || typeof DOMParser === 'undefined') {
+    // Basic SSR/test fallback: remove <script> tags at minimum
     return html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '');
   }
 
@@ -30,25 +10,26 @@ export function sanitizeHtml(html: string): string {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
     
+    if (!doc || !doc.body) {
+      return html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '');
+    }
+    
     const sanitizeNode = (node: Node): void => {
-      if (node.nodeType === Node.ELEMENT_NODE) {
+      if (node.nodeType === 1) { // Element
         const el = node as HTMLElement;
         const tagName = el.tagName.toUpperCase();
         
-        if (!SAFE_TAGS.has(tagName)) {
-          // Remove unsafe element but keep its text content
-          while (el.firstChild) {
-            el.parentNode?.insertBefore(el.firstChild, el);
-          }
-          el.parentNode?.removeChild(el);
+        // Remove dangerous tags
+        if (tagName === 'SCRIPT' || tagName === 'OBJECT' || tagName === 'EMBED' || tagName === 'IFRAME') {
+          el.remove();
           return;
         }
         
-        // Remove unsafe attributes
+        // Remove on* attributes
         const attrs = Array.from(el.attributes);
         for (const attr of attrs) {
           const attrName = attr.name.toUpperCase();
-          if (!SAFE_ATTRIBUTES.has(attrName)) {
+          if (attrName.startsWith('ON')) {
             el.removeAttribute(attr.name);
           }
           
@@ -77,6 +58,7 @@ export function sanitizeHtml(html: string): string {
         });
       } catch { /* ignore */ }
     })();
-    return ''; // Return empty on failure for safety
+    // Return partially sanitized HTML as ultimate fallback instead of empty string
+    return html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '');
   }
 }

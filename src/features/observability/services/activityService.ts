@@ -67,10 +67,20 @@ export const ActivityTypes = {
     PAGE_CREATED: 'cms.page_created',
     PAGE_UPDATED: 'cms.page_updated',
     PAGE_DELETED: 'cms.page_deleted',
+    THEME_CREATED: 'cms.theme_created',
     THEME_UPDATED: 'cms.theme_updated',
+    THEME_DELETED: 'cms.theme_deleted',
   },
   SYSTEM: {
     SETTINGS_CHANGED: 'system.settings_changed',
     DATABASE_SYNC: 'system.database_sync',
+  },
+  INTEGRATION: {
+    CREATED: 'integration.created',
+    UPDATED: 'integration.updated',
+    DELETED: 'integration.deleted',
+    CONNECTION_CREATED: 'integration.connection_created',
+    CONNECTION_UPDATED: 'integration.connection_updated',
+    CONNECTION_DELETED: 'integration.connection_deleted',
   }
 } as const;

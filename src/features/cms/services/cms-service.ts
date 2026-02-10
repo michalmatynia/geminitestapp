@@ -2,7 +2,7 @@ import 'server-only';
 
 import type { Page, Slug, PageComponent, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from '@/features/cms/types';
 import type { CmsRepository, PageUpdateData } from '@/features/cms/types/services/cms-repository';
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem, logActivity, ActivityTypes } from '@/features/observability/server';
 
 import { getCmsRepository } from './cms-repository';
 
@@ -35,9 +35,43 @@ export const cmsService: CmsRepository = {
   getPages: (): Promise<Page[]> => repoCall('getPages'),
   getPageById: (id: string): Promise<Page | null> => repoCall('getPageById', id),
   getPageBySlug: (slug: string): Promise<Page | null> => repoCall('getPageBySlug', slug),
-  createPage: (data: { name: string }): Promise<Page> => repoCall('createPage', data),
-  updatePage: (id: string, data: PageUpdateData): Promise<Page | null> => repoCall('updatePage', id, data),
-  deletePage: (id: string): Promise<Page | null> => repoCall('deletePage', id),
+  createPage: async (data: { name: string }): Promise<Page> => {
+    const page = await repoCall('createPage', data);
+    void logActivity({
+      type: ActivityTypes.CMS.PAGE_CREATED,
+      description: `Created page ${page.name}`,
+      entityId: page.id,
+      entityType: 'page',
+      metadata: { name: page.name }
+    }).catch(() => {});
+    return page;
+  },
+  updatePage: async (id: string, data: PageUpdateData): Promise<Page | null> => {
+    const page = await repoCall('updatePage', id, data);
+    if (page) {
+      void logActivity({
+        type: ActivityTypes.CMS.PAGE_UPDATED,
+        description: `Updated page ${page.name}`,
+        entityId: page.id,
+        entityType: 'page',
+        metadata: { changes: Object.keys(data) }
+      }).catch(() => {});
+    }
+    return page;
+  },
+  deletePage: async (id: string): Promise<Page | null> => {
+    const page = await repoCall('deletePage', id);
+    if (page) {
+      void logActivity({
+        type: ActivityTypes.CMS.PAGE_DELETED,
+        description: `Deleted page ${page.name}`,
+        entityId: page.id,
+        entityType: 'page',
+        metadata: { name: page.name }
+      }).catch(() => {});
+    }
+    return page;
+  },
   replacePageSlugs: (pageId: string, slugIds: string[]): Promise<void> => repoCall('replacePageSlugs', pageId, slugIds),
   replacePageComponents: (pageId: string, components: PageComponent[]): Promise<void> => repoCall('replacePageComponents', pageId, components),
 
@@ -56,7 +90,41 @@ export const cmsService: CmsRepository = {
   // Themes
   getThemes: (): Promise<CmsTheme[]> => repoCall('getThemes'),
   getThemeById: (id: string): Promise<CmsTheme | null> => repoCall('getThemeById', id),
-  createTheme: (data: CmsThemeCreateInput): Promise<CmsTheme> => repoCall('createTheme', data),
-  updateTheme: (id: string, data: CmsThemeUpdateInput): Promise<CmsTheme | null> => repoCall('updateTheme', id, data),
-  deleteTheme: (id: string): Promise<CmsTheme | null> => repoCall('deleteTheme', id),
+  createTheme: async (data: CmsThemeCreateInput): Promise<CmsTheme> => {
+    const theme = await repoCall('createTheme', data);
+    void logActivity({
+      type: ActivityTypes.CMS.THEME_CREATED,
+      description: `Created theme ${theme.name}`,
+      entityId: theme.id,
+      entityType: 'theme',
+      metadata: { name: theme.name }
+    }).catch(() => {});
+    return theme;
+  },
+  updateTheme: async (id: string, data: CmsThemeUpdateInput): Promise<CmsTheme | null> => {
+    const theme = await repoCall('updateTheme', id, data);
+    if (theme) {
+      void logActivity({
+        type: ActivityTypes.CMS.THEME_UPDATED,
+        description: `Updated theme ${theme.name}`,
+        entityId: theme.id,
+        entityType: 'theme',
+        metadata: { changes: Object.keys(data) }
+      }).catch(() => {});
+    }
+    return theme;
+  },
+  deleteTheme: async (id: string): Promise<CmsTheme | null> => {
+    const theme = await repoCall('deleteTheme', id);
+    if (theme) {
+      void logActivity({
+        type: ActivityTypes.CMS.THEME_DELETED,
+        description: `Deleted theme ${theme.name}`,
+        entityId: theme.id,
+        entityType: 'theme',
+        metadata: { name: theme.name }
+      }).catch(() => {});
+    }
+    return theme;
+  },
 };

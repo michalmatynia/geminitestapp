@@ -1,4 +1,7 @@
+import { randomUUID } from 'crypto';
+
 import { Prisma } from '@prisma/client';
+import { ObjectId, type Filter } from 'mongodb';
 
 import type {
   ExternalCategory,
@@ -6,6 +9,8 @@ import type {
   ExternalCategorySyncInput,
   BaseCategory,
 } from '@/features/integrations/types/category-mapping';
+import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
 export type ExternalCategoryRepository = {
@@ -98,6 +103,102 @@ const toRecord = (doc: ExternalCategoryDoc): ExternalCategory => ({
   updatedAt: doc.updatedAt,
 });
 
+type MongoExternalCategoryDoc = {
+  _id: ObjectId | string;
+  connectionId: string;
+  externalId: string;
+  name: string;
+  parentExternalId: string | null;
+  path: string | null;
+  depth: number;
+  isLeaf: boolean;
+  metadata?: Record<string, unknown> | null;
+  fetchedAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+const EXTERNAL_CATEGORY_COLLECTION = 'external_categories';
+let mongoExternalCategoryIndexesReady: Promise<void> | null = null;
+
+const ensureMongoExternalCategoryIndexes = async (): Promise<void> => {
+  if (!mongoExternalCategoryIndexesReady) {
+    mongoExternalCategoryIndexesReady = (async () => {
+      const db = await getMongoDb();
+      const collection = db.collection<MongoExternalCategoryDoc>(EXTERNAL_CATEGORY_COLLECTION);
+      await Promise.all([
+        collection.createIndex(
+          { connectionId: 1, externalId: 1 },
+          { unique: true, name: 'external_categories_connection_external_unique' }
+        ),
+        collection.createIndex(
+          { connectionId: 1, depth: 1, name: 1 },
+          { name: 'external_categories_connection_depth_name' }
+        ),
+        collection.createIndex(
+          { connectionId: 1, parentExternalId: 1 },
+          { name: 'external_categories_connection_parent' }
+        ),
+      ]);
+    })();
+  }
+  await mongoExternalCategoryIndexesReady;
+};
+
+const toMongoRecord = (doc: MongoExternalCategoryDoc): ExternalCategory => ({
+  id: doc._id.toString(),
+  connectionId: doc.connectionId,
+  externalId: doc.externalId,
+  name: doc.name,
+  parentExternalId: doc.parentExternalId ?? null,
+  path: doc.path ?? null,
+  depth: doc.depth ?? 0,
+  isLeaf: Boolean(doc.isLeaf),
+  metadata: doc.metadata ?? null,
+  fetchedAt: doc.fetchedAt,
+  createdAt: doc.createdAt,
+  updatedAt: doc.updatedAt,
+});
+
+const buildMongoIdFilter = (id: string): Filter<MongoExternalCategoryDoc> => {
+  if (ObjectId.isValid(id)) {
+    return { $or: [{ _id: id }, { _id: new ObjectId(id) }] } as Filter<MongoExternalCategoryDoc>;
+  }
+  return { _id: id } as Filter<MongoExternalCategoryDoc>;
+};
+
+const mirrorPrismaRecordsToMongo = async (records: ExternalCategoryDoc[]): Promise<void> => {
+  if (records.length === 0) return;
+  await ensureMongoExternalCategoryIndexes();
+  const db = await getMongoDb();
+  const collection = db.collection<MongoExternalCategoryDoc>(EXTERNAL_CATEGORY_COLLECTION);
+  for (const record of records) {
+    await collection.updateOne(
+      {
+        connectionId: record.connectionId,
+        externalId: record.externalId,
+      },
+      {
+        $set: {
+          name: record.name,
+          parentExternalId: record.parentExternalId ?? null,
+          path: record.path ?? null,
+          depth: record.depth,
+          isLeaf: record.isLeaf,
+          metadata: (record.metadata as Record<string, unknown> | null) ?? null,
+          fetchedAt: record.fetchedAt,
+          updatedAt: record.updatedAt,
+        },
+        $setOnInsert: {
+          _id: record.id,
+          createdAt: record.createdAt,
+        },
+      },
+      { upsert: true }
+    );
+  }
+};
+
 export function getExternalCategoryRepository(): ExternalCategoryRepository {
   return {
     async syncFromBase(connectionId: string, categories: BaseCategory[]): Promise<number> {
@@ -119,8 +220,45 @@ export function getExternalCategoryRepository(): ExternalCategoryRepository {
         isLeaf: isLeafCategory(cat.id, categories),
       }));
 
-      // Upsert all categories in a transaction
+      const provider = await getAppDbProvider();
       let count = 0;
+
+      if (provider === 'mongodb') {
+        await ensureMongoExternalCategoryIndexes();
+        const db = await getMongoDb();
+        const collection = db.collection<MongoExternalCategoryDoc>(EXTERNAL_CATEGORY_COLLECTION);
+
+        for (const input of syncInputs) {
+          await collection.updateOne(
+            {
+              connectionId: input.connectionId,
+              externalId: input.externalId,
+            },
+            {
+              $set: {
+                name: input.name,
+                parentExternalId: input.parentExternalId ?? null,
+                path: input.path ?? null,
+                depth: input.depth,
+                isLeaf: input.isLeaf,
+                metadata: input.metadata ?? null,
+                fetchedAt: now,
+                updatedAt: now,
+              },
+              $setOnInsert: {
+                _id: randomUUID(),
+                createdAt: now,
+              },
+            },
+            { upsert: true }
+          );
+          count++;
+        }
+
+        return count;
+      }
+
+      // Upsert all categories in a transaction
       await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         for (const input of syncInputs) {
           await tx.externalCategory.upsert({
@@ -157,6 +295,33 @@ export function getExternalCategoryRepository(): ExternalCategoryRepository {
     },
 
     async listByConnection(connectionId: string): Promise<ExternalCategory[]> {
+      const provider = await getAppDbProvider();
+      if (provider === 'mongodb') {
+        await ensureMongoExternalCategoryIndexes();
+        const db = await getMongoDb();
+        const mongoRecords = await db
+          .collection<MongoExternalCategoryDoc>(EXTERNAL_CATEGORY_COLLECTION)
+          .find({ connectionId })
+          .sort({ depth: 1, name: 1 })
+          .toArray();
+        if (mongoRecords.length > 0) {
+          return mongoRecords.map((r: MongoExternalCategoryDoc) => toMongoRecord(r));
+        }
+
+        try {
+          const prismaRecords = await prisma.externalCategory.findMany({
+            where: { connectionId },
+            orderBy: [{ depth: 'asc' }, { name: 'asc' }],
+          });
+          if (prismaRecords.length > 0) {
+            await mirrorPrismaRecordsToMongo(prismaRecords);
+          }
+          return prismaRecords.map((r: ExternalCategoryDoc) => toRecord(r));
+        } catch {
+          return [];
+        }
+      }
+
       const records = await prisma.externalCategory.findMany({
         where: { connectionId },
         orderBy: [{ depth: 'asc' }, { name: 'asc' }],
@@ -166,17 +331,34 @@ export function getExternalCategoryRepository(): ExternalCategoryRepository {
     },
 
     async getTreeByConnection(connectionId: string): Promise<ExternalCategoryWithChildren[]> {
-      const records = await prisma.externalCategory.findMany({
-        where: { connectionId },
-        orderBy: [{ depth: 'asc' }, { name: 'asc' }],
-      });
-
-      const categories: ExternalCategory[] = records.map((r: ExternalCategoryDoc) => toRecord(r));
+      const categories = await this.listByConnection(connectionId);
 
       return buildTree(categories, null);
     },
 
     async getById(id: string): Promise<ExternalCategory | null> {
+      const provider = await getAppDbProvider();
+      if (provider === 'mongodb') {
+        await ensureMongoExternalCategoryIndexes();
+        const db = await getMongoDb();
+        const mongoRecord = await db
+          .collection<MongoExternalCategoryDoc>(EXTERNAL_CATEGORY_COLLECTION)
+          .findOne(buildMongoIdFilter(id));
+
+        if (mongoRecord) return toMongoRecord(mongoRecord);
+
+        try {
+          const prismaRecord = await prisma.externalCategory.findUnique({
+            where: { id },
+          });
+          if (!prismaRecord) return null;
+          await mirrorPrismaRecordsToMongo([prismaRecord]);
+          return toRecord(prismaRecord);
+        } catch {
+          return null;
+        }
+      }
+
       const record = await prisma.externalCategory.findUnique({
         where: { id },
       });
@@ -190,6 +372,33 @@ export function getExternalCategoryRepository(): ExternalCategoryRepository {
       connectionId: string,
       externalId: string
     ): Promise<ExternalCategory | null> {
+      const provider = await getAppDbProvider();
+      if (provider === 'mongodb') {
+        await ensureMongoExternalCategoryIndexes();
+        const db = await getMongoDb();
+        const mongoRecord = await db
+          .collection<MongoExternalCategoryDoc>(EXTERNAL_CATEGORY_COLLECTION)
+          .findOne({
+            connectionId,
+            externalId,
+          });
+
+        if (mongoRecord) return toMongoRecord(mongoRecord);
+
+        try {
+          const prismaRecord = await prisma.externalCategory.findUnique({
+            where: {
+              connectionId_externalId: { connectionId, externalId },
+            },
+          });
+          if (!prismaRecord) return null;
+          await mirrorPrismaRecordsToMongo([prismaRecord]);
+          return toRecord(prismaRecord);
+        } catch {
+          return null;
+        }
+      }
+
       const record = await prisma.externalCategory.findUnique({
         where: {
           connectionId_externalId: { connectionId, externalId },
@@ -202,6 +411,16 @@ export function getExternalCategoryRepository(): ExternalCategoryRepository {
     },
 
     async deleteByConnection(connectionId: string): Promise<number> {
+      const provider = await getAppDbProvider();
+      if (provider === 'mongodb') {
+        await ensureMongoExternalCategoryIndexes();
+        const db = await getMongoDb();
+        const result = await db
+          .collection<MongoExternalCategoryDoc>(EXTERNAL_CATEGORY_COLLECTION)
+          .deleteMany({ connectionId });
+        return result.deletedCount ?? 0;
+      }
+
       const result = await prisma.externalCategory.deleteMany({
         where: { connectionId },
       });

@@ -1,9 +1,15 @@
 
  * In Products,  When I reorder CAtegories, I get an error
 
-Mapped Categories are not being retained. The connection breaks and I need to remap again
+My AI Paths are a mess 
+* Mapped Categories are not being retained. The connection breaks and I need to remap again
 
 Validation patterns are gone
+
+Set up all the backfilling and fallback policies. Nothing is to be done automatically, I want full control, remove the legacy code
+
+Create database Backup from MongoDB add that to runtime
+
   
   › again, my AI Paths are gone, I had them retrieved and they are gone again.
 

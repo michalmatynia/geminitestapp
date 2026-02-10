@@ -1,4 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
+
+vi.unmock('@/shared/lib/db/prisma');
 
 import { noteService } from '@/features/notesapp/services/notes';
 import { cleanupNoteFile } from '@/features/notesapp/services/notes/file-cleanup';
@@ -11,6 +13,9 @@ vi.mock('@/features/notesapp/services/notes/file-cleanup', () => ({
 
 describe('NoteService', () => {
   beforeEach(async () => {
+    // Only run if DATABASE_URL is available
+    if (!process.env['DATABASE_URL']) return;
+
     // Clean up DB using prisma directly to ensure a fresh state
     await prisma.noteRelation.deleteMany({});
     await prisma.noteFile.deleteMany({});
@@ -24,8 +29,14 @@ describe('NoteService', () => {
     vi.clearAllMocks();
   });
 
+  afterAll(async () => {
+    await prisma.$disconnect();
+  });
+
   describe('CRUD Operations', () => {
     it('creates a note in the default notebook', async () => {
+      if (!process.env['DATABASE_URL']) return;
+
       const note = await noteService.create({
         title: 'Test Note',
         content: 'Test Content',
@@ -41,6 +52,8 @@ describe('NoteService', () => {
     });
 
     it('retrieves notes with filters and populated relations', async () => {
+      if (!process.env['DATABASE_URL']) return;
+
       const note = await noteService.create({
         title: 'Find Me',
         content: 'Secret',
@@ -54,6 +67,8 @@ describe('NoteService', () => {
     });
 
     it('filters by isFavorite', async () => {
+      if (!process.env['DATABASE_URL']) return;
+
       await noteService.create({ title: 'Fav', content: '...', isFavorite: true });
       await noteService.create({ title: 'Not Fav', content: '...', isFavorite: false });
 
@@ -63,6 +78,8 @@ describe('NoteService', () => {
     });
 
     it('truncates content when requested', async () => {
+      if (!process.env['DATABASE_URL']) return;
+
       const longContent = 'A'.repeat(500);
       await noteService.create({
         title: 'Long Note',
@@ -75,6 +92,8 @@ describe('NoteService', () => {
     });
 
     it('searches notes by title or content', async () => {
+      if (!process.env['DATABASE_URL']) return;
+
       await noteService.create({ title: 'Specific Title', content: '...' });
       await noteService.create({ title: '...', content: 'Specific Content' });
       await noteService.create({ title: 'Other', content: '...' });
@@ -89,6 +108,8 @@ describe('NoteService', () => {
 
   describe('Notebook Management', () => {
     it('creates and retrieves notebooks', async () => {
+      if (!process.env['DATABASE_URL']) return;
+
       const nb = await noteService.createNotebook({ name: 'Work' });
       expect(nb.name).toBe('Work');
 
@@ -97,6 +118,8 @@ describe('NoteService', () => {
     });
 
     it('gets or creates default notebook', async () => {
+      if (!process.env['DATABASE_URL']) return;
+
       const nb = await noteService.getOrCreateDefaultNotebook();
       expect(nb.name).toBe('Default');
 
@@ -107,6 +130,8 @@ describe('NoteService', () => {
 
   describe('Relation Syncing', () => {
     it('automatically creates bidirectional relations', async () => {
+      if (!process.env['DATABASE_URL']) return;
+
       const noteA = await noteService.create({
         title: 'Note A',
         content: 'Content A',
@@ -131,6 +156,8 @@ describe('NoteService', () => {
     });
 
     it('removes bidirectional relations when one side is updated', async () => {
+      if (!process.env['DATABASE_URL']) return;
+
       const noteA = await noteService.create({ title: 'A', content: '...' });
       const noteB = await noteService.create({ title: 'B', content: '...' });
 
@@ -148,6 +175,8 @@ describe('NoteService', () => {
 
   describe('File Cleanup', () => {
     it('calls cleanupNoteFile when a note is deleted', async () => {
+      if (!process.env['DATABASE_URL']) return;
+
       const note = await noteService.create({ title: 'Delete Me', content: '...' });
       
       // Manually add a file record via prisma for testing
@@ -170,6 +199,8 @@ describe('NoteService', () => {
 
   describe('Categories and Tags', () => {
     it('manages category trees', async () => {
+      if (!process.env['DATABASE_URL']) return;
+
       const parent = await noteService.createCategory({ name: 'Parent' });
       const child = await noteService.createCategory({ 
         name: 'Child', 

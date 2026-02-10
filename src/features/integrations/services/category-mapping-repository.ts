@@ -1,4 +1,7 @@
+import { randomUUID } from 'crypto';
+
 import { Prisma } from '@prisma/client';
+import { ObjectId, type Filter } from 'mongodb';
 
 import type {
   CategoryMapping,
@@ -6,6 +9,8 @@ import type {
   CategoryMappingCreateInput,
   CategoryMappingUpdateInput,
 } from '@/features/integrations/types/category-mapping';
+import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
 export type CategoryMappingRepository = {
@@ -56,9 +61,147 @@ type EnrichedCategoryMapping = Prisma.CategoryMappingGetPayload<{
   };
 }>;
 
+type MongoCategoryMappingDoc = {
+  _id: string | ObjectId;
+  connectionId: string;
+  externalCategoryId: string;
+  internalCategoryId: string;
+  catalogId: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type MongoExternalCategoryDoc = {
+  _id: string | ObjectId;
+  connectionId: string;
+  externalId: string;
+  name: string;
+  parentExternalId: string | null;
+  path: string | null;
+  depth: number;
+  isLeaf: boolean;
+  metadata?: Record<string, unknown> | null;
+  fetchedAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type MongoProductCategoryDoc = {
+  _id: string | ObjectId;
+  name: string;
+  description: string | null;
+  color: string | null;
+  parentId: string | ObjectId | null;
+  catalogId: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+const CATEGORY_MAPPING_COLLECTION = 'category_mappings';
+const EXTERNAL_CATEGORY_COLLECTION = 'external_categories';
+const PRODUCT_CATEGORY_COLLECTION = 'product_categories';
+
+let mongoCategoryMappingIndexesReady: Promise<void> | null = null;
+
+const ensureMongoCategoryMappingIndexes = async (): Promise<void> => {
+  if (!mongoCategoryMappingIndexesReady) {
+    mongoCategoryMappingIndexesReady = (async () => {
+      const db = await getMongoDb();
+      const collection = db.collection<MongoCategoryMappingDoc>(CATEGORY_MAPPING_COLLECTION);
+      await Promise.all([
+        collection.createIndex(
+          { connectionId: 1, externalCategoryId: 1, catalogId: 1 },
+          {
+            unique: true,
+            name: 'category_mappings_connection_external_catalog_unique',
+          }
+        ),
+        collection.createIndex(
+          { connectionId: 1, catalogId: 1, isActive: 1 },
+          { name: 'category_mappings_connection_catalog_active' }
+        ),
+        collection.createIndex(
+          { connectionId: 1, internalCategoryId: 1, isActive: 1 },
+          { name: 'category_mappings_connection_internal_active' }
+        ),
+      ]);
+    })();
+  }
+  await mongoCategoryMappingIndexesReady;
+};
+
+const buildMongoIdFilter = (id: string): Filter<MongoCategoryMappingDoc> => {
+  if (ObjectId.isValid(id)) {
+    return { $or: [{ _id: id }, { _id: new ObjectId(id) }] } as Filter<MongoCategoryMappingDoc>;
+  }
+  return { _id: id } as Filter<MongoCategoryMappingDoc>;
+};
+
+const mapMongoCategoryMappingToRecord = (record: MongoCategoryMappingDoc): CategoryMapping => ({
+  id: record._id.toString(),
+  connectionId: record.connectionId,
+  externalCategoryId: record.externalCategoryId,
+  internalCategoryId: record.internalCategoryId,
+  catalogId: record.catalogId,
+  isActive: Boolean(record.isActive),
+  createdAt: record.createdAt,
+  updatedAt: record.updatedAt,
+});
+
+const mapMongoExternalCategory = (
+  record: MongoExternalCategoryDoc
+): CategoryMappingWithDetails['externalCategory'] => ({
+  id: record._id.toString(),
+  connectionId: record.connectionId,
+  externalId: record.externalId,
+  name: record.name,
+  parentExternalId: record.parentExternalId ?? null,
+  path: record.path ?? null,
+  depth: record.depth ?? 0,
+  isLeaf: Boolean(record.isLeaf),
+  metadata: record.metadata ?? null,
+  fetchedAt: record.fetchedAt,
+  createdAt: record.createdAt,
+  updatedAt: record.updatedAt,
+});
+
+const mapMongoInternalCategory = (
+  record: MongoProductCategoryDoc
+): CategoryMappingWithDetails['internalCategory'] => ({
+  id: record._id.toString(),
+  name: record.name,
+  description: record.description ?? null,
+  color: record.color ?? null,
+  parentId: record.parentId?.toString() ?? null,
+  catalogId: record.catalogId,
+  createdAt: record.createdAt.toISOString(),
+  updatedAt: record.updatedAt.toISOString(),
+});
+
 export function getCategoryMappingRepository(): CategoryMappingRepository {
   return {
     async create(input: CategoryMappingCreateInput): Promise<CategoryMapping> {
+      const provider = await getAppDbProvider();
+      if (provider === 'mongodb') {
+        await ensureMongoCategoryMappingIndexes();
+        const db = await getMongoDb();
+        const collection = db.collection<MongoCategoryMappingDoc>(CATEGORY_MAPPING_COLLECTION);
+        const now = new Date();
+        const doc: MongoCategoryMappingDoc = {
+          _id: randomUUID(),
+          connectionId: input.connectionId,
+          externalCategoryId: input.externalCategoryId,
+          internalCategoryId: input.internalCategoryId,
+          catalogId: input.catalogId,
+          isActive: true,
+          createdAt: now,
+          updatedAt: now,
+        };
+        await collection.insertOne(doc);
+        return mapMongoCategoryMappingToRecord(doc);
+      }
+
       const record = await prisma.categoryMapping.create({
         data: {
           connectionId: input.connectionId,
@@ -71,6 +214,35 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
     },
 
     async update(id: string, input: CategoryMappingUpdateInput): Promise<CategoryMapping> {
+      const provider = await getAppDbProvider();
+      if (provider === 'mongodb') {
+        await ensureMongoCategoryMappingIndexes();
+        const db = await getMongoDb();
+        const collection = db.collection<MongoCategoryMappingDoc>(CATEGORY_MAPPING_COLLECTION);
+        const filter = buildMongoIdFilter(id);
+        const updatePayload: Partial<MongoCategoryMappingDoc> = {
+          updatedAt: new Date(),
+        };
+
+        if (input.internalCategoryId !== undefined) {
+          updatePayload.internalCategoryId = input.internalCategoryId;
+        }
+        if (input.isActive !== undefined) {
+          updatePayload.isActive = input.isActive;
+        }
+
+        const result = await collection.updateOne(filter, { $set: updatePayload });
+        if (result.matchedCount === 0) {
+          throw new Error('Category mapping not found');
+        }
+
+        const record = await collection.findOne(filter);
+        if (!record) {
+          throw new Error('Category mapping not found');
+        }
+        return mapMongoCategoryMappingToRecord(record);
+      }
+
       const record = await prisma.categoryMapping.update({
         where: { id },
         data: {
@@ -84,12 +256,32 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
     },
 
     async delete(id: string): Promise<void> {
+      const provider = await getAppDbProvider();
+      if (provider === 'mongodb') {
+        await ensureMongoCategoryMappingIndexes();
+        const db = await getMongoDb();
+        await db
+          .collection<MongoCategoryMappingDoc>(CATEGORY_MAPPING_COLLECTION)
+          .deleteOne(buildMongoIdFilter(id));
+        return;
+      }
+
       await prisma.categoryMapping.delete({
         where: { id },
       });
     },
 
     async getById(id: string): Promise<CategoryMapping | null> {
+      const provider = await getAppDbProvider();
+      if (provider === 'mongodb') {
+        await ensureMongoCategoryMappingIndexes();
+        const db = await getMongoDb();
+        const record = await db
+          .collection<MongoCategoryMappingDoc>(CATEGORY_MAPPING_COLLECTION)
+          .findOne(buildMongoIdFilter(id));
+        return record ? mapMongoCategoryMappingToRecord(record) : null;
+      }
+
       const record = await prisma.categoryMapping.findUnique({
         where: { id },
       });
@@ -100,6 +292,224 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
       connectionId: string,
       catalogId?: string
     ): Promise<CategoryMappingWithDetails[]> {
+      const provider = await getAppDbProvider();
+      if (provider === 'mongodb') {
+        await ensureMongoCategoryMappingIndexes();
+        const db = await getMongoDb();
+        const mappingDocs = await db
+          .collection<MongoCategoryMappingDoc>(CATEGORY_MAPPING_COLLECTION)
+          .find({
+            connectionId,
+            ...(catalogId ? { catalogId } : {}),
+          })
+          .toArray();
+
+        if (mappingDocs.length === 0) {
+          try {
+            const fallbackRecords = await prisma.categoryMapping.findMany({
+              where: {
+                connectionId,
+                ...(catalogId && { catalogId }),
+              },
+              include: {
+                externalCategory: true,
+                internalCategory: true,
+              },
+              orderBy: [
+                { externalCategory: { depth: 'asc' } },
+                { externalCategory: { name: 'asc' } },
+              ],
+            });
+
+            if (fallbackRecords.length === 0) return [];
+
+            for (const record of fallbackRecords as EnrichedCategoryMapping[]) {
+              await db.collection<MongoCategoryMappingDoc>(CATEGORY_MAPPING_COLLECTION).updateOne(
+                {
+                  connectionId: record.connectionId,
+                  externalCategoryId: record.externalCategoryId,
+                  catalogId: record.catalogId,
+                },
+                {
+                  $set: {
+                    internalCategoryId: record.internalCategoryId,
+                    isActive: record.isActive,
+                    updatedAt: record.updatedAt,
+                  },
+                  $setOnInsert: {
+                    _id: record.id,
+                    createdAt: record.createdAt,
+                  },
+                },
+                { upsert: true }
+              );
+            }
+
+            return (fallbackRecords as EnrichedCategoryMapping[]).map((r: EnrichedCategoryMapping) => ({
+              id: r.id,
+              connectionId: r.connectionId,
+              externalCategoryId: r.externalCategoryId,
+              internalCategoryId: r.internalCategoryId,
+              catalogId: r.catalogId,
+              isActive: r.isActive,
+              createdAt: r.createdAt,
+              updatedAt: r.updatedAt,
+              externalCategory: {
+                id: r.externalCategory.id,
+                connectionId: r.externalCategory.connectionId,
+                externalId: r.externalCategory.externalId,
+                name: r.externalCategory.name,
+                parentExternalId: r.externalCategory.parentExternalId,
+                path: r.externalCategory.path,
+                depth: r.externalCategory.depth,
+                isLeaf: r.externalCategory.isLeaf,
+                metadata: r.externalCategory.metadata as Record<string, unknown> | null,
+                fetchedAt: r.externalCategory.fetchedAt,
+                createdAt: r.externalCategory.createdAt,
+                updatedAt: r.externalCategory.updatedAt,
+              },
+              internalCategory: {
+                id: r.internalCategory.id,
+                name: r.internalCategory.name,
+                description: r.internalCategory.description,
+                color: r.internalCategory.color,
+                parentId: r.internalCategory.parentId,
+                catalogId: r.internalCategory.catalogId,
+                createdAt: r.internalCategory.createdAt.toISOString(),
+                updatedAt: r.internalCategory.updatedAt.toISOString(),
+              },
+            }));
+          } catch {
+            return [];
+          }
+        }
+
+        const externalDocs = await db
+          .collection<MongoExternalCategoryDoc>(EXTERNAL_CATEGORY_COLLECTION)
+          .find({ connectionId })
+          .toArray();
+        const externalById = new Map<
+          string,
+          CategoryMappingWithDetails['externalCategory']
+        >(
+          externalDocs.map((doc: MongoExternalCategoryDoc) => [
+            doc._id.toString(),
+            mapMongoExternalCategory(doc),
+          ])
+        );
+
+        const missingExternalIds = Array.from(
+          new Set(
+            mappingDocs
+              .map((doc: MongoCategoryMappingDoc) => doc.externalCategoryId)
+              .filter((id: string) => !externalById.has(id))
+          )
+        );
+        if (missingExternalIds.length > 0) {
+          try {
+            const fallbackExternalDocs = await prisma.externalCategory.findMany({
+              where: { id: { in: missingExternalIds } },
+            });
+            fallbackExternalDocs.forEach((doc) => {
+              externalById.set(doc.id, {
+                id: doc.id,
+                connectionId: doc.connectionId,
+                externalId: doc.externalId,
+                name: doc.name,
+                parentExternalId: doc.parentExternalId,
+                path: doc.path,
+                depth: doc.depth,
+                isLeaf: doc.isLeaf,
+                metadata: doc.metadata as Record<string, unknown> | null,
+                fetchedAt: doc.fetchedAt,
+                createdAt: doc.createdAt,
+                updatedAt: doc.updatedAt,
+              });
+            });
+          } catch {
+            // Prisma may be unavailable in Mongo-first deployments.
+          }
+        }
+
+        const catalogIds = Array.from(
+          new Set(mappingDocs.map((doc: MongoCategoryMappingDoc) => doc.catalogId))
+        );
+        let internalDocs: MongoProductCategoryDoc[] = [];
+        if (catalogIds.length > 0) {
+          internalDocs = await db
+            .collection<MongoProductCategoryDoc>(PRODUCT_CATEGORY_COLLECTION)
+            .find({ catalogId: { $in: catalogIds } })
+            .toArray();
+        }
+        const internalById = new Map<
+          string,
+          CategoryMappingWithDetails['internalCategory']
+        >(
+          internalDocs.map((doc: MongoProductCategoryDoc) => [
+            doc._id.toString(),
+            mapMongoInternalCategory(doc),
+          ])
+        );
+
+        const missingInternalIds = Array.from(
+          new Set(
+            mappingDocs
+              .map((doc: MongoCategoryMappingDoc) => doc.internalCategoryId)
+              .filter((id: string) => !internalById.has(id))
+          )
+        );
+        if (missingInternalIds.length > 0) {
+          try {
+            const fallbackInternalDocs = await prisma.productCategory.findMany({
+              where: { id: { in: missingInternalIds } },
+            });
+            fallbackInternalDocs.forEach((doc) => {
+              internalById.set(doc.id, {
+                id: doc.id,
+                name: doc.name,
+                description: doc.description,
+                color: doc.color,
+                parentId: doc.parentId,
+                catalogId: doc.catalogId,
+                createdAt: doc.createdAt.toISOString(),
+                updatedAt: doc.updatedAt.toISOString(),
+              });
+            });
+          } catch {
+            // Prisma may be unavailable in Mongo-first deployments.
+          }
+        }
+
+        const combined = mappingDocs.flatMap((mapping: MongoCategoryMappingDoc) => {
+          const external = externalById.get(mapping.externalCategoryId);
+          const internal = internalById.get(mapping.internalCategoryId);
+          if (!external || !internal) return [];
+
+          return [
+            {
+              id: mapping._id.toString(),
+              connectionId: mapping.connectionId,
+              externalCategoryId: mapping.externalCategoryId,
+              internalCategoryId: mapping.internalCategoryId,
+              catalogId: mapping.catalogId,
+              isActive: Boolean(mapping.isActive),
+              createdAt: mapping.createdAt,
+              updatedAt: mapping.updatedAt,
+              externalCategory: external,
+              internalCategory: internal,
+            } satisfies CategoryMappingWithDetails,
+          ];
+        });
+
+        combined.sort((a: CategoryMappingWithDetails, b: CategoryMappingWithDetails) => {
+          if (a.externalCategory.depth !== b.externalCategory.depth) {
+            return a.externalCategory.depth - b.externalCategory.depth;
+          }
+          return a.externalCategory.name.localeCompare(b.externalCategory.name);
+        });
+        return combined;
+      }
+
       const records = await prisma.categoryMapping.findMany({
         where: {
           connectionId,
@@ -156,6 +566,57 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
       externalCategoryId: string,
       catalogId: string
     ): Promise<CategoryMapping | null> {
+      const provider = await getAppDbProvider();
+      if (provider === 'mongodb') {
+        await ensureMongoCategoryMappingIndexes();
+        const db = await getMongoDb();
+        const mongoRecord = await db
+          .collection<MongoCategoryMappingDoc>(CATEGORY_MAPPING_COLLECTION)
+          .findOne({
+            connectionId,
+            externalCategoryId,
+            catalogId,
+          });
+        if (mongoRecord) return mapMongoCategoryMappingToRecord(mongoRecord);
+
+        try {
+          const prismaRecord = await prisma.categoryMapping.findUnique({
+            where: {
+              connectionId_externalCategoryId_catalogId: {
+                connectionId,
+                externalCategoryId,
+                catalogId,
+              },
+            },
+          });
+          if (!prismaRecord) return null;
+
+          await db.collection<MongoCategoryMappingDoc>(CATEGORY_MAPPING_COLLECTION).updateOne(
+            {
+              connectionId: prismaRecord.connectionId,
+              externalCategoryId: prismaRecord.externalCategoryId,
+              catalogId: prismaRecord.catalogId,
+            },
+            {
+              $set: {
+                internalCategoryId: prismaRecord.internalCategoryId,
+                isActive: prismaRecord.isActive,
+                updatedAt: prismaRecord.updatedAt,
+              },
+              $setOnInsert: {
+                _id: prismaRecord.id,
+                createdAt: prismaRecord.createdAt,
+              },
+            },
+            { upsert: true }
+          );
+
+          return mapToRecord(prismaRecord);
+        } catch {
+          return null;
+        }
+      }
+
       const record = await prisma.categoryMapping.findUnique({
         where: {
           connectionId_externalCategoryId_catalogId: {
@@ -173,6 +634,59 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
       catalogId: string,
       mappings: { externalCategoryId: string; internalCategoryId: string | null }[]
     ): Promise<number> {
+      const provider = await getAppDbProvider();
+      if (provider === 'mongodb') {
+        await ensureMongoCategoryMappingIndexes();
+        const db = await getMongoDb();
+        const collection = db.collection<MongoCategoryMappingDoc>(CATEGORY_MAPPING_COLLECTION);
+        let count = 0;
+
+        for (const mapping of mappings) {
+          if (mapping.internalCategoryId === null) {
+            const deactivated = await collection.updateMany(
+              {
+                connectionId,
+                externalCategoryId: mapping.externalCategoryId,
+                catalogId,
+                isActive: true,
+              },
+              {
+                $set: { isActive: false, updatedAt: new Date() },
+              }
+            );
+            count += deactivated.modifiedCount;
+            continue;
+          }
+
+          const now = new Date();
+          await collection.updateOne(
+            {
+              connectionId,
+              externalCategoryId: mapping.externalCategoryId,
+              catalogId,
+            },
+            {
+              $set: {
+                internalCategoryId: mapping.internalCategoryId,
+                isActive: true,
+                updatedAt: now,
+              },
+              $setOnInsert: {
+                _id: randomUUID(),
+                connectionId,
+                externalCategoryId: mapping.externalCategoryId,
+                catalogId,
+                createdAt: now,
+              },
+            },
+            { upsert: true }
+          );
+          count++;
+        }
+
+        return count;
+      }
+
       let count = 0;
       await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         for (const mapping of mappings) {
@@ -216,6 +730,16 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
     },
 
     async deleteByConnection(connectionId: string): Promise<number> {
+      const provider = await getAppDbProvider();
+      if (provider === 'mongodb') {
+        await ensureMongoCategoryMappingIndexes();
+        const db = await getMongoDb();
+        const result = await db
+          .collection<MongoCategoryMappingDoc>(CATEGORY_MAPPING_COLLECTION)
+          .deleteMany({ connectionId });
+        return result.deletedCount ?? 0;
+      }
+
       const result = await prisma.categoryMapping.deleteMany({
         where: { connectionId },
       });

@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem, logActivity, ActivityTypes } from '@/features/observability/server';
 
 import { getIntegrationRepository } from './integration-repository';
 
@@ -35,8 +35,17 @@ const repoCall = async <K extends keyof IntegrationRepository>(
 
 export const integrationService: IntegrationRepository = {
   listIntegrations: (): Promise<IntegrationRecord[]> => repoCall('listIntegrations'),
-  upsertIntegration: (input: { name: string; slug: string }): Promise<IntegrationRecord> =>
-    repoCall('upsertIntegration', input),
+  upsertIntegration: async (input: { name: string; slug: string }): Promise<IntegrationRecord> => {
+    const result = await repoCall('upsertIntegration', input);
+    void logActivity({
+      type: ActivityTypes.INTEGRATION.UPDATED,
+      description: `Upserted integration ${result.name}`,
+      entityId: result.id,
+      entityType: 'integration',
+      metadata: { slug: result.slug }
+    }).catch(() => {});
+    return result;
+  },
   getIntegrationById: (id: string): Promise<IntegrationRecord | null> =>
     repoCall('getIntegrationById', id),
   listConnections: (integrationId: string): Promise<IntegrationConnectionRecord[]> =>
@@ -48,16 +57,41 @@ export const integrationService: IntegrationRepository = {
     integrationId: string
   ): Promise<IntegrationConnectionRecord | null> =>
     repoCall('getConnectionByIdAndIntegration', id, integrationId),
-  createConnection: (
+  createConnection: async (
     integrationId: string,
     input: { name: string; username: string; password: string }
-  ): Promise<IntegrationConnectionRecord> =>
-    repoCall('createConnection', integrationId, input),
-  updateConnection: (
+  ): Promise<IntegrationConnectionRecord> => {
+    const result = await repoCall('createConnection', integrationId, input);
+    void logActivity({
+      type: ActivityTypes.INTEGRATION.CONNECTION_CREATED,
+      description: `Created connection ${result.name}`,
+      entityId: result.id,
+      entityType: 'integration_connection',
+      metadata: { integrationId }
+    }).catch(() => {});
+    return result;
+  },
+  updateConnection: async (
     id: string,
     input: Partial<IntegrationConnectionRecord>
-  ): Promise<IntegrationConnectionRecord> =>
-    repoCall('updateConnection', id, input),
-  deleteConnection: (id: string): Promise<void> =>
-    repoCall('deleteConnection', id),
+  ): Promise<IntegrationConnectionRecord> => {
+    const result = await repoCall('updateConnection', id, input);
+    void logActivity({
+      type: ActivityTypes.INTEGRATION.CONNECTION_UPDATED,
+      description: `Updated connection ${result.name}`,
+      entityId: result.id,
+      entityType: 'integration_connection',
+      metadata: { changes: Object.keys(input) }
+    }).catch(() => {});
+    return result;
+  },
+  deleteConnection: async (id: string): Promise<void> => {
+    await repoCall('deleteConnection', id);
+    void logActivity({
+      type: ActivityTypes.INTEGRATION.CONNECTION_DELETED,
+      description: `Deleted connection ${id}`,
+      entityId: id,
+      entityType: 'integration_connection'
+    }).catch(() => {});
+  },
 };

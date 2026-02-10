@@ -163,4 +163,4 @@ export const GET = apiHandler(GET_handler, {
   querySchema: productFilterSchema,
 });
 
-export const POST = apiHandler(POST_handler, { source: 'products.POST' });
+export const POST = apiHandler(POST_handler, { source: 'products.POST', logSuccess: true });

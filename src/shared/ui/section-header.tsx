@@ -12,17 +12,17 @@ const titleSizes: Record<SectionHeaderSize, string> = {
 
 type SectionHeaderProps = {
   title: string;
-  subtitle?: string | undefined; // Added subtitle prop
-  description?: string;
-  actions?: ReactNode;
-  eyebrow?: ReactNode;
-  icon?: ReactNode;
-  size?: SectionHeaderSize;
-  className?: string;
-  titleClassName?: string;
-  subtitleClassName?: string; // Added subtitleClassName prop
-  descriptionClassName?: string;
-  children?: ReactNode; // Added children prop
+  subtitle?: string | undefined;
+  description?: string | undefined;
+  actions?: ReactNode | undefined;
+  eyebrow?: ReactNode | undefined;
+  icon?: ReactNode | undefined;
+  size?: SectionHeaderSize | undefined;
+  className?: string | undefined;
+  titleClassName?: string | undefined;
+  subtitleClassName?: string | undefined;
+  descriptionClassName?: string | undefined;
+  children?: ReactNode | undefined;
 };
 
 export function SectionHeader({

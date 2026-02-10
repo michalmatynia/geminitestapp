@@ -18,7 +18,6 @@ import {
 import { logClientError } from '@/features/observability';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import type { SystemSetting } from '@/shared/types/domain/settings';
-import { logger } from '@/shared/utils/logger';
 
 export type { SystemSetting };
 

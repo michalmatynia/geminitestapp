@@ -2,6 +2,7 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useCallback } from 'react';
+import { logClientError } from '@/features/observability';
 import { logger } from '@/shared/utils/logger';
 
 interface SyncConfig {
@@ -26,7 +27,7 @@ export function useQuerySync(configs: SyncConfig[]): void {
           const data = JSON.parse(event.newValue) as unknown;
           queryClient.setQueryData(matchingConfig.queryKey, data);
         } catch (error) {
-          logger.warn('Failed to sync query data', { error: error instanceof Error ? error.message : String(error) });
+          logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useQuerySync', action: 'syncQueryDataFailed', level: 'warn' } });
         }
       }
     }

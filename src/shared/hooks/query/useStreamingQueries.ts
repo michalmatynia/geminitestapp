@@ -3,7 +3,6 @@
 import { useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
 import { logClientError } from "@/features/observability";
-import { logger } from "@/shared/utils/logger";
 
 interface StreamConfig {
   endpoint: string;

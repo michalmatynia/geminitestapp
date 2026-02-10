@@ -3,7 +3,7 @@
 
 import { useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
-import { logger } from '@/shared/utils/logger';
+import { logClientError } from '@/features/observability';
 
 interface RealtimeConfig {
   queryKey?: readonly unknown[];
@@ -45,18 +45,18 @@ export function useRealtimeQuery<TData>(
           queryClient.setQueryData(queryKey as unknown[], data);
           config?.onUpdate?.(data);
         } catch (error) {
-          logger.warn('Failed to parse WebSocket data', { error: error instanceof Error ? error.message : String(error) });
+          logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useRealtimeQuery', action: 'parseWebSocketData', level: 'warn' } });
         }
       };
 
       wsRef.current.onerror = (): void => {
         // Fallback to polling if WebSocket fails
-        logger.info('WebSocket failed, using polling fallback');
+  
       };
 
     } catch {
       // WebSocket not available, use polling
-      logger.info('WebSocket not available, using polling');
+
     }
 
     const currentInterval = intervalRef.current;
@@ -92,12 +92,12 @@ export function useServerSentEvents<TData>(
         queryClient.setQueryData(queryKey as unknown[], data);
         config?.onUpdate?.(data);
       } catch (error) {
-        logger.warn('Failed to parse SSE data', { error: error instanceof Error ? error.message : String(error) });
+        logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useServerSentEvents', action: 'parseSSEData', level: 'warn' } });
       }
     };
 
     eventSource.onerror = (error: Event): void => {
-      logger.warn('SSE connection error', { error: String(error) });
+      logClientError(new Error(String(error)), { context: { source: 'useServerSentEvents', action: 'sseConnectionError', level: 'warn' } });
     };
 
     return (): void => {

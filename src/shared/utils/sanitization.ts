@@ -1,5 +1,3 @@
-import { logger } from '@/shared/utils/logger';
-
 export function sanitizeHtml(html: string): string {
   if (!html) return '';
 

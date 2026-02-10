@@ -2,6 +2,8 @@
 
 import { useMutation, useQuery, useQueryClient, type UseMutationResult, type UseQueryResult } from '@tanstack/react-query';
 
+import { logClientError } from '@/features/observability';
+
 import { api } from '@/shared/lib/api-client';
 import { logger } from '@/shared/utils/logger';
 import type { UserPreferences, UserPreferencesUpdate } from '@/shared/types/domain/user-preferences';
@@ -41,7 +43,7 @@ export function useUserPreferences(): UseQueryResult<UserPreferences, Error> {
       api.get<unknown>('/api/user/preferences')
         .then((data: unknown) => normalizeUserPreferencesResponse(data) as UserPreferences)
         .catch(error => {
-          logger.warn('[user-preferences] Failed to load user preferences', { error: error instanceof Error ? error.message : String(error) });
+          logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useUserPreferences', action: 'loadUserPreferences', level: 'warn' } });
           return {} as UserPreferences;
         }),
     staleTime: 1000 * 60 * 5, // 5 minutes

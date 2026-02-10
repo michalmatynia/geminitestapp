@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
+import { logClientError } from '@/features/observability';
 import { logger } from '@/shared/utils/logger';
 
 interface BackgroundSyncOptions {
@@ -32,7 +33,7 @@ export function useBackgroundSync({
           previousDataRef.current = currentData;
         }
       } catch (error: unknown) {
-        logger.warn('Background sync failed', { error: error instanceof Error ? error.message : String(error) });
+        logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useBackgroundSync', action: 'backgroundSyncFailed', level: 'warn' } });
       }
     };
 

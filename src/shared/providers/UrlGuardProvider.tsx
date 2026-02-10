@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import { logClientError } from '@/features/observability';
-import { logger } from '@/shared/utils/logger';
 
 const normalizeBadHostPath = (host: string, path: string): string | null => {
   const hostPrefix = `/${host}`;

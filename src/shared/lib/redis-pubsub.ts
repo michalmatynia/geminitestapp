@@ -4,7 +4,6 @@ import { ErrorSystem } from '@/features/observability/server';
 import { Redis } from 'ioredis';
 
 import { getRedisClient, isRedisEnabled } from '@/shared/lib/redis';
-import { logger } from '@/shared/utils/logger';
 
 let subscriber: Redis | null = null;
 

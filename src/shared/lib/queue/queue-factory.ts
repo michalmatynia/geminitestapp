@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
 import { Queue, Worker } from 'bullmq';
 
 import { logger } from '@/shared/utils/logger';
@@ -64,9 +65,7 @@ export function createManagedQueue<TJobData>(
     if (workerStarted) return;
     const connection = getRedisConnection();
     if (!connection) {
-      logger.info(
-        `[queue-factory:${config.name}] Redis not available, using inline processing mode`,
-      );
+      void logSystemEvent({ level: 'info', message: `Redis not available for queue ${config.name}, using inline processing mode`, source: `queue-factory:${config.name}` });
       return;
     }
     workerStarted = true;
@@ -101,26 +100,22 @@ export function createManagedQueue<TJobData>(
     }
 
     worker.on('error', (err: Error) => {
-      logger.error(`[${config.name}] Worker error: ${err.message}`, err);
-      // Log to ErrorSystem via dynamic import to avoid shared -> features circular dependency
-      void (async () => {
+      void (async (): Promise<void> => {
         try {
-          // eslint-disable-next-line import/no-restricted-paths
-          const { ErrorSystem } = await import('@/features/observability/services/error-system');
           await ErrorSystem.captureException(err, {
             service: `queue-worker:${config.name}`,
             category: 'SYSTEM',
           });
         } catch (logError) {
-          logger.error(`[${config.name}] Failed to log worker error to ErrorSystem`, logError);
+          logger.error(
+            `[${config.name}] Failed to log worker error to ErrorSystem`,
+            logError,
+          );
         }
       })();
     });
 
-    logger.info(
-      `[queue-factory:${config.name}] BullMQ worker started (concurrency: ${config.concurrency})`,
-      { concurrency: config.concurrency },
-    );
+    void logSystemEvent({ level: 'info', message: `BullMQ worker started (concurrency: ${config.concurrency})`, source: `queue-factory:${config.name}`, context: { concurrency: config.concurrency } });
   };
 
   const stopWorker = async (): Promise<void> => {
@@ -133,7 +128,7 @@ export function createManagedQueue<TJobData>(
       queue = null;
     }
     workerStarted = false;
-    logger.info(`[queue-factory:${config.name}] Worker stopped`);
+    void logSystemEvent({ level: 'info', message: 'Worker stopped', source: `queue-factory:${config.name}` });
   };
 
   const getHealthStatus = async (): Promise<QueueHealthStatus> => {

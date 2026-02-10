@@ -35,11 +35,6 @@ Add Error Boundary components to catch uncaught UI errors and forward them to yo
 -Implement UI Error Boundaries for React trees and ensure boundary events flow into the centralized error pipeline (including component stack, route, and last user action).
 -Add a ‘safe error serializer’ for client responses: keep user-facing error codes/messages stable; never include raw stack traces or DB error strings.
 
-* Scanned application for error handling coverage.
-* Confirmed ALL server-side API routes use `apiHandler` (or secure wrappers like `withSecurity`) which integrates with `logSystemEvent`.
-* Confirmed client-side errors are captured via `logClientError` and sent to the centralized logging system.
-* Confirmed `console.error` usage is minimal and primarily used as a fallback when logging fails.
-
 ---
 
 STATE MANAGEMENT

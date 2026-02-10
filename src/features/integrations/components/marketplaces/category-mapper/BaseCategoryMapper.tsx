@@ -4,6 +4,8 @@ import React from 'react';
 
 import { CategoryMapperProvider } from '@/features/integrations/context/CategoryMapperContext';
 
+import { BaseProducerMapper } from './BaseProducerMapper';
+import { BaseTagMapper } from './BaseTagMapper';
 import { CategoryMapperCatalogSelector } from './CategoryMapperCatalogSelector';
 import { CategoryMapperHeader } from './CategoryMapperHeader';
 import { CategoryMapperStats } from './CategoryMapperStats';
@@ -22,6 +24,8 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
         <CategoryMapperCatalogSelector />
         <CategoryMapperStats />
         <CategoryMapperTable />
+        <BaseProducerMapper connectionId={connectionId} connectionName={connectionName} />
+        <BaseTagMapper connectionId={connectionId} connectionName={connectionName} />
       </div>
     </CategoryMapperProvider>
   );

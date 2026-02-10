@@ -3,6 +3,14 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
 import type { ExternalCategory, CategoryMappingWithDetails } from '@/features/integrations/types/category-mapping';
+import type {
+  ExternalProducer,
+  ProducerMappingWithDetails,
+} from '@/features/integrations/types/producer-mapping';
+import type {
+  ExternalTag,
+  TagMappingWithDetails,
+} from '@/features/integrations/types/tag-mapping';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
@@ -39,5 +47,48 @@ export function useCategoryMappingsByConnection(
     queryKey: marketplaceKeys.mappings(connectionId, 'all'),
     queryFn: () => api.get<CategoryMappingWithDetails[]>(`/api/marketplace/mappings?connectionId=${connectionId}`),
     enabled: isEnabled && !!connectionId,
+  });
+}
+
+export function useExternalProducers(connectionId: string): UseQueryResult<ExternalProducer[]> {
+  return useQuery({
+    queryKey: marketplaceKeys.producers(connectionId),
+    queryFn: () =>
+      api.get<ExternalProducer[]>(`/api/marketplace/producers?connectionId=${connectionId}`),
+    enabled: !!connectionId,
+  });
+}
+
+export function useProducerMappings(
+  connectionId: string
+): UseQueryResult<ProducerMappingWithDetails[]> {
+  return useQuery({
+    queryKey: marketplaceKeys.producerMappings(connectionId),
+    queryFn: () =>
+      api.get<ProducerMappingWithDetails[]>(
+        `/api/marketplace/producer-mappings?connectionId=${connectionId}`
+      ),
+    enabled: !!connectionId,
+  });
+}
+
+export function useExternalTags(connectionId: string): UseQueryResult<ExternalTag[]> {
+  return useQuery({
+    queryKey: marketplaceKeys.tags(connectionId),
+    queryFn: () => api.get<ExternalTag[]>(`/api/marketplace/tags?connectionId=${connectionId}`),
+    enabled: !!connectionId,
+  });
+}
+
+export function useTagMappings(
+  connectionId: string
+): UseQueryResult<TagMappingWithDetails[]> {
+  return useQuery({
+    queryKey: marketplaceKeys.tagMappings(connectionId),
+    queryFn: () =>
+      api.get<TagMappingWithDetails[]>(
+        `/api/marketplace/tag-mappings?connectionId=${connectionId}`
+      ),
+    enabled: !!connectionId,
   });
 }

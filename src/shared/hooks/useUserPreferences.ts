@@ -12,6 +12,27 @@ import {
 
 const userPreferencesQueryKey = ['user-preferences'] as const;
 
+const hasPreferenceChanged = (
+  current: UserPreferences | undefined,
+  key: string,
+  nextValue: unknown
+): boolean => {
+  const currentValue = (current as Record<string, unknown> | undefined)?.[key];
+  if (
+    currentValue &&
+    typeof currentValue === 'object' &&
+    nextValue &&
+    typeof nextValue === 'object'
+  ) {
+    try {
+      return JSON.stringify(currentValue) !== JSON.stringify(nextValue);
+    } catch {
+      return true;
+    }
+  }
+  return currentValue !== nextValue;
+};
+
 export function useUserPreferences(): UseQueryResult<UserPreferences, Error> {
   return useQuery({
     queryKey: userPreferencesQueryKey,
@@ -37,7 +58,14 @@ export function useUpdateUserPreferences(): UseMutationResult<UserPreferences, E
         throw new Error('Invalid user preferences payload.');
       }
       const payload = normalizeUserPreferencesUpdatePayload(validation.data);
-      return api.patch<UserPreferences>('/api/user/preferences', payload);
+      const current = queryClient.getQueryData<UserPreferences>(userPreferencesQueryKey) ?? undefined;
+      const changedPayload = Object.fromEntries(
+        Object.entries(payload).filter(([key, value]) => hasPreferenceChanged(current, key, value))
+      ) as UserPreferencesUpdate;
+      if (Object.keys(changedPayload).length === 0) {
+        return Promise.resolve((current ?? {}) as UserPreferences);
+      }
+      return api.patch<UserPreferences>('/api/user/preferences', changedPayload);
     },
     onSuccess: (data: UserPreferences): void => {
       queryClient.setQueryData(

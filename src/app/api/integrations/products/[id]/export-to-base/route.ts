@@ -10,6 +10,8 @@ import { getProductListingRepository } from '@/features/integrations/server';
 import { findProductListingByIdAcrossProviders } from '@/features/integrations/server';
 import { findProductListingByProductAndConnectionAcrossProviders } from '@/features/integrations/server';
 import { getCategoryMappingRepository } from '@/features/integrations/server';
+import { getProducerMappingRepository } from '@/features/integrations/server';
+import { getTagMappingRepository } from '@/features/integrations/server';
 import {
   getExportWarehouseId
 } from '@/features/integrations/server';
@@ -36,6 +38,7 @@ import { ErrorSystem } from '@/features/observability/server';
 import { parseJsonBody } from '@/features/products/server';
 import { getProducerRepository } from '@/features/products/server';
 import { getProductRepository } from '@/features/products/server';
+import { getTagRepository } from '@/features/products/server';
 import {
   badRequestError,
   conflictError,
@@ -130,6 +133,20 @@ const CATEGORY_TEMPLATE_PRODUCT_FIELDS = new Set([
   'categoryid',
   'category_id',
   'category',
+]);
+
+const PRODUCER_ID_TEMPLATE_FIELDS = new Set([
+  'producerid',
+  'producer_id',
+  'producerids',
+  'producer_ids',
+]);
+
+const TAG_ID_TEMPLATE_FIELDS = new Set([
+  'tagid',
+  'tag_id',
+  'tagids',
+  'tag_ids',
 ]);
 
 const BASE_EXPORT_RUN_PATH_ID = 'integration-base-export';
@@ -340,59 +357,228 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       }
     }
 
-    let producerNameById: Record<string, string> | null = null;
-    if (!imagesOnly) {
-      const producerIds = Array.from(
-        new Set(
-          (product.producers ?? [])
-            .map((producer) => producer.producerId?.trim())
-            .filter((producerId): producerId is string => Boolean(producerId))
+    const productProducerIds = !imagesOnly
+      ? Array.from(
+          new Set(
+            (product.producers ?? [])
+              .map((producer) => producer.producerId?.trim())
+              .filter((producerId): producerId is string => Boolean(producerId))
+          )
         )
-      );
-      if (producerIds.length > 0) {
-        try {
-          const producerRepository = await getProducerRepository();
-          const resolvedProducers = await Promise.all(
-            producerIds.map(async (producerId: string) => {
-              try {
-                return await producerRepository.getProducerById(producerId);
-              } catch {
-                return null;
-              }
-            })
-          );
-          const mappedEntries = resolvedProducers
-            .map((producer) => {
-              const id =
-                typeof producer?.id === 'string' ? producer.id.trim() : '';
-              const name =
-                typeof producer?.name === 'string'
-                  ? producer.name.trim()
-                  : '';
-              if (!id || !name) return null;
-              return [id, name] as const;
-            })
-            .filter(
-              (entry): entry is readonly [string, string] => entry !== null
-            );
-          if (mappedEntries.length > 0) {
-            producerNameById = Object.fromEntries(mappedEntries);
-          }
-        } catch (error) {
-          await ErrorSystem.logWarning(
-            '[export-to-base] Failed to resolve producer names for export',
-            {
-              productId,
-              producerCount: producerIds.length,
-              error: error instanceof Error ? error.message : String(error),
+      : [];
+    const productTagIds = !imagesOnly
+      ? Array.from(
+          new Set(
+            (product.tags ?? [])
+              .map((tag) => tag.tagId?.trim())
+              .filter((tagId): tagId is string => Boolean(tagId))
+          )
+        )
+      : [];
+    let producerNameById: Record<string, string> | null = null;
+    let producerExternalIdByInternalId: Record<string, string> | null = null;
+    let tagNameById: Record<string, string> | null = null;
+    let tagExternalIdByInternalId: Record<string, string> | null = null;
+    if (!imagesOnly && productProducerIds.length > 0) {
+      try {
+        const producerRepository = await getProducerRepository();
+        const resolvedProducers = await Promise.all(
+          productProducerIds.map(async (producerId: string) => {
+            try {
+              return await producerRepository.getProducerById(producerId);
+            } catch {
+              return null;
             }
+          })
+        );
+        const mappedEntries = resolvedProducers
+          .map((producer) => {
+            const id = typeof producer?.id === 'string' ? producer.id.trim() : '';
+            const name =
+              typeof producer?.name === 'string' ? producer.name.trim() : '';
+            if (!id || !name) return null;
+            return [id, name] as const;
+          })
+          .filter(
+            (entry): entry is readonly [string, string] => entry !== null
           );
+        if (mappedEntries.length > 0) {
+          producerNameById = Object.fromEntries([
+            ...mappedEntries,
+            ...mappedEntries.map(([id, name]) => [id.toLowerCase(), name] as const),
+          ]);
         }
+      } catch (error) {
+        await ErrorSystem.logWarning(
+          '[export-to-base] Failed to resolve producer names for export',
+          {
+            productId,
+            producerCount: productProducerIds.length,
+            error: error instanceof Error ? error.message : String(error),
+          }
+        );
+      }
+
+      try {
+        const producerMappingRepo = getProducerMappingRepository();
+        const producerMappings =
+          await producerMappingRepo.listByInternalProducerIds(
+            data.connectionId,
+            productProducerIds
+          );
+        const mappedEntries = producerMappings
+          .map((mapping) => {
+            const internalProducerId =
+              typeof mapping.internalProducerId === 'string'
+                ? mapping.internalProducerId.trim()
+                : '';
+            const externalProducerId =
+              typeof mapping.externalProducer?.externalId === 'string'
+                ? mapping.externalProducer.externalId.trim()
+                : '';
+            if (!internalProducerId || !externalProducerId) return null;
+            return [internalProducerId, externalProducerId] as const;
+          })
+          .filter(
+            (entry): entry is readonly [string, string] => entry !== null
+          );
+        if (mappedEntries.length > 0) {
+          producerExternalIdByInternalId = Object.fromEntries([
+            ...mappedEntries,
+            ...mappedEntries.map(([id, externalId]) => [id.toLowerCase(), externalId] as const),
+          ]);
+        }
+      } catch (error) {
+        await ErrorSystem.logWarning(
+          '[export-to-base] Failed to resolve producer mappings for export',
+          {
+            productId,
+            producerCount: productProducerIds.length,
+            error: error instanceof Error ? error.message : String(error),
+          }
+        );
+      }
+    }
+
+    if (!imagesOnly && productTagIds.length > 0) {
+      try {
+        const tagRepository = await getTagRepository();
+        const resolvedTags = await Promise.all(
+          productTagIds.map(async (tagId: string) => {
+            try {
+              return await tagRepository.getTagById(tagId);
+            } catch {
+              return null;
+            }
+          })
+        );
+        const mappedEntries = resolvedTags
+          .map((tag) => {
+            const id = typeof tag?.id === 'string' ? tag.id.trim() : '';
+            const name = typeof tag?.name === 'string' ? tag.name.trim() : '';
+            if (!id || !name) return null;
+            return [id, name] as const;
+          })
+          .filter((entry): entry is readonly [string, string] => entry !== null);
+        if (mappedEntries.length > 0) {
+          tagNameById = Object.fromEntries([
+            ...mappedEntries,
+            ...mappedEntries.map(([id, name]) => [id.toLowerCase(), name] as const),
+          ]);
+        }
+      } catch (error) {
+        await ErrorSystem.logWarning(
+          '[export-to-base] Failed to resolve tag names for export',
+          {
+            productId,
+            tagCount: productTagIds.length,
+            error: error instanceof Error ? error.message : String(error),
+          }
+        );
+      }
+
+      try {
+        const tagMappingRepo = getTagMappingRepository();
+        const tagMappings = await tagMappingRepo.listByInternalTagIds(
+          data.connectionId,
+          productTagIds
+        );
+        const mappedEntries = tagMappings
+          .map((mapping) => {
+            const internalTagId =
+              typeof mapping.internalTagId === 'string'
+                ? mapping.internalTagId.trim()
+                : '';
+            const externalTagId =
+              typeof mapping.externalTag?.externalId === 'string'
+                ? mapping.externalTag.externalId.trim()
+                : '';
+            if (!internalTagId || !externalTagId) return null;
+            return [internalTagId, externalTagId] as const;
+          })
+          .filter((entry): entry is readonly [string, string] => entry !== null);
+        if (mappedEntries.length > 0) {
+          tagExternalIdByInternalId = Object.fromEntries([
+            ...mappedEntries,
+            ...mappedEntries.map(([id, externalId]) => [id.toLowerCase(), externalId] as const),
+          ]);
+        }
+      } catch (error) {
+        await ErrorSystem.logWarning(
+          '[export-to-base] Failed to resolve tag mappings for export',
+          {
+            productId,
+            tagCount: productTagIds.length,
+            error: error instanceof Error ? error.message : String(error),
+          }
+        );
       }
     }
 
     let exportProduct = product;
     if (!imagesOnly) {
+      const hasProducerIdTemplateMapping = mappings.some((mapping) =>
+        PRODUCER_ID_TEMPLATE_FIELDS.has(mapping['sourceKey'].trim().toLowerCase())
+      );
+      if (hasProducerIdTemplateMapping && productProducerIds.length > 0) {
+        const missingProducerIds = productProducerIds.filter((producerId: string) => {
+          const direct = producerExternalIdByInternalId?.[producerId];
+          const lowered = producerExternalIdByInternalId?.[producerId.toLowerCase()];
+          return !direct && !lowered;
+        });
+        if (missingProducerIds.length > 0) {
+          const missingProducerNames = missingProducerIds.map((producerId: string) => {
+            const direct = producerNameById?.[producerId];
+            const lowered = producerNameById?.[producerId.toLowerCase()];
+            return direct ?? lowered ?? producerId;
+          });
+          throw badRequestError(
+            `No Base.com producer mapping found for: ${missingProducerNames.join(', ')}. Map producers in Producer Mapper first.`
+          );
+        }
+      }
+
+      const hasTagIdTemplateMapping = mappings.some((mapping) =>
+        TAG_ID_TEMPLATE_FIELDS.has(mapping['sourceKey'].trim().toLowerCase())
+      );
+      if (hasTagIdTemplateMapping && productTagIds.length > 0) {
+        const missingTagIds = productTagIds.filter((tagId: string) => {
+          const direct = tagExternalIdByInternalId?.[tagId];
+          const lowered = tagExternalIdByInternalId?.[tagId.toLowerCase()];
+          return !direct && !lowered;
+        });
+        if (missingTagIds.length > 0) {
+          const missingTagNames = missingTagIds.map((tagId: string) => {
+            const direct = tagNameById?.[tagId];
+            const lowered = tagNameById?.[tagId.toLowerCase()];
+            return direct ?? lowered ?? tagId;
+          });
+          throw badRequestError(
+            `No Base.com tag mapping found for: ${missingTagNames.join(', ')}. Map tags in Tag Mapper first.`
+          );
+        }
+      }
+
       const hasCategoryTemplateMapping = mappings.some((mapping) =>
         CATEGORY_TEMPLATE_PRODUCT_FIELDS.has(
           mapping['targetField'].trim().toLowerCase()
@@ -761,6 +947,13 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
           includeStockWithoutWarehouse,
           ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
           ...(producerNameById ? { producerNameById } : {}),
+          ...(producerExternalIdByInternalId
+            ? { producerExternalIdByInternalId }
+            : {}),
+          ...(tagNameById ? { tagNameById } : {}),
+          ...(tagExternalIdByInternalId
+            ? { tagExternalIdByInternalId }
+            : {}),
           exportImagesAsBase64: exportImagesAsBase64,
           imageBase64Mode,
           imageTransform,
@@ -824,6 +1017,13 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
           includeStockWithoutWarehouse,
           ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
           ...(producerNameById ? { producerNameById } : {}),
+          ...(producerExternalIdByInternalId
+            ? { producerExternalIdByInternalId }
+            : {}),
+          ...(tagNameById ? { tagNameById } : {}),
+          ...(tagExternalIdByInternalId
+            ? { tagExternalIdByInternalId }
+            : {}),
           exportImagesAsBase64: exportImagesAsBase64,
           ...(baseImageDiagnostics ? { imageDiagnostics: baseImageDiagnostics } : {}),
           imageBase64Mode,
@@ -871,6 +1071,13 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
           includeStockWithoutWarehouse,
           ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
           ...(producerNameById ? { producerNameById } : {}),
+          ...(producerExternalIdByInternalId
+            ? { producerExternalIdByInternalId }
+            : {}),
+          ...(tagNameById ? { tagNameById } : {}),
+          ...(tagExternalIdByInternalId
+            ? { tagExternalIdByInternalId }
+            : {}),
           exportImagesAsBase64: exportImagesAsBase64,
           imageBase64Mode,
           imageTransform
@@ -919,6 +1126,13 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
           includeStockWithoutWarehouse,
           ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
           ...(producerNameById ? { producerNameById } : {}),
+          ...(producerExternalIdByInternalId
+            ? { producerExternalIdByInternalId }
+            : {}),
+          ...(tagNameById ? { tagNameById } : {}),
+          ...(tagExternalIdByInternalId
+            ? { tagExternalIdByInternalId }
+            : {}),
           exportImagesAsBase64: exportImagesAsBase64,
           imageBase64Mode,
           imageTransform
@@ -992,6 +1206,13 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
               includeStockWithoutWarehouse,
               ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
               ...(producerNameById ? { producerNameById } : {}),
+              ...(producerExternalIdByInternalId
+                ? { producerExternalIdByInternalId }
+                : {}),
+              ...(tagNameById ? { tagNameById } : {}),
+              ...(tagExternalIdByInternalId
+                ? { tagExternalIdByInternalId }
+                : {}),
               exportImagesAsBase64: exportImagesAsBase64,
               imageDiagnostics,
               imageBase64Mode,

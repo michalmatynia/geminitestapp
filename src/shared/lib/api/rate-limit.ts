@@ -2,6 +2,7 @@ import 'server-only';
 
 import { rateLimitedError } from '@/shared/errors/app-error';
 import { getRedisClient } from '@/shared/lib/redis';
+import { logger } from '@/shared/utils/logger';
 
 import type { NextRequest } from 'next/server';
 
@@ -64,7 +65,7 @@ class RateLimiter {
           totalHits: count + (allowed ? 1 : 0),
         };
       } catch (error) {
-        console.error('[rate-limit] Redis failure, falling back to memory:', error);
+        logger.warn('[rate-limit] Redis failure, falling back to memory', { error });
       }
     }
 

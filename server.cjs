@@ -212,25 +212,60 @@ app.prepare().then(() => {
     handle(req, res);
   });
 
+  const isExpectedMissingCleanupModuleError = (error) => {
+    if (!error) return false;
+    const code = typeof error === 'object' ? error.code : undefined;
+    const message = typeof error === 'object' && typeof error.message === 'string' ? error.message : String(error);
+    return (
+      code === 'ERR_MODULE_NOT_FOUND' ||
+      code === 'MODULE_NOT_FOUND' ||
+      code === 'ERR_UNKNOWN_FILE_EXTENSION' ||
+      message.includes('Cannot find module') ||
+      message.includes('Unknown file extension')
+    );
+  };
+
+  const importCleanupModule = async (specifier) => {
+    try {
+      return await import(specifier);
+    } catch (error) {
+      if (isExpectedMissingCleanupModuleError(error)) {
+        if (process.env.DEBUG_SHUTDOWN_CLEANUP === 'true') {
+          console.info(`[server] Cleanup module unavailable, skipping: ${specifier}`);
+        }
+        return null;
+      }
+      throw error;
+    }
+  };
+
   // Graceful shutdown: drain BullMQ workers and close all Redis connections before exit
   const gracefulShutdown = async (signal) => {
     console.log(`\n> Received ${signal}, shutting down gracefully...`);
     try {
-      const { stopAllWorkers, closeRedisConnection } = await import('./src/shared/lib/queue/index.js');
-      await stopAllWorkers();
-      await closeRedisConnection();
+      const queueModule = await importCleanupModule('./src/shared/lib/queue/index.js');
+      if (queueModule?.stopAllWorkers) {
+        await queueModule.stopAllWorkers();
+      }
+      if (queueModule?.closeRedisConnection) {
+        await queueModule.closeRedisConnection();
+      }
     } catch (err) {
       console.warn('[server] Queue cleanup error:', err.message);
     }
     try {
-      const { closeSubscriber } = await import('./src/shared/lib/redis-pubsub.js');
-      await closeSubscriber();
+      const redisPubSubModule = await importCleanupModule('./src/shared/lib/redis-pubsub.js');
+      if (redisPubSubModule?.closeSubscriber) {
+        await redisPubSubModule.closeSubscriber();
+      }
     } catch (err) {
       console.warn('[server] Redis subscriber cleanup error:', err.message);
     }
     try {
-      const { closeRedisClient } = await import('./src/shared/lib/redis.js');
-      await closeRedisClient();
+      const redisModule = await importCleanupModule('./src/shared/lib/redis.js');
+      if (redisModule?.closeRedisClient) {
+        await redisModule.closeRedisClient();
+      }
     } catch (err) {
       console.warn('[server] Redis client cleanup error:', err.message);
     }

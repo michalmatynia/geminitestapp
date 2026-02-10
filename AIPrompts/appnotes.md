@@ -9,22 +9,19 @@ I cannot get rid of non replacement validations
 * In my AI Paths, the data signal flow seems a bit off. In the Category Inference Path, when I use the Simulation Node which provides data readily available, the data flow starts with node-wi2740 JSON Mapper Value output and flows into node-z6sjck Configure Database Query input where it is immediately available, before it is availabe in the input of the preceding node JSON Mapper node-wi2740, which does not make sense, cause it looks as if the signal was skipping Nodes.
 
 
-I think I need producer mapper, like category mapper, and I think it's the same for tags
+* I think I need producer mapper, like category mapper, and I think it's the same for tags
 
 
-In product Edit Create Field, I want to see the actual name of the producer in the selector field, instead of 1, selected. Also, in Drafter, I want the producer field to have the same selector as the PRoduct Create / Edit Modal, The same goes for images, Drafter needs the same component as Product Create / Edit modal
+* In product Edit / Create Modal, In Other Tab, I want to see the actual name of the producer in the selector field, instead of 1, selected. The same goes for Catalogs, I want to see the actual catalog names.
+ Also, in Drafter, I want the producer field to have the same selector as the PRoduct Create / Edit Modal, The same goes for images, Drafter needs the same component as Product Create / Edit modal
 
 Move all Database operatons into one page
+
+In Category, the strike through line when I insert one category into another is not that great. Adjust it, so that the Line finished before the Category name begins
 
 * Add a Producer Field to Drafter and also add it to import Export Template, as it's not showing there and Producer field can't be imported / exported.
 
 * Repair Category Handling in Products Feature. Adding and resorting categories is not working. Also, I would like to use folder tree component for unification purposes to handle the hierarchies of category section. The Category Folder tree needs little drag icons to the left like the folder tree in CMS Builder Page, I don't need any icons in the Category Folder tree, just the names of Categories
-
- * Add a one click export to Base.com button
-
-* In my drafter Modal I was supposed to have coloring options for my Icons, I still don't see that.
-
-* I updated my drafter Draft Icon, but in the PRoduct List I see the old icon. The icon has not updated.
 
 * My Export import template settings are not retained after save and page
   refresh.

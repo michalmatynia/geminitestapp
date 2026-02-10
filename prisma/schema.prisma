@@ -713,6 +713,7 @@ model ProductTag {
   updatedAt DateTime               @updatedAt
   catalog   Catalog                @relation(fields: [catalogId], references: [id], onDelete: Cascade)
   products  ProductTagAssignment[]
+  tagMappings TagMapping[]
 
   @@unique([catalogId, name])
 }
@@ -734,6 +735,7 @@ model Producer {
   createdAt DateTime                    @default(now())
   updatedAt DateTime                    @updatedAt
   products  ProductProducerAssignment[]
+  producerMappings ProducerMapping[]
 }
 
 model ProductProducerAssignment {
@@ -1037,6 +1039,68 @@ model CategoryMapping {
   @@unique([connectionId, externalCategoryId, catalogId])
   @@index([connectionId])
   @@index([internalCategoryId])
+}
+
+model ExternalProducer {
+  id           String            @id @default(cuid())
+  connectionId String
+  externalId   String
+  name         String
+  metadata     Json?
+  fetchedAt    DateTime          @default(now())
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  mappings     ProducerMapping[]
+
+  @@unique([connectionId, externalId])
+  @@index([connectionId])
+}
+
+model ProducerMapping {
+  id                 String           @id @default(cuid())
+  connectionId       String
+  externalProducerId String
+  internalProducerId String
+  isActive           Boolean          @default(true)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  externalProducer   ExternalProducer @relation(fields: [externalProducerId], references: [id], onDelete: Cascade)
+  internalProducer   Producer         @relation(fields: [internalProducerId], references: [id], onDelete: Cascade)
+
+  @@unique([connectionId, internalProducerId])
+  @@index([connectionId])
+  @@index([externalProducerId])
+}
+
+model ExternalTag {
+  id           String       @id @default(cuid())
+  connectionId String
+  externalId   String
+  name         String
+  metadata     Json?
+  fetchedAt    DateTime     @default(now())
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  mappings     TagMapping[]
+
+  @@unique([connectionId, externalId])
+  @@index([connectionId])
+}
+
+model TagMapping {
+  id            String      @id @default(cuid())
+  connectionId  String
+  externalTagId String
+  internalTagId String
+  isActive      Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  externalTag   ExternalTag @relation(fields: [externalTagId], references: [id], onDelete: Cascade)
+  internalTag   ProductTag  @relation(fields: [internalTagId], references: [id], onDelete: Cascade)
+
+  @@unique([connectionId, internalTagId])
+  @@index([connectionId])
+  @@index([externalTagId])
 }
 
 model Asset3D {

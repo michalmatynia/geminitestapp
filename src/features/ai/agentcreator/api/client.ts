@@ -1,51 +1,35 @@
+import { api } from '@/shared/lib/api-client';
 import { AiPathRunRecord } from '@/shared/types/domain/ai-paths';
 import { AgentSnapshot, AgentBrowserLog, AgentAuditLog } from '@/shared/types/domain/chatbot';
 
 export async function getAgentRuns(): Promise<AiPathRunRecord[]> {
-  const res = await fetch('/api/agentcreator/agent');
-  if (!res.ok) throw new Error('Failed to load agent runs.');
-  const data = (await res.json()) as { runs?: AiPathRunRecord[] };
+  const data = await api.get<{ runs?: AiPathRunRecord[] }>('/api/agentcreator/agent');
   return data.runs ?? [];
 }
 
 export async function getAgentSnapshots(runId: string): Promise<AgentSnapshot[]> {
-  const res = await fetch(`/api/agentcreator/agent/${runId}/snapshots`);
-  if (!res.ok) throw new Error('Failed to load agent snapshots.');
-  const data = (await res.json()) as { snapshots?: AgentSnapshot[] };
+  const data = await api.get<{ snapshots?: AgentSnapshot[] }>(`/api/agentcreator/agent/${runId}/snapshots`);
   return data.snapshots ?? [];
 }
 
 export async function getAgentLogs(runId: string): Promise<AgentBrowserLog[]> {
-  const res = await fetch(`/api/agentcreator/agent/${runId}/logs`);
-  if (!res.ok) throw new Error('Failed to load agent logs.');
-  const data = (await res.json()) as { logs?: AgentBrowserLog[] };
+  const data = await api.get<{ logs?: AgentBrowserLog[] }>(`/api/agentcreator/agent/${runId}/logs`);
   return data.logs ?? [];
 }
 
 export async function getAgentAudits(runId: string): Promise<AgentAuditLog[]> {
-  const res = await fetch(`/api/agentcreator/agent/${runId}/audits`);
-  if (!res.ok) throw new Error('Failed to load agent steps.');
-  const data = (await res.json()) as { audits?: AgentAuditLog[] };
+  const data = await api.get<{ audits?: AgentAuditLog[] }>(`/api/agentcreator/agent/${runId}/audits`);
   return data.audits ?? [];
 }
 
 export async function deleteAgentRun(runId: string, force: boolean = false): Promise<void> {
-  const url = force
-    ? `/api/agentcreator/agent/${runId}?force=true`
-    : `/api/agentcreator/agent/${runId}`;
-  const res = await fetch(url, { method: 'DELETE' });
-  if (!res.ok) {
-    const data = (await res.json()) as { error?: string };
-    throw new Error(data.error || 'Failed to delete agent run.');
-  }
+  const options: Parameters<typeof api.delete>[1] = {};
+  if (force) options.params = { force: 'true' };
+  await api.delete(`/api/agentcreator/agent/${runId}`, options);
 }
 
 export async function deleteCompletedAgentRuns(): Promise<void> {
-  const res = await fetch('/api/agentcreator/agent?scope=terminal', {
-    method: 'DELETE',
+  await api.delete('/api/agentcreator/agent', {
+    params: { scope: 'terminal' }
   });
-  if (!res.ok) {
-    const data = (await res.json()) as { error?: string };
-    throw new Error(data.error || 'Failed to delete agent runs.');
-  }
 }

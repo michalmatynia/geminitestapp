@@ -2,9 +2,21 @@
 
 import { useMutation, useQuery, useQueryClient, type UseMutationResult, type UseQueryResult } from '@tanstack/react-query';
 
-import { logClientError } from '@/features/observability';
 import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord, AgentTeachingEmbeddingDocumentListItem, AgentTeachingChatSource } from '@/shared/types/domain/agent-teaching';
 import type { ChatMessage } from '@/shared/types/domain/chatbot';
+import { 
+  getTeachingAgents, 
+  upsertTeachingAgent, 
+  deleteTeachingAgent,
+  getEmbeddingCollections,
+  upsertEmbeddingCollection,
+  deleteEmbeddingCollection,
+  getEmbeddingDocuments as fetchEmbeddingDocs,
+  addEmbeddingDocument,
+  deleteEmbeddingDocument,
+  searchEmbeddingCollection,
+  teachingChat
+} from '../api';
 
 export const agentTeachingKeys = {
   all: ['agent-teaching'] as const,
@@ -19,25 +31,11 @@ export function useSearchEmbeddingCollectionMutation(): UseMutationResult<
   { collectionId: string; queryText: string; topK?: number; minScore?: number }
   > {
   return useMutation({
-    mutationFn: async ({ collectionId, queryText, topK, minScore }): Promise<AgentTeachingChatSource[]> => {
-      const res = await fetch(
-        `/api/agentcreator/teaching/collections/${encodeURIComponent(collectionId)}/search`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            queryText,
-            topK,
-            minScore,
-          }),
-        }
-      );
-      if (!res.ok) {
-        const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error || 'Search failed.');
-      }
-      const data = (await res.json()) as { sources?: AgentTeachingChatSource[] };
-      return Array.isArray(data.sources) ? data.sources : [];
+    mutationFn: ({ collectionId, queryText, topK, minScore }) => {
+      const payload: Parameters<typeof searchEmbeddingCollection>[1] = { queryText };
+      if (topK !== undefined) payload.topK = topK;
+      if (minScore !== undefined) payload.minScore = minScore;
+      return searchEmbeddingCollection(collectionId, payload);
     },
   });
 }
@@ -48,46 +46,14 @@ export function useTeachingChatMutation(): UseMutationResult<
   { agentId: string; messages: ChatMessage[] }
   > {
   return useMutation({
-    mutationFn: async ({ agentId, messages }): Promise<{ message: string; sources: AgentTeachingChatSource[] }> => {
-      const res = await fetch('/api/agentcreator/teaching/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agentId, messages }),
-      });
-      if (!res.ok) {
-        const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error || 'Chat failed.');
-      }
-      return (await res.json()) as { message: string; sources: AgentTeachingChatSource[] };
-    },
+    mutationFn: ({ agentId, messages }) => teachingChat(agentId, messages),
   });
 }
 
 export function useTeachingAgents(options?: { enabled?: boolean }): UseQueryResult<AgentTeachingAgentRecord[], Error> {
   return useQuery({
     queryKey: agentTeachingKeys.agents(),
-    queryFn: async (): Promise<AgentTeachingAgentRecord[]> => {
-      try {
-        const res = await fetch('/api/agentcreator/teaching/agents');
-        if (!res.ok) {
-          const payload = (await res.json().catch(() => null)) as { error?: string } | null;
-          const errorMsg = payload?.error ?? `HTTP ${res.status}`;
-          console.warn('[learner-agents] Failed to load learner agents', errorMsg);
-          logClientError(new Error(`Failed to load learner agents: ${errorMsg}`), {
-            context: { source: 'useAgentTeaching', action: 'useTeachingAgents', status: res.status }
-          });
-          return [];
-        }
-        const data = (await res.json()) as { agents?: AgentTeachingAgentRecord[] };
-        return data.agents ?? [];
-      } catch (error) {
-        console.warn('[learner-agents] Failed to load learner agents', error);
-        logClientError(error instanceof Error ? error : new Error('Failed to load learner agents'), {
-          context: { source: 'useAgentTeaching', action: 'useTeachingAgents' }
-        });
-        return [];
-      }
-    },
+    queryFn: getTeachingAgents,
     enabled: options?.enabled ?? true,
   });
 }
@@ -95,12 +61,7 @@ export function useTeachingAgents(options?: { enabled?: boolean }): UseQueryResu
 export function useTeachingCollections(): UseQueryResult<AgentTeachingEmbeddingCollectionRecord[], Error> {
   return useQuery({
     queryKey: agentTeachingKeys.collections(),
-    queryFn: async (): Promise<AgentTeachingEmbeddingCollectionRecord[]> => {
-      const res = await fetch('/api/agentcreator/teaching/collections');
-      if (!res.ok) throw new Error('Failed to load embedding collections.');
-      const data = (await res.json()) as { collections?: AgentTeachingEmbeddingCollectionRecord[] };
-      return data.collections ?? [];
-    },
+    queryFn: getEmbeddingCollections,
   });
 }
 
@@ -111,26 +72,7 @@ export function useUpsertTeachingAgentMutation(): UseMutationResult<
   > {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: Partial<AgentTeachingAgentRecord> & { name: string }): Promise<AgentTeachingAgentRecord> => {
-      const id = typeof payload.id === 'string' ? payload.id.trim() : '';
-      const isUpdate = id.length > 0;
-      const url = isUpdate
-        ? `/api/agentcreator/teaching/agents/${encodeURIComponent(id)}`
-        : '/api/agentcreator/teaching/agents';
-      const method = isUpdate ? 'PATCH' : 'POST';
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error || 'Failed to save learner agent.');
-      }
-      const data = (await res.json()) as { agent?: AgentTeachingAgentRecord };
-      if (!data.agent) throw new Error('Missing agent in response.');
-      return data.agent;
-    },
+    mutationFn: upsertTeachingAgent,
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: agentTeachingKeys.agents() });
     },
@@ -144,13 +86,7 @@ export function useDeleteTeachingAgentMutation(): UseMutationResult<
   > {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id }: { id: string }): Promise<void> => {
-      const res = await fetch(`/api/agentcreator/teaching/agents/${encodeURIComponent(id)}`, { method: 'DELETE' });
-      if (!res.ok) {
-        const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error || 'Failed to delete learner agent.');
-      }
-    },
+    mutationFn: ({ id }) => deleteTeachingAgent(id),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: agentTeachingKeys.agents() });
     },
@@ -164,26 +100,7 @@ export function useUpsertEmbeddingCollectionMutation(): UseMutationResult<
   > {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: Partial<AgentTeachingEmbeddingCollectionRecord> & { name: string }): Promise<AgentTeachingEmbeddingCollectionRecord> => {
-      const id = typeof payload.id === 'string' ? payload.id.trim() : '';
-      const isUpdate = id.length > 0;
-      const url = isUpdate
-        ? `/api/agentcreator/teaching/collections/${encodeURIComponent(id)}`
-        : '/api/agentcreator/teaching/collections';
-      const method = isUpdate ? 'PATCH' : 'POST';
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error || 'Failed to save embedding collection.');
-      }
-      const data = (await res.json()) as { collection?: AgentTeachingEmbeddingCollectionRecord };
-      if (!data.collection) throw new Error('Missing collection in response.');
-      return data.collection;
-    },
+    mutationFn: upsertEmbeddingCollection,
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: agentTeachingKeys.collections() });
     },
@@ -197,13 +114,7 @@ export function useDeleteEmbeddingCollectionMutation(): UseMutationResult<
   > {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id }: { id: string }): Promise<void> => {
-      const res = await fetch(`/api/agentcreator/teaching/collections/${encodeURIComponent(id)}`, { method: 'DELETE' });
-      if (!res.ok) {
-        const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error || 'Failed to delete embedding collection.');
-      }
-    },
+    mutationFn: ({ id }) => deleteEmbeddingCollection(id),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: agentTeachingKeys.collections() });
       void qc.invalidateQueries({ queryKey: agentTeachingKeys.agents() });
@@ -216,9 +127,7 @@ export function useEmbeddingDocuments(collectionId: string | null): UseQueryResu
     queryKey: collectionId ? agentTeachingKeys.documents(collectionId) : [...agentTeachingKeys.all, 'documents', 'none'],
     queryFn: async () => {
       if (!collectionId) return null;
-      const res = await fetch(`/api/agentcreator/teaching/collections/${encodeURIComponent(collectionId)}/documents?limit=100&skip=0`);
-      if (!res.ok) throw new Error('Failed to load documents.');
-      return (await res.json()) as { items: AgentTeachingEmbeddingDocumentListItem[]; total: number };
+      return fetchEmbeddingDocs(collectionId);
     },
     enabled: !!collectionId,
   });
@@ -231,29 +140,14 @@ export function useAddEmbeddingDocumentMutation(): UseMutationResult<
   > {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: { collectionId: string; text: string; title?: string | null; source?: string | null; tags?: string[] }): Promise<AgentTeachingEmbeddingDocumentListItem> => {
-      const res = await fetch(
-        `/api/agentcreator/teaching/collections/${encodeURIComponent(payload.collectionId)}/documents`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            text: payload.text,
-            title: payload.title ?? null,
-            source: payload.source ?? null,
-            tags: payload.tags ?? [],
-          }),
-        }
-      );
-      if (!res.ok) {
-        const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error || 'Failed to add document.');
-      }
-      const data = (await res.json()) as { item?: AgentTeachingEmbeddingDocumentListItem };
-      if (!data.item) throw new Error('Missing item in response.');
-      return data.item;
+    mutationFn: ({ collectionId, text, title, source, tags }) => {
+      const payload: Parameters<typeof addEmbeddingDocument>[1] = { text };
+      if (title !== undefined) payload.title = title;
+      if (source !== undefined) payload.source = source;
+      if (tags !== undefined) payload.tags = tags;
+      return addEmbeddingDocument(collectionId, payload);
     },
-    onSuccess: (_item: AgentTeachingEmbeddingDocumentListItem, vars: { collectionId: string; text: string; title?: string | null; source?: string | null; tags?: string[] }) => {
+    onSuccess: (_item, vars) => {
       void qc.invalidateQueries({ queryKey: agentTeachingKeys.documents(vars.collectionId) });
     },
   });
@@ -266,17 +160,8 @@ export function useDeleteEmbeddingDocumentMutation(): UseMutationResult<
   > {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ collectionId, documentId }: { collectionId: string; documentId: string }): Promise<void> => {
-      const res = await fetch(
-        `/api/agentcreator/teaching/collections/${encodeURIComponent(collectionId)}/documents/${encodeURIComponent(documentId)}`,
-        { method: 'DELETE' }
-      );
-      if (!res.ok) {
-        const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error || 'Failed to delete document.');
-      }
-    },
-    onSuccess: (_item: void, vars: { collectionId: string; documentId: string }) => {
+    mutationFn: ({ collectionId, documentId }) => deleteEmbeddingDocument(collectionId, documentId),
+    onSuccess: (_item, vars) => {
       void qc.invalidateQueries({ queryKey: agentTeachingKeys.documents(vars.collectionId) });
     },
   });

@@ -71,6 +71,7 @@ export default function SlugsPage(): React.JSX.Element {
   const allSlugs = useMemo((): Slug[] => allSlugsQuery.data ?? [], [allSlugsQuery.data]);
 
   const handleDomainChange = (value: string): void => {
+    if (value === (activeDomainId ?? '')) return;
     const params = new URLSearchParams(searchParams.toString());
     if (value) {
       params.set('domainId', value);

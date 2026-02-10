@@ -1,3 +1,4 @@
+import { api } from '@/shared/lib/api-client';
 import type { AuthUserSummary } from '../types';
 
 export type AuthUsersResponse = {
@@ -13,20 +14,8 @@ export type AuthUserSecurityProfile = {
   bannedAt: string | null;
 };
 
-const safeJson = async <T>(res: Response): Promise<T> => {
-  try {
-    return (await res.json()) as T;
-  } catch {
-    return {} as T;
-  }
-};
-
 export const fetchAuthUsers = async (): Promise<AuthUsersResponse> => {
-  const res = await fetch('/api/auth/users');
-  if (!res.ok) {
-    throw new Error('Failed to load users');
-  }
-  return res.json() as Promise<AuthUsersResponse>;
+  return api.get<AuthUsersResponse>('/api/auth/users');
 };
 
 export const updateAuthUser = async (
@@ -37,23 +26,21 @@ export const updateAuthUser = async (
     emailVerified?: boolean | null;
   }
 ): Promise<{ ok: boolean; payload: AuthUserSummary }> => {
-  const res = await fetch(`/api/auth/users/${userId}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-  });
-  const payload = await safeJson<AuthUserSummary>(res);
-  return { ok: res.ok, payload };
+  try {
+    const payload = await api.patch<AuthUserSummary>(`/api/auth/users/${userId}`, input);
+    return { ok: true, payload };
+  } catch (error: unknown) {
+    return { 
+      ok: false, 
+      payload: { id: userId, email: input.email ?? '' } as AuthUserSummary 
+    };
+  }
 };
 
 export const fetchAuthUserSecurity = async (
   userId: string
 ): Promise<AuthUserSecurityProfile> => {
-  const res = await fetch(`/api/auth/users/${userId}/security`);
-  if (!res.ok) {
-    throw new Error('Failed to load security profile');
-  }
-  return res.json() as Promise<AuthUserSecurityProfile>;
+  return api.get<AuthUserSecurityProfile>(`/api/auth/users/${userId}/security`);
 };
 
 export const updateAuthUserSecurity = async (
@@ -65,21 +52,25 @@ export const updateAuthUserSecurity = async (
     disableMfa?: boolean;
   }
 ): Promise<{ ok: boolean; payload: AuthUserSecurityProfile }> => {
-  const res = await fetch(`/api/auth/users/${userId}/security`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-  });
-  const payload = await safeJson<AuthUserSecurityProfile>(res);
-  return { ok: res.ok, payload };
+  try {
+    const payload = await api.patch<AuthUserSecurityProfile>(`/api/auth/users/${userId}/security`, input);
+    return { ok: true, payload };
+  } catch (error: unknown) {
+    return { 
+      ok: false, 
+      payload: { userId, mfaEnabled: false, allowedIps: [], disabledAt: null, bannedAt: null } 
+    };
+  }
 };
 
 export const mockSignIn = async (input: { email: string; password: string }): Promise<{ ok: boolean; payload: { ok?: boolean; message?: string } }> => {
-  const res = await fetch('/api/auth/mock-signin', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-  });
-  const payload = await safeJson<{ ok?: boolean; message?: string }>(res);
-  return { ok: res.ok, payload };
+  try {
+    const payload = await api.post<{ ok?: boolean; message?: string }>('/api/auth/mock-signin', input);
+    return { ok: true, payload };
+  } catch (error: unknown) {
+    return { 
+      ok: false, 
+      payload: { ok: false, message: error instanceof Error ? error.message : 'Sign in failed' } 
+    };
+  }
 };

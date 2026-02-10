@@ -73,11 +73,23 @@ export function MultiSelect({
     .filter((opt) => selected.includes(opt.value))
     .map((opt) => opt.label);
 
-  const displayValue = selectedLabels.length > 0
-    ? single 
-      ? selectedLabels[0]
-      : `${selectedLabels.length} selected`
-    : placeholder;
+  const displayValue = React.useMemo((): string => {
+    if (selected.length === 0) return placeholder;
+
+    if (single) {
+      return selectedLabels[0] ?? `${selected.length} selected`;
+    }
+
+    if (selectedLabels.length === 0) {
+      return `${selected.length} selected`;
+    }
+
+    if (selectedLabels.length <= 2) {
+      return selectedLabels.join(', ');
+    }
+
+    return `${selectedLabels.slice(0, 2).join(', ')} +${selectedLabels.length - 2}`;
+  }, [placeholder, selected.length, selectedLabels, single]);
 
   return (
     <div className={cn('space-y-2', className)}>

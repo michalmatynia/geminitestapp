@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 
 import { useRealtimeQuery } from '@/shared/hooks/query/useRealtimeQuery';
+import { getJobStatus, getJobStatusDetail, cancelJob } from '../api';
 
 import type { UseQueryResult } from '@tanstack/react-query';
 
@@ -16,11 +17,7 @@ export const jobKeys = {
 export function useRealtimeJobs(): UseQueryResult<unknown, Error> {
   return useRealtimeQuery(
     jobKeys.realtime,
-    async (): Promise<unknown> => {
-      const res = await fetch('/api/jobs/status');
-      if (!res.ok) throw new Error('Failed to fetch job status');
-      return res.json();
-    },
+    getJobStatus,
     {
       interval: 5000, // 5 second fallback
       enabled: true,
@@ -32,11 +29,7 @@ export function useRealtimeJobs(): UseQueryResult<unknown, Error> {
 export function useJobStatus(jobId: string): UseQueryResult<unknown, Error> {
   return useRealtimeQuery(
     jobKeys.status(jobId),
-    async (): Promise<unknown> => {
-      const res = await fetch(`/api/jobs/${jobId}/status`);
-      if (!res.ok) throw new Error('Failed to fetch job status');
-      return res.json();
-    },
+    () => getJobStatusDetail(jobId),
     {
       interval: 2000, // 2 second fallback for individual jobs
       enabled: !!jobId,
@@ -49,13 +42,7 @@ export function useCancelJob(): UseMutationResult<unknown, Error, string> {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (jobId: string): Promise<unknown> => {
-      const res = await fetch(`/api/jobs/${jobId}/cancel`, {
-        method: 'POST',
-      });
-      if (!res.ok) throw new Error('Failed to cancel job');
-      return res.json();
-    },
+    mutationFn: cancelJob,
     onSuccess: (): void => {
       void queryClient.invalidateQueries({ queryKey: jobKeys.all });
     },

@@ -8,6 +8,7 @@ import { NextResponse } from 'next/server';
 
 import { validationError } from '@/shared/errors/app-error';
 import { resolveError } from '@/shared/errors/resolve-error';
+import { logger } from '@/shared/utils/logger';
 
 // Local type definitions to avoid importing from features layer
 type LogSystemEventParams = {
@@ -38,8 +39,7 @@ const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
      
     await realLogSystemEvent(params as any);
   } catch (error) {
-    console.error('Failed to log system event via observability feature:', error);
-    console.log('System event (fallback):', params);
+    logger.error('Failed to log system event via observability feature', error, { context: params });
   }
 };
 
@@ -49,7 +49,7 @@ const getErrorFingerprint = async (params: ErrorFingerprintParams): Promise<stri
     const { getErrorFingerprint: realGetFingerprint } = await import('@/features/observability/server');
     return realGetFingerprint(params as any);
   } catch (error) {
-    console.error('Failed to get error fingerprint via observability feature:', error);
+    logger.error('Failed to get error fingerprint via observability feature', error, { context: params });
     return `${params.source}-${params.statusCode}-${Date.now()}`;
   }
 };

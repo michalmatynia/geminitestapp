@@ -1,0 +1,180 @@
+'use client';
+
+import { useCallback, useRef, useState } from 'react';
+
+import type {
+  AiPathRuntimeEvent,
+  AiPathRuntimeEventKind,
+  AiPathRuntimeNodeStatus,
+  AiPathRuntimeNodeStatusMap,
+} from '@/features/ai/ai-paths/lib';
+
+import {
+  MAX_RUNTIME_EVENTS,
+  NON_SETTLED_RUNTIME_NODE_STATUSES,
+  type RunStatus,
+  type RuntimeEventInput,
+} from './types';
+
+export function useAiPathsRuntimeState() {
+  const [runStatus, setRunStatus] = useState<RunStatus>('idle');
+  const [runtimeNodeStatuses, setRuntimeNodeStatuses] = useState<AiPathRuntimeNodeStatusMap>({});
+  const [runtimeEvents, setRuntimeEvents] = useState<AiPathRuntimeEvent[]>([]);
+
+  const runtimeNodeStatusesRef = useRef<AiPathRuntimeNodeStatusMap>({});
+  const runStatusRef = useRef<RunStatus>(runStatus);
+
+  const setRunStatusWithRef = useCallback((status: RunStatus) => {
+    runStatusRef.current = status;
+    setRunStatus(status);
+  }, []);
+
+  const appendRuntimeEvent = useCallback((input: RuntimeEventInput): void => {
+    const event: AiPathRuntimeEvent = {
+      id:
+        input.id ??
+        (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+          ? crypto.randomUUID()
+          : `evt_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`),
+      timestamp: input.timestamp ?? new Date().toISOString(),
+      source: input.source,
+      kind: input.kind,
+      level: input.level,
+      message: input.message,
+      ...(input.runId !== undefined ? { runId: input.runId } : {}),
+      ...(input.runStartedAt !== undefined ? { runStartedAt: input.runStartedAt } : {}),
+      ...(input.nodeId !== undefined ? { nodeId: input.nodeId } : {}),
+      ...(input.nodeType !== undefined ? { nodeType: input.nodeType } : {}),
+      ...(input.nodeTitle !== undefined ? { nodeTitle: input.nodeTitle } : {}),
+      ...(input.status !== undefined ? { status: input.status } : {}),
+      ...(input.iteration !== undefined ? { iteration: input.iteration } : {}),
+      ...(input.metadata !== undefined ? { metadata: input.metadata } : {}),
+    };
+    setRuntimeEvents((prev: AiPathRuntimeEvent[]): AiPathRuntimeEvent[] => {
+      const next = [...prev, event];
+      if (next.length > MAX_RUNTIME_EVENTS) {
+        return next.slice(next.length - MAX_RUNTIME_EVENTS);
+      }
+      return next;
+    });
+  }, []);
+
+  const resetRuntimeNodeStatuses = useCallback((next: AiPathRuntimeNodeStatusMap = {}): void => {
+    runtimeNodeStatusesRef.current = next;
+    setRuntimeNodeStatuses(next);
+  }, []);
+
+  const normalizeNodeStatus = useCallback((value: unknown): AiPathRuntimeNodeStatus | null => {
+    if (!value || typeof value !== 'string') return null;
+    const s = value.toLowerCase();
+    if (s === 'idle' || s === 'queued' || s === 'running' || s === 'completed' || s === 'failed' || s === 'canceled' || s === 'cancelled' || s === 'cached' || s === 'polling' || s === 'waiting_callback' || s === 'advance_pending' || s === 'blocked' || s === 'skipped' || s === 'timeout') {
+      return s as AiPathRuntimeNodeStatus;
+    }
+    return null;
+  }, []);
+
+  const formatStatusLabel = useCallback((status: AiPathRuntimeNodeStatus): string => {
+    switch (status) {
+      case 'idle': return 'Idle';
+      case 'queued': return 'Queued';
+      case 'running': return 'Running';
+      case 'completed': return 'Completed';
+      case 'failed': return 'Failed';
+      case 'canceled':
+      case 'cancelled': return 'Cancelled';
+      case 'cached': return 'Cached';
+      case 'polling': return 'Polling';
+      case 'waiting_callback': return 'Waiting';
+      case 'advance_pending': return 'Processing';
+      case 'blocked': return 'Blocked';
+      case 'skipped': return 'Skipped';
+      case 'timeout': return 'Timeout';
+      default: return String(status);
+    }
+  }, []);
+
+  const setNodeStatus = useCallback(
+    (input: {
+      nodeId: string;
+      status: unknown;
+      source: 'local' | 'server';
+      runId?: string | null | undefined;
+      runStartedAt?: string | null | undefined;
+      iteration?: number | undefined;
+      nodeType?: string | null | undefined;
+      nodeTitle?: string | null | undefined;
+      kind?: AiPathRuntimeEventKind | undefined;
+      level?: 'info' | 'warning' | 'error' | undefined;
+      message?: string | undefined;
+      metadata?: Record<string, unknown> | null | undefined;
+    }): void => {
+      const normalizedStatus = normalizeNodeStatus(input.status);
+      if (!normalizedStatus) return;
+      const prevStatus = runtimeNodeStatusesRef.current[input.nodeId];
+      if (prevStatus === normalizedStatus) return;
+      const next = {
+        ...runtimeNodeStatusesRef.current,
+        [input.nodeId]: normalizedStatus,
+      };
+      runtimeNodeStatusesRef.current = next;
+      setRuntimeNodeStatuses(next);
+      appendRuntimeEvent({
+        source: input.source,
+        kind: input.kind ?? 'node_status',
+        level: input.level ?? 'info',
+        message: input.message ?? `Node ${input.nodeTitle ?? input.nodeId} is ${formatStatusLabel(normalizedStatus)}.`,
+        ...(input.runId !== undefined ? { runId: input.runId } : {}),
+        ...(input.runStartedAt !== undefined ? { runStartedAt: input.runStartedAt } : {}),
+        nodeId: input.nodeId,
+        ...(input.nodeType !== undefined ? { nodeType: input.nodeType } : {}),
+        ...(input.nodeTitle !== undefined ? { nodeTitle: input.nodeTitle } : {}),
+        status: normalizedStatus,
+        ...(input.iteration !== undefined ? { iteration: input.iteration } : {}),
+        ...(input.metadata !== undefined ? { metadata: input.metadata } : {}),
+      });
+    },
+    [normalizeNodeStatus, appendRuntimeEvent, formatStatusLabel]
+  );
+
+  const settleTransientNodeStatuses = useCallback(
+    (terminalStatus: 'completed' | 'failed' | 'canceled', currentOutputs: Record<string, unknown> = {}): void => {
+      const currentStatuses = runtimeNodeStatusesRef.current;
+      const nextStatuses: AiPathRuntimeNodeStatusMap = { ...currentStatuses };
+      const candidateNodeIds = new Set<string>([
+        ...Object.keys(currentStatuses),
+        ...Object.keys(currentOutputs),
+      ]);
+      let changed = false;
+      candidateNodeIds.forEach((nodeId: string) => {
+        const outputStatus = ((currentOutputs[nodeId] ?? {}) as Record<string, unknown>)['status'];
+        const normalizedStatus = normalizeNodeStatus(nextStatuses[nodeId] ?? outputStatus);
+        if (!normalizedStatus) return;
+        if (NON_SETTLED_RUNTIME_NODE_STATUSES.has(normalizedStatus)) return;
+        if (nextStatuses[nodeId] === terminalStatus) return;
+        nextStatuses[nodeId] = terminalStatus;
+        changed = true;
+      });
+      if (!changed) return;
+      runtimeNodeStatusesRef.current = nextStatuses;
+      setRuntimeNodeStatuses(nextStatuses);
+    },
+    [normalizeNodeStatus]
+  );
+
+  return {
+    runStatus,
+    setRunStatus: setRunStatusWithRef,
+    runStatusRef,
+    runtimeNodeStatuses,
+    setRuntimeNodeStatuses,
+    runtimeNodeStatusesRef,
+    runtimeEvents,
+    setRuntimeEvents,
+    appendRuntimeEvent,
+    resetRuntimeNodeStatuses,
+    setNodeStatus,
+    settleTransientNodeStatuses,
+    normalizeNodeStatus,
+    formatStatusLabel,
+  };
+}

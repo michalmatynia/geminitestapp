@@ -1,3 +1,4 @@
+import { api } from '@/shared/lib/api-client';
 import { logClientError } from '@/features/observability';
 
 import type { Asset3DRecord, Asset3DUpdateInput, Asset3DListFilters } from '../types';
@@ -5,48 +6,20 @@ import type { Asset3DRecord, Asset3DUpdateInput, Asset3DListFilters } from '../t
 const API_BASE = '/api/assets3d';
 
 export async function fetchAssets3D(filters?: Asset3DListFilters): Promise<Asset3DRecord[]> {
-  const params = new URLSearchParams();
-  if (filters?.filename) params.set('filename', filters.filename);
-  if (filters?.category) params.set('category', filters.category);
-  if (filters?.search) params.set('search', filters.search);
-  if (filters?.isPublic !== undefined) params.set('isPublic', String(filters.isPublic));
+  const params: Record<string, string> = {};
+  if (filters?.filename) params['filename'] = filters.filename;
+  if (filters?.category) params['category'] = filters.category;
+  if (filters?.search) params['search'] = filters.search;
+  if (filters?.isPublic !== undefined) params['isPublic'] = String(filters.isPublic);
   if (filters?.tags && filters.tags.length > 0) {
-    params.set('tags', filters.tags.join(','));
+    params['tags'] = filters.tags.join(',');
   }
 
-  const url = params.toString() ? `${API_BASE}?${params}` : API_BASE;
-  try {
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      const error = new Error('Failed to fetch 3D assets');
-      logClientError(error, { context: { status: response.status, url } });
-      throw error;
-    }
-
-    return response.json() as Promise<Asset3DRecord[]>;
-  } catch (error) {
-    logClientError(error, { context: { source: 'fetchAssets3D', url } });
-    throw error;
-  }
+  return api.get<Asset3DRecord[]>(API_BASE, { params });
 }
 
 export async function fetchAsset3DById(id: string): Promise<Asset3DRecord> {
-  const url = `${API_BASE}/${id}`;
-  try {
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      const error = new Error('Failed to fetch 3D asset');
-      logClientError(error, { context: { status: response.status, id, url } });
-      throw error;
-    }
-
-    return response.json() as Promise<Asset3DRecord>;
-  } catch (error) {
-    logClientError(error, { context: { source: 'fetchAsset3DById', id, url } });
-    throw error;
-  }
+  return api.get<Asset3DRecord>(`${API_BASE}/${id}`);
 }
 
 export async function uploadAsset3DFile(
@@ -78,62 +51,25 @@ export async function uploadAsset3DFile(
 
     return result.data;
   } catch (error) {
-    logClientError(error, { context: { source: 'uploadAsset3DFile', filename: file.name } });
+    logClientError(error as Error, { context: { source: 'uploadAsset3DFile', filename: file.name } });
     throw error;
   }
 }
 
 export async function updateAsset3D(id: string, data: Asset3DUpdateInput): Promise<Asset3DRecord> {
-  const url = `${API_BASE}/${id}`;
-  try {
-    const response = await fetch(url, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      const result = (await response.json()) as { error?: string };
-      const error = new Error(result.error ?? 'Failed to update 3D asset');
-      logClientError(error, { context: { status: response.status, id, url } });
-      throw error;
-    }
-
-    return response.json() as Promise<Asset3DRecord>;
-  } catch (error) {
-    logClientError(error, { context: { source: 'updateAsset3D', id, url } });
-    throw error;
-  }
+  return api.patch<Asset3DRecord>(`${API_BASE}/${id}`, data);
 }
 
 export async function deleteAsset3DById(id: string): Promise<void> {
-  const url = `${API_BASE}/${id}`;
-  try {
-    const response = await fetch(url, {
-      method: 'DELETE',
-    });
-
-    if (!response.ok) {
-      const error = new Error('Failed to delete 3D asset');
-      logClientError(error, { context: { status: response.status, id, url } });
-      throw error;
-    }
-  } catch (error) {
-    logClientError(error, { context: { source: 'deleteAsset3DById', id, url } });
-    throw error;
-  }
+  await api.delete(`${API_BASE}/${id}`);
 }
 
 export async function fetchCategories(): Promise<string[]> {
-  const response = await fetch(`${API_BASE}/categories`);
-  if (!response.ok) return [];
-  return response.json() as Promise<string[]>;
+  return api.get<string[]>(`${API_BASE}/categories`);
 }
 
 export async function fetchTags(): Promise<string[]> {
-  const response = await fetch(`${API_BASE}/tags`);
-  if (!response.ok) return [];
-  return response.json() as Promise<string[]>;
+  return api.get<string[]>(`${API_BASE}/tags`);
 }
 
 export async function reindexAssets3DFromDisk(): Promise<{
@@ -144,17 +80,12 @@ export async function reindexAssets3DFromDisk(): Promise<{
   skipped: number;
   createdIds: string[];
 }> {
-  const response = await fetch(`${API_BASE}/reindex`, { method: 'POST' });
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { error?: string } | null;
-    throw new Error(body?.error ?? 'Failed to reindex 3D assets');
-  }
-  return response.json() as Promise<{
+  return api.post<{
     diskFiles: number;
     supportedFiles: number;
     existingRecords: number;
     created: number;
     skipped: number;
     createdIds: string[];
-  }>;
+  }>(`${API_BASE}/reindex`);
 }

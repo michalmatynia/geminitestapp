@@ -21,6 +21,7 @@ import type {
   ApiRouteHandlerWithParams,
 } from '@/shared/types/api/api';
 import type { SystemLogLevel } from '@/shared/types/domain/system-logs';
+import { logger } from '@/shared/utils/logger';
 
 import type { ZodSchema } from 'zod';
 
@@ -60,8 +61,7 @@ const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
     const { logSystemEvent: realLogSystemEvent } = await import('@/features/observability/server');
     await realLogSystemEvent(params);
   } catch (error) {
-    console.error('Failed to log system event via observability feature:', error);
-    console.log('System event (fallback):', params);
+    logger.error('Failed to log system event via observability feature', error, { context: params });
   }
 };
 
@@ -71,7 +71,7 @@ const getErrorFingerprint = async (params: ErrorFingerprintParams): Promise<stri
     const { getErrorFingerprint: realGetFingerprint } = await import('@/features/observability/server');
     return realGetFingerprint(params);
   } catch (error) {
-    console.error('Failed to get error fingerprint via observability feature:', error);
+    logger.error('Failed to get error fingerprint via observability feature', error, { context: params });
     return `${params.source}-${params.statusCode}-${Date.now()}`;
   }
 };

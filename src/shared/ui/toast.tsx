@@ -11,6 +11,7 @@ import {
 } from 'react';
 
 import { Button } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type ToastVariant = 'success' | 'error' | 'info' | 'warning';
 
@@ -174,6 +175,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }): Reac
           duration,
         },
       ]);
+
+      if (variant === 'error') {
+        logClientError(new Error(message), {
+          context: { source: 'toast-notification' }
+        });
+      }
 
       const timer = setTimeout(() => removeToast(id), duration);
       timers.current.set(id, timer);

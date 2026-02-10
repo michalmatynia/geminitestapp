@@ -238,6 +238,17 @@ const PRODUCER_TARGET_FIELDS = new Set([
   'producer',
 ]);
 
+const TAG_TARGET_FIELDS = new Set([
+  'tagids',
+  'tag_ids',
+  'tagid',
+  'tag_id',
+  'tags',
+  'tag',
+  'tagnames',
+  'tag_names',
+]);
+
 const toStringValue = (value: unknown): string | null => {
   if (Array.isArray(value)) {
     const parts = value
@@ -287,6 +298,48 @@ const normalizeProducerIds = (value: unknown): string[] => {
       const candidate =
         record['producerId'] ??
         record['producer_id'] ??
+        record['id'] ??
+        record['name'] ??
+        record['label'] ??
+        record['value'];
+      if (candidate !== undefined && candidate !== null) {
+        pushValue(candidate);
+        return;
+      }
+      Object.values(record).forEach((nested: unknown) => pushValue(nested));
+    }
+  };
+
+  if (Array.isArray(value)) {
+    value.forEach((entry: unknown) => pushValue(entry));
+  } else {
+    pushValue(value);
+  }
+
+  return Array.from(unique);
+};
+
+const normalizeTagIds = (value: unknown): string[] => {
+  const unique = new Set<string>();
+
+  const pushValue = (entry: unknown): void => {
+    if (typeof entry === 'string') {
+      entry
+        .split(/[,\n;|]/)
+        .map((part: string) => part.trim())
+        .filter(Boolean)
+        .forEach((part: string) => unique.add(part));
+      return;
+    }
+    if (typeof entry === 'number' && Number.isFinite(entry)) {
+      unique.add(String(entry));
+      return;
+    }
+    if (entry && typeof entry === 'object') {
+      const record = entry as Record<string, unknown>;
+      const candidate =
+        record['tagId'] ??
+        record['tag_id'] ??
         record['id'] ??
         record['name'] ??
         record['label'] ??
@@ -418,6 +471,13 @@ const applyTemplateMappings = (
       const producerIds = normalizeProducerIds(rawValue);
       if (producerIds.length > 0) {
         (mapped as ProductCreateInput & { producerIds?: string[] }).producerIds = producerIds;
+      }
+      continue;
+    }
+    if (TAG_TARGET_FIELDS.has(normalizedTargetField)) {
+      const tagIds = normalizeTagIds(rawValue);
+      if (tagIds.length > 0) {
+        (mapped as ProductCreateInput & { tagIds?: string[] }).tagIds = tagIds;
       }
       continue;
     }

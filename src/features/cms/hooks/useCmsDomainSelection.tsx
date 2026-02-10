@@ -94,12 +94,13 @@ export function useCmsDomainSelection(options: CmsDomainSelectionOptions = {}): 
     (domainId: string | null): void => {
       if (!persist) return;
       if (!zoningEnabled) return;
+      if (domainId === activeDomainId) return;
       if (domainId === userPreferences?.cmsActiveDomainId) return;
       if (updatePreferencesMutation.isPending) return;
       
       updatePreferencesMutation.mutate({ cmsActiveDomainId: domainId });
     },
-    [persist, userPreferences?.cmsActiveDomainId, updatePreferencesMutation, zoningEnabled]
+    [activeDomainId, persist, userPreferences?.cmsActiveDomainId, updatePreferencesMutation, zoningEnabled]
   );
 
   return {

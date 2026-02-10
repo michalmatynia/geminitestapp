@@ -2,6 +2,8 @@ import 'server-only';
 
 import { Redis } from 'ioredis';
 
+import { logger } from '@/shared/utils/logger';
+
 const REDIS_URL = process.env['REDIS_URL'];
 
 let redis: Redis | null = null;
@@ -14,10 +16,10 @@ if (REDIS_URL) {
     });
     
     redis.on('error', (err) => {
-      console.error('[redis] connection error:', err);
+      logger.error('[redis] connection error', err, { source: 'redis' });
     });
   } catch (error) {
-    console.error('[redis] failed to initialize client:', error);
+    logger.error('[redis] failed to initialize client', error, { source: 'redis' });
   }
 }
 

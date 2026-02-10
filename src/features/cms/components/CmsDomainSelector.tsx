@@ -19,6 +19,7 @@ export function CmsDomainSelector({
   const { domains, activeDomainId, hostDomainId, setActiveDomainId, zoningEnabled } = useCmsDomainSelection();
 
   const handleChange = (value: string): void => {
+    if (value === (activeDomainId ?? '')) return;
     setActiveDomainId(value);
     onChange?.(value);
   };

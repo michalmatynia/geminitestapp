@@ -2,6 +2,7 @@
 
 import { useQuery, type UseQueryResult, type Query } from '@tanstack/react-query';
 
+import { getIntegrationJobs, getProductAiJobs, getChatbotJobs } from '../api';
 import type { ProductAiJob } from '@/shared/types/domain/jobs';
 import type { ProductJob } from '@/shared/types/domain/listing-jobs';
 
@@ -15,22 +16,14 @@ export const jobKeys = {
 export function useIntegrationJobs(): UseQueryResult<ProductJob[]> {
   return useQuery({
     queryKey: jobKeys.integrations,
-    queryFn: async (): Promise<ProductJob[]> => {
-      const res = await fetch('/api/integrations/jobs');
-      if (!res.ok) throw new Error('Failed to load integration jobs');
-      return (await res.json()) as ProductJob[];
-    },
+    queryFn: getIntegrationJobs,
   });
 }
 
 export function useProductAiJobs(scope: string = 'all'): UseQueryResult<{ jobs: ProductAiJob[] }> {
   return useQuery({
     queryKey: [...jobKeys.productAi, scope],
-    queryFn: async (): Promise<{ jobs: ProductAiJob[] }> => {
-      const res = await fetch(`/api/products/ai-jobs?scope=${scope}`);
-      if (!res.ok) throw new Error('Failed to load product AI jobs');
-      return (await res.json()) as { jobs: ProductAiJob[] };
-    },
+    queryFn: () => getProductAiJobs(scope),
     refetchInterval: (query: Query<{ jobs: ProductAiJob[] }, Error>): number | false => {
       const data = query.state.data;
       if (!data || !Array.isArray(data.jobs)) return 5000;
@@ -58,10 +51,6 @@ const hasScheduledMarker = (payload: unknown): boolean => {
 export function useChatbotJobs(scope: string = 'all'): UseQueryResult<{ jobs: unknown[] }> {
   return useQuery({
     queryKey: [...jobKeys.chatbot, scope],
-    queryFn: async (): Promise<{ jobs: unknown[] }> => {
-      const res = await fetch(`/api/chatbot/jobs?scope=${scope}`);
-      if (!res.ok) throw new Error('Failed to load chatbot jobs');
-      return (await res.json()) as { jobs: unknown[] };
-    },
+    queryFn: () => getChatbotJobs(scope),
   });
 }

@@ -20,11 +20,13 @@ import {
 import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
 import { extractBaseImageUrls, mapBaseProduct } from '@/features/integrations/services/imports/base-mapper';
 import { getIntegrationRepository } from '@/features/integrations/services/integration-repository';
+import { getTagMappingRepository } from '@/features/integrations/services/tag-mapping-repository';
 import { decryptSecret } from '@/features/integrations/utils/encryption';
 import { getCatalogRepository } from '@/features/products/services/catalog-repository';
 import { getProducerRepository } from '@/features/products/services/producer-repository';
 import { getProductDataProvider } from '@/features/products/services/product-provider';
 import { getProductRepository } from '@/features/products/services/product-repository';
+import { getTagRepository } from '@/features/products/services/tag-repository';
 import type { ProductWithImages } from '@/features/products/types/records';
 import { validateProductCreate } from '@/features/products/validations';
 import type { ProductCreateInput } from '@/features/products/validations/schemas';
@@ -435,6 +437,67 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
     return Array.from(unique);
   };
 
+  const tagRepository = await getTagRepository();
+  const tags = await tagRepository.listTags({});
+  const tagIdSet = new Set(
+    tags
+      .map((tag: { id: string }) => tag.id?.trim())
+      .filter((tagId: string | undefined): tagId is string => Boolean(tagId))
+  );
+  const tagNameToId = new Map(
+    tags
+      .map((tag: { id: string; name: string }) => {
+        const normalizedName = typeof tag.name === 'string' ? tag.name.trim().toLowerCase() : '';
+        const normalizedId = typeof tag.id === 'string' ? tag.id.trim() : '';
+        if (!normalizedName || !normalizedId) return null;
+        return [normalizedName, normalizedId] as const;
+      })
+      .filter((entry): entry is readonly [string, string] => entry !== null)
+  );
+
+  const externalTagToInternalTagId = new Map<string, string>();
+  if (data.connectionId) {
+    try {
+      const tagMappingRepo = getTagMappingRepository();
+      const tagMappings = await tagMappingRepo.listByConnection(data.connectionId);
+      tagMappings.forEach((mapping) => {
+        if (!mapping.isActive) return;
+        const externalId = mapping.externalTag?.externalId?.trim();
+        const internalId = mapping.internalTagId?.trim();
+        if (!externalId || !internalId) return;
+        externalTagToInternalTagId.set(externalId, internalId);
+        externalTagToInternalTagId.set(externalId.toLowerCase(), internalId);
+      });
+    } catch {
+      // Tag mappings are optional for imports; fallback to internal id/name resolution.
+    }
+  }
+
+  const resolveTagIds = (values: string[] | undefined): string[] => {
+    if (!Array.isArray(values) || values.length === 0) return [];
+    const unique = new Set<string>();
+    values.forEach((rawValue: string) => {
+      const trimmed = rawValue.trim();
+      if (!trimmed) return;
+      const mappedExternal =
+        externalTagToInternalTagId.get(trimmed) ??
+        externalTagToInternalTagId.get(trimmed.toLowerCase());
+      if (mappedExternal) {
+        unique.add(mappedExternal);
+        return;
+      }
+      if (tagIdSet.has(trimmed)) {
+        unique.add(trimmed);
+        return;
+      }
+      const byName = tagNameToId.get(trimmed.toLowerCase());
+      if (byName) {
+        unique.add(byName);
+      }
+    });
+    return Array.from(unique);
+  };
+
   let imported = 0;
   let failed = 0;
   let skipped = 0; // Skipped due to duplicate SKU
@@ -495,8 +558,10 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
     try {
       const mapped = mapBaseProduct(raw, template?.mappings ?? []) as ProductCreateInput & {
         producerIds?: string[];
+        tagIds?: string[];
       };
       const mappedProducerIds = resolveProducerIds(mapped.producerIds);
+      const mappedTagIds = resolveTagIds(mapped.tagIds);
 
       // Check for duplicate SKU if not allowed
       if (existingSkus && mapped.sku && existingSkus.has(mapped.sku)) {
@@ -535,6 +600,9 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
         ]);
         if (mappedProducerIds.length > 0) {
           await productRepository.replaceProductProducers(created.id, mappedProducerIds);
+        }
+        if (mappedTagIds.length > 0) {
+          await productRepository.replaceProductTags(created.id, mappedTagIds);
         }
       }
 
@@ -579,8 +647,10 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
         try {
           const mapped = mapBaseProduct(raw, template?.mappings ?? []) as ProductCreateInput & {
             producerIds?: string[];
+            tagIds?: string[];
           };
           const mappedProducerIds = resolveProducerIds(mapped.producerIds);
+          const mappedTagIds = resolveTagIds(mapped.tagIds);
           const imageUrls = (mapped.imageLinks ?? []).slice(0, maxImages);
           const fallbackSku = mapped.baseProductId
             ? `BASE-${mapped.baseProductId}`
@@ -604,6 +674,9 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
             ]);
             if (mappedProducerIds.length > 0) {
               await productRepository.replaceProductProducers(created.id, mappedProducerIds);
+            }
+            if (mappedTagIds.length > 0) {
+              await productRepository.replaceProductTags(created.id, mappedTagIds);
             }
           }
 

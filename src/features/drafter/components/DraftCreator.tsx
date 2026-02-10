@@ -1,11 +1,12 @@
 'use client';
 import { useQueries } from '@tanstack/react-query';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useDraft, useCreateDraft, useUpdateDraft } from '@/features/drafter/hooks/useDrafts';
 import { draftSubmitSchema } from '@/features/drafter/validations/draft-form';
 import { IconSelector, ICON_LIBRARY_MAP } from '@/features/icons';
 import { CreateProductDraftInput, UpdateProductDraftInput } from '@/features/products';
+import { useProductImages } from '@/features/products/hooks/useProductImages';
 import type { CatalogRecord } from '@/features/products';
 import type { ProductCategoryDto, ProductTag, ProductParameter, ProductParameterValue, Producer } from '@/features/products';
 import { getCategoriesFlat, getTags, getParameters } from '@/features/products/api/settings';
@@ -18,6 +19,15 @@ import { useOptionalDrafterContext } from '../context/DrafterContext';
 
 const DEFAULT_ICON_COLOR = '#60a5fa';
 const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
+const TOTAL_IMAGE_SLOTS = 15;
+
+const fileToDataUrl = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error('Failed to convert image to data URL.'));
+    reader.readAsDataURL(file);
+  });
 
 const normalizeIconColor = (value: string | null | undefined): string | null => {
   if (typeof value !== 'string') return null;
@@ -31,7 +41,6 @@ export function DraftCreator({
   onSaveSuccess: propOnSaveSuccess,
   active: propActive,
   onActiveChange,
-  onCancel: _propOnCancel,
 }: {
   draftId?: string | null;
   onSaveSuccess?: () => void;
@@ -82,7 +91,6 @@ export function DraftCreator({
   const [iconColorMode, setIconColorMode] = useState<'theme' | 'custom'>('theme');
   const [iconColor, setIconColor] = useState<string>(DEFAULT_ICON_COLOR);
   const [isIconLibraryOpen, setIsIconLibraryOpen] = useState(false);
-  const [imageLinks, setImageLinks] = useState<string[]>(Array(15).fill('') as string[]);
 
   const [selectedCatalogIds, setSelectedCatalogIds] = useState<string[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
@@ -112,23 +120,88 @@ export function DraftCreator({
     }))
   });
 
-  const categories = useMemo(() => categoryQueries.flatMap((q: (typeof categoryQueries)[number]) => (q.data as ProductCategoryDto[]) || []), [categoryQueries]);
-  const tags = useMemo(() => tagQueries.flatMap((q: (typeof tagQueries)[number]) => (q.data as ProductTag[]) || []), [tagQueries]);
-  const parameters = useMemo(() => parameterQueries.flatMap((q: (typeof parameterQueries)[number]) => (q.data as ProductParameter[]) || []), [parameterQueries]);
-  const parametersLoading = useMemo(() => parameterQueries.some((q: (typeof parameterQueries)[number]) => q.isLoading), [parameterQueries]);
+  const categories = useMemo(() => categoryQueries.flatMap((q) => (q.data as ProductCategoryDto[]) || []), [categoryQueries]);
+  const tags = useMemo(() => tagQueries.flatMap((q) => (q.data as ProductTag[]) || []), [tagQueries]);
+  const parameters = useMemo(() => parameterQueries.flatMap((q) => (q.data as ProductParameter[]) || []), [parameterQueries]);
+  const parametersLoading = useMemo(() => parameterQueries.some((q) => q.isLoading), [parameterQueries]);
   const active = propActive ?? activeState;
+  
+  const {
+    imageSlots,
+    imageLinks,
+    imageBase64s,
+    handleSlotImageChange,
+    setImageLinkAt,
+    setImageBase64At,
+  } = useProductImages(undefined, []);
 
   const setActive = (value: boolean): void => {
     setActiveState(value);
     onActiveChange?.(value);
   };
 
+  const applyDraftImageState = useCallback((incomingLinks: string[] | null | undefined): void => {
+    for (let i = 0; i < TOTAL_IMAGE_SLOTS; i += 1) {
+      handleSlotImageChange(null, i);
+      setImageLinkAt(i, '');
+      setImageBase64At(i, '');
+    }
+
+    const normalizedLinks = Array.isArray(incomingLinks) ? incomingLinks : [];
+    normalizedLinks.slice(0, TOTAL_IMAGE_SLOTS).forEach((rawValue: string, index: number): void => {
+      const value = typeof rawValue === 'string' ? rawValue.trim() : '';
+      if (!value) return;
+      if (value.startsWith('data:')) {
+        setImageBase64At(index, value);
+      } else {
+        setImageLinkAt(index, value);
+      }
+    });
+  }, [handleSlotImageChange, setImageBase64At, setImageLinkAt]);
+
+  const serializeDraftImageLinks = useCallback(async (): Promise<string[]> => {
+    const serialized: string[] = [];
+
+    for (let i = 0; i < TOTAL_IMAGE_SLOTS; i += 1) {
+      const base64Value = imageBase64s[i]?.trim();
+      if (base64Value) {
+        serialized.push(base64Value);
+        continue;
+      }
+
+      const linkValue = imageLinks[i]?.trim();
+      if (linkValue) {
+        serialized.push(linkValue);
+        continue;
+      }
+
+      const slot = imageSlots[i];
+      if (!slot) continue;
+
+      if (slot.type === 'existing') {
+        const filePath = slot.data?.filepath?.trim();
+        if (filePath) serialized.push(filePath);
+        continue;
+      }
+
+      try {
+        const dataUrl = await fileToDataUrl(slot.data);
+        if (dataUrl) serialized.push(dataUrl);
+      } catch (error) {
+        logClientError(error, {
+          context: { source: 'DraftCreator', action: 'serializeDraftImage', draftId, slotIndex: i },
+        });
+      }
+    }
+
+    return serialized;
+  }, [draftId, imageBase64s, imageLinks, imageSlots]);
+
   // Sync form with draft data
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
     if (draftQuery.data) {
       const draft = draftQuery.data;
-      // Use a timeout to avoid synchronous setState in effect
       timer = setTimeout((): void => {
         setName(draft.name);
         setDescription(draft.description || '');
@@ -159,8 +232,7 @@ export function DraftCreator({
         setIcon(draft.icon || null);
         setIconColorMode(draft.iconColorMode === 'custom' ? 'custom' : 'theme');
         setIconColor(normalizeIconColor(draft.iconColor) || DEFAULT_ICON_COLOR);
-        const links: string[] = draft.imageLinks && draft.imageLinks.length > 0 ? draft.imageLinks : [];
-        setImageLinks([...links, ...(Array(Math.max(0, 15 - links.length)).fill('') as string[])]);
+        applyDraftImageState(draft.imageLinks || []);
         setSelectedCatalogIds(draft.catalogIds || []);
         setSelectedCategoryId(draft.categoryId ?? null);
         setSelectedTagIds(draft.tagIds || []);
@@ -168,7 +240,6 @@ export function DraftCreator({
         setParameterValues(draft.parameters || []);
       }, 0);
     } else if (!draftId) {
-      // Reset form
       timer = setTimeout((): void => {
         setName('');
         setDescription('');
@@ -196,7 +267,7 @@ export function DraftCreator({
         setIcon(null);
         setIconColorMode('theme');
         setIconColor(DEFAULT_ICON_COLOR);
-        setImageLinks(Array(15).fill('') as string[]);
+        applyDraftImageState([]);
         setSelectedCatalogIds([]);
         setSelectedCategoryId(null);
         setSelectedTagIds([]);
@@ -207,7 +278,7 @@ export function DraftCreator({
     return (): void => {
       if (timer) clearTimeout(timer);
     };
-  }, [draftQuery.data, draftId]);
+  }, [applyDraftImageState, draftQuery.data, draftId]);
 
   const handleSave = async (): Promise<void> => {
     const validation = validateFormData(
@@ -222,6 +293,7 @@ export function DraftCreator({
 
     try {
       const normalizedIconColor = normalizeIconColor(iconColor);
+      const serializedImageLinks = await serializeDraftImageLinks();
       const input: UpdateProductDraftInput = {
         name: name.trim(),
         description: description.trim() || null,
@@ -258,7 +330,7 @@ export function DraftCreator({
         icon,
         iconColorMode,
         iconColor: iconColorMode === 'custom' ? (normalizedIconColor || DEFAULT_ICON_COLOR) : null,
-        imageLinks: imageLinks.filter((link: string): boolean => !!link.trim()),
+        imageLinks: serializedImageLinks,
         baseProductId: baseProductId.trim() || null,
       };
 
@@ -296,12 +368,6 @@ export function DraftCreator({
     );
   };
 
-  const toggleProducer = (producerId: string): void => {
-    setSelectedProducerIds((prev: string[]): string[] =>
-      prev.includes(producerId) ? prev.filter((id: string): boolean => id !== producerId) : [...prev, producerId]
-    );
-  };
-
   const addParameterValue = (): void => {
     setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => [...prev, { parameterId: '', value: '' }]);
   };
@@ -325,7 +391,7 @@ export function DraftCreator({
   };
 
   const removeParameterValue = (index: number): void => {
-    setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => prev.filter((_: ProductParameterValue, i: number): boolean => i !== index));
+    setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => prev.filter((_, i: number): boolean => i !== index));
   };
 
   const selectedParameterIds: (string | undefined)[] = useMemo(
@@ -777,26 +843,26 @@ export function DraftCreator({
               {/* Producers */}
               <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
                 <h3 className='text-sm font-semibold text-white'>Producers</h3>
-                {producers.length === 0 ? (
-                  <p className='text-sm text-gray-400'>No producers available.</p>
-                ) : (
-                  <div className='flex flex-wrap gap-2'>
-                    {producers.map((producer: Producer): React.JSX.Element => (
-                      <Button
-                        key={producer.id}
-                        type='button'
-                        onClick={(): void => toggleProducer(producer.id)}
-                        className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
-                          selectedProducerIds.includes(producer.id)
-                            ? 'bg-amber-600 text-white'
-                            : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                        }`}
-                      >
-                        {producer.name}
-                      </Button>
-                    ))}
-                  </div>
-                )}
+                <div className='flex flex-wrap gap-2'>
+                  {producers.map((producer: Producer): React.JSX.Element => (
+                    <Button
+                      key={producer.id}
+                      type='button'
+                      onClick={(): void => {
+                        setSelectedProducerIds((prev: string[]): string[] =>
+                          prev.includes(producer.id) ? prev.filter((id: string): boolean => id !== producer.id) : [...prev, producer.id]
+                        );
+                      }}
+                      className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
+                        selectedProducerIds.includes(producer.id)
+                          ? 'bg-orange-600 text-white'
+                          : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                      }`}
+                    >
+                      {producer.name}
+                    </Button>
+                  ))}
+                </div>
               </div>
 
               {/* Price Group Info */}
@@ -809,31 +875,6 @@ export function DraftCreator({
                   </p>
                 </div>
               )}
-
-              {/* Image Links */}
-              <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
-                <h3 className='text-sm font-semibold text-white'>Default Image Links (up to 15)</h3>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
-                  {imageLinks.map((link: string, index: number): React.JSX.Element => (
-                    <div key={index} className='space-y-1'>
-                      <Label htmlFor={`image-${index}`} className='text-xs text-gray-400'>
-                  Image {index + 1}
-                      </Label>
-                      <Input
-                        id={`image-${index}`}
-                        value={link}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
-                          const newLinks: string[] = [...imageLinks];
-                          newLinks[index] = e.target.value;
-                          setImageLinks(newLinks);
-                        }}
-                        placeholder={'https://...'}
-                        className='text-sm'
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
 
               {/* Import Info */}
               <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>

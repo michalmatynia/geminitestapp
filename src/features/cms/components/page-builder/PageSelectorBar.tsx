@@ -25,6 +25,7 @@ export function PageSelectorBar({ variant = 'bar' }: PageSelectorBarProps): Reac
   const searchParams = useSearchParams();
   const pageIdParam = searchParams.get('pageId');
   const lastSavedPageIdRef = useRef<string | null>(null);
+  const hasUserSelectedPageRef = useRef(false);
   
   const preferencesQuery = useUserPreferences();
   const userPreferences = preferencesQuery.data;
@@ -71,7 +72,14 @@ export function PageSelectorBar({ variant = 'bar' }: PageSelectorBarProps): Reac
   }, [pageQuery.data, selectedPageId, state.currentPage?.id, dispatch]);
 
   useEffect((): void => {
+    if (!preferencesQuery.isFetched) return;
     if (!selectedPageId) return;
+    if (!hasUserSelectedPageRef.current && !pageIdParam) {
+      if (typeof userPreferences?.cmsLastPageId === 'string' && userPreferences.cmsLastPageId.trim()) {
+        lastSavedPageIdRef.current = userPreferences.cmsLastPageId;
+      }
+      return;
+    }
     if (selectedPageId === userPreferences?.cmsLastPageId) {
       lastSavedPageIdRef.current = selectedPageId;
       return;
@@ -79,9 +87,10 @@ export function PageSelectorBar({ variant = 'bar' }: PageSelectorBarProps): Reac
     if (lastSavedPageIdRef.current === selectedPageId) return;
     lastSavedPageIdRef.current = selectedPageId;
     updatePreferencesMutation.mutate({ cmsLastPageId: selectedPageId });
-  }, [selectedPageId, userPreferences?.cmsLastPageId, updatePreferencesMutation]);
+  }, [pageIdParam, preferencesQuery.isFetched, selectedPageId, updatePreferencesMutation, userPreferences?.cmsLastPageId]);
 
   const handlePageChange = useCallback((value: string): void => {
+    hasUserSelectedPageRef.current = true;
     setUserPageId((prev: string | null) => (prev === value ? prev : value));
   }, []);
 

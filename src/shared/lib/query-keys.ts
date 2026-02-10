@@ -69,6 +69,10 @@ export const QUERY_KEYS = {
       all: ['marketplace'] as const,
       categories: (connectionId: string) => [...QUERY_KEYS.integrations.marketplace.all, 'categories', connectionId] as const,
       mappings: (connectionId: string, catalogId?: string | null) => [...QUERY_KEYS.integrations.marketplace.all, 'mappings', connectionId, catalogId ?? 'all'] as const,
+      producers: (connectionId: string) => [...QUERY_KEYS.integrations.marketplace.all, 'producers', connectionId] as const,
+      producerMappings: (connectionId: string) => [...QUERY_KEYS.integrations.marketplace.all, 'producer-mappings', connectionId] as const,
+      tags: (connectionId: string) => [...QUERY_KEYS.integrations.marketplace.all, 'tags', connectionId] as const,
+      tagMappings: (connectionId: string) => [...QUERY_KEYS.integrations.marketplace.all, 'tag-mappings', connectionId] as const,
     },
     listings: (id: string) => [...QUERY_KEYS.integrations.all, 'listings', id] as const,
     importExport: {

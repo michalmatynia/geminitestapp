@@ -21,6 +21,16 @@ export type BaseWarehouse = {
   typedId?: string;
 };
 
+export type BaseProducer = {
+  id: string;
+  name: string;
+};
+
+export type BaseTag = {
+  id: string;
+  name: string;
+};
+
 export type BaseProductRecord = Record<string, unknown>;
 
 export type BaseApiRawResult = {
@@ -87,6 +97,66 @@ const normalizeBaseParentId = (value: unknown): string | null => {
   if (!parentId) return null;
   if (parentId === '0') return null;
   return parentId;
+};
+
+const extractProducerList = (payload: BaseApiResponse): BaseProducer[] => {
+  const candidates = [
+    payload['manufacturers'],
+    payload['producers'],
+    payload['producer_list'],
+    payload['producers_list'],
+    (payload['data'] as Record<string, unknown> | undefined)?.['manufacturers'],
+    (payload['data'] as Record<string, unknown> | undefined)?.['producers'],
+    (payload['data'] as Record<string, unknown> | undefined)?.['producer_list'],
+    (payload['data'] as Record<string, unknown> | undefined)?.['producers_list'],
+  ];
+  const raw = candidates.map(toArray).find((list: unknown[]) => list.length > 0) ?? [];
+  return raw
+    .map((entry: unknown) => {
+      if (!entry || typeof entry !== 'object') return null;
+      const record = entry as Record<string, unknown>;
+      const id =
+        toStringId(record['manufacturer_id']) ??
+        toStringId(record['producer_id']) ??
+        toStringId(record['id']);
+      if (!id) return null;
+      const name =
+        (typeof record['name'] === 'string' && record['name'].trim()) ||
+        (typeof record['producer_name'] === 'string' && record['producer_name'].trim()) ||
+        (typeof record['manufacturer_name'] === 'string' && record['manufacturer_name'].trim()) ||
+        id;
+      return { id, name };
+    })
+    .filter((entry: BaseProducer | null): entry is BaseProducer => Boolean(entry));
+};
+
+const extractTagList = (payload: BaseApiResponse): BaseTag[] => {
+  const candidates = [
+    payload['tags'],
+    payload['tag_list'],
+    payload['labels'],
+    (payload['data'] as Record<string, unknown> | undefined)?.['tags'],
+    (payload['data'] as Record<string, unknown> | undefined)?.['tag_list'],
+    (payload['data'] as Record<string, unknown> | undefined)?.['labels'],
+  ];
+  const raw = candidates.map(toArray).find((list: unknown[]) => list.length > 0) ?? [];
+  return raw
+    .map((entry: unknown) => {
+      if (!entry || typeof entry !== 'object') return null;
+      const record = entry as Record<string, unknown>;
+      const id =
+        toStringId(record['tag_id']) ??
+        toStringId(record['id']) ??
+        toStringId(record['label_id']);
+      if (!id) return null;
+      const name =
+        (typeof record['name'] === 'string' && record['name'].trim()) ||
+        (typeof record['tag'] === 'string' && record['tag'].trim()) ||
+        (typeof record['label'] === 'string' && record['label'].trim()) ||
+        id;
+      return { id, name };
+    })
+    .filter((entry: BaseTag | null): entry is BaseTag => Boolean(entry));
 };
 
 const extractInventoryList = (payload: BaseApiResponse): BaseInventory[] => {
@@ -681,6 +751,192 @@ export async function checkBaseSkuExists(
     // On error, assume SKU doesn't exist to avoid blocking export
     return { exists: false };
   }
+}
+
+type FetchBaseProducersOptions = {
+  inventoryId?: string | null;
+};
+
+const dedupeProducers = (producers: BaseProducer[]): BaseProducer[] => {
+  const byId = new Map<string, BaseProducer>();
+  for (const producer of producers) {
+    if (!producer.id) continue;
+    if (!byId.has(producer.id)) {
+      byId.set(producer.id, producer);
+    }
+  }
+  return Array.from(byId.values());
+};
+
+/**
+ * Fetches producer/manufacturer entries from Base.com inventory.
+ */
+export async function fetchBaseProducers(
+  token: string,
+  options?: FetchBaseProducersOptions
+): Promise<BaseProducer[]> {
+  let lastError: Error | null = null;
+  const preferredInventoryId =
+    typeof options?.inventoryId === 'string' ? options.inventoryId.trim() : '';
+
+  const singlePassCalls: Array<{ method: string; parameters: Record<string, unknown> }> = [];
+  if (preferredInventoryId && preferredInventoryId !== '0') {
+    singlePassCalls.push({
+      method: 'getInventoryManufacturers',
+      parameters: { inventory_id: preferredInventoryId },
+    });
+    singlePassCalls.push({
+      method: 'getManufacturers',
+      parameters: { inventory_id: preferredInventoryId },
+    });
+  }
+  singlePassCalls.push(
+    { method: 'getInventoryManufacturers', parameters: {} },
+    { method: 'getManufacturers', parameters: {} },
+    { method: 'getProducers', parameters: {} }
+  );
+
+  for (const call of singlePassCalls) {
+    try {
+      const payload = await callBaseApi(token, call.method, call.parameters);
+      const producers = extractProducerList(payload);
+      if (producers.length > 0) {
+        return dedupeProducers(producers);
+      }
+    } catch (error: unknown) {
+      lastError = error instanceof Error ? error : new Error('Base API error.');
+    }
+  }
+
+  const aggregated: BaseProducer[] = [];
+  let inventoryIds: string[] = [];
+  try {
+    const inventories = await fetchBaseInventories(token);
+    inventoryIds = inventories
+      .map((inventory: BaseInventory): string => inventory.id)
+      .filter((id: string): boolean => Boolean(id?.trim()));
+  } catch (error: unknown) {
+    lastError = error instanceof Error ? error : new Error('Base API error.');
+  }
+
+  const visitedInventoryIds = new Set<string>();
+  if (preferredInventoryId && preferredInventoryId !== '0') {
+    visitedInventoryIds.add(preferredInventoryId);
+  }
+
+  for (const inventoryId of inventoryIds) {
+    if (visitedInventoryIds.has(inventoryId)) continue;
+    visitedInventoryIds.add(inventoryId);
+    try {
+      const payload = await callBaseApi(token, 'getInventoryManufacturers', {
+        inventory_id: inventoryId,
+      });
+      const producers = extractProducerList(payload);
+      if (producers.length > 0) {
+        aggregated.push(...producers);
+      }
+    } catch (error: unknown) {
+      lastError = error instanceof Error ? error : new Error('Base API error.');
+    }
+  }
+
+  if (aggregated.length > 0) {
+    return dedupeProducers(aggregated);
+  }
+
+  if (lastError) throw lastError;
+  return [];
+}
+
+type FetchBaseTagsOptions = {
+  inventoryId?: string | null;
+};
+
+const dedupeTags = (tags: BaseTag[]): BaseTag[] => {
+  const byId = new Map<string, BaseTag>();
+  for (const tag of tags) {
+    if (!tag.id) continue;
+    if (!byId.has(tag.id)) {
+      byId.set(tag.id, tag);
+    }
+  }
+  return Array.from(byId.values());
+};
+
+/**
+ * Fetches tags/labels from Base.com inventory.
+ */
+export async function fetchBaseTags(
+  token: string,
+  options?: FetchBaseTagsOptions
+): Promise<BaseTag[]> {
+  let lastError: Error | null = null;
+  const preferredInventoryId =
+    typeof options?.inventoryId === 'string' ? options.inventoryId.trim() : '';
+
+  const singlePassCalls: Array<{ method: string; parameters: Record<string, unknown> }> = [];
+  if (preferredInventoryId && preferredInventoryId !== '0') {
+    singlePassCalls.push(
+      { method: 'getInventoryTags', parameters: { inventory_id: preferredInventoryId } },
+      { method: 'getTags', parameters: { inventory_id: preferredInventoryId } }
+    );
+  }
+  singlePassCalls.push(
+    { method: 'getInventoryTags', parameters: {} },
+    { method: 'getTags', parameters: {} },
+    { method: 'getLabels', parameters: {} }
+  );
+
+  for (const call of singlePassCalls) {
+    try {
+      const payload = await callBaseApi(token, call.method, call.parameters);
+      const tags = extractTagList(payload);
+      if (tags.length > 0) {
+        return dedupeTags(tags);
+      }
+    } catch (error: unknown) {
+      lastError = error instanceof Error ? error : new Error('Base API error.');
+    }
+  }
+
+  const aggregated: BaseTag[] = [];
+  let inventoryIds: string[] = [];
+  try {
+    const inventories = await fetchBaseInventories(token);
+    inventoryIds = inventories
+      .map((inventory: BaseInventory): string => inventory.id)
+      .filter((id: string): boolean => Boolean(id?.trim()));
+  } catch (error: unknown) {
+    lastError = error instanceof Error ? error : new Error('Base API error.');
+  }
+
+  const visitedInventoryIds = new Set<string>();
+  if (preferredInventoryId && preferredInventoryId !== '0') {
+    visitedInventoryIds.add(preferredInventoryId);
+  }
+
+  for (const inventoryId of inventoryIds) {
+    if (visitedInventoryIds.has(inventoryId)) continue;
+    visitedInventoryIds.add(inventoryId);
+    try {
+      const payload = await callBaseApi(token, 'getInventoryTags', {
+        inventory_id: inventoryId,
+      });
+      const tags = extractTagList(payload);
+      if (tags.length > 0) {
+        aggregated.push(...tags);
+      }
+    } catch (error: unknown) {
+      lastError = error instanceof Error ? error : new Error('Base API error.');
+    }
+  }
+
+  if (aggregated.length > 0) {
+    return dedupeTags(aggregated);
+  }
+
+  if (lastError) throw lastError;
+  return [];
 }
 
 export type BaseCategory = {

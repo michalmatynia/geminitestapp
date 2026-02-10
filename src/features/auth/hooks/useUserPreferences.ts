@@ -17,6 +17,27 @@ export interface UserPreferences {
 
 const USER_PREFERENCES_STALE_MS = 1000 * 60 * 5;
 
+const hasPreferenceChanged = (
+  current: UserPreferences | undefined,
+  key: string,
+  nextValue: unknown
+): boolean => {
+  const currentValue = (current as Record<string, unknown> | undefined)?.[key];
+  if (
+    currentValue &&
+    typeof currentValue === 'object' &&
+    nextValue &&
+    typeof nextValue === 'object'
+  ) {
+    try {
+      return JSON.stringify(currentValue) !== JSON.stringify(nextValue);
+    } catch {
+      return true;
+    }
+  }
+  return currentValue !== nextValue;
+};
+
 export function useUserPreferences(): UseQueryResult<UserPreferences, Error> {
   return useQuery({
     queryKey: ['user-preferences'],
@@ -47,11 +68,18 @@ export function useUpdateUserPreferencesMutation(): UseMutationResult<UserPrefer
         throw new Error('Invalid user preferences payload.');
       }
       const payload = normalizeUserPreferencesUpdatePayload(validation.data);
+      const current = queryClient.getQueryData<UserPreferences>(['user-preferences']) ?? undefined;
+      const changedPayload = Object.fromEntries(
+        Object.entries(payload).filter(([key, value]) => hasPreferenceChanged(current, key, value))
+      ) as UserPreferences;
+      if (Object.keys(changedPayload).length === 0) {
+        return (current ?? {}) as UserPreferences;
+      }
       const res = await fetch('/api/user/preferences', {
         method: 'PATCH',
         headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
         credentials: 'include',
-        body: JSON.stringify(payload),
+        body: JSON.stringify(changedPayload),
       });
       if (!res.ok) throw new Error('Failed to update user preferences.');
       return normalizeUserPreferencesResponse(await res.json()) as UserPreferences;

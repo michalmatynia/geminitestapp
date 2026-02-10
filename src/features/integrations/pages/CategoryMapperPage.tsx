@@ -60,8 +60,8 @@ export default function CategoryMapperPage(): React.JSX.Element {
     <div className='container mx-auto py-10'>
       <SectionPanel className='p-6'>
         <SectionHeader
-          title='Category Mapper'
-          description='Map external marketplace categories to your internal product categories for seamless import and export.'
+          title='Category, Producer & Tag Mapper'
+          description='Map external marketplace categories, producers, and tags to internal records for reliable import and export.'
           className='mb-6'
         />
 

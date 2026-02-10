@@ -39,6 +39,15 @@ interface ServerStreamMessage {
   startedAt?: string;
 }
 
+interface AiPathRunEventRecordExtended extends AiPathRunEventRecord {
+  nodeId?: string | null;
+  runId?: string | null;
+  status?: string | null;
+  iteration?: number | null;
+  metadata?: Record<string, unknown> | null;
+  timestamp?: string | null;
+}
+
 export function useAiPathsServerExecution(args: ServerExecutionArgs) {
   const serverRunActiveRef = useRef(false);
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -103,17 +112,18 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
 
           if (data.type === 'run_events' && Array.isArray(data.events)) {
             const logEvents: AiPathRuntimeEvent[] = [];
-            data.events.forEach((item: AiPathRunEventRecord): void => {
-              const nodeId = (item as any).nodeId as string | undefined;
-              const runId = (item as any).runId as string | undefined;
-              const status = args.normalizeNodeStatus((item as any).status);
-              const iteration = (item as any).iteration as number | undefined;
-              const metadata = (item as any).metadata as Record<string, unknown> | undefined;
+            data.events.forEach((rawItem: AiPathRunEventRecord): void => {
+              const item = rawItem as AiPathRunEventRecordExtended;
+              const nodeId = item.nodeId;
+              const runId = item.runId;
+              const status = args.normalizeNodeStatus(item.status);
+              const iteration = item.iteration;
+              const metadata = item.metadata;
               const runtimeNode = args.normalizedNodes.find((n) => n.id === nodeId);
 
               logEvents.push({
                 id: item.id,
-                timestamp: (item as any).timestamp as string || new Date().toISOString(),
+                timestamp: item.timestamp || new Date().toISOString(),
                 source: 'server',
                 kind: 'log',
                 level: item.level as 'info' | 'warning' | 'error',
@@ -123,8 +133,8 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                 nodeType: runtimeNode?.type,
                 nodeTitle: runtimeNode?.title ?? null,
                 status,
-                iteration,
-                metadata,
+                iteration: iteration ?? undefined,
+                metadata: metadata ?? undefined,
               });
             });
             if (logEvents.length > 0) {

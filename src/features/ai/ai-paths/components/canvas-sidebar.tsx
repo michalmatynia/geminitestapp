@@ -310,7 +310,7 @@ export function CanvasSidebar({
                   <Button
                     className='w-full rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10'
                     type='button'
-                    onClick={(event) => fireTrigger(selectedNode, event)}
+                    onClick={(event) => { void fireTrigger(selectedNode, event); }}
                   >
                     Fire Trigger
                   </Button>
@@ -318,7 +318,7 @@ export function CanvasSidebar({
                     <Button
                       className='w-full rounded-md border border-sky-500/40 text-xs text-sky-200 hover:bg-sky-500/10'
                       type='button'
-                      onClick={(event) => fireTriggerPersistent(selectedNode, event)}
+                      onClick={(event) => { void fireTriggerPersistent(selectedNode, event); }}
                     >
                       Queue Persistent Run
                     </Button>

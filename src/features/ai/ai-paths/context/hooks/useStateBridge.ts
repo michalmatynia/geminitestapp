@@ -419,9 +419,11 @@ export function useStateBridgeRuntime({
 
   useEffect(() => {
     actions.setRunControlHandlers({
-      ...(handleFireTrigger !== undefined && { fireTrigger: handleFireTrigger }),
+      ...(handleFireTrigger !== undefined && { 
+        fireTrigger: (node, event) => { void handleFireTrigger(node, event); } 
+      }),
       ...(handleFireTriggerPersistent !== undefined && {
-        fireTriggerPersistent: handleFireTriggerPersistent,
+        fireTriggerPersistent: (node, event) => { void handleFireTriggerPersistent(node, event); }
       }),
       ...(handlePauseActiveRun !== undefined && { pauseActiveRun: handlePauseActiveRun }),
       ...(handleResumeActiveRun !== undefined && { resumeActiveRun: handleResumeActiveRun }),
@@ -442,10 +444,18 @@ export function useStateBridgeRuntime({
 
   useEffect(() => {
     actions.setRuntimeNodeConfigHandlers({
-      ...(handleFetchParserSample !== undefined && { fetchParserSample: handleFetchParserSample }),
-      ...(handleFetchUpdaterSample !== undefined && { fetchUpdaterSample: handleFetchUpdaterSample }),
-      ...(handleRunSimulation !== undefined && { runSimulation: handleRunSimulation }),
-      ...(handleSendToAi !== undefined && { sendToAi: handleSendToAi }),
+      ...(handleFetchParserSample !== undefined && { 
+        fetchParserSample: (nodeId, entityType, entityId) => { void handleFetchParserSample(nodeId, entityType, entityId); } 
+      }),
+      ...(handleFetchUpdaterSample !== undefined && { 
+        fetchUpdaterSample: (nodeId, entityType, entityId, options) => { void handleFetchUpdaterSample(nodeId, entityType, entityId, options); } 
+      }),
+      ...(handleRunSimulation !== undefined && { 
+        runSimulation: (node, triggerEvent) => { void handleRunSimulation(node, triggerEvent); } 
+      }),
+      ...(handleSendToAi !== undefined && { 
+        sendToAi: (nodeId, prompt) => { void handleSendToAi(nodeId, prompt); } 
+      }),
     });
   }, [
     actions,

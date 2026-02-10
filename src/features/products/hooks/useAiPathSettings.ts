@@ -25,6 +25,7 @@ export type PathSettingsResult = {
   orderedConfigs: PathConfig[];
   pathOrder: string[];
   uiState: Record<string, unknown> | null;
+  preferredActivePathId: string | null;
 };
 
 export async function fetchPathSettings(
@@ -46,6 +47,26 @@ export async function fetchPathSettings(
   const map = new Map<string, string>(
     settingsData.map((item: { key: string; value: string }) => [item.key, item.value])
   );
+
+  let preferredActivePathId: string | null = null;
+  try {
+    const preferencesResponse = await queryClient.fetchQuery({
+      queryKey: ['user-preferences', 'ai-paths'],
+      queryFn: async (): Promise<{ aiPathsActivePathId?: unknown }> => {
+        const res = await fetch('/api/user/preferences', { credentials: 'include' });
+        if (!res.ok) return {};
+        return (await res.json()) as { aiPathsActivePathId?: unknown };
+      },
+      staleTime: AI_PATHS_SETTINGS_STALE_MS,
+    });
+    preferredActivePathId =
+      typeof preferencesResponse.aiPathsActivePathId === 'string' &&
+      preferencesResponse.aiPathsActivePathId.trim().length > 0
+        ? preferencesResponse.aiPathsActivePathId.trim()
+        : null;
+  } catch {
+    preferredActivePathId = null;
+  }
 
   const uiStateRaw = map.get(AI_PATHS_UI_STATE_KEY);
   const uiStateParsed = uiStateRaw ? safeParseJson(uiStateRaw).value : null;
@@ -108,12 +129,14 @@ export async function fetchPathSettings(
     orderedConfigs,
     pathOrder: settingsPathOrder,
     uiState,
+    preferredActivePathId,
   };
 }
 
 export function findTriggerPath(
   orderedConfigs: PathConfig[],
   uiState: Record<string, unknown> | null,
+  preferredActivePathId: string | null,
   triggerEvent: string,
 ): PathConfig | undefined {
   const triggerCandidates: PathConfig[] = orderedConfigs.filter((config: PathConfig) =>
@@ -127,9 +150,12 @@ export function findTriggerPath(
   );
 
   const activePathId =
-    typeof uiState?.['activePathId'] === 'string' && uiState['activePathId'].trim().length > 0
+    (typeof preferredActivePathId === 'string' && preferredActivePathId.trim().length > 0
+      ? preferredActivePathId.trim()
+      : null) ??
+    (typeof uiState?.['activePathId'] === 'string' && uiState['activePathId'].trim().length > 0
       ? uiState['activePathId'].trim()
-      : null;
+      : null);
 
   const activeTriggerCandidate = activePathId
     ? triggerCandidates.find((config: PathConfig): boolean => config.id === activePathId)

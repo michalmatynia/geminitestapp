@@ -90,6 +90,11 @@ export const updateAiPathsSettingsBulk = async (
     throw new Error(`Failed to update AI Paths settings (${res.status})`);
   }
   invalidateAiPathsSettingsCache();
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent('ai-paths:settings:updated', { detail: { scope: 'ai-paths' } })
+    );
+  }
   const data = (await res.json()) as unknown;
   if (!Array.isArray(data)) return payload;
   return data
@@ -117,6 +122,11 @@ export const updateAiPathsSetting = async (
     throw new Error(`Failed to update AI Paths setting (${res.status})`);
   }
   invalidateAiPathsSettingsCache();
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent('ai-paths:settings:updated', { detail: { scope: 'ai-paths' } })
+    );
+  }
   const data = (await res.json()) as unknown;
   if (!data || typeof data !== 'object') return { key, value };
   const nextKey = (data as { key?: unknown }).key;
@@ -126,4 +136,3 @@ export const updateAiPathsSetting = async (
     value: typeof nextValue === 'string' ? nextValue : value,
   };
 };
-

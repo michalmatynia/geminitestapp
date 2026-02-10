@@ -47,8 +47,8 @@ import {
   triggers,
   triggerButtonsApi,
 } from '@/features/ai/ai-paths/lib';
+import { updateAiPathsSetting } from '@/features/ai/ai-paths/lib/settings-store-client';
 import { logClientError } from '@/features/observability';
-import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import type { AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
 import { useToast } from '@/shared/ui';
 
@@ -440,7 +440,6 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
   );
   const [loadNonce, setLoadNonce] = useState(0);
   const queryClient = useQueryClient();
-  const updateSettingMutation = useUpdateSetting();
 
   const triggerButtonsQuery = useQuery({
     queryKey: ['ai-paths', 'trigger-buttons'],
@@ -706,15 +705,15 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       payload: { message: string; time: string; pathId?: string | null } | null
     ): Promise<void> => {
       try {
-        await updateSettingMutation.mutateAsync({
-          key: AI_PATHS_LAST_ERROR_KEY,
-          value: payload ? JSON.stringify(payload) : '',
-        });
+        await updateAiPathsSetting(
+          AI_PATHS_LAST_ERROR_KEY,
+          payload ? JSON.stringify(payload) : ''
+        );
       } catch (error: unknown) {
-        console.warn('[AI Paths] Failed to persist last error.', error);
+        console.warn('[AI Paths] Failed to persist last error.', error instanceof Error ? error.message : String(error));
       }
     },
-    [updateSettingMutation]
+    []
   );
 
   const reportAiPathsError = useCallback(

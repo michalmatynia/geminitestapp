@@ -43,7 +43,7 @@ type SettingDocument = {
 
 const SETTINGS_COLLECTION = 'settings';
 const AI_PATHS_CONFIG_PREFIX = 'ai_paths_config_';
-const HEAVY_PREFIXES = ['ai_paths_', 'image_studio_', 'base_import_', 'base_export_'];
+const HEAVY_PREFIXES = ['image_studio_', 'base_import_', 'base_export_'];
 const HEAVY_KEYS = new Set<string>(['agent_personas']);
 const HEAVY_PREFIX_REGEX = new RegExp(`^(${HEAVY_PREFIXES.map((p) => p.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|')})`);
 const DEFAULT_SCOPE: SettingsScope = 'light';

@@ -2,11 +2,11 @@ export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import { requireAiPathsAccess, requireAiPathsRunAccess } from '@/features/ai/ai-paths/server';
 import {
   getAiPathsSetting,
   upsertAiPathsSetting,
 } from '@/features/ai/ai-paths/server/settings-store';
-import { requireAiPathsAccess, requireAiPathsRunAccess } from '@/features/ai/ai-paths/server';
 import {
   aiTriggerButtonCreateSchema,
   parseAiTriggerButtonsRaw,

@@ -17,7 +17,7 @@ import {
   GraphExecutionError,
   GraphExecutionCancelled,
 } from '@/features/ai/ai-paths/lib';
-import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { updateAiPathsSetting } from '@/features/ai/ai-paths/lib/settings-store-client';
 
 import {
   LOCAL_RUN_STEP_CHUNK,
@@ -32,8 +32,6 @@ import {
 } from './utils';
 
 export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
-  const updateSettingMutation = useUpdateSetting();
-
   const persistDebugSnapshot = useCallback(
     async (pathId: string | null, runAt: string, state: RuntimeState): Promise<void> => {
       if (!pathId) return;
@@ -42,10 +40,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
       const payload = safeJsonStringify(snapshot);
       if (!payload) return;
       try {
-        await updateSettingMutation.mutateAsync({
-          key: `${PATH_DEBUG_PREFIX}${pathId}`,
-          value: payload,
-        });
+        await updateAiPathsSetting(`${PATH_DEBUG_PREFIX}${pathId}`, payload);
         args.setPathDebugSnapshots((prev: Record<string, PathDebugSnapshot>) => ({
           ...prev,
           [pathId]: snapshot,
@@ -54,7 +49,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
         console.warn('[AI Paths] Failed to persist debug snapshot.', error);
       }
     },
-    [args, updateSettingMutation]
+    [args]
   );
 
   const finalizeLocalRunOutcome = useCallback(
@@ -101,12 +96,12 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
           }));
         }
         const entityId =
-          typeof (meta.triggerContext)?.['entityId'] === 'string'
-            ? (meta.triggerContext)['entityId']
+          typeof meta.triggerContext?.['entityId'] === 'string'
+            ? meta.triggerContext['entityId']
             : null;
         const entityType =
-          typeof (meta.triggerContext)?.['entityType'] === 'string'
-            ? (meta.triggerContext)['entityType']
+          typeof meta.triggerContext?.['entityType'] === 'string'
+            ? meta.triggerContext['entityType']
             : null;
         void appendLocalRun({
           pathId: args.activePathId ?? null,

@@ -35,8 +35,8 @@ export interface LastErrorInfo {
 export type RuntimeRunStatus = 'idle' | 'running' | 'paused' | 'stepping';
 
 export interface RuntimeControlHandlers {
-  fireTrigger?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
-  fireTriggerPersistent?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
+  fireTrigger?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>;
+  fireTriggerPersistent?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>;
   pauseActiveRun?: () => void;
   resumeActiveRun?: () => void;
   stepActiveRun?: (triggerNode?: AiNode) => void;
@@ -127,8 +127,8 @@ export interface RuntimeActions {
     status: RuntimeRunStatus | ((prev: RuntimeRunStatus) => RuntimeRunStatus)
   ) => void;
   setRunControlHandlers: (handlers: RuntimeControlHandlers) => void;
-  fireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
-  fireTriggerPersistent: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
+  fireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>;
+  fireTriggerPersistent: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>;
   pauseActiveRun: () => void;
   resumeActiveRun: () => void;
   stepActiveRun: (triggerNode?: AiNode) => void;
@@ -316,11 +316,11 @@ export function RuntimeProvider({
   }, []);
 
   const fireTrigger = useCallback((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => {
-    runControlHandlersRef.current.fireTrigger?.(node, event);
+    return runControlHandlersRef.current.fireTrigger?.(node, event);
   }, []);
 
   const fireTriggerPersistent = useCallback((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => {
-    runControlHandlersRef.current.fireTriggerPersistent?.(node, event);
+    return runControlHandlersRef.current.fireTriggerPersistent?.(node, event);
   }, []);
 
   const pauseActiveRun = useCallback(() => {

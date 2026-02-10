@@ -231,11 +231,16 @@ export function useAiPathTrigger(): {
     let startedAtMs: number | null = null;
 
     try {
-      const { orderedConfigs, uiState } =
+      const { orderedConfigs, uiState, preferredActivePathId } =
         await fetchPathSettings(queryClient);
 
       const triggerEvent = (TRIGGER_EVENTS[0]?.id as string) ?? 'path_generate_description';
-      const selectedConfig = findTriggerPath(orderedConfigs, uiState, triggerEvent);
+      const selectedConfig = findTriggerPath(
+        orderedConfigs,
+        uiState,
+        preferredActivePathId,
+        triggerEvent
+      );
 
       if (!selectedConfig) {
         toast(

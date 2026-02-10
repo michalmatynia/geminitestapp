@@ -8,6 +8,7 @@ import type {
   Edge,
   RuntimePortValues,
   RuntimeState,
+  PathExecutionMode,
 } from '@/features/ai/ai-paths/lib';
 import {
   TRIGGER_EVENTS,
@@ -25,7 +26,7 @@ import {
 type SimulationArgs = {
   normalizedNodes: AiNode[];
   sanitizedEdges: Edge[];
-  executionMode: any;
+  executionMode: PathExecutionMode;
   setRuntimeState: React.Dispatch<React.SetStateAction<RuntimeState>>;
   runtimeStateRef: React.MutableRefObject<RuntimeState>;
   pendingSimulationContextRef: React.MutableRefObject<Record<string, unknown> | null>;

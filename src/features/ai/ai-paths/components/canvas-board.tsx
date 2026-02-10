@@ -1362,7 +1362,7 @@ export function CanvasBoard({
                     className='self-start rounded-md border border-emerald-500/40 px-2 py-1 text-[10px] text-emerald-200 hover:bg-emerald-500/10'
                     type='button'
                     onPointerDown={(event) => event.stopPropagation()}
-                    onClick={(event) => fireTrigger(node, event)}
+                    onClick={(event) => { void fireTrigger(node, event); }}
                   >
                     Fire Trigger
                   </Button>

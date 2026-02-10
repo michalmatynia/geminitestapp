@@ -5,63 +5,213 @@ import { useEffect, useState } from 'react';
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
+  PRODUCT_IMAGES_EXTERNAL_ROUTES_SETTING_KEY,
 } from '@/features/products/constants';
 import { normalizeProductImageExternalBaseUrl } from '@/features/products/utils/image-routing';
-import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, Input, Label, useToast } from '@/shared/ui';
+
+const dedupeRoutes = (routes: string[]): string[] => {
+  const next: string[] = [];
+  routes.forEach((route) => {
+    if (!route) return;
+    if (next.includes(route)) return;
+    next.push(route);
+  });
+  return next;
+};
+
+const parseRoutesSetting = (
+  rawValue: string | null | undefined,
+  fallbackRoute: string
+): string[] => {
+  if (!rawValue?.trim()) return [fallbackRoute];
+  try {
+    const parsed = JSON.parse(rawValue) as unknown;
+    if (!Array.isArray(parsed)) return [fallbackRoute];
+    const normalized = dedupeRoutes(
+      parsed
+        .map((entry: unknown) =>
+          typeof entry === 'string' ? normalizeProductImageExternalBaseUrl(entry) : ''
+        )
+        .filter((entry: string) => entry.length > 0)
+    );
+    return normalized.length > 0 ? normalized : [fallbackRoute];
+  } catch {
+    return [fallbackRoute];
+  }
+};
 
 export function ProductImageRoutingSettings(): React.JSX.Element {
   const { toast } = useToast();
   const settingsStore = useSettingsStore();
-  const updateSetting = useUpdateSetting();
+  const updateSettingsBulk = useUpdateSettingsBulk();
 
-  const persistedBaseUrl =
+  const persistedBaseUrlRaw =
     settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
     DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
+  const persistedBaseUrl =
+    normalizeProductImageExternalBaseUrl(persistedBaseUrlRaw) ||
+    DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
+  const persistedRoutesRaw =
+    settingsStore.get(PRODUCT_IMAGES_EXTERNAL_ROUTES_SETTING_KEY) ?? null;
 
-  const [value, setValue] = useState<string>(persistedBaseUrl);
+  const [routes, setRoutes] = useState<string[]>(
+    parseRoutesSetting(persistedRoutesRaw, persistedBaseUrl)
+  );
+  const [defaultRoute, setDefaultRoute] = useState<string>(persistedBaseUrl);
+  const [newRoute, setNewRoute] = useState<string>('');
 
   useEffect(() => {
-    setValue(persistedBaseUrl);
-  }, [persistedBaseUrl]);
+    const nextRoutes = parseRoutesSetting(persistedRoutesRaw, persistedBaseUrl);
+    const ensuredRoutes = nextRoutes.includes(persistedBaseUrl)
+      ? nextRoutes
+      : dedupeRoutes([persistedBaseUrl, ...nextRoutes]);
+    setRoutes(ensuredRoutes);
+    setDefaultRoute(persistedBaseUrl);
+  }, [persistedBaseUrl, persistedRoutesRaw]);
+
+  const handleAddRoute = (): void => {
+    const normalized = normalizeProductImageExternalBaseUrl(newRoute);
+    if (!normalized) {
+      toast('Enter a valid route URL.', { variant: 'warning' });
+      return;
+    }
+    setRoutes((prev: string[]) =>
+      prev.includes(normalized) ? prev : dedupeRoutes([...prev, normalized])
+    );
+    setNewRoute('');
+  };
+
+  const handleRemoveRoute = (route: string): void => {
+    setRoutes((prev: string[]) => {
+      const next = prev.filter((entry: string) => entry !== route);
+      if (next.length > 0) {
+        if (defaultRoute === route) {
+          setDefaultRoute(next[0] ?? DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL);
+        }
+        return next;
+      }
+      const fallback = DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
+      setDefaultRoute(fallback);
+      return [fallback];
+    });
+  };
 
   const handleSave = (): void => {
-    const normalized = normalizeProductImageExternalBaseUrl(value);
-    const nextValue = normalized || DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
-    updateSetting.mutate(
-      {
-        key: PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
-        value: nextValue,
-      },
+    const normalizedRoutes = dedupeRoutes(
+      routes
+        .map((route: string) => normalizeProductImageExternalBaseUrl(route))
+        .filter((route: string) => route.length > 0)
+    );
+    const normalizedDefault =
+      normalizeProductImageExternalBaseUrl(defaultRoute) ||
+      normalizedRoutes[0] ||
+      DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
+    const ensuredRoutes = normalizedRoutes.includes(normalizedDefault)
+      ? normalizedRoutes
+      : dedupeRoutes([normalizedDefault, ...normalizedRoutes]);
+    const routesPayload = ensuredRoutes.length > 0
+      ? ensuredRoutes
+      : [DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL];
+    const defaultPayload = routesPayload.includes(normalizedDefault)
+      ? normalizedDefault
+      : routesPayload[0] ?? DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
+
+    updateSettingsBulk.mutate(
+      [
+        {
+          key: PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
+          value: defaultPayload,
+        },
+        {
+          key: PRODUCT_IMAGES_EXTERNAL_ROUTES_SETTING_KEY,
+          value: JSON.stringify(routesPayload),
+        },
+      ],
       {
         onSuccess: () => {
-          toast('Image host saved.', { variant: 'success' });
+          setRoutes(routesPayload);
+          setDefaultRoute(defaultPayload);
+          toast('Image routes saved.', { variant: 'success' });
         },
         onError: () => {
-          toast('Failed to save image host.', { variant: 'error' });
+          toast('Failed to save image routes.', { variant: 'error' });
         },
       }
     );
   };
 
   const handleUseLocalhost = (): void => {
-    setValue(DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL);
+    const localhostRoute = DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
+    setRoutes((prev: string[]) =>
+      prev.includes(localhostRoute) ? prev : dedupeRoutes([localhostRoute, ...prev])
+    );
+    setDefaultRoute(localhostRoute);
   };
 
   return (
     <div className='space-y-5'>
       <div className='space-y-2'>
-        <Label htmlFor='productImageBaseUrl'>Global Product Image Host</Label>
-        <Input
-          id='productImageBaseUrl'
-          value={value}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>) => setValue(event.target.value)}
-          placeholder={DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL}
-        />
+        <Label htmlFor='productImageRoute'>Add Product Image Route</Label>
+        <div className='flex items-center gap-2'>
+          <Input
+            id='productImageRoute'
+            value={newRoute}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setNewRoute(event.target.value)}
+            placeholder={DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL}
+            onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                handleAddRoute();
+              }
+            }}
+          />
+          <Button
+            type='button'
+            variant='outline'
+            onClick={handleAddRoute}
+            disabled={updateSettingsBulk.isPending}
+          >
+            Add
+          </Button>
+        </div>
         <p className='text-xs text-gray-500'>
-          All product image paths are routed through this host in Product List and modals.
+          Add multiple image routes and choose one default route used by Product List and modals.
         </p>
+      </div>
+
+      <div className='space-y-2'>
+        <Label>Available Routes</Label>
+        <div className='space-y-2'>
+          {routes.map((route: string) => {
+            const isDefault = defaultRoute === route;
+            return (
+              <div
+                key={route}
+                className='flex items-center gap-3 rounded-md border border-gray-200 px-3 py-2'
+              >
+                <input
+                  type='radio'
+                  name='productImageDefaultRoute'
+                  checked={isDefault}
+                  onChange={() => setDefaultRoute(route)}
+                  disabled={updateSettingsBulk.isPending}
+                />
+                <span className='min-w-0 flex-1 truncate text-sm'>{route}</span>
+                <Button
+                  type='button'
+                  variant='ghost'
+                  onClick={() => handleRemoveRoute(route)}
+                  disabled={routes.length <= 1 || updateSettingsBulk.isPending}
+                >
+                  Remove
+                </Button>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div className='flex items-center gap-3'>
@@ -69,16 +219,16 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
           type='button'
           variant='outline'
           onClick={handleUseLocalhost}
-          disabled={updateSetting.isPending}
+          disabled={updateSettingsBulk.isPending}
         >
           Use localhost:3000
         </Button>
         <Button
           type='button'
           onClick={handleSave}
-          disabled={updateSetting.isPending}
+          disabled={updateSettingsBulk.isPending}
         >
-          {updateSetting.isPending ? 'Saving...' : 'Save'}
+          {updateSettingsBulk.isPending ? 'Saving...' : 'Save'}
         </Button>
       </div>
     </div>

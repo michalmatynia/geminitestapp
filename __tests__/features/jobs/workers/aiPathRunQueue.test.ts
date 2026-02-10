@@ -2,7 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { executePathRun } from '@/features/ai/ai-paths/services/path-run-executor';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
-import { processRun, computeBackoffMs } from '@/features/jobs/workers/aiPathRunQueue';
+import {
+  processRun,
+  computeBackoffMs,
+  computeAiPathRunQueueSlo,
+  type QueueSloThresholds,
+} from '@/features/jobs/workers/aiPathRunQueue';
 
 vi.mock('@/features/ai/ai-paths/services/path-run-executor', () => ({
   executePathRun: vi.fn(),
@@ -52,6 +57,78 @@ describe('AI Path Run Queue Worker', () => {
       // Default max is 60000
       const resLarge = computeBackoffMs(10);
       expect(resLarge).toBeLessThanOrEqual(61000); // 60000 + jitter
+    });
+  });
+
+  describe('computeAiPathRunQueueSlo', () => {
+    const thresholds: QueueSloThresholds = {
+      queueLagWarningMs: 60_000,
+      queueLagCriticalMs: 180_000,
+      successRateWarningPct: 95,
+      successRateCriticalPct: 90,
+      deadLetterRateWarningPct: 1,
+      deadLetterRateCriticalPct: 3,
+      brainErrorRateWarningPct: 5,
+      brainErrorRateCriticalPct: 15,
+      minTerminalSamples: 10,
+      minBrainSamples: 20,
+    };
+
+    it('returns critical when worker is stopped', () => {
+      const result = computeAiPathRunQueueSlo(
+        {
+          queueRunning: false,
+          queueHealthy: false,
+          queueLagMs: null,
+          successRate24h: 99,
+          terminalRuns24h: 200,
+          deadLetterRate24h: 0,
+          brainErrorRate24h: 1,
+          brainTotalReports24h: 100,
+        },
+        thresholds
+      );
+      expect(result.overall).toBe('critical');
+      expect(result.indicators.workerHealth.level).toBe('critical');
+      expect(result.breachCount).toBeGreaterThanOrEqual(1);
+    });
+
+    it('returns warning for elevated dead-letter rate', () => {
+      const result = computeAiPathRunQueueSlo(
+        {
+          queueRunning: true,
+          queueHealthy: true,
+          queueLagMs: 2_000,
+          successRate24h: 97,
+          terminalRuns24h: 120,
+          deadLetterRate24h: 1.5,
+          brainErrorRate24h: 2,
+          brainTotalReports24h: 80,
+        },
+        thresholds
+      );
+      expect(result.indicators.deadLetterRate24h.level).toBe('warning');
+      expect(result.overall).toBe('warning');
+    });
+
+    it('ignores rate indicators when sample size is too small', () => {
+      const result = computeAiPathRunQueueSlo(
+        {
+          queueRunning: true,
+          queueHealthy: true,
+          queueLagMs: null,
+          successRate24h: 10,
+          terminalRuns24h: 2,
+          deadLetterRate24h: 90,
+          brainErrorRate24h: 50,
+          brainTotalReports24h: 2,
+        },
+        thresholds
+      );
+      expect(result.indicators.successRate24h.level).toBe('ok');
+      expect(result.indicators.deadLetterRate24h.level).toBe('ok');
+      expect(result.indicators.brainErrorRate24h.level).toBe('ok');
+      expect(result.overall).toBe('ok');
     });
   });
 

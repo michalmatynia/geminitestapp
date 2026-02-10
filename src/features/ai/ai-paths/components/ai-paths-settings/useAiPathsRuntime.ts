@@ -381,6 +381,73 @@ export function useAiPathsRuntime({
     [appendRuntimeEvent, formatStatusLabel, normalizeNodeStatus]
   );
 
+  /**
+   * Batched version of setNodeStatus — applies multiple status changes in 2 setState calls
+   * instead of 2N. Used by SSE event handlers where N nodes arrive in a single event.
+   */
+  const batchNodeStatusUpdates = useCallback(
+    (updates: Array<{
+      nodeId: string;
+      status: unknown;
+      source: 'local' | 'server';
+      runId?: string | null | undefined;
+      runStartedAt?: string | null | undefined;
+      iteration?: number | undefined;
+      nodeType?: string | null | undefined;
+      nodeTitle?: string | null | undefined;
+      kind?: AiPathRuntimeEventKind | undefined;
+      level?: 'info' | 'warning' | 'error' | undefined;
+      message?: string | undefined;
+      metadata?: Record<string, unknown> | null | undefined;
+    }>): void => {
+      const currentStatuses = runtimeNodeStatusesRef.current;
+      const nextStatuses: AiPathRuntimeNodeStatusMap = { ...currentStatuses };
+      const batchedEvents: AiPathRuntimeEvent[] = [];
+      let statusChanged = false;
+
+      for (const input of updates) {
+        const normalized = normalizeNodeStatus(input.status);
+        if (!normalized) continue;
+        if (nextStatuses[input.nodeId] === normalized) continue;
+        nextStatuses[input.nodeId] = normalized;
+        statusChanged = true;
+        batchedEvents.push({
+          id:
+            typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+              ? crypto.randomUUID()
+              : `evt_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`,
+          timestamp: new Date().toISOString(),
+          source: input.source,
+          kind: input.kind ?? 'node_status',
+          level: input.level ?? 'info',
+          message:
+            input.message ??
+            `Node ${input.nodeTitle ?? input.nodeId} is ${formatStatusLabel(normalized)}.`,
+          ...(input.runId !== undefined ? { runId: input.runId } : {}),
+          ...(input.runStartedAt !== undefined ? { runStartedAt: input.runStartedAt } : {}),
+          nodeId: input.nodeId,
+          ...(input.nodeType !== undefined ? { nodeType: input.nodeType } : {}),
+          ...(input.nodeTitle !== undefined ? { nodeTitle: input.nodeTitle } : {}),
+          status: normalized,
+          ...(input.iteration !== undefined ? { iteration: input.iteration } : {}),
+          ...(input.metadata !== undefined ? { metadata: input.metadata } : {}),
+        });
+      }
+
+      if (statusChanged) {
+        runtimeNodeStatusesRef.current = nextStatuses;
+        setRuntimeNodeStatuses(nextStatuses);
+      }
+      if (batchedEvents.length > 0) {
+        setRuntimeEvents((prev: AiPathRuntimeEvent[]): AiPathRuntimeEvent[] => {
+          const next = [...prev, ...batchedEvents];
+          return next.length > MAX_RUNTIME_EVENTS ? next.slice(-MAX_RUNTIME_EVENTS) : next;
+        });
+      }
+    },
+    [formatStatusLabel, normalizeNodeStatus]
+  );
+
   useEffect((): void => {
     const validNodeIds = new Set(normalizedNodes.map((node: AiNode): string => node.id));
     const current = runtimeNodeStatusesRef.current;
@@ -535,42 +602,28 @@ export function useAiPathsRuntime({
     []
   );
 
-  const seedDownstreamInputsRecursive = useCallback(
+  const seedImmediateDownstreamInputs = useCallback(
     (
       inputs: Record<string, RuntimePortValues>,
       allOutputs: Record<string, RuntimePortValues>,
       fromNodeId: string
     ): Record<string, RuntimePortValues> => {
       const nextInputs: Record<string, RuntimePortValues> = { ...inputs };
-      const visited = new Set<string>();
-      const queue = [fromNodeId];
+      const nodeOutputs = allOutputs[fromNodeId];
+      if (!nodeOutputs) return nextInputs;
+      sanitizedEdges.forEach((edge: Edge): void => {
+        if (edge.from !== fromNodeId || !edge.to) return;
+        const rawFromPort = edge.fromPort?.trim() || 'context';
+        const fromPort = rawFromPort === 'simulation' ? 'context' : rawFromPort;
+        const toPort = edge.toPort?.trim() || fromPort;
+        const value = (nodeOutputs as Record<string, unknown>)[fromPort];
+        if (value === undefined) return;
+        nextInputs[edge.to] = {
+          ...(nextInputs[edge.to] ?? {}),
+          [toPort]: value,
+        };
+      });
 
-      while (queue.length > 0) {
-        const currentNodeId = queue.shift()!;
-        if (visited.has(currentNodeId)) continue;
-        visited.add(currentNodeId);
-
-        const nodeOutputs = allOutputs[currentNodeId];
-        if (!nodeOutputs) continue;
-
-        sanitizedEdges.forEach((edge: Edge): void => {
-          if (edge.from !== currentNodeId || !edge.to) return;
-          const rawFromPort = edge.fromPort?.trim() || 'context';
-          const fromPort = rawFromPort === 'simulation' ? 'context' : rawFromPort;
-          const toPort = edge.toPort?.trim() || fromPort;
-          const value = (nodeOutputs as Record<string, unknown>)[fromPort];
-          if (value === undefined) return;
-          nextInputs[edge.to] = {
-            ...(nextInputs[edge.to] ?? {}),
-            [toPort]: value,
-          };
-          // Continue propagation through nodes that already have outputs
-          // (from a previous run), so the UI shows the full downstream chain.
-          if (allOutputs[edge.to] && !visited.has(edge.to)) {
-            queue.push(edge.to);
-          }
-        });
-      }
       return nextInputs;
     },
     [sanitizedEdges]
@@ -602,9 +655,8 @@ export function useAiPathsRuntime({
             ...simulationOutputs,
           },
         };
-        // Use recursive seeding to propagate through the entire downstream chain,
-        // so all downstream nodes (including multi-hop mappers) see data immediately.
-        const nextInputs = seedDownstreamInputsRecursive(
+        // Seed only immediate downstream inputs so visual flow matches causal execution.
+        const nextInputs = seedImmediateDownstreamInputs(
           prev.inputs,
           nextOutputs,
           simulationNode.id
@@ -618,7 +670,7 @@ export function useAiPathsRuntime({
         return next;
       });
     },
-    [executionMode, seedDownstreamInputsRecursive, setRuntimeState]
+    [executionMode, seedImmediateDownstreamInputs, setRuntimeState]
   );
 
   const buildActivePathConfig = useCallback(
@@ -862,25 +914,28 @@ export function useAiPathsRuntime({
           if (!changed) return prev;
           return { ...prev, inputs: nextInputs, outputs: nextOutputs };
         });
-        nodes.forEach((node) => {
-          const runtimeNode = normalizedNodes.find((candidate: AiNode): boolean => candidate.id === node.nodeId);
-          const normalizedStatus = typeof node.status === 'string' ? node.status.trim().toLowerCase() : '';
-          setNodeStatus({
-            nodeId: node.nodeId,
-            status: node.status,
-            source: 'server',
-            runId,
-            nodeType: runtimeNode?.type,
-            nodeTitle: runtimeNode?.title ?? null,
-            kind:
-              normalizedStatus === 'running'
-                ? 'node_started'
-                : normalizedStatus === 'failed'
-                  ? 'node_failed'
-                  : 'node_status',
-            level: normalizedStatus === 'failed' ? 'error' : 'info',
-          });
-        });
+        // Batched: 2 setState calls instead of 2N
+        batchNodeStatusUpdates(
+          nodes.map((node) => {
+            const runtimeNode = normalizedNodes.find((candidate: AiNode): boolean => candidate.id === node.nodeId);
+            const ns = typeof node.status === 'string' ? node.status.trim().toLowerCase() : '';
+            return {
+              nodeId: node.nodeId,
+              status: node.status,
+              source: 'server' as const,
+              runId,
+              nodeType: runtimeNode?.type,
+              nodeTitle: runtimeNode?.title ?? null,
+              kind:
+                (ns === 'running'
+                  ? 'node_started'
+                  : ns === 'failed'
+                    ? 'node_failed'
+                    : 'node_status') as AiPathRuntimeEventKind,
+              level: ns === 'failed' ? 'error' : 'info',
+            };
+          })
+        );
       } catch {
         // ignore parse errors
       }
@@ -893,6 +948,10 @@ export function useAiPathsRuntime({
           limit?: number;
         };
         const eventBatch = Array.isArray(payload.events) ? payload.events : [];
+        // Batched: 2 setState calls (statuses + events) instead of up to 3M
+        const statusUpdates: Array<Parameters<typeof batchNodeStatusUpdates>[0][number]> = [];
+        const logEvents: AiPathRuntimeEvent[] = [];
+
         eventBatch.forEach((item: AiPathRunEventRecord) => {
           const metadata = (item.metadata ?? {});
           const nodeId = typeof metadata['nodeId'] === 'string' ? metadata['nodeId'] : undefined;
@@ -904,12 +963,13 @@ export function useAiPathsRuntime({
           const runtimeNode = nodeId
             ? normalizedNodes.find((candidate: AiNode): boolean => candidate.id === nodeId)
             : undefined;
+
           if (nodeId && status) {
-            const normalizedStatus = status.trim().toLowerCase();
-            setNodeStatus({
+            const ns = status.trim().toLowerCase();
+            statusUpdates.push({
               nodeId,
               status,
-              source: 'server',
+              source: 'server' as const,
               runId,
               nodeType: runtimeNode?.type,
               nodeTitle:
@@ -917,18 +977,29 @@ export function useAiPathsRuntime({
                   ? metadata['nodeTitle']
                   : runtimeNode?.title ?? null,
               kind:
-                normalizedStatus === 'running'
+                (ns === 'running'
                   ? 'node_started'
-                  : normalizedStatus === 'failed'
+                  : ns === 'failed'
                     ? 'node_failed'
-                    : 'node_status',
+                    : 'node_status') as AiPathRuntimeEventKind,
               level: item.level,
               message: item.message,
               ...(iteration !== undefined ? { iteration } : {}),
               metadata,
             });
           }
-          appendRuntimeEvent({
+
+          logEvents.push({
+            id:
+              typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+                ? crypto.randomUUID()
+                : `evt_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`,
+            timestamp:
+              typeof item.createdAt === 'string'
+                ? item.createdAt
+                : item.createdAt instanceof Date
+                  ? item.createdAt.toISOString()
+                  : new Date().toISOString(),
             source: 'server',
             kind: 'log',
             level: item.level,
@@ -938,14 +1009,18 @@ export function useAiPathsRuntime({
             ...(status ? { status: status.trim().toLowerCase() as AiPathRuntimeNodeStatus } : {}),
             ...(iteration !== undefined ? { iteration } : {}),
             metadata,
-            timestamp:
-              typeof item.createdAt === 'string'
-                ? item.createdAt
-                : item.createdAt instanceof Date
-                  ? item.createdAt.toISOString()
-                  : undefined,
           });
         });
+
+        if (statusUpdates.length > 0) {
+          batchNodeStatusUpdates(statusUpdates);
+        }
+        if (logEvents.length > 0) {
+          setRuntimeEvents((prev: AiPathRuntimeEvent[]): AiPathRuntimeEvent[] => {
+            const next = [...prev, ...logEvents];
+            return next.length > MAX_RUNTIME_EVENTS ? next.slice(-MAX_RUNTIME_EVENTS) : next;
+          });
+        }
         if (payload.overflow) {
           appendRuntimeEvent({
             source: 'server',
@@ -1009,10 +1084,10 @@ export function useAiPathsRuntime({
   }, [
     applyServerRunUpdate,
     appendRuntimeEvent,
+    batchNodeStatusUpdates,
     normalizedNodes,
     resetRuntimeNodeStatuses,
     settleTransientNodeStatuses,
-    setNodeStatus,
     setRuntimeState,
     stopServerRunStream,
   ]);
@@ -1863,8 +1938,8 @@ export function useAiPathsRuntime({
           ...prev.outputs,
           [triggerNode.id]: immediateOutputs,
         };
-        // Use recursive seeding so multi-hop downstream nodes see data immediately.
-        const nextInputs = seedDownstreamInputsRecursive(
+        // Seed only immediate downstream inputs so data does not appear to skip nodes.
+        const nextInputs = seedImmediateDownstreamInputs(
           seededInputs,
           nextOutputs,
           triggerNode.id
@@ -1942,7 +2017,7 @@ export function useAiPathsRuntime({
     createRunId,
     executionMode,
     runLocalLoop,
-    seedDownstreamInputsRecursive,
+    seedImmediateDownstreamInputs,
     updateRunStatus,
     finalizeLocalRunOutcome,
   ]);

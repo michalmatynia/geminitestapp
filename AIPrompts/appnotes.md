@@ -1,49 +1,18 @@
 
-In my AI Paths, the data signal flow seems a bit off. In the Category Inference Path, when I use the Simulation Node which provides data readily available, the data flow starts with node-wi2740 JSON Mapper Value output and flows into node-z6sjck Configure Database Query input where it is immediately available, before it is availabe in the input of the preceding node JSON Mapper node-wi2740, which does not make sense, cause it looks as if the signal was skipping Nodes.
+I can't monitor my singal in Ai Paths
 
-ANalyze deeply the nature of AI-Paths modular system and Prepare improvement plan for this feature to make it even more performatice, reliable, robust.
+My validator can't be turned off, Also I need a pattern which would detect double spaces (Space and not new lines), if it sees double or more space, it should be trimmed
+I cannot get rid of non replacement validations
 
-When I try to Edit create a product I get ## Error Type
-Console ApiError
-
-## Error Message
-Database operation failed
+* In my AI Paths, the data signal flow seems a bit off. In the Category Inference Path, when I use the Simulation Node which provides data readily available, the data flow starts with node-wi2740 JSON Mapper Value output and flows into node-z6sjck Configure Database Query input where it is immediately available, before it is availabe in the input of the preceding node JSON Mapper node-wi2740, which does not make sense, cause it looks as if the signal was skipping Nodes.
 
 
-    at apiClient (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/src_09f337a5._.js:12811:23)
-
-Next.js version: 16.1.6 (Turbopack)
-
-
-The Formatter Button is too big and in the wrong place, it should be global, meaning if I turn it off it turns off for all products, vAlidator button is missing still
-
-* Connect Validator to product description and name
-* Conditional Replacer (for example, only for certain fields)
-
-
-The Drafter Icon doesn't refresh immediately in Product List
-
-* In Product List, One Click Base.com Export exports two times and duplicates start to appear in Base.com. Also.
-When I export the product successfully, The button doesn't turn green immediately, but I need to refresh the page.
-
-Do Producer eXprot ?
-
-* Hierarchies in Category don't work, they don't refresh and they don't sort properly. I don't want these placeholders which flicker the whole design. If I move cateogry A over category B I want the Top of the Cateogry be to turn into a gentle Gradient, signifying Category A can be dropped over Category B. When Category A is dropped over Category B, the Categories gently move down in a smooth movement. When I insert Category C in Between Category D which is at the top and Cateogry E which is a the bottom, I want the same gradient to appear at the bottom of Category D and at the top of Category E. When I drop the Category in between them, I want the Categories to realign in a smooth movement.
+I think I need producer mapper, like category mapper, and I think it's the same for tags
 
 
 In product Edit Create Field, I want to see the actual name of the producer in the selector field, instead of 1, selected. Also, in Drafter, I want the producer field to have the same selector as the PRoduct Create / Edit Modal, The same goes for images, Drafter needs the same component as Product Create / Edit modal
 
-* I am not able to export Products with Images with One CLick Export button, it works with Products, but when I attach images, I get the Timeout error
-
 Move all Database operatons into one page
-
-› * the one CLick Export button to Base works great, but when it becomes Green
-  (meaning connected I want to have the old options back that I had when I
-  clicked the Green BL button, in particular, I want to be able to see all the
-  syncing options and reexport images or deleted Product from BAse.com and
-  break the connection to Base.com). Also, when One click does not succeed and turns red or Yellow, I also want to see the options including the option to attempt reexporting the porduct.
-
-  * When I change color of the Drafter icon, it does not appear colored in the Product List
 
 * Add a Producer Field to Drafter and also add it to import Export Template, as it's not showing there and Producer field can't be imported / exported.
 

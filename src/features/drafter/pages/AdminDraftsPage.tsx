@@ -83,7 +83,7 @@ function AdminDraftsPageContent(): React.JSX.Element {
         onClose={closeCreator}
         title={title}
         header={header}
-        className='md:min-w-[52rem] max-w-[55rem]'
+        className='md:min-w-[63rem] max-w-[66rem]'
       >
         <DraftCreator
           active={isDraftActive}

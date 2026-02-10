@@ -34,6 +34,7 @@ import { decryptSecret } from '@/features/integrations/server';
 import { LogCapture } from '@/features/integrations/server';
 import { ErrorSystem } from '@/features/observability/server';
 import { parseJsonBody } from '@/features/products/server';
+import { getProducerRepository } from '@/features/products/server';
 import { getProductRepository } from '@/features/products/server';
 import {
   badRequestError,
@@ -335,6 +336,57 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
           template.exportImagesAsBase64 !== undefined
         ) {
           exportImagesAsBase64 = template.exportImagesAsBase64;
+        }
+      }
+    }
+
+    let producerNameById: Record<string, string> | null = null;
+    if (!imagesOnly) {
+      const producerIds = Array.from(
+        new Set(
+          (product.producers ?? [])
+            .map((producer) => producer.producerId?.trim())
+            .filter((producerId): producerId is string => Boolean(producerId))
+        )
+      );
+      if (producerIds.length > 0) {
+        try {
+          const producerRepository = await getProducerRepository();
+          const resolvedProducers = await Promise.all(
+            producerIds.map(async (producerId: string) => {
+              try {
+                return await producerRepository.getProducerById(producerId);
+              } catch {
+                return null;
+              }
+            })
+          );
+          const mappedEntries = resolvedProducers
+            .map((producer) => {
+              const id =
+                typeof producer?.id === 'string' ? producer.id.trim() : '';
+              const name =
+                typeof producer?.name === 'string'
+                  ? producer.name.trim()
+                  : '';
+              if (!id || !name) return null;
+              return [id, name] as const;
+            })
+            .filter(
+              (entry): entry is readonly [string, string] => entry !== null
+            );
+          if (mappedEntries.length > 0) {
+            producerNameById = Object.fromEntries(mappedEntries);
+          }
+        } catch (error) {
+          await ErrorSystem.logWarning(
+            '[export-to-base] Failed to resolve producer names for export',
+            {
+              productId,
+              producerCount: producerIds.length,
+              error: error instanceof Error ? error.message : String(error),
+            }
+          );
         }
       }
     }
@@ -708,6 +760,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
           imageBaseUrl,
           includeStockWithoutWarehouse,
           ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
+          ...(producerNameById ? { producerNameById } : {}),
           exportImagesAsBase64: exportImagesAsBase64,
           imageBase64Mode,
           imageTransform,
@@ -770,6 +823,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
           imageBaseUrl,
           includeStockWithoutWarehouse,
           ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
+          ...(producerNameById ? { producerNameById } : {}),
           exportImagesAsBase64: exportImagesAsBase64,
           ...(baseImageDiagnostics ? { imageDiagnostics: baseImageDiagnostics } : {}),
           imageBase64Mode,
@@ -816,6 +870,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
           imageBaseUrl,
           includeStockWithoutWarehouse,
           ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
+          ...(producerNameById ? { producerNameById } : {}),
           exportImagesAsBase64: exportImagesAsBase64,
           imageBase64Mode,
           imageTransform
@@ -863,6 +918,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
           imageBaseUrl,
           includeStockWithoutWarehouse,
           ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
+          ...(producerNameById ? { producerNameById } : {}),
           exportImagesAsBase64: exportImagesAsBase64,
           imageBase64Mode,
           imageTransform
@@ -935,6 +991,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
               imageBaseUrl,
               includeStockWithoutWarehouse,
               ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
+              ...(producerNameById ? { producerNameById } : {}),
               exportImagesAsBase64: exportImagesAsBase64,
               imageDiagnostics,
               imageBase64Mode,

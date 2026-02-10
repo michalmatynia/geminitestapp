@@ -4,20 +4,300 @@ import { Queue } from 'bullmq';
 
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { getRuntimeAnalyticsSummary, recordRuntimeRunStarted } from '@/features/ai/ai-paths/services/runtime-analytics-service';
-import { processRun } from '@/features/jobs/processors/ai-path-run-processor';
+import { processRun, processStaleRunRecovery } from '@/features/jobs/processors/ai-path-run-processor';
 import { getAiInsightsQueueStatus } from '@/features/jobs/workers/aiInsightsQueue';
 import { createManagedQueue, getRedisConnection } from '@/shared/lib/queue';
 
 const DEFAULT_CONCURRENCY = Number(process.env['AI_PATHS_RUN_CONCURRENCY'] ?? '1');
 const AI_PATH_RUN_QUEUE_NAME = 'ai-path-run';
 const buildRetryJobId = (runId: string): string => `${runId}:retry`;
+const DEBUG_AI_PATH_QUEUE = process.env['AI_PATHS_QUEUE_DEBUG'] === 'true';
+
+const debugQueueLog = (...args: unknown[]): void => {
+  if (!DEBUG_AI_PATH_QUEUE) return;
+  console.log(...args);
+};
+
+const debugQueueWarn = (...args: unknown[]): void => {
+  if (!DEBUG_AI_PATH_QUEUE) return;
+  console.warn(...args);
+};
 
 type AiPathRunJobData = {
   runId: string;
+  type?: 'run' | 'recovery';
 };
 
 type EnqueuePathRunJobOptions = {
   delayMs?: number;
+};
+
+type SloLevel = 'ok' | 'warning' | 'critical';
+
+export type QueueSloThresholds = {
+  queueLagWarningMs: number;
+  queueLagCriticalMs: number;
+  successRateWarningPct: number;
+  successRateCriticalPct: number;
+  deadLetterRateWarningPct: number;
+  deadLetterRateCriticalPct: number;
+  brainErrorRateWarningPct: number;
+  brainErrorRateCriticalPct: number;
+  minTerminalSamples: number;
+  minBrainSamples: number;
+};
+
+export type AiPathRunQueueSloStatus = {
+  overall: SloLevel;
+  evaluatedAt: string;
+  thresholds: QueueSloThresholds;
+  indicators: {
+    workerHealth: {
+      level: SloLevel;
+      running: boolean;
+      healthy: boolean;
+      message: string;
+    };
+    queueLag: {
+      level: SloLevel;
+      valueMs: number | null;
+      message: string;
+    };
+    successRate24h: {
+      level: SloLevel;
+      valuePct: number;
+      sampleSize: number;
+      message: string;
+    };
+    deadLetterRate24h: {
+      level: SloLevel;
+      valuePct: number;
+      sampleSize: number;
+      message: string;
+    };
+    brainErrorRate24h: {
+      level: SloLevel;
+      valuePct: number;
+      sampleSize: number;
+      message: string;
+    };
+  };
+  breachCount: number;
+  breaches: Array<{
+    indicator: string;
+    level: Extract<SloLevel, 'warning' | 'critical'>;
+    message: string;
+  }>;
+};
+
+type ComputeQueueSloInput = {
+  queueRunning: boolean;
+  queueHealthy: boolean;
+  queueLagMs: number | null;
+  successRate24h: number;
+  terminalRuns24h: number;
+  deadLetterRate24h: number;
+  brainErrorRate24h: number;
+  brainTotalReports24h: number;
+};
+
+const parseEnvNumber = (name: string, fallback: number, min: number = 0): number => {
+  const raw = process.env[name];
+  if (!raw) return fallback;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(min, parsed);
+};
+
+const parseEnvFloat = (name: string, fallback: number, min: number = 0, max: number = 100): number => {
+  const raw = process.env[name];
+  if (!raw) return fallback;
+  const parsed = Number.parseFloat(raw);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(max, Math.max(min, parsed));
+};
+
+const resolveQueueSloThresholds = (): QueueSloThresholds => ({
+  queueLagWarningMs: parseEnvNumber('AI_PATHS_SLO_QUEUE_LAG_WARNING_MS', 60_000, 1_000),
+  queueLagCriticalMs: parseEnvNumber('AI_PATHS_SLO_QUEUE_LAG_CRITICAL_MS', 180_000, 1_000),
+  successRateWarningPct: parseEnvFloat('AI_PATHS_SLO_SUCCESS_RATE_WARNING_PCT', 95, 0, 100),
+  successRateCriticalPct: parseEnvFloat('AI_PATHS_SLO_SUCCESS_RATE_CRITICAL_PCT', 90, 0, 100),
+  deadLetterRateWarningPct: parseEnvFloat('AI_PATHS_SLO_DEAD_LETTER_RATE_WARNING_PCT', 1, 0, 100),
+  deadLetterRateCriticalPct: parseEnvFloat('AI_PATHS_SLO_DEAD_LETTER_RATE_CRITICAL_PCT', 3, 0, 100),
+  brainErrorRateWarningPct: parseEnvFloat('AI_PATHS_SLO_BRAIN_ERROR_RATE_WARNING_PCT', 5, 0, 100),
+  brainErrorRateCriticalPct: parseEnvFloat('AI_PATHS_SLO_BRAIN_ERROR_RATE_CRITICAL_PCT', 15, 0, 100),
+  minTerminalSamples: parseEnvNumber('AI_PATHS_SLO_MIN_TERMINAL_SAMPLES', 10, 1),
+  minBrainSamples: parseEnvNumber('AI_PATHS_SLO_MIN_BRAIN_SAMPLES', 20, 1),
+});
+
+const severityRank: Record<SloLevel, number> = {
+  ok: 0,
+  warning: 1,
+  critical: 2,
+};
+
+const maxLevel = (levels: SloLevel[]): SloLevel => {
+  return levels.reduce((max, current) => {
+    if (severityRank[current] > severityRank[max]) return current;
+    return max;
+  }, 'ok' as SloLevel);
+};
+
+const classifyGreaterIsWorse = (value: number, warning: number, critical: number): SloLevel => {
+  if (value >= Math.max(warning, critical)) return 'critical';
+  if (value >= Math.min(warning, critical)) return 'warning';
+  return 'ok';
+};
+
+const classifyLowerIsWorse = (value: number, warning: number, critical: number): SloLevel => {
+  if (value <= Math.min(warning, critical)) return 'critical';
+  if (value <= Math.max(warning, critical)) return 'warning';
+  return 'ok';
+};
+
+export const computeAiPathRunQueueSlo = (
+  input: ComputeQueueSloInput,
+  thresholds: QueueSloThresholds = resolveQueueSloThresholds()
+): AiPathRunQueueSloStatus => {
+  const breaches: AiPathRunQueueSloStatus['breaches'] = [];
+
+  const workerHealthLevel: SloLevel =
+    !input.queueRunning ? 'critical' : input.queueHealthy ? 'ok' : 'warning';
+  const workerHealthMessage =
+    !input.queueRunning
+      ? 'Worker is stopped.'
+      : input.queueHealthy
+        ? 'Worker is healthy.'
+        : 'Worker is running but not healthy.';
+  if (workerHealthLevel !== 'ok') {
+    breaches.push({
+      indicator: 'workerHealth',
+      level: workerHealthLevel,
+      message: workerHealthMessage,
+    });
+  }
+
+  const lagValue = input.queueLagMs ?? 0;
+  const queueLagLevel =
+    input.queueLagMs === null
+      ? 'ok'
+      : classifyGreaterIsWorse(
+          lagValue,
+          thresholds.queueLagWarningMs,
+          thresholds.queueLagCriticalMs
+        );
+  const queueLagMessage =
+    input.queueLagMs === null
+      ? 'No queued runs.'
+      : `Lag ${lagValue}ms (warn ${thresholds.queueLagWarningMs}ms / critical ${thresholds.queueLagCriticalMs}ms).`;
+  if (queueLagLevel !== 'ok') {
+    breaches.push({
+      indicator: 'queueLag',
+      level: queueLagLevel,
+      message: queueLagMessage,
+    });
+  }
+
+  const hasTerminalSample = input.terminalRuns24h >= thresholds.minTerminalSamples;
+  const successRateLevel = hasTerminalSample
+    ? classifyLowerIsWorse(
+        input.successRate24h,
+        thresholds.successRateWarningPct,
+        thresholds.successRateCriticalPct
+      )
+    : 'ok';
+  const successRateMessage = hasTerminalSample
+    ? `Success ${input.successRate24h.toFixed(2)}% over ${input.terminalRuns24h} terminal runs.`
+    : `Insufficient sample (${input.terminalRuns24h}/${thresholds.minTerminalSamples}) for success-rate SLO.`;
+  if (successRateLevel !== 'ok') {
+    breaches.push({
+      indicator: 'successRate24h',
+      level: successRateLevel,
+      message: successRateMessage,
+    });
+  }
+
+  const deadLetterLevel = hasTerminalSample
+    ? classifyGreaterIsWorse(
+        input.deadLetterRate24h,
+        thresholds.deadLetterRateWarningPct,
+        thresholds.deadLetterRateCriticalPct
+      )
+    : 'ok';
+  const deadLetterMessage = hasTerminalSample
+    ? `Dead-letter rate ${input.deadLetterRate24h.toFixed(2)}% over ${input.terminalRuns24h} terminal runs.`
+    : `Insufficient sample (${input.terminalRuns24h}/${thresholds.minTerminalSamples}) for dead-letter SLO.`;
+  if (deadLetterLevel !== 'ok') {
+    breaches.push({
+      indicator: 'deadLetterRate24h',
+      level: deadLetterLevel,
+      message: deadLetterMessage,
+    });
+  }
+
+  const hasBrainSample = input.brainTotalReports24h >= thresholds.minBrainSamples;
+  const brainErrorLevel = hasBrainSample
+    ? classifyGreaterIsWorse(
+        input.brainErrorRate24h,
+        thresholds.brainErrorRateWarningPct,
+        thresholds.brainErrorRateCriticalPct
+      )
+    : 'ok';
+  const brainErrorMessage = hasBrainSample
+    ? `Brain error rate ${input.brainErrorRate24h.toFixed(2)}% over ${input.brainTotalReports24h} reports.`
+    : `Insufficient sample (${input.brainTotalReports24h}/${thresholds.minBrainSamples}) for brain error-rate SLO.`;
+  if (brainErrorLevel !== 'ok') {
+    breaches.push({
+      indicator: 'brainErrorRate24h',
+      level: brainErrorLevel,
+      message: brainErrorMessage,
+    });
+  }
+
+  return {
+    overall: maxLevel([
+      workerHealthLevel,
+      queueLagLevel,
+      successRateLevel,
+      deadLetterLevel,
+      brainErrorLevel,
+    ]),
+    evaluatedAt: new Date().toISOString(),
+    thresholds,
+    indicators: {
+      workerHealth: {
+        level: workerHealthLevel,
+        running: input.queueRunning,
+        healthy: input.queueHealthy,
+        message: workerHealthMessage,
+      },
+      queueLag: {
+        level: queueLagLevel,
+        valueMs: input.queueLagMs,
+        message: queueLagMessage,
+      },
+      successRate24h: {
+        level: successRateLevel,
+        valuePct: input.successRate24h,
+        sampleSize: input.terminalRuns24h,
+        message: successRateMessage,
+      },
+      deadLetterRate24h: {
+        level: deadLetterLevel,
+        valuePct: input.deadLetterRate24h,
+        sampleSize: input.terminalRuns24h,
+        message: deadLetterMessage,
+      },
+      brainErrorRate24h: {
+        level: brainErrorLevel,
+        valuePct: input.brainErrorRate24h,
+        sampleSize: input.brainTotalReports24h,
+        message: brainErrorMessage,
+      },
+    },
+    breachCount: breaches.length,
+    breaches,
+  };
 };
 
 const queue = createManagedQueue<AiPathRunJobData>({
@@ -29,19 +309,29 @@ const queue = createManagedQueue<AiPathRunJobData>({
     removeOnFail: false,
   },
   processor: async (data) => {
+    // Handle stale run recovery job
+    if (data.runId === '__recovery__' || data.type === 'recovery') {
+      await processStaleRunRecovery();
+      return;
+    }
+
     const repo = getPathRunRepository();
     const run = await repo.claimRunForProcessing(data.runId);
     if (!run) {
       const latest = await repo.findRunById(data.runId);
       if (!latest) {
-        console.warn(`[aiPathRunQueue] Run ${data.runId} not found, skipping`);
+        debugQueueWarn(`[aiPathRunQueue] Run ${data.runId} not found, skipping`);
         return;
       }
       if (latest.status === 'running') {
-        console.log(`[aiPathRunQueue] Run ${data.runId} is already running, skipping duplicate job`);
+        debugQueueLog(
+          `[aiPathRunQueue] Run ${data.runId} is already running, skipping duplicate job`
+        );
         return;
       }
-      console.log(`[aiPathRunQueue] Run ${data.runId} has status "${latest.status}", skipping`);
+      debugQueueLog(
+        `[aiPathRunQueue] Run ${data.runId} has status "${latest.status}", skipping`
+      );
       return;
     }
     await recordRuntimeRunStarted({ runId: run.id });
@@ -65,9 +355,14 @@ const queue = createManagedQueue<AiPathRunJobData>({
 
 export const startAiPathRunQueue = (): void => {
   queue.startWorker();
+  // Schedule stale-run recovery as a repeatable job every 2 minutes
+  void queue.enqueue(
+    { runId: '__recovery__', type: 'recovery' },
+    { repeat: { every: 120_000 }, jobId: 'ai-path-run-recovery' }
+  );
 };
 
-export const getAiPathRunQueueStatus = async (): Promise<{
+type AiPathRunQueueStatus = {
   running: boolean;
   healthy: boolean;
   processing: boolean;
@@ -99,55 +394,111 @@ export const getAiPathRunQueueStatus = async (): Promise<{
     warningReports: number;
     errorReports: number;
   };
-}> => {
-  const now = Date.now();
-  const health = await queue.getHealthStatus();
-  const repo = getPathRunRepository();
-  const [stats, insightsQueueHealth, runtimeAnalyticsSummary] = await Promise.all([
-    repo.getQueueStats(),
-    getAiInsightsQueueStatus(),
-    getRuntimeAnalyticsSummary({
-      from: new Date(now - 24 * 60 * 60 * 1000),
-      to: new Date(now),
-      range: '24h',
-    }),
-  ]);
-  const oldestQueuedAt = stats.oldestQueuedAt ? stats.oldestQueuedAt.getTime() : null;
-  const queueLagMs = oldestQueuedAt !== null ? Math.max(0, now - oldestQueuedAt) : null;
+  slo: AiPathRunQueueSloStatus;
+};
 
-  return {
-    running: health.running,
-    healthy: health.healthy,
-    processing: health.processing,
-    activeRuns: health.activeCount,
-    concurrency: Math.max(1, DEFAULT_CONCURRENCY),
-    lastPollTime: health.lastPollTime,
-    timeSinceLastPoll: health.timeSinceLastPoll,
-    queuedCount: stats.queuedCount,
-    oldestQueuedAt,
-    queueLagMs,
-    completedLastMinute: health.completedCount,
-    throughputPerMinute: health.completedCount,
-    avgRuntimeMs: null, // BullMQ doesn't track this natively; can be added via QueueEvents
-    p50RuntimeMs: null,
-    p95RuntimeMs: null,
-    brainQueue: {
-      running: insightsQueueHealth.running,
-      healthy: insightsQueueHealth.healthy,
-      processing: insightsQueueHealth.processing,
-      activeJobs: insightsQueueHealth.activeJobs,
-      waitingJobs: insightsQueueHealth.waitingJobs,
-      failedJobs: insightsQueueHealth.failedJobs,
-      completedJobs: insightsQueueHealth.completedJobs,
-    },
-    brainAnalytics24h: {
-      analyticsReports: runtimeAnalyticsSummary.brain.analyticsReports,
-      logReports: runtimeAnalyticsSummary.brain.logReports,
-      totalReports: runtimeAnalyticsSummary.brain.totalReports,
-      warningReports: runtimeAnalyticsSummary.brain.warningReports,
-      errorReports: runtimeAnalyticsSummary.brain.errorReports,
-    },
-  };
+const QUEUE_STATUS_CACHE_TTL_MS = parseEnvNumber(
+  'AI_PATHS_QUEUE_STATUS_CACHE_TTL_MS',
+  2_000,
+  250
+);
+
+let queueStatusCache: { value: AiPathRunQueueStatus; expiresAt: number } | null = null;
+let queueStatusInFlight: Promise<AiPathRunQueueStatus> | null = null;
+
+export const getAiPathRunQueueStatus = async (): Promise<AiPathRunQueueStatus> => {
+  const now = Date.now();
+  if (queueStatusCache && queueStatusCache.expiresAt > now) {
+    return queueStatusCache.value;
+  }
+  if (queueStatusInFlight) {
+    return queueStatusInFlight;
+  }
+
+  queueStatusInFlight = (async (): Promise<AiPathRunQueueStatus> => {
+    const health = await queue.getHealthStatus();
+    const repo = getPathRunRepository();
+    const [stats, insightsQueueHealth, runtimeAnalyticsSummary] = await Promise.all([
+      repo.getQueueStats(),
+      getAiInsightsQueueStatus(),
+      getRuntimeAnalyticsSummary({
+        from: new Date(now - 24 * 60 * 60 * 1000),
+        to: new Date(now),
+        range: '24h',
+      }),
+    ]);
+    const oldestQueuedAt = stats.oldestQueuedAt ? stats.oldestQueuedAt.getTime() : null;
+    const queueLagMs = oldestQueuedAt !== null ? Math.max(0, now - oldestQueuedAt) : null;
+    const terminalRuns24h =
+      runtimeAnalyticsSummary.runs.completed +
+      runtimeAnalyticsSummary.runs.failed +
+      runtimeAnalyticsSummary.runs.canceled +
+      runtimeAnalyticsSummary.runs.deadLettered;
+    const brainTotalReports24h = runtimeAnalyticsSummary.brain.totalReports;
+    const brainErrorRate24h =
+      brainTotalReports24h > 0
+        ? Math.max(
+            0,
+            Math.min(100, (runtimeAnalyticsSummary.brain.errorReports / brainTotalReports24h) * 100)
+          )
+        : 0;
+    const slo = computeAiPathRunQueueSlo({
+      queueRunning: health.running,
+      queueHealthy: health.healthy,
+      queueLagMs,
+      successRate24h: runtimeAnalyticsSummary.runs.successRate,
+      terminalRuns24h,
+      deadLetterRate24h: runtimeAnalyticsSummary.runs.deadLetterRate,
+      brainErrorRate24h,
+      brainTotalReports24h,
+    });
+
+    return {
+      running: health.running,
+      healthy: health.healthy,
+      processing: health.processing,
+      activeRuns: health.activeCount,
+      concurrency: Math.max(1, DEFAULT_CONCURRENCY),
+      lastPollTime: health.lastPollTime,
+      timeSinceLastPoll: health.timeSinceLastPoll,
+      queuedCount: stats.queuedCount,
+      oldestQueuedAt,
+      queueLagMs,
+      completedLastMinute: health.completedCount,
+      throughputPerMinute: health.completedCount,
+      avgRuntimeMs: null, // BullMQ doesn't track this natively; can be added via QueueEvents
+      p50RuntimeMs: null,
+      p95RuntimeMs: null,
+      brainQueue: {
+        running: insightsQueueHealth.running,
+        healthy: insightsQueueHealth.healthy,
+        processing: insightsQueueHealth.processing,
+        activeJobs: insightsQueueHealth.activeJobs,
+        waitingJobs: insightsQueueHealth.waitingJobs,
+        failedJobs: insightsQueueHealth.failedJobs,
+        completedJobs: insightsQueueHealth.completedJobs,
+      },
+      brainAnalytics24h: {
+        analyticsReports: runtimeAnalyticsSummary.brain.analyticsReports,
+        logReports: runtimeAnalyticsSummary.brain.logReports,
+        totalReports: runtimeAnalyticsSummary.brain.totalReports,
+        warningReports: runtimeAnalyticsSummary.brain.warningReports,
+        errorReports: runtimeAnalyticsSummary.brain.errorReports,
+      },
+      slo,
+    };
+  })();
+
+  try {
+    const status = await queueStatusInFlight;
+    queueStatusCache = {
+      value: status,
+      expiresAt: Date.now() + QUEUE_STATUS_CACHE_TTL_MS,
+    };
+    return status;
+  } finally {
+    queueStatusInFlight = null;
+  }
 };
 
 export const processSingleRun = async (runId: string): Promise<void> => {
@@ -203,7 +554,7 @@ export const enqueuePathRunJob = async (
   const { queue: bullQueue, owned } = resolveAiPathRunQueue();
   if (!bullQueue) {
     if (delayMs > 0) {
-      console.warn(
+      debugQueueWarn(
         `[aiPathRunQueue] Redis unavailable; retry delay for run ${runId} cannot be scheduled, processing inline.`
       );
     }
@@ -215,7 +566,7 @@ export const enqueuePathRunJob = async (
     const retryJobId = buildRetryJobId(runId);
     const existing = await bullQueue.getJob(runId);
     if (existing) {
-      const state = await existing.getState();
+      const state = (await existing.getState()) as string;
       if (state === 'active') {
         if (delayMs > 0) {
           const existingRetry = await bullQueue.getJob(retryJobId);

@@ -627,8 +627,10 @@ export type AiPathRuntimeAnalyticsSummary = {
     completed: number;
     failed: number;
     canceled: number;
+    deadLettered: number;
     successRate: number;
     failureRate: number;
+    deadLetterRate: number;
     avgDurationMs: number | null;
     p95DurationMs: number | null;
   };

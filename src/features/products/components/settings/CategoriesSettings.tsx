@@ -1,7 +1,7 @@
 'use client';
 
 import { Plus } from 'lucide-react';
-import React, { useState, useCallback, useMemo, useEffect, useLayoutEffect, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 
 import { useProductCategoryTree } from '@/features/products/hooks/useCategoryQueries';
 import {
@@ -128,7 +128,6 @@ export function CategoriesSettings({
   const { toast } = useToast();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [draggedId, setDraggedId] = useState<string | null>(null);
-  const [rootDropActive, setRootDropActive] = useState<boolean>(false);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [editingCategory, setEditingCategory] =
     useState<ProductCategoryWithChildren | null>(null);
@@ -148,7 +147,6 @@ export function CategoriesSettings({
   const [modalCatalogId, setModalCatalogId] = useState<string | null>(null);
   const [treeData, setTreeData] = useState<ProductCategoryWithChildren[]>(() => cloneCategoryTree(categories));
   const treeBodyRef = useRef<HTMLDivElement | null>(null);
-  const previousRectsRef = useRef<Map<string, DOMRect>>(new Map<string, DOMRect>());
 
   const { data: fetchedModalCategories, isLoading: modalLoadingCategories } = useProductCategoryTree(modalCatalogId || undefined);
 
@@ -164,7 +162,6 @@ export function CategoriesSettings({
   // Reset expanded state when catalog changes
   useEffect((): void => {
     setExpandedIds(new Set());
-    setRootDropActive(false);
   }, [selectedCatalogId]);
 
   // Expand all categories on initial load
@@ -183,50 +180,6 @@ export function CategoriesSettings({
       setExpandedIds(new Set(collectIds(treeData)));
     }
   }, [treeData, expandedIds.size]);
-
-  useLayoutEffect((): void => {
-    const container = treeBodyRef.current;
-    if (!container) return;
-
-    const rows = Array.from(container.querySelectorAll<HTMLElement>('[data-category-row-id]'));
-    const currentRects = new Map<string, DOMRect>();
-    rows.forEach((row: HTMLElement): void => {
-      const rowId = row.dataset['categoryRowId'];
-      if (!rowId) return;
-      currentRects.set(rowId, row.getBoundingClientRect());
-    });
-
-    const previousRects = previousRectsRef.current;
-    rows.forEach((row: HTMLElement): void => {
-      const rowId = row.dataset['categoryRowId'];
-      if (!rowId) return;
-      const prevRect = previousRects.get(rowId);
-      const nextRect = currentRects.get(rowId);
-      if (!prevRect || !nextRect) return;
-
-      const deltaX = prevRect.left - nextRect.left;
-      const deltaY = prevRect.top - nextRect.top;
-      if (Math.abs(deltaX) < 0.5 && Math.abs(deltaY) < 0.5) return;
-
-      row.style.transition = 'transform 0s';
-      row.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
-      row.style.willChange = 'transform';
-      requestAnimationFrame((): void => {
-        row.style.transition = 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)';
-        row.style.transform = '';
-      });
-      row.addEventListener(
-        'transitionend',
-        (): void => {
-          row.style.transition = '';
-          row.style.willChange = '';
-        },
-        { once: true }
-      );
-    });
-
-    previousRectsRef.current = currentRects;
-  }, [treeData, expandedIds]);
 
   const handleToggleExpand = useCallback((id: string): void => {
     setExpandedIds((prev: Set<string>): Set<string> => {
@@ -335,7 +288,6 @@ export function CategoriesSettings({
     target: CategoryDropTarget
   ): Promise<void> => {
     if (draggedCatId === target.parentId) return;
-    setRootDropActive(false);
     const previousTree = cloneCategoryTree(treeData);
     const optimisticTree = applyOptimisticCategoryDrop(treeData, draggedCatId, target);
     if (optimisticTree) {
@@ -364,7 +316,6 @@ export function CategoriesSettings({
   const handleRootDrop = (e: React.DragEvent): void => {
     e.preventDefault();
     e.stopPropagation();
-    setRootDropActive(false);
     const catId: string = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.CATEGORY_ID], draggedId ?? '') || '';
     if (catId) {
       void handleDrop(catId, { parentId: null, position: 'inside', targetId: null });
@@ -509,20 +460,9 @@ export function CategoriesSettings({
                   e.preventDefault();
                   e.stopPropagation();
                   e.dataTransfer.dropEffect = 'move';
-                  const overRow = (e.target as HTMLElement | null)?.closest('[data-category-row-id]');
-                  setRootDropActive(!overRow);
-                }}
-                onDragLeave={(e: React.DragEvent): void => {
-                  if (e.currentTarget.contains(e.relatedTarget as Node)) return;
-                  setRootDropActive(false);
                 }}
                 onDrop={handleRootDrop}
               >
-                {rootDropActive && (
-                  <div className='pointer-events-none absolute inset-x-2 top-1 h-5 overflow-hidden rounded-md'>
-                    <div className='h-full w-full bg-gradient-to-b from-emerald-300/65 via-emerald-300/30 to-transparent' />
-                  </div>
-                )}
                 <div ref={treeBodyRef} className='space-y-0.5'>
                   {treeData.map((category: ProductCategoryWithChildren): React.JSX.Element => (
                     <CategoryTreeItem
@@ -538,7 +478,6 @@ export function CategoriesSettings({
                       onDragStart={setDraggedId}
                       onDragEnd={(): void => {
                         setDraggedId(null);
-                        setRootDropActive(false);
                       }}
                       onDrop={(
                         e: string,

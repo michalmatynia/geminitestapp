@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 
 import { AdminImageStudioValidationPatternsPage } from '@/features/ai/image-studio';
 import { ValidatorSettings } from '@/features/products/components/settings/ValidatorSettings';
-import { SectionHeader, SectionPanel, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
+import { ClientOnly, SectionHeader, SectionPanel, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
 
 type ValidatorScope = 'products' | 'image-studio';
 
@@ -39,30 +39,38 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
         description='Choose which pattern list you want to manage.'
       />
 
-      <Tabs value={activeScope} onValueChange={handleScopeChange} className='space-y-4'>
-        <TabsList>
-          <TabsTrigger value='products'>Product Patterns</TabsTrigger>
-          <TabsTrigger value='image-studio'>Image Studio Patterns</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value='products' className='space-y-4'>
+      <ClientOnly
+        fallback={
           <SectionPanel variant='subtle' className='p-4'>
-            <p className='text-sm text-gray-300'>
-              Product patterns validate and normalize product Name/Description fields.
-            </p>
+            <p className='text-sm text-gray-400'>Loading validator scopes...</p>
           </SectionPanel>
-          <ValidatorSettings />
-        </TabsContent>
+        }
+      >
+        <Tabs value={activeScope} onValueChange={handleScopeChange} className='space-y-4'>
+          <TabsList>
+            <TabsTrigger value='products'>Product Patterns</TabsTrigger>
+            <TabsTrigger value='image-studio'>Image Studio Patterns</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value='image-studio' className='space-y-4'>
-          <SectionPanel variant='subtle' className='p-4'>
-            <p className='text-sm text-gray-300'>
-              Image Studio patterns control prompt validation rules used in AI image workflows.
-            </p>
-          </SectionPanel>
-          <AdminImageStudioValidationPatternsPage embedded />
-        </TabsContent>
-      </Tabs>
+          <TabsContent value='products' className='space-y-4'>
+            <SectionPanel variant='subtle' className='p-4'>
+              <p className='text-sm text-gray-300'>
+                Product patterns validate and normalize product Name/Description fields.
+              </p>
+            </SectionPanel>
+            <ValidatorSettings />
+          </TabsContent>
+
+          <TabsContent value='image-studio' className='space-y-4'>
+            <SectionPanel variant='subtle' className='p-4'>
+              <p className='text-sm text-gray-300'>
+                Image Studio patterns control prompt validation rules used in AI image workflows.
+              </p>
+            </SectionPanel>
+            <AdminImageStudioValidationPatternsPage embedded />
+          </TabsContent>
+        </Tabs>
+      </ClientOnly>
     </div>
   );
 }

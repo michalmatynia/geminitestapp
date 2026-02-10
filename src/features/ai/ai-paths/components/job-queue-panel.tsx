@@ -84,6 +84,47 @@ type QueueStatus = {
     warningReports: number;
     errorReports: number;
   };
+  slo?: {
+    overall: 'ok' | 'warning' | 'critical';
+    evaluatedAt: string;
+    breachCount: number;
+    breaches: Array<{
+      indicator: string;
+      level: 'warning' | 'critical';
+      message: string;
+    }>;
+    indicators: {
+      workerHealth: {
+        level: 'ok' | 'warning' | 'critical';
+        running: boolean;
+        healthy: boolean;
+        message: string;
+      };
+      queueLag: {
+        level: 'ok' | 'warning' | 'critical';
+        valueMs: number | null;
+        message: string;
+      };
+      successRate24h: {
+        level: 'ok' | 'warning' | 'critical';
+        valuePct: number;
+        sampleSize: number;
+        message: string;
+      };
+      deadLetterRate24h: {
+        level: 'ok' | 'warning' | 'critical';
+        valuePct: number;
+        sampleSize: number;
+        message: string;
+      };
+      brainErrorRate24h: {
+        level: 'ok' | 'warning' | 'critical';
+        valuePct: number;
+        sampleSize: number;
+        message: string;
+      };
+    };
+  };
 };
 
 type StreamMessageEvent = Event & { data: string };
@@ -125,6 +166,12 @@ const formatDurationMs = (value?: number | null): string => {
   return `${minutes}m ${remaining}s`;
 };
 
+const getSloBadgeClass = (level?: 'ok' | 'warning' | 'critical'): string => {
+  if (level === 'critical') return 'border-rose-500/40 bg-rose-500/15 text-rose-100';
+  if (level === 'warning') return 'border-amber-500/40 bg-amber-500/15 text-amber-100';
+  return 'border-emerald-500/40 bg-emerald-500/15 text-emerald-100';
+};
+
 const safePrettyJson = (value: unknown): string => {
   const raw = safeJsonStringify(value);
   if (!raw) return '';
@@ -144,6 +191,30 @@ const getLatestEventTimestamp = (events: AiPathRunEventRecord[]): string | null 
     }
   });
   return max > 0 ? new Date(max).toISOString() : null;
+};
+
+const normalizeRunNodes = (value: unknown): AiPathRunNodeRecord[] => (
+  Array.isArray(value) ? value as AiPathRunNodeRecord[] : []
+);
+
+const normalizeRunEvents = (value: unknown): AiPathRunEventRecord[] => (
+  Array.isArray(value) ? value as AiPathRunEventRecord[] : []
+);
+
+const normalizeRunDetail = (value: unknown, fallbackRun?: AiPathRunRecord): RunDetail | null => {
+  if (!value || typeof value !== 'object') {
+    return fallbackRun ? { run: fallbackRun, nodes: [], events: [] } : null;
+  }
+  const detail = value as { run?: unknown; nodes?: unknown; events?: unknown };
+  const runCandidate = detail.run ?? fallbackRun;
+  if (!runCandidate || typeof runCandidate !== 'object') {
+    return null;
+  }
+  return {
+    run: runCandidate as AiPathRunRecord,
+    nodes: normalizeRunNodes(detail.nodes),
+    events: normalizeRunEvents(detail.events),
+  };
 };
 
 const readMetaRecord = (meta: AiPathRunRecord['meta']): Record<string, unknown> | null => {
@@ -617,14 +688,18 @@ export function JobQueuePanel({
       setStreamStatuses((prev: Record<string, 'connecting' | 'live' | 'stopped' | 'paused'>) => ({ ...prev, [runId]: 'connecting' }));
 
       const mergeEvents = (incoming: AiPathRunEventRecord[]): void => {
+        const safeIncoming = normalizeRunEvents(incoming);
+        if (safeIncoming.length === 0) {
+          return;
+        }
         setRunDetails((prev: Record<string, RunDetail | null>) => {
-          const current = prev[runId];
+          const current = normalizeRunDetail(prev[runId]);
           if (!current) {
             return prev;
           }
           const existingIds = new Set(current.events.map((event: AiPathRunEventRecord) => event.id));
           const merged = [...current.events];
-          incoming.forEach((event: AiPathRunEventRecord) => {
+          safeIncoming.forEach((event: AiPathRunEventRecord) => {
             if (!existingIds.has(event.id)) {
               merged.push(event);
             }
@@ -643,13 +718,14 @@ export function JobQueuePanel({
       });
       source.addEventListener('run', (event: Event) => {
         try {
-          const payload = JSON.parse((event as StreamMessageEvent).data) as AiPathRunRecord;
+          const payload = JSON.parse((event as StreamMessageEvent).data) as unknown;
+          if (!payload || typeof payload !== 'object') {
+            return;
+          }
           setRunDetails((prev: Record<string, RunDetail | null>) => {
-            const current = prev[runId];
-            if (current) {
-              return { ...prev, [runId]: { ...current, run: payload } };
-            }
-            return { ...prev, [runId]: { run: payload, nodes: [], events: [] } };
+            const current = normalizeRunDetail(prev[runId], payload as AiPathRunRecord);
+            if (!current) return prev;
+            return { ...prev, [runId]: { ...current, run: payload as AiPathRunRecord } };
           });
         } catch {
           // ignore parse errors
@@ -657,11 +733,12 @@ export function JobQueuePanel({
       });
       source.addEventListener('nodes', (event: Event) => {
         try {
-          const payload = JSON.parse((event as StreamMessageEvent).data) as AiPathRunNodeRecord[];
+          const payload = JSON.parse((event as StreamMessageEvent).data) as unknown;
+          const nodes = normalizeRunNodes(payload);
           setRunDetails((prev: Record<string, RunDetail | null>) => {
-            const current = prev[runId];
+            const current = normalizeRunDetail(prev[runId]);
             if (!current) return prev;
-            return { ...prev, [runId]: { ...current, nodes: payload } };
+            return { ...prev, [runId]: { ...current, nodes } };
           });
         } catch {
           // ignore parse errors
@@ -669,14 +746,15 @@ export function JobQueuePanel({
       });
       source.addEventListener('events', (event: Event) => {
         try {
-          const payload = JSON.parse((event as StreamMessageEvent).data) as
-                                | AiPathRunEventRecord[]
-                                | { events?: AiPathRunEventRecord[] };                      if (Array.isArray(payload)) {
-            mergeEvents(payload);
+          const payload = JSON.parse((event as StreamMessageEvent).data) as unknown;
+          if (Array.isArray(payload)) {
+            mergeEvents(normalizeRunEvents(payload));
             return;
           }
-          const events = Array.isArray(payload.events) ? payload.events : [];
-          mergeEvents(events);
+          if (payload && typeof payload === 'object') {
+            const events = normalizeRunEvents((payload as { events?: unknown }).events);
+            mergeEvents(events);
+          }
         } catch {
           // ignore parse errors
         }
@@ -706,7 +784,10 @@ export function JobQueuePanel({
       if (!response.ok) {
         throw new Error(response.error || 'Failed to load run details.');
       }
-      const data = response.data as RunDetail;
+      const data = normalizeRunDetail(response.data);
+      if (!data) {
+        throw new Error('Failed to load run details.');
+      }
       setRunDetails((prev: Record<string, RunDetail | null>) => ({ ...prev, [runId]: data }));
     } catch (error) {
       setRunDetailErrors((prev: Record<string, string>) => ({
@@ -927,6 +1008,13 @@ export function JobQueuePanel({
               Updated every 5s
             </div>
           )}
+          {queueStatus?.slo ? (
+            <div
+              className={`mt-2 inline-flex items-center rounded-md border px-2 py-1 text-[10px] uppercase tracking-wide ${getSloBadgeClass(queueStatus.slo.overall)}`}
+            >
+              SLO {queueStatus.slo.overall} · {queueStatus.slo.breachCount} breach{queueStatus.slo.breachCount === 1 ? '' : 'es'}
+            </div>
+          ) : null}
         </div>
         <div className='rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300'>
           <div className='text-[10px] uppercase text-gray-500'>Queue Depth</div>
@@ -991,6 +1079,23 @@ export function JobQueuePanel({
       {queueStatus?.queueLagMs && queueStatus.queueLagMs > lagThresholdMs ? (
         <div className='mt-4 rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100'>
           Queue lag is high: {formatDurationMs(queueStatus.queueLagMs)} (threshold {formatDurationMs(lagThresholdMs)}). Consider increasing concurrency or investigating slow nodes.
+        </div>
+      ) : null}
+
+      {queueStatus?.slo && queueStatus.slo.overall !== 'ok' ? (
+        <div
+          className={`mt-3 rounded-lg border px-4 py-3 text-sm ${
+            queueStatus.slo.overall === 'critical'
+              ? 'border-rose-500/40 bg-rose-500/10 text-rose-100'
+              : 'border-amber-500/40 bg-amber-500/10 text-amber-100'
+          }`}
+        >
+          <div className='font-medium'>
+            Runtime SLO is {queueStatus.slo.overall}.
+          </div>
+          <div className='mt-1 text-xs opacity-90'>
+            {queueStatus.slo.breaches.slice(0, 3).map((breach) => breach.message).join(' ')}
+          </div>
         </div>
       ) : null}
 
@@ -1162,7 +1267,7 @@ export function JobQueuePanel({
       ) : (
         <div className='space-y-3'>
           {runs.map((run: AiPathRunRecord) => {            const isExpanded = expandedRunIds.has(run.id);
-            const detail = runDetails[run.id];
+            const detail = normalizeRunDetail(runDetails[run.id]);
             const detailLoading = runDetailLoading.has(run.id);
             const detailError = runDetailErrors[run.id];
             const detailRun = detail?.run ?? run;
@@ -1180,8 +1285,8 @@ export function JobQueuePanel({
             const runExecution = resolveRunExecutionKind(detailRun);
             const runSource = resolveRunSource(detailRun) ?? 'unknown';
             const runSourceDebug = resolveRunSourceDebug(detailRun);
-            const nodes = detail?.nodes ?? [];
-            const events = detail?.events ?? [];
+            const nodes = normalizeRunNodes(detail?.nodes);
+            const events = normalizeRunEvents(detail?.events);
             const history = (detailRun.runtimeState?.history ?? undefined);
             const historyOptions = buildHistoryNodeOptions(
               history,

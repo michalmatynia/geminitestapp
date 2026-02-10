@@ -22,5 +22,8 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
-  { source: 'products.validator-config.GET' },
+  {
+    source: 'products.validator-config.GET',
+    cacheControl: 'no-store',
+  },
 );

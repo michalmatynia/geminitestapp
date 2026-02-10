@@ -6,6 +6,7 @@ import {
   recordRuntimeRunFinished,
   recordRuntimeRunQueued,
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
+import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
 import type { AiPathRunRepository } from '@/features/ai/ai-paths/types/path-run-repository';
 import { enqueuePathRunJob } from '@/features/jobs/workers/aiPathRunQueue';
 import { ErrorSystem } from '@/features/observability/services/error-system';
@@ -171,6 +172,7 @@ export const resumePathRun = async (
     }
 
     await dispatchRun(updated.id);
+    publishRunUpdate(runId, 'run', { status: 'queued', mode });
 
     return updated;
   } catch (error) {
@@ -250,6 +252,7 @@ export const retryPathRunNode = async (runId: string, nodeId: string): Promise<A
     }
 
     await dispatchRun(updated.id);
+    publishRunUpdate(runId, 'run', { status: 'queued', retryNodeId: nodeId });
 
     return updated;
   } catch (error) {
@@ -322,6 +325,8 @@ export const cancelPathRunWithRepository = async (
         runId,
       });
     }
+
+    publishRunUpdate(runId, 'done', { status: 'canceled' });
 
     return updated;
   } catch (error) {

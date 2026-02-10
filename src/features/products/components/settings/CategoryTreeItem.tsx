@@ -5,6 +5,7 @@ import React, { useMemo, useState } from 'react';
 
 import type { ProductCategoryWithChildren } from '@/features/products/types';
 import { TreeActionButton, TreeActionSlot, TreeCaret, TreeRow } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 import { DRAG_KEYS, getFirstDragValue, resolveVerticalDropPosition, setDragData } from '@/shared/utils/drag-drop';
 
 export type CategoryNodeProps = {
@@ -91,18 +92,25 @@ export function CategoryTreeItem({
     canDropToParent(category.id);
   const siblingParentId = category.parentId ?? null;
   const canDropAsSibling: boolean = Boolean(draggedId) && canDropToParent(siblingParentId);
-  const showBeforeBoundary: boolean = dropTarget === 'before' && canDropAsSibling;
-  const showAfterBoundary: boolean = dropTarget === 'after' && canDropAsSibling;
+  const canShowDropIndicator =
+    dropTarget === 'inside' ? canDropInside : dropTarget === 'before' || dropTarget === 'after' ? canDropAsSibling : false;
+  const dropIndicatorPositionClass =
+    dropTarget === 'before'
+      ? 'top-[2px]'
+      : dropTarget === 'after'
+        ? 'bottom-[2px]'
+        : 'top-1/2 -translate-y-1/2';
+  const dragMotionClassName = draggedId ? 'duration-0' : 'duration-200';
 
   return (
-    <div className='relative transition-[transform,opacity] duration-200 ease-out'>
+    <div className={`relative transition-[transform,opacity] ease-out ${dragMotionClassName}`}>
       <TreeRow
         tone='primary'
         depth={level}
         data-category-row-id={category.id}
-        className='cursor-pointer active:cursor-grabbing gap-1 transition-[background-color,color,transform,box-shadow] duration-200 ease-out'
+        className={`cursor-pointer active:cursor-grabbing gap-1 transform-gpu transition-[background-color,color,transform,box-shadow] ease-out ${dragMotionClassName}`}
         dragOver={dropTarget === 'inside' && canDropInside}
-        dragOverClassName='bg-emerald-500/18 text-emerald-100 ring-1 ring-emerald-400/45'
+        dragOverClassName='bg-transparent'
         onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
           const droppedId =
             getFirstDragValue(event.dataTransfer, [DRAG_KEYS.CATEGORY_ID], draggedId ?? '') || '';
@@ -113,8 +121,7 @@ export function CategoryTreeItem({
 
           const rect = event.currentTarget.getBoundingClientRect();
           const position = resolveVerticalDropPosition(event.clientY, rect, {
-            thresholdRatio: 0.35,
-            thresholdPx: 10,
+            thresholdRatio: 0.36,
           });
 
           let nextDropTarget: DropTarget = null;
@@ -122,6 +129,19 @@ export function CategoryTreeItem({
             nextDropTarget = canDropAsSibling ? position : null;
           } else {
             nextDropTarget = canDropInside ? 'inside' : null;
+          }
+
+          // Keep before/after state sticky near row edges to avoid boundary flapping.
+          if (
+            (dropTarget === 'before' || dropTarget === 'after') &&
+            (nextDropTarget === 'inside' || nextDropTarget === null)
+          ) {
+            const stickyInset = Math.max(10, rect.height * 0.18);
+            const keepBefore = dropTarget === 'before' && event.clientY - rect.top <= stickyInset;
+            const keepAfter = dropTarget === 'after' && rect.bottom - event.clientY <= stickyInset;
+            if (keepBefore || keepAfter) {
+              nextDropTarget = dropTarget;
+            }
           }
 
           setDropTarget((prev: DropTarget): DropTarget => {
@@ -177,16 +197,13 @@ export function CategoryTreeItem({
           setDropTarget(null);
         }}
       >
-        {showBeforeBoundary && (
-          <div className='pointer-events-none absolute inset-x-2 -top-2 h-4 overflow-hidden rounded-md'>
-            <div className='h-full w-full bg-gradient-to-b from-emerald-300/70 via-emerald-300/30 to-transparent' />
-          </div>
-        )}
-        {showAfterBoundary && (
-          <div className='pointer-events-none absolute inset-x-2 -bottom-2 h-4 overflow-hidden rounded-md'>
-            <div className='h-full w-full bg-gradient-to-t from-emerald-300/70 via-emerald-300/30 to-transparent' />
-          </div>
-        )}
+        <div
+          className={cn(
+            'pointer-events-none absolute inset-x-3 h-px rounded-full bg-slate-200 transition-all duration-150',
+            dropIndicatorPositionClass,
+            canShowDropIndicator ? 'scale-x-100 opacity-45' : 'scale-x-95 opacity-0'
+          )}
+        />
 
         <div
           draggable

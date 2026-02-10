@@ -3,15 +3,14 @@ const { createHash } = require('crypto');
 
 
 const dev = process.env.NODE_ENV !== 'production';
-if (dev && !process.env.NEXT_DISABLE_TURBOPACK) {
-  process.env.NEXT_DISABLE_TURBOPACK = '1';
-}
-if (dev && !process.env.WATCHPACK_POLLING) {
-  // Use polling in local dev to avoid "too many open files" watcher failures.
-  process.env.WATCHPACK_POLLING = 'true';
-}
-if (dev && !process.env.CHOKIDAR_USEPOLLING) {
-  process.env.CHOKIDAR_USEPOLLING = '1';
+// Keep fast/default dev tooling unless explicitly opting into legacy polling watchers.
+if (dev && process.env.FORCE_LEGACY_DEV_WATCHERS === 'true') {
+  if (!process.env.WATCHPACK_POLLING) {
+    process.env.WATCHPACK_POLLING = 'true';
+  }
+  if (!process.env.CHOKIDAR_USEPOLLING) {
+    process.env.CHOKIDAR_USEPOLLING = '1';
+  }
 }
 
 const next = require('next');
@@ -42,6 +41,7 @@ const SCRAPER_GUARD = createScraperGuard({
 app.prepare().then(() => {
   const server = createServer((req, res) => {
     const debugResponseHeaders = process.env.DEBUG_RESPONSE_HEADERS === 'true';
+    const debugUrlNormalize = process.env.DEBUG_URL_NORMALIZE === 'true';
     const originalSetHeader = res.setHeader.bind(res);
     const normalizeRedirectHeader = (value) => {
       if (value && typeof value === 'object' && typeof value.toString === 'function') {
@@ -136,13 +136,15 @@ app.prepare().then(() => {
       originalRawUrl === host ||
       originalRawUrl.startsWith(`${host}/`);
     if (shouldNormalize && normalizedUrl !== originalRawUrl) {
-      console.warn('[url-normalize] rewrite', {
-        original: originalRawUrl,
-        normalized: normalizedUrl,
-        host,
-        referer: req.headers.referer,
-        userAgent: req.headers['user-agent'],
-      });
+      if (debugUrlNormalize) {
+        console.warn('[url-normalize] rewrite', {
+          original: originalRawUrl,
+          normalized: normalizedUrl,
+          host,
+          referer: req.headers.referer,
+          userAgent: req.headers['user-agent'],
+        });
+      }
       res.statusCode = 307;
       res.setHeader('Location', normalizedUrl);
       res.end();
@@ -151,7 +153,7 @@ app.prepare().then(() => {
     if (normalizedUrl !== originalRawUrl) {
       req.url = normalizedUrl;
     }
-    if (originalRawUrl.includes(hostPrefix) || originalRawUrl.includes(`//${host}`)) {
+    if (debugUrlNormalize && (originalRawUrl.includes(hostPrefix) || originalRawUrl.includes(`//${host}`))) {
       console.warn('[url-normalize] received', {
         original: originalRawUrl,
         host,
@@ -159,13 +161,7 @@ app.prepare().then(() => {
         userAgent: req.headers['user-agent'],
       });
     }
-    if (normalizedUrl === '/__debug') {
-      res.statusCode = 200;
-      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-      res.end('ok');
-      return;
-    }
-    if (normalizedUrl === '/' && originalRawUrl !== '/') {
+    if (debugUrlNormalize && normalizedUrl === '/' && originalRawUrl !== '/') {
       console.warn('[root-request]', {
         url: originalRawUrl,
         normalized: normalizedUrl,
@@ -216,7 +212,7 @@ app.prepare().then(() => {
     handle(req, res);
   });
 
-  // Graceful shutdown: drain BullMQ workers and close Redis before exit
+  // Graceful shutdown: drain BullMQ workers and close all Redis connections before exit
   const gracefulShutdown = async (signal) => {
     console.log(`\n> Received ${signal}, shutting down gracefully...`);
     try {
@@ -225,6 +221,18 @@ app.prepare().then(() => {
       await closeRedisConnection();
     } catch (err) {
       console.warn('[server] Queue cleanup error:', err.message);
+    }
+    try {
+      const { closeSubscriber } = await import('./src/shared/lib/redis-pubsub.js');
+      await closeSubscriber();
+    } catch (err) {
+      console.warn('[server] Redis subscriber cleanup error:', err.message);
+    }
+    try {
+      const { closeRedisClient } = await import('./src/shared/lib/redis.js');
+      await closeRedisClient();
+    } catch (err) {
+      console.warn('[server] Redis client cleanup error:', err.message);
     }
     server.close(() => {
       console.log('> Server closed');

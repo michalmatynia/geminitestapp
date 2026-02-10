@@ -4,6 +4,16 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import {
+  getRuntimeAnalyticsSummary,
+  resolveRuntimeAnalyticsRangeWindow,
+} from '@/features/ai/ai-paths/services/runtime-analytics-service';
+import {
+  getAiPathRunQueueStatus,
+  startAiInsightsQueue,
+  startAiPathRunQueue,
+} from '@/features/jobs/server';
+import { notifyAiPathsSloBreach } from '@/features/observability/server';
 import { getProductAiJobProvider, getProductAiJobRepository } from '@/features/jobs/services/product-ai-job-repository';
 import type { ProductAiJobStatus } from '@/features/jobs/types/product-ai-job-repository';
 import { apiHandler } from '@/shared/lib/api/api-handler';
@@ -39,6 +49,8 @@ const toIso = (value?: Date | string | null): string | null => {
 
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
+  startAiPathRunQueue();
+  startAiInsightsQueue();
 
   const errors: Record<string, string> = {};
 
@@ -158,16 +170,60 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
     }
   })();
 
-  const ok = Object.keys(errors).length === 0;
+  const queue = await (async () => {
+    try {
+      return await getAiPathRunQueueStatus();
+    } catch (error) {
+      errors['queue'] = error instanceof Error ? error.message : 'Failed to load queue health.';
+      return null;
+    }
+  })();
+
+  const runtime24h = await (async () => {
+    try {
+      const { from, to } = resolveRuntimeAnalyticsRangeWindow('24h');
+      return await getRuntimeAnalyticsSummary({ from, to, range: '24h' });
+    } catch (error) {
+      errors['runtime24h'] =
+        error instanceof Error ? error.message : 'Failed to load runtime analytics summary.';
+      return null;
+    }
+  })();
+
+  const sloNotification = await (async () => {
+    if (!queue || queue.slo.overall === 'ok') return null;
+    return notifyAiPathsSloBreach({
+      status: queue.slo,
+      queue: {
+        running: queue.running,
+        healthy: queue.healthy,
+        activeRuns: queue.activeRuns,
+        queuedCount: queue.queuedCount,
+        queueLagMs: queue.queueLagMs,
+      },
+    });
+  })();
+
+  const hasCriticalSlo = queue?.slo?.overall === 'critical';
+  const ok = Object.keys(errors).length === 0 && !hasCriticalSlo;
+  const responseErrors =
+    ok
+      ? undefined
+      : Object.keys(errors).length > 0
+        ? errors
+        : { slo: 'Critical AI Paths SLO breach detected.' };
   return NextResponse.json(
     {
       ok,
       timestamp: new Date().toISOString(),
       aiPaths,
       aiJobs,
-      errors: ok ? undefined : errors,
+      queue,
+      runtime24h,
+      sloNotification,
+      errors: responseErrors,
     },
-    { status: ok ? 200 : 500 }
+    { status: ok ? 200 : hasCriticalSlo ? 503 : 500 }
   );
 }
 

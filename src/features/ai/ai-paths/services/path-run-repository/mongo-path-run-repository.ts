@@ -180,6 +180,29 @@ const parseFilterDate = (value: Date | string | null | undefined): Date | null =
   return Number.isNaN(date.getTime()) ? null : date;
 };
 
+const RUN_LIST_PROJECTION = {
+  _id: 1,
+  id: 1,
+  userId: 1,
+  pathId: 1,
+  pathName: 1,
+  status: 1,
+  triggerEvent: 1,
+  triggerNodeId: 1,
+  meta: 1,
+  entityId: 1,
+  entityType: 1,
+  errorMessage: 1,
+  retryCount: 1,
+  maxAttempts: 1,
+  nextRetryAt: 1,
+  deadLetteredAt: 1,
+  createdAt: 1,
+  updatedAt: 1,
+  startedAt: 1,
+  finishedAt: 1,
+} as const;
+
 const buildRunFilter = (options: AiPathRunListOptions = {}): Record<string, unknown> => {
   const andFilters: Record<string, unknown>[] = [];
   if (options.userId) {
@@ -398,7 +421,7 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     const filter = buildRunFilter(options);
     const cursor = db
       .collection<RunDocument>(RUNS_COLLECTION)
-      .find(filter)
+      .find(filter, { projection: RUN_LIST_PROJECTION })
       .sort({ createdAt: -1 });
     if (typeof options.offset === 'number') {
       cursor.skip(options.offset);

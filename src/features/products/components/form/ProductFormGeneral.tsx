@@ -26,6 +26,11 @@ type FieldValidatorIssue = {
   replacementActive: boolean;
 };
 
+type ProductFormGeneralProps = {
+  validatorEnabled: boolean;
+  formatterEnabled: boolean;
+};
+
 const resolveFieldTargetAndLocale = (
   fieldName: string
 ): { target: 'name' | 'description' | null; locale: string | null } => {
@@ -220,7 +225,10 @@ function ValidatorIssueHint({
   );
 }
 
-export default function ProductFormGeneral(): React.JSX.Element {
+export default function ProductFormGeneral({
+  validatorEnabled,
+  formatterEnabled,
+}: ProductFormGeneralProps): React.JSX.Element {
   const {
     filteredLanguages,
     errors,
@@ -228,7 +236,6 @@ export default function ProductFormGeneral(): React.JSX.Element {
 
   const { register, getValues, setValue, watch } = useFormContext<ProductFormData>();
   const validatorConfigQuery = useProductValidatorConfig();
-  const [formatterEnabled, setFormatterEnabled] = useState(false);
 
   const [identifierType, setIdentifierType] = useState<'ean' | 'gtin' | 'asin'>((): 'ean' | 'gtin' | 'asin' => {
     const vals = getValues();
@@ -239,14 +246,13 @@ export default function ProductFormGeneral(): React.JSX.Element {
   const allValues = watch();
   const hasCatalogs = (filteredLanguages ?? []).length > 0;
   const languagesReady = (filteredLanguages ?? []).length > 0;
-  const validatorEnabledByDefault = validatorConfigQuery.data?.enabledByDefault ?? true;
   const validatorPatterns = validatorConfigQuery.data?.patterns ?? [];
   const fieldIssues = useMemo(
     () =>
-      validatorEnabledByDefault
+      validatorEnabled
         ? buildFieldIssues(allValues, validatorPatterns)
         : ({} as Record<string, FieldValidatorIssue[]>),
-    [allValues, validatorEnabledByDefault, validatorPatterns]
+    [allValues, validatorEnabled, validatorPatterns]
   );
 
   const applyIssueReplacement = (
@@ -267,7 +273,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
   };
 
   useEffect(() => {
-    if (!validatorEnabledByDefault || !formatterEnabled) return;
+    if (!formatterEnabled) return;
     for (const [fieldNameRaw, rawValue] of Object.entries(allValues)) {
       if (typeof rawValue !== 'string' || !rawValue) continue;
       const fieldName = fieldNameRaw as keyof ProductFormData;
@@ -295,7 +301,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
         });
       }
     }
-  }, [allValues, formatterEnabled, setValue, validatorEnabledByDefault, validatorPatterns]);
+  }, [allValues, formatterEnabled, setValue, validatorPatterns]);
 
   return (
     <div className='space-y-6'>
@@ -331,20 +337,6 @@ export default function ProductFormGeneral(): React.JSX.Element {
 
       {hasCatalogs && languagesReady && (
         <FormSection>
-          <div className='mb-2 flex items-center justify-end'>
-            <Button
-              type='button'
-              onClick={() => setFormatterEnabled((prev: boolean) => !prev)}
-              className={`rounded border px-3 py-1.5 text-xs ${
-                formatterEnabled
-                  ? 'border-emerald-500/60 bg-emerald-500/15 text-emerald-100 hover:bg-emerald-500/25'
-                  : 'border-red-500/60 bg-red-500/15 text-red-100 hover:bg-red-500/25'
-              }`}
-            >
-              Formatter {formatterEnabled ? 'ON' : 'OFF'}
-            </Button>
-          </div>
-
           <Tabs defaultValue={filteredLanguages[0] ? `${filteredLanguages[0].name.toLowerCase()}-name` : 'english-name'} className='w-full'>
             <TabsList className='mb-4'>
               {filteredLanguages.map((language: { name: string; code: string }) => {

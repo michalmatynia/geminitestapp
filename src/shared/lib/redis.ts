@@ -26,3 +26,14 @@ export function getRedisClient(): Redis | null {
 }
 
 export const isRedisEnabled = (): boolean => redis !== null;
+
+export async function closeRedisClient(): Promise<void> {
+  if (redis) {
+    try {
+      await redis.quit();
+    } catch {
+      // Already disconnected
+    }
+    redis = null;
+  }
+}

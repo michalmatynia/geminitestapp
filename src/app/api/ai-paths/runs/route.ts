@@ -15,6 +15,39 @@ import type { AiPathRunStatus } from '@/shared/types/ai-paths';
 import type { ApiHandlerContext } from '@/shared/types/api';
 
 const DEFAULT_STALE_RUNNING_MAX_AGE_MS = 30 * 60 * 1000;
+const DEFAULT_STALE_RUNNING_CLEANUP_INTERVAL_MS = 30_000;
+
+let lastStaleRunningCleanupAt = 0;
+let staleRunningCleanupPromise: Promise<void> | null = null;
+
+const parseEnvNumber = (value: string | undefined, fallback: number): number => {
+  const parsed = Number.parseInt(value ?? '', 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+const staleRunningCleanupIntervalMs = parseEnvNumber(
+  process.env['AI_PATHS_STALE_RUNNING_CLEANUP_INTERVAL_MS'],
+  DEFAULT_STALE_RUNNING_CLEANUP_INTERVAL_MS
+);
+
+const scheduleStaleRunningCleanup = (
+  repo: ReturnType<typeof getPathRunRepository>,
+  staleRunningMaxAgeMs: number
+): void => {
+  const now = Date.now();
+  if (staleRunningCleanupPromise) return;
+  if (now - lastStaleRunningCleanupAt < staleRunningCleanupIntervalMs) return;
+  lastStaleRunningCleanupAt = now;
+  staleRunningCleanupPromise = repo
+    .markStaleRunningRuns(staleRunningMaxAgeMs)
+    .then(() => undefined)
+    .catch(() => {
+      // Non-fatal cleanup best effort.
+    })
+    .finally(() => {
+      staleRunningCleanupPromise = null;
+    });
+};
 
 const RUN_STATUSES: AiPathRunStatus[] = [
   'queued',
@@ -62,11 +95,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     Number.isFinite(staleRunningMaxAgeMsRaw) && staleRunningMaxAgeMsRaw > 0
       ? staleRunningMaxAgeMsRaw
       : DEFAULT_STALE_RUNNING_MAX_AGE_MS;
-  try {
-    await repo.markStaleRunningRuns(staleRunningMaxAgeMs);
-  } catch {
-    // Non-fatal cleanup best effort.
-  }
+  scheduleStaleRunningCleanup(repo, staleRunningMaxAgeMs);
   const hasGlobalRunAccess = canAccessGlobalAiPathRuns(access);
   const result = await repo.listRuns({
     ...(!hasGlobalRunAccess ? { userId: access.userId } : {}),

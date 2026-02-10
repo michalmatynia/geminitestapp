@@ -287,6 +287,23 @@ const IMAGE_EXPORT_ALIASES = new Set([
   'image_links',
 ]);
 
+const PRODUCER_TARGET_FIELDS = new Set([
+  'producer',
+  'producer_id',
+  'producer_ids',
+]);
+
+type ProducerNameLookup = Record<string, string> | Map<string, string> | null | undefined;
+
+type ProducerEntry = {
+  producerId?: string | null;
+  producerName?: string | null;
+  name?: string | null;
+  producer?: {
+    name?: string | null;
+  } | null;
+};
+
 const normalizeExportTargetField = (targetField: string): string => {
   const trimmed = targetField.trim();
   const normalized = trimmed.toLowerCase();
@@ -295,6 +312,12 @@ const normalizeExportTargetField = (targetField: string): string => {
   }
   if (normalized === 'category' || normalized === 'categoryid') {
     return 'category_id';
+  }
+  if (normalized === 'producerid') {
+    return 'producer_id';
+  }
+  if (normalized === 'producerids') {
+    return 'producer_ids';
   }
   return trimmed;
 };
@@ -328,6 +351,125 @@ const toNumberValue = (value: unknown): number | null => {
     if (Number.isFinite(parsed)) return parsed;
   }
   return null;
+};
+
+const toTrimmedString = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed || null;
+};
+
+const getProducerNameFromLookup = (
+  producerId: string,
+  producerNameById?: ProducerNameLookup
+): string | null => {
+  if (!producerNameById) return null;
+  if (producerNameById instanceof Map) {
+    return (
+      toTrimmedString(producerNameById.get(producerId)) ??
+      toTrimmedString(producerNameById.get(producerId.toLowerCase()))
+    );
+  }
+  return (
+    toTrimmedString(producerNameById[producerId]) ??
+    toTrimmedString(producerNameById[producerId.toLowerCase()])
+  );
+};
+
+const normalizeProducerTargetField = (targetField: string): string | null => {
+  const normalized = targetField.trim().toLowerCase();
+  if (normalized === 'producerid') return 'producer_id';
+  if (normalized === 'producerids') return 'producer_ids';
+  if (PRODUCER_TARGET_FIELDS.has(normalized)) return normalized;
+  return null;
+};
+
+const toProducerValueList = (
+  value: unknown,
+  producerNameById?: ProducerNameLookup
+): string[] => {
+  const values: string[] = [];
+  const seen = new Set<string>();
+
+  const pushValue = (candidate: unknown): void => {
+    if (candidate === null || candidate === undefined) return;
+    if (Array.isArray(candidate)) {
+      candidate.forEach((entry: unknown) => pushValue(entry));
+      return;
+    }
+    if (typeof candidate === 'object') {
+      const record = candidate as Record<string, unknown>;
+      const nested =
+        toTrimmedString(record['producerId']) ??
+        toTrimmedString(record['producer_id']) ??
+        toTrimmedString(record['producerName']) ??
+        toTrimmedString(record['name']) ??
+        toTrimmedString(record['value']) ??
+        toTrimmedString(record['id']);
+      if (nested) {
+        pushValue(nested);
+      }
+      return;
+    }
+
+    const text = toStringValue(candidate);
+    if (!text) return;
+    const normalizedText = text.includes(',') || text.includes(';')
+      ? text.split(/[,;]+/g)
+      : [text];
+    normalizedText.forEach((part: string) => {
+      const trimmed = part.trim();
+      if (!trimmed) return;
+      const resolved = getProducerNameFromLookup(trimmed, producerNameById) ?? trimmed;
+      if (!seen.has(resolved)) {
+        seen.add(resolved);
+        values.push(resolved);
+      }
+    });
+  };
+
+  pushValue(value);
+  return values;
+};
+
+const getProductProducerValues = (
+  product: ProductWithImages,
+  producerNameById?: ProducerNameLookup
+): { producerIds: string[]; producerNames: string[] } => {
+  const entries = Array.isArray(product.producers)
+    ? (product.producers as unknown as ProducerEntry[])
+    : [];
+  const producerIds: string[] = [];
+  const producerNames: string[] = [];
+  const seenIds = new Set<string>();
+  const seenNames = new Set<string>();
+
+  const pushProducerName = (candidate: string | null): void => {
+    if (!candidate || seenNames.has(candidate)) return;
+    seenNames.add(candidate);
+    producerNames.push(candidate);
+  };
+
+  for (const entry of entries) {
+    if (!entry || typeof entry !== 'object') continue;
+    const producerId = toTrimmedString(entry.producerId);
+    const producerName =
+      toTrimmedString(entry.producerName) ??
+      toTrimmedString(entry.name) ??
+      toTrimmedString(entry.producer?.name);
+
+    if (producerId && !seenIds.has(producerId)) {
+      seenIds.add(producerId);
+      producerIds.push(producerId);
+    }
+    pushProducerName(producerName);
+  }
+
+  producerIds.forEach((producerId: string) => {
+    pushProducerName(getProducerNameFromLookup(producerId, producerNameById));
+  });
+
+  return { producerIds, producerNames };
 };
 
 export const normalizeStockKey = (value: string): string | null => {
@@ -690,7 +832,8 @@ const getProductValue = (
   product: ProductWithImages,
   sourceKey: string,
   imageBaseUrl?: string | null,
-  diagnostics?: ImageExportDiagnostics
+  diagnostics?: ImageExportDiagnostics,
+  producerNameById?: ProducerNameLookup
 ): unknown => {
   if (!sourceKey) return null;
 
@@ -704,17 +847,34 @@ const getProductValue = (
     normalized === 'producerid' ||
     normalized === 'producer_id' ||
     normalized === 'producers' ||
-    normalized === 'producer'
+    normalized === 'producer' ||
+    normalized === 'producernames' ||
+    normalized === 'producer_names'
   ) {
-    const producerIds = Array.isArray(product.producers)
-      ? product.producers
-        .map((entry: { producerId: string }) => entry.producerId?.trim())
-        .filter((entry: string | undefined): entry is string => Boolean(entry))
-      : [];
-    if (normalized === 'producerid' || normalized === 'producer_id' || normalized === 'producer') {
+    const { producerIds, producerNames } = getProductProducerValues(
+      product,
+      producerNameById
+    );
+    if (
+      normalized === 'producerid' ||
+      normalized === 'producer_id'
+    ) {
       return producerIds[0] ?? null;
     }
-    return producerIds;
+    if (normalized === 'producerids' || normalized === 'producer_ids') {
+      return producerIds;
+    }
+    if (
+      normalized === 'producers' ||
+      normalized === 'producernames' ||
+      normalized === 'producer_names'
+    ) {
+      return producerNames.length > 0 ? producerNames : producerIds;
+    }
+    if (normalized === 'producer') {
+      return producerNames[0] ?? producerIds[0] ?? null;
+    }
+    return null;
   }
   const slotMatch = normalized.match(/^image_(slot|file|link)_(\d+)$/);
   if (slotMatch) {
@@ -765,7 +925,8 @@ function applyExportTemplateMappings(
   product: ProductWithImages,
   mappings: ExportTemplateMapping[],
   imageBaseUrl?: string | null,
-  imageDiagnostics?: ImageExportDiagnostics
+  imageDiagnostics?: ImageExportDiagnostics,
+  producerNameById?: ProducerNameLookup
 ): Record<string, unknown> {
   const result: Record<string, unknown> = {};
 
@@ -775,7 +936,13 @@ function applyExportTemplateMappings(
 
     if (!sourceKey || !targetField) continue;
 
-    const rawValue = getProductValue(product, sourceKey, imageBaseUrl, imageDiagnostics);
+    const rawValue = getProductValue(
+      product,
+      sourceKey,
+      imageBaseUrl,
+      imageDiagnostics,
+      producerNameById
+    );
     if (rawValue === null || rawValue === undefined) continue;
 
     const targetKey = targetField.toLowerCase();
@@ -814,6 +981,18 @@ function applyExportTemplateMappings(
         ) {
           result[targetField] = [resolved];
         }
+      }
+      continue;
+    }
+
+    const producerTarget = normalizeProducerTargetField(targetField);
+    if (producerTarget) {
+      const producerValues = toProducerValueList(rawValue, producerNameById);
+      if (producerValues.length === 0) continue;
+      if (producerTarget === 'producer' || producerTarget === 'producer_id') {
+        result[targetField] = producerValues[0] ?? null;
+      } else {
+        result[targetField] = producerValues;
       }
       continue;
     }
@@ -959,6 +1138,7 @@ export async function buildBaseProductData(
     imageBaseUrl?: string | null;
     includeStockWithoutWarehouse?: boolean;
     stockWarehouseAliases?: Record<string, string>;
+    producerNameById?: Record<string, string>;
     exportImagesAsBase64?: boolean | undefined;
     imageDiagnostics?: ImageExportDiagnostics | undefined;
     imageBase64Mode?: ImageBase64Mode | undefined;
@@ -1037,7 +1217,8 @@ export async function buildBaseProductData(
       product,
       exportMappings,
       options?.imageBaseUrl ?? null,
-      options?.imageDiagnostics
+      options?.imageDiagnostics,
+      options?.producerNameById ?? null
     );
     mergeTextFields(baseData, templateData);
     mergeNumericFields(templateData, 'prices');
@@ -1113,6 +1294,7 @@ export async function exportProductToBase(
     imageBaseUrl?: string | null;
     includeStockWithoutWarehouse?: boolean;
     stockWarehouseAliases?: Record<string, string>;
+    producerNameById?: Record<string, string>;
     exportImagesAsBase64?: boolean | undefined;
     imageDiagnostics?: ImageExportDiagnostics | undefined;
     imageBase64Mode?: ImageBase64Mode | undefined;

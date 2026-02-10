@@ -1,0 +1,82 @@
+import { describe, expect, it } from 'vitest';
+
+import { buildBaseProductData } from '@/features/integrations/services/exports/base-exporter';
+import type { ProductWithImages } from '@/shared/types/domain/products';
+
+const createProduct = (): ProductWithImages =>
+  ({
+    id: 'product-1',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    sku: 'SKU-1',
+    baseProductId: null,
+    defaultPriceGroupId: null,
+    ean: null,
+    gtin: null,
+    asin: null,
+    name_en: 'Test Product',
+    name_pl: null,
+    name_de: null,
+    description_en: null,
+    description_pl: null,
+    description_de: null,
+    supplierName: null,
+    supplierLink: null,
+    priceComment: null,
+    stock: 5,
+    price: 20,
+    sizeLength: null,
+    sizeWidth: null,
+    weight: null,
+    length: null,
+    published: false,
+    categoryId: null,
+    catalogId: 'catalog-1',
+    imageLinks: [],
+    imageBase64s: [],
+    noteIds: [],
+    images: [],
+    catalogs: [],
+    tags: [],
+    producers: [{ producerId: 'producer-local-1' }],
+  }) as ProductWithImages;
+
+describe('buildBaseProductData producer mapping', () => {
+  it('exports producer name when producer lookup is provided', async () => {
+    const product = createProduct();
+    const payload = await buildBaseProductData(
+      product,
+      [{ sourceKey: 'producer', targetField: 'producerIds' }],
+      null,
+      {
+        producerNameById: { 'producer-local-1': 'Noe' },
+      }
+    );
+
+    expect(payload['producer']).toBe('Noe');
+  });
+
+  it('falls back to producer id when lookup is unavailable', async () => {
+    const product = createProduct();
+    const payload = await buildBaseProductData(
+      product,
+      [{ sourceKey: 'producer', targetField: 'producerIds' }]
+    );
+
+    expect(payload['producer']).toBe('producer-local-1');
+  });
+
+  it('normalizes producerids alias and exports producer list', async () => {
+    const product = createProduct();
+    const payload = await buildBaseProductData(
+      product,
+      [{ sourceKey: 'producerids', targetField: 'producerIds' }],
+      null,
+      {
+        producerNameById: { 'producer-local-1': 'Noe' },
+      }
+    );
+
+    expect(payload['producer_ids']).toEqual(['Noe']);
+  });
+});

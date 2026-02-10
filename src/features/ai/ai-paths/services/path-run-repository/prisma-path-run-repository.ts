@@ -119,6 +119,28 @@ const parseFilterDate = (value: Date | string | null | undefined): Date | null =
   return Number.isNaN(date.getTime()) ? null : date;
 };
 
+const RUN_LIST_SELECT = {
+  id: true,
+  userId: true,
+  pathId: true,
+  pathName: true,
+  status: true,
+  triggerEvent: true,
+  triggerNodeId: true,
+  meta: true,
+  entityId: true,
+  entityType: true,
+  errorMessage: true,
+  retryCount: true,
+  maxAttempts: true,
+  nextRetryAt: true,
+  deadLetteredAt: true,
+  createdAt: true,
+  updatedAt: true,
+  startedAt: true,
+  finishedAt: true,
+} as const;
+
 const buildRunWhere = (options: AiPathRunListOptions = {}): Prisma.AiPathRunWhereInput => {
   const query = options.query?.trim();
   const statuses = Array.isArray(options.statuses) ? options.statuses.filter(Boolean) : [];
@@ -304,6 +326,7 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     const where = buildRunWhere(options);
     const [runs, total] = await Promise.all([
       prismaAny.aiPathRun!.findMany({
+        select: RUN_LIST_SELECT,
         where,
         orderBy: { createdAt: 'desc' },
         ...(typeof options.offset === 'number' ? { skip: options.offset } : {}),

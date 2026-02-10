@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Copy, Plus, Pencil, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/features/products/constants';
@@ -85,6 +85,18 @@ const formatReplacementFields = (fields: string[] | null | undefined): string =>
   const normalized = normalizeReplacementFields(fields);
   if (normalized.length === 0) return 'all matching fields';
   return normalized.map((field) => REPLACEMENT_FIELD_LABELS[field] ?? field).join(', ');
+};
+
+const buildDuplicateLabel = (label: string, existingLabels: Set<string>): string => {
+  const trimmed = label.trim() || 'Pattern';
+  const base = `${trimmed} (copy)`;
+  let candidate = base;
+  let counter = 2;
+  while (existingLabels.has(candidate.toLowerCase())) {
+    candidate = `${base} ${counter}`;
+    counter += 1;
+  }
+  return candidate;
 };
 
 const ToggleButton = ({
@@ -245,6 +257,33 @@ export function ValidatorSettings(): React.JSX.Element {
     }
   };
 
+  const handleDuplicatePattern = async (pattern: ProductValidationPattern): Promise<void> => {
+    const existingLabels = new Set(
+      patterns
+        .map((item: ProductValidationPattern) => item.label.trim().toLowerCase())
+        .filter((value: string) => value.length > 0)
+    );
+    const duplicatedLabel = buildDuplicateLabel(pattern.label, existingLabels);
+    try {
+      await createPattern.mutateAsync({
+        label: duplicatedLabel,
+        target: pattern.target,
+        locale: pattern.locale,
+        regex: pattern.regex,
+        flags: pattern.flags,
+        message: pattern.message,
+        severity: pattern.severity,
+        enabled: pattern.enabled,
+        replacementEnabled: pattern.replacementEnabled,
+        replacementValue: pattern.replacementValue,
+        replacementFields: normalizeReplacementFields(pattern.replacementFields),
+      });
+      toast('Pattern duplicated.', { variant: 'success' });
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to duplicate pattern.', { variant: 'error' });
+    }
+  };
+
   return (
     <div className='space-y-5'>
       <SectionPanel variant='subtle' className='p-4'>
@@ -349,6 +388,17 @@ export function ValidatorSettings(): React.JSX.Element {
                         void handleTogglePattern(pattern);
                       }}
                     />
+                    <Button
+                      type='button'
+                      onClick={() => {
+                        void handleDuplicatePattern(pattern);
+                      }}
+                      className='rounded bg-slate-800 px-2 py-1 text-xs text-slate-100 hover:bg-slate-700'
+                      title='Duplicate pattern'
+                      disabled={createPattern.isPending}
+                    >
+                      <Copy className='size-3' />
+                    </Button>
                     <Button
                       type='button'
                       onClick={() => openEdit(pattern)}

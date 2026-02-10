@@ -6,6 +6,7 @@ import {
   recordRuntimeNodeStatus,
   recordRuntimeRunFinished,
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
+import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
 import { noteService } from '@/features/notesapp/server';
 import { ErrorSystem } from '@/features/observability/services/error-system';
 import { getProductRepository } from '@/features/products/services/product-repository';
@@ -385,6 +386,14 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             nodeId: node.id,
             status: 'running',
           });
+          publishRunUpdate(run.id, 'nodes', {
+            nodeId: node.id,
+            nodeType: node.type,
+            nodeTitle: node.title ?? null,
+            status: 'running',
+            attempt: nextAttempt,
+            iteration,
+          });
         } catch (error) {
           void ErrorSystem.logWarning(`onNodeStart failed for node ${node.id}`, {
             service: 'ai-paths-executor',
@@ -453,6 +462,14 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
                 nodeId: node.id,
                 status: 'cached',
               });
+              publishRunUpdate(run.id, 'nodes', {
+                nodeId: node.id,
+                nodeType: node.type,
+                nodeTitle: node.title ?? null,
+                status: 'completed',
+                cached: true,
+                outputs: safeOutputs,
+              });
             }
             return;
           }
@@ -487,6 +504,14 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             runId: run.id,
             nodeId: node.id,
             status: 'completed',
+          });
+          publishRunUpdate(run.id, 'nodes', {
+            nodeId: node.id,
+            nodeType: node.type,
+            nodeTitle: node.title ?? null,
+            status: 'completed',
+            outputs: safeOutputs,
+            iteration,
           });
         } catch (error) {
           void ErrorSystem.logWarning(`onNodeFinish failed for node ${node.id}`, {
@@ -535,6 +560,14 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             runId: run.id,
             nodeId: node.id,
             status: 'failed',
+          });
+          publishRunUpdate(run.id, 'nodes', {
+            nodeId: node.id,
+            nodeType: node.type,
+            nodeTitle: node.title ?? null,
+            status: 'failed',
+            error: error instanceof Error ? error.message : String(error),
+            iteration,
           });
         } catch (dbError) {
           void ErrorSystem.logWarning(`onNodeError failed for node ${node.id}`, {
@@ -631,6 +664,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     }
 
     if (finalizedAsCompleted) {
+      publishRunUpdate(run.id, 'done', { status: 'completed' });
       try {
         const startedAtMs = Date.parse(runStartedAt);
         const durationMs = Number.isFinite(startedAtMs)
@@ -700,6 +734,8 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         runId: run.id,
       });
     }
+
+    publishRunUpdate(run.id, 'error', { error: errorMessage });
 
     try {
       const startedAtMs = Date.parse(runStartedAt);

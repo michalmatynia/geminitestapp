@@ -1,4 +1,4 @@
-import { ProductValidationPattern as PrismaPattern } from '@prisma/client';
+import { Prisma, ProductValidationPattern as PrismaPattern } from '@prisma/client';
 
 import {
   PRODUCT_VALIDATION_REPLACEMENT_FIELDS,
@@ -20,6 +20,22 @@ import type {
 const DEFAULT_ENABLED_BY_DEFAULT = true;
 const MISSING_DELEGATE_MESSAGE =
   'ProductValidationPattern model is unavailable in Prisma Client. Run `npx prisma generate` and restart the app.';
+const SCHEMA_MISMATCH_MESSAGE =
+  'Product validation schema mismatch detected. Run `npx prisma db push` to sync the database schema.';
+
+const isSchemaMismatchError = (
+  error: unknown
+): error is Prisma.PrismaClientKnownRequestError =>
+  error instanceof Prisma.PrismaClientKnownRequestError &&
+  (error.code === 'P2021' || error.code === 'P2022');
+
+const schemaMismatchError = (error: unknown) => {
+  const code =
+    error instanceof Prisma.PrismaClientKnownRequestError ? error.code : undefined;
+  return operationFailedError(SCHEMA_MISMATCH_MESSAGE, {
+    prismaCode: code ?? null,
+  });
+};
 
 const parseBooleanSetting = (value: string | null | undefined): boolean => {
   if (typeof value !== 'string') return DEFAULT_ENABLED_BY_DEFAULT;
@@ -110,10 +126,21 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
     if (!delegate) {
       return [];
     }
-    const rows = await delegate.findMany({
-      orderBy: [{ target: 'asc' }, { label: 'asc' }],
-    });
-    return rows.map(toDomain);
+    try {
+      const rows = await delegate.findMany({
+        orderBy: [{ target: 'asc' }, { label: 'asc' }],
+      });
+      return rows.map(toDomain);
+    } catch (error) {
+      if (isSchemaMismatchError(error)) {
+        console.warn(
+          '[validation-pattern-repository] Prisma schema mismatch while listing patterns; returning empty set.',
+          { code: error.code }
+        );
+        return [];
+      }
+      throw error;
+    }
   },
 
   async getPatternById(id: string): Promise<ProductValidationPattern | null> {
@@ -121,60 +148,92 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
     if (!delegate) {
       return null;
     }
-    const row = await delegate.findUnique({
-      where: { id },
-    });
-    return row ? toDomain(row) : null;
+    try {
+      const row = await delegate.findUnique({
+        where: { id },
+      });
+      return row ? toDomain(row) : null;
+    } catch (error) {
+      if (isSchemaMismatchError(error)) {
+        console.warn(
+          '[validation-pattern-repository] Prisma schema mismatch while reading pattern by id; returning null.',
+          { code: error.code, id }
+        );
+        return null;
+      }
+      throw error;
+    }
   },
 
   async createPattern(data: CreateProductValidationPatternInput): Promise<ProductValidationPattern> {
     const delegate = requirePatternDelegate();
-    const row = await delegate.create({
-      data: {
-        label: data.label,
-        target: data.target,
-        locale: data.locale?.trim() || null,
-        regex: data.regex,
-        flags: data.flags ?? null,
-        message: data.message,
-        severity: data.severity ?? 'error',
-        enabled: data.enabled ?? true,
-        replacementEnabled: data.replacementEnabled ?? false,
-        replacementValue: data.replacementValue?.trim() || null,
-        replacementFields: normalizeReplacementFields(data.replacementFields),
-      },
-    });
-    return toDomain(row);
+    try {
+      const row = await delegate.create({
+        data: {
+          label: data.label,
+          target: data.target,
+          locale: data.locale?.trim() || null,
+          regex: data.regex,
+          flags: data.flags ?? null,
+          message: data.message,
+          severity: data.severity ?? 'error',
+          enabled: data.enabled ?? true,
+          replacementEnabled: data.replacementEnabled ?? false,
+          replacementValue: data.replacementValue?.trim() || null,
+          replacementFields: normalizeReplacementFields(data.replacementFields),
+        },
+      });
+      return toDomain(row);
+    } catch (error) {
+      if (isSchemaMismatchError(error)) {
+        throw schemaMismatchError(error);
+      }
+      throw error;
+    }
   },
 
   async updatePattern(id: string, data: UpdateProductValidationPatternInput): Promise<ProductValidationPattern> {
     const delegate = requirePatternDelegate();
-    const row = await delegate.update({
-      where: { id },
-      data: {
-        ...(data.label !== undefined && { label: data.label }),
-        ...(data.target !== undefined && { target: data.target }),
-        ...(data.locale !== undefined && { locale: data.locale?.trim() || null }),
-        ...(data.regex !== undefined && { regex: data.regex }),
-        ...(data.flags !== undefined && { flags: data.flags ?? null }),
-        ...(data.message !== undefined && { message: data.message }),
-        ...(data.severity !== undefined && { severity: data.severity }),
-        ...(data.enabled !== undefined && { enabled: data.enabled }),
-        ...(data.replacementEnabled !== undefined && { replacementEnabled: data.replacementEnabled }),
-        ...(data.replacementValue !== undefined && { replacementValue: data.replacementValue?.trim() || null }),
-        ...(data.replacementFields !== undefined && {
-          replacementFields: normalizeReplacementFields(data.replacementFields),
-        }),
-      },
-    });
-    return toDomain(row);
+    try {
+      const row = await delegate.update({
+        where: { id },
+        data: {
+          ...(data.label !== undefined && { label: data.label }),
+          ...(data.target !== undefined && { target: data.target }),
+          ...(data.locale !== undefined && { locale: data.locale?.trim() || null }),
+          ...(data.regex !== undefined && { regex: data.regex }),
+          ...(data.flags !== undefined && { flags: data.flags ?? null }),
+          ...(data.message !== undefined && { message: data.message }),
+          ...(data.severity !== undefined && { severity: data.severity }),
+          ...(data.enabled !== undefined && { enabled: data.enabled }),
+          ...(data.replacementEnabled !== undefined && { replacementEnabled: data.replacementEnabled }),
+          ...(data.replacementValue !== undefined && { replacementValue: data.replacementValue?.trim() || null }),
+          ...(data.replacementFields !== undefined && {
+            replacementFields: normalizeReplacementFields(data.replacementFields),
+          }),
+        },
+      });
+      return toDomain(row);
+    } catch (error) {
+      if (isSchemaMismatchError(error)) {
+        throw schemaMismatchError(error);
+      }
+      throw error;
+    }
   },
 
   async deletePattern(id: string): Promise<void> {
     const delegate = requirePatternDelegate();
-    await delegate.delete({
-      where: { id },
-    });
+    try {
+      await delegate.delete({
+        where: { id },
+      });
+    } catch (error) {
+      if (isSchemaMismatchError(error)) {
+        throw schemaMismatchError(error);
+      }
+      throw error;
+    }
   },
 
   async getEnabledByDefault(): Promise<boolean> {

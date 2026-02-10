@@ -2,13 +2,22 @@ import 'server-only';
 
 import { executePathRun } from '@/features/ai/ai-paths/services/path-run-executor';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
+import { recordRuntimeRunFinished } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { ErrorSystem } from '@/features/observability/services/error-system';
 import type { AiPathRunRecord } from '@/shared/types/ai-paths';
 
+const STALE_RUNNING_THRESHOLD_MS = 10 * 60 * 1000; // 10 minutes
 const DEFAULT_MAX_ATTEMPTS = Number(process.env['AI_PATHS_RUN_MAX_ATTEMPTS'] ?? '3');
 const DEFAULT_BACKOFF_MS = Number(process.env['AI_PATHS_RUN_BACKOFF_MS'] ?? '5000');
 const DEFAULT_BACKOFF_MAX_MS = Number(process.env['AI_PATHS_RUN_BACKOFF_MAX_MS'] ?? '60000');
 const TERMINAL_RUN_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
+const DEBUG_AI_PATH_QUEUE = process.env['AI_PATHS_QUEUE_DEBUG'] === 'true';
+
+const debugQueueLog = (...args: unknown[]): void => {
+  if (!DEBUG_AI_PATH_QUEUE) return;
+  console.log(...args);
+};
 
 const normalizeNumber = (value: number, fallback: number, min: number = 0): number => {
   if (!Number.isFinite(value)) return fallback;
@@ -66,6 +75,21 @@ const isNonRetryableRunError = (error: unknown): boolean => {
   return NON_RETRYABLE_PATTERNS.some((pattern) => normalized.includes(pattern));
 };
 
+const resolveDurationMs = (
+  startedAt: Date | string | null | undefined,
+  finishedAt: Date
+): number | null => {
+  if (!startedAt) return null;
+  const startedAtMs =
+    typeof startedAt === 'string'
+      ? Date.parse(startedAt)
+      : startedAt instanceof Date
+        ? startedAt.getTime()
+        : Number.NaN;
+  if (!Number.isFinite(startedAtMs)) return null;
+  return Math.max(0, finishedAt.getTime() - startedAtMs);
+};
+
 export const computeBackoffMs = (retryCount: number, meta?: Record<string, unknown>): number => {
   const base =
     typeof meta?.['backoffMs'] === 'number' ? meta['backoffMs'] : DEFAULT_BACKOFF_MS;
@@ -89,15 +113,15 @@ export type ProcessRunResult =
 
 export const processRun = async (run: AiPathRunRecord): Promise<ProcessRunResult> => {
   const repo = getPathRunRepository();
-  console.log(`[aiPathRunQueue] Processing run ${run.id}`);
+  debugQueueLog(`[aiPathRunQueue] Processing run ${run.id}`);
   try {
     await executePathRun(run);
     const latest = await repo.findRunById(run.id);
     if (latest?.status === 'canceled') {
-      console.log(`[aiPathRunQueue] Run ${run.id} was canceled during execution`);
+      debugQueueLog(`[aiPathRunQueue] Run ${run.id} was canceled during execution`);
       return;
     }
-    console.log(`[aiPathRunQueue] Run ${run.id} completed`);
+    debugQueueLog(`[aiPathRunQueue] Run ${run.id} completed`);
     return;
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Run failed.';
@@ -115,10 +139,11 @@ export const processRun = async (run: AiPathRunRecord): Promise<ProcessRunResult
       return;
     }
     if (isNonRetryableRunError(error)) {
+      const finishedAt = new Date();
       const failed = await repo.updateRunIfStatus(run.id, ['running', 'queued'], {
         status: 'failed',
         retryCount: latest?.retryCount ?? run.retryCount ?? 0,
-        finishedAt: new Date(),
+        finishedAt,
         errorMessage: message,
       });
       if (failed) {
@@ -128,6 +153,13 @@ export const processRun = async (run: AiPathRunRecord): Promise<ProcessRunResult
           message: `Run stopped: non-retryable error — ${message}`,
           metadata: { nonRetryable: true, reason: 'non_retryable_error' },
         });
+        await recordRuntimeRunFinished({
+          runId: run.id,
+          status: 'failed',
+          durationMs: resolveDurationMs(latest?.startedAt ?? run.startedAt, finishedAt),
+          timestamp: finishedAt,
+        });
+        publishRunUpdate(run.id, 'error', { error: message, nonRetryable: true });
       }
       return;
     }
@@ -159,11 +191,12 @@ export const processRun = async (run: AiPathRunRecord): Promise<ProcessRunResult
       });
       return { requeueDelayMs: delayMs };
     } else {
+      const finishedAt = new Date();
       const deadLettered = await repo.updateRunIfStatus(run.id, ['running', 'queued'], {
         status: 'dead_lettered',
         retryCount,
-        finishedAt: new Date(),
-        deadLetteredAt: new Date(),
+        finishedAt,
+        deadLetteredAt: finishedAt,
         errorMessage: message,
       });
       if (deadLettered) {
@@ -173,8 +206,52 @@ export const processRun = async (run: AiPathRunRecord): Promise<ProcessRunResult
           message: 'Run moved to dead-letter after max retries.',
           metadata: { retryCount, maxAttempts },
         });
+        await recordRuntimeRunFinished({
+          runId: run.id,
+          status: 'dead_lettered',
+          durationMs: resolveDurationMs(latest?.startedAt ?? run.startedAt, finishedAt),
+          timestamp: finishedAt,
+        });
+        publishRunUpdate(run.id, 'error', {
+          error: 'Max retries exceeded',
+          status: 'dead_lettered',
+          retryCount,
+          maxAttempts,
+        });
       }
       return;
     }
+  }
+};
+
+/**
+ * Periodic recovery job: marks runs stuck in 'running' state for >10 minutes
+ * as 'failed'. This handles cases where the worker crashed mid-execution
+ * without updating the run status.
+ */
+export const processStaleRunRecovery = async (): Promise<void> => {
+  try {
+    const repo = getPathRunRepository();
+    const result = await repo.markStaleRunningRuns(STALE_RUNNING_THRESHOLD_MS);
+    if (result.count > 0) {
+      debugQueueLog(
+        `[aiPathRunQueue] Recovery: marked ${result.count} stale running run(s) as failed`
+      );
+      void ErrorSystem.logWarning(
+        `Stale run recovery: marked ${result.count} run(s) as failed`,
+        {
+          service: 'ai-paths-queue',
+          action: 'staleRunRecovery',
+          count: result.count,
+          thresholdMs: STALE_RUNNING_THRESHOLD_MS,
+        }
+      );
+    }
+  } catch (error) {
+    void ErrorSystem.logWarning('Stale run recovery failed', {
+      service: 'ai-paths-queue',
+      action: 'staleRunRecovery',
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 };

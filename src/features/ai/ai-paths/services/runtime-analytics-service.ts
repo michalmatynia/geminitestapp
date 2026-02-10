@@ -13,13 +13,56 @@ import type {
 const KEY_PREFIX = 'ai_paths:runtime:analytics:v1';
 const RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 
-const keyRuns = (status: 'all' | 'queued' | 'started' | 'completed' | 'failed' | 'canceled'): string =>
+const keyRuns = (
+  status: 'all' | 'queued' | 'started' | 'completed' | 'failed' | 'canceled' | 'dead_lettered'
+): string =>
   `${KEY_PREFIX}:runs:${status}`;
 const keyDurations = (): string => `${KEY_PREFIX}:runs:durations`;
 const keyNodes = (status: string): string => `${KEY_PREFIX}:nodes:${status}`;
 const keyBrain = (scope: 'all' | 'analytics' | 'logs' | 'warning' | 'error'): string =>
   `${KEY_PREFIX}:brain:${scope}`;
 const keyTotals = (): string => `${KEY_PREFIX}:totals`;
+
+const parseEnvNumber = (
+  name: string,
+  fallback: number,
+  min: number,
+  max: number
+): number => {
+  const raw = process.env[name];
+  if (!raw) return fallback;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(min, Math.min(max, parsed));
+};
+
+const SUMMARY_CACHE_TTL_MS = parseEnvNumber(
+  'AI_PATHS_RUNTIME_SUMMARY_CACHE_TTL_MS',
+  5_000,
+  500,
+  120_000
+);
+const SUMMARY_QUERY_TIMEOUT_MS = parseEnvNumber(
+  'AI_PATHS_RUNTIME_SUMMARY_TIMEOUT_MS',
+  2_500,
+  250,
+  60_000
+);
+const DURATION_SAMPLE_LIMIT = parseEnvNumber(
+  'AI_PATHS_RUNTIME_DURATION_SAMPLE_LIMIT',
+  2_000,
+  50,
+  50_000
+);
+const SUMMARY_RANGE_BUCKET_MS = Math.max(1_000, SUMMARY_CACHE_TTL_MS);
+
+type SummaryCacheEntry = {
+  value: AiPathRuntimeAnalyticsSummary;
+  expiresAt: number;
+};
+
+const summaryCache = new Map<string, SummaryCacheEntry>();
+const summaryInFlight = new Map<string, Promise<AiPathRuntimeAnalyticsSummary>>();
 
 const toTimestampMs = (value?: Date | string | number | null): number => {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
@@ -51,6 +94,92 @@ const clampRate = (value: number): number => {
   return Math.max(0, Math.min(100, value));
 };
 
+const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> => {
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) return promise;
+  let timer: NodeJS.Timeout | null = null;
+  try {
+    return await Promise.race<T>([
+      promise,
+      new Promise<T>((_resolve, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+};
+
+const buildSummaryCacheKey = (
+  fromMs: number,
+  toMs: number,
+  range: AiPathRuntimeAnalyticsRange | 'custom'
+): string => {
+  if (range === 'custom') {
+    return `custom:${fromMs}:${toMs}`;
+  }
+  const bucket = Math.floor(toMs / SUMMARY_RANGE_BUCKET_MS);
+  return `${range}:${bucket}`;
+};
+
+const pruneSummaryCache = (now: number): void => {
+  summaryCache.forEach((entry, key) => {
+    if (entry.expiresAt <= now) {
+      summaryCache.delete(key);
+    }
+  });
+};
+
+const readCachedSummary = (
+  cacheKey: string,
+  now: number
+): AiPathRuntimeAnalyticsSummary | null => {
+  const cached = summaryCache.get(cacheKey);
+  if (!cached) return null;
+  if (cached.expiresAt <= now) {
+    summaryCache.delete(cacheKey);
+    return null;
+  }
+  return cached.value;
+};
+
+const readStaleSummary = (cacheKey: string): AiPathRuntimeAnalyticsSummary | null => {
+  const cached = summaryCache.get(cacheKey);
+  return cached?.value ?? null;
+};
+
+const setCachedSummary = (
+  cacheKey: string,
+  summary: AiPathRuntimeAnalyticsSummary,
+  now: number
+): void => {
+  summaryCache.set(cacheKey, {
+    value: summary,
+    expiresAt: now + SUMMARY_CACHE_TTL_MS,
+  });
+  pruneSummaryCache(now);
+};
+
+const toPipelineCount = (value: unknown): number => {
+  if (typeof value === 'number' && Number.isFinite(value)) return Math.max(0, value);
+  if (typeof value === 'string') {
+    const parsed = Number.parseInt(value, 10);
+    return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
+  }
+  return 0;
+};
+
+const toPipelineStrings = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item: unknown): item is string => typeof item === 'string');
+};
+
+const parseDurationMember = (member: string): number | null => {
+  const parts = member.split('|');
+  if (parts.length < 2) return null;
+  const value = Number(parts[1]);
+  return Number.isFinite(value) ? Math.max(0, value) : null;
+};
+
 const emptySummary = (from: Date, to: Date, range: AiPathRuntimeAnalyticsRange | 'custom'): AiPathRuntimeAnalyticsSummary => ({
   from: from.toISOString(),
   to: to.toISOString(),
@@ -63,8 +192,10 @@ const emptySummary = (from: Date, to: Date, range: AiPathRuntimeAnalyticsRange |
     completed: 0,
     failed: 0,
     canceled: 0,
+    deadLettered: 0,
     successRate: 0,
     failureRate: 0,
+    deadLetterRate: 0,
     avgDurationMs: null,
     p95DurationMs: null,
   },
@@ -155,7 +286,7 @@ export const recordRuntimeRunStarted = async (input: {
 
 export const recordRuntimeRunFinished = async (input: {
   runId: string;
-  status: 'completed' | 'failed' | 'canceled';
+  status: 'completed' | 'failed' | 'canceled' | 'dead_lettered';
   durationMs?: number | null;
   timestamp?: Date | string | number | null;
 }): Promise<void> => {
@@ -290,106 +421,153 @@ export const getRuntimeAnalyticsSummary = async (input: {
 
   const fromMs = from.getTime();
   const toMs = to.getTime();
-  const [
-    runsTotal,
-    runsQueued,
-    runsStarted,
-    runsCompleted,
-    runsFailed,
-    runsCanceled,
-    nodeStarted,
-    nodeCompleted,
-    nodeFailed,
-    nodeQueued,
-    nodeRunning,
-    nodePolling,
-    nodeCached,
-    nodeWaitingCallback,
-    brainAnalyticsReports,
-    brainLogReports,
-    brainTotalReports,
-    brainWarningReports,
-    brainErrorReports,
-    durationMembers,
-  ] = await Promise.all([
-    redis.zcount(keyRuns('all'), fromMs, toMs),
-    redis.zcount(keyRuns('queued'), fromMs, toMs),
-    redis.zcount(keyRuns('started'), fromMs, toMs),
-    redis.zcount(keyRuns('completed'), fromMs, toMs),
-    redis.zcount(keyRuns('failed'), fromMs, toMs),
-    redis.zcount(keyRuns('canceled'), fromMs, toMs),
-    redis.zcount(keyNodes('started'), fromMs, toMs),
-    redis.zcount(keyNodes('completed'), fromMs, toMs),
-    redis.zcount(keyNodes('failed'), fromMs, toMs),
-    redis.zcount(keyNodes('queued'), fromMs, toMs),
-    redis.zcount(keyNodes('running'), fromMs, toMs),
-    redis.zcount(keyNodes('polling'), fromMs, toMs),
-    redis.zcount(keyNodes('cached'), fromMs, toMs),
-    redis.zcount(keyNodes('waiting_callback'), fromMs, toMs),
-    redis.zcount(keyBrain('analytics'), fromMs, toMs),
-    redis.zcount(keyBrain('logs'), fromMs, toMs),
-    redis.zcount(keyBrain('all'), fromMs, toMs),
-    redis.zcount(keyBrain('warning'), fromMs, toMs),
-    redis.zcount(keyBrain('error'), fromMs, toMs),
-    redis.zrangebyscore(keyDurations(), fromMs, toMs),
-  ]);
+  const cacheKey = buildSummaryCacheKey(fromMs, toMs, range);
+  const now = Date.now();
+  const cached = readCachedSummary(cacheKey, now);
+  if (cached) return cached;
 
-  const durations = durationMembers
-    .map((member: string): number | null => {
-      const parts = member.split('|');
-      if (parts.length < 2) return null;
-      const value = Number(parts[1]);
-      return Number.isFinite(value) ? Math.max(0, value) : null;
-    })
-    .filter((value: number | null): value is number => value !== null)
-    .sort((a: number, b: number) => a - b);
-  const avgDurationMs =
-    durations.length > 0
-      ? Math.round(durations.reduce((sum: number, value: number) => sum + value, 0) / durations.length)
-      : null;
-  const p95DurationMs =
-    durations.length > 0
-      ? durations[Math.min(durations.length - 1, Math.max(0, Math.ceil(durations.length * 0.95) - 1))]!
-      : null;
+  const inFlight = summaryInFlight.get(cacheKey);
+  if (inFlight) return inFlight;
 
-  const terminalRuns = runsCompleted + runsFailed + runsCanceled;
-  const successRate = terminalRuns > 0 ? clampRate((runsCompleted / terminalRuns) * 100) : 0;
-  const failureRate = terminalRuns > 0 ? clampRate(((runsFailed + runsCanceled) / terminalRuns) * 100) : 0;
+  const loadPromise = (async (): Promise<AiPathRuntimeAnalyticsSummary> => {
+    try {
+      const pipeline = redis.pipeline();
+      pipeline.zcount(keyRuns('all'), fromMs, toMs);
+      pipeline.zcount(keyRuns('queued'), fromMs, toMs);
+      pipeline.zcount(keyRuns('started'), fromMs, toMs);
+      pipeline.zcount(keyRuns('completed'), fromMs, toMs);
+      pipeline.zcount(keyRuns('failed'), fromMs, toMs);
+      pipeline.zcount(keyRuns('canceled'), fromMs, toMs);
+      pipeline.zcount(keyRuns('dead_lettered'), fromMs, toMs);
+      pipeline.zcount(keyNodes('started'), fromMs, toMs);
+      pipeline.zcount(keyNodes('completed'), fromMs, toMs);
+      pipeline.zcount(keyNodes('failed'), fromMs, toMs);
+      pipeline.zcount(keyNodes('queued'), fromMs, toMs);
+      pipeline.zcount(keyNodes('running'), fromMs, toMs);
+      pipeline.zcount(keyNodes('polling'), fromMs, toMs);
+      pipeline.zcount(keyNodes('cached'), fromMs, toMs);
+      pipeline.zcount(keyNodes('waiting_callback'), fromMs, toMs);
+      pipeline.zcount(keyBrain('analytics'), fromMs, toMs);
+      pipeline.zcount(keyBrain('logs'), fromMs, toMs);
+      pipeline.zcount(keyBrain('all'), fromMs, toMs);
+      pipeline.zcount(keyBrain('warning'), fromMs, toMs);
+      pipeline.zcount(keyBrain('error'), fromMs, toMs);
+      pipeline.zrangebyscore(
+        keyDurations(),
+        fromMs,
+        toMs,
+        'LIMIT',
+        0,
+        DURATION_SAMPLE_LIMIT
+      );
 
-  return {
-    from: from.toISOString(),
-    to: to.toISOString(),
-    range,
-    storage: 'redis',
-    runs: {
-      total: runsTotal,
-      queued: runsQueued,
-      started: runsStarted,
-      completed: runsCompleted,
-      failed: runsFailed,
-      canceled: runsCanceled,
-      successRate,
-      failureRate,
-      avgDurationMs,
-      p95DurationMs,
-    },
-    nodes: {
-      started: nodeStarted,
-      completed: nodeCompleted,
-      failed: nodeFailed,
-      queued: nodeQueued,
-      running: nodeRunning,
-      polling: nodePolling,
-      cached: nodeCached,
-      waitingCallback: nodeWaitingCallback,
-    },
-    brain: {
-      analyticsReports: brainAnalyticsReports,
-      logReports: brainLogReports,
-      totalReports: brainTotalReports,
-      warningReports: brainWarningReports,
-      errorReports: brainErrorReports,
-    },
-    generatedAt: new Date().toISOString(),
-  };
+      const results =
+        (await withTimeout(
+          pipeline.exec(),
+          SUMMARY_QUERY_TIMEOUT_MS,
+          'ai-paths runtime analytics summary'
+        )) ?? [];
+      for (const result of results) {
+        if (Array.isArray(result) && result[0]) {
+          throw result[0];
+        }
+      }
+
+      const readCountAt = (index: number): number =>
+        toPipelineCount(Array.isArray(results[index]) ? results[index]?.[1] : 0);
+      const durationMembers = toPipelineStrings(
+        Array.isArray(results[20]) ? results[20]?.[1] : []
+      );
+      const durations = durationMembers
+        .map(parseDurationMember)
+        .filter((value: number | null): value is number => value !== null)
+        .sort((a: number, b: number) => a - b);
+      const avgDurationMs =
+        durations.length > 0
+          ? Math.round(
+              durations.reduce((sum: number, value: number) => sum + value, 0) /
+                durations.length
+            )
+          : null;
+      const p95DurationMs =
+        durations.length > 0
+          ? durations[
+              Math.min(
+                durations.length - 1,
+                Math.max(0, Math.ceil(durations.length * 0.95) - 1)
+              )
+            ]!
+          : null;
+
+      const runsCompleted = readCountAt(3);
+      const runsFailed = readCountAt(4);
+      const runsCanceled = readCountAt(5);
+      const runsDeadLettered = readCountAt(6);
+      const terminalRuns = runsCompleted + runsFailed + runsCanceled + runsDeadLettered;
+      const successRate = terminalRuns > 0 ? clampRate((runsCompleted / terminalRuns) * 100) : 0;
+      const failureRate =
+        terminalRuns > 0
+          ? clampRate(((runsFailed + runsCanceled + runsDeadLettered) / terminalRuns) * 100)
+          : 0;
+      const deadLetterRate =
+        terminalRuns > 0 ? clampRate((runsDeadLettered / terminalRuns) * 100) : 0;
+
+      const summary: AiPathRuntimeAnalyticsSummary = {
+        from: from.toISOString(),
+        to: to.toISOString(),
+        range,
+        storage: 'redis',
+        runs: {
+          total: readCountAt(0),
+          queued: readCountAt(1),
+          started: readCountAt(2),
+          completed: runsCompleted,
+          failed: runsFailed,
+          canceled: runsCanceled,
+          deadLettered: runsDeadLettered,
+          successRate,
+          failureRate,
+          deadLetterRate,
+          avgDurationMs,
+          p95DurationMs,
+        },
+        nodes: {
+          started: readCountAt(7),
+          completed: readCountAt(8),
+          failed: readCountAt(9),
+          queued: readCountAt(10),
+          running: readCountAt(11),
+          polling: readCountAt(12),
+          cached: readCountAt(13),
+          waitingCallback: readCountAt(14),
+        },
+        brain: {
+          analyticsReports: readCountAt(15),
+          logReports: readCountAt(16),
+          totalReports: readCountAt(17),
+          warningReports: readCountAt(18),
+          errorReports: readCountAt(19),
+        },
+        generatedAt: new Date().toISOString(),
+      };
+      setCachedSummary(cacheKey, summary, Date.now());
+      return summary;
+    } catch (error) {
+      void ErrorSystem.logWarning('Failed to load runtime analytics summary', {
+        service: 'ai-paths-analytics',
+        error,
+        range,
+      });
+      const stale = readStaleSummary(cacheKey);
+      if (stale) return stale;
+      return emptySummary(from, to, range);
+    }
+  })();
+
+  summaryInFlight.set(cacheKey, loadPromise);
+  try {
+    return await loadPromise;
+  } finally {
+    summaryInFlight.delete(cacheKey);
+  }
 };

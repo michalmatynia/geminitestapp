@@ -11,17 +11,23 @@ export const draftKeys = QUERY_KEYS.drafts;
 export function useDrafts(): UseQueryResult<ProductDraft[]> {
   return useQuery({
     queryKey: draftKeys.all,
-    queryFn: () => api.get<ProductDraft[]>('/api/drafts'),
+    queryFn: () => api.get<ProductDraft[]>('/api/drafts', { cache: 'no-store' }),
     staleTime: 0,
-    refetchOnMount: true,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: 'always',
+    refetchOnReconnect: 'always',
   });
 }
 
 export function useDraft(id: string | null): UseQueryResult<ProductDraft> {
   return useQuery({
     queryKey: draftKeys.detail(id || ''),
-    queryFn: () => api.get<ProductDraft>(`/api/drafts/${id}`),
+    queryFn: () => api.get<ProductDraft>(`/api/drafts/${id}`, { cache: 'no-store' }),
     enabled: !!id,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: 'always',
+    refetchOnReconnect: 'always',
   });
 }
 
@@ -35,7 +41,7 @@ export function useCreateDraft(): UseMutationResult<ProductDraft, Error, CreateP
         return [created, ...current];
       });
       queryClient.setQueryData<ProductDraft>(draftKeys.detail(created.id), created);
-      void queryClient.invalidateQueries({ queryKey: draftKeys.all });
+      void queryClient.invalidateQueries({ queryKey: draftKeys.all, refetchType: 'all' });
     },
   });
 }
@@ -57,8 +63,8 @@ export function useUpdateDraft(): UseMutationResult<ProductDraft, Error, { id: s
         return [data, ...next];
       });
       queryClient.setQueryData<ProductDraft>(draftKeys.detail(data.id), data);
-      void queryClient.invalidateQueries({ queryKey: draftKeys.all });
-      void queryClient.invalidateQueries({ queryKey: draftKeys.detail(data.id) });
+      void queryClient.invalidateQueries({ queryKey: draftKeys.all, refetchType: 'all' });
+      void queryClient.invalidateQueries({ queryKey: draftKeys.detail(data.id), refetchType: 'all' });
     },
   });
 }
@@ -75,7 +81,7 @@ export function useDeleteDraft(): UseMutationResult<string, Error, string> {
         if (!current) return current;
         return current.filter((draft: ProductDraft) => draft.id !== deletedId);
       });
-      void queryClient.invalidateQueries({ queryKey: draftKeys.all });
+      void queryClient.invalidateQueries({ queryKey: draftKeys.all, refetchType: 'all' });
       queryClient.removeQueries({ queryKey: draftKeys.detail(deletedId) });
     },
   });

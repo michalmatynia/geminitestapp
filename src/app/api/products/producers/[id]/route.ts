@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { getProducerRepository } from '@/features/products/server';
 import { conflictError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const producerUpdateSchema = z.object({
   name: z.string().min(1).optional(),

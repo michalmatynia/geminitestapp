@@ -8,7 +8,7 @@ import {
 
 import { createProduct, updateProduct, deleteProduct } from '@/features/products/api/products';
 import type { ProductWithImages } from '@/features/products/types';
-import type { DeleteResponse } from '@/shared/types/api';
+import type { DeleteResponse } from '@/shared/types/api/api';
 import { delay } from '@/shared/utils';
 
 interface UpdateProductPayload {

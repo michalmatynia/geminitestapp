@@ -16,8 +16,8 @@ import {
 import type { AiPathRunRepository } from '@/features/ai/ai-paths/types/path-run-repository';
 import { removePathRunQueueEntries } from '@/features/jobs/workers/aiPathRunQueue';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type { AiPathRunRecord } from '@/shared/types/ai-paths';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { AiPathRunRecord } from '@/shared/types/domain/ai-paths';
 
 const TERMINAL_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
 

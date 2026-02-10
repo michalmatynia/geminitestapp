@@ -12,7 +12,7 @@ import {
 import { useNotebooks } from '@/features/notesapp/api/useNoteQueries';
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/features/observability';
-import type { NotebookRecord } from '@/shared/types/notes';
+import type { NotebookRecord } from '@/shared/types/domain/notes';
 import { Button, useToast, Input, Label, SectionPanel, SectionHeader, AdminPageLayout } from '@/shared/ui';
 
 export function AdminNotesNotebooksPage(): React.JSX.Element {

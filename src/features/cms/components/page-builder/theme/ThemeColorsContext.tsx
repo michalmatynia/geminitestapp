@@ -7,8 +7,8 @@ import { AI_BRAIN_SETTINGS_KEY, parseBrainSettings, resolveBrainAssignment } fro
 import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
 import type { ColorSchemeColors, ColorScheme, ThemeSettings } from '@/features/cms/types/theme-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import type { AgentTeachingAgentRecord } from '@/shared/types/agent-teaching';
-import type { ChatMessage } from '@/shared/types/chatbot';
+import type { AgentTeachingAgentRecord } from '@/shared/types/domain/agent-teaching';
+import type { ChatMessage } from '@/shared/types/domain/chatbot';
 import { useToast } from '@/shared/ui';
 
 import { DEFAULT_SCHEME_COLORS } from './theme-constants';

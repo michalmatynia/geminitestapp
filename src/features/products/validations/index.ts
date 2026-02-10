@@ -49,7 +49,3 @@ export {
   ValidationProvider,
   useValidationContext,
 } from './context';
-
-// Legacy type aliases for backward compatibility
-export type ProductCreateData = ProductCreateInput;
-export type ProductUpdateData = ProductUpdateInput;

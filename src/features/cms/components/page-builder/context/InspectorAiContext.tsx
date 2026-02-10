@@ -5,8 +5,8 @@ import React, { createContext, useContext, useState, useRef, useCallback, useEff
 import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeaching';
 import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
 import { logClientError } from '@/features/observability';
-import type { AgentTeachingAgentRecord } from '@/shared/types/agent-teaching';
-import type { ChatMessage } from '@/shared/types/chatbot';
+import type { AgentTeachingAgentRecord } from '@/shared/types/domain/agent-teaching';
+import type { ChatMessage } from '@/shared/types/domain/chatbot';
 import { useToast } from '@/shared/ui';
 
 import { usePageBuilder } from '../../hooks/usePageBuilderContext';

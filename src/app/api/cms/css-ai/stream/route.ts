@@ -5,7 +5,7 @@ import type { ChatMessageDto as ChatMessage } from '@/shared/dtos/chatbot';
 import type { CmsCssAiRequestDto as CssAiRequest } from '@/shared/dtos/cms';
 import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 export const runtime = 'nodejs';
 

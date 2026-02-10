@@ -4,9 +4,9 @@ import { useQuery, useQueryClient, useMutation, type UseQueryResult, type UseMut
 import { useRef, useEffect, useMemo, useCallback } from 'react';
 
 import type { UseNoteDataProps } from '@/features/notesapp/types/notes-hooks';
-import { useDebounce } from '@/shared/hooks/use-debounce';
+import { useDebounce } from '@/shared/hooks/ui/use-debounce';
 import { api } from '@/shared/lib/api-client';
-import type { DeleteResponse } from '@/shared/types/api';
+import type { DeleteResponse } from '@/shared/types/api/api';
 import type {
   NoteRecord,
   NoteWithRelations,
@@ -27,7 +27,7 @@ import type {
   ThemeUpdateInput,
   NoteFileRecord,
   CategoryWithChildren,
-} from '@/shared/types/notes';
+} from '@/shared/types/domain/notes';
 
 // --- Queries ---
 

@@ -1,17 +1,16 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import { useAiPathRuntimeAnalytics } from '@/features/ai/ai-paths/hooks/useAiPathQueries';
 import { triggers } from '@/features/ai/ai-paths/lib';
 import type {
   AiNode,
-  AiPathRuntimeAnalyticsSummary,
   ClusterPreset,
   NodeDefinition,
 } from '@/features/ai/ai-paths/lib';
-import type { PathConfig, PathMeta } from '@/shared/types/ai-paths';
+import type { PathConfig, PathMeta } from '@/shared/types/domain/ai-paths';
 import { Button, Input, Label, SharedModal, UnifiedSelect, useToast } from '@/shared/ui';
 
 import { useGraphState, usePersistenceActions, usePersistenceState, useRuntimeActions, useRuntimeState, useSelectionState } from '../../context';
@@ -136,7 +135,6 @@ export function AiPathsSettingsView({
     handleResumeRun,
     handleCancelRun,
     handleRequeueDeadLetter,
-    modelOptions,
     handleRunSimulation,
     handleImportPresets,
     simulationOpenNodeId,
@@ -226,21 +224,7 @@ export function AiPathsSettingsView({
     []
   );
 
-  const runtimeAnalyticsQuery = useQuery({
-    queryKey: ['ai-paths', 'runtime-analytics', '24h'],
-    queryFn: async (): Promise<AiPathRuntimeAnalyticsSummary> => {
-      const res = await fetch('/api/ai-paths/runtime-analytics/summary?range=24h');
-      if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(body?.error ?? 'Failed to fetch runtime analytics.');
-      }
-      const data = (await res.json()) as { summary?: AiPathRuntimeAnalyticsSummary };
-      if (!data.summary) throw new Error('Missing runtime analytics payload.');
-      return data.summary;
-    },
-    refetchInterval: 30_000,
-    enabled: activeTab === 'canvas',
-  });
+  const runtimeAnalyticsQuery = useAiPathRuntimeAnalytics('24h', activeTab === 'canvas');
 
   const nodeTitleById = useMemo((): Map<string, string> => {
     const map = new Map<string, string>();
@@ -836,9 +820,7 @@ export function AiPathsSettingsView({
         />
       )}
 
-      <NodeConfigDialogMigrated
-        modelOptions={modelOptions}
-      />
+      <NodeConfigDialogMigrated />
       <RunDetailDialogWithContext />
       <PresetsDialogWithContext
         onImportPresets={() => { void handleImportPresets('merge').catch(() => {}); }}

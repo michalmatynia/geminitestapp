@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AI_PATHS_MONGO_INDEXES } from '@/features/ai/ai-paths/services/path-run-repository/mongo-path-run-repository';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 import type { IndexSpecification } from 'mongodb';
 

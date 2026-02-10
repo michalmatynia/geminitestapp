@@ -6,8 +6,8 @@ import { deleteCmsDomain, setCmsDomainAlias } from '@/features/cms/services/cms-
 import { cmsDomainUpdateSchema } from '@/features/cms/validations/api';
 import { parseJsonBody } from '@/features/products/server';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
-import { ApiParams } from '@/shared/types/base-types';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
+import { ApiParams } from '@/shared/types/core/base-types';
 
 async function PUT_handler(
   req: NextRequest,

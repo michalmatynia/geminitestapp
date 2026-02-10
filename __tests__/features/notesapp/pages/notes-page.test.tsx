@@ -13,7 +13,7 @@ import { NoteSettingsProvider } from '@/features/notesapp/hooks/NoteSettingsCont
 import { AdminNotesPage } from '@/features/notesapp/pages/AdminNotesPage';
 import { NoteCreateData } from '@/features/notesapp/validations/notes';
 import { server } from '@/mocks/server';
-import type { NoteWithRelations, TagRecord, CategoryRecord } from '@/shared/types/notes';
+import type { NoteWithRelations, TagRecord, CategoryRecord } from '@/shared/types/domain/notes';
 import { ToastProvider } from '@/shared/ui/toast';
 
 

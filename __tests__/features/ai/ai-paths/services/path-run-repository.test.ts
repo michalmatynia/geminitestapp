@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import prisma from '@/shared/lib/db/prisma';
-import type { AiNode } from '@/shared/types/ai-paths';
+import type { AiNode } from '@/shared/types/domain/ai-paths';
 
 describe('AiPathRunRepository', () => {
   const repo = getPathRunRepository();

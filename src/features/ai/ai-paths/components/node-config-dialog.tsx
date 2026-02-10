@@ -28,10 +28,10 @@ import {
   TabsTrigger,
 } from '@/shared/ui';
 
+import { useAiPathConfig } from './AiPathConfigContext';
 import { NodeHistoryTab } from './node-config/dialog/NodeHistoryTab'; // Keep NodeHistoryTab import
 import { NodeNotesTab } from './node-config/dialog/NodeNotesTab';
 import { NodeConfigurationSections } from './NodeConfigurationSections'; // Import the new component
-import { useAiPathConfig } from './AiPathConfigContext';
 import { useSelectionActions } from '../context';
 
 export function NodeConfigDialog(): React.JSX.Element | null {
@@ -56,6 +56,7 @@ export function NodeConfigDialog(): React.JSX.Element | null {
     handleFetchUpdaterSample,
     handleRunSimulation,
     clearRuntimeForNode,
+    clearNodeCache,
     clearNodeHistory,
     onSendToAi,
     sendingToAi,
@@ -306,6 +307,7 @@ export function NodeConfigDialog(): React.JSX.Element | null {
                 handleFetchUpdaterSample={handleFetchUpdaterSample}
                 handleRunSimulation={handleRunSimulation}
                 clearRuntimeForNode={clearRuntimeForNode}
+                clearNodeCache={clearNodeCache}
                 clearNodeHistory={clearNodeHistory}
                 onSendToAi={onSendToAi}
                 sendingToAi={sendingToAi}

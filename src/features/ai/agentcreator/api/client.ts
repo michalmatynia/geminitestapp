@@ -1,5 +1,5 @@
-import { AiPathRunRecord } from '@/shared/types/ai-paths';
-import { AgentSnapshot, AgentBrowserLog, AgentAuditLog } from '@/shared/types/chatbot';
+import { AiPathRunRecord } from '@/shared/types/domain/ai-paths';
+import { AgentSnapshot, AgentBrowserLog, AgentAuditLog } from '@/shared/types/domain/chatbot';
 
 export async function getAgentRuns(): Promise<AiPathRunRecord[]> {
   const res = await fetch('/api/agentcreator/agent');

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import React from 'react';
 
 import { buildModelProfile } from '@/features/ai/chatbot/utils';
-import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/agent-teaching';
+import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/domain/agent-teaching';
 import { Button, ConfirmDialog, Input, Label, SectionHeader, SectionPanel, SharedModal, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast, UnifiedSelect } from '@/shared/ui';
 
 import { useAgentTeachingContext } from '../context/AgentTeachingContext';

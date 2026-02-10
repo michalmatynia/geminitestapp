@@ -16,7 +16,7 @@ import {
   type SettingsScope,
 } from '@/shared/api/settings-client';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
-import type { SystemSetting } from '@/shared/types/settings';
+import type { SystemSetting } from '@/shared/types/domain/settings';
 
 export type { SystemSetting };
 

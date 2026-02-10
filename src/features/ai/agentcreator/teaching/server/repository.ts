@@ -6,7 +6,7 @@ import type {
   AgentTeachingEmbeddingCollectionRecord,
   AgentTeachingEmbeddingDocumentListItem,
   AgentTeachingEmbeddingDocumentMetadata,
-} from '@/shared/types/agent-teaching';
+} from '@/shared/types/domain/agent-teaching';
 
 const AGENTS_COLLECTION = 'agent_teaching_agents';
 const COLLECTIONS_COLLECTION = 'agent_teaching_collections';

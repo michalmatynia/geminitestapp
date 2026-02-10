@@ -12,7 +12,7 @@ import type {
 } from '@/features/products/types/services/product-repository';
 import { conflictError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
-import type { ImageFileRecord } from '@/shared/types/files';
+import type { ImageFileRecord } from '@/shared/types/domain/files';
 
 // Helper to remove undefined keys for exactOptionalPropertyTypes compliance
 function removeUndefined<T extends object>(obj: T): T {

@@ -1,16 +1,16 @@
 import type { ProductWithImages, ProductRecord } from '@/features/products/types';
 import type {
-  ProductCreateData,
-  ProductUpdateData,
+  ProductCreateInput,
   ProductFiltersParsed,
+  ProductUpdateInput,
 } from '@/features/products/validations';
 
 import type { Prisma } from '@prisma/client';
 
 export type ProductFilters = Partial<ProductFiltersParsed>;
 
-export type CreateProductInput = ProductCreateData;
-export type UpdateProductInput = ProductUpdateData;
+export type CreateProductInput = ProductCreateInput;
+export type UpdateProductInput = ProductUpdateInput;
 
 // Define a type for the transactional client, which will have the same methods as ProductRepository
 // but operate within a transaction.

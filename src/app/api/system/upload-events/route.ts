@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { listFileUploadEvents } from '@/features/files/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const parseDateParam = (value: string | null, endOfDay: boolean = false): Date | null => {
   if (!value) return null;

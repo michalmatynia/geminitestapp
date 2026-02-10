@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
 import { findFolderById, findFolderParentId } from '@/features/foldertree/utils/tree';
-import type { CategoryWithChildren } from '@/shared/types/notes';
+import type { CategoryWithChildren } from '@/shared/types/domain/notes';
 
 const mockFolders: CategoryWithChildren[] = [
   {

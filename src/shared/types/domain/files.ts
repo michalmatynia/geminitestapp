@@ -1,4 +1,4 @@
-import { Entity } from '../base-types';
+import { Entity } from '../core/base-types';
 
 import type { 
   FileDto, 

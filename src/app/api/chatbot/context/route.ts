@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { badRequestError, configurationError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const chunkText = (text: string, maxChars: number): string[] => {
   const chunks: string[] = [];

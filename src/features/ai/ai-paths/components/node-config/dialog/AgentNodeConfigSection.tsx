@@ -14,6 +14,7 @@ import {
   SelectValue,
   Textarea,
 } from '@/shared/ui';
+
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
 const DEFAULT_AGENT_CONFIG: AgentConfig = {

@@ -5,6 +5,7 @@
 
 import { parsePathList } from '@/features/ai/ai-paths/lib';
 import { Button, Label, Textarea } from '@/shared/ui';
+
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
 export function BundleNodeConfigSection(): React.JSX.Element | null {

@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 
-import type { AiNode } from '@/shared/types/ai-paths';
-import type { NodeHandlerContext } from '@/shared/types/ai-paths-runtime';
+import type { AiNode } from '@/shared/types/domain/ai-paths';
+import type { NodeHandlerContext } from '@/shared/types/domain/ai-paths-runtime';
 
 export const createMockContext = (overrides: Partial<NodeHandlerContext> = {}): NodeHandlerContext => {
   return {

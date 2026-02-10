@@ -8,8 +8,8 @@ import { createEmbeddingDocument, getEmbeddingCollectionById, listEmbeddingDocum
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { AgentTeachingEmbeddingDocumentListItem } from '@/shared/types/agent-teaching';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { AgentTeachingEmbeddingDocumentListItem } from '@/shared/types/domain/agent-teaching';
 
 const createDocumentSchema = z.object({
   text: z.string().trim().min(1),

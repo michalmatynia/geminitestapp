@@ -6,7 +6,7 @@ import { generateProductDescription } from '@/features/products/services/aiDescr
 import { productCreateSchema } from '@/features/products/validations/schemas'; // Import schema
 import { validationError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 interface GenerateDescriptionBody {
   productData?: {

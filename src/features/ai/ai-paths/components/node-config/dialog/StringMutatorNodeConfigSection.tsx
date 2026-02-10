@@ -14,6 +14,7 @@ import {
   SelectValue,
   Switch,
 } from '@/shared/ui';
+
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
 const OPERATION_LABELS: Record<StringMutatorOperation['type'], string> = {

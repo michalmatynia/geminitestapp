@@ -1,6 +1,9 @@
 import { logClientError } from '@/features/observability';
-
-import type { CurrencyOption, CountryOption, Language } from '../../../shared/types/internationalization';
+import type {
+  CountryOption,
+  CurrencyOption,
+  Language,
+} from '@/shared/types/domain/internationalization';
 
 export async function getCurrencies(): Promise<CurrencyOption[]> {
   try {

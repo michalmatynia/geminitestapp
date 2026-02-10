@@ -3,7 +3,7 @@ import 'server-only';
 import { getImageFileRepository } from '@/features/files/server';
 import type { Asset3DRecord } from '@/features/viewer3d/types';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import type { ImageFileRecord } from '@/shared/types/files';
+import type { ImageFileRecord } from '@/shared/types/domain/files';
 
 type ImageStudioSlotDocument = {
   _id: string;

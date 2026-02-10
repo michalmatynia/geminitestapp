@@ -4,7 +4,7 @@ import { X, ArrowUp, ArrowDown, Eye, EyeOff } from 'lucide-react';
 import React from 'react';
 
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
-import type { TagRecord } from '@/shared/types/notes';
+import type { TagRecord } from '@/shared/types/domain/notes';
 import { Button, SearchInput, UnifiedSelect, MultiSelect } from '@/shared/ui';
 
 import { buildBreadcrumbPath } from '../utils';

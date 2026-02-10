@@ -1,4 +1,4 @@
-import type { AiNode, NodeConfig, NodeType, DatabaseConfig } from '@/shared/types/ai-paths';
+import type { AiNode, NodeConfig, NodeType, DatabaseConfig } from '@/shared/types/domain/ai-paths';
 
 import {
   AGENT_INPUT_PORTS,
@@ -34,33 +34,11 @@ import {
   TRIGGER_OUTPUT_PORTS,
   VIEWER_INPUT_PORTS,
 } from '../constants';
-import {
-  createParserMappings,
-  createViewerOutputs,
-  ensureUniquePorts,
-  normalizePortName,
-} from '../utils';
-
-type LegacyUpdaterConfig = {
-  targetField?: string;
-  mappings?: Array<{ 
-    targetPath: string;
-    sourcePort: string;
-    sourcePath?: string;
-  }>;
-  entityType?: string;
-  idField?: string;
-  mode?: 'replace' | 'append';
-};
+import { createParserMappings, createViewerOutputs, ensureUniquePorts, normalizePortName } from '../utils';
 
 export const normalizeNodes = (items: AiNode[]): AiNode[] =>
   items
     .map((node: AiNode): AiNode | null => {
-      const nodeType: string = node.type as string;
-      // Remove legacy node that is no longer supported/exposed.
-      if (node.type === 'trigger' && node.title === 'Trigger: Path Generate Description') {
-        return null;
-      }
       if (node.type === 'context') {
         const contextConfig = node.config?.context;
         const cleanedOutputs = (node.outputs ?? []).filter(
@@ -68,7 +46,6 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
         );
         return {
           ...node,
-          title: node.title === 'Context Grabber' ? 'Context Filter' : node.title,
           inputs: ensureUniquePorts(node.inputs ?? [], CONTEXT_INPUT_PORTS),
           outputs: ensureUniquePorts(cleanedOutputs, CONTEXT_OUTPUT_PORTS),
           config: {
@@ -102,8 +79,6 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
       if (node.type === 'simulation') {
         const simulationConfig = node.config?.simulation;
         const rawEntityId = simulationConfig?.entityId ?? '';
-        const rawProductId = simulationConfig?.productId ?? '';
-        const resolvedId = rawEntityId.trim() || rawProductId.trim() || '';
         return {
           ...node,
           inputs: SIMULATION_INPUT_PORTS,
@@ -111,9 +86,9 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
           config: {
             ...node.config,
             simulation: {
-              productId: rawProductId || resolvedId,
+              productId: rawEntityId,
               entityType: simulationConfig?.entityType ?? 'product',
-              entityId: rawEntityId || resolvedId,
+              entityId: rawEntityId,
             },
           },
         };
@@ -485,63 +460,6 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
           },
         };
       }
-      if (nodeType === 'db_query') {
-        const dbQuery = {
-          provider: node.config?.dbQuery?.provider ?? 'auto',
-          collection: node.config?.dbQuery?.collection ?? 'products',
-          mode: node.config?.dbQuery?.mode ?? 'preset',
-          preset: node.config?.dbQuery?.preset ?? 'by_id',
-          field: node.config?.dbQuery?.field ?? '_id',
-          idType: node.config?.dbQuery?.idType ?? 'string',
-          queryTemplate:
-          node.config?.dbQuery?.queryTemplate ?? '{\n  "_id": "{{value}}"\n}',
-          limit: node.config?.dbQuery?.limit ?? 20,
-          sort: node.config?.dbQuery?.sort ?? '',
-          projection: node.config?.dbQuery?.projection ?? '',
-          single: node.config?.dbQuery?.single ?? false,
-        };
-        const legacyDbConfig: DatabaseConfig = node.config?.database ?? { operation: 'query' };
-        const inferredUseMongoActions =
-        legacyDbConfig.useMongoActions ?? Boolean(legacyDbConfig.actionCategory || legacyDbConfig.action);
-        const runtimeConfig = node.config?.runtime
-          ? {
-            ...node.config.runtime,
-            ...(node.config.runtime.waitForInputs === undefined ? { waitForInputs: true } : {}),
-          }
-          : { waitForInputs: true };
-        return {
-          ...node,
-          type: 'database',
-          inputs: ensureUniquePorts(node.inputs, DATABASE_INPUT_PORTS),
-          outputs: ensureUniquePorts(node.outputs, ['result', 'bundle', 'content_en', 'aiPrompt']),
-          config: {
-            ...node.config,
-            ...(runtimeConfig ? { runtime: runtimeConfig } : {}),
-            database: {
-              operation: 'query',
-              entityType: legacyDbConfig.entityType ?? 'product',
-              idField: legacyDbConfig.idField ?? 'entityId',
-              mode: legacyDbConfig.mode ?? 'replace',
-              updateStrategy: legacyDbConfig.updateStrategy ?? 'one',
-              useMongoActions: inferredUseMongoActions,
-              ...(legacyDbConfig.actionCategory ? { actionCategory: legacyDbConfig.actionCategory } : {}),
-              ...(legacyDbConfig.action ? { action: legacyDbConfig.action } : {}),
-              distinctField: legacyDbConfig.distinctField ?? '',
-              updateTemplate: legacyDbConfig.updateTemplate ?? '',
-              mappings: legacyDbConfig.mappings ?? [],
-              query: dbQuery,
-              writeSource: legacyDbConfig.writeSource ?? 'bundle',
-              writeSourcePath: legacyDbConfig.writeSourcePath ?? '',
-              dryRun: legacyDbConfig.dryRun ?? false,
-              ...(legacyDbConfig.presetId ? { presetId: legacyDbConfig.presetId } : {}),
-              skipEmpty: legacyDbConfig.skipEmpty ?? false,
-              trimStrings: legacyDbConfig.trimStrings ?? false,
-              aiPrompt: legacyDbConfig.aiPrompt ?? '',
-              validationRuleIds: legacyDbConfig.validationRuleIds ?? [],
-            },
-          },
-        };
-      }
       if (node.type === 'ai_description') {
         return {
           ...node,
@@ -606,70 +524,11 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
           },
         };
       }
-      if (nodeType === 'updater') {
-        const updaterConfig: LegacyUpdaterConfig =
-        (node.config as { updater?: LegacyUpdaterConfig } | undefined)?.updater ?? {};
-        const legacyTarget = updaterConfig.targetField ?? node.outputs[0] ?? 'content_en';
-        const legacyMappings =
-        updaterConfig.mappings && updaterConfig.mappings.length > 0
-          ? updaterConfig.mappings
-          : [
-            {
-              targetPath: legacyTarget,
-              sourcePort: node.inputs.includes('result') ? 'result' : legacyTarget,
-            },
-          ];
-        const defaultQuery = {
-          provider: 'mongodb' as const,
-          collection: 'products',
-          mode: 'preset' as const,
-          preset: 'by_id' as const,
-          field: '_id',
-          idType: 'string' as const,
-          queryTemplate: '{\n  "_id": "{{value}}"\n}',
-          limit: 20,
-          sort: '',
-          projection: '',
-          single: false,
-        };
-        return {
-          ...node,
-          type: 'database',
-          inputs: ensureUniquePorts(node.inputs, DATABASE_INPUT_PORTS),
-          outputs: ensureUniquePorts(node.outputs, ['result', 'bundle', 'content_en', 'aiPrompt']),
-          config: {
-            ...node.config,
-            database: {
-              operation: 'update',
-              entityType: updaterConfig.entityType ?? 'product',
-              idField: updaterConfig.idField ?? 'productId',
-              mode: updaterConfig.mode ?? 'replace',
-              updateStrategy: 'one',
-              mappings: legacyMappings,
-              query: {
-                ...defaultQuery,
-                ...(node.config?.database?.query ?? {}),
-              },
-              writeSource: node.config?.database?.writeSource ?? 'bundle',
-              writeSourcePath: node.config?.database?.writeSourcePath ?? '',
-              dryRun: node.config?.database?.dryRun ?? false,
-              skipEmpty: node.config?.database?.skipEmpty ?? false,
-              trimStrings: node.config?.database?.trimStrings ?? false,
-              aiPrompt: node.config?.database?.aiPrompt ?? '',
-              validationRuleIds: node.config?.database?.validationRuleIds ?? [],
-            },
-          },
-        };
-      }
       if (node.type === 'viewer') {
         const normalizedInputs = ensureUniquePorts(node.inputs, VIEWER_INPUT_PORTS);
         const existingOutputs = node.config?.viewer?.outputs;
-        const legacyOutput = 
-        (node.config as { viewer?: { sampleOutput?: string } } | undefined)?.viewer
-          ?.sampleOutput ?? '';
         const outputs = existingOutputs ?? {
           ...createViewerOutputs(normalizedInputs),
-          ...(legacyOutput ? { result: legacyOutput } : {}),
         };
         return {
           ...node,
@@ -700,6 +559,26 @@ export const getDefaultConfigForType = (
   }
   if (type === 'simulation') {
     return { simulation: { productId: '', entityType: 'product', entityId: '' } };
+  }
+  if (type === 'audio_oscillator') {
+    return {
+      audioOscillator: {
+        waveform: 'sine',
+        frequencyHz: 440,
+        gain: 0.25,
+        durationMs: 400,
+      },
+    };
+  }
+  if (type === 'audio_speaker') {
+    return {
+      audioSpeaker: {
+        enabled: true,
+        autoPlay: true,
+        gain: 1,
+        stopPrevious: true,
+      },
+    };
   }
   if (type === 'viewer') {
     return { viewer: { outputs: createViewerOutputs(inputs), showImagesAsJson: false } };

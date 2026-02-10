@@ -7,7 +7,7 @@ import { useImportFolderMutation } from '@/features/foldertree/hooks/useFolderMu
 import type { FolderTreeProps } from '@/features/foldertree/types/folder-tree-ui';
 import { parseMultipleFolders, countMultipleFolders } from '@/features/foldertree/utils/folderImporter';
 import { logClientError } from '@/features/observability';
-import type { CategoryWithChildren } from '@/shared/types/notes';
+import type { CategoryWithChildren } from '@/shared/types/domain/notes';
 import { Button, TreeHeader, useToast } from '@/shared/ui';
 import { FolderTreePanel } from '@/shared/ui';
 import { getFolderDragId, getNoteDragId } from '@/shared/utils/drag-drop';

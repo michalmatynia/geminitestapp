@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { getCurrencyRepository } from '@/features/internationalization/server';
 import { conflictError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 export const runtime = 'nodejs';
 

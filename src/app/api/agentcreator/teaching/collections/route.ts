@@ -6,8 +6,8 @@ import { z } from 'zod';
 import { listEmbeddingCollections, upsertEmbeddingCollection } from '@/features/ai/agentcreator/teaching/server/repository';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/agent-teaching';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/domain/agent-teaching';
 
 const createCollectionSchema = z.object({
   name: z.string().trim().min(1),

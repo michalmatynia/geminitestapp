@@ -9,7 +9,7 @@ import { getImageFileRepository } from '@/features/files/services/image-file-rep
 import type { ImageFileRecord } from '@/features/files/types/services/image-file-repository';
 import { noteService } from '@/features/notesapp/server';
 import { ErrorSystem } from '@/features/observability/server';
-import type { NoteFileRecord } from '@/shared/types/notes';
+import type { NoteFileRecord } from '@/shared/types/domain/notes';
 
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');

@@ -7,7 +7,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { FolderTree } from '@/features/foldertree/components/FolderTree';
-import type { CategoryWithChildren } from '@/shared/types/notes';
+import type { CategoryWithChildren } from '@/shared/types/domain/notes';
 
 
 // Mocking useToast

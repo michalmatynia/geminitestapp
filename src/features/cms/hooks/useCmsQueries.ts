@@ -34,7 +34,7 @@ import {
 } from '@/features/cms/api/themes';
 import type { Page, PageSummary, Slug, CmsDomain, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from '@/features/cms/types';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { ImageFileRecord } from '@/shared/types/files';
+import type { ImageFileRecord } from '@/shared/types/domain/files';
 
 const cmsKeys = QUERY_KEYS.cms;
 

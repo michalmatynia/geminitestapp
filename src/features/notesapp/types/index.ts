@@ -1,4 +1,4 @@
-// Re-export DTOs as types for backward compatibility
+// DTO type exports
 export type {
   NoteDto,
   NotebookDto,
@@ -10,7 +10,7 @@ export type {
   UpdateNotebookDto
 } from '@/shared/dtos';
 
-export * from '@/shared/types/notes';
+export * from '@/shared/types/domain/notes';
 export * from './notes-hooks';
 export * from './notes-ui';
 export * from './notes-settings';

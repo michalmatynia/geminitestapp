@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAsset3DRepository } from '@/features/viewer3d/server';
 import { notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 async function GET_handler(
   _request: NextRequest,

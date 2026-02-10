@@ -12,45 +12,6 @@ export interface NoteImport {
 }
 
 /**
- * Parse dropped files and build a folder tree structure
- * Only processes .md and .markdown files as notes
- * Returns a single folder or null for backward compatibility
- */
-export async function parseFolderStructure(
-  items: DataTransferItemList
-): Promise<FolderNode | null> {
-  const entries: FileSystemEntry[] = [];
-
-  // Collect all file system entries
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i];
-    if (item?.kind === 'file') {
-      const entry = item.webkitGetAsEntry?.();
-      if (entry) {
-        entries.push(entry);
-      }
-    }
-  }
-
-  if (entries.length === 0) {
-    return null;
-  }
-
-  // Process entries recursively
-  const rootEntry = entries[0];
-  if (!rootEntry) return null;
-
-  if (rootEntry.isDirectory) {
-    return await processDirectoryEntry(
-      rootEntry as FileSystemDirectoryEntry,
-      ''
-    );
-  }
-
-  return null;
-}
-
-/**
  * Parse multiple dropped folders and build folder tree structures
  * Only processes .md and .markdown files as notes
  * Returns array of folder structures

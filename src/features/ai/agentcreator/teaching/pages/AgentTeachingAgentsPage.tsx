@@ -4,7 +4,7 @@ import Link from 'next/link';
 import React from 'react';
 
 import { buildModelProfile } from '@/features/ai/chatbot/utils';
-import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/agent-teaching';
+import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/domain/agent-teaching';
 import { Input, ItemLibrary, Label, UnifiedSelect, Textarea, useToast } from '@/shared/ui';
 
 import { useAgentTeachingContext } from '../context/AgentTeachingContext';

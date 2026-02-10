@@ -10,8 +10,8 @@ import { z } from 'zod';
 import { getImageFileRepository } from '@/features/files/server';
 import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
-import type { ImageFileRecord } from '@/shared/types/files';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ImageFileRecord } from '@/shared/types/domain/files';
 
 const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');

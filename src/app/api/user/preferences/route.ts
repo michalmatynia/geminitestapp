@@ -4,7 +4,7 @@ import { getUserPreferences, updateUserPreferences, type UserPreferencesData } f
 import { auth } from '@/features/auth/server';
 import { logSystemEvent } from '@/features/observability/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 import { parseUserPreferencesUpdatePayload } from '@/shared/validations/user-preferences';
 
 export const runtime = 'nodejs';

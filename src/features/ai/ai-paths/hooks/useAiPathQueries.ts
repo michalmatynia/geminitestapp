@@ -2,11 +2,24 @@
 
 import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from '@tanstack/react-query';
 
-import { runsApi } from '@/features/ai/ai-paths/lib';
+import { runsApi, analyticsApi, type AiPathRuntimeAnalyticsSummary } from '@/features/ai/ai-paths/lib';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { AiPathRunRecord, AiPathRunNodeRecord, AiPathRunEventRecord } from '@/shared/types/ai-paths';
+import type { AiPathRunRecord, AiPathRunNodeRecord, AiPathRunEventRecord } from '@/shared/types/domain/ai-paths';
 
 const aiPathKeys = QUERY_KEYS.ai.aiPaths;
+
+export function useAiPathRuntimeAnalytics(range: string = '24h', enabled: boolean = true): UseQueryResult<AiPathRuntimeAnalyticsSummary, Error> {
+  return useQuery({
+    queryKey: [...aiPathKeys.all, 'runtime-analytics', range],
+    queryFn: async () => {
+      const response = await analyticsApi.summary({ range });
+      if (!response.ok) throw new Error(response.error || 'Failed to load runtime analytics');
+      return response.data;
+    },
+    enabled,
+    refetchInterval: 30_000,
+  });
+}
 
 export function useAiPathDeadLetterRuns(filters: { status: string; pathId?: string; query?: string; limit: number; offset: number }): UseQueryResult<{ runs: AiPathRunRecord[]; total: number }, Error> {
   return useQuery({
@@ -14,6 +27,7 @@ export function useAiPathDeadLetterRuns(filters: { status: string; pathId?: stri
     queryFn: async () => {
       const response = await runsApi.list(filters);
       if (!response.ok) throw new Error(response.error || 'Failed to load dead-letter runs');
+      if (!response.data) throw new Error('No data returned for dead-letter runs');
       return response.data as { runs: AiPathRunRecord[]; total: number };
     },
   });

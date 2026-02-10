@@ -5,6 +5,7 @@ import React from 'react';
 
 import { dbApi } from '@/features/ai/ai-paths/lib/api';
 import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+
 import { useAiPathConfig } from '../AiPathConfigContext';
 
 type SchemaData = {

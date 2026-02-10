@@ -3,7 +3,7 @@ import type {
   NotebookRecord,
   NotebookCreateInput,
   NotebookUpdateInput,
-} from '@/shared/types/notes';
+} from '@/shared/types/domain/notes';
 
 import type { Notebook } from '@prisma/client';
 

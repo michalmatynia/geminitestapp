@@ -41,6 +41,7 @@ export default function ProductForm({
   const [validatorEnabled, setValidatorEnabled] = useState(true);
   const [formatterEnabled, setFormatterEnabled] = useState(false);
   const [validatorInitialized, setValidatorInitialized] = useState(false);
+  const [validatorManuallyChanged, setValidatorManuallyChanged] = useState(false);
 
   useEffect(() => {
     setIsDebugOpen(searchParams.get('debug') === 'true');
@@ -48,11 +49,12 @@ export default function ProductForm({
 
   useEffect(() => {
     if (validatorInitialized) return;
+    if (validatorManuallyChanged) return;
     const enabledByDefault = validatorConfigQuery.data?.enabledByDefault;
     if (typeof enabledByDefault !== 'boolean') return;
     setValidatorEnabled(enabledByDefault);
     setValidatorInitialized(true);
-  }, [validatorConfigQuery.data?.enabledByDefault, validatorInitialized]);
+  }, [validatorConfigQuery.data?.enabledByDefault, validatorInitialized, validatorManuallyChanged]);
 
   return (
     <form onSubmit={(e: React.FormEvent) => { void handleSubmit(e); }} className='relative min-h-[400px] pb-10'>
@@ -97,7 +99,11 @@ export default function ProductForm({
             <div className='mt-4 flex flex-wrap items-center gap-2'>
               <Button
                 type='button'
-                onClick={() => setValidatorEnabled((prev: boolean) => !prev)}
+                onClick={() => {
+                  setValidatorManuallyChanged(true);
+                  setValidatorInitialized(true);
+                  setValidatorEnabled((prev: boolean) => !prev);
+                }}
                 className={`h-8 rounded border px-2.5 text-[10px] font-semibold tracking-wide ${
                   validatorEnabled
                     ? 'border-cyan-500/60 bg-cyan-500/15 text-cyan-100 hover:bg-cyan-500/25'

@@ -1,5 +1,5 @@
-import { api } from '@/shared/lib/api-client';
 import { logClientError } from '@/features/observability';
+import { api } from '@/shared/lib/api-client';
 import type {
   ProductValidationPattern,
   ProductValidatorConfig,
@@ -68,6 +68,20 @@ export async function getCategories(catalogId: string | null): Promise<ProductCa
     console.warn('[categories] Failed to load categories', error);
     logClientError(error instanceof Error ? error : new Error('Failed to load categories'), {
       context: { source: 'products-api-settings', action: 'getCategories', catalogId }
+    });
+    return [];
+  }
+}
+
+export async function getCategoriesFlat(catalogId: string | null): Promise<ProductCategory[]> {
+  try {
+    return await api.get<ProductCategory[]>('/api/products/categories', {
+      params: { catalogId: catalogId || undefined }
+    });
+  } catch (error) {
+    console.warn('[categories] Failed to load flat categories', error);
+    logClientError(error instanceof Error ? error : new Error('Failed to load flat categories'), {
+      context: { source: 'products-api-settings', action: 'getCategoriesFlat', catalogId }
     });
     return [];
   }

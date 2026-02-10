@@ -8,7 +8,7 @@ import type {
   AiPathRunEventRecord,
   AiPathRunNodeRecord,
   AiPathRunRecord,
-} from '@/shared/types/ai-paths';
+} from '@/shared/types/domain/ai-paths';
 import {
   Button,
   Checkbox,

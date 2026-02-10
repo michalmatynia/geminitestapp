@@ -1,4 +1,4 @@
-import type { ChatMessage } from '@/shared/types/chatbot';
+import type { ChatMessage } from '@/shared/types/domain/chatbot';
 
 export const sendChatbotMessage = async (payload: {
   messages: ChatMessage[];

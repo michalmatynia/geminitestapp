@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import { findFolderParentId, findFolderById } from '@/features/foldertree';
 import type { UseNoteOperationsProps } from '@/features/notesapp/types/notes-hooks';
 import type { UndoAction } from '@/features/notesapp/types/notes-hooks';
-import type { NoteWithRelations, CategoryWithChildren } from '@/shared/types/notes';
+import type { NoteWithRelations, CategoryWithChildren } from '@/shared/types/domain/notes';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {

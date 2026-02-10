@@ -13,7 +13,7 @@ import {
   ensureMongoBackupsDir,
 } from '@/features/database/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 async function getBackups(type: 'postgresql' | 'mongodb'): Promise<DatabaseInfo[]> {
   const backupsDir = type === 'mongodb' ? mongoBackupsDir : pgBackupsDir;

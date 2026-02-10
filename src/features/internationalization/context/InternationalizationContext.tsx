@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useMemo, ReactNode } from '
 
 import { useDeleteCountryMutation, useDeleteCurrencyMutation, useDeleteLanguageMutation } from '@/features/internationalization/hooks/useInternationalizationMutations';
 import { useCountries, useCurrencies, useLanguages } from '@/features/internationalization/hooks/useInternationalizationQueries';
-import type { CurrencyOption, CountryOption, Language } from '@/shared/types/internationalization';
+import type { CurrencyOption, CountryOption, Language } from '@/shared/types/domain/internationalization';
 import { useToast } from '@/shared/ui';
 
 interface InternationalizationContextType {

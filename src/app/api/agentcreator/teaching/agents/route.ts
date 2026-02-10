@@ -6,8 +6,8 @@ import { z } from 'zod';
 import { listTeachingAgents, upsertTeachingAgent } from '@/features/ai/agentcreator/teaching/server/repository';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { AgentTeachingAgentRecord } from '@/shared/types/agent-teaching';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { AgentTeachingAgentRecord } from '@/shared/types/domain/agent-teaching';
 
 const createAgentSchema = z.object({
   name: z.string().trim().min(1),

@@ -8,8 +8,8 @@ import { logSystemEvent } from '@/features/observability/server';
 import { parseJsonBody } from '@/features/products/server';
 import { notFoundError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
-import type { ChatSession, UpdateSessionInput } from '@/shared/types/chatbot';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ChatSession, UpdateSessionInput } from '@/shared/types/domain/chatbot';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 

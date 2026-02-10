@@ -1,4 +1,4 @@
-import type { NoteWithRelations } from '@/shared/types/notes';
+import type { NoteWithRelations } from '@/shared/types/domain/notes';
 
 export interface CreateNoteModalProps {
   isOpen: boolean;

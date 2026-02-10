@@ -5,7 +5,7 @@ import type {
   RuntimeHistoryLink,
   RuntimePortValues,
   RuntimeState,
-} from '@/shared/types/ai-paths';
+} from '@/shared/types/domain/ai-paths';
 
 import { DEFAULT_DB_QUERY } from '../constants';
 import {
@@ -20,6 +20,8 @@ import {
 import {
   NodeHandler,
   handleAiDescription,
+  handleAudioOscillator,
+  handleAudioSpeaker,
   handleAgent,
   handleBundle,
   handleCompare,
@@ -185,6 +187,7 @@ export type EvaluateGraphOptions = {
   skipAiJobs?: boolean | undefined;
   seedOutputs?: Record<string, RuntimePortValues> | undefined;
   seedHashes?: Record<string, string> | undefined;
+  seedHashTimestamps?: Record<string, number> | undefined;
   seedHistory?: Record<string, RuntimeHistoryEntry[]> | undefined;
   recordHistory?: boolean | undefined;
   historyLimit?: number | undefined;
@@ -224,6 +227,7 @@ export type EvaluateGraphOptions = {
     inputs: Record<string, RuntimePortValues>;
     outputs: Record<string, RuntimePortValues>;
     hashes?: Record<string, string> | undefined;
+    hashTimestamps?: Record<string, number> | undefined;
     history?: Record<string, RuntimeHistoryEntry[]> | undefined;
   }) => void | Promise<void>;
   control?: RuntimeExecutionControl | undefined;
@@ -475,6 +479,8 @@ const HANDLERS: Record<string, NodeHandler> = {
   trigger: handleTrigger,
   notification: handleNotification,
   context: handleContext,
+  audio_oscillator: handleAudioOscillator,
+  audio_speaker: handleAudioSpeaker,
   parser: handleParser,
   regex: handleRegex,
   iterator: handleIterator,
@@ -520,6 +526,7 @@ export async function evaluateGraph({
   skipAiJobs,
   seedOutputs,
   seedHashes,
+  seedHashTimestamps,
   seedHistory,
   recordHistory,
   historyLimit,
@@ -664,6 +671,11 @@ export async function evaluateGraph({
   const inputHashes = new Map<string, string>(
     shouldReuseHashes && seedHashes ? Object.entries(seedHashes) : []
   );
+  const hashTimestamps = new Map<string, number>(
+    shouldReuseHashes && seedHashTimestamps
+      ? Object.entries(seedHashTimestamps).map(([k, v]: [string, number]) => [k, v])
+      : []
+  );
   const historyMax = Math.max(1, historyLimit ?? 50);
   const history = new Map<string, RuntimeHistoryEntry[]>(
     seedHistory
@@ -700,6 +712,7 @@ export async function evaluateGraph({
     inputs: cloneValue(inputsSnapshot),
     outputs: cloneValue(outputs),
     hashes: inputHashes.size ? Object.fromEntries(inputHashes) : undefined,
+    hashTimestamps: hashTimestamps.size ? Object.fromEntries(hashTimestamps) : undefined,
     history: buildHistorySnapshot(),
   });
   const throwCancelled = (
@@ -1485,6 +1498,7 @@ export async function evaluateGraph({
       const isCacheable = cacheMode !== 'disabled' && !isWriteNode;
       if (!isCacheable && inputHashes.has(node.id)) {
         inputHashes.delete(node.id);
+        hashTimestamps.delete(node.id);
       }
       let hashMs: number | undefined;
       let fenceHash: string;
@@ -1546,11 +1560,25 @@ export async function evaluateGraph({
           continue;
         }
       }
+      const cacheTtlMs = node.config?.runtime?.cache?.ttlMs;
+      const hashTs = hashTimestamps.get(node.id);
+      const isTtlExpired =
+        cacheTtlMs != null &&
+        cacheTtlMs > 0 &&
+        hashTs != null &&
+        Date.now() - hashTs > cacheTtlMs;
+
+      if (isTtlExpired && inputHashes.has(node.id)) {
+        inputHashes.delete(node.id);
+        hashTimestamps.delete(node.id);
+      }
+
       const hasCachedOutput =
         isCacheable &&
         inputHash !== null &&
         inputHashes.get(node.id) === inputHash &&
-        outputs[node.id] !== undefined;
+        outputs[node.id] !== undefined &&
+        !isTtlExpired;
 
       if (hasCachedOutput) {
         if (fenceHash) {
@@ -1732,6 +1760,7 @@ export async function evaluateGraph({
             inputs: cloneValue(nextInputs),
             outputs: cloneValue(outputs),
             hashes: inputHashes.size ? Object.fromEntries(inputHashes) : undefined,
+            hashTimestamps: hashTimestamps.size ? Object.fromEntries(hashTimestamps) : undefined,
             history: historySnapshot,
           };
           const message = error instanceof Error ? error.message : String(error);
@@ -1770,6 +1799,7 @@ export async function evaluateGraph({
       }
       if (isCacheable && inputHash) {
         inputHashes.set(node.id, inputHash);
+        hashTimestamps.set(node.id, Date.now());
       }
       const didChange = hashRuntimeValue(prevOutputs) !== hashRuntimeValue(nextOutputs);
       if (didChange) {
@@ -1819,6 +1849,7 @@ export async function evaluateGraph({
         inputs,
         outputs,
         hashes: inputHashes.size ? Object.fromEntries(inputHashes) : undefined,
+        hashTimestamps: hashTimestamps.size ? Object.fromEntries(hashTimestamps) : undefined,
         history:
           recordHistory && history.size ? Object.fromEntries(history) : undefined,
       });
@@ -1852,6 +1883,7 @@ export async function evaluateGraph({
     inputs,
     outputs,
     hashes: inputHashes.size ? Object.fromEntries(inputHashes) : undefined,
+    hashTimestamps: hashTimestamps.size ? Object.fromEntries(hashTimestamps) : undefined,
     history: recordHistory && history.size ? Object.fromEntries(history) : undefined,
   };
   if (haltReason === 'step_limit') {
@@ -1967,6 +1999,7 @@ export async function evaluateGraphWithIteratorAutoContinue(options: EvaluateGra
         ...baseOptions,
         seedOutputs: current.outputs,
         seedHashes: current.hashes ?? undefined,
+        seedHashTimestamps: current.hashTimestamps ?? undefined,
         seedHistory: current.history ?? undefined,
         seedRunId: current.runId ?? resolvedRunId,
         seedRunStartedAt: current.runStartedAt ?? resolvedRunStartedAt,

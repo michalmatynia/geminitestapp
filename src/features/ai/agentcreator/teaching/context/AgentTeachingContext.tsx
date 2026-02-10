@@ -3,7 +3,7 @@
 import React, { createContext, useContext, ReactNode, useMemo } from 'react';
 
 import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
-import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/agent-teaching';
+import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/domain/agent-teaching';
 
 import { useTeachingAgents, useTeachingCollections } from '../hooks/useAgentTeaching';
 

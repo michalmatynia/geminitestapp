@@ -8,7 +8,7 @@ import { getProductRepository } from '@/features/products/server';
 import { parseJsonBody } from '@/features/products/server';
 import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const assignSchema = z.object({
   productIds: z.array(z.string().trim().min(1)).min(1),

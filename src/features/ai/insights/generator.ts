@@ -15,9 +15,9 @@ import { listSystemLogs, getSystemLogMetrics } from '@/features/observability/se
 import { getSettingValue } from '@/features/products/services/aiDescriptionService';
 import type { AnalyticsEventDto, AnalyticsSummaryDto } from '@/shared/types';
 import type { AiInsightRecord, AiInsightSource, AiInsightStatus, AiInsightType } from '@/shared/types/ai-insights';
-import type { AiPathRuntimeAnalyticsRange } from '@/shared/types/ai-paths';
-import type { ChatMessage } from '@/shared/types/chatbot';
-import { SystemLogRecord } from '@/shared/types/system-logs';
+import type { AiPathRuntimeAnalyticsRange } from '@/shared/types/domain/ai-paths';
+import type { ChatMessage } from '@/shared/types/domain/chatbot';
+import { SystemLogRecord } from '@/shared/types/domain/system-logs';
 
 import { appendAiInsight, appendAiInsightNotification, setAiInsightsMeta } from './repository';
 import {

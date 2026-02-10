@@ -7,7 +7,7 @@ import { logClientError } from '@/features/observability';
 import type { ExpandedImageFile } from '@/features/products';
 import { useAssets3D } from '@/features/viewer3d/hooks/useAsset3dQueries';
 import type { Asset3DRecord, Asset3DListFilters } from '@/features/viewer3d/types';
-import type { ImageFileSelection } from '@/shared/types/files';
+import type { ImageFileSelection } from '@/shared/types/domain/files';
 import { useToast } from '@/shared/ui';
 
 interface FileManagerContextState {

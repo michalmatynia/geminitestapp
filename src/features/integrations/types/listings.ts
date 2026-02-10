@@ -4,7 +4,7 @@ import type {
   IntegrationWithConnectionsBasic 
 } from '@/shared/types/domain/integrations';
 
-export type { ListingJob, ListingAttempt, ProductJob } from '@/shared/types/listing-jobs';
+export type { ListingJob, ListingAttempt, ProductJob } from '@/shared/types/domain/listing-jobs';
 
 export type ProductListingRecord = {
   id: string;

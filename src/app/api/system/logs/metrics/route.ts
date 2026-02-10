@@ -5,7 +5,7 @@ import { z } from 'zod';
 
 import { getSystemLogMetrics } from '@/features/observability/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const levelSchema = z.enum(['info', 'warn', 'error']);
 

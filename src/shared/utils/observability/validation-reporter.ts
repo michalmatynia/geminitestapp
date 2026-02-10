@@ -13,22 +13,11 @@ export async function reportValidationError(
   const isServer = typeof window === 'undefined';
 
   if (isServer) {
-    try {
-      // eslint-disable-next-line import/no-restricted-paths
-      const { logSystemEvent } = await import('@/features/observability/server');
-      await logSystemEvent({
-        level: 'warn',
-        message,
-        source: 'validation-reporter',
-        context: {
-          service: (context as Record<string, unknown>)['service'] || 'validation',
-          ...context,
-        },
-      });
-    } catch (error) {
-      console.warn(`[ValidationReporter] ${message}`, { service: (context as Record<string, unknown>)['service'] || 'validation', ...context });
-      console.error('[ValidationReporter] Failed to log to system logger:', error);
-    }
+    console.warn(`[ValidationReporter] ${message}`, {
+      service: (context as Record<string, unknown>)['service'] || 'validation',
+      ...context,
+    });
+    return;
   } else {
     try {
       await reportClientError(message, {

@@ -5,7 +5,7 @@ import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-r
 import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
 import { recordRuntimeRunFinished } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { ErrorSystem } from '@/features/observability/services/error-system';
-import type { AiPathRunRecord } from '@/shared/types/ai-paths';
+import type { AiPathRunRecord } from '@/shared/types/domain/ai-paths';
 
 const STALE_RUNNING_THRESHOLD_MS = 10 * 60 * 1000; // 10 minutes
 const DEFAULT_MAX_ATTEMPTS = Number(process.env['AI_PATHS_RUN_MAX_ATTEMPTS'] ?? '3');

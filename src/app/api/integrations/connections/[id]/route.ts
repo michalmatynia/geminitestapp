@@ -8,7 +8,7 @@ import { encryptSecret } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const connectionSchema = z.object({
   name: z.string().trim().min(1),

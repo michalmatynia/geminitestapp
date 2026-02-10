@@ -2,7 +2,7 @@
 
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 
-import type { ChatSession } from '@/shared/types/chatbot';
+import type { ChatSession } from '@/shared/types/domain/chatbot';
 
 import {
   chatbotQueryKeys,

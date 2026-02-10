@@ -1,4 +1,4 @@
-// Re-export DTOs as types for backward compatibility
+// DTO type exports
 export type {
   DatabaseInfoDto,
   DatabaseBackupDto,
@@ -14,7 +14,7 @@ export type {
 export type DatabaseType = 'postgresql' | 'mongodb';
 export type DatabasePreviewMode = 'backup' | 'current';
 
-// Legacy types for backward compatibility
+// Integration domain record types
 export type DatabaseInfo = {
   name: string;
   size: string;

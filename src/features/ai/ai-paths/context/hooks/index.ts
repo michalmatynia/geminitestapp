@@ -78,25 +78,25 @@ export {
   type AutoSaveStatus,
 } from './usePersistence';
 
-// Legacy Sync (for gradual migration)
+// State bridge hooks (sync shared state into domain contexts)
 export {
-  useLegacySyncSelection,
-  useLegacySyncCanvas,
-  useLegacySyncGraph,
-  useLegacySyncRuntime,
-  useLegacySyncPersistence,
-  useLegacySyncPresets,
-  useLegacySyncRunHistory,
-  useLegacySyncAll,
-  type LegacySyncSelectionProps,
-  type LegacySyncCanvasProps,
-  type LegacySyncGraphProps,
-  type LegacySyncRuntimeProps,
-  type LegacySyncPersistenceProps,
-  type LegacySyncPresetsProps,
-  type LegacySyncRunHistoryProps,
-  type LegacySyncAllProps,
-} from './useLegacySync';
+  useStateBridgeSelection,
+  useStateBridgeCanvas,
+  useStateBridgeGraph,
+  useStateBridgeRuntime,
+  useStateBridgePersistence,
+  useStateBridgePresets,
+  useStateBridgeRunHistory,
+  useStateBridgeAll,
+  type StateBridgeSelectionProps,
+  type StateBridgeCanvasProps,
+  type StateBridgeGraphProps,
+  type StateBridgeRuntimeProps,
+  type StateBridgePersistenceProps,
+  type StateBridgePresetsProps,
+  type StateBridgeRunHistoryProps,
+  type StateBridgeAllProps,
+} from './useStateBridge';
 
 // Derived hooks
 export { useEdgePaths, type EdgePath } from './useEdgePaths';

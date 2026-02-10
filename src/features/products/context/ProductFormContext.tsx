@@ -35,8 +35,8 @@ import {
   productCreateSchema,
   productUpdateSchema,
 } from '@/features/products/validations/schemas';
-import type { ImageFileSelection } from '@/shared/types/files';
-import type { Language } from '@/shared/types/internationalization';
+import type { ImageFileSelection } from '@/shared/types/domain/files';
+import type { Language } from '@/shared/types/domain/internationalization';
 
 export interface ProductFormContextType {
   register: UseFormRegister<ProductFormData>;

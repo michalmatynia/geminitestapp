@@ -1,15 +1,17 @@
 'use client';
 
 import type { NodeCacheMode } from '@/features/ai/ai-paths/lib';
-import { Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Switch } from '@/shared/ui';
+import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Switch } from '@/shared/ui';
+
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
 export function RuntimeNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  const { selectedNode, updateSelectedNodeConfig, clearNodeCache } = useAiPathConfig();
   if (!selectedNode) return null;
   const runtimeConfig = selectedNode.config?.runtime ?? {};
   const cacheConfig = runtimeConfig.cache ?? {};
   const cacheMode: NodeCacheMode = cacheConfig.mode ?? 'auto';
+  const cacheTtlSeconds = cacheConfig.ttlMs ? Math.round(cacheConfig.ttlMs / 1000) : '';
   const defaultWaitForInputs = selectedNode.type === 'database';
   const waitForInputs = runtimeConfig.waitForInputs ?? defaultWaitForInputs;
 
@@ -41,6 +43,43 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
           </SelectContent>
         </Select>
       </div>
+      {cacheMode !== 'disabled' && (
+        <div>
+          <Label className='text-xs text-gray-400'>Cache TTL (seconds)</Label>
+          <Input
+            type='number'
+            min={0}
+            placeholder='No expiry'
+            value={cacheTtlSeconds}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
+              const seconds = parseInt(e.target.value, 10);
+              const ttlMs = Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : null;
+              const { ttlMs: droppedTtlMs, ...cacheWithoutTtl } = cacheConfig;
+              void droppedTtlMs;
+              updateSelectedNodeConfig({
+                runtime: {
+                  ...runtimeConfig,
+                  cache: ttlMs !== null ? { ...cacheWithoutTtl, ttlMs } : cacheWithoutTtl,
+                },
+              });
+            }}
+            className='mt-1 w-full border-border bg-card/70 text-sm text-white'
+          />
+          <p className='mt-1 text-[11px] text-gray-500'>
+            How long cached outputs stay valid. Leave empty for no expiry.
+          </p>
+        </div>
+      )}
+      {cacheMode !== 'disabled' && clearNodeCache && (
+        <Button
+          variant='ghost'
+          size='sm'
+          className='h-7 text-[11px] text-gray-400 hover:text-white'
+          onClick={(): void => clearNodeCache(selectedNode.id)}
+        >
+          Clear cached output
+        </Button>
+      )}
       <p className='text-[11px] text-gray-500'>
         Auto caching skips re-execution when inputs are unchanged within a run.
       </p>

@@ -1,4 +1,4 @@
-import { Status } from '../base-types';
+import { Status } from '../core/base-types';
 
 import type { 
   AiPathDto, 
@@ -158,6 +158,22 @@ export type ContextConfig = {
   scopeTarget?: 'entity' | 'context';
   includePaths?: string[];
   excludePaths?: string[];
+};
+
+export type AudioWaveform = 'sine' | 'square' | 'sawtooth' | 'triangle';
+
+export type AudioOscillatorConfig = {
+  waveform: AudioWaveform;
+  frequencyHz: number;
+  gain: number;
+  durationMs: number;
+};
+
+export type AudioSpeakerConfig = {
+  enabled: boolean;
+  autoPlay: boolean;
+  gain: number;
+  stopPrevious: boolean;
 };
 
 export type DescriptionConfig = {
@@ -372,6 +388,7 @@ export type NodeCacheMode = 'auto' | 'force' | 'disabled';
 export type NodeRuntimeConfig = {
   cache?: {
     mode?: NodeCacheMode;
+    ttlMs?: number;
   };
   waitForInputs?: boolean;
   timeoutMs?: number;
@@ -384,6 +401,8 @@ export type NodeRuntimeConfig = {
 export type NodeConfig = {
   trigger?: TriggerConfig;
   simulation?: SimulationConfig;
+  audioOscillator?: AudioOscillatorConfig;
+  audioSpeaker?: AudioSpeakerConfig;
   viewer?: ViewerConfig;
   context?: ContextConfig;
   regex?: RegexConfig;
@@ -481,6 +500,7 @@ export type RuntimeState = {
   inputs: Record<string, RuntimePortValues>;
   outputs: Record<string, RuntimePortValues>;
   hashes?: Record<string, string> | undefined;
+  hashTimestamps?: Record<string, number> | undefined;
   history?: Record<string, RuntimeHistoryEntry[]> | undefined;
 };
 

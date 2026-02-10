@@ -3,7 +3,7 @@ export const runtime = 'nodejs';
 import { NextRequest } from 'next/server';
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 import { GET_handler } from '../route';
 

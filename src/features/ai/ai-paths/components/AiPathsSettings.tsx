@@ -1,6 +1,6 @@
 'use client';
 
-import { AiPathsProvider, useLegacySyncAll } from '../context';
+import { AiPathsProvider, useStateBridgeAll } from '../context';
 import { AiPathsSettingsView } from './ai-paths-settings/AiPathsSettingsView';
 import { useAiPathsSettingsState, type AiPathsSettingsState } from './ai-paths-settings/useAiPathsSettingsState';
 
@@ -16,7 +16,7 @@ type AiPathsSettingsProps = {
  * Root component for AI-Paths settings.
  * Wraps the entire tree with AiPathsProvider to enable context-based state management.
  *
- * Migration note: Currently still uses useAiPathsSettingsState for backwards compatibility.
+ * Migration note: Currently uses useAiPathsSettingsState as orchestrator state.
  * Child components can progressively migrate to use context hooks (useGraph, useSelection, etc.)
  */
 export function AiPathsSettings({
@@ -40,9 +40,9 @@ export function AiPathsSettings({
 }
 
 /**
- * Inner component that uses the legacy state hook and syncs to contexts.
+ * Inner component that uses the orchestrator state hook and syncs to contexts.
  * This allows child components to consume state via context hooks while
- * the legacy state management continues to work.
+ * domain contexts remain the runtime source.
  */
 function AiPathsSettingsInner({
   activeTab,
@@ -53,8 +53,8 @@ function AiPathsSettingsInner({
 }: AiPathsSettingsProps): React.JSX.Element {
   const state: AiPathsSettingsState = useAiPathsSettingsState({ activeTab });
 
-  // Sync legacy state to contexts so child components can use context hooks
-  useLegacySyncAll({
+  // Sync orchestrator state to domain contexts for child components.
+  useStateBridgeAll({
     // Selection
     selectedNodeId: state.selectedNodeId,
     selectedEdgeId: state.selectedEdgeId,
@@ -108,7 +108,7 @@ function AiPathsSettingsInner({
     saving: state.saving,
     autoSaveStatus: state.autoSaveStatus,
     autoSaveAt: state.autoSaveAt,
-    savePathConfig: state.handleSave,
+    savePathConfig: (options) => state.handleSave(options),
     // Presets
     clusterPresets: state.clusterPresets,
     presetDraft: state.presetDraft,

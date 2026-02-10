@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getIntegrationRepository, listAllProductListingsAcrossProviders } from '@/features/integrations/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com']);
 

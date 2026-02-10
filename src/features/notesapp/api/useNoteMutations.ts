@@ -4,7 +4,7 @@ import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/r
 
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { DeleteResponse } from '@/shared/types/api';
+import type { DeleteResponse } from '@/shared/types/api/api';
 import type {
   NoteWithRelations,
   NoteCreateInput,
@@ -16,7 +16,7 @@ import type {
   TagUpdateInput,
   ThemeRecord,
   ThemeUpdateInput,
-} from '@/shared/types/notes';
+} from '@/shared/types/domain/notes';
 
 export function useCreateNote(): UseMutationResult<NoteWithRelations, Error, NoteCreateInput> {
   const queryClient = useQueryClient();

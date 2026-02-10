@@ -8,8 +8,8 @@ import { startProductAiJobQueue, processSingleJob } from '@/features/jobs/server
 import { logSystemEvent, ErrorSystem } from '@/features/observability/server';
 import { parseJsonBody } from '@/features/products/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
-import type { ProductAiJobType } from '@/shared/types/jobs';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ProductAiJobType } from '@/shared/types/domain/jobs';
 
 const enqueueSchema = z.object({
   productId: z.string().trim().min(1),

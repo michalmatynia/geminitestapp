@@ -1,26 +1,26 @@
 /**
- * useLegacySync - Bridge hook for syncing legacy state with new contexts.
+ * useStateBridge - Bridge hook for syncing source state with new contexts.
  *
  * This hook enables gradual migration from the monolithic useAiPathsSettingsState
- * to domain-based contexts. It syncs the legacy state values to their corresponding
+ * to domain-based contexts. It syncs the source state values to their corresponding
  * contexts, allowing child components to start consuming context hooks.
  *
- * Usage in a component that has access to legacy state:
+ * Usage in a component that has access to source state:
  * ```tsx
- * const legacyState = useAiPathsSettingsState({ activeTab });
+ * const sourceState = useAiPathsSettingsState({ activeTab });
  *
- * // Sync selection state from legacy to context
- * useLegacySyncSelection({
- *   selectedNodeId: legacyState.selectedNodeId,
- *   selectedEdgeId: legacyState.selectedEdgeId,
- *   configOpen: legacyState.configOpen,
+ * // Sync selection state from source to context
+ * useStateBridgeSelection({
+ *   selectedNodeId: sourceState.selectedNodeId,
+ *   selectedEdgeId: sourceState.selectedEdgeId,
+ *   configOpen: sourceState.configOpen,
  * });
  *
  * // Now child components can use useSelectionState() and get the synced values
  * ```
  *
  * Migration path:
- * 1. Add useLegacySync* calls in parent component
+ * 1. Add useStateBridge* calls in parent component
  * 2. Child components can use context hooks
  * 3. Gradually move state management to contexts
  * 4. Remove sync hooks when migration is complete
@@ -53,8 +53,9 @@ import { useSelectionActions } from '../SelectionContext';
 
 
 import type { ViewState, PanState, DragState, ConnectingState } from '../CanvasContext';
-import type { ClusterPresetDraft } from '../PresetsContext';
 import type { SavePathConfigOptions } from '../PersistenceContext';
+import type { ClusterPresetDraft } from '../PresetsContext';
+import type { RunHistoryFilter } from '../RunHistoryContext';
 // Note: Using string for runFilter to accommodate different RunHistoryFilter types
 // (context uses "all" | "completed" | "failed" | "running" | "queued" | "cancelled"
 // while run-history-panel uses "all" | "active" | "failed" | "dead")
@@ -63,7 +64,7 @@ import type { SavePathConfigOptions } from '../PersistenceContext';
 // Selection Sync
 // ---------------------------------------------------------------------------
 
-export interface LegacySyncSelectionProps {
+export interface StateBridgeSelectionProps {
   selectedNodeId: string | null;
   selectedEdgeId?: string | null | undefined;
   configOpen?: boolean | undefined;
@@ -72,15 +73,15 @@ export interface LegacySyncSelectionProps {
 }
 
 /**
- * Sync selection state from legacy hook to SelectionContext.
+ * Sync selection state from source hook to SelectionContext.
  */
-export function useLegacySyncSelection({
+export function useStateBridgeSelection({
   selectedNodeId,
   selectedEdgeId,
   configOpen,
   nodeConfigDirty,
   simulationOpenNodeId,
-}: LegacySyncSelectionProps): void {
+}: StateBridgeSelectionProps): void {
   const actions = useSelectionActions();
 
   useEffect(() => {
@@ -116,7 +117,7 @@ export function useLegacySyncSelection({
 // Canvas Sync
 // ---------------------------------------------------------------------------
 
-export interface LegacySyncCanvasProps {
+export interface StateBridgeCanvasProps {
   view: ViewState;
   panState?: PanState | null | undefined;
   dragState?: DragState | null | undefined;
@@ -126,16 +127,16 @@ export interface LegacySyncCanvasProps {
 }
 
 /**
- * Sync canvas state from legacy hook to CanvasContext.
+ * Sync canvas state from source hook to CanvasContext.
  */
-export function useLegacySyncCanvas({
+export function useStateBridgeCanvas({
   view,
   panState,
   dragState,
   connecting,
   connectingPos,
   lastDrop,
-}: LegacySyncCanvasProps): void {
+}: StateBridgeCanvasProps): void {
   const actions = useCanvasActions();
 
   useEffect(() => {
@@ -172,7 +173,7 @@ export function useLegacySyncCanvas({
 // Graph Sync
 // ---------------------------------------------------------------------------
 
-export interface LegacySyncGraphProps {
+export interface StateBridgeGraphProps {
   nodes: AiNode[];
   edges: Edge[];
   onNodesChangeFromContext?: ((nodes: AiNode[]) => void) | undefined;
@@ -190,9 +191,9 @@ export interface LegacySyncGraphProps {
 }
 
 /**
- * Sync graph state from legacy hook to GraphContext.
+ * Sync graph state from source hook to GraphContext.
  */
-export function useLegacySyncGraph({
+export function useStateBridgeGraph({
   nodes,
   edges,
   onNodesChangeFromContext,
@@ -207,24 +208,24 @@ export function useLegacySyncGraph({
   runMode,
   paths,
   pathConfigs,
-}: LegacySyncGraphProps): void {
+}: StateBridgeGraphProps): void {
   const actions = useGraphActions();
   const { nodes: contextNodes, edges: contextEdges } = useGraphState();
   const skipNextContextNodesSyncRef = useRef(false);
   const skipNextContextEdgesSyncRef = useRef(false);
-  const lastLegacyNodesHashRef = useRef<string>(stableStringify(nodes));
-  const lastLegacyEdgesHashRef = useRef<string>(stableStringify(edges));
-  const legacyNodesHash = stableStringify(nodes);
-  const legacyEdgesHash = stableStringify(edges);
+  const lastSourceNodesHashRef = useRef<string>(stableStringify(nodes));
+  const lastSourceEdgesHashRef = useRef<string>(stableStringify(edges));
+  const sourceNodesHash = stableStringify(nodes);
+  const sourceEdgesHash = stableStringify(edges);
 
-  // Mark a legacy->context push before layout effects run, so context->legacy
+  // Mark a source->context push before layout effects run, so context->source
   // cannot overwrite freshly loaded graph state in the same render cycle.
-  if (lastLegacyNodesHashRef.current !== legacyNodesHash) {
-    lastLegacyNodesHashRef.current = legacyNodesHash;
+  if (lastSourceNodesHashRef.current !== sourceNodesHash) {
+    lastSourceNodesHashRef.current = sourceNodesHash;
     skipNextContextNodesSyncRef.current = true;
   }
-  if (lastLegacyEdgesHashRef.current !== legacyEdgesHash) {
-    lastLegacyEdgesHashRef.current = legacyEdgesHash;
+  if (lastSourceEdgesHashRef.current !== sourceEdgesHash) {
+    lastSourceEdgesHashRef.current = sourceEdgesHash;
     skipNextContextEdgesSyncRef.current = true;
   }
 
@@ -323,7 +324,7 @@ export function useLegacySyncGraph({
 // Runtime Sync
 // ---------------------------------------------------------------------------
 
-export interface LegacySyncRuntimeProps {
+export interface StateBridgeRuntimeProps {
   runtimeState: RuntimeState;
   lastRunAt?: string | null | undefined;
   lastError?: { message: string; time: string; pathId?: string | null } | null | undefined;
@@ -347,9 +348,9 @@ export interface LegacySyncRuntimeProps {
 }
 
 /**
- * Sync runtime state from legacy hook to RuntimeContext.
+ * Sync runtime state from source hook to RuntimeContext.
  */
-export function useLegacySyncRuntime({
+export function useStateBridgeRuntime({
   runtimeState,
   lastRunAt,
   lastError,
@@ -365,7 +366,7 @@ export function useLegacySyncRuntime({
   handleFetchUpdaterSample,
   handleRunSimulation,
   handleSendToAi,
-}: LegacySyncRuntimeProps): void {
+}: StateBridgeRuntimeProps): void {
   const actions = useRuntimeActions();
 
   useEffect(() => {
@@ -433,7 +434,7 @@ export function useLegacySyncRuntime({
 // Persistence Sync
 // ---------------------------------------------------------------------------
 
-export interface LegacySyncPersistenceProps {
+export interface StateBridgePersistenceProps {
   loading: boolean;
   saving?: boolean | undefined;
   autoSaveStatus?: 'idle' | 'saving' | 'saved' | 'error' | undefined;
@@ -442,15 +443,15 @@ export interface LegacySyncPersistenceProps {
 }
 
 /**
- * Sync persistence state from legacy hook to PersistenceContext.
+ * Sync persistence state from source hook to PersistenceContext.
  */
-export function useLegacySyncPersistence({
+export function useStateBridgePersistence({
   loading,
   saving,
   autoSaveStatus,
   autoSaveAt,
   savePathConfig,
-}: LegacySyncPersistenceProps): void {
+}: StateBridgePersistenceProps): void {
   const actions = usePersistenceActions();
 
   useEffect(() => {
@@ -486,7 +487,7 @@ export function useLegacySyncPersistence({
 // Presets Sync
 // ---------------------------------------------------------------------------
 
-export interface LegacySyncPresetsProps {
+export interface StateBridgePresetsProps {
   clusterPresets?: ClusterPreset[] | undefined;
   presetDraft?: ClusterPresetDraft | undefined;
   editingPresetId?: string | null | undefined;
@@ -497,9 +498,9 @@ export interface LegacySyncPresetsProps {
 }
 
 /**
- * Sync presets state from legacy hook to PresetsContext.
+ * Sync presets state from source hook to PresetsContext.
  */
-export function useLegacySyncPresets({
+export function useStateBridgePresets({
   clusterPresets,
   presetDraft,
   editingPresetId,
@@ -507,7 +508,7 @@ export function useLegacySyncPresets({
   expandedPaletteGroups,
   saveDbQueryPresets,
   saveDbNodePresets,
-}: LegacySyncPresetsProps): void {
+}: StateBridgePresetsProps): void {
   const actions = usePresetsActions();
 
   useEffect(() => {
@@ -552,27 +553,27 @@ export function useLegacySyncPresets({
 // Run History Sync
 // ---------------------------------------------------------------------------
 
-export interface LegacySyncRunHistoryProps {
+export interface StateBridgeRunHistoryProps {
   runFilter?: string | undefined;
   expandedRunHistory?: Record<string, boolean> | undefined;
   runHistorySelection?: Record<string, string> | undefined;
 }
 
 /**
- * Sync run history state from legacy hook to RunHistoryContext.
+ * Sync run history state from source hook to RunHistoryContext.
  * Note: runFilter is typed as string to accommodate different RunHistoryFilter types.
  */
-export function useLegacySyncRunHistory({
+export function useStateBridgeRunHistory({
   runFilter,
   expandedRunHistory,
   runHistorySelection,
-}: LegacySyncRunHistoryProps): void {
+}: StateBridgeRunHistoryProps): void {
   const actions = useRunHistoryActions();
 
   useEffect(() => {
     if (runFilter !== undefined) {
       // Cast to context's RunHistoryFilter type
-      actions.setRunFilter(runFilter as any);
+      actions.setRunFilter(runFilter as RunHistoryFilter);
     }
   }, [runFilter, actions]);
 
@@ -593,7 +594,7 @@ export function useLegacySyncRunHistory({
 // Combined Sync
 // ---------------------------------------------------------------------------
 
-export interface LegacySyncAllProps {
+export interface StateBridgeAllProps {
   // Selection
   selectedNodeId: string | null;
   selectedEdgeId?: string | null | undefined;
@@ -664,11 +665,11 @@ export interface LegacySyncAllProps {
 }
 
 /**
- * Sync all legacy state to contexts at once.
- * Use this in the component that has access to the full legacy state.
+ * Sync all source state to contexts at once.
+ * Use this in the component that has access to the full source state.
  */
-export function useLegacySyncAll(props: LegacySyncAllProps): void {
-  useLegacySyncSelection({
+export function useStateBridgeAll(props: StateBridgeAllProps): void {
+  useStateBridgeSelection({
     selectedNodeId: props.selectedNodeId,
     selectedEdgeId: props.selectedEdgeId,
     configOpen: props.configOpen,
@@ -676,7 +677,7 @@ export function useLegacySyncAll(props: LegacySyncAllProps): void {
     simulationOpenNodeId: props.simulationOpenNodeId,
   });
 
-  useLegacySyncCanvas({
+  useStateBridgeCanvas({
     view: props.view,
     panState: props.panState,
     dragState: props.dragState,
@@ -685,7 +686,7 @@ export function useLegacySyncAll(props: LegacySyncAllProps): void {
     lastDrop: props.lastDrop,
   });
 
-  useLegacySyncGraph({
+  useStateBridgeGraph({
     nodes: props.nodes,
     edges: props.edges,
     onNodesChangeFromContext: props.onNodesChangeFromContext,
@@ -702,7 +703,7 @@ export function useLegacySyncAll(props: LegacySyncAllProps): void {
     pathConfigs: props.pathConfigs,
   });
 
-  useLegacySyncRuntime({
+  useStateBridgeRuntime({
     runtimeState: props.runtimeState,
     lastRunAt: props.lastRunAt,
     lastError: props.lastError,
@@ -720,7 +721,7 @@ export function useLegacySyncAll(props: LegacySyncAllProps): void {
     handleSendToAi: props.handleSendToAi,
   });
 
-  useLegacySyncPersistence({
+  useStateBridgePersistence({
     loading: props.loading,
     saving: props.saving,
     autoSaveStatus: props.autoSaveStatus,
@@ -728,7 +729,7 @@ export function useLegacySyncAll(props: LegacySyncAllProps): void {
     savePathConfig: props.savePathConfig,
   });
 
-  useLegacySyncPresets({
+  useStateBridgePresets({
     clusterPresets: props.clusterPresets,
     presetDraft: props.presetDraft,
     editingPresetId: props.editingPresetId,
@@ -738,7 +739,7 @@ export function useLegacySyncAll(props: LegacySyncAllProps): void {
     saveDbNodePresets: props.saveDbNodePresets,
   });
 
-  useLegacySyncRunHistory({
+  useStateBridgeRunHistory({
     runFilter: props.runFilter,
     expandedRunHistory: props.expandedRunHistory,
     runHistorySelection: props.runHistorySelection,

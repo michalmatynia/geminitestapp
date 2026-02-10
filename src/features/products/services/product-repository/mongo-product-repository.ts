@@ -16,7 +16,7 @@ import type {
 } from '@/features/products/types/services/product-repository';
 import { conflictError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import type { ImageFileRecord } from '@/shared/types/files';
+import type { ImageFileRecord } from '@/shared/types/domain/files';
 
 import type { Prisma } from '@prisma/client';
 
@@ -184,32 +184,16 @@ const buildSearchFilter = (filters: ProductFilters): Filter<ProductDocument> => 
 
   if (filters.catalogId) {
     if (filters.catalogId === 'unassigned') {
-      // Backward compatibility:
-      // older documents may store catalog relation in different fields/shapes.
       andConditions.push({
         $or: [
           { catalogs: { $exists: false } },
           { catalogs: { $size: 0 } },
-          { catalogIds: { $exists: false } },
-          { catalogIds: { $size: 0 } },
-          { catalogId: { $exists: false } },
-          { catalogId: null as unknown as string },
-          { catalogId: '' },
         ],
       });
     } else {
-      // Support multiple historical schemas:
-      // - catalogs: [{ catalogId: string, ... }]
-      // - catalogs: [{ id: string, ... }]
-      // - catalogs: string[]
-      // - catalogIds: string[]
-      // - catalogId: string
       andConditions.push({
         $or: [
           { catalogs: { $elemMatch: { catalogId: filters.catalogId } } },
-          { catalogs: { $elemMatch: { id: filters.catalogId } } },
-          { catalogIds: filters.catalogId },
-          { catalogId: filters.catalogId },
         ],
       });
     }

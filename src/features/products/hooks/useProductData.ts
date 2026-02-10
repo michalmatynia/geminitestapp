@@ -15,7 +15,7 @@ import type {
   ProductWithImages, 
 } from '@/features/products/types';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
-import type { DeleteResponse } from '@/shared/types/api';
+import type { DeleteResponse } from '@/shared/types/api/api';
 
 // --- Queries ---
 

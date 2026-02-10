@@ -2,6 +2,7 @@
 
 
 import { Button } from '@/shared/ui';
+
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
 export function AiDescriptionNodeConfigSection(): React.JSX.Element | null {

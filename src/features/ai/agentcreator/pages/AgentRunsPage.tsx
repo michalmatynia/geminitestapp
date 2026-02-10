@@ -4,11 +4,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
-import { AiPathRunRecord } from '@/shared/types/ai-paths';
+import { AiPathRunRecord } from '@/shared/types/domain/ai-paths';
 import {
   AgentAuditLog,
   AgentBrowserLog,
-} from '@/shared/types/chatbot';
+} from '@/shared/types/domain/chatbot';
 import { Button, SectionHeader, SectionPanel, Tabs, TabsContent, TabsList, TabsTrigger, SharedModal, Input } from '@/shared/ui';
 
 import { useAgentRunContext } from '../context/AgentRunContext';

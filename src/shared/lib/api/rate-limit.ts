@@ -65,18 +65,6 @@ class RateLimiter {
         };
       } catch (error) {
         console.error('[rate-limit] Redis failure, falling back to memory:', error);
-        void (async (): Promise<void> => {
-          try {
-            const { logSystemEvent } = await import('@/features/observability/server');
-            await logSystemEvent({
-              level: 'warn',
-              message: '[rate-limit] Redis failure, falling back to memory',
-              source: 'rate-limit',
-              error,
-              request: req,
-            });
-          } catch { /* ignore */ }
-        })();
       }
     }
 

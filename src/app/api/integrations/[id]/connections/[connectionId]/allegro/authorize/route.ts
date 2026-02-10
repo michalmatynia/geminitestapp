@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const PROD_AUTH_URL =
   process.env['ALLEGRO_AUTH_URL'] ?? 'https://allegro.pl/auth/oauth/authorize';

@@ -7,7 +7,7 @@ import { useCreateNoteTheme, useDeleteNoteTheme, useUpdateNoteTheme } from '@/fe
 import { useNotebooks, useNoteThemes } from '@/features/notesapp/api/useNoteQueries';
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/features/observability';
-import type { ThemeRecord } from '@/shared/types/notes';
+import type { ThemeRecord } from '@/shared/types/domain/notes';
 import { Button, useToast, Input, Label, SectionHeader, SectionPanel } from '@/shared/ui';
 
 

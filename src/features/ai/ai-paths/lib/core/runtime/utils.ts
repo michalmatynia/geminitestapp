@@ -2,7 +2,7 @@ import type {
   ContextConfig,
   DbQueryConfig,
   RuntimePortValues,
-} from '@/shared/types/ai-paths';
+} from '@/shared/types/domain/ai-paths';
 
 import { aiJobsApi, dbApi } from '../../api';
 import {

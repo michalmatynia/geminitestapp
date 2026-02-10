@@ -5,6 +5,5 @@ export * from './color-utils';
 export * from './markdown-utils';
 export * from './settings-json';
 export * from './error-formatting';
-export * from './logger';
 export * from './drag-drop';
 export * from './sanitization';

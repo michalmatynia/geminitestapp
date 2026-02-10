@@ -7,7 +7,7 @@ import { useMemo, useState } from 'react';
 import { useAiPathTriggerEvent } from '@/features/ai/ai-paths/hooks/useAiPathTriggerEvent';
 import { triggerButtonsApi } from '@/features/ai/ai-paths/lib';
 import { ICON_LIBRARY_MAP } from '@/features/icons';
-import type { AiTriggerButtonLocation, AiTriggerButtonRecord } from '@/shared/types/ai-trigger-buttons';
+import type { AiTriggerButtonLocation, AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
 import { Button, Switch, useToast } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 

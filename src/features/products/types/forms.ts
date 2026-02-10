@@ -1,3 +1,3 @@
-import type { ProductCreateData } from '@/features/products/validations';
+import type { ProductCreateInput } from '@/features/products/validations';
 
-export type ProductFormData = ProductCreateData;
+export type ProductFormData = ProductCreateInput;

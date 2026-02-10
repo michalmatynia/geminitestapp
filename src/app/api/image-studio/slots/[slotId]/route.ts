@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { deleteImageStudioSlot, updateImageStudioSlot } from '@/features/ai/image-studio/server/slot-repository';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const sanitizeFolderPath = (value: string): string => {
   const normalized = value.replace(/\\/g, '/').trim();

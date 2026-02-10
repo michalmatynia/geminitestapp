@@ -6,7 +6,7 @@ import type {
   NoteWithRelations,
   NoteCreateInput,
   NoteUpdateInput,
-} from '@/shared/types/notes';
+} from '@/shared/types/domain/notes';
 
 import { getOrCreateDefaultNotebook } from './notebook-impl';
 

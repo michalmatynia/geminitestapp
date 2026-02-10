@@ -3,8 +3,8 @@
 import { Folder, FolderOpen, FilePlus, FolderPlus, Edit2, Trash2 } from 'lucide-react';
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 
-import type { CategoryWithChildren } from '@/shared/types/notes';
-import type { NoteRecord } from '@/shared/types/notes';
+import type { CategoryWithChildren } from '@/shared/types/domain/notes';
+import type { NoteRecord } from '@/shared/types/domain/notes';
 import type { TreeContextMenuItem } from '@/shared/ui';
 import { TreeRow, TreeCaret, TreeActionButton, TreeActionSlot } from '@/shared/ui';
 import { useToast, Input, TreeContextMenu } from '@/shared/ui';

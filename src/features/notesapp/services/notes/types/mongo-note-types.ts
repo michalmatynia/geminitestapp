@@ -1,4 +1,4 @@
-import { MongoDocument } from '@/shared/types/base-types';
+import { MongoDocument } from '@/shared/types/core/base-types';
 import type { 
   TagRecord, 
   CategoryRecord, 
@@ -11,7 +11,7 @@ import type {
   NoteRelationWithTarget,
   NoteRelationWithSource,
   NoteRecord
-} from '@/shared/types/notes';
+} from '@/shared/types/domain/notes';
 
 export type TagDocument = MongoDocument<TagRecord>;
 export type CategoryDocument = MongoDocument<CategoryRecord>;

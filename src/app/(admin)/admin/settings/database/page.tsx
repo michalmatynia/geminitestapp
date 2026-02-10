@@ -1,15 +1,15 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState, ChangeEvent } from 'react';
 
 import { AUTH_SETTINGS_KEYS } from '@/features/auth/utils/auth-management';
+import { SettingsBackfillResult } from '@/features/database/api';
+import { useSettingsBackfillMutation, useSyncDatabaseMutation, useProviderDiagnostics } from '@/features/database/hooks/useDatabaseSettings';
 import { PRODUCT_DB_PROVIDER_SETTING_KEY } from '@/features/products/constants';
 import type {
   AppProviderValueDto as ProviderValueStatus,
   AppProviderServiceDto as ProviderService,
   AppProviderServiceStatusDto as ProviderServiceStatus,
-  AppProviderDiagnosticsDto as ProviderDiagnosticsResponse,
 } from '@/shared/dtos/system';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useToast, Button, Label } from '@/shared/ui';
@@ -59,13 +59,6 @@ const productProviderOptions = [
 ] as const;
 
 type ProductProviderValue = (typeof productProviderOptions)[number]['value'];
-
-type SettingsBackfillResult = {
-  matched: number;
-  modified: number;
-  remaining: number;
-  sampleIds?: string[];
-};
 
 const providerServiceLabel: Record<ProviderService, string> = {
   app: 'App',
@@ -121,21 +114,12 @@ function DatabaseSettingsForm({
   const [backfillLoading, setBackfillLoading] = useState(false);
   const [backfillLimit, setBackfillLimit] = useState(500);
   const [backfillResult, setBackfillResult] = useState<SettingsBackfillResult | null>(null);
+  
   const updateSetting = useUpdateSetting();
+  const syncDatabaseMutation = useSyncDatabaseMutation();
+  const backfillSettingsMutation = useSettingsBackfillMutation();
   const settingsQuery = useSettingsMap();
-  const providerDiagnosticsQuery = useQuery<ProviderDiagnosticsResponse, Error>({
-    queryKey: ['settings', 'provider-diagnostics'],
-    queryFn: async (): Promise<ProviderDiagnosticsResponse> => {
-      const res = await fetch('/api/settings/providers', { cache: 'no-store' });
-      if (!res.ok) {
-        const payload = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(payload?.error || 'Failed to fetch provider diagnostics.');
-      }
-      return (await res.json()) as ProviderDiagnosticsResponse;
-    },
-    staleTime: 15_000,
-    refetchInterval: 30_000,
-  });
+  const providerDiagnosticsQuery = useProviderDiagnostics();
 
   const refreshProviderDiagnostics = (): void => {
     void providerDiagnosticsQuery.refetch();
@@ -225,15 +209,7 @@ function DatabaseSettingsForm({
 
     setSyncing(direction);
     try {
-      const res = await fetch('/api/settings/database/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ direction }),
-      });
-      if (!res.ok) {
-        const payload = (await res.json()) as { error?: string };
-        throw new Error(payload?.error || 'Failed to enqueue database sync.');
-      }
+      await syncDatabaseMutation.mutateAsync(direction);
       refreshProviderDiagnostics();
       toast('Database sync job queued. Track progress in Job Queue.', { variant: 'success' });
     } catch (error) {
@@ -250,16 +226,7 @@ function DatabaseSettingsForm({
   const runSettingsBackfill = async (dryRun: boolean): Promise<void> => {
     setBackfillLoading(true);
     try {
-      const res = await fetch('/api/settings/migrate/backfill-keys', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dryRun, limit: backfillLimit }),
-      });
-      if (!res.ok) {
-        const payload = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(payload?.error || 'Failed to backfill settings keys.');
-      }
-      const payload = (await res.json()) as SettingsBackfillResult;
+      const payload = await backfillSettingsMutation.mutateAsync({ dryRun, limit: backfillLimit });
       setBackfillResult(payload);
       refreshProviderDiagnostics();
       toast(

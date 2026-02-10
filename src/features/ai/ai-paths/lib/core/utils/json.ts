@@ -1,4 +1,4 @@
-import type { JsonPathEntry } from '@/shared/types/ai-paths';
+import type { JsonPathEntry } from '@/shared/types/domain/ai-paths';
 
 import { cloneValue } from './runtime';
 

@@ -7,7 +7,7 @@ import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/features/products/const
 import { getValidationPatternRepository } from '@/features/products/server';
 import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const replacementFieldSchema = z.enum(PRODUCT_VALIDATION_REPLACEMENT_FIELDS);
 

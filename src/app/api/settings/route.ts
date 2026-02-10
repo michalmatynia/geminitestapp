@@ -29,7 +29,7 @@ import {
   getStaleSettings,
   type SettingsScope,
 } from '@/shared/lib/settings-cache';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const shouldLog = () => process.env['DEBUG_SETTINGS'] === 'true';
 

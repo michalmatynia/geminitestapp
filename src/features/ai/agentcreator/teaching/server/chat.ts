@@ -1,7 +1,7 @@
 import 'server-only';
 
-import type { AgentTeachingChatSource } from '@/shared/types/agent-teaching';
-import type { ChatMessage } from '@/shared/types/chatbot';
+import type { AgentTeachingChatSource } from '@/shared/types/domain/agent-teaching';
+import type { ChatMessage } from '@/shared/types/domain/chatbot';
 
 import { generateOllamaEmbedding } from './embeddings';
 import { getTeachingAgentById } from './repository';

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 
 import { logClientError } from '@/features/observability';
-import type { TagRecord } from '@/shared/types/notes';
+import type { TagRecord } from '@/shared/types/domain/notes';
 import { useToast } from '@/shared/ui';
 
 // Why: Tag selection has complex state:

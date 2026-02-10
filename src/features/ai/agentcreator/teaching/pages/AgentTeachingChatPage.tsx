@@ -3,23 +3,24 @@
 import Link from 'next/link';
 import React from 'react';
 
-import type { AgentTeachingAgentRecord, AgentTeachingChatSource, AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/agent-teaching';
-import type { ChatMessage } from '@/shared/types/chatbot';
+import type { AgentTeachingAgentRecord, AgentTeachingChatSource, AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/domain/agent-teaching';
+import type { ChatMessage } from '@/shared/types/domain/chatbot';
 import { Button, Label, SectionHeader, SectionPanel, Textarea, useToast } from '@/shared/ui';
 
 import { useAgentTeachingContext } from '../context/AgentTeachingContext';
-
-type ChatResponse = { message: string; sources: AgentTeachingChatSource[] };
+import { useTeachingChatMutation } from '../hooks/useAgentTeaching';
 
 export function AgentTeachingChatPage(): React.JSX.Element {
   const { toast } = useToast();
   const { agents, collections, isLoading: loadingAgents } = useAgentTeachingContext();
+  const chatMutation = useTeachingChatMutation();
 
   const [selectedAgentId, setSelectedAgentId] = React.useState<string>('');
   const [input, setInput] = React.useState('');
-  const [sending, setSending] = React.useState(false);
   const [messages, setMessages] = React.useState<ChatMessage[]>([]);
   const [lastSources, setLastSources] = React.useState<AgentTeachingChatSource[]>([]);
+
+  const sending = chatMutation.isPending;
 
   const selectedAgent: AgentTeachingAgentRecord | null =
     selectedAgentId
@@ -39,30 +40,18 @@ export function AgentTeachingChatPage(): React.JSX.Element {
     const content = input.trim();
     if (!content) return;
 
-    setSending(true);
     const nextMessages: ChatMessage[] = [...messages, { role: 'user', content }];
     setMessages(nextMessages);
     setInput('');
     setLastSources([]);
 
     try {
-      const res = await fetch('/api/agentcreator/teaching/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agentId: selectedAgentId, messages: nextMessages }),
-      });
-      if (!res.ok) {
-        const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error || 'Chat failed.');
-      }
-      const data = (await res.json()) as ChatResponse;
+      const data = await chatMutation.mutateAsync({ agentId: selectedAgentId, messages: nextMessages });
       setMessages((prev: ChatMessage[]) => [...prev, { role: 'assistant', content: data.message }]);
       setLastSources(Array.isArray(data.sources) ? data.sources : []);
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Chat failed.', { variant: 'error' });
       setMessages((prev: ChatMessage[]) => [...prev, { role: 'assistant', content: 'Error: failed to generate response.' }]);
-    } finally {
-      setSending(false);
     }
   };
 

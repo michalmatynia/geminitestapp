@@ -53,3 +53,25 @@ export function useRunAnalyticsInsight() {
     },
   });
 }
+
+export function useTrackEventMutation() {
+  return useMutation({
+    mutationFn: async (payload: Record<string, unknown>) => {
+      const body = JSON.stringify(payload);
+      
+      if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
+        const blob = new Blob([body], { type: 'application/json' });
+        const ok = navigator.sendBeacon('/api/analytics/events', blob);
+        if (ok) return Promise.resolve();
+      }
+
+      await fetch('/api/analytics/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        credentials: 'include',
+        keepalive: true,
+      });
+    },
+  });
+}

@@ -3,9 +3,9 @@ import {
   DEFAULT_AGENT_PERSONA_SETTINGS,
 } from '@/features/ai/agentcreator/constants/personas';
 import type { AgentPersona } from '@/features/ai/agentcreator/types';
-import type { RuntimePortValues } from '@/shared/types/ai-paths';
-import type { NodeHandler, NodeHandlerContext } from '@/shared/types/ai-paths-runtime';
-import type { ChatMessage } from '@/shared/types/chatbot';
+import type { RuntimePortValues } from '@/shared/types/domain/ai-paths';
+import type { NodeHandler, NodeHandlerContext } from '@/shared/types/domain/ai-paths-runtime';
+import type { ChatMessage } from '@/shared/types/domain/chatbot';
 
 import { agentApi, learnerAgentsApi, settingsApi } from '../../../api';
 import {

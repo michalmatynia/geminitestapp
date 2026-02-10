@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { useMemo } from 'react';
 
 import { JobsProvider, useJobsContext } from '@/features/jobs/context/JobsContext';
-import type { ListingJob, ProductJob } from '@/shared/types/listing-jobs';
+import type { ListingJob, ProductJob } from '@/shared/types/domain/listing-jobs';
 import { Button, SharedModal, ListPanel, SectionHeader, StatusBadge, Pagination, DynamicFilters, RefreshButton, type FilterField } from '@/shared/ui';
 
 import { JobTable, type JobRowData } from './JobTable';

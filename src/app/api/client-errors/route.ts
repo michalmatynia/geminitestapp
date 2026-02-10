@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ErrorSystem } from '@/features/observability/services/error-system';
 import type { ErrorContext } from '@/features/observability/services/error-system';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 export const runtime = 'nodejs';
 

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { clearOfflineMutationQueue } from '@/shared/hooks/useOfflineMutation';
+import { clearOfflineMutationQueue } from '@/shared/hooks/offline/useOfflineMutation';
 
 export type OfflineQueueItem = {
   id: string;

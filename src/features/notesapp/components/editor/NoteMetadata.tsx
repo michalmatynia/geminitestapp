@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 import React from 'react';
 
 import { useNoteFormContext } from '@/features/notesapp/context/NoteFormContext';
-import type { TagRecord, NoteWithRelations } from '@/shared/types/notes';
+import type { TagRecord, NoteWithRelations } from '@/shared/types/domain/notes';
 import { Button, Input, Label, Checkbox, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
 

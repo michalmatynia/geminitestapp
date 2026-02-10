@@ -11,7 +11,7 @@ import type { ProductRecord, ProductWithImages } from '@/features/products/types
 import { validateProductUpdateMiddleware } from '@/features/products/validations/middleware';
 import { badRequestError, notFoundError, payloadTooLargeError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 import { idParamSchema } from '@/shared/validations/api-schemas';
 
 const isLikelyPayloadTooLarge = (error: unknown): boolean => {

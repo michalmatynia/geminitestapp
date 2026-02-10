@@ -10,7 +10,7 @@ import {
 } from '@/features/ai/image-studio/server/slot-repository';
 import { badRequestError, quotaExceededError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const sanitizeProjectId = (value: string): string =>
   value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');

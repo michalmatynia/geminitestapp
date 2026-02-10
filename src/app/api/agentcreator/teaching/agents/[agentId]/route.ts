@@ -7,8 +7,8 @@ import { deleteTeachingAgent, getTeachingAgentById, upsertTeachingAgent } from '
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { AgentTeachingAgentRecord } from '@/shared/types/agent-teaching';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { AgentTeachingAgentRecord } from '@/shared/types/domain/agent-teaching';
 
 const updateAgentSchema = z.object({
   name: z.string().trim().min(1).optional(),

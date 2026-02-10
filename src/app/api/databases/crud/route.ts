@@ -7,7 +7,7 @@ import { Client } from 'pg';
 import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 // Validate table/collection name to prevent injection
 const SAFE_NAME_RE = /^[a-zA-Z_][a-zA-Z0-9_]*$/;

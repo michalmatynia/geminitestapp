@@ -7,7 +7,7 @@ import { auth } from '@/features/auth/server';
 import { authError, badRequestError } from '@/shared/errors/app-error';
 import { apiHandler, getQueryParams } from '@/shared/lib/api/api-handler';
 import type { AnalyticsScope } from '@/shared/types';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const RANGE_VALUES = ['24h', '7d', '30d'] as const;
 type AnalyticsRange = (typeof RANGE_VALUES)[number];

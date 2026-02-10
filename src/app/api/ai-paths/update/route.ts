@@ -17,8 +17,8 @@ import { getProductDataProvider } from '@/features/products/services/product-pro
 import { badRequestError, notFoundError, validationError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
-import type { ApiHandlerContext } from '@/shared/types/api';
-import { NoteUpdateInput } from '@/shared/types/notes';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
+import { NoteUpdateInput } from '@/shared/types/domain/notes';
 import { removeUndefined } from '@/shared/utils';
 
 const updateSchema = z.object({

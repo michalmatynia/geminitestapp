@@ -11,7 +11,7 @@ import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-r
 import { removePathRunQueueEntries } from '@/features/jobs/workers/aiPathRunQueue';
 import { notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 async function GET_handler(
   _req: NextRequest,

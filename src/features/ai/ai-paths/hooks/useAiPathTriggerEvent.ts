@@ -27,7 +27,7 @@ import type {
   Edge,
   PathConfig,
   PathMeta,
-} from '@/shared/types/ai-paths';
+} from '@/shared/types/domain/ai-paths';
 import { useToast } from '@/shared/ui';
 import { logger } from '@/shared/utils/logger';
 
@@ -104,22 +104,8 @@ const loadPathConfigsFromSettings = async (
       }
     }
     if (Object.keys(configs).length === 0) {
-      const legacyRaw = map.get(`${PATH_CONFIG_PREFIX}default`) ?? map.get('ai_paths_config');
-      if (legacyRaw) {
-        try {
-          const parsedConfig = JSON.parse(legacyRaw) as PathConfig;
-          const fallback = createDefaultPathConfig(parsedConfig.id ?? 'default');
-          configs[fallback.id] = {
-            ...fallback,
-            ...parsedConfig,
-            id: parsedConfig.id ?? fallback.id,
-            name: parsedConfig.name || fallback.name,
-          };
-        } catch {
-          const fallback = createDefaultPathConfig('default');
-          configs[fallback.id] = fallback;
-        }
-      }
+      const fallback = createDefaultPathConfig('default');
+      configs[fallback.id] = fallback;
     }
   } catch {
     return { configs: {}, settingsPathOrder: [] };

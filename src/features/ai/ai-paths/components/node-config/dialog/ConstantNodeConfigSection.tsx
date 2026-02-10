@@ -6,6 +6,7 @@
 
 import type { ConstantConfig } from '@/features/ai/ai-paths/lib';
 import { Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
 export function ConstantNodeConfigSection(): React.JSX.Element | null {

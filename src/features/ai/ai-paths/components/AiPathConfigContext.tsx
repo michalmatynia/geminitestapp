@@ -41,6 +41,7 @@ export interface AiPathConfigData {
   ) => Promise<void>;
   handleRunSimulation: (node: AiNode) => void | Promise<void>;
   clearRuntimeForNode?: ((nodeId: string) => void) | undefined;
+  clearNodeCache?: ((nodeId: string) => void) | undefined;
   clearNodeHistory?: ((nodeId: string) => void | Promise<void>) | undefined;
   onSendToAi?: ((databaseNodeId: string, prompt: string) => Promise<void>) | undefined;
   sendingToAi?: boolean | undefined;
@@ -93,6 +94,7 @@ export function AiPathConfigProvider({
     props.handleFetchUpdaterSample,
     props.handleRunSimulation,
     props.clearRuntimeForNode,
+    props.clearNodeCache,
     props.clearNodeHistory,
     props.onSendToAi,
     props.sendingToAi,

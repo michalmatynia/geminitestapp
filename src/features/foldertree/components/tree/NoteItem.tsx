@@ -3,7 +3,7 @@
 import { FileText, Edit2, Copy, Trash2, FilePlus } from 'lucide-react';
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 
-import type { NoteRecord } from '@/shared/types/notes';
+import type { NoteRecord } from '@/shared/types/domain/notes';
 import { TreeRow, TreeActionButton, TreeActionSlot, useToast, Input, TreeContextMenu, type TreeContextMenuItem } from '@/shared/ui';
 import { getNoteDragId, hasDragType, setNoteDragData, DRAG_KEYS } from '@/shared/utils/drag-drop';
 

@@ -5,6 +5,7 @@
 
 import type { RouterConfig } from '@/features/ai/ai-paths/lib';
 import { Input, Label, UnifiedSelect } from '@/shared/ui';
+
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
 export function RouterNodeConfigSection(): React.JSX.Element | null {

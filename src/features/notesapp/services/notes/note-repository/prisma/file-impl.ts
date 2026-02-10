@@ -3,7 +3,7 @@ import 'server-only';
 import { Prisma } from '@prisma/client';
 
 import prisma from '@/shared/lib/db/prisma';
-import type { NoteFileRecord, NoteFileCreateInput } from '@/shared/types/notes';
+import type { NoteFileRecord, NoteFileCreateInput } from '@/shared/types/domain/notes';
 
 export const createNoteFile = async (
   data: NoteFileCreateInput

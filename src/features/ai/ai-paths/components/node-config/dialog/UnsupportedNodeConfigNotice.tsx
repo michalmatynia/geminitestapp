@@ -5,6 +5,8 @@ import type { AiNode } from '@/features/ai/ai-paths/lib';
 const SUPPORTED_NODE_TYPES = new Set<AiNode['type']>([
   'trigger',
   'simulation',
+  'audio_oscillator',
+  'audio_speaker',
   'context',
   'parser',
   'regex',

@@ -31,10 +31,6 @@ export type Template = {
   updatedAt: string;
 };
 
-// Legacy aliases for backwards compatibility
-export type ImportTemplateMapping = TemplateMapping;
-export type ImportTemplate = Template;
-
 const SETTINGS_KEY = 'base_import_templates';
 const SAMPLE_PRODUCT_KEY = 'base_import_sample_product_id';
 const SAMPLE_INVENTORY_KEY = 'base_import_sample_inventory_id';
@@ -582,7 +578,7 @@ export const setImportParameterCache = async (input: {
 
 export const getImportTemplate = async (
   id: string
-): Promise<ImportTemplate | null> => {
+): Promise<Template | null> => {
   const templates = await listImportTemplates();
   return templates.find((template: Template) => template.id === id) ?? null;
 };
@@ -591,7 +587,7 @@ export const createImportTemplate = async (input: {
   name: string;
   description?: string | null;
   mappings?: TemplateMapping[];
-}): Promise<ImportTemplate> => {
+}): Promise<Template> => {
   const templates = await listImportTemplates();
   const now = new Date().toISOString();
   const template: Template = {
@@ -614,7 +610,7 @@ export const updateImportTemplate = async (
     description: string | null | undefined;
     mappings: TemplateMapping[] | undefined;
   }>
-): Promise<ImportTemplate | null> => {
+): Promise<Template | null> => {
   const templates = await listImportTemplates();
   const index = templates.findIndex((template: Template) => template.id === id);
   if (index === -1) return null;

@@ -74,7 +74,7 @@ export interface PresetsActions {
   normalizeDbNodePreset: (raw: Partial<DbNodePreset>) => DbNodePreset;
   normalizeClusterPreset: (raw: Partial<ClusterPreset>) => ClusterPreset;
 
-  // Persistence handlers (legacy bridge)
+  // Persistence handlers (injected by orchestrator/runtime layer)
   setPresetPersistenceHandlers: (handlers: PresetPersistenceHandlers) => void;
   saveDbQueryPresets: (nextPresets: DbQueryPreset[]) => Promise<void>;
   saveDbNodePresets: (nextPresets: DbNodePreset[]) => Promise<void>;

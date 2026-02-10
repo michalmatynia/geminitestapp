@@ -12,8 +12,8 @@ import {
   internalError,
 } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
-import type { ChatMessage } from '@/shared/types/chatbot';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ChatMessage } from '@/shared/types/domain/chatbot';
 
 export const runtime = 'nodejs';
 

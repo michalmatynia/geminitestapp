@@ -5,7 +5,7 @@ import type { CatalogRecord } from '@/features/products/types';
 import type { ProductMigrationDirection as MigrationDirection, ProductMigrationBatchResult as MigrationBatchResult } from '@/features/products/types';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { ImageFileRecord } from '@/shared/types/files';
+import type { ImageFileRecord } from '@/shared/types/domain/files';
 
 import type { WithId } from 'mongodb';
 

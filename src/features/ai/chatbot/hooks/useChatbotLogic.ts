@@ -15,7 +15,7 @@ import {
   ChatbotSettingsPayload,
   ChatbotDebugState,
   ChatSession,
-} from '@/shared/types/chatbot';
+} from '@/shared/types/domain/chatbot';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

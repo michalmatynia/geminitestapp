@@ -37,7 +37,7 @@ import type {
   ThemeRecord,
   ThemeCreateInput,
   ThemeUpdateInput,
-} from '@/shared/types/notes';
+} from '@/shared/types/domain/notes';
 
 import type { Filter, WithId, UpdateFilter } from 'mongodb';
 

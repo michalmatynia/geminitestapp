@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { getActivityRepository } from '@/features/observability/server';
 import type { ActivityFilters } from '@/features/observability/types/services/activity-repository';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 import { commonListQuerySchema } from '@/shared/validations/api-schemas';
 
 type ListQuery = z.infer<typeof commonListQuerySchema>;

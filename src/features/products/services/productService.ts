@@ -327,7 +327,7 @@ async function updateProduct(
     if (formData.has('catalogIds')) {
       await updateProductCatalogs(id, catalogIds);
     }
-    if (formData.has('categoryId') || formData.has('categoryIds')) {
+    if (formData.has('categoryId')) {
       await updateProductCategory(id, categoryId);
     }
     if (formData.has('tagIds')) {
@@ -596,15 +596,8 @@ function normalizeCategoryId(formData: FormData): string | null {
   if (typeof direct === 'string') {
     const trimmed = direct.trim();
     if (trimmed) return trimmed;
-    return null;
   }
-  const legacyEntries = formData.getAll('categoryIds');
-  const normalized = legacyEntries
-    .map((entry: FormDataEntryValue): string =>
-      typeof entry === 'string' ? entry.trim() : '',
-    )
-    .filter((entry: string): boolean => entry.length > 0);
-  return normalized[0] ?? null;
+  return null;
 }
 
 function normalizeTagIds(entries: FormDataEntryValue[]): string[] {

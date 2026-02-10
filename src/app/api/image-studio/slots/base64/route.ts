@@ -5,7 +5,7 @@ import { z } from 'zod';
 
 import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const payloadSchema = z.object({
   url: z.string().trim().min(1),

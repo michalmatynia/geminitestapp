@@ -1,4 +1,4 @@
-import type { AiNode, Edge, ConnectionValidation } from '@/shared/types/ai-paths';
+import type { AiNode, Edge, ConnectionValidation } from '@/shared/types/domain/ai-paths';
 
 import {
   CANVAS_HEIGHT,
@@ -145,6 +145,8 @@ const PROCESSING_NODE_TYPES = new Set<string>([
   'model',
   'agent',
   'learner_agent',
+  'audio_oscillator',
+  'audio_speaker',
   'iterator',
   'database',
   'poll',

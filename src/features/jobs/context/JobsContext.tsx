@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useMemo, ReactNode } from '
 import { useCancelListingMutation, useChatbotJobMutation, useClearChatbotJobsMutation } from '@/features/jobs/hooks/useJobMutations';
 import { useIntegrationJobs, useChatbotJobs } from '@/features/jobs/hooks/useJobQueries';
 import { logClientError } from '@/features/observability';
-import type { ListingJob, ProductJob } from '@/shared/types/listing-jobs';
+import type { ListingJob, ProductJob } from '@/shared/types/domain/listing-jobs';
 
 export type JobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'canceled' | 'success' | 'listed' | 'deleted' | 'removed' | 'processing' | 'in_progress';
 

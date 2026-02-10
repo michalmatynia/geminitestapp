@@ -26,7 +26,7 @@ import type {
   PathDebugEntry,
   Edge,
   RuntimeState,
-} from '@/shared/types/ai-paths';
+} from '@/shared/types/domain/ai-paths';
 import { useToast } from '@/shared/ui';
 import { logger } from '@/shared/utils/logger';
 

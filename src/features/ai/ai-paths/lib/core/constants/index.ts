@@ -1,4 +1,4 @@
-import type { AiNode, DbQueryConfig, Edge, NodeType } from '@/shared/types/ai-paths';
+import type { AiNode, DbQueryConfig, Edge, NodeType } from '@/shared/types/domain/ai-paths';
 
 export const NODE_WIDTH = 340;
 export const NODE_MIN_HEIGHT = 230;
@@ -35,6 +35,10 @@ export const CONTEXT_INPUT_PORTS = ['context'];
 export const CONTEXT_OUTPUT_PORTS = ['context', 'entityId', 'entityType', 'entityJson'];
 export const SIMULATION_INPUT_PORTS = ['trigger'];
 export const SIMULATION_OUTPUT_PORTS = ['context', 'entityId', 'entityType', 'productId'];
+export const AUDIO_OSCILLATOR_INPUT_PORTS = ['frequency', 'waveform', 'gain', 'durationMs', 'trigger'];
+export const AUDIO_OSCILLATOR_OUTPUT_PORTS = ['audioSignal', 'frequency', 'waveform', 'gain', 'durationMs'];
+export const AUDIO_SPEAKER_INPUT_PORTS = ['audioSignal', 'frequency', 'waveform', 'gain', 'durationMs', 'trigger'];
+export const AUDIO_SPEAKER_OUTPUT_PORTS = ['status', 'audioSignal'];
 export const DESCRIPTION_OUTPUT_PORTS = ['description_en'];
 export const BUNDLE_INPUT_PORTS = [
   'context',
@@ -365,6 +369,11 @@ export const VIEWER_INPUT_PORTS = [
   'valid',
   'errors',
   'value',
+  'audioSignal',
+  'frequency',
+  'waveform',
+  'gain',
+  'durationMs',
   'queryCallback',
   'aiPrompt',
 ];
@@ -449,6 +458,11 @@ export const PORT_COMPATIBILITY: Record<string, string[]> = {
     'callback',
     'regexCallback',
   ],
+  audioSignal: ['audioSignal', 'value', 'result', 'bundle'],
+  frequency: ['frequency', 'value', 'result'],
+  waveform: ['waveform', 'value', 'result'],
+  gain: ['gain', 'value', 'result'],
+  durationMs: ['durationMs', 'value', 'result'],
   query: ['query', 'value', 'result'],
   jobId: ['jobId', 'value', 'result', 'callback'],
   status: ['status', 'value', 'result', 'callback'],
@@ -539,6 +553,8 @@ export const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
     'poll',
     'database',
     'trigger',
+    'audio_oscillator',
+    'audio_speaker',
   ],
   mutator: [
     'validator',
@@ -584,14 +600,16 @@ export const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
     'poll',
     'database',
   ],
-  constant: ['math', 'template', 'viewer', 'bundle', 'compare', 'router', 'delay', 'poll', 'http', 'database'],
-  math: ['template', 'viewer', 'bundle', 'compare', 'router', 'delay', 'poll', 'http', 'database'],
+  math: ['template', 'viewer', 'bundle', 'compare', 'router', 'delay', 'poll', 'http', 'database', 'audio_oscillator', 'audio_speaker'],
+  audio_oscillator: ['audio_speaker', 'viewer', 'bundle', 'delay', 'router'],
+  audio_speaker: ['viewer', 'bundle', 'delay', 'notification'],
+  constant: ['math', 'template', 'viewer', 'bundle', 'compare', 'router', 'delay', 'poll', 'http', 'database', 'audio_oscillator', 'audio_speaker'],
   compare: ['gate', 'router', 'viewer', 'bundle', 'template', 'poll', 'database'],
-  gate: ['validator', 'viewer', 'prompt', 'ai_description', 'description_updater', 'bundle', 'template', 'router', 'delay', 'poll'],
-  router: ['viewer', 'bundle', 'template', 'prompt', 'model', 'agent', 'learner_agent', 'delay', 'poll', 'database'],
+  gate: ['validator', 'viewer', 'prompt', 'ai_description', 'description_updater', 'bundle', 'template', 'router', 'delay', 'poll', 'audio_oscillator', 'audio_speaker'],
+  router: ['viewer', 'bundle', 'template', 'prompt', 'model', 'agent', 'learner_agent', 'delay', 'poll', 'database', 'audio_oscillator', 'audio_speaker'],
   regex: ['viewer', 'bundle', 'template', 'prompt', 'model', 'agent', 'learner_agent', 'delay', 'poll', 'database'],
   iterator: ['viewer', 'bundle', 'template', 'prompt', 'model', 'agent', 'learner_agent', 'delay', 'poll', 'database', 'notification'],
-  delay: ['viewer', 'bundle', 'template', 'prompt', 'model', 'agent', 'learner_agent', 'validator', 'gate', 'poll', 'database'],
+  delay: ['viewer', 'bundle', 'template', 'prompt', 'model', 'agent', 'learner_agent', 'validator', 'gate', 'poll', 'database', 'audio_oscillator', 'audio_speaker'],
   poll: ['viewer', 'notification', 'bundle', 'template', 'prompt', 'model', 'agent', 'learner_agent', 'delay', 'database'],
   http: ['viewer', 'bundle', 'template', 'prompt', 'math', 'compare', 'poll', 'database'],
   database: ['viewer', 'bundle', 'template', 'prompt', 'mapper', 'validator', 'iterator', 'poll', 'notification', 'model', 'agent', 'learner_agent'],
@@ -612,6 +630,8 @@ export const typeStyles: Record<NodeType, { border: string; glow: string }> = {
   trigger: { border: 'border-lime-500/40', glow: 'shadow-lime-500/20' },
   simulation: { border: 'border-cyan-500/40', glow: 'shadow-cyan-500/20' },
   context: { border: 'border-emerald-500/40', glow: 'shadow-emerald-500/20' },
+  audio_oscillator: { border: 'border-violet-400/40', glow: 'shadow-violet-400/20' },
+  audio_speaker: { border: 'border-indigo-500/40', glow: 'shadow-indigo-500/20' },
   parser: { border: 'border-sky-500/40', glow: 'shadow-sky-500/20' },
   regex: { border: 'border-cyan-500/40', glow: 'shadow-cyan-500/20' },
   iterator: { border: 'border-amber-500/40', glow: 'shadow-amber-500/20' },

@@ -16,8 +16,8 @@ import { getImageFileRepository } from '@/features/files/server';
 import { getSettingValue } from '@/features/products/services/aiDescriptionService';
 import { badRequestError, configurationError, operationFailedError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
-import type { ImageFileRecord } from '@/shared/types/files';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ImageFileRecord } from '@/shared/types/domain/files';
 
 const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
 const publicRoot = path.join(process.cwd(), 'public');

@@ -1,8 +1,12 @@
-import type { NodeDefinition } from '@/shared/types/ai-paths';
+import type { NodeDefinition } from '@/shared/types/domain/ai-paths';
 
 import {
   AGENT_INPUT_PORTS,
   AGENT_OUTPUT_PORTS,
+  AUDIO_OSCILLATOR_INPUT_PORTS,
+  AUDIO_OSCILLATOR_OUTPUT_PORTS,
+  AUDIO_SPEAKER_INPUT_PORTS,
+  AUDIO_SPEAKER_OUTPUT_PORTS,
   LEARNER_AGENT_INPUT_PORTS,
   LEARNER_AGENT_OUTPUT_PORTS,
   BUNDLE_INPUT_PORTS,
@@ -70,6 +74,36 @@ export const palette: NodeDefinition[] = [
     description: 'Simulate a modal action by Entity ID.',
     inputs: SIMULATION_INPUT_PORTS,
     outputs: SIMULATION_OUTPUT_PORTS,
+  },
+  {
+    type: 'audio_oscillator',
+    title: 'Audio Oscillator',
+    description: 'Generate a waveform signal (sine/square/triangle/sawtooth).',
+    inputs: AUDIO_OSCILLATOR_INPUT_PORTS,
+    outputs: AUDIO_OSCILLATOR_OUTPUT_PORTS,
+    config: {
+      audioOscillator: {
+        waveform: 'sine',
+        frequencyHz: 440,
+        gain: 0.25,
+        durationMs: 400,
+      },
+    },
+  },
+  {
+    type: 'audio_speaker',
+    title: 'Audio Speaker (Mono)',
+    description: 'Play incoming audio signals in local runtime.',
+    inputs: AUDIO_SPEAKER_INPUT_PORTS,
+    outputs: AUDIO_SPEAKER_OUTPUT_PORTS,
+    config: {
+      audioSpeaker: {
+        enabled: true,
+        autoPlay: true,
+        gain: 1,
+        stopPrevious: true,
+      },
+    },
   },
   {
     type: 'viewer',

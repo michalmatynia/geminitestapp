@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/ui';
+
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
 export function PollNodeConfigSection(): React.JSX.Element | null {
@@ -195,7 +196,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                   <SelectValue placeholder='Select provider' />
                 </SelectTrigger>
                 <SelectContent className='border-border bg-gray-900'>
-                  <SelectItem value='auto'>Auto (legacy)</SelectItem>
+                  <SelectItem value='auto'>Auto</SelectItem>
                   <SelectItem value='mongodb'>MongoDB</SelectItem>
                   <SelectItem value='prisma'>Prisma</SelectItem>
                 </SelectContent>

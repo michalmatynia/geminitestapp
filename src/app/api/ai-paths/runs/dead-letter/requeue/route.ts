@@ -13,7 +13,7 @@ import { resumePathRun } from '@/features/ai/ai-paths/services/path-run-service'
 import { startAiPathRunQueue } from '@/features/jobs/server';
 import { parseJsonBody } from '@/features/products/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const requeueSchema = z.object({
   runIds: z.array(z.string().trim().min(1)).optional(),

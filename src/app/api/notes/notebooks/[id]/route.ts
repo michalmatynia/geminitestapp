@@ -7,7 +7,7 @@ import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { UpdateNotebookDto } from '@/shared/dtos/notesapp';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 import { removeUndefined } from '@/shared/utils';
 
 /**

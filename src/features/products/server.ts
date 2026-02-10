@@ -41,7 +41,5 @@ export {
   type ValidationError,
   type ValidationMetadata,
   type FieldValidationResult,
-  type ProductCreateData,
-  type ProductUpdateData,
 } from './validations';
 export * from './utils';

@@ -1,4 +1,4 @@
-// Re-export DTOs as types for backward compatibility
+// DTO type exports
 export type {
   IntegrationDto,
   IntegrationConnectionDto,
@@ -15,7 +15,7 @@ export type {
   BaseCategoryDto as BaseCategory,
 } from '@/shared/dtos';
 
-// Legacy types for backward compatibility
+// Integration domain record types
 export type IntegrationRecord = {
   id: string;
   name: string;

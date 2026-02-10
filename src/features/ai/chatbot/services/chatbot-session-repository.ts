@@ -8,7 +8,7 @@ import type {
   CreateSessionInput,
   UpdateSessionInput,
   ChatSessionDocument,
-} from '@/shared/types/chatbot';
+} from '@/shared/types/domain/chatbot';
 
 const COLLECTION_NAME = 'chatbot_sessions';
 

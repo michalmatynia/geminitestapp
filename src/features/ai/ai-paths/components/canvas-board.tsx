@@ -86,8 +86,11 @@ const formatRuntimeStatusLabel = (status: string): string =>
     .join(' ');
 
 const runtimeStatusBadgeClassName = (status: string): string => {
-  if (status === 'completed' || status === 'cached') {
+  if (status === 'completed') {
     return 'border-emerald-400/60 bg-emerald-500/15 text-emerald-200';
+  }
+  if (status === 'cached') {
+    return 'border-teal-400/60 bg-teal-500/15 text-teal-200';
   }
   if (status === 'failed' || status === 'canceled' || status === 'timeout') {
     return 'border-rose-500/60 bg-rose-500/15 text-rose-200';
@@ -1313,6 +1316,11 @@ export function CanvasBoard({
                   <div
                     className={`inline-flex w-fit items-center gap-1 rounded-full border px-2 py-[2px] text-[9px] uppercase tracking-wide ${runtimeStatusBadgeClassName(runtimeNodeStatus ?? '')}`}
                   >
+                    {runtimeNodeStatus === 'cached' && (
+                      <svg className='h-2.5 w-2.5 shrink-0' viewBox='0 0 16 16' fill='currentColor'>
+                        <path d='M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2m3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2' />
+                      </svg>
+                    )}
                     {runtimeNodeStatusLabel}
                   </div>
                 )}

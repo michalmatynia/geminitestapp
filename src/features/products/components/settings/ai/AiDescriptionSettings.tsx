@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo } from 'react';
 
 import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
 import { logClientError } from '@/features/observability';
+import { getProductById, getProducts } from '@/features/products/api/products';
 import { useAiConfig, useUpdateAiConfigMutation } from '@/features/products/hooks/useAiConfigQueries';
 import { useAiJobStatus, useEnqueueAiJob, useBulkAiJobs } from '@/features/products/hooks/useProductAiJobs';
 import { ProductWithImages, ProductImageRecord } from '@/features/products/types';
@@ -130,17 +131,13 @@ export function AiDescriptionSettings(): React.JSX.Element {
       
       // First find the product
       let product: ProductWithImages | null = null;
-      const productRes = await fetch(`/api/products/${testProductId}`);
-      
-      if (productRes.ok) {
-        product = (await productRes.json()) as ProductWithImages;
-      } else {
-        const skuRes = await fetch(`/api/products?sku=${testProductId}`);
-        if (skuRes.ok) {
-          const products = (await skuRes.json()) as ProductWithImages[];
-          if (Array.isArray(products) && products.length > 0) {
-            product = products[0] || null;
-          }
+      try {
+        product = await getProductById(testProductId);
+      } catch {
+        // Fallback to SKU
+        const products = await getProducts({ sku: testProductId });
+        if (Array.isArray(products) && products.length > 0) {
+          product = products[0] || null;
         }
       }
 

@@ -7,7 +7,7 @@ import type { CapturedLog } from '@/features/integrations/services/exports/log-c
 import type { ProductListingWithDetails } from '@/features/integrations/types/listings';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { ProductJob } from '@/shared/types/listing-jobs';
+import type { ProductJob } from '@/shared/types/domain/listing-jobs';
 
 export type ExportToBaseVariables = {
   connectionId: string;

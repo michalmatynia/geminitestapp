@@ -4,7 +4,7 @@ import type {
   CategoryWithChildren,
   ThemeRecord,
   NotebookRecord,
-} from '@/shared/types/notes';
+} from '@/shared/types/domain/notes';
 
 import type React from 'react';
 import type { RefObject } from 'react';

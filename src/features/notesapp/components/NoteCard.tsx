@@ -12,7 +12,7 @@ import type {
   NoteRelationWithSource,
   NoteFileRecord,
   NoteWithRelations,
-} from '@/shared/types/notes';
+} from '@/shared/types/domain/notes';
 import { BreadcrumbScroller, Button, CopyButton, Tag, Badge, SectionPanel } from '@/shared/ui';
 import { cn, setNoteDragData, sanitizeHtml } from '@/shared/utils';
 

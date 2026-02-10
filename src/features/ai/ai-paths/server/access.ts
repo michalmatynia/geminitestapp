@@ -3,7 +3,7 @@ import 'server-only';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { auth } from '@/features/auth/server';
 import { forbiddenError, authError, rateLimitedError } from '@/shared/errors/app-error';
-import type { AiPathRunRecord, AiPathRunStatus } from '@/shared/types/ai-paths';
+import type { AiPathRunRecord, AiPathRunStatus } from '@/shared/types/domain/ai-paths';
 
 import type { NextRequest } from 'next/server';
 

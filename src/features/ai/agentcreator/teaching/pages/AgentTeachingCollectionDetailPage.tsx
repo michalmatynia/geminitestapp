@@ -5,11 +5,11 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import React from 'react';
 
-import type { AgentTeachingChatSource, AgentTeachingEmbeddingCollectionRecord, AgentTeachingEmbeddingDocumentListItem } from '@/shared/types/agent-teaching';
+import type { AgentTeachingChatSource, AgentTeachingEmbeddingCollectionRecord, AgentTeachingEmbeddingDocumentListItem } from '@/shared/types/domain/agent-teaching';
 import { Button, ConfirmDialog, Input, Label, SectionHeader, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast } from '@/shared/ui';
 
 import { useAgentTeachingContext } from '../context/AgentTeachingContext';
-import { useAddEmbeddingDocumentMutation, useDeleteEmbeddingDocumentMutation, useEmbeddingDocuments } from '../hooks/useAgentTeaching';
+import { useAddEmbeddingDocumentMutation, useDeleteEmbeddingDocumentMutation, useEmbeddingDocuments, useSearchEmbeddingCollectionMutation } from '../hooks/useAgentTeaching';
 
 export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -25,6 +25,7 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
   const { data: docsResult, isLoading: loadingDocs } = useEmbeddingDocuments(collectionId);
   const { mutateAsync: addDoc, isPending: adding } = useAddEmbeddingDocumentMutation();
   const { mutateAsync: deleteDoc, isPending: deleting } = useDeleteEmbeddingDocumentMutation();
+  const searchMutation = useSearchEmbeddingCollectionMutation();
 
   const [text, setText] = React.useState('');
   const [title, setTitle] = React.useState('');
@@ -34,11 +35,11 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [searchTopK, setSearchTopK] = React.useState(8);
   const [searchMinScore, setSearchMinScore] = React.useState(0.15);
-  const [searching, setSearching] = React.useState(false);
   const [searchResults, setSearchResults] = React.useState<AgentTeachingChatSource[]>([]);
   const [searchError, setSearchError] = React.useState<string | null>(null);
 
   const isLoading = loadingCollections || loadingDocs;
+  const searching = searchMutation.isPending;
 
   const handleAdd = async (): Promise<void> => {
     if (!collectionId) return;
@@ -72,32 +73,18 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
     if (!collectionId) return;
     const queryText = searchQuery.trim();
     if (!queryText) return;
-    setSearching(true);
     setSearchError(null);
     try {
-      const res = await fetch(
-        `/api/agentcreator/teaching/collections/${encodeURIComponent(collectionId)}/search`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            queryText,
-            topK: searchTopK,
-            minScore: searchMinScore,
-          }),
-        }
-      );
-      if (!res.ok) {
-        const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error || 'Search failed.');
-      }
-      const data = (await res.json()) as { sources?: AgentTeachingChatSource[] };
-      setSearchResults(Array.isArray(data.sources) ? data.sources : []);
+      const results = await searchMutation.mutateAsync({
+        collectionId,
+        queryText,
+        topK: searchTopK,
+        minScore: searchMinScore,
+      });
+      setSearchResults(results);
     } catch (error) {
       setSearchError(error instanceof Error ? error.message : 'Search failed.');
       setSearchResults([]);
-    } finally {
-      setSearching(false);
     }
   };
 

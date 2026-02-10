@@ -7,7 +7,7 @@ import { decryptSecret, encryptSecret } from '@/features/integrations/server';
 import { fetchBaseInventories } from '@/features/integrations/server';
 import { mapStatusToAppError } from '@/shared/errors/error-mapper';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 type TestLogEntry = {
   step: string;

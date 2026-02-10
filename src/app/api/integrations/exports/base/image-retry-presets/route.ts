@@ -10,7 +10,7 @@ import {
 } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const transformSchema = z.object({
   forceJpeg: z.boolean().optional(),

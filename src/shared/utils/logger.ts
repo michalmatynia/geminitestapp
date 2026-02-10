@@ -20,35 +20,9 @@ const formatMessage = (level: LogLevel, message: string, _context?: Record<strin
 export const logger = {
   info: (message: string, context?: Record<string, unknown>): void => {
     console.info(formatMessage('info', message, context), context || '');
-    if (typeof window === 'undefined') {
-      void (async (): Promise<void> => {
-        try {
-          const { logSystemEvent } = await import('@/features/observability/server');
-          await logSystemEvent({
-            level: 'info',
-            message,
-            source: 'shared-logger',
-            context: context ?? null,
-          });
-        } catch { /* ignore */ }
-      })();
-    }
   },
   warn: (message: string, context?: Record<string, unknown>): void => {
     console.warn(formatMessage('warn', message, context), context || '');
-    if (typeof window === 'undefined') {
-      void (async (): Promise<void> => {
-        try {
-          const { logSystemEvent } = await import('@/features/observability/server');
-          await logSystemEvent({
-            level: 'warn',
-            message,
-            source: 'shared-logger',
-            context: context ?? null,
-          });
-        } catch { /* ignore */ }
-      })();
-    }
   },
   error: (message: string, error?: unknown, context?: Record<string, unknown>): void => {
     const combinedContext = { 
@@ -66,22 +40,6 @@ export const logger = {
           logClientError(err, { context: { source: 'shared-logger', message, ...combinedContext } });
         } catch {
           // Fallback if logClientError fails or import fails
-        }
-      })();
-    } else {
-      // Server-side integration
-      void (async (): Promise<void> => {
-        try {
-          const { logSystemEvent } = await import('@/features/observability/server');
-          await logSystemEvent({
-            level: 'error',
-            message,
-            source: 'shared-logger',
-            error,
-            context: combinedContext,
-          });
-        } catch {
-          // Fallback if logSystemEvent fails or import fails
         }
       })();
     }

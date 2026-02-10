@@ -9,7 +9,7 @@ import { z } from 'zod';
 import { getImageFileRepository } from '@/features/files/server';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');

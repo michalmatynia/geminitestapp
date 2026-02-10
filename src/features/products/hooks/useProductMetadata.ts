@@ -15,7 +15,7 @@ import type {
 } from '@/features/products/types';
 import type { ProductFormData } from '@/features/products/types';
 import { api } from '@/shared/lib/api-client';
-import type { Language } from '@/shared/types/internationalization';
+import type { Language } from '@/shared/types/domain/internationalization';
 
 import type { UseFormSetValue, UseFormGetValues } from 'react-hook-form';
 

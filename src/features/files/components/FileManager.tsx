@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { ImageFileSelection } from '@/shared/types/files';
+import type { ImageFileSelection } from '@/shared/types/domain/files';
 
 import { FileManagerProvider } from '../contexts/FileManagerContext';
 import { FileManagerBulkActions } from './file-manager/FileManagerBulkActions';

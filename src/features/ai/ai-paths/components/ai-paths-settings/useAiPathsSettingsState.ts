@@ -49,7 +49,7 @@ import {
 } from '@/features/ai/ai-paths/lib';
 import { logClientError } from '@/features/observability';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import type { AiTriggerButtonRecord } from '@/shared/types/ai-trigger-buttons';
+import type { AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
 import { useToast } from '@/shared/ui';
 
 import { DOCS_DESCRIPTION_SNIPPET, DOCS_JOBS_SNIPPET, DOCS_OVERVIEW_SNIPPET, DOCS_WIRING_SNIPPET } from './docs-snippets';
@@ -296,6 +296,7 @@ export interface UseAiPathsSettingsStateReturn {
   runtimeNodeStatuses: AiPathRuntimeNodeStatusMap;
   runtimeEvents: AiPathRuntimeEvent[];
   clearRuntimeForNode: (nodeId: string) => void;
+  clearNodeCache: (nodeId: string) => void;
   handleSendToAi: (nodeId: string, prompt: string) => Promise<void>;
   sendingToAi: boolean;
   dbQueryPresets: DbQueryPreset[];
@@ -1076,6 +1077,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     runStatus: runtimeRunStatus,
     runtimeNodeStatuses,
     runtimeEvents,
+    clearNodeCache,
     handleSendToAi,
     sendingToAi,
   } = useAiPathsRuntime({
@@ -2041,6 +2043,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     handleFetchUpdaterSample,
     handleRunSimulation: (node: AiNode, triggerEvent?: string): void => { void handleRunSimulation(node, triggerEvent); },
     clearRuntimeForNode,
+    clearNodeCache,
     handleSendToAi,
     sendingToAi,
     handlePauseActiveRun,

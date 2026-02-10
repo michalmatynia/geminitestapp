@@ -8,6 +8,7 @@ import { IconSelector, ICON_LIBRARY_MAP } from '@/features/icons';
 import { CreateProductDraftInput, UpdateProductDraftInput } from '@/features/products';
 import type { CatalogRecord } from '@/features/products';
 import type { ProductCategoryDto, ProductTag, ProductParameter, ProductParameterValue, Producer } from '@/features/products';
+import { getCategoriesFlat, getTags, getParameters } from '@/features/products/api/settings';
 import { useCatalogs, useProducers } from '@/features/products/hooks/useProductMetadata';
 import { AppModal, Button, Input, Label, Textarea, Tabs, TabsContent, TabsList, TabsTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -93,30 +94,21 @@ export function DraftCreator({
   const categoryQueries = useQueries({
     queries: selectedCatalogIds.map((id: string) => ({
       queryKey: ['categories', id],
-      queryFn: async (): Promise<ProductCategoryDto[]> => {
-        const res = await fetch(`/api/products/categories?catalogId=${id}`);
-        return (await res.json()) as ProductCategoryDto[];
-      }
+      queryFn: () => getCategoriesFlat(id),
     }))
   });
 
   const tagQueries = useQueries({
     queries: selectedCatalogIds.map((id: string) => ({
       queryKey: ['tags', id],
-      queryFn: async (): Promise<ProductTag[]> => {
-        const res = await fetch(`/api/products/tags?catalogId=${id}`);
-        return (await res.json()) as ProductTag[];
-      }
+      queryFn: () => getTags(id),
     }))
   });
 
   const parameterQueries = useQueries({
     queries: selectedCatalogIds.map((id: string) => ({
       queryKey: ['parameters', id],
-      queryFn: async (): Promise<ProductParameter[]> => {
-        const res = await fetch(`/api/products/parameters?catalogId=${id}`);
-        return (await res.json()) as ProductParameter[];
-      }
+      queryFn: () => getParameters(id),
     }))
   });
 

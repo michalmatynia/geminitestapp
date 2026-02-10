@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/features/products/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 interface FolderNode {
   name: string;
@@ -24,8 +24,7 @@ interface NoteImport {
 interface ImportRequest {
   notebookId: string;
   parentFolderId?: string | null | undefined;
-  structure?: FolderNode | undefined;
-  structures?: FolderNode[] | undefined;
+  structures: FolderNode[];
 }
 
 const noteImportSchema = z.object({
@@ -47,18 +46,8 @@ const importSchema: z.ZodSchema<ImportRequest> = z
   .object({
     notebookId: z.string().trim().min(1),
     parentFolderId: z.string().trim().min(1).nullable().optional(),
-    structure: folderNodeSchema.optional(),
-    structures: z.array(folderNodeSchema).optional(),
-  })
-  .refine(
-    (data) =>
-      Boolean(data.structure) ||
-      Boolean(data.structures && data.structures.length > 0),
-    {
-      message: 'Missing required field: structure or structures',
-      path: ['structures'],
-    }
-  );
+    structures: z.array(folderNodeSchema).min(1),
+  });
 
 async function createFolderStructure(
   node: FolderNode,
@@ -101,25 +90,13 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   if (!parsed.ok) {
     return parsed.response;
   }
-  const { notebookId, parentFolderId, structure, structures } = parsed.data;
+  const { notebookId, parentFolderId, structures } = parsed.data;
 
   const categoryMap = new Map<string, string>();
 
-  // Handle multiple folders
-  if (structures && structures.length > 0) {
-    for (const folderStructure of structures) {
-      await createFolderStructure(
-        folderStructure,
-        notebookId,
-        parentFolderId || null,
-        categoryMap
-      );
-    }
-  }
-  // Handle single folder (backward compatibility)
-  else if (structure) {
+  for (const folderStructure of structures) {
     await createFolderStructure(
-      structure,
+      folderStructure,
       notebookId,
       parentFolderId || null,
       categoryMap

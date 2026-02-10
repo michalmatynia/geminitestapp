@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { CurrencyOption, CountryOption, Language } from '@/shared/types/internationalization';
+import type { CurrencyOption, CountryOption, Language } from '@/shared/types/domain/internationalization';
 
 import { deleteCurrency, deleteCountry, deleteLanguage, saveCurrency, saveCountry, saveLanguage, type SaveCurrencyInput, type SaveCountryInput, type SaveLanguageInput } from '../api';
 

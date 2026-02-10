@@ -9,7 +9,7 @@ import {
   retryPathRunNode 
 } from '@/features/ai/ai-paths/services/path-run-service';
 import prisma from '@/shared/lib/db/prisma';
-import type { AiNode } from '@/shared/types/ai-paths';
+import type { AiNode } from '@/shared/types/domain/ai-paths';
 
 vi.mock('@/features/jobs/workers/aiPathRunQueue', () => ({
   enqueuePathRunJob: vi.fn().mockResolvedValue(undefined),

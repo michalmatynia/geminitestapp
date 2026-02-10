@@ -1,4 +1,4 @@
-import type { NodeType } from '@/shared/types/ai-paths';
+import type { NodeType } from '@/shared/types/domain/ai-paths';
 
 import { palette as NODE_DEFINITIONS } from '../definitions';
 
@@ -72,8 +72,54 @@ const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>> = {
     {
       path: 'simulation.productId',
       description:
-        'Legacy field for product ID. Kept for backward compatibility; prefer entityId + entityType.',
+        'Product ID alias for entity identifier. Prefer entityId + entityType.',
       defaultValue: '""',
+    },
+    ...COMMON_RUNTIME_FIELDS,
+  ],
+  audio_oscillator: [
+    {
+      path: 'audioOscillator.waveform',
+      description: 'Wave shape for generated signal: sine/square/triangle/sawtooth.',
+      defaultValue: 'sine',
+    },
+    {
+      path: 'audioOscillator.frequencyHz',
+      description: 'Signal frequency in Hz.',
+      defaultValue: '440',
+    },
+    {
+      path: 'audioOscillator.gain',
+      description: 'Signal amplitude in 0..1 range.',
+      defaultValue: '0.25',
+    },
+    {
+      path: 'audioOscillator.durationMs',
+      description: 'Playback duration in milliseconds.',
+      defaultValue: '400',
+    },
+    ...COMMON_RUNTIME_FIELDS,
+  ],
+  audio_speaker: [
+    {
+      path: 'audioSpeaker.enabled',
+      description: 'If false, speaker stays muted and reports disabled status.',
+      defaultValue: 'true',
+    },
+    {
+      path: 'audioSpeaker.autoPlay',
+      description: 'If true, plays incoming audio signal immediately.',
+      defaultValue: 'true',
+    },
+    {
+      path: 'audioSpeaker.gain',
+      description: 'Speaker output gain multiplier in 0..1 range.',
+      defaultValue: '1',
+    },
+    {
+      path: 'audioSpeaker.stopPrevious',
+      description: 'Stop existing tone before playing the next signal.',
+      defaultValue: 'true',
     },
     ...COMMON_RUNTIME_FIELDS,
   ],
@@ -733,6 +779,8 @@ const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>> = {
 const ALL_NODE_TYPES: NodeType[] = [
   'trigger',
   'simulation',
+  'audio_oscillator',
+  'audio_speaker',
   'context',
   'parser',
   'regex',
@@ -769,8 +817,8 @@ export const AI_PATHS_NODE_DOCS: AiPathsNodeDoc[] = ALL_NODE_TYPES.map((type: No
     type === 'description_updater'
       ? {
         type: 'description_updater' as const,
-        title: 'Description Updater (Legacy)',
-        description: 'Writes description_en back to the product (legacy helper node).',
+        title: 'Description Updater (Deprecated)',
+        description: 'Writes description_en back to the product.',
         inputs: ['productId', 'description_en'],
         outputs: ['description_en'],
       }
@@ -779,7 +827,7 @@ export const AI_PATHS_NODE_DOCS: AiPathsNodeDoc[] = ALL_NODE_TYPES.map((type: No
   const notes =
     type === 'description_updater'
       ? [
-        'Legacy node. This node type may be hidden from the palette; prefer Database node write operations for updates.',
+        'Deprecated node. Prefer Database node write operations for updates.',
       ]
       : type === 'notification'
         ? ['Configuration UI is not available yet; it runs with defaults.']

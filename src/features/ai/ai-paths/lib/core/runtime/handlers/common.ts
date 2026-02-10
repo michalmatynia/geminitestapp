@@ -1,5 +1,5 @@
-import type { RuntimePortValues } from '@/shared/types/ai-paths';
-import type { NodeHandler, NodeHandlerContext } from '@/shared/types/ai-paths-runtime';
+import type { RuntimePortValues } from '@/shared/types/domain/ai-paths';
+import type { NodeHandler, NodeHandlerContext } from '@/shared/types/domain/ai-paths-runtime';
 
 import { DELAY_OUTPUT_PORTS, ROUTER_OUTPUT_PORTS } from '../../constants';
 import {

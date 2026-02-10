@@ -1,5 +1,5 @@
-import type { RegexConfig, RuntimePortValues, StringMutatorOperation } from '@/shared/types/ai-paths';
-import type { NodeHandler, NodeHandlerContext } from '@/shared/types/ai-paths-runtime';
+import type { RegexConfig, RuntimePortValues, StringMutatorOperation } from '@/shared/types/domain/ai-paths';
+import type { NodeHandler, NodeHandlerContext } from '@/shared/types/domain/ai-paths-runtime';
 
 import {
   cloneValue,

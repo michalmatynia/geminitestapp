@@ -14,7 +14,7 @@ import { getSettingValue } from '@/features/products/services/aiDescriptionServi
 import { authError, configurationError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const payloadSchema = z.object({
   imagePath: z.string().trim().min(1),

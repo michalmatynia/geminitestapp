@@ -34,7 +34,7 @@ import { useRunHistoryState, useRunHistoryActions } from '../context';
 import type { HistoryNodeOption } from './run-history-utils';
 
 // ---------------------------------------------------------------------------
-// Legacy Props Interface (for backward compatibility during migration)
+// Props Interface
 // ---------------------------------------------------------------------------
 
 type RunDetailDialogProps = {
@@ -64,8 +64,8 @@ type RunDetailDialogProps = {
 };
 
 /**
- * Legacy RunDetailDialog that receives all props.
- * @deprecated Use RunDetailDialogWithContext for new implementations.
+ * Props-driven RunDetailDialog.
+ * Use RunDetailDialogWithContext for context-managed state.
  */
 export function RunDetailDialog({
   open,

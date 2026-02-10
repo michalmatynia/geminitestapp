@@ -10,13 +10,16 @@ import {
   aiTriggerButtonReorderSchema,
   aiTriggerButtonUpdateSchema,
 } from '@/features/ai/ai-paths/validations/trigger-buttons';
-import type { AgentTeachingAgentRecord, AgentTeachingChatSource } from '@/shared/types/agent-teaching';
-import type { AiTriggerButtonRecord } from '@/shared/types/ai-trigger-buttons';
-import type { ChatMessage } from '@/shared/types/chatbot';
+import type { AgentTeachingAgentRecord, AgentTeachingChatSource } from '@/shared/types/domain/agent-teaching';
+import type { AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
+import type { ChatMessage } from '@/shared/types/domain/chatbot';
+
+import type { AiPathRuntimeAnalyticsSummary } from '..';
 
 // ============================================================================
 // Types
 // ============================================================================
+
 
 export type ApiResponse<T> = {
   ok: true;
@@ -517,18 +520,22 @@ export const aiJobsApi = {
       const headers = new Headers({ 'Content-Type': 'application/json' });
       headers.set('x-csrf-token', token);
       headers.set('cookie', `csrf-token=${encodeURIComponent(token)}`);
-      return apiFetch<{ jobId: string }>(url, {
+      const response = await apiFetch<{ jobId: string }>(url, {
         method: 'POST',
         headers,
         body: JSON.stringify(payload),
       });
+      if (!response.ok) return response;
+      return response;
     }
     const { withCsrfHeaders } = await import('@/shared/lib/security/csrf-client');
-    return apiFetch<{ jobId: string }>(url, {
+    const response = await apiFetch<{ jobId: string }>(url, {
       method: 'POST',
       headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload),
     });
+    if (!response.ok) return response;
+    return response;
   },
 
   /**
@@ -761,5 +768,26 @@ export const runsApi = {
       runIds: string[];
       errors?: Array<{ runId: string; error: string }>;
     }>('/api/ai-paths/runs/dead-letter/requeue', payload);
+  },
+};
+
+// ============================================================================
+// Analytics API
+// ============================================================================
+
+export const analyticsApi = {
+  /**
+   * Fetch runtime analytics summary
+   */
+  async summary(options?: { range?: string }): Promise<ApiResponse<AiPathRuntimeAnalyticsSummary>> {
+    const range = options?.range ?? '24h';
+    const response = await apiFetch<{ summary?: AiPathRuntimeAnalyticsSummary }>(
+      `/api/ai-paths/runtime-analytics/summary?range=${encodeURIComponent(range)}`
+    );
+    if (!response.ok) return response;
+    if (!response.data.summary) {
+      return { ok: false, error: 'Missing runtime analytics payload.' };
+    }
+    return { ok: true, data: response.data.summary };
   },
 };

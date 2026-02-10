@@ -7,7 +7,7 @@ import { generateLogsInsight } from '@/features/ai/insights/generator';
 import { listAiInsights } from '@/features/ai/insights/repository';
 import { startAiInsightsQueue } from '@/features/jobs/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const listSchema = z.object({
   limit: z.coerce.number().int().positive().max(50).optional(),

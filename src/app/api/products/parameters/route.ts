@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { getParameterRepository } from '@/features/products/server';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const productParameterCreateSchema = z.object({
   name_en: z.string().min(1, 'English name is required'),

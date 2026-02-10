@@ -37,9 +37,6 @@ export type {
   AgentBrowserLogDto
 };
 
-/**
- * Legacy interface for backward compatibility
- */
 export type ChatMessage = ChatMessageDto;
 
 export interface ChatSession extends Omit<ChatbotSessionDto, 'createdAt' | 'updatedAt'> {

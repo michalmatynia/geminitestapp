@@ -707,6 +707,3 @@ export const removePathRunQueueEntries = async (
 
   return { removed, requested: uniqueRunIds.length };
 };
-
-// Re-export for backward compatibility with tests
-export { processRun, computeBackoffMs } from '@/features/jobs/processors/ai-path-run-processor';

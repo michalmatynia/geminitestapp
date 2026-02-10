@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { noteService } from '@/features/notesapp/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 /**
  * GET /api/notes/categories/tree

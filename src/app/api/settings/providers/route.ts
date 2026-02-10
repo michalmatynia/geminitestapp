@@ -23,7 +23,7 @@ import {
 } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const normalizeAppProvider = (value?: string | null): AppDbProvider | null => {
   if (!value) return null;

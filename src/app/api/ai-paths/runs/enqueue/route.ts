@@ -9,8 +9,8 @@ import { startAiPathRunQueue } from '@/features/jobs/server';
 import { parseJsonBody } from '@/features/products/server';
 import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { AiNode, Edge } from '@/shared/types/ai-paths';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { AiNode, Edge } from '@/shared/types/domain/ai-paths';
 
 const enqueueSchema = z.object({
   pathId: z.string().trim().min(1),

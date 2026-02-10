@@ -6,7 +6,7 @@ import React, { useMemo } from 'react';
 import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { useNotesLookup } from '@/features/notesapp/api/useNoteQueries';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
-import type { NoteWithRelations, RelatedNote, NoteRelationWithTarget, NoteRelationWithSource } from '@/shared/types/notes';
+import type { NoteWithRelations, RelatedNote, NoteRelationWithTarget, NoteRelationWithSource } from '@/shared/types/domain/notes';
 import { Button, useToast, SectionPanel } from '@/shared/ui';
 import { sanitizeHtml } from '@/shared/utils';
 

@@ -118,7 +118,7 @@ export function DatabaseQueryValidatorPanel({
                 queryConfig.provider === 'prisma'
                   ? 'Prisma'
                   : queryConfig.provider === 'auto'
-                    ? 'MongoDB (legacy auto)'
+                    ? 'MongoDB (auto)'
                     : 'MongoDB';
               const correctionPrompt = `Fix this invalid ${providerName} query for a ${operation} operation on the "${queryConfig.collection}" collection.
 

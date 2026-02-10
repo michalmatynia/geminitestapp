@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 
-import type { CategoryWithChildren } from '@/shared/types/notes';
+import type { CategoryWithChildren } from '@/shared/types/domain/notes';
 
 import type { FolderTreeProps } from '../types/folder-tree-ui';
 

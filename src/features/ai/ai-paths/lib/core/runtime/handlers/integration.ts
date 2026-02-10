@@ -9,9 +9,9 @@ import type {
   DatabaseAction,
   DatabaseActionCategory,
   DatabaseOperation
-} from '@/shared/types/ai-paths';
-import type { AiNode, Edge } from '@/shared/types/ai-paths';
-import type { NodeHandler, NodeHandlerContext } from '@/shared/types/ai-paths-runtime';
+} from '@/shared/types/domain/ai-paths';
+import type { AiNode, Edge } from '@/shared/types/domain/ai-paths';
+import type { NodeHandler, NodeHandlerContext } from '@/shared/types/domain/ai-paths-runtime';
 
 import { dbApi, entityApi, ApiResponse } from '../../../api';
 import { DEFAULT_DB_QUERY, DB_PROVIDER_PLACEHOLDERS } from '../../constants';
@@ -759,8 +759,6 @@ export const handleDatabase: NodeHandler = async ({
       });
     }
 
-    // Backward-compat aliases: many legacy paths still map translator output to `value`
-    // while update templates expect `{{result}}` (and vice-versa).
     const templateInputs: RuntimePortValues = {
       ...resolvedInputs,
     };
@@ -1791,7 +1789,7 @@ export const handleDatabase: NodeHandler = async ({
       simulationEntityId,
       );
       const debugPayload = {
-        mode: 'legacy',
+        mode: 'mapping',
         updateStrategy,
         entityType,
         collection: configuredCollection || null,

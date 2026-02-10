@@ -3,7 +3,7 @@ import React from 'react';
 
 import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
-import type { NoteWithRelations, ThemeRecord } from '@/shared/types/notes';
+import type { NoteWithRelations, ThemeRecord } from '@/shared/types/domain/notes';
 import { Button, ListPanel, EmptyState, Pagination, UnifiedSelect, SectionPanel } from '@/shared/ui';
 
 import { NoteCard } from './NoteCard';

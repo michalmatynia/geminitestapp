@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect } from 'react';
 
-import { ChatMessage } from '@/shared/types/chatbot';
+import { ChatMessage } from '@/shared/types/domain/chatbot';
 import { Button, Input } from '@/shared/ui';
 
 import { ChatMessageContent } from './ChatMessageContent';

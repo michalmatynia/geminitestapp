@@ -9,7 +9,7 @@ import prisma from '@/shared/lib/db/prisma';
 import type {
   SystemLogLevel,
   SystemLogRecord,
-} from '@/shared/types/system-logs';
+} from '@/shared/types/domain/system-logs';
 
 import { withTransientRecovery } from './transient-recovery/with-recovery';
 

@@ -1,4 +1,4 @@
-// Re-export DTOs as types for backward compatibility
+// Re-export DTOs as local type aliases for repository contracts
 export type {
   AiPathDto,
   AiNodeDto,
@@ -18,7 +18,7 @@ import type {
   AiPathRunRecord,
   AiPathRunStatus,
   Edge,
-} from '@/shared/types/ai-paths';
+} from '@/shared/types/domain/ai-paths';
 
 export type AiPathRunCreateInput = {
   userId?: string | null;

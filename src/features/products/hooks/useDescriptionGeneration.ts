@@ -8,7 +8,7 @@ import { useState } from 'react';
 
 import type { ProductImageSlot } from '@/features/products/types/products-ui';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
-import type { ProductAiJob } from '@/shared/types/jobs';
+import type { ProductAiJob } from '@/shared/types/domain/jobs';
 
 interface UseDescriptionGenerationProps {
   productId?: string;

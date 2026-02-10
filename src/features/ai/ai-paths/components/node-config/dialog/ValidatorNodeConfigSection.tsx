@@ -5,6 +5,7 @@
 
 import { parsePathList } from '@/features/ai/ai-paths/lib';
 import { Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
 export function ValidatorNodeConfigSection(): React.JSX.Element | null {

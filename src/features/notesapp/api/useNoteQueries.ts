@@ -11,7 +11,7 @@ import type {
   ThemeRecord, 
   NotebookRecord,
   RelatedNote
-} from '@/shared/types/notes';
+} from '@/shared/types/domain/notes';
 
 const NOTES_STALE_MS = 10_000;
 

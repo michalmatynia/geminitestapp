@@ -8,6 +8,8 @@ import { DatabaseNodeConfigSection } from './node-config/DatabaseNodeConfigSecti
 import { DbSchemaNodeConfigSection } from './node-config/DbSchemaNodeConfigSection';
 import { AgentNodeConfigSection } from './node-config/dialog/AgentNodeConfigSection';
 import { AiDescriptionNodeConfigSection } from './node-config/dialog/AiDescriptionNodeConfigSection';
+import { AudioOscillatorNodeConfigSection } from './node-config/dialog/AudioOscillatorNodeConfigSection';
+import { AudioSpeakerNodeConfigSection } from './node-config/dialog/AudioSpeakerNodeConfigSection';
 import { BundleNodeConfigSection } from './node-config/dialog/BundleNodeConfigSection';
 import { CompareNodeConfigSection } from './node-config/dialog/CompareNodeConfigSection';
 import { ConstantNodeConfigSection } from './node-config/dialog/ConstantNodeConfigSection';
@@ -43,6 +45,8 @@ export function NodeConfigurationSections(props: AiPathConfigData): React.JSX.El
       <div className='space-y-6'>
         <TriggerNodeConfigSection />
         <SimulationNodeConfigSection />
+        <AudioOscillatorNodeConfigSection />
+        <AudioSpeakerNodeConfigSection />
         <ContextNodeConfigSection />
         <ParserNodeConfigSection />
         <RegexNodeConfigSection />

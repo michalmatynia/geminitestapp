@@ -8,7 +8,7 @@ import { parseJsonBody } from '@/features/products/server';
 import type { UpdateCmsThemeDto } from '@/shared/dtos/cms';
 import { notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const id = params.id;

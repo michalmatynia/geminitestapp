@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { configurationError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 async function POST_handler(
   req: NextRequest,

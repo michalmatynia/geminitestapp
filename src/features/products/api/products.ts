@@ -79,3 +79,7 @@ export async function deleteProduct(id: string): Promise<{ success: boolean }> {
     return { success: false };
   }
 }
+
+export async function getProductById(id: string): Promise<ProductWithImages> {
+  return api.get<ProductWithImages>(`/api/products/${id}`);
+}

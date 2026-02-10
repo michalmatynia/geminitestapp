@@ -19,8 +19,8 @@ import type {
   ApiHandlerContext,
   ApiRouteHandler,
   ApiRouteHandlerWithParams,
-} from '@/shared/types/api';
-import type { SystemLogLevel } from '@/shared/types/system-logs';
+} from '@/shared/types/api/api';
+import type { SystemLogLevel } from '@/shared/types/domain/system-logs';
 
 import type { ZodSchema } from 'zod';
 

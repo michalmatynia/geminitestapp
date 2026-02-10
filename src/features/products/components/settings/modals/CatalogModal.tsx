@@ -5,7 +5,7 @@ import React from 'react';
 import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
 import { useSaveCatalogMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { Catalog, PriceGroup } from '@/features/products/types';
-import type { Language } from '@/shared/types/internationalization';
+import type { Language } from '@/shared/types/domain/internationalization';
 import {
   Input,
   Label,

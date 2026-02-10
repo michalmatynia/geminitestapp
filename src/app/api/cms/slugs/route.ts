@@ -14,7 +14,7 @@ import { cmsSlugCreateSchema } from '@/features/cms/validations/api';
 import { parseJsonBody } from '@/features/products/server';
 import { notFoundError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const resolveDomainFromRequest = async (req: NextRequest) => {
   const domainId = req.nextUrl.searchParams.get('domainId');

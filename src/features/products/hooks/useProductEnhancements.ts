@@ -1,6 +1,8 @@
  
 'use client';
 
+import { getProductById, getProducts, updateProduct } from '@/features/products/api/products';
+import { getCatalogs } from '@/features/products/api/settings';
 import type { ProductWithImages } from '@/features/products/types';
 import { useCacheWarmup, useSmartPrefetch } from '@/shared/hooks/query/useCacheWarmup';
 import { useOptimisticMutation } from '@/shared/hooks/useOptimisticMutation';
@@ -22,14 +24,7 @@ export function useOptimisticProductUpdate(): UseMutationResult<
     ProductWithImages[]
   >(
     async ({ id, data }): Promise<ProductWithImages> => {
-      const res = await fetch(`/api/products/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error('Failed to update product');
-      const result = await res.json();
-      return result as ProductWithImages;
+      return updateProduct(id, data);
     },
     {
       queryKey: ['products'],
@@ -48,9 +43,7 @@ export function useOptimisticProductUpdate(): UseMutationResult<
 export function useProductCacheWarmup(productId?: string): void {
   const resolveWarmCatalogId = async (): Promise<string | null> => {
     try {
-      const catalogsRes = await fetch('/api/catalogs');
-      if (!catalogsRes.ok) return null;
-      const catalogs = (await catalogsRes.json()) as Array<{ id?: string }>;
+      const catalogs = await getCatalogs();
       if (!Array.isArray(catalogs) || catalogs.length === 0) return null;
       return catalogs[0]?.id ?? null;
     } catch {
@@ -61,11 +54,7 @@ export function useProductCacheWarmup(productId?: string): void {
   useCacheWarmup([
     {
       queryKey: ['products'],
-      queryFn: async (): Promise<unknown> => {
-        const res = await fetch('/api/products');
-        const result = await res.json();
-        return result;
-      },
+      queryFn: () => getProducts({}),
       priority: 'high' as const,
     },
     {
@@ -73,21 +62,14 @@ export function useProductCacheWarmup(productId?: string): void {
       queryFn: async (): Promise<unknown> => {
         const catalogId = await resolveWarmCatalogId();
         if (!catalogId) return [];
-        const res = await fetch(
-          `/api/products/categories?catalogId=${encodeURIComponent(catalogId)}`
-        );
-        if (!res.ok) return [];
-        return res.json();
+        const { getCategoriesFlat } = await import('@/features/products/api/settings');
+        return getCategoriesFlat(catalogId);
       },
       priority: 'medium' as const,
     },
     ...(productId ? [{
       queryKey: ['products', productId],
-      queryFn: async (): Promise<unknown> => {
-        const res = await fetch(`/api/products/${productId}`);
-        const result = await res.json();
-        return result;
-      },
+      queryFn: () => getProductById(productId),
       priority: 'high' as const,
       conditions: (): boolean => !!productId,
     }] : []),
@@ -104,19 +86,13 @@ export function useProductPrefetch(): {
   const prefetchProduct = (productId: string): { onMouseEnter: () => void; onMouseLeave: () => void } =>
     prefetchOnHover(
       ['products', productId],
-      async (): Promise<unknown> => {
-        const res = await fetch(`/api/products/${productId}`);
-        return res.json();
-      }
+      () => getProductById(productId)
     );
 
   const prefetchProductEdit = (productId: string): { onFocus: () => void } =>
     prefetchOnFocus(
       ['products', productId, 'edit'],
-      async (): Promise<unknown> => {
-        const res = await fetch(`/api/products/${productId}`);
-        return res.json();
-      }
+      () => getProductById(productId)
     );
 
   return { prefetchProduct, prefetchProductEdit };

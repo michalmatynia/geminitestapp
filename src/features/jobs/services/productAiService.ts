@@ -2,7 +2,7 @@ import { getProductAiJobRepository } from '@/features/jobs/services/product-ai-j
 import type { ProductAiJobRecord, ProductAiJobUpdate } from '@/features/jobs/types/product-ai-job-repository';
 import { productService } from '@/features/products/server';
 import { invalidStateError, notFoundError } from '@/shared/errors/app-error';
-import type { ProductAiJobType, ProductAiJob, ProductAiJobResult } from '@/shared/types/jobs';
+import type { ProductAiJobType, ProductAiJob, ProductAiJobResult } from '@/shared/types/domain/jobs';
 
 type ProductSummary = {
   name_en: string | null;

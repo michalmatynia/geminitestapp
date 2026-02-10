@@ -14,8 +14,8 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { AiTriggerButtonRecord } from '@/shared/types/ai-trigger-buttons';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
 
 const SETTINGS_COLLECTION = 'settings';
 const AI_PATHS_TRIGGER_BUTTONS_KEY = 'ai_paths_trigger_buttons';

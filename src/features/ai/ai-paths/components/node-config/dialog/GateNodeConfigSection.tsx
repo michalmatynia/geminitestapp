@@ -5,6 +5,7 @@
 
 import type { GateConfig } from '@/features/ai/ai-paths/lib';
 import { Input, Label, UnifiedSelect } from '@/shared/ui';
+
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
 export function GateNodeConfigSection(): React.JSX.Element | null {

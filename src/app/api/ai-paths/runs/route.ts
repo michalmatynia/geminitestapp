@@ -11,8 +11,8 @@ import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-r
 import type { AiPathRunListOptions } from '@/features/ai/ai-paths/types/path-run-repository';
 import { removePathRunQueueEntries } from '@/features/jobs/workers/aiPathRunQueue';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { AiPathRunStatus } from '@/shared/types/ai-paths';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { AiPathRunStatus } from '@/shared/types/domain/ai-paths';
 
 const DEFAULT_STALE_RUNNING_MAX_AGE_MS = 30 * 60 * 1000;
 const DEFAULT_STALE_RUNNING_CLEANUP_INTERVAL_MS = 30_000;

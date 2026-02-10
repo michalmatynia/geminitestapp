@@ -1,4 +1,4 @@
-import type { ChatbotSettingsPayload } from '@/shared/types/chatbot';
+import type { ChatbotSettingsPayload } from '@/shared/types/domain/chatbot';
 
 import { fetchWithTimeout, readErrorResponse, requestJson } from './client';
 

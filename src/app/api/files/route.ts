@@ -5,9 +5,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { imageFileService } from '@/features/files/server';
 import { getProductRepository } from '@/features/products/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ImageFileRecord } from '@/shared/types/domain/files';
 import type { ProductWithImages } from '@/shared/types/domain/products';
-import type { ImageFileRecord } from '@/shared/types/files';
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { searchParams } = new URL(req.url);

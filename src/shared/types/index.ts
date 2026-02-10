@@ -12,20 +12,20 @@ export * from './domain/integrations';
 
 // API types
 export * from './api/api';
-export * from './api/system-logs';
-export * from './api/listing-jobs';
-export * from './api/jobs';
+export * from './domain/system-logs';
+export * from './domain/listing-jobs';
+export * from './domain/jobs';
 
 // AI & Runtime types
-export * from './ai-paths';
-export * from './ai-paths-runtime';
-export * from './chatbot';
-export * from './agent-teaching';
-export * from './analytics';
+export * from './domain/ai-paths';
+export * from './domain/ai-paths-runtime';
+export * from './domain/chatbot';
+export * from './domain/agent-teaching';
+export * from './domain/analytics';
 export * from './ai-insights';
 
 // System types
-export * from './system';
+export * from './domain/system';
 
 // Product types (detailed exports)
 export {

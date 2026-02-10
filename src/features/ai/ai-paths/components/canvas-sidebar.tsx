@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import type { AiNode, NodeDefinition } from '@/features/ai/ai-paths/lib';
 import { createParserMappings } from '@/features/ai/ai-paths/lib';
@@ -53,6 +53,45 @@ type CanvasSidebarProps = {
     nodeOverride?: AiNode | undefined;
   }) => Promise<boolean>) | undefined;
 };
+
+type PaletteMode = 'data' | 'sound';
+
+type PaletteGroup = {
+  title: string;
+  types: NodeDefinition['type'][];
+  icon: string;
+};
+
+const DATA_PALETTE_GROUPS: PaletteGroup[] = [
+  { title: 'Triggers', types: ['trigger'], icon: '⚡' },
+  { title: 'Simulation', types: ['simulation'], icon: '🧪' },
+  { title: 'Context + Parsing', types: ['context', 'parser'], icon: '📦' },
+  {
+    title: 'Transforms',
+    types: ['mapper', 'mutator', 'string_mutator', 'validator', 'regex', 'iterator'],
+    icon: '🧭',
+  },
+  {
+    title: 'Signals + Logic',
+    types: ['constant', 'math', 'compare', 'gate', 'router', 'delay', 'poll'],
+    icon: '🧪',
+  },
+  { title: 'Bundles + Templates', types: ['bundle', 'template'], icon: '🧩' },
+  { title: 'IO + Fetch', types: ['http', 'database', 'db_schema'], icon: '🌐' },
+  { title: 'Prompts + Models', types: ['prompt', 'model'], icon: '🤖' },
+  { title: 'Agents', types: ['agent', 'learner_agent'], icon: '🧠' },
+  { title: 'Viewers', types: ['viewer', 'notification'], icon: '👁' },
+];
+
+const SOUND_PALETTE_GROUPS: PaletteGroup[] = [
+  { title: 'Sound Sources', types: ['audio_oscillator'], icon: '〰' },
+  { title: 'Sound Outputs', types: ['audio_speaker', 'viewer'], icon: '🔊' },
+  {
+    title: 'Signal Control',
+    types: ['trigger', 'simulation', 'constant', 'math', 'gate', 'router', 'delay', 'bundle'],
+    icon: '🎛',
+  },
+];
 
 export function CanvasSidebar({
   palette,
@@ -119,6 +158,11 @@ export function CanvasSidebar({
         : runStatus === 'stepping'
           ? 'Stepping'
           : 'Idle';
+  const [paletteMode, setPaletteMode] = useState<PaletteMode>('data');
+  const activePaletteGroups = useMemo(
+    (): PaletteGroup[] => (paletteMode === 'sound' ? SOUND_PALETTE_GROUPS : DATA_PALETTE_GROUPS),
+    [paletteMode]
+  );
 
   return (
     <div className='space-y-4'>
@@ -137,36 +181,37 @@ export function CanvasSidebar({
             {paletteCollapsed ? 'Expand' : 'Collapse'}
           </button>
         </div>
+        <div className='mb-3 flex items-center gap-2'>
+          <button
+            type='button'
+            className={`rounded border px-2 py-1 text-[10px] transition ${
+              paletteMode === 'data'
+                ? 'border-sky-400/50 bg-sky-500/10 text-sky-200'
+                : 'border-border/60 text-gray-400 hover:bg-muted/40'
+            }`}
+            onClick={() => setPaletteMode('data')}
+          >
+            Data Signal
+          </button>
+          <button
+            type='button'
+            className={`rounded border px-2 py-1 text-[10px] transition ${
+              paletteMode === 'sound'
+                ? 'border-violet-400/50 bg-violet-500/10 text-violet-200'
+                : 'border-border/60 text-gray-400 hover:bg-muted/40'
+            }`}
+            onClick={() => setPaletteMode('sound')}
+          >
+            Sound Signal
+          </button>
+        </div>
         {paletteCollapsed ? (
           <div className='rounded-md border border-dashed border-border/60 px-3 py-2 text-[11px] text-gray-500'>
             Palette collapsed. Expand to add nodes.
           </div>
         ) : (
           <div className='max-h-[520px] space-y-1 overflow-y-auto pr-1'>
-	            {[
-	              { title: 'Triggers', types: ['trigger'], icon: '⚡' },
-	              { title: 'Simulation', types: ['simulation'], icon: '🧪' },
-	              { title: 'Context + Parsing', types: ['context', 'parser'], icon: '📦' },
-	              {
-	                title: 'Transforms',
-	                types: ['mapper', 'mutator', 'string_mutator', 'validator', 'regex', 'iterator'],
-	                icon: '🧭',
-	              },
-	              {
-	                title: 'Signals + Logic',
-	                types: ['constant', 'math', 'compare', 'gate', 'router', 'delay', 'poll'],
-	                icon: '🧪',
-	              },
-              { title: 'Bundles + Templates', types: ['bundle', 'template'], icon: '🧩' },
-              { title: 'IO + Fetch', types: ['http', 'database', 'db_schema'], icon: '🌐' },
-              {
-                title: 'Prompts + Models',
-                types: ['prompt', 'model'],
-                icon: '🤖',
-              },
-              { title: 'Agents', types: ['agent'], icon: '🧠' },
-              { title: 'Viewers', types: ['viewer', 'notification'], icon: '👁' },
-            ].map((group) => {
+            {activePaletteGroups.map((group) => {
               const items = palette.filter((node) => group.types.includes(node.type));
               if (items.length === 0) return null;
               const isExpanded = expandedPaletteGroups.has(group.title);

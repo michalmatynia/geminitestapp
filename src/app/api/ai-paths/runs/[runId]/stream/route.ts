@@ -7,8 +7,8 @@ import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-r
 import { notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import { getRedisSubscriber, isSubscriberConnected } from '@/shared/lib/redis-pubsub';
-import type { AiPathRunRecord, AiPathRunNodeRecord } from '@/shared/types/ai-paths';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { AiPathRunRecord, AiPathRunNodeRecord } from '@/shared/types/domain/ai-paths';
 
 const TERMINAL_STATUSES = new Set([
   'completed',

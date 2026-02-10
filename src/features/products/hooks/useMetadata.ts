@@ -13,7 +13,7 @@ import type {
   ProductTag,
   ProductParameter,
 } from '@/features/products/types';
-import type { Language } from '@/shared/types/internationalization';
+import type { Language } from '@/shared/types/domain/internationalization';
 
 export function useCatalogs(): UseQueryResult<CatalogRecord[]> {
   return useQuery({

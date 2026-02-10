@@ -4,6 +4,7 @@
 
 import { toNumber } from '@/features/ai/ai-paths/lib';
 import { Input, Label } from '@/shared/ui';
+
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
 export function DelayNodeConfigSection(): React.JSX.Element | null {

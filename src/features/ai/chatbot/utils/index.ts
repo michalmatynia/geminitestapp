@@ -5,7 +5,7 @@ import {
   ModelProfile,
   ModelTaskRule,
   TimelineEntry,
-} from '@/shared/types/chatbot';
+} from '@/shared/types/domain/chatbot';
 
 export const isRecord = (value: unknown): value is Record<string, unknown> =>
   !!value && typeof value === 'object' && !Array.isArray(value);

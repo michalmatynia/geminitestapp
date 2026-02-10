@@ -2,7 +2,7 @@ import 'server-only';
 
 import { createHash } from 'crypto';
 
-import type { SystemLogLevel } from '@/shared/types/system-logs';
+import type { SystemLogLevel } from '@/shared/types/domain/system-logs';
 
 import { notifyCriticalError } from './critical-error-notifier';
 import {

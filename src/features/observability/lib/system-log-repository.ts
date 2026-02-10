@@ -13,7 +13,7 @@ import type {
   SystemLogLevel,
   SystemLogMetrics,
   SystemLogRecord,
-} from '@/shared/types/system-logs';
+} from '@/shared/types/domain/system-logs';
 
 const toMongoId = (id: string): ObjectId | string => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);

@@ -2,7 +2,7 @@ import { Upload, X } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import React from 'react';
 
-import type { ImageFileRecord, ImageFileSelection } from '@/shared/types/files';
+import type { ImageFileRecord, ImageFileSelection } from '@/shared/types/domain/files';
 import { Button, Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, useToast, FileUploadButton, type FileUploadHelpers } from '@/shared/ui';
 
 import { useUploadCmsMedia } from '../../hooks/useCmsQueries';

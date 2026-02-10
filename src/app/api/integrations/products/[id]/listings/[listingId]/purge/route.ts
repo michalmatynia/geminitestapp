@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { findProductListingByIdAcrossProviders } from '@/features/integrations/server';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; listingId: string }): Promise<Response> {
   const { id: productId, listingId } = params;

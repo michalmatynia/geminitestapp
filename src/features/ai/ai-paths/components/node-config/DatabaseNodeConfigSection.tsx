@@ -2217,7 +2217,7 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
               <SelectValue placeholder='Select provider' />
             </SelectTrigger>
             <SelectContent className='border-border bg-gray-900'>
-              <SelectItem value='auto'>Auto (legacy)</SelectItem>
+              <SelectItem value='auto'>Auto</SelectItem>
               <SelectItem value='mongodb'>MongoDB</SelectItem>
               <SelectItem value='prisma'>Prisma</SelectItem>
             </SelectContent>
@@ -2531,7 +2531,7 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
             title={
               databaseConfig.useMongoActions
                 ? `${resolvedProvider.toUpperCase()} action mode enabled`
-                : 'Legacy update mode (mappings only)'
+                : 'Mappings mode (manual field mappings)'
             }
           >
                         Action Mode: {databaseConfig.useMongoActions ? 'On' : 'Off'}

@@ -15,7 +15,7 @@ import { useNoteTheme } from '@/features/notesapp/hooks/useNoteTheme';
 import type { UndoAction } from '@/features/notesapp/types/notes-hooks';
 import type { NoteSettings } from '@/features/notesapp/types/notes-settings';
 import { api } from '@/shared/lib/api-client';
-import type { NoteWithRelations, TagRecord, ThemeRecord, CategoryWithChildren, NoteTagRecord } from '@/shared/types/notes';
+import type { NoteWithRelations, TagRecord, ThemeRecord, CategoryWithChildren, NoteTagRecord } from '@/shared/types/domain/notes';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

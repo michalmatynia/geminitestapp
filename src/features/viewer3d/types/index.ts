@@ -1,4 +1,4 @@
-// Re-export DTOs as types for backward compatibility
+// DTO type exports
 export type {
   Asset3dDto,
   Asset3dCategoryDto,

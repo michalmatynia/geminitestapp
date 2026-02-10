@@ -1,4 +1,4 @@
-import type { CategoryWithChildren } from '@/shared/types/notes';
+import type { CategoryWithChildren } from '@/shared/types/domain/notes';
 import { darkenColor } from '@/shared/utils/color-utils';
 import { autoformatMarkdown } from '@/shared/utils/markdown-utils';
 

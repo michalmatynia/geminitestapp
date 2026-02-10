@@ -9,6 +9,8 @@ export type AiNodeTypeDto =
   | 'trigger'
   | 'simulation'
   | 'context'
+  | 'audio_oscillator'
+  | 'audio_speaker'
   | 'parser'
   | 'regex'
   | 'iterator'

@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCategoryMappingRepository } from '@/features/integrations/server';
 import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 type CreateMappingRequest = {
   connectionId: string;

@@ -9,7 +9,7 @@ import { createDraftPayloadSchema, resolveDraftCategoryId } from '@/features/dra
 import type { CreateProductDraftInput } from '@/features/products/server';
 import { parseJsonBody } from '@/features/products/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 /**
  * GET /api/drafts

@@ -6,7 +6,7 @@ import { Client } from 'pg';
 import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const QUERY_TIMEOUT_MS = 30_000;
 

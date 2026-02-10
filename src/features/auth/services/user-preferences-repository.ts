@@ -207,26 +207,6 @@ export async function getUserPreferences(userId: string): Promise<UserPreference
     return toUserPreferences(doc);
   }
 
-  // Backward compatibility: older records may have used a different _id and stored userId separately.
-  const legacy = await collection.findOne({ userId });
-  if (legacy) {
-    const migratedDoc: UserPreferencesDocument = {
-      ...legacy,
-      _id: canonicalId,
-      userId,
-      updatedAt: legacy.updatedAt ?? new Date(),
-    };
-    await collection.replaceOne(
-      { _id: canonicalId },
-      migratedDoc,
-      { upsert: true }
-    );
-    if (String(legacy._id) !== String(canonicalId)) {
-      void collection.deleteOne({ _id: legacy._id }).catch(() => {});
-    }
-    return toUserPreferences(migratedDoc);
-  }
-
   const now = new Date();
   const document: UserPreferencesDocument = {
     _id: canonicalId,

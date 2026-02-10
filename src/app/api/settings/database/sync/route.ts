@@ -7,8 +7,8 @@ import { ActivityTypes, logActivity, logSystemError } from '@/features/observabi
 import { authError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/types/api';
-import type { ProductAiJobType } from '@/shared/types/jobs';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ProductAiJobType } from '@/shared/types/domain/jobs';
 
 export const runtime = 'nodejs';
 

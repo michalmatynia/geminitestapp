@@ -7,7 +7,7 @@ import { logSystemEvent } from '@/features/observability/server';
 import { getCategoryRepository } from '@/features/products/server';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const shouldLogTiming = () => process.env['DEBUG_API_TIMING'] === 'true';
 

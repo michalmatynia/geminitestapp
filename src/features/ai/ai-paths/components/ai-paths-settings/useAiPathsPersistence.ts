@@ -32,13 +32,10 @@ import {
   STORAGE_VERSION,
   createDefaultPathConfig,
   createPathMeta,
-  initialEdges,
-  initialNodes,
   normalizeNodes,
   safeParseJson,
   stableStringify,
   sanitizeEdges,
-  triggers,
 } from '@/features/ai/ai-paths/lib';
 import { fetchSettingsCached } from '@/shared/api/settings-client';
 import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
@@ -486,36 +483,9 @@ export function useAiPathsPersistence({
           Object.assign(configs, settingsConfigs);
           metas = settingsMetas;
         } else {
-          const legacyRaw = map.get(`${PATH_CONFIG_PREFIX}default`) ?? map.get('ai_paths_config');
-          if (legacyRaw) {
-            const parsed = JSON.parse(legacyRaw) as {
-              version?: number;
-              pathName?: string;
-              description?: string;
-              trigger?: string;
-              nodes?: AiNode[];
-              edges?: Edge[];
-            };
-            const legacyConfig: PathConfig = {
-              id: 'default',
-              version: parsed.version ?? STORAGE_VERSION,
-              name: parsed.pathName ?? 'AI Description Path',
-              description: parsed.description ?? '',
-              trigger: parsed.trigger ?? (triggers[0] ?? 'Product Modal - Context Filter'),
-              flowIntensity: 'medium',
-              nodes: Array.isArray(parsed.nodes) ? parsed.nodes : initialNodes,
-              edges: Array.isArray(parsed.edges) ? parsed.edges : initialEdges,
-              updatedAt: new Date().toISOString(),
-              runtimeState: { inputs: {}, outputs: {} },
-              lastRunAt: null,
-            };
-            configs[legacyConfig.id] = legacyConfig;
-            metas = [createPathMeta(legacyConfig)];
-          } else {
-            const fallback = createDefaultPathConfig('default');
-            configs[fallback.id] = fallback;
-            metas = [createPathMeta(fallback)];
-          }
+          const fallback = createDefaultPathConfig('default');
+          configs[fallback.id] = fallback;
+          metas = [createPathMeta(fallback)];
         }
 
         const normalizeMetaName = (name: unknown, pathId: string): string => {

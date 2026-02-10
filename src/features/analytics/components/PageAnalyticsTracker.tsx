@@ -3,6 +3,7 @@
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo } from 'react';
 
+import { useTrackEventMutation } from '@/features/analytics/hooks/useAnalytics';
 import type { AnalyticsEventCreateInput, AnalyticsScope } from '@/shared/types';
 
 const VISITOR_COOKIE = 'pa_vid';
@@ -90,30 +91,11 @@ const getUtm = (searchParams: URLSearchParams): AnalyticsEventCreateInput['utm']
   return Object.keys(utm).length > 0 ? (utm as AnalyticsEventCreateInput['utm']) : null;
 };
 
-const sendAnalyticsEvent = async (payload: AnalyticsEventCreateInput): Promise<void> => {
-  const body = JSON.stringify(payload);
-
-  if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
-    const blob = new Blob([body], { type: 'application/json' });
-    const ok = navigator.sendBeacon('/api/analytics/events', blob);
-    if (ok) return;
-  }
-
-  await fetch('/api/analytics/events', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body,
-    credentials: 'include',
-    keepalive: true,
-  }).catch(() => {
-    // Intentionally swallow errors; analytics must never break UX.
-  });
-};
-
 export default function PageAnalyticsTracker(): null {
   const pathname = usePathname() ?? '';
   const searchParams = useSearchParams();
   const search = useMemo(() => searchParams.toString(), [searchParams]);
+  const trackEventMutation = useTrackEventMutation();
 
   useEffect(() => {
     if (!pathname) return;
@@ -172,7 +154,11 @@ export default function PageAnalyticsTracker(): null {
       clientTs,
     };
 
-    void sendAnalyticsEvent(event);
+    trackEventMutation.mutate(event as unknown as Record<string, unknown>, {
+      onError: () => {
+        // Intentionally swallow errors; analytics must never break UX.
+      }
+    });
   }, [pathname, search]);
 
   return null;

@@ -18,7 +18,7 @@ import type {
   ThemeRecord,
   ThemeCreateInput,
   ThemeUpdateInput,
-} from '@/shared/types/notes';
+} from '@/shared/types/domain/notes';
 
 export type NoteRepository = {
   // Notes

@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAsset3DRepository } from '@/features/viewer3d/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 import { logger } from '@/shared/utils/logger';
 
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

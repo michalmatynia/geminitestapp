@@ -10,7 +10,7 @@ import { getImageStudioSlotById, updateImageStudioSlot } from '@/features/ai/ima
 import { getImageFileRepository } from '@/features/files/server';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const payloadSchema = z.object({
   dataUrl: z.string().trim().min(1),

@@ -12,6 +12,7 @@ import {
   useImportList,
   useImportMutation,
   useSaveExportSettingsMutation,
+  useClearInventoryMutation,
 } from '@/features/data-import-export/hooks/useImportQueries';
 import type { CatalogRecord } from '@/features/data-import-export/hooks/useImportQueries';
 import type {
@@ -342,6 +343,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   const savePreferenceMutation = useSavePreferenceMutation();
   const importMutation = useImportMutation();
   const saveExportSettingsMutation = useSaveExportSettingsMutation();
+  const clearInventoryMutation = useClearInventoryMutation();
   const saveImportTemplateMutation = useTemplateMutation('import', importActiveTemplateId);
   const saveExportTemplateMutation = useTemplateMutation('export', exportActiveTemplateId);
 
@@ -543,18 +545,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   const handleClearInventory = async (): Promise<void> => {
     setInventoryId('');
     try {
-      await Promise.all([
-        fetch('/api/integrations/imports/base/sample-product', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ inventoryId: '', saveOnly: true }),
-        }),
-        fetch('/api/integrations/imports/base/parameters', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ inventoryId: '', productId: '', clearOnly: true }),
-        })
-      ]);
+      await clearInventoryMutation.mutateAsync();
       toast('Inventory cleared.', { variant: 'success' });
     } catch {
       toast('Failed to clear inventory.', { variant: 'error' });

@@ -12,8 +12,7 @@ import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const catalogSchema = z.object({
   name: z.string().trim().min(1),
@@ -61,29 +60,6 @@ async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Re
           missingIds.add(catalog.defaultLanguageId);
         }
       });
-
-      if (missingIds.size > 0 && process.env['DATABASE_URL']) {
-        const legacyIds = Array.from(missingIds);
-        try {
-          const legacyLanguages = await prisma.language.findMany({
-            where: { id: { in: legacyIds } },
-            select: { id: true, code: true },
-          });
-          legacyLanguages.forEach((language: { id: string; code: string }) => {
-            languageCodeById.set(language.id, language.code);
-          });
-        } catch (error: unknown) {
-          void logSystemEvent({
-            level: 'warn',
-            message: 'Failed to load legacy languages from Prisma',
-            source: 'catalogs.GET',
-            error,
-            request: req,
-            requestId: ctx.requestId,
-            context: { provider },
-          });
-        }
-      }
 
       const collection = mongo.collection<{ _id: string; id: string }>('catalogs');
       catalogs = await Promise.all(

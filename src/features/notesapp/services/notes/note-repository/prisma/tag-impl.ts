@@ -3,7 +3,7 @@ import type {
   TagRecord,
   TagCreateInput,
   TagUpdateInput,
-} from '@/shared/types/notes';
+} from '@/shared/types/domain/notes';
 
 import { getOrCreateDefaultNotebook } from './notebook-impl';
 

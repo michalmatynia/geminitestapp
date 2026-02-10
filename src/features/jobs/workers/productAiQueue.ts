@@ -195,13 +195,3 @@ export const processSingleJob = async (jobId: string): Promise<void> => {
     throw error;
   }
 };
-
-// Re-export processors for backward compatibility
-export {
-  processGraphModel,
-  processDescriptionGeneration,
-  processTranslation,
-  processDatabaseSync,
-  processBase64ConvertAll,
-  processBaseImageSyncAll,
-} from '@/features/jobs/processors/product-ai-processors';

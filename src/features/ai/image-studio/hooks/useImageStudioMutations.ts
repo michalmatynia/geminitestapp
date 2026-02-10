@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 
 import { api } from '@/shared/lib/api-client';
-import type { ImageFileSelection } from '@/shared/types/files';
+import type { ImageFileSelection } from '@/shared/types/domain/files';
 
 import { studioKeys } from './useImageStudioQueries';
 

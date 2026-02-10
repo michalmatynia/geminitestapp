@@ -6,7 +6,7 @@ import { getIntegrationRepository } from '@/features/integrations/server';
 import { decryptSecret } from '@/features/integrations/server';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 /**
  * GET /api/integrations/connections/[id]/session

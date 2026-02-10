@@ -9,7 +9,7 @@ import { resolveBaseConnectionToken } from '@/features/integrations/services/bas
 import { parseJsonBody } from '@/features/products/server';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const requestSchema = z.object({
   inventoryId: z.string().trim().min(1),

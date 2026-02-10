@@ -1,7 +1,9 @@
 
 I can't monitor my singal in Ai Paths
 
-My validator can't be turned off, Also I need a pattern which would detect double spaces (Space and not new lines), if it sees double or more space, it should be trimmed
+* My validator can't be turned off, when it finds a suggestion without replacement, it just stays in the suggestion mode all the time.
+
+Also I need a pattern which would detect double spaces (Space and not new lines), if it sees double or more space, it should be trimmed
 I cannot get rid of non replacement validations
 
 * In my AI Paths, the data signal flow seems a bit off. In the Category Inference Path, when I use the Simulation Node which provides data readily available, the data flow starts with node-wi2740 JSON Mapper Value output and flows into node-z6sjck Configure Database Query input where it is immediately available, before it is availabe in the input of the preceding node JSON Mapper node-wi2740, which does not make sense, cause it looks as if the signal was skipping Nodes.

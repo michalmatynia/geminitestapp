@@ -12,7 +12,7 @@ import {
 import { logSystemEvent } from '@/features/observability/server';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import { MongoSettingRecord } from '@/shared/types/base-types';
+import { MongoSettingRecord } from '@/shared/types/core/base-types';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 type AttemptRecord = {
@@ -86,20 +86,6 @@ export const getAuthSecurityPolicy = async (): Promise<AuthSecurityPolicy> => {
       DEFAULT_AUTH_SECURITY_POLICY
     );
     return normalizeAuthSecurityPolicy(parsed);
-  }
-
-  const legacyUserPages = await readSettingValue(AUTH_SETTINGS_KEYS.userPages);
-  if (legacyUserPages) {
-    const parsed = parseJsonSetting<{ requireStrongPassword?: boolean }>(
-      legacyUserPages,
-      {}
-    );
-    if (typeof parsed.requireStrongPassword === 'boolean') {
-      return normalizeAuthSecurityPolicy({
-        ...DEFAULT_AUTH_SECURITY_POLICY,
-        requireStrongPassword: parsed.requireStrongPassword,
-      });
-    }
   }
 
   return DEFAULT_AUTH_SECURITY_POLICY;

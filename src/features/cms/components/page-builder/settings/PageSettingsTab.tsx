@@ -6,8 +6,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeaching';
 import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
-import type { AgentTeachingAgentRecord } from '@/shared/types/agent-teaching';
-import type { ChatMessage } from '@/shared/types/chatbot';
+import type { AgentTeachingAgentRecord } from '@/shared/types/domain/agent-teaching';
+import type { ChatMessage } from '@/shared/types/domain/chatbot';
 import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Switch, Textarea, UnifiedSelect, useToast } from '@/shared/ui';
 
 import { useCmsDomainSelection } from '../../../hooks/useCmsDomainSelection';

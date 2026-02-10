@@ -5,8 +5,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { enqueueProductAiJob, processSingleJob, startProductAiJobQueue } from '@/features/jobs/server';
 import { logSystemError } from '@/features/observability/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
-import type { ProductAiJobType } from '@/shared/types/jobs';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ProductAiJobType } from '@/shared/types/domain/jobs';
 
 async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const job = await enqueueProductAiJob(

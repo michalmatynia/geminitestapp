@@ -8,7 +8,7 @@ import { encryptSecret } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const createConnectionSchema = z
   .object({

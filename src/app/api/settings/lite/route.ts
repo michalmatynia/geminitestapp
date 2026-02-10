@@ -10,7 +10,7 @@ import { apiHandler } from '@/shared/lib/api/api-handler';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 type SettingRecord = { key: string; value: string };
 type SettingDocument = { _id?: string; key?: string; value?: string };

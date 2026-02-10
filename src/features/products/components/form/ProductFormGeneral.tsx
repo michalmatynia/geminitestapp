@@ -361,7 +361,7 @@ export default function ProductFormGeneral({
               const fieldName = `name_${language.code.toLowerCase()}` as keyof ProductFormData;
               const error = errors[fieldName]?.message;
               const fieldNameKey = String(fieldName);
-              const fieldIssueList = fieldIssues[fieldNameKey] ?? [];
+              const fieldIssueList = validatorEnabled ? fieldIssues[fieldNameKey] ?? [] : [];
               const fieldIssue = fieldIssueList[0];
               const fieldValue = (allValues[fieldName] as string | undefined) ?? '';
               return (
@@ -370,6 +370,7 @@ export default function ProductFormGeneral({
                     <Input
                       id={fieldName}
                       className={cn(
+                        validatorEnabled &&
                         fieldIssue &&
                           (fieldIssue.severity === 'warning'
                             ? 'border-amber-500/60'
@@ -378,7 +379,7 @@ export default function ProductFormGeneral({
                       {...register(fieldName)}
                       placeholder={`Enter product name in ${language.name}`}
                     />
-                    {fieldIssueList.map((issue: FieldValidatorIssue) => (
+                    {validatorEnabled && fieldIssueList.map((issue: FieldValidatorIssue) => (
                       <ValidatorIssueHint
                         key={issue.patternId}
                         issue={issue}
@@ -429,7 +430,7 @@ export default function ProductFormGeneral({
               const fieldName = `description_${language.code.toLowerCase()}` as keyof ProductFormData;
               const error = errors[fieldName]?.message;
               const fieldNameKey = String(fieldName);
-              const fieldIssueList = fieldIssues[fieldNameKey] ?? [];
+              const fieldIssueList = validatorEnabled ? fieldIssues[fieldNameKey] ?? [] : [];
               const fieldIssue = fieldIssueList[0];
               const fieldValue = (allValues[fieldName] as string | undefined) ?? '';
               return (
@@ -438,6 +439,7 @@ export default function ProductFormGeneral({
                     <Textarea
                       id={fieldName}
                       className={cn(
+                        validatorEnabled &&
                         fieldIssue &&
                           (fieldIssue.severity === 'warning'
                             ? 'border-amber-500/60'
@@ -447,7 +449,7 @@ export default function ProductFormGeneral({
                       placeholder={`Enter product description in ${language.name}`}
                       rows={4}
                     />
-                    {fieldIssueList.map((issue: FieldValidatorIssue) => (
+                    {validatorEnabled && fieldIssueList.map((issue: FieldValidatorIssue) => (
                       <ValidatorIssueHint
                         key={issue.patternId}
                         issue={issue}

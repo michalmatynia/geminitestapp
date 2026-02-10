@@ -67,7 +67,7 @@ export interface PersistenceActions {
   startLoading: () => void;
   finishLoading: () => void;
 
-  // Legacy operation handlers
+  // Operation handlers (injected by orchestrator/runtime layer)
   setOperationHandlers: (handlers: PersistenceOperationHandlers) => void;
   savePathConfig: (options?: SavePathConfigOptions) => Promise<boolean>;
 }
@@ -147,8 +147,9 @@ export function PersistenceProvider({
   }, []);
 
   const savePathConfig = useCallback(
-    async (options?: SavePathConfigOptions): Promise<boolean> =>
-      (operationHandlersRef.current.savePathConfig?.(options) ?? Promise.resolve(false)),
+    async (options?: SavePathConfigOptions): Promise<boolean> => {
+      return await (operationHandlersRef.current.savePathConfig?.(options) ?? Promise.resolve(false));
+    },
     []
   );
 

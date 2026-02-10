@@ -1,0 +1,124 @@
+'use client';
+
+import type { AudioWaveform } from '@/features/ai/ai-paths/lib';
+import { toNumber } from '@/features/ai/ai-paths/lib';
+import {
+  Input,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/ui';
+
+import { useAiPathConfig } from '../../AiPathConfigContext';
+
+const WAVEFORM_OPTIONS: AudioWaveform[] = ['sine', 'square', 'triangle', 'sawtooth'];
+
+export function AudioOscillatorNodeConfigSection(): React.JSX.Element | null {
+  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  if (!selectedNode || selectedNode.type !== 'audio_oscillator') return null;
+
+  const oscillatorConfig = selectedNode.config?.audioOscillator ?? {
+    waveform: 'sine' as AudioWaveform,
+    frequencyHz: 440,
+    gain: 0.25,
+    durationMs: 400,
+  };
+
+  return (
+    <div className='space-y-4'>
+      <div>
+        <Label className='text-xs text-gray-400'>Waveform</Label>
+        <Select
+          value={oscillatorConfig.waveform}
+          onValueChange={(value: string): void =>
+            updateSelectedNodeConfig({
+              audioOscillator: {
+                ...oscillatorConfig,
+                waveform: value as AudioWaveform,
+              },
+            })
+          }
+        >
+          <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
+            <SelectValue placeholder='Select waveform' />
+          </SelectTrigger>
+          <SelectContent className='border-border bg-gray-900'>
+            {WAVEFORM_OPTIONS.map((waveform: AudioWaveform) => (
+              <SelectItem key={waveform} value={waveform}>
+                {waveform}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label className='text-xs text-gray-400'>Frequency (Hz)</Label>
+        <Input
+          type='number'
+          min='20'
+          max='20000'
+          step='1'
+          className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+          value={oscillatorConfig.frequencyHz}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+            updateSelectedNodeConfig({
+              audioOscillator: {
+                ...oscillatorConfig,
+                frequencyHz: toNumber(event.target.value, oscillatorConfig.frequencyHz),
+              },
+            })
+          }
+        />
+      </div>
+
+      <div>
+        <Label className='text-xs text-gray-400'>Gain (0-1)</Label>
+        <Input
+          type='number'
+          min='0'
+          max='1'
+          step='0.01'
+          className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+          value={oscillatorConfig.gain}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+            updateSelectedNodeConfig({
+              audioOscillator: {
+                ...oscillatorConfig,
+                gain: toNumber(event.target.value, oscillatorConfig.gain),
+              },
+            })
+          }
+        />
+      </div>
+
+      <div>
+        <Label className='text-xs text-gray-400'>Duration (ms)</Label>
+        <Input
+          type='number'
+          min='30'
+          max='10000'
+          step='10'
+          className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+          value={oscillatorConfig.durationMs}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+            updateSelectedNodeConfig({
+              audioOscillator: {
+                ...oscillatorConfig,
+                durationMs: toNumber(event.target.value, oscillatorConfig.durationMs),
+              },
+            })
+          }
+        />
+      </div>
+
+      <p className='text-[11px] text-gray-500'>
+        Emits audioSignal payloads that can be connected to Audio Speaker nodes.
+      </p>
+    </div>
+  );
+}
+

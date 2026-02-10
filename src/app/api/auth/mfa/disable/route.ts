@@ -8,7 +8,7 @@ import { hashRecoveryCode, verifyTotpToken } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/utils/auth-request-logger';
 import { authError, badRequestError, validationError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 export const runtime = 'nodejs';
 

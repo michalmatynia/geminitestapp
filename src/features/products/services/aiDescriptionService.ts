@@ -15,7 +15,7 @@ import {
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { ImageFileRecord } from '@/shared/types/files';
+import type { ImageFileRecord } from '@/shared/types/domain/files';
 
 import type { ProductFormData } from '../types/forms';
 import type { ChatCompletionContentPart } from 'openai/resources/chat/completions';

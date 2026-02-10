@@ -4,7 +4,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { logClientError } from '@/features/observability';
 import type { ProductWithImages, ProductImageRecord } from '@/features/products/types';
 import type { ProductImageSlot } from '@/features/products/types/products-ui';
-import type { ImageFileSelection } from '@/shared/types/files';
+import type { ImageFileSelection } from '@/shared/types/domain/files';
 
 const TOTAL_IMAGE_SLOTS = 15;
 

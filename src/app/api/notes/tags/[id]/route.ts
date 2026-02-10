@@ -6,8 +6,8 @@ import { tagUpdateSchema } from '@/features/notesapp';
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/features/products/server';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
-import type { TagUpdateInput } from '@/shared/types/notes';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { TagUpdateInput } from '@/shared/types/domain/notes';
 import { removeUndefined } from '@/shared/utils';
 
 /**

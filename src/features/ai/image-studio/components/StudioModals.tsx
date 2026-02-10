@@ -3,7 +3,7 @@
 import React from 'react';
 
 import FileManager from '@/features/files/components/FileManager';
-import type { ImageFileSelection } from '@/shared/types/files';
+import type { ImageFileSelection } from '@/shared/types/domain/files';
 import { Button, SharedModal, useToast } from '@/shared/ui';
 
 import { useImageStudio } from '../context/ImageStudioContext';

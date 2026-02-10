@@ -8,9 +8,9 @@ import { startProductAiJobQueue } from '@/features/jobs/server';
 import { getProductRepository } from '@/features/products/server';
 import { parseJsonBody } from '@/features/products/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ProductAiJobType } from '@/shared/types/domain/jobs';
 import type { ProductWithImages } from '@/shared/types/domain/products';
-import type { ProductAiJobType } from '@/shared/types/jobs';
 
 
 const bulkJobSchema = z.object({

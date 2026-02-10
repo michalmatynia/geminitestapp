@@ -7,8 +7,8 @@ import { badRequestError, internalError, notFoundError } from '@/shared/errors/a
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { ApiHandlerContext } from '@/shared/types/api';
-import type { LanguageWithCountries } from '@/shared/types/internationalization';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { LanguageWithCountries } from '@/shared/types/domain/internationalization';
 
 import type { Prisma } from '@prisma/client';
 

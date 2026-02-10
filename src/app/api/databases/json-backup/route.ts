@@ -7,7 +7,7 @@ import {
   listJsonBackups,
 } from '@/features/database/services/database-json-backup';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 async function POST_handler(): Promise<Response> {
   const result = await createPrismaJsonBackup();

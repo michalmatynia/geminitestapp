@@ -1,4 +1,4 @@
-import type { CategoryWithChildren } from '@/shared/types/notes';
+import type { CategoryWithChildren } from '@/shared/types/domain/notes';
 
 export const findFolderById = (
   foldersToScan: CategoryWithChildren[],

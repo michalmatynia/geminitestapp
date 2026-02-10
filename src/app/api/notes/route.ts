@@ -6,8 +6,8 @@ import { noteCreateSchema } from '@/features/notesapp';
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/features/products/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
-import type { NoteFilters } from '@/shared/types/notes';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { NoteFilters } from '@/shared/types/domain/notes';
 
 /**
  * GET /api/notes

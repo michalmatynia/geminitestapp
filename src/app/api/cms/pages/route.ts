@@ -7,7 +7,7 @@ import { cmsPageCreateSchema } from '@/features/cms/validations/api';
 import { ActivityTypes, logActivity } from '@/features/observability/server';
 import { parseJsonBody } from '@/features/products/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 /**
  * GET /api/cms/pages

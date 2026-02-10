@@ -1,4 +1,4 @@
-import type { AiNode, Edge, PathConfig, PathMeta } from '@/shared/types/ai-paths';
+import type { AiNode, Edge, PathConfig, PathMeta } from '@/shared/types/domain/ai-paths';
 
 import {
   CONTEXT_INPUT_PORTS,

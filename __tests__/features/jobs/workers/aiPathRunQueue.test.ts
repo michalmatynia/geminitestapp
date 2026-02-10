@@ -3,11 +3,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { executePathRun } from '@/features/ai/ai-paths/services/path-run-executor';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import {
-  processRun,
-  computeBackoffMs,
   computeAiPathRunQueueSlo,
   type QueueSloThresholds,
 } from '@/features/jobs/workers/aiPathRunQueue';
+import {
+  computeBackoffMs,
+  processRun,
+} from '@/features/jobs/processors/ai-path-run-processor';
 
 vi.mock('@/features/ai/ai-paths/services/path-run-executor', () => ({
   executePathRun: vi.fn(),

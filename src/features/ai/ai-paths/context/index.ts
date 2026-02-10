@@ -122,24 +122,24 @@ export type {
   PersistenceOperationHandlers,
 } from './PersistenceContext';
 
-// Legacy Sync Hooks (for gradual migration)
+// State bridge hooks (sync shared state into domain contexts)
 export {
-  useLegacySyncSelection,
-  useLegacySyncCanvas,
-  useLegacySyncGraph,
-  useLegacySyncRuntime,
-  useLegacySyncPersistence,
-  useLegacySyncAll,
-} from './hooks/useLegacySync';
+  useStateBridgeSelection,
+  useStateBridgeCanvas,
+  useStateBridgeGraph,
+  useStateBridgeRuntime,
+  useStateBridgePersistence,
+  useStateBridgeAll,
+} from './hooks/useStateBridge';
 
 // Derived hooks
 export { useCanvasInteractions } from './hooks/useCanvasInteractions';
 
 export type {
-  LegacySyncSelectionProps,
-  LegacySyncCanvasProps,
-  LegacySyncGraphProps,
-  LegacySyncRuntimeProps,
-  LegacySyncPersistenceProps,
-  LegacySyncAllProps,
-} from './hooks/useLegacySync';
+  StateBridgeSelectionProps,
+  StateBridgeCanvasProps,
+  StateBridgeGraphProps,
+  StateBridgeRuntimeProps,
+  StateBridgePersistenceProps,
+  StateBridgeAllProps,
+} from './hooks/useStateBridge';

@@ -7,7 +7,7 @@ import { getCatalogRepository } from '@/features/products/server';
 import { parseJsonBody } from '@/features/products/server';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 import { removeUndefined } from '@/shared/utils';
 
 const catalogUpdateSchema = z.object({

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createMongoBackup, createPostgresBackup } from '@/features/database/server';
 import { forbiddenError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 export const runtime = 'nodejs';
 

@@ -229,3 +229,14 @@ export function useSaveExportSettingsMutation(): UseMutationResult<void, Error, 
     }
   });
 }
+
+export function useClearInventoryMutation(): UseMutationResult<void, Error, void> {
+  return useMutation({
+    mutationFn: async () => {
+      await Promise.all([
+        api.post('/api/integrations/imports/base/sample-product', { inventoryId: '', saveOnly: true }),
+        api.post('/api/integrations/imports/base/parameters', { inventoryId: '', productId: '', clearOnly: true }),
+      ]);
+    },
+  });
+}

@@ -15,8 +15,7 @@ import type {
   BlockInstance,
 } from '../types/page-builder';
 
-// Re-export for backward compatibility
-export { basePageBuilderReducer, pageBuilderReducer } from './page-builder/page-builder-reducer';
+export { pageBuilderReducer } from './page-builder/page-builder-reducer';
 
 // ---------------------------------------------------------------------------
 // Context

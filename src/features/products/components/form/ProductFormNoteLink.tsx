@@ -8,7 +8,7 @@ import { useMemo, useState } from 'react';
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { NoteWithRelations, RelatedNote } from '@/shared/types/notes';
+import type { NoteWithRelations, RelatedNote } from '@/shared/types/domain/notes';
 import { Button, Input, FormSection } from '@/shared/ui';
 
 type NotesLookupResult = RelatedNote[];

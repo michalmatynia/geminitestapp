@@ -4,7 +4,7 @@ import {
   fetchSettingsCached,
   invalidateSettingsCache,
 } from '@/shared/api/settings-client';
-import { useOfflineMutation } from '@/shared/hooks/useOfflineMutation';
+import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
 export interface SettingRecord {

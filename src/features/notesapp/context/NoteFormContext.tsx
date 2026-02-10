@@ -3,7 +3,7 @@
 import { useQueries, useQuery, type UseQueryResult } from '@tanstack/react-query';
 import React, { createContext, useContext, useState, useMemo, useEffect, useRef, useCallback } from 'react';
 
-import { useUndo } from '@/shared/hooks/use-undo';
+import { useUndo } from '@/shared/hooks/ui/use-undo';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { 
@@ -15,7 +15,7 @@ import type {
   RelatedNote,
   NoteRelationWithTarget,
   NoteRelationWithSource
-} from '@/shared/types/notes';
+} from '@/shared/types/domain/notes';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { integrationService } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const integrationSchema = z.object({
   name: z.string().trim().min(1),

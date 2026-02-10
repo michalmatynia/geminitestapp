@@ -2,7 +2,7 @@ import { MoreVertical } from 'lucide-react';
 
 import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
 import { countryFlagMap } from '@/shared/constants/internationalization';
-import type { CurrencyOption, CountryOption, Language } from '@/shared/types/internationalization';
+import type { CurrencyOption, CountryOption, Language } from '@/shared/types/domain/internationalization';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Button, Badge, Alert, SearchInput } from '@/shared/ui';
 
 export function InternationalizationSettings(): React.JSX.Element {

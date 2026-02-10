@@ -3,7 +3,8 @@
 import { useMutation, useQuery, useQueryClient, type UseMutationResult, type UseQueryResult } from '@tanstack/react-query';
 
 import { logClientError } from '@/features/observability';
-import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord, AgentTeachingEmbeddingDocumentListItem } from '@/shared/types/agent-teaching';
+import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord, AgentTeachingEmbeddingDocumentListItem, AgentTeachingChatSource } from '@/shared/types/domain/agent-teaching';
+import type { ChatMessage } from '@/shared/types/domain/chatbot';
 
 export const agentTeachingKeys = {
   all: ['agent-teaching'] as const,
@@ -11,6 +12,56 @@ export const agentTeachingKeys = {
   collections: () => [...agentTeachingKeys.all, 'collections'] as const,
   documents: (collectionId: string) => [...agentTeachingKeys.all, 'collections', collectionId, 'documents'] as const,
 };
+
+export function useSearchEmbeddingCollectionMutation(): UseMutationResult<
+  AgentTeachingChatSource[],
+  Error,
+  { collectionId: string; queryText: string; topK?: number; minScore?: number }
+  > {
+  return useMutation({
+    mutationFn: async ({ collectionId, queryText, topK, minScore }): Promise<AgentTeachingChatSource[]> => {
+      const res = await fetch(
+        `/api/agentcreator/teaching/collections/${encodeURIComponent(collectionId)}/search`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            queryText,
+            topK,
+            minScore,
+          }),
+        }
+      );
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(data?.error || 'Search failed.');
+      }
+      const data = (await res.json()) as { sources?: AgentTeachingChatSource[] };
+      return Array.isArray(data.sources) ? data.sources : [];
+    },
+  });
+}
+
+export function useTeachingChatMutation(): UseMutationResult<
+  { message: string; sources: AgentTeachingChatSource[] },
+  Error,
+  { agentId: string; messages: ChatMessage[] }
+  > {
+  return useMutation({
+    mutationFn: async ({ agentId, messages }): Promise<{ message: string; sources: AgentTeachingChatSource[] }> => {
+      const res = await fetch('/api/agentcreator/teaching/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentId, messages }),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(data?.error || 'Chat failed.');
+      }
+      return (await res.json()) as { message: string; sources: AgentTeachingChatSource[] };
+    },
+  });
+}
 
 export function useTeachingAgents(options?: { enabled?: boolean }): UseQueryResult<AgentTeachingAgentRecord[], Error> {
   return useQuery({

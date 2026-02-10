@@ -4,7 +4,7 @@ import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { TRIGGER_EVENTS, triggerButtonsApi } from '@/features/ai/ai-paths/lib';
-import type { AiTriggerButtonRecord } from '@/shared/types/ai-trigger-buttons';
+import type { AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
 import { Label, UnifiedSelect } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';

@@ -1,6 +1,6 @@
 import type { ProductCategoryDto } from '@/shared/dtos';
 
-// Re-export DTOs as types for backward compatibility
+// DTO type exports
 export type {
   ProductDto,
   ProductTagDto as ProductTag,

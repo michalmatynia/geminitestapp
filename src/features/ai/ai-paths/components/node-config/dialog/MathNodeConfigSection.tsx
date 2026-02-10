@@ -6,6 +6,7 @@
 import type { MathConfig } from '@/features/ai/ai-paths/lib';
 import { toNumber } from '@/features/ai/ai-paths/lib';
 import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
 export function MathNodeConfigSection(): React.JSX.Element | null {

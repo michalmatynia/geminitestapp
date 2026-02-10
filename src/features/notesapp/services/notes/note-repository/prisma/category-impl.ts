@@ -8,7 +8,7 @@ import type {
   CategoryWithChildren,
   CategoryCreateInput,
   CategoryUpdateInput,
-} from '@/shared/types/notes';
+} from '@/shared/types/domain/notes';
 
 import { getOrCreateDefaultNotebook } from './notebook-impl';
 

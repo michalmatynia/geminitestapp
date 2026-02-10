@@ -5,7 +5,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { ChatInterface } from '@/features/ai/chatbot/components/ChatInterface';
-import { ChatMessage } from '@/shared/types/chatbot';
+import { ChatMessage } from '@/shared/types/domain/chatbot';
 
 describe('ChatInterface', () => {
   beforeEach(() => {

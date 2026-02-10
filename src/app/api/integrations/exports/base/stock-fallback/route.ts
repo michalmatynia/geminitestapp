@@ -9,7 +9,7 @@ import {
 } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const requestSchema = z.object({
   enabled: z.boolean()

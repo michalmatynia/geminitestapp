@@ -145,6 +145,7 @@ type UseAiPathsRuntimeResult = {
   sendingToAi: boolean;
   runtimeNodeStatuses: AiPathRuntimeNodeStatusMap;
   runtimeEvents: AiPathRuntimeEvent[];
+  clearNodeCache: (nodeId: string) => void;
 };
 
 export function useAiPathsRuntime({
@@ -446,6 +447,37 @@ export function useAiPathsRuntime({
       }
     },
     [formatStatusLabel, normalizeNodeStatus]
+  );
+
+  const clearNodeCache = useCallback(
+    (nodeId: string): void => {
+      setRuntimeState((prev: RuntimeState) => {
+        const nextHashes = { ...(prev.hashes ?? {}) };
+        const nextTimestamps = { ...(prev.hashTimestamps ?? {}) };
+        delete nextHashes[nodeId];
+        delete nextTimestamps[nodeId];
+        return {
+          ...prev,
+          hashes: Object.keys(nextHashes).length > 0 ? nextHashes : undefined,
+          hashTimestamps: Object.keys(nextTimestamps).length > 0 ? nextTimestamps : undefined,
+        };
+      });
+      const currentStatus = runtimeNodeStatusesRef.current[nodeId];
+      if (currentStatus === 'cached') {
+        const next = { ...runtimeNodeStatusesRef.current };
+        delete next[nodeId];
+        runtimeNodeStatusesRef.current = next;
+        setRuntimeNodeStatuses(next);
+      }
+      appendRuntimeEvent({
+        source: 'local',
+        kind: 'node_status',
+        level: 'info',
+        nodeId,
+        message: `Cache cleared for node ${nodeId}.`,
+      });
+    },
+    [appendRuntimeEvent]
   );
 
   useEffect((): void => {
@@ -888,6 +920,7 @@ export function useAiPathsRuntime({
         const nodes = JSON.parse((event as MessageEvent).data) as Array<{
           nodeId: string;
           status: string;
+          cached?: boolean;
           inputs?: RuntimePortValues | null;
           outputs?: RuntimePortValues | null;
         }>;
@@ -897,9 +930,10 @@ export function useAiPathsRuntime({
           const nextInputs = { ...(prev.inputs ?? {}) };
           let changed = false;
           for (const node of nodes) {
+            const effectiveStatus = node.cached ? 'cached' : node.status;
             const prevOut = (nextOutputs[node['nodeId']] ?? {}) as Record<string, unknown>;
-            if (prevOut['status'] !== node['status']) {
-              nextOutputs[node['nodeId']] = { ...prevOut, status: node['status'] } as RuntimePortValues;
+            if (prevOut['status'] !== effectiveStatus) {
+              nextOutputs[node['nodeId']] = { ...prevOut, status: effectiveStatus } as RuntimePortValues;
               changed = true;
             }
             if (node['inputs']) {
@@ -907,7 +941,7 @@ export function useAiPathsRuntime({
               changed = true;
             }
             if (node['outputs']) {
-              nextOutputs[node['nodeId']] = { ...(nextOutputs[node['nodeId']] as Record<string, unknown> ?? {}), ...node['outputs'], status: node['status'] } as RuntimePortValues;
+              nextOutputs[node['nodeId']] = { ...(nextOutputs[node['nodeId']] as Record<string, unknown> ?? {}), ...node['outputs'], status: effectiveStatus } as RuntimePortValues;
               changed = true;
             }
           }
@@ -918,10 +952,11 @@ export function useAiPathsRuntime({
         batchNodeStatusUpdates(
           nodes.map((node) => {
             const runtimeNode = normalizedNodes.find((candidate: AiNode): boolean => candidate.id === node.nodeId);
-            const ns = typeof node.status === 'string' ? node.status.trim().toLowerCase() : '';
+            const effectiveStatus = node.cached ? 'cached' : node.status;
+            const ns = typeof effectiveStatus === 'string' ? effectiveStatus.trim().toLowerCase() : '';
             return {
               nodeId: node.nodeId,
-              status: node.status,
+              status: effectiveStatus,
               source: 'server' as const,
               runId,
               nodeType: runtimeNode?.type,
@@ -932,7 +967,7 @@ export function useAiPathsRuntime({
                   : ns === 'failed'
                     ? 'node_failed'
                     : 'node_status') as AiPathRuntimeEventKind,
-              level: ns === 'failed' ? 'error' : 'info',
+              level: (ns === 'failed' ? 'error' : 'info') as 'info' | 'error',
             };
           })
         );
@@ -1435,6 +1470,7 @@ export function useAiPathsRuntime({
             historyLimit: 50,
             seedOutputs: state.outputs,
             seedHashes: state.hashes ?? undefined,
+            seedHashTimestamps: state.hashTimestamps ?? undefined,
             seedHistory: state.history ?? undefined,
             seedRunId: state.runId ?? runId,
             seedRunStartedAt: state.runStartedAt ?? runStartedAt,
@@ -2290,6 +2326,7 @@ export function useAiPathsRuntime({
           skipAiJobs: true,
           seedOutputs: seededOutputs,
           seedHashes: runtimeStateRef.current.hashes ?? undefined,
+          seedHashTimestamps: runtimeStateRef.current.hashTimestamps ?? undefined,
           seedHistory: runtimeStateRef.current.history ?? undefined,
           seedRunId: runtimeStateRef.current.runId ?? undefined,
           seedRunStartedAt: runtimeStateRef.current.runStartedAt ?? undefined,
@@ -2340,6 +2377,7 @@ export function useAiPathsRuntime({
               historyLimit: 50,
               seedOutputs: downstreamState.outputs,
               seedHashes: downstreamState.hashes ?? undefined,
+              seedHashTimestamps: downstreamState.hashTimestamps ?? undefined,
               seedHistory: downstreamState.history ?? undefined,
               seedRunId: downstreamState.runId ?? runtimeStateRef.current.runId ?? undefined,
               seedRunStartedAt: downstreamState.runStartedAt ?? runtimeStateRef.current.runStartedAt ?? undefined,
@@ -3052,5 +3090,6 @@ export function useAiPathsRuntime({
     sendingToAi,
     runtimeNodeStatuses,
     runtimeEvents,
+    clearNodeCache,
   };
 }

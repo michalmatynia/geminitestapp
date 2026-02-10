@@ -14,7 +14,7 @@ import {
 import { usePresetsState, usePresetsActions } from '../context';
 
 // ---------------------------------------------------------------------------
-// Legacy Props Interface (for backward compatibility)
+// Props Interface
 // ---------------------------------------------------------------------------
 
 type PresetsDialogProps = {
@@ -33,8 +33,8 @@ type PresetsDialogProps = {
 };
 
 /**
- * Legacy PresetsDialog that receives all props.
- * @deprecated Use PresetsDialogWithContext for new implementations.
+ * Props-driven PresetsDialog.
+ * Use PresetsDialogWithContext for context-managed state.
  */
 export function PresetsDialog({
   open,

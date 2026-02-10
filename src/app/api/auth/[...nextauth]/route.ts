@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { handlers } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/utils/auth-request-logger';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 export const runtime = 'nodejs';
 

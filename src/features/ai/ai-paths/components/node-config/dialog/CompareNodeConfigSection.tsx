@@ -6,6 +6,7 @@
 
 import type { CompareConfig } from '@/features/ai/ai-paths/lib';
 import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
 export function CompareNodeConfigSection(): React.JSX.Element | null {

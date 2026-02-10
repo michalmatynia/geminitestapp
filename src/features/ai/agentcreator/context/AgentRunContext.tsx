@@ -2,8 +2,8 @@
 
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
 
-import { AiPathRunRecord } from '@/shared/types/ai-paths';
-import { AgentAuditLog, AgentBrowserLog, AgentSnapshot } from '@/shared/types/chatbot';
+import { AiPathRunRecord } from '@/shared/types/domain/ai-paths';
+import { AgentAuditLog, AgentBrowserLog, AgentSnapshot } from '@/shared/types/domain/chatbot';
 
 import { useAgentAudits, useAgentLogs, useAgentRuns, useAgentSnapshots } from '../hooks/useAgentRunsQueries';
 

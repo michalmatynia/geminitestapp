@@ -18,7 +18,7 @@ import { extractParamsFromPrompt, inferParamSpecs, validateImageStudioParams, se
 import { type VectorShape, type VectorToolMode } from '@/features/vector-drawing';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import type { ImageFileSelection } from '@/shared/types/files';
+import type { ImageFileSelection } from '@/shared/types/domain/files';
 import { useToast } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 

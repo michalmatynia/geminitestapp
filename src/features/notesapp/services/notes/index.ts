@@ -4,7 +4,7 @@ import type { NoteRepository } from '@/features/notesapp/services/notes/types/no
 import { ErrorSystem } from '@/features/observability/server';
 import { configurationError } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
-import type { NoteWithRelations, RelatedNote, NoteUpdateInput, NoteCreateInput, NoteFilters, TagRecord, TagCreateInput, TagUpdateInput, CategoryRecord, CategoryCreateInput, CategoryUpdateInput, CategoryWithChildren, NotebookRecord, NotebookCreateInput, NotebookUpdateInput, ThemeRecord, ThemeCreateInput, ThemeUpdateInput, NoteFileRecord, NoteFileCreateInput } from '@/shared/types/notes';
+import type { NoteWithRelations, RelatedNote, NoteUpdateInput, NoteCreateInput, NoteFilters, TagRecord, TagCreateInput, TagUpdateInput, CategoryRecord, CategoryCreateInput, CategoryUpdateInput, CategoryWithChildren, NotebookRecord, NotebookCreateInput, NotebookUpdateInput, ThemeRecord, ThemeCreateInput, ThemeUpdateInput, NoteFileRecord, NoteFileCreateInput } from '@/shared/types/domain/notes';
 
 import { cleanupNoteFile } from './file-cleanup';
 

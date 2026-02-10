@@ -3,7 +3,7 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { CurrencyOption, CountryOption, Language } from '@/shared/types/internationalization';
+import type { CurrencyOption, CountryOption, Language } from '@/shared/types/domain/internationalization';
 
 import { getCurrencies, getCountries, getLanguages } from '../api';
 

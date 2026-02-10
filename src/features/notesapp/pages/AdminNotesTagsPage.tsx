@@ -7,7 +7,7 @@ import { useCreateNoteTag, useDeleteNoteTag, useUpdateNoteTag } from '@/features
 import { useNotebooks, useNoteTags } from '@/features/notesapp/api/useNoteQueries';
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/features/observability';
-import type { TagRecord } from '@/shared/types/notes';
+import type { TagRecord } from '@/shared/types/domain/notes';
 import { Button, useToast, Input, Label, SectionHeader, SectionPanel, SearchInput } from '@/shared/ui';
 
 

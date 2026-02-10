@@ -10,8 +10,8 @@ import {
 import { startAiInsightsQueue, startAiPathRunQueue } from '@/features/jobs/server';
 import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandler, getQueryParams } from '@/shared/lib/api/api-handler';
-import type { AiPathRuntimeAnalyticsRange } from '@/shared/types/ai-paths';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { AiPathRuntimeAnalyticsRange } from '@/shared/types/domain/ai-paths';
 
 const RANGE_VALUES: readonly AiPathRuntimeAnalyticsRange[] = ['1h', '24h', '7d', '30d'];
 

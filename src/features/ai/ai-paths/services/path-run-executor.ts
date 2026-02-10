@@ -18,7 +18,7 @@ import type {
   RuntimeHistoryEntry,
   RuntimePortValues,
   RuntimeState,
-} from '@/shared/types/ai-paths';
+} from '@/shared/types/domain/ai-paths';
 
 const TERMINAL_RUN_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
 
@@ -330,6 +330,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       ...(run.triggerContext ? { triggerContext: run.triggerContext } : {}),
       seedOutputs: runtimeState.outputs,
       seedHashes: runtimeState.hashes ?? undefined,
+      seedHashTimestamps: runtimeState.hashTimestamps ?? undefined,
       seedHistory: runtimeState.history ?? undefined,
       seedRunId: runtimeState.runId ?? undefined,
       seedRunStartedAt: runtimeState.runStartedAt ?? undefined,

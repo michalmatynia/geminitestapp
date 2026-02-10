@@ -5,7 +5,7 @@ import Image from 'next/image';
 import React from 'react';
 
 import { useNoteFormContext } from '@/features/notesapp/context/NoteFormContext';
-import type { NoteFileRecord } from '@/shared/types/notes';
+import type { NoteFileRecord } from '@/shared/types/domain/notes';
 import { Button, Label, FileUploadTrigger, type FileUploadHelpers } from '@/shared/ui';
 
 

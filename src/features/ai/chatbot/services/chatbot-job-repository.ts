@@ -7,7 +7,7 @@ import type {
   ChatbotJob,
   ChatbotJobDocument,
   ChatbotJobStatus,
-} from '@/shared/types/chatbot';
+} from '@/shared/types/domain/chatbot';
 
 const COLLECTION_NAME = 'chatbot_jobs';
 

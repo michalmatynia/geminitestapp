@@ -6,7 +6,7 @@ import { buildImageBase64Slots } from '@/features/products/services/image-base64
 import { getProductRepository } from '@/features/products/services/product-repository';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 async function POST_handler(
   _req: NextRequest,

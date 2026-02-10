@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { validateProductsBatch } from '@/features/products/validations';
 import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 // POST /api/products/validation - Batch validation
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

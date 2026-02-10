@@ -1,3 +1,4 @@
+import type { AppProviderDiagnosticsDto as ProviderDiagnosticsResponse } from '@/shared/dtos/system';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
 import type {
@@ -40,6 +41,15 @@ type PreviewApiResponse = DatabasePreviewPayload & {
     tables?: DatabasePreviewTable[];
   };
   data?: DatabasePreviewRow[];
+};
+
+export const fetchProviderDiagnostics = async (): Promise<ProviderDiagnosticsResponse> => {
+  const res = await fetch('/api/settings/providers', { cache: 'no-store' });
+  if (!res.ok) {
+    const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(payload?.error || 'Failed to fetch provider diagnostics.');
+  }
+  return (await res.json()) as ProviderDiagnosticsResponse;
 };
 
 export const fetchDatabaseBackups = async (
@@ -263,4 +273,44 @@ export const updateCollectionProviderMap = async (
   if (!res.ok) {
     throw new Error('Failed to update collection provider map');
   }
+};
+
+export type DatabaseSyncDirection = 'mongo_to_prisma' | 'prisma_to_mongo';
+
+export const syncDatabase = async (
+  direction: DatabaseSyncDirection
+): Promise<{ error?: string }> => {
+  const res = await fetch('/api/settings/database/sync', {
+    method: 'POST',
+    headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ direction }),
+  });
+  if (!res.ok) {
+    const payload = (await res.json()) as { error?: string };
+    throw new Error(payload?.error || 'Failed to enqueue database sync.');
+  }
+  return {};
+};
+
+export type SettingsBackfillResult = {
+  matched: number;
+  modified: number;
+  remaining: number;
+  sampleIds?: string[];
+};
+
+export const backfillSettings = async (
+  dryRun: boolean,
+  limit: number
+): Promise<SettingsBackfillResult> => {
+  const res = await fetch('/api/settings/migrate/backfill-keys', {
+    method: 'POST',
+    headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ dryRun, limit }),
+  });
+  if (!res.ok) {
+    const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(payload?.error || 'Failed to backfill settings keys.');
+  }
+  return res.json() as Promise<SettingsBackfillResult>;
 };

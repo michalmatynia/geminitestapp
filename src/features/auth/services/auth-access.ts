@@ -12,7 +12,7 @@ import {
 } from '@/features/auth/utils/auth-management';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import { MongoSettingRecord } from '@/shared/types/base-types';
+import { MongoSettingRecord } from '@/shared/types/core/base-types';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 

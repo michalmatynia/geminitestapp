@@ -9,7 +9,7 @@ import {
 import type { DatabaseSyncDirection } from '@/features/database/services/database-sync';
 import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const SAFE_NAME_RE = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 

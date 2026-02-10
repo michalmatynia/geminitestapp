@@ -2,7 +2,7 @@ import { MoreVertical } from 'lucide-react';
 
 import { useInternationalizationContext } from '@/features/internationalization';
 import { Catalog } from '@/features/products/types';
-import type { Language } from '@/shared/types/internationalization';
+import type { Language } from '@/shared/types/domain/internationalization';
 import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Badge } from '@/shared/ui';
 
 

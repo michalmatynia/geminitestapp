@@ -379,13 +379,16 @@ export const getProductColumns = (
         (link: string) => link && link.trim().length > 0
       );
 
+      const resolvedFileImage = resolveProductImageUrl(firstFileImage, imageExternalBaseUrl) ?? undefined;
+      const resolvedLinkImage = resolveProductImageUrl(firstLinkImage, imageExternalBaseUrl) ?? undefined;
+
       let imageUrl: string | undefined;
       if (thumbnailSource === 'link') {
-        imageUrl = firstLinkImage;
+        imageUrl = resolvedLinkImage || resolvedFileImage || firstBase64Image;
       } else if (thumbnailSource === 'base64') {
-        imageUrl = firstBase64Image;
+        imageUrl = firstBase64Image || resolvedFileImage || resolvedLinkImage;
       } else {
-        imageUrl = resolveProductImageUrl(firstFileImage, imageExternalBaseUrl) ?? undefined;
+        imageUrl = resolvedFileImage || resolvedLinkImage || firstBase64Image;
       }
 
       return (

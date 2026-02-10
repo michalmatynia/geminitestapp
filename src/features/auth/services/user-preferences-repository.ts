@@ -156,6 +156,23 @@ const setCachedUserPreferences = (cacheKey: string, value: UserPreferences): voi
   });
 };
 
+export const peekUserPreferencesCache = (
+  userId: string,
+  options?: { allowStale?: boolean }
+): UserPreferences | null => {
+  const cacheKey = getUserPreferencesCacheKey(userId);
+  if (options?.allowStale) {
+    return userPreferencesCache.get(cacheKey)?.value ?? null;
+  }
+  return getCachedUserPreferences(cacheKey);
+};
+
+export const warmUserPreferencesCache = (userId: string): void => {
+  void getUserPreferences(userId).catch(() => {
+    // no-op; warm-up must never throw
+  });
+};
+
 export const invalidateUserPreferencesCache = (userId?: string): void => {
   if (userId) {
     const cacheKey = getUserPreferencesCacheKey(userId);

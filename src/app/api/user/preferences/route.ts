@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getUserPreferences, updateUserPreferences, type UserPreferencesData } from '@/features/auth/server';
+import {
+  getUserPreferences,
+  peekUserPreferencesCache,
+  updateUserPreferences,
+  warmUserPreferencesCache,
+  type UserPreferencesData,
+} from '@/features/auth/server';
 import { auth } from '@/features/auth/server';
 import { logSystemEvent } from '@/features/observability/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
@@ -20,7 +26,7 @@ const parsePositiveInt = (value: string | undefined, fallback: number): number =
 };
 const USER_PREFERENCES_REPOSITORY_TIMEOUT_MS = parsePositiveInt(
   process.env['USER_PREFERENCES_REPOSITORY_TIMEOUT_MS'],
-  2500
+  3500
 );
 
 const withTimeout = async <T,>(label: string, fn: () => Promise<T>): Promise<T> => {
@@ -72,6 +78,14 @@ const buildUserPreferencesResponse = (
     : {}),
 });
 
+const mergeUserPreferencesFallback = (
+  base: Partial<UserPreferencesData> | null | undefined,
+  updates: Partial<UserPreferencesData> | null | undefined
+): Partial<UserPreferencesData> => ({
+  ...(base ?? {}),
+  ...(updates ?? {}),
+});
+
 /**
  * GET /api/user/preferences
  * Get current user preferences
@@ -104,12 +118,50 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
       headers: { 'x-user-preferences-fallback': 'true' },
     });
   }
+  const cachedPreferences = await withTiming(
+    'cache',
+    async () => peekUserPreferencesCache(userId)
+  );
+  if (cachedPreferences) {
+    const response = NextResponse.json(
+      buildUserPreferencesResponse(cachedPreferences, includeAdminMenu),
+      {
+        headers: { 'x-user-preferences-cache': 'hit' },
+      }
+    );
+    if (logTiming) {
+      timings['total'] = performance.now() - totalStart;
+      void logSystemEvent({
+        level: 'info',
+        message: '[timing] user.preferences.GET',
+        context: { ...timings, databaseConfigured: true, source: 'cache' },
+      }).catch(() => {});
+    }
+    return response;
+  }
+
+  // Warm the repository cache for authenticated users before awaiting the fetch.
+  if (session?.user?.id) {
+    warmUserPreferencesCache(session.user.id);
+  }
   let preferences: Partial<UserPreferencesData>;
   try {
     preferences = await withTiming('repository', () =>
       withTimeout('repository.get', () => getUserPreferences(userId))
     );
   } catch (error) {
+    const staleCached = peekUserPreferencesCache(userId, { allowStale: true });
+    if (staleCached) {
+      return NextResponse.json(
+        buildUserPreferencesResponse(staleCached, includeAdminMenu),
+        {
+          headers: {
+            'x-user-preferences-fallback': 'true',
+            'x-user-preferences-cache': 'stale',
+          },
+        }
+      );
+    }
     if (logTiming) {
       timings['total'] = performance.now() - totalStart;
       void logSystemEvent({
@@ -192,6 +244,8 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise
       withTimeout('repository.patch', () => updateUserPreferences(userId, data))
     );
   } catch (error) {
+    const staleCached = peekUserPreferencesCache(userId, { allowStale: true });
+    const mergedFallback = mergeUserPreferencesFallback(staleCached, data);
     if (logTiming) {
       timings['total'] = performance.now() - totalStart;
       void logSystemEvent({
@@ -204,10 +258,11 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise
         },
       }).catch(() => {});
     }
-    return NextResponse.json(buildUserPreferencesResponse(data, false), {
+    return NextResponse.json(buildUserPreferencesResponse(mergedFallback, false), {
       headers: {
         'x-user-preferences-fallback': 'true',
         'x-user-preferences-persisted': 'false',
+        ...(staleCached ? { 'x-user-preferences-cache': 'stale' } : {}),
       },
     });
   }

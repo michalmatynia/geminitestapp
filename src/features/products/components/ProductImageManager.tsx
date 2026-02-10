@@ -26,7 +26,7 @@ import {
 } from '@/shared/ui';
 import { DRAG_KEYS, getFirstDragValue, parseDragIndex, setDragData } from '@/shared/utils/drag-drop';
 
-type SlotViewMode = 'upload' | 'link' | 'base64' | 'external';
+type SlotViewMode = 'upload' | 'link' | 'base64';
 
 export default function ProductImageManager(): React.JSX.Element {
   const {
@@ -72,29 +72,18 @@ export default function ProductImageManager(): React.JSX.Element {
         const hasUpload = Boolean(imageSlots[i]);
         const hasLink = Boolean(imageLinks[i]?.trim());
         const hasBase64 = Boolean(imageBase64s[i]?.trim());
-        const slot = imageSlots[i];
-        const hasExternal = Boolean(
-          externalBaseSetting.trim() &&
-            slot?.type === 'existing' &&
-            slot.data &&
-            'filepath' in slot.data &&
-            slot.data.filepath
-        );
         const current = prev[i];
         const currentValid =
           (current === 'upload' && hasUpload) ||
           (current === 'link' && hasLink) ||
-          (current === 'base64' && hasBase64) ||
-          (current === 'external' && hasExternal);
-        if (hasUpload && (hasLink || hasBase64 || hasExternal)) {
+          (current === 'base64' && hasBase64);
+        if (hasUpload && (hasLink || hasBase64)) {
           if (currentValid) {
             next[i] = current;
           } else if (hasBase64) {
             next[i] = 'base64';
           } else if (hasLink) {
             next[i] = 'link';
-          } else if (hasExternal) {
-            next[i] = 'external';
           } else {
             next[i] = 'upload';
           }
@@ -102,8 +91,6 @@ export default function ProductImageManager(): React.JSX.Element {
           next[i] = 'base64';
         } else if (hasLink && !hasUpload) {
           next[i] = 'link';
-        } else if (hasExternal && !hasUpload) {
-          next[i] = 'external';
         } else {
           next[i] = 'upload';
         }
@@ -114,7 +101,7 @@ export default function ProductImageManager(): React.JSX.Element {
 
       return changed ? next : prev;
     });
-  }, [imageSlots, imageLinks, imageBase64s, externalBaseSetting, isReordering]);
+  }, [imageSlots, imageLinks, imageBase64s, isReordering]);
 
   const pushDebug = (info: Omit<DebugInfo, 'timestamp'>): void => {
     setDebugInfo({
@@ -284,8 +271,12 @@ export default function ProductImageManager(): React.JSX.Element {
     }
   };
 
-  const buildExternalUrl = (filepath: string): string => {
-    return resolveProductImageUrl(filepath, externalBaseSetting) ?? filepath;
+  const resolveSlotUploadUrl = (slot: ProductImageSlot | null): string => {
+    if (!slot) return '';
+    if (slot.type === 'existing') {
+      return resolveProductImageUrl(slot.data.filepath, externalBaseSetting) ?? slot.data.filepath;
+    }
+    return resolveProductImageUrl(slot.previewUrl, externalBaseSetting) ?? slot.previewUrl;
   };
 
   // Drag and drop handlers
@@ -365,9 +356,14 @@ export default function ProductImageManager(): React.JSX.Element {
   return (
     <div>
       <div className='mb-3 flex items-center justify-between'>
-        <div className='flex items-center gap-2'>
-          <span className='text-xs text-gray-400'>Image slots</span>
-          <span className='text-xs text-gray-500'>(drag to reorder)</span>
+        <div className='flex flex-col gap-1'>
+          <div className='flex items-center gap-2'>
+            <span className='text-xs text-gray-400'>Image slots</span>
+            <span className='text-xs text-gray-500'>(drag to reorder)</span>
+          </div>
+          <span className='text-[11px] text-gray-500'>
+            Image host is configured globally in Product Settings - Images.
+          </span>
         </div>
         <div className='flex items-center gap-2'>
           <Button
@@ -417,42 +413,29 @@ export default function ProductImageManager(): React.JSX.Element {
           const hasUpload = slot !== null;
           const linkValue = imageLinks[index] ?? '';
           const base64Value = imageBase64s[index] ?? '';
+          const uploadUrl = resolveSlotUploadUrl(slot);
           const hasLink = Boolean(linkValue.trim());
           const hasBase64 = Boolean(base64Value.trim());
-          const hasExternal =
-            Boolean(externalBaseSetting.trim()) &&
-            slot?.type === 'existing' &&
-            Boolean(slot.data?.filepath);
           const mode = slotViewModes[index];
           const prefersLink = mode === 'link';
           const prefersBase64 = mode === 'base64';
-          const prefersExternal = mode === 'external';
           const showBase64 =
             (prefersBase64 && hasBase64) ||
             (!hasUpload && !hasLink && hasBase64);
           const showLink =
             (prefersLink && hasLink) ||
             (!hasUpload && hasLink && !prefersBase64);
-          const externalUrl =
-            hasExternal && slot?.data?.filepath
-              ? buildExternalUrl(slot.data.filepath)
-              : '';
-          const showExternal = prefersExternal && hasExternal;
           const displayUrl = showBase64
             ? base64Value
             : showLink
               ? linkValue
-              : showExternal
-                ? externalUrl
-                : slot?.previewUrl;
+              : uploadUrl;
           const modeLabel =
             mode === 'upload'
               ? 'Upload'
               : mode === 'link'
                 ? 'Link'
-                : mode === 'base64'
-                  ? 'Base64'
-                  : 'External';
+                : 'Base64';
           const canConvertToBase64 = Boolean(slot || linkValue.trim());
 
           // Use index as key to prevent re-mounting during drag/drop and updates
@@ -509,16 +492,6 @@ export default function ProductImageManager(): React.JSX.Element {
                   >
                     B
                   </span>
-                  <span
-                    className={`rounded-full border px-1 ${
-                      hasExternal
-                        ? 'border-amber-400 text-amber-300'
-                        : 'border-gray-600 text-gray-500'
-                    }`}
-                    title='External host'
-                  >
-                    E
-                  </span>
                 </div>
                 <div className='flex items-center gap-1'>
                   <DropdownMenu>
@@ -568,18 +541,6 @@ export default function ProductImageManager(): React.JSX.Element {
                         }
                       >
                         Base64
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        disabled={!hasExternal}
-                        onClick={() =>
-                          setSlotViewModes((prev: SlotViewMode[]) => {
-                            const next = [...prev];
-                            next[index] = 'external';
-                            return next;
-                          })
-                        }
-                      >
-                        External
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

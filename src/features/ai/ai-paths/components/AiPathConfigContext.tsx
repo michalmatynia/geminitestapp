@@ -68,6 +68,63 @@ export interface AiPathConfigData {
 
 const AiPathConfigContext = createContext<AiPathConfigData | null>(null);
 
+const FALLBACK_NODE: AiNode = {
+  id: '__missing-node__',
+  type: 'constant',
+  title: 'Node',
+  description: '',
+  inputs: [],
+  outputs: [],
+  position: { x: 0, y: 0 },
+  config: {},
+};
+
+const FALLBACK_RUNTIME_STATE: RuntimeState = {
+  inputs: {},
+  outputs: {},
+  history: {},
+};
+
+const noop = (): void => {};
+const asyncNoop = async (): Promise<void> => {};
+
+const fallbackConfigValue: AiPathConfigData = {
+  configOpen: false,
+  setConfigOpen: noop,
+  selectedNode: null,
+  nodes: [FALLBACK_NODE],
+  edges: [],
+  isPathLocked: false,
+  modelOptions: [],
+  parserSamples: {},
+  setParserSamples: noop as React.Dispatch<React.SetStateAction<Record<string, ParserSampleState>>>,
+  parserSampleLoading: false,
+  updaterSamples: {},
+  setUpdaterSamples: noop as React.Dispatch<React.SetStateAction<Record<string, UpdaterSampleState>>>,
+  updaterSampleLoading: false,
+  runtimeState: FALLBACK_RUNTIME_STATE,
+  pathDebugSnapshot: null,
+  updateSelectedNode: noop,
+  updateSelectedNodeConfig: noop,
+  handleFetchParserSample: asyncNoop,
+  handleFetchUpdaterSample: asyncNoop,
+  handleRunSimulation: noop,
+  clearRuntimeForNode: noop,
+  clearNodeCache: noop,
+  clearNodeHistory: asyncNoop,
+  onSendToAi: asyncNoop,
+  sendingToAi: false,
+  dbQueryPresets: [],
+  setDbQueryPresets: noop as React.Dispatch<React.SetStateAction<DbQueryPreset[]>>,
+  saveDbQueryPresets: asyncNoop,
+  dbNodePresets: [],
+  setDbNodePresets: noop as React.Dispatch<React.SetStateAction<DbNodePreset[]>>,
+  saveDbNodePresets: asyncNoop,
+  toast: noop,
+  onDirtyChange: noop,
+  savePathConfig: async () => false,
+};
+
 export function AiPathConfigProvider({
   children,
   ...props
@@ -119,7 +176,10 @@ export function AiPathConfigProvider({
 export function useAiPathConfig(): AiPathConfigData {
   const context = useContext(AiPathConfigContext);
   if (!context) {
-    throw new Error('useAiPathConfig must be used within an AiPathConfigProvider');
+    if (process.env['NODE_ENV'] !== 'production') {
+      console.warn('[ai-paths] Missing AiPathConfigProvider. Using fallback config context.');
+    }
+    return fallbackConfigValue;
   }
   return context;
 }

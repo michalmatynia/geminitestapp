@@ -1,30 +1,35 @@
- in my Product List, the size of my image thumbnails and image preview has
-  become enourmous and covers the whole page, make it the same as before
 
-I can't monitor my singal in Ai Paths
-My Catalog has too many languages, I want an option to remove languages from
+* I can't monitor my singal in Ai Paths
+* My Catalog has too many languages, I want an option to remove languages from
   Catalogs.
-   For my image rerouting, I would like an option to add different routes and
-  select the default one
+   For my image rerouting, I would like an option to add different routes, not only one, and
+  select a default one that is read by the application
 
-  When I reorder CAtegories, I get an error
-Remove Languages from my Catalog
+ In Products,  When I reorder CAtegories, I get an error
 
-Database Query need to work with mongo
-Asses the functionality of AI-Paths to run seamlessly with a MongoDB provider, as the provider has just been changed
-For my image rerouting, I would like an option to add different routes and
-  select the default one
+In AI paths, the Database Query Node does not work with mongoDB Provider, works perfectly with Prisma
+Asses the functionality of AI-Paths to run seamlessly with a MongoDB provider, as the provider has just been changed.
 
 Currency Doesn't change in product list
 
-Remove Patterns from product settings
-
-In Category, the strike through line when I insert one category into another is not that great. Adjust it, so that the Line finished before the Category name begins
-
-* My validator can't be turned off, when it finds a suggestion without replacement, it just stays in the suggestion mode all the time.
+In Products Category, the strike through line when I insert one category into another is not that great. Adjust it, so that the Line finished before the Category name begins
 
 Also I need a pattern which would detect double spaces (Space and not new lines), if it sees double or more space, it should be trimmed
+
+I need clear logs to work
+
+
 I cannot get rid of non replacement validations
+
+Move all Database operatons into one page
+
+
+I would  like to continue developing my database control Page. I would like a page where I can see one Panel for Each Connected Database Prisma, Redis and MongoDB. Through these panels, I should be able to see all the collections in each database and designate which are my primary collections when the Page Loads and which are Fallback, in case a primary collection doesn't load.
+
+I should also be able to synchronise collections between databases and if the collection exists in one database, but doesn't exist in the other, Copy a collection from one database to the other.
+
+I had AiTranslation and AI Description functionalities that were configured through my Products Settings, these functionalities have been taken over by the AI-Paths, so any remainder code from them can be removed.
+
 
 * In my AI Paths, the data signal flow seems a bit off. In the Category Inference Path, when I use the Simulation Node which provides data readily available, the data flow starts with node-wi2740 JSON Mapper Value output and flows into node-z6sjck Configure Database Query input where it is immediately available, before it is availabe in the input of the preceding node JSON Mapper node-wi2740, which does not make sense, cause it looks as if the signal was skipping Nodes.
 
@@ -35,7 +40,6 @@ I cannot get rid of non replacement validations
 * In product Edit / Create Modal, In Other Tab, I want to see the actual name of the producer in the selector field, instead of 1, selected. The same goes for Catalogs, I want to see the actual catalog names.
  Also, in Drafter, I want the producer field to have the same selector as the PRoduct Create / Edit Modal, The same goes for images, Drafter needs the same component as Product Create / Edit modal
 
-Move all Database operatons into one page
 
 
 
@@ -50,12 +54,6 @@ Move all Database operatons into one page
 
 * I need a reliable database control for my Mixed Provider setup. I need a working database restore for Prisma (the current one is not working). I also need to be able to fetch collections from both MongoDB and Prisma. I would to be able to convert/copy a collection from Prisma to MongoDB and vice versa. I also want to be able to choose on a per collection basis, which collections are to be fetched from which Provider.
 
-I would  like to continue developing my database control Page. I would like a page where I can see one Panel for Each Connected Database Prisma, Redis and MongoDB. Through these panels, I should be able to see all the collections in each database and designate which are my primary collections when the Page Loads and which are Fallback, in case a primary collection doesn't load.
-
-I should also be able to synchronise collections between databases and if the collection exists in one database, but doesn't exist in the other, Copy a collection from one database to the other.
-
-I had AiTranslation and AI Description functionalities that were configured through my Products Settings, these functionalities have been taken over by the AI-Paths, so any remainder code from them can be removed.
-
 
 * Move all database operations into one Page, so System - Settings -  Database to Workspace - Databases Page
 
@@ -68,7 +66,6 @@ I had AiTranslation and AI Description functionalities that were configured thro
 (I also need info if I'm trying to create with duplicate SKU notification)
 
 I need promper importer in my Base.com
-I need clear logs to work
 
 I need prisma mock in test to work and I need to move my product and related to mongodb, I need my AI paths to work on MongoDB
 

@@ -70,11 +70,25 @@ export function NodeConfigDialog(): React.JSX.Element | null {
     savePathConfig,
   } = useAiPathConfig();
 
-  if (!selectedNode) return null;
   const { setNodeConfigDraft, setNodeConfigDirty } = useSelectionActions();
+  const hasSelectedNode = selectedNode !== null;
+  const selectedNodeSafe = useMemo<AiNode>(
+    () =>
+      selectedNode ?? {
+        id: '__missing-node__',
+        type: 'constant',
+        title: 'Node',
+        description: '',
+        inputs: [],
+        outputs: [],
+        position: { x: 0, y: 0 },
+        config: {},
+      },
+    [selectedNode]
+  );
   const isScheduledTrigger =
-    selectedNode.type === 'trigger' &&
-    selectedNode.config?.trigger?.event === 'scheduled_run';
+    selectedNodeSafe.type === 'trigger' &&
+    selectedNodeSafe.config?.trigger?.event === 'scheduled_run';
   const cloneNode = useCallback((node: AiNode): AiNode => {
     if (typeof structuredClone === 'function') {
       return structuredClone(node);
@@ -127,7 +141,7 @@ export function NodeConfigDialog(): React.JSX.Element | null {
     setNodeConfigDraft(draftNode);
   }, [configOpen, draftNode, setNodeConfigDraft]);
 
-  const draftSelectedNode = draftNode ?? selectedNode;
+  const draftSelectedNode = draftNode ?? selectedNodeSafe;
   const nodesForConfig = useMemo((): AiNode[] => {
     if (!draftNode) return nodes;
     return nodes.map((node: AiNode): AiNode =>
@@ -138,7 +152,7 @@ export function NodeConfigDialog(): React.JSX.Element | null {
   const updateDraftNode = useCallback(
     (patch: Partial<AiNode>): void => {
       setDraftNode((prev: AiNode | null) => {
-        const base = prev ?? (selectedNode ? cloneNode(selectedNode) : null);
+        const base = prev ?? (selectedNode ? cloneNode(selectedNode) : cloneNode(selectedNodeSafe));
         if (!base) return prev;
         const next: AiNode = { ...base, ...patch };
         if (patch.config) {
@@ -147,7 +161,7 @@ export function NodeConfigDialog(): React.JSX.Element | null {
         return next;
       });
     },
-    [cloneNode, mergeConfigPatch, selectedNode]
+    [cloneNode, mergeConfigPatch, selectedNode, selectedNodeSafe]
   );
 
   const updateDraftConfig = useCallback(
@@ -217,6 +231,8 @@ export function NodeConfigDialog(): React.JSX.Element | null {
     setConfigOpen(false);
   }, [handleDiscardChanges, setConfigOpen]);
 
+  if (!hasSelectedNode) return null;
+
   return (
     <>
       <Dialog
@@ -233,7 +249,7 @@ export function NodeConfigDialog(): React.JSX.Element | null {
           <DialogHeader>
             <div className='flex items-center justify-between'>
               <DialogTitle className='flex items-center gap-2 text-lg'>
-                <span>Configure {selectedNode.title}</span>
+                <span>Configure {selectedNodeSafe.title}</span>
                 {isScheduledTrigger ? (
                   <span className='rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[10px] uppercase text-amber-200'>
                   Scheduled
@@ -329,7 +345,7 @@ export function NodeConfigDialog(): React.JSX.Element | null {
             </TabsContent>
             <TabsContent value='history'>
               <NodeHistoryTab
-                selectedNode={selectedNode}
+                selectedNode={selectedNodeSafe}
                 runtimeState={runtimeState}
                 {...(clearNodeHistory && { onClearNodeHistory: clearNodeHistory })}
               />
@@ -338,14 +354,14 @@ export function NodeConfigDialog(): React.JSX.Element | null {
           <div className='mt-4 flex items-center justify-end gap-2 text-xs text-gray-400'>
             <span className='text-[11px] uppercase tracking-wide text-gray-500'>Node ID</span>
             <span className='max-w-[260px] truncate font-mono text-xs text-gray-300'>
-              {selectedNode.id}
+              {selectedNodeSafe.id}
             </span>
             <Button
               type='button'
               size='sm'
               className='rounded border border-border px-2 py-1 text-[11px] text-gray-200 hover:bg-muted/50'
               onClick={() => {
-                void navigator.clipboard.writeText(selectedNode.id).then(
+                void navigator.clipboard.writeText(selectedNodeSafe.id).then(
                   () => toast('Node ID copied.', { variant: 'success' }),
                   () => toast('Failed to copy Node ID.', { variant: 'error' })
                 );

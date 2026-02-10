@@ -3,24 +3,20 @@ export const normalizeProductImageExternalBaseUrl = (
 ): string => {
   const trimmed = value?.trim() ?? '';
   if (!trimmed) return '';
-  return trimmed.replace(/\/+$/, '');
-};
 
-const canUseRelativePathForHost = (baseUrl: string): boolean => {
+  const hasProtocol = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed);
+  const withProtocol = hasProtocol ? trimmed : `http://${trimmed.replace(/^\/+/, '')}`;
+
   try {
-    const parsed = new URL(baseUrl);
-    return parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
+    return new URL(withProtocol).toString().replace(/\/+$/, '');
   } catch {
-    return false;
+    return trimmed.replace(/\/+$/, '');
   }
 };
 
 const joinPathToBase = (path: string, baseUrl: string): string => {
   const normalizedBase = normalizeProductImageExternalBaseUrl(baseUrl);
   if (!normalizedBase) return path;
-  if (canUseRelativePathForHost(normalizedBase)) {
-    return path;
-  }
   const cleanedPath = path.replace(/^\/+/, '');
   return `${normalizedBase}/${cleanedPath}`;
 };

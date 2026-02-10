@@ -227,7 +227,7 @@ export function AdminImageStudioSettingsPage(): React.JSX.Element {
               <Link href='/admin/image-studio'>Back to Studio</Link>
             </Button>
             <Button type='button' variant='outline' asChild>
-              <Link href='/admin/prompt-engine/validation'>Global Validation Patterns</Link>
+              <Link href='/admin/validator'>Global Validation Patterns</Link>
             </Button>
             <Button
               type='button'

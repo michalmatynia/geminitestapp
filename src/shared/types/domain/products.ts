@@ -134,6 +134,29 @@ export type Producer = Entity & {
   website: string | null;
 };
 
+export type ProductValidationTarget = 'name' | 'description';
+
+export type ProductValidationSeverity = 'error' | 'warning';
+
+export type ProductValidationPattern = Entity & {
+  label: string;
+  target: ProductValidationTarget;
+  locale: string | null;
+  regex: string;
+  flags: string | null;
+  message: string;
+  severity: ProductValidationSeverity;
+  enabled: boolean;
+  replacementEnabled: boolean;
+  replacementValue: string | null;
+  replacementFields: string[];
+};
+
+export type ProductValidatorConfig = {
+  enabledByDefault: boolean;
+  patterns: ProductValidationPattern[];
+};
+
 export interface CreateProductDraftInput extends Partial<CreateProductDto> {
   sku: string;
 }

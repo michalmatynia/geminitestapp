@@ -33,6 +33,7 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   '/admin/ai-paths': 'Design, test, and run AI Paths workflows.',
   '/admin/ai-paths/queue': 'Monitor queued, running, and completed path runs.',
   '/admin/ai-paths/dead-letter': 'Inspect failed AI runs and retry or requeue them.',
+  '/admin/validator': 'Manage validator pattern lists for Products and Image Studio.',
   '/admin/products': 'Browse and manage all products in the catalog.',
   '/admin/cms/builder': 'Visual page builder for CMS layouts.',
   '/admin/settings': 'System settings overview and quick access cards.',

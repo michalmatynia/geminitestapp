@@ -983,6 +983,25 @@ model ProductDraft {
   updatedAt           DateTime @updatedAt
 }
 
+model ProductValidationPattern {
+  id        String   @id @default(cuid())
+  label     String
+  target    String
+  locale    String?
+  regex     String
+  flags     String?
+  message   String
+  severity  String   @default("error")
+  enabled   Boolean  @default(true)
+  replacementEnabled Boolean @default(false)
+  replacementValue   String?
+  replacementFields  String[] @default([])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([target, locale, enabled])
+}
+
 model ExternalCategory {
   id               String            @id @default(cuid())
   connectionId     String

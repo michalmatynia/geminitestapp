@@ -26,6 +26,10 @@ export type {
   IntegrationDbProvider,
   UserPreferences,
   Producer,
+  ProductValidationPattern,
+  ProductValidationTarget,
+  ProductValidationSeverity,
+  ProductValidatorConfig,
 } from '@/shared/types/domain/products';
 
 export type ProductCategoryWithChildren = ProductCategoryDto & {

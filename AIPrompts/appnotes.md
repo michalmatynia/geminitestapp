@@ -1,3 +1,34 @@
+
+In my AI Paths, the data signal flow seems a bit off. In the Category Inference Path, when I use the Simulation Node which provides data readily available, the data flow starts with node-wi2740 JSON Mapper Value output and flows into node-z6sjck Configure Database Query input where it is immediately available, before it is availabe in the input of the preceding node JSON Mapper node-wi2740, which does not make sense, cause it looks as if the signal was skipping Nodes.
+
+Connect Validator to product description and name
+Conditional Replacer (for example, only for certain fields)
+
+
+The Drafter Icon doesn't refresh immediately in Product List
+
+In Product List, One Click Base.com Export exports two times and duplicates start to appear in Base.com. Also.
+When I export the product successfully, The button doesn't turn green immediately, but I need to refresh the page.
+
+
+
+Hierarchies in Category don't work
+
+
+In product Edit Create Field, I want to see the actual name of the producer in the selector field, instead of 1, selected. Also, in Drafter, I want the producer field to have the same selector as the PRoduct Create / Edit Modal, The same goes for images, Drafter needs the same component as Product Create / Edit modal
+
+* I am not able to export Products with Images with One CLick Export button, it works with Products, but when I attach images, I get the Timeout error
+
+Move all Database operatons into one page
+
+› the one CLick Export button to Base works great, but when it becomes Green
+  (meaning connected I want to have the old options back that I had when I
+  clicked the Green BL button, in particular, I want to be able to see all the
+  syncing options and reexport images or deleted Product from BAse.com and
+  break the connection to Base.com). Also, when One click does not succeed and turns red or Yellow, I also want to see the options including the option to attempt reexporting the porduct.
+
+  * When I change color of the Drafter icon, it does not appear colored in the Product List
+
 * Add a Producer Field to Drafter and also add it to import Export Template, as it's not showing there and Producer field can't be imported / exported.
 
 * Repair Category Handling in Products Feature. Adding and resorting categories is not working. Also, I would like to use folder tree component for unification purposes to handle the hierarchies of category section. The Category Folder tree needs little drag icons to the left like the folder tree in CMS Builder Page, I don't need any icons in the Category Folder tree, just the names of Categories
@@ -39,10 +70,9 @@ I need prisma mock in test to work and I need to move my product and related to 
 
 Increment SKU Atomatically
 
-Connect Validator to product description
+Database Query Node Doesn't work with MongoDB
 
 Database Query Node Reply (like success:ok), so it can go into Logical Condition node
-Database Query Node Doesn't work with MongoDB
 
 Fetch COllection names automatically in Database Query Node
 
@@ -51,11 +81,6 @@ Placeholder inference matrix
 * W drafterze potrzebuje producenta, ikonek wiecej, modal as wide as other Product crete modals, Icon Matrix so that Icons are not spread everywhere, Check If I can Export Product with Producer, when the description is present a little text icon
 
 Daily Backups
-
-Category name not visible immediately after update, same for database backup
-
-One Click Base Export
-
 
 I want to include Redis in My Database management
 

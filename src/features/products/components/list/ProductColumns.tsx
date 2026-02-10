@@ -3,28 +3,31 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowUpDown, Download, MoreVertical } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useRef, useState } from 'react';
 
-
-
-
-
-
-
-
+import {
+  fetchPreferredBaseConnection,
+  integrationSelectionQueryKeys,
+} from '@/features/integrations/components/listings/hooks/useIntegrationSelection';
+import { fetchProductListings, productListingsQueryKey } from '@/features/integrations/hooks/useListingQueries';
+import { useGenericExportToBaseMutation } from '@/features/integrations/hooks/useProductListingMutations';
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
 import { EditableCell } from '@/features/products/components/EditableCell';
 import { useProductListContext } from '@/features/products/context/ProductListContext';
 import { useDuplicateProduct } from '@/features/products/hooks/useProductsMutations';
 import type { ProductWithImages } from '@/features/products/types';
 import { calculatePriceForCurrency, normalizeCurrencyCode } from '@/features/products/utils/priceCalculation';
-import {
-  fetchPreferredBaseConnection,
-  integrationSelectionQueryKeys,
-} from '@/features/integrations/components/listings/hooks/useIntegrationSelection';
-import { useGenericExportToBaseMutation } from '@/features/integrations/hooks/useProductListingMutations';
-import { fetchProductListings, productListingsQueryKey } from '@/features/integrations/hooks/useListingQueries';
 import { api } from '@/shared/lib/api-client';
-import { Button, Checkbox, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, useToast, Badge } from '@/shared/ui';
+import {
+  Badge,
+  Button,
+  Checkbox,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  useToast,
+} from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import type { ColumnDef, Row, Table, Column } from '@tanstack/react-table';
@@ -38,6 +41,7 @@ type CircleIconButtonProps = {
   onClick?: () => void;
   onMouseEnter?: () => void;
   onFocus?: () => void;
+  disabled?: boolean;
   ariaLabel: string;
   title?: string;
   className?: string;
@@ -48,6 +52,7 @@ const CircleIconButton = ({
   onClick,
   onMouseEnter,
   onFocus,
+  disabled,
   ariaLabel,
   title,
   className,
@@ -55,6 +60,7 @@ const CircleIconButton = ({
 }: CircleIconButtonProps): React.JSX.Element => (
   <Button
     type='button'
+    disabled={disabled}
     onClick={onClick}
     onMouseEnter={onMouseEnter}
     onFocus={onFocus}
@@ -64,6 +70,7 @@ const CircleIconButton = ({
     title={title}
     className={cn(
       'size-8 rounded-full border border-transparent bg-transparent p-0 hover:bg-transparent',
+      disabled && 'cursor-not-allowed opacity-60',
       className
     )}
   >
@@ -81,15 +88,19 @@ const BaseQuickExportButton = ({
   status,
   prefetchListings,
   showMarketplaceBadge,
+  onOpenSettings,
 }: {
   product: ProductWithImages;
   status: string;
   prefetchListings: () => void;
   showMarketplaceBadge: boolean;
+  onOpenSettings?: (() => void) | undefined;
 }): React.JSX.Element => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const quickExportMutation = useGenericExportToBaseMutation();
+  const quickExportLockRef = useRef(false);
+  const [quickExportLocked, setQuickExportLocked] = useState(false);
 
   const getStatusToneClass = (value: string): string => {
     const normalized = value.toLowerCase();
@@ -105,93 +116,113 @@ const BaseQuickExportButton = ({
     return 'border-gray-500/50 text-gray-300 hover:border-gray-400/60 hover:text-gray-200';
   };
 
+  const getBlButtonClass = (value: string, manageMode: boolean): string => {
+    if (manageMode) {
+      return 'border-sky-400/70 bg-sky-500/15 text-sky-100 hover:border-sky-300/80 hover:bg-sky-500/25';
+    }
+    return getStatusToneClass(value);
+  };
+
   const runQuickExport = async (): Promise<void> => {
-    if (quickExportMutation.isPending) return;
-
-    let connectionId = '';
-    let inventoryId = '';
-    let templateId = '';
-    try {
-      const [preferredConnection, defaultInventory, activeTemplate] = await Promise.all([
-        queryClient.fetchQuery({
-          queryKey: integrationSelectionQueryKeys.defaultConnection,
-          queryFn: fetchPreferredBaseConnection,
-          staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
-          gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
-        }),
-        queryClient.fetchQuery({
-          queryKey: defaultExportInventoryQueryKey,
-          queryFn: () => api.get<{ inventoryId?: string | null }>('/api/integrations/exports/base/default-inventory'),
-          staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
-          gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
-        }),
-        queryClient.fetchQuery({
-          queryKey: activeExportTemplateQueryKey,
-          queryFn: () => api.get<{ templateId?: string | null }>('/api/integrations/exports/base/active-template'),
-          staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
-          gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
-        }),
-      ]);
-      connectionId = preferredConnection?.connectionId?.trim() || '';
-      inventoryId = defaultInventory?.inventoryId?.trim() || '';
-      templateId = activeTemplate?.templateId?.trim() || '';
-    } catch {
-      toast('Failed to load Base.com export defaults.', { variant: 'error' });
-      return;
-    }
-
-    if (!connectionId) {
-      toast('Set a default Base.com connection first.', { variant: 'error' });
-      return;
-    }
-
-    if (!inventoryId) {
-      toast('Set a default Base.com inventory first.', { variant: 'error' });
-      return;
-    }
-
-    const payload: {
-      productId: string;
-      connectionId: string;
-      inventoryId: string;
-      templateId?: string;
-    } = {
-      productId: product.id,
-      connectionId,
-      inventoryId,
-    };
-    if (templateId) {
-      payload.templateId = templateId;
-    }
+    if (quickExportLockRef.current || quickExportMutation.isPending) return;
+    quickExportLockRef.current = true;
+    setQuickExportLocked(true);
 
     try {
-      await quickExportMutation.mutateAsync(payload);
-      prefetchListings();
-      void queryClient.invalidateQueries({ queryKey: productListingsQueryKey(product.id) });
-      toast('Base.com export started.', { variant: 'success' });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to export to Base.com.';
-      toast(message, { variant: 'error' });
+      let connectionId = '';
+      let inventoryId = '';
+      let templateId = '';
+      try {
+        const [preferredConnection, defaultInventory, activeTemplate] = await Promise.all([
+          queryClient.fetchQuery({
+            queryKey: integrationSelectionQueryKeys.defaultConnection,
+            queryFn: fetchPreferredBaseConnection,
+            staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
+            gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
+          }),
+          queryClient.fetchQuery({
+            queryKey: defaultExportInventoryQueryKey,
+            queryFn: () => api.get<{ inventoryId?: string | null }>('/api/integrations/exports/base/default-inventory'),
+            staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
+            gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
+          }),
+          queryClient.fetchQuery({
+            queryKey: activeExportTemplateQueryKey,
+            queryFn: () => api.get<{ templateId?: string | null }>('/api/integrations/exports/base/active-template'),
+            staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
+            gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
+          }),
+        ]);
+        connectionId = preferredConnection?.connectionId?.trim() || '';
+        inventoryId = defaultInventory?.inventoryId?.trim() || '';
+        templateId = activeTemplate?.templateId?.trim() || '';
+      } catch {
+        toast('Failed to load Base.com export defaults.', { variant: 'error' });
+        return;
+      }
+
+      if (!connectionId) {
+        toast('Set a default Base.com connection first.', { variant: 'error' });
+        return;
+      }
+
+      if (!inventoryId) {
+        toast('Set a default Base.com inventory first.', { variant: 'error' });
+        return;
+      }
+
+      const payload: {
+        productId: string;
+        connectionId: string;
+        inventoryId: string;
+        templateId?: string;
+      } = {
+        productId: product.id,
+        connectionId,
+        inventoryId,
+      };
+      if (templateId) {
+        payload.templateId = templateId;
+      }
+
+      try {
+        await quickExportMutation.mutateAsync(payload);
+        prefetchListings();
+        void queryClient.invalidateQueries({ queryKey: productListingsQueryKey(product.id) });
+        toast('Base.com export started.', { variant: 'success' });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to export to Base.com.';
+        toast(message, { variant: 'error' });
+      }
+    } finally {
+      quickExportLockRef.current = false;
+      setQuickExportLocked(false);
     }
   };
 
   const label = showMarketplaceBadge
-    ? `Base.com export status: ${status}. Click to export now.`
+    ? `Manage Base listing (${status}).`
     : 'One-click export to Base.com';
+  const quickExportPending = quickExportMutation.isPending || quickExportLocked;
 
   return (
     <CircleIconButton
-      onClick={(): void => {
-        void runQuickExport();
-      }}
+      onClick={
+        showMarketplaceBadge && onOpenSettings
+          ? onOpenSettings
+          : (): void => {
+            void runQuickExport();
+          }
+      }
       onMouseEnter={prefetchListings}
       onFocus={prefetchListings}
+      disabled={!showMarketplaceBadge && quickExportPending}
       ariaLabel={label}
       title={label}
-      className={getStatusToneClass(status)}
+      className={getBlButtonClass(status, showMarketplaceBadge)}
     >
       <span aria-hidden='true' className='text-[9px] font-black uppercase leading-none tracking-tight'>
-        {quickExportMutation.isPending ? '...' : 'BL'}
+        {quickExportPending ? '...' : 'BL'}
       </span>
     </CircleIconButton>
   );
@@ -601,6 +632,7 @@ export const getProductColumns = (
       const product: ProductWithImages = row.original;
       const {
         onIntegrationsClick: handleClick,
+        onExportSettingsClick: handleOpenExportSettings,
         integrationBadgeIds,
         integrationBadgeStatuses,
       } = useProductListContext();
@@ -638,6 +670,11 @@ export const getProductColumns = (
             status={status}
             prefetchListings={prefetchListings}
             showMarketplaceBadge={showMarketplaceBadge}
+            onOpenSettings={
+              handleOpenExportSettings
+                ? (): void => handleOpenExportSettings(product)
+                : undefined
+            }
           />
         </div>
       );

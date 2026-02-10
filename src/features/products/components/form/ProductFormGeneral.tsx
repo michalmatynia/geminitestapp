@@ -1,12 +1,224 @@
 'use client';
 
-import { useState } from 'react';
+import { ArrowRight } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/features/products/constants';
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
+import { useProductValidatorConfig } from '@/features/products/hooks/useProductSettingsQueries';
 import { ProductFormData } from '@/features/products/types';
-import { Input, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
+import type { ProductValidationPattern } from '@/shared/types/domain/products';
+import { Button, Input, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+
+type FieldValidatorIssue = {
+  patternId: string;
+  message: string;
+  severity: 'error' | 'warning';
+  matchText: string;
+  index: number;
+  length: number;
+  regex: string;
+  flags: string | null;
+  replacementValue: string | null;
+  replacementScope: 'none' | 'global' | 'field';
+  replacementActive: boolean;
+};
+
+const resolveFieldTargetAndLocale = (
+  fieldName: string
+): { target: 'name' | 'description' | null; locale: string | null } => {
+  const target: 'name' | 'description' | null = fieldName.startsWith('name_')
+    ? 'name'
+    : fieldName.startsWith('description_')
+      ? 'description'
+      : null;
+  const localeMatch = /_(en|pl|de)$/i.exec(fieldName);
+  const locale = localeMatch?.[1]?.toLowerCase() ?? null;
+  return {
+    target,
+    locale,
+  };
+};
+
+const isPatternLocaleMatch = (patternLocale: string | null, fieldLocale: string | null): boolean => {
+  if (!patternLocale) return true;
+  if (!fieldLocale) return false;
+  return patternLocale.toLowerCase() === fieldLocale.toLowerCase();
+};
+
+const ALLOWED_REPLACEMENT_FIELDS = new Set<string>(PRODUCT_VALIDATION_REPLACEMENT_FIELDS);
+
+const normalizeReplacementFields = (fields: string[] | null | undefined): string[] => {
+  if (!Array.isArray(fields) || fields.length === 0) return [];
+  const unique = new Set<string>();
+  for (const field of fields) {
+    if (!field || !ALLOWED_REPLACEMENT_FIELDS.has(field)) continue;
+    unique.add(field);
+  }
+  return [...unique];
+};
+
+const isReplacementAllowedForField = (
+  pattern: ProductValidationPattern,
+  fieldName: string
+): boolean => {
+  const replacementFields = normalizeReplacementFields(pattern.replacementFields);
+  if (replacementFields.length === 0) return true;
+  return replacementFields.includes(fieldName);
+};
+
+const applyPatternReplacement = (value: string, pattern: ProductValidationPattern): string => {
+  if (!pattern.replacementEnabled || !pattern.replacementValue) return value;
+  const replacementValue = pattern.replacementValue;
+  try {
+    const currentFlags = pattern.flags ?? '';
+    const replacementFlags = currentFlags.includes('g') ? currentFlags : `${currentFlags}g`;
+    const regex = new RegExp(pattern.regex, replacementFlags || undefined);
+    return value.replace(regex, (match: string) =>
+      match === replacementValue ? match : replacementValue
+    );
+  } catch {
+    return value;
+  }
+};
+
+const buildIssueSnippet = (
+  value: string,
+  index: number,
+  length: number
+): { before: string; match: string; after: string } => {
+  const start = Math.max(0, index - 24);
+  const end = Math.min(value.length, index + length + 24);
+  const rawBefore = value.slice(start, index);
+  const rawMatch = value.slice(index, Math.min(value.length, index + length));
+  const rawAfter = value.slice(Math.min(value.length, index + length), end);
+
+  return {
+    before: `${start > 0 ? '...' : ''}${rawBefore}`,
+    match: rawMatch || value.slice(index, Math.min(value.length, index + 1)) || ' ',
+    after: `${rawAfter}${end < value.length ? '...' : ''}`,
+  };
+};
+
+const buildFieldIssues = (
+  values: ProductFormData,
+  patterns: ProductValidationPattern[]
+): Record<string, FieldValidatorIssue[]> => {
+  const issues: Record<string, FieldValidatorIssue[]> = {};
+  const entries = Object.entries(values) as Array<[string, unknown]>;
+
+  for (const [fieldName, rawValue] of entries) {
+    if (typeof rawValue !== 'string' || !rawValue) continue;
+    const { target, locale } = resolveFieldTargetAndLocale(fieldName);
+    if (!target) continue;
+
+    for (const pattern of patterns) {
+      if (!pattern.enabled || pattern.target !== target) continue;
+      if (!isPatternLocaleMatch(pattern.locale, locale)) continue;
+      try {
+        const regex = new RegExp(pattern.regex, pattern.flags ?? undefined);
+        const match = regex.exec(rawValue);
+        if (!match || typeof match.index !== 'number') continue;
+        const matched = match[0] ?? '';
+        const length = Math.max(1, matched.length);
+        const replacementFields = normalizeReplacementFields(pattern.replacementFields);
+        const hasReplacer = Boolean(pattern.replacementEnabled && pattern.replacementValue);
+        const replacementScope: FieldValidatorIssue['replacementScope'] = !hasReplacer
+          ? 'none'
+          : replacementFields.length === 0
+            ? 'global'
+            : 'field';
+        const replacementActive =
+          hasReplacer &&
+          (replacementScope === 'global' || replacementFields.includes(fieldName));
+        if (!issues[fieldName]) {
+          issues[fieldName] = [];
+        }
+        issues[fieldName].push({
+          patternId: pattern.id,
+          message: pattern.message,
+          severity: pattern.severity,
+          matchText: matched,
+          index: match.index,
+          length,
+          regex: pattern.regex,
+          flags: pattern.flags ?? null,
+          replacementValue: replacementActive ? pattern.replacementValue : null,
+          replacementScope,
+          replacementActive,
+        });
+      } catch {
+        // Invalid pattern is blocked at API write time; skip defensively.
+      }
+    }
+  }
+
+  return issues;
+};
+
+function ValidatorIssueHint({
+  issue,
+  value,
+  onReplace,
+}: {
+  issue: FieldValidatorIssue;
+  value: string;
+  onReplace?: (() => void) | undefined;
+}): React.JSX.Element {
+  const snippet = buildIssueSnippet(value, issue.index, issue.length);
+  const toneClass =
+    issue.severity === 'warning'
+      ? 'border-amber-500/40 bg-amber-500/10 text-amber-100'
+      : 'border-red-500/40 bg-red-500/10 text-red-100';
+  const matchClass =
+    issue.severity === 'warning'
+      ? 'bg-amber-300/30 text-amber-50'
+      : 'bg-red-300/30 text-red-50';
+  const replacementBadgeClass =
+    issue.replacementScope === 'global'
+      ? 'border-emerald-500/50 bg-emerald-500/15 text-emerald-100'
+      : issue.replacementScope === 'field'
+        ? issue.replacementActive
+          ? 'border-cyan-500/50 bg-cyan-500/15 text-cyan-100'
+          : 'border-cyan-500/40 bg-cyan-500/10 text-cyan-200/80'
+        : 'border-gray-500/40 bg-gray-500/10 text-gray-200/80';
+  const replacementBadgeText =
+    issue.replacementScope === 'global'
+      ? 'Global replacer'
+      : issue.replacementScope === 'field'
+        ? issue.replacementActive
+          ? 'Field replacer'
+          : 'Field replacer (other field)'
+        : 'Validation only';
+
+  return (
+    <div className={cn('mt-2 rounded-md border px-2 py-2 text-xs', toneClass)}>
+      <div className='flex items-center gap-2'>
+        <ArrowRight className='size-4 animate-bounce' />
+        <span>{issue.message}</span>
+        <span className={cn('rounded border px-1.5 py-0.5 text-[10px]', replacementBadgeClass)}>
+          {replacementBadgeText}
+        </span>
+        {issue.replacementValue && onReplace && (
+          <Button
+            type='button'
+            onClick={onReplace}
+            className='ml-auto h-6 rounded border border-emerald-500/50 bg-emerald-500/15 px-2 text-[10px] text-emerald-100 hover:bg-emerald-500/25'
+          >
+            Replace
+          </Button>
+        )}
+      </div>
+      <div className='mt-1 font-mono text-[11px] break-all'>
+        <span className='opacity-90'>{snippet.before}</span>
+        <mark className={cn('rounded px-0.5', matchClass)}>{snippet.match}</mark>
+        <span className='opacity-90'>{snippet.after}</span>
+      </div>
+    </div>
+  );
+}
 
 export default function ProductFormGeneral(): React.JSX.Element {
   const {
@@ -14,7 +226,9 @@ export default function ProductFormGeneral(): React.JSX.Element {
     errors,
   } = useProductFormContext();
 
-  const { register, getValues, watch } = useFormContext<ProductFormData>();
+  const { register, getValues, setValue, watch } = useFormContext<ProductFormData>();
+  const validatorConfigQuery = useProductValidatorConfig();
+  const [formatterEnabled, setFormatterEnabled] = useState(false);
 
   const [identifierType, setIdentifierType] = useState<'ean' | 'gtin' | 'asin'>((): 'ean' | 'gtin' | 'asin' => {
     const vals = getValues();
@@ -25,6 +239,63 @@ export default function ProductFormGeneral(): React.JSX.Element {
   const allValues = watch();
   const hasCatalogs = (filteredLanguages ?? []).length > 0;
   const languagesReady = (filteredLanguages ?? []).length > 0;
+  const validatorEnabledByDefault = validatorConfigQuery.data?.enabledByDefault ?? true;
+  const validatorPatterns = validatorConfigQuery.data?.patterns ?? [];
+  const fieldIssues = useMemo(
+    () =>
+      validatorEnabledByDefault
+        ? buildFieldIssues(allValues, validatorPatterns)
+        : ({} as Record<string, FieldValidatorIssue[]>),
+    [allValues, validatorEnabledByDefault, validatorPatterns]
+  );
+
+  const applyIssueReplacement = (
+    value: string,
+    issue: FieldValidatorIssue
+  ): string => {
+    if (!issue.replacementValue) return value;
+    try {
+      const regex = new RegExp(issue.regex, issue.flags ?? undefined);
+      const probe = regex.exec(value);
+      if (!probe) return value;
+      if (probe[0] === issue.replacementValue) return value;
+      const nextRegex = new RegExp(issue.regex, issue.flags ?? undefined);
+      return value.replace(nextRegex, issue.replacementValue);
+    } catch {
+      return value;
+    }
+  };
+
+  useEffect(() => {
+    if (!validatorEnabledByDefault || !formatterEnabled) return;
+    for (const [fieldNameRaw, rawValue] of Object.entries(allValues)) {
+      if (typeof rawValue !== 'string' || !rawValue) continue;
+      const fieldName = fieldNameRaw as keyof ProductFormData;
+      const { target, locale } = resolveFieldTargetAndLocale(fieldNameRaw);
+      if (!target) continue;
+
+      const replacementPatterns = validatorPatterns.filter((pattern: ProductValidationPattern) => {
+        if (!pattern.enabled) return false;
+        if (!pattern.replacementEnabled || !pattern.replacementValue) return false;
+        if (pattern.target !== target) return false;
+        if (!isPatternLocaleMatch(pattern.locale, locale)) return false;
+        return isReplacementAllowedForField(pattern, fieldNameRaw);
+      });
+
+      if (replacementPatterns.length === 0) continue;
+      let nextValue = rawValue;
+      for (const pattern of replacementPatterns) {
+        nextValue = applyPatternReplacement(nextValue, pattern);
+      }
+
+      if (nextValue !== rawValue) {
+        setValue(fieldName, nextValue as ProductFormData[typeof fieldName], {
+          shouldDirty: true,
+          shouldTouch: true,
+        });
+      }
+    }
+  }, [allValues, formatterEnabled, setValue, validatorEnabledByDefault, validatorPatterns]);
 
   return (
     <div className='space-y-6'>
@@ -60,6 +331,20 @@ export default function ProductFormGeneral(): React.JSX.Element {
 
       {hasCatalogs && languagesReady && (
         <FormSection>
+          <div className='mb-2 flex items-center justify-end'>
+            <Button
+              type='button'
+              onClick={() => setFormatterEnabled((prev: boolean) => !prev)}
+              className={`rounded border px-3 py-1.5 text-xs ${
+                formatterEnabled
+                  ? 'border-emerald-500/60 bg-emerald-500/15 text-emerald-100 hover:bg-emerald-500/25'
+                  : 'border-red-500/60 bg-red-500/15 text-red-100 hover:bg-red-500/25'
+              }`}
+            >
+              Formatter {formatterEnabled ? 'ON' : 'OFF'}
+            </Button>
+          </div>
+
           <Tabs defaultValue={filteredLanguages[0] ? `${filteredLanguages[0].name.toLowerCase()}-name` : 'english-name'} className='w-full'>
             <TabsList className='mb-4'>
               {filteredLanguages.map((language: { name: string; code: string }) => {
@@ -83,14 +368,45 @@ export default function ProductFormGeneral(): React.JSX.Element {
             {filteredLanguages.map((language: { name: string; code: string }) => {
               const fieldName = `name_${language.code.toLowerCase()}` as keyof ProductFormData;
               const error = errors[fieldName]?.message;
+              const fieldNameKey = String(fieldName);
+              const fieldIssueList = fieldIssues[fieldNameKey] ?? [];
+              const fieldIssue = fieldIssueList[0];
+              const fieldValue = (allValues[fieldName] as string | undefined) ?? '';
               return (
                 <TabsContent key={language.code} value={`${language.name.toLowerCase()}-name`}>
                   <FormField label={`${language.name} Name`} error={error} id={fieldName}>
                     <Input
                       id={fieldName}
+                      className={cn(
+                        fieldIssue &&
+                          (fieldIssue.severity === 'warning'
+                            ? 'border-amber-500/60'
+                            : 'border-red-500/60')
+                      )}
                       {...register(fieldName)}
                       placeholder={`Enter product name in ${language.name}`}
                     />
+                    {fieldIssueList.map((issue: FieldValidatorIssue) => (
+                      <ValidatorIssueHint
+                        key={issue.patternId}
+                        issue={issue}
+                        value={fieldValue}
+                        onReplace={
+                          issue.replacementValue
+                            ? () => {
+                              const currentValue = ((getValues(fieldName) as string | undefined) ?? '');
+                              const nextValue = applyIssueReplacement(currentValue, issue);
+                              if (nextValue !== currentValue) {
+                                setValue(fieldName, nextValue as ProductFormData[typeof fieldName], {
+                                  shouldDirty: true,
+                                  shouldTouch: true,
+                                });
+                              }
+                            }
+                            : undefined
+                        }
+                      />
+                    ))}
                   </FormField>
                 </TabsContent>
               );
@@ -120,15 +436,46 @@ export default function ProductFormGeneral(): React.JSX.Element {
             {filteredLanguages.map((language: { name: string; code: string }) => {
               const fieldName = `description_${language.code.toLowerCase()}` as keyof ProductFormData;
               const error = errors[fieldName]?.message;
+              const fieldNameKey = String(fieldName);
+              const fieldIssueList = fieldIssues[fieldNameKey] ?? [];
+              const fieldIssue = fieldIssueList[0];
+              const fieldValue = (allValues[fieldName] as string | undefined) ?? '';
               return (
                 <TabsContent key={language.code} value={`${language.name.toLowerCase()}-description`}>
                   <FormField label={`${language.name} Description`} error={error} id={fieldName}>
                     <Textarea
                       id={fieldName}
+                      className={cn(
+                        fieldIssue &&
+                          (fieldIssue.severity === 'warning'
+                            ? 'border-amber-500/60'
+                            : 'border-red-500/60')
+                      )}
                       {...register(fieldName)}
                       placeholder={`Enter product description in ${language.name}`}
                       rows={4}
                     />
+                    {fieldIssueList.map((issue: FieldValidatorIssue) => (
+                      <ValidatorIssueHint
+                        key={issue.patternId}
+                        issue={issue}
+                        value={fieldValue}
+                        onReplace={
+                          issue.replacementValue
+                            ? () => {
+                              const currentValue = ((getValues(fieldName) as string | undefined) ?? '');
+                              const nextValue = applyIssueReplacement(currentValue, issue);
+                              if (nextValue !== currentValue) {
+                                setValue(fieldName, nextValue as ProductFormData[typeof fieldName], {
+                                  shouldDirty: true,
+                                  shouldTouch: true,
+                                });
+                              }
+                            }
+                            : undefined
+                        }
+                      />
+                    ))}
                   </FormField>
                 </TabsContent>
               );

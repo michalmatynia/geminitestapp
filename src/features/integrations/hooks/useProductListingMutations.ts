@@ -36,6 +36,31 @@ const aiPathsJobQueueQueryKey = ['ai-paths-job-queue'] as const;
 const aiPathsQueueStatusQueryKey = ['ai-paths-queue-status'] as const;
 const listingBadgesQueryKey = ['integrations', 'product-listings-badges'] as const;
 
+type ListingBadgesPayload = Record<string, string>;
+
+const setListingBadgeStatus = (
+  queryClient: ReturnType<typeof useQueryClient>,
+  productId: string,
+  status: string
+): void => {
+  queryClient.setQueryData<ListingBadgesPayload>(listingBadgesQueryKey, (current) => ({
+    ...(current ?? {}),
+    [productId]: status,
+  }));
+};
+
+const removeListingBadgeStatus = (
+  queryClient: ReturnType<typeof useQueryClient>,
+  productId: string
+): void => {
+  queryClient.setQueryData<ListingBadgesPayload>(listingBadgesQueryKey, (current) => {
+    if (!current) return current;
+    const next = { ...current };
+    delete next[productId];
+    return next;
+  });
+};
+
 export function useGenericExportToBaseMutation(): UseMutationResult<
   ExportResponse,
   Error,
@@ -43,7 +68,12 @@ export function useGenericExportToBaseMutation(): UseMutationResult<
   > {
   const queryClient = useQueryClient();
 
-  return useMutation<ExportResponse, Error, ExportToBaseVariables & { productId: string }>({
+  return useMutation<
+    ExportResponse,
+    Error,
+    ExportToBaseVariables & { productId: string },
+    { previousListingBadges?: ListingBadgesPayload | undefined }
+  >({
     mutationFn: async (vars: ExportToBaseVariables & { productId: string }): Promise<ExportResponse> => {
       const { productId, ...payload } = vars;
       try {
@@ -58,7 +88,23 @@ export function useGenericExportToBaseMutation(): UseMutationResult<
         throw error;
       }
     },
+    onMutate: async (vars: ExportToBaseVariables & { productId: string }): Promise<{
+      previousListingBadges?: ListingBadgesPayload | undefined;
+    }> => {
+      await queryClient.cancelQueries({ queryKey: listingBadgesQueryKey });
+      const previousListingBadges = queryClient.getQueryData<ListingBadgesPayload>(listingBadgesQueryKey);
+      setListingBadgeStatus(queryClient, vars.productId, 'pending');
+      return { previousListingBadges };
+    },
+    onError: (_error, vars, context): void => {
+      if (context?.previousListingBadges) {
+        queryClient.setQueryData(listingBadgesQueryKey, context.previousListingBadges);
+        return;
+      }
+      removeListingBadgeStatus(queryClient, vars.productId);
+    },
     onSuccess: (_: ExportResponse, vars: ExportToBaseVariables & { productId: string }): void => {
+      setListingBadgeStatus(queryClient, vars.productId, 'active');
       void queryClient.invalidateQueries({ queryKey: listingKeys.listings(vars.productId) });
       void queryClient.invalidateQueries({ queryKey: integrationJobsQueryKey });
       void queryClient.invalidateQueries({ queryKey: aiPathsJobQueueQueryKey });
@@ -252,7 +298,12 @@ export function useExportToBaseMutation(productId: string): UseMutationResult<
 > {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<
+    ExportResponse,
+    Error,
+    ExportToBaseVariables,
+    { previousListingBadges?: ListingBadgesPayload | undefined }
+  >({
     mutationFn: async (payload: ExportToBaseVariables): Promise<ExportResponse> => {
       try {
         return await api.post<ExportResponse>(`/api/integrations/products/${productId}/export-to-base`, payload);
@@ -266,7 +317,23 @@ export function useExportToBaseMutation(productId: string): UseMutationResult<
         throw error;
       }
     },
+    onMutate: async (): Promise<{
+      previousListingBadges?: ListingBadgesPayload | undefined;
+    }> => {
+      await queryClient.cancelQueries({ queryKey: listingBadgesQueryKey });
+      const previousListingBadges = queryClient.getQueryData<ListingBadgesPayload>(listingBadgesQueryKey);
+      setListingBadgeStatus(queryClient, productId, 'pending');
+      return { previousListingBadges };
+    },
+    onError: (_error, _vars, context): void => {
+      if (context?.previousListingBadges) {
+        queryClient.setQueryData(listingBadgesQueryKey, context.previousListingBadges);
+        return;
+      }
+      removeListingBadgeStatus(queryClient, productId);
+    },
     onSuccess: (): void => {
+      setListingBadgeStatus(queryClient, productId, 'active');
       void queryClient.invalidateQueries({ queryKey: listingKeys.listings(productId) });
       void queryClient.invalidateQueries({ queryKey: integrationJobsQueryKey });
       void queryClient.invalidateQueries({ queryKey: aiPathsJobQueueQueryKey });

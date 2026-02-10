@@ -5,7 +5,7 @@ import prisma from '@/shared/lib/db/prisma';
 
 vi.mock('@/shared/lib/db/prisma', () => ({
   default: {
-    activityLog: {
+    systemLog: {
       findMany: vi.fn(),
       count: vi.fn(),
       create: vi.fn(),
@@ -23,22 +23,26 @@ describe('prismaActivityRepository', () => {
     const mockLogs = [
       {
         id: '1',
-        type: 'test',
-        description: 'desc',
+        level: 'info',
+        message: 'desc',
+        category: 'test',
+        source: 'activity',
         userId: 'u1',
-        entityId: 'e1',
-        entityType: 'type',
-        metadata: {},
+        context: {
+          entityId: 'e1',
+          entityType: 'type',
+          metadata: {},
+        },
         createdAt: new Date(),
       },
     ];
-    (prisma.activityLog.findMany as any).mockResolvedValue(mockLogs);
+    (prisma.systemLog.findMany as any).mockResolvedValue(mockLogs);
 
     const result = await prismaActivityRepository.listActivity({ limit: 10 });
 
     expect(result).toHaveLength(1);
     expect(result[0]?.id).toBe('1');
-    expect(prisma.activityLog.findMany).toHaveBeenCalledWith(expect.objectContaining({
+    expect(prisma.systemLog.findMany).toHaveBeenCalledWith(expect.objectContaining({
       take: 10,
     }));
   });
@@ -46,15 +50,19 @@ describe('prismaActivityRepository', () => {
   it('should create an activity log', async () => {
     const mockLog = {
       id: '1',
-      type: 'test',
-      description: 'desc',
+      level: 'info',
+      message: 'desc',
+      category: 'test',
+      source: 'activity',
       userId: 'u1',
-      entityId: 'e1',
-      entityType: 'type',
-      metadata: { foo: 'bar' },
+      context: {
+        entityId: 'e1',
+        entityType: 'type',
+        metadata: { foo: 'bar' },
+      },
       createdAt: new Date(),
     };
-    (prisma.activityLog.create as any).mockResolvedValue(mockLog);
+    (prisma.systemLog.create as any).mockResolvedValue(mockLog);
 
     const result = await prismaActivityRepository.createActivity({
       type: 'test',
@@ -66,14 +74,18 @@ describe('prismaActivityRepository', () => {
     });
 
     expect(result.id).toBe('1');
-    expect(prisma.activityLog.create).toHaveBeenCalledWith({
+    expect(prisma.systemLog.create).toHaveBeenCalledWith({
       data: {
-        type: 'test',
-        description: 'desc',
+        level: 'info',
+        message: 'desc',
+        category: 'test',
+        source: 'activity',
         userId: 'u1',
-        entityId: 'e1',
-        entityType: 'type',
-        metadata: { foo: 'bar' },
+        context: {
+          entityId: 'e1',
+          entityType: 'type',
+          metadata: { foo: 'bar' },
+        },
       },
     });
   });

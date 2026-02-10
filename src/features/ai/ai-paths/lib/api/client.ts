@@ -5,6 +5,11 @@
  * Provides typed fetch wrappers with consistent error handling.
  */
 
+import {
+  aiTriggerButtonCreateSchema,
+  aiTriggerButtonReorderSchema,
+  aiTriggerButtonUpdateSchema,
+} from '@/features/ai/ai-paths/validations/trigger-buttons';
 import type { AgentTeachingAgentRecord, AgentTeachingChatSource } from '@/shared/types/agent-teaching';
 import type { AiTriggerButtonRecord } from '@/shared/types/ai-trigger-buttons';
 import type { ChatMessage } from '@/shared/types/chatbot';
@@ -312,14 +317,31 @@ export const triggerButtonsApi = {
     locations: AiTriggerButtonRecord['locations'];
     mode?: AiTriggerButtonRecord['mode'];
   }): Promise<ApiResponse<AiTriggerButtonRecord>> {
-    return apiPost<AiTriggerButtonRecord>('/api/ai-paths/trigger-buttons', payload);
+    const validation = aiTriggerButtonCreateSchema.safeParse(payload);
+    if (!validation.success) {
+      return {
+        ok: false,
+        error: validation.error.issues[0]?.message ?? 'Invalid trigger button payload.',
+      };
+    }
+    return apiPost<AiTriggerButtonRecord>('/api/ai-paths/trigger-buttons', validation.data);
   },
 
   async update(
     id: string,
     patch: Partial<Pick<AiTriggerButtonRecord, 'name' | 'iconId' | 'locations' | 'mode' | 'display'>>
   ): Promise<ApiResponse<AiTriggerButtonRecord>> {
-    return apiPatch<AiTriggerButtonRecord>(`/api/ai-paths/trigger-buttons/${encodeURIComponent(id)}`, patch);
+    const validation = aiTriggerButtonUpdateSchema.safeParse(patch);
+    if (!validation.success) {
+      return {
+        ok: false,
+        error: validation.error.issues[0]?.message ?? 'Invalid trigger button update payload.',
+      };
+    }
+    return apiPatch<AiTriggerButtonRecord>(
+      `/api/ai-paths/trigger-buttons/${encodeURIComponent(id)}`,
+      validation.data
+    );
   },
 
   async remove(id: string): Promise<ApiResponse<{ ok: true }>> {
@@ -327,7 +349,17 @@ export const triggerButtonsApi = {
   },
 
   async reorder(orderedIds: string[]): Promise<ApiResponse<AiTriggerButtonRecord[]>> {
-    return apiPost<AiTriggerButtonRecord[]>('/api/ai-paths/trigger-buttons/reorder', { orderedIds });
+    const validation = aiTriggerButtonReorderSchema.safeParse({ orderedIds });
+    if (!validation.success) {
+      return {
+        ok: false,
+        error: validation.error.issues[0]?.message ?? 'Invalid trigger button order payload.',
+      };
+    }
+    return apiPost<AiTriggerButtonRecord[]>(
+      '/api/ai-paths/trigger-buttons/reorder',
+      validation.data
+    );
   },
 };
 

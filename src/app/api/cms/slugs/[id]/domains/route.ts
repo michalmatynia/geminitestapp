@@ -1,7 +1,6 @@
 export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import {
   ensureDomainSlug,
@@ -11,16 +10,13 @@ import {
   resolveCmsDomainScopeById,
 } from '@/features/cms/services/cms-domain';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
+import { cmsSlugDomainsUpdateSchema } from '@/features/cms/validations/api';
 import { parseJsonBody } from '@/features/products/server';
 import { notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api';
 
 type Params = { id: string };
-
-const domainsSchema = z.object({
-  domainIds: z.array(z.string().trim().min(1)),
-});
 
 async function GET_handler(
   _req: NextRequest,
@@ -47,7 +43,7 @@ async function PUT_handler(
   params: Params
 ): Promise<NextResponse | Response> {
   const { id } = params;
-  const parsed = await parseJsonBody(req, domainsSchema, {
+  const parsed = await parseJsonBody(req, cmsSlugDomainsUpdateSchema, {
     logPrefix: 'cms-slug-domains',
   });
   if (!parsed.ok) {

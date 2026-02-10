@@ -31,6 +31,34 @@ export type BaseApiRawResult = {
 };
 
 const DEFAULT_BASE_API_URL = 'https://api.baselinker.com/connector.php';
+const DEFAULT_BASE_API_TIMEOUT_MS = 12000;
+const DEFAULT_BASE_API_PRODUCT_WRITE_TIMEOUT_MS = 30000;
+const DEFAULT_BASE_API_IMAGE_TIMEOUT_MS = 90000;
+const DEFAULT_BASE_API_LARGE_PAYLOAD_BYTES = 250_000;
+
+const toPositiveIntOrFallback = (raw: string | undefined, fallback: number): number => {
+  if (!raw) return fallback;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return parsed;
+};
+
+const BASE_API_TIMEOUT_MS = toPositiveIntOrFallback(
+  process.env['BASE_API_TIMEOUT_MS'],
+  DEFAULT_BASE_API_TIMEOUT_MS
+);
+const BASE_API_PRODUCT_WRITE_TIMEOUT_MS = toPositiveIntOrFallback(
+  process.env['BASE_API_PRODUCT_WRITE_TIMEOUT_MS'],
+  DEFAULT_BASE_API_PRODUCT_WRITE_TIMEOUT_MS
+);
+const BASE_API_IMAGE_TIMEOUT_MS = toPositiveIntOrFallback(
+  process.env['BASE_API_IMAGE_TIMEOUT_MS'],
+  DEFAULT_BASE_API_IMAGE_TIMEOUT_MS
+);
+const BASE_API_LARGE_PAYLOAD_BYTES = toPositiveIntOrFallback(
+  process.env['BASE_API_LARGE_PAYLOAD_BYTES'],
+  DEFAULT_BASE_API_LARGE_PAYLOAD_BYTES
+);
 
 const buildBaseApiUrl = (): string => {
   const raw = process.env['BASE_API_URL'] || DEFAULT_BASE_API_URL;
@@ -194,11 +222,68 @@ const extractProducts = (payload: BaseApiResponse): BaseProductRecord[] => {
   return [];
 };
 
+type BaseApiCallOptions = {
+  timeoutMs?: number;
+  maxAttempts?: number;
+};
+
+const isProductWriteMethod = (method: string): boolean =>
+  method === 'addInventoryProduct' || method === 'updateInventoryProduct';
+
+const hasImagePayload = (parameters: Record<string, unknown>): boolean => {
+  const images = parameters['images'];
+  if (Array.isArray(images)) return images.length > 0;
+  if (images && typeof images === 'object') return Object.keys(images).length > 0;
+  return false;
+};
+
+const estimatePayloadSizeBytes = (parameters: Record<string, unknown>): number => {
+  try {
+    return Buffer.byteLength(JSON.stringify(parameters), 'utf8');
+  } catch {
+    return 0;
+  }
+};
+
+const resolveBaseApiTimeoutMs = (
+  method: string,
+  parameters: Record<string, unknown>,
+  options?: BaseApiCallOptions
+): number => {
+  if (
+    typeof options?.timeoutMs === 'number' &&
+    Number.isFinite(options.timeoutMs) &&
+    options.timeoutMs > 0
+  ) {
+    return Math.round(options.timeoutMs);
+  }
+
+  if (!isProductWriteMethod(method)) {
+    return BASE_API_TIMEOUT_MS;
+  }
+
+  if (hasImagePayload(parameters)) {
+    return BASE_API_IMAGE_TIMEOUT_MS;
+  }
+
+  const payloadBytes = estimatePayloadSizeBytes(parameters);
+  if (payloadBytes >= BASE_API_LARGE_PAYLOAD_BYTES) {
+    return Math.max(BASE_API_PRODUCT_WRITE_TIMEOUT_MS, BASE_API_IMAGE_TIMEOUT_MS);
+  }
+
+  return BASE_API_PRODUCT_WRITE_TIMEOUT_MS;
+};
+
 export async function callBaseApi(
   token: string,
   method: string,
-  parameters: Record<string, unknown> = {}
+  parameters: Record<string, unknown> = {},
+  options?: BaseApiCallOptions
 ): Promise<BaseApiResponse> {
+  const timeoutMs = resolveBaseApiTimeoutMs(method, parameters, options);
+  const maxAttempts =
+    options?.maxAttempts ??
+    (isProductWriteMethod(method) || hasImagePayload(parameters) ? 2 : 3);
   const endpoint = buildBaseApiUrl();
   const body = new URLSearchParams({
     token,
@@ -207,11 +292,28 @@ export async function callBaseApi(
   });
   const response = await withTransientRecovery(
     async (): Promise<Response> => {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body,
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      let res: Response;
+      try {
+        res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body,
+          signal: controller.signal,
+        });
+      } catch (error: unknown) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          throw externalServiceError(
+            `Base API request timed out after ${timeoutMs}ms.`,
+            { method, timeoutMs },
+            { retryable: true }
+          );
+        }
+        throw error;
+      } finally {
+        clearTimeout(timeoutId);
+      }
       if (!res.ok) {
         const retryable = res.status >= 500 || res.status === 408 || res.status === 429;
         const retryAfterHeader = res.headers.get('retry-after');
@@ -231,10 +333,10 @@ export async function callBaseApi(
       source: 'base-api',
       circuitId: 'base-api',
       retry: {
-        maxAttempts: 3,
+        maxAttempts,
         initialDelayMs: 800,
         maxDelayMs: 8000,
-        timeoutMs: 12000,
+        timeoutMs: timeoutMs + 2000,
       },
     }
   );

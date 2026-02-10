@@ -10,6 +10,7 @@ export * from './services/category-repository';
 export * from './services/parameter-repository';
 export * from './services/producer-repository';
 export * from './services/tag-repository';
+export * from './services/validation-pattern-repository';
 export * from './services/product-migration';
 export * from './services/product-provider';
 export * from './services/product-repository';

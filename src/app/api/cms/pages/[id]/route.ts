@@ -1,9 +1,9 @@
 export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
+import { cmsPageUpdateSchema } from '@/features/cms/validations/api';
 import { ActivityTypes, logActivity } from '@/features/observability/server';
 import { parseJsonBody } from '@/features/products/server';
 import { notFoundError } from '@/shared/errors/app-error';
@@ -11,26 +11,6 @@ import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api';
 
 type Params = { id: string };
-
-const pageUpdateSchema = z.object({
-  name: z.string().trim().min(1),
-  status: z.enum(['draft', 'published', 'scheduled']).optional(),
-  publishedAt: z.string().nullable().optional(),
-  seoTitle: z.string().nullable().optional(),
-  seoDescription: z.string().nullable().optional(),
-  seoOgImage: z.string().nullable().optional(),
-  seoCanonical: z.string().nullable().optional(),
-  robotsMeta: z.string().nullable().optional(),
-  showMenu: z.boolean().optional(),
-  themeId: z.string().nullable().optional(),
-  slugIds: z.array(z.string().trim().min(1)).optional(),
-  components: z.array(
-    z.object({
-      type: z.string().trim().min(1),
-      content: z.record(z.string(), z.any()),
-    })
-  ),
-});
 
 /**
  * GET /api/cms/pages/[id]
@@ -55,7 +35,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: P
 async function PUT_handler(req: NextRequest, ctx: ApiHandlerContext, params: Params): Promise<NextResponse | Response> {
   const { id } = params;
 
-  const parsed = await parseJsonBody(req, pageUpdateSchema, {
+  const parsed = await parseJsonBody(req, cmsPageUpdateSchema, {
     logPrefix: 'cms-pages',
   });
   if (!parsed.ok) {

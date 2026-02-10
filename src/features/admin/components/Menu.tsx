@@ -703,11 +703,11 @@ export const buildAdminNav = (handlers: {
       },
       {
         id: 'ai/prompt-engine',
-        label: 'Global Prompt Engine',
-        href: '/admin/prompt-engine',
-        keywords: ['validation', 'extractor', 'formatter', 'prompt rules'],
+        label: 'Global Validator',
+        href: '/admin/validator',
+        keywords: ['validation', 'extractor', 'formatter', 'prompt rules', 'products', 'image studio'],
         children: [
-          { id: 'ai/prompt-engine/validation', label: 'Global Validation Patterns', href: '/admin/prompt-engine/validation' },
+          { id: 'ai/prompt-engine/validation', label: 'Pattern Lists', href: '/admin/validator' },
         ],
       },
       {

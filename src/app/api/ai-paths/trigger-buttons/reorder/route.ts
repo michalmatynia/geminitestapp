@@ -2,9 +2,12 @@ export const runtime = 'nodejs';
 
 import { ObjectId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
+import {
+  aiTriggerButtonReorderSchema,
+  parseAiTriggerButtonsRaw,
+} from '@/features/ai/ai-paths/validations/trigger-buttons';
 import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -16,41 +19,6 @@ import type { ApiHandlerContext } from '@/shared/types/api';
 
 const SETTINGS_COLLECTION = 'settings';
 const AI_PATHS_TRIGGER_BUTTONS_KEY = 'ai_paths_trigger_buttons';
-
-const triggerButtonLocationSchema = z.enum([
-  'product_modal',
-  'product_list',
-  'note_modal',
-  'note_list',
-]);
-
-const triggerButtonModeSchema = z.enum(['click', 'toggle']);
-const triggerButtonDisplaySchema = z.enum(['icon', 'icon_label']);
-
-const triggerButtonRecordSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().min(1),
-  // Older persisted records may miss some fields; keep parsing lenient and normalize on read.
-  iconId: z.string().nullable().optional(),
-  locations: z
-    .preprocess(
-      (value) => (typeof value === 'string' ? [value] : value),
-      z.array(triggerButtonLocationSchema)
-    )
-    .optional(),
-  mode: triggerButtonModeSchema.optional(),
-  display: triggerButtonDisplaySchema.optional(),
-  createdAt: z
-    .preprocess((value) => (value instanceof Date ? value.toISOString() : value), z.string().min(1))
-    .optional(),
-  updatedAt: z
-    .preprocess((value) => (value instanceof Date ? value.toISOString() : value), z.string().min(1))
-    .optional(),
-});
-
-const reorderSchema = z.object({
-  orderedIds: z.array(z.string().trim().min(1)),
-});
 
 type SettingDoc = {
   _id?: string | ObjectId;
@@ -141,38 +109,6 @@ const writeTriggerButtonsRaw = async (value: string): Promise<void> => {
   }
 };
 
-const parseTriggerButtons = (raw: string | null): AiTriggerButtonRecord[] => {
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    const items: AiTriggerButtonRecord[] = [];
-    parsed.forEach((item: unknown) => {
-      const validated = triggerButtonRecordSchema.safeParse(item);
-      if (!validated.success) return;
-      const data = validated.data;
-      const now = new Date().toISOString();
-      const locations =
-        Array.isArray(data.locations) && data.locations.length > 0
-          ? data.locations
-          : (['product_modal'] as const);
-      items.push({
-        id: data.id,
-        name: data.name,
-        iconId: data.iconId ?? null,
-        locations: [...locations],
-        mode: data.mode ?? 'click',
-        display: data.display ?? 'icon_label',
-        createdAt: data.createdAt ?? now,
-        updatedAt: data.updatedAt ?? data.createdAt ?? now,
-      });
-    });
-    return items;
-  } catch {
-    return [];
-  }
-};
-
 const applyReorder = (existing: AiTriggerButtonRecord[], orderedIds: string[]): AiTriggerButtonRecord[] => {
   const byId = new Map<string, AiTriggerButtonRecord>();
   existing.forEach((item: AiTriggerButtonRecord) => byId.set(item.id, item));
@@ -201,7 +137,7 @@ const applyReorder = (existing: AiTriggerButtonRecord[], orderedIds: string[]): 
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
-  const parsed = await parseJsonBody(req, reorderSchema, {
+  const parsed = await parseJsonBody(req, aiTriggerButtonReorderSchema, {
     logPrefix: 'ai-paths.trigger-buttons.reorder.POST',
   });
   if (!parsed.ok) return parsed.response;
@@ -212,7 +148,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   }
 
   const raw = await readTriggerButtonsRaw();
-  const existing = parseTriggerButtons(raw);
+  const existing = parseAiTriggerButtonsRaw(raw);
   const next = applyReorder(existing, orderedIds);
   await writeTriggerButtonsRaw(JSON.stringify(next));
   return NextResponse.json(next);

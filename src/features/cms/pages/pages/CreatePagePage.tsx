@@ -7,7 +7,9 @@ import { CmsDomainSelector } from '@/features/cms';
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
 import { useCmsAllSlugs, useCmsSlugs, useCreatePage } from '@/features/cms/hooks/useCmsQueries';
 import type { Slug } from '@/features/cms/types';
+import { cmsPageCreateSchema } from '@/features/cms/validations/api';
 import { Button, Input, Label, SectionHeader, Checkbox, Switch } from '@/shared/ui';
+import { validateFormData } from '@/shared/validations/form-validation';
 
 export default function CreatePagePage(): React.JSX.Element {
   const [name, setName] = useState('');
@@ -19,6 +21,7 @@ export default function CreatePagePage(): React.JSX.Element {
   const allSlugsQuery = useCmsAllSlugs(includeAllZones);
   const createPage = useCreatePage();
   const [search, setSearch] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   const domainSlugs = useMemo(() => slugsQuery.data ?? [], [slugsQuery.data]);
   const allSlugs = allSlugsQuery.data ?? [];
@@ -30,8 +33,26 @@ export default function CreatePagePage(): React.JSX.Element {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
-    await createPage.mutateAsync({ name, slugIds });
-    router.push('/admin/cms/pages');
+    const validation = validateFormData(
+      cmsPageCreateSchema,
+      { name, slugIds },
+      'Page form is invalid.',
+    );
+    if (!validation.success) {
+      setError(validation.firstError);
+      return;
+    }
+
+    setError(null);
+    try {
+      await createPage.mutateAsync({
+        name: validation.data.name,
+        slugIds: validation.data.slugIds ?? [],
+      });
+      router.push('/admin/cms/pages');
+    } catch (submitError: unknown) {
+      setError(submitError instanceof Error ? submitError.message : 'Failed to create page.');
+    }
   };
 
   return (
@@ -41,6 +62,11 @@ export default function CreatePagePage(): React.JSX.Element {
         <CmsDomainSelector />
       </div>
       <form onSubmit={(e: React.FormEvent<HTMLFormElement>): void => { void handleSubmit(e); }}>
+        {error ? (
+          <div className='mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200'>
+            {error}
+          </div>
+        ) : null}
         <div className='mb-4'>
           <Label htmlFor='name'>Page Name</Label>
           <Input

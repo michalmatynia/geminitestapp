@@ -13,6 +13,7 @@ import { LanguageModal } from '@/features/products/components/settings/modals/La
 import { PriceGroupModal } from '@/features/products/components/settings/modals/PriceGroupModal';
 import { PriceGroupsSettings } from '@/features/products/components/settings/pricing/PriceGroupsSettings';
 import { TagsSettings } from '@/features/products/components/settings/TagsSettings';
+import { ValidatorSettings } from '@/features/products/components/settings/ValidatorSettings';
 import { useCatalogs, useCategories, usePriceGroups, useTags, useDeleteCatalogMutation, useDeletePriceGroupMutation, useUpdatePriceGroupMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import { Catalog, PriceGroup } from '@/features/products/types';
 import { Button, SectionHeader, SectionPanel, useToast } from '@/shared/ui';
@@ -168,6 +169,9 @@ export function ProductSettingsPage(): React.JSX.Element {
                 handleEditCatalog={(c: Catalog): void => { setEditingCatalog(c); setShowCatalogModal(true); }}
                 handleDeleteCatalog={(c: Catalog): void => { void handleDeleteCatalog(c); }}
               />
+            )}
+            {activeSection === 'Validator' && (
+              <ValidatorSettings />
             )}
             {activeSection === 'Internationalization' && (
               <InternationalizationSettings />

@@ -5,7 +5,9 @@ import React, { useState } from 'react';
 
 import { useCreateTheme } from '@/features/cms/hooks/useCmsQueries';
 import type { CmsThemeColors, CmsThemeTypography, CmsThemeSpacing } from '@/features/cms/types';
+import { cmsThemeCreateSchema } from '@/features/cms/validations/api';
 import { Button, Input, SectionHeader, FormSection, FormField } from '@/shared/ui';
+import { validateFormData } from '@/shared/validations/form-validation';
 
 const DEFAULT_COLORS: CmsThemeColors = {
   primary: '#3b82f6',
@@ -38,11 +40,27 @@ export default function CreateThemePage(): React.ReactNode {
   const [colors, setColors] = useState<CmsThemeColors>(DEFAULT_COLORS);
   const [typography, setTypography] = useState<CmsThemeTypography>(DEFAULT_TYPOGRAPHY);
   const [spacing, setSpacing] = useState<CmsThemeSpacing>(DEFAULT_SPACING);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    await createTheme.mutateAsync({ name, colors, typography, spacing });
-    router.push('/admin/cms/themes');
+    const validation = validateFormData(
+      cmsThemeCreateSchema,
+      { name, colors, typography, spacing },
+      'Theme form is invalid.',
+    );
+    if (!validation.success) {
+      setError(validation.firstError);
+      return;
+    }
+
+    setError(null);
+    try {
+      await createTheme.mutateAsync(validation.data);
+      router.push('/admin/cms/themes');
+    } catch (submitError: unknown) {
+      setError(submitError instanceof Error ? submitError.message : 'Failed to create theme.');
+    }
   };
 
   const updateColor = (key: keyof CmsThemeColors, value: string): void => {
@@ -53,6 +71,11 @@ export default function CreateThemePage(): React.ReactNode {
     <div className='container mx-auto max-w-2xl py-10'>
       <SectionHeader title='Create Theme' className='mb-6' />
       <form onSubmit={(e: React.FormEvent) => { void handleSubmit(e); }} className='space-y-8'>
+        {error ? (
+          <div className='rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200'>
+            {error}
+          </div>
+        ) : null}
         <FormSection title='General' description='Basic identification for this theme.'>
           <FormField label='Theme Name' required id='theme-name'>
             <Input

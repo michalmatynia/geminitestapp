@@ -4,6 +4,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 
 import { triggerButtonsApi } from '@/features/ai/ai-paths/lib';
+import {
+  aiTriggerButtonCreateSchema,
+  type AiTriggerButtonCreatePayload,
+} from '@/features/ai/ai-paths/validations/trigger-buttons';
 import { IconSelector } from '@/features/icons';
 import type {
   AiTriggerButtonDisplay,
@@ -26,17 +30,11 @@ import {
   SharedModal, 
   useToast 
 } from '@/shared/ui';
+import { validateFormData } from '@/shared/validations/form-validation';
 
 import { TriggerButtonListManager, type AiTriggerButtonRecord } from '../components/TriggerButtonListManager';
 
-type TriggerButtonDraft = {
-  id?: string;
-  name: string;
-  iconId: string | null;
-  locations: AiTriggerButtonLocation[];
-  mode: AiTriggerButtonMode;
-  display: AiTriggerButtonDisplay;
-};
+type TriggerButtonDraft = AiTriggerButtonCreatePayload & { id?: string };
 
 const LOCATION_OPTIONS: Array<{ value: AiTriggerButtonLocation; label: string }> = [
   { value: 'product_modal', label: 'Products: Product Modal' },
@@ -82,7 +80,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (payload: Omit<TriggerButtonDraft, 'id'>): Promise<AiTriggerButtonDto> => {
+    mutationFn: async (payload: AiTriggerButtonCreatePayload): Promise<AiTriggerButtonDto> => {
       const result = await triggerButtonsApi.create(payload);
       if (!result.ok) throw new Error(result.error);
       return result.data;
@@ -98,14 +96,19 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (payload: TriggerButtonDraft): Promise<AiTriggerButtonDto> => {
-      if (!payload.id) throw new Error('Missing trigger button id.');
-      const result = await triggerButtonsApi.update(payload.id, {
-        name: payload.name,
-        iconId: payload.iconId,
-        locations: payload.locations,
-        mode: payload.mode,
-        display: payload.display,
+    mutationFn: async ({
+      id,
+      input,
+    }: {
+      id: string;
+      input: AiTriggerButtonCreatePayload;
+    }): Promise<AiTriggerButtonDto> => {
+      const result = await triggerButtonsApi.update(id, {
+        name: input.name,
+        iconId: input.iconId,
+        locations: input.locations,
+        mode: input.mode,
+        display: input.display,
       });
       if (!result.ok) throw new Error(result.error);
       return result.data;
@@ -171,26 +174,28 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   }, [reorderMutation]);
 
   const handleSave = async (): Promise<void> => {
-    const name = draft.name.trim();
-    if (!name) {
-      toast('Name is required.', { variant: 'error' });
+    const validation = validateFormData(
+      aiTriggerButtonCreateSchema,
+      {
+        name: draft.name,
+        iconId: draft.iconId,
+        locations: draft.locations,
+        mode: draft.mode,
+        display: draft.display,
+      },
+      'Trigger button form is invalid.',
+    );
+    if (!validation.success) {
+      toast(validation.firstError, { variant: 'error' });
       return;
     }
-    if (!draft.locations.length) {
-      toast('Select at least one location.', { variant: 'error' });
-      return;
-    }
+    const input = validation.data;
+
     if (draft.id) {
-      await updateMutation.mutateAsync({ ...draft, name });
+      await updateMutation.mutateAsync({ id: draft.id, input });
       return;
     }
-    await createMutation.mutateAsync({
-      name,
-      iconId: draft.iconId,
-      locations: draft.locations,
-      mode: draft.mode,
-      display: draft.display,
-    });
+    await createMutation.mutateAsync(input);
   };
 
   const saving = createMutation.isPending || updateMutation.isPending;

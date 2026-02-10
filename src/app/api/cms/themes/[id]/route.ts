@@ -1,45 +1,14 @@
 export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
+import { cmsThemeUpdateSchema } from '@/features/cms/validations/api';
 import { parseJsonBody } from '@/features/products/server';
 import type { UpdateCmsThemeDto } from '@/shared/dtos/cms';
 import { notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api';
-
-const colorsSchema = z.object({
-  primary: z.string(),
-  secondary: z.string(),
-  accent: z.string(),
-  background: z.string(),
-  surface: z.string(),
-  text: z.string(),
-  muted: z.string(),
-});
-
-const typographySchema = z.object({
-  headingFont: z.string(),
-  bodyFont: z.string(),
-  baseSize: z.number(),
-  headingWeight: z.number(),
-  bodyWeight: z.number(),
-});
-
-const spacingSchema = z.object({
-  sectionPadding: z.string(),
-  containerMaxWidth: z.string(),
-});
-
-const themeUpdateSchema = z.object({
-  name: z.string().trim().min(1),
-  colors: colorsSchema.optional(),
-  typography: typographySchema.optional(),
-  spacing: spacingSchema.optional(),
-  customCss: z.string().nullable().optional(),
-});
 
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const id = params.id;
@@ -56,7 +25,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: {
 async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const id = params.id;
 
-  const parsed = await parseJsonBody(req, themeUpdateSchema, {
+  const parsed = await parseJsonBody(req, cmsThemeUpdateSchema, {
     logPrefix: 'cms-themes',
   });
   if (!parsed.ok) {

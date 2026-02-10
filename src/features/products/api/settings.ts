@@ -1,4 +1,8 @@
 import { api } from '@/shared/lib/api-client';
+import type {
+  ProductValidationPattern,
+  ProductValidatorConfig,
+} from '@/shared/types/domain/products';
 
 import { 
   Catalog, 
@@ -122,4 +126,44 @@ export async function updateParameter(id: string, data: Partial<ProductParameter
 
 export async function deleteParameter(id: string): Promise<void> {
   return api.delete(`/api/products/parameters/${id}`);
+}
+
+export async function getValidatorSettings(): Promise<{ enabledByDefault: boolean }> {
+  return api.get<{ enabledByDefault: boolean }>('/api/products/validator-settings');
+}
+
+export async function updateValidatorSettings(
+  data: { enabledByDefault: boolean }
+): Promise<{ enabledByDefault: boolean }> {
+  return api.put<{ enabledByDefault: boolean }>('/api/products/validator-settings', data);
+}
+
+export async function getValidationPatterns(): Promise<ProductValidationPattern[]> {
+  return api.get<ProductValidationPattern[]>('/api/products/validator-patterns');
+}
+
+export async function createValidationPattern(
+  data: Omit<ProductValidationPattern, 'id' | 'createdAt' | 'updatedAt'>
+): Promise<ProductValidationPattern> {
+  return api.post<ProductValidationPattern>('/api/products/validator-patterns', data);
+}
+
+export async function updateValidationPattern(
+  id: string,
+  data: Partial<Omit<ProductValidationPattern, 'id' | 'createdAt' | 'updatedAt'>>
+): Promise<ProductValidationPattern> {
+  return api.put<ProductValidationPattern>(`/api/products/validator-patterns/${id}`, data);
+}
+
+export async function deleteValidationPattern(id: string): Promise<void> {
+  return api.delete(`/api/products/validator-patterns/${id}`);
+}
+
+export async function getProductValidatorConfig(includeDisabled: boolean = false): Promise<ProductValidatorConfig> {
+  if (includeDisabled) {
+    return api.get<ProductValidatorConfig>('/api/products/validator-config', {
+      params: { includeDisabled: true },
+    });
+  }
+  return api.get<ProductValidatorConfig>('/api/products/validator-config');
 }

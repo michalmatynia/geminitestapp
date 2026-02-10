@@ -8,7 +8,9 @@ import CmsEditorLayout from '@/features/cms/components/CmsEditorLayout';
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
 import { useCmsAllSlugs, useCmsPage, useCmsSlugs, useUpdatePage } from '@/features/cms/hooks/useCmsQueries';
 import type { Page, Slug, PageSlugLink } from '@/features/cms/types';
+import { cmsPageUpdateSchema } from '@/features/cms/validations/api';
 import { Button, Checkbox, Input, Label, SectionHeader, Switch } from '@/shared/ui';
+import { validateFormData } from '@/shared/validations/form-validation';
 
 export default function EditPagePageLoader(): React.JSX.Element {
   const { id } = useParams();
@@ -31,6 +33,7 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
   const [manualSelectedSlugIds, setManualSelectedSlugIds] = useState<string[] | null>(null);
   const router = useRouter();
   const updatePage = useUpdatePage();
+  const [error, setError] = useState<string | null>(null);
 
   const allSlugs = useMemo((): Slug[] => allSlugsQuery.data ?? [], [allSlugsQuery.data]);
   const domainSlugs = useMemo((): Slug[] => slugsQuery.data ?? [], [slugsQuery.data]);
@@ -74,9 +77,33 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
   const handleSave = async (): Promise<void> => {
     if (!page) return;
 
+    const validation = validateFormData(
+      cmsPageUpdateSchema,
+      {
+        name: page.name,
+        status: page.status,
+        publishedAt: page.publishedAt ?? null,
+        seoTitle: page.seoTitle ?? null,
+        seoDescription: page.seoDescription ?? null,
+        seoOgImage: page.seoOgImage ?? null,
+        seoCanonical: page.seoCanonical ?? null,
+        robotsMeta: page.robotsMeta ?? null,
+        themeId: page.themeId ?? null,
+        showMenu: page.showMenu ?? true,
+        components: page.components,
+        slugIds: selectedSlugIds,
+      },
+      'Page form is invalid.',
+    );
+    if (!validation.success) {
+      setError(validation.firstError);
+      return;
+    }
+
+    setError(null);
     await updatePage.mutateAsync({
       id,
-      input: { ...page, showMenu: page.showMenu ?? true, slugIds: selectedSlugIds },
+      input: validation.data as Page & { slugIds?: string[] },
     });
     router.push('/admin/cms/pages');
   };
@@ -90,6 +117,12 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
             {updatePage.isPending ? 'Saving...' : 'Save'}
           </Button>
         </div>
+
+        {error ? (
+          <div className='rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200'>
+            {error}
+          </div>
+        ) : null}
 
         <div className='rounded-lg border border-border/50 bg-gray-900/40 p-4'>
           <div className='mb-4'>

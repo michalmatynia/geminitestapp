@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 
+import type { ProductValidationPattern } from '@/shared/types/domain/products';
+
 import * as api from '../api/settings';
 import { PriceGroup, Catalog, CatalogRecord, ProductCategory, ProductTag, ProductParameter, ProductCategoryWithChildren } from '../types';
 
@@ -10,6 +12,10 @@ export const productSettingsKeys = {
   categories: (catalogId: string | null) => [...productSettingsKeys.all, 'categories', catalogId] as const,
   tags: (catalogId: string | null) => [...productSettingsKeys.all, 'tags', catalogId] as const,
   parameters: (catalogId: string | null) => [...productSettingsKeys.all, 'parameters', catalogId] as const,
+  validatorSettings: () => [...productSettingsKeys.all, 'validator-settings'] as const,
+  validatorPatterns: () => [...productSettingsKeys.all, 'validator-patterns'] as const,
+  validatorConfig: (includeDisabled: boolean) =>
+    [...productSettingsKeys.all, 'validator-config', includeDisabled] as const,
 };
 
 export function usePriceGroups(): UseQueryResult<PriceGroup[], Error> {
@@ -47,6 +53,30 @@ export function useParameters(catalogId: string | null): UseQueryResult<ProductP
     queryKey: productSettingsKeys.parameters(catalogId),
     queryFn: () => api.getParameters(catalogId),
     enabled: !!catalogId,
+  });
+}
+
+export function useValidatorSettings(): UseQueryResult<{ enabledByDefault: boolean }, Error> {
+  return useQuery({
+    queryKey: productSettingsKeys.validatorSettings(),
+    queryFn: api.getValidatorSettings,
+  });
+}
+
+export function useValidationPatterns(): UseQueryResult<ProductValidationPattern[], Error> {
+  return useQuery({
+    queryKey: productSettingsKeys.validatorPatterns(),
+    queryFn: api.getValidationPatterns,
+  });
+}
+
+export function useProductValidatorConfig(includeDisabled: boolean = false): UseQueryResult<{
+  enabledByDefault: boolean;
+  patterns: ProductValidationPattern[];
+}, Error> {
+  return useQuery({
+    queryKey: productSettingsKeys.validatorConfig(includeDisabled),
+    queryFn: () => api.getProductValidatorConfig(includeDisabled),
   });
 }
 
@@ -187,6 +217,54 @@ export function useDeleteParameterMutation(): UseMutationResult<void, Error, { i
     mutationFn: ({ id }: { id: string; catalogId: string | null }) => api.deleteParameter(id),
     onSuccess: (_: void, variables: { id: string; catalogId: string | null }) => {
       void queryClient.invalidateQueries({ queryKey: productSettingsKeys.parameters(variables.catalogId) });
+    },
+  });
+}
+
+export function useUpdateValidatorSettingsMutation(): UseMutationResult<{ enabledByDefault: boolean }, Error, { enabledByDefault: boolean }> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: api.updateValidatorSettings,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorSettings() });
+      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorConfig(true) });
+      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorConfig(false) });
+    },
+  });
+}
+
+export function useCreateValidationPatternMutation(): UseMutationResult<ProductValidationPattern, Error, Omit<ProductValidationPattern, 'id' | 'createdAt' | 'updatedAt'>> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: api.createValidationPattern,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorPatterns() });
+      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorConfig(true) });
+      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorConfig(false) });
+    },
+  });
+}
+
+export function useUpdateValidationPatternMutation(): UseMutationResult<ProductValidationPattern, Error, { id: string; data: Partial<Omit<ProductValidationPattern, 'id' | 'createdAt' | 'updatedAt'>> }> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }) => api.updateValidationPattern(id, data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorPatterns() });
+      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorConfig(true) });
+      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorConfig(false) });
+    },
+  });
+}
+
+export function useDeleteValidationPatternMutation(): UseMutationResult<void, Error, string> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.deleteValidationPattern(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorPatterns() });
+      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorConfig(true) });
+      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorConfig(false) });
     },
   });
 }

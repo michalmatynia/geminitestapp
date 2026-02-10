@@ -1,10 +1,13 @@
 export const runtime = 'nodejs';
 
-import { ObjectId, Filter } from 'mongodb'; // Added imports
+import { ObjectId, Filter } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
+import {
+  aiTriggerButtonUpdateSchema,
+  parseAiTriggerButtonsRaw,
+} from '@/features/ai/ai-paths/validations/trigger-buttons';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -16,49 +19,6 @@ import type { ApiHandlerContext } from '@/shared/types/api';
 
 const SETTINGS_COLLECTION = 'settings';
 const AI_PATHS_TRIGGER_BUTTONS_KEY = 'ai_paths_trigger_buttons';
-
-const triggerButtonLocationSchema = z.enum([
-  'product_modal',
-  'product_list',
-  'note_modal',
-  'note_list',
-]);
-
-const triggerButtonModeSchema = z.enum(['click', 'toggle']);
-const triggerButtonDisplaySchema = z.enum(['icon', 'icon_label']);
-
-const triggerButtonRecordSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().min(1),
-  // Older persisted records may miss some fields; keep parsing lenient and normalize on read.
-  iconId: z.string().nullable().optional(),
-  locations: z
-    .preprocess(
-      (value) => (typeof value === 'string' ? [value] : value),
-      z.array(triggerButtonLocationSchema)
-    )
-    .optional(),
-  mode: triggerButtonModeSchema.optional(),
-  display: triggerButtonDisplaySchema.optional(),
-  createdAt: z
-    .preprocess((value) => (value instanceof Date ? value.toISOString() : value), z.string().min(1))
-    .optional(),
-  updatedAt: z
-    .preprocess((value) => (value instanceof Date ? value.toISOString() : value), z.string().min(1))
-    .optional(),
-});
-
-const updateTriggerButtonSchema = z
-  .object({
-    name: z.string().trim().min(1).optional(),
-    iconId: z.string().trim().min(1).nullable().optional(),
-    locations: z.array(triggerButtonLocationSchema).min(1).optional(),
-    mode: triggerButtonModeSchema.optional(),
-    display: triggerButtonDisplaySchema.optional(),
-  })
-  .refine((value) => Object.keys(value).length > 0, {
-    message: 'No updates provided',
-  });
 
 type SettingDoc = { _id?: string | ObjectId; key?: string; value?: string; createdAt?: Date; updatedAt?: Date };
 
@@ -153,38 +113,6 @@ const writeTriggerButtonsRaw = async (value: string): Promise<void> => {
   }
 };
 
-const parseTriggerButtons = (raw: string | null): AiTriggerButtonRecord[] => {
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    const items: AiTriggerButtonRecord[] = [];
-    parsed.forEach((item: unknown) => {
-      const validated = triggerButtonRecordSchema.safeParse(item);
-      if (!validated.success) return;
-      const data = validated.data;
-      const now = new Date().toISOString();
-      const locations =
-        Array.isArray(data.locations) && data.locations.length > 0
-          ? data.locations
-          : (['product_modal'] as const);
-      items.push({
-        id: data.id,
-        name: data.name,
-        iconId: data.iconId ?? null,
-        locations: [...locations],
-        mode: data.mode ?? 'click',
-        display: data.display ?? 'icon_label',
-        createdAt: data.createdAt ?? now,
-        updatedAt: data.updatedAt ?? data.createdAt ?? now,
-      });
-    });
-    return items;
-  } catch {
-    return [];
-  }
-};
-
 async function PATCH_handler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
@@ -193,12 +121,12 @@ async function PATCH_handler(
   await requireAiPathsAccess();
   const id = params.id;
   if (!id) throw badRequestError('Missing trigger button id.');
-  const parsed = await parseJsonBody(req, updateTriggerButtonSchema, {
+  const parsed = await parseJsonBody(req, aiTriggerButtonUpdateSchema, {
     logPrefix: 'ai-paths.trigger-buttons.PATCH',
   });
   if (!parsed.ok) return parsed.response;
   const raw = await readTriggerButtonsRaw();
-  const existing = parseTriggerButtons(raw);
+  const existing = parseAiTriggerButtonsRaw(raw);
   const index = existing.findIndex((item: AiTriggerButtonRecord) => item.id === id);
   if (index === -1) {
     throw notFoundError('Trigger button not found.', { id });
@@ -229,7 +157,7 @@ async function DELETE_handler(
   const id = params.id;
   if (!id) throw badRequestError('Missing trigger button id.');
   const raw = await readTriggerButtonsRaw();
-  const existing = parseTriggerButtons(raw);
+  const existing = parseAiTriggerButtonsRaw(raw);
   const next = existing.filter((item: AiTriggerButtonRecord) => item.id !== id);
   if (next.length === existing.length) {
     throw notFoundError('Trigger button not found.', { id });

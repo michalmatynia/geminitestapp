@@ -3,5 +3,6 @@ export const settingSections = [
   'Tags',
   'Price Groups',
   'Catalogs',
+  'Validator',
   'Internationalization',
 ] as const;

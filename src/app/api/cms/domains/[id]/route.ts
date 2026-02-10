@@ -1,24 +1,20 @@
 export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { deleteCmsDomain, setCmsDomainAlias } from '@/features/cms/services/cms-domain';
+import { cmsDomainUpdateSchema } from '@/features/cms/validations/api';
 import { parseJsonBody } from '@/features/products/server';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api';
 import { ApiParams } from '@/shared/types/base-types';
-
-const domainUpdateSchema = z.object({
-  aliasOf: z.string().trim().min(1).nullable().optional(),
-});
 
 async function PUT_handler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: ApiParams
 ): Promise<Response> {
-  const parsed = await parseJsonBody(req, domainUpdateSchema, {
+  const parsed = await parseJsonBody(req, cmsDomainUpdateSchema, {
     logPrefix: 'cms-domains',
   });
   if (!parsed.ok) {

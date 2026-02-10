@@ -1,7 +1,6 @@
 export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import {
   getDomainSlugLinks,
@@ -15,17 +14,13 @@ import {
   setGlobalDefaultSlug,
 } from '@/features/cms/services/cms-domain';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
+import { cmsSlugUpdateSchema } from '@/features/cms/validations/api';
 import { parseJsonBody } from '@/features/products/server';
 import { notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api';
 
 type Params = { id: string };
-
-const slugUpdateSchema = z.object({
-  slug: z.string().trim().min(1),
-  isDefault: z.boolean().optional(),
-});
 
 const resolveDomainFromRequest = async (req: NextRequest) => {
   const domainId = req.nextUrl.searchParams.get('domainId');
@@ -81,7 +76,7 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params:
 async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Params): Promise<NextResponse | Response> {
   const { id } = params;
 
-  const parsed = await parseJsonBody(req, slugUpdateSchema, {
+  const parsed = await parseJsonBody(req, cmsSlugUpdateSchema, {
     logPrefix: 'cms-slugs',
   });
   if (!parsed.ok) {

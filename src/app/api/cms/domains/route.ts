@@ -1,20 +1,16 @@
 export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import {
   createCmsDomain,
   listCmsDomains,
   resolveCmsDomainFromRequest,
 } from '@/features/cms/services/cms-domain';
+import { cmsDomainCreateSchema } from '@/features/cms/validations/api';
 import { parseJsonBody } from '@/features/products/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api';
-
-const domainSchema = z.object({
-  domain: z.string().trim().min(1),
-});
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await resolveCmsDomainFromRequest(req);
@@ -23,7 +19,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 }
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const parsed = await parseJsonBody(req, domainSchema, {
+  const parsed = await parseJsonBody(req, cmsDomainCreateSchema, {
     logPrefix: 'cms-domains',
   });
   if (!parsed.ok) {

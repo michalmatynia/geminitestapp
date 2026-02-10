@@ -2,9 +2,12 @@ export const runtime = 'nodejs';
 
 import { ObjectId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { requireAiPathsAccess, requireAiPathsRunAccess } from '@/features/ai/ai-paths/server';
+import {
+  aiTriggerButtonCreateSchema,
+  parseAiTriggerButtonsRaw,
+} from '@/features/ai/ai-paths/validations/trigger-buttons';
 import { AppErrorCodes, badRequestError, isAppError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -16,45 +19,6 @@ import type { ApiHandlerContext } from '@/shared/types/api';
 
 const SETTINGS_COLLECTION = 'settings';
 const AI_PATHS_TRIGGER_BUTTONS_KEY = 'ai_paths_trigger_buttons';
-
-const triggerButtonLocationSchema = z.enum([
-  'product_modal',
-  'product_list',
-  'note_modal',
-  'note_list',
-]);
-
-const triggerButtonModeSchema = z.enum(['click', 'toggle']);
-const triggerButtonDisplaySchema = z.enum(['icon', 'icon_label']);
-
-const triggerButtonRecordSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().min(1),
-  // Older persisted records may miss some fields; keep parsing lenient and normalize on read.
-  iconId: z.string().nullable().optional(),
-  locations: z
-    .preprocess(
-      (value) => (typeof value === 'string' ? [value] : value),
-      z.array(triggerButtonLocationSchema)
-    )
-    .optional(),
-  mode: triggerButtonModeSchema.optional(),
-  display: triggerButtonDisplaySchema.optional(),
-  createdAt: z
-    .preprocess((value) => (value instanceof Date ? value.toISOString() : value), z.string().min(1))
-    .optional(),
-  updatedAt: z
-    .preprocess((value) => (value instanceof Date ? value.toISOString() : value), z.string().min(1))
-    .optional(),
-});
-
-const createTriggerButtonSchema = z.object({
-  name: z.string().trim().min(1),
-  iconId: z.string().trim().min(1).nullable().optional(),
-  locations: z.array(triggerButtonLocationSchema).min(1),
-  mode: triggerButtonModeSchema.optional().default('click'),
-  display: triggerButtonDisplaySchema.optional().default('icon_label'),
-});
 
 type SettingDoc = { _id?: string | ObjectId; key?: string; value?: string; createdAt?: Date; updatedAt?: Date };
 
@@ -139,38 +103,6 @@ const writeTriggerButtonsRaw = async (value: string): Promise<void> => {
   }
 };
 
-const parseTriggerButtons = (raw: string | null): AiTriggerButtonRecord[] => {
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    const items: AiTriggerButtonRecord[] = [];
-    parsed.forEach((item: unknown) => {
-      const validated = triggerButtonRecordSchema.safeParse(item);
-      if (!validated.success) return;
-      const data = validated.data;
-      const now = new Date().toISOString();
-      const locations =
-        Array.isArray(data.locations) && data.locations.length > 0
-          ? data.locations
-          : (['product_modal'] as const);
-      items.push({
-        id: data.id,
-        name: data.name,
-        iconId: data.iconId ?? null,
-        locations: [...locations],
-        mode: data.mode ?? 'click',
-        display: data.display ?? 'icon_label',
-        createdAt: data.createdAt ?? now,
-        updatedAt: data.updatedAt ?? data.createdAt ?? now,
-      });
-    });
-    return items;
-  } catch {
-    return [];
-  }
-};
-
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     await requireAiPathsRunAccess();
@@ -186,20 +118,20 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
     throw error;
   }
   const raw = await readTriggerButtonsRaw();
-  const triggerButtons = parseTriggerButtons(raw);
+  const triggerButtons = parseAiTriggerButtonsRaw(raw);
   return NextResponse.json(triggerButtons);
 }
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
-  const parsed = await parseJsonBody(req, createTriggerButtonSchema, {
+  const parsed = await parseJsonBody(req, aiTriggerButtonCreateSchema, {
     logPrefix: 'ai-paths.trigger-buttons.POST',
   });
   if (!parsed.ok) return parsed.response;
 
   const { name, iconId, locations, mode, display } = parsed.data;
   const raw = await readTriggerButtonsRaw();
-  const existing = parseTriggerButtons(raw);
+  const existing = parseAiTriggerButtonsRaw(raw);
   const normalizedName = name.trim();
   if (!normalizedName) {
     throw badRequestError('Name is required.');

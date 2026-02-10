@@ -1,18 +1,13 @@
 export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { cmsService } from '@/features/cms/services/cms-service';
+import { cmsPageCreateSchema } from '@/features/cms/validations/api';
 import { ActivityTypes, logActivity } from '@/features/observability/server';
 import { parseJsonBody } from '@/features/products/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api';
-
-const createPageSchema = z.object({
-  name: z.string().trim().min(1),
-  slugIds: z.array(z.string().trim().min(1)).optional(),
-});
 
 /**
  * GET /api/cms/pages
@@ -28,7 +23,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
  * Creates a new page.
  */
 async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<NextResponse | Response> {
-  const parsed = await parseJsonBody(req, createPageSchema, {
+  const parsed = await parseJsonBody(req, cmsPageCreateSchema, {
     logPrefix: 'cms-pages',
   });
   if (!parsed.ok) {

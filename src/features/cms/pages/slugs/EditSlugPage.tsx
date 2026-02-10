@@ -9,7 +9,12 @@ import { useMemo, useState, useEffect } from 'react';
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
 import { useCmsDomains, useCmsSlug, useCmsSlugDomains, useUpdateSlug, useUpdateSlugDomains } from '@/features/cms/hooks/useCmsQueries';
 import type { CmsDomain, Slug } from '@/features/cms/types';
+import {
+  cmsSlugDomainsUpdateSchema,
+  cmsSlugUpdateSchema,
+} from '@/features/cms/validations/api';
 import { Button, Input, Label, Switch, SectionHeader, Checkbox } from '@/shared/ui';
+import { validateFormData } from '@/shared/validations/form-validation';
 
 export default function EditSlugPageLoader(): React.JSX.Element {
   const params = useParams();
@@ -44,6 +49,7 @@ function EditSlugForm({
   const selectedDomainIds = domainSelection ?? slugDomainsQuery.data?.domainIds ?? [];
   const router = useRouter();
   const updateSlug = useUpdateSlug();
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!zoningEnabled) return;
@@ -62,12 +68,42 @@ function EditSlugForm({
     e.preventDefault();
     if (!slug) return;
 
-    if (zoningEnabled && selectedDomainIds.length === 0) {
-      alert('Assign this slug to at least one zone.');
+    const slugValidation = validateFormData(
+      cmsSlugUpdateSchema,
+      {
+        slug: slug.slug,
+        isDefault: Boolean(slug.isDefault),
+      },
+      'Slug form is invalid.',
+    );
+    if (!slugValidation.success) {
+      setError(slugValidation.firstError);
       return;
     }
 
-    const updateData: { id: string; input: Partial<Slug>; domainId?: string | null } = { id, input: slug };
+    if (zoningEnabled) {
+      const domainsValidation = validateFormData(
+        cmsSlugDomainsUpdateSchema,
+        { domainIds: selectedDomainIds },
+        'Assign this slug to at least one zone.',
+      );
+      if (!domainsValidation.success) {
+        setError(domainsValidation.firstError);
+        return;
+      }
+    }
+
+    setError(null);
+    const slugInput: Partial<Slug> = {
+      slug: slugValidation.data.slug,
+      ...(typeof slugValidation.data.isDefault === 'boolean'
+        ? { isDefault: slugValidation.data.isDefault }
+        : {}),
+    };
+    const updateData: { id: string; input: Partial<Slug>; domainId?: string | null } = {
+      id,
+      input: slugInput,
+    };
     if (domainId) updateData.domainId = domainId;
     await updateSlug.mutateAsync(updateData);
     if (zoningEnabled) {
@@ -81,6 +117,11 @@ function EditSlugForm({
     <div className='container mx-auto py-10'>
       <SectionHeader title='Edit Slug' className='mb-6' />
       <form onSubmit={(e: React.FormEvent<HTMLFormElement>): void => { void handleSubmit(e); }}>
+        {error ? (
+          <div className='mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200'>
+            {error}
+          </div>
+        ) : null}
         <div className='mb-4'>
           <Label htmlFor='slug'>Slug</Label>
           <Input

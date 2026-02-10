@@ -21,6 +21,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/ui';
+import { validateFormData } from '@/shared/validations/form-validation';
+
+import { cmsDomainCreateSchema, cmsDomainUpdateSchema } from '../../validations/api';
 
 export default function ZonesPage(): React.JSX.Element {
   const domainsQuery = useCmsDomains();
@@ -33,14 +36,19 @@ export default function ZonesPage(): React.JSX.Element {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
-    const value = domain.trim();
-    if (!value) {
-      setError('Enter a domain or hostname.');
+    const validation = validateFormData(
+      cmsDomainCreateSchema,
+      { domain },
+      'Enter a domain or hostname.',
+    );
+    if (!validation.success) {
+      setError(validation.firstError);
       return;
     }
+
     setError('');
     try {
-      await createDomain.mutateAsync({ domain: value });
+      await createDomain.mutateAsync(validation.data);
       setDomain('');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to create domain.');
@@ -54,7 +62,18 @@ export default function ZonesPage(): React.JSX.Element {
 
   const handleAliasChange = async (id: string, aliasOfValue: string): Promise<void> => {
     const aliasOf = aliasOfValue === 'none' ? null : aliasOfValue;
-    await updateDomain.mutateAsync({ id, input: { aliasOf } });
+    const validation = validateFormData(
+      cmsDomainUpdateSchema,
+      { aliasOf },
+      'Alias selection is invalid.',
+    );
+    if (!validation.success) {
+      setError(validation.firstError);
+      return;
+    }
+
+    const input = validation.data.aliasOf === undefined ? {} : { aliasOf: validation.data.aliasOf };
+    await updateDomain.mutateAsync({ id, input });
   };
 
   return (

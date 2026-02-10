@@ -49,6 +49,10 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
 
   const imageRetryPresets = useImageRetryPresets();
   const isBaseListing = ['baselinker', 'base-com'].includes(normalizeIntegrationSlug(listing.integration.slug));
+  const normalizedListingStatus = (listing.status ?? '').trim().toLowerCase();
+  const isSuccessStatus = ['active', 'success', 'completed', 'listed', 'ok'].includes(normalizedListingStatus);
+  const isExportRunningStatus = ['running', 'processing', 'in_progress', 'pending', 'queued'].includes(normalizedListingStatus);
+  const canRetryExport = isBaseListing && !isExportRunningStatus;
 
   const getExportFieldsLabel = (): string => {
     const fields: string[] = [];
@@ -148,7 +152,7 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
       <div className='ml-4 flex flex-col gap-2'>
         {isBaseListing && (
           <>
-            {listing.status === 'failed' && (
+            {canRetryExport && (
               <Button
                 type='button'
                 variant='outline'
@@ -157,7 +161,7 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
                 disabled={exportingListing === listing.id}
                 className='border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
               >
-                Export again
+                {isSuccessStatus ? 'Re-export product' : 'Export again'}
               </Button>
             )}
             {listing.status !== 'removed' && (
@@ -262,7 +266,7 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
           className='text-gray-400 hover:bg-muted/50 hover:text-red-400'
         >
           <Trash2 className='mr-1 size-3' />
-          Remove history
+          {isBaseListing ? 'Break connection' : 'Remove history'}
         </Button>
       </div>
     </div>

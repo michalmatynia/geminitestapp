@@ -3,6 +3,7 @@ import 'server-only';
 import { randomUUID } from 'crypto';
 
 import type {
+  FindProductAiJobsOptions,
   ProductAiJobRecord,
   ProductAiJobRepository,
   ProductAiJobUpdate,
@@ -60,14 +61,29 @@ export const mongoProductAiJobRepository: ProductAiJobRepository = {
     return toRecord(document);
   },
 
-  async findJobs(productId?: string) {
+  async findJobs(productId?: string, options?: FindProductAiJobsOptions) {
     const db = await getMongoDb();
-    const filter = productId ? { productId } : {};
-    const docs = await db
+    const statuses =
+      options?.statuses && options.statuses.length > 0
+        ? options.statuses
+        : undefined;
+    const filter = {
+      ...(productId ? { productId } : {}),
+      ...(options?.type ? { type: options.type } : {}),
+      ...(statuses ? { status: { $in: statuses } } : {}),
+    };
+    const cursor = db
       .collection<JobDocument>(JOBS_COLLECTION)
       .find(filter)
-      .sort({ createdAt: -1 })
-      .toArray();
+      .sort({ createdAt: -1 });
+    const limit =
+      typeof options?.limit === 'number' && options.limit > 0
+        ? Math.floor(options.limit)
+        : null;
+    if (limit !== null) {
+      cursor.limit(limit);
+    }
+    const docs = await cursor.toArray();
     return docs.map(toRecord);
   },
 

@@ -11,7 +11,7 @@ import {
 } from 'react';
 
 import type { ClusterPreset, DbQueryPreset, DbNodePreset } from '@/features/ai/ai-paths/lib';
-import { createPresetId } from '@/features/ai/ai-paths/lib';
+import { createPresetId, migrateDatabaseConfigCollections } from '@/features/ai/ai-paths/lib';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -167,15 +167,17 @@ export function PresetsProvider({
 
   const normalizeDbNodePreset = useCallback((raw: Partial<DbNodePreset>): DbNodePreset => {
     const now = new Date().toISOString();
+    const baseConfig =
+      raw.config && typeof raw.config === 'object'
+        ? raw.config
+        : ({ operation: 'query' } as DbNodePreset['config']);
+    const migratedConfig = migrateDatabaseConfigCollections(baseConfig).databaseConfig ?? baseConfig;
     return {
       id: raw.id && typeof raw.id === 'string' ? raw.id : createPresetId(),
       name:
         typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : 'Database Preset',
       description: typeof raw.description === 'string' ? raw.description : '',
-      config:
-        raw.config && typeof raw.config === 'object'
-          ? raw.config
-          : ({ operation: 'query' } as DbNodePreset['config']),
+      config: migratedConfig,
       createdAt: raw.createdAt ?? now,
       updatedAt: raw.updatedAt ?? now,
     };

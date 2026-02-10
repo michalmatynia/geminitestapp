@@ -28,16 +28,13 @@ const PRISMA_COLLECTION_DELEGATES: Record<string, string> = {
   product_drafts: 'productDraft',
   product_categories: 'productCategory',
   product_category_assignments: 'productCategoryAssignment',
-  product_category_assignment: 'productCategoryAssignment',
   product_tags: 'productTag',
   product_tag_assignments: 'productTagAssignment',
-  product_tag_assignment: 'productTagAssignment',
   catalogs: 'catalog',
   image_files: 'imageFile',
   product_listings: 'productListing',
   product_ai_jobs: 'productAiJob',
   product_producer_assignments: 'productProducerAssignment',
-  product_producer_assignment: 'productProducerAssignment',
   integrations: 'integration',
   integration_connections: 'integrationConnection',
   settings: 'setting',
@@ -50,7 +47,6 @@ const PRISMA_COLLECTION_DELEGATES: Record<string, string> = {
   categories: 'category',
   notebooks: 'notebook',
   noteFiles: 'noteFile',
-  note_files: 'noteFile',
   themes: 'theme',
   chatbot_sessions: 'chatbotSession',
   auth_security_attempts: 'authSecurityAttempt',
@@ -79,76 +75,13 @@ const coerceQuery = (value: unknown): Record<string, unknown> => {
 
 const normalizeCollectionKey = (value: string): string => value.trim().toLowerCase();
 
-const toSnakeCase = (value: string): string =>
-  value
-    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
-    .replace(/[\s-]+/g, '_')
-    .replace(/__+/g, '_')
-    .toLowerCase();
-
-const pluralize = (value: string): string => {
-  if (!value) return value;
-  if (value.endsWith('s')) return value;
-  if (value.endsWith('y') && !/[aeiou]y$/.test(value)) {
-    return `${value.slice(0, -1)}ies`;
-  }
-  if (value.endsWith('x') || value.endsWith('ch') || value.endsWith('sh') || value.endsWith('z')) {
-    return `${value}es`;
-  }
-  return `${value}s`;
-};
-
-const singularize = (value: string): string => {
-  if (!value) return value;
-  if (value.endsWith('ies') && value.length > 3) {
-    return `${value.slice(0, -3)}y`;
-  }
-  if (
-    value.endsWith('ses') ||
-    value.endsWith('xes') ||
-    value.endsWith('ches') ||
-    value.endsWith('shes') ||
-    value.endsWith('zes')
-  ) {
-    return value.slice(0, -2);
-  }
-  if (value.endsWith('s') && value.length > 1) {
-    return value.slice(0, -1);
-  }
-  return value;
-};
-
-const buildCollectionCandidates = (collection: string): string[] => {
-  const trimmed = collection.trim();
-  if (!trimmed) return [];
-  const lower = normalizeCollectionKey(trimmed);
-  const snake = toSnakeCase(trimmed);
-  return Array.from(
-    new Set<string>([
-      trimmed,
-      lower,
-      snake,
-      pluralize(snake),
-      singularize(snake),
-      pluralize(lower),
-      singularize(lower),
-    ])
-  );
-};
-
 const resolvePrismaCollectionKey = (collection: string): string | null => {
   if (!collection) return null;
-  if (PRISMA_COLLECTION_DELEGATES[collection]) return collection;
-  const normalized = normalizeCollectionKey(collection);
-  if (PRISMA_COLLECTION_DELEGATES[normalized]) return normalized;
-  const candidates = buildCollectionCandidates(collection);
-  for (const candidate of candidates) {
-    if (PRISMA_COLLECTION_DELEGATES[candidate]) return candidate;
-  }
-  const delegateEntry = Object.entries(PRISMA_COLLECTION_DELEGATES).find(
-    ([, delegate]) => delegate.toLowerCase() === normalized
-  );
-  return delegateEntry ? delegateEntry[0] : null;
+  const trimmed = collection.trim();
+  if (!trimmed) return null;
+  if (PRISMA_COLLECTION_DELEGATES[trimmed]) return trimmed;
+  const normalized = normalizeCollectionKey(trimmed);
+  return PRISMA_COLLECTION_DELEGATES[normalized] ? normalized : null;
 };
 
 const looksLikeObjectId = (value: string): boolean => /^[0-9a-fA-F]{24}$/.test(value);

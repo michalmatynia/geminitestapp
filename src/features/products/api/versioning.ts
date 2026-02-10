@@ -2,7 +2,8 @@ import { NextRequest } from 'next/server';
 
 import type { ProductWithImages } from '@/features/products/types';
 
-export type ApiVersion = 'v1' | 'v2' | 'v3';
+export type ApiVersion = 'v2';
+type RequestedApiVersion = 'v1' | 'v2' | 'v3';
 
 export type VersionedResponse<T> = {
   version: ApiVersion;
@@ -16,111 +17,59 @@ export type VersionedResponse<T> = {
 
 export class ApiVersionManager {
   private static readonly CURRENT_VERSION: ApiVersion = 'v2';
-  private static readonly SUPPORTED_VERSIONS: ApiVersion[] = ['v1', 'v2'];
-  private static readonly DEPRECATED_VERSIONS: ApiVersion[] = ['v1'];
+  private static readonly SUPPORTED_VERSIONS: ApiVersion[] = ['v2'];
 
-  static extractVersion(req: NextRequest): ApiVersion {
-    // Check URL path first (/api/v2/products)
+  static extractVersion(req: NextRequest): RequestedApiVersion {
     const pathVersion = this.extractVersionFromPath(req.url);
     if (pathVersion) return pathVersion;
 
-    // Check Accept header (Accept: application/vnd.api+json;version=2)
     const headerVersion = this.extractVersionFromHeader(req);
     if (headerVersion) return headerVersion;
 
-    // Check query parameter (?version=v2)
     const queryVersion = this.extractVersionFromQuery(req);
     if (queryVersion) return queryVersion;
 
-    // Default to current version
     return this.CURRENT_VERSION;
   }
 
-  static isVersionSupported(version: ApiVersion): boolean {
-    return this.SUPPORTED_VERSIONS.includes(version);
+  static isVersionSupported(version: RequestedApiVersion): version is ApiVersion {
+    return this.SUPPORTED_VERSIONS.includes(version as ApiVersion);
   }
 
-  static isVersionDeprecated(version: ApiVersion): boolean {
-    return this.DEPRECATED_VERSIONS.includes(version);
-  }
-
-  static getVersionMeta(version: ApiVersion): VersionedResponse<unknown>['meta'] {
-    if (this.isVersionDeprecated(version)) {
-      return {
-        deprecated: true,
-        deprecationDate: this.getDeprecationDate(version),
-        migrationGuide: `/docs/migration/${version}-to-${this.CURRENT_VERSION}`,
-      };
-    }
-
+  static getVersionMeta(_version: ApiVersion): VersionedResponse<unknown>['meta'] {
     return undefined;
   }
 
-  private static extractVersionFromPath(url: string): ApiVersion | null {
+  private static extractVersionFromPath(url: string): RequestedApiVersion | null {
     const match = url.match(/\/api\/(v[1-3])\//);
-    return match ? match[1] as ApiVersion : null;
+    return match ? (match[1] as RequestedApiVersion) : null;
   }
 
-  private static extractVersionFromHeader(req: NextRequest): ApiVersion | null {
+  private static extractVersionFromHeader(req: NextRequest): RequestedApiVersion | null {
     const accept = req.headers.get('accept') || '';
     const match = accept.match(/version=([1-3])/);
-    return match ? `v${match[1]}` as ApiVersion : null;
+    return match ? (`v${match[1]}` as RequestedApiVersion) : null;
   }
 
-  private static extractVersionFromQuery(req: NextRequest): ApiVersion | null {
+  private static extractVersionFromQuery(req: NextRequest): RequestedApiVersion | null {
     const url = new URL(req.url);
     const version = url.searchParams.get('version');
     if (version && ['v1', 'v2', 'v3'].includes(version)) {
-      return version as ApiVersion;
+      return version as RequestedApiVersion;
     }
     return null;
   }
-
-  private static getDeprecationDate(version: ApiVersion): string {
-    const dates: Record<ApiVersion, string> = {
-      'v1': '2024-12-31',
-      'v2': '',
-      'v3': ''
-    };
-    return dates[version];
-  }
 }
 
-// Version-specific transformers
 export class ProductTransformer {
   static transformForVersion<T extends Partial<ProductWithImages> & Record<string, unknown>>(
     data: T,
-    version: ApiVersion
+    _version: ApiVersion
   ): unknown {
-    switch (version) {
-      case 'v1':
-        return this.transformToV1(data);
-      case 'v2':
-        return this.transformToV2(data);
-      case 'v3':
-        return this.transformToV3(data);
-      default:
-        return data;
-    }
-  }
-
-  private static transformToV1(data: Partial<ProductWithImages> & Record<string, unknown>): Record<string, unknown> {
-    // V1 format - legacy structure
-    return {
-      id: data.id,
-      sku: data.sku,
-      name: data.name_en, // Single name field
-      description: data.description_en, // Single description
-      price: data.price,
-      stock: data.stock,
-      images: data.imageLinks || [],
-      created: data.createdAt,
-      updated: data.updatedAt
-    };
+    return this.transformToV2(data);
   }
 
   private static transformToV2(data: Partial<ProductWithImages> & Record<string, unknown>): Record<string, unknown> {
-    // V2 format - current structure with multilingual support
     return {
       id: data.id,
       sku: data.sku,
@@ -166,84 +115,46 @@ export class ProductTransformer {
       }
     };
   }
-
-  private static transformToV3(data: Partial<ProductWithImages> & Record<string, unknown>): Record<string, unknown> {
-    // V3 format - future structure with enhanced features
-    const resolvedCategoryId =
-      typeof (data as { categoryId?: unknown }).categoryId === 'string'
-        ? ((data as { categoryId?: string }).categoryId ?? null)
-        : Array.isArray((data as { categories?: Array<{ categoryId?: string }> }).categories)
-          ? (data as { categories?: Array<{ categoryId?: string }> }).categories?.[0]?.categoryId ?? null
-          : null;
-    return {
-      ...this.transformToV2(data),
-      variants: (data['variants'] as unknown[]) || [],
-      categoryId: resolvedCategoryId,
-      tags: (data['tags'] as Array<{ tagId: string }>)?.map((t: { tagId: string }) => t.tagId) || [],
-      seo: {
-        slug: data['slug'] as string | undefined,
-        metaTitle: data['metaTitle'] as string | undefined,
-        metaDescription: data['metaDescription'] as string | undefined
-      }
-    };
-  }
 }
 
-// Versioned response wrapper
 export function createVersionedResponse<T>(
   data: T,
   version: ApiVersion,
   status: number = 200
 ): Response {
-  // Ensure that 'data' is treated as a generic object when passed to transformForVersion
-  // This cast is safe because transformForVersion handles a broad type that includes T
-  const transformedData = ProductTransformer.transformForVersion(data as Partial<ProductWithImages> & Record<string, unknown>, version);
-  
+  const transformedData = ProductTransformer.transformForVersion(
+    data as Partial<ProductWithImages> & Record<string, unknown>,
+    version
+  );
   const meta = ApiVersionManager.getVersionMeta(version);
 
   const response: VersionedResponse<typeof transformedData> = {
     version,
     data: transformedData,
-    // Conditionally include meta only if it exists and has properties
     ...(meta && Object.keys(meta).length > 0 ? { meta } : {})
   };
 
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    'API-Version': version
-  };
-
-  // Add deprecation headers
-  if (ApiVersionManager.isVersionDeprecated(version) && meta) {
-    headers['Deprecation'] = 'true';
-    if (meta.deprecationDate) { // Check if deprecationDate is explicitly defined
-      headers['Sunset'] = meta.deprecationDate;
-    }
-    if (meta.migrationGuide) { // Check if migrationGuide is explicitly defined
-      headers['Link'] = `<${meta.migrationGuide}>; rel="migration-guide"`;
-    }
-  }
-
   return new Response(JSON.stringify(response), {
     status,
-    headers
+    headers: {
+      'Content-Type': 'application/json',
+      'API-Version': version
+    }
   });
 }
 
-// Version middleware
 export function withApiVersioning(
   handler: (req: NextRequest, version: ApiVersion, ...args: unknown[]) => Promise<Response>
 ) {
   return async (req: NextRequest, ...args: unknown[]): Promise<Response> => {
-    const version = ApiVersionManager.extractVersion(req);
+    const requestedVersion = ApiVersionManager.extractVersion(req);
 
-    // Check if version is supported
-    if (!ApiVersionManager.isVersionSupported(version)) {
+    if (!ApiVersionManager.isVersionSupported(requestedVersion)) {
       return new Response(
         JSON.stringify({
           error: 'Unsupported API version',
-          supportedVersions: ['v1', 'v2'],
-          requestedVersion: version
+          supportedVersions: ['v2'],
+          requestedVersion,
         }),
         {
           status: 400,
@@ -252,6 +163,6 @@ export function withApiVersioning(
       );
     }
 
-    return handler(req, version, ...args);
+    return handler(req, requestedVersion, ...args);
   };
 }

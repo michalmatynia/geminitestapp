@@ -35,11 +35,7 @@ import type {
   PageBuilderSnapshot,
 } from '../../types/page-builder';
 
-// ---------------------------------------------------------------------------
-// Base reducer
-// ---------------------------------------------------------------------------
-
-export function basePageBuilderReducer(
+function reducePageBuilderState(
   state: PageBuilderState,
   action: PageBuilderAction
 ): PageBuilderState {
@@ -1401,7 +1397,7 @@ export function pageBuilderReducer(state: PageBuilderState, action: PageBuilderA
     };
   }
 
-  const nextState = basePageBuilderReducer(state, action);
+  const nextState = reducePageBuilderState(state, action);
 
   if (nextState === state) return state;
 

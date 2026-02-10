@@ -69,6 +69,22 @@ export const handleModel: NodeHandler = async ({
   reportAiPathsError,
   abortSignal,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
+  const parseIntWithMin = (raw: string | undefined, fallback: number, min: number): number => {
+    const parsed = Number.parseInt(raw ?? '', 10);
+    if (!Number.isFinite(parsed)) return fallback;
+    return Math.max(min, parsed);
+  };
+  const defaultModelPollIntervalMs = parseIntWithMin(
+    process.env['AI_PATHS_MODEL_POLL_INTERVAL_MS'],
+    2000,
+    500
+  );
+  const defaultModelPollTimeoutMs = parseIntWithMin(
+    process.env['AI_PATHS_MODEL_POLL_TIMEOUT_MS'],
+    300_000,
+    30_000
+  );
+
   if (skipAiJobs) {
     return prevOutputs;
   }
@@ -204,6 +220,7 @@ export const handleModel: NodeHandler = async ({
     },
   };
   const productId = resolveJobProductId(nodeInputs, simulationEntityType, simulationEntityId, activePathId);
+  const cacheKey = hashRuntimeValue(payload);
   const payloadHash = hashRuntimeValue({ payload, runId, runStartedAt });
 
   // Idempotency across evaluateGraph calls (seeded outputs): if we already enqueued a job for the same payload,
@@ -221,7 +238,10 @@ export const handleModel: NodeHandler = async ({
     const enqueueResult = await aiJobsApi.enqueue({
       productId,
       type: 'graph_model',
-      payload,
+      payload: {
+        ...payload,
+        cacheKey,
+      },
     });
     if (!enqueueResult.ok) {
       throw new Error(enqueueResult.error || 'Failed to enqueue AI job.');
@@ -234,15 +254,34 @@ export const handleModel: NodeHandler = async ({
         jobId: enqueueResult.data.jobId,
         status: 'queued',
         debugPayload: payload,
+        cacheKey,
         payloadHash,
       };
     }
-    const result = await pollGraphJob(enqueueResult.data.jobId, abortSignal ? { signal: abortSignal } : {});
+    const configuredTimeoutMs =
+      typeof node.config?.runtime?.timeoutMs === 'number' &&
+      Number.isFinite(node.config.runtime.timeoutMs) &&
+      node.config.runtime.timeoutMs > 0
+        ? Math.max(1000, Math.floor(node.config.runtime.timeoutMs))
+        : defaultModelPollTimeoutMs;
+    const pollMaxAttempts = Math.max(
+      1,
+      Math.ceil(configuredTimeoutMs / defaultModelPollIntervalMs)
+    );
+    const result = await pollGraphJob(
+      enqueueResult.data.jobId,
+      {
+        intervalMs: defaultModelPollIntervalMs,
+        maxAttempts: pollMaxAttempts,
+        ...(abortSignal ? { signal: abortSignal } : {}),
+      }
+    );
     return {
       result,
       jobId: enqueueResult.data.jobId,
       status: 'completed',
       debugPayload: payload,
+      cacheKey,
       payloadHash,
     };
   } catch (error) {
@@ -281,6 +320,7 @@ export const handleModel: NodeHandler = async ({
       jobId: enqueuedJobId,
       status: 'failed',
       debugPayload: payload,
+      cacheKey,
       payloadHash,
     };
   }

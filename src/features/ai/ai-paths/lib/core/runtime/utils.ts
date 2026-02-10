@@ -119,6 +119,53 @@ export const coercePayloadObject = (value: unknown): Record<string, unknown> | n
   return null;
 };
 
+const IMAGE_HINT_KEYS = new Set([
+  'image',
+  'images',
+  'imageFile',
+  'imageFiles',
+  'imageUrl',
+  'imageUrls',
+  'imageFileId',
+  'filepath',
+  'path',
+  'src',
+  'url',
+]);
+
+const hasImageHintKey = (value: unknown): boolean => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  return Object.keys(value as Record<string, unknown>).some((key: string) => {
+    const normalized = key.trim();
+    return (
+      IMAGE_HINT_KEYS.has(normalized) ||
+      normalized.toLowerCase().includes('image')
+    );
+  });
+};
+
+const normalizeImageCentricValue = (value: unknown): unknown => {
+  const urls = extractImageUrls(value);
+  if (urls.length === 0) return value;
+
+  if (Array.isArray(value)) {
+    if (value.length === 0) return value;
+    const imageLikeCount = value.filter((item: unknown) =>
+      hasImageHintKey(item)
+    ).length;
+    if (imageLikeCount >= Math.ceil(value.length / 2)) {
+      return urls;
+    }
+    return value;
+  }
+
+  if (hasImageHintKey(value)) {
+    return urls;
+  }
+
+  return value;
+};
+
 export const buildPromptOutput = (
   promptConfig: { template?: string } | undefined,
   nodeInputs: RuntimePortValues
@@ -162,9 +209,32 @@ export const buildPromptOutput = (
       ? { content_en: bundleDescription, description_en: bundleDescription } 
       : {}),
   };
-  const data = { ...bundleContext, ...alias, ...(nodeInputs as Record<string, unknown>), bundle: bundleContext };
-  const currentValue = 
-    coerceInput(nodeInputs['result']) ?? coerceInput(nodeInputs['value']) ?? '';
+  const normalizedImagesInput = normalizeImageCentricValue(nodeInputs['images']);
+  const normalizedResultInput = normalizeImageCentricValue(nodeInputs['result']);
+  const normalizedValueInput = normalizeImageCentricValue(nodeInputs['value']);
+  const normalizedImageUrls = (() => {
+    const fromInputs = extractImageUrls(normalizedImagesInput);
+    if (fromInputs.length > 0) return fromInputs;
+    return extractImageUrls(bundleContext['images']);
+  })();
+  const normalizedNodeInputs: Record<string, unknown> = {
+    ...(nodeInputs as Record<string, unknown>),
+    ...(nodeInputs['images'] !== undefined ? { images: normalizedImagesInput } : {}),
+    ...(nodeInputs['result'] !== undefined ? { result: normalizedResultInput } : {}),
+    ...(nodeInputs['value'] !== undefined ? { value: normalizedValueInput } : {}),
+  };
+  const data = {
+    ...bundleContext,
+    ...alias,
+    ...normalizedNodeInputs,
+    bundle: bundleContext,
+    ...(normalizedImageUrls.length > 0
+      ? { images: normalizedImageUrls, imageUrls: normalizedImageUrls }
+      : {}),
+  };
+  const currentValueCandidate =
+    coerceInput(normalizedResultInput) ?? coerceInput(normalizedValueInput) ?? '';
+  const currentValue = normalizeImageCentricValue(currentValueCandidate);
   const prompt = resolvedConfig.template
     ? renderTemplate(
       resolvedConfig.template,
@@ -175,8 +245,8 @@ export const buildPromptOutput = (
       .map(([key, value]: [string, unknown]) => `${key}: ${formatRuntimeValue(value)}`)
       .join('\n');
   const imagesValue = 
-    nodeInputs['images'] !== undefined
-      ? nodeInputs['images']
+    normalizedImagesInput !== undefined
+      ? normalizedImagesInput
       : bundleContext['images'] !== undefined
         ? bundleContext['images']
         : undefined;

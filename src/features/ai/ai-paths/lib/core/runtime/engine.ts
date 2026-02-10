@@ -245,8 +245,39 @@ export type EvaluateGraphOptions = {
 };
 
 const CACHE_VERSION = 1;
-const DEFAULT_NODE_TIMEOUT_MS = Math.max(5_000, Number.parseInt(process.env['AI_PATHS_NODE_TIMEOUT_MS'] ?? '', 10) || 120_000);
+const parseTimeout = (value: string | undefined, fallback: number, min: number): number => {
+  const parsed = Number.parseInt(value ?? '', 10);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(min, parsed);
+};
+const DEFAULT_NODE_TIMEOUT_MS = parseTimeout(
+  process.env['AI_PATHS_NODE_TIMEOUT_MS'],
+  120_000,
+  5_000
+);
+const DEFAULT_BLOCKING_AI_NODE_TIMEOUT_MS = Math.max(
+  DEFAULT_NODE_TIMEOUT_MS,
+  parseTimeout(
+    process.env['AI_PATHS_BLOCKING_AI_NODE_TIMEOUT_MS'],
+    300_000,
+    30_000
+  )
+);
 const DEFAULT_RETRY_BACKOFF_MS = Math.max(250, Number.parseInt(process.env['AI_PATHS_NODE_RETRY_BACKOFF_MS'] ?? '', 10) || 750);
+
+const resolveNodeTimeoutMs = (node: AiNode): number => {
+  const configured = node.config?.runtime?.timeoutMs;
+  if (typeof configured === 'number' && Number.isFinite(configured) && configured > 0) {
+    return Math.max(1_000, Math.floor(configured));
+  }
+  const isBlockingAiNode =
+    (node.type === 'model' && node.config?.model?.waitForResult !== false) ||
+    (node.type === 'agent' && node.config?.agent?.waitForResult !== false);
+  if (isBlockingAiNode) {
+    return DEFAULT_BLOCKING_AI_NODE_TIMEOUT_MS;
+  }
+  return DEFAULT_NODE_TIMEOUT_MS;
+};
 
 const nowMs = (): number =>
   typeof performance !== 'undefined' && typeof performance.now === 'function'
@@ -1638,7 +1669,7 @@ export async function evaluateGraph({
         const nodeStartMs = profileEnabled ? nowMs() : 0;
         try {
           ensureNotCancelled(nextInputs, node.id);
-          const timeoutMs = node.config?.runtime?.timeoutMs ?? DEFAULT_NODE_TIMEOUT_MS;
+          const timeoutMs = resolveNodeTimeoutMs(node);
           const retryAttempts = node.config?.runtime?.retry?.attempts ?? 1;
           const retryBackoffMs = node.config?.runtime?.retry?.backoffMs ?? DEFAULT_RETRY_BACKOFF_MS;
           const result = await withRetries(

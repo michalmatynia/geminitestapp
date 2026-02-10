@@ -33,6 +33,8 @@ import {
   createDefaultPathConfig,
   createPathMeta,
   normalizeNodes,
+  migrateDatabaseConfigCollections,
+  migratePathConfigCollections,
   safeParseJson,
   stableStringify,
   sanitizeEdges,
@@ -388,6 +390,7 @@ export function useAiPathsPersistence({
         const settingsConfigs: Record<string, PathConfig> = {};
         let metas: PathMeta[] = [];
         let settingsMetas: PathMeta[] = [];
+        const migrationPayload: PersistSettingsPayload = [];
         let loadedLastError: { message: string; time: string; pathId?: string | null } | null = null;
         if (lastErrorRaw) {
           try {
@@ -439,9 +442,25 @@ export function useAiPathsPersistence({
           try {
             const parsed = JSON.parse(dbNodePresetsRaw) as DbNodePreset[];
             if (Array.isArray(parsed)) {
-              const normalized = parsed.map((item: DbNodePreset): DbNodePreset =>
-                normalizeDbNodePreset(item)
-              );
+              let dbNodePresetsChanged = false;
+              const normalized = parsed.map((item: DbNodePreset): DbNodePreset => {
+                const preset = normalizeDbNodePreset(item);
+                const migration = migrateDatabaseConfigCollections(preset.config);
+                if (!migration.changed || !migration.databaseConfig) {
+                  return preset;
+                }
+                dbNodePresetsChanged = true;
+                return {
+                  ...preset,
+                  config: migration.databaseConfig,
+                };
+              });
+              if (dbNodePresetsChanged) {
+                migrationPayload.push({
+                  key: DB_NODE_PRESETS_KEY,
+                  value: JSON.stringify(normalized),
+                });
+              }
               setDbNodePresets(normalized);
             }
           } catch (error) {
@@ -465,11 +484,19 @@ export function useAiPathsPersistence({
             if (configRaw) {
               try {
                 const parsedConfig = JSON.parse(configRaw) as PathConfig;
-                settingsConfigs[meta.id] = {
+                const mergedConfig: PathConfig = {
                   ...parsedConfig,
                   id: meta.id,
                   name: parsedConfig.name || meta.name,
                 };
+                const migration = migratePathConfigCollections(mergedConfig);
+                settingsConfigs[meta.id] = migration.config;
+                if (migration.changed) {
+                  migrationPayload.push({
+                    key: `${PATH_CONFIG_PREFIX}${meta.id}`,
+                    value: JSON.stringify(migration.config),
+                  });
+                }
               } catch {
                 settingsConfigs[meta.id] = createDefaultPathConfig(meta.id);
               }
@@ -513,13 +540,10 @@ export function useAiPathsPersistence({
           };
         });
         if (stableStringify(normalizedMetas) !== stableStringify(metas)) {
-          try {
-            await updateSettingsBulkMutation.mutateAsync([
-              { key: PATH_INDEX_KEY, value: JSON.stringify(normalizedMetas) },
-            ]);
-          } catch (error) {
-            console.warn('[AI Paths] Failed to persist normalized path names.', error);
-          }
+          migrationPayload.push({
+            key: PATH_INDEX_KEY,
+            value: JSON.stringify(normalizedMetas),
+          });
         }
 
         setPaths(normalizedMetas);
@@ -579,6 +603,13 @@ export function useAiPathsPersistence({
         if (loadedLastError?.message === 'Failed to load AI Paths settings') {
           setLastError(null);
           void persistLastError(null);
+        }
+        if (migrationPayload.length > 0) {
+          try {
+            await updateSettingsBulkMutation.mutateAsync(migrationPayload);
+          } catch (error) {
+            console.warn('[AI Paths] Failed to persist migrated AI Paths settings.', error);
+          }
         }
         setUiStateLoaded(true);
       } catch (error) {

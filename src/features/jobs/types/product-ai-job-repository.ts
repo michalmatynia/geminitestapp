@@ -35,13 +35,22 @@ export type ProductAiJobUpdate = Partial<
   createdAt?: Date;
 };
 
+export type FindProductAiJobsOptions = {
+  type?: string;
+  statuses?: ProductAiJobStatus[];
+  limit?: number;
+};
+
 export type ProductAiJobRepository = {
   createJob(
     productId: string,
     type: string,
     payload: unknown
   ): Promise<ProductAiJobRecord>;
-  findJobs(productId?: string): Promise<ProductAiJobRecord[]>;
+  findJobs(
+    productId?: string,
+    options?: FindProductAiJobsOptions
+  ): Promise<ProductAiJobRecord[]>;
   findJobById(jobId: string): Promise<ProductAiJobRecord | null>;
   findNextPendingJob(): Promise<ProductAiJobRecord | null>;
   findAnyPendingJob(): Promise<ProductAiJobRecord | null>;

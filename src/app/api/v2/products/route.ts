@@ -50,8 +50,7 @@ async function handleGetProducts(_req: NextRequest, version: ApiVersion, searchP
         .toResponse(404);
     }
 
-    // Add pagination metadata for v2+
-    const responseData = version === 'v1' ? products : {
+    const responseData = {
       products,
       pagination: {
         page,

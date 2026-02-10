@@ -1,6 +1,6 @@
 export { PageBuilderLayout } from './PageBuilderLayout';
 export { ComponentTreePanel } from './ComponentTreePanel';
-export { SectionNodeItem } from './ComponentTreeNodeItem';
+export { SectionNodeItem } from './tree';
 export { PagePreviewPanel } from './PagePreviewPanel';
 export { PreviewSection } from './PreviewBlock';
 export { ComponentSettingsPanel } from './ComponentSettingsPanel';

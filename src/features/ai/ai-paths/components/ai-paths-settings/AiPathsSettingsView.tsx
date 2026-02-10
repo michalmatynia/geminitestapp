@@ -820,7 +820,7 @@ export function AiPathsSettingsView({
         />
       )}
 
-      <NodeConfigDialogMigrated />
+      <NodeConfigDialogMigrated state={state} />
       <RunDetailDialogWithContext />
       <PresetsDialogWithContext
         onImportPresets={() => { void handleImportPresets('merge').catch(() => {}); }}

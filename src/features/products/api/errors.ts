@@ -87,7 +87,7 @@ export class ApiErrorBuilder {
         headers['Retry-After'] = '60';
         break;
       case 'UNSUPPORTED_VERSION':
-        headers['API-Supported-Versions'] = 'v1, v2';
+        headers['API-Supported-Versions'] = 'v2';
         break;
       case 'SERVICE_UNAVAILABLE':
         headers['Retry-After'] = '300';
@@ -243,4 +243,3 @@ export const ErrorStatusCodes: Record<ErrorCode, number> = {
   'INVALID_FILE_TYPE': 415,
   'QUOTA_EXCEEDED': 429
 };
-

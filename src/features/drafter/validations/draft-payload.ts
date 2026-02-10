@@ -26,7 +26,6 @@ const draftPayloadSchema = z.object({
   stock: z.number().optional().nullable(),
   catalogIds: z.array(z.string()).optional(),
   categoryId: z.string().optional().nullable(),
-  categoryIds: z.array(z.string()).optional(),
   tagIds: z.array(z.string()).optional(),
   producerIds: z.array(z.string()).optional(),
   parameters: z
@@ -51,15 +50,8 @@ export const updateDraftPayloadSchema = draftPayloadSchema.partial();
 
 export const resolveDraftCategoryId = (input: {
   categoryId?: string | null | undefined;
-  categoryIds?: string[] | undefined;
 }): string | null => {
   const explicitCategoryId =
     typeof input.categoryId === 'string' ? input.categoryId.trim() : '';
-  if (explicitCategoryId) return explicitCategoryId;
-
-  const firstLegacyCategoryId = Array.isArray(input.categoryIds)
-    ? input.categoryIds.find((categoryId: string) => categoryId.trim().length > 0)
-    : undefined;
-
-  return firstLegacyCategoryId ? firstLegacyCategoryId.trim() : null;
+  return explicitCategoryId || null;
 };

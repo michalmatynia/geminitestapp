@@ -7,3 +7,4 @@ export * from './factory';
 export * from './template';
 export * from './port-types';
 export * from './provider-actions';
+export * from './collection-names';

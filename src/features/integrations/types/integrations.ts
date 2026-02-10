@@ -124,18 +124,6 @@ export type TemplateMapping = {
   transform?: string;
 };
 
-export type ImportTemplateMapping = TemplateMapping;
-export type ImportTemplate = {
-  id: string;
-  name: string;
-  description?: string;
-  provider: string;
-  mapping: TemplateMapping[];
-  config: Record<string, unknown>;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
 export type ImportParameterCache = {
   key: string;
   value: unknown;

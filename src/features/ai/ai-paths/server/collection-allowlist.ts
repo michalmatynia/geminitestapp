@@ -4,12 +4,14 @@ const DEFAULT_COLLECTION_ALLOWLIST = [
   'products',
   'product_drafts',
   'product_categories',
-  'product_category_assignment',
+  'product_category_assignments',
   'product_tags',
+  'product_tag_assignments',
   'catalogs',
   'image_files',
   'product_listings',
   'product_ai_jobs',
+  'product_producer_assignments',
   'integrations',
   'integration_connections',
   'settings',
@@ -38,66 +40,6 @@ const parseAllowlist = (raw: string): string[] =>
 const normalizeCollectionName = (value: string): string =>
   value.trim().toLowerCase();
 
-const toSnakeCase = (value: string): string =>
-  value
-    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
-    .replace(/[\s-]+/g, '_')
-    .replace(/__+/g, '_')
-    .toLowerCase();
-
-const pluralize = (value: string): string => {
-  if (!value) return value;
-  if (value.endsWith('s')) return value;
-  if (value.endsWith('y') && !/[aeiou]y$/.test(value)) {
-    return `${value.slice(0, -1)}ies`;
-  }
-  if (
-    value.endsWith('x') ||
-    value.endsWith('ch') ||
-    value.endsWith('sh') ||
-    value.endsWith('z')
-  ) {
-    return `${value}es`;
-  }
-  return `${value}s`;
-};
-
-const singularize = (value: string): string => {
-  if (!value) return value;
-  if (value.endsWith('ies') && value.length > 3) {
-    return `${value.slice(0, -3)}y`;
-  }
-  if (
-    value.endsWith('ses') ||
-    value.endsWith('xes') ||
-    value.endsWith('ches') ||
-    value.endsWith('shes') ||
-    value.endsWith('zes')
-  ) {
-    return value.slice(0, -2);
-  }
-  if (value.endsWith('s') && value.length > 1) {
-    return value.slice(0, -1);
-  }
-  return value;
-};
-
-const buildCollectionCandidates = (collection: string): Set<string> => {
-  const candidates = new Set<string>();
-  if (!collection) return candidates;
-  const trimmed = collection.trim();
-  if (!trimmed) return candidates;
-  const lower = normalizeCollectionName(trimmed);
-  const snake = toSnakeCase(trimmed);
-  candidates.add(lower);
-  candidates.add(snake);
-  candidates.add(pluralize(snake));
-  candidates.add(singularize(snake));
-  candidates.add(pluralize(lower));
-  candidates.add(singularize(lower));
-  return candidates;
-};
-
 type AllowlistConfig = {
   allowAll: boolean;
   allowed: Set<string>;
@@ -108,7 +50,11 @@ const buildAllowlist = (): AllowlistConfig => {
   if (!raw?.trim()) {
     return {
       allowAll: false,
-      allowed: new Set(DEFAULT_COLLECTION_ALLOWLIST),
+      allowed: new Set(
+        DEFAULT_COLLECTION_ALLOWLIST.map((collection: string) =>
+          normalizeCollectionName(collection)
+        )
+      ),
     };
   }
 
@@ -145,11 +91,7 @@ const allowlistConfig = buildAllowlist();
 export const isCollectionAllowed = (collection: string): boolean => {
   if (!collection) return false;
   if (allowlistConfig.allowAll) return true;
-  const candidates = buildCollectionCandidates(collection);
-  for (const candidate of candidates) {
-    if (allowlistConfig.allowed.has(candidate)) return true;
-  }
-  return false;
+  return allowlistConfig.allowed.has(normalizeCollectionName(collection));
 };
 
 export const getCollectionAllowlist = (): string[] => {

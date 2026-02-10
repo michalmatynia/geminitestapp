@@ -9,6 +9,24 @@ type ProductSummary = {
   sku: string | null;
 };
 
+const parseEnvMs = (raw: string | undefined, fallbackMs: number, minMs: number): number => {
+  const parsed = Number.parseInt(raw ?? '', 10);
+  if (!Number.isFinite(parsed)) return fallbackMs;
+  return Math.max(minMs, parsed);
+};
+
+const GRAPH_MODEL_REUSE_RUNNING_MAX_AGE_MS = parseEnvMs(
+  process.env['AI_PATHS_GRAPH_MODEL_REUSE_RUNNING_MAX_AGE_MS'],
+  20_000,
+  0
+);
+
+const GRAPH_MODEL_REUSE_SCAN_LIMIT = parseEnvMs(
+  process.env['AI_PATHS_GRAPH_MODEL_REUSE_SCAN_LIMIT'],
+  30,
+  1
+);
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object';
 
@@ -46,19 +64,107 @@ const toProductSummary = (product: Record<string, unknown> | null): ProductSumma
   return { name_en: name, sku };
 };
 
+const resolveGraphModelCacheKey = (payload: unknown): string | null => {
+  if (!payload || typeof payload !== 'object') return null;
+  const raw = (payload as Record<string, unknown>)['cacheKey'];
+  if (typeof raw !== 'string') return null;
+  const trimmed = raw.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const resolveGraphModelResultText = (result: unknown): string => {
+  if (!result || typeof result !== 'object') return '';
+  const value = (result as Record<string, unknown>)['result'];
+  return typeof value === 'string' ? value.trim() : '';
+};
+
+const summarizeGraphModelPayload = (payload: unknown): Record<string, unknown> | undefined => {
+  if (!payload || typeof payload !== 'object') return undefined;
+  const record = payload as Record<string, unknown>;
+  const prompt = record['prompt'];
+  const imageUrls = Array.isArray(record['imageUrls']) ? record['imageUrls'] : [];
+  return {
+    source: record['source'],
+    modelId: record['modelId'],
+    vision: record['vision'],
+    promptLength: typeof prompt === 'string' ? prompt.length : null,
+    imageCount: imageUrls.length,
+    cacheKey:
+      typeof record['cacheKey'] === 'string'
+        ? (record['cacheKey'] as string).slice(0, 12)
+        : null,
+  };
+};
+
+const canReuseGraphModelJob = (
+  job: ProductAiJobRecord,
+  cacheKey: string
+): boolean => {
+  if (job.type !== 'graph_model') return false;
+  if (resolveGraphModelCacheKey(job.payload) !== cacheKey) return false;
+  if (job.status === 'pending') return true;
+  if (job.status === 'running') {
+    if (GRAPH_MODEL_REUSE_RUNNING_MAX_AGE_MS <= 0) return false;
+    if (!job.startedAt) return true;
+    const startedAtMs =
+      job.startedAt instanceof Date ? job.startedAt.getTime() : Number.NaN;
+    if (!Number.isFinite(startedAtMs)) return true;
+    return Date.now() - startedAtMs < GRAPH_MODEL_REUSE_RUNNING_MAX_AGE_MS;
+  }
+  if (job.status !== 'completed') return false;
+  return resolveGraphModelResultText(job.result).length > 0;
+};
+
 export async function enqueueProductAiJob(productId: string, type: ProductAiJobType, payload: unknown): Promise<ProductAiJob> {
   try {
     const { ErrorSystem } = await import('@/features/observability/services/error-system');
     void ErrorSystem.logInfo('[enqueueProductAiJob] Creating job', {
       service: 'product-ai-service',
       productId,
-      context: { type, payload: typeof payload === 'object' ? payload : undefined }
+      context: {
+        type,
+        payloadSummary:
+          type === 'graph_model'
+            ? summarizeGraphModelPayload(payload)
+            : undefined,
+      },
     });
   } catch {
     // Fallback to console if logging fails
     console.log(`[enqueueProductAiJob] Creating job for productId: ${productId}, type: ${type}`);
   }
   const jobRepository = await getProductAiJobRepository();
+
+  if (type === 'graph_model') {
+    const cacheKey = resolveGraphModelCacheKey(payload);
+    if (cacheKey) {
+      const existingJobs = await jobRepository.findJobs(productId, {
+        type: 'graph_model',
+        statuses: ['pending', 'running', 'completed'],
+        limit: GRAPH_MODEL_REUSE_SCAN_LIMIT,
+      });
+      const reusable = existingJobs.find((job: ProductAiJobRecord) =>
+        canReuseGraphModelJob(job, cacheKey)
+      );
+      if (reusable) {
+        try {
+          const { ErrorSystem } = await import('@/features/observability/services/error-system');
+          void ErrorSystem.logInfo('[enqueueProductAiJob] Reusing graph_model job by cache key', {
+            service: 'product-ai-service',
+            productId,
+            jobId: reusable.id,
+            context: { type, cacheKey, status: reusable.status },
+          });
+        } catch {
+          console.log(
+            `[enqueueProductAiJob] Reusing graph_model job ${reusable.id} (status: ${reusable.status})`
+          );
+        }
+        return toProductAiJob(reusable);
+      }
+    }
+  }
+
   const jobRecord = await jobRepository.createJob(productId, type, payload);
   
   try {

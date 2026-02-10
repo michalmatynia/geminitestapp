@@ -67,21 +67,11 @@ function renderFieldGroups(
     if (group.kind === 'single') {
       const raw = group.fields[0]!;
       const field = resolveField ? resolveField(raw) : raw;
-      const legacyBackground =
-        field.type === 'background' && settings[field.key] === undefined
-          ? ((): Record<string, unknown> | undefined => {
-            const bgColor = settings['backgroundColor'];
-            if (typeof bgColor !== 'string') return undefined;
-            const trimmed = bgColor.trim();
-            if (!trimmed) return undefined;
-            return { type: 'solid', color: trimmed };
-          })()
-          : undefined;
       return (
         <SettingsFieldRenderer
           key={field.key}
           field={field}
-          value={legacyBackground ?? settings[field.key]}
+          value={settings[field.key]}
           onChange={onChange}
         />
       );

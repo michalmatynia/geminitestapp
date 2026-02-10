@@ -10,6 +10,7 @@ import {
   DB_QUERY_PRESETS_KEY,
   TEMPLATE_INPUT_PORTS,
   createPresetId,
+  migrateDatabaseConfigCollections,
   parsePathList,
 } from '@/features/ai/ai-paths/lib';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
@@ -172,15 +173,17 @@ export function useAiPathsPresets({
 
   const normalizeDbNodePreset = (raw: Partial<DbNodePreset>): DbNodePreset => {
     const now = new Date().toISOString();
+    const baseConfig =
+      raw.config && typeof raw.config === 'object'
+        ? raw.config
+        : ({ operation: 'query' } as DbNodePreset['config']);
+    const migratedConfig = migrateDatabaseConfigCollections(baseConfig).databaseConfig ?? baseConfig;
     return {
       id: raw.id && typeof raw.id === 'string' ? raw.id : createPresetId(),
       name:
         typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : 'Database Preset',
       description: typeof raw.description === 'string' ? raw.description : '',
-      config:
-        raw.config && typeof raw.config === 'object'
-          ? raw.config
-          : ({ operation: 'query' } as DbNodePreset['config']),
+      config: migratedConfig,
       createdAt: raw.createdAt ?? now,
       updatedAt: raw.updatedAt ?? now,
     };

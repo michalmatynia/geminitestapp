@@ -14,6 +14,7 @@ import {
   dbApi,
   aiJobsApi,
   getValueAtMappingPath,
+  migratePathConfigCollections,
   safeStringify,
   stableStringify,
 } from '@/features/ai/ai-paths/lib';
@@ -209,16 +210,17 @@ export const buildPersistedRuntimeState = (
 };
 
 export const sanitizePathConfig = (config: PathConfig): PathConfig => {
-  const uiState = config.uiState ? { ...config.uiState } : undefined;
+  const migrated = migratePathConfigCollections(config).config;
+  const uiState = migrated.uiState ? { ...migrated.uiState } : undefined;
   if (uiState && 'configOpen' in uiState) {
     delete (uiState as { configOpen?: boolean }).configOpen;
   }
   return {
-    ...config,
+    ...migrated,
     uiState,
     runtimeState: buildPersistedRuntimeState(
-      parseRuntimeState(config.runtimeState),
-      config.nodes
+      parseRuntimeState(migrated.runtimeState),
+      migrated.nodes
     ),
   };
 };

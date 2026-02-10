@@ -278,13 +278,9 @@ const IMAGE_TARGET_FIELDS = new Set([
 
 // Internal product field aliases that map to "images" for export
 const IMAGE_EXPORT_ALIASES = new Set([
-  'image_all',
   'images_all',
   'image_slots_all',
-  'image_slots',
-  'image_files',
   'image_links_all',
-  'image_links',
 ]);
 
 const PRODUCER_TARGET_FIELDS = new Set([
@@ -889,15 +885,10 @@ const getProductValue = (
     if (Number.isNaN(index)) return null;
     return getImageSlotUrl(product, index, 'slot', imageBaseUrl, diagnostics);
   }
-  if (
-    normalized === 'image_all' ||
-    normalized === 'image_slots' ||
-    normalized === 'image_files' ||
-    normalized === 'image_slots_all'
-  ) {
+  if (normalized === 'image_slots_all') {
     return getImageList(product, 'slot', imageBaseUrl, diagnostics);
   }
-  if (normalized === 'image_links' || normalized === 'image_links_all') {
+  if (normalized === 'image_links_all') {
     return getImageList(product, 'link', imageBaseUrl, diagnostics);
   }
   if (normalized === 'images_all') {

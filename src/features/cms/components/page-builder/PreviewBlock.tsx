@@ -350,28 +350,9 @@ export function PreviewSection({
   const [slideshowPaused, setSlideshowPaused] = useState(false);
   const slideshowFrames = useMemo((): BlockInstance[] => {
     if (!isSlideshowSection) return [];
-    const frameBlocks = section.blocks.filter(
+    return section.blocks.filter(
       (block: BlockInstance) => block.type === 'SlideshowFrame',
     );
-    const legacyBlocks = section.blocks.filter(
-      (block: BlockInstance) => block.type !== 'SlideshowFrame',
-    );
-    if (frameBlocks.length > 0) {
-      if (legacyBlocks.length === 0) return frameBlocks;
-      const legacyFrames = legacyBlocks.map((block: BlockInstance) => ({
-        id: block.id,
-        type: 'SlideshowFrame',
-        settings: {},
-        blocks: [block],
-      }));
-      return [...frameBlocks, ...legacyFrames];
-    }
-    return legacyBlocks.map((block: BlockInstance) => ({
-      id: block.id,
-      type: 'SlideshowFrame',
-      settings: {},
-      blocks: [block],
-    }));
   }, [isSlideshowSection, section.blocks]);
   const slideshowCount = slideshowFrames.length;
   const currentSlideshowIndex =

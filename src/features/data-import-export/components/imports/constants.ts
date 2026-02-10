@@ -46,7 +46,6 @@ export const PRODUCT_FIELDS = [
   { value: 'image_slot_13', label: 'Image Slot 13' },
   { value: 'image_slot_14', label: 'Image Slot 14' },
   { value: 'image_slot_15', label: 'Image Slot 15' },
-  { value: 'image_all', label: 'Image Slots (All, legacy key)' },
   { value: 'image_slots_all', label: 'Image Slots (All)' },
   { value: 'image_links_all', label: 'Image Links (All)' },
   { value: 'images_all', label: 'Images (All: slots + links)' },
@@ -59,7 +58,6 @@ export const IMAGE_SLOT_KEYS = Array.from(
 
 export const ALL_IMAGE_KEYS = [
   ...IMAGE_SLOT_KEYS,
-  'image_all',
   'image_slots_all',
   'image_links_all',
   'images_all',

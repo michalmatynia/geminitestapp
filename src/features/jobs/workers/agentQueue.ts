@@ -52,8 +52,3 @@ export function stopAgentQueue(): void {
 export async function enqueueAgentRun(runId: string): Promise<void> {
   await queue.enqueue({ runId, type: 'run' });
 }
-
-// Backward compatibility: processAgentQueue polls for next queued run
-export async function processAgentQueue(): Promise<void> {
-  await processNextQueuedAgentRun();
-}

@@ -1751,10 +1751,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
           priceComment: (doc as { priceComment?: string | null }).priceComment ?? null,
           stock: (doc as { stock?: number | null }).stock ?? null,
           catalogIds: (doc as { catalogIds?: any[] }).catalogIds ?? [],
-          categoryId:
-            (doc as { categoryId?: string | null }).categoryId ??
-            ((doc as { categoryIds?: any[] }).categoryIds ?? [])[0] ??
-            null,
+          categoryId: (doc as { categoryId?: string | null }).categoryId ?? null,
           tagIds: (doc as { tagIds?: any[] }).tagIds ?? [],
           producerIds: (doc as { producerIds?: any[] }).producerIds ?? [],
           parameters: (doc as { parameters?: any[] }).parameters ?? [],
@@ -3196,7 +3193,6 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
       stock: row.stock ?? null,
       catalogIds: row.catalogIds ?? [],
       categoryId: row.categoryId ?? null,
-      categoryIds: row.categoryId ? [row.categoryId] : [],
       tagIds: row.tagIds ?? [],
       producerIds: row.producerIds ?? [],
       parameters: row.parameters ?? [],

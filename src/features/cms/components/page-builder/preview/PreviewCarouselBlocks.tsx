@@ -271,25 +271,7 @@ export function PreviewSlideshowBlock({
   const showDots = (block.settings['showDots'] as string) !== 'no';
   const heightMode = (block.settings['heightMode'] as string) || 'auto';
   const height = (block.settings['height'] as number) || 360;
-  const frameBlocks = (block.blocks ?? []).filter((b: BlockInstance) => b.type === 'SlideshowFrame');
-  const legacyBlocks = (block.blocks ?? []).filter((b: BlockInstance) => b.type !== 'SlideshowFrame');
-  const frames =
-    frameBlocks.length > 0
-      ? [
-        ...frameBlocks,
-        ...legacyBlocks.map((b: BlockInstance) => ({
-          id: b.id,
-          type: 'SlideshowFrame',
-          settings: {},
-          blocks: [b],
-        })),
-      ]
-      : legacyBlocks.map((b: BlockInstance) => ({
-        id: b.id,
-        type: 'SlideshowFrame',
-        settings: {},
-        blocks: [b],
-      }));
+  const frames = (block.blocks ?? []).filter((b: BlockInstance) => b.type === 'SlideshowFrame');
   const slideCount = frames.length;
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);

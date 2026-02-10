@@ -3,6 +3,7 @@ import 'server-only';
 import { ProductAiJob, Prisma } from '@prisma/client';
 
 import type {
+  FindProductAiJobsOptions,
   ProductAiJobRecord,
   ProductAiJobRepository,
   ProductAiJobUpdate,
@@ -37,10 +38,21 @@ export const prismaProductAiJobRepository: ProductAiJobRepository = {
     return mapJob(job);
   },
 
-  async findJobs(productId?: string) {
+  async findJobs(productId?: string, options?: FindProductAiJobsOptions) {
+    const statuses =
+      options?.statuses && options.statuses.length > 0
+        ? options.statuses
+        : undefined;
     const jobs = await prisma.productAiJob.findMany({
-      where: productId ? { productId } : {},
+      where: {
+        ...(productId ? { productId } : {}),
+        ...(options?.type ? { type: options.type } : {}),
+        ...(statuses ? { status: { in: statuses } } : {}),
+      },
       orderBy: { createdAt: 'desc' },
+      ...(typeof options?.limit === 'number' && options.limit > 0
+        ? { take: Math.floor(options.limit) }
+        : {}),
     });
     return jobs.map(mapJob);
   },

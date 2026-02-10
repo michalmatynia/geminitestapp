@@ -635,10 +635,3 @@ export const deleteImportTemplate = async (id: string): Promise<boolean> => {
   await writeTemplatesValue(JSON.stringify(next));
   return true;
 };
-
-// Modern aliases without "Import" prefix (for dual-purpose import/export templates)
-export const listTemplates = listImportTemplates;
-export const getTemplate = getImportTemplate;
-export const createTemplate = createImportTemplate;
-export const updateTemplate = updateImportTemplate;
-export const deleteTemplate = deleteImportTemplate;

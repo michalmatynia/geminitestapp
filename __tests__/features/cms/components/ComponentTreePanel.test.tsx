@@ -15,9 +15,30 @@ vi.mock('@/features/cms/hooks/useCmsQueries', () => ({
   useCmsPages: vi.fn(),
   useCmsPage: vi.fn(),
 }));
+vi.mock('@/features/cms/hooks/useDragStateContext', () => ({
+  useDragState: vi.fn(() => ({
+    state: {
+      block: {
+        id: null,
+        type: null,
+        fromSectionId: null,
+        fromColumnId: null,
+        fromParentBlockId: null,
+      },
+      section: {
+        id: null,
+        type: null,
+        index: null,
+        zone: null,
+      },
+    },
+    endBlockDrag: vi.fn(),
+    endSectionDrag: vi.fn(),
+  })),
+}));
 
 // Mock the child components to simplify testing
-vi.mock('@/features/cms/components/page-builder/ComponentTreeNodeItem', () => ({
+vi.mock('@/features/cms/components/page-builder/tree', () => ({
   SectionNodeItem: ({ section }: any) => <div data-testid='section-item'>{section.type}</div>,
 }));
 vi.mock('@/features/cms/components/page-builder/SectionPicker', () => ({

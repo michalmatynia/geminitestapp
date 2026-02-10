@@ -1,5 +1,5 @@
 import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
-import type { ProductCreateInput as ProductCreateData } from '@/features/products/validations/schemas';
+import type { ProductCreateInput } from '@/features/products/validations/schemas';
 
 const toTrimmedString = (value: unknown): string | null => {
   if (typeof value === 'string') {
@@ -146,7 +146,6 @@ const IMAGE_LINK_KEYS = [
   'images_urls',
   'imageUrls',
   'image_links_all',
-  'images_link_all',
   'links',
   'link',
 ];
@@ -359,10 +358,7 @@ const resolveTemplateValue = (
   if (normalized === 'image_slots_all') {
     return getImageUrlsForSlots(record);
   }
-  if (normalized === 'image_all') {
-    return getImageUrlsForSlots(record);
-  }
-  if (normalized === 'images_link_all' || normalized === 'image_links_all') {
+  if (normalized === 'image_links_all') {
     return getImageUrlsForLinks(record);
   }
   if (normalized === 'images_all') {
@@ -408,7 +404,7 @@ const resolveTemplateValue = (
 
 const applyTemplateMappings = (
   record: BaseProductRecord,
-  mapped: ProductCreateData,
+  mapped: ProductCreateInput,
   mappings: TemplateMapping[]
 ): void => {
   for (const mapping of mappings) {
@@ -421,7 +417,7 @@ const applyTemplateMappings = (
     if (PRODUCER_TARGET_FIELDS.has(normalizedTargetField)) {
       const producerIds = normalizeProducerIds(rawValue);
       if (producerIds.length > 0) {
-        (mapped as ProductCreateData & { producerIds?: string[] }).producerIds = producerIds;
+        (mapped as ProductCreateInput & { producerIds?: string[] }).producerIds = producerIds;
       }
       continue;
     }
@@ -444,11 +440,7 @@ const applyTemplateMappings = (
       continue;
     }
     if (
-      targetField === 'image_all' ||
-      targetField === 'image_links' ||
       targetField === 'image_links_all' ||
-      targetField === 'image_files' ||
-      targetField === 'image_slots' ||
       targetField === 'image_slots_all' ||
       targetField === 'images_all'
     ) {
@@ -470,7 +462,7 @@ const applyTemplateMappings = (
 export function mapBaseProduct(
   record: BaseProductRecord,
   mappings: TemplateMapping[] = []
-): ProductCreateData {
+): ProductCreateInput {
   // Extend this mapper as new Base.com fields are needed.
   const baseProductId = pickString(record, [
     'base_product_id',
@@ -525,7 +517,7 @@ export function mapBaseProduct(
   const sizeWidth = pickInt(record, ['sizeWidth', 'width_cm']);
   const length = pickInt(record, ['length']);
 
-  const mapped: ProductCreateData = {
+  const mapped: ProductCreateInput = {
     baseProductId: baseProductId ?? undefined,
     name_en: nameEn ?? undefined,
     name_pl: namePl ?? undefined,

@@ -1,6 +1,5 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, GripVertical, Plus, Star, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -27,7 +26,6 @@ import {
   parseAdminMenuJson,
 } from '@/features/admin/constants/admin-menu-settings';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import { api } from '@/shared/lib/api-client';
 import { Button, Checkbox, Input, Label, SearchInput, SectionHeader, SectionPanel, Switch, useToast, UnifiedSelect } from '@/shared/ui';
 import { cn, DRAG_KEYS, getFirstDragValue, setDragData } from '@/shared/utils';
 
@@ -238,79 +236,6 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
       settingsValues.customNav.length > 0 ? settingsValues.customNav : defaultCustomNav
     );
   }, [defaultCustomNav, settingsQuery.isFetched, settingsSnapshot, settingsValues]);
-
-  const hasAdminMenuSettings = useMemo(() => {
-    const map = settingsQuery.data;
-    if (!map) return false;
-    return Boolean(
-      map.get(ADMIN_MENU_FAVORITES_KEY) ||
-        map.get(ADMIN_MENU_SECTION_COLORS_KEY) ||
-        map.get(ADMIN_MENU_CUSTOM_ENABLED_KEY) ||
-        map.get(ADMIN_MENU_CUSTOM_NAV_KEY)
-    );
-  }, [settingsQuery.data]);
-
-  const legacyPreferencesQuery = useQuery({
-    queryKey: ['user-preferences', 'admin-menu-legacy'],
-    queryFn: async (): Promise<{
-      adminMenuFavorites?: string[] | null;
-      adminMenuSectionColors?: Record<string, string> | null;
-      adminMenuCustomEnabled?: boolean | null;
-      adminMenuCustomNav?: AdminMenuCustomNode[] | null;
-    } | null> => {
-      try {
-        return await api.get<{
-          adminMenuFavorites?: string[] | null;
-          adminMenuSectionColors?: Record<string, string> | null;
-          adminMenuCustomEnabled?: boolean | null;
-          adminMenuCustomNav?: AdminMenuCustomNode[] | null;
-        }>('/api/user/preferences', {
-          params: { include: 'admin-menu' }
-        });
-      } catch {
-        return null;
-      }
-    },
-    enabled: settingsQuery.isFetched && !hasAdminMenuSettings,
-    staleTime: 0,
-    retry: 1,
-  });
-
-  const migratedLegacyRef = useRef(false);
-  useEffect(() => {
-    if (migratedLegacyRef.current) return;
-    if (!legacyPreferencesQuery.data || hasAdminMenuSettings) return;
-    const legacy = legacyPreferencesQuery.data;
-    const payloads = [
-      {
-        key: ADMIN_MENU_FAVORITES_KEY,
-        value: JSON.stringify(Array.isArray(legacy.adminMenuFavorites) ? legacy.adminMenuFavorites : []),
-      },
-      {
-        key: ADMIN_MENU_SECTION_COLORS_KEY,
-        value: JSON.stringify(
-          legacy.adminMenuSectionColors && typeof legacy.adminMenuSectionColors === 'object'
-            ? legacy.adminMenuSectionColors
-            : {}
-        ),
-      },
-      {
-        key: ADMIN_MENU_CUSTOM_ENABLED_KEY,
-        value: JSON.stringify(Boolean(legacy.adminMenuCustomEnabled)),
-      },
-      {
-        key: ADMIN_MENU_CUSTOM_NAV_KEY,
-        value: JSON.stringify(
-          Array.isArray(legacy.adminMenuCustomNav) ? legacy.adminMenuCustomNav : defaultCustomNav
-        ),
-      },
-    ];
-    migratedLegacyRef.current = true;
-    void updateSettingsBulk.mutateAsync(payloads).catch((error: unknown) => {
-      migratedLegacyRef.current = false;
-      console.warn('[admin-menu] Failed to migrate legacy preferences.', error);
-    });
-  }, [defaultCustomNav, hasAdminMenuSettings, legacyPreferencesQuery.data, updateSettingsBulk]);
 
   const menuNav = useMemo(
     () => (customEnabled ? buildAdminMenuFromCustomNav(normalizedCustomNav, baseNav) : baseNav),

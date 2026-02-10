@@ -69,6 +69,19 @@ describe('AiPathRunRepository', () => {
     expect(updated.startedAt).toBeDefined();
   });
 
+  it('should conditionally update run status', async () => {
+    const run = await repo.createRun({ pathId: 'test-conditional' });
+    const miss = await repo.updateRunIfStatus(run.id, ['running'], {
+      status: 'completed',
+    });
+    expect(miss).toBeNull();
+
+    const hit = await repo.updateRunIfStatus(run.id, ['queued'], {
+      status: 'running',
+    });
+    expect(hit?.status).toBe('running');
+  });
+
   it('should list runs with filters', async () => {
     const r1 = await repo.createRun({ pathId: 'path-1', pathName: 'Alpha' });
     await repo.updateRun(r1.id, { status: 'completed' });
@@ -118,6 +131,16 @@ describe('AiPathRunRepository', () => {
     const claimed2 = await repo.claimNextQueuedRun();
     expect(claimed2).not.toBeNull();
     expect(claimed2!.pathId).toBe('past');
+  });
+
+  it('should claim a specific queued run for processing', async () => {
+    const run = await repo.createRun({ pathId: 'claim-specific' });
+    const claimed = await repo.claimRunForProcessing(run.id);
+    expect(claimed).not.toBeNull();
+    expect(claimed?.status).toBe('running');
+
+    const claimedAgain = await repo.claimRunForProcessing(run.id);
+    expect(claimedAgain).toBeNull();
   });
 
   it('should create and list run nodes', async () => {

@@ -1,7 +1,9 @@
 import Link from 'next/link';
-import type { JSX } from 'react';
 
 import { Button } from '@/shared/ui';
+
+import type { JSX } from 'react';
+
 
 export default function AdminNotFound(): JSX.Element {
   return (

@@ -16,6 +16,7 @@ import type { AiNode } from '@/shared/types/ai-paths';
 
 import {
   AiPathRunEventCreateInput,
+  AiPathRunEventListOptions,
   AiPathRunListOptions,
   AiPathRunCreateInput,
   AiPathRunRepository,
@@ -308,6 +309,65 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     return toRunRecord(result);
   },
 
+  async updateRunIfStatus(
+    runId: string,
+    expectedStatuses,
+    data: AiPathRunUpdate
+  ): Promise<AiPathRunRecord | null> {
+    await ensureIndexes();
+    const statuses = expectedStatuses.filter(Boolean);
+    if (statuses.length === 0) return null;
+    const db = await getMongoDb();
+    const now = new Date();
+    const updateData = { ...data, updatedAt: now } as Record<string, unknown>;
+    if (updateData['nextRetryAt'] && typeof updateData['nextRetryAt'] === 'string') {
+      updateData['nextRetryAt'] = new Date(updateData['nextRetryAt']);
+    }
+    if (updateData['deadLetteredAt'] && typeof updateData['deadLetteredAt'] === 'string') {
+      updateData['deadLetteredAt'] = new Date(updateData['deadLetteredAt']);
+    }
+    if (updateData['startedAt'] && typeof updateData['startedAt'] === 'string') {
+      updateData['startedAt'] = new Date(updateData['startedAt']);
+    }
+    if (updateData['finishedAt'] && typeof updateData['finishedAt'] === 'string') {
+      updateData['finishedAt'] = new Date(updateData['finishedAt']);
+    }
+
+    const result = await db
+      .collection<RunDocument>(RUNS_COLLECTION)
+      .findOneAndUpdate(
+        {
+          $or: [{ _id: runId }, { id: runId }],
+          status: { $in: statuses },
+        },
+        { $set: updateData },
+        { returnDocument: 'after' }
+      );
+    if (!result) return null;
+    return toRunRecord(result);
+  },
+
+  async claimRunForProcessing(runId: string): Promise<AiPathRunRecord | null> {
+    await ensureIndexes();
+    const db = await getMongoDb();
+    const now = new Date();
+    const result = await db
+      .collection<RunDocument>(RUNS_COLLECTION)
+      .findOneAndUpdate(
+        {
+          $and: [
+            { $or: [{ _id: runId }, { id: runId }] },
+            { status: 'queued' },
+            { $or: [{ nextRetryAt: null }, { nextRetryAt: { $lte: now } }] },
+          ],
+        },
+        { $set: { status: 'running', startedAt: now, updatedAt: now } },
+        { returnDocument: 'after' }
+      );
+    if (!result) return null;
+    return toRunRecord(result);
+  },
+
   async findRunById(runId: string) {
     await ensureIndexes();
     const db = await getMongoDb();
@@ -386,15 +446,17 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     await ensureIndexes();
     const db = await getMongoDb();
     const now = new Date();
-    const result = await db
+    const next = await db
       .collection<RunDocument>(RUNS_COLLECTION)
-      .findOneAndUpdate(
+      .findOne(
         { status: 'queued', $or: [{ nextRetryAt: null }, { nextRetryAt: { $lte: now } }] },
-        { $set: { status: 'running', startedAt: now, updatedAt: now } },
-        { sort: { createdAt: 1 }, returnDocument: 'after' }
+        {
+          projection: { _id: 1, id: 1 },
+          sort: { createdAt: 1 },
+        }
       );
-    if (!result) return null;
-    return toRunRecord(result);
+    if (!next) return null;
+    return mongoPathRunRepository.claimRunForProcessing(next.id || next._id);
   },
 
   async getQueueStats(): Promise<{ queuedCount: number; oldestQueuedAt: Date | null }> {
@@ -491,7 +553,7 @@ export const mongoPathRunRepository: AiPathRunRepository = {
 
   async listRunEvents(
     runId: string,
-    options: { since?: Date | string | null; limit?: number } = {}
+    options: AiPathRunEventListOptions = {}
   ) {
     await ensureIndexes();
     const db = await getMongoDb();
@@ -503,13 +565,32 @@ export const mongoPathRunRepository: AiPathRunRepository = {
       : null;
     const since =
       sinceValue && !Number.isNaN(sinceValue.getTime()) ? sinceValue : null;
-    if (since) {
+    const afterDateValue = options.after?.createdAt
+      ? options.after.createdAt instanceof Date
+        ? options.after.createdAt
+        : new Date(options.after.createdAt)
+      : null;
+    const afterDate =
+      afterDateValue && !Number.isNaN(afterDateValue.getTime()) ? afterDateValue : null;
+    const afterId =
+      typeof options.after?.id === 'string' && options.after.id.trim().length > 0
+        ? options.after.id.trim()
+        : null;
+    if (afterDate && afterId) {
+      filter['$or'] = [
+        { createdAt: { $gt: afterDate } },
+        {
+          createdAt: afterDate,
+          $or: [{ _id: { $gt: afterId } }, { id: { $gt: afterId } }],
+        },
+      ];
+    } else if (since) {
       filter['createdAt'] = { $gt: since };
     }
     const cursor = db
       .collection<EventDocument>(EVENTS_COLLECTION)
       .find(filter)
-      .sort({ createdAt: 1 });
+      .sort({ createdAt: 1, _id: 1 });
     if (typeof options.limit === 'number') {
       cursor.limit(options.limit);
     }

@@ -6,7 +6,7 @@ import { assertAiPathRunAccess, requireAiPathsAccess } from '@/features/ai/ai-pa
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type { AiPathRunEventRecord, AiPathRunRecord, AiPathRunNodeRecord } from '@/shared/types/ai-paths';
+import type { AiPathRunRecord, AiPathRunNodeRecord } from '@/shared/types/ai-paths';
 import type { ApiHandlerContext } from '@/shared/types/api';
 
 const TERMINAL_STATUSES = new Set([
@@ -30,6 +30,17 @@ const toISOStringSafe = (value?: Date | string | null): string | null => {
   if (!value) return null;
   if (typeof value === 'string') return value;
   return value.toISOString();
+};
+
+const isAfterCursor = (
+  candidateTs: string,
+  candidateId: string,
+  cursorTs: string,
+  cursorId: string
+): boolean => {
+  if (candidateTs > cursorTs) return true;
+  if (candidateTs < cursorTs) return false;
+  return candidateId > cursorId;
 };
 
 const parseSinceParam = (value: string | null): Date | null => {
@@ -80,9 +91,9 @@ async function GET_handler(
       send('run', run);
 
       let lastRunUpdatedAt = toISOStringSafe(run.updatedAt ?? run.createdAt);
-      let lastNodeUpdatedAt: string | null = null;
-      let lastEventCreatedAt = initialSince
-        ? initialSince.toISOString()
+      let lastNodeCursor: { ts: string; nodeId: string } | null = null;
+      let lastEventCursor: { createdAt: string; id: string } | null = initialSince
+        ? { createdAt: initialSince.toISOString(), id: '' }
         : null;
 
       while (!cancelled) {
@@ -101,39 +112,47 @@ async function GET_handler(
         }
 
         const nodes = await repo.listRunNodes(runId);
-        const changedNodes = nodes.filter((node: AiPathRunNodeRecord) => {
-          const ts = toISOStringSafe(node.updatedAt ?? node.createdAt);
-          if (!ts) return false;
-          const prev = lastNodeUpdatedAt;
-          return !prev || ts > prev;
-        });
+        const changedNodes = nodes
+          .filter((node: AiPathRunNodeRecord) => {
+            const ts = toISOStringSafe(node.updatedAt ?? node.createdAt);
+            if (!ts) return false;
+            if (!lastNodeCursor) return true;
+            return isAfterCursor(ts, node.nodeId, lastNodeCursor.ts, lastNodeCursor.nodeId);
+          })
+          .sort((a: AiPathRunNodeRecord, b: AiPathRunNodeRecord) => {
+            const aTs = toISOStringSafe(a.updatedAt ?? a.createdAt) ?? '';
+            const bTs = toISOStringSafe(b.updatedAt ?? b.createdAt) ?? '';
+            if (aTs === bTs) return a.nodeId.localeCompare(b.nodeId);
+            return aTs.localeCompare(bTs);
+          });
         if (changedNodes.length > 0) {
           send('nodes', changedNodes);
-          let latestNodeTs: string | null = lastNodeUpdatedAt;
-          for (const node of changedNodes) {
-            const candidate = toISOStringSafe(node.updatedAt ?? node.createdAt);
-            if (!candidate) continue;
-            if (!latestNodeTs || candidate > latestNodeTs) latestNodeTs = candidate;
+          const latestNode = changedNodes[changedNodes.length - 1];
+          const latestNodeTs = toISOStringSafe(
+            latestNode?.updatedAt ?? latestNode?.createdAt
+          );
+          if (latestNodeTs && latestNode) {
+            lastNodeCursor = { ts: latestNodeTs, nodeId: latestNode.nodeId };
           }
-          if (latestNodeTs) lastNodeUpdatedAt = latestNodeTs;
         }
 
         const events = await repo.listRunEvents(runId, {
-          ...(lastEventCreatedAt ? { since: lastEventCreatedAt } : {}),
+          ...(lastEventCursor
+            ? { after: lastEventCursor }
+            : {}),
           limit: EVENT_BATCH_LIMIT + 1,
         });
         if (events.length > 0) {
           const overflow = events.length > EVENT_BATCH_LIMIT;
           const batch = overflow ? events.slice(0, EVENT_BATCH_LIMIT) : events;
           send('events', { events: batch, overflow, limit: EVENT_BATCH_LIMIT });
-          const latestEventTime = batch.reduce<string | null>((max: string | null, event: AiPathRunEventRecord) => {
-            const candidate = toISOStringSafe(event.createdAt);
-            if (!candidate) return max;
-            if (!max) return candidate;
-            return candidate > max ? candidate : max;
-          }, lastEventCreatedAt);
-          if (latestEventTime) {
-            lastEventCreatedAt = latestEventTime;
+          const latestEvent = batch[batch.length - 1];
+          const latestEventCreatedAt = toISOStringSafe(latestEvent?.createdAt);
+          if (latestEventCreatedAt && latestEvent?.id) {
+            lastEventCursor = {
+              createdAt: latestEventCreatedAt,
+              id: latestEvent.id,
+            };
           }
         }
 

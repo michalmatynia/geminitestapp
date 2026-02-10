@@ -1,9 +1,11 @@
 import { redirect } from 'next/navigation';
-import type { JSX } from 'react';
+
 
 import { AdminLayout } from '@/features/admin/layout/AdminLayout';
 import { auth, getUserPreferences } from '@/features/auth/server';
 import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider';
+
+import type { JSX } from 'react';
 
 export const dynamic = 'force-dynamic';
 const ADMIN_LAYOUT_USER_PREFERENCES_TIMEOUT_MS = (() => {

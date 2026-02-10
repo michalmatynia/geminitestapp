@@ -141,6 +141,7 @@ describe('PathRunService', () => {
         status: 'failed',
         errorMessage: 'Node failed'
       });
+      await repo.updateRun(run.id, { status: 'failed', errorMessage: 'Run failed' });
 
       const updatedRun = await retryPathRunNode(run.id, 'node-1');
       expect(updatedRun.status).toBe('queued');

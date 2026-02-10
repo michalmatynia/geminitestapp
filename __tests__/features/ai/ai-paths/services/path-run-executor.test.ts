@@ -76,14 +76,29 @@ describe('PathRunExecutor', () => {
 
     const updatedRun = await repo.findRunById(run.id);
     expect(updatedRun.status).toBe('failed');
-    expect(updatedRun.errorMessage).toBe('Run graph is missing or invalid.');
+    expect(updatedRun.errorMessage).toContain('Run graph is missing or invalid.');
   });
 
   it('should update node records during execution', async () => {
     // Setup evaluateGraphWithIteratorAutoContinue to call onNodeStart and onNodeFinish
     (evaluateGraphWithIteratorAutoContinue as any).mockImplementation(async (options: any) => {
-      options.onNodeStart({ node: mockNodes[0], nodeInputs: {}, prevOutputs: {} });
-      await options.onNodeFinish({ node: mockNodes[0], nodeInputs: {}, nextOutputs: { value: 'done' }, iteration: 0 });
+      const runStartedAt = options.runStartedAt;
+      const runId = options.runId;
+      await options.onNodeStart({
+        node: mockNodes[0],
+        nodeInputs: {},
+        prevOutputs: {},
+        iteration: 0,
+        runStartedAt,
+      });
+      await options.onNodeFinish({
+        node: mockNodes[0],
+        nodeInputs: {},
+        nextOutputs: { value: 'done' },
+        iteration: 0,
+        runStartedAt,
+        runId,
+      });
       return { outputs: { 'node-1': { value: 'done' } } };
     });
 

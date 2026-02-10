@@ -58,6 +58,7 @@ type ActionResult = {
   value?: unknown;
 };
 
+import { useAiPathConfig } from '../AiPathConfigContext';
 import { DatabaseConstructorTab } from './database/DatabaseConstructorTab';
 import { DatabasePresetsTab } from './database/DatabasePresetsTab';
 import { DatabaseQueryInputControls } from './database/DatabaseQueryInputControls';
@@ -74,7 +75,6 @@ import {
   mergeValidationIssues,
   type ValidationPaletteRule,
 } from './database/query-utils';
-import { useAiPathConfig } from '../AiPathConfigContext';
 
 import type { AiQuery, CollectionSchema, DatabasePresetOption, SchemaData } from './database/types';
 

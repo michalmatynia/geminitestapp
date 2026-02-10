@@ -28,11 +28,34 @@ type EnqueueRunInput = {
   meta?: Record<string, unknown> | null;
 };
 
+const ACTIVE_RUN_STATUSES = new Set(['queued', 'running']);
+
 const resolveRunStartedAt = (run: AiPathRunRecord): string | null => {
   if (!run.startedAt) return null;
   if (typeof run.startedAt === 'string') return run.startedAt;
   if (run.startedAt instanceof Date) return run.startedAt.toISOString();
   return null;
+};
+
+const dispatchRun = async (
+  runId: string,
+  options?: { delayMs?: number }
+): Promise<void> => {
+  try {
+    await enqueuePathRunJob(runId, options);
+  } catch (queueError) {
+    void ErrorSystem.captureException(queueError, {
+      service: 'ai-paths-service',
+      action: 'enqueueJob',
+      runId,
+      ...(options?.delayMs !== undefined ? { delayMs: options.delayMs } : {}),
+    });
+    throw new Error(
+      `Failed to enqueue job: ${
+        queueError instanceof Error ? queueError.message : String(queueError)
+      }`
+    );
+  }
 };
 
 export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunRecord> => {
@@ -80,18 +103,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
     }
 
     // Dispatch to BullMQ for immediate pickup (falls back to inline if Redis unavailable)
-    try {
-      await enqueuePathRunJob(run.id);
-    } catch (queueError) {
-      void ErrorSystem.captureException(queueError, {
-        service: 'ai-paths-service',
-        action: 'enqueueJob',
-        runId: run.id,
-      });
-      // Depending on requirements, we might want to fail the run here or just log it.
-      // For now, we throw to let the caller know the run wasn't successfully enqueued.
-      throw new Error(`Failed to enqueue job: ${queueError instanceof Error ? queueError.message : String(queueError)}`);
-    }
+    await dispatchRun(run.id);
 
     return run;
   } catch (error) {
@@ -112,12 +124,18 @@ export const resumePathRun = async (
     const repo = getPathRunRepository();
     const run = await repo.findRunById(runId);
     if (!run) throw new Error(`Run ${runId} not found`);
+    if (ACTIVE_RUN_STATUSES.has(run.status)) {
+      if (run.status === 'queued') {
+        await dispatchRun(run.id);
+      }
+      return run;
+    }
     const meta = {
       ...(run.meta ?? {}),
       resumeMode: mode,
       retryNodeIds: [],
     };
-    const updated = await repo.updateRun(runId, {
+    const updated = await repo.updateRunIfStatus(runId, [run.status], {
       status: 'queued',
       errorMessage: null,
       retryCount: 0,
@@ -125,6 +143,14 @@ export const resumePathRun = async (
       deadLetteredAt: null,
       meta,
     });
+    if (!updated) {
+      const latest = await repo.findRunById(runId);
+      if (!latest) throw new Error(`Run ${runId} not found`);
+      if (latest.status === 'queued') {
+        await dispatchRun(latest.id);
+      }
+      return latest;
+    }
     
     try {
       await Promise.all([
@@ -144,6 +170,8 @@ export const resumePathRun = async (
       });
     }
 
+    await dispatchRun(updated.id);
+
     return updated;
   } catch (error) {
     void ErrorSystem.captureException(error, {
@@ -160,9 +188,36 @@ export const retryPathRunNode = async (runId: string, nodeId: string): Promise<A
     const repo = getPathRunRepository();
     const run = await repo.findRunById(runId);
     if (!run) throw new Error(`Run ${runId} not found`);
+    if (ACTIVE_RUN_STATUSES.has(run.status)) {
+      if (run.status === 'queued') {
+        await dispatchRun(run.id);
+      }
+      return run;
+    }
     const nodeInfo =
       run.graph?.nodes?.find((node: AiNode) => node.id === nodeId) ?? null;
-    
+    const meta = {
+      ...(run.meta ?? {}),
+      resumeMode: 'retry',
+      retryNodeIds: [nodeId],
+    };
+    const updated = await repo.updateRunIfStatus(runId, [run.status], {
+      status: 'queued',
+      errorMessage: null,
+      retryCount: 0,
+      nextRetryAt: null,
+      deadLetteredAt: null,
+      meta,
+    });
+    if (!updated) {
+      const latest = await repo.findRunById(runId);
+      if (!latest) throw new Error(`Run ${runId} not found`);
+      if (latest.status === 'queued') {
+        await dispatchRun(latest.id);
+      }
+      return latest;
+    }
+
     await repo.upsertRunNode(runId, nodeId, {
       nodeType: nodeInfo?.type ?? 'unknown',
       nodeTitle: nodeInfo?.title ?? null,
@@ -173,19 +228,6 @@ export const retryPathRunNode = async (runId: string, nodeId: string): Promise<A
       errorMessage: null,
       startedAt: null,
       finishedAt: null,
-    });
-    const meta = {
-      ...(run.meta ?? {}),
-      resumeMode: 'retry',
-      retryNodeIds: [nodeId],
-    };
-    const updated = await repo.updateRun(runId, {
-      status: 'queued',
-      errorMessage: null,
-      retryCount: 0,
-      nextRetryAt: null,
-      deadLetteredAt: null,
-      meta,
     });
 
     try {
@@ -206,6 +248,8 @@ export const retryPathRunNode = async (runId: string, nodeId: string): Promise<A
         nodeId,
       });
     }
+
+    await dispatchRun(updated.id);
 
     return updated;
   } catch (error) {
@@ -230,6 +274,12 @@ export const cancelPathRunWithRepository = async (
   try {
     const run = await repo.findRunById(runId);
     if (!run) throw new Error(`Run ${runId} not found`);
+    if (run.status === 'canceled') {
+      return run;
+    }
+    if (run.status === 'completed' || run.status === 'failed' || run.status === 'dead_lettered') {
+      return run;
+    }
     const finishedAt = new Date();
     const startedAtMs =
       typeof run.startedAt === 'string'
@@ -240,10 +290,15 @@ export const cancelPathRunWithRepository = async (
     const durationMs = Number.isFinite(startedAtMs)
       ? Math.max(0, finishedAt.getTime() - startedAtMs)
       : null;
-    const updated = await repo.updateRun(runId, {
+    const updated = await repo.updateRunIfStatus(runId, [run.status], {
       status: 'canceled',
       finishedAt,
     });
+    if (!updated) {
+      const latest = await repo.findRunById(runId);
+      if (!latest) throw new Error(`Run ${runId} not found`);
+      return latest;
+    }
 
     try {
       await Promise.all([

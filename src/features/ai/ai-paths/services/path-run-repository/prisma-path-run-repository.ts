@@ -9,6 +9,7 @@ import {
 import type {
   AiPathRunCreateInput,
   AiPathRunEventCreateInput,
+  AiPathRunEventListOptions,
   AiPathRunListOptions,
   AiPathRunRepository,
   AiPathRunUpdate,
@@ -238,6 +239,48 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     return mapRun(run);
   },
 
+  async updateRunIfStatus(
+    runId: string,
+    expectedStatuses,
+    data: AiPathRunUpdate
+  ): Promise<AiPathRunRecord | null> {
+    ensureModels();
+    const statuses = expectedStatuses.filter(Boolean);
+    if (statuses.length === 0) return null;
+    const updated = await prismaAny.aiPathRun!.updateMany({
+      where: {
+        id: runId,
+        status: { in: statuses },
+      },
+      data: data as Record<string, unknown>,
+    });
+    if (!updated.count) {
+      return null;
+    }
+    const fresh = await prismaAny.aiPathRun!.findUnique({ where: { id: runId } });
+    return fresh ? mapRun(fresh) : null;
+  },
+
+  async claimRunForProcessing(runId: string): Promise<AiPathRunRecord | null> {
+    ensureModels();
+    const now = new Date();
+    const startedAt = new Date();
+    const updated = await prismaAny.aiPathRun!.updateMany({
+      where: {
+        id: runId,
+        status: 'queued',
+        OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: now } }],
+      },
+      data: {
+        status: 'running',
+        startedAt,
+      },
+    });
+    if (!updated.count) return null;
+    const fresh = await prismaAny.aiPathRun!.findUnique({ where: { id: runId } });
+    return fresh ? mapRun(fresh) : null;
+  },
+
   async findRunById(runId: string): Promise<AiPathRunRecord | null> {
     ensureModels();
     const run = await prismaAny.aiPathRun!.findUnique({
@@ -289,13 +332,7 @@ export const prismaPathRunRepository: AiPathRunRepository = {
       orderBy: { createdAt: 'asc' },
     })) as Record<string, unknown> | null;
     if (!run) return null;
-    const updated = await prismaAny.aiPathRun!.updateMany({
-      where: { id: run['id'] as string, status: 'queued' },
-      data: { status: 'running', startedAt: new Date() },
-    });
-    if (!updated.count) return null;
-    const fresh = await prismaAny.aiPathRun!.findUnique({ where: { id: run['id'] as string } });
-    return fresh ? mapRun(fresh) : null;
+    return prismaPathRunRepository.claimRunForProcessing(run['id'] as string);
   },
 
   async getQueueStats(): Promise<{ queuedCount: number; oldestQueuedAt: Date | null }> {
@@ -380,7 +417,7 @@ export const prismaPathRunRepository: AiPathRunRepository = {
 
   async listRunEvents(
     runId: string,
-    options: { since?: Date | string | null; limit?: number } = {}
+    options: AiPathRunEventListOptions = {}
   ): Promise<AiPathRunEventRecord[]> {
     ensureModels();
     const sinceValue = options.since
@@ -390,12 +427,33 @@ export const prismaPathRunRepository: AiPathRunRepository = {
       : null;
     const since =
       sinceValue && !Number.isNaN(sinceValue.getTime()) ? sinceValue : null;
+    const afterDateValue = options.after?.createdAt
+      ? options.after.createdAt instanceof Date
+        ? options.after.createdAt
+        : new Date(options.after.createdAt)
+      : null;
+    const afterDate =
+      afterDateValue && !Number.isNaN(afterDateValue.getTime()) ? afterDateValue : null;
+    const afterId =
+      typeof options.after?.id === 'string' && options.after.id.trim().length > 0
+        ? options.after.id.trim()
+        : null;
+    const where =
+      afterDate && afterId
+        ? {
+            runId,
+            OR: [
+              { createdAt: { gt: afterDate } },
+              { createdAt: afterDate, id: { gt: afterId } },
+            ],
+          }
+        : {
+            runId,
+            ...(since ? { createdAt: { gt: since } } : {}),
+          };
     const events = await prismaAny.aiPathRunEvent!.findMany({
-      where: {
-        runId,
-        ...(since ? { createdAt: { gt: since } } : {}),
-      },
-      orderBy: { createdAt: 'asc' },
+      where,
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
       ...(typeof options.limit === 'number' ? { take: options.limit } : {}),
     });
     return (events).map(mapEvent);

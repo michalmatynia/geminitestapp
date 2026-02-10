@@ -29,4 +29,7 @@ async function getHandlerInternal(req: NextRequest, _ctx: ApiHandlerContext): Pr
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => getHandlerInternal(req, ctx),
-  { source: 'products.categories.tree.GET' });
+  {
+    source: 'products.categories.tree.GET',
+    cacheControl: 'no-store',
+  });

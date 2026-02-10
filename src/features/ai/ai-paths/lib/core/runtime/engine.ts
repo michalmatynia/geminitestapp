@@ -733,8 +733,7 @@ export async function evaluateGraph({
           ? ((seedOut as Record<string, unknown>)['context'] as Record<string, unknown>)
           : null;
       const seedEnt =
-        seedCtx &&
-        seedCtx['entity'] !== undefined &&
+        seedCtx?.['entity'] !== undefined &&
         seedCtx['entity'] !== null &&
         typeof seedCtx['entity'] === 'object' &&
         Object.keys(seedCtx['entity'] as Record<string, unknown>).length > 1
@@ -1327,8 +1326,7 @@ export async function evaluateGraph({
           ? ((existingSeed as Record<string, unknown>)['context'] as Record<string, unknown>)
           : null;
       const seedEntity =
-        existingContext &&
-        existingContext['entity'] !== undefined &&
+        existingContext?.['entity'] !== undefined &&
         existingContext['entity'] !== null &&
         typeof existingContext['entity'] === 'object'
           ? (existingContext['entity'] as Record<string, unknown>)

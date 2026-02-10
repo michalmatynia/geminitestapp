@@ -50,6 +50,10 @@ const RUN_ACTIVE_MAX = parseNumber(
   process.env['AI_PATHS_RUN_ACTIVE_LIMIT'],
   5
 );
+const RUN_GLOBAL_QUEUED_MAX = parseNumber(
+  process.env['AI_PATHS_RUN_GLOBAL_QUEUED_LIMIT'],
+  500
+);
 const ACTION_RATE_WINDOW_SECONDS = parseNumber(
   process.env['AI_PATHS_ACTION_RATE_LIMIT_WINDOW_SECONDS'],
   60
@@ -153,7 +157,7 @@ export const enforceAiPathsRunRateLimit = async (
   const activeStatuses: AiPathRunStatus[] = ['queued', 'running', 'paused'];
 
   // Run both rate-limit queries in parallel
-  const [recent, active] = await Promise.all([
+  const [recent, active, queueStats] = await Promise.all([
     RUN_RATE_MAX > 0
       ? repo.listRuns({
         userId: access.userId,
@@ -170,6 +174,7 @@ export const enforceAiPathsRunRateLimit = async (
         offset: 0,
       })
       : null,
+    RUN_GLOBAL_QUEUED_MAX > 0 ? repo.getQueueStats() : null,
   ]);
 
   if (recent && recent.total >= RUN_RATE_MAX) {
@@ -182,6 +187,16 @@ export const enforceAiPathsRunRateLimit = async (
     throw rateLimitedError(
       'Too many active runs. Wait for one to finish before starting another.',
       windowMs
+    );
+  }
+  if (queueStats && queueStats.queuedCount >= RUN_GLOBAL_QUEUED_MAX) {
+    throw rateLimitedError(
+      'AI Paths queue is currently busy. Please retry shortly.',
+      Math.max(windowMs, 5000),
+      {
+        queuedCount: queueStats.queuedCount,
+        queuedLimit: RUN_GLOBAL_QUEUED_MAX,
+      }
     );
   }
 };

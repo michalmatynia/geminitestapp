@@ -118,6 +118,16 @@ const BaseQuickExportButton = ({
 
   const getBlButtonClass = (value: string, manageMode: boolean): string => {
     if (manageMode) {
+      const normalized = value.toLowerCase();
+      if (['active', 'success', 'completed', 'listed', 'ok'].includes(normalized)) {
+        return 'border-emerald-400/70 bg-emerald-500/15 text-emerald-100 hover:border-emerald-300/80 hover:bg-emerald-500/25';
+      }
+      if (['warning', 'pending', 'queued', 'processing', 'in_progress'].includes(normalized)) {
+        return 'border-amber-400/70 bg-amber-500/15 text-amber-100 hover:border-amber-300/80 hover:bg-amber-500/25';
+      }
+      if (['failed', 'error', 'removed'].includes(normalized)) {
+        return 'border-rose-400/70 bg-rose-500/15 text-rose-100 hover:border-rose-300/80 hover:bg-rose-500/25';
+      }
       return 'border-sky-400/70 bg-sky-500/15 text-sky-100 hover:border-sky-300/80 hover:bg-sky-500/25';
     }
     return getStatusToneClass(value);

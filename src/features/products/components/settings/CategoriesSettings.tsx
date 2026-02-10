@@ -1,7 +1,7 @@
 'use client';
 
 import { Plus } from 'lucide-react';
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useLayoutEffect, useRef } from 'react';
 
 import { useProductCategoryTree } from '@/features/products/hooks/useCategoryQueries';
 import {
@@ -39,6 +39,84 @@ type CategoryDropTarget = {
   targetId: string | null;
 };
 
+const cloneCategoryTree = (
+  nodes: ProductCategoryWithChildren[]
+): ProductCategoryWithChildren[] =>
+  nodes.map((node: ProductCategoryWithChildren): ProductCategoryWithChildren => ({
+    ...node,
+    children: cloneCategoryTree(node.children),
+  }));
+
+const removeCategoryFromTree = (
+  nodes: ProductCategoryWithChildren[],
+  id: string
+): ProductCategoryWithChildren | null => {
+  for (let index = 0; index < nodes.length; index += 1) {
+    const node = nodes[index];
+    if (!node) continue;
+    if (node.id === id) {
+      const [removed] = nodes.splice(index, 1);
+      return removed ?? null;
+    }
+    const removedFromChildren = removeCategoryFromTree(node.children, id);
+    if (removedFromChildren) return removedFromChildren;
+  }
+  return null;
+};
+
+const findCategoryChildrenBucket = (
+  nodes: ProductCategoryWithChildren[],
+  parentId: string | null
+): ProductCategoryWithChildren[] | null => {
+  if (parentId === null) return nodes;
+  for (const node of nodes) {
+    if (node.id === parentId) return node.children;
+    const nested = findCategoryChildrenBucket(node.children, parentId);
+    if (nested) return nested;
+  }
+  return null;
+};
+
+const normalizeCategorySortIndices = (
+  nodes: ProductCategoryWithChildren[]
+): ProductCategoryWithChildren[] =>
+  nodes.map(
+    (node: ProductCategoryWithChildren, index: number): ProductCategoryWithChildren => ({
+      ...node,
+      sortIndex: index,
+      children: normalizeCategorySortIndices(node.children),
+    })
+  );
+
+const applyOptimisticCategoryDrop = (
+  tree: ProductCategoryWithChildren[],
+  draggedCatId: string,
+  target: CategoryDropTarget
+): ProductCategoryWithChildren[] | null => {
+  const nextTree = cloneCategoryTree(tree);
+  const draggedNode = removeCategoryFromTree(nextTree, draggedCatId);
+  if (!draggedNode) return null;
+
+  const targetBucket = findCategoryChildrenBucket(nextTree, target.parentId);
+  if (!targetBucket) return null;
+
+  draggedNode.parentId = target.parentId;
+  if (target.position === 'inside') {
+    targetBucket.push(draggedNode);
+    return normalizeCategorySortIndices(nextTree);
+  }
+
+  if (!target.targetId) return null;
+  const targetIndex = targetBucket.findIndex(
+    (entry: ProductCategoryWithChildren): boolean => entry.id === target.targetId
+  );
+  if (targetIndex < 0) return null;
+
+  const insertionIndex = target.position === 'before' ? targetIndex : targetIndex + 1;
+  targetBucket.splice(insertionIndex, 0, draggedNode);
+  return normalizeCategorySortIndices(nextTree);
+};
+
 export function CategoriesSettings({
   loading,
   categories,
@@ -50,6 +128,7 @@ export function CategoriesSettings({
   const { toast } = useToast();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [rootDropActive, setRootDropActive] = useState<boolean>(false);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [editingCategory, setEditingCategory] =
     useState<ProductCategoryWithChildren | null>(null);
@@ -67,22 +146,30 @@ export function CategoriesSettings({
   const reorderCategoryMutation = useReorderCategoryMutation();
 
   const [modalCatalogId, setModalCatalogId] = useState<string | null>(null);
-  
+  const [treeData, setTreeData] = useState<ProductCategoryWithChildren[]>(() => cloneCategoryTree(categories));
+  const treeBodyRef = useRef<HTMLDivElement | null>(null);
+  const previousRectsRef = useRef<Map<string, DOMRect>>(new Map<string, DOMRect>());
+
   const { data: fetchedModalCategories, isLoading: modalLoadingCategories } = useProductCategoryTree(modalCatalogId || undefined);
-  
+
+  useEffect((): void => {
+    setTreeData(cloneCategoryTree(categories));
+  }, [categories]);
+
   const modalCategories = useMemo(() => {
-    if (modalCatalogId === selectedCatalogId) return categories;
+    if (modalCatalogId === selectedCatalogId) return treeData;
     return fetchedModalCategories || [];
-  }, [modalCatalogId, selectedCatalogId, categories, fetchedModalCategories]);
+  }, [modalCatalogId, selectedCatalogId, treeData, fetchedModalCategories]);
 
   // Reset expanded state when catalog changes
   useEffect((): void => {
     setExpandedIds(new Set());
+    setRootDropActive(false);
   }, [selectedCatalogId]);
 
   // Expand all categories on initial load
   useEffect((): void => {
-    if (categories.length > 0 && expandedIds.size === 0) {
+    if (treeData.length > 0 && expandedIds.size === 0) {
       const collectIds = (cats: ProductCategoryWithChildren[]): string[] => {
         const ids: string[] = [];
         for (const cat of cats) {
@@ -93,9 +180,53 @@ export function CategoriesSettings({
         }
         return ids;
       };
-      setExpandedIds(new Set(collectIds(categories)));
+      setExpandedIds(new Set(collectIds(treeData)));
     }
-  }, [categories, expandedIds.size]);
+  }, [treeData, expandedIds.size]);
+
+  useLayoutEffect((): void => {
+    const container = treeBodyRef.current;
+    if (!container) return;
+
+    const rows = Array.from(container.querySelectorAll<HTMLElement>('[data-category-row-id]'));
+    const currentRects = new Map<string, DOMRect>();
+    rows.forEach((row: HTMLElement): void => {
+      const rowId = row.dataset['categoryRowId'];
+      if (!rowId) return;
+      currentRects.set(rowId, row.getBoundingClientRect());
+    });
+
+    const previousRects = previousRectsRef.current;
+    rows.forEach((row: HTMLElement): void => {
+      const rowId = row.dataset['categoryRowId'];
+      if (!rowId) return;
+      const prevRect = previousRects.get(rowId);
+      const nextRect = currentRects.get(rowId);
+      if (!prevRect || !nextRect) return;
+
+      const deltaX = prevRect.left - nextRect.left;
+      const deltaY = prevRect.top - nextRect.top;
+      if (Math.abs(deltaX) < 0.5 && Math.abs(deltaY) < 0.5) return;
+
+      row.style.transition = 'transform 0s';
+      row.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+      row.style.willChange = 'transform';
+      requestAnimationFrame((): void => {
+        row.style.transition = 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)';
+        row.style.transform = '';
+      });
+      row.addEventListener(
+        'transitionend',
+        (): void => {
+          row.style.transition = '';
+          row.style.willChange = '';
+        },
+        { once: true }
+      );
+    });
+
+    previousRectsRef.current = currentRects;
+  }, [treeData, expandedIds]);
 
   const handleToggleExpand = useCallback((id: string): void => {
     setExpandedIds((prev: Set<string>): Set<string> => {
@@ -204,6 +335,12 @@ export function CategoriesSettings({
     target: CategoryDropTarget
   ): Promise<void> => {
     if (draggedCatId === target.parentId) return;
+    setRootDropActive(false);
+    const previousTree = cloneCategoryTree(treeData);
+    const optimisticTree = applyOptimisticCategoryDrop(treeData, draggedCatId, target);
+    if (optimisticTree) {
+      setTreeData(optimisticTree);
+    }
 
     try {
       await reorderCategoryMutation.mutateAsync({
@@ -217,6 +354,7 @@ export function CategoriesSettings({
       toast('Category moved successfully', { variant: 'success' });
       onRefresh();
     } catch (error) {
+      setTreeData(previousTree);
       const message: string =
         error instanceof Error ? error.message : 'Failed to move category';
       toast(message, { variant: 'error' });
@@ -225,6 +363,8 @@ export function CategoriesSettings({
 
   const handleRootDrop = (e: React.DragEvent): void => {
     e.preventDefault();
+    e.stopPropagation();
+    setRootDropActive(false);
     const catId: string = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.CATEGORY_ID], draggedId ?? '') || '';
     if (catId) {
       void handleDrop(catId, { parentId: null, position: 'inside', targetId: null });
@@ -340,11 +480,11 @@ export function CategoriesSettings({
               Category Tree for &quot;{selectedCatalog?.name}&quot;
             </p>
 
-            {loading ? (
+            {loading && treeData.length === 0 ? (
               <div className='rounded-md border border-dashed border p-4 text-center text-sm text-gray-400'>
                 Loading categories...
               </div>
-            ) : categories.length === 0 ? (
+            ) : treeData.length === 0 ? (
               <EmptyState
                 title='No categories yet'
                 description='Categories help you organize products into a hierarchical tree.'
@@ -357,52 +497,57 @@ export function CategoriesSettings({
               />
             ) : (
               <FolderTreePanel
-                className='rounded-md border border-border bg-gray-900 p-2'
+                className='relative rounded-md border border-border bg-gray-900 p-2'
                 bodyClassName='space-y-0.5'
                 onDragOver={(e: React.DragEvent): void => {
+                  const draggedCategoryId = getFirstDragValue(
+                    e.dataTransfer,
+                    [DRAG_KEYS.CATEGORY_ID],
+                    draggedId ?? ''
+                  ) || '';
+                  if (!draggedCategoryId) return;
                   e.preventDefault();
+                  e.stopPropagation();
+                  e.dataTransfer.dropEffect = 'move';
+                  const overRow = (e.target as HTMLElement | null)?.closest('[data-category-row-id]');
+                  setRootDropActive(!overRow);
+                }}
+                onDragLeave={(e: React.DragEvent): void => {
+                  if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+                  setRootDropActive(false);
                 }}
                 onDrop={handleRootDrop}
               >
-                {/* Root drop zone */}
-                <div
-                  className='flex items-center gap-2 px-2 py-1.5 rounded text-sm text-gray-500 border border-dashed border mb-2'
-                  onDragOver={(e: React.DragEvent): void => {
-                    e.preventDefault();
-                    (e.currentTarget as HTMLElement).classList.add('bg-emerald-600/20', 'border-emerald-500');
-                  }}
-                  onDragLeave={(e: React.DragEvent): void => {
-                    (e.currentTarget as HTMLElement).classList.remove('bg-emerald-600/20', 'border-emerald-500');
-                  }}
-                  onDrop={(e: React.DragEvent): void => {
-                    e.preventDefault();
-                    (e.currentTarget as HTMLElement).classList.remove('bg-emerald-600/20', 'border-emerald-500');
-                    handleRootDrop(e);
-                  }}
-                >
-                  <span>Drop here to move to root level</span>
+                {rootDropActive && (
+                  <div className='pointer-events-none absolute inset-x-2 top-1 h-5 overflow-hidden rounded-md'>
+                    <div className='h-full w-full bg-gradient-to-b from-emerald-300/65 via-emerald-300/30 to-transparent' />
+                  </div>
+                )}
+                <div ref={treeBodyRef} className='space-y-0.5'>
+                  {treeData.map((category: ProductCategoryWithChildren): React.JSX.Element => (
+                    <CategoryTreeItem
+                      key={category.id}
+                      category={category}
+                      level={0}
+                      expandedIds={expandedIds}
+                      onToggleExpand={handleToggleExpand}
+                      onEdit={handleOpenEditModal}
+                      onDelete={handleDelete}
+                      onCreateChild={handleOpenCreateModal}
+                      draggedId={draggedId}
+                      onDragStart={setDraggedId}
+                      onDragEnd={(): void => {
+                        setDraggedId(null);
+                        setRootDropActive(false);
+                      }}
+                      onDrop={(
+                        e: string,
+                        target: CategoryDropTarget
+                      ): void => void handleDrop(e, target)}
+                      allCategories={treeData}
+                    />
+                  ))}
                 </div>
-
-                {categories.map((category: ProductCategoryWithChildren): React.JSX.Element => (
-                  <CategoryTreeItem
-                    key={category.id}
-                    category={category}
-                    level={0}
-                    expandedIds={expandedIds}
-                    onToggleExpand={handleToggleExpand}
-                    onEdit={handleOpenEditModal}
-                    onDelete={handleDelete}
-                    onCreateChild={handleOpenCreateModal}
-                    draggedId={draggedId}
-                    onDragStart={setDraggedId}
-                    onDragEnd={(): void => setDraggedId(null)}
-                    onDrop={(
-                      e: string,
-                      target: CategoryDropTarget
-                    ): void => void handleDrop(e, target)}
-                    allCategories={categories}
-                  />
-                ))}
               </FolderTreePanel>
             )}
           </SectionPanel>

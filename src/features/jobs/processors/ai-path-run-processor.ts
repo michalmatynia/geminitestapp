@@ -81,16 +81,24 @@ export const computeBackoffMs = (retryCount: number, meta?: Record<string, unkno
   return Math.max(0, withJitter);
 };
 
-export const processRun = async (run: AiPathRunRecord): Promise<void> => {
+export type ProcessRunResult =
+  | {
+      requeueDelayMs: number;
+    }
+  | undefined;
+
+export const processRun = async (run: AiPathRunRecord): Promise<ProcessRunResult> => {
+  const repo = getPathRunRepository();
   console.log(`[aiPathRunQueue] Processing run ${run.id}`);
   try {
     await executePathRun(run);
-    const latest = await (getPathRunRepository()).findRunById(run.id);
+    const latest = await repo.findRunById(run.id);
     if (latest?.status === 'canceled') {
       console.log(`[aiPathRunQueue] Run ${run.id} was canceled during execution`);
       return;
     }
     console.log(`[aiPathRunQueue] Run ${run.id} completed`);
+    return;
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Run failed.';
     await ErrorSystem.captureException(error, {
@@ -98,35 +106,41 @@ export const processRun = async (run: AiPathRunRecord): Promise<void> => {
       pathRunId: run.id,
       pathId: run.pathId,
     });
-    const latest = await (getPathRunRepository()).findRunById(run.id);
+    const latest = await repo.findRunById(run.id);
     if (latest && TERMINAL_RUN_STATUSES.has(latest.status)) {
       // Another flow (e.g. cancel endpoint) already finalized the run.
       return;
     }
+    if (latest && latest.status !== 'running' && latest.status !== 'queued') {
+      return;
+    }
     if (isNonRetryableRunError(error)) {
-      await (getPathRunRepository()).updateRun(run.id, {
+      const failed = await repo.updateRunIfStatus(run.id, ['running', 'queued'], {
         status: 'failed',
-        retryCount: run.retryCount ?? 0,
+        retryCount: latest?.retryCount ?? run.retryCount ?? 0,
         finishedAt: new Date(),
         errorMessage: message,
       });
-      await (getPathRunRepository()).createRunEvent({
-        runId: run.id,
-        level: 'error',
-        message: `Run stopped: non-retryable error — ${message}`,
-        metadata: { nonRetryable: true, reason: 'non_retryable_error' },
-      });
+      if (failed) {
+        await repo.createRunEvent({
+          runId: run.id,
+          level: 'error',
+          message: `Run stopped: non-retryable error — ${message}`,
+          metadata: { nonRetryable: true, reason: 'non_retryable_error' },
+        });
+      }
       return;
     }
+    const retrySource = latest ?? run;
     const maxAttempts =
-      typeof run.maxAttempts === 'number' && run.maxAttempts > 0
-        ? run.maxAttempts
+      typeof retrySource.maxAttempts === 'number' && retrySource.maxAttempts > 0
+        ? retrySource.maxAttempts
         : DEFAULT_MAX_ATTEMPTS;
-    const retryCount = (run.retryCount ?? 0) + 1;
+    const retryCount = (retrySource.retryCount ?? 0) + 1;
     if (retryCount < maxAttempts) {
-      const delayMs = computeBackoffMs(retryCount - 1, run.meta ?? undefined);
+      const delayMs = computeBackoffMs(retryCount - 1, retrySource.meta ?? undefined);
       const nextRetryAt = new Date(Date.now() + delayMs);
-      await (getPathRunRepository()).updateRun(run.id, {
+      const requeued = await repo.updateRunIfStatus(run.id, ['running', 'queued'], {
         status: 'queued',
         retryCount,
         nextRetryAt,
@@ -134,26 +148,33 @@ export const processRun = async (run: AiPathRunRecord): Promise<void> => {
         startedAt: null,
         finishedAt: null,
       });
-      await (getPathRunRepository()).createRunEvent({
+      if (!requeued) {
+        return;
+      }
+      await repo.createRunEvent({
         runId: run.id,
         level: 'warning',
         message: `Run failed. Retrying in ${Math.round(delayMs / 1000)}s.`,
         metadata: { retryCount, nextRetryAt },
       });
+      return { requeueDelayMs: delayMs };
     } else {
-      await (getPathRunRepository()).updateRun(run.id, {
+      const deadLettered = await repo.updateRunIfStatus(run.id, ['running', 'queued'], {
         status: 'dead_lettered',
         retryCount,
         finishedAt: new Date(),
         deadLetteredAt: new Date(),
         errorMessage: message,
       });
-      await (getPathRunRepository()).createRunEvent({
-        runId: run.id,
-        level: 'error',
-        message: 'Run moved to dead-letter after max retries.',
-        metadata: { retryCount, maxAttempts },
-      });
+      if (deadLettered) {
+        await repo.createRunEvent({
+          runId: run.id,
+          level: 'error',
+          message: 'Run moved to dead-letter after max retries.',
+          metadata: { retryCount, maxAttempts },
+        });
+      }
+      return;
     }
   }
 };

@@ -9,13 +9,13 @@ import type {
   ProductValidationPatternRepository,
   UpdateProductValidationPatternInput,
 } from '@/features/products/types/services/validation-pattern-repository';
+import { operationFailedError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
 import type {
   ProductValidationPattern,
   ProductValidationSeverity,
   ProductValidationTarget,
 } from '@/shared/types/domain/products';
-import { operationFailedError } from '@/shared/errors/app-error';
 
 const DEFAULT_ENABLED_BY_DEFAULT = true;
 const MISSING_DELEGATE_MESSAGE =

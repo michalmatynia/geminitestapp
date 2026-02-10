@@ -12,7 +12,10 @@ export function useProductCategories(catalogId?: string): UseQueryResult<Product
     queryKey: ['product-categories', catalogId],
     queryFn: async (): Promise<ProductCategoryWithChildren[]> => {
       if (!catalogId) return [];
-      const res = await fetch(`/api/products/categories?catalogId=${catalogId}`);
+      const res = await fetch(`/api/products/categories?catalogId=${catalogId}`, {
+        cache: 'no-store',
+        credentials: 'include',
+      });
       if (!res.ok) {
         throw new Error('Failed to fetch categories');
       }
@@ -30,7 +33,10 @@ export function useProductCategoryTree(catalogId?: string): UseQueryResult<Produ
     queryKey: ['product-categories', 'tree', catalogId],
     queryFn: async (): Promise<ProductCategoryWithChildren[]> => {
       if (!catalogId) return [];
-      const res = await fetch(`/api/products/categories/tree?catalogId=${catalogId}`);
+      const res = await fetch(`/api/products/categories/tree?catalogId=${catalogId}`, {
+        cache: 'no-store',
+        credentials: 'include',
+      });
       if (!res.ok) {
         throw new Error('Failed to fetch category tree');
       }

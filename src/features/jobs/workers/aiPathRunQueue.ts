@@ -10,9 +10,14 @@ import { createManagedQueue, getRedisConnection } from '@/shared/lib/queue';
 
 const DEFAULT_CONCURRENCY = Number(process.env['AI_PATHS_RUN_CONCURRENCY'] ?? '1');
 const AI_PATH_RUN_QUEUE_NAME = 'ai-path-run';
+const buildRetryJobId = (runId: string): string => `${runId}:retry`;
 
 type AiPathRunJobData = {
   runId: string;
+};
+
+type EnqueuePathRunJobOptions = {
+  delayMs?: number;
 };
 
 const queue = createManagedQueue<AiPathRunJobData>({
@@ -25,42 +30,25 @@ const queue = createManagedQueue<AiPathRunJobData>({
   },
   processor: async (data) => {
     const repo = getPathRunRepository();
-    const run = await repo.findRunById(data.runId);
+    const run = await repo.claimRunForProcessing(data.runId);
     if (!run) {
-      console.warn(`[aiPathRunQueue] Run ${data.runId} not found, skipping`);
-      return;
-    }
-    if (run.status !== 'running' && run.status !== 'queued') {
-      console.log(`[aiPathRunQueue] Run ${data.runId} has status "${run.status}", skipping`);
-      return;
-    }
-    let runToProcess = run;
-    if (run.status === 'queued') {
       const latest = await repo.findRunById(data.runId);
       if (!latest) {
-        console.warn(`[aiPathRunQueue] Run ${data.runId} disappeared before claim, skipping`);
+        console.warn(`[aiPathRunQueue] Run ${data.runId} not found, skipping`);
         return;
       }
-      if (latest.status !== 'queued') {
-        if (latest.status === 'running') {
-          runToProcess = latest;
-        } else {
-          console.log(
-            `[aiPathRunQueue] Run ${data.runId} changed to "${latest.status}" before claim, skipping`
-          );
-          return;
-        }
-      } else {
-        const startedAt = new Date();
-        await repo.updateRun(run.id, {
-          status: 'running',
-          startedAt,
-        });
-        await recordRuntimeRunStarted({ runId: run.id });
-        runToProcess = { ...latest, status: 'running', startedAt };
+      if (latest.status === 'running') {
+        console.log(`[aiPathRunQueue] Run ${data.runId} is already running, skipping duplicate job`);
+        return;
       }
+      console.log(`[aiPathRunQueue] Run ${data.runId} has status "${latest.status}", skipping`);
+      return;
     }
-    await processRun({ ...runToProcess, status: 'running' });
+    await recordRuntimeRunStarted({ runId: run.id });
+    const outcome = await processRun(run);
+    if (outcome?.requeueDelayMs !== undefined) {
+      await enqueuePathRunJob(run.id, { delayMs: outcome.requeueDelayMs });
+    }
   },
   onFailed: async (_jobId, error, data) => {
     try {
@@ -165,20 +153,17 @@ export const getAiPathRunQueueStatus = async (): Promise<{
 export const processSingleRun = async (runId: string): Promise<void> => {
   try {
     const repo = getPathRunRepository();
-    const run = await repo.findRunById(runId);
+    const run = await repo.claimRunForProcessing(runId);
     if (!run) {
-      throw new Error('Run not found');
-    }
-    if (run.status !== 'queued') {
+      const latest = await repo.findRunById(runId);
+      if (!latest) {
+        throw new Error('Run not found');
+      }
       return;
     }
-    await repo.updateRun(run.id, {
-      status: 'running',
-      startedAt: new Date(),
-    });
     await recordRuntimeRunStarted({ runId: run.id });
     const { executePathRun } = await import('@/features/ai/ai-paths/services/path-run-executor');
-    await executePathRun({ ...run, status: 'running' });
+    await executePathRun(run);
   } catch (error) {
     try {
       const { ErrorSystem } = await import('@/features/observability/services/error-system');
@@ -193,8 +178,107 @@ export const processSingleRun = async (runId: string): Promise<void> => {
   }
 };
 
-export const enqueuePathRunJob = async (runId: string): Promise<void> => {
-  await queue.enqueue({ runId }, { jobId: runId });
+const normalizeDelayMs = (value?: number): number => {
+  if (!Number.isFinite(value) || value === undefined || value <= 0) return 0;
+  return Math.floor(value);
+};
+
+const hasSameDelay = async (job: Awaited<ReturnType<Queue['getJob']>>, delayMs: number): Promise<boolean> => {
+  if (!job) return false;
+  const state = await job.getState();
+  if (state !== 'delayed') {
+    return delayMs === 0;
+  }
+  const delayUntil = job.timestamp + job.delay;
+  const remainingDelay = Math.max(0, delayUntil - Date.now());
+  const toleranceMs = 250;
+  return Math.abs(remainingDelay - delayMs) <= toleranceMs;
+};
+
+export const enqueuePathRunJob = async (
+  runId: string,
+  options: EnqueuePathRunJobOptions = {}
+): Promise<void> => {
+  const delayMs = normalizeDelayMs(options.delayMs);
+  const { queue: bullQueue, owned } = resolveAiPathRunQueue();
+  if (!bullQueue) {
+    if (delayMs > 0) {
+      console.warn(
+        `[aiPathRunQueue] Redis unavailable; retry delay for run ${runId} cannot be scheduled, processing inline.`
+      );
+    }
+    await queue.enqueue({ runId }, { jobId: runId });
+    return;
+  }
+
+  try {
+    const retryJobId = buildRetryJobId(runId);
+    const existing = await bullQueue.getJob(runId);
+    if (existing) {
+      const state = await existing.getState();
+      if (state === 'active') {
+        if (delayMs > 0) {
+          const existingRetry = await bullQueue.getJob(retryJobId);
+          if (existingRetry && (await hasSameDelay(existingRetry, delayMs))) {
+            return;
+          }
+          if (existingRetry) {
+            try {
+              await existingRetry.remove();
+            } catch {
+              // Keep the existing retry job if it cannot be replaced.
+              return;
+            }
+          }
+          await bullQueue.add(
+            AI_PATH_RUN_QUEUE_NAME,
+            { runId },
+            {
+              jobId: retryJobId,
+              delay: delayMs,
+            }
+          );
+        }
+        return;
+      }
+      if (
+        (state === 'waiting' ||
+          state === 'delayed' ||
+          state === 'paused' ||
+          state === 'prioritized' ||
+          state === 'waiting-children') &&
+        (await hasSameDelay(existing, delayMs))
+      ) {
+        return;
+      }
+      try {
+        await existing.remove();
+      } catch {
+        if (
+          state === 'waiting' ||
+          state === 'delayed' ||
+          state === 'paused' ||
+          state === 'prioritized' ||
+          state === 'waiting-children'
+        ) {
+          return;
+        }
+      }
+    }
+
+    await bullQueue.add(
+      AI_PATH_RUN_QUEUE_NAME,
+      { runId },
+      {
+        jobId: runId,
+        ...(delayMs > 0 ? { delay: delayMs } : {}),
+      }
+    );
+  } finally {
+    if (owned) {
+      await bullQueue.close();
+    }
+  }
 };
 
 const resolveAiPathRunQueue = (): { queue: Queue | null; owned: boolean } => {

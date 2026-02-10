@@ -91,15 +91,18 @@ export function CategoryTreeItem({
     canDropToParent(category.id);
   const siblingParentId = category.parentId ?? null;
   const canDropAsSibling: boolean = Boolean(draggedId) && canDropToParent(siblingParentId);
+  const showBeforeBoundary: boolean = dropTarget === 'before' && canDropAsSibling;
+  const showAfterBoundary: boolean = dropTarget === 'after' && canDropAsSibling;
 
   return (
-    <div>
+    <div className='relative transition-[transform,opacity] duration-200 ease-out'>
       <TreeRow
         tone='primary'
         depth={level}
-        className='cursor-pointer active:cursor-grabbing gap-1'
+        data-category-row-id={category.id}
+        className='cursor-pointer active:cursor-grabbing gap-1 transition-[background-color,color,transform,box-shadow] duration-200 ease-out'
         dragOver={dropTarget === 'inside' && canDropInside}
-        dragOverClassName='bg-emerald-600 text-white'
+        dragOverClassName='bg-emerald-500/18 text-emerald-100 ring-1 ring-emerald-400/45'
         onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
           const droppedId =
             getFirstDragValue(event.dataTransfer, [DRAG_KEYS.CATEGORY_ID], draggedId ?? '') || '';
@@ -114,15 +117,26 @@ export function CategoryTreeItem({
             thresholdPx: 10,
           });
 
+          let nextDropTarget: DropTarget = null;
           if (position === 'before' || position === 'after') {
-            setDropTarget(canDropAsSibling ? position : null);
+            nextDropTarget = canDropAsSibling ? position : null;
           } else {
-            setDropTarget(canDropInside ? 'inside' : null);
+            nextDropTarget = canDropInside ? 'inside' : null;
           }
-          event.dataTransfer.dropEffect = 'move';
+
+          setDropTarget((prev: DropTarget): DropTarget => {
+            if (prev === nextDropTarget) return prev;
+            return nextDropTarget;
+          });
+          if (nextDropTarget === null) {
+            event.dataTransfer.dropEffect = 'none';
+          } else {
+            event.dataTransfer.dropEffect = 'move';
+          }
         }}
         onDragLeave={(event: React.DragEvent<HTMLDivElement>): void => {
           event.stopPropagation();
+          if (event.currentTarget.contains(event.relatedTarget as Node)) return;
           setDropTarget(null);
         }}
         onDrop={(event: React.DragEvent<HTMLDivElement>): void => {
@@ -163,11 +177,15 @@ export function CategoryTreeItem({
           setDropTarget(null);
         }}
       >
-        {dropTarget === 'before' && (
-          <div className='pointer-events-none absolute inset-x-2 top-0 h-0.5 rounded bg-blue-400/90' />
+        {showBeforeBoundary && (
+          <div className='pointer-events-none absolute inset-x-2 -top-2 h-4 overflow-hidden rounded-md'>
+            <div className='h-full w-full bg-gradient-to-b from-emerald-300/70 via-emerald-300/30 to-transparent' />
+          </div>
         )}
-        {dropTarget === 'after' && (
-          <div className='pointer-events-none absolute inset-x-2 bottom-0 h-0.5 rounded bg-blue-400/90' />
+        {showAfterBoundary && (
+          <div className='pointer-events-none absolute inset-x-2 -bottom-2 h-4 overflow-hidden rounded-md'>
+            <div className='h-full w-full bg-gradient-to-t from-emerald-300/70 via-emerald-300/30 to-transparent' />
+          </div>
         )}
 
         <div

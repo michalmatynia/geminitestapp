@@ -63,6 +63,10 @@ export type AiPathRunEventCreateInput = {
 
 export type AiPathRunEventListOptions = {
   since?: Date | string | null;
+  after?: {
+    createdAt: Date | string;
+    id: string;
+  } | null;
   limit?: number;
 };
 
@@ -88,6 +92,12 @@ export type AiPathRunListResult = {
 export type AiPathRunRepository = {
   createRun(input: AiPathRunCreateInput): Promise<AiPathRunRecord>;
   updateRun(runId: string, data: AiPathRunUpdate): Promise<AiPathRunRecord>;
+  updateRunIfStatus(
+    runId: string,
+    expectedStatuses: AiPathRunStatus[],
+    data: AiPathRunUpdate
+  ): Promise<AiPathRunRecord | null>;
+  claimRunForProcessing(runId: string): Promise<AiPathRunRecord | null>;
   findRunById(runId: string): Promise<AiPathRunRecord | null>;
   deleteRun(runId: string): Promise<boolean>;
   listRuns(options?: AiPathRunListOptions): Promise<AiPathRunListResult>;

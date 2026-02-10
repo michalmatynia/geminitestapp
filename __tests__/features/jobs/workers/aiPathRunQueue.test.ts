@@ -20,12 +20,18 @@ vi.mock('@/features/observability/services/error-system', () => ({
 
 describe('AI Path Run Queue Worker', () => {
   const mockRepo = {
+    findRunById: vi.fn(),
     updateRun: vi.fn(),
+    updateRunIfStatus: vi.fn(),
+    claimRunForProcessing: vi.fn(),
     createRunEvent: vi.fn(),
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRepo.findRunById.mockResolvedValue(null);
+    mockRepo.updateRunIfStatus.mockResolvedValue(null);
+    mockRepo.claimRunForProcessing.mockResolvedValue(null);
     vi.mocked(getPathRunRepository).mockReturnValue(mockRepo as any);
   });
 
@@ -58,15 +64,26 @@ describe('AI Path Run Queue Worker', () => {
 
       expect(executePathRun).toHaveBeenCalledWith(run);
       expect(mockRepo.updateRun).not.toHaveBeenCalled(); // No status update on success here (handled by executor usually)
+      expect(mockRepo.updateRunIfStatus).not.toHaveBeenCalled();
     });
 
     it('retries on failure if attempts remaining', async () => {
       const run = { id: 'run-1', pathId: 'path-1', retryCount: 0, maxAttempts: 3 } as any;
       vi.mocked(executePathRun).mockRejectedValue(new Error('Network Error'));
+      mockRepo.updateRunIfStatus.mockResolvedValueOnce({
+        id: 'run-1',
+        status: 'queued',
+        retryCount: 1,
+      });
 
-      await processRun(run);
+      const outcome = await processRun(run);
+      expect(outcome).toEqual(
+        expect.objectContaining({
+          requeueDelayMs: expect.any(Number),
+        })
+      );
 
-      expect(mockRepo.updateRun).toHaveBeenCalledWith('run-1', expect.objectContaining({
+      expect(mockRepo.updateRunIfStatus).toHaveBeenCalledWith('run-1', ['running', 'queued'], expect.objectContaining({
         status: 'queued',
         retryCount: 1,
         errorMessage: 'Network Error',
@@ -81,10 +98,15 @@ describe('AI Path Run Queue Worker', () => {
     it('moves to dead-letter on max retries', async () => {
       const run = { id: 'run-1', pathId: 'path-1', retryCount: 2, maxAttempts: 3 } as any;
       vi.mocked(executePathRun).mockRejectedValue(new Error('Fatal Error'));
+      mockRepo.updateRunIfStatus.mockResolvedValueOnce({
+        id: 'run-1',
+        status: 'dead_lettered',
+        retryCount: 3,
+      });
 
       await processRun(run);
 
-      expect(mockRepo.updateRun).toHaveBeenCalledWith('run-1', expect.objectContaining({
+      expect(mockRepo.updateRunIfStatus).toHaveBeenCalledWith('run-1', ['running', 'queued'], expect.objectContaining({
         status: 'dead_lettered',
         retryCount: 3,
         errorMessage: 'Fatal Error',

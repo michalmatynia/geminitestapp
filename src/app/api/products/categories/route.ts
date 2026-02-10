@@ -108,7 +108,10 @@ async function postHandlerInternal(_req: NextRequest, ctx: ApiHandlerContext): P
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => getHandlerInternal(req, ctx),
-  { source: 'products.categories.GET' });
+  {
+    source: 'products.categories.GET',
+    cacheControl: 'no-store',
+  });
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => postHandlerInternal(req, ctx),
   { source: 'products.categories.POST', parseJsonBody: true, bodySchema: productCategoryCreateSchema });

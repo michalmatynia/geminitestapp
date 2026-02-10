@@ -26,6 +26,8 @@ export type DatabaseInfo = {
 };
 
 export type DatabaseBackupResponse = {
+  success?: boolean;
+  jobId?: string;
   message?: string;
   backupName?: string;
   log?: string;

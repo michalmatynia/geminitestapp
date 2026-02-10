@@ -5,6 +5,7 @@ export type ProductAiJobType =
   | 'translation'
   | 'graph_model'
   | 'db_sync'
+  | 'db_backup'
   | 'base64_all'
   | 'base_images_sync_all';
 

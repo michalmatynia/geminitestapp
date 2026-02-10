@@ -18,11 +18,15 @@ import {
 } from '@/shared/lib/db/app-db-provider';
 import { invalidateCollectionProviderMapCache } from '@/shared/lib/db/collection-provider-map';
 import {
+  DATABASE_ENGINE_BACKUP_SCHEDULE_KEY,
   DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY,
   DATABASE_ENGINE_POLICY_KEY,
   DATABASE_ENGINE_SERVICE_ROUTE_MAP_KEY,
 } from '@/shared/lib/db/database-engine-constants';
-import { invalidateDatabaseEnginePolicyCache } from '@/shared/lib/db/database-engine-policy';
+import {
+  getDatabaseEnginePolicy,
+  invalidateDatabaseEnginePolicyCache,
+} from '@/shared/lib/db/database-engine-policy';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import {
@@ -125,6 +129,23 @@ const isPrismaMissingTableError = (
 ): error is Prisma.PrismaClientKnownRequestError =>
   error instanceof Prisma.PrismaClientKnownRequestError &&
   (error.code === 'P2021' || error.code === 'P2022');
+
+const isAutomaticSettingsFallbackAllowed = async (): Promise<boolean> => {
+  const policy = await getDatabaseEnginePolicy();
+  return (
+    policy.allowAutomaticFallback &&
+    policy.allowAutomaticMigrations &&
+    !policy.strictProviderAvailability
+  );
+};
+
+const assertAutomaticSettingsFallbackAllowed = async (): Promise<void> => {
+  const allowed = await isAutomaticSettingsFallbackAllowed();
+  if (allowed) return;
+  throw internalError(
+    'Prisma settings table is missing and automatic fallback is disabled by Database Engine policy. Configure migrations manually in Workflow Database -> Database Engine.'
+  );
+};
 
 const readPrismaSettingsForScope = async (scope: SettingsScope): Promise<SettingRecord[]> => {
   if (!process.env['DATABASE_URL'] || !('setting' in prisma)) return [];
@@ -388,6 +409,7 @@ const fetchAndCacheSettings = async (
       prismaSettings.push(...applyScopeFilter(settings, scope));
     } catch (error) {
       if (isPrismaMissingTableError(error)) {
+        await assertAutomaticSettingsFallbackAllowed();
         prismaMissing = true;
         await logSystemEvent({
           level: 'warn',
@@ -413,8 +435,11 @@ const fetchAndCacheSettings = async (
   if (prismaMissing && !hasMongo) {
     await logSystemEvent({
       level: 'warn',
-      message: '[settings] Prisma settings table missing and no Mongo fallback; returning empty settings.',
+      message: '[settings] Prisma settings table missing and no Mongo fallback.',
     });
+    throw internalError(
+      'Prisma settings table is missing and MongoDB fallback is unavailable. Run migrations manually in Workflow Database -> Database Engine.'
+    );
   }
   const settingsMap = new Map<string, SettingRecord>();
   if (provider === 'mongodb') {
@@ -695,6 +720,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       });
     } catch (error) {
       if (isPrismaMissingTableError(error)) {
+        await assertAutomaticSettingsFallbackAllowed();
         prismaMissing = true;
         await logSystemEvent({
           level: 'warn',
@@ -724,6 +750,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     setting.key === DATABASE_ENGINE_POLICY_KEY ||
     setting.key === DATABASE_ENGINE_SERVICE_ROUTE_MAP_KEY ||
     setting.key === DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY ||
+    setting.key === DATABASE_ENGINE_BACKUP_SCHEDULE_KEY ||
     setting.key === 'collection_provider_map'
   ) {
     invalidateDatabaseEnginePolicyCache();

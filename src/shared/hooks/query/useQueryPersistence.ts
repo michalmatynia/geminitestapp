@@ -27,7 +27,7 @@ export function useQueryPersistence(config: PersistenceConfig) {
       const key = `${config.key}-${JSON.stringify(queryKey)}`;
       storage.setItem(key, JSON.stringify(item));
     } catch (error) {
-      logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useQueryPersistence', action: 'saveQueryToStorage', level: 'warn' } });
+      logger.warn('Failed to save query to storage', { error: error instanceof Error ? error.message : String(error) });
     }
   }, [config.key, config.ttl, storage]);
 
@@ -48,7 +48,7 @@ export function useQueryPersistence(config: PersistenceConfig) {
 
       return parsed.data;
     } catch (error) {
-      logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useQueryPersistence', action: 'loadQueryFromStorage', level: 'warn' } });
+      logger.warn('Failed to load query from storage', { error: error instanceof Error ? error.message : String(error) });
       return null;
     }
   }, [config.key, storage]);
@@ -112,7 +112,7 @@ export function useFormPersistence<T>(
       };
       storage.setItem(key, JSON.stringify(item));
     } catch (error) {
-      logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useFormPersistence', action: 'saveFormState', level: 'warn' } });
+      logger.warn('Failed to save form state', { error: error instanceof Error ? error.message : String(error) });
     }
   }, [key, options?.ttl, storage]);
 
@@ -132,7 +132,7 @@ export function useFormPersistence<T>(
 
       return { ...defaultValues, ...parsed.data };
     } catch (error) {
-      logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useFormPersistence', action: 'loadFormState', level: 'warn' } });
+      logger.warn('Failed to load form state', { error: error instanceof Error ? error.message : String(error) });
       return defaultValues;
     }
   }, [key, defaultValues, storage]);

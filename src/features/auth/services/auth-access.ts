@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/services/auth-provider';
 import {
   AUTH_SETTINGS_KEYS,
   DEFAULT_AUTH_PERMISSIONS,
@@ -42,10 +43,8 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
 };
 
 const readSettingValue = async (key: string): Promise<string | null> => {
-  if (process.env['MONGODB_URI']) {
-    return readMongoSetting(key);
-  }
-  return readPrismaSetting(key);
+  const provider = requireAuthProvider(await getAuthDataProvider());
+  return provider === 'mongodb' ? readMongoSetting(key) : readPrismaSetting(key);
 };
 
 export const getAuthPermissions = async (): Promise<AuthPermission[]> => {

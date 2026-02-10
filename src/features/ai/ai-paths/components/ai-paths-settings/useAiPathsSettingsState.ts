@@ -28,6 +28,11 @@ import type {
 } from '@/features/ai/ai-paths/lib';
 import { dbApi, entityApi } from '@/features/ai/ai-paths/lib';
 import {
+  AI_PATHS_HISTORY_RETENTION_DEFAULT,
+  AI_PATHS_HISTORY_RETENTION_KEY,
+  AI_PATHS_HISTORY_RETENTION_MAX,
+  AI_PATHS_HISTORY_RETENTION_MIN,
+  AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT,
   AI_PATHS_LAST_ERROR_KEY,
   DEFAULT_MODELS,
   PATH_CONFIG_PREFIX,
@@ -51,6 +56,7 @@ import {
 } from '@/features/ai/ai-paths/lib';
 import { deleteAiPathsSettings, updateAiPathsSetting } from '@/features/ai/ai-paths/lib/settings-store-client';
 import { logClientError } from '@/features/observability';
+import { logger } from '@/shared/utils/logger';
 import type { AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
 import { useToast } from '@/shared/ui';
 
@@ -106,9 +112,12 @@ export interface UseAiPathsSettingsStateReturn {
   executionMode: PathExecutionMode;
   flowIntensity: PathFlowIntensity;
   runMode: PathRunMode;
+  historyRetentionPasses: number;
+  historyRetentionOptionsMax: number;
   handleExecutionModeChange: (mode: PathExecutionMode) => void;
   handleFlowIntensityChange: (intensity: PathFlowIntensity) => void;
   handleRunModeChange: (mode: PathRunMode) => void;
+  handleHistoryRetentionChange: (passes: number) => Promise<void>;
   triggers: string[];
   isPathLocked: boolean;
   isPathActive: boolean;
@@ -389,6 +398,12 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
   const [executionMode, setExecutionMode] = useState<PathExecutionMode>('server');
   const [flowIntensity, setFlowIntensity] = useState<PathFlowIntensity>('medium');
   const [runMode, setRunMode] = useState<PathRunMode>('block');
+  const [historyRetentionPasses, setHistoryRetentionPasses] = useState<number>(
+    AI_PATHS_HISTORY_RETENTION_DEFAULT
+  );
+  const [historyRetentionOptionsMax, setHistoryRetentionOptionsMax] = useState<number>(
+    AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT
+  );
   const [parserSamples, setParserSamples] = useState<Record<string, ParserSampleState>>(
     {}
   );
@@ -712,7 +727,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
           payload ? JSON.stringify(payload) : ''
         );
       } catch (error: unknown) {
-        console.warn('[AI Paths] Failed to persist last error.', error instanceof Error ? error.message : String(error));
+        logger.warn('[AI Paths] Failed to persist last error', { error: error instanceof Error ? error.message : String(error) });
       }
     },
     []
@@ -732,7 +747,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
         logError.stack = error.stack;
         logError.name = error.name;
       }
-      console.error(fallbackMessage ?? 'AI Paths error:', error);
+      logger.error(fallbackMessage ?? 'AI Paths error', error);
       const payload = {
         message: summary,
         time: new Date().toISOString(),
@@ -766,7 +781,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
         });
         if (!res.ok) {
           const body = await res.text().catch(() => '');
-          console.warn('[ai-paths][models] Failed to load models.', {
+          logger.warn('[ai-paths][models] Failed to load models', {
             status: res.status,
             statusText: res.statusText,
             body,
@@ -776,7 +791,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
         const data = (await res.json()) as { models?: string[] };
         return data ?? { models: [] };
       } catch (error) {
-        console.warn('[ai-paths][models] Model list fetch failed.', error);
+        logger.warn('[ai-paths][models] Model list fetch failed', { error: error instanceof Error ? error.message : String(error) });
         return { models: [] };
       }
     },
@@ -1029,6 +1044,8 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setExecutionMode,
     setFlowIntensity,
     setRunMode,
+    setHistoryRetentionPasses,
+    setHistoryRetentionOptionsMax,
     setPathName,
     setPaths,
     setRuntimeState,
@@ -1089,6 +1106,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     activeTrigger,
     executionMode,
     runMode,
+    historyRetentionPasses,
     isPathActive,
     edges,
     nodes,
@@ -1481,6 +1499,47 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       return { ...prev, [activePathId]: { ...base, runMode: mode } };
     });
   };
+
+  const normalizeHistoryRetentionPasses = useCallback((value: number): number => {
+    if (!Number.isFinite(value)) return AI_PATHS_HISTORY_RETENTION_DEFAULT;
+    const normalized = Math.trunc(value);
+    if (normalized < AI_PATHS_HISTORY_RETENTION_MIN) {
+      return AI_PATHS_HISTORY_RETENTION_DEFAULT;
+    }
+    return Math.min(AI_PATHS_HISTORY_RETENTION_MAX, normalized);
+  }, []);
+
+  const handleHistoryRetentionChange = useCallback(
+    async (passes: number): Promise<void> => {
+      const nextValue = normalizeHistoryRetentionPasses(passes);
+      if (nextValue === historyRetentionPasses) return;
+      const previous = historyRetentionPasses;
+      setHistoryRetentionPasses(nextValue);
+      try {
+        await persistSettingsBulk([
+          {
+            key: AI_PATHS_HISTORY_RETENTION_KEY,
+            value: String(nextValue),
+          },
+        ]);
+      } catch (error) {
+        setHistoryRetentionPasses(previous);
+        reportAiPathsError(
+          error,
+          { action: 'saveHistoryRetention', previous, nextValue },
+          'Failed to save AI Paths history retention:'
+        );
+        toast('Failed to save history retention.', { variant: 'error' });
+      }
+    },
+    [
+      historyRetentionPasses,
+      normalizeHistoryRetentionPasses,
+      persistSettingsBulk,
+      reportAiPathsError,
+      toast,
+    ]
+  );
 
   const handleTogglePathLock = (): void => {
     if (!activePathId) return;
@@ -1886,7 +1945,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
         activePathId,
         nextConfig
       ).catch((error: unknown): void => {
-        console.warn('[AI Paths] Failed to persist runtime state.', error);
+        logger.warn('[AI Paths] Failed to persist runtime state', { error: error instanceof Error ? error.message : String(error) });
       });
     }, 750);
 
@@ -1955,9 +2014,12 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     executionMode,
     flowIntensity,
     runMode,
+    historyRetentionPasses,
+    historyRetentionOptionsMax,
     handleExecutionModeChange,
     handleFlowIntensityChange,
     handleRunModeChange,
+    handleHistoryRetentionChange,
     triggers,
     isPathLocked,
     isPathActive,

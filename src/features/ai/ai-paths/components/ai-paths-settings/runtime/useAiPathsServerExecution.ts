@@ -11,6 +11,7 @@ import type {
 import {
   aiPathsApi,
 } from '@/features/ai/ai-paths/lib';
+import { logger } from '@/shared/utils/logger';
 
 import { 
   mergeRuntimeStateSnapshot, 
@@ -206,12 +207,12 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
             args.settleTransientNodeStatuses('failed');
           }
         } catch (err) {
-          console.error('[AI Paths] Failed to parse server stream message.', err);
+          logger.error('[AI Paths] Failed to parse server stream message', err);
         }
       };
 
       eventSource.onerror = (err: Event): void => {
-        console.error('[AI Paths] Server run stream error.', err);
+        logger.error('[AI Paths] Server run stream error', { error: String(err) });
         args.appendRuntimeEvent({
           source: 'server',
           kind: 'run_failed',

@@ -6,6 +6,7 @@ import type {
   ProducerMappingUpdateInput,
   ProducerMappingWithDetails,
 } from '@/features/integrations/types/producer-mapping';
+import { getProducerRepository } from '@/features/products/services/producer-repository';
 import prisma from '@/shared/lib/db/prisma';
 
 export type ProducerMappingRepository = {
@@ -83,30 +84,185 @@ const toDetails = (record: EnrichedProducerMapping): ProducerMappingWithDetails 
   },
 });
 
+const isPrismaKnownRequestError = (error: unknown): error is Prisma.PrismaClientKnownRequestError =>
+  error instanceof Prisma.PrismaClientKnownRequestError;
+
+const buildFallbackProducerName = (internalProducerId: string): string => {
+  const suffix = internalProducerId.slice(-6);
+  return `Producer ${suffix || 'unknown'}`;
+};
+
+const resolveExternalProducerRef = async (
+  tx: Prisma.TransactionClient,
+  connectionId: string,
+  externalProducerId: string
+): Promise<string> => {
+  const candidate = externalProducerId.trim();
+  if (candidate.length === 0) {
+    return candidate;
+  }
+
+  const byId = await tx.externalProducer.findUnique({
+    where: { id: candidate },
+  });
+  if (byId) {
+    return byId.id;
+  }
+
+  const byExternalId = await tx.externalProducer.findUnique({
+    where: {
+      connectionId_externalId: {
+        connectionId,
+        externalId: candidate,
+      },
+    },
+  });
+  if (byExternalId) {
+    return byExternalId.id;
+  }
+
+  const now = new Date();
+  const created = await tx.externalProducer.create({
+    data: {
+      connectionId,
+      externalId: candidate,
+      name: `External Producer ${candidate}`,
+      fetchedAt: now,
+    },
+  });
+  return created.id;
+};
+
+const ensureInternalProducerRef = async (
+  tx: Prisma.TransactionClient,
+  internalProducerId: string
+): Promise<void> => {
+  const candidate = internalProducerId.trim();
+  if (candidate.length === 0) {
+    return;
+  }
+
+  const existingById = await tx.producer.findUnique({
+    where: { id: candidate },
+    select: { id: true },
+  });
+  if (existingById) {
+    return;
+  }
+
+  const producerRepository = await getProducerRepository();
+  const sourceProducer = await producerRepository
+    .getProducerById(candidate)
+    .catch(() => null);
+
+  const baseName =
+    sourceProducer?.name?.trim() || buildFallbackProducerName(candidate);
+  const website = sourceProducer?.website ?? null;
+  const fallbackSuffix = candidate.slice(-6) || 'mapped';
+
+  const candidateNames = [
+    baseName,
+    `${baseName} (${fallbackSuffix})`,
+    `${baseName} (${fallbackSuffix}-2)`,
+  ];
+
+  for (const name of candidateNames) {
+    try {
+      await tx.producer.create({
+        data: {
+          id: candidate,
+          name,
+          website,
+        },
+      });
+      return;
+    } catch (error: unknown) {
+      if (!isPrismaKnownRequestError(error)) {
+        throw error;
+      }
+
+      if (error.code === 'P2002') {
+        continue;
+      }
+
+      if (error.code === 'P2003') {
+        continue;
+      }
+
+      throw error;
+    }
+  }
+
+  const maybeCreatedByRace = await tx.producer.findUnique({
+    where: { id: candidate },
+    select: { id: true },
+  });
+  if (maybeCreatedByRace) {
+    return;
+  }
+
+  const forcedName = `${buildFallbackProducerName(candidate)} (${Date.now()})`;
+  await tx.producer.create({
+    data: {
+      id: candidate,
+      name: forcedName,
+      website,
+    },
+  });
+};
+
 export function getProducerMappingRepository(): ProducerMappingRepository {
   return {
     async create(input: ProducerMappingCreateInput): Promise<ProducerMapping> {
-      const record = await prisma.producerMapping.create({
-        data: {
-          connectionId: input.connectionId,
-          externalProducerId: input.externalProducerId,
-          internalProducerId: input.internalProducerId,
-        },
+      return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        const resolvedExternalProducerId = await resolveExternalProducerRef(
+          tx,
+          input.connectionId,
+          input.externalProducerId
+        );
+        await ensureInternalProducerRef(tx, input.internalProducerId);
+
+        const record = await tx.producerMapping.create({
+          data: {
+            connectionId: input.connectionId,
+            externalProducerId: resolvedExternalProducerId,
+            internalProducerId: input.internalProducerId,
+          },
+        });
+        return mapToRecord(record);
       });
-      return mapToRecord(record);
     },
 
     async update(id: string, input: ProducerMappingUpdateInput): Promise<ProducerMapping> {
-      const record = await prisma.producerMapping.update({
-        where: { id },
-        data: {
-          ...(input.externalProducerId !== undefined && {
-            externalProducerId: input.externalProducerId,
-          }),
-          ...(input.isActive !== undefined && { isActive: input.isActive }),
-        },
+      return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        const current = await tx.producerMapping.findUnique({
+          where: { id },
+          select: { connectionId: true },
+        });
+        if (!current) {
+          throw new Error('Producer mapping not found');
+        }
+
+        const resolvedExternalProducerId =
+          input.externalProducerId !== undefined
+            ? await resolveExternalProducerRef(
+              tx,
+              current.connectionId,
+              input.externalProducerId
+            )
+            : undefined;
+
+        const record = await tx.producerMapping.update({
+          where: { id },
+          data: {
+            ...(resolvedExternalProducerId !== undefined && {
+              externalProducerId: resolvedExternalProducerId,
+            }),
+            ...(input.isActive !== undefined && { isActive: input.isActive }),
+          },
+        });
+        return mapToRecord(record);
       });
-      return mapToRecord(record);
     },
 
     async delete(id: string): Promise<void> {
@@ -191,6 +347,13 @@ export function getProducerMappingRepository(): ProducerMappingRepository {
             continue;
           }
 
+          const resolvedExternalProducerId = await resolveExternalProducerRef(
+            tx,
+            connectionId,
+            mapping.externalProducerId
+          );
+          await ensureInternalProducerRef(tx, mapping.internalProducerId);
+
           await tx.producerMapping.upsert({
             where: {
               connectionId_internalProducerId: {
@@ -201,10 +364,10 @@ export function getProducerMappingRepository(): ProducerMappingRepository {
             create: {
               connectionId,
               internalProducerId: mapping.internalProducerId,
-              externalProducerId: mapping.externalProducerId,
+              externalProducerId: resolvedExternalProducerId,
             },
             update: {
-              externalProducerId: mapping.externalProducerId,
+              externalProducerId: resolvedExternalProducerId,
               isActive: true,
             },
           });

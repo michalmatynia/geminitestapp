@@ -3,6 +3,10 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import {
+  AI_PATHS_HISTORY_RETENTION_DEFAULT,
+  AI_PATHS_HISTORY_RETENTION_KEY,
+  AI_PATHS_HISTORY_RETENTION_MAX,
+  AI_PATHS_HISTORY_RETENTION_MIN,
   normalizeNodes,
   sanitizeEdges,
   createDefaultPathConfig,
@@ -34,6 +38,27 @@ import { logger } from '@/shared/utils/logger';
 type TriggerEventEntityType = 'product' | 'note' | 'custom';
 
 const AI_PATHS_SETTINGS_STALE_MS = 10_000;
+
+const normalizeHistoryRetentionPasses = (value: unknown): number => {
+  const parsed =
+    typeof value === 'number'
+      ? value
+      : Number.parseInt(typeof value === 'string' ? value : '', 10);
+  if (!Number.isFinite(parsed) || parsed < AI_PATHS_HISTORY_RETENTION_MIN) {
+    return AI_PATHS_HISTORY_RETENTION_DEFAULT;
+  }
+  return Math.min(
+    AI_PATHS_HISTORY_RETENTION_MAX,
+    Math.max(AI_PATHS_HISTORY_RETENTION_MIN, Math.trunc(parsed))
+  );
+};
+
+const resolveHistoryRetentionPasses = (
+  settingsData: Array<{ key: string; value: string }>
+): number => {
+  const raw = settingsData.find((item: { key: string; value: string }) => item.key === AI_PATHS_HISTORY_RETENTION_KEY)?.value;
+  return normalizeHistoryRetentionPasses(raw);
+};
 
 export type FireAiPathTriggerEventArgs = {
   triggerEventId: string;
@@ -326,6 +351,7 @@ export function useAiPathTriggerEvent(): {
       } catch {
         settingsData = await fetchAiPathsSettingsCached();
       }
+      let historyRetentionPasses = resolveHistoryRetentionPasses(settingsData);
 
       let selection = await resolveTriggerSelection(
         settingsData,
@@ -368,6 +394,7 @@ export function useAiPathTriggerEvent(): {
           return;
         }
         settingsData = freshSettingsData;
+        historyRetentionPasses = resolveHistoryRetentionPasses(settingsData);
         selectedConfig = selection.selectedConfig;
         uiState = selection.uiState;
       }
@@ -505,7 +532,7 @@ export function useAiPathTriggerEvent(): {
             triggerContext,
             deferPoll: true,
             recordHistory: true,
-            historyLimit: 50,
+            historyLimit: historyRetentionPasses,
             fetchEntityByType: async (entityType: string, entityId: string) => {
               const result = await entityApi.getByType(entityType, entityId);
               return result.ok ? result.data : null;
@@ -587,6 +614,7 @@ export function useAiPathTriggerEvent(): {
           source: 'trigger_button',
           triggerEventId,
           triggerLabel: args.triggerLabel ?? null,
+          historyRetentionPasses,
           ...(args.source ? { sourceInfo: args.source } : {}),
           ...(args.extras ?? {}),
         },

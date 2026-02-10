@@ -149,6 +149,10 @@ export const QUERY_KEYS = {
       schema: (params: Record<string, unknown>) => [...QUERY_KEYS.system.databases.all, 'schema', params] as const,
       redisOverview: (params: Record<string, unknown>) =>
         [...QUERY_KEYS.system.databases.all, 'redis-overview', params] as const,
+      engineStatus: [...['system', 'databases'], 'engine-status'] as const,
+      engineBackupSchedulerStatus: [...['system', 'databases'], 'engine-backup-scheduler-status'] as const,
+      engineProviderPreview: (params: Record<string, unknown>) =>
+        [...QUERY_KEYS.system.databases.all, 'engine-provider-preview', params] as const,
       controlPanel: [...['system', 'databases'], 'control-panel'] as const,
       jsonBackups: [...['system', 'databases'], 'json-backups'] as const,
     },

@@ -45,18 +45,18 @@ export function useRealtimeQuery<TData>(
           queryClient.setQueryData(queryKey as unknown[], data);
           config?.onUpdate?.(data);
         } catch (error) {
-          logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useRealtimeQuery', action: 'parseWebSocketData', level: 'warn' } });
+          logger.warn('Failed to parse WebSocket data', { error: error instanceof Error ? error.message : String(error) });
         }
       };
 
       wsRef.current.onerror = (): void => {
         // Fallback to polling if WebSocket fails
-  
+        logger.info('WebSocket failed, using polling fallback');
       };
 
     } catch {
       // WebSocket not available, use polling
-
+      logger.info('WebSocket not available, using polling');
     }
 
     const currentInterval = intervalRef.current;
@@ -92,12 +92,12 @@ export function useServerSentEvents<TData>(
         queryClient.setQueryData(queryKey as unknown[], data);
         config?.onUpdate?.(data);
       } catch (error) {
-        logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useServerSentEvents', action: 'parseSSEData', level: 'warn' } });
+        logger.warn('Failed to parse SSE data', { error: error instanceof Error ? error.message : String(error) });
       }
     };
 
     eventSource.onerror = (error: Event): void => {
-      logClientError(new Error(String(error)), { context: { source: 'useServerSentEvents', action: 'sseConnectionError', level: 'warn' } });
+      logger.warn('SSE connection error', { error: String(error) });
     };
 
     return (): void => {

@@ -148,3 +148,122 @@ export interface RedisOverviewDto {
   namespaces: RedisNamespaceStatsDto[];
   sampleKeys: string[];
 }
+
+export type DatabaseEngineServiceDto = 'app' | 'auth' | 'product' | 'integrations' | 'cms';
+export type DatabaseEngineProviderDto = 'mongodb' | 'prisma' | 'redis';
+export type DatabaseEnginePrimaryProviderDto = 'mongodb' | 'prisma';
+
+export interface DatabaseEnginePolicyDto {
+  requireExplicitServiceRouting: boolean;
+  requireExplicitCollectionRouting: boolean;
+  allowAutomaticFallback: boolean;
+  allowAutomaticBackfill: boolean;
+  allowAutomaticMigrations: boolean;
+  strictProviderAvailability: boolean;
+}
+
+export interface DatabaseEngineServiceStatusDto {
+  service: DatabaseEngineServiceDto;
+  configuredProvider: DatabaseEngineProviderDto | null;
+  effectiveProvider: DatabaseEnginePrimaryProviderDto | null;
+  missingExplicitRoute: boolean;
+  unsupportedConfiguredProvider: boolean;
+  unavailableConfiguredProvider: boolean;
+  resolutionError: string | null;
+}
+
+export interface DatabaseEngineUnavailableCollectionRouteDto {
+  collection: string;
+  provider: DatabaseEngineProviderDto;
+}
+
+export interface DatabaseEngineCollectionStatusDto {
+  knownCollections: string[];
+  configuredCount: number;
+  missingExplicitRoutes: string[];
+  orphanedRoutes: string[];
+  unavailableConfiguredRoutes: DatabaseEngineUnavailableCollectionRouteDto[];
+}
+
+export interface DatabaseEngineStatusDto {
+  timestamp: string;
+  policy: DatabaseEnginePolicyDto;
+  providers: {
+    prismaConfigured: boolean;
+    mongodbConfigured: boolean;
+    redisConfigured: boolean;
+  };
+  serviceRouteMap: Partial<Record<DatabaseEngineServiceDto, DatabaseEngineProviderDto>>;
+  collectionRouteMap: Record<string, DatabaseEngineProviderDto>;
+  services: DatabaseEngineServiceStatusDto[];
+  collections: DatabaseEngineCollectionStatusDto;
+  blockingIssues: string[];
+}
+
+export type DatabaseEngineCollectionProviderPreviewSourceDto =
+  | 'collection_route'
+  | 'app_provider'
+  | 'error';
+
+export interface DatabaseEngineCollectionProviderPreviewItemDto {
+  collection: string;
+  configuredProvider: DatabaseEngineProviderDto | null;
+  effectiveProvider: DatabaseEnginePrimaryProviderDto | null;
+  source: DatabaseEngineCollectionProviderPreviewSourceDto;
+  error: string | null;
+}
+
+export interface DatabaseEngineProviderPreviewDto {
+  timestamp: string;
+  policy: DatabaseEnginePolicyDto;
+  appProvider: DatabaseEnginePrimaryProviderDto | null;
+  appProviderError: string | null;
+  collections: DatabaseEngineCollectionProviderPreviewItemDto[];
+}
+
+export type DatabaseEngineBackupCadenceDto = 'daily' | 'every_n_days' | 'weekly';
+export type DatabaseEngineBackupStatusDto =
+  | 'idle'
+  | 'queued'
+  | 'running'
+  | 'success'
+  | 'failed';
+
+export interface DatabaseEngineBackupTargetStatusDto {
+  enabled: boolean;
+  cadence: DatabaseEngineBackupCadenceDto;
+  intervalDays: number;
+  weekday: number;
+  timeUtc: string;
+  lastQueuedAt: string | null;
+  lastRunAt: string | null;
+  lastStatus: DatabaseEngineBackupStatusDto;
+  lastJobId: string | null;
+  lastError: string | null;
+  nextDueAt: string | null;
+  dueNow: boolean;
+}
+
+export interface DatabaseEngineBackupSchedulerQueueStatusDto {
+  running: boolean;
+  healthy: boolean;
+  processing: boolean;
+  activeJobs: number;
+  waitingJobs: number;
+  failedJobs: number;
+  completedJobs: number;
+  lastPollTime: number;
+  timeSinceLastPoll: number;
+}
+
+export interface DatabaseEngineBackupSchedulerStatusDto {
+  timestamp: string;
+  schedulerEnabled: boolean;
+  lastCheckedAt: string | null;
+  repeatEveryMs: number;
+  queue: DatabaseEngineBackupSchedulerQueueStatusDto;
+  targets: {
+    mongodb: DatabaseEngineBackupTargetStatusDto;
+    postgresql: DatabaseEngineBackupTargetStatusDto;
+  };
+}

@@ -6,7 +6,6 @@ export * from './services/activityService';
 export * from './lib/system-log-repository';
 export * from './lib/system-logger';
 export * from './lib/critical-error-notifier';
-export * from './lib/ai-paths-slo-notifier';
 export * from './lib/log-redaction';
 export * from './lib/transient-recovery/constants';
 export * from './lib/transient-recovery/settings';

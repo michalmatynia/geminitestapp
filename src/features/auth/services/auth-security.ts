@@ -72,10 +72,8 @@ const readPrismaSetting = async (key: string): Promise<string | null> => {
 };
 
 const readSettingValue = async (key: string): Promise<string | null> => {
-  if (process.env['MONGODB_URI']) {
-    return readMongoSetting(key);
-  }
-  return readPrismaSetting(key);
+  const provider = requireAuthProvider(await getAuthDataProvider());
+  return provider === 'mongodb' ? readMongoSetting(key) : readPrismaSetting(key);
 };
 
 export const getAuthSecurityPolicy = async (): Promise<AuthSecurityPolicy> => {

@@ -2,7 +2,12 @@
 
 import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 
-import type { RedisOverviewDto as RedisOverviewResponse } from '@/shared/dtos/database';
+import type {
+  DatabaseEngineBackupSchedulerStatusDto as DatabaseEngineBackupSchedulerStatusResponse,
+  DatabaseEngineProviderPreviewDto as DatabaseEngineProviderPreviewResponse,
+  DatabaseEngineStatusDto as DatabaseEngineStatusResponse,
+  RedisOverviewDto as RedisOverviewResponse,
+} from '@/shared/dtos/database';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import {
@@ -15,11 +20,18 @@ import {
   executeSqlQuery,
   executeCrudOperation,
   fetchAllCollectionsSchema,
+  fetchDatabaseEngineBackupSchedulerStatus,
+  fetchDatabaseEngineStatus,
+  fetchDatabaseEngineProviderPreview,
   fetchRedisOverview,
+  runDatabaseEngineBackupNow,
+  runDatabaseEngineBackupSchedulerTick,
   copyCollectionBetweenProviders,
   createJsonBackup,
   restoreJsonBackup,
   fetchJsonBackups,
+  type DatabaseEngineBackupRunNowResponse,
+  type DatabaseEngineBackupSchedulerTickResponse,
   type MultiSchemaResponse,
   type CollectionCopyResult,
 } from '../api';
@@ -173,6 +185,71 @@ export function useRedisOverview(limit = 200): UseQueryResult<RedisOverviewRespo
     queryKey: dbKeys.redisOverview({ limit }),
     queryFn: () => fetchRedisOverview(limit),
     staleTime: 15_000,
+  });
+}
+
+export function useDatabaseEngineStatus(): UseQueryResult<DatabaseEngineStatusResponse, Error> {
+  return useQuery({
+    queryKey: dbKeys.engineStatus,
+    queryFn: fetchDatabaseEngineStatus,
+    staleTime: 10_000,
+    refetchInterval: 20_000,
+  });
+}
+
+export function useDatabaseBackupSchedulerStatus(): UseQueryResult<
+  DatabaseEngineBackupSchedulerStatusResponse,
+  Error
+  > {
+  return useQuery({
+    queryKey: dbKeys.engineBackupSchedulerStatus,
+    queryFn: fetchDatabaseEngineBackupSchedulerStatus,
+    staleTime: 10_000,
+    refetchInterval: 20_000,
+  });
+}
+
+export function useDatabaseBackupSchedulerTickMutation(): UseMutationResult<
+  DatabaseEngineBackupSchedulerTickResponse,
+  Error,
+  void
+  > {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => runDatabaseEngineBackupSchedulerTick(),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: dbKeys.engineBackupSchedulerStatus });
+    },
+  });
+}
+
+export function useDatabaseBackupRunNowMutation(): UseMutationResult<
+  DatabaseEngineBackupRunNowResponse,
+  Error,
+  { dbType: 'mongodb' | 'postgresql' | 'all' }
+  > {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ dbType }) => runDatabaseEngineBackupNow(dbType),
+    onSuccess: (payload) => {
+      void queryClient.invalidateQueries({ queryKey: dbKeys.engineBackupSchedulerStatus });
+      payload.queued.forEach((item) => {
+        void queryClient.invalidateQueries({ queryKey: dbKeys.backups(item.dbType) });
+      });
+    },
+  });
+}
+
+export function useDatabaseEngineProviderPreview(
+  collections?: string[]
+): UseQueryResult<DatabaseEngineProviderPreviewResponse, Error> {
+  return useQuery({
+    queryKey: dbKeys.engineProviderPreview({
+      collections: collections ?? [],
+    }),
+    queryFn: () => fetchDatabaseEngineProviderPreview(collections),
+    staleTime: 10_000,
+    refetchInterval: 20_000,
   });
 }
 

@@ -7,7 +7,7 @@ import { ErrorSystem } from '@/features/observability/server';
 import type { DatabaseBrowseParamsDto as BrowseParams, DatabaseBrowseDto as BrowseResponse } from '@/shared/dtos/database';
 import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
+import { resolveCollectionProviderForRequest } from '@/shared/lib/db/collection-provider-map';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -153,10 +153,12 @@ async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext): Promi
     throw badRequestError('Collection parameter is required');
   }
 
-  const provider =
+  const provider = await resolveCollectionProviderForRequest(
+    collection,
     providerParam === 'mongodb' || providerParam === 'prisma'
       ? providerParam
-      : await getAppDbProvider();
+      : 'auto'
+  );
 
   const params: BrowseParams = { collection, limit, skip };
   if (query !== undefined) {

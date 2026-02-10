@@ -56,9 +56,12 @@ const warnAuthProviderDrift = (
   if (appProvider === authProvider) return;
   // Explicit auth provider settings are intentional overrides in mixed-provider deployments.
   if (source !== 'fallback') return;
-  console.warn(
-    `[auth-provider] Auth provider "${authProvider}" from ${source} differs from app provider "${appProvider}".`
-  );
+  void ErrorSystem.logWarning(`Auth provider "${authProvider}" from ${source} differs from app provider "${appProvider}".`, {
+    service: 'auth-provider',
+    appProvider,
+    authProvider,
+    source
+  });
 };
 
 const ensureAvailableAuthProvider = (

@@ -14,6 +14,7 @@ import { POST as POST_DELETE } from '@/app/api/databases/delete/route';
 import { POST as POST_RESTORE } from '@/app/api/databases/restore/route';
 import { POST as POST_UPLOAD } from '@/app/api/databases/upload/route';
 import { execFileAsync } from '@/features/database/utils/postgres';
+import { enqueueProductAiJob, processSingleJob, startProductAiJobQueue } from '@/features/jobs/server';
 import prisma from '@/shared/lib/db/prisma';
 
 
@@ -25,10 +26,33 @@ vi.mock('@/features/database/utils/postgres', async (importOriginal) => {
   };
 });
 
+vi.mock('@/features/jobs/server', () => ({
+  enqueueProductAiJob: vi.fn(),
+  processSingleJob: vi.fn(),
+  startProductAiJobQueue: vi.fn(),
+}));
+
 describe('Databases API', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     (execFileAsync as Mock).mockResolvedValue({ stdout: 'stdout', stderr: 'stderr' });
+    vi.mocked(enqueueProductAiJob).mockResolvedValue({
+      id: 'job-backup-1',
+      productId: 'system',
+      status: 'pending',
+      type: 'db_backup',
+      payload: {},
+      result: null,
+      errorMessage: null,
+      error: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      startedAt: null,
+      finishedAt: null,
+      completedAt: null,
+    });
+    vi.mocked(processSingleJob).mockResolvedValue(undefined);
+    vi.mocked(startProductAiJobQueue).mockImplementation(() => {});
     process.env['DATABASE_URL'] = 'postgresql://localhost:5432/test';
     vi.mocked(prisma.$queryRaw).mockResolvedValue([]);
     vi.mocked(prisma.$executeRawUnsafe).mockResolvedValue(0);
@@ -39,12 +63,28 @@ describe('Databases API', () => {
   });
 
   describe('POST /api/databases/backup', () => {
-    it('should create a backup of the database', async () => {
-      vi.spyOn(fs, 'writeFile').mockResolvedValue(undefined);
+    it('should enqueue a database backup job', async () => {
+      const res = await POST_BACKUP(
+        new NextRequest('http://localhost/api/databases/backup?type=postgresql', { method: 'POST' })
+      );
+      const payload = await res.json();
 
-      const res = await POST_BACKUP(new NextRequest('http://localhost/api/databases/backup', { method: 'POST' }));
       expect(res.status).toEqual(200);
-      expect(execFileAsync).toHaveBeenCalledTimes(1);
+      expect(payload).toMatchObject({
+        success: true,
+        jobId: 'job-backup-1',
+      });
+      expect(enqueueProductAiJob).toHaveBeenCalledWith(
+        'system',
+        'db_backup',
+        expect.objectContaining({
+          dbType: 'postgresql',
+          entityType: 'system',
+          source: 'db_backup',
+        })
+      );
+      expect(processSingleJob).toHaveBeenCalledWith('job-backup-1');
+      expect(startProductAiJobQueue).not.toHaveBeenCalled();
     });
   });
 

@@ -7,6 +7,7 @@ import {
   timeoutError,
   wrapError,
 } from '@/shared/errors/app-error';
+import { logger } from '@/shared/utils/logger';
 
 // Local type definition to avoid importing from features layer
 type LogSystemEventParams = {
@@ -21,12 +22,12 @@ type LogSystemEventParams = {
 const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
   try {
     // eslint-disable-next-line import/no-restricted-paths
-    const { logSystemEvent: realLogSystemEvent } = await import('@/features/observability/server');
+    const { logSystemEvent: realLogSystemEvent } = await import('@/features/observability/lib/system-logger');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
     await realLogSystemEvent(params as any);
   } catch (error) {
-    console.error('Failed to log system event via observability feature:', error);
-    console.log('System event (fallback):', params);
+    logger.error('Failed to log system event via observability feature', error);
+    logger.info('System event (fallback)', params as unknown as Record<string, unknown>);
   }
 };
 

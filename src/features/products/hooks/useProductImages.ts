@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useCallback, useRef, useEffect } from 'react';
 
 import { logClientError } from '@/features/observability';
+import { logger } from '@/shared/utils/logger';
 import type { ProductWithImages, ProductImageRecord } from '@/features/products/types';
 import type { ProductImageSlot } from '@/features/products/types/products-ui';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
@@ -380,7 +381,7 @@ export function useProductImages(
       if (isReorderingRef.current) {
         pendingRefreshRef.current = savedProduct;
         if (process.env['NODE_ENV'] !== 'production') {
-          console.info('[product-images] Refresh deferred during reorder');
+          logger.info('[product-images] Refresh deferred during reorder');
         }
         return;
       }

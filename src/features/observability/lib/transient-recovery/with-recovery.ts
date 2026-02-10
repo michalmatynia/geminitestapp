@@ -1,6 +1,5 @@
 import 'server-only';
 
-import { logSystemEvent } from '@/features/observability/server';
 import { isRetryableError } from '@/shared/errors/app-error';
 import { withRetry, type RetryOptions, withCircuitBreaker, type CircuitBreakerOptions } from '@/shared/utils/retry';
 
@@ -86,9 +85,7 @@ export async function withTransientRecovery<T>(
     return await execute();
   } catch (error) {
     if (options?.fallback && isTransientError(error)) {
-      void logSystemEvent({
-        level: 'warn',
-        message: 'Transient recovery fallback executed',
+      console.warn('[transient-recovery] fallback executed', {
         source: options?.source ?? 'transient-recovery',
         error,
       });

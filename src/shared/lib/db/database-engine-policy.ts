@@ -7,12 +7,15 @@ import {
   DATABASE_ENGINE_POLICY_KEY,
   DATABASE_ENGINE_SERVICE_ROUTE_MAP_KEY,
   DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY,
+  DATABASE_ENGINE_BACKUP_SCHEDULE_KEY,
   DEFAULT_DATABASE_ENGINE_POLICY,
   type DatabaseEnginePolicy,
+  type DatabaseEngineBackupSchedule,
   type DatabaseEngineProvider,
   type DatabaseEnginePrimaryProvider,
   type DatabaseEngineServiceRoute,
 } from './database-engine-constants';
+import { normalizeDatabaseEngineBackupSchedule } from './database-engine-backup-schedule';
 
 const CACHE_TTL_MS = 30_000;
 
@@ -26,6 +29,9 @@ let serviceRouteMapInflight: Promise<Partial<Record<DatabaseEngineServiceRoute, 
 
 let collectionRouteMapCache: CachedValue<Record<string, DatabaseEngineProvider>> | null = null;
 let collectionRouteMapInflight: Promise<Record<string, DatabaseEngineProvider>> | null = null;
+
+let backupScheduleCache: CachedValue<DatabaseEngineBackupSchedule> | null = null;
+let backupScheduleInflight: Promise<DatabaseEngineBackupSchedule> | null = null;
 
 const isValidProvider = (value: string): value is DatabaseEngineProvider =>
   value === 'mongodb' || value === 'prisma' || value === 'redis';
@@ -97,6 +103,9 @@ const parseCollectionRouteMap = (raw: unknown): Record<string, DatabaseEnginePro
   }
   return result;
 };
+
+const parseBackupSchedule = (raw: unknown): DatabaseEngineBackupSchedule =>
+  normalizeDatabaseEngineBackupSchedule(raw);
 
 const readPrismaSetting = async (key: string): Promise<string | null> => {
   if (!process.env['DATABASE_URL']) return null;
@@ -205,6 +214,29 @@ export async function getDatabaseEngineCollectionRouteMap(): Promise<Record<stri
   }
 }
 
+export async function getDatabaseEngineBackupSchedule(): Promise<DatabaseEngineBackupSchedule> {
+  const now = Date.now();
+  if (backupScheduleCache && now - backupScheduleCache.ts < CACHE_TTL_MS) {
+    return backupScheduleCache.value;
+  }
+  if (backupScheduleInflight) {
+    return backupScheduleInflight;
+  }
+
+  backupScheduleInflight = (async (): Promise<DatabaseEngineBackupSchedule> => {
+    const raw = await readSettingValue(DATABASE_ENGINE_BACKUP_SCHEDULE_KEY);
+    return parseBackupSchedule(raw);
+  })();
+
+  try {
+    const value = await backupScheduleInflight;
+    backupScheduleCache = { value, ts: Date.now() };
+    return value;
+  } finally {
+    backupScheduleInflight = null;
+  }
+}
+
 export async function getDatabaseEngineServiceProvider(
   service: DatabaseEngineServiceRoute
 ): Promise<DatabaseEngineProvider | null> {
@@ -226,5 +258,6 @@ export const invalidateDatabaseEnginePolicyCache = (): void => {
   serviceRouteMapInflight = null;
   collectionRouteMapCache = null;
   collectionRouteMapInflight = null;
+  backupScheduleCache = null;
+  backupScheduleInflight = null;
 };
-

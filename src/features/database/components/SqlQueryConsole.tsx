@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { logger } from '@/shared/utils/logger';
 import { Badge, Button, SectionPanel } from '@/shared/ui';
 
 import { useDatabase } from '../context/DatabaseContext';
@@ -31,7 +32,7 @@ function saveHistory(history: string[]): void {
   try {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, MAX_HISTORY)));
   } catch (error) {
-    console.warn('[SqlQueryConsole] Failed to save history', error);
+    logger.warn('[SqlQueryConsole] Failed to save history', { error: error instanceof Error ? error.message : String(error) });
   }
 }
 

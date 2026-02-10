@@ -300,6 +300,9 @@ type BaseApiCallOptions = {
 const isProductWriteMethod = (method: string): boolean =>
   method === 'addInventoryProduct' || method === 'updateInventoryProduct';
 
+const isNonIdempotentProductWriteMethod = (method: string): boolean =>
+  method === 'addInventoryProduct';
+
 const hasImagePayload = (parameters: Record<string, unknown>): boolean => {
   const images = parameters['images'];
   if (Array.isArray(images)) return images.length > 0;
@@ -353,7 +356,11 @@ export async function callBaseApi(
   const timeoutMs = resolveBaseApiTimeoutMs(method, parameters, options);
   const maxAttempts =
     options?.maxAttempts ??
-    (isProductWriteMethod(method) || hasImagePayload(parameters) ? 2 : 3);
+    (isNonIdempotentProductWriteMethod(method)
+      ? 1
+      : isProductWriteMethod(method) || hasImagePayload(parameters)
+        ? 2
+        : 3);
   const endpoint = buildBaseApiUrl();
   const body = new URLSearchParams({
     token,

@@ -815,6 +815,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
 
     const targetInventoryId =
       imagesOnly && listingInventoryId ? listingInventoryId : resolvedInventoryId;
+    const canRetryWrite = imagesOnly || Boolean(listingExternalId);
     imageDiagnosticsContext = {
       ...imageDiagnosticsContext,
       inventoryId: targetInventoryId
@@ -1043,7 +1044,13 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
 
     const warehouseMismatch = !imagesOnly && isWarehouseMismatch(result.error);
 
-    if (!imagesOnly && !result.success && warehouseMismatch && allowStockFallback) {
+    if (
+      !imagesOnly &&
+      canRetryWrite &&
+      !result.success &&
+      warehouseMismatch &&
+      allowStockFallback
+    ) {
       await ErrorSystem.logWarning('[export-to-base] Warehouse mismatch, retrying without stock', {
         productId,
         inventoryId: targetInventoryId,
@@ -1094,6 +1101,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
 
     if (
       !imagesOnly &&
+      canRetryWrite &&
       !result.success &&
       !warehouseMismatch &&
       includeStockWithoutWarehouse &&
@@ -1181,12 +1189,63 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
             includeStockWithoutWarehouse
           ));
         }
-        result = imagesOnly
-          ? await exportProductImagesToBase(
-            token,
-            targetInventoryId,
-            exportProduct,
-              listingExternalId as string,
+        if (canRetryWrite) {
+          result = imagesOnly
+            ? await exportProductImagesToBase(
+              token,
+              targetInventoryId,
+              exportProduct,
+                listingExternalId as string,
+                {
+                  imageBaseUrl,
+                  exportImagesAsBase64: exportImagesAsBase64,
+                  imageDiagnostics,
+                  imageBase64Mode,
+                  imageTransform
+                }
+            )
+            : await exportProductToBase(
+              token,
+              targetInventoryId,
+              exportProduct,
+              effectiveMappings,
+              warehouseId,
+              {
+                imageBaseUrl,
+                includeStockWithoutWarehouse,
+                ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
+                ...(producerNameById ? { producerNameById } : {}),
+                ...(producerExternalIdByInternalId
+                  ? { producerExternalIdByInternalId }
+                  : {}),
+                ...(tagNameById ? { tagNameById } : {}),
+                ...(tagExternalIdByInternalId
+                  ? { tagExternalIdByInternalId }
+                  : {}),
+                exportImagesAsBase64: exportImagesAsBase64,
+                imageDiagnostics,
+                imageBase64Mode,
+                imageTransform
+              }
+            );
+        } else {
+          let existingExternalProductId: string | null = null;
+          if (product.sku) {
+            const skuCheck = await checkBaseSkuExists(
+              token,
+              targetInventoryId,
+              product.sku
+            );
+            existingExternalProductId = skuCheck.productId ?? null;
+          }
+
+          if (existingExternalProductId) {
+            listingExternalId = existingExternalProductId;
+            result = await exportProductImagesToBase(
+              token,
+              targetInventoryId,
+              exportProduct,
+              existingExternalProductId,
               {
                 imageBaseUrl,
                 exportImagesAsBase64: exportImagesAsBase64,
@@ -1194,31 +1253,60 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
                 imageBase64Mode,
                 imageTransform
               }
-          )
-          : await exportProductToBase(
-            token,
-            targetInventoryId,
-            exportProduct,
-            effectiveMappings,
-            warehouseId,
-            {
-              imageBaseUrl,
-              includeStockWithoutWarehouse,
-              ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
-              ...(producerNameById ? { producerNameById } : {}),
-              ...(producerExternalIdByInternalId
-                ? { producerExternalIdByInternalId }
-                : {}),
-              ...(tagNameById ? { tagNameById } : {}),
-              ...(tagExternalIdByInternalId
-                ? { tagExternalIdByInternalId }
-                : {}),
-              exportImagesAsBase64: exportImagesAsBase64,
-              imageDiagnostics,
-              imageBase64Mode,
-              imageTransform
-            }
-          );
+            );
+          } else {
+            result = await exportProductToBase(
+              token,
+              targetInventoryId,
+              exportProduct,
+              effectiveMappings,
+              warehouseId,
+              {
+                imageBaseUrl,
+                includeStockWithoutWarehouse,
+                ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
+                ...(producerNameById ? { producerNameById } : {}),
+                ...(producerExternalIdByInternalId
+                  ? { producerExternalIdByInternalId }
+                  : {}),
+                ...(tagNameById ? { tagNameById } : {}),
+                ...(tagExternalIdByInternalId
+                  ? { tagExternalIdByInternalId }
+                  : {}),
+                exportImagesAsBase64: exportImagesAsBase64,
+                imageDiagnostics,
+                imageBase64Mode,
+                imageTransform
+              }
+            );
+          }
+        }
+      }
+    }
+
+    if (!result.success && !imagesOnly && !canRetryWrite && product.sku) {
+      const createdAfterTimeout = await checkBaseSkuExists(
+        token,
+        targetInventoryId,
+        product.sku
+      );
+      if (createdAfterTimeout.exists) {
+        await ErrorSystem.logWarning(
+          '[export-to-base] Initial export failed but SKU now exists; treating export as successful to avoid duplicate create.',
+          {
+            productId,
+            sku: product.sku,
+            inventoryId: targetInventoryId,
+            detectedExternalProductId: createdAfterTimeout.productId ?? null,
+            originalError: result.error ?? null,
+          }
+        );
+        result = {
+          success: true,
+          ...(createdAfterTimeout.productId
+            ? { productId: createdAfterTimeout.productId }
+            : {}),
+        };
       }
     }
 

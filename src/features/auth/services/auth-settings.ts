@@ -1,3 +1,4 @@
+import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/services/auth-provider';
 import { AUTH_SETTINGS_KEYS } from '@/features/auth/utils/auth-management';
 import {
   DEFAULT_AUTH_USER_PAGE_SETTINGS,
@@ -34,10 +35,8 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
 };
 
 const readSettingValue = async (key: string): Promise<string | null> => {
-  if (process.env['MONGODB_URI']) {
-    return readMongoSetting(key);
-  }
-  return readPrismaSetting(key);
+  const provider = requireAuthProvider(await getAuthDataProvider());
+  return provider === 'mongodb' ? readMongoSetting(key) : readPrismaSetting(key);
 };
 
 export const getAuthUserPageSettings = async (): Promise<AuthUserPageSettings> => {

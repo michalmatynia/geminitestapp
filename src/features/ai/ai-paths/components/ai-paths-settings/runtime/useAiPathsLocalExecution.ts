@@ -247,7 +247,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
             triggerContext: args.triggerContextRef.current,
             deferPoll: true,
             recordHistory: true,
-            historyLimit: 50,
+            historyLimit: args.historyRetentionPasses,
             seedOutputs: state.outputs,
             seedHashes: state.hashes ?? undefined,
             seedHashTimestamps: state.hashTimestamps ?? undefined,

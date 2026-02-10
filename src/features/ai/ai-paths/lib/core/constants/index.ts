@@ -420,6 +420,27 @@ export const DB_QUERY_PRESETS_KEY = 'ai_paths_db_query_presets';
 export const DB_NODE_PRESETS_KEY = 'ai_paths_db_node_presets';
 export const AI_PATHS_UI_STATE_KEY = 'ai_paths_ui_state';
 export const AI_PATHS_LOCAL_RUNS_KEY = 'ai_paths_local_runs';
+export const AI_PATHS_HISTORY_RETENTION_KEY = 'ai_paths_history_retention_passes';
+export const AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY =
+  'ai_paths_history_retention_options_max';
+export const AI_PATHS_HISTORY_RETENTION_MIN = 1;
+export const AI_PATHS_HISTORY_RETENTION_MAX = 50;
+export const AI_PATHS_HISTORY_RETENTION_DEFAULT = 3;
+const rawHistoryRetentionOptionsMax = Number.parseInt(
+  process.env['NEXT_PUBLIC_AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX'] ?? '',
+  10
+);
+export const AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT =
+  Number.isFinite(rawHistoryRetentionOptionsMax) &&
+  rawHistoryRetentionOptionsMax >= AI_PATHS_HISTORY_RETENTION_MIN
+    ? Math.min(
+      AI_PATHS_HISTORY_RETENTION_MAX,
+      Math.max(
+        AI_PATHS_HISTORY_RETENTION_MIN,
+        Math.trunc(rawHistoryRetentionOptionsMax)
+      )
+    )
+    : AI_PATHS_HISTORY_RETENTION_MAX;
 export const STORAGE_VERSION = 1;
 export const DEFAULT_MODELS = ['gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'];
 export const TRIGGER_EVENTS = [

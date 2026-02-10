@@ -751,7 +751,6 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
             },
             {
               $set: {
-                externalCategoryId: canonicalExternalCategoryId,
                 internalCategoryId: mapping.internalCategoryId,
                 isActive: true,
                 updatedAt: now,
@@ -759,7 +758,6 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
               $setOnInsert: {
                 _id: randomUUID(),
                 connectionId,
-                externalCategoryId: canonicalExternalCategoryId,
                 catalogId,
                 createdAt: now,
               },

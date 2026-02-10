@@ -109,6 +109,9 @@ export function AiPathsSettingsView({
     updateActivePathMeta,
     handleSwitchPath,
     savePathIndex,
+    historyRetentionPasses,
+    historyRetentionOptionsMax,
+    handleHistoryRetentionChange,
     setNodes,
     palette,
     handleDragStart,
@@ -231,6 +234,19 @@ export function AiPathsSettingsView({
       { value: 'queue', label: 'Run: Queue' },
     ],
     []
+  );
+  const historyRetentionOptions = useMemo(
+    () => {
+      const optionCount = Math.max(historyRetentionPasses, historyRetentionOptionsMax);
+      return Array.from({ length: optionCount }, (_value, index) => {
+        const passes = index + 1;
+        return {
+          value: String(passes),
+          label: `${passes} pass${passes === 1 ? '' : 'es'}`,
+        };
+      });
+    },
+    [historyRetentionOptionsMax, historyRetentionPasses]
   );
 
   const runtimeAnalyticsQuery = useAiPathRuntimeAnalytics('24h', activeTab === 'canvas');
@@ -509,6 +525,21 @@ export function AiPathsSettingsView({
                     className='w-[160px]'
                     triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
                     disabled={isPathLocked}
+                  />
+                </div>
+                <div className='flex flex-col items-end gap-1'>
+                  <Label className='text-[10px] uppercase text-gray-500'>History</Label>
+                  <UnifiedSelect
+                    value={String(historyRetentionPasses)}
+                    onValueChange={(value: string): void => {
+                      const parsed = Number.parseInt(value, 10);
+                      if (!Number.isFinite(parsed) || parsed === historyRetentionPasses) return;
+                      void handleHistoryRetentionChange(parsed);
+                    }}
+                    options={historyRetentionOptions}
+                    className='w-[140px]'
+                    triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
+                    disabled={saving}
                   />
                 </div>
                 <UnifiedSelect

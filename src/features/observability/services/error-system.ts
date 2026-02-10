@@ -15,7 +15,7 @@ export const ErrorSystem = {
    */
   captureException: async (error: unknown, context: ErrorContext = {}): Promise<void> => {
     try {
-      const { logSystemEvent } = await import('@/features/observability/server');
+      const { logSystemEvent } = await import('@/features/observability/lib/system-logger');
       const message = error instanceof Error ? error.message : String(error);
       const service = context.service || 'unknown';
 
@@ -58,7 +58,7 @@ export const ErrorSystem = {
    */
   logWarning: async (message: string, context: ErrorContext = {}): Promise<void> => {
     try {
-      const { logSystemEvent } = await import('@/features/observability/server');
+      const { logSystemEvent } = await import('@/features/observability/lib/system-logger');
       const service = context.service || 'unknown';
       
       await logSystemEvent({
@@ -86,7 +86,7 @@ export const ErrorSystem = {
    */
   logValidationError: async (message: string, context: ErrorContext = {}): Promise<void> => {
     try {
-      const { logSystemEvent } = await import('@/features/observability/server');
+      const { logSystemEvent } = await import('@/features/observability/lib/system-logger');
       const service = context.service || 'unknown';
       
       await logSystemEvent({
@@ -108,7 +108,7 @@ export const ErrorSystem = {
    */
   logInfo: async (message: string, context: ErrorContext = {}): Promise<void> => {
     try {
-      const { logSystemEvent } = await import('@/features/observability/server');
+      const { logSystemEvent } = await import('@/features/observability/lib/system-logger');
       const service = context.service || 'unknown';
       
       await logSystemEvent({

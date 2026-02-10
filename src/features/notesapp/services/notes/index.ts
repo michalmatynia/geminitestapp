@@ -1,7 +1,7 @@
 import 'server-only';
 
 import type { NoteRepository } from '@/features/notesapp/services/notes/types/note-repository';
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem, logActivity, ActivityTypes } from '@/features/observability/server';
 import { configurationError } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import type { NoteWithRelations, RelatedNote, NoteUpdateInput, NoteCreateInput, NoteFilters, TagRecord, TagCreateInput, TagUpdateInput, CategoryRecord, CategoryCreateInput, CategoryUpdateInput, CategoryWithChildren, NotebookRecord, NotebookCreateInput, NotebookUpdateInput, ThemeRecord, ThemeCreateInput, ThemeUpdateInput, NoteFileRecord, NoteFileCreateInput } from '@/shared/types/domain/notes';
@@ -102,7 +102,15 @@ export const noteService: NoteRepository = {
 
   create: async (data: NoteCreateInput): Promise<NoteWithRelations> => {
     const note = await repoCall('create', data);
-    return populateRelations(note);
+    const populated = populateRelations(note);
+    void logActivity({
+        type: ActivityTypes.NOTE.CREATED,
+        description: `Created note ${populated.title}`,
+        entityId: populated.id,
+        entityType: 'note',
+        metadata: { title: populated.title, notebookId: populated.notebookId }
+    }).catch(() => {});
+    return populated;
   },
 
   update: async (id: string, data: NoteUpdateInput): Promise<NoteWithRelations | null> => {
@@ -140,21 +148,12 @@ export const noteService: NoteRepository = {
           
           await repoCall('update', relatedId, { relatedNoteIds: nextIds });
         } catch (syncError) {
-          try {
-            await ErrorSystem.captureException(syncError, { 
-              service: 'note-service',
-              action: 'syncRelatedNote',
-              noteId: id,
-              relatedId
-            });
-          } catch (logError) {
-            console.error('[noteService][update] Failed to sync relation (and logging failed)', {
-              noteId: id,
-              relatedId,
-              syncError,
-              logError
-            });
-          }
+          void ErrorSystem.captureException(syncError, { 
+            service: 'note-service',
+            action: 'syncRelatedNote',
+            noteId: id,
+            relatedId
+          });
         }
       };
 
@@ -164,7 +163,15 @@ export const noteService: NoteRepository = {
       ]);
     }
 
-    return populateRelations(note);
+    const populated = populateRelations(note);
+    void logActivity({
+        type: ActivityTypes.NOTE.UPDATED,
+        description: `Updated note ${populated.title}`,
+        entityId: populated.id,
+        entityType: 'note',
+        metadata: { changes: Object.keys(data) }
+    }).catch(() => {});
+    return populated;
   },
 
   delete: async (id: string): Promise<boolean> => {
@@ -174,17 +181,22 @@ export const noteService: NoteRepository = {
         files.map((file: NoteFileRecord) => cleanupNoteFile(id, file.filepath))
       );
     } catch (error) {
-      try {
-        await ErrorSystem.captureException(error, { 
-          service: 'note-service',
-          action: 'deleteNoteFiles',
-          noteId: id
-        });
-      } catch (logError) {
-        console.error('[noteService][delete] Failed to cleanup files (and logging failed)', error, logError);
-      }
+      void ErrorSystem.captureException(error, { 
+        service: 'note-service',
+        action: 'deleteNoteFiles',
+        noteId: id
+      });
     }
-    return repoCall('delete', id);
+    const success = await repoCall('delete', id);
+    if (success) {
+      void logActivity({
+        type: ActivityTypes.NOTE.DELETED,
+        description: `Deleted note ${id}`,
+        entityId: id,
+        entityType: 'note',
+      }).catch(() => {});
+    }
+    return success;
   },
 
   // Pass-through methods

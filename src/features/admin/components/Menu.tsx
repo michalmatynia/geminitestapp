@@ -605,12 +605,11 @@ export const buildAdminNav = (handlers: {
         id: 'workspace/databases',
         label: 'Workflow Database',
         href: '/admin/databases',
-        keywords: ['database', 'backups', 'operations', 'providers'],
+        keywords: ['database', 'backups', 'operations', 'engine'],
         children: [
           { id: 'workspace/databases/backups', label: 'Backups', href: '/admin/databases', exact: true },
           { id: 'workspace/databases/operations', label: 'Operations', href: '/admin/databases/operations' },
           { id: 'workspace/databases/engine', label: 'Database Engine', href: '/admin/databases/engine' },
-          { id: 'workspace/databases/settings', label: 'Provider Settings', href: '/admin/databases/settings' },
         ],
       },
       { id: 'workspace/app-embeds', label: 'App Embeds', href: '/admin/app-embeds' },

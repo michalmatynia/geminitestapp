@@ -37,6 +37,10 @@ const aiPathsQueueStatusQueryKey = ['ai-paths-queue-status'] as const;
 const listingBadgesQueryKey = ['integrations', 'product-listings-badges'] as const;
 
 type ListingBadgesPayload = Record<string, string>;
+type GenericExportToBaseVariables = ExportToBaseVariables & {
+  productId: string;
+  requestId?: string;
+};
 
 const setListingBadgeStatus = (
   queryClient: ReturnType<typeof useQueryClient>,
@@ -64,20 +68,28 @@ const removeListingBadgeStatus = (
 export function useGenericExportToBaseMutation(): UseMutationResult<
   ExportResponse,
   Error,
-  ExportToBaseVariables & { productId: string }
+  GenericExportToBaseVariables
   > {
   const queryClient = useQueryClient();
 
   return useMutation<
     ExportResponse,
     Error,
-    ExportToBaseVariables & { productId: string },
+    GenericExportToBaseVariables,
     { previousListingBadges?: ListingBadgesPayload | undefined }
   >({
-    mutationFn: async (vars: ExportToBaseVariables & { productId: string }): Promise<ExportResponse> => {
-      const { productId, ...payload } = vars;
+    mutationFn: async (vars: GenericExportToBaseVariables): Promise<ExportResponse> => {
+      const { productId, requestId, ...payload } = vars;
+      const requestKey = requestId?.trim();
+      const options = requestKey
+        ? { headers: { 'x-idempotency-key': requestKey } }
+        : undefined;
       try {
-        return await api.post<ExportResponse>(`/api/integrations/products/${productId}/export-to-base`, payload);
+        return await api.post<ExportResponse>(
+          `/api/integrations/products/${productId}/export-to-base`,
+          payload,
+          options
+        );
       } catch (error: unknown) {
         if (error && typeof error === 'object' && 'data' in error) {
           const payloadRes = (error as { data: ExportResponse }).data;
@@ -88,7 +100,7 @@ export function useGenericExportToBaseMutation(): UseMutationResult<
         throw error;
       }
     },
-    onMutate: async (vars: ExportToBaseVariables & { productId: string }): Promise<{
+    onMutate: async (vars: GenericExportToBaseVariables): Promise<{
       previousListingBadges?: ListingBadgesPayload | undefined;
     }> => {
       await queryClient.cancelQueries({ queryKey: listingBadgesQueryKey });
@@ -103,7 +115,7 @@ export function useGenericExportToBaseMutation(): UseMutationResult<
       }
       removeListingBadgeStatus(queryClient, vars.productId);
     },
-    onSuccess: (_: ExportResponse, vars: ExportToBaseVariables & { productId: string }): void => {
+    onSuccess: (_: ExportResponse, vars: GenericExportToBaseVariables): void => {
       setListingBadgeStatus(queryClient, vars.productId, 'active');
       void queryClient.invalidateQueries({ queryKey: listingKeys.listings(vars.productId) });
       void queryClient.invalidateQueries({ queryKey: integrationJobsQueryKey });

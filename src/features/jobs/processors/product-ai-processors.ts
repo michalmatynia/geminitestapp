@@ -6,14 +6,24 @@ import path from 'path';
 import { ObjectId } from 'mongodb';
 import OpenAI from 'openai';
 
-import { runDatabaseSync, type DatabaseSyncDirection } from '@/features/database/server';
+import {
+  createMongoBackup,
+  createPostgresBackup,
+  runDatabaseSync,
+  type DatabaseSyncDirection,
+} from '@/features/database/server';
+import {
+  markDatabaseBackupJobFailed,
+  markDatabaseBackupJobRunning,
+  markDatabaseBackupJobSucceeded,
+} from '@/features/database/services/database-backup-scheduler';
 import type { ImageFileRecord } from '@/features/files/server';
 import { getImageFileRepository } from '@/features/files/server';
 import { listBaseListingsForSync, syncBaseImagesForListing } from '@/features/integrations/services/base-image-sync';
 import { defaultLanguages } from '@/features/internationalization/server';
 import { getInternationalizationProvider } from '@/features/internationalization/services/internationalization-provider';
 import type { ProductAiJobRecord } from '@/features/jobs/types/product-ai-job-repository';
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
 import {
   generateProductDescription,
   getProductRepository,
@@ -210,6 +220,50 @@ export async function processDatabaseSync(job: Job): Promise<Record<string, unkn
   });
 }
 
+export async function processDatabaseBackup(job: Job): Promise<Record<string, unknown>> {
+  const dbType = job.payload['dbType'];
+  if (dbType !== 'mongodb' && dbType !== 'postgresql') {
+    throw badRequestError('Database backup job missing valid dbType', {
+      jobId: job.id,
+      dbType,
+    });
+  }
+
+  try {
+    await markDatabaseBackupJobRunning(dbType, job.id);
+  } catch {
+    // Backup execution should continue even if scheduler metadata persistence fails.
+  }
+
+  try {
+    if (dbType === 'mongodb') {
+      const result = await createMongoBackup();
+      try {
+        await markDatabaseBackupJobSucceeded(dbType, job.id);
+      } catch {
+        // Keep backup result successful if status persistence fails.
+      }
+      return { ...result, dbType };
+    }
+
+    const result = await createPostgresBackup();
+    try {
+      await markDatabaseBackupJobSucceeded(dbType, job.id);
+    } catch {
+      // Keep backup result successful if status persistence fails.
+    }
+    return { ...result, dbType };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    try {
+      await markDatabaseBackupJobFailed(dbType, job.id, message);
+    } catch {
+      // Keep original backup failure as the primary error path.
+    }
+    throw error;
+  }
+}
+
 export async function processBase64ConvertAll(job: Job): Promise<Record<string, unknown>> {
   const productRepo = await getProductRepository();
   const pageSize = typeof job.payload['pageSize'] === 'number' ? job.payload['pageSize'] : 100;
@@ -359,17 +413,12 @@ const fetchAllLanguages = async (): Promise<LanguageRecord[]> => {
 
 const resolveFallbackLanguages = async (): Promise<string[]> => {
   const allLanguages = await fetchAllLanguages();
-  try {
-    const { logSystemEvent } = await import('@/features/observability/server');
-    void logSystemEvent({
-      level: 'info',
-      source: 'product-ai-processors',
-      message: `Found ${allLanguages.length} available languages`,
-      context: { count: allLanguages.length }
-    });
-  } catch {
-    console.log(`[processTranslation] Found ${allLanguages.length} available languages`);
-  }
+  void logSystemEvent({
+    level: 'info',
+    source: 'product-ai-processors',
+    message: `Found ${allLanguages.length} available languages`,
+    context: { count: allLanguages.length }
+  });
   const filtered = allLanguages.filter((lang: LanguageRecord) => lang.code.toUpperCase() !== 'EN');
   if (filtered.length > 0) {
     return filtered.map((lang: LanguageRecord) => lang.name);
@@ -377,17 +426,12 @@ const resolveFallbackLanguages = async (): Promise<string[]> => {
   const defaults = defaultLanguages
     .filter((lang: { code: string }) => lang.code !== 'EN')
     .map((lang: { name: string }) => lang.name);
-  try {
-    const { logSystemEvent } = await import('@/features/observability/server');
-    void logSystemEvent({
-      level: 'info',
-      source: 'product-ai-processors',
-      message: 'Using default languages fallback',
-      context: { defaults }
-    });
-  } catch {
-    console.log('[processTranslation] Using default languages fallback:', defaults);
-  }
+  void logSystemEvent({
+    level: 'info',
+    source: 'product-ai-processors',
+    message: 'Using default languages fallback',
+    context: { defaults }
+  });
   return defaults;
 };
 
@@ -626,6 +670,8 @@ export async function dispatchProductAiJob(job: Job): Promise<unknown> {
       return processGraphModel(job);
     case 'db_sync':
       return processDatabaseSync(job);
+    case 'db_backup':
+      return processDatabaseBackup(job);
     case 'base64_all':
       return processBase64ConvertAll(job);
     case 'base_images_sync_all':

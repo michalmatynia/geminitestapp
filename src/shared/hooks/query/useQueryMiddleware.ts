@@ -36,7 +36,7 @@ export function useQueryMiddleware(middlewares: QueryMiddleware[]): void {
               break;
           }
         } catch (error) {
-          logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'QueryMiddleware', action: 'middlewareError', middlewareName: middleware.name } });
+          logger.warn(`Middleware ${middleware.name} error`, { error: error instanceof Error ? error.message : String(error) });
         }
       });
     });
@@ -48,8 +48,12 @@ export function useQueryMiddleware(middlewares: QueryMiddleware[]): void {
 // Logging middleware
 export const loggingMiddleware: QueryMiddleware = {
   name: 'logging',
-
-
+  onQueryStart: (query: Query): void => {
+    logger.info(`🔄 Query started: ${JSON.stringify(query.queryKey)}`, { queryKey: query.queryKey });
+  },
+  onQuerySuccess: (query: Query, data: unknown): void => {
+    logger.info(`✅ Query success: ${JSON.stringify(query.queryKey)}`, { queryKey: query.queryKey, data });
+  },
   onQueryError: (query: Query, error: Error): void => {
     const message = error?.message?.trim() || "";
     if (!message || ["{}", "[]", "[object Object]"].includes(message)) {
@@ -80,7 +84,7 @@ export const performanceMiddleware: QueryMiddleware = {
     const duration = performance.now() - startTime;
     delete (query as any)._startTime;
     if (duration > 1000) { // Log slow queries
-      logClientError(new Error(`Slow query: ${JSON.stringify(query.queryKey)}`), { context: { source: 'PerformanceMiddleware', queryKey: query.queryKey, durationMs: duration, level: 'warn' } });
+      logger.warn(`🐌 Slow query (${duration.toFixed(0)}ms): ${JSON.stringify(query.queryKey)}`, { queryKey: query.queryKey, durationMs: duration });
     }
   },
   onQueryError: (query: Query): void => {
@@ -130,10 +134,12 @@ export const validationMiddleware: QueryMiddleware = {
   onQuerySuccess: (query: Query, data: unknown): void => {
     // Basic data validation
     if (data === null || data === undefined) {
-      logClientError(new Error(`Query returned null/undefined: ${JSON.stringify(query.queryKey)}`), { context: { source: 'ValidationMiddleware', queryKey: query.queryKey, level: 'warn' } });
+      logger.warn(`⚠️ Query returned null/undefined: ${JSON.stringify(query.queryKey)}`, { queryKey: query.queryKey });
     }
     
-
+    if (Array.isArray(data) && data.length === 0) {
+      logger.info(`ℹ️ Query returned empty array: ${JSON.stringify(query.queryKey)}`, { queryKey: query.queryKey });
+    }
   },
 };
 
@@ -146,7 +152,7 @@ export const securityMiddleware: QueryMiddleware = {
     const sensitivePatterns = ['password', 'token', 'secret', 'key'];
     
     if (sensitivePatterns.some((pattern: string) => queryKeyStr.includes(pattern))) {
-      logClientError(new Error(`Potential sensitive data in query key: ${JSON.stringify(query.queryKey)}`), { context: { source: 'SecurityMiddleware', queryKey: query.queryKey, level: 'warn' } });
+      logger.warn(`🔒 Potential sensitive data in query key: ${JSON.stringify(query.queryKey)}`, { queryKey: query.queryKey });
     }
   },
   onQuerySuccess: (_query: Query, data: unknown): void => {

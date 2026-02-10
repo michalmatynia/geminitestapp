@@ -34,6 +34,20 @@ const parseMap = (raw: unknown): Record<string, DatabaseEngineProvider> => {
   }
 };
 
+const findCollectionRoute = (
+  map: Record<string, DatabaseEngineProvider>,
+  collectionName: string
+): DatabaseEngineProvider | undefined => {
+  const direct = map[collectionName];
+  if (direct) return direct;
+  const normalized = collectionName.trim().toLowerCase();
+  if (!normalized) return undefined;
+  const matchedKey = Object.keys(map).find(
+    (key) => key.trim().toLowerCase() === normalized
+  );
+  return matchedKey ? map[matchedKey] : undefined;
+};
+
 const readMapFromPrisma = async (key: string): Promise<Record<string, DatabaseEngineProvider>> => {
   if (!process.env['DATABASE_URL']) return {};
   try {
@@ -113,7 +127,7 @@ export async function getCollectionProviderMap(): Promise<Record<string, AppDbPr
 export async function getCollectionProvider(collectionName: string): Promise<AppDbProvider> {
   const policy = await getDatabaseEnginePolicy();
   const map = await getCollectionRouteMap();
-  const explicit = map[collectionName];
+  const explicit = findCollectionRoute(map, collectionName);
   if (explicit === 'mongodb' || explicit === 'prisma') return explicit;
   if (explicit === 'redis') {
     throw internalError(
@@ -126,6 +140,18 @@ export async function getCollectionProvider(collectionName: string): Promise<App
     );
   }
   return getAppDbProvider();
+}
+
+export type CollectionProviderSelection = 'auto' | AppDbProvider | undefined;
+
+export async function resolveCollectionProviderForRequest(
+  collectionName: string,
+  requestedProvider: CollectionProviderSelection
+): Promise<AppDbProvider> {
+  if (requestedProvider === 'mongodb' || requestedProvider === 'prisma') {
+    return requestedProvider;
+  }
+  return getCollectionProvider(collectionName);
 }
 
 export const invalidateCollectionProviderMapCache = (): void => {

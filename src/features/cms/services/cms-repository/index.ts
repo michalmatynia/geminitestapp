@@ -3,6 +3,8 @@ import 'server-only';
 import { Prisma } from '@prisma/client';
 
 import { logSystemEvent } from '@/features/observability/server';
+import { internalError } from '@/shared/errors/app-error';
+import { getDatabaseEnginePolicy } from '@/shared/lib/db/database-engine-policy';
 import prisma from '@/shared/lib/db/prisma';
 
 
@@ -80,6 +82,17 @@ export async function getCmsRepository(): Promise<CmsRepository> {
       });
     }
     return cachedRepository;
+  }
+
+  const enginePolicy = await getDatabaseEnginePolicy();
+  const automaticFallbackBlocked =
+    !enginePolicy.allowAutomaticFallback || enginePolicy.strictProviderAvailability;
+  const automaticMigrationBlocked = !enginePolicy.allowAutomaticMigrations;
+
+  if (automaticFallbackBlocked || automaticMigrationBlocked) {
+    throw internalError(
+      'Prisma CMS tables are missing. Database Engine policy blocks automatic fallback/migrations. Run migrations manually or update engine policy.'
+    );
   }
 
   if (process.env['MONGODB_URI']) {

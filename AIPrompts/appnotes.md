@@ -1,4 +1,9 @@
+ The producer is not exporting still despite being mapped and set up in
+  export template
 
+  I can't delete users
+
+  Not able to create new Import / Export template. I should be able to duplicate them and if I press delete, I need a confirmation
  
 * I want new in Databases, one with three panels, one for MongoDB collection, one for Prisma Collections and one for Redis.
 I want this page to be a Dtabase migrations management engine, where I can manage which parts (collections) of application load from which provider. I also want to be able to fully controls synchronisation between these databased, migrations, backfilling behaviour and fallback polices. Nothing in regards to fallback, backfilling or migration is to be done automatically by the application. Everything needs to be set up in the Database engine or throw an error. I want full control and full customisation of these database aspect management.
@@ -11,7 +16,7 @@ I would  like to continue developing my database control Page. I would like a pa
 
 I should also be able to synchronise collections between databases and if the collection exists in one database, but doesn't exist in the other, Copy a collection from one database to the other.
 
- When I create / Edit Product, the name and description fields are invisible until I switch the Tabs
+* When I create / Edit Product, the name and description fields are invisible until I switch the Tabs
 
 Referenced record not found
 
@@ -20,11 +25,13 @@ Referenced record not found
 My AI Paths are a mess 
 * Mapped Categories are not being retained. The connection breaks and I need to remap again
 
-Validation patterns are gone
+* Validation patterns are gone
+
+* In AI paths, the Database Query Node does not work with mongoDB Provider, works perfectly with Prisma
+Asses the functionality of AI-Paths to run seamlessly with a MongoDB provider, as the provider has just been changed.
 
 
-
-Create database Backup from MongoDB add that to runtime
+* Create database Backup should be server job added to runtime
 
 When I try to save Mappings Base.com PRoducers, I get notification Referenced record not found
   
@@ -32,8 +39,6 @@ When I try to save Mappings Base.com PRoducers, I get notification Referenced re
 
 Referenced record not found in Producer mappings when I try to save the mapping fetched from Base.com
 
-In AI paths, the Database Query Node does not work with mongoDB Provider, works perfectly with Prisma
-Asses the functionality of AI-Paths to run seamlessly with a MongoDB provider, as the provider has just been changed.
 
 Base.com Producers
 Connection: Baselinker Connection
@@ -63,17 +68,14 @@ Mapped: 0
 
 
 
-In Products Category, the strike through line when I insert one category into another is not that great. Adjust it, so that the Line finished before the Category name begins
+* In Products Category, the strike through line when I insert one category into another is not that great. Adjust it, so that the Line finished before the Category name begins
 
 Also I need a pattern which would detect double spaces (Space and not new lines), if it sees double or more space, it should be trimmed. I cannot get rid of non replacement validations
 
 
 I need clear logs to work
 
-
-
-I had AiTranslation and AI Description functionalities that were configured through my Products Settings, these functionalities have been taken over by the AI-Paths, so any remainder code from them can be removed.
-
+Removing PAth should require confirmation
 
 
 Image uploads to Fastcomet

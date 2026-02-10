@@ -4,6 +4,11 @@ export * from './services/productAiService';
 export { startAgentQueue, stopAgentQueue, enqueueAgentRun } from './workers/agentQueue';
 export { startAiInsightsQueue } from './workers/aiInsightsQueue';
 export {
+  startDatabaseBackupSchedulerQueue,
+  getDatabaseBackupSchedulerQueueStatus,
+  DATABASE_BACKUP_SCHEDULER_REPEAT_EVERY_MS,
+} from './workers/databaseBackupSchedulerQueue';
+export {
   startAiPathRunQueue,
   getAiPathRunQueueStatus,
   processSingleRun,

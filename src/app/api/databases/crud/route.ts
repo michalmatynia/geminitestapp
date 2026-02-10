@@ -6,6 +6,7 @@ import { Client } from 'pg';
 
 import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
+import { resolveCollectionProviderForRequest } from '@/shared/lib/db/collection-provider-map';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
@@ -20,13 +21,16 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const parsed = await req.json() as {
     table?: string;
     operation?: 'insert' | 'update' | 'delete';
-    type?: 'postgresql' | 'mongodb';
+    type?: 'postgresql' | 'mongodb' | 'auto';
     data?: Record<string, unknown>;
     primaryKey?: Record<string, unknown>;
   };
 
   const { table, operation, data, primaryKey } = parsed;
-  const dbType = parsed.type ?? 'postgresql';
+  const requestedType = parsed.type ?? 'auto';
+  if (!['postgresql', 'mongodb', 'auto'].includes(requestedType)) {
+    throw badRequestError('Type must be postgresql, mongodb, or auto.');
+  }
 
   if (!table || !SAFE_NAME_RE.test(table)) {
     throw badRequestError('Valid table/collection name is required.');
@@ -35,7 +39,14 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     throw badRequestError('Operation must be insert, update, or delete.');
   }
 
-  if (dbType === 'mongodb') {
+  const provider =
+    requestedType === 'postgresql'
+      ? 'prisma'
+      : requestedType === 'mongodb'
+        ? 'mongodb'
+        : await resolveCollectionProviderForRequest(table, 'auto');
+
+  if (provider === 'mongodb') {
     return handleMongoCrud(table, operation, data, primaryKey);
   }
 

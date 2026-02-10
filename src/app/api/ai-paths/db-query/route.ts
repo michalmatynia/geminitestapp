@@ -8,7 +8,7 @@ import { enforceAiPathsActionRateLimit, isCollectionAllowed, requireAiPathsAcces
 import { parseJsonBody } from '@/features/products/server';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
+import { resolveCollectionProviderForRequest } from '@/shared/lib/db/collection-provider-map';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -98,6 +98,11 @@ const normalizeObjectId = (query: Record<string, unknown>, idType?: string): Rec
   return next;
 };
 
+const canRetryWithObjectId = (query: Record<string, unknown>, idType?: string): boolean =>
+  idType !== 'objectId' &&
+  typeof query['_id'] === 'string' &&
+  looksLikeObjectId(query['_id']);
+
 const getPrismaDelegate = (collection: string): PrismaDelegate | null => {
   const delegateName = PRISMA_COLLECTION_DELEGATES[collection];
   if (!delegateName) return null;
@@ -161,12 +166,10 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     throw internalError('Collection not allowlisted');
   }
 
-  const provider =
-    requestedProvider === 'prisma'
-      ? 'prisma'
-      : requestedProvider === 'mongodb'
-        ? 'mongodb'
-        : await getAppDbProvider();
+  const provider = await resolveCollectionProviderForRequest(
+    collection,
+    requestedProvider
+  );
 
   if (provider === 'prisma') {
     if (!process.env['DATABASE_URL']) {
@@ -212,14 +215,50 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   }
 
   const mongo = await getMongoDb();
-  const filter = normalizeObjectId(coerceQuery(query), idType);
+  const collectionRef = mongo.collection(collection);
+  const rawFilter = coerceQuery(query);
+  const filter = normalizeObjectId(rawFilter, idType);
 
-  const cursor = mongo.collection(collection).find(filter, projection ? { projection } : undefined);
-  if (sort) {
-    cursor.sort(sort as Sort);
+  const findOneWithFilter = async (
+    candidateFilter: Record<string, unknown>
+  ): Promise<Record<string, unknown> | null> =>
+    collectionRef.findOne(candidateFilter, {
+      ...(projection ? { projection } : {}),
+      ...(sort ? { sort: sort as Sort } : {}),
+    }) as Promise<Record<string, unknown> | null>;
+
+  const findManyWithFilter = async (
+    candidateFilter: Record<string, unknown>
+  ): Promise<{ items: Record<string, unknown>[]; count: number }> => {
+    const cursor = collectionRef.find(
+      candidateFilter,
+      projection ? { projection } : undefined
+    );
+    if (sort) {
+      cursor.sort(sort as Sort);
+    }
+    const [items, count] = await Promise.all([
+      cursor.limit(limit).toArray() as Promise<Record<string, unknown>[]>,
+      collectionRef.countDocuments(candidateFilter),
+    ]);
+    return { items, count };
+  };
+
+  if (single) {
+    let item = await findOneWithFilter(filter);
+    if (!item && canRetryWithObjectId(rawFilter, idType)) {
+      item = await findOneWithFilter(normalizeObjectId(rawFilter, 'objectId'));
+    }
+    return NextResponse.json({ item, count: item ? 1 : 0 });
   }
-  const items = await cursor.limit(limit).toArray();
-  return NextResponse.json({ items, count: items.length });
+
+  let { items, count } = await findManyWithFilter(filter);
+  if (count === 0 && canRetryWithObjectId(rawFilter, idType)) {
+    ({ items, count } = await findManyWithFilter(
+      normalizeObjectId(rawFilter, 'objectId')
+    ));
+  }
+  return NextResponse.json({ items, count });
 }
 
 export const POST = apiHandler(

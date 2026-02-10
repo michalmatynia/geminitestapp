@@ -1,6 +1,5 @@
 import 'server-only';
 
-import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
 import { Queue, Worker } from 'bullmq';
 
 import { logger } from '@/shared/utils/logger';
@@ -65,7 +64,9 @@ export function createManagedQueue<TJobData>(
     if (workerStarted) return;
     const connection = getRedisConnection();
     if (!connection) {
-      void logSystemEvent({ level: 'info', message: `Redis not available for queue ${config.name}, using inline processing mode`, source: `queue-factory:${config.name}` });
+      logger.info(
+        `[queue-factory:${config.name}] Redis not available, using inline processing mode`,
+      );
       return;
     }
     workerStarted = true;
@@ -116,7 +117,10 @@ export function createManagedQueue<TJobData>(
       })();
     });
 
-    void logSystemEvent({ level: 'info', message: `BullMQ worker started (concurrency: ${config.concurrency})`, source: `queue-factory:${config.name}`, context: { concurrency: config.concurrency } });
+    logger.info(
+      `[queue-factory:${config.name}] BullMQ worker started (concurrency: ${config.concurrency})`,
+      { concurrency: config.concurrency },
+    );
   };
 
   const stopWorker = async (): Promise<void> => {
@@ -129,52 +133,8 @@ export function createManagedQueue<TJobData>(
       queue = null;
     }
     workerStarted = false;
-    void logSystemEvent({ level: 'info', message: 'Worker stopped', source: `queue-factory:${config.name}` });
+    logger.info(`[queue-factory:${config.name}] Worker stopped`);
   };
-
-  const getHealthStatus = async (): Promise<QueueHealthStatus> => {
-    const q = ensureQueue();
-    if (!q) {
-      return {
-        running: false,
-        healthy: false,
-        processing: false,
-        activeCount: 0,
-        waitingCount: 0,
-        failedCount: 0,
-        completedCount: 0,
-        lastPollTime: 0,
-        timeSinceLastPoll: 0,
-      };
-    }
-    const counts = await q.getJobCounts('active', 'waiting', 'failed', 'completed');
-    const now = Date.now();
-    return {
-      running: workerStarted,
-      healthy: workerStarted && (lastProcessTime === 0 || now - lastProcessTime < 120_000),
-      processing: (counts['active'] ?? 0) > 0,
-      activeCount: counts['active'] ?? 0,
-      waitingCount: counts['waiting'] ?? 0,
-      failedCount: counts['failed'] ?? 0,
-      completedCount: counts['completed'] ?? 0,
-      lastPollTime: lastProcessTime,
-      timeSinceLastPoll: lastProcessTime > 0 ? now - lastProcessTime : 0,
-    };
-  };
-
-  const managed: ManagedQueue<TJobData> = {
-    enqueue,
-    startWorker,
-    stopWorker,
-    getHealthStatus,
-    processInline,
-    getQueue: () => queue,
-  };
-
-  registerQueue(config.name, managed as ManagedQueue<unknown>);
-
-  return managed;
-}
 
   const getHealthStatus = async (): Promise<QueueHealthStatus> => {
     const q = ensureQueue();

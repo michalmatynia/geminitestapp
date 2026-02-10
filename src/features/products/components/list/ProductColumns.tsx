@@ -83,6 +83,7 @@ const INTEGRATION_SELECTION_STALE_TIME_MS = 5 * 60 * 1000;
 const INTEGRATION_SELECTION_GC_TIME_MS = 30 * 60 * 1000;
 const defaultExportInventoryQueryKey = ['integrations', 'default-export-inventory'] as const;
 const activeExportTemplateQueryKey = ['integrations', 'active-export-template'] as const;
+const oneClickExportInFlight = new Set<string>();
 
 const BaseQuickExportButton = ({
   product,
@@ -135,8 +136,15 @@ const BaseQuickExportButton = ({
   };
 
   const runQuickExport = async (): Promise<void> => {
-    if (quickExportLockRef.current || quickExportMutation.isPending) return;
+    if (
+      quickExportLockRef.current ||
+      quickExportMutation.isPending ||
+      oneClickExportInFlight.has(product.id)
+    ) {
+      return;
+    }
     quickExportLockRef.current = true;
+    oneClickExportInFlight.add(product.id);
     setQuickExportLocked(true);
 
     try {
@@ -187,10 +195,12 @@ const BaseQuickExportButton = ({
         connectionId: string;
         inventoryId: string;
         templateId?: string;
+        requestId?: string;
       } = {
         productId: product.id,
         connectionId,
         inventoryId,
+        requestId: `one-click:${product.id}:${connectionId}:${inventoryId}:${Math.floor(Date.now() / 30000)}`,
       };
       if (templateId) {
         payload.templateId = templateId;
@@ -207,6 +217,7 @@ const BaseQuickExportButton = ({
       }
     } finally {
       quickExportLockRef.current = false;
+      oneClickExportInFlight.delete(product.id);
       setQuickExportLocked(false);
     }
   };

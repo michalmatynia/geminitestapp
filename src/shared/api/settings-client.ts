@@ -1,7 +1,6 @@
 'use client';
 
 import { logClientError } from '@/features/observability';
-import { logger } from '@/shared/utils/logger';
 
 export type SettingRecord = {
   key: string;

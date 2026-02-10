@@ -12,7 +12,7 @@ import {
   ConfirmDialog,
   FileUploadButton,
   type FileUploadHelpers,
-  AdminPageLayout,
+  PageLayout,
 } from '@/shared/ui';
 
 import { getDatabaseColumns } from '../components/DatabaseColumns';
@@ -113,6 +113,14 @@ function DatabasesContent(): React.JSX.Element {
       const { ok, payload } = result;
       const log = payload.log ?? 'No log available.';
       if (ok) {
+        if (payload.jobId) {
+          toast(
+            payload.message ?? `Database backup job queued (job: ${payload.jobId}).`,
+            { variant: 'success' }
+          );
+          return;
+        }
+
         if (payload.warning) {
           openLogModal(
             `${payload.message ?? 'Backup created'}: ${ 
@@ -191,14 +199,14 @@ function DatabasesContent(): React.JSX.Element {
   };
 
   return (
-    <AdminPageLayout
+    <PageLayout
       title={`Databases - ${activeTab === 'postgresql' ? 'PostgreSQL' : 'MongoDB'}`}
       description={
         activeTab === 'postgresql'
           ? 'PostgreSQL backups use pg_dump/pg_restore (.dump files). Restores are data-only and preserve your current schema.'
           : 'MongoDB backups use mongodump/mongorestore (.archive files). Full database dumps with BSON format.'
       }
-      mainActions={
+      headerActions={
         <>
           <Button
             disabled={isProd}
@@ -289,7 +297,7 @@ function DatabasesContent(): React.JSX.Element {
           sortingStorageKey={`stardb:database-backups:${activeTab}:sorting`}
         />
       </SectionPanel>
-    </AdminPageLayout>
+    </PageLayout>
   );
 }
 

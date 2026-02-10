@@ -18,6 +18,7 @@ import { ToneMappingMode, BlendFunction } from 'postprocessing';
 import { Suspense, useEffect, useRef, useMemo, Component, ErrorInfo } from 'react';
 import * as THREE from 'three';
 
+import { logger } from '@/shared/utils/logger';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { useOptionalViewer3D } from '../context/Viewer3DContext';
@@ -43,7 +44,7 @@ class Model3DErrorBoundary extends Component<
   }
 
   override componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    console.error('3D Model Error:', error, errorInfo);
+    logger.error('3D Model Error', error, { componentStack: errorInfo.componentStack });
     logClientError(error, {
       componentStack: errorInfo.componentStack,
       context: { source: 'Viewer3D-error-boundary' },
@@ -166,7 +167,7 @@ function Model3D({
   useEffect(() => {
     if (scene) {
       if (replacedTextureRef.current) {
-        console.warn(
+        logger.warn(
           '[Viewer3D] Model references blob: textures. Re-export as .glb or embed textures to restore materials.'
         );
       }

@@ -1,4 +1,9 @@
-import type { RedisOverviewDto as RedisOverviewResponse } from '@/shared/dtos/database';
+import type {
+  DatabaseEngineBackupSchedulerStatusDto as DatabaseEngineBackupSchedulerStatusResponse,
+  DatabaseEngineProviderPreviewDto as DatabaseEngineProviderPreviewResponse,
+  DatabaseEngineStatusDto as DatabaseEngineStatusResponse,
+  RedisOverviewDto as RedisOverviewResponse,
+} from '@/shared/dtos/database';
 import type { AppProviderDiagnosticsDto as ProviderDiagnosticsResponse } from '@/shared/dtos/system';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
@@ -205,6 +210,22 @@ export type CollectionCopyResult = {
   error?: string;
 };
 
+export type DatabaseEngineBackupSchedulerTickResponse = {
+  success: boolean;
+  tick: {
+    checkedAt: string;
+    schedulerEnabled: boolean;
+    triggered: Array<{ dbType: 'mongodb' | 'postgresql'; jobId: string }>;
+    skipped: Array<{ dbType: 'mongodb' | 'postgresql'; reason: string }>;
+  };
+  status: DatabaseEngineBackupSchedulerStatusResponse;
+};
+
+export type DatabaseEngineBackupRunNowResponse = {
+  success: boolean;
+  queued: Array<{ dbType: 'mongodb' | 'postgresql'; jobId: string }>;
+};
+
 export const fetchAllCollectionsSchema = async (): Promise<MultiSchemaResponse> => {
   const res = await fetch('/api/databases/schema?provider=all&includeCounts=true');
   if (!res.ok) {
@@ -221,6 +242,67 @@ export const fetchRedisOverview = async (limit = 200): Promise<RedisOverviewResp
     throw new Error('Failed to fetch Redis overview');
   }
   return res.json() as Promise<RedisOverviewResponse>;
+};
+
+export const fetchDatabaseEngineStatus = async (): Promise<DatabaseEngineStatusResponse> => {
+  const res = await fetch('/api/databases/engine/status', { cache: 'no-store' });
+  if (!res.ok) {
+    throw new Error('Failed to fetch Database Engine status');
+  }
+  return res.json() as Promise<DatabaseEngineStatusResponse>;
+};
+
+export const fetchDatabaseEngineBackupSchedulerStatus = async (): Promise<DatabaseEngineBackupSchedulerStatusResponse> => {
+  const res = await fetch('/api/databases/engine/backup-scheduler/status', { cache: 'no-store' });
+  if (!res.ok) {
+    throw new Error('Failed to fetch Database Engine backup scheduler status');
+  }
+  return res.json() as Promise<DatabaseEngineBackupSchedulerStatusResponse>;
+};
+
+export const fetchDatabaseEngineProviderPreview = async (
+  collections?: string[]
+): Promise<DatabaseEngineProviderPreviewResponse> => {
+  const params = new URLSearchParams();
+  if (collections && collections.length > 0) {
+    params.set('collections', collections.join(','));
+  }
+  const query = params.toString();
+  const url = query
+    ? `/api/databases/engine/provider-preview?${query}`
+    : '/api/databases/engine/provider-preview';
+  const res = await fetch(url, { cache: 'no-store' });
+  if (!res.ok) {
+    throw new Error('Failed to fetch Database Engine provider preview');
+  }
+  return res.json() as Promise<DatabaseEngineProviderPreviewResponse>;
+};
+
+export const runDatabaseEngineBackupSchedulerTick = async (): Promise<DatabaseEngineBackupSchedulerTickResponse> => {
+  const res = await fetch('/api/databases/engine/backup-scheduler/tick', {
+    method: 'POST',
+    headers: withCsrfHeaders(),
+  });
+  if (!res.ok) {
+    const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(payload?.error || 'Failed to run Database Engine backup scheduler tick');
+  }
+  return res.json() as Promise<DatabaseEngineBackupSchedulerTickResponse>;
+};
+
+export const runDatabaseEngineBackupNow = async (
+  dbType: 'mongodb' | 'postgresql' | 'all'
+): Promise<DatabaseEngineBackupRunNowResponse> => {
+  const res = await fetch('/api/databases/engine/backup-scheduler/run-now', {
+    method: 'POST',
+    headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ dbType }),
+  });
+  if (!res.ok) {
+    const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(payload?.error || 'Failed to queue manual database backup');
+  }
+  return res.json() as Promise<DatabaseEngineBackupRunNowResponse>;
 };
 
 export const copyCollectionBetweenProviders = async (

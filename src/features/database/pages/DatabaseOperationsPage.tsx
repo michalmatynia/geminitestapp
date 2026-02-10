@@ -4,7 +4,7 @@ import { AlertTriangleIcon } from 'lucide-react';
 import Link from 'next/link';
 
 import {
-  AdminPageLayout,
+  PageLayout,
   Button,
   SectionPanel,
   Tabs,
@@ -24,10 +24,10 @@ function DatabaseOperationsContent(): React.JSX.Element {
   const isProduction = process.env['NODE_ENV'] === 'production';
 
   return (
-    <AdminPageLayout
+    <PageLayout
       title='Database Operations'
       description='Execute SQL queries and manage table data directly.'
-      mainActions={
+      headerActions={
         <div className='flex items-center gap-2'>
           <select
             value={dbType}
@@ -88,7 +88,7 @@ function DatabaseOperationsContent(): React.JSX.Element {
           )}
         </TabsContent>
       </Tabs>
-    </AdminPageLayout>
+    </PageLayout>
   );
 }
 

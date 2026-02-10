@@ -13,7 +13,7 @@ import { useNotebooks } from '@/features/notesapp/api/useNoteQueries';
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/features/observability';
 import type { NotebookRecord } from '@/shared/types/domain/notes';
-import { Button, useToast, Input, Label, SectionPanel, SectionHeader, AdminPageLayout } from '@/shared/ui';
+import { Button, useToast, Input, Label, SectionPanel, SectionHeader, PageLayout } from '@/shared/ui';
 
 export function AdminNotesNotebooksPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -119,7 +119,7 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
 
 
   return (
-    <AdminPageLayout
+    <PageLayout
       title='Notebooks'
       description='Create and manage notebooks. Notes, folders, and tags are scoped per notebook.'
     >
@@ -300,6 +300,6 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
           )}
         </SectionPanel>
       </div>
-    </AdminPageLayout>
+    </PageLayout>
   );
 }

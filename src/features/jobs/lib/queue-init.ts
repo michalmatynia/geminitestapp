@@ -69,13 +69,18 @@ export const initializeQueues = (): void => {
     }
 
     // Import all queue modules to trigger registration via createManagedQueue
-    await Promise.all([
+    const queueModules = await Promise.all([
       import('@/features/jobs/workers/productAiQueue'),
       import('@/features/jobs/workers/aiPathRunQueue'),
       import('@/features/jobs/workers/chatbotJobQueue'),
       import('@/features/jobs/workers/agentQueue'),
       import('@/features/jobs/workers/aiInsightsQueue'),
+      import('@/features/jobs/workers/databaseBackupSchedulerQueue'),
     ]);
+    const backupSchedulerModule = queueModules[5] as {
+      startDatabaseBackupSchedulerQueue?: () => void;
+    };
+    backupSchedulerModule.startDatabaseBackupSchedulerQueue?.();
 
     void logSystemEvent({
       level: 'info',

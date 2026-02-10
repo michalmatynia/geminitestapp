@@ -21,6 +21,12 @@ import type {
   UpdaterSampleState,
 } from '@/features/ai/ai-paths/lib';
 import {
+  AI_PATHS_HISTORY_RETENTION_DEFAULT,
+  AI_PATHS_HISTORY_RETENTION_KEY,
+  AI_PATHS_HISTORY_RETENTION_MAX,
+  AI_PATHS_HISTORY_RETENTION_MIN,
+  AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT,
+  AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY,
   AI_PATHS_LAST_ERROR_KEY,
   AI_PATHS_UI_STATE_KEY,
   CLUSTER_PRESETS_KEY,
@@ -44,6 +50,7 @@ import {
   updateAiPathsSettingsBulk,
 } from '@/features/ai/ai-paths/lib/settings-store-client';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
+import { logger } from '@/shared/utils/logger';
 
 import {
   buildPersistedRuntimeState,
@@ -114,6 +121,8 @@ type UseAiPathsPersistenceArgs = {
   setExecutionMode: (value: PathExecutionMode) => void;
   setFlowIntensity: (value: PathFlowIntensity) => void;
   setRunMode: (value: PathRunMode) => void;
+  setHistoryRetentionPasses: (value: number) => void;
+  setHistoryRetentionOptionsMax: (value: number) => void;
   setPathName: (value: string) => void;
   setPaths: React.Dispatch<React.SetStateAction<PathMeta[]>>;
   setRuntimeState: React.Dispatch<React.SetStateAction<RuntimeState>>;
@@ -209,6 +218,8 @@ export function useAiPathsPersistence({
   setExecutionMode,
   setFlowIntensity,
   setRunMode,
+  setHistoryRetentionPasses,
+  setHistoryRetentionOptionsMax,
   setPathName,
   setPaths,
   setRuntimeState,
@@ -262,6 +273,33 @@ export function useAiPathsPersistence({
     pathConfigsRef.current = pathConfigs;
   }, [pathConfigs]);
 
+  const normalizeHistoryRetentionPasses = useCallback((value: unknown): number => {
+    const parsed =
+      typeof value === 'number'
+        ? value
+        : Number.parseInt(typeof value === 'string' ? value : '', 10);
+    if (!Number.isFinite(parsed) || parsed < AI_PATHS_HISTORY_RETENTION_MIN) {
+      return AI_PATHS_HISTORY_RETENTION_DEFAULT;
+    }
+    return Math.min(
+      AI_PATHS_HISTORY_RETENTION_MAX,
+      Math.max(AI_PATHS_HISTORY_RETENTION_MIN, Math.trunc(parsed))
+    );
+  }, []);
+  const normalizeHistoryRetentionOptionsMax = useCallback((value: unknown): number => {
+    const parsed =
+      typeof value === 'number'
+        ? value
+        : Number.parseInt(typeof value === 'string' ? value : '', 10);
+    if (!Number.isFinite(parsed) || parsed < AI_PATHS_HISTORY_RETENTION_MIN) {
+      return AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT;
+    }
+    return Math.min(
+      AI_PATHS_HISTORY_RETENTION_MAX,
+      Math.max(AI_PATHS_HISTORY_RETENTION_MIN, Math.trunc(parsed))
+    );
+  }, []);
+
   const normalizeConfigForHash = useCallback(
     (config: PathConfig): PathConfig => ({
       ...config,
@@ -307,7 +345,7 @@ export function useAiPathsPersistence({
         await persistUserPreferences(resolved);
         lastUserPrefsActivePathIdRef.current = resolved;
       } catch (error) {
-        console.warn('[AI Paths] Failed to persist user preferences.', error);
+        logger.warn('[AI Paths] Failed to persist user preferences', { error: error instanceof Error ? error.message : String(error) });
       }
     },
     [persistUserPreferences, uiStateLoaded]
@@ -342,6 +380,16 @@ export function useAiPathsPersistence({
             item.value,
           ])
         );
+        const historyRetentionRaw = map.get(AI_PATHS_HISTORY_RETENTION_KEY);
+        const normalizedHistoryRetentionPasses = normalizeHistoryRetentionPasses(historyRetentionRaw);
+        const historyRetentionOptionsMaxRaw = map.get(
+          AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY
+        );
+        const normalizedHistoryRetentionOptionsMax = normalizeHistoryRetentionOptionsMax(
+          historyRetentionOptionsMaxRaw
+        );
+        setHistoryRetentionPasses(normalizedHistoryRetentionPasses);
+        setHistoryRetentionOptionsMax(normalizedHistoryRetentionOptionsMax);
         const uiStateRaw = map.get(AI_PATHS_UI_STATE_KEY);
         const uiStateParsed = uiStateRaw ? safeParseJson(uiStateRaw).value : null;
         const uiState =
@@ -393,6 +441,21 @@ export function useAiPathsPersistence({
         let metas: PathMeta[] = [];
         let settingsMetas: PathMeta[] = [];
         const migrationPayload: PersistSettingsPayload = [];
+        if ((historyRetentionRaw?.trim() ?? '') !== String(normalizedHistoryRetentionPasses)) {
+          migrationPayload.push({
+            key: AI_PATHS_HISTORY_RETENTION_KEY,
+            value: String(normalizedHistoryRetentionPasses),
+          });
+        }
+        if (
+          historyRetentionOptionsMaxRaw !== undefined &&
+          historyRetentionOptionsMaxRaw.trim() !== String(normalizedHistoryRetentionOptionsMax)
+        ) {
+          migrationPayload.push({
+            key: AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY,
+            value: String(normalizedHistoryRetentionOptionsMax),
+          });
+        }
         let loadedLastError: { message: string; time: string; pathId?: string | null } | null = null;
         if (lastErrorRaw) {
           try {
@@ -609,7 +672,7 @@ export function useAiPathsPersistence({
           try {
             await updateAiPathsSettingsMutation.mutateAsync(migrationPayload);
           } catch (error) {
-            console.warn('[AI Paths] Failed to persist migrated AI Paths settings.', error);
+            logger.warn('[AI Paths] Failed to persist migrated AI Paths settings', { error: error instanceof Error ? error.message : String(error) });
           }
         }
         setUiStateLoaded(true);
@@ -629,8 +692,12 @@ export function useAiPathsPersistence({
     loadNonce,
     updateAiPathsSettingsMutation,
     normalizeConfigForHash,
+    normalizeHistoryRetentionPasses,
+    normalizeHistoryRetentionOptionsMax,
     persistLastError,
     setLoading,
+    setHistoryRetentionPasses,
+    setHistoryRetentionOptionsMax,
   ]);
 
   useEffect((): void | (() => void) => {
@@ -647,7 +714,7 @@ export function useAiPathsPersistence({
     const shouldPersistUserPrefs = nextActivePathId !== lastUserPrefsActivePathIdRef.current;
     const timeout = setTimeout((): void => {
       void persistUiState(payload).catch((error: unknown) => {
-        console.warn('[AI Paths] Failed to persist UI state.', error);
+        logger.warn('[AI Paths] Failed to persist UI state', { error: error instanceof Error ? error.message : String(error) });
       });
       if (shouldPersistUserPrefs) {
         void persistUserPreferences(nextActivePathId)
@@ -655,7 +722,7 @@ export function useAiPathsPersistence({
             lastUserPrefsActivePathIdRef.current = nextActivePathId;
           })
           .catch((error: unknown) => {
-            console.warn('[AI Paths] Failed to persist user preferences.', error);
+            logger.warn('[AI Paths] Failed to persist user preferences', { error: error instanceof Error ? error.message : String(error) });
           });
       }
     }, 200);

@@ -56,11 +56,9 @@ export * from './PromptGenerationSection';
 export { default as FilePreviewModal } from './file-preview-modal';
 export { default as MissingImagePlaceholder } from './missing-image-placeholder';
 
-export * from './AdminPageLayout';
 export * from './PageLayout';
 export * from './CardWithActions';
 export * from './FormModal';
 export * from './form-section';
-export * from './SettingsPageLayout';
 export * from './ResourceCard';
 export * from './DynamicFilters';

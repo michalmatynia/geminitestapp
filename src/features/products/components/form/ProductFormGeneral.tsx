@@ -236,6 +236,8 @@ export default function ProductFormGeneral({
 
   const { register, getValues, setValue, watch } = useFormContext<ProductFormData>();
   const validatorConfigQuery = useProductValidatorConfig();
+  const [activeNameTab, setActiveNameTab] = useState<string>('');
+  const [activeDescriptionTab, setActiveDescriptionTab] = useState<string>('');
 
   const [identifierType, setIdentifierType] = useState<'ean' | 'gtin' | 'asin'>((): 'ean' | 'gtin' | 'asin' => {
     const vals = getValues();
@@ -254,6 +256,26 @@ export default function ProductFormGeneral({
         : ({} as Record<string, FieldValidatorIssue[]>),
     [allValues, validatorEnabled, validatorPatterns]
   );
+  const languageTabValues = useMemo(
+    () =>
+      filteredLanguages.map((language: { code: string }) => String(language.code).trim().toLowerCase()),
+    [filteredLanguages]
+  );
+  const firstLanguageTab = languageTabValues[0] ?? '';
+
+  useEffect(() => {
+    if (!firstLanguageTab) {
+      setActiveNameTab('');
+      setActiveDescriptionTab('');
+      return;
+    }
+    setActiveNameTab((prev: string) =>
+      prev && languageTabValues.includes(prev) ? prev : firstLanguageTab
+    );
+    setActiveDescriptionTab((prev: string) =>
+      prev && languageTabValues.includes(prev) ? prev : firstLanguageTab
+    );
+  }, [firstLanguageTab, languageTabValues]);
 
   const applyIssueReplacement = (
     value: string,
@@ -337,7 +359,11 @@ export default function ProductFormGeneral({
 
       {hasCatalogs && languagesReady && (
         <FormSection>
-          <Tabs defaultValue={filteredLanguages[0] ? `${filteredLanguages[0].name.toLowerCase()}-name` : 'english-name'} className='w-full'>
+          <Tabs
+            value={activeNameTab}
+            onValueChange={setActiveNameTab}
+            className='w-full'
+          >
             <TabsList className='mb-4'>
               {filteredLanguages.map((language: { name: string; code: string }) => {
                 const fieldName = `name_${language.code.toLowerCase()}` as keyof ProductFormData;
@@ -345,7 +371,7 @@ export default function ProductFormGeneral({
                 return (
                   <TabsTrigger
                     key={language.code}
-                    value={`${language.name.toLowerCase()}-name`}
+                    value={language.code.toLowerCase()}
                     className={cn(
                       !fieldValue?.trim()
                         ? 'text-muted-foreground/90 data-[state=active]:text-muted-foreground/90'
@@ -365,7 +391,7 @@ export default function ProductFormGeneral({
               const fieldIssue = fieldIssueList[0];
               const fieldValue = (allValues[fieldName] as string | undefined) ?? '';
               return (
-                <TabsContent key={language.code} value={`${language.name.toLowerCase()}-name`}>
+                <TabsContent key={language.code} value={language.code.toLowerCase()}>
                   <FormField label={`${language.name} Name`} error={error} id={fieldName}>
                     <Input
                       id={fieldName}
@@ -406,7 +432,11 @@ export default function ProductFormGeneral({
             })}
           </Tabs>
 
-          <Tabs defaultValue={filteredLanguages[0] ? `${filteredLanguages[0].name.toLowerCase()}-description` : 'english-description'} className='w-full mt-4'>
+          <Tabs
+            value={activeDescriptionTab}
+            onValueChange={setActiveDescriptionTab}
+            className='w-full mt-4'
+          >
             <TabsList className='mb-4'>
               {filteredLanguages.map((language: { name: string; code: string }) => {
                 const fieldName = `description_${language.code.toLowerCase()}` as keyof ProductFormData;
@@ -414,7 +444,7 @@ export default function ProductFormGeneral({
                 return (
                   <TabsTrigger
                     key={language.code}
-                    value={`${language.name.toLowerCase()}-description`}
+                    value={language.code.toLowerCase()}
                     className={cn(
                       !fieldValue?.trim()
                         ? 'text-muted-foreground/90 data-[state=active]:text-muted-foreground/90'
@@ -434,7 +464,7 @@ export default function ProductFormGeneral({
               const fieldIssue = fieldIssueList[0];
               const fieldValue = (allValues[fieldName] as string | undefined) ?? '';
               return (
-                <TabsContent key={language.code} value={`${language.name.toLowerCase()}-description`}>
+                <TabsContent key={language.code} value={language.code.toLowerCase()}>
                   <FormField label={`${language.name} Description`} error={error} id={fieldName}>
                     <Textarea
                       id={fieldName}

@@ -41,7 +41,7 @@ const recordPublishFailure = (err: unknown): void => {
           }
         );
       } catch {
-        logger.error('[redis-pubsub] Circuit breaker opened, ErrorSystem unavailable');
+        console.error('[redis-pubsub] Circuit breaker opened, ErrorSystem unavailable');
       }
     })();
   }

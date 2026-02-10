@@ -7,19 +7,40 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { logClientError } from '@/features/observability';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import {
+  DATABASE_ENGINE_BACKUP_SCHEDULE_KEY,
   DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY,
   DATABASE_ENGINE_POLICY_KEY,
   DATABASE_ENGINE_SERVICE_ROUTE_MAP_KEY,
+  DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE,
   DEFAULT_DATABASE_ENGINE_POLICY,
+  type DatabaseEngineBackupSchedule,
+  type DatabaseEngineBackupType,
   type DatabaseEnginePolicy,
   type DatabaseEngineProvider,
   type DatabaseEngineServiceRoute,
 } from '@/shared/lib/db/database-engine-constants';
-import { AdminPageLayout, Button, ConfirmDialog, SectionPanel, useToast } from '@/shared/ui';
+import {
+  DATABASE_ENGINE_BACKUP_WEEKDAYS,
+  isValidDatabaseEngineBackupTimeUtc,
+  normalizeDatabaseEngineBackupSchedule,
+} from '@/shared/lib/db/database-engine-backup-schedule';
+import { PageLayout, Button, ConfirmDialog, SectionPanel, useToast } from '@/shared/ui';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
-import { useCopyCollectionMutation, useAllCollectionsSchema, useRedisOverview } from '../hooks/useDatabaseQueries';
-import { useSettingsBackfillMutation, useSyncDatabaseMutation } from '../hooks/useDatabaseSettings';
+import {
+  useAllCollectionsSchema,
+  useDatabaseBackupRunNowMutation,
+  useCopyCollectionMutation,
+  useDatabaseBackupSchedulerStatus,
+  useDatabaseBackupSchedulerTickMutation,
+  useDatabaseEngineProviderPreview,
+  useDatabaseEngineStatus,
+  useRedisOverview,
+} from '../hooks/useDatabaseQueries';
+import {
+  useSettingsBackfillMutation,
+  useSyncDatabaseMutation,
+} from '../hooks/useDatabaseSettings';
 
 type SyncDirection = 'mongo_to_prisma' | 'prisma_to_mongo';
 
@@ -35,6 +56,24 @@ type CollectionRow = {
   prismaRowCount: number | null;
   existsInMongo: boolean;
   existsInPrisma: boolean;
+};
+
+type ProviderPreviewRow = {
+  effectiveProvider: 'mongodb' | 'prisma' | null;
+  source: 'collection_route' | 'app_provider' | 'error';
+  configuredProvider: 'mongodb' | 'prisma' | 'redis' | null;
+  error: string | null;
+};
+
+const backupTargetLabels: Record<DatabaseEngineBackupType, string> = {
+  mongodb: 'MongoDB',
+  postgresql: 'PostgreSQL',
+};
+
+const backupCadenceLabels: Record<DatabaseEngineBackupSchedule['mongodb']['cadence'], string> = {
+  daily: 'Daily',
+  every_n_days: 'Every N days',
+  weekly: 'Weekly',
 };
 
 const services: DatabaseEngineServiceRoute[] = [
@@ -81,6 +120,12 @@ const parseCollectionRouteMap = (raw: string | undefined): Record<string, Databa
 const parseEnginePolicy = (raw: string | undefined): DatabaseEnginePolicy =>
   parseJsonSetting<DatabaseEnginePolicy>(raw, DEFAULT_DATABASE_ENGINE_POLICY);
 
+const parseBackupSchedule = (raw: string | undefined): DatabaseEngineBackupSchedule =>
+  normalizeDatabaseEngineBackupSchedule(raw);
+
+const isPrimaryProvider = (value: unknown): value is 'mongodb' | 'prisma' =>
+  value === 'mongodb' || value === 'prisma';
+
 export default function DatabaseEnginePage(): React.JSX.Element {
   const { toast } = useToast();
   const settingsQuery = useSettingsMap({ scope: 'all' });
@@ -88,6 +133,10 @@ export default function DatabaseEnginePage(): React.JSX.Element {
 
   const schemaQuery = useAllCollectionsSchema();
   const redisQuery = useRedisOverview(400);
+  const engineStatusQuery = useDatabaseEngineStatus();
+  const backupSchedulerStatusQuery = useDatabaseBackupSchedulerStatus();
+  const backupSchedulerTickMutation = useDatabaseBackupSchedulerTickMutation();
+  const backupRunNowMutation = useDatabaseBackupRunNowMutation();
   const syncDatabaseMutation = useSyncDatabaseMutation();
   const backfillMutation = useSettingsBackfillMutation();
   const copyCollectionMutation = useCopyCollectionMutation();
@@ -113,6 +162,11 @@ export default function DatabaseEnginePage(): React.JSX.Element {
     return parseCollectionRouteMap(raw);
   }, [settingsQuery.data]);
 
+  const backupScheduleFromSettings = useMemo<DatabaseEngineBackupSchedule>(() => {
+    const raw = settingsQuery.data?.get(DATABASE_ENGINE_BACKUP_SCHEDULE_KEY);
+    return parseBackupSchedule(raw);
+  }, [settingsQuery.data]);
+
   const [policyDraft, setPolicyDraft] = useState<DatabaseEnginePolicy>(policyFromSettings);
   const [serviceRouteMapDraft, setServiceRouteMapDraft] = useState<
     Partial<Record<DatabaseEngineServiceRoute, DatabaseEngineProvider>>
@@ -120,6 +174,9 @@ export default function DatabaseEnginePage(): React.JSX.Element {
   const [collectionRouteMapDraft, setCollectionRouteMapDraft] = useState<
     Record<string, DatabaseEngineProvider>
   >(collectionRouteMapFromSettings);
+  const [backupScheduleDraft, setBackupScheduleDraft] = useState<DatabaseEngineBackupSchedule>(
+    backupScheduleFromSettings
+  );
 
   useEffect(() => {
     setPolicyDraft(policyFromSettings);
@@ -132,6 +189,10 @@ export default function DatabaseEnginePage(): React.JSX.Element {
   useEffect(() => {
     setCollectionRouteMapDraft(collectionRouteMapFromSettings);
   }, [collectionRouteMapFromSettings]);
+
+  useEffect(() => {
+    setBackupScheduleDraft(backupScheduleFromSettings);
+  }, [backupScheduleFromSettings]);
 
   const rows = useMemo<CollectionRow[]>(() => {
     const data = schemaQuery.data;
@@ -173,8 +234,224 @@ export default function DatabaseEnginePage(): React.JSX.Element {
     return Array.from(byName.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [schemaQuery.data]);
 
+  const previewCollections = useMemo(() => rows.map((row) => row.name), [rows]);
+  const providerPreviewQuery = useDatabaseEngineProviderPreview(
+    previewCollections.length > 0 ? previewCollections : undefined
+  );
+  const providerPreviewByCollection = useMemo(() => {
+    const map = new Map<string, ProviderPreviewRow>();
+    providerPreviewQuery.data?.collections.forEach((item) => {
+      map.set(item.collection, {
+        effectiveProvider: item.effectiveProvider,
+        source: item.source,
+        configuredProvider: item.configuredProvider,
+        error: item.error,
+      });
+    });
+    return map;
+  }, [providerPreviewQuery.data]);
+
+  const effectivePreviewByCollection = useMemo(() => {
+    const appProvider = providerPreviewQuery.data?.appProvider ?? null;
+    const appProviderError = providerPreviewQuery.data?.appProviderError ?? null;
+    const map = new Map<string, ProviderPreviewRow>();
+    rows.forEach((row) => {
+      const draftRoute = collectionRouteMapDraft[row.name] ?? null;
+      if (draftRoute === 'mongodb' || draftRoute === 'prisma') {
+        map.set(row.name, {
+          configuredProvider: draftRoute,
+          effectiveProvider: draftRoute,
+          source: 'collection_route',
+          error: null,
+        });
+        return;
+      }
+      if (draftRoute === 'redis') {
+        map.set(row.name, {
+          configuredProvider: 'redis',
+          effectiveProvider: null,
+          source: 'error',
+          error:
+            `Collection "${row.name}" is routed to Redis; ` +
+            'this operation path supports only MongoDB/Prisma.',
+        });
+        return;
+      }
+
+      const serverPreview = providerPreviewByCollection.get(row.name);
+      if (serverPreview && serverPreview.source !== 'collection_route') {
+        map.set(row.name, serverPreview);
+        return;
+      }
+
+      if (appProvider) {
+        map.set(row.name, {
+          configuredProvider: null,
+          effectiveProvider: appProvider,
+          source: 'app_provider',
+          error: null,
+        });
+        return;
+      }
+
+      map.set(row.name, {
+        configuredProvider: null,
+        effectiveProvider: null,
+        source: 'error',
+        error:
+          appProviderError ??
+          `Collection "${row.name}" cannot resolve an effective provider while route is auto.`,
+      });
+    });
+    return map;
+  }, [
+    collectionRouteMapDraft,
+    providerPreviewByCollection,
+    providerPreviewQuery.data?.appProvider,
+    providerPreviewQuery.data?.appProviderError,
+    rows,
+  ]);
+
+  const providerPreviewErrors = useMemo(
+    () => Array.from(effectivePreviewByCollection.values()).filter((item) => item.error !== null),
+    [effectivePreviewByCollection]
+  );
+
   const mongoCollections = useMemo(() => rows.filter((row) => row.existsInMongo), [rows]);
   const prismaCollections = useMemo(() => rows.filter((row) => row.existsInPrisma), [rows]);
+  const knownCollectionNames = useMemo(() => new Set(rows.map((row) => row.name)), [rows]);
+
+  const missingServiceRoutes = useMemo(
+    () => services.filter((service) => !isPrimaryProvider(serviceRouteMapDraft[service])),
+    [serviceRouteMapDraft]
+  );
+
+  const missingCollectionRoutes = useMemo(
+    () =>
+      rows
+        .filter((row) => collectionRouteMapDraft[row.name] === undefined)
+        .map((row) => row.name),
+    [collectionRouteMapDraft, rows]
+  );
+
+  const orphanedCollectionRoutes = useMemo(
+    () =>
+      Object.keys(collectionRouteMapDraft)
+        .filter((collectionName) => !knownCollectionNames.has(collectionName))
+        .sort((a, b) => a.localeCompare(b)),
+    [collectionRouteMapDraft, knownCollectionNames]
+  );
+
+  const providerAvailability = useMemo(
+    () => ({
+      prisma: engineStatusQuery.data?.providers.prismaConfigured ?? null,
+      mongodb: engineStatusQuery.data?.providers.mongodbConfigured ?? null,
+      redis: engineStatusQuery.data?.providers.redisConfigured ?? null,
+    }),
+    [engineStatusQuery.data]
+  );
+
+  const serverBlockingIssues = engineStatusQuery.data?.blockingIssues ?? [];
+
+  const unavailableServiceRoutes = useMemo(
+    () =>
+      services.filter((service) => {
+        const provider = serviceRouteMapDraft[service];
+        if (!isPrimaryProvider(provider)) return false;
+        return providerAvailability[provider] === false;
+      }),
+    [providerAvailability, serviceRouteMapDraft]
+  );
+
+  const unavailableCollectionRoutes = useMemo(
+    () =>
+      Object.entries(collectionRouteMapDraft)
+        .filter((entry): entry is [string, DatabaseEngineProvider] => {
+          const provider = entry[1];
+          return providerAvailability[provider] === false;
+        })
+        .map(([collection, provider]) => ({ collection, provider }))
+        .sort((a, b) => a.collection.localeCompare(b.collection)),
+    [collectionRouteMapDraft, providerAvailability]
+  );
+
+  const backupScheduleValidationErrors = useMemo(() => {
+    const issues: string[] = [];
+    const validateTarget = (dbType: DatabaseEngineBackupType): void => {
+      const target = backupScheduleDraft[dbType];
+      if (!backupScheduleDraft.schedulerEnabled || !target.enabled) return;
+
+      if (!isValidDatabaseEngineBackupTimeUtc(target.timeUtc)) {
+        issues.push(`${backupTargetLabels[dbType]} schedule time must use HH:MM (UTC).`);
+      }
+      if (target.cadence === 'every_n_days' && (target.intervalDays < 1 || target.intervalDays > 365)) {
+        issues.push(`${backupTargetLabels[dbType]} interval days must be between 1 and 365.`);
+      }
+      if (target.cadence === 'weekly' && (target.weekday < 0 || target.weekday > 6)) {
+        issues.push(`${backupTargetLabels[dbType]} weekly day must be between 0 and 6.`);
+      }
+    };
+
+    validateTarget('mongodb');
+    validateTarget('postgresql');
+    return issues;
+  }, [backupScheduleDraft]);
+
+  const validationErrors = useMemo(() => {
+    const issues: string[] = [];
+    if (policyDraft.requireExplicitServiceRouting && missingServiceRoutes.length > 0) {
+      issues.push(`Missing service routes: ${missingServiceRoutes.join(', ')}`);
+    }
+    if (policyDraft.requireExplicitCollectionRouting && missingCollectionRoutes.length > 0) {
+      issues.push(`Missing collection routes: ${missingCollectionRoutes.length}`);
+    }
+    if (policyDraft.strictProviderAvailability && unavailableServiceRoutes.length > 0) {
+      issues.push(`Service routes target unavailable providers: ${unavailableServiceRoutes.join(', ')}`);
+    }
+    if (policyDraft.strictProviderAvailability && unavailableCollectionRoutes.length > 0) {
+      issues.push(`Collection routes target unavailable providers: ${unavailableCollectionRoutes.length}`);
+    }
+    issues.push(...backupScheduleValidationErrors);
+    return issues;
+  }, [
+    backupScheduleValidationErrors,
+    missingCollectionRoutes,
+    missingServiceRoutes,
+    policyDraft.requireExplicitCollectionRouting,
+    policyDraft.requireExplicitServiceRouting,
+    policyDraft.strictProviderAvailability,
+    unavailableCollectionRoutes,
+    unavailableServiceRoutes,
+  ]);
+
+  const hasBlockingValidationErrors = validationErrors.length > 0;
+
+  const assignUnmappedCollections = useCallback(
+    (provider: DatabaseEngineProvider): void => {
+      setCollectionRouteMapDraft((prev) => {
+        const next = { ...prev };
+        rows.forEach((row) => {
+          if (!next[row.name]) {
+            next[row.name] = provider;
+          }
+        });
+        return next;
+      });
+    },
+    [rows]
+  );
+
+  const clearOrphanedCollectionRoutes = useCallback((): void => {
+    setCollectionRouteMapDraft((prev) => {
+      const next: Record<string, DatabaseEngineProvider> = {};
+      Object.entries(prev).forEach(([collectionName, provider]) => {
+        if (knownCollectionNames.has(collectionName)) {
+          next[collectionName] = provider;
+        }
+      });
+      return next;
+    });
+  }, [knownCollectionNames]);
 
   const applyManualOnlyTemplate = (): void => {
     setPolicyDraft({
@@ -187,14 +464,37 @@ export default function DatabaseEnginePage(): React.JSX.Element {
     });
   };
 
+  const updateBackupTargetDraft = useCallback(
+    (
+      dbType: DatabaseEngineBackupType,
+      updater: (
+        target: DatabaseEngineBackupSchedule['mongodb']
+      ) => DatabaseEngineBackupSchedule['mongodb'],
+    ): void => {
+      setBackupScheduleDraft((prev) => ({
+        ...prev,
+        [dbType]: updater(prev[dbType]),
+      }));
+    },
+    []
+  );
+
   const saveEngineConfiguration = useCallback(async (): Promise<void> => {
+    if (hasBlockingValidationErrors) {
+      toast(`Cannot save engine config: ${validationErrors[0] ?? 'Validation failed.'}`, {
+        variant: 'error',
+      });
+      return;
+    }
+
     const normalizedServiceMap: Partial<Record<DatabaseEngineServiceRoute, DatabaseEngineProvider>> = {};
     services.forEach((service) => {
       const value = serviceRouteMapDraft[service];
-      if (value === 'mongodb' || value === 'prisma') {
+      if (isPrimaryProvider(value)) {
         normalizedServiceMap[service] = value;
       }
     });
+    const normalizedBackupSchedule = normalizeDatabaseEngineBackupSchedule(backupScheduleDraft);
 
     try {
       await updateSettingsBulk.mutateAsync([
@@ -210,13 +510,26 @@ export default function DatabaseEnginePage(): React.JSX.Element {
           key: DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY,
           value: JSON.stringify(collectionRouteMapDraft),
         },
+        {
+          key: DATABASE_ENGINE_BACKUP_SCHEDULE_KEY,
+          value: JSON.stringify(normalizedBackupSchedule),
+        },
       ]);
       toast('Database Engine configuration saved.', { variant: 'success' });
     } catch (error: unknown) {
       logClientError(error, { context: { source: 'DatabaseEnginePage', action: 'saveEngineConfiguration' } });
       toast('Failed to save Database Engine configuration.', { variant: 'error' });
     }
-  }, [collectionRouteMapDraft, policyDraft, serviceRouteMapDraft, toast, updateSettingsBulk]);
+  }, [
+    backupScheduleDraft,
+    collectionRouteMapDraft,
+    hasBlockingValidationErrors,
+    policyDraft,
+    serviceRouteMapDraft,
+    toast,
+    updateSettingsBulk,
+    validationErrors,
+  ]);
 
   const runDatabaseSync = useCallback(
     async (direction: SyncDirection): Promise<void> => {
@@ -253,6 +566,48 @@ export default function DatabaseEnginePage(): React.JSX.Element {
     [backfillLimit, backfillMutation, toast]
   );
 
+  const runBackupSchedulerTickNow = useCallback(async (): Promise<void> => {
+    try {
+      const result = await backupSchedulerTickMutation.mutateAsync();
+      const queued = result.tick.triggered;
+      if (queued.length > 0) {
+        const details = queued.map((item) => `${item.dbType}:${item.jobId}`).join(', ');
+        toast(`Scheduler tick queued ${queued.length} backup job(s): ${details}`, {
+          variant: 'success',
+        });
+      } else {
+        toast('Scheduler tick completed. No backups were due.', { variant: 'success' });
+      }
+      void backupSchedulerStatusQuery.refetch();
+    } catch (error: unknown) {
+      logClientError(error, {
+        context: { source: 'DatabaseEnginePage', action: 'runBackupSchedulerTickNow' },
+      });
+      toast('Failed to run backup scheduler check.', { variant: 'error' });
+    }
+  }, [backupSchedulerStatusQuery, backupSchedulerTickMutation, toast]);
+
+  const runBackupNow = useCallback(
+    async (dbType: 'mongodb' | 'postgresql' | 'all'): Promise<void> => {
+      try {
+        const result = await backupRunNowMutation.mutateAsync({ dbType });
+        if (result.queued.length > 0) {
+          const details = result.queued.map((item) => `${item.dbType}:${item.jobId}`).join(', ');
+          toast(`Backup job queued: ${details}`, { variant: 'success' });
+        } else {
+          toast('No backup jobs were queued.', { variant: 'error' });
+        }
+        void backupSchedulerStatusQuery.refetch();
+      } catch (error: unknown) {
+        logClientError(error, {
+          context: { source: 'DatabaseEnginePage', action: 'runBackupNow', dbType },
+        });
+        toast('Failed to queue backup job.', { variant: 'error' });
+      }
+    },
+    [backupRunNowMutation, backupSchedulerStatusQuery, toast]
+  );
+
   const confirmCollectionSync = useCallback(async (): Promise<void> => {
     if (!pendingCollectionSync) return;
     const action = pendingCollectionSync;
@@ -282,6 +637,9 @@ export default function DatabaseEnginePage(): React.JSX.Element {
       settingsQuery.refetch(),
       schemaQuery.refetch(),
       redisQuery.refetch(),
+      engineStatusQuery.refetch(),
+      backupSchedulerStatusQuery.refetch(),
+      providerPreviewQuery.refetch(),
     ]);
   };
 
@@ -295,17 +653,25 @@ export default function DatabaseEnginePage(): React.JSX.Element {
       policyDraft.strictProviderAvailability,
     [policyDraft]
   );
+  const backupSchedulerStatus = backupSchedulerStatusQuery.data;
 
   return (
-    <AdminPageLayout
+    <PageLayout
       title='Database Engine'
       description='Manual control center for provider routing, migrations, synchronisation, backfilling, and fallback behavior across MongoDB, Prisma, and Redis.'
-      mainActions={
+      headerActions={
         <div className='flex items-center gap-2'>
           <Button
             variant='outline'
             onClick={refreshAll}
-            disabled={settingsQuery.isFetching || schemaQuery.isFetching || redisQuery.isFetching}
+            disabled={
+              settingsQuery.isFetching ||
+              schemaQuery.isFetching ||
+              redisQuery.isFetching ||
+              engineStatusQuery.isFetching ||
+              backupSchedulerStatusQuery.isFetching ||
+              providerPreviewQuery.isFetching
+            }
           >
             <RefreshCcwIcon className='mr-2 size-4' />
             Refresh
@@ -314,7 +680,8 @@ export default function DatabaseEnginePage(): React.JSX.Element {
             onClick={(): void => {
               void saveEngineConfiguration();
             }}
-            disabled={updateSettingsBulk.isPending}
+            disabled={updateSettingsBulk.isPending || hasBlockingValidationErrors}
+            title={hasBlockingValidationErrors ? validationErrors[0] : undefined}
           >
             <SaveIcon className='mr-2 size-4' />
             {updateSettingsBulk.isPending ? 'Saving...' : 'Save Engine Config'}
@@ -461,6 +828,95 @@ export default function DatabaseEnginePage(): React.JSX.Element {
         </div>
       </SectionPanel>
 
+      <SectionPanel className='mt-6 p-5'>
+        <div className='flex flex-wrap items-start justify-between gap-3'>
+          <div>
+            <h2 className='text-lg font-semibold text-white'>Engine Validation</h2>
+            <p className='mt-1 text-sm text-gray-400'>
+              Validate strict policy requirements before saving routing changes.
+            </p>
+          </div>
+          <div className='flex flex-wrap gap-2'>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={(): void => assignUnmappedCollections('prisma')}
+            >
+              Assign Unmapped -&gt; Prisma
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={(): void => assignUnmappedCollections('mongodb')}
+            >
+              Assign Unmapped -&gt; MongoDB
+            </Button>
+            {orphanedCollectionRoutes.length > 0 && (
+              <Button variant='outline' size='sm' onClick={clearOrphanedCollectionRoutes}>
+                Clear Orphaned Routes
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <div className='mt-4 grid gap-2 text-xs sm:grid-cols-3'>
+          <div className='rounded border border-gray-800/80 bg-black/20 px-2 py-2 text-gray-300'>
+            Prisma env: {providerAvailability.prisma === null ? 'Unknown' : providerAvailability.prisma ? 'Configured' : 'Missing'}
+          </div>
+          <div className='rounded border border-gray-800/80 bg-black/20 px-2 py-2 text-gray-300'>
+            MongoDB env: {providerAvailability.mongodb === null ? 'Unknown' : providerAvailability.mongodb ? 'Configured' : 'Missing'}
+          </div>
+          <div className='rounded border border-gray-800/80 bg-black/20 px-2 py-2 text-gray-300'>
+            Redis env: {providerAvailability.redis === null ? 'Unknown' : providerAvailability.redis ? 'Configured' : 'Missing'}
+          </div>
+        </div>
+
+        {validationErrors.length > 0 ? (
+          <div className='mt-4 rounded-md border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-100'>
+            <div className='font-semibold'>Blocking issues</div>
+            <div className='mt-1 space-y-1'>
+              {validationErrors.map((issue) => (
+                <div key={issue}>- {issue}</div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className='mt-4 rounded-md border border-emerald-500/40 bg-emerald-500/10 p-3 text-xs text-emerald-100'>
+            No blocking validation issues detected.
+          </div>
+        )}
+
+        {serverBlockingIssues.length > 0 && (
+          <div className='mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100'>
+            <div className='font-semibold'>Saved engine configuration issues (server)</div>
+            <div className='mt-1 space-y-1'>
+              {serverBlockingIssues.slice(0, 8).map((issue) => (
+                <div key={issue}>- {issue}</div>
+              ))}
+              {serverBlockingIssues.length > 8 && (
+                <div>+{serverBlockingIssues.length - 8} more issue(s)</div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {orphanedCollectionRoutes.length > 0 && (
+          <div className='mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100'>
+            Orphaned collection routes detected: {orphanedCollectionRoutes.slice(0, 8).join(', ')}
+            {orphanedCollectionRoutes.length > 8
+              ? ` (+${orphanedCollectionRoutes.length - 8} more)`
+              : ''}
+          </div>
+        )}
+
+        {providerPreviewErrors.length > 0 && (
+          <div className='mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100'>
+            Effective provider preview currently reports {providerPreviewErrors.length} error(s).
+            Save routing or policy changes and resolve these before running sync/migration operations.
+          </div>
+        )}
+      </SectionPanel>
+
       <div className='mt-6 grid gap-4 lg:grid-cols-3'>
         <SectionPanel className='p-5'>
           <div className='flex items-center gap-2'>
@@ -532,10 +988,60 @@ export default function DatabaseEnginePage(): React.JSX.Element {
       </div>
 
       <SectionPanel className='mt-6 p-5'>
-        <h2 className='text-lg font-semibold text-white'>Service Routing</h2>
-        <p className='mt-1 text-sm text-gray-400'>
-          Route each application service to a primary data provider.
-        </p>
+        <div className='flex flex-wrap items-start justify-between gap-3'>
+          <div>
+            <h2 className='text-lg font-semibold text-white'>Service Routing</h2>
+            <p className='mt-1 text-sm text-gray-400'>
+              Route each application service to a primary data provider.
+            </p>
+          </div>
+          <div className='flex flex-wrap gap-2'>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={(): void => {
+                setServiceRouteMapDraft({
+                  app: 'prisma',
+                  auth: 'prisma',
+                  product: 'prisma',
+                  integrations: 'prisma',
+                  cms: 'prisma',
+                });
+              }}
+            >
+              Set All -&gt; Prisma
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={(): void => {
+                setServiceRouteMapDraft({
+                  app: 'mongodb',
+                  auth: 'mongodb',
+                  product: 'mongodb',
+                  integrations: 'mongodb',
+                  cms: 'mongodb',
+                });
+              }}
+            >
+              Set All -&gt; MongoDB
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={(): void => {
+                setServiceRouteMapDraft({});
+              }}
+            >
+              Clear Service Routes
+            </Button>
+          </div>
+        </div>
+        {policyDraft.requireExplicitServiceRouting && missingServiceRoutes.length > 0 && (
+          <div className='mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100'>
+            Explicit service routing is enabled, but {missingServiceRoutes.length} service route(s) are missing.
+          </div>
+        )}
         <div className='mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5'>
           {services.map((service) => (
             <div key={service}>
@@ -571,10 +1077,30 @@ export default function DatabaseEnginePage(): React.JSX.Element {
       </SectionPanel>
 
       <SectionPanel className='mt-6 p-5'>
-        <h2 className='text-lg font-semibold text-white'>Collection Routing and Sync</h2>
-        <p className='mt-1 text-sm text-gray-400'>
-          Assign collection-level providers and run manual collection sync operations.
-        </p>
+        <div className='flex flex-wrap items-start justify-between gap-3'>
+          <div>
+            <h2 className='text-lg font-semibold text-white'>Collection Routing and Sync</h2>
+            <p className='mt-1 text-sm text-gray-400'>
+              Assign collection-level providers and run manual collection sync operations.
+            </p>
+          </div>
+          <div className='flex flex-wrap gap-2'>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={(): void => {
+                setCollectionRouteMapDraft({});
+              }}
+            >
+              Clear All Collection Routes
+            </Button>
+          </div>
+        </div>
+        {policyDraft.requireExplicitCollectionRouting && missingCollectionRoutes.length > 0 && (
+          <div className='mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100'>
+            Explicit collection routing is enabled, but {missingCollectionRoutes.length} collection(s) are still set to auto.
+          </div>
+        )}
         <div className='mt-4 overflow-auto'>
           <table className='min-w-full text-xs'>
             <thead>
@@ -583,6 +1109,7 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                 <th className='px-2 py-2'>MongoDB</th>
                 <th className='px-2 py-2'>Prisma</th>
                 <th className='px-2 py-2'>Assigned Provider</th>
+                <th className='px-2 py-2'>Effective (Auto)</th>
                 <th className='px-2 py-2'>Manual Sync</th>
               </tr>
             </thead>
@@ -624,6 +1151,35 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                     </select>
                   </td>
                   <td className='px-2 py-2'>
+                    {(() => {
+                      const preview = effectivePreviewByCollection.get(row.name);
+                      if (!preview) {
+                        return <span className='text-gray-500'>--</span>;
+                      }
+                      if (preview.error) {
+                        return (
+                          <span className='text-red-300' title={preview.error}>
+                            Error
+                          </span>
+                        );
+                      }
+                      const sourceLabel =
+                        preview.source === 'collection_route' ? 'route' : 'app';
+                      return (
+                        <span
+                          className='text-gray-200'
+                          title={
+                            preview.configuredProvider
+                              ? `Configured: ${preview.configuredProvider}`
+                              : 'Configured: auto'
+                          }
+                        >
+                          {preview.effectiveProvider ?? '--'} ({sourceLabel})
+                        </span>
+                      );
+                    })()}
+                  </td>
+                  <td className='px-2 py-2'>
                     <div className='flex gap-1'>
                       <Button
                         variant='outline'
@@ -659,6 +1215,251 @@ export default function DatabaseEnginePage(): React.JSX.Element {
               ))}
             </tbody>
           </table>
+        </div>
+      </SectionPanel>
+
+      <SectionPanel className='mt-6 p-5'>
+        <div className='flex flex-wrap items-start justify-between gap-3'>
+          <div>
+            <h2 className='text-lg font-semibold text-white'>Scheduled Backups</h2>
+            <p className='mt-1 text-sm text-gray-400'>
+              Runtime scheduler for controlled backup execution. Nothing runs until enabled here.
+            </p>
+          </div>
+          <div className='flex flex-wrap gap-2'>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={(): void => {
+                setBackupScheduleDraft((prev) => ({
+                  ...prev,
+                  schedulerEnabled: true,
+                  mongodb: { ...prev.mongodb, enabled: true },
+                  postgresql: { ...prev.postgresql, enabled: true },
+                }));
+              }}
+            >
+              Enable All
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={(): void => {
+                setBackupScheduleDraft((prev) => ({
+                  ...prev,
+                  schedulerEnabled: false,
+                  mongodb: { ...prev.mongodb, enabled: false },
+                  postgresql: { ...prev.postgresql, enabled: false },
+                }));
+              }}
+            >
+              Disable All
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={(): void => {
+                setBackupScheduleDraft(
+                  normalizeDatabaseEngineBackupSchedule(DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE)
+                );
+              }}
+            >
+              Reset Defaults
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={(): void => {
+                void runBackupSchedulerTickNow();
+              }}
+              disabled={backupSchedulerTickMutation.isPending}
+            >
+              {backupSchedulerTickMutation.isPending
+                ? 'Checking...'
+                : 'Run Scheduler Check Now'}
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
+              className='border-emerald-500/40 text-emerald-100 hover:bg-emerald-500/20'
+              onClick={(): void => {
+                void runBackupNow('all');
+              }}
+              disabled={backupRunNowMutation.isPending}
+            >
+              {backupRunNowMutation.isPending ? 'Queueing...' : 'Run All Backups Now'}
+            </Button>
+          </div>
+        </div>
+
+        <label className='mt-4 flex items-center gap-2 text-sm text-gray-200'>
+          <input
+            type='checkbox'
+            checked={backupScheduleDraft.schedulerEnabled}
+            onChange={(event): void => {
+              const enabled = event.target.checked;
+              setBackupScheduleDraft((prev) => ({
+                ...prev,
+                schedulerEnabled: enabled,
+              }));
+            }}
+          />
+          Enable backup scheduler runtime
+        </label>
+
+        <div className='mt-4 rounded-md border border-gray-800/80 bg-black/20 p-3 text-xs text-gray-300'>
+          {backupSchedulerStatus ? (
+            <div className='space-y-1'>
+              <div>
+                Runtime queue: {backupSchedulerStatus.queue.running ? 'Running' : 'Stopped'} /{' '}
+                {backupSchedulerStatus.queue.healthy ? 'Healthy' : 'Unhealthy'}
+              </div>
+              <div>
+                Tick interval: every {Math.max(1, Math.floor(backupSchedulerStatus.repeatEveryMs / 1000))}s
+              </div>
+              <div>
+                Last scheduler check: {backupSchedulerStatus.lastCheckedAt ?? 'n/a'}
+              </div>
+            </div>
+          ) : (
+            <div>
+              {backupSchedulerStatusQuery.isFetching
+                ? 'Loading scheduler status...'
+                : 'Scheduler status unavailable.'}
+            </div>
+          )}
+        </div>
+
+        <div className='mt-4 grid gap-4 lg:grid-cols-2'>
+          {(['mongodb', 'postgresql'] as const).map((dbType) => {
+            const draftTarget = backupScheduleDraft[dbType];
+            const runtimeTarget = backupSchedulerStatus?.targets[dbType];
+            return (
+              <div key={dbType} className='rounded-md border border-gray-800/80 bg-black/20 p-4'>
+                <div className='flex items-start justify-between gap-3'>
+                  <div>
+                    <h3 className='text-sm font-semibold text-white'>
+                      {backupTargetLabels[dbType]}
+                    </h3>
+                    <p className='mt-1 text-xs text-gray-400'>
+                      Last run: {runtimeTarget?.lastRunAt ?? draftTarget.lastRunAt ?? 'never'}
+                    </p>
+                  </div>
+                  <label className='flex items-center gap-2 text-xs text-gray-200'>
+                    <input
+                      type='checkbox'
+                      checked={draftTarget.enabled}
+                      onChange={(event): void =>
+                        updateBackupTargetDraft(dbType, (target) => ({
+                          ...target,
+                          enabled: event.target.checked,
+                        }))
+                      }
+                    />
+                    Enabled
+                  </label>
+                </div>
+
+                <div className='mt-3 grid gap-3 sm:grid-cols-2'>
+                  <div>
+                    <label className='mb-1 block text-xs text-gray-400'>Cadence</label>
+                    <select
+                      value={draftTarget.cadence}
+                      onChange={(event): void => {
+                        const cadence = event.target.value as DatabaseEngineBackupSchedule['mongodb']['cadence'];
+                        updateBackupTargetDraft(dbType, (target) => ({ ...target, cadence }));
+                      }}
+                      className='w-full rounded-md border border-gray-700 bg-gray-900 px-2 py-2 text-xs text-gray-200'
+                    >
+                      {Object.entries(backupCadenceLabels).map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className='mb-1 block text-xs text-gray-400'>UTC Time</label>
+                    <input
+                      type='time'
+                      step={60}
+                      value={draftTarget.timeUtc}
+                      onChange={(event): void => {
+                        const value = event.target.value;
+                        updateBackupTargetDraft(dbType, (target) => ({ ...target, timeUtc: value }));
+                      }}
+                      className='w-full rounded-md border border-gray-700 bg-gray-900 px-2 py-2 text-xs text-gray-200'
+                    />
+                  </div>
+                  {draftTarget.cadence === 'every_n_days' && (
+                    <div>
+                      <label className='mb-1 block text-xs text-gray-400'>Interval Days</label>
+                      <input
+                        type='number'
+                        min={1}
+                        max={365}
+                        value={draftTarget.intervalDays}
+                        onChange={(event): void => {
+                          const parsed = Number.parseInt(event.target.value, 10);
+                          if (!Number.isFinite(parsed)) return;
+                          updateBackupTargetDraft(dbType, (target) => ({
+                            ...target,
+                            intervalDays: Math.min(365, Math.max(1, parsed)),
+                          }));
+                        }}
+                        className='w-full rounded-md border border-gray-700 bg-gray-900 px-2 py-2 text-xs text-gray-200'
+                      />
+                    </div>
+                  )}
+                  {draftTarget.cadence === 'weekly' && (
+                    <div>
+                      <label className='mb-1 block text-xs text-gray-400'>Weekday</label>
+                      <select
+                        value={draftTarget.weekday}
+                        onChange={(event): void => {
+                          const parsed = Number.parseInt(event.target.value, 10);
+                          if (!Number.isFinite(parsed)) return;
+                          updateBackupTargetDraft(dbType, (target) => ({
+                            ...target,
+                            weekday: Math.min(6, Math.max(0, parsed)),
+                          }));
+                        }}
+                        className='w-full rounded-md border border-gray-700 bg-gray-900 px-2 py-2 text-xs text-gray-200'
+                      >
+                        {DATABASE_ENGINE_BACKUP_WEEKDAYS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+
+                <div className='mt-3 rounded-md border border-gray-800/70 bg-gray-950/50 p-2 text-xs text-gray-300'>
+                  <div>Next due: {runtimeTarget?.nextDueAt ?? draftTarget.nextDueAt ?? 'n/a'}</div>
+                  <div>Last status: {runtimeTarget?.lastStatus ?? draftTarget.lastStatus}</div>
+                  <div>Last job: {runtimeTarget?.lastJobId ?? draftTarget.lastJobId ?? 'n/a'}</div>
+                  <div>Last error: {runtimeTarget?.lastError ?? draftTarget.lastError ?? 'none'}</div>
+                  <div>Due now: {runtimeTarget?.dueNow ? 'Yes' : 'No'}</div>
+                </div>
+
+                <div className='mt-3 flex flex-wrap gap-2'>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    className='border-emerald-500/40 text-emerald-100 hover:bg-emerald-500/20'
+                    disabled={backupRunNowMutation.isPending}
+                    onClick={(): void => {
+                      void runBackupNow(dbType);
+                    }}
+                  >
+                    Run {backupTargetLabels[dbType]} Backup Now
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </SectionPanel>
 
@@ -731,6 +1532,6 @@ export default function DatabaseEnginePage(): React.JSX.Element {
           </div>
         )}
       </SectionPanel>
-    </AdminPageLayout>
+    </PageLayout>
   );
 }

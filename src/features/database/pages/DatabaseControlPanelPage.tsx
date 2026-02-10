@@ -5,7 +5,7 @@ import { useMemo, useState, useCallback } from 'react';
 import { logClientError } from '@/features/observability';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
-  AdminPageLayout,
+  PageLayout,
   Button,
   DataTable,
   SectionPanel,
@@ -201,7 +201,7 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
   const jsonBackups = jsonBackupsQuery.data?.backups ?? [];
 
   return (
-    <AdminPageLayout
+    <PageLayout
       title='Database Control Panel'
       description='View and manage collections across MongoDB and PostgreSQL. Copy data between providers and assign per-collection provider routing.'
     >
@@ -315,6 +315,6 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
           <p className='mt-3 text-xs text-gray-400'>Loading backups...</p>
         )}
       </SectionPanel>
-    </AdminPageLayout>
+    </PageLayout>
   );
 }

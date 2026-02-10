@@ -1,6 +1,11 @@
 import 'server-only';
 
-import { evaluateGraphWithIteratorAutoContinue } from '@/features/ai/ai-paths/lib';
+import {
+  AI_PATHS_HISTORY_RETENTION_DEFAULT,
+  AI_PATHS_HISTORY_RETENTION_MAX,
+  AI_PATHS_HISTORY_RETENTION_MIN,
+  evaluateGraphWithIteratorAutoContinue,
+} from '@/features/ai/ai-paths/lib';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
 import {
@@ -161,6 +166,20 @@ const normalizeEntityType = (value?: string | null): string | null => {
   return normalized;
 };
 
+const parseHistoryRetentionPasses = (value: unknown): number | null => {
+  const parsed =
+    typeof value === 'number'
+      ? value
+      : Number.parseInt(typeof value === 'string' ? value : '', 10);
+  if (!Number.isFinite(parsed) || parsed < AI_PATHS_HISTORY_RETENTION_MIN) {
+    return null;
+  }
+  return Math.min(
+    AI_PATHS_HISTORY_RETENTION_MAX,
+    Math.max(AI_PATHS_HISTORY_RETENTION_MIN, Math.trunc(parsed))
+  );
+};
+
 const fetchEntityByType = async (entityType: string, entityId: string): Promise<Record<string, unknown> | null> => {
   if (!entityType || !entityId) return null;
   const normalized = normalizeEntityType(entityType);
@@ -286,9 +305,12 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     await saveIntermediateState();
   };
 
-  const historyLimit = Number.parseInt(process.env['AI_PATHS_HISTORY_LIMIT'] ?? '', 10);
+  const envHistoryLimit = parseHistoryRetentionPasses(process.env['AI_PATHS_HISTORY_LIMIT']);
+  const metaHistoryLimit = parseHistoryRetentionPasses(
+    (run.meta as Record<string, unknown> | null)?.['historyRetentionPasses']
+  );
   const resolvedHistoryLimit =
-    Number.isFinite(historyLimit) && historyLimit > 0 ? historyLimit : 50;
+    metaHistoryLimit ?? envHistoryLimit ?? AI_PATHS_HISTORY_RETENTION_DEFAULT;
   const nodeRecords = await repo.listRunNodes(run.id);
   const nodeStatusMap = new Map<string, string>(
     nodeRecords.map((record: AiPathRunNodeRecord) => [record.nodeId, record.status])

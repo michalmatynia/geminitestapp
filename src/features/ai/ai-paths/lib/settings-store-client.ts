@@ -1,6 +1,7 @@
 'use client';
 
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
+import { logger } from '@/shared/utils/logger';
 
 export type AiPathsSettingRecord = {
   key: string;
@@ -151,12 +152,12 @@ export const fetchAiPathsSettingsCached = async (
     })
     .catch((error: unknown) => {
       if (aiPathsSettingsCache) {
-        console.warn('[ai-paths-settings] GET failed; using stale cache.', error);
+        logger.warn('[ai-paths-settings] GET failed; using stale cache.', { error: error instanceof Error ? error.message : String(error) });
         return aiPathsSettingsCache;
       }
       const backup = readBackupSettings();
       if (backup && backup.length > 0) {
-        console.warn('[ai-paths-settings] GET failed; using local backup cache.', error);
+        logger.warn('[ai-paths-settings] GET failed; using local backup cache.', { error: error instanceof Error ? error.message : String(error) });
         aiPathsSettingsCache = backup;
         aiPathsSettingsFetchedAt = Date.now();
         return backup;

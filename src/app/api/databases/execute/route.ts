@@ -5,6 +5,7 @@ import { Client } from 'pg';
 
 import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
+import { resolveCollectionProviderForRequest } from '@/shared/lib/db/collection-provider-map';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
@@ -17,7 +18,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
   const parsed = await req.json() as {
     sql?: string;
-    type?: 'postgresql' | 'mongodb';
+    type?: 'postgresql' | 'mongodb' | 'auto';
     // MongoDB fields
     collection?: string;
     operation?: 'find' | 'insertOne' | 'updateOne' | 'deleteOne' | 'deleteMany' | 'aggregate' | 'countDocuments';
@@ -27,10 +28,38 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     pipeline?: Record<string, unknown>[];
   };
 
-  const dbType = parsed.type ?? 'postgresql';
+  const requestedType = parsed.type ?? 'auto';
+  if (!['postgresql', 'mongodb', 'auto'].includes(requestedType)) {
+    throw badRequestError('Type must be postgresql, mongodb, or auto.');
+  }
 
-  if (dbType === 'mongodb') {
+  const hasMongoIntent = Boolean(
+    parsed.collection ||
+      parsed.operation ||
+      parsed.filter ||
+      parsed.document ||
+      parsed.update ||
+      parsed.pipeline
+  );
+
+  if (requestedType === 'mongodb') {
     return handleMongoOperation(parsed);
+  }
+
+  if (requestedType === 'auto') {
+    if (parsed.collection) {
+      const provider = await resolveCollectionProviderForRequest(parsed.collection, 'auto');
+      if (provider === 'mongodb') {
+        return handleMongoOperation(parsed);
+      }
+      if (hasMongoIntent) {
+        throw badRequestError(
+          `Collection "${parsed.collection}" resolves to Prisma in Database Engine routing. Use type="mongodb" to force MongoDB or update collection route mapping.`
+        );
+      }
+    } else if (hasMongoIntent) {
+      throw badRequestError('Collection name is required for MongoDB operations.');
+    }
   }
 
   return handlePostgresQuery(parsed.sql);

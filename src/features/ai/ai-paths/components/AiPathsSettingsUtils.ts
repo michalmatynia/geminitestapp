@@ -1,5 +1,7 @@
 import type {
   DbQueryConfig,
+  DatabaseConfig,
+  DatabaseOperation,
   PathConfig,
   RuntimeHistoryEntry,
   RuntimePortValues,
@@ -127,19 +129,19 @@ export const buildPersistedRuntimeState = (
   graphNodes: AiNode[]
 ): string => {
   const excludedTypes = new Set<string>(['notification', 'viewer']);
-  const trimRuntimeValue = (value: unknown, depth: number = 2): unknown => {
+  const trimRuntimeValue = (value: unknown, depth: number = 1): unknown => {
     if (value === null || value === undefined) return value;
     if (typeof value === 'string') {
-      const trimmed = value.length > 4000 ? `${value.slice(0, 4000)}…` : value;
+      const trimmed = value.length > 1000 ? `${value.slice(0, 1000)}…` : value;
       return trimmed;
     }
     if (typeof value === 'number' || typeof value === 'boolean') return value;
     if (value instanceof Date) return value.toISOString();
     if (Array.isArray(value)) {
       if (depth <= 0) return `[Array(${value.length})]`;
-      const slice = value.slice(0, 50).map((entry: unknown) => trimRuntimeValue(entry, depth - 1));
-      if (value.length > 50) {
-        slice.push(`…${value.length - 50} more`);
+      const slice = value.slice(0, 20).map((entry: unknown) => trimRuntimeValue(entry, depth - 1));
+      if (value.length > 20) {
+        slice.push(`…${value.length - 20} more`);
       }
       return slice;
     }
@@ -147,13 +149,13 @@ export const buildPersistedRuntimeState = (
       if (depth <= 0) return '[Object]';
       const record = value as Record<string, unknown>;
       const entries = Object.entries(record);
-      const trimmedEntries = entries.slice(0, 40).map(([key, entryValue]: [string, unknown]) => [
+      const trimmedEntries = entries.slice(0, 20).map(([key, entryValue]: [string, unknown]) => [
         key,
         trimRuntimeValue(entryValue, depth - 1),
       ]);
       const result = Object.fromEntries(trimmedEntries) as Record<string, unknown>;
-      if (entries.length > 40) {
-        result['__truncated__'] = `…${entries.length - 40} more keys`;
+      if (entries.length > 20) {
+        result['__truncated__'] = `…${entries.length - 20} more keys`;
       }
       return result;
     }
@@ -162,11 +164,12 @@ export const buildPersistedRuntimeState = (
   const trimRuntimePorts = (ports: RuntimePortValues): RuntimePortValues => {
     const trimmed: RuntimePortValues = {};
     Object.entries(ports).forEach(([key, value]: [string, unknown]) => {
-      trimmed[key] = trimRuntimeValue(value, 2);
+      trimmed[key] = trimRuntimeValue(value, 1);
     });
     return trimmed;
   };
-  const historyLimit = 50;
+  const includeHistoryInPathConfig = false;
+  const historyLimit = 5;
   const nodeIds = new Set(
     graphNodes
       .filter((node: AiNode): boolean => !excludedTypes.has(node.type))
@@ -186,6 +189,7 @@ export const buildPersistedRuntimeState = (
     }
   });
   Object.entries(state.history ?? {}).forEach(([key, value]: [string, RuntimeHistoryEntry[]]) => {
+    if (!includeHistoryInPathConfig) return;
     if (!nodeIds.has(key)) return;
     const trimmed = Array.isArray(value) ? value.slice(-historyLimit) : [];
     if (trimmed.length > 0) {
@@ -209,18 +213,48 @@ export const buildPersistedRuntimeState = (
   return safe ? JSON.stringify(safe) : '';
 };
 
+const isDatabaseOperation = (value: unknown): value is DatabaseOperation =>
+  value === 'query' || value === 'update' || value === 'insert' || value === 'delete';
+
 export const sanitizePathConfig = (config: PathConfig): PathConfig => {
   const migrated = migratePathConfigCollections(config).config;
+  const sanitizedNodes = migrated.nodes.map((node: AiNode): AiNode => {
+    if (node.type !== 'database' || !node.config || typeof node.config !== 'object') {
+      return node;
+    }
+    const configRecord = node.config as Record<string, unknown>;
+    const databaseConfig = configRecord['database'];
+    if (!databaseConfig || typeof databaseConfig !== 'object') {
+      return node;
+    }
+    if (!('schemaSnapshot' in (databaseConfig as Record<string, unknown>))) {
+      return node;
+    }
+    const operation = (databaseConfig as Record<string, unknown>)['operation'];
+    const nextDatabaseConfig = {
+      ...(databaseConfig as Partial<DatabaseConfig>),
+      operation: isDatabaseOperation(operation) ? operation : 'query',
+    } as DatabaseConfig;
+    delete (nextDatabaseConfig as { schemaSnapshot?: unknown })['schemaSnapshot'];
+    return {
+      ...node,
+      config: {
+        ...configRecord,
+        database: nextDatabaseConfig,
+      },
+    };
+  });
   const uiState = migrated.uiState ? { ...migrated.uiState } : undefined;
   if (uiState && 'configOpen' in uiState) {
     delete (uiState as { configOpen?: boolean }).configOpen;
   }
   return {
     ...migrated,
+    nodes: sanitizedNodes,
     uiState,
     runtimeState: buildPersistedRuntimeState(
       parseRuntimeState(migrated.runtimeState),
-      migrated.nodes
+      sanitizedNodes
     ),
   };
 };

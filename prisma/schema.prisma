@@ -681,10 +681,10 @@ model ProductCategory {
   description String?
   color       String?                     @default("#10b981")
   parentId    String?
-  sortIndex   Int                         @default(0)
   createdAt   DateTime                    @default(now())
   updatedAt   DateTime                    @updatedAt
   catalogId   String
+  sortIndex   Int                         @default(0)
   mappings    CategoryMapping[]
   catalog     Catalog                     @relation(fields: [catalogId], references: [id], onDelete: Cascade)
   parent      ProductCategory?            @relation("ProductCategoryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
@@ -705,14 +705,14 @@ model ProductCategoryAssignment {
 }
 
 model ProductTag {
-  id        String                 @id @default(cuid())
-  name      String
-  color     String?
-  catalogId String
-  createdAt DateTime               @default(now())
-  updatedAt DateTime               @updatedAt
-  catalog   Catalog                @relation(fields: [catalogId], references: [id], onDelete: Cascade)
-  products  ProductTagAssignment[]
+  id          String                 @id @default(cuid())
+  name        String
+  color       String?
+  catalogId   String
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  catalog     Catalog                @relation(fields: [catalogId], references: [id], onDelete: Cascade)
+  products    ProductTagAssignment[]
   tagMappings TagMapping[]
 
   @@unique([catalogId, name])
@@ -729,13 +729,13 @@ model ProductTagAssignment {
 }
 
 model Producer {
-  id        String                      @id @default(cuid())
-  name      String                      @unique
-  website   String?
-  createdAt DateTime                    @default(now())
-  updatedAt DateTime                    @updatedAt
-  products  ProductProducerAssignment[]
+  id               String                      @id @default(cuid())
+  name             String                      @unique
+  website          String?
+  createdAt        DateTime                    @default(now())
+  updatedAt        DateTime                    @updatedAt
   producerMappings ProducerMapping[]
+  products         ProductProducerAssignment[]
 }
 
 model ProductProducerAssignment {
@@ -972,34 +972,34 @@ model ProductDraft {
   catalogIds          Json     @default("[]")
   categoryId          String?
   tagIds              Json     @default("[]")
-  producerIds         Json     @default("[]")
   parameters          Json     @default("[]")
   defaultPriceGroupId String?
   active              Boolean  @default(true)
   icon                String?
-  iconColorMode       String?  @default("theme")
-  iconColor           String?
   imageLinks          Json     @default("[]")
   baseProductId       String?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+  producerIds         Json     @default("[]")
+  iconColor           String?
+  iconColorMode       String?  @default("theme")
 }
 
 model ProductValidationPattern {
-  id        String   @id @default(cuid())
-  label     String
-  target    String
-  locale    String?
-  regex     String
-  flags     String?
-  message   String
-  severity  String   @default("error")
-  enabled   Boolean  @default(true)
-  replacementEnabled Boolean @default(false)
+  id                 String   @id @default(cuid())
+  label              String
+  target             String
+  regex              String
+  flags              String?
+  message            String
+  severity           String   @default("error")
+  enabled            Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  locale             String?
+  replacementEnabled Boolean  @default(false)
   replacementValue   String?
   replacementFields  String[] @default([])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
   @@index([target, locale, enabled])
 }

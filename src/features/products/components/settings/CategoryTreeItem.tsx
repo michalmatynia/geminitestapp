@@ -100,6 +100,10 @@ export function CategoryTreeItem({
       : dropTarget === 'after'
         ? 'bottom-[2px]'
         : 'top-1/2 -translate-y-1/2';
+  const dropIndicatorSpanClass =
+    dropTarget === 'inside'
+      ? 'left-2 right-auto w-9'
+      : 'inset-x-3';
   const dragMotionClassName = draggedId ? 'duration-0' : 'duration-200';
 
   return (
@@ -199,7 +203,8 @@ export function CategoryTreeItem({
       >
         <div
           className={cn(
-            'pointer-events-none absolute inset-x-3 h-px rounded-full bg-slate-200 transition-all duration-150',
+            'pointer-events-none absolute h-px rounded-full bg-slate-200 transition-all duration-150',
+            dropIndicatorSpanClass,
             dropIndicatorPositionClass,
             canShowDropIndicator ? 'scale-x-100 opacity-45' : 'scale-x-95 opacity-0'
           )}

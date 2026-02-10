@@ -4,12 +4,11 @@ import { ObjectId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { resolveDbActionProvider } from '@/features/ai/ai-paths/lib/core/utils/provider-actions';
 import { enforceAiPathsActionRateLimit, isCollectionAllowed, requireAiPathsAccessOrInternal } from '@/features/ai/ai-paths/server';
 import { parseJsonBody } from '@/features/products/server';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
+import { resolveCollectionProviderForRequest } from '@/shared/lib/db/collection-provider-map';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -123,7 +122,10 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   if (Object.keys(normalizedUpdates).length === 0) {
     throw badRequestError('No updates provided');
   }
-  const provider = resolveDbActionProvider(requestedProvider, await getAppDbProvider());
+  const provider = await resolveCollectionProviderForRequest(
+    collection,
+    requestedProvider
+  );
 
   if (provider === 'prisma') {
     if (!process.env['DATABASE_URL']) {

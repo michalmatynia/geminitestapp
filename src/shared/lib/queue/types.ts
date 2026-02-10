@@ -5,7 +5,8 @@ export type QueueName =
   | 'ai-path-run'
   | 'chatbot'
   | 'agent'
-  | 'ai-insights';
+  | 'ai-insights'
+  | 'database-backup-scheduler';
 
 export type QueueHealthStatus = {
   running: boolean;

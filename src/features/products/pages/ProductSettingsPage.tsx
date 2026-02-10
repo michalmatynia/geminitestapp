@@ -12,6 +12,7 @@ import { CurrencyModal } from '@/features/products/components/settings/modals/Cu
 import { LanguageModal } from '@/features/products/components/settings/modals/LanguageModal';
 import { PriceGroupModal } from '@/features/products/components/settings/modals/PriceGroupModal';
 import { PriceGroupsSettings } from '@/features/products/components/settings/pricing/PriceGroupsSettings';
+import { ProductImageRoutingSettings } from '@/features/products/components/settings/ProductImageRoutingSettings';
 import { TagsSettings } from '@/features/products/components/settings/TagsSettings';
 import { ValidatorSettings } from '@/features/products/components/settings/ValidatorSettings';
 import { useCatalogs, useCategories, usePriceGroups, useTags, useDeleteCatalogMutation, useDeletePriceGroupMutation, useUpdatePriceGroupMutation } from '@/features/products/hooks/useProductSettingsQueries';
@@ -169,6 +170,9 @@ export function ProductSettingsPage(): React.JSX.Element {
                 handleEditCatalog={(c: Catalog): void => { setEditingCatalog(c); setShowCatalogModal(true); }}
                 handleDeleteCatalog={(c: Catalog): void => { void handleDeleteCatalog(c); }}
               />
+            )}
+            {activeSection === 'Images' && (
+              <ProductImageRoutingSettings />
             )}
             {activeSection === 'Validator' && (
               <ValidatorSettings />

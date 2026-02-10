@@ -36,10 +36,15 @@ import {
 import { useProductOperations } from '@/features/products/hooks/useProductOperations';
 import { useUserPreferences } from '@/features/products/hooks/useUserPreferences';
 import { useQueuedProductIds } from '@/features/products/state/queued-product-ops';
+import {
+  DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
+  PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
+} from '@/features/products/constants';
 import type { ProductWithImages } from '@/features/products/types';
 import type { ProductDraft } from '@/features/products/types/drafts';
 import { useProductListSync } from '@/shared/hooks/sync/useBackgroundSync';
 import { api } from '@/shared/lib/api-client';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast, ConfirmDialog } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -56,6 +61,10 @@ export function AdminProductsPage(): React.JSX.Element {
   const [isDebugOpen, setIsDebugOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
+  const settingsStore = useSettingsStore();
+  const productImageBaseUrl =
+    settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
+    DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [createDraft, setCreateDraft] = useState<ProductDraft | null>(null);
   const [productToDelete, setProductToDelete] = useState<ProductWithImages | null>(null);
@@ -463,8 +472,8 @@ export function AdminProductsPage(): React.JSX.Element {
   );
 
   const columns = useMemo(
-    () => getProductColumns(preferences.thumbnailSource ?? 'file'),
-    [preferences.thumbnailSource]
+    () => getProductColumns(preferences.thumbnailSource ?? 'file', productImageBaseUrl),
+    [preferences.thumbnailSource, productImageBaseUrl]
   );
 
   return (

@@ -66,6 +66,8 @@ export const ProductImageCell = React.memo(function ProductImageCell({
         alt={productName}
         width={64}
         height={64}
+        sizes='64px'
+        unoptimized
         className='size-16 rounded-md object-cover cursor-pointer transition-opacity hover:opacity-80'
         style={{ width: 'auto', height: 'auto' }}
       />
@@ -102,6 +104,8 @@ export const ProductImageCell = React.memo(function ProductImageCell({
               alt={productName}
               width={PREVIEW_SIZE}
               height={PREVIEW_SIZE}
+              sizes={`${PREVIEW_SIZE}px`}
+              unoptimized
               className='rounded-lg object-cover'
               style={{ width: 'auto', height: 'auto' }}
               priority

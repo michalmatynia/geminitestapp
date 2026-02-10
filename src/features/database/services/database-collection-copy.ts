@@ -171,6 +171,137 @@ const usersHandler: CollectionHandler = {
   },
 };
 
+const productsGenericHandler = genericHandler('products', 'Product');
+
+const productsHandler: CollectionHandler = {
+  async mongoToPrisma() {
+    return productsGenericHandler.mongoToPrisma();
+  },
+  async prismaToMongo() {
+    const rows = await prisma.product.findMany({
+      include: {
+        images: {
+          include: { imageFile: true },
+          orderBy: { assignedAt: 'desc' },
+        },
+        catalogs: {
+          include: {
+            catalog: {
+              include: { languages: { select: { languageId: true } } },
+            },
+          },
+        },
+        categories: { select: { categoryId: true } },
+        tags: { select: { tagId: true } },
+        producers: { select: { producerId: true } },
+      },
+    });
+
+    const docs = rows.map((row: any) => {
+      const categoryId = row.categories?.categoryId ?? null;
+      const categories = categoryId
+        ? [{ productId: row.id, categoryId, assignedAt: row.updatedAt ?? row.createdAt }]
+        : [];
+      const images = Array.isArray(row.images)
+        ? row.images
+            .filter((image: any) => image?.imageFile)
+            .map((image: any) => ({
+              productId: row.id,
+              imageFileId: image.imageFileId,
+              assignedAt: image.assignedAt,
+              imageFile: {
+                id: image.imageFile.id,
+                filename: image.imageFile.filename,
+                filepath: image.imageFile.filepath,
+                mimetype: image.imageFile.mimetype,
+                size: image.imageFile.size,
+                width: image.imageFile.width ?? null,
+                height: image.imageFile.height ?? null,
+                tags: Array.isArray(image.imageFile.tags) ? image.imageFile.tags : [],
+                createdAt: image.imageFile.createdAt,
+                updatedAt: image.imageFile.updatedAt,
+              },
+            }))
+        : [];
+      const catalogs = Array.isArray(row.catalogs)
+        ? row.catalogs
+            .filter((entry: any) => entry?.catalog)
+            .map((entry: any) => ({
+              productId: row.id,
+              catalogId: entry.catalogId,
+              assignedAt: entry.assignedAt,
+              catalog: {
+                id: entry.catalog.id,
+                name: entry.catalog.name,
+                description: entry.catalog.description ?? null,
+                isDefault: entry.catalog.isDefault,
+                defaultLanguageId: entry.catalog.defaultLanguageId ?? null,
+                defaultPriceGroupId: entry.catalog.defaultPriceGroupId ?? null,
+                languageIds: Array.isArray(entry.catalog.languages)
+                  ? entry.catalog.languages
+                      .map((languageEntry: any) => languageEntry?.languageId)
+                      .filter(Boolean)
+                  : [],
+                priceGroupIds: Array.isArray(entry.catalog.priceGroupIds)
+                  ? entry.catalog.priceGroupIds
+                  : [],
+                createdAt: entry.catalog.createdAt,
+                updatedAt: entry.catalog.updatedAt,
+              },
+            }))
+        : [];
+
+      return {
+        _id: row.id,
+        id: row.id,
+        sku: row.sku ?? null,
+        baseProductId: row.baseProductId ?? null,
+        defaultPriceGroupId: row.defaultPriceGroupId ?? null,
+        ean: row.ean ?? null,
+        gtin: row.gtin ?? null,
+        asin: row.asin ?? null,
+        name_en: row.name_en ?? null,
+        name_pl: row.name_pl ?? null,
+        name_de: row.name_de ?? null,
+        description_en: row.description_en ?? null,
+        description_pl: row.description_pl ?? null,
+        description_de: row.description_de ?? null,
+        supplierName: row.supplierName ?? null,
+        supplierLink: row.supplierLink ?? null,
+        priceComment: row.priceComment ?? null,
+        stock: row.stock ?? null,
+        price: row.price ?? null,
+        sizeLength: row.sizeLength ?? null,
+        sizeWidth: row.sizeWidth ?? null,
+        weight: row.weight ?? null,
+        length: row.length ?? null,
+        parameters: Array.isArray(row.parameters) ? row.parameters : [],
+        imageLinks: Array.isArray(row.imageLinks) ? row.imageLinks : [],
+        imageBase64s: Array.isArray(row.imageBase64s) ? row.imageBase64s : [],
+        noteIds: Array.isArray(row.noteIds) ? row.noteIds : [],
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        categoryId,
+        categories,
+        images,
+        catalogs,
+        tags: Array.isArray(row.tags)
+          ? row.tags.map((tag: any) => ({ tagId: tag.tagId }))
+          : [],
+        producers: Array.isArray(row.producers)
+          ? row.producers.map((producer: any) => ({ producerId: producer.producerId }))
+          : [],
+      };
+    });
+
+    const mongo = await getMongoDb();
+    const collection = mongo.collection('products');
+    const deleted = await collection.deleteMany({});
+    if (docs.length) await collection.insertMany(docs as any[]);
+    return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
+  },
+};
+
 // ── Handler Registry ──
 
 // Maps collection names to their specialized handlers.
@@ -180,6 +311,7 @@ const usersHandler: CollectionHandler = {
 const SPECIALIZED_HANDLERS: Record<string, CollectionHandler> = {
   settings: settingsHandler,
   users: usersHandler,
+  products: productsHandler,
 };
 
 // Known collection name <-> Prisma model mappings for the generic handler

@@ -16,6 +16,7 @@ import { EditableCell } from '@/features/products/components/EditableCell';
 import { useProductListContext } from '@/features/products/context/ProductListContext';
 import { useDuplicateProduct } from '@/features/products/hooks/useProductsMutations';
 import type { ProductWithImages } from '@/features/products/types';
+import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
 import { calculatePriceForCurrency, normalizeCurrencyCode } from '@/features/products/utils/priceCalculation';
 import { api } from '@/shared/lib/api-client';
 import {
@@ -334,7 +335,8 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
 };
 
 export const getProductColumns = (
-  thumbnailSource: 'file' | 'link' | 'base64' = 'file'
+  thumbnailSource: 'file' | 'link' | 'base64' = 'file',
+  imageExternalBaseUrl: string | null = null
 ): ColumnDef<ProductWithImages>[] => [
   {
     id: 'select',
@@ -383,7 +385,7 @@ export const getProductColumns = (
       } else if (thumbnailSource === 'base64') {
         imageUrl = firstBase64Image;
       } else {
-        imageUrl = firstFileImage;
+        imageUrl = resolveProductImageUrl(firstFileImage, imageExternalBaseUrl) ?? undefined;
       }
 
       return (

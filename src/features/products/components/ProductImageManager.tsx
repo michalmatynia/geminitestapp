@@ -6,9 +6,13 @@ import React, { useEffect, useState } from 'react';
 
 
 
+import {
+  DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
+  PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
+} from '@/features/products/constants';
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
 import { DebugInfo, ProductImageSlot } from '@/features/products/types/products-ui';
-import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   Button,
@@ -22,7 +26,6 @@ import {
 } from '@/shared/ui';
 import { DRAG_KEYS, getFirstDragValue, parseDragIndex, setDragData } from '@/shared/utils/drag-drop';
 
-const EXTERNAL_IMAGE_BASE_URL_KEY = 'product_images_external_base_url';
 type SlotViewMode = 'upload' | 'link' | 'base64' | 'external';
 
 export default function ProductImageManager(): React.JSX.Element {
@@ -41,8 +44,9 @@ export default function ProductImageManager(): React.JSX.Element {
   } = useProductFormContext();
 
   const settingsStore = useSettingsStore();
-  const updateSetting = useUpdateSetting();
-  const externalBaseSetting = settingsStore.get(EXTERNAL_IMAGE_BASE_URL_KEY) ?? '';
+  const externalBaseSetting =
+    settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
+    DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
 
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
   const [showDebug, setShowDebug] = useState(false);
@@ -50,13 +54,8 @@ export default function ProductImageManager(): React.JSX.Element {
     Array(imageSlots.length).fill('upload')
   );
   const [base64LoadingSlots, setBase64LoadingSlots] = useState<Record<number, boolean>>({});
-  const [externalBaseInput, setExternalBaseInput] = useState(externalBaseSetting);
   const currentSlotIndexRef = React.useRef<number | null>(null);
   const fileInputRefs = React.useRef<Array<HTMLInputElement | null>>([]);
-
-  useEffect(() => {
-    setExternalBaseInput(externalBaseSetting);
-  }, [externalBaseSetting]);
 
   // Drag and drop state
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -285,34 +284,8 @@ export default function ProductImageManager(): React.JSX.Element {
     }
   };
 
-  const normalizeExternalBaseUrl = (value: string): string => {
-    const trimmed = value.trim();
-    if (!trimmed) return '';
-    return trimmed.replace(/\/+$/, '');
-  };
-
   const buildExternalUrl = (filepath: string): string => {
-    const base = normalizeExternalBaseUrl(externalBaseSetting);
-    if (!base) return filepath;
-    if (/^[a-z][a-z0-9+.-]*:/i.test(filepath)) {
-      try {
-        const url = new URL(filepath);
-        const cleanPath = url.pathname.replace(/^\/+/, '');
-        return `${base}/${cleanPath}`;
-      } catch {
-        return filepath;
-      }
-    }
-    const cleanPath = filepath.replace(/^\/+/, '');
-    return `${base}/${cleanPath}`;
-  };
-
-  const saveExternalBaseUrl = (): void => {
-    const next = normalizeExternalBaseUrl(externalBaseInput);
-    updateSetting.mutate({
-      key: EXTERNAL_IMAGE_BASE_URL_KEY,
-      value: next,
-    });
+    return resolveProductImageUrl(filepath, externalBaseSetting) ?? filepath;
   };
 
   // Drag and drop handlers
@@ -417,35 +390,6 @@ export default function ProductImageManager(): React.JSX.Element {
           </Button>
         </div>
       </div>
-      <div className='mb-3 flex flex-wrap items-center gap-2'>
-        <span className='text-xs text-gray-400'>External host</span>
-        <Input
-          value={externalBaseInput}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-            setExternalBaseInput(event.target.value)
-          }
-          onBlur={saveExternalBaseUrl}
-          placeholder='https://cdn.example.com'
-          className='h-7 w-64 px-2 text-[11px]'
-          aria-label='External image host'
-        />
-        <Button
-          type='button'
-          variant='outline'
-          size='sm'
-          className='h-7 px-2 text-xs'
-          onClick={saveExternalBaseUrl}
-          disabled={updateSetting.isPending}
-        >
-          {updateSetting.isPending ? 'Saving...' : 'Save'}
-        </Button>
-        {externalBaseSetting.trim() ? (
-          <span className='text-[10px] text-emerald-300/80'>Active</span>
-        ) : (
-          <span className='text-[10px] text-gray-500'>Not set</span>
-        )}
-      </div>
-
       {showDebug && (uploadError || debugInfo) && (
         <Alert variant='error' className='mb-3 p-3 text-xs'>
           {uploadError ? <div>Upload error: {uploadError}</div> : null}

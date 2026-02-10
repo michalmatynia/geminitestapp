@@ -1,8 +1,17 @@
 
 I can't monitor my singal in Ai Paths
+My Catalog has too many languages, I want an option to remove languages from
+  Catalogs.
+   For my image rerouting, I would like an option to add different routes and
+  select the default one
+
+  When I reorder CAtegories, I get an error
+Remove Languages from my Catalog
+
 Database Query need to work with mongo
 Asses the functionality of AI-Paths to run seamlessly with a MongoDB provider, as the provider has just been changed
-
+For my image rerouting, I would like an option to add different routes and
+  select the default one
 
 Currency Doesn't change in product list
 

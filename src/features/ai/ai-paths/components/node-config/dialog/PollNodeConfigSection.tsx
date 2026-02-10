@@ -1,12 +1,9 @@
 'use client';
 
 import type {
-  AiNode,
   DbQueryConfig,
   Edge,
-  NodeConfig,
   PollConfig,
-  RuntimeState,
 } from '@/features/ai/ai-paths/lib';
 import {
   DB_COLLECTION_OPTIONS,
@@ -24,21 +21,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/ui';
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
-type PollNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  edges: Edge[];
-  runtimeState: RuntimeState;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-};
+export function PollNodeConfigSection(): React.JSX.Element | null {
+  const { selectedNode, edges, runtimeState, updateSelectedNodeConfig } = useAiPathConfig();
 
-export function PollNodeConfigSection({
-  selectedNode,
-  edges,
-  runtimeState,
-  updateSelectedNodeConfig,
-}: PollNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== 'poll') return null;
+  if (!selectedNode || selectedNode.type !== 'poll') return null;
 
   const defaultQuery: DbQueryConfig = {
     provider: 'mongodb',

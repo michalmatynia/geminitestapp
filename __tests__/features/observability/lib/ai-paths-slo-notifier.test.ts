@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { notifyAiPathsSloBreach } from '@/features/observability/lib/ai-paths-slo-notifier';
 import type { AiPathRunQueueSloStatus } from '@/features/jobs/workers/aiPathRunQueue';
+import { notifyAiPathsSloBreach } from '@/features/observability/lib/ai-paths-slo-notifier';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getRedisConnection } from '@/shared/lib/queue';
 

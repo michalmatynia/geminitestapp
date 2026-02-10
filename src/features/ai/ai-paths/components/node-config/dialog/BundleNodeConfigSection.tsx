@@ -3,20 +3,14 @@
 
 
 
-import type { AiNode, NodeConfig } from '@/features/ai/ai-paths/lib';
 import { parsePathList } from '@/features/ai/ai-paths/lib';
 import { Button, Label, Textarea } from '@/shared/ui';
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
-type BundleNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-};
+export function BundleNodeConfigSection(): React.JSX.Element | null {
+  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
 
-export function BundleNodeConfigSection({
-  selectedNode,
-  updateSelectedNodeConfig,
-}: BundleNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== 'bundle') return null;
+  if (!selectedNode || selectedNode.type !== 'bundle') return null;
 
   const bundleConfig = selectedNode.config?.bundle ?? {
     includePorts: [],

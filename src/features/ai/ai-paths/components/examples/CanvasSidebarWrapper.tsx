@@ -18,10 +18,6 @@ export type CanvasSidebarWrapperProps = {
   palette: NodeDefinition[];
   /** Callback when dragging a node from palette */
   onDragStart: (event: React.DragEvent<HTMLDivElement>, node: NodeDefinition) => void;
-  /** Callback to fire a trigger */
-  onFireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
-  /** Callback to fire a persistent trigger */
-  onFireTriggerPersistent?: ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void) | undefined;
   
   onUpdateSelectedNode?: (
     patch: Partial<AiNode>,
@@ -30,19 +26,6 @@ export type CanvasSidebarWrapperProps = {
   onDeleteSelectedNode?: () => void;
   onRemoveEdge?: (edgeId: string) => void;
   executionMode?: 'local' | 'server';
-
-  /** Current run status */
-  runStatus: 'idle' | 'running' | 'paused' | 'stepping';
-  /** Pause current run */
-  onPauseRun?: () => void;
-  /** Resume paused run */
-  onResumeRun?: () => void;
-  /** Step run (optional trigger override) */
-  onStepRun?: (triggerNode?: AiNode) => void;
-  /** Cancel current run */
-  onCancelRun?: () => void;
-  /** Callback to clear all wires */
-  onClearWires: () => void;
   /** Save path config - for persisting node changes */
   savePathConfig?: ((options?: {
     silent?: boolean | undefined;

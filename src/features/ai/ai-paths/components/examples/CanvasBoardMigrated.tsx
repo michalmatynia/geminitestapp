@@ -10,9 +10,7 @@
 
 import React from 'react';
 
-import type {
-  AiNode,
-} from '@/features/ai/ai-paths/lib';
+import type { AiNode } from '@/features/ai/ai-paths/lib';
 
 import { CanvasBoard } from '../canvas-board';
 
@@ -20,7 +18,7 @@ import { CanvasBoard } from '../canvas-board';
 export type CanvasBoardMigratedProps = {
   runtimeRunStatus?: 'idle' | 'running' | 'paused' | 'stepping';
   viewportClassName?: string | undefined;
-  onFireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
+  onFireTrigger?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
 };
 
 /**

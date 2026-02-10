@@ -6,10 +6,12 @@ import {
   useState,
   useMemo,
   useCallback,
+  useRef,
   type ReactNode,
 } from 'react';
 
 import type {
+  AiNode,
   RuntimeState,
   RuntimePortValues,
   ParserSampleState,
@@ -30,6 +32,30 @@ export interface LastErrorInfo {
   pathId?: string | null;
 }
 
+export type RuntimeRunStatus = 'idle' | 'running' | 'paused' | 'stepping';
+
+export interface RuntimeControlHandlers {
+  fireTrigger?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
+  fireTriggerPersistent?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
+  pauseActiveRun?: () => void;
+  resumeActiveRun?: () => void;
+  stepActiveRun?: (triggerNode?: AiNode) => void;
+  cancelActiveRun?: () => void;
+  clearWires?: () => void | Promise<void>;
+}
+
+export interface RuntimeNodeConfigHandlers {
+  fetchParserSample?: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
+  fetchUpdaterSample?: (
+    nodeId: string,
+    entityType: string,
+    entityId: string,
+    options?: { notify?: boolean }
+  ) => Promise<void>;
+  runSimulation?: (node: AiNode, triggerEvent?: string) => void | Promise<void>;
+  sendToAi?: (databaseNodeId: string, prompt: string) => Promise<void>;
+}
+
 export interface RuntimeStateData {
   // Core runtime state
   runtimeState: RuntimeState;
@@ -48,6 +74,7 @@ export interface RuntimeStateData {
   // Execution tracking
   lastRunAt: string | null;
   lastError: LastErrorInfo | null;
+  runtimeRunStatus: RuntimeRunStatus;
 
   // Loading states
   parserSampleLoading: boolean;
@@ -88,6 +115,27 @@ export interface RuntimeActions {
   // Execution tracking actions
   setLastRunAt: (timestamp: string | null) => void;
   setLastError: (error: LastErrorInfo | null) => void;
+  setRuntimeRunStatus: (
+    status: RuntimeRunStatus | ((prev: RuntimeRunStatus) => RuntimeRunStatus)
+  ) => void;
+  setRunControlHandlers: (handlers: RuntimeControlHandlers) => void;
+  fireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
+  fireTriggerPersistent: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
+  pauseActiveRun: () => void;
+  resumeActiveRun: () => void;
+  stepActiveRun: (triggerNode?: AiNode) => void;
+  cancelActiveRun: () => void;
+  clearWires: () => void;
+  setRuntimeNodeConfigHandlers: (handlers: RuntimeNodeConfigHandlers) => void;
+  fetchParserSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
+  fetchUpdaterSample: (
+    nodeId: string,
+    entityType: string,
+    entityId: string,
+    options?: { notify?: boolean }
+  ) => Promise<void>;
+  runSimulation: (node: AiNode, triggerEvent?: string) => Promise<void>;
+  sendToAi: (databaseNodeId: string, prompt: string) => Promise<void>;
 
   // Loading state actions
   setParserSampleLoading: (loading: boolean) => void;
@@ -142,11 +190,14 @@ export function RuntimeProvider({
   // Execution tracking
   const [lastRunAt, setLastRunAtInternal] = useState<string | null>(null);
   const [lastError, setLastErrorInternal] = useState<LastErrorInfo | null>(null);
+  const [runtimeRunStatus, setRuntimeRunStatusInternal] = useState<RuntimeRunStatus>('idle');
 
   // Loading states
   const [parserSampleLoading, setParserSampleLoadingInternal] = useState(false);
   const [updaterSampleLoading, setUpdaterSampleLoadingInternal] = useState(false);
   const [sendingToAi, setSendingToAiInternal] = useState(false);
+  const runControlHandlersRef = useRef<RuntimeControlHandlers>({});
+  const runtimeNodeConfigHandlersRef = useRef<RuntimeNodeConfigHandlers>({});
 
   // Memoized update operations
   const updateNodeInputs = useCallback((nodeId: string, inputs: RuntimePortValues) => {
@@ -244,6 +295,88 @@ export function RuntimeProvider({
     setPathDebugSnapshotsInternal((prev) => ({ ...prev, [pathId]: snapshot }));
   }, []);
 
+  const setRunControlHandlers = useCallback((handlers: RuntimeControlHandlers) => {
+    runControlHandlersRef.current = handlers;
+  }, []);
+
+  const fireTrigger = useCallback((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => {
+    runControlHandlersRef.current.fireTrigger?.(node, event);
+  }, []);
+
+  const fireTriggerPersistent = useCallback((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => {
+    runControlHandlersRef.current.fireTriggerPersistent?.(node, event);
+  }, []);
+
+  const pauseActiveRun = useCallback(() => {
+    runControlHandlersRef.current.pauseActiveRun?.();
+  }, []);
+
+  const resumeActiveRun = useCallback(() => {
+    runControlHandlersRef.current.resumeActiveRun?.();
+  }, []);
+
+  const stepActiveRun = useCallback((triggerNode?: AiNode) => {
+    runControlHandlersRef.current.stepActiveRun?.(triggerNode);
+  }, []);
+
+  const cancelActiveRun = useCallback(() => {
+    runControlHandlersRef.current.cancelActiveRun?.();
+  }, []);
+
+  const clearWires = useCallback(() => {
+    const result = runControlHandlersRef.current.clearWires?.();
+    if (result && typeof (result as Promise<unknown>).then === 'function') {
+      void (result as Promise<unknown>).catch(() => {});
+    }
+  }, []);
+
+  const setRuntimeNodeConfigHandlers = useCallback((handlers: RuntimeNodeConfigHandlers) => {
+    runtimeNodeConfigHandlersRef.current = handlers;
+  }, []);
+
+  const fetchParserSample = useCallback(
+    async (nodeId: string, entityType: string, entityId: string): Promise<void> => {
+      await (runtimeNodeConfigHandlersRef.current.fetchParserSample?.(nodeId, entityType, entityId)
+        ?? Promise.resolve());
+    },
+    []
+  );
+
+  const fetchUpdaterSample = useCallback(
+    async (
+      nodeId: string,
+      entityType: string,
+      entityId: string,
+      options?: { notify?: boolean }
+    ): Promise<void> => {
+      await (runtimeNodeConfigHandlersRef.current.fetchUpdaterSample?.(
+        nodeId,
+        entityType,
+        entityId,
+        options
+      ) ?? Promise.resolve());
+    },
+    []
+  );
+
+  const runSimulation = useCallback(
+    async (node: AiNode, triggerEvent?: string): Promise<void> => {
+      const result = runtimeNodeConfigHandlersRef.current.runSimulation?.(node, triggerEvent);
+      if (result && typeof (result as Promise<unknown>).then === 'function') {
+        await (result as Promise<unknown>);
+      }
+    },
+    []
+  );
+
+  const sendToAi = useCallback(
+    async (databaseNodeId: string, prompt: string): Promise<void> => {
+      await (runtimeNodeConfigHandlersRef.current.sendToAi?.(databaseNodeId, prompt)
+        ?? Promise.resolve());
+    },
+    []
+  );
+
   // Actions are stable
   const actions = useMemo<RuntimeActions>(
     () => ({
@@ -276,6 +409,20 @@ export function RuntimeProvider({
       // Execution tracking actions
       setLastRunAt: setLastRunAtInternal,
       setLastError: setLastErrorInternal,
+      setRuntimeRunStatus: setRuntimeRunStatusInternal,
+      setRunControlHandlers,
+      fireTrigger,
+      fireTriggerPersistent,
+      pauseActiveRun,
+      resumeActiveRun,
+      stepActiveRun,
+      cancelActiveRun,
+      clearWires,
+      setRuntimeNodeConfigHandlers,
+      fetchParserSample,
+      fetchUpdaterSample,
+      runSimulation,
+      sendToAi,
 
       // Loading state actions
       setParserSampleLoading: setParserSampleLoadingInternal,
@@ -296,6 +443,19 @@ export function RuntimeProvider({
       updateParserSample,
       updateUpdaterSample,
       updatePathDebugSnapshot,
+      setRunControlHandlers,
+      fireTrigger,
+      fireTriggerPersistent,
+      pauseActiveRun,
+      resumeActiveRun,
+      stepActiveRun,
+      cancelActiveRun,
+      clearWires,
+      setRuntimeNodeConfigHandlers,
+      fetchParserSample,
+      fetchUpdaterSample,
+      runSimulation,
+      sendToAi,
     ]
   );
 
@@ -309,6 +469,7 @@ export function RuntimeProvider({
       pathDebugSnapshots,
       lastRunAt,
       lastError,
+      runtimeRunStatus,
       parserSampleLoading,
       updaterSampleLoading,
       sendingToAi,
@@ -322,6 +483,7 @@ export function RuntimeProvider({
       pathDebugSnapshots,
       lastRunAt,
       lastError,
+      runtimeRunStatus,
       parserSampleLoading,
       updaterSampleLoading,
       sendingToAi,

@@ -1,17 +1,12 @@
 'use client';
 
-import type { AiNode, NodeCacheMode, NodeConfig } from '@/features/ai/ai-paths/lib';
+import type { NodeCacheMode } from '@/features/ai/ai-paths/lib';
 import { Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Switch } from '@/shared/ui';
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
-type RuntimeNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-};
-
-export function RuntimeNodeConfigSection({
-  selectedNode,
-  updateSelectedNodeConfig,
-}: RuntimeNodeConfigSectionProps): React.JSX.Element {
+export function RuntimeNodeConfigSection(): React.JSX.Element | null {
+  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  if (!selectedNode) return null;
   const runtimeConfig = selectedNode.config?.runtime ?? {};
   const cacheConfig = runtimeConfig.cache ?? {};
   const cacheMode: NodeCacheMode = cacheConfig.mode ?? 'auto';

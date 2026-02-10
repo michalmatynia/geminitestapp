@@ -69,6 +69,14 @@ export function sanitizeHtml(html: string): string {
     return doc.body.innerHTML;
   } catch (error) {
     console.error('HTML Sanitization failed:', error);
+    void (async (): Promise<void> => {
+      try {
+        const { logClientError } = await import('@/shared/utils/observability/client-error-logger');
+        logClientError(error instanceof Error ? error : new Error('HTML Sanitization failed'), {
+          context: { source: 'sanitization', htmlLength: html.length },
+        });
+      } catch { /* ignore */ }
+    })();
     return ''; // Return empty on failure for safety
   }
 }

@@ -28,7 +28,19 @@
 
 import { useEffect, useLayoutEffect, useRef } from 'react';
 
-import type { AiNode, Edge, RuntimeState, ClusterPreset, PathMeta, PathConfig, PathExecutionMode, PathFlowIntensity, PathRunMode } from '@/features/ai/ai-paths/lib';
+import type {
+  AiNode,
+  Edge,
+  RuntimeState,
+  ClusterPreset,
+  PathMeta,
+  PathConfig,
+  PathExecutionMode,
+  PathFlowIntensity,
+  PathRunMode,
+  DbQueryPreset,
+  DbNodePreset,
+} from '@/features/ai/ai-paths/lib';
 import { stableStringify } from '@/features/ai/ai-paths/lib';
 
 import { useCanvasActions } from '../CanvasContext';
@@ -42,6 +54,7 @@ import { useSelectionActions } from '../SelectionContext';
 
 import type { ViewState, PanState, DragState, ConnectingState } from '../CanvasContext';
 import type { ClusterPresetDraft } from '../PresetsContext';
+import type { SavePathConfigOptions } from '../PersistenceContext';
 // Note: Using string for runFilter to accommodate different RunHistoryFilter types
 // (context uses "all" | "completed" | "failed" | "running" | "queued" | "cancelled"
 // while run-history-panel uses "all" | "active" | "failed" | "dead")
@@ -314,6 +327,23 @@ export interface LegacySyncRuntimeProps {
   runtimeState: RuntimeState;
   lastRunAt?: string | null | undefined;
   lastError?: { message: string; time: string; pathId?: string | null } | null | undefined;
+  runtimeRunStatus?: 'idle' | 'running' | 'paused' | 'stepping' | undefined;
+  handleFireTrigger?: ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void) | undefined;
+  handleFireTriggerPersistent?: ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void) | undefined;
+  handlePauseActiveRun?: (() => void) | undefined;
+  handleResumeActiveRun?: (() => void) | undefined;
+  handleStepActiveRun?: ((triggerNode?: AiNode) => void) | undefined;
+  handleCancelActiveRun?: (() => void) | undefined;
+  handleClearWires?: (() => Promise<void> | void) | undefined;
+  handleFetchParserSample?: ((nodeId: string, entityType: string, entityId: string) => Promise<void>) | undefined;
+  handleFetchUpdaterSample?: ((
+    nodeId: string,
+    entityType: string,
+    entityId: string,
+    options?: { notify?: boolean }
+  ) => Promise<void>) | undefined;
+  handleRunSimulation?: ((node: AiNode, triggerEvent?: string) => void | Promise<void>) | undefined;
+  handleSendToAi?: ((databaseNodeId: string, prompt: string) => Promise<void>) | undefined;
 }
 
 /**
@@ -323,6 +353,18 @@ export function useLegacySyncRuntime({
   runtimeState,
   lastRunAt,
   lastError,
+  runtimeRunStatus,
+  handleFireTrigger,
+  handleFireTriggerPersistent,
+  handlePauseActiveRun,
+  handleResumeActiveRun,
+  handleStepActiveRun,
+  handleCancelActiveRun,
+  handleClearWires,
+  handleFetchParserSample,
+  handleFetchUpdaterSample,
+  handleRunSimulation,
+  handleSendToAi,
 }: LegacySyncRuntimeProps): void {
   const actions = useRuntimeActions();
 
@@ -341,6 +383,50 @@ export function useLegacySyncRuntime({
       actions.setLastError(lastError);
     }
   }, [lastError, actions]);
+
+  useEffect(() => {
+    if (runtimeRunStatus !== undefined) {
+      actions.setRuntimeRunStatus(runtimeRunStatus);
+    }
+  }, [runtimeRunStatus, actions]);
+
+  useEffect(() => {
+    actions.setRunControlHandlers({
+      ...(handleFireTrigger !== undefined && { fireTrigger: handleFireTrigger }),
+      ...(handleFireTriggerPersistent !== undefined && {
+        fireTriggerPersistent: handleFireTriggerPersistent,
+      }),
+      ...(handlePauseActiveRun !== undefined && { pauseActiveRun: handlePauseActiveRun }),
+      ...(handleResumeActiveRun !== undefined && { resumeActiveRun: handleResumeActiveRun }),
+      ...(handleStepActiveRun !== undefined && { stepActiveRun: handleStepActiveRun }),
+      ...(handleCancelActiveRun !== undefined && { cancelActiveRun: handleCancelActiveRun }),
+      ...(handleClearWires !== undefined && { clearWires: handleClearWires }),
+    });
+  }, [
+    actions,
+    handleFireTrigger,
+    handleFireTriggerPersistent,
+    handlePauseActiveRun,
+    handleResumeActiveRun,
+    handleStepActiveRun,
+    handleCancelActiveRun,
+    handleClearWires,
+  ]);
+
+  useEffect(() => {
+    actions.setRuntimeNodeConfigHandlers({
+      ...(handleFetchParserSample !== undefined && { fetchParserSample: handleFetchParserSample }),
+      ...(handleFetchUpdaterSample !== undefined && { fetchUpdaterSample: handleFetchUpdaterSample }),
+      ...(handleRunSimulation !== undefined && { runSimulation: handleRunSimulation }),
+      ...(handleSendToAi !== undefined && { sendToAi: handleSendToAi }),
+    });
+  }, [
+    actions,
+    handleFetchParserSample,
+    handleFetchUpdaterSample,
+    handleRunSimulation,
+    handleSendToAi,
+  ]);
 }
 
 // ---------------------------------------------------------------------------
@@ -352,6 +438,7 @@ export interface LegacySyncPersistenceProps {
   saving?: boolean | undefined;
   autoSaveStatus?: 'idle' | 'saving' | 'saved' | 'error' | undefined;
   autoSaveAt?: string | null | undefined;
+  savePathConfig?: ((options?: SavePathConfigOptions) => Promise<boolean>) | undefined;
 }
 
 /**
@@ -362,6 +449,7 @@ export function useLegacySyncPersistence({
   saving,
   autoSaveStatus,
   autoSaveAt,
+  savePathConfig,
 }: LegacySyncPersistenceProps): void {
   const actions = usePersistenceActions();
 
@@ -386,6 +474,12 @@ export function useLegacySyncPersistence({
       actions.setAutoSaveAt(autoSaveAt);
     }
   }, [autoSaveAt, actions]);
+
+  useEffect(() => {
+    actions.setOperationHandlers({
+      ...(savePathConfig !== undefined && { savePathConfig }),
+    });
+  }, [actions, savePathConfig]);
 }
 
 // ---------------------------------------------------------------------------
@@ -398,6 +492,8 @@ export interface LegacySyncPresetsProps {
   editingPresetId?: string | null | undefined;
   paletteCollapsed?: boolean | undefined;
   expandedPaletteGroups?: Set<string> | undefined;
+  saveDbQueryPresets?: ((nextPresets: DbQueryPreset[]) => Promise<void>) | undefined;
+  saveDbNodePresets?: ((nextPresets: DbNodePreset[]) => Promise<void>) | undefined;
 }
 
 /**
@@ -409,6 +505,8 @@ export function useLegacySyncPresets({
   editingPresetId,
   paletteCollapsed,
   expandedPaletteGroups,
+  saveDbQueryPresets,
+  saveDbNodePresets,
 }: LegacySyncPresetsProps): void {
   const actions = usePresetsActions();
 
@@ -441,6 +539,13 @@ export function useLegacySyncPresets({
       actions.setExpandedPaletteGroups(expandedPaletteGroups);
     }
   }, [expandedPaletteGroups, actions]);
+
+  useEffect(() => {
+    actions.setPresetPersistenceHandlers({
+      ...(saveDbQueryPresets !== undefined && { saveDbQueryPresets }),
+      ...(saveDbNodePresets !== undefined && { saveDbNodePresets }),
+    });
+  }, [actions, saveDbQueryPresets, saveDbNodePresets]);
 }
 
 // ---------------------------------------------------------------------------
@@ -521,17 +626,37 @@ export interface LegacySyncAllProps {
   runtimeState: RuntimeState;
   lastRunAt?: string | null | undefined;
   lastError?: { message: string; time: string; pathId?: string | null } | null | undefined;
+  runtimeRunStatus?: 'idle' | 'running' | 'paused' | 'stepping' | undefined;
+  handleFireTrigger?: ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void) | undefined;
+  handleFireTriggerPersistent?: ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void) | undefined;
+  handlePauseActiveRun?: (() => void) | undefined;
+  handleResumeActiveRun?: (() => void) | undefined;
+  handleStepActiveRun?: ((triggerNode?: AiNode) => void) | undefined;
+  handleCancelActiveRun?: (() => void) | undefined;
+  handleClearWires?: (() => Promise<void> | void) | undefined;
+  handleFetchParserSample?: ((nodeId: string, entityType: string, entityId: string) => Promise<void>) | undefined;
+  handleFetchUpdaterSample?: ((
+    nodeId: string,
+    entityType: string,
+    entityId: string,
+    options?: { notify?: boolean }
+  ) => Promise<void>) | undefined;
+  handleRunSimulation?: ((node: AiNode, triggerEvent?: string) => void | Promise<void>) | undefined;
+  handleSendToAi?: ((databaseNodeId: string, prompt: string) => Promise<void>) | undefined;
   // Persistence
   loading: boolean;
   saving?: boolean | undefined;
   autoSaveStatus?: 'idle' | 'saving' | 'saved' | 'error' | undefined;
   autoSaveAt?: string | null | undefined;
+  savePathConfig?: ((options?: SavePathConfigOptions) => Promise<boolean>) | undefined;
   // Presets
   clusterPresets?: ClusterPreset[] | undefined;
   presetDraft?: ClusterPresetDraft | undefined;
   editingPresetId?: string | null | undefined;
   paletteCollapsed?: boolean | undefined;
   expandedPaletteGroups?: Set<string> | undefined;
+  saveDbQueryPresets?: ((nextPresets: DbQueryPreset[]) => Promise<void>) | undefined;
+  saveDbNodePresets?: ((nextPresets: DbNodePreset[]) => Promise<void>) | undefined;
   // Run History
   runFilter?: string | undefined;
   expandedRunHistory?: Record<string, boolean> | undefined;
@@ -581,6 +706,18 @@ export function useLegacySyncAll(props: LegacySyncAllProps): void {
     runtimeState: props.runtimeState,
     lastRunAt: props.lastRunAt,
     lastError: props.lastError,
+    runtimeRunStatus: props.runtimeRunStatus,
+    handleFireTrigger: props.handleFireTrigger,
+    handleFireTriggerPersistent: props.handleFireTriggerPersistent,
+    handlePauseActiveRun: props.handlePauseActiveRun,
+    handleResumeActiveRun: props.handleResumeActiveRun,
+    handleStepActiveRun: props.handleStepActiveRun,
+    handleCancelActiveRun: props.handleCancelActiveRun,
+    handleClearWires: props.handleClearWires,
+    handleFetchParserSample: props.handleFetchParserSample,
+    handleFetchUpdaterSample: props.handleFetchUpdaterSample,
+    handleRunSimulation: props.handleRunSimulation,
+    handleSendToAi: props.handleSendToAi,
   });
 
   useLegacySyncPersistence({
@@ -588,6 +725,7 @@ export function useLegacySyncAll(props: LegacySyncAllProps): void {
     saving: props.saving,
     autoSaveStatus: props.autoSaveStatus,
     autoSaveAt: props.autoSaveAt,
+    savePathConfig: props.savePathConfig,
   });
 
   useLegacySyncPresets({
@@ -596,6 +734,8 @@ export function useLegacySyncAll(props: LegacySyncAllProps): void {
     editingPresetId: props.editingPresetId,
     paletteCollapsed: props.paletteCollapsed,
     expandedPaletteGroups: props.expandedPaletteGroups,
+    saveDbQueryPresets: props.saveDbQueryPresets,
+    saveDbNodePresets: props.saveDbNodePresets,
   });
 
   useLegacySyncRunHistory({

@@ -13,9 +13,9 @@ import {
   startAiInsightsQueue,
   startAiPathRunQueue,
 } from '@/features/jobs/server';
-import { notifyAiPathsSloBreach } from '@/features/observability/server';
 import { getProductAiJobProvider, getProductAiJobRepository } from '@/features/jobs/services/product-ai-job-repository';
 import type { ProductAiJobStatus } from '@/features/jobs/types/product-ai-job-repository';
+import { notifyAiPathsSloBreach } from '@/features/observability/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';

@@ -4,7 +4,17 @@ import type { AiNode, NodeDefinition } from '@/features/ai/ai-paths/lib';
 import { createParserMappings } from '@/features/ai/ai-paths/lib';
 import { Button, Input, Label, Textarea, SectionPanel } from '@/shared/ui';
 
-import { useGraphState, useGraphActions, usePresetsState, usePresetsActions, useSelectionState, useSelectionActions, useCanvasInteractions } from '../context';
+import {
+  useGraphState,
+  useGraphActions,
+  usePresetsState,
+  usePresetsActions,
+  useSelectionState,
+  useSelectionActions,
+  useCanvasInteractions,
+  useRuntimeState,
+  useRuntimeActions,
+} from '../context';
 import { formatPlaceholderLabel, formatPortLabel } from '../utils/ui-utils';
 
 type CanvasSidebarProps = {
@@ -13,7 +23,7 @@ type CanvasSidebarProps = {
   /** Callback when dragging a node from palette */
   onDragStart: (event: React.DragEvent<HTMLDivElement>, node: NodeDefinition) => void;
   /** Callback to fire a trigger */
-  onFireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
+  onFireTrigger?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
   /** Callback to fire a persistent trigger */
   onFireTriggerPersistent?: ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void) | undefined;
   
@@ -26,14 +36,14 @@ type CanvasSidebarProps = {
   executionMode?: 'local' | 'server';
 
   /** Current run status */
-  runStatus: 'idle' | 'running' | 'paused' | 'stepping';
+  runStatus?: 'idle' | 'running' | 'paused' | 'stepping';
   /** Run control callbacks */
   onPauseRun?: () => void;
   onResumeRun?: () => void;
   onStepRun?: (triggerNode?: AiNode) => void;
   onCancelRun?: () => void;
   /** Callback to clear all wires */
-  onClearWires: () => void;
+  onClearWires?: () => void;
   /** Save path config - for persisting node changes */
   savePathConfig?: ((options?: {
     silent?: boolean | undefined;
@@ -53,7 +63,7 @@ export function CanvasSidebar({
   onDeleteSelectedNode,
   onRemoveEdge,
   executionMode: executionModeProp,
-  runStatus,
+  runStatus: runStatusProp,
   onPauseRun,
   onResumeRun,
   onStepRun,
@@ -65,6 +75,16 @@ export function CanvasSidebar({
   const { nodes, edges, executionMode: executionModeContext } = useGraphState();
   const executionMode = executionModeProp ?? executionModeContext;
   const { updateNode } = useGraphActions();
+  const { runtimeRunStatus: runtimeRunStatusContext } = useRuntimeState();
+  const {
+    fireTrigger: fireTriggerContext,
+    fireTriggerPersistent: fireTriggerPersistentContext,
+    pauseActiveRun: pauseActiveRunContext,
+    resumeActiveRun: resumeActiveRunContext,
+    stepActiveRun: stepActiveRunContext,
+    cancelActiveRun: cancelActiveRunContext,
+    clearWires: clearWiresContext,
+  } = useRuntimeActions();
   const { paletteCollapsed, expandedPaletteGroups } = usePresetsState();
   const { setPaletteCollapsed, togglePaletteGroup } = usePresetsActions();
   const { selectedNodeId, selectedEdgeId } = useSelectionState();
@@ -73,6 +93,14 @@ export function CanvasSidebar({
 
   const deleteSelectedNode = onDeleteSelectedNode ?? deleteSelectedNodeContext;
   const handleRemoveEdge = onRemoveEdge ?? removeEdgeContext;
+  const runStatus = runStatusProp ?? runtimeRunStatusContext;
+  const fireTrigger = onFireTrigger ?? fireTriggerContext;
+  const fireTriggerPersistent = onFireTriggerPersistent ?? fireTriggerPersistentContext;
+  const pauseRun = onPauseRun ?? pauseActiveRunContext;
+  const resumeRun = onResumeRun ?? resumeActiveRunContext;
+  const stepRun = onStepRun ?? stepActiveRunContext;
+  const cancelRun = onCancelRun ?? cancelActiveRunContext;
+  const clearWires = onClearWires ?? clearWiresContext;
 
   // --- Derived ---
   const selectedNode = useMemo(() => 
@@ -237,15 +265,15 @@ export function CanvasSidebar({
                   <Button
                     className='w-full rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10'
                     type='button'
-                    onClick={(event) => onFireTrigger(selectedNode, event)}
+                    onClick={(event) => fireTrigger(selectedNode, event)}
                   >
                     Fire Trigger
                   </Button>
-                  {onFireTriggerPersistent && (
+                  {fireTriggerPersistent && (
                     <Button
                       className='w-full rounded-md border border-sky-500/40 text-xs text-sky-200 hover:bg-sky-500/10'
                       type='button'
-                      onClick={(event) => onFireTriggerPersistent(selectedNode, event)}
+                      onClick={(event) => fireTriggerPersistent(selectedNode, event)}
                     >
                       Queue Persistent Run
                     </Button>
@@ -409,16 +437,16 @@ export function CanvasSidebar({
                 <Button
                   className='rounded-md border border-amber-500/40 text-xs text-amber-200 hover:bg-amber-500/10'
                   type='button'
-                  onClick={onPauseRun}
-                  disabled={!onPauseRun}
+                  onClick={pauseRun}
+                  disabled={!pauseRun}
                 >
                   Pause
                 </Button>
                 <Button
                   className='rounded-md border border-rose-500/40 text-xs text-rose-200 hover:bg-rose-500/10'
                   type='button'
-                  onClick={onCancelRun}
-                  disabled={!onCancelRun}
+                  onClick={cancelRun}
+                  disabled={!cancelRun}
                 >
                   Cancel
                 </Button>
@@ -428,24 +456,24 @@ export function CanvasSidebar({
                 <Button
                   className='rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10'
                   type='button'
-                  onClick={onResumeRun}
-                  disabled={!onResumeRun}
+                  onClick={resumeRun}
+                  disabled={!resumeRun}
                 >
                   Resume
                 </Button>
                 <Button
                   className='rounded-md border border-sky-500/40 text-xs text-sky-200 hover:bg-sky-500/10'
                   type='button'
-                  onClick={() => onStepRun?.(selectedNode?.type === 'trigger' ? selectedNode : undefined)}
-                  disabled={!onStepRun}
+                  onClick={() => stepRun?.(selectedNode?.type === 'trigger' ? selectedNode : undefined)}
+                  disabled={!stepRun}
                 >
                   Step
                 </Button>
                 <Button
                   className='col-span-2 rounded-md border border-rose-500/40 text-xs text-rose-200 hover:bg-rose-500/10'
                   type='button'
-                  onClick={onCancelRun}
-                  disabled={!onCancelRun}
+                  onClick={cancelRun}
+                  disabled={!cancelRun}
                 >
                   Cancel
                 </Button>
@@ -454,8 +482,8 @@ export function CanvasSidebar({
               <Button
                 className='col-span-2 rounded-md border border-sky-500/40 text-xs text-sky-200 hover:bg-sky-500/10'
                 type='button'
-                onClick={() => onStepRun?.(selectedNode?.type === 'trigger' ? selectedNode : undefined)}
-                disabled={!onStepRun}
+                onClick={() => stepRun?.(selectedNode?.type === 'trigger' ? selectedNode : undefined)}
+                disabled={!stepRun}
               >
                 Step Run
               </Button>
@@ -538,7 +566,7 @@ export function CanvasSidebar({
           <Button
             className='w-full rounded-md border border-rose-500/40 text-xs text-rose-200 hover:bg-rose-500/10'
             type='button'
-            onClick={onClearWires}
+            onClick={clearWires}
           >
             Clear All Wires
           </Button>

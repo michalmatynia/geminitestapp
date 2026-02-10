@@ -5,8 +5,8 @@ import { createHash } from 'crypto';
 import type { AiPathRunQueueSloStatus } from '@/features/jobs/workers/aiPathRunQueue';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import { getRedisConnection } from '@/shared/lib/queue';
 import prisma from '@/shared/lib/db/prisma';
+import { getRedisConnection } from '@/shared/lib/queue';
 
 import { withTransientRecovery } from './transient-recovery/with-recovery';
 
@@ -269,9 +269,9 @@ const buildPayload = (
   const headline =
     status.breaches.length > 0
       ? status.breaches
-          .slice(0, 3)
-          .map((breach) => breach.message)
-          .join(' ')
+        .slice(0, 3)
+        .map((breach) => breach.message)
+        .join(' ')
       : 'No detailed breach messages were provided.';
   return {
     event: 'ai_paths_slo_breach',

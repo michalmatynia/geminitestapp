@@ -6,6 +6,7 @@ import {
   useState,
   useMemo,
   useCallback,
+  useRef,
   type ReactNode,
 } from 'react';
 
@@ -21,6 +22,11 @@ export interface ClusterPresetDraft {
   description: string;
   bundlePorts: string;
   template: string;
+}
+
+export interface PresetPersistenceHandlers {
+  saveDbQueryPresets?: (nextPresets: DbQueryPreset[]) => Promise<void>;
+  saveDbNodePresets?: (nextPresets: DbNodePreset[]) => Promise<void>;
 }
 
 export interface PresetsState {
@@ -67,6 +73,11 @@ export interface PresetsActions {
   normalizeDbQueryPreset: (raw: Partial<DbQueryPreset>) => DbQueryPreset;
   normalizeDbNodePreset: (raw: Partial<DbNodePreset>) => DbNodePreset;
   normalizeClusterPreset: (raw: Partial<ClusterPreset>) => ClusterPreset;
+
+  // Persistence handlers (legacy bridge)
+  setPresetPersistenceHandlers: (handlers: PresetPersistenceHandlers) => void;
+  saveDbQueryPresets: (nextPresets: DbQueryPreset[]) => Promise<void>;
+  saveDbNodePresets: (nextPresets: DbNodePreset[]) => Promise<void>;
 }
 
 // ---------------------------------------------------------------------------
@@ -122,6 +133,7 @@ export function PresetsProvider({
   // Palette UI state
   const [expandedPaletteGroups, setExpandedPaletteGroupsInternal] = useState<Set<string>>(DEFAULT_EXPANDED_GROUPS);
   const [paletteCollapsed, setPaletteCollapsedInternal] = useState(false);
+  const presetPersistenceHandlersRef = useRef<PresetPersistenceHandlers>({});
 
   // Normalization utilities
   const normalizeClusterPreset = useCallback((raw: Partial<ClusterPreset>): ClusterPreset => {
@@ -168,6 +180,26 @@ export function PresetsProvider({
       updatedAt: raw.updatedAt ?? now,
     };
   }, []);
+
+  const setPresetPersistenceHandlers = useCallback((handlers: PresetPersistenceHandlers) => {
+    presetPersistenceHandlersRef.current = handlers;
+  }, []);
+
+  const saveDbQueryPresets = useCallback(
+    async (nextPresets: DbQueryPreset[]): Promise<void> => {
+      await (presetPersistenceHandlersRef.current.saveDbQueryPresets?.(nextPresets)
+        ?? Promise.resolve());
+    },
+    []
+  );
+
+  const saveDbNodePresets = useCallback(
+    async (nextPresets: DbNodePreset[]): Promise<void> => {
+      await (presetPersistenceHandlersRef.current.saveDbNodePresets?.(nextPresets)
+        ?? Promise.resolve());
+    },
+    []
+  );
 
   // Actions are stable (empty deps array ensures they never change identity)
   const actions = useMemo<PresetsActions>(
@@ -217,8 +249,18 @@ export function PresetsProvider({
       normalizeDbQueryPreset,
       normalizeDbNodePreset,
       normalizeClusterPreset,
+      setPresetPersistenceHandlers,
+      saveDbQueryPresets,
+      saveDbNodePresets,
     }),
-    [normalizeDbQueryPreset, normalizeDbNodePreset, normalizeClusterPreset]
+    [
+      normalizeDbQueryPreset,
+      normalizeDbNodePreset,
+      normalizeClusterPreset,
+      setPresetPersistenceHandlers,
+      saveDbQueryPresets,
+      saveDbNodePresets,
+    ]
   );
 
   const state = useMemo<PresetsState>(

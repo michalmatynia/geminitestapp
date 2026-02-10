@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient, type UseMutationResult, type UseQueryResult } from '@tanstack/react-query';
 
+import { logClientError } from '@/features/observability';
 import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord, AgentTeachingEmbeddingDocumentListItem } from '@/shared/types/agent-teaching';
 
 export const agentTeachingKeys = {
@@ -19,13 +20,20 @@ export function useTeachingAgents(options?: { enabled?: boolean }): UseQueryResu
         const res = await fetch('/api/agentcreator/teaching/agents');
         if (!res.ok) {
           const payload = (await res.json().catch(() => null)) as { error?: string } | null;
-          console.warn('[learner-agents] Failed to load learner agents', payload?.error ?? res.status);
+          const errorMsg = payload?.error ?? `HTTP ${res.status}`;
+          console.warn('[learner-agents] Failed to load learner agents', errorMsg);
+          logClientError(new Error(`Failed to load learner agents: ${errorMsg}`), {
+            context: { source: 'useAgentTeaching', action: 'useTeachingAgents', status: res.status }
+          });
           return [];
         }
         const data = (await res.json()) as { agents?: AgentTeachingAgentRecord[] };
         return data.agents ?? [];
       } catch (error) {
         console.warn('[learner-agents] Failed to load learner agents', error);
+        logClientError(error instanceof Error ? error : new Error('Failed to load learner agents'), {
+          context: { source: 'useAgentTeaching', action: 'useTeachingAgents' }
+        });
         return [];
       }
     },

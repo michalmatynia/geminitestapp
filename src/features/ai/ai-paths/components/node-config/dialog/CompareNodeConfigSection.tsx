@@ -4,19 +4,14 @@
 
 
 
-import type { AiNode, CompareConfig, NodeConfig } from '@/features/ai/ai-paths/lib';
+import type { CompareConfig } from '@/features/ai/ai-paths/lib';
 import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
-type CompareNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-};
+export function CompareNodeConfigSection(): React.JSX.Element | null {
+  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
 
-export function CompareNodeConfigSection({
-  selectedNode,
-  updateSelectedNodeConfig,
-}: CompareNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== 'compare') return null;
+  if (!selectedNode || selectedNode.type !== 'compare') return null;
 
   const compareConfig = selectedNode.config?.compare ?? {
     operator: 'eq',

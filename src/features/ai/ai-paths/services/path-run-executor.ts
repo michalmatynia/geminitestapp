@@ -2,11 +2,11 @@ import 'server-only';
 
 import { evaluateGraphWithIteratorAutoContinue } from '@/features/ai/ai-paths/lib';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
 import {
   recordRuntimeNodeStatus,
   recordRuntimeRunFinished,
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
-import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
 import { noteService } from '@/features/notesapp/server';
 import { ErrorSystem } from '@/features/observability/services/error-system';
 import { getProductRepository } from '@/features/products/services/product-repository';

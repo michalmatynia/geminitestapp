@@ -14,10 +14,13 @@ import type {
   UpdaterSampleState,
 } from '@/features/ai/ai-paths/lib';
 
-interface AiPathConfigData {
+export interface AiPathConfigData {
+  configOpen: boolean;
+  setConfigOpen: (open: boolean) => void;
   selectedNode: AiNode | null;
   nodes: AiNode[];
   edges: Edge[];
+  isPathLocked: boolean;
   modelOptions: string[];
   parserSamples: Record<string, ParserSampleState>;
   setParserSamples: React.Dispatch<React.SetStateAction<Record<string, ParserSampleState>>>;
@@ -38,6 +41,7 @@ interface AiPathConfigData {
   ) => Promise<void>;
   handleRunSimulation: (node: AiNode) => void | Promise<void>;
   clearRuntimeForNode?: ((nodeId: string) => void) | undefined;
+  clearNodeHistory?: ((nodeId: string) => void | Promise<void>) | undefined;
   onSendToAi?: ((databaseNodeId: string, prompt: string) => Promise<void>) | undefined;
   sendingToAi?: boolean | undefined;
   dbQueryPresets: DbQueryPreset[];
@@ -50,6 +54,15 @@ interface AiPathConfigData {
     message: string,
     options?: { variant?: 'success' | 'error' | 'info' | 'warning' }
   ) => void;
+  onDirtyChange?: ((dirty: boolean) => void) | undefined;
+  savePathConfig?: ((options?: {
+    silent?: boolean | undefined;
+    includeNodeConfig?: boolean | undefined;
+    force?: boolean | undefined;
+    nodesOverride?: AiNode[] | undefined;
+    nodeOverride?: AiNode | undefined;
+    edgesOverride?: Edge[] | undefined;
+  }) => Promise<boolean>) | undefined;
 }
 
 const AiPathConfigContext = createContext<AiPathConfigData | null>(null);
@@ -59,9 +72,12 @@ export function AiPathConfigProvider({
   ...props
 }: AiPathConfigData & { children: React.ReactNode }): React.ReactNode {
   const value = useMemo(() => props, [
+    props.configOpen,
+    props.setConfigOpen,
     props.selectedNode,
     props.nodes,
     props.edges,
+    props.isPathLocked,
     props.modelOptions,
     props.parserSamples,
     props.setParserSamples,
@@ -77,6 +93,7 @@ export function AiPathConfigProvider({
     props.handleFetchUpdaterSample,
     props.handleRunSimulation,
     props.clearRuntimeForNode,
+    props.clearNodeHistory,
     props.onSendToAi,
     props.sendingToAi,
     props.dbQueryPresets,
@@ -86,6 +103,8 @@ export function AiPathConfigProvider({
     props.setDbNodePresets,
     props.saveDbNodePresets,
     props.toast,
+    props.onDirtyChange,
+    props.savePathConfig,
   ]);
 
   return (

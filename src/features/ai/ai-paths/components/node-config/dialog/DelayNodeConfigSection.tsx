@@ -2,20 +2,14 @@
 
 
 
-import type { AiNode, NodeConfig } from '@/features/ai/ai-paths/lib';
 import { toNumber } from '@/features/ai/ai-paths/lib';
 import { Input, Label } from '@/shared/ui';
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
-type DelayNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-};
+export function DelayNodeConfigSection(): React.JSX.Element | null {
+  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
 
-export function DelayNodeConfigSection({
-  selectedNode,
-  updateSelectedNodeConfig,
-}: DelayNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== 'delay') return null;
+  if (!selectedNode || selectedNode.type !== 'delay') return null;
 
   const delayConfig = selectedNode.config?.delay ?? { ms: 300 };
 

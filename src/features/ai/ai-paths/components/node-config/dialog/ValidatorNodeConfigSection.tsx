@@ -3,20 +3,14 @@
 
 
 
-import type { AiNode, NodeConfig } from '@/features/ai/ai-paths/lib';
 import { parsePathList } from '@/features/ai/ai-paths/lib';
 import { Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
-type ValidatorNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-};
+export function ValidatorNodeConfigSection(): React.JSX.Element | null {
+  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
 
-export function ValidatorNodeConfigSection({
-  selectedNode,
-  updateSelectedNodeConfig,
-}: ValidatorNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== 'validator') return null;
+  if (!selectedNode || selectedNode.type !== 'validator') return null;
 
   const validatorConfig = selectedNode.config?.validator ?? {
     requiredPaths: ['entity.id'],

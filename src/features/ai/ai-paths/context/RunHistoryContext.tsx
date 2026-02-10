@@ -18,7 +18,15 @@ import type {
 // Types
 // ---------------------------------------------------------------------------
 
-export type RunHistoryFilter = 'all' | 'completed' | 'failed' | 'running' | 'queued' | 'cancelled';
+export type RunHistoryFilter =
+  | 'all'
+  | 'active'
+  | 'failed'
+  | 'dead'
+  | 'completed'
+  | 'running'
+  | 'queued'
+  | 'cancelled';
 
 export type RunStreamStatus = 'connecting' | 'live' | 'stopped' | 'paused';
 

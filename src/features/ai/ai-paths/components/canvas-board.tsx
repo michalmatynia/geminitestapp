@@ -27,7 +27,16 @@ import {
 } from '@/features/ai/ai-paths/lib';
 import { Button, Tooltip, SectionPanel } from '@/shared/ui';
 
-import { useCanvasState, useCanvasRefs, useCanvasInteractions, useGraphState, useRuntimeState, useSelectionState, useSelectionActions } from '../context';
+import {
+  useCanvasState,
+  useCanvasRefs,
+  useCanvasInteractions,
+  useGraphState,
+  useRuntimeState,
+  useRuntimeActions,
+  useSelectionState,
+  useSelectionActions,
+} from '../context';
 import { NodeProcessingDots } from './NodeProcessingDots';
 import { SignalDots } from './SignalDots';
 import { formatPortLabel } from '../utils/ui-utils';
@@ -67,7 +76,7 @@ type CanvasBoardProps = {
   /** Optional class name for the viewport container */
   viewportClassName?: string | undefined;
   /** Callback to fire a trigger (TODO: move to context) */
-  onFireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
+  onFireTrigger?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
 };
 
 const formatRuntimeStatusLabel = (status: string): string =>
@@ -108,7 +117,7 @@ const BLOCKER_PROCESSING_STATUSES = new Set<string>([
 ]);
 
 export function CanvasBoard({
-  runtimeRunStatus = 'idle',
+  runtimeRunStatus: runtimeRunStatusProp,
   viewportClassName,
   onFireTrigger,
 }: CanvasBoardProps): React.JSX.Element {
@@ -116,9 +125,17 @@ export function CanvasBoard({
   const { view, panState, dragState, lastDrop, connecting, connectingPos } = useCanvasState();
   const { viewportRef, canvasRef } = useCanvasRefs();
   const { nodes, edges, flowIntensity } = useGraphState();
-  const { runtimeState, runtimeNodeStatuses, runtimeEvents } = useRuntimeState();
+  const {
+    runtimeState,
+    runtimeNodeStatuses,
+    runtimeEvents,
+    runtimeRunStatus: runtimeRunStatusContext,
+  } = useRuntimeState();
+  const { fireTrigger: fireTriggerContext } = useRuntimeActions();
   const { selectedNodeId, selectedEdgeId } = useSelectionState();
   const { selectEdge, setConfigOpen } = useSelectionActions();
+  const runtimeRunStatus = runtimeRunStatusProp ?? runtimeRunStatusContext;
+  const fireTrigger = onFireTrigger ?? fireTriggerContext;
   const {
     edgePaths,
     handlePointerDownNode,
@@ -1328,7 +1345,7 @@ export function CanvasBoard({
                     className='self-start rounded-md border border-emerald-500/40 px-2 py-1 text-[10px] text-emerald-200 hover:bg-emerald-500/10'
                     type='button'
                     onPointerDown={(event) => event.stopPropagation()}
-                    onClick={(event) => onFireTrigger(node, event)}
+                    onClick={(event) => fireTrigger(node, event)}
                   >
                     Fire Trigger
                   </Button>

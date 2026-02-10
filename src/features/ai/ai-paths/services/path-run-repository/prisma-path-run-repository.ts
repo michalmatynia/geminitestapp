@@ -464,16 +464,16 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     const where =
       afterDate && afterId
         ? {
-            runId,
-            OR: [
-              { createdAt: { gt: afterDate } },
-              { createdAt: afterDate, id: { gt: afterId } },
-            ],
-          }
+          runId,
+          OR: [
+            { createdAt: { gt: afterDate } },
+            { createdAt: afterDate, id: { gt: afterId } },
+          ],
+        }
         : {
-            runId,
-            ...(since ? { createdAt: { gt: since } } : {}),
-          };
+          runId,
+          ...(since ? { createdAt: { gt: since } } : {}),
+        };
     const events = await prismaAny.aiPathRunEvent!.findMany({
       where,
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],

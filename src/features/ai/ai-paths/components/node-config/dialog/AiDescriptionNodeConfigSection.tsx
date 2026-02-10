@@ -1,19 +1,12 @@
 'use client';
 
 
-import type { AiNode, NodeConfig } from '@/features/ai/ai-paths/lib';
 import { Button } from '@/shared/ui';
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
-type AiDescriptionNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-};
-
-export function AiDescriptionNodeConfigSection({
-  selectedNode,
-  updateSelectedNodeConfig,
-}: AiDescriptionNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== 'ai_description') return null;
+export function AiDescriptionNodeConfigSection(): React.JSX.Element | null {
+  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  if (!selectedNode || selectedNode.type !== 'ai_description') return null;
 
   const descriptionConfig = selectedNode.config?.description ?? {
     visionOutputEnabled: true,

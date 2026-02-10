@@ -4,19 +4,14 @@
 
 
 
-import type { AiNode, ConstantConfig, NodeConfig } from '@/features/ai/ai-paths/lib';
+import type { ConstantConfig } from '@/features/ai/ai-paths/lib';
 import { Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
-type ConstantNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-};
+export function ConstantNodeConfigSection(): React.JSX.Element | null {
+  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
 
-export function ConstantNodeConfigSection({
-  selectedNode,
-  updateSelectedNodeConfig,
-}: ConstantNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== 'constant') return null;
+  if (!selectedNode || selectedNode.type !== 'constant') return null;
 
   const constantConfig = selectedNode.config?.constant ?? {
     valueType: 'string',

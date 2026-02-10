@@ -3,19 +3,14 @@
 
 
 
-import type { AiNode, GateConfig, NodeConfig } from '@/features/ai/ai-paths/lib';
+import type { GateConfig } from '@/features/ai/ai-paths/lib';
 import { Input, Label, UnifiedSelect } from '@/shared/ui';
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
-type GateNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-};
+export function GateNodeConfigSection(): React.JSX.Element | null {
+  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
 
-export function GateNodeConfigSection({
-  selectedNode,
-  updateSelectedNodeConfig,
-}: GateNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== 'gate') return null;
+  if (!selectedNode || selectedNode.type !== 'gate') return null;
 
   const gateConfig: GateConfig = selectedNode.config?.gate ?? {
     mode: 'block',

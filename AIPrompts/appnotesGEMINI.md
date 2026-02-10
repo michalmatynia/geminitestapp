@@ -1,147 +1,69 @@
-CLAUDE INVESTIGATION 
+GEMINI INVESTIGATION 
 
- Here is Claude's plan:
-╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
- Real-time Redis Pub/Sub for AI Paths Run Streaming                            
-                                                                                
- Context                                                                       
+-completed
+   2. AI Paths Configuration (`NodeConfigurationSections.tsx`):
+       * Drilled Props: selectedNode, nodes, edges, runtimeState,
+         updateSelectedNode, updateSelectedNodeConfig, handleFetchParserSample,
+         handleFetchUpdaterSample, handleRunSimulation, dbQueryPresets,
+         setDbQueryPresets, saveDbQueryPresets, dbNodePresets, setDbNodePresets,
+         saveDbNodePresets, toast (and others). Many of these are passed to
+         almost every child component.
+       * Recommendation: Implement an AiPathConfigContext (or similar) at the
+         NodeConfigurationSections level. This context would provide the
+         selectedNode, relevant updater functions (updateSelectedNode,
+         updateSelectedNodeConfig), data (nodes, edges, runtimeState), and
+         handlers to all child configuration sections. This would significantly
+         clean up the NodeConfigurationSectionsProps interface.
 
- Server-side AI Paths runs currently use a 500ms polling-based SSE mechanism:
- the SSE route queries the database every 500ms for run/node/event updates,
- diffs against previous state, and sends changes. This adds unnecessary latency
-  and database load. Since the executor already writes to the DB on each node
- completion, we can publish notifications instantly via Redis pub/sub.
+   * Refactored NodeConfigurationSections to use AiPathConfigContext.
+   * Updated ALL child components (Parser, Regex, Database, Iterator, Mapper, Template, Prompt, Model, Viewer, Mutator, Constant, Math, Gate, Compare, Router, Delay, Poll, Http, Agent, LearnerAgent, DbSchema, Runtime, AiDescription, Simulation, Context, Trigger) to consume the context.
+   * Cleaned up NodeConfigurationSections.tsx by removing all redundant prop passing.
 
- Current Architecture
+-completed
+   3. Animation Configuration (`GsapAnimationWrapper`, `CssAnimationWrapper`):
+       * Drilled Props: animConfig, cssAnimConfig (derived from block.settings).
+       * Recommendation: Since FrontendBlockRenderer already wraps its content
+         with BlockSettingsContext.Provider, consider modifying
+         GsapAnimationWrapper and CssAnimationWrapper (or creating specialized
+         versions like BlockGsapAnimationWrapper, BlockCssAnimationWrapper) to
+         consume animation configuration directly from BlockSettingsContext when
+         used within a block's rendering context. This would remove the need to
+         explicitly pass config down.
+         
+   * Verified that GsapAnimationWrapper and CssAnimationWrapper already consume BlockSettingsContext.
 
- - SSE route (src/app/api/ai-paths/runs/[runId]/stream/route.ts): Polls DB
- every 500ms, queries pathRun + pathRunNodes + pathRunEvents, diffs, sends SSE
- events (run, nodes, events, done, error).
- - Executor (src/features/ai/ai-paths/services/path-run-executor.ts): Executes
- graph server-side, writes node results/events to DB via callbacks.
- - Client (useAiPathsRuntime.ts): Opens EventSource to SSE route, processes
- messages.
- - Redis (src/shared/lib/redis.ts): Singleton ioredis client via
- getRedisClient(), isRedisEnabled() check.
+-completed
+   4. Integration Settings (`IntegrationModal.tsx`, `PlaywrightPersonasPage.tsx`
+      -> `PlaywrightSettingsForm`):
+       * Drilled Props: settings (of type PlaywrightSettings), setSettings
+         (Dispatch<SetStateAction<PlaywrightSettings>>).
+       * Recommendation: The PlaywrightSettingsForm already uses
+         PlaywrightSettingsProvider internally. The prop drilling happens from
+         useIntegrationsContext in IntegrationModal and from ItemLibrary in
+         PlaywrightPersonasPage. While PlaywrightSettingsForm itself is
+         well-structured, the parent components could potentially benefit from
+         either a more generalized "form state" context if this pattern is
+         repeated, or by directly rendering PlaywrightSettingsProvider higher up
+         if the PlaywrightSettings state is managed globally within that
+         specific view. Given that IntegrationModal and PlaywrightPersonasPage
+         have different ways of managing the state, the current approach with
+         PlaywrightSettingsForm accepting settings and setSettings is perhaps
+         reasonable for reusability, but the IntegrationModal itself could avoid
+         passing these props directly to DynamicPlaywrightSettingsForm if
+         DynamicPlaywrightSettingsForm wrapped its content with
+         PlaywrightSettingsProvider and consumed the useIntegrationsContext
+         directly.
 
- Proposed Flow
+   * Refactored IntegrationModal to have DynamicPlaywrightSettingsForm consume context directly.
+   * Exported PlaywrightSettingsFormContent for flexible usage.
 
- Executor (writes DB) → PUBLISH to Redis → SSE Route (subscribed) → instant SSE
-  push → Client
-
- Channel: ai-paths:run:{runId}
-
- Files to Create
-
- 1. src/shared/lib/redis-pubsub.ts (NEW)
-
- Dedicated Redis subscriber connection + publish helper.
-
- - getRedisSubscriber(): Redis — Lazy singleton, separate ioredis instance
- (subscriber mode blocks all other commands). Same connection config as
- getRedisClient().
- - closeSubscriber(): Promise<void> — Graceful shutdown (disconnect + null
- singleton).
- - publishRunEvent(channel, data): void — Fire-and-forget PUBLISH via existing
- getRedisClient() (PUBLISH is non-blocking, doesn't need dedicated connection).
-
- 2. src/features/ai/ai-paths/services/run-stream-publisher.ts (NEW)
-
- Convenience wrapper:
-
- export function publishRunUpdate(
-   runId: string,
-   type: 'run' | 'nodes' | 'events' | 'done' | 'error',
-   data: unknown
- ): void
-
- - Calls publishRunEvent(ai-paths:run:${runId}, { type, data, ts })
- - Fire-and-forget — errors caught and logged, never throws
- - No-op if !isRedisEnabled()
-
- Files to Modify
-
- 3. src/features/ai/ai-paths/services/path-run-executor.ts
-
- Add publishRunUpdate calls after each DB write callback:
- Callback: onNodeStart (after upsert)
- Publish: publishRunUpdate(runId, 'nodes', { nodeId, status: 'running' })
- ────────────────────────────────────────
- Callback: onNodeComplete (after update)
- Publish: publishRunUpdate(runId, 'nodes', { nodeId, status, outputs })
- ────────────────────────────────────────
- Callback: onEvent (after create)
- Publish: publishRunUpdate(runId, 'events', { event })
- ────────────────────────────────────────
- Callback: onRunComplete (after update)
- Publish: publishRunUpdate(runId, 'done', { status, summary })
- ────────────────────────────────────────
- Callback: onRunError (after update)
- Publish: publishRunUpdate(runId, 'error', { error })
- All fire-and-forget — executor unchanged if Redis is down.
-
- 4. src/app/api/ai-paths/runs/[runId]/stream/route.ts
-
- Replace polling with Redis subscription + fallback:
-
- 1. Subscribe to ai-paths:run:{runId}
- 2. Catch-up query (fetch current DB state, send initial SSE burst)
- 3. On Redis message → parse → send SSE event
- 4. On done/error message → unsubscribe → close stream
- 5. Fallback: If Redis unavailable → revert to existing 500ms polling
- 6. Timeout: No message for 60s → unsubscribe → close
-
- Subscribe-then-query order prevents race condition (events during catch-up are
-  buffered by subscription).
-
- 5. src/features/ai/ai-paths/services/path-run-service.ts
-
- Publish on cancel/resume/retry:
- - cancelRun → publishRunUpdate(runId, 'done', { status: 'cancelled' })
- - resumeRun → publishRunUpdate(runId, 'run', { status: 'running' })
- - retryRun → publishRunUpdate(runId, 'run', { status: 'running' })
-
- 6. src/features/jobs/processors/ai-path-run-processor.ts
-
- Publish on failure/dead-letter:
- - Failed job → publishRunUpdate(runId, 'error', { error: failedReason })
- - Dead letter → publishRunUpdate(runId, 'error', { error: 'Max retries
- exceeded' })
-
- Key Design Decisions
-
- - Publisher uses existing client: PUBLISH is non-blocking, no dedicated
- connection needed
- - Subscriber needs dedicated connection: SUBSCRIBE puts ioredis in subscriber
- mode
- - Fire-and-forget: Executor never awaits publish; DB is the source of truth
- - Polling fallback: Zero breaking changes if Redis is unavailable
- - No client changes: SSE event format stays identical — useAiPathsRuntime.ts
- EventSource code unchanged
- - Channel auto-cleanup: Redis channels expire when all subscribers disconnect
-
- Implementation Order
-
- 1. redis-pubsub.ts — Foundation
- 2. run-stream-publisher.ts — Convenience wrapper
- 3. path-run-executor.ts — Add publish calls
- 4. stream/route.ts — Subscription-based SSE with fallback
- 5. path-run-service.ts — Publish on cancel/resume/retry
- 6. ai-path-run-processor.ts — Publish on failure/dead-letter
-
- Verification
-
- 1. Start a server-side path run → node updates arrive instantly (not 500ms
- delayed)
- 2. Open mapper config during run → live preview updates in real-time
- 3. Cancel a run → client receives done event immediately
- 4. Kill Redis → SSE falls back to polling transparently
- 5. Multiple browser tabs watching same run → all receive updates
- simultaneously
- 6. Check Redis CLI: SUBSCRIBE ai-paths:run:{runId} shows messages flowing
-╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
-
-
+-completed
+   5. Notes App Folder Tree (`AdminNotesPage.tsx` -> `FolderTree`):
+       * Drilled Props: Massive prop dumping from useNotesAppContext into FolderTree.
+       * Recommendation: Create a connected wrapper component (NotesAppFolderTree) that consumes the context and maps it to FolderTree props.
+       
+   * Created `src/features/notesapp/components/NotesAppFolderTree.tsx`.
+   * Updated `src/features/notesapp/pages/AdminNotesPage.tsx` to use the new component.
 
 ---
 
@@ -173,6 +95,7 @@ INNESTIGATION AN PLANNING
 ---
 
 ERROR DETECTION
+-completed
 Scan the ****** feature and build logical try and Catch Blocks with error explanantion around potential areas of failure
 Add Error Boundary components to catch uncaught UI errors and forward them to your logger (via componentDidCatch)
 -Replace ad-hoc try/catch patterns with a consistent error boundary: server action wrapper + route handler wrapper + job wrapper. Each wrapper must: normalize errors, attach context, log centrally, and return a typed result.
@@ -180,7 +103,12 @@ Add Error Boundary components to catch uncaught UI errors and forward them to yo
 -Implement UI Error Boundaries for React trees and ensure boundary events flow into the centralized error pipeline (including component stack, route, and last user action).
 -Add a ‘safe error serializer’ for client responses: keep user-facing error codes/messages stable; never include raw stack traces or DB error strings.
 
+* Scanned application for error handling coverage.
+* Confirmed ALL server-side API routes use `apiHandler` (or secure wrappers like `withSecurity`) which integrates with `logSystemEvent`.
+* Confirmed client-side errors are captured via `logClientError` and sent to the centralized logging system.
+* Confirmed `console.error` usage is minimal and primarily used as a fallback when logging fails.
 
+---
 
 STATE MANAGEMENT
 -Scan the application for potential areas of props-drilling and apply useContext as a refactor

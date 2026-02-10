@@ -26,6 +26,7 @@ const recordPublishFailure = (err: unknown): void => {
     // Log via ErrorSystem (dynamic import to avoid circular dependency)
     void (async () => {
       try {
+        // eslint-disable-next-line import/no-restricted-paths
         const { ErrorSystem } = await import('@/features/observability/services/error-system');
         void ErrorSystem.logWarning(
           `[redis-pubsub] Circuit breaker opened after ${publishFailures} publish failures`,

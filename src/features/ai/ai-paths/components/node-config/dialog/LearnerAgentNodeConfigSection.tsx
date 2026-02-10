@@ -4,7 +4,7 @@ import Link from 'next/link';
 import React from 'react';
 
 import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeaching';
-import type { AiNode, LearnerAgentConfig, NodeConfig } from '@/features/ai/ai-paths/lib';
+import type { LearnerAgentConfig } from '@/features/ai/ai-paths/lib';
 import type { AgentTeachingAgentRecord } from '@/shared/types/agent-teaching';
 import {
   Button,
@@ -16,11 +16,7 @@ import {
   SelectValue,
   Textarea,
 } from '@/shared/ui';
-
-type LearnerAgentNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-};
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
 const DEFAULT_CONFIG: LearnerAgentConfig = {
   agentId: '',
@@ -30,13 +26,11 @@ const DEFAULT_CONFIG: LearnerAgentConfig = {
 
 const NO_AGENT_VALUE = '__none__';
 
-export function LearnerAgentNodeConfigSection({
-  selectedNode,
-  updateSelectedNodeConfig,
-}: LearnerAgentNodeConfigSectionProps): React.JSX.Element | null {
+export function LearnerAgentNodeConfigSection(): React.JSX.Element | null {
+  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
   const agentsQuery = useTeachingAgents();
 
-  if (selectedNode.type !== 'learner_agent') return null;
+  if (!selectedNode || selectedNode.type !== 'learner_agent') return null;
 
   const agents = agentsQuery.data ?? [];
   const learnerConfig = selectedNode.config?.learnerAgent ?? DEFAULT_CONFIG;

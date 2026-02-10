@@ -19,7 +19,7 @@ import { TestResultModal } from './TestResultModal';
 
 function DynamicPlaywrightSettingsForm(): React.JSX.Element {
   const { playwrightSettings, setPlaywrightSettings, handleSavePlaywrightSettings } = useIntegrationsContext();
-  const [Component, setComponent] = useState<React.ComponentType<any> | null>(null);
+  const [Component, setComponent] = useState<React.ComponentType<{ onSave: () => void }> | null>(null);
 
   useEffect(() => {
     const loadComponent = async (): Promise<void> => {

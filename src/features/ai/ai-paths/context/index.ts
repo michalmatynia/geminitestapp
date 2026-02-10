@@ -85,6 +85,7 @@ export type {
   PresetsState,
   PresetsActions,
   ClusterPresetDraft,
+  PresetPersistenceHandlers,
 } from './PresetsContext';
 
 // Types - Run History
@@ -107,6 +108,9 @@ export type {
   RuntimeStateData,
   RuntimeActions,
   LastErrorInfo,
+  RuntimeRunStatus,
+  RuntimeControlHandlers,
+  RuntimeNodeConfigHandlers,
 } from './RuntimeContext';
 
 // Types - Persistence
@@ -114,6 +118,8 @@ export type {
   PersistenceState,
   PersistenceActions,
   AutoSaveStatus,
+  SavePathConfigOptions,
+  PersistenceOperationHandlers,
 } from './PersistenceContext';
 
 // Legacy Sync Hooks (for gradual migration)

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 
 import { useAgentPersonas } from '@/features/ai/agentcreator/hooks/useAgentPersonas';
-import type { AiNode, AgentConfig, NodeConfig } from '@/features/ai/ai-paths/lib';
+import type { AgentConfig } from '@/features/ai/ai-paths/lib';
 import {
   Button,
   Label,
@@ -14,11 +14,7 @@ import {
   SelectValue,
   Textarea,
 } from '@/shared/ui';
-
-type AgentNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-};
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
 const DEFAULT_AGENT_CONFIG: AgentConfig = {
   personaId: '',
@@ -28,13 +24,11 @@ const DEFAULT_AGENT_CONFIG: AgentConfig = {
 
 const RUNTIME_PERSONA_VALUE = '__runtime__';
 
-export function AgentNodeConfigSection({
-  selectedNode,
-  updateSelectedNodeConfig,
-}: AgentNodeConfigSectionProps): React.JSX.Element | null {
+export function AgentNodeConfigSection(): React.JSX.Element | null {
+  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
   const personasQuery = useAgentPersonas();
   
-  if (selectedNode.type !== 'agent') return null;
+  if (!selectedNode || selectedNode.type !== 'agent') return null;
 
   const personas = personasQuery.data ?? [];
   const agentConfig = selectedNode.config?.agent ?? DEFAULT_AGENT_CONFIG;

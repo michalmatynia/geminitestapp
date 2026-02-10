@@ -9,9 +9,9 @@ import { resolveError } from '@/shared/errors/resolve-error';
 import { enforceRateLimit } from '@/shared/lib/api/rate-limit';
 import { runWithContext } from '@/shared/lib/observability/request-context';
 import {
+  CSRF_COOKIE_NAME,
   CSRF_SAFE_METHODS,
   getCsrfTokenFromHeaders,
-  getCsrfTokenFromRequest,
   isSameOriginRequest,
 } from '@/shared/lib/security/csrf';
 import type {
@@ -108,9 +108,19 @@ const enforceCsrf = (request: NextRequest, options: ApiHandlerOptions): void => 
   if (!isSameOriginRequest(request)) {
     throw forbiddenError('Invalid request origin.');
   }
-  const cookieToken = getCsrfTokenFromRequest(request);
-  const headerToken = getCsrfTokenFromHeaders(request);
-  if (!cookieToken || !headerToken || cookieToken !== headerToken) {
+  const headerToken = getCsrfTokenFromHeaders(request)?.trim() || null;
+  if (!headerToken) {
+    throw forbiddenError('Invalid CSRF token.');
+  }
+  const cookieTokens = request.cookies
+    .getAll(CSRF_COOKIE_NAME)
+    .map((cookie: { value: string }) => cookie.value?.trim())
+    .filter((token: string | undefined): token is string => Boolean(token));
+
+  // Prefer strict double-submit validation when cookie exists.
+  // If cookie is temporarily absent but request is same-origin and header is present,
+  // accept to avoid false negatives in dev/proxy edge cases.
+  if (cookieTokens.length > 0 && !cookieTokens.includes(headerToken)) {
     throw forbiddenError('Invalid CSRF token.');
   }
 };

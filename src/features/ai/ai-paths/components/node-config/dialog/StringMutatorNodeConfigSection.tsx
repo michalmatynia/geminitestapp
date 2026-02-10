@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 
-import type { AiNode, NodeConfig, StringMutatorOperation } from '@/features/ai/ai-paths/lib';
+import type { StringMutatorOperation } from '@/features/ai/ai-paths/lib';
 import {
   Button,
   Input,
@@ -14,11 +14,7 @@ import {
   SelectValue,
   Switch,
 } from '@/shared/ui';
-
-type StringMutatorNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-};
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
 const OPERATION_LABELS: Record<StringMutatorOperation['type'], string> = {
   trim: 'Trim',
@@ -57,11 +53,10 @@ const parseOptionalNumber = (value: string): number | undefined => {
   return Number.isFinite(parsed) ? parsed : undefined;
 };
 
-export function StringMutatorNodeConfigSection({
-  selectedNode,
-  updateSelectedNodeConfig,
-}: StringMutatorNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== 'string_mutator') return null;
+export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
+  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+
+  if (!selectedNode || selectedNode.type !== 'string_mutator') return null;
 
   const stringConfig = selectedNode.config?.stringMutator ?? { operations: [] };
   const operations = Array.isArray(stringConfig.operations)

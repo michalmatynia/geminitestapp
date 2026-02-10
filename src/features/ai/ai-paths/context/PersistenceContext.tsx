@@ -6,14 +6,30 @@ import {
   useState,
   useMemo,
   useCallback,
+  useRef,
   type ReactNode,
 } from 'react';
+
+import type { AiNode, Edge } from '@/features/ai/ai-paths/lib';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 export type AutoSaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+
+export interface SavePathConfigOptions {
+  silent?: boolean | undefined;
+  includeNodeConfig?: boolean | undefined;
+  force?: boolean | undefined;
+  nodesOverride?: AiNode[] | undefined;
+  nodeOverride?: AiNode | undefined;
+  edgesOverride?: Edge[] | undefined;
+}
+
+export interface PersistenceOperationHandlers {
+  savePathConfig?: (options?: SavePathConfigOptions) => Promise<boolean>;
+}
 
 export interface PersistenceState {
   // Loading state
@@ -50,6 +66,10 @@ export interface PersistenceActions {
   finishSaving: (success: boolean) => void;
   startLoading: () => void;
   finishLoading: () => void;
+
+  // Legacy operation handlers
+  setOperationHandlers: (handlers: PersistenceOperationHandlers) => void;
+  savePathConfig: (options?: SavePathConfigOptions) => Promise<boolean>;
 }
 
 // ---------------------------------------------------------------------------
@@ -83,6 +103,7 @@ export function PersistenceProvider({
 
   // Dirty tracking
   const [isDirty, setIsDirtyInternal] = useState(false);
+  const operationHandlersRef = useRef<PersistenceOperationHandlers>({});
 
   // Memoized actions
   const incrementLoadNonce = useCallback(() => {
@@ -121,6 +142,16 @@ export function PersistenceProvider({
     setLoadingInternal(false);
   }, []);
 
+  const setOperationHandlers = useCallback((handlers: PersistenceOperationHandlers) => {
+    operationHandlersRef.current = handlers;
+  }, []);
+
+  const savePathConfig = useCallback(
+    async (options?: SavePathConfigOptions): Promise<boolean> =>
+      (operationHandlersRef.current.savePathConfig?.(options) ?? Promise.resolve(false)),
+    []
+  );
+
   // Actions are stable
   const actions = useMemo<PersistenceActions>(
     () => ({
@@ -144,8 +175,20 @@ export function PersistenceProvider({
       finishSaving,
       startLoading,
       finishLoading,
+      setOperationHandlers,
+      savePathConfig,
     }),
-    [incrementLoadNonce, markDirty, markClean, startSaving, finishSaving, startLoading, finishLoading]
+    [
+      incrementLoadNonce,
+      markDirty,
+      markClean,
+      startSaving,
+      finishSaving,
+      startLoading,
+      finishLoading,
+      setOperationHandlers,
+      savePathConfig,
+    ]
   );
 
   const state = useMemo<PersistenceState>(

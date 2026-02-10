@@ -29,6 +29,14 @@ function toPrismaJson(
   return JSON.parse(jsonString) as Prisma.InputJsonValue;
 }
 
+const isRunIdForeignKeyViolation = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') return false;
+  const maybe = error as { code?: unknown; meta?: unknown };
+  if (maybe.code !== 'P2003') return false;
+  const metaText = JSON.stringify(maybe.meta ?? {});
+  return metaText.includes('runId') || metaText.includes('AgentAuditLog_runId_fkey');
+};
+
 export async function logAgentAudit(
   runId: string | null,
   level: AuditLevel,
@@ -54,25 +62,52 @@ export async function logAgentAudit(
       },
     });
   } catch (error) {
-    try {
-      const { ErrorSystem } = await import('@/features/observability/services/error-system');
-      void ErrorSystem.captureException(error, {
-        service: 'agent-audit',
-        action: 'logAgentAudit',
-        originalMessage: message,
-        auditLevel: level,
-        targetRunId: runId,
-      });
-    } catch (logError) {
-      if (DEBUG_CHATBOT) {
-        console.error('[chatbot][agent][audit] Failed to write audit log (and logging failed)', {
-          runId,
-          level,
-          message,
-          error,
-          logError,
+    if (runId && isRunIdForeignKeyViolation(error)) {
+      try {
+        const fallbackMetadata = toPrismaJson({
+          ...(metadata ?? {}),
+          orphanedRunId: runId,
+          runLinkMissing: true,
         });
+        await prisma.agentAuditLog.create({
+          data: {
+            runId: null,
+            level,
+            message,
+            ...(fallbackMetadata !== undefined && { metadata: fallbackMetadata }),
+          },
+        });
+        return;
+      } catch (fallbackError) {
+        // Report the fallback failure instead of the original FK violation
+        // We re-use the reporting block below
+        void reportError(fallbackError, runId, level, message);
+        return;
       }
+    }
+    void reportError(error, runId, level, message);
+  }
+}
+
+async function reportError(error: unknown, runId: string | null, level: string, message: string): Promise<void> {
+  try {
+    const { ErrorSystem } = await import('@/features/observability/services/error-system');
+    void ErrorSystem.captureException(error, {
+      service: 'agent-audit',
+      action: 'logAgentAudit',
+      originalMessage: message,
+      auditLevel: level,
+      targetRunId: runId,
+    });
+  } catch (logError) {
+    if (DEBUG_CHATBOT) {
+      console.error('[chatbot][agent][audit] Failed to write audit log (and logging failed)', {
+        runId,
+        level,
+        message,
+        error,
+        logError,
+      });
     }
   }
 }

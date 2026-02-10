@@ -32,12 +32,10 @@
  * />
  * ```
  *
- * AFTER: 14 props (only callbacks + modelOptions)
+ * AFTER: minimal props (model options only)
  * ```tsx
  * <NodeConfigDialogMigrated
  *   modelOptions={modelOptions}
- *   updateSelectedNode={...}
- *   ... 12 more callback props
  * />
  * ```
  *
@@ -54,13 +52,16 @@
 
 import { useMemo } from 'react';
 
-import type { AiNode, DbQueryPreset, DbNodePreset, NodeConfig } from '@/features/ai/ai-paths/lib';
+import type { AiNode, NodeConfig } from '@/features/ai/ai-paths/lib';
 import { sanitizeEdges } from '@/features/ai/ai-paths/lib';
+import { useToast } from '@/shared/ui';
 
 import { useGraphState, useGraphActions } from '../../context/GraphContext';
+import { usePersistenceActions } from '../../context/PersistenceContext';
 import { usePresetsState, usePresetsActions } from '../../context/PresetsContext';
 import { useRuntimeState, useRuntimeActions } from '../../context/RuntimeContext';
 import { useSelectionState, useSelectionActions } from '../../context/SelectionContext';
+import { AiPathConfigProvider } from '../AiPathConfigContext';
 import { NodeConfigDialog } from '../node-config-dialog';
 
 
@@ -73,43 +74,6 @@ import { NodeConfigDialog } from '../node-config-dialog';
 export type NodeConfigDialogMigratedProps = {
   // Configuration (not in context)
   modelOptions: string[];
-
-  // Callbacks for node operations
-  updateSelectedNode: (patch: Partial<AiNode>, options?: { nodeId?: string }) => void;
-  updateSelectedNodeConfig: (patch: NodeConfig) => void;
-
-  // Callbacks for sample fetching
-  handleFetchParserSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
-  handleFetchUpdaterSample: (
-    nodeId: string,
-    entityType: string,
-    entityId: string,
-    options?: { notify?: boolean }
-  ) => Promise<void>;
-
-  // Callbacks for simulation
-  handleRunSimulation: (node: AiNode) => void | Promise<void>;
-
-  // Callbacks for AI operations
-  onSendToAi?: ((databaseNodeId: string, prompt: string) => Promise<void>) | undefined;
-
-  // Callbacks for preset persistence
-  saveDbQueryPresets: (nextPresets: DbQueryPreset[]) => Promise<void>;
-  saveDbNodePresets: (nextPresets: DbNodePreset[]) => Promise<void>;
-
-  // Utility callbacks
-  toast: (
-    message: string,
-    options?: { variant?: 'success' | 'error' | 'info' | 'warning' }
-  ) => void;
-  onDirtyChange?: ((dirty: boolean) => void) | undefined;
-  savePathConfig?: ((options?: {
-    silent?: boolean | undefined;
-    includeNodeConfig?: boolean | undefined;
-    force?: boolean | undefined;
-    nodesOverride?: AiNode[] | undefined;
-    nodeOverride?: AiNode | undefined;
-  }) => Promise<boolean>) | undefined;
 };
 
 /**
@@ -119,18 +83,9 @@ export type NodeConfigDialogMigratedProps = {
  */
 export function NodeConfigDialogMigrated({
   modelOptions,
-  updateSelectedNode,
-  updateSelectedNodeConfig,
-  handleFetchParserSample,
-  handleFetchUpdaterSample,
-  handleRunSimulation,
-  onSendToAi,
-  saveDbQueryPresets,
-  saveDbNodePresets,
-  toast,
-  onDirtyChange,
-  savePathConfig,
 }: NodeConfigDialogMigratedProps): React.JSX.Element | null {
+  const { toast } = useToast();
+
   // Read state from GraphContext
   const { nodes, edges, isPathLocked, activePathId } = useGraphState();
   const { setNodes, setEdges } = useGraphActions();
@@ -149,11 +104,28 @@ export function NodeConfigDialogMigrated({
     pathDebugSnapshots,
     sendingToAi,
   } = useRuntimeState();
-  const { setParserSamples, setUpdaterSamples, clearNodeRuntime, clearNodeHistory } = useRuntimeActions();
+  const {
+    setParserSamples,
+    setUpdaterSamples,
+    clearNodeRuntime,
+    clearNodeHistory,
+    fetchParserSample,
+    fetchUpdaterSample,
+    runSimulation,
+    sendToAi,
+  } = useRuntimeActions();
 
   // Read state from PresetsContext
   const { dbQueryPresets, dbNodePresets } = usePresetsState();
-  const { setDbQueryPresets, setDbNodePresets } = usePresetsActions();
+  const {
+    setDbQueryPresets,
+    setDbNodePresets,
+    saveDbQueryPresets,
+    saveDbNodePresets,
+  } = usePresetsActions();
+
+  // Read persistence operation handlers from context
+  const { savePathConfig } = usePersistenceActions();
 
   // Derive selectedNode from context state
   const selectedNode = useMemo<AiNode | null>(() => {
@@ -167,19 +139,11 @@ export function NodeConfigDialogMigrated({
     return pathDebugSnapshots[activePathId] ?? null;
   }, [pathDebugSnapshots, activePathId]);
 
-  // Build optional props object to avoid passing undefined with exactOptionalPropertyTypes
-  const optionalProps = {
-    ...(onSendToAi !== undefined && { onSendToAi }),
-    ...(onDirtyChange !== undefined && { onDirtyChange }),
-    ...(savePathConfig !== undefined && { savePathConfig }),
-  };
-
   const updateSelectedNodeWithContextSync = (
     patch: Partial<AiNode>,
     options?: { nodeId?: string }
   ): void => {
     const targetNodeId = options?.nodeId ?? selectedNodeId;
-    updateSelectedNode(patch, options);
     if (!targetNodeId) return;
 
     const shouldSanitize = Boolean(patch.inputs || patch.outputs);
@@ -248,20 +212,46 @@ export function NodeConfigDialogMigrated({
     });
   };
 
+  const updateSelectedNodeConfigWithContextSync = (patch: Partial<NodeConfig>): void => {
+    if (!selectedNodeId) return;
+    setNodes((prev: AiNode[]): AiNode[] =>
+      prev.map((node: AiNode): AiNode => {
+        if (node.id !== selectedNodeId) return node;
+        const currentConfig = node.config ?? {};
+        const mergedConfig = { ...currentConfig };
+        for (const key of Object.keys(patch) as Array<keyof NodeConfig>) {
+          const patchValue = patch[key];
+          const currentValue = currentConfig[key];
+          if (
+            patchValue &&
+            typeof patchValue === 'object' &&
+            !Array.isArray(patchValue) &&
+            currentValue &&
+            typeof currentValue === 'object' &&
+            !Array.isArray(currentValue)
+          ) {
+            (mergedConfig as Record<string, unknown>)[key] = {
+              ...(currentValue as object),
+              ...(patchValue as object),
+            };
+          } else {
+            (mergedConfig as Record<string, unknown>)[key] = patchValue as unknown;
+          }
+        }
+        return { ...node, config: mergedConfig };
+      })
+    );
+  };
+
   return (
-    <NodeConfigDialog
-      // State from SelectionContext
+    <AiPathConfigProvider
       configOpen={configOpen}
       setConfigOpen={setConfigOpen}
-      // Derived from SelectionContext + GraphContext
       selectedNode={selectedNode}
-      // State from GraphContext
       nodes={nodes}
       edges={edges}
       isPathLocked={isPathLocked}
-      // Configuration prop
       modelOptions={modelOptions}
-      // State from RuntimeContext
       parserSamples={parserSamples}
       setParserSamples={setParserSamples}
       parserSampleLoading={parserSampleLoading}
@@ -270,26 +260,25 @@ export function NodeConfigDialogMigrated({
       updaterSampleLoading={updaterSampleLoading}
       runtimeState={runtimeState}
       pathDebugSnapshot={pathDebugSnapshot}
-      sendingToAi={sendingToAi}
-      // Actions from RuntimeContext
+      updateSelectedNode={updateSelectedNodeWithContextSync}
+      updateSelectedNodeConfig={updateSelectedNodeConfigWithContextSync}
+      handleFetchParserSample={fetchParserSample}
+      handleFetchUpdaterSample={fetchUpdaterSample}
+      handleRunSimulation={runSimulation}
       clearRuntimeForNode={clearNodeRuntime}
       clearNodeHistory={clearNodeHistory}
-      // State from PresetsContext
+      onSendToAi={sendToAi}
+      sendingToAi={sendingToAi}
       dbQueryPresets={dbQueryPresets}
       setDbQueryPresets={setDbQueryPresets}
       dbNodePresets={dbNodePresets}
       setDbNodePresets={setDbNodePresets}
-      // Callback props passed through
-      updateSelectedNode={updateSelectedNodeWithContextSync}
-      updateSelectedNodeConfig={(config: NodeConfig) => updateSelectedNodeConfig(config)}
-      handleFetchParserSample={handleFetchParserSample}
-      handleFetchUpdaterSample={handleFetchUpdaterSample}
-      handleRunSimulation={handleRunSimulation}
       saveDbQueryPresets={saveDbQueryPresets}
       saveDbNodePresets={saveDbNodePresets}
       toast={toast}
-      // Optional props spread conditionally
-      {...optionalProps}
-    />
+      savePathConfig={savePathConfig}
+     >
+      <NodeConfigDialog />
+    </AiPathConfigProvider>
   );
 }

@@ -3,19 +3,14 @@
 
 
 
-import type { AiNode, NodeConfig, RouterConfig } from '@/features/ai/ai-paths/lib';
+import type { RouterConfig } from '@/features/ai/ai-paths/lib';
 import { Input, Label, UnifiedSelect } from '@/shared/ui';
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
-type RouterNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-};
+export function RouterNodeConfigSection(): React.JSX.Element | null {
+  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
 
-export function RouterNodeConfigSection({
-  selectedNode,
-  updateSelectedNodeConfig,
-}: RouterNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== 'router') return null;
+  if (!selectedNode || selectedNode.type !== 'router') return null;
 
   const routerConfig = selectedNode.config?.router ?? {
     mode: 'valid',

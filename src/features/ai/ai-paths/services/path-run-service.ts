@@ -2,11 +2,11 @@ import 'server-only';
 
 import { normalizeNodes, sanitizeEdges } from '@/features/ai/ai-paths/lib';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
 import {
   recordRuntimeRunFinished,
   recordRuntimeRunQueued,
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
-import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
 import type { AiPathRunRepository } from '@/features/ai/ai-paths/types/path-run-repository';
 import { enqueuePathRunJob } from '@/features/jobs/workers/aiPathRunQueue';
 import { ErrorSystem } from '@/features/observability/services/error-system';

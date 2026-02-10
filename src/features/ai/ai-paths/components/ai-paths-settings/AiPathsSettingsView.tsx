@@ -115,18 +115,11 @@ export function AiPathsSettingsView({
     palette,
     handleDragStart,
     handleRemoveEdge,
-    handleFireTrigger,
-    handleFireTriggerPersistent,
-    handlePauseActiveRun,
-    handleResumeActiveRun,
-    handleStepActiveRun,
-    handleCancelActiveRun,
     runtimeRunStatus,
     runtimeNodeStatuses,
     runtimeEvents,
     updateSelectedNode,
     handleDeleteSelectedNode,
-    handleClearWires,
     handleClearConnectorData,
     handleClearHistory,
     presetDraft,
@@ -139,25 +132,12 @@ export function AiPathsSettingsView({
     lastGraphModelPayload,
     runList,
     runsQuery,
-    runFilter,
-    setRunFilter,
-    expandedRunHistory,
-    setExpandedRunHistory,
-    runHistorySelection,
-    setRunHistorySelection,
     handleOpenRunDetail,
     handleResumeRun,
     handleCancelRun,
     handleRequeueDeadLetter,
-    setNodeConfigDirty,
     modelOptions,
-    updateSelectedNodeConfig,
-    handleFetchParserSample,
-    handleFetchUpdaterSample,
     handleRunSimulation,
-    handleSendToAi,
-    saveDbQueryPresets,
-    saveDbNodePresets,
     handleImportPresets,
     simulationOpenNodeId,
     setSimulationOpenNodeId,
@@ -633,17 +613,9 @@ export function AiPathsSettingsView({
                 onDragStart={(e: React.DragEvent<HTMLDivElement>, node: NodeDefinition) => {
                   handleDragStart(e, node);
                 }}
-                onFireTrigger={(node: AiNode) => { handleFireTrigger(node); }}
-                onFireTriggerPersistent={(node: AiNode) => { handleFireTriggerPersistent(node).catch(() => {}); }}
                 onUpdateSelectedNode={(patch, options) => { updateSelectedNode(patch, options); }}
                 onDeleteSelectedNode={() => { handleDeleteSelectedNode(); }}
                 onRemoveEdge={(edgeId: string) => { handleRemoveEdge(edgeId); }}
-                onClearWires={() => { handleClearWires().catch(() => {}); }}
-                runStatus={runtimeRunStatus}
-                onPauseRun={handlePauseActiveRun}
-                onResumeRun={handleResumeActiveRun}
-                onStepRun={handleStepActiveRun}
-                onCancelRun={handleCancelActiveRun}
                 savePathConfig={handleSave}
               />
               <ClusterPresetsPanelMigrated
@@ -664,19 +636,11 @@ export function AiPathsSettingsView({
                 onResumeRun={(runId: string, mode: 'resume' | 'replay') => { handleResumeRun(runId, mode).catch(() => {}); }}
                 onCancelRun={(runId: string) => { handleCancelRun(runId).catch(() => {}); }}
                 onRequeueDeadLetter={(runId: string) => { handleRequeueDeadLetter(runId).catch(() => {}); }}
-                runFilter={runFilter}
-                setRunFilter={setRunFilter}
-                expandedRunHistory={expandedRunHistory}
-                setExpandedRunHistory={setExpandedRunHistory}
-                runHistorySelection={runHistorySelection}
-                setRunHistorySelection={setRunHistorySelection}
               />
             </div>
             <div className={`relative ${isFocusMode ? 'h-full min-h-0' : ''}`}>
               <CanvasBoardMigrated
-                runtimeRunStatus={runtimeRunStatus}
                 viewportClassName={isFocusMode ? 'h-full min-h-0 rounded-none border-0' : undefined}
-                onFireTrigger={(node) => { handleFireTrigger(node); }}
               />
             </div>
           </div>
@@ -874,17 +838,6 @@ export function AiPathsSettingsView({
 
       <NodeConfigDialogMigrated
         modelOptions={modelOptions}
-        updateSelectedNode={updateSelectedNode}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-        handleFetchParserSample={handleFetchParserSample}
-        handleFetchUpdaterSample={handleFetchUpdaterSample}
-        handleRunSimulation={(node) => { handleRunSimulation(node); }}
-        onSendToAi={async (id, prompt) => { await handleSendToAi(id, prompt).catch(() => {}); }}
-        saveDbQueryPresets={saveDbQueryPresets}
-        saveDbNodePresets={saveDbNodePresets}
-        toast={toast}
-        onDirtyChange={setNodeConfigDirty}
-        savePathConfig={handleSave}
       />
       <RunDetailDialogWithContext />
       <PresetsDialogWithContext

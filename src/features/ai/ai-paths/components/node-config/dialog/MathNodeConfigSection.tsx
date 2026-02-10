@@ -3,20 +3,15 @@
 
 
 
-import type { AiNode, MathConfig, NodeConfig } from '@/features/ai/ai-paths/lib';
+import type { MathConfig } from '@/features/ai/ai-paths/lib';
 import { toNumber } from '@/features/ai/ai-paths/lib';
 import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
-type MathNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-};
+export function MathNodeConfigSection(): React.JSX.Element | null {
+  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
 
-export function MathNodeConfigSection({
-  selectedNode,
-  updateSelectedNodeConfig,
-}: MathNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== 'math') return null;
+  if (!selectedNode || selectedNode.type !== 'math') return null;
 
   const mathConfig = selectedNode.config?.math ?? {
     operation: 'add',

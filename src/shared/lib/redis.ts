@@ -15,9 +15,31 @@ if (REDIS_URL) {
     
     redis.on('error', (err) => {
       console.error('[redis] connection error:', err);
+      void (async (): Promise<void> => {
+        try {
+          const { logSystemEvent } = await import('@/features/observability/server');
+          await logSystemEvent({
+            level: 'error',
+            message: '[redis] connection error',
+            source: 'redis',
+            error: err,
+          });
+        } catch { /* ignore */ }
+      })();
     });
   } catch (error) {
     console.error('[redis] failed to initialize client:', error);
+    void (async (): Promise<void> => {
+      try {
+        const { logSystemEvent } = await import('@/features/observability/server');
+        await logSystemEvent({
+          level: 'error',
+          message: '[redis] failed to initialize client',
+          source: 'redis',
+          error,
+        });
+      } catch { /* ignore */ }
+    })();
   }
 }
 

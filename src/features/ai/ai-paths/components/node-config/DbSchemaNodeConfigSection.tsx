@@ -3,9 +3,9 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import React from 'react';
 
-import type { AiNode, NodeConfig } from '@/features/ai/ai-paths/lib';
 import { dbApi } from '@/features/ai/ai-paths/lib/api';
 import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+import { useAiPathConfig } from '../AiPathConfigContext';
 
 type SchemaData = {
   provider: 'mongodb' | 'prisma' | 'multi';
@@ -71,15 +71,11 @@ const matchesCollectionSelection = (
   return false;
 };
 
-type DbSchemaNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-};
+export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
+  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
 
-export function DbSchemaNodeConfigSection({
-  selectedNode,
-  updateSelectedNodeConfig,
-}: DbSchemaNodeConfigSectionProps): React.JSX.Element | null {
+  if (!selectedNode) return null;
+
   // Data Browser state
   const [browseCollection, setBrowseCollection] = React.useState<string | null>(null);
   const [browseSkip, setBrowseSkip] = React.useState(0);

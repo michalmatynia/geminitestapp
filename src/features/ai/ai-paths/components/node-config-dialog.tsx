@@ -5,14 +5,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type {
   AiNode,
-  DbNodePreset,
-  DbQueryPreset,
-  Edge,
   NodeConfig,
-  ParserSampleState,
-  PathDebugSnapshot,
-  RuntimeState,
-  UpdaterSampleState,
 } from '@/features/ai/ai-paths/lib';
 import { stableStringify } from '@/features/ai/ai-paths/lib';
 import {
@@ -38,95 +31,46 @@ import {
 import { NodeHistoryTab } from './node-config/dialog/NodeHistoryTab'; // Keep NodeHistoryTab import
 import { NodeNotesTab } from './node-config/dialog/NodeNotesTab';
 import { NodeConfigurationSections } from './NodeConfigurationSections'; // Import the new component
+import { useAiPathConfig } from './AiPathConfigContext';
 import { useSelectionActions } from '../context';
 
-type NodeConfigDialogProps = {
-  configOpen: boolean;
-  setConfigOpen: (open: boolean) => void;
-  selectedNode: AiNode | null;
-  nodes: AiNode[];
-  edges: Edge[];
-  isPathLocked: boolean;
-  modelOptions: string[];
-  parserSamples: Record<string, ParserSampleState>;
-  setParserSamples: React.Dispatch<React.SetStateAction<Record<string, ParserSampleState>>>;
-  parserSampleLoading: boolean;
-  updaterSamples: Record<string, UpdaterSampleState>;
-  setUpdaterSamples: React.Dispatch<React.SetStateAction<Record<string, UpdaterSampleState>>>;
-  updaterSampleLoading: boolean;
-  runtimeState: RuntimeState;
-  pathDebugSnapshot?: PathDebugSnapshot | null;
-  updateSelectedNode: (patch: Partial<AiNode>, options?: { nodeId?: string }) => void;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-  handleFetchParserSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
-  handleFetchUpdaterSample: (
-    nodeId: string,
-    entityType: string,
-    entityId: string,
-    options?: { notify?: boolean }
-  ) => Promise<void>;
-  handleRunSimulation: (node: AiNode) => void | Promise<void>;
-  clearRuntimeForNode?: ((nodeId: string) => void) | undefined;
-  clearNodeHistory?: ((nodeId: string) => void | Promise<void>) | undefined;
-  onSendToAi?: ((databaseNodeId: string, prompt: string) => Promise<void>) | undefined;
-  sendingToAi?: boolean | undefined;
-  dbQueryPresets: DbQueryPreset[];
-  setDbQueryPresets: React.Dispatch<React.SetStateAction<DbQueryPreset[]>>;
-  saveDbQueryPresets: (nextPresets: DbQueryPreset[]) => Promise<void>;
-  dbNodePresets: DbNodePreset[];
-  setDbNodePresets: React.Dispatch<React.SetStateAction<DbNodePreset[]>>;
-  saveDbNodePresets: (nextPresets: DbNodePreset[]) => Promise<void>;
-  toast: (
-    message: string,
-    options?: { variant?: 'success' | 'error' | 'info' | 'warning' }
-  ) => void;
-  onDirtyChange?: (dirty: boolean) => void;
-  savePathConfig?: (options?: {
-    silent?: boolean | undefined;
-    includeNodeConfig?: boolean | undefined;
-    force?: boolean | undefined;
-    nodesOverride?: AiNode[] | undefined;
-    nodeOverride?: AiNode | undefined;
-    edgesOverride?: Edge[] | undefined;
-  }) => Promise<boolean>;
-};
+export function NodeConfigDialog(): React.JSX.Element | null {
+  const {
+    configOpen,
+    setConfigOpen,
+    selectedNode,
+    nodes,
+    edges,
+    isPathLocked,
+    modelOptions,
+    parserSamples,
+    setParserSamples,
+    parserSampleLoading,
+    updaterSamples,
+    setUpdaterSamples,
+    updaterSampleLoading,
+    runtimeState,
+    pathDebugSnapshot,
+    updateSelectedNode,
+    handleFetchParserSample,
+    handleFetchUpdaterSample,
+    handleRunSimulation,
+    clearRuntimeForNode,
+    clearNodeHistory,
+    onSendToAi,
+    sendingToAi,
+    dbQueryPresets,
+    setDbQueryPresets,
+    saveDbQueryPresets,
+    dbNodePresets,
+    setDbNodePresets,
+    saveDbNodePresets,
+    toast,
+    savePathConfig,
+  } = useAiPathConfig();
 
-export function NodeConfigDialog({
-  configOpen,
-  setConfigOpen,
-  selectedNode,
-  nodes,
-  edges,
-  isPathLocked,
-  modelOptions,
-  parserSamples,
-  setParserSamples,
-  parserSampleLoading,
-  updaterSamples,
-  setUpdaterSamples,
-  updaterSampleLoading,
-  runtimeState,
-  pathDebugSnapshot,
-  updateSelectedNode,
-  handleFetchParserSample,
-  handleFetchUpdaterSample,
-  handleRunSimulation,
-  clearRuntimeForNode,
-  clearNodeHistory,
-  onSendToAi,
-  sendingToAi,
-  dbQueryPresets,
-  setDbQueryPresets,
-  saveDbQueryPresets,
-  dbNodePresets,
-  setDbNodePresets,
-  saveDbNodePresets,
-  toast,
-  onDirtyChange,
-  savePathConfig,
-}: NodeConfigDialogProps): React.JSX.Element | null {
   if (!selectedNode) return null;
-  const { setNodeConfigDraft } = useSelectionActions();
+  const { setNodeConfigDraft, setNodeConfigDirty } = useSelectionActions();
   const isScheduledTrigger =
     selectedNode.type === 'trigger' &&
     selectedNode.config?.trigger?.event === 'scheduled_run';
@@ -217,11 +161,10 @@ export function NodeConfigDialog({
     return stableStringify(draftNode) !== stableStringify(selectedNode);
   }, [draftNode, selectedNode]);
 
-  useEffect((): (() => void) | void => {
-    if (!onDirtyChange) return;
-    onDirtyChange(hasUnsavedChanges);
-    return (): void => onDirtyChange(false);
-  }, [hasUnsavedChanges, onDirtyChange]);
+  useEffect((): (() => void) => {
+    setNodeConfigDirty(hasUnsavedChanges);
+    return (): void => setNodeConfigDirty(false);
+  }, [hasUnsavedChanges, setNodeConfigDirty]);
 
   const handleUpdateNode = useCallback((): void => {
     if (!draftNode) return;
@@ -342,9 +285,12 @@ export function NodeConfigDialog({
               </div>
               {/* Render the new consolidated component here */}
               <NodeConfigurationSections
+                configOpen={configOpen}
+                setConfigOpen={setConfigOpen}
                 selectedNode={draftSelectedNode}
                 nodes={nodesForConfig}
                 edges={edges}
+                isPathLocked={isPathLocked}
                 modelOptions={modelOptions}
                 parserSamples={parserSamples}
                 setParserSamples={setParserSamples}
@@ -360,6 +306,7 @@ export function NodeConfigDialog({
                 handleFetchUpdaterSample={handleFetchUpdaterSample}
                 handleRunSimulation={handleRunSimulation}
                 clearRuntimeForNode={clearRuntimeForNode}
+                clearNodeHistory={clearNodeHistory}
                 onSendToAi={onSendToAi}
                 sendingToAi={sendingToAi}
                 dbQueryPresets={dbQueryPresets}
@@ -369,6 +316,7 @@ export function NodeConfigDialog({
                 setDbNodePresets={setDbNodePresets}
                 saveDbNodePresets={saveDbNodePresets}
                 toast={toast}
+                {...(savePathConfig !== undefined && { savePathConfig })}
               />
             </TabsContent>
             <TabsContent value='notes'>

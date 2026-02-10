@@ -15,6 +15,7 @@ import {
 
 import { buildHistoryNodeOptions } from './run-history-utils';
 import { RunHistoryEntries } from './RunHistoryEntries';
+import { useRunHistoryActions, useRunHistoryState } from '../context';
 
 export type RunHistoryFilter = 'all' | 'active' | 'failed' | 'dead';
 
@@ -22,12 +23,6 @@ type RunHistoryPanelProps = {
   runs: AiPathRunRecord[];
   isRefreshing: boolean;
   onRefresh: () => void;
-  runFilter: RunHistoryFilter;
-  setRunFilter: React.Dispatch<React.SetStateAction<RunHistoryFilter>>;
-  expandedRunHistory: Record<string, boolean>;
-  setExpandedRunHistory: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
-  runHistorySelection: Record<string, string>;
-  setRunHistorySelection: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   onOpenRunDetail: (runId: string) => void;
   onResumeRun: (runId: string, mode: 'resume' | 'replay') => void;
   onCancelRun: (runId: string) => void;
@@ -38,17 +33,39 @@ export function RunHistoryPanel({
   runs,
   isRefreshing,
   onRefresh,
-  runFilter,
-  setRunFilter,
-  expandedRunHistory,
-  setExpandedRunHistory,
-  runHistorySelection,
-  setRunHistorySelection,
   onOpenRunDetail,
   onResumeRun,
   onCancelRun,
   onRequeueDeadLetter,
 }: RunHistoryPanelProps): React.JSX.Element {
+  const runHistoryState = useRunHistoryState();
+  const {
+    expandedRunHistory,
+    runHistorySelection,
+  } = runHistoryState;
+  const {
+    setRunFilter: setRunFilterContext,
+    setExpandedRunHistory,
+    setRunHistorySelection,
+  } = useRunHistoryActions();
+  const rawRunFilter = runHistoryState.runFilter as string;
+
+  const runFilter: RunHistoryFilter = React.useMemo((): RunHistoryFilter => {
+    if (rawRunFilter === 'active' || rawRunFilter === 'running' || rawRunFilter === 'queued') {
+      return 'active';
+    }
+    if (rawRunFilter === 'failed') return 'failed';
+    if (rawRunFilter === 'dead' || rawRunFilter === 'cancelled') return 'dead';
+    return 'all';
+  }, [rawRunFilter]);
+
+  const setRunFilter = React.useCallback(
+    (nextFilter: RunHistoryFilter): void => {
+      setRunFilterContext(nextFilter);
+    },
+    [setRunFilterContext]
+  );
+
   const filteredRunList = React.useMemo((): AiPathRunRecord[] => {
     if (runFilter === 'all') return runs;
     if (runFilter === 'active') {

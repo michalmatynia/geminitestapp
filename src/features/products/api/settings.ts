@@ -1,4 +1,5 @@
 import { api } from '@/shared/lib/api-client';
+import { logClientError } from '@/features/observability';
 import type {
   ProductValidationPattern,
   ProductValidatorConfig,
@@ -20,6 +21,9 @@ export async function getPriceGroups(): Promise<PriceGroup[]> {
     return await api.get<PriceGroup[]>('/api/price-groups');
   } catch (error) {
     console.warn('[price-groups] Failed to load price groups', error);
+    logClientError(error instanceof Error ? error : new Error('Failed to load price groups'), {
+      context: { source: 'products-api-settings', action: 'getPriceGroups' }
+    });
     return [];
   }
 }
@@ -62,6 +66,9 @@ export async function getCategories(catalogId: string | null): Promise<ProductCa
     });
   } catch (error) {
     console.warn('[categories] Failed to load categories', error);
+    logClientError(error instanceof Error ? error : new Error('Failed to load categories'), {
+      context: { source: 'products-api-settings', action: 'getCategories', catalogId }
+    });
     return [];
   }
 }

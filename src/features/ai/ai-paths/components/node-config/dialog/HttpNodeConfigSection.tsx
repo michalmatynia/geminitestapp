@@ -4,19 +4,14 @@
 
 
 
-import type { AiNode, HttpConfig, NodeConfig } from '@/features/ai/ai-paths/lib';
+import type { HttpConfig } from '@/features/ai/ai-paths/lib';
 import { Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
-type HttpNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-};
+export function HttpNodeConfigSection(): React.JSX.Element | null {
+  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
 
-export function HttpNodeConfigSection({
-  selectedNode,
-  updateSelectedNodeConfig,
-}: HttpNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== 'http') return null;
+  if (!selectedNode || selectedNode.type !== 'http') return null;
 
   const httpConfig: HttpConfig = selectedNode.config?.http ?? {
     url: '',

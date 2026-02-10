@@ -1,5 +1,8 @@
 import 'server-only';
 
+
+
+import { logSystemEvent } from '@/features/observability/server';
 import { internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
@@ -113,7 +116,11 @@ export const getAppDbProvider = async (): Promise<AppDbProvider> => {
         'App provider is set to MongoDB but MONGODB_URI is missing. Automatic fallback is disabled by Database Engine policy.'
       );
     }
-    console.warn('[app-db-provider] MONGODB_URI missing; falling back to Prisma.');
+    void logSystemEvent({
+      level: 'warn',
+      message: 'MONGODB_URI missing; falling back to Prisma.',
+      source: 'app-db-provider'
+    });
     if (process.env['DATABASE_URL']) return 'prisma';
     throw internalError(
       'No available fallback provider. Configure DATABASE_URL or update Database Engine routing.'
@@ -122,7 +129,11 @@ export const getAppDbProvider = async (): Promise<AppDbProvider> => {
   if (setting === 'prisma') {
     if (process.env['DATABASE_URL']) return 'prisma';
     if (policy.allowAutomaticFallback && process.env['MONGODB_URI']) {
-      console.warn('[app-db-provider] DATABASE_URL missing; falling back to MongoDB.');
+      void logSystemEvent({
+        level: 'warn',
+        message: 'DATABASE_URL missing; falling back to MongoDB.',
+        source: 'app-db-provider'
+      });
       return 'mongodb';
     }
     if (!policy.allowAutomaticFallback || policy.strictProviderAvailability) {
@@ -144,9 +155,11 @@ export const getAppDbProvider = async (): Promise<AppDbProvider> => {
   // No explicit setting found — detect from available connections.
   // Prefer Prisma when both are configured to avoid accidental MongoDB drift.
   if (process.env['DATABASE_URL'] && process.env['MONGODB_URI']) {
-    console.warn(
-      '[app-db-provider] Both DATABASE_URL and MONGODB_URI are set without explicit provider; defaulting to Prisma.'
-    );
+    void logSystemEvent({
+      level: 'warn',
+      message: 'Both DATABASE_URL and MONGODB_URI are set without explicit provider; defaulting to Prisma.',
+      source: 'app-db-provider'
+    });
     return 'prisma';
   }
   if (process.env['MONGODB_URI']) return 'mongodb';

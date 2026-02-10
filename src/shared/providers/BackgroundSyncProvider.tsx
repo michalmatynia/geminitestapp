@@ -5,6 +5,7 @@ import { createContext, useContext, useEffect, useMemo } from 'react';
 import { useSystemSync } from '@/shared/hooks/sync/useSystemSync';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { QueryDevPanel } from '@/shared/ui';
+import { logger } from '@/shared/utils/logger';
 
 type BackgroundSyncContextValue = {
   enabled: boolean;
@@ -56,9 +57,7 @@ export function BackgroundSyncProvider({ children }: { children: React.ReactNode
   });
 
   useEffect(() => {
-    if (process.env['NODE_ENV'] === 'development') {
-      console.log('Background sync status:', { isOnline, lastSync });
-    }
+
   }, [isOnline, lastSync]);
 
   const value = useMemo(

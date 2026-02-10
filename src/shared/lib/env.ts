@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ErrorSystem } from '@/features/observability/server';
 
 /**
  * Schema for all application environment variables.
@@ -55,8 +56,11 @@ function getEnv() {
     const issues = result.error.flatten().fieldErrors;
     const missing = Object.keys(issues).join(', ');
     
-    console.error('❌ Invalid environment variables:', missing);
-    console.error(JSON.stringify(issues, null, 2));
+    void ErrorSystem.captureException(new Error(`Invalid environment variables: ${missing}`), {
+      source: 'env-validation',
+      context: { missing, issues },
+      critical: true,
+    });
     
     if (process.env['NODE_ENV'] === 'production') {
       throw new Error(`Critical environment variables missing or invalid: ${missing}`);

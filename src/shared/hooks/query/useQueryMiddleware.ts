@@ -1,9 +1,9 @@
-/* eslint-disable */
 "use client";
 
 import { useQueryClient, type Query } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { logClientError } from "@/features/observability";
+import { logger } from "@/shared/utils/logger";
 
 interface QueryMiddleware {
   name: string;
@@ -36,7 +36,7 @@ export function useQueryMiddleware(middlewares: QueryMiddleware[]): void {
               break;
           }
         } catch (error) {
-          console.warn(`Middleware ${middleware.name} error:`, error);
+          logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'QueryMiddleware', action: 'middlewareError', middlewareName: middleware.name } });
         }
       });
     });
@@ -48,12 +48,8 @@ export function useQueryMiddleware(middlewares: QueryMiddleware[]): void {
 // Logging middleware
 export const loggingMiddleware: QueryMiddleware = {
   name: 'logging',
-  onQueryStart: (query: Query): void => {
-    console.log(`🔄 Query started: ${JSON.stringify(query.queryKey)}`);
-  },
-  onQuerySuccess: (query: Query, data: unknown): void => {
-    console.log(`✅ Query success: ${JSON.stringify(query.queryKey)}`, data);
-  },
+
+
   onQueryError: (query: Query, error: Error): void => {
     const message = error?.message?.trim() || "";
     if (!message || ["{}", "[]", "[object Object]"].includes(message)) {
@@ -66,7 +62,7 @@ export const loggingMiddleware: QueryMiddleware = {
         fetchStatus: query.state.fetchStatus
       } 
     });
-    console.error(`❌ Query error: ${JSON.stringify(query.queryKey)}`, error);
+
   },
 };
 
@@ -84,7 +80,7 @@ export const performanceMiddleware: QueryMiddleware = {
     const duration = performance.now() - startTime;
     delete (query as any)._startTime;
     if (duration > 1000) { // Log slow queries
-      console.warn(`🐌 Slow query (${duration.toFixed(0)}ms): ${JSON.stringify(query.queryKey)}`);
+      logClientError(new Error(`Slow query: ${JSON.stringify(query.queryKey)}`), { context: { source: 'PerformanceMiddleware', queryKey: query.queryKey, durationMs: duration, level: 'warn' } });
     }
   },
   onQueryError: (query: Query): void => {
@@ -134,12 +130,10 @@ export const validationMiddleware: QueryMiddleware = {
   onQuerySuccess: (query: Query, data: unknown): void => {
     // Basic data validation
     if (data === null || data === undefined) {
-      console.warn(`⚠️ Query returned null/undefined: ${JSON.stringify(query.queryKey)}`);
+      logClientError(new Error(`Query returned null/undefined: ${JSON.stringify(query.queryKey)}`), { context: { source: 'ValidationMiddleware', queryKey: query.queryKey, level: 'warn' } });
     }
     
-    if (Array.isArray(data) && data.length === 0) {
-      console.info(`ℹ️ Query returned empty array: ${JSON.stringify(query.queryKey)}`);
-    }
+
   },
 };
 
@@ -152,7 +146,7 @@ export const securityMiddleware: QueryMiddleware = {
     const sensitivePatterns = ['password', 'token', 'secret', 'key'];
     
     if (sensitivePatterns.some((pattern: string) => queryKeyStr.includes(pattern))) {
-      console.warn(`🔒 Potential sensitive data in query key: ${JSON.stringify(query.queryKey)}`);
+      logClientError(new Error(`Potential sensitive data in query key: ${JSON.stringify(query.queryKey)}`), { context: { source: 'SecurityMiddleware', queryKey: query.queryKey, level: 'warn' } });
     }
   },
   onQuerySuccess: (_query: Query, data: unknown): void => {

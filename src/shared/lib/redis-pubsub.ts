@@ -1,8 +1,10 @@
 import 'server-only';
 
+import { ErrorSystem } from '@/features/observability/server';
 import { Redis } from 'ioredis';
 
 import { getRedisClient, isRedisEnabled } from '@/shared/lib/redis';
+import { logger } from '@/shared/utils/logger';
 
 let subscriber: Redis | null = null;
 
@@ -39,7 +41,7 @@ const recordPublishFailure = (err: unknown): void => {
           }
         );
       } catch {
-        console.error('[redis-pubsub] Circuit breaker opened, ErrorSystem unavailable');
+        logger.error('[redis-pubsub] Circuit breaker opened, ErrorSystem unavailable');
       }
     })();
   }
@@ -84,10 +86,10 @@ export function getRedisSubscriber(): Redis | null {
       ...(process.env['REDIS_TLS'] === 'true' ? { tls: {} } : {}),
     });
     subscriber.on('error', (err) => {
-      console.error('[redis-pubsub] subscriber connection error:', err.message);
+      void ErrorSystem.captureException(err, { source: 'redis-pubsub', context: { action: 'subscriber_connection_error' } });
     });
   } catch (error) {
-    console.error('[redis-pubsub] failed to create subscriber:', error);
+    void ErrorSystem.captureException(error, { source: 'redis-pubsub', context: { action: 'create_subscriber_failed' } });
     return null;
   }
 

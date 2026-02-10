@@ -1,5 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
+import { logClientError } from '@/features/observability';
+import { logger } from '@/shared/utils/logger';
 
 interface WebSocketSyncOptions {
   url: string;
@@ -29,12 +31,12 @@ export function useWebSocketSync({ url, queryKeys, enabled = true }: WebSocketSy
           });
         }
       } catch (error: unknown) {
-        console.warn('WebSocket message parsing failed:', error);
+        logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useWebSocketSync', action: 'messageParsingFailed', level: 'warn' } });
       }
     };
 
     ws.onerror = (error: Event): void => {
-      console.warn('WebSocket error:', error);
+      logClientError(new Error(String(error)), { context: { source: 'useWebSocketSync', action: 'webSocketError', level: 'warn' } });
     };
 
     return (): void => {

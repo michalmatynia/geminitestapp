@@ -1,3 +1,5 @@
+import { logger } from '@/shared/utils/logger';
+
 export function sanitizeHtml(html: string): string {
   if (!html) return '';
 
@@ -49,7 +51,7 @@ export function sanitizeHtml(html: string): string {
     sanitizeNode(doc.body);
     return doc.body.innerHTML;
   } catch (error) {
-    console.error('HTML Sanitization failed:', error);
+
     void (async (): Promise<void> => {
       try {
         const { logClientError } = await import('@/shared/utils/observability/client-error-logger');

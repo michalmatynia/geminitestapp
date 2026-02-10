@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
+import { logClientError } from '@/features/observability';
+import { logger } from '@/shared/utils/logger';
 
 const normalizeBadHostPath = (host: string, path: string): string | null => {
   const hostPrefix = `/${host}`;
@@ -43,10 +45,7 @@ export function UrlGuardProvider(): null {
       const nextUrl = `${normalizedPath}${window.location.search}${window.location.hash}`;
       window.history.replaceState(null, '', nextUrl);
        
-      console.warn('[url-guard] normalized path', {
-        from: window.location.pathname,
-        to: normalizedPath,
-      });
+      logClientError(new Error('Normalized path'), { context: { source: 'UrlGuardProvider', from: window.location.pathname, to: normalizedPath, level: 'info' } });
     }
 
     const wrap = (original: (url: string, ...rest: unknown[]) => void): ((url: string, ...rest: unknown[]) => void) => {
@@ -54,7 +53,7 @@ export function UrlGuardProvider(): null {
         const next = normalizeNavigationUrl(url, host);
         if (next.startsWith(hostPrefix) || next.startsWith(`//${host}`)) {
            
-          console.warn('[url-guard] blocked invalid navigation', { url, normalized: next, stack: new Error().stack });
+          logClientError(new Error('Blocked invalid navigation'), { context: { source: 'UrlGuardProvider', url, normalized: next, stack: new Error().stack, level: 'warn' } });
         }
         original(next, ...rest);
       };
@@ -78,7 +77,7 @@ export function UrlGuardProvider(): null {
           const next = normalizeNavigationUrl(url, host);
           if (next.startsWith(hostPrefix) || next.startsWith(`//${host}`)) {
              
-            console.warn(`[url-guard] ${label} invalid`, { url, normalized: next, stack: new Error().stack });
+            logClientError(new Error(`${label} invalid`), { context: { source: 'UrlGuardProvider', url, normalized: next, stack: new Error().stack, level: 'warn' } });
           }
           original.call(window.history, data, title, next); return;
         }
@@ -105,7 +104,7 @@ export function UrlGuardProvider(): null {
       const normalized = normalizeNavigationUrl(href, host);
       if (normalized !== href) {
          
-        console.warn('[url-guard] normalized anchor', { href, normalized, stack: new Error().stack });
+        logClientError(new Error('Normalized anchor'), { context: { source: 'UrlGuardProvider', href, normalized, stack: new Error().stack, level: 'info' } });
         anchor.setAttribute('href', normalized);
       }
     };

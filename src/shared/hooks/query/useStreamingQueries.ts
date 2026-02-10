@@ -1,9 +1,9 @@
-/* eslint-disable */
 "use client";
 
 import { useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
 import { logClientError } from "@/features/observability";
+import { logger } from "@/shared/utils/logger";
 
 interface StreamConfig {
   endpoint: string;
@@ -38,7 +38,7 @@ export function useStreamingQuery<T>(
         config.onMessage?.(data);
         reconnectAttemptsRef.current = 0; // Reset on successful message
       } catch (error) {
-        console.warn('Failed to parse streaming data:', error);
+        logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useStreamingQuery', action: 'parseStreamingData', level: 'warn' } });
       }
     };
 
@@ -101,7 +101,7 @@ export function useWebSocketQuery<T>(
         queryClient.setQueryData(queryKey, data);
         options?.onMessage?.(data);
       } catch (error) {
-        console.warn('Failed to parse WebSocket data:', error);
+        logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useWebSocketQuery', action: 'parseWebSocketData', level: 'warn' } });
       }
     };
 

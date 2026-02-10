@@ -15,8 +15,10 @@ import {
   invalidateSettingsCache,
   type SettingsScope,
 } from '@/shared/api/settings-client';
+import { logClientError } from '@/features/observability';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import type { SystemSetting } from '@/shared/types/domain/settings';
+import { logger } from '@/shared/utils/logger';
 
 export type { SystemSetting };
 
@@ -31,7 +33,7 @@ export function useSettings(options?: { scope?: SettingsScope; enabled?: boolean
       try {
         return (await fetchSettingsCached({ scope })) as SystemSetting[];
       } catch (error) {
-        console.warn('[settings] Failed to fetch settings', error);
+        logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useSettings', action: 'fetchSettings', scope, level: 'warn' } });
         return [];
       }
     },
@@ -52,7 +54,7 @@ export function useSettingsMap(options?: { scope?: SettingsScope; enabled?: bool
       try {
         return (await fetchSettingsCached({ scope })) as SystemSetting[];
       } catch (error) {
-        console.warn('[settings] Failed to fetch settings', error);
+        logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useSettings', action: 'fetchSettings', scope, level: 'warn' } });
         return [];
       }
     },
@@ -73,7 +75,7 @@ export function useLiteSettingsMap(options?: { enabled?: boolean }): UseQueryRes
       try {
         return (await fetchLiteSettingsCached()) as SystemSetting[];
       } catch (error) {
-        console.warn('[settings] Failed to fetch lite settings', error);
+        logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useLiteSettingsMap', action: 'fetchLiteSettings', level: 'warn' } });
         return [];
       }
     },

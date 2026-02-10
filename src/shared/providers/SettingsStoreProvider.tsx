@@ -2,7 +2,10 @@
 
 import React, { createContext, useContext, useMemo } from 'react';
 
+import { logClientError } from '@/features/observability';
+
 import { useLiteSettingsMap, useSettingsMap } from '@/shared/hooks/use-settings';
+import { logger } from '@/shared/utils/logger';
 
 type SettingsStoreValue = {
   map: Map<string, string>;
@@ -82,7 +85,7 @@ export function useSettingsStore(): SettingsStoreValue {
   const context = useContext(SettingsStoreContext);
   if (!context) {
     if (process.env['NODE_ENV'] !== 'production') {
-      console.warn('[settings-store] Missing provider; returning defaults.');
+      logClientError(new Error('Missing SettingsStoreProvider context; returning defaults.'), { context: { source: 'useSettingsStore', level: 'warn' } });
     }
     return fallbackStore;
   }

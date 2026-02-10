@@ -1,5 +1,8 @@
 'use client';
 
+import { logClientError } from '@/features/observability';
+import { logger } from '@/shared/utils/logger';
+
 export type SettingRecord = {
   key: string;
   value: string;
@@ -44,10 +47,10 @@ async function fetchSettingsFromApi(
     const scopeValue = normalizeScope(scope);
     const cached = settingsCache.get(scopeValue);
     if (cached) {
-      console.warn('[settings-client] Failed to fetch settings, using cached data.', error);
+      logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'settings-client', action: 'fetchSettingsFromApi', scope: scopeValue, message: 'Failed to fetch settings, using cached data.' } });
       return cached.data;
     }
-    console.warn('[settings-client] Failed to fetch settings, returning empty list.', error);
+    logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'settings-client', action: 'fetchSettingsFromApi', scope: scopeValue, message: 'Failed to fetch settings, returning empty list.' } });
     return [];
   }
 }
@@ -58,25 +61,17 @@ async function fetchLiteSettingsFromApi(bypassCache: boolean): Promise<SettingRe
       cache: bypassCache ? 'no-store' : 'default',
       credentials: 'include',
     });
-    if (process.env['NODE_ENV'] === 'development' || process.env['DEBUG_SETTINGS'] === 'true') {
-      const cacheHeader = res.headers.get('X-Cache');
-      const cacheControl = res.headers.get('Cache-Control');
-      console.log('[settings.lite] response', {
-        cache: cacheHeader ?? 'unknown',
-        cacheControl: cacheControl ?? 'unknown',
-        status: res.status,
-      });
-    }
+
     if (!res.ok) {
       throw new Error(`Failed to fetch lite settings (${res.status})`);
     }
     return (await res.json()) as SettingRecord[];
   } catch (error) {
     if (liteSettingsCache) {
-      console.warn('[settings-client] Failed to fetch lite settings, using cached data.', error);
+      logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'settings-client', action: 'fetchLiteSettingsFromApi', message: 'Failed to fetch lite settings, using cached data.' } });
       return liteSettingsCache.data;
     }
-    console.warn('[settings-client] Failed to fetch lite settings, returning empty list.', error);
+    logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'settings-client', action: 'fetchLiteSettingsFromApi', message: 'Failed to fetch lite settings, returning empty list.' } });
     return [];
   }
 }

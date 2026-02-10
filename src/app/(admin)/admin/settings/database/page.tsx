@@ -82,8 +82,13 @@ export default function DatabaseSettingsPage() {
     settingsQuery.data.get('app_db_provider') === 'mongodb' ? 'mongodb' : 'prisma';
   const initialAuthProvider: AuthProviderValue =
     settingsQuery.data.get(AUTH_SETTINGS_KEYS.provider) === 'prisma' ? 'prisma' : 'mongodb';
+  const productProviderSetting = settingsQuery.data.get(PRODUCT_DB_PROVIDER_SETTING_KEY);
   const initialProductProvider: ProductProviderValue =
-    settingsQuery.data.get(PRODUCT_DB_PROVIDER_SETTING_KEY) === 'prisma' ? 'prisma' : 'mongodb';
+    productProviderSetting === 'mongodb'
+      ? 'mongodb'
+      : productProviderSetting === 'prisma'
+        ? 'prisma'
+        : 'prisma';
 
   return (
     <DatabaseSettingsForm

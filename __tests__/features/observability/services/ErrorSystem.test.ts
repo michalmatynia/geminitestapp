@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { logAgentAudit } from '@/features/ai/agent-runtime/server';
+import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 import { logSystemEvent } from '@/features/observability/server';
 import { ErrorSystem } from '@/features/observability/services/error-system';
 
@@ -10,7 +10,7 @@ vi.mock('@/features/observability/server', () => ({
   logSystemError: vi.fn().mockResolvedValue(undefined), getErrorFingerprint: vi.fn().mockResolvedValue('test-fingerprint'),
 }));
 
-vi.mock('@/features/ai/agent-runtime/server', () => ({
+vi.mock('@/features/ai/agent-runtime/audit', () => ({
   logAgentAudit: vi.fn(),
 }));
 

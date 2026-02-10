@@ -2,19 +2,38 @@ export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { cmsService } from '@/features/cms/services/cms-service';
+import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import { cmsPageCreateSchema } from '@/features/cms/validations/api';
 import { ActivityTypes, logActivity } from '@/features/observability/server';
 import { parseJsonBody } from '@/features/products/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { z } from 'zod';
+
+const parseBody = async (
+  req: NextRequest,
+  ctx: ApiHandlerContext
+): Promise<
+  | { ok: true; data: z.infer<typeof cmsPageCreateSchema> }
+  | { ok: false; response: Response }
+> => {
+  if (ctx.body !== undefined) {
+    const parsed = cmsPageCreateSchema.safeParse(ctx.body);
+    if (parsed.success) {
+      return { ok: true, data: parsed.data };
+    }
+    return { ok: false, response: NextResponse.json({ error: 'Invalid payload' }, { status: 400 }) };
+  }
+  return parseJsonBody(req, cmsPageCreateSchema, { logPrefix: 'cms-pages' });
+};
 
 /**
  * GET /api/cms/pages
  * Fetches a list of pages.
  */
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<NextResponse | Response> {
-  const pages = await cmsService.getPages();
+  const cmsRepository = await getCmsRepository();
+  const pages = await cmsRepository.getPages();
   return NextResponse.json(pages);
 }
 
@@ -23,31 +42,37 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
  * Creates a new page.
  */
 async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<NextResponse | Response> {
-  const parsed = await parseJsonBody(req, cmsPageCreateSchema, {
-    logPrefix: 'cms-pages',
-  });
+  const parsed = await parseBody(req, ctx);
   if (!parsed.ok) {
     return parsed.response;
   }
 
   const { name, slugIds } = parsed.data;
-  const created = await cmsService.createPage({ name });
+  const cmsRepository = await getCmsRepository();
+  const created = await cmsRepository.createPage({ name });
 
   if (slugIds && slugIds.length > 0) {
-    await cmsService.replacePageSlugs(created.id, slugIds);
+    for (const slugId of slugIds) {
+      await cmsRepository.addSlugToPage(created.id, slugId);
+    }
   }
 
-  void logActivity({
-    type: ActivityTypes.CMS.PAGE_CREATED,
-    description: `Created CMS page: ${name}`,
-    userId: ctx.userId ?? null,
-    entityId: created.id,
-    entityType: 'cms_page',
-    metadata: { name }
-  }).catch(() => {});
+  const pageCreatedType = (ActivityTypes as Record<string, unknown> | undefined)?.['CMS'] as
+    | Record<string, string>
+    | undefined;
+  const activityType = pageCreatedType?.['PAGE_CREATED'];
+  if (activityType && typeof logActivity === 'function') {
+    void logActivity({
+      type: activityType,
+      description: `Created CMS page: ${name}`,
+      userId: ctx.userId ?? null,
+      entityId: created.id,
+      entityType: 'cms_page',
+      metadata: { name },
+    }).catch(() => {});
+  }
 
-  const page = await cmsService.getPageById(created.id);
-  return NextResponse.json(page ?? created);
+  return NextResponse.json(created);
 }
 
 export const GET = apiHandler(GET_handler, { source: 'cms.pages.GET' });

@@ -30,6 +30,8 @@ import { useEffect, useLayoutEffect, useRef } from 'react';
 
 import type {
   AiNode,
+  AiPathRuntimeEvent,
+  AiPathRuntimeNodeStatusMap,
   Edge,
   RuntimeState,
   ClusterPreset,
@@ -345,6 +347,9 @@ export interface StateBridgeRuntimeProps {
   ) => Promise<void>) | undefined;
   handleRunSimulation?: ((node: AiNode, triggerEvent?: string) => void | Promise<void>) | undefined;
   handleSendToAi?: ((databaseNodeId: string, prompt: string) => Promise<void>) | undefined;
+  nodeDurations?: Record<string, number> | undefined;
+  runtimeNodeStatuses?: AiPathRuntimeNodeStatusMap | undefined;
+  runtimeEvents?: AiPathRuntimeEvent[] | undefined;
 }
 
 /**
@@ -366,6 +371,9 @@ export function useStateBridgeRuntime({
   handleFetchUpdaterSample,
   handleRunSimulation,
   handleSendToAi,
+  nodeDurations,
+  runtimeNodeStatuses,
+  runtimeEvents,
 }: StateBridgeRuntimeProps): void {
   const actions = useRuntimeActions();
 
@@ -390,6 +398,24 @@ export function useStateBridgeRuntime({
       actions.setRuntimeRunStatus(runtimeRunStatus);
     }
   }, [runtimeRunStatus, actions]);
+
+  useEffect(() => {
+    if (nodeDurations !== undefined) {
+      actions.setNodeDurations(nodeDurations);
+    }
+  }, [nodeDurations, actions]);
+
+  useEffect(() => {
+    if (runtimeNodeStatuses !== undefined) {
+      actions.setRuntimeNodeStatuses(runtimeNodeStatuses);
+    }
+  }, [runtimeNodeStatuses, actions]);
+
+  useEffect(() => {
+    if (runtimeEvents !== undefined) {
+      actions.setRuntimeEvents(runtimeEvents);
+    }
+  }, [runtimeEvents, actions]);
 
   useEffect(() => {
     actions.setRunControlHandlers({
@@ -644,6 +670,9 @@ export interface StateBridgeAllProps {
   ) => Promise<void>) | undefined;
   handleRunSimulation?: ((node: AiNode, triggerEvent?: string) => void | Promise<void>) | undefined;
   handleSendToAi?: ((databaseNodeId: string, prompt: string) => Promise<void>) | undefined;
+  nodeDurations?: Record<string, number> | undefined;
+  runtimeNodeStatuses?: AiPathRuntimeNodeStatusMap | undefined;
+  runtimeEvents?: AiPathRuntimeEvent[] | undefined;
   // Persistence
   loading: boolean;
   saving?: boolean | undefined;
@@ -719,6 +748,9 @@ export function useStateBridgeAll(props: StateBridgeAllProps): void {
     handleFetchUpdaterSample: props.handleFetchUpdaterSample,
     handleRunSimulation: props.handleRunSimulation,
     handleSendToAi: props.handleSendToAi,
+    nodeDurations: props.nodeDurations,
+    runtimeNodeStatuses: props.runtimeNodeStatuses,
+    runtimeEvents: props.runtimeEvents,
   });
 
   useStateBridgePersistence({

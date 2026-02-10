@@ -76,6 +76,10 @@ export interface RuntimeStateData {
   lastError: LastErrorInfo | null;
   runtimeRunStatus: RuntimeRunStatus;
 
+  // Node execution timing
+  /** Map of node IDs to their last execution duration in ms */
+  nodeDurations: Record<string, number>;
+
   // Loading states
   parserSampleLoading: boolean;
   updaterSampleLoading: boolean;
@@ -94,8 +98,12 @@ export interface RuntimeActions {
   setRuntimeNodeStatuses: (statuses: AiPathRuntimeNodeStatusMap | ((prev: AiPathRuntimeNodeStatusMap) => AiPathRuntimeNodeStatusMap)) => void;
   /** Add a new runtime event */
   addRuntimeEvent: (event: AiPathRuntimeEvent) => void;
+  /** Replace the full runtime events array */
+  setRuntimeEvents: (events: AiPathRuntimeEvent[]) => void;
   /** Clear all runtime events */
   clearRuntimeEvents: () => void;
+  /** Set node execution durations map */
+  setNodeDurations: (durations: Record<string, number> | ((prev: Record<string, number>) => Record<string, number>)) => void;
 
   // History actions
   appendHistory: (nodeId: string, entry: RuntimeHistoryEntry) => void;
@@ -192,6 +200,9 @@ export function RuntimeProvider({
   const [lastError, setLastErrorInternal] = useState<LastErrorInfo | null>(null);
   const [runtimeRunStatus, setRuntimeRunStatusInternal] = useState<RuntimeRunStatus>('idle');
 
+  // Node execution timing
+  const [nodeDurations, setNodeDurationsInternal] = useState<Record<string, number>>({});
+
   // Loading states
   const [parserSampleLoading, setParserSampleLoadingInternal] = useState(false);
   const [updaterSampleLoading, setUpdaterSampleLoadingInternal] = useState(false);
@@ -235,6 +246,7 @@ export function RuntimeProvider({
     setRuntimeStateInternal(INITIAL_RUNTIME_STATE);
     setRuntimeNodeStatusesInternal({});
     setRuntimeEventsInternal([]);
+    setNodeDurationsInternal({});
   }, []);
 
   const addRuntimeEvent = useCallback((event: AiPathRuntimeEvent) => {
@@ -245,6 +257,10 @@ export function RuntimeProvider({
       }
       return next;
     });
+  }, []);
+
+  const setRuntimeEvents = useCallback((events: AiPathRuntimeEvent[]) => {
+    setRuntimeEventsInternal(events);
   }, []);
 
   const clearRuntimeEvents = useCallback(() => {
@@ -389,7 +405,9 @@ export function RuntimeProvider({
 
       setRuntimeNodeStatuses: setRuntimeNodeStatusesInternal,
       addRuntimeEvent,
+      setRuntimeEvents,
       clearRuntimeEvents,
+      setNodeDurations: setNodeDurationsInternal,
 
       // History actions
       appendHistory,
@@ -436,6 +454,7 @@ export function RuntimeProvider({
       clearAllRuntime,
       setRuntimeNodeStatusesInternal,
       addRuntimeEvent,
+      setRuntimeEvents,
       clearRuntimeEvents,
       appendHistory,
       clearHistory,
@@ -464,6 +483,7 @@ export function RuntimeProvider({
       runtimeState,
       runtimeNodeStatuses,
       runtimeEvents,
+      nodeDurations,
       parserSamples,
       updaterSamples,
       pathDebugSnapshots,
@@ -478,6 +498,7 @@ export function RuntimeProvider({
       runtimeState,
       runtimeNodeStatuses,
       runtimeEvents,
+      nodeDurations,
       parserSamples,
       updaterSamples,
       pathDebugSnapshots,

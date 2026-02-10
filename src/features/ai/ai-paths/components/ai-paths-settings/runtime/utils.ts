@@ -197,7 +197,7 @@ export const getDomSelector = (element: Element | null): string | null => {
 /**
  * Extracts info from a mouse event target
  */
-export const getTargetInfo = (event?: React.MouseEvent): Record<string, unknown> | null => {
+export const getTargetInfo = (event?: React.MouseEvent | undefined): Record<string, unknown> | null => {
   const target = event?.target as Element | null;
   if (!target) return null;
       const element =
@@ -237,11 +237,11 @@ export const getTargetInfo = (event?: React.MouseEvent): Record<string, unknown>
 export const buildTriggerContext = (args: {
   triggerNode: AiNode;
   triggerEvent: string;
-  event?: React.MouseEvent;
+  event?: React.MouseEvent | undefined;
   sessionUser: { id: string; name: string | null; email: string | null } | null;
   activePathId: string | null;
   pathName: string;
-  activeTab: string;
+  activeTab?: string | undefined;
   activeTrigger: string;
 }): Record<string, unknown> => {
   const timestamp = new Date().toISOString();

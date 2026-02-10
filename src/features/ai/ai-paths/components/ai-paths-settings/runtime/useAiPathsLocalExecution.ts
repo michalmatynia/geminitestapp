@@ -474,17 +474,18 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
     const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id ?? 'manual';
     if (args.runInFlightRef.current) {
       if (args.runMode === 'queue' && mode === 'run') {
+        const triggerContextArgs = {
+          triggerNode,
+          triggerEvent,
+          event: event ?? undefined,
+          sessionUser: args.sessionUser,
+          activePathId: args.activePathId,
+          pathName: args.pathName,
+          activeTab: args.activeTab,
+          activeTrigger: args.activeTrigger
+        };
         const queuedContext = {
-          ...buildTriggerContext({
-            triggerNode,
-            triggerEvent,
-            event: event || undefined,
-            sessionUser: args.sessionUser,
-            activePathId: args.activePathId,
-            pathName: args.pathName,
-            activeTab: args.activeTab,
-            activeTrigger: args.activeTrigger
-          }),
+          ...buildTriggerContext(triggerContextArgs),
           ...(args.pendingSimulationContextRef.current ?? {}),
           ...(contextOverride ?? {}),
         };
@@ -544,17 +545,18 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
     });
     args.abortControllerRef.current = new AbortController();
     const simulationContext = args.pendingSimulationContextRef.current ?? null;
+    const triggerContextArgs = {
+      triggerNode,
+      triggerEvent,
+      event: event ?? undefined,
+      sessionUser: args.sessionUser,
+      activePathId: args.activePathId,
+      pathName: args.pathName,
+      activeTab: args.activeTab,
+      activeTrigger: args.activeTrigger
+    };
     const triggerContext = {
-      ...buildTriggerContext({
-        triggerNode,
-        triggerEvent,
-        event: event || undefined,
-        sessionUser: args.sessionUser,
-        activePathId: args.activePathId,
-        pathName: args.pathName,
-        activeTab: args.activeTab,
-        activeTrigger: args.activeTrigger
-      }),
+      ...buildTriggerContext(triggerContextArgs),
       ...(simulationContext ?? {}),
       ...(contextOverride ?? {}),
     };

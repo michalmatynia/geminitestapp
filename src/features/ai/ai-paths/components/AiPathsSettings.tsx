@@ -103,6 +103,9 @@ function AiPathsSettingsInner({
     handleFetchUpdaterSample: state.handleFetchUpdaterSample,
     handleRunSimulation: state.handleRunSimulation,
     handleSendToAi: state.handleSendToAi,
+    nodeDurations: state.nodeDurations,
+    runtimeNodeStatuses: state.runtimeNodeStatuses,
+    runtimeEvents: state.runtimeEvents,
     // Persistence
     loading: state.loading,
     saving: state.saving,

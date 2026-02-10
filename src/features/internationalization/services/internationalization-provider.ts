@@ -4,16 +4,26 @@ import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 
 export type InternationalizationProvider = 'prisma' | 'mongodb';
 
+const normalizeProvider = (value?: string | null): InternationalizationProvider | null => {
+  if (!value) return null;
+  return value.toLowerCase().trim() === 'mongodb' ? 'mongodb' : 'prisma';
+};
+
 /**
  * Determines the data provider for internationalization (countries, languages, currencies).
- * Currently follows the global app DB provider, but can be overridden here.
+ * Follows explicit env override first, then app-wide provider.
  */
 export const getInternationalizationProvider = async (): Promise<InternationalizationProvider> => {
-  // We are moving internationalization to MongoDB.
-  // Return 'mongodb' if MONGODB_URI is present, otherwise fallback to app default.
-  if (process.env['MONGODB_URI']) {
-    return 'mongodb';
+  const explicit = normalizeProvider(process.env['INTERNATIONALIZATION_DB_PROVIDER']);
+  if (explicit) {
+    if (explicit === 'mongodb' && !process.env['MONGODB_URI']) {
+      return 'prisma';
+    }
+    if (explicit === 'prisma' && !process.env['DATABASE_URL'] && process.env['MONGODB_URI']) {
+      return 'mongodb';
+    }
+    return explicit;
   }
-  
+
   return getAppDbProvider();
 };

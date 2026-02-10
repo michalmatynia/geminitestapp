@@ -2,11 +2,13 @@ import 'server-only';
 
 import { mongoCatalogRepository } from '@/features/products/services/catalog-repository/mongo-catalog-repository';
 import { prismaCatalogRepository } from '@/features/products/services/catalog-repository/prisma-catalog-repository';
-import { getProductDataProvider } from '@/features/products/services/product-provider';
+import { getProductDataProvider, type ProductDbProvider } from '@/features/products/services/product-provider';
 import type { CatalogRepository } from '@/features/products/types/services/catalog-repository';
 
-export const getCatalogRepository = async (): Promise<CatalogRepository> => {
-  const provider = await getProductDataProvider();
+export const getCatalogRepository = async (
+  providerOverride?: ProductDbProvider
+): Promise<CatalogRepository> => {
+  const provider = providerOverride ?? await getProductDataProvider();
   if (provider === 'mongodb') {
     return mongoCatalogRepository;
   }

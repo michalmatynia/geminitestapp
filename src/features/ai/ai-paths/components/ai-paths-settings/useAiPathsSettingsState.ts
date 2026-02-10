@@ -295,6 +295,7 @@ export interface UseAiPathsSettingsStateReturn {
   runtimeRunStatus: 'idle' | 'running' | 'paused' | 'stepping';
   runtimeNodeStatuses: AiPathRuntimeNodeStatusMap;
   runtimeEvents: AiPathRuntimeEvent[];
+  nodeDurations: Record<string, number>;
   clearRuntimeForNode: (nodeId: string) => void;
   clearNodeCache: (nodeId: string) => void;
   handleSendToAi: (nodeId: string, prompt: string) => Promise<void>;
@@ -1077,6 +1078,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     runStatus: runtimeRunStatus,
     runtimeNodeStatuses,
     runtimeEvents,
+    nodeDurations,
     clearNodeCache,
     handleSendToAi,
     sendingToAi,
@@ -2053,6 +2055,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     runtimeRunStatus,
     runtimeNodeStatuses,
     runtimeEvents,
+    nodeDurations,
     dbQueryPresets,
     setDbQueryPresets,
     saveDbQueryPresets,

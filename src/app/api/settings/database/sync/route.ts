@@ -14,6 +14,7 @@ export const runtime = 'nodejs';
 
 const syncSchema = z.object({
   direction: z.enum(['mongo_to_prisma', 'prisma_to_mongo']),
+  skipAuthCollections: z.boolean().optional(),
 });
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
@@ -32,12 +33,17 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     return parsed.response;
   }
 
-  const { direction } = parsed.data;
+  const { direction, skipAuthCollections } = parsed.data;
 
   const job = await enqueueProductAiJob(
     'system',
     'db_sync' as ProductAiJobType,
-    { direction, entityType: 'system', source: 'db_sync' }
+    {
+      direction,
+      skipAuthCollections: Boolean(skipAuthCollections),
+      entityType: 'system',
+      source: 'db_sync',
+    }
   );
 
   void logActivity({

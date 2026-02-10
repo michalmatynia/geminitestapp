@@ -15,6 +15,7 @@ import {
   PORT_SIZE,
   getPortOffsetY,
   formatRuntimeValue,
+  formatDurationMs,
   typeStyles,
   validateConnection,
   arePortTypesCompatible,
@@ -133,6 +134,7 @@ export function CanvasBoard({
     runtimeNodeStatuses,
     runtimeEvents,
     runtimeRunStatus: runtimeRunStatusContext,
+    nodeDurations,
   } = useRuntimeState();
   const { fireTrigger: fireTriggerContext } = useRuntimeActions();
   const { selectedNodeId, selectedEdgeId } = useSelectionState();
@@ -1313,15 +1315,22 @@ export function CanvasBoard({
                   </div>
                 </div>
                 {runtimeNodeStatusLabel && (
-                  <div
-                    className={`inline-flex w-fit items-center gap-1 rounded-full border px-2 py-[2px] text-[9px] uppercase tracking-wide ${runtimeStatusBadgeClassName(runtimeNodeStatus ?? '')}`}
-                  >
-                    {runtimeNodeStatus === 'cached' && (
-                      <svg className='h-2.5 w-2.5 shrink-0' viewBox='0 0 16 16' fill='currentColor'>
-                        <path d='M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2m3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2' />
-                      </svg>
+                  <div className='inline-flex w-fit items-center gap-1'>
+                    <div
+                      className={`inline-flex items-center gap-1 rounded-full border px-2 py-[2px] text-[9px] uppercase tracking-wide ${runtimeStatusBadgeClassName(runtimeNodeStatus ?? '')}`}
+                    >
+                      {runtimeNodeStatus === 'cached' && (
+                        <svg className='h-2.5 w-2.5 shrink-0' viewBox='0 0 16 16' fill='currentColor'>
+                          <path d='M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2m3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2' />
+                        </svg>
+                      )}
+                      {runtimeNodeStatusLabel}
+                    </div>
+                    {nodeDurations[node.id] != null && (
+                      <span className='text-[9px] text-gray-400'>
+                        {formatDurationMs(nodeDurations[node.id] ?? null)}
+                      </span>
                     )}
-                    {runtimeNodeStatusLabel}
                   </div>
                 )}
                 {node.type === 'iterator' && (iteratorStatus || iteratorProgressLabel) ? (

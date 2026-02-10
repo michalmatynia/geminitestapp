@@ -1,5 +1,16 @@
 
 I can't monitor my singal in Ai Paths
+Database Query need to work with mongo
+Asses the functionality of AI-Paths to run seamlessly with a MongoDB provider, as the provider has just been changed
+
+
+Currency Doesn't change in product list
+
+Remove Patterns from product settings
+
+image spreads on first open
+
+In Category, the strike through line when I insert one category into another is not that great. Adjust it, so that the Line finished before the Category name begins
 
 * My validator can't be turned off, when it finds a suggestion without replacement, it just stays in the suggestion mode all the time.
 
@@ -17,7 +28,7 @@ I cannot get rid of non replacement validations
 
 Move all Database operatons into one page
 
-In Category, the strike through line when I insert one category into another is not that great. Adjust it, so that the Line finished before the Category name begins
+
 
 * Add a Producer Field to Drafter and also add it to import Export Template, as it's not showing there and Producer field can't be imported / exported.
 

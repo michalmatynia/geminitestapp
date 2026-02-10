@@ -41,12 +41,29 @@ const deleteSessionSchema = z.object({
   sessionId: z.string().trim().min(1),
 });
 
+const parseBody = async <T>(
+  req: NextRequest,
+  ctx: ApiHandlerContext,
+  schema: z.ZodSchema<T>,
+  logPrefix: string
+): Promise<
+  | { ok: true; data: T }
+  | { ok: false; response: Response }
+> => {
+  if (ctx.body !== undefined) {
+    const parsed = schema.safeParse(ctx.body);
+    if (parsed.success) {
+      return { ok: true, data: parsed.data };
+    }
+    return { ok: false, response: NextResponse.json({ error: 'Invalid payload' }, { status: 400 }) };
+  }
+  return parseJsonBody(req, schema, { logPrefix });
+};
+
 // POST /api/chatbot/sessions - Create new session
-async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
-  const parsed = await parseJsonBody(req, createSessionSchema, {
-    logPrefix: 'chatbot.sessions.POST',
-  });
+  const parsed = await parseBody(req, ctx, createSessionSchema, 'chatbot.sessions.POST');
   if (!parsed.ok) {
     return parsed.response;
   }
@@ -101,11 +118,9 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
 }
 
 // PATCH /api/chatbot/sessions - Update session (title)
-async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
-  const parsed = await parseJsonBody(req, updateSessionSchema, {
-    logPrefix: 'chatbot.sessions.PATCH',
-  });
+  const parsed = await parseBody(req, ctx, updateSessionSchema, 'chatbot.sessions.PATCH');
   if (!parsed.ok) {
     return parsed.response;
   }
@@ -148,11 +163,9 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise
 }
 
 // DELETE /api/chatbot/sessions - Delete session
-async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+async function DELETE_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
-  const parsed = await parseJsonBody(req, deleteSessionSchema, {
-    logPrefix: 'chatbot.sessions.DELETE',
-  });
+  const parsed = await parseBody(req, ctx, deleteSessionSchema, 'chatbot.sessions.DELETE');
   if (!parsed.ok) {
     return parsed.response;
   }

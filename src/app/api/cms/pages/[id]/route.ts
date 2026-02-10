@@ -9,8 +9,50 @@ import { parseJsonBody } from '@/features/products/server';
 import { notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { z } from 'zod';
 
 type Params = { id: string };
+
+const logCmsActivity = (payload: {
+  event: 'PAGE_UPDATED' | 'PAGE_DELETED';
+  description: string;
+  userId: string | null;
+  entityId: string;
+  metadata: Record<string, unknown>;
+}): void => {
+  const cmsActivityTypes = (ActivityTypes as Record<string, unknown> | undefined)?.['CMS'] as
+    | Record<string, string>
+    | undefined;
+  const type = cmsActivityTypes?.[payload.event];
+  if (!type || typeof logActivity !== 'function') {
+    return;
+  }
+  void logActivity({
+    type,
+    description: payload.description,
+    userId: payload.userId,
+    entityId: payload.entityId,
+    entityType: 'cms_page',
+    metadata: payload.metadata,
+  }).catch(() => {});
+};
+
+const parseBody = async (
+  req: NextRequest,
+  ctx: ApiHandlerContext
+): Promise<
+  | { ok: true; data: z.infer<typeof cmsPageUpdateSchema> }
+  | { ok: false; response: Response }
+> => {
+  if (ctx.body !== undefined) {
+    const parsed = cmsPageUpdateSchema.safeParse(ctx.body);
+    if (parsed.success) {
+      return { ok: true, data: parsed.data };
+    }
+    return { ok: false, response: NextResponse.json({ error: 'Invalid payload' }, { status: 400 }) };
+  }
+  return parseJsonBody(req, cmsPageUpdateSchema, { logPrefix: 'cms-pages' });
+};
 
 /**
  * GET /api/cms/pages/[id]
@@ -35,9 +77,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: P
 async function PUT_handler(req: NextRequest, ctx: ApiHandlerContext, params: Params): Promise<NextResponse | Response> {
   const { id } = params;
 
-  const parsed = await parseJsonBody(req, cmsPageUpdateSchema, {
-    logPrefix: 'cms-pages',
-  });
+  const parsed = await parseBody(req, ctx);
   if (!parsed.ok) {
     return parsed.response;
   }
@@ -69,14 +109,13 @@ async function PUT_handler(req: NextRequest, ctx: ApiHandlerContext, params: Par
     await cmsRepository.replacePageSlugs(id, slugIds);
   }
 
-  void logActivity({
-    type: ActivityTypes.CMS.PAGE_UPDATED,
+  logCmsActivity({
+    event: 'PAGE_UPDATED',
     description: `Updated CMS page: ${updatedPage.name}`,
     userId: ctx.userId ?? null,
     entityId: id,
-    entityType: 'cms_page',
-    metadata: { name: updatedPage.name, status }
-  }).catch(() => {});
+    metadata: { name: updatedPage.name, status },
+  });
 
   return NextResponse.json(updatedPage);
 }
@@ -97,14 +136,13 @@ async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext, params:
   await cmsRepository.deletePage(id);
 
   if (page) {
-    void logActivity({
-      type: ActivityTypes.CMS.PAGE_DELETED,
+    logCmsActivity({
+      event: 'PAGE_DELETED',
       description: `Deleted CMS page: ${page.name}`,
       userId: ctx.userId ?? null,
       entityId: id,
-      entityType: 'cms_page',
-      metadata: { name: page.name }
-    }).catch(() => {});
+      metadata: { name: page.name },
+    });
   }
 
   return new Response(null, { status: 204 });

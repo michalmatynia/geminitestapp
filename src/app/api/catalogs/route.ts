@@ -29,11 +29,54 @@ const catalogSchema = z.object({
  * Fetches all catalogs.
  */
 async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  const catalogRepository = await getCatalogRepository();
-  let catalogs = await catalogRepository.listCatalogs();
   const provider = await getProductDataProvider();
+  let activeProvider = provider;
+  let catalogs = await (await getCatalogRepository(provider)).listCatalogs();
 
-  if (provider === 'mongodb' && catalogs.length > 0) {
+  if (catalogs.length === 0) {
+    const fallbackProvider = provider === 'prisma' ? 'mongodb' : 'prisma';
+    const canReadFallback =
+      fallbackProvider === 'mongodb'
+        ? Boolean(process.env['MONGODB_URI'])
+        : Boolean(process.env['DATABASE_URL']);
+
+    if (canReadFallback) {
+      try {
+        const fallbackCatalogs = await (await getCatalogRepository(fallbackProvider)).listCatalogs();
+        if (fallbackCatalogs.length > 0) {
+          activeProvider = fallbackProvider;
+          catalogs = fallbackCatalogs;
+          await logSystemEvent({
+            level: 'warn',
+            message: '[catalogs.GET] Primary provider returned empty result; using fallback provider.',
+            source: 'catalogs.GET',
+            request: req,
+            requestId: ctx.requestId,
+            context: {
+              primaryProvider: provider,
+              fallbackProvider,
+              fallbackCount: fallbackCatalogs.length,
+            },
+          });
+        }
+      } catch (error: unknown) {
+        await logSystemEvent({
+          level: 'warn',
+          message: '[catalogs.GET] Failed to read fallback provider.',
+          source: 'catalogs.GET',
+          request: req,
+          requestId: ctx.requestId,
+          error,
+          context: {
+            primaryProvider: provider,
+            fallbackProvider,
+          },
+        });
+      }
+    }
+  }
+
+  if (activeProvider === 'mongodb' && catalogs.length > 0) {
     try {
       const mongo = await getMongoDb();
       const mongoLanguages = await mongo
@@ -110,7 +153,7 @@ async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Re
         error,
         request: req,
         requestId: ctx.requestId,
-        context: { provider },
+        context: { provider: activeProvider },
       });
     }
   }

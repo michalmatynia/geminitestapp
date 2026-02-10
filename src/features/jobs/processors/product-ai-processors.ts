@@ -54,6 +54,7 @@ export type JobPayload = {
   source?: string;
   graph?: Record<string, unknown>;
   direction?: DatabaseSyncDirection;
+  skipAuthCollections?: boolean;
   [key: string]: unknown;
 };
 
@@ -204,7 +205,9 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
 
 export async function processDatabaseSync(job: Job): Promise<Record<string, unknown>> {
   const direction = job.payload.direction ?? 'mongo_to_prisma';
-  return runDatabaseSync(direction);
+  return runDatabaseSync(direction, {
+    skipAuthCollections: Boolean(job.payload.skipAuthCollections),
+  });
 }
 
 export async function processBase64ConvertAll(job: Job): Promise<Record<string, unknown>> {

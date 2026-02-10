@@ -23,6 +23,8 @@ export function useAiPathsRuntimeState() {
 
   const runtimeNodeStatusesRef = useRef<AiPathRuntimeNodeStatusMap>({});
   const runStatusRef = useRef<RunStatus>(runStatus);
+  const nodeStartTimesRef = useRef<Record<string, number>>({});
+  const [nodeDurations, setNodeDurations] = useState<Record<string, number>>({});
 
   const setRunStatusWithRef = useCallback((status: RunStatus) => {
     runStatusRef.current = status;
@@ -62,6 +64,8 @@ export function useAiPathsRuntimeState() {
   const resetRuntimeNodeStatuses = useCallback((next: AiPathRuntimeNodeStatusMap = {}): void => {
     runtimeNodeStatusesRef.current = next;
     setRuntimeNodeStatuses(next);
+    nodeStartTimesRef.current = {};
+    setNodeDurations({});
   }, []);
 
   const normalizeNodeStatus = useCallback((value: unknown): AiPathRuntimeNodeStatus | null => {
@@ -110,6 +114,16 @@ export function useAiPathsRuntimeState() {
     }): void => {
       const normalizedStatus = normalizeNodeStatus(input.status);
       if (!normalizedStatus) return;
+      // Track node execution timing
+      if (normalizedStatus === 'running') {
+        nodeStartTimesRef.current[input.nodeId] = performance.now();
+      }
+      const TERMINAL_STATUSES: ReadonlySet<string> = new Set(['completed', 'cached', 'failed', 'canceled', 'timeout', 'skipped']);
+      if (TERMINAL_STATUSES.has(normalizedStatus) && nodeStartTimesRef.current[input.nodeId] != null) {
+        const dur = Math.round(performance.now() - nodeStartTimesRef.current[input.nodeId]!);
+        delete nodeStartTimesRef.current[input.nodeId];
+        setNodeDurations((prev) => ({ ...prev, [input.nodeId]: dur }));
+      }
       const prevStatus = runtimeNodeStatusesRef.current[input.nodeId];
       if (prevStatus === normalizedStatus) return;
       const next = {
@@ -176,5 +190,7 @@ export function useAiPathsRuntimeState() {
     settleTransientNodeStatuses,
     normalizeNodeStatus,
     formatStatusLabel,
+    nodeDurations,
+    nodeStartTimesRef,
   };
 }

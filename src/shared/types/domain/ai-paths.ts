@@ -490,6 +490,7 @@ export type RuntimeHistoryEntry = {
   skipReason?: string | null | undefined;
   error?: string | null | undefined;
   delayMs?: number | null | undefined;
+  durationMs?: number | null | undefined;
   inputsFrom?: RuntimeHistoryLink[] | undefined;
   outputsTo?: RuntimeHistoryLink[] | undefined;
 };

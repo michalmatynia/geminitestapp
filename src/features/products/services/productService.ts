@@ -90,6 +90,14 @@ const shouldLogTiming = (): boolean => process.env['DEBUG_API_TIMING'] === 'true
 
 type ProductQueryTimings = Record<string, number | null | undefined>;
 
+const getFallbackProvider = (provider: ProductDbProvider): ProductDbProvider =>
+  provider === 'prisma' ? 'mongodb' : 'prisma';
+
+const isProviderAvailable = (provider: ProductDbProvider): boolean =>
+  provider === 'mongodb'
+    ? Boolean(process.env['MONGODB_URI'])
+    : Boolean(process.env['DATABASE_URL']);
+
 async function getProducts(
   filters: ProductFilters,
   options?: { timings?: ProductQueryTimings; provider?: ProductDbProvider }
@@ -100,12 +108,63 @@ async function getProducts(
   const productRepository = await resolveProductRepository(provider);
 
   const repoStart = performance.now();
-  const products = await productRepository.getProducts(filters);
+  let products = await productRepository.getProducts(filters);
   const repoMs = performance.now() - repoStart;
   if (timings) {
     timings['repo'] = repoMs;
   }
   performanceMonitor.record('db.query', repoMs, { operation: 'getProducts', provider });
+
+  const fallbackProvider = getFallbackProvider(provider);
+  if (isProviderAvailable(fallbackProvider)) {
+    const fallbackRepository = await resolveProductRepository(fallbackProvider);
+    const shouldCompareCounts =
+      products.length === 0 || Number(filters.page ?? 1) === 1;
+
+    let primaryCount = products.length;
+    let fallbackCount = 0;
+
+    if (shouldCompareCounts) {
+      const countStart = performance.now();
+      primaryCount = await productRepository.countProducts(filters);
+      fallbackCount = await fallbackRepository.countProducts(filters);
+      if (timings) {
+        timings['countCompare'] = performance.now() - countStart;
+      }
+    } else if (products.length === 0) {
+      fallbackCount = await fallbackRepository.countProducts(filters);
+    }
+
+    const shouldUseFallback =
+      (products.length === 0 && fallbackCount > 0) || fallbackCount > primaryCount;
+
+    if (shouldUseFallback) {
+      const fallbackStart = performance.now();
+      const fallbackProducts = await fallbackRepository.getProducts(filters);
+      const fallbackMs = performance.now() - fallbackStart;
+      if (timings) {
+        timings['repoFallback'] = fallbackMs;
+      }
+      performanceMonitor.record('db.query', fallbackMs, {
+        operation: 'getProducts.fallback',
+        provider: fallbackProvider,
+      });
+      products = fallbackProducts;
+      await logSystemEvent({
+        level: 'warn',
+        message:
+          '[products] Primary provider has fewer matching rows; using fallback provider.',
+        context: {
+          primaryProvider: provider,
+          fallbackProvider,
+          primaryCount,
+          fallbackCount,
+          returnedCount: fallbackProducts.length,
+          filters,
+        },
+      });
+    }
+  }
 
   const imagesStart = performance.now();
   
@@ -153,8 +212,33 @@ async function getProducts(
  * @returns The total count.
  */
 async function countProducts(filters: ProductFilters): Promise<number> {
-  const productRepository = await resolveProductRepository();
-  return productRepository.countProducts(filters);
+  const provider = await getProductDataProvider();
+  const productRepository = await resolveProductRepository(provider);
+  const count = await productRepository.countProducts(filters);
+
+  const fallbackProvider = getFallbackProvider(provider);
+  if (!isProviderAvailable(fallbackProvider)) {
+    return count;
+  }
+
+  const fallbackRepository = await resolveProductRepository(fallbackProvider);
+  const fallbackCount = await fallbackRepository.countProducts(filters);
+  if (fallbackCount > count) {
+    await logSystemEvent({
+      level: 'warn',
+      message:
+        '[products] Primary provider has fewer matching rows; using fallback provider count.',
+      context: {
+        primaryProvider: provider,
+        fallbackProvider,
+        primaryCount: count,
+        fallbackCount,
+        filters,
+      },
+    });
+    return fallbackCount;
+  }
+  return count;
 }
 
 /**
@@ -163,13 +247,32 @@ async function countProducts(filters: ProductFilters): Promise<number> {
  * @returns The product, or null if not found.
  */
 async function getProductById(id: string): Promise<ProductWithImages | null> {
-  const productRepository = await resolveProductRepository();
-  return productRepository.getProductById(id);
+  const provider = await getProductDataProvider();
+  const productRepository = await resolveProductRepository(provider);
+  const product = await productRepository.getProductById(id);
+  if (product) return product;
+
+  const fallbackProvider = getFallbackProvider(provider);
+  if (!isProviderAvailable(fallbackProvider)) {
+    return null;
+  }
+  const fallbackRepository = await resolveProductRepository(fallbackProvider);
+  return fallbackRepository.getProductById(id);
 }
 
 async function getProductBySku(sku: string): Promise<ProductWithImages | null> {
-  const productRepository = await resolveProductRepository();
-  const product = await productRepository.getProductBySku(sku);
+  const provider = await getProductDataProvider();
+  const productRepository = await resolveProductRepository(provider);
+  let product = await productRepository.getProductBySku(sku);
+
+  if (!product) {
+    const fallbackProvider = getFallbackProvider(provider);
+    if (isProviderAvailable(fallbackProvider)) {
+      const fallbackRepository = await resolveProductRepository(fallbackProvider);
+      product = await fallbackRepository.getProductBySku(sku);
+    }
+  }
+
   if (!product) return null;
   return getProductById(product.id);
 }

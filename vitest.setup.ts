@@ -27,23 +27,6 @@ vi.mock('@/features/observability/server', async (importOriginal) => {
       ...data
     })),
     getErrorFingerprint: vi.fn().mockResolvedValue('test-fingerprint'),
-    listSystemLogs: vi.fn().mockResolvedValue({ logs: [], total: 0 }),
-    createSystemLog: vi.fn().mockResolvedValue({}),
-    clearSystemLogs: vi.fn().mockResolvedValue({ deleted: 0 }),
-    getSystemLogMetrics: vi.fn().mockResolvedValue({
-      total: 0,
-      last24Hours: 0,
-      last7Days: 0,
-      levels: { error: 0, warn: 0, info: 0 },
-      topSources: [],
-      topPaths: [],
-    }),
-    ErrorSystem: {
-      captureException: vi.fn().mockResolvedValue(undefined),
-      logWarning: vi.fn().mockResolvedValue(undefined),
-      logError: vi.fn().mockResolvedValue(undefined),
-      logInfo: vi.fn().mockResolvedValue(undefined),
-    },
   };
 });
 

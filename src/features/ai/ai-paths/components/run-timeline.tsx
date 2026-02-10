@@ -7,6 +7,7 @@ import type {
   AiPathRunNodeRecord,
   AiPathRunRecord,
 } from '@/features/ai/ai-paths/lib';
+import { formatDurationMs } from '@/features/ai/ai-paths/lib';
 import { Button, Tooltip } from '@/shared/ui';
 
 
@@ -72,18 +73,7 @@ const formatDuration = (start?: Date | string | null, end?: Date | string | null
   return `${minutes}m ${remaining}s`;
 };
 
-const formatDurationMs = (diffMs: number | null): string | null => {
-  if (diffMs === null || Number.isNaN(diffMs)) return null;
-  if (diffMs < 1000) return `${Math.max(diffMs, 0)}ms`;
-  const seconds = Math.round(diffMs / 1000);
-  if (seconds < 60) return `${seconds}s`;
-  const minutes = Math.floor(seconds / 60);
-  const remaining = seconds % 60;
-  if (minutes < 60) return `${minutes}m ${remaining}s`;
-  const hours = Math.floor(minutes / 60);
-  const minutesRemaining = minutes % 60;
-  return `${hours}h ${minutesRemaining}m`;
-};
+// formatDurationMs imported from @/features/ai/ai-paths/lib
 
 const getDurationMs = (
   start?: Date | string | null,

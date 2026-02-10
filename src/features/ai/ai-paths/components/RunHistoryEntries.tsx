@@ -1,7 +1,7 @@
 'use client';
 
 import type { RuntimeHistoryEntry, RuntimeHistoryLink } from '@/features/ai/ai-paths/lib';
-import { formatRuntimeValue } from '@/features/ai/ai-paths/lib';
+import { formatDurationMs, formatRuntimeValue } from '@/features/ai/ai-paths/lib';
 
 type RunHistoryEntriesProps = {
   entries: RuntimeHistoryEntry[];
@@ -101,6 +101,11 @@ export function RunHistoryEntries({
             {entry.delayMs !== null && entry.delayMs !== undefined && (
               <div className='mt-2 text-xs text-amber-200'>
                 Delay: {entry.delayMs}ms
+              </div>
+            )}
+            {entry.durationMs != null && entry.durationMs > 0 && (
+              <div className='mt-1 text-[10px] text-gray-400'>
+                Duration: {formatDurationMs(entry.durationMs)}
               </div>
             )}
             <div className='mt-3 grid gap-4 lg:grid-cols-2'>

@@ -111,6 +111,7 @@ export type UseAiPathsRuntimeResult = {
   sendingToAi: boolean;
   runtimeNodeStatuses: AiPathRuntimeNodeStatusMap;
   runtimeEvents: AiPathRuntimeEvent[];
+  nodeDurations: Record<string, number>;
   clearNodeCache: (nodeId: string) => void;
 };
 

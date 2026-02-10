@@ -18,6 +18,14 @@ vi.mock('@/features/cms/services/cms-domain', () => ({
 vi.mock('@/features/observability/server', () => ({
   logSystemEvent: vi.fn().mockResolvedValue(undefined),
   logSystemError: vi.fn().mockResolvedValue(undefined), getErrorFingerprint: vi.fn().mockResolvedValue('test-fingerprint'),
+  logActivity: vi.fn().mockResolvedValue(undefined),
+  ActivityTypes: {
+    CMS: {
+      PAGE_CREATED: 'cms.page_created',
+      PAGE_UPDATED: 'cms.page_updated',
+      PAGE_DELETED: 'cms.page_deleted',
+    },
+  },
   ErrorSystem: {
     captureException: vi.fn(),
   },

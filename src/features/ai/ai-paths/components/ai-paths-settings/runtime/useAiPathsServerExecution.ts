@@ -7,7 +7,7 @@ import type {
   AiPathRunEventRecord,
 } from '@/features/ai/ai-paths/lib';
 import {
-  aiJobsApi,
+  aiPathsApi,
 } from '@/features/ai/ai-paths/lib';
 
 import {
@@ -46,8 +46,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
       serverRunActiveRef.current = true;
       args.resetRuntimeNodeStatuses({});
 
-      // Use aiJobsApi.streamRun as aiPathsApi is not available in common lib
-      const eventSource = aiJobsApi.streamRun(args.activePathId, {
+      const eventSource = aiPathsApi.streamRun(args.activePathId, {
         triggerNodeId: triggerNode.id,
         triggerEvent,
         triggerContext,

@@ -141,7 +141,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const productConfigured =
     appEffective === 'prisma'
       ? (productPrismaSetting ?? 'prisma')
-      : (productMongoSetting ?? productPrismaSetting ?? 'mongodb');
+      : (productMongoSetting ?? productPrismaSetting ?? (hasDatabaseUrl ? 'prisma' : 'mongodb'));
   const productConfiguredSource: ProviderSource =
     appEffective === 'prisma'
       ? (productPrismaSetting ? 'prisma-setting' : 'derived')

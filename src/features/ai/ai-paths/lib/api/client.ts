@@ -791,3 +791,26 @@ export const analyticsApi = {
     return { ok: true, data: response.data.summary };
   },
 };
+
+// ============================================================================
+// AI Paths Settings API
+// ============================================================================
+
+export const aiPathsApi = {
+  /**
+   * Stream a path run using EventSource
+   */
+  streamRun(pathId: string, payload: {
+    triggerNodeId: string;
+    triggerEvent: string;
+    triggerContext: Record<string, unknown>;
+  }): EventSource {
+    const params = new URLSearchParams();
+    params.set('triggerNodeId', payload.triggerNodeId);
+    params.set('triggerEvent', payload.triggerEvent);
+    params.set('triggerContext', JSON.stringify(payload.triggerContext));
+    
+    const url = `/api/ai-paths/${encodeURIComponent(pathId)}/run/stream?${params.toString()}`;
+    return new EventSource(resolveApiUrl(url));
+  },
+};

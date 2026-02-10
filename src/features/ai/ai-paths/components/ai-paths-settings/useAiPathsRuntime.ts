@@ -308,6 +308,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     sendingToAi,
     runtimeNodeStatuses: state.runtimeNodeStatuses,
     runtimeEvents: state.runtimeEvents,
+    nodeDurations: state.nodeDurations,
     clearNodeCache,
   };
 }

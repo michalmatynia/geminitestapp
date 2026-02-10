@@ -12,7 +12,9 @@ vi.mock('@/features/cms/services/cms-repository', () => ({
 vi.mock('@/features/cms/services/cms-domain', () => ({
   getSlugsForDomain: vi.fn(),
   getSlugForDomainById: vi.fn(),
+  ensureDomainSlug: vi.fn().mockResolvedValue(undefined),
   resolveCmsDomainFromRequest: vi.fn().mockResolvedValue({ id: 'd1', domain: 'localhost' }),
+  resolveCmsDomainScopeById: vi.fn().mockResolvedValue(null),
 }));
 
 describe('CMS Slugs API', () => {

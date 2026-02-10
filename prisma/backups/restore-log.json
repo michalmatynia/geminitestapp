@@ -7,5 +7,13 @@
   "stardb-backup-1770618679844.dump": {
     "date": "2026-02-09T18:02:56.263Z",
     "logFile": "stardb-backup-1770618679844.dump.restore.log"
+  },
+  "stardb-backup-1770726799619.dump": {
+    "date": "2026-02-10T14:28:16.048Z",
+    "logFile": "stardb-backup-1770726799619.dump.restore.log"
+  },
+  "stardb-backup-1770734063504.dump": {
+    "date": "2026-02-10T14:53:21.925Z",
+    "logFile": "stardb-backup-1770734063504.dump.restore.log"
   }
 }

@@ -41,6 +41,23 @@ const clearSchema = z.object({
   before: z.string().datetime().optional(),
 });
 
+const parseCreateBody = async (
+  req: NextRequest,
+  ctx: ApiHandlerContext
+): Promise<
+  | { ok: true; data: z.infer<typeof createSchema> }
+  | { ok: false; response: Response }
+> => {
+  if (ctx.body !== undefined) {
+    const parsed = createSchema.safeParse(ctx.body);
+    if (parsed.success) {
+      return { ok: true, data: parsed.data };
+    }
+    return { ok: false, response: NextResponse.json({ error: 'Invalid payload' }, { status: 400 }) };
+  }
+  return parseJsonBody(req, createSchema, { logPrefix: 'systemLogs.POST' });
+};
+
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const url = new URL(req.url);
   const parsed = listSchema.parse(Object.fromEntries(url.searchParams.entries()));
@@ -56,10 +73,8 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
   return NextResponse.json(result);
 }
 
-async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const parsed = await parseJsonBody(req, createSchema, {
-    logPrefix: 'systemLogs.POST',
-  });
+async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+  const parsed = await parseCreateBody(req, ctx);
   if (!parsed.ok) {
     return parsed.response;
   }

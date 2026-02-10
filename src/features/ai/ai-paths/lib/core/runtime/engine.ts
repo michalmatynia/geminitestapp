@@ -1111,6 +1111,7 @@ export async function evaluateGraph({
       inputsFrom: buildInputLinks(node.id, nodeInputs),
       outputsTo: buildOutputLinks(node.id, prevOutputs),
       delayMs: node.type === 'delay' ? (node.config?.delay?.ms ?? 300) : null,
+      durationMs: null,
     };
     pushHistoryEntry(node.id, entry);
   };
@@ -1654,6 +1655,7 @@ export async function evaluateGraph({
       }
 
       const handler = HANDLERS[node.type];
+      const nodeStartMs = nowMs();
       if (handler) {
         ensureNotCancelled(nextInputs, node.id);
         if (onNodeStart) {
@@ -1666,7 +1668,6 @@ export async function evaluateGraph({
             iteration,
           });
         }
-        const nodeStartMs = profileEnabled ? nowMs() : 0;
         try {
           ensureNotCancelled(nextInputs, node.id);
           const timeoutMs = resolveNodeTimeoutMs(node);
@@ -1767,6 +1768,7 @@ export async function evaluateGraph({
               inputsFrom: buildInputLinks(node.id, nodeInputs),
               outputsTo: buildOutputLinks(node.id, prevOutputs),
               delayMs: node.type === 'delay' ? (node.config?.delay?.ms ?? 300) : null,
+              durationMs: Math.round(nowMs() - nodeStartMs),
             };
             pushHistoryEntry(node.id, entry);
           }
@@ -1822,6 +1824,7 @@ export async function evaluateGraph({
           inputsFrom: buildInputLinks(node.id, nodeInputs),
           outputsTo: buildOutputLinks(node.id, nextOutputs),
           delayMs: node.type === 'delay' ? (node.config?.delay?.ms ?? 300) : null,
+          durationMs: Math.round(nowMs() - nodeStartMs),
         };
         pushHistoryEntry(node.id, entry);
       }

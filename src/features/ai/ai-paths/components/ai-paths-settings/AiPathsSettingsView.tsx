@@ -23,6 +23,7 @@ import { SimulationDialogMigrated } from '../examples/SimulationDialogMigrated';
 import { GraphModelDebugPanel } from '../graph-model-debug-panel';
 import { PresetsDialogWithContext } from '../presets-dialog';
 import { RunDetailDialogWithContext } from '../run-detail-dialog';
+import { RuntimeEventLogPanel } from '../runtime-event-log-panel';
 import { DocsTabPanel, PathsTabPanel } from '../ui-panels';
 import {
   DOCS_OVERVIEW_SNIPPET,
@@ -83,11 +84,11 @@ export function AiPathsSettingsView({
   const { incrementLoadNonce } = usePersistenceActions();
 
   // Domain: Runtime — read from context
-  const { runtimeState, lastRunAt, lastError } = useRuntimeState();
+  const { runtimeState, lastRunAt, lastError, runtimeRunStatus, runtimeNodeStatuses, runtimeEvents } = useRuntimeState();
   const { setLastError } = useRuntimeActions();
 
   // Domain: Graph — read from context (synced state only)
-  const { activePathId, pathName, isPathLocked, isPathActive, activeTrigger, executionMode, flowIntensity, runMode, paths, pathConfigs } = useGraphState();
+  const { activePathId, pathName, isPathLocked, isPathActive, activeTrigger, executionMode, flowIntensity, runMode, paths, pathConfigs, nodes } = useGraphState();
 
   // Domain: Selection — read from context
   const { nodeConfigDirty } = useSelectionState();
@@ -109,20 +110,14 @@ export function AiPathsSettingsView({
     updateActivePathMeta,
     handleSwitchPath,
     savePathIndex,
-    nodes,
     setNodes,
     palette,
     handleDragStart,
     handleRemoveEdge,
-    runtimeRunStatus,
-    runtimeNodeStatuses,
-    runtimeEvents,
     updateSelectedNode,
     handleDeleteSelectedNode,
     handleClearConnectorData,
     handleClearHistory,
-    presetDraft,
-    setPresetDraft,
     handlePresetFromSelection,
     handleSavePreset,
     handleApplyPreset,
@@ -137,8 +132,6 @@ export function AiPathsSettingsView({
     handleRequeueDeadLetter,
     handleRunSimulation,
     handleImportPresets,
-    simulationOpenNodeId,
-    setSimulationOpenNodeId,
     reportAiPathsError,
   } = state;
 
@@ -608,8 +601,6 @@ export function AiPathsSettingsView({
                 onApplyPreset={(preset: ClusterPreset) => { handleApplyPreset(preset); }}
                 onDeletePreset={(presetId: string) => { handleDeletePreset(presetId).catch(() => {}); }}
                 onExportPresets={handleExportPresets}
-                presetDraft={presetDraft}
-                setPresetDraft={setPresetDraft}
               />
               <GraphModelDebugPanel payload={lastGraphModelPayload} />
               <RunHistoryPanelMigrated
@@ -628,6 +619,7 @@ export function AiPathsSettingsView({
               />
             </div>
           </div>
+          {!isFocusMode && <RuntimeEventLogPanel />}
           {!isFocusMode ? (
             <div className='grid gap-4 lg:grid-cols-2'>
               <div className='space-y-3 rounded-lg border border-border/60 bg-card/50 p-4'>
@@ -831,10 +823,6 @@ export function AiPathsSettingsView({
       <SimulationDialogMigrated
         setNodes={setNodesFromUser}
         onRunSimulation={(node) => { handleRunSimulation(node); }}
-        openNodeId={simulationOpenNodeId}
-        onClose={() => setSimulationOpenNodeId(null)}
-        nodes={nodes}
-        isPathLocked={isPathLocked}
         savePathConfig={handleSave}
       />
     </div>

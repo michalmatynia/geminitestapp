@@ -52,32 +52,41 @@ const readPrismaProductProvider = async (): Promise<ProductDbProvider | null> =>
   }
 };
 
+const resolveAvailableProvider = (preferred: ProductDbProvider): ProductDbProvider => {
+  const hasPrisma = Boolean(process.env['DATABASE_URL']);
+  const hasMongo = Boolean(process.env['MONGODB_URI']);
+
+  if (preferred === 'prisma') {
+    if (hasPrisma) return 'prisma';
+    return hasMongo ? 'mongodb' : 'prisma';
+  }
+
+  if (hasMongo) return 'mongodb';
+  return hasPrisma ? 'prisma' : 'mongodb';
+};
+
 export const getProductDataProvider = async (): Promise<ProductDbProvider> => {
   void prisma;
   const appProvider = await getAppDbProvider();
   if (appProvider === 'prisma') {
     const prismaSetting = await readPrismaProductProvider();
     if (prismaSetting) {
-      if (prismaSetting === 'prisma' && !process.env['DATABASE_URL']) return 'mongodb';
-      if (prismaSetting === 'mongodb' && !process.env['MONGODB_URI']) return 'prisma';
       warnProviderDrift(appProvider, prismaSetting, 'prisma-setting');
-      return prismaSetting;
+      return resolveAvailableProvider(prismaSetting);
     }
-    return 'prisma';
+    return resolveAvailableProvider('prisma');
   }
 
   const mongoSetting = await readMongoProductProvider();
   if (mongoSetting) {
-    if (mongoSetting === 'mongodb' && !process.env['MONGODB_URI']) return 'prisma';
     warnProviderDrift(appProvider, mongoSetting, 'mongo-setting');
-    return mongoSetting;
+    return resolveAvailableProvider(mongoSetting);
   }
   const prismaSetting = await readPrismaProductProvider();
   if (prismaSetting) {
-    if (prismaSetting === 'prisma' && !process.env['DATABASE_URL']) return 'mongodb';
-    if (prismaSetting === 'mongodb' && !process.env['MONGODB_URI']) return 'prisma';
     warnProviderDrift(appProvider, prismaSetting, 'prisma-setting');
-    return prismaSetting;
+    return resolveAvailableProvider(prismaSetting);
   }
-  return 'mongodb';
+  // No explicit product provider setting found: prefer Prisma when available.
+  return resolveAvailableProvider('prisma');
 };

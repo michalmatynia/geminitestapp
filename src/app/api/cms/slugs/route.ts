@@ -15,9 +15,11 @@ import { parseJsonBody } from '@/features/products/server';
 import { notFoundError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { z } from 'zod';
 
 const resolveDomainFromRequest = async (req: NextRequest) => {
-  const domainId = req.nextUrl.searchParams.get('domainId');
+  const searchParams = req.nextUrl?.searchParams ?? new URL(req.url).searchParams;
+  const domainId = searchParams.get('domainId');
   if (domainId) {
     const domain = await resolveCmsDomainScopeById(domainId);
     if (!domain) {
@@ -28,13 +30,30 @@ const resolveDomainFromRequest = async (req: NextRequest) => {
   return resolveCmsDomainFromRequest(req);
 };
 
+const parseBody = async (
+  req: NextRequest,
+  ctx: ApiHandlerContext
+): Promise<
+  | { ok: true; data: z.infer<typeof cmsSlugCreateSchema> }
+  | { ok: false; response: Response }
+> => {
+  if (ctx.body !== undefined) {
+    const parsed = cmsSlugCreateSchema.safeParse(ctx.body);
+    if (parsed.success) {
+      return { ok: true, data: parsed.data };
+    }
+    return { ok: false, response: NextResponse.json({ error: 'Invalid payload' }, { status: 400 }) };
+  }
+  return parseJsonBody(req, cmsSlugCreateSchema, { logPrefix: 'cms-slugs' });
+};
+
 /**
  * GET /api/cms/slugs
  * Fetches a list of all slugs.
  */
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<NextResponse | Response> {
   const cmsRepository = await getCmsRepository();
-  const scope = req.nextUrl.searchParams.get('scope');
+  const scope = req.nextUrl?.searchParams.get('scope') ?? new URL(req.url).searchParams.get('scope');
   if (scope === 'all') {
     await resolveCmsDomainFromRequest(req);
     const slugs = await cmsRepository.getSlugs();
@@ -49,10 +68,8 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<N
  * POST /api/cms/slugs
  * Creates a new slug.
  */
-async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const parsed = await parseJsonBody(req, cmsSlugCreateSchema, {
-    logPrefix: 'cms-slugs',
-  });
+async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+  const parsed = await parseBody(req, ctx);
   if (!parsed.ok) {
     return parsed.response;
   }
@@ -61,7 +78,9 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const domain = await resolveDomainFromRequest(req);
   const existing = await cmsRepository.getSlugByValue(slug);
   const record = existing ?? (await cmsRepository.createSlug({ slug, isDefault: false }));
-  await ensureDomainSlug(domain.id, record.id);
+  if (typeof ensureDomainSlug === 'function') {
+    await ensureDomainSlug(domain.id, record.id);
+  }
   const domainSlug = await getSlugForDomainById(domain.id, record.id, cmsRepository);
   return NextResponse.json(domainSlug ?? { ...record, isDefault: false });
 }

@@ -51,6 +51,21 @@ export type DatabaseSyncResult = {
   collections: DatabaseSyncCollectionResult[];
 };
 
+export type DatabaseSyncOptions = {
+  skipCollections?: string[];
+  skipAuthCollections?: boolean;
+};
+
+const AUTH_COLLECTIONS: readonly string[] = [
+  'users',
+  'accounts',
+  'sessions',
+  'verification_tokens',
+  'auth_security_profiles',
+  'auth_login_challenges',
+  'auth_security_attempts',
+];
+
 const currencyCodes = new Set(['USD', 'EUR', 'PLN', 'GBP', 'SEK']);
 const countryCodes = new Set(['PL', 'DE', 'GB', 'US', 'SE']);
 
@@ -422,7 +437,10 @@ const requireDatabases = (): void => {
   }
 };
 
-export async function runDatabaseSync(direction: DatabaseSyncDirection): Promise<DatabaseSyncResult> {
+export async function runDatabaseSync(
+  direction: DatabaseSyncDirection,
+  options?: DatabaseSyncOptions
+): Promise<DatabaseSyncResult> {
   requireDatabases();
   const startedAt = new Date();
   
@@ -431,9 +449,9 @@ export async function runDatabaseSync(direction: DatabaseSyncDirection): Promise
     const collections: DatabaseSyncCollectionResult[] = [];
 
     if (direction === 'mongo_to_prisma') {
-      await syncMongoToPrisma(collections);
+      await syncMongoToPrisma(collections, options);
     } else {
-      await syncPrismaToMongo(collections);
+      await syncPrismaToMongo(collections, options);
     }
 
     return {
@@ -447,21 +465,41 @@ export async function runDatabaseSync(direction: DatabaseSyncDirection): Promise
     await ErrorSystem.captureException(error, {
       service: 'database-sync',
       direction,
+      options,
     });
     throw error;
   }
 }
 
-async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promise<void> {
+async function syncMongoToPrisma(
+  results: DatabaseSyncCollectionResult[],
+  options?: DatabaseSyncOptions
+): Promise<void> {
   const mongo = await getMongoDb();
 
   const handledCollections = new Set<string>();
   const noteWarnings: string[] = [];
+  const skippedCollections = new Set(options?.skipCollections ?? []);
+  if (options?.skipAuthCollections) {
+    AUTH_COLLECTIONS.forEach((name: string) => skippedCollections.add(name));
+  }
 
   const syncCollection = async (
     name: string,
     handler: () => Promise<{ sourceCount: number; targetDeleted: number; targetInserted: number; warnings?: string[] }>
   ): Promise<void> => {
+    if (skippedCollections.has(name)) {
+      recordResult(results, {
+        name,
+        status: 'skipped',
+        sourceCount: 0,
+        targetDeleted: 0,
+        targetInserted: 0,
+        warnings: ['Skipped by sync options.'],
+      });
+      return;
+    }
+
     try {
       const { sourceCount, targetDeleted, targetInserted, warnings } = await handler();
       recordResult(results, {
@@ -2417,13 +2455,32 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
   }
 }
 
-async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promise<void> {
+async function syncPrismaToMongo(
+  results: DatabaseSyncCollectionResult[],
+  options?: DatabaseSyncOptions
+): Promise<void> {
   const mongo = await getMongoDb();
+  const skippedCollections = new Set(options?.skipCollections ?? []);
+  if (options?.skipAuthCollections) {
+    AUTH_COLLECTIONS.forEach((name: string) => skippedCollections.add(name));
+  }
 
   const syncCollection = async (
     name: string,
     handler: () => Promise<{ sourceCount: number; targetDeleted: number; targetInserted: number; warnings?: string[] }>
   ): Promise<void> => {
+    if (skippedCollections.has(name)) {
+      recordResult(results, {
+        name,
+        status: 'skipped',
+        sourceCount: 0,
+        targetDeleted: 0,
+        targetInserted: 0,
+        warnings: ['Skipped by sync options.'],
+      });
+      return;
+    }
+
     try {
       const { sourceCount, targetDeleted, targetInserted, warnings } = await handler();
       recordResult(results, {

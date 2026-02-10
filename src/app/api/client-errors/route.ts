@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { ErrorSystem } from '@/features/observability/services/error-system';
+import { ErrorSystem } from '@/features/observability/server';
 import type { ErrorContext } from '@/features/observability/services/error-system';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -8,40 +8,42 @@ import type { ApiHandlerContext } from '@/shared/types/api/api';
 export const runtime = 'nodejs';
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<NextResponse> {
-  // Use _ctx.body if available, otherwise parse json manually (though apiHandler can do it)
-  // apiHandler options.parseJsonBody: true will populate _ctx.body
-  
   const body = (await req.json()) as {
     error?: unknown;
     context?: ErrorContext;
     message?: string;
     name?: string;
     stack?: string | null;
+    url?: string;
   };
-  
-  const wrappedError = body.error;
-  const directPayload =
-    (body.message || body.name || body.stack)
-      ? {
-        message: body.message ?? 'Unknown client error',
-        name: body.name ?? 'ClientError',
-        stack: body.stack ?? undefined,
-      }
-      : null;
-  const error = wrappedError ?? directPayload ?? body;
-  const context = body.context ?? {};
 
-  // Log the error using the server-only ErrorSystem
-  await ErrorSystem.captureException(error, {
-    ...context,
+  const message =
+    typeof body.message === 'string' && body.message.trim().length > 0
+      ? body.message
+      : 'Unknown client error';
+  const normalizedError = new Error(message);
+  normalizedError.name =
+    typeof body.name === 'string' && body.name.trim().length > 0
+      ? body.name
+      : 'ClientError';
+  if (typeof body.stack === 'string' && body.stack.trim().length > 0) {
+    normalizedError.stack = body.stack;
+  }
+
+  await ErrorSystem.captureException(normalizedError, {
+    ...(body.context ?? {}),
     source: 'client.error.reporter',
-    service: 'client',
+    service: 'client-error-reporter',
+    ...(typeof body.url === 'string' ? { url: body.url } : {}),
+    extra: body.context ?? {},
   });
 
-  return NextResponse.json({ success: true }, { status: 200 });
+  return NextResponse.json({ ok: true, success: true }, { status: 200 });
 }
 
 export const POST = apiHandler(POST_handler, {
   source: 'client-errors.POST',
-  parseJsonBody: false, // We parse manually to handle custom structure if needed, or we can switch to true
+  parseJsonBody: false,
+  // Browser-side error reporter can fire before CSRF cookie/header bootstrap.
+  requireCsrf: false,
 });

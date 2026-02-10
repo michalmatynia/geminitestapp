@@ -118,8 +118,8 @@ const createMockModel = () => {
     }),
     upsert: vi.fn().mockImplementation((args: { where: Record<string, any>; create: Record<string, unknown>; update: Record<string, unknown> }) => {
       const index = items.findIndex(i => {
-        if (args.where.runId_nodeId) {
-          return i.runId === args.where.runId_nodeId.runId && i.nodeId === args.where.runId_nodeId.nodeId;
+        if (args.where && args.where['runId_nodeId']) {
+          return i.runId === args.where['runId_nodeId'].runId && i.nodeId === args.where['runId_nodeId'].nodeId;
         }
         return Object.entries(args.where).every(([k, v]) => i[k] === v);
       });
@@ -243,10 +243,10 @@ const prismaMock = {
         });
       }
     });
-    (prismaMock.$executeRaw as vi.Mock).mockClear();
-    (prismaMock.$executeRawUnsafe as vi.Mock).mockClear();
-    (prismaMock.$queryRaw as vi.Mock).mockClear();
-    (prismaMock.$queryRawUnsafe as vi.Mock).mockClear();
+    (prismaMock.$executeRaw).mockClear();
+    (prismaMock.$executeRawUnsafe).mockClear();
+    (prismaMock.$queryRaw).mockClear();
+    (prismaMock.$queryRawUnsafe).mockClear();
   },
 };
 

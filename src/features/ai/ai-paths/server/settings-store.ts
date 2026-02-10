@@ -241,6 +241,11 @@ const parsePathConfigMeta = (id: string, raw: string): ParsedPathMeta | null => 
 const repairPathIndexFromConfigs = (records: Map<string, string>): string | null => {
   const existingIndexRaw = records.get(AI_PATHS_INDEX_KEY);
   const existingIndex = parsePathMetas(existingIndexRaw);
+  // Do not resurrect deleted paths when an explicit index already exists.
+  // Rebuild only when the index is missing/empty/corrupt.
+  if (existingIndexRaw && existingIndex.length > 0) {
+    return null;
+  }
 
   const configMetasById = new Map<string, ParsedPathMeta>();
   records.forEach((value: string, key: string) => {
@@ -253,26 +258,10 @@ const repairPathIndexFromConfigs = (records: Map<string, string>): string | null
   });
 
   if (configMetasById.size === 0) return null;
-
-  const byId = new Map<string, ParsedPathMeta>();
-  existingIndex.forEach((meta: ParsedPathMeta) => {
-    if (!byId.has(meta.id)) {
-      byId.set(meta.id, meta);
-    }
-  });
-
-  let changed = existingIndex.length === 0;
-  configMetasById.forEach((meta: ParsedPathMeta, id: string) => {
-    if (byId.has(id)) return;
-    byId.set(id, meta);
-    changed = true;
-  });
-  if (!changed) return null;
-
-  const merged = Array.from(byId.values()).sort((a: ParsedPathMeta, b: ParsedPathMeta) =>
+  const rebuilt = Array.from(configMetasById.values()).sort((a: ParsedPathMeta, b: ParsedPathMeta) =>
     b.updatedAt.localeCompare(a.updatedAt)
   );
-  return JSON.stringify(merged);
+  return JSON.stringify(rebuilt);
 };
 
 const ensurePathIndexConsistency = async (
@@ -355,4 +344,27 @@ export async function upsertAiPathsSettingsBulk(
   );
   clearCachedAiPathsSettings();
   return normalized;
+}
+
+export async function deleteAiPathsSettings(keys: string[]): Promise<number> {
+  assertMongoConfigured();
+  const normalizedKeys = Array.from(
+    new Set(
+      keys.filter(
+        (key: string): boolean =>
+          typeof key === 'string' && key.length > 0 && isAiPathsKey(key)
+      )
+    )
+  );
+  if (normalizedKeys.length === 0) return 0;
+
+  await withMongoOperationTimeout(ensureMongoIndexes());
+  const mongo = await withMongoOperationTimeout(getMongoDb());
+  const result = await withMongoOperationTimeout(
+    mongo
+      .collection<MongoAiPathsSettingDoc>(AI_PATHS_SETTINGS_COLLECTION)
+      .deleteMany({ key: { $in: normalizedKeys } })
+  );
+  clearCachedAiPathsSettings();
+  return result.deletedCount ?? 0;
 }

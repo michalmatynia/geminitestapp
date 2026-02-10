@@ -16,6 +16,13 @@ import {
   getAppDbProvider,
   invalidateAppDbProviderCache,
 } from '@/shared/lib/db/app-db-provider';
+import { invalidateCollectionProviderMapCache } from '@/shared/lib/db/collection-provider-map';
+import {
+  DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY,
+  DATABASE_ENGINE_POLICY_KEY,
+  DATABASE_ENGINE_SERVICE_ROUTE_MAP_KEY,
+} from '@/shared/lib/db/database-engine-constants';
+import { invalidateDatabaseEnginePolicyCache } from '@/shared/lib/db/database-engine-policy';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import {
@@ -712,6 +719,15 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   }
   if (setting.key === APP_DB_PROVIDER_SETTING_KEY) {
     invalidateAppDbProviderCache();
+  }
+  if (
+    setting.key === DATABASE_ENGINE_POLICY_KEY ||
+    setting.key === DATABASE_ENGINE_SERVICE_ROUTE_MAP_KEY ||
+    setting.key === DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY ||
+    setting.key === 'collection_provider_map'
+  ) {
+    invalidateDatabaseEnginePolicyCache();
+    invalidateCollectionProviderMapCache();
   }
   return NextResponse.json(setting);
 }

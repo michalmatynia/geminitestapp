@@ -10,6 +10,7 @@ export type AiPathsSettingRecord = {
 const AI_PATHS_SETTINGS_STALE_MS = 10_000;
 const AI_PATHS_SETTINGS_BACKUP_KEY = 'ai_paths_settings_backup_v1';
 const AI_PATHS_SETTINGS_RETRY_DELAYS_MS = [250, 750, 1500, 3000];
+const AI_PATHS_SETTINGS_BACKUP_MAX_AGE_MS = 60_000;
 
 let aiPathsSettingsCache: AiPathsSettingRecord[] | null = null;
 let aiPathsSettingsFetchedAt = 0;
@@ -31,8 +32,20 @@ const readBackupSettings = (): AiPathsSettingRecord[] | null => {
     const raw = window.localStorage.getItem(AI_PATHS_SETTINGS_BACKUP_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return null;
-    const normalized = parsed
+    const records = Array.isArray(parsed)
+      ? parsed
+      : parsed && typeof parsed === 'object' && Array.isArray((parsed as { records?: unknown }).records)
+        ? (parsed as { records: unknown[] }).records
+        : null;
+    if (!records) return null;
+    const backupAgeMs =
+      parsed && typeof parsed === 'object' && typeof (parsed as { savedAt?: unknown }).savedAt === 'number'
+        ? Date.now() - ((parsed as { savedAt: number }).savedAt)
+        : Number.POSITIVE_INFINITY;
+    if (backupAgeMs > AI_PATHS_SETTINGS_BACKUP_MAX_AGE_MS) {
+      return null;
+    }
+    const normalized = records
       .map((item: unknown): AiPathsSettingRecord | null => {
         if (!item || typeof item !== 'object') return null;
         const key = (item as { key?: unknown }).key;
@@ -50,7 +63,10 @@ const readBackupSettings = (): AiPathsSettingRecord[] | null => {
 const writeBackupSettings = (records: AiPathsSettingRecord[]): void => {
   if (typeof window === 'undefined') return;
   try {
-    window.localStorage.setItem(AI_PATHS_SETTINGS_BACKUP_KEY, JSON.stringify(records));
+    window.localStorage.setItem(
+      AI_PATHS_SETTINGS_BACKUP_KEY,
+      JSON.stringify({ savedAt: Date.now(), records })
+    );
   } catch {
     // Ignore storage failures in private mode/quota conditions.
   }
@@ -222,4 +238,34 @@ export const updateAiPathsSetting = async (
     key: typeof nextKey === 'string' ? nextKey : key,
     value: typeof nextValue === 'string' ? nextValue : value,
   };
+};
+
+export const deleteAiPathsSettings = async (keys: string[]): Promise<number> => {
+  const normalizedKeys = Array.from(
+    new Set(
+      keys.filter(
+        (key: string): boolean =>
+          typeof key === 'string' && key.startsWith('ai_paths_')
+      )
+    )
+  );
+  if (normalizedKeys.length === 0) return 0;
+
+  const res = await fetch('/api/ai-paths/settings', {
+    method: 'DELETE',
+    credentials: 'include',
+    headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ keys: normalizedKeys }),
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to delete AI Paths settings (${res.status})`);
+  }
+  invalidateAiPathsSettingsCache();
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent('ai-paths:settings:updated', { detail: { scope: 'ai-paths' } })
+    );
+  }
+  const data = (await res.json()) as { deletedCount?: unknown };
+  return typeof data?.deletedCount === 'number' ? data.deletedCount : 0;
 };

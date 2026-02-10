@@ -23,6 +23,19 @@ type CollectionHandler = {
   prismaToMongo: () => Promise<SyncResult>;
 };
 
+const AI_PATHS_KEY_PREFIX = 'ai_paths_';
+const AI_PATHS_LEGACY_PREFIX = 'ai_paths_store:';
+const AI_PATHS_LEGACY_KEY_PREFIX = `${AI_PATHS_LEGACY_PREFIX}${AI_PATHS_KEY_PREFIX}`;
+
+const normalizeAiPathsKey = (key: string | null | undefined): string | null => {
+  if (typeof key !== 'string' || key.length === 0) return null;
+  if (key.startsWith(AI_PATHS_LEGACY_PREFIX)) {
+    const normalized = key.slice(AI_PATHS_LEGACY_PREFIX.length);
+    return normalized.startsWith(AI_PATHS_KEY_PREFIX) ? normalized : null;
+  }
+  return key.startsWith(AI_PATHS_KEY_PREFIX) ? key : null;
+};
+
 // ── Generic fallback ──
 
 /**
@@ -127,6 +140,91 @@ const settingsHandler: CollectionHandler = {
     const deleted = await collection.deleteMany({});
     if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
+  },
+};
+
+const aiPathsSettingsHandler: CollectionHandler = {
+  async mongoToPrisma() {
+    const mongo = await getMongoDb();
+    const docs = await mongo.collection('ai_paths_settings').find({}).toArray();
+    const normalized = docs
+      .map((doc: any) => {
+        const key = normalizeAiPathsKey(typeof doc.key === 'string' ? doc.key : null);
+        const value = doc.value;
+        if (!key || typeof value !== 'string') return null;
+        return {
+          key: `${AI_PATHS_LEGACY_PREFIX}${key}`,
+          value,
+          createdAt: toDate(doc.createdAt) ?? new Date(),
+          updatedAt: toDate(doc.updatedAt) ?? new Date(),
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null);
+
+    const deleted = await prisma.setting.deleteMany({
+      where: {
+        OR: [
+          { key: { startsWith: AI_PATHS_LEGACY_KEY_PREFIX } },
+          { key: { startsWith: AI_PATHS_KEY_PREFIX } },
+        ],
+      },
+    });
+    const created = normalized.length
+      ? await prisma.setting.createMany({ data: normalized, skipDuplicates: true })
+      : { count: 0 };
+    return {
+      sourceCount: normalized.length,
+      targetDeleted: deleted.count,
+      targetInserted: created.count,
+    };
+  },
+  async prismaToMongo() {
+    const mongo = await getMongoDb();
+    const rows = await prisma.setting.findMany({
+      where: {
+        OR: [
+          { key: { startsWith: AI_PATHS_LEGACY_KEY_PREFIX } },
+          { key: { startsWith: AI_PATHS_KEY_PREFIX } },
+        ],
+      },
+    });
+
+    const byKey = new Map<
+      string,
+      { key: string; value: string; createdAt: Date; updatedAt: Date }
+    >();
+
+    rows.forEach((row) => {
+      const normalizedKey = normalizeAiPathsKey(row.key);
+      if (!normalizedKey) return;
+      const next = {
+        key: normalizedKey,
+        value: row.value,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+      };
+      const existing = byKey.get(normalizedKey);
+      if (!existing || next.updatedAt > existing.updatedAt) {
+        byKey.set(normalizedKey, next);
+      }
+    });
+
+    const docs = Array.from(byKey.values()).map((row) => ({
+      _id: row.key,
+      key: row.key,
+      value: row.value,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    }));
+
+    const collection = mongo.collection('ai_paths_settings');
+    const deleted = await collection.deleteMany({});
+    if (docs.length) await collection.insertMany(docs as any[]);
+    return {
+      sourceCount: byKey.size,
+      targetDeleted: deleted.deletedCount ?? 0,
+      targetInserted: docs.length,
+    };
   },
 };
 
@@ -310,6 +408,7 @@ const productsHandler: CollectionHandler = {
 
 const SPECIALIZED_HANDLERS: Record<string, CollectionHandler> = {
   settings: settingsHandler,
+  ai_paths_settings: aiPathsSettingsHandler,
   users: usersHandler,
   products: productsHandler,
 };

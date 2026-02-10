@@ -104,7 +104,7 @@ describe('productMigration', () => {
           catalogs: [],
         },
       ];
-      (mockMongoCollection.find().toArray as vi.Mock).mockResolvedValueOnce(mockDocs);
+      (mockMongoCollection.find().toArray as any).mockResolvedValueOnce(mockDocs);
 
       const result = await migrateProductBatch({
         direction: 'mongo-to-prisma',

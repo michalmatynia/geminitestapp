@@ -1,11 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { http, HttpResponse } from 'msw';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import { AdminLayoutProvider } from '@/features/admin/context/AdminLayoutContext';
 import { PageBuilderLayout } from '@/features/cms/components/page-builder/PageBuilderLayout';
 import { useCmsPages, useCmsPage, useCmsSlugs } from '@/features/cms/hooks/useCmsQueries';
 import { initialState } from '@/features/cms/hooks/usePageBuilderContext';
+import { server } from '@/mocks/server';
 
 // Mock dependencies
 vi.mock('next/navigation', () => ({
@@ -100,6 +102,12 @@ describe('PageBuilder UI Integration', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    server.use(
+      http.get('/api/cms/slugs', () => HttpResponse.json([])),
+      http.get('/api/user/preferences', () => HttpResponse.json({})),
+      http.patch('/api/user/preferences', () => HttpResponse.json({})),
+      http.post('/api/client-errors', () => HttpResponse.json({ success: true }))
+    );
     (useCmsPages as any).mockReturnValue({ data: mockPages, isLoading: false });
     (useCmsPage as any).mockImplementation((id: string) => {
       if (id === '1') return { data: mockPages[0], isLoading: false };

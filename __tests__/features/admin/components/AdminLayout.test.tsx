@@ -1,9 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { http, HttpResponse } from 'msw';
 import { ReactNode } from 'react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { AdminLayout } from '@/features/admin/layout/AdminLayout';
+import { server } from '@/mocks/server';
 import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider';
 import { ToastProvider } from '@/shared/ui/toast';
 
@@ -51,6 +53,15 @@ const renderLayout = (children: ReactNode) => {
 };
 
 describe('AdminLayout', () => {
+  beforeEach(() => {
+    server.use(
+      http.get('/api/user/preferences', () => HttpResponse.json({})),
+      http.patch('/api/user/preferences', () => HttpResponse.json({})),
+      http.get('/api/settings/lite', () => HttpResponse.json([])),
+      http.post('/api/client-errors', () => HttpResponse.json({ success: true }))
+    );
+  });
+
   it('renders children correctly', () => {
     renderLayout(<div data-testid='child'>Test Content</div>);
 

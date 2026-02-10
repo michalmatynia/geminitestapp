@@ -3,7 +3,7 @@ import path from 'path';
 
 import { Product, ImageFile } from '@prisma/client';
 import { NextRequest } from 'next/server';
-import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
+import { describe, it, expect, vi, afterAll } from 'vitest';
 
 vi.unmock('@/shared/lib/db/prisma');
 

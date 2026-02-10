@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
@@ -8,7 +8,6 @@ import { ComponentSettingsProvider } from '@/features/cms/components/page-builde
 import { useCmsThemes, useCmsDomains, useCmsSlugs, useCmsAllSlugs } from '@/features/cms/hooks/useCmsQueries';
 import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import * as sharedUi from '@/shared/ui';
 
 // Create a new QueryClient for each test
 const createTestQueryClient = () => new QueryClient({

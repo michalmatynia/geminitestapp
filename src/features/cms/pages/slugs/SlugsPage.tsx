@@ -27,7 +27,7 @@ import {
   EmptyState,
   SearchInput,
   SharedModal,
-  AdminPageLayout,
+  PageLayout,
 } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
@@ -153,14 +153,14 @@ export default function SlugsPage(): React.JSX.Element {
   };
 
   return (
-    <AdminPageLayout
+    <PageLayout
       title='Slugs'
       description={
         zoningEnabled
           ? 'Manage slugs assigned to the currently active domain. Slugs control routing for your CMS pages.'
           : 'Manage slugs for all domains. Slugs control routing for your CMS pages.'
       }
-      mainActions={
+      headerActions={
         <>
           <div className='flex items-center gap-2 rounded-md border border-border/60 bg-background/40 px-2 py-1'>
             <Switch
@@ -361,6 +361,6 @@ export default function SlugsPage(): React.JSX.Element {
         confirmText='Remove'
         variant='destructive'
       />
-    </AdminPageLayout>
+    </PageLayout>
   );
 }

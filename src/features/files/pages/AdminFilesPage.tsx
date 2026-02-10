@@ -1,15 +1,15 @@
 'use client';
 
 import FileManager from '@/features/files/components/FileManager';
-import { AdminPageLayout } from '@/shared/ui';
+import { PageLayout } from '@/shared/ui';
 
 export function AdminFilesPage(): React.JSX.Element {
   return (
-    <AdminPageLayout
+    <PageLayout
       title='File Manager'
       description='Manage your uploads, backups, and shared assets.'
     >
       <FileManager mode='view' />
-    </AdminPageLayout>
+    </PageLayout>
   );
 }

@@ -77,6 +77,6 @@ describe('buildBaseProductData producer mapping', () => {
       }
     );
 
-    expect(payload['producer_ids']).toEqual(['Noe']);
+    expect(payload['producer_ids']).toEqual(['producer-local-1']);
   });
 });

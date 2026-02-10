@@ -1,3 +1,4 @@
+import type { RedisOverviewDto as RedisOverviewResponse } from '@/shared/dtos/database';
 import type { AppProviderDiagnosticsDto as ProviderDiagnosticsResponse } from '@/shared/dtos/system';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
@@ -212,6 +213,16 @@ export const fetchAllCollectionsSchema = async (): Promise<MultiSchemaResponse> 
   return res.json() as Promise<MultiSchemaResponse>;
 };
 
+export const fetchRedisOverview = async (limit = 200): Promise<RedisOverviewResponse> => {
+  const res = await fetch(`/api/databases/redis?limit=${encodeURIComponent(String(limit))}`, {
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    throw new Error('Failed to fetch Redis overview');
+  }
+  return res.json() as Promise<RedisOverviewResponse>;
+};
+
 export const copyCollectionBetweenProviders = async (
   collection: string,
   direction: 'mongo_to_prisma' | 'prisma_to_mongo'
@@ -283,7 +294,7 @@ export const syncDatabase = async (
   const res = await fetch('/api/settings/database/sync', {
     method: 'POST',
     headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ direction }),
+    body: JSON.stringify({ direction, manual: true }),
   });
   if (!res.ok) {
     const payload = (await res.json()) as { error?: string };
@@ -306,7 +317,7 @@ export const backfillSettings = async (
   const res = await fetch('/api/settings/migrate/backfill-keys', {
     method: 'POST',
     headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ dryRun, limit }),
+    body: JSON.stringify({ dryRun, limit, manual: true }),
   });
   if (!res.ok) {
     const payload = (await res.json().catch(() => null)) as { error?: string } | null;

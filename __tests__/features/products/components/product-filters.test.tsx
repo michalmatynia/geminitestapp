@@ -1,10 +1,16 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { vi } from 'vitest';
+import { vi, describe, it, expect } from 'vitest';
 
 import { ProductFilters } from '@/features/products/components/list/ProductFilters';
+import { ProductListProvider, type ProductListContextType } from '@/features/products/context/ProductListContext';
+
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: false } }
+});
 
 describe('ProductFilters Component', () => {
-  const mockProps = {
+  const mockContextValue: Partial<ProductListContextType> = {
     search: '',
     setSearch: vi.fn(),
     sku: '',
@@ -19,8 +25,18 @@ describe('ProductFilters Component', () => {
     setEndDate: vi.fn(),
   };
 
+  const renderWithProviders = (contextValue: Partial<ProductListContextType>) => {
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <ProductListProvider value={contextValue as ProductListContextType}>
+          <ProductFilters />
+        </ProductListProvider>
+      </QueryClientProvider>
+    );
+  };
+
   it('renders all filter inputs', () => {
-    render(<ProductFilters {...mockProps} />);
+    renderWithProviders(mockContextValue);
     
     expect(screen.getByPlaceholderText('Search by name...')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Search by SKU...')).toBeInTheDocument();
@@ -31,16 +47,16 @@ describe('ProductFilters Component', () => {
   });
 
   it('calls setSearch when name input changes', () => {
-    render(<ProductFilters {...mockProps} />);
+    renderWithProviders(mockContextValue);
     const input = screen.getByPlaceholderText('Search by name...');
     fireEvent.change(input, { target: { value: 'laptop' } });
-    expect(mockProps.setSearch).toHaveBeenCalledWith('laptop');
+    expect(mockContextValue.setSearch).toHaveBeenCalledWith('laptop');
   });
 
   it('calls setSku when SKU input changes', () => {
-    render(<ProductFilters {...mockProps} />);
+    renderWithProviders(mockContextValue);
     const input = screen.getByPlaceholderText('Search by SKU...');
     fireEvent.change(input, { target: { value: 'ABC' } });
-    expect(mockProps.setSku).toHaveBeenCalledWith('ABC');
+    expect(mockContextValue.setSku).toHaveBeenCalledWith('ABC');
   });
 });

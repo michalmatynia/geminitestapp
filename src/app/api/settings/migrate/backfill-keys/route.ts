@@ -3,9 +3,10 @@ import { z } from 'zod';
 
 
 import { auth } from '@/features/auth/server';
-import { authError, internalError } from '@/shared/errors/app-error';
+import { authError, forbiddenError, internalError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { getDatabaseEnginePolicy } from '@/shared/lib/db/database-engine-policy';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
@@ -16,6 +17,7 @@ export const runtime = 'nodejs';
 const backfillSchema = z.object({
   dryRun: z.boolean().optional(),
   limit: z.number().int().min(1).max(5000).optional(),
+  manual: z.boolean().optional(),
 });
 
 type BackfillResult = {
@@ -39,6 +41,13 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   });
   if (!parsed.ok) {
     return parsed.response;
+  }
+
+  const enginePolicy = await getDatabaseEnginePolicy();
+  if (!enginePolicy.allowAutomaticBackfill && parsed.data.manual !== true) {
+    throw forbiddenError(
+      'Automatic backfill is disabled by Database Engine policy. Run backfill manually from Workflow Database -> Database Engine.'
+    );
   }
 
   if (!process.env['MONGODB_URI']) {

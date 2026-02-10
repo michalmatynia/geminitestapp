@@ -1,4 +1,20 @@
 
+ 
+* I want new in Databases, one with three panels, one for MongoDB collection, one for Prisma Collections and one for Redis.
+I want this page to be a Dtabase migrations management engine, where I can manage which parts (collections) of application load from which provider. I also want to be able to fully controls synchronisation between these databased, migrations, backfilling behaviour and fallback polices. Nothing in regards to fallback, backfilling or migration is to be done automatically by the application. Everything needs to be set up in the Database engine or throw an error. I want full control and full customisation of these database aspect management.
+
+migrations
+
+Set up all the backfilling and fallback policies. Nothing is to be done automatically, I want full control, remove the legacy code
+
+I would  like to continue developing my database control Page. I would like a page where I can see one Panel for Each Connected Database Prisma, Redis and MongoDB. Through these panels, I should be able to see all the collections in each database and designate which are my primary collections when the Page Loads and which are Fallback, in case a primary collection doesn't load.
+
+I should also be able to synchronise collections between databases and if the collection exists in one database, but doesn't exist in the other, Copy a collection from one database to the other.
+
+ When I create / Edit Product, the name and description fields are invisible until I switch the Tabs
+
+Referenced record not found
+
  * In Products,  When I reorder CAtegories, I get an error
 
 My AI Paths are a mess 
@@ -6,10 +22,11 @@ My AI Paths are a mess
 
 Validation patterns are gone
 
-Set up all the backfilling and fallback policies. Nothing is to be done automatically, I want full control, remove the legacy code
+
 
 Create database Backup from MongoDB add that to runtime
 
+When I try to save Mappings Base.com PRoducers, I get notification Referenced record not found
   
   › again, my AI Paths are gone, I had them retrieved and they are gone again.
 
@@ -54,13 +71,6 @@ Also I need a pattern which would detect double spaces (Space and not new lines)
 I need clear logs to work
 
 
-
-Move all Database operatons into one page
-
-
-I would  like to continue developing my database control Page. I would like a page where I can see one Panel for Each Connected Database Prisma, Redis and MongoDB. Through these panels, I should be able to see all the collections in each database and designate which are my primary collections when the Page Loads and which are Fallback, in case a primary collection doesn't load.
-
-I should also be able to synchronise collections between databases and if the collection exists in one database, but doesn't exist in the other, Copy a collection from one database to the other.
 
 I had AiTranslation and AI Description functionalities that were configured through my Products Settings, these functionalities have been taken over by the AI-Paths, so any remainder code from them can be removed.
 

@@ -1,5 +1,5 @@
-import DatabaseControlPanelPage from '@/features/database/pages/DatabaseControlPanelPage';
+import { redirect } from 'next/navigation';
 
-export default function Page(): React.JSX.Element {
-  return <DatabaseControlPanelPage />;
+export default function Page(): never {
+  redirect('/admin/databases/engine');
 }

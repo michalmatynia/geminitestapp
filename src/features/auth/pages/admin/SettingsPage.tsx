@@ -493,14 +493,14 @@ export default function AuthSettingsPage(): React.JSX.Element {
       </div>
 
       <div className='rounded-md border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-100'>
-        Go to Settings → Database to choose the global provider for the entire app.
+        Go to Workflow Database → Provider Settings to choose the global provider for the entire app.
       </div>
       <div>
         <Link
-          href='/admin/settings/database'
+          href='/admin/databases/settings'
           className='text-sm font-semibold text-blue-400 underline'
         >
-          Open Database Settings
+          Open Database Provider Settings
         </Link>
       </div>
     </SectionPanel>

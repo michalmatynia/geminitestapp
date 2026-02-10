@@ -228,6 +228,14 @@ function DatabasesContent(): React.JSX.Element {
           >
             Database Operations
           </Button>
+          <Button
+            variant='outline'
+            onClick={(): void => {
+              window.location.assign('/admin/databases/engine');
+            }}
+          >
+            Database Engine
+          </Button>
         </>
       }
       tabs={{

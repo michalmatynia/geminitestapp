@@ -1,14 +1,38 @@
 import 'server-only';
 
+import { internalError } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
+import {
+  getDatabaseEnginePolicy,
+  getDatabaseEngineServiceProvider,
+  isPrimaryProviderConfigured,
+} from '@/shared/lib/db/database-engine-policy';
 
 type CmsDbProvider = 'prisma' | 'mongodb';
 
 export const getCmsDataProvider = async (): Promise<CmsDbProvider> => {
-  // For now, follow the app-wide setting, but the user wants MongoDB specifically for CMS.
-  // We can force it to MongoDB if that's the goal, or respect the setting.
-  // Given the user said "move the whole cms section to MongoDB since prisma is only a fallback for tests",
-  // I will check the provider but we want it to be mongo.
+  const policy = await getDatabaseEnginePolicy();
+  const routeProvider = await getDatabaseEngineServiceProvider('cms');
+  if (routeProvider) {
+    if (routeProvider === 'redis') {
+      throw internalError(
+        'Database Engine route "cms" cannot target Redis. Configure Prisma or MongoDB.'
+      );
+    }
+    if (policy.strictProviderAvailability && !isPrimaryProviderConfigured(routeProvider)) {
+      throw internalError(
+        `Database Engine route "cms" points to "${routeProvider}" but it is not configured.`
+      );
+    }
+    return routeProvider;
+  }
+
+  if (policy.requireExplicitServiceRouting) {
+    throw internalError(
+      'Database Engine requires explicit routing for "cms". Configure it in Workflow Database -> Database Engine.'
+    );
+  }
+
   const provider = await getAppDbProvider();
   return provider as CmsDbProvider;
 };

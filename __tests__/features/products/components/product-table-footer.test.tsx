@@ -1,9 +1,14 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Table } from '@tanstack/react-table';
 import { render, screen } from '@testing-library/react';
 import { vi } from 'vitest';
 
 import { ProductTableFooter } from '@/features/products/components/list/ProductTableFooter';
 import { ToastProvider } from '@/shared/ui/toast';
+
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: false } }
+});
 
 describe('ProductTableFooter Component', () => {
   const mockTable = {
@@ -19,23 +24,25 @@ describe('ProductTableFooter Component', () => {
     setActionError: vi.fn(),
   };
 
-  it('renders selection count', () => {
-    render(
-      <ToastProvider>
-        <ProductTableFooter {...mockProps} />
-      </ToastProvider>
+  const renderWithProviders = (ui: React.ReactElement) => {
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          {ui}
+        </ToastProvider>
+      </QueryClientProvider>
     );
+  };
+
+  it('renders selection count', () => {
+    renderWithProviders(<ProductTableFooter {...mockProps} />);
     expect(screen.getByText((_content, element) => {
       return element?.textContent === '0 of 100 row(s) selected.';
     })).toBeInTheDocument();
   });
 
   it('disables delete button when no selection', () => {
-    render(
-      <ToastProvider>
-        <ProductTableFooter {...mockProps} />
-      </ToastProvider>
-    );
+    renderWithProviders(<ProductTableFooter {...mockProps} />);
     const deleteButton = screen.getByRole('button', { name: /Delete Selected/i });
     expect(deleteButton).toBeDisabled();
   });
@@ -46,11 +53,7 @@ describe('ProductTableFooter Component', () => {
       getFilteredSelectedRowModel: () => ({ rows: [{}, {}] }),
     } as unknown as Table<object>;
 
-    render(
-      <ToastProvider>
-        <ProductTableFooter {...mockProps} table={tableWithSelection} />
-      </ToastProvider>
-    );
+    renderWithProviders(<ProductTableFooter {...mockProps} table={tableWithSelection} />);
     const deleteButton = screen.getByRole('button', { name: /Delete Selected/i });
     expect(deleteButton).not.toBeDisabled();
   });

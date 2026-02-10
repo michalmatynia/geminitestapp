@@ -35,6 +35,7 @@ import {
   validateProductUpdate,
 } from '@/features/products/validations';
 import { badRequestError } from '@/shared/errors/app-error';
+import { getDatabaseEnginePolicy } from '@/shared/lib/db/database-engine-policy';
 
 const resolveProductRepository = async (
   providerOverride?: ProductDbProvider
@@ -98,8 +99,11 @@ const isProviderAvailable = (provider: ProductDbProvider): boolean =>
     ? Boolean(process.env['MONGODB_URI'])
     : Boolean(process.env['DATABASE_URL']);
 
-const shouldCompareFallbackProvider = (): boolean =>
-  process.env['PRODUCTS_COMPARE_FALLBACK_PROVIDER'] === 'true';
+const shouldCompareFallbackProvider = async (): Promise<boolean> => {
+  const policy = await getDatabaseEnginePolicy();
+  if (!policy.allowAutomaticFallback) return false;
+  return process.env['PRODUCTS_COMPARE_FALLBACK_PROVIDER'] === 'true';
+};
 
 async function getProducts(
   filters: ProductFilters,
@@ -119,7 +123,8 @@ async function getProducts(
   performanceMonitor.record('db.query', repoMs, { operation: 'getProducts', provider });
 
   const fallbackProvider = getFallbackProvider(provider);
-  if (shouldCompareFallbackProvider() && isProviderAvailable(fallbackProvider)) {
+  const compareFallbackProvider = await shouldCompareFallbackProvider();
+  if (compareFallbackProvider && isProviderAvailable(fallbackProvider)) {
     const fallbackRepository = await resolveProductRepository(fallbackProvider);
     const shouldCompareCounts =
       products.length === 0 || Number(filters.page ?? 1) === 1;
@@ -220,7 +225,8 @@ async function countProducts(filters: ProductFilters): Promise<number> {
   const count = await productRepository.countProducts(filters);
 
   const fallbackProvider = getFallbackProvider(provider);
-  if (!shouldCompareFallbackProvider() || !isProviderAvailable(fallbackProvider)) {
+  const compareFallbackProvider = await shouldCompareFallbackProvider();
+  if (!compareFallbackProvider || !isProviderAvailable(fallbackProvider)) {
     return count;
   }
 
@@ -255,6 +261,11 @@ async function getProductById(id: string): Promise<ProductWithImages | null> {
   const product = await productRepository.getProductById(id);
   if (product) return product;
 
+  const policy = await getDatabaseEnginePolicy();
+  if (!policy.allowAutomaticFallback) {
+    return null;
+  }
+
   const fallbackProvider = getFallbackProvider(provider);
   if (!isProviderAvailable(fallbackProvider)) {
     return null;
@@ -269,6 +280,11 @@ async function getProductBySku(sku: string): Promise<ProductWithImages | null> {
   let product = await productRepository.getProductBySku(sku);
 
   if (!product) {
+    const policy = await getDatabaseEnginePolicy();
+    if (!policy.allowAutomaticFallback) {
+      return null;
+    }
+
     const fallbackProvider = getFallbackProvider(provider);
     if (isProviderAvailable(fallbackProvider)) {
       const fallbackRepository = await resolveProductRepository(fallbackProvider);

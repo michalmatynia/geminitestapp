@@ -184,10 +184,6 @@ describe('productService', () => {
       reorderUpdate.append('imageFileIds', imageA.id);
       await productService.updateProduct(original.id, reorderUpdate);
 
-      const links = await prisma.productImage.findMany({
-        where: { productId: original.id },
-        orderBy: { assignedAt: 'asc' }, // In actual DB they are likely ordered by insertion or explicit field
-      });
       // The current implementation of updateProduct for images unlinks all and re-links in order.
       // So checking the order of IDs returned by findMany (default order) might depend on implementation.
       const productWithImages = await productService.getProductById(original.id);

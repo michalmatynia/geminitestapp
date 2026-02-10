@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 
+import type { RedisOverviewDto as RedisOverviewResponse } from '@/shared/dtos/database';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import {
@@ -14,6 +15,7 @@ import {
   executeSqlQuery,
   executeCrudOperation,
   fetchAllCollectionsSchema,
+  fetchRedisOverview,
   copyCollectionBetweenProviders,
   createJsonBackup,
   restoreJsonBackup,
@@ -163,6 +165,14 @@ export function useAllCollectionsSchema(): UseQueryResult<MultiSchemaResponse, E
     queryKey: dbKeys.schema({ provider: 'all', includeCounts: true }),
     queryFn: () => fetchAllCollectionsSchema(),
     staleTime: 30_000,
+  });
+}
+
+export function useRedisOverview(limit = 200): UseQueryResult<RedisOverviewResponse, Error> {
+  return useQuery({
+    queryKey: dbKeys.redisOverview({ limit }),
+    queryFn: () => fetchRedisOverview(limit),
+    staleTime: 15_000,
   });
 }
 

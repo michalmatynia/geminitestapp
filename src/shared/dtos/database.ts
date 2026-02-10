@@ -131,3 +131,20 @@ export interface BrowseResponseDto {
   items: Record<string, unknown>[];
   fields: string[];
 }
+
+export interface RedisNamespaceStatsDto {
+  namespace: string;
+  keyCount: number;
+  sampleKeys: string[];
+}
+
+export interface RedisOverviewDto {
+  enabled: boolean;
+  connected: boolean;
+  urlConfigured: boolean;
+  dbSize: number;
+  usedMemory: string | null;
+  maxMemory: string | null;
+  namespaces: RedisNamespaceStatsDto[];
+  sampleKeys: string[];
+}

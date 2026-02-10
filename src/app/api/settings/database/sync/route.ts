@@ -4,9 +4,10 @@ import { z } from 'zod';
 import { auth } from '@/features/auth/server';
 import { enqueueProductAiJob, processSingleJob, startProductAiJobQueue } from '@/features/jobs/server';
 import { ActivityTypes, logActivity, logSystemError } from '@/features/observability/server';
-import { authError } from '@/shared/errors/app-error';
+import { authError, forbiddenError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { getDatabaseEnginePolicy } from '@/shared/lib/db/database-engine-policy';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 import type { ProductAiJobType } from '@/shared/types/domain/jobs';
 
@@ -15,6 +16,7 @@ export const runtime = 'nodejs';
 const syncSchema = z.object({
   direction: z.enum(['mongo_to_prisma', 'prisma_to_mongo']),
   skipAuthCollections: z.boolean().optional(),
+  manual: z.boolean().optional(),
 });
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
@@ -33,7 +35,13 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     return parsed.response;
   }
 
-  const { direction, skipAuthCollections } = parsed.data;
+  const { direction, skipAuthCollections, manual } = parsed.data;
+  const enginePolicy = await getDatabaseEnginePolicy();
+  if (!enginePolicy.allowAutomaticMigrations && manual !== true) {
+    throw forbiddenError(
+      'Automatic migrations are disabled by Database Engine policy. Execute migrations manually from Workflow Database -> Database Engine.'
+    );
+  }
 
   const job = await enqueueProductAiJob(
     'system',

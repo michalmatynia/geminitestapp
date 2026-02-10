@@ -153,8 +153,7 @@ type UseAiPathsPersistenceResult = {
   ) => Promise<PathConfig | null>;
   persistRuntimePathState: (
     configId: string,
-    runtimeState: RuntimeState,
-    lastRunAt: string | null
+    config: PathConfig
   ) => Promise<void>;
   persistSettingsBulk: (payload: PersistSettingsPayload) => Promise<void>;
   savePathIndex: (nextPaths: PathMeta[]) => Promise<void>;
@@ -710,15 +709,11 @@ export function useAiPathsPersistence({
   const persistRuntimePathState = useCallback(
     async (
       configId: string,
-      nextRuntimeState: RuntimeState,
-      nextLastRunAt: string | null
+      config: PathConfig
     ): Promise<void> => {
-      const runtimeOnlyPayload = JSON.stringify({
-        runtimeState: nextRuntimeState,
-        lastRunAt: nextLastRunAt,
-      });
+      const payload = JSON.stringify(sanitizePathConfig(config));
       await updateAiPathsSettingsMutation.mutateAsync([
-        { key: `${PATH_CONFIG_PREFIX}${configId}`, value: runtimeOnlyPayload },
+        { key: `${PATH_CONFIG_PREFIX}${configId}`, value: payload },
       ]);
     },
     [updateAiPathsSettingsMutation]

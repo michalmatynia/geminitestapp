@@ -4,7 +4,6 @@ import {
   BellIcon,
   ArrowRightIcon,
   Brain,
-  Database,
   Radar,
   Activity,
   MonitorPlay,
@@ -65,15 +64,6 @@ const settings: SettingsOption[] = [
     description: 'Unified AI center: provider keys, model routing, prompts, schedules, and metrics.',
     color: 'emerald',
     bgColor: 'bg-emerald-500/10',
-  },
-  {
-    id: 'database',
-    href: '/admin/settings/database',
-    icon: Database,
-    title: 'Database',
-    description: 'Select the global database provider for the entire app.',
-    color: 'amber',
-    bgColor: 'bg-amber-500/10',
   },
   {
     id: 'logging',

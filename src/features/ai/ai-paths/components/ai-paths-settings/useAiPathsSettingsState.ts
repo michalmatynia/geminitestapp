@@ -30,6 +30,8 @@ import { dbApi, entityApi } from '@/features/ai/ai-paths/lib';
 import {
   AI_PATHS_LAST_ERROR_KEY,
   DEFAULT_MODELS,
+  PATH_CONFIG_PREFIX,
+  PATH_DEBUG_PREFIX,
   PATH_INDEX_KEY,
   STORAGE_VERSION,
   createAiDescriptionPath,
@@ -47,7 +49,7 @@ import {
   triggers,
   triggerButtonsApi,
 } from '@/features/ai/ai-paths/lib';
-import { updateAiPathsSetting } from '@/features/ai/ai-paths/lib/settings-store-client';
+import { deleteAiPathsSettings, updateAiPathsSetting } from '@/features/ai/ai-paths/lib/settings-store-client';
 import { logClientError } from '@/features/observability';
 import type { AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
 import { useToast } from '@/shared/ui';
@@ -1719,6 +1721,25 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       const fallbackNodeId = normalizedNodes[0]?.id ?? null;
       setSelectedNodeId(fallbackNodeId);
       setConfigOpen(false);
+      try {
+        await persistSettingsBulk([
+          { key: PATH_INDEX_KEY, value: JSON.stringify([fallbackMeta]) },
+          { key: `${PATH_CONFIG_PREFIX}${fallbackId}`, value: JSON.stringify(fallback) },
+        ]);
+        if (targetId !== fallbackId) {
+          await deleteAiPathsSettings([
+            `${PATH_CONFIG_PREFIX}${targetId}`,
+            `${PATH_DEBUG_PREFIX}${targetId}`,
+          ]);
+        }
+      } catch (error) {
+        reportAiPathsError(
+          error,
+          { action: 'deleteLastPathFallback', pathId: targetId },
+          'Failed to persist fallback path:'
+        );
+        toast('Failed to persist fallback path.', { variant: 'error' });
+      }
       toast('Cannot delete the last path. Reset to default instead.', {
         variant: 'info',
       });
@@ -1766,6 +1787,10 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
           { key: PATH_INDEX_KEY, value: JSON.stringify(nextPaths) },
         ]);
       }
+      await deleteAiPathsSettings([
+        `${PATH_CONFIG_PREFIX}${targetId}`,
+        `${PATH_DEBUG_PREFIX}${targetId}`,
+      ]);
       toast('Path removed from the index.', { variant: 'success' });
     } catch (error) {
       reportAiPathsError(error, { action: 'deletePath', pathId: targetId }, 'Failed to update path index:');
@@ -1843,15 +1868,15 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     const timeout = setTimeout((): void => {
       runtimePersistenceKeyRef.current = snapshotKey;
       const updatedAt = new Date().toISOString();
+      const baseConfig = pathConfigs[activePathId] ?? createDefaultPathConfig(activePathId);
+      const nextConfig: PathConfig = {
+        ...baseConfig,
+        id: activePathId,
+        updatedAt,
+        runtimeState,
+        lastRunAt,
+      };
       setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => {
-        const baseConfig = prev[activePathId] ?? createDefaultPathConfig(activePathId);
-        const nextConfig: PathConfig = {
-          ...baseConfig,
-          id: activePathId,
-          updatedAt,
-          runtimeState,
-          lastRunAt,
-        };
         return {
           ...prev,
           [activePathId]: nextConfig,
@@ -1859,8 +1884,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       });
       void persistRuntimePathState(
         activePathId,
-        runtimeState,
-        lastRunAt
+        nextConfig
       ).catch((error: unknown): void => {
         console.warn('[AI Paths] Failed to persist runtime state.', error);
       });

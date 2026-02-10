@@ -4,7 +4,7 @@ import { Trash2, Copy } from 'lucide-react';
 
 import { SystemLogsProvider, useSystemLogsContext } from '@/features/observability/context/SystemLogsContext';
 import type { SystemLogRecord, AiInsightRecord } from '@/shared/types';
-import { Button, DynamicFilters, ListPanel, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Pagination, StatusBadge, ConfirmDialog, AdminPageLayout, RefreshButton } from '@/shared/ui';
+import { Button, DynamicFilters, ListPanel, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Pagination, StatusBadge, ConfirmDialog, PageLayout, RefreshButton } from '@/shared/ui';
 
 const formatTimestamp = (value: Date | string): string => {
   const date = value instanceof Date ? value : new Date(value);
@@ -473,10 +473,10 @@ function SystemLogsContent(): React.JSX.Element {
   } = useSystemLogsContext();
 
   return (
-    <AdminPageLayout
+    <PageLayout
       title='System Logs'
       description='Centralized error and warning events captured across the platform.'
-      mainActions={
+      headerActions={
         <>
           <Button
             variant='outline'
@@ -564,7 +564,7 @@ function SystemLogsContent(): React.JSX.Element {
           <LogList />
         </div>
       </ListPanel>
-    </AdminPageLayout>
+    </PageLayout>
   );
 }
 

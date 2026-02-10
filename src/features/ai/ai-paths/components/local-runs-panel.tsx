@@ -1,12 +1,17 @@
 'use client';
 
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react';
 import React from 'react';
 
 import { AI_PATHS_LOCAL_RUNS_KEY, parseLocalRuns } from '@/features/ai/ai-paths/lib';
 import type { AiPathLocalRunRecord } from '@/features/ai/ai-paths/lib';
 import { AI_PATHS_RUN_SOURCE_VALUES } from '@/features/ai/ai-paths/lib/run-sources';
-import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import {
+  fetchAiPathsSettingsCached,
+  invalidateAiPathsSettingsCache,
+  updateAiPathsSetting,
+} from '@/features/ai/ai-paths/lib/settings-store-client';
 import { Button, ConfirmDialog, useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -71,11 +76,26 @@ export function LocalRunsPanel({
   sourceMode,
 }: LocalRunsPanelProps): React.JSX.Element {
   const { toast } = useToast();
-  const settingsQuery = useSettingsMap({ scope: 'heavy' });
-  const updateSetting = useUpdateSetting();
+  const settingsQuery = useQuery({
+    queryKey: ['ai-paths-settings'],
+    queryFn: async (): Promise<Array<{ key: string; value: string }>> =>
+      await fetchAiPathsSettingsCached({ bypassCache: true }),
+  });
+  const updateSetting = useMutation({
+    mutationFn: async (nextRuns: AiPathLocalRunRecord[]): Promise<void> => {
+      await updateAiPathsSetting(AI_PATHS_LOCAL_RUNS_KEY, serializeSetting(nextRuns));
+      invalidateAiPathsSettingsCache();
+    },
+    onSuccess: (): void => {
+      void settingsQuery.refetch();
+    },
+  });
   const [clearScope, setClearScope] = React.useState<'terminal' | 'all' | null>(null);
 
-  const rawRuns = settingsQuery.data?.get(AI_PATHS_LOCAL_RUNS_KEY) ?? null;
+  const rawRuns = React.useMemo(() => {
+    const map = new Map((settingsQuery.data ?? []).map((item) => [item.key, item.value]));
+    return map.get(AI_PATHS_LOCAL_RUNS_KEY) ?? null;
+  }, [settingsQuery.data]);
   const allRuns = React.useMemo(() => parseLocalRuns(rawRuns), [rawRuns]);
   const runs = React.useMemo(() => {
     return allRuns.filter((run: AiPathLocalRunRecord) => shouldIncludeRun(run, sourceFilter, sourceMode));
@@ -84,11 +104,11 @@ export function LocalRunsPanel({
   React.useEffect((): (() => void) => {
     const handler = (event: Event): void => {
       const detail = (event as CustomEvent<{ scope?: string }>).detail;
-      if (detail?.scope && detail.scope !== 'heavy') return;
+      if (detail?.scope && detail.scope !== 'ai-paths') return;
       void settingsQuery.refetch();
     };
-    window.addEventListener('settings:updated', handler);
-    return (): void => window.removeEventListener('settings:updated', handler);
+    window.addEventListener('ai-paths:settings:updated', handler);
+    return (): void => window.removeEventListener('ai-paths:settings:updated', handler);
   }, [settingsQuery]);
 
   const metrics = React.useMemo(() => {
@@ -120,12 +140,11 @@ export function LocalRunsPanel({
     });
 
     try {
-      await updateSetting.mutateAsync({
-        key: AI_PATHS_LOCAL_RUNS_KEY,
-        value: serializeSetting(nextRuns),
-      });
+      await updateSetting.mutateAsync(nextRuns);
       if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('settings:updated', { detail: { scope: 'heavy' } }));
+        window.dispatchEvent(
+          new CustomEvent('ai-paths:settings:updated', { detail: { scope: 'ai-paths' } })
+        );
       }
       toast(
         scope === 'all'

@@ -16,12 +16,12 @@ import {
   evaluateGraphWithIteratorAutoContinue,
   runsApi,
 } from '@/features/ai/ai-paths/lib';
-import { jobKeys } from '@/features/jobs/hooks/useJobQueries';
 import {
-  fetchSettingsCached,
-  invalidateSettingsCache,
-} from '@/shared/api/settings-client';
-import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
+  fetchAiPathsSettingsCached,
+  invalidateAiPathsSettingsCache,
+  updateAiPathsSetting,
+} from '@/features/ai/ai-paths/lib/settings-store-client';
+import { jobKeys } from '@/features/jobs/hooks/useJobQueries';
 import type {
   AiNode,
   Edge,
@@ -65,7 +65,7 @@ const loadPathConfigsFromSettings = async (
     const data =
       settingsData ??
       ((await (async (): Promise<Array<{ key: string; value: string }> | null> => {
-        return await fetchSettingsCached({ scope: 'heavy' });
+        return await fetchAiPathsSettingsCached();
       })()) ?? []);
     if (!data.length) return { configs: {}, settingsPathOrder: [] };
     const map = new Map<string, string>(
@@ -115,7 +115,8 @@ const loadPathConfigsFromSettings = async (
 
 const resolveTriggerSelection = async (
   settingsData: Array<{ key: string; value: string }>,
-  triggerEventId: string
+  triggerEventId: string,
+  preferredActivePathId?: string | null
 ): Promise<{
   triggerCandidates: PathConfig[];
   selectedConfig: PathConfig | null;
@@ -152,9 +153,12 @@ const resolveTriggerSelection = async (
   );
 
   const activePathId =
-    typeof uiState?.['activePathId'] === 'string' && uiState['activePathId'].trim().length > 0
+    (typeof preferredActivePathId === 'string' && preferredActivePathId.trim().length > 0
+      ? preferredActivePathId.trim()
+      : null) ??
+    (typeof uiState?.['activePathId'] === 'string' && uiState['activePathId'].trim().length > 0
       ? uiState['activePathId'].trim()
-      : null;
+      : null);
 
   const preferredConfig: PathConfig | null =
     (activePathId
@@ -281,6 +285,20 @@ const buildTriggerContext = (args: {
   return base;
 };
 
+const loadPreferredActivePathId = async (): Promise<string | null> => {
+  try {
+    const res = await fetch('/api/user/preferences', { credentials: 'include' });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { aiPathsActivePathId?: unknown };
+    return typeof data.aiPathsActivePathId === 'string' &&
+      data.aiPathsActivePathId.trim().length > 0
+      ? data.aiPathsActivePathId.trim()
+      : null;
+  } catch {
+    return null;
+  }
+};
+
 export function useAiPathTriggerEvent(): {
   fireAiPathTriggerEvent: (args: FireAiPathTriggerEventArgs) => Promise<void>;
   } {
@@ -296,19 +314,24 @@ export function useAiPathTriggerEvent(): {
 
     try {
       let settingsData: Array<{ key: string; value: string }> = [];
+      const preferredActivePathId = await loadPreferredActivePathId();
       try {
         settingsData = await queryClient.fetchQuery({
-          queryKey: ['settings', 'heavy'],
+          queryKey: ['ai-paths-settings'],
           queryFn: async () => {
-            return await fetchSettingsCached({ scope: 'heavy' });
+            return await fetchAiPathsSettingsCached();
           },
           staleTime: AI_PATHS_SETTINGS_STALE_MS,
         });
       } catch {
-        settingsData = await fetchSettingsCached({ scope: 'heavy' });
+        settingsData = await fetchAiPathsSettingsCached();
       }
 
-      let selection = await resolveTriggerSelection(settingsData, triggerEventId);
+      let selection = await resolveTriggerSelection(
+        settingsData,
+        triggerEventId,
+        preferredActivePathId
+      );
       const triggerCandidates: PathConfig[] = selection.triggerCandidates;
 
       if (triggerCandidates.length === 0) {
@@ -331,9 +354,15 @@ export function useAiPathTriggerEvent(): {
 
       if (selectedConfig.isActive === false) {
         // Guard against stale settings cache after path activation toggles.
-        invalidateSettingsCache('heavy');
-        const freshSettingsData = await fetchSettingsCached({ scope: 'heavy', bypassCache: true });
-        selection = await resolveTriggerSelection(freshSettingsData, triggerEventId);
+        invalidateAiPathsSettingsCache();
+        const freshSettingsData = await fetchAiPathsSettingsCached({
+          bypassCache: true,
+        });
+        selection = await resolveTriggerSelection(
+          freshSettingsData,
+          triggerEventId,
+          preferredActivePathId
+        );
         if (selection.selectedConfig?.isActive === false || !selection.selectedConfig) {
           toast('This path is deactivated. Activate it to run.', { variant: 'info' });
           return;
@@ -439,21 +468,16 @@ export function useAiPathTriggerEvent(): {
 
       const persistRunSnapshot = async (runAt: string): Promise<void> => {
         try {
-          const csrfHeaders = withCsrfHeaders({ 'Content-Type': 'application/json' });
           const nextUiState = {
             ...(uiState && typeof uiState === 'object' ? uiState : {}),
-            activePathId: selectedConfig.id,
             lastTriggeredAt: runAt,
           };
-          await fetch('/api/settings', {
-            method: 'POST',
-            headers: csrfHeaders,
-            body: JSON.stringify({
-              key: AI_PATHS_UI_STATE_KEY,
-              value: JSON.stringify(nextUiState),
-            }),
-          });
-          invalidateSettingsCache();
+          await updateAiPathsSetting(
+            AI_PATHS_UI_STATE_KEY,
+            JSON.stringify(nextUiState)
+          );
+          invalidateAiPathsSettingsCache();
+          void queryClient.invalidateQueries({ queryKey: ['ai-paths-settings'] });
         } catch (error) {
           logger.error('Failed to persist AI Paths settings snapshot', error);
         }

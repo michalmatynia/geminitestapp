@@ -68,6 +68,44 @@ export function CatalogModal({
     React.useState('');
   const [languageQuery, setLanguageQuery] = React.useState('');
 
+  const languageIdByAnyValue = React.useMemo((): Map<string, string> => {
+    const map = new Map<string, string>();
+    languages.forEach((language: Language) => {
+      const id = language.id?.trim();
+      const code = language.code?.trim();
+      if (id) {
+        map.set(id, id);
+        map.set(id.toLowerCase(), id);
+      }
+      if (code && id) {
+        map.set(code, id);
+        map.set(code.toLowerCase(), id);
+      }
+    });
+    return map;
+  }, [languages]);
+
+  const canonicalizeLanguageId = React.useCallback(
+    (value: string): string => {
+      const trimmed = value.trim();
+      if (!trimmed) return '';
+      return (
+        languageIdByAnyValue.get(trimmed) ??
+        languageIdByAnyValue.get(trimmed.toLowerCase()) ??
+        trimmed
+      );
+    },
+    [languageIdByAnyValue]
+  );
+
+  const getLanguage = React.useCallback(
+    (value: string): Language | undefined => {
+      const canonicalId = canonicalizeLanguageId(value);
+      return languages.find((language: Language) => language.id === canonicalId);
+    },
+    [canonicalizeLanguageId, languages]
+  );
+
   React.useEffect(() => {
     if (catalog) {
       setForm({
@@ -75,10 +113,17 @@ export function CatalogModal({
         description: catalog.description ?? '',
         isDefault: catalog.isDefault,
       });
-      const nextLanguageIds = catalog.languageIds ?? [];
+      const nextLanguageIds = Array.from(
+        new Set((catalog.languageIds ?? []).map((id: string) => canonicalizeLanguageId(id)))
+      ).filter((id: string) => Boolean(id));
       setSelectedLanguageIds(nextLanguageIds);
+      const normalizedDefaultLanguageId = catalog.defaultLanguageId
+        ? canonicalizeLanguageId(catalog.defaultLanguageId)
+        : '';
       setDefaultLanguageId(
-        catalog.defaultLanguageId ?? nextLanguageIds[0] ?? '',
+        nextLanguageIds.includes(normalizedDefaultLanguageId)
+          ? normalizedDefaultLanguageId
+          : nextLanguageIds[0] ?? '',
       );
       const nextPriceGroupIds = catalog.priceGroupIds?.length
         ? catalog.priceGroupIds
@@ -105,7 +150,7 @@ export function CatalogModal({
     }
     setError(null);
     setLanguageQuery('');
-  }, [catalog, defaultGroupId]);
+  }, [catalog, defaultGroupId, canonicalizeLanguageId]);
 
   const handleSubmit = async (): Promise<void> => {
     if (saveMutation.isPending) return;
@@ -161,22 +206,35 @@ export function CatalogModal({
 
   const availableLanguages = React.useMemo((): Language[] => {
     const query = languageQuery.trim().toLowerCase();
+    const selectedSet = new Set(
+      selectedLanguageIds
+        .map((id: string) => canonicalizeLanguageId(id))
+        .filter((id: string) => Boolean(id))
+    );
     return languages.filter(
       (l) =>
-        !selectedLanguageIds.includes(l.id) &&
+        !selectedSet.has(l.id) &&
         (!query ||
           l.name.toLowerCase().includes(query) ||
           l.code.toLowerCase().includes(query)),
     );
-  }, [languages, selectedLanguageIds, languageQuery]);
+  }, [languages, selectedLanguageIds, languageQuery, canonicalizeLanguageId]);
 
   const toggleLanguage = (id: string): void => {
+    const normalizedId = canonicalizeLanguageId(id);
     setSelectedLanguageIds((prev) => {
-      const next = prev.includes(id)
-        ? prev.filter((i) => i !== id)
-        : [...prev, id];
-      if (!next.includes(defaultLanguageId))
+      const canonicalPrev = Array.from(
+        new Set(prev.map((value: string) => canonicalizeLanguageId(value)))
+      ).filter((value: string) => Boolean(value));
+      const next = canonicalPrev.includes(normalizedId)
+        ? canonicalPrev.filter((value: string) => value !== normalizedId)
+        : [...canonicalPrev, normalizedId];
+      const normalizedDefault = defaultLanguageId
+        ? canonicalizeLanguageId(defaultLanguageId)
+        : '';
+      if (!next.includes(normalizedDefault)) {
         setDefaultLanguageId(next[0] ?? '');
+      }
       return next;
     });
   };
@@ -282,8 +340,10 @@ export function CatalogModal({
                   </p>
                 ) : (
                   selectedLanguageIds.map((id, index) => {
-                    const lang = languages.find((l) => l.id === id);
-                    if (!lang) return null;
+                    const lang = getLanguage(id);
+                    const label = lang
+                      ? `${lang.name} (${lang.code})`
+                      : id;
                     return (
                       <div
                         key={id}
@@ -293,9 +353,7 @@ export function CatalogModal({
                           <span className='text-gray-500 w-4'>
                             {index + 1}.
                           </span>
-                          <span>
-                            {lang.name} ({lang.code})
-                          </span>
+                          <span>{label}</span>
                           {id === defaultLanguageId && (
                             <Badge variant='success'>
                               Default
@@ -325,11 +383,10 @@ export function CatalogModal({
                           </Button>
                           <Button
                             variant='ghost'
-                            size='icon'
-                            className='h-6 w-6 text-red-400'
+                            className='h-6 px-2 text-red-400 hover:text-red-300'
                             onClick={() => toggleLanguage(id)}
                           >
-                            ×
+                            Remove
                           </Button>
                         </div>
                       </div>
@@ -368,10 +425,10 @@ export function CatalogModal({
                   </SelectTrigger>
                   <SelectContent>
                     {selectedLanguageIds.map((id) => {
-                      const lang = languages.find((l) => l.id === id);
+                      const lang = getLanguage(id);
                       return (
                         <SelectItem key={id} value={id}>
-                          {lang?.name} ({lang?.code})
+                          {lang ? `${lang.name} (${lang.code})` : id}
                         </SelectItem>
                       );
                     })}

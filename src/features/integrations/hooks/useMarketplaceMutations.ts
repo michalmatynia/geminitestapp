@@ -42,7 +42,7 @@ export function useFetchExternalProducersMutation(): UseMutationResult<
   { fetched: number; message: string },
   Error,
   { connectionId: string }
-> {
+  > {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -64,7 +64,7 @@ export function useSaveProducerMappingsMutation(): UseMutationResult<
     connectionId: string;
     mappings: { internalProducerId: string; externalProducerId: string | null }[];
   }
-> {
+  > {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -88,7 +88,7 @@ export function useFetchExternalTagsMutation(): UseMutationResult<
   { fetched: number; message: string },
   Error,
   { connectionId: string }
-> {
+  > {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -110,7 +110,7 @@ export function useSaveTagMappingsMutation(): UseMutationResult<
     connectionId: string;
     mappings: { internalTagId: string; externalTagId: string | null }[];
   }
-> {
+  > {
   const queryClient = useQueryClient();
 
   return useMutation({

@@ -6,10 +6,10 @@ import { useDraft, useCreateDraft, useUpdateDraft } from '@/features/drafter/hoo
 import { draftSubmitSchema } from '@/features/drafter/validations/draft-form';
 import { IconSelector, ICON_LIBRARY_MAP } from '@/features/icons';
 import { CreateProductDraftInput, UpdateProductDraftInput } from '@/features/products';
-import { useProductImages } from '@/features/products/hooks/useProductImages';
 import type { CatalogRecord } from '@/features/products';
 import type { ProductCategoryDto, ProductTag, ProductParameter, ProductParameterValue, Producer } from '@/features/products';
 import { getCategoriesFlat, getTags, getParameters } from '@/features/products/api/settings';
+import { useProductImages } from '@/features/products/hooks/useProductImages';
 import { useCatalogs, useProducers } from '@/features/products/hooks/useProductMetadata';
 import { AppModal, Button, Input, Label, Textarea, Tabs, TabsContent, TabsList, TabsTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

@@ -101,12 +101,12 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
           }));
         }
         const entityId =
-          typeof meta.triggerContext?.['entityId'] === 'string'
-            ? meta.triggerContext['entityId']
+          typeof (meta.triggerContext)?.['entityId'] === 'string'
+            ? (meta.triggerContext)['entityId']
             : null;
         const entityType =
-          typeof meta.triggerContext?.['entityType'] === 'string'
-            ? meta.triggerContext['entityType']
+          typeof (meta.triggerContext)?.['entityType'] === 'string'
+            ? (meta.triggerContext)['entityType']
             : null;
         void appendLocalRun({
           pathId: args.activePathId ?? null,

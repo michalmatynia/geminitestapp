@@ -1372,10 +1372,10 @@ function applyExportTemplateMappings(
         producerTarget === 'producer'
           ? toProducerNameValueList(rawValue, producerNameById)
           : toProducerIdValueList(
-              rawValue,
-              producerExternalIdByInternalId,
-              producerNameById
-            );
+            rawValue,
+            producerExternalIdByInternalId,
+            producerNameById
+          );
       if (producerValues.length === 0) continue;
       if (producerTarget === 'producer' || producerTarget === 'producer_id') {
         result[targetField] = producerValues[0] ?? null;
@@ -1391,10 +1391,10 @@ function applyExportTemplateMappings(
         tagTarget === 'tag'
           ? toTagNameValueList(rawValue, tagNameById)
           : toTagIdValueList(
-              rawValue,
-              tagExternalIdByInternalId,
-              tagNameById
-            );
+            rawValue,
+            tagExternalIdByInternalId,
+            tagNameById
+          );
       if (tagValues.length === 0) continue;
       if (tagTarget === 'tag' || tagTarget === 'tag_id') {
         result[targetField] = tagValues[0] ?? null;

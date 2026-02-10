@@ -204,51 +204,51 @@ const productsHandler: CollectionHandler = {
         : [];
       const images = Array.isArray(row.images)
         ? row.images
-            .filter((image: any) => image?.imageFile)
-            .map((image: any) => ({
-              productId: row.id,
-              imageFileId: image.imageFileId,
-              assignedAt: image.assignedAt,
-              imageFile: {
-                id: image.imageFile.id,
-                filename: image.imageFile.filename,
-                filepath: image.imageFile.filepath,
-                mimetype: image.imageFile.mimetype,
-                size: image.imageFile.size,
-                width: image.imageFile.width ?? null,
-                height: image.imageFile.height ?? null,
-                tags: Array.isArray(image.imageFile.tags) ? image.imageFile.tags : [],
-                createdAt: image.imageFile.createdAt,
-                updatedAt: image.imageFile.updatedAt,
-              },
-            }))
+          .filter((image: any) => image?.imageFile)
+          .map((image: any) => ({
+            productId: row.id,
+            imageFileId: image.imageFileId,
+            assignedAt: image.assignedAt,
+            imageFile: {
+              id: image.imageFile.id,
+              filename: image.imageFile.filename,
+              filepath: image.imageFile.filepath,
+              mimetype: image.imageFile.mimetype,
+              size: image.imageFile.size,
+              width: image.imageFile.width ?? null,
+              height: image.imageFile.height ?? null,
+              tags: Array.isArray(image.imageFile.tags) ? image.imageFile.tags : [],
+              createdAt: image.imageFile.createdAt,
+              updatedAt: image.imageFile.updatedAt,
+            },
+          }))
         : [];
       const catalogs = Array.isArray(row.catalogs)
         ? row.catalogs
-            .filter((entry: any) => entry?.catalog)
-            .map((entry: any) => ({
-              productId: row.id,
-              catalogId: entry.catalogId,
-              assignedAt: entry.assignedAt,
-              catalog: {
-                id: entry.catalog.id,
-                name: entry.catalog.name,
-                description: entry.catalog.description ?? null,
-                isDefault: entry.catalog.isDefault,
-                defaultLanguageId: entry.catalog.defaultLanguageId ?? null,
-                defaultPriceGroupId: entry.catalog.defaultPriceGroupId ?? null,
-                languageIds: Array.isArray(entry.catalog.languages)
-                  ? entry.catalog.languages
-                      .map((languageEntry: any) => languageEntry?.languageId)
-                      .filter(Boolean)
-                  : [],
-                priceGroupIds: Array.isArray(entry.catalog.priceGroupIds)
-                  ? entry.catalog.priceGroupIds
-                  : [],
-                createdAt: entry.catalog.createdAt,
-                updatedAt: entry.catalog.updatedAt,
-              },
-            }))
+          .filter((entry: any) => entry?.catalog)
+          .map((entry: any) => ({
+            productId: row.id,
+            catalogId: entry.catalogId,
+            assignedAt: entry.assignedAt,
+            catalog: {
+              id: entry.catalog.id,
+              name: entry.catalog.name,
+              description: entry.catalog.description ?? null,
+              isDefault: entry.catalog.isDefault,
+              defaultLanguageId: entry.catalog.defaultLanguageId ?? null,
+              defaultPriceGroupId: entry.catalog.defaultPriceGroupId ?? null,
+              languageIds: Array.isArray(entry.catalog.languages)
+                ? entry.catalog.languages
+                  .map((languageEntry: any) => languageEntry?.languageId)
+                  .filter(Boolean)
+                : [],
+              priceGroupIds: Array.isArray(entry.catalog.priceGroupIds)
+                ? entry.catalog.priceGroupIds
+                : [],
+              createdAt: entry.catalog.createdAt,
+              updatedAt: entry.catalog.updatedAt,
+            },
+          }))
         : [];
 
       return {

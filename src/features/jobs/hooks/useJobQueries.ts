@@ -2,9 +2,10 @@
 
 import { useQuery, type UseQueryResult, type Query } from '@tanstack/react-query';
 
-import { getIntegrationJobs, getProductAiJobs, getChatbotJobs } from '../api';
 import type { ProductAiJob } from '@/shared/types/domain/jobs';
 import type { ProductJob } from '@/shared/types/domain/listing-jobs';
+
+import { getIntegrationJobs, getProductAiJobs, getChatbotJobs } from '../api';
 
 export const jobKeys = {
   all: ['jobs'] as const,

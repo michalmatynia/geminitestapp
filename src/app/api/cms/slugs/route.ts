@@ -15,6 +15,7 @@ import { parseJsonBody } from '@/features/products/server';
 import { notFoundError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
+
 import type { z } from 'zod';
 
 const resolveDomainFromRequest = async (req: NextRequest) => {

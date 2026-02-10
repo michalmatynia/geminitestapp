@@ -14,7 +14,7 @@ import {
   AI_PATHS_RUN_SOURCE_TABS,
   AI_PATHS_RUN_SOURCE_VALUES,
 } from '@/features/ai/ai-paths/lib/run-sources';
-import { useSettingsMap } from '@/shared/hooks/use-settings';
+import { fetchAiPathsSettingsCached } from '@/features/ai/ai-paths/lib/settings-store-client';
 import {
   Button,
   ConfirmDialog,
@@ -422,8 +422,15 @@ export function JobQueuePanel({
   const [autoRefreshInterval, setAutoRefreshInterval] = React.useState(5000);
   const [clearScope, setClearScope] = React.useState<'terminal' | 'all' | null>(null);
   const [runToDelete, setRunToDelete] = React.useState<AiPathRunRecord | null>(null);
-  const heavySettings = useSettingsMap({ scope: 'heavy' });
-  const heavyMap = heavySettings.data ?? new Map<string, string>();
+  const aiPathsSettingsQuery = useQuery({
+    queryKey: ['ai-paths-settings'],
+    queryFn: async (): Promise<Array<{ key: string; value: string }>> =>
+      await fetchAiPathsSettingsCached({ bypassCache: true }),
+  });
+  const heavyMap = React.useMemo(
+    () => new Map((aiPathsSettingsQuery.data ?? []).map((item) => [item.key, item.value])),
+    [aiPathsSettingsQuery.data]
+  );
 
   const normalizedPathFilter = pathFilter.trim();
   const normalizedQuery = debouncedQuery.trim();

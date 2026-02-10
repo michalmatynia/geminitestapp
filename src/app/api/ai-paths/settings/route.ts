@@ -1,0 +1,69 @@
+export const runtime = 'nodejs';
+
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { listAiPathsSettings, upsertAiPathsSetting, upsertAiPathsSettingsBulk } from '@/features/ai/ai-paths/server/settings-store';
+import { badRequestError } from '@/shared/errors/app-error';
+import { apiHandler } from '@/shared/lib/api/api-handler';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
+
+const settingPayloadSchema = z.object({
+  key: z.string().trim().min(1).refine((value) => value.startsWith('ai_paths_'), {
+    message: 'AI Paths setting keys must start with "ai_paths_".',
+  }),
+  value: z.string(),
+});
+
+const settingsBulkPayloadSchema = z.object({
+  items: z.array(settingPayloadSchema).min(1),
+});
+
+async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const settings = await listAiPathsSettings();
+  return NextResponse.json(settings, {
+    headers: {
+      'Cache-Control': 'private, max-age=10, stale-while-revalidate=30',
+    },
+  });
+}
+
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const rawBody = await req.text();
+  let body: unknown = {};
+  if (rawBody) {
+    try {
+      body = JSON.parse(rawBody);
+    } catch {
+      throw badRequestError('Invalid JSON body.');
+    }
+  }
+
+  const parsedBulk = settingsBulkPayloadSchema.safeParse(body);
+  if (parsedBulk.success) {
+    const updated = await upsertAiPathsSettingsBulk(parsedBulk.data.items);
+    return NextResponse.json(updated);
+  }
+
+  const parsedSingle = settingPayloadSchema.safeParse(body);
+  if (parsedSingle.success) {
+    const updated = await upsertAiPathsSetting(
+      parsedSingle.data.key,
+      parsedSingle.data.value
+    );
+    return NextResponse.json(updated);
+  }
+  throw badRequestError('Invalid AI Paths settings payload.');
+}
+
+export const GET = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> =>
+    GET_handler(req, ctx),
+  { source: 'ai-paths.settings.GET' }
+);
+
+export const POST = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> =>
+    POST_handler(req, ctx),
+  { source: 'ai-paths.settings.POST' }
+);

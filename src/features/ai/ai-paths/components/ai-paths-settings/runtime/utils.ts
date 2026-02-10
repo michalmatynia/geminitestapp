@@ -146,7 +146,7 @@ export const selectorEscape = (val: string): string => {
   if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
     return CSS.escape(val);
   }
-  return val.replace(/[^\w-]/g, '\$&');
+  return val.replace(/[^\w-]/g, '$&');
 };
 
 /**
@@ -200,9 +200,9 @@ export const getDomSelector = (element: Element | null): string | null => {
 export const getTargetInfo = (event?: React.MouseEvent | undefined): Record<string, unknown> | null => {
   const target = event?.target as Element | null;
   if (!target) return null;
-      const element =
+  const element =
         target.closest(
-          `[data-component],[data-testid],[data-node],button,a,[role='button']`
+          '[data-component],[data-testid],[data-node],button,a,[role=\'button\']'
         ) ?? target;  const rect = element.getBoundingClientRect();
   const dataset = element instanceof HTMLElement ? element.dataset : undefined;
   return {

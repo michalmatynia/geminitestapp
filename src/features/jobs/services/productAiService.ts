@@ -91,7 +91,7 @@ const summarizeGraphModelPayload = (payload: unknown): Record<string, unknown> |
     imageCount: imageUrls.length,
     cacheKey:
       typeof record['cacheKey'] === 'string'
-        ? (record['cacheKey'] as string).slice(0, 12)
+        ? (record['cacheKey']).slice(0, 12)
         : null,
   };
 };

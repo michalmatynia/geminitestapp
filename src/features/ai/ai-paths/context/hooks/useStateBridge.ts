@@ -331,8 +331,8 @@ export interface StateBridgeRuntimeProps {
   lastRunAt?: string | null | undefined;
   lastError?: { message: string; time: string; pathId?: string | null } | null | undefined;
   runtimeRunStatus?: 'idle' | 'running' | 'paused' | 'stepping' | undefined;
-  handleFireTrigger?: ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void) | undefined;
-  handleFireTriggerPersistent?: ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void) | undefined;
+  handleFireTrigger?: ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>) | undefined;
+  handleFireTriggerPersistent?: ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>) | undefined;
   handlePauseActiveRun?: (() => void) | undefined;
   handleResumeActiveRun?: (() => void) | undefined;
   handleStepActiveRun?: ((triggerNode?: AiNode) => void) | undefined;
@@ -654,8 +654,8 @@ export interface StateBridgeAllProps {
   lastRunAt?: string | null | undefined;
   lastError?: { message: string; time: string; pathId?: string | null } | null | undefined;
   runtimeRunStatus?: 'idle' | 'running' | 'paused' | 'stepping' | undefined;
-  handleFireTrigger?: ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void) | undefined;
-  handleFireTriggerPersistent?: ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void) | undefined;
+  handleFireTrigger?: ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>) | undefined;
+  handleFireTriggerPersistent?: ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>) | undefined;
   handlePauseActiveRun?: (() => void) | undefined;
   handleResumeActiveRun?: (() => void) | undefined;
   handleStepActiveRun?: ((triggerNode?: AiNode) => void) | undefined;

@@ -7,8 +7,8 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { FolderTreePanel, TreeHeader } from '@/shared/ui';
 
 import { SectionPicker } from './SectionPicker';
-import { SectionNodeItem } from './tree';
 import { PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY, PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY } from './settings/PageBuilderSettingsPage';
+import { SectionNodeItem } from './tree';
 import { useDragState } from '../../hooks/useDragStateContext';
 import { usePageBuilder } from '../../hooks/usePageBuilderContext';
 import { TreeActionsProvider, useTreeActions } from '../../hooks/useTreeActionsContext';

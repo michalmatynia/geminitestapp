@@ -1,4 +1,5 @@
 import { api } from '@/shared/lib/api-client';
+
 import type { AuthUserSummary } from '../types';
 
 export type AuthUsersResponse = {
@@ -29,7 +30,7 @@ export const updateAuthUser = async (
   try {
     const payload = await api.patch<AuthUserSummary>(`/api/auth/users/${userId}`, input);
     return { ok: true, payload };
-  } catch (error: unknown) {
+  } catch (_error: unknown) {
     return { 
       ok: false, 
       payload: { id: userId, email: input.email ?? '' } as AuthUserSummary 
@@ -55,7 +56,7 @@ export const updateAuthUserSecurity = async (
   try {
     const payload = await api.patch<AuthUserSecurityProfile>(`/api/auth/users/${userId}/security`, input);
     return { ok: true, payload };
-  } catch (error: unknown) {
+  } catch (_error: unknown) {
     return { 
       ok: false, 
       payload: { userId, mfaEnabled: false, allowedIps: [], disabledAt: null, bannedAt: null } 
@@ -67,10 +68,10 @@ export const mockSignIn = async (input: { email: string; password: string }): Pr
   try {
     const payload = await api.post<{ ok?: boolean; message?: string }>('/api/auth/mock-signin', input);
     return { ok: true, payload };
-  } catch (error: unknown) {
+  } catch (_error: unknown) {
     return { 
       ok: false, 
-      payload: { ok: false, message: error instanceof Error ? error.message : 'Sign in failed' } 
+      payload: { ok: false, message: _error instanceof Error ? _error.message : 'Sign in failed' } 
     };
   }
 };

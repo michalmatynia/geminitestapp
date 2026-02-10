@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import type {
@@ -39,8 +39,10 @@ import {
   stableStringify,
   sanitizeEdges,
 } from '@/features/ai/ai-paths/lib';
-import { fetchSettingsCached } from '@/shared/api/settings-client';
-import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
+import {
+  fetchAiPathsSettingsCached,
+  updateAiPathsSettingsBulk,
+} from '@/features/ai/ai-paths/lib/settings-store-client';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
 import {
@@ -216,11 +218,24 @@ export function useAiPathsPersistence({
   setUpdaterSamples,
   toast,
 }: UseAiPathsPersistenceArgs): UseAiPathsPersistenceResult {
-  const updateSettingsBulkMutation = useUpdateSettingsBulk();
+  const queryClient = useQueryClient();
+  const updateAiPathsSettingsMutation = useMutation({
+    mutationFn: async (
+      payloads: Array<{ key: string; value: string }>
+    ): Promise<Array<{ key: string; value: string }>> =>
+      await updateAiPathsSettingsBulk(payloads),
+    onSuccess: (): void => {
+      void queryClient.invalidateQueries({
+        predicate: (query): boolean =>
+          Array.isArray(query.queryKey) &&
+          query.queryKey[0] === 'ai-paths-settings',
+      });
+    },
+  });
   const settingsQuery = useQuery({
-    queryKey: ['settings', 'heavy'],
+    queryKey: ['ai-paths-settings'],
     queryFn: async (): Promise<Array<{ key: string; value: string }>> => {
-      return await fetchSettingsCached({ scope: 'heavy', bypassCache: true });
+      return await fetchAiPathsSettingsCached({ bypassCache: true });
     },
     enabled: false,
   });
@@ -277,18 +292,18 @@ export function useAiPathsPersistence({
 
   const persistSettingsBulk = useCallback(
     async (payload: PersistSettingsPayload): Promise<void> => {
-      await updateSettingsBulkMutation.mutateAsync(payload);
+      await updateAiPathsSettingsMutation.mutateAsync(payload);
     },
-    [updateSettingsBulkMutation]
+    [updateAiPathsSettingsMutation]
   );
 
   const persistUiState = useCallback(
     async (payload: AiPathsUiState): Promise<void> => {
-      await updateSettingsBulkMutation.mutateAsync([
+      await updateAiPathsSettingsMutation.mutateAsync([
         { key: AI_PATHS_UI_STATE_KEY, value: JSON.stringify(payload) },
       ]);
     },
-    [updateSettingsBulkMutation]
+    [updateAiPathsSettingsMutation]
   );
   const persistUserPreferences = useCallback(async (pathId: string | null): Promise<void> => {
     const csrfHeaders = withCsrfHeaders({ 'Content-Type': 'application/json' });
@@ -568,7 +583,6 @@ export function useAiPathsPersistence({
         }
         if (hasStoredUiState) {
           lastUiStatePayloadRef.current = stableStringify({
-            activePathId: firstPath,
             expandedGroups: preferredGroups ?? Array.from(expandedPaletteGroups),
             paletteCollapsed:
               typeof preferredPaletteCollapsed === 'boolean'
@@ -606,7 +620,7 @@ export function useAiPathsPersistence({
         }
         if (migrationPayload.length > 0) {
           try {
-            await updateSettingsBulkMutation.mutateAsync(migrationPayload);
+            await updateAiPathsSettingsMutation.mutateAsync(migrationPayload);
           } catch (error) {
             console.warn('[AI Paths] Failed to persist migrated AI Paths settings.', error);
           }
@@ -628,7 +642,7 @@ export function useAiPathsPersistence({
     loadNonce,
     settingsQuery,
     userPreferencesQuery,
-    updateSettingsBulkMutation,
+    updateAiPathsSettingsMutation,
     normalizeConfigForHash,
     persistLastError,
     setLoading,
@@ -638,7 +652,6 @@ export function useAiPathsPersistence({
     if (!uiStateLoaded) return;
     const expandedGroups = Array.from(expandedPaletteGroups).sort();
     const payload: AiPathsUiState = {
-      activePathId,
       expandedGroups,
       paletteCollapsed,
     };
@@ -677,7 +690,7 @@ export function useAiPathsPersistence({
         config: normalizeConfigForHash(sanitizedConfig),
       });
       if (payloadKey === lastSettingsPayloadRef.current) return sanitizedConfig;
-      const responses = await updateSettingsBulkMutation.mutateAsync([
+      const responses = await updateAiPathsSettingsMutation.mutateAsync([
         { key: PATH_INDEX_KEY, value: JSON.stringify(nextPaths) },
         {
           key: `${PATH_CONFIG_PREFIX}${configId}`,
@@ -688,7 +701,7 @@ export function useAiPathsPersistence({
       const configResponse = responses[1];
       if (!configResponse) return sanitizedConfig;
       try {
-        const payload = (await configResponse.clone().json()) as { key?: unknown; value?: unknown };
+        const payload = configResponse as { key?: unknown; value?: unknown };
         if (
           payload &&
           typeof payload.key === 'string' &&
@@ -705,7 +718,7 @@ export function useAiPathsPersistence({
       }
       return sanitizedConfig;
     },
-    [normalizeConfigForHash, updateSettingsBulkMutation]
+    [normalizeConfigForHash, updateAiPathsSettingsMutation]
   );
 
   const persistRuntimePathState = useCallback(
@@ -718,11 +731,11 @@ export function useAiPathsPersistence({
         runtimeState: nextRuntimeState,
         lastRunAt: nextLastRunAt,
       });
-      await updateSettingsBulkMutation.mutateAsync([
+      await updateAiPathsSettingsMutation.mutateAsync([
         { key: `${PATH_CONFIG_PREFIX}${configId}`, value: runtimeOnlyPayload },
       ]);
     },
-    [updateSettingsBulkMutation]
+    [updateAiPathsSettingsMutation]
   );
 
   const stripNodeConfig = useCallback(

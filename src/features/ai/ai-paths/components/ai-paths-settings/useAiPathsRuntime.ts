@@ -14,13 +14,14 @@ import {
   aiJobsApi,
 } from '@/features/ai/ai-paths/lib';
 
+import { useAiPathsLocalExecution } from './runtime/useAiPathsLocalExecution';
 import { useAiPathsRuntimeState } from './runtime/useAiPathsRuntimeState';
 import { useAiPathsServerExecution } from './runtime/useAiPathsServerExecution';
-import { useAiPathsLocalExecution } from './runtime/useAiPathsLocalExecution';
 import { useAiPathsSimulation } from './runtime/useAiPathsSimulation';
 import { 
   createRunId, 
 } from './runtime/utils';
+
 import type { 
   UseAiPathsRuntimeArgs, 
   UseAiPathsRuntimeResult, 

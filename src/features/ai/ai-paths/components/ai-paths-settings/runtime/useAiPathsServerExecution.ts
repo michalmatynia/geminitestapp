@@ -5,14 +5,12 @@ import { useCallback, useRef } from 'react';
 import type {
   AiNode,
   AiPathRunEventRecord,
+  AiPathRunRecord,
+  AiPathRuntimeEvent,
 } from '@/features/ai/ai-paths/lib';
 import {
   aiPathsApi,
 } from '@/features/ai/ai-paths/lib';
-
-import {
-  parseRuntimeState,
-} from '../../AiPathsSettingsUtils';
 
 import { 
   mergeRuntimeStateSnapshot, 
@@ -20,7 +18,26 @@ import {
   resolveRunStartedAt,
   buildActivePathConfig
 } from './utils';
+import {
+  parseRuntimeState,
+} from '../../AiPathsSettingsUtils';
+
 import type { ServerExecutionArgs } from './types';
+
+interface ServerStreamMessage {
+  type: string;
+  state?: unknown;
+  nodeId?: string;
+  status?: string;
+  runId?: string;
+  runStartedAt?: string;
+  iteration?: number;
+  events?: AiPathRunEventRecord[];
+  error?: string;
+  finishedAt?: string;
+  updatedAt?: string;
+  startedAt?: string;
+}
 
 export function useAiPathsServerExecution(args: ServerExecutionArgs) {
   const serverRunActiveRef = useRef(false);
@@ -56,7 +73,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
 
       eventSource.onmessage = (event: MessageEvent): void => {
         try {
-          const data = JSON.parse(event.data);
+          const data = JSON.parse(event.data as string) as ServerStreamMessage;
           if (data.type === 'heartbeat') return;
 
           if (data.type === 'state_update' && data.state) {
@@ -73,8 +90,8 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
               nodeId: data.nodeId,
               status,
               source: 'server',
-              runId: data.runId,
-              runStartedAt: data.runStartedAt,
+              runId: data.runId ?? null,
+              runStartedAt: data.runStartedAt ?? null,
               nodeType: runtimeNode?.type,
               nodeTitle: runtimeNode?.title ?? null,
               iteration: data.iteration,
@@ -85,24 +102,24 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           }
 
           if (data.type === 'run_events' && Array.isArray(data.events)) {
-            const logEvents: any[] = [];
+            const logEvents: AiPathRuntimeEvent[] = [];
             data.events.forEach((item: AiPathRunEventRecord): void => {
-              const nodeId = (item as any).nodeId;
-              const runId = (item as any).runId;
+              const nodeId = (item as any).nodeId as string | undefined;
+              const runId = (item as any).runId as string | undefined;
               const status = args.normalizeNodeStatus((item as any).status);
-              const iteration = (item as any).iteration;
-              const metadata = (item as any).metadata;
+              const iteration = (item as any).iteration as number | undefined;
+              const metadata = (item as any).metadata as Record<string, unknown> | undefined;
               const runtimeNode = args.normalizedNodes.find((n) => n.id === nodeId);
 
               logEvents.push({
                 id: item.id,
-                timestamp: (item as any).timestamp || new Date().toISOString(),
+                timestamp: (item as any).timestamp as string || new Date().toISOString(),
                 source: 'server',
                 kind: 'log',
                 level: item.level as 'info' | 'warning' | 'error',
                 message: item.message,
-                runId,
-                nodeId,
+                runId: runId ?? null,
+                nodeId: nodeId ?? null,
                 nodeType: runtimeNode?.type,
                 nodeTitle: runtimeNode?.title ?? null,
                 status,
@@ -116,13 +133,13 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           }
 
           if (data.type === 'run_completed') {
-            const finishedAt = resolveRunAt(data);
-            const startedAt = resolveRunStartedAt(data, args.runtimeStateRef.current);
+            const finishedAt = resolveRunAt(data as unknown as AiPathRunRecord);
+            const startedAt = resolveRunStartedAt(data as unknown as AiPathRunRecord, args.runtimeStateRef.current);
             args.appendRuntimeEvent({
               source: 'server',
               kind: 'run_completed',
               level: 'info',
-              runId: data.runId,
+              runId: data.runId ?? null,
               runStartedAt: startedAt,
               timestamp: finishedAt,
               message: 'Server run completed.',
@@ -160,13 +177,13 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           }
 
           if (data.type === 'run_failed') {
-            const finishedAt = resolveRunAt(data);
-            const startedAt = resolveRunStartedAt(data, args.runtimeStateRef.current);
+            const finishedAt = resolveRunAt(data as unknown as AiPathRunRecord);
+            const startedAt = resolveRunStartedAt(data as unknown as AiPathRunRecord, args.runtimeStateRef.current);
             args.appendRuntimeEvent({
               source: 'server',
               kind: 'run_failed',
               level: 'error',
-              runId: data.runId,
+              runId: data.runId ?? null,
               runStartedAt: startedAt,
               timestamp: finishedAt,
               message: `Server run failed: ${data.error || 'Unknown error'}`,

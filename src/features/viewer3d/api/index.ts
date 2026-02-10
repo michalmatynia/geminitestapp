@@ -1,5 +1,5 @@
-import { api } from '@/shared/lib/api-client';
 import { logClientError } from '@/features/observability';
+import { api } from '@/shared/lib/api-client';
 
 import type { Asset3DRecord, Asset3DUpdateInput, Asset3DListFilters } from '../types';
 

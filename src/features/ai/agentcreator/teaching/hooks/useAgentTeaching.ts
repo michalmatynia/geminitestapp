@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient, type UseMutationResult, type Use
 
 import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord, AgentTeachingEmbeddingDocumentListItem, AgentTeachingChatSource } from '@/shared/types/domain/agent-teaching';
 import type { ChatMessage } from '@/shared/types/domain/chatbot';
+
 import { 
   getTeachingAgents, 
   upsertTeachingAgent, 

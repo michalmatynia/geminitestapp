@@ -1,5 +1,8 @@
-import { fetchSettingsCached, invalidateSettingsCache } from '@/shared/api/settings-client';
-import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
+import {
+  fetchAiPathsSettingsCached,
+  invalidateAiPathsSettingsCache,
+  updateAiPathsSetting,
+} from '@/features/ai/ai-paths/lib/settings-store-client';
 
 import { AI_PATHS_LOCAL_RUNS_KEY } from './core/constants';
 
@@ -99,20 +102,16 @@ export const appendLocalRun = async (
   };
 
   try {
-    const settings = await fetchSettingsCached({ scope: 'heavy', bypassCache: true });
+    const settings = await fetchAiPathsSettingsCached({ bypassCache: true });
     const map = new Map(settings.map((item) => [item.key, item.value]));
     const existing = parseLocalRuns(map.get(AI_PATHS_LOCAL_RUNS_KEY));
     const next = [normalized, ...existing].slice(0, MAX_LOCAL_RUNS);
     const payload = JSON.stringify(next);
-    await fetch('/api/settings', {
-      method: 'POST',
-      headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ key: AI_PATHS_LOCAL_RUNS_KEY, value: payload }),
-    });
-    invalidateSettingsCache();
+    await updateAiPathsSetting(AI_PATHS_LOCAL_RUNS_KEY, payload);
+    invalidateAiPathsSettingsCache();
     if (typeof window !== 'undefined') {
       window.dispatchEvent(
-        new CustomEvent('settings:updated', { detail: { scope: 'heavy' } })
+        new CustomEvent('ai-paths:settings:updated', { detail: { scope: 'ai-paths' } })
       );
     }
     return normalized;

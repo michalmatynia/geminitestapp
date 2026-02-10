@@ -2,9 +2,6 @@
 
 import { useMemo } from 'react';
 
-import { AiPathConfigProvider } from '../AiPathConfigContext';
-import { NodeConfigDialog } from '../node-config-dialog';
-import type { AiPathsSettingsState } from '../ai-paths-settings/useAiPathsSettingsState';
 import {
   useGraphState,
   usePersistenceActions,
@@ -15,6 +12,10 @@ import {
   useSelectionActions,
   useSelectionState,
 } from '../../context';
+import { AiPathConfigProvider } from '../AiPathConfigContext';
+import { NodeConfigDialog } from '../node-config-dialog';
+
+import type { AiPathsSettingsState } from '../ai-paths-settings/useAiPathsSettingsState';
 
 export type NodeConfigDialogMigratedProps = {
   state: AiPathsSettingsState;

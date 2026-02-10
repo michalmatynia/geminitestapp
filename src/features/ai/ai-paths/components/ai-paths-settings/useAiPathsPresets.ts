@@ -13,7 +13,7 @@ import {
   migrateDatabaseConfigCollections,
   parsePathList,
 } from '@/features/ai/ai-paths/lib';
-import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { updateAiPathsSetting } from '@/features/ai/ai-paths/lib/settings-store-client';
 
 import type { ClusterPresetDraft } from '../cluster-presets-panel';
 
@@ -103,14 +103,9 @@ export function useAiPathsPresets({
   );
   const [paletteCollapsed, setPaletteCollapsed] = useState(false);
 
-  const updateSettingMutation = useUpdateSetting();
-
   const saveClusterPresets = async (nextPresets: ClusterPreset[]): Promise<void> => {
     try {
-      await updateSettingMutation.mutateAsync({
-        key: CLUSTER_PRESETS_KEY,
-        value: JSON.stringify(nextPresets),
-      });
+      await updateAiPathsSetting(CLUSTER_PRESETS_KEY, JSON.stringify(nextPresets));
     } catch (error: unknown) {
       reportAiPathsError(error, { action: 'saveClusterPresets' }, 'Failed to save presets:');
       toast('Failed to save cluster presets.', { variant: 'error' });
@@ -119,10 +114,7 @@ export function useAiPathsPresets({
 
   const saveDbQueryPresets = async (nextPresets: DbQueryPreset[]): Promise<void> => {
     try {
-      await updateSettingMutation.mutateAsync({
-        key: DB_QUERY_PRESETS_KEY,
-        value: JSON.stringify(nextPresets),
-      });
+      await updateAiPathsSetting(DB_QUERY_PRESETS_KEY, JSON.stringify(nextPresets));
     } catch (error: unknown) {
       reportAiPathsError(error, { action: 'saveDbQueryPresets' }, 'Failed to save query presets:');
       toast('Failed to save query presets.', { variant: 'error' });
@@ -132,10 +124,7 @@ export function useAiPathsPresets({
 
   const saveDbNodePresets = async (nextPresets: DbNodePreset[]): Promise<void> => {
     try {
-      await updateSettingMutation.mutateAsync({
-        key: DB_NODE_PRESETS_KEY,
-        value: JSON.stringify(nextPresets),
-      });
+      await updateAiPathsSetting(DB_NODE_PRESETS_KEY, JSON.stringify(nextPresets));
     } catch (error: unknown) {
       reportAiPathsError(error, { action: 'saveDbNodePresets' }, 'Failed to save database presets:');
       toast('Failed to save database presets.', { variant: 'error' });

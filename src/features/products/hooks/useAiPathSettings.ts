@@ -9,9 +9,7 @@ import {
   createDefaultPathConfig,
 } from '@/features/ai/ai-paths/lib/core/utils/factory';
 import { safeParseJson } from '@/features/ai/ai-paths/lib/core/utils/runtime';
-import {
-  fetchSettingsCached,
-} from '@/shared/api/settings-client';
+import { fetchAiPathsSettingsCached } from '@/features/ai/ai-paths/lib/settings-store-client';
 import type {
   AiNode,
   PathConfig,
@@ -35,14 +33,14 @@ export async function fetchPathSettings(
   let settingsData: Array<{ key: string; value: string }> = [];
   try {
     settingsData = await queryClient.fetchQuery({
-      queryKey: ['settings', 'heavy'],
+      queryKey: ['ai-paths-settings'],
       queryFn: async () => {
-        return await fetchSettingsCached({ scope: 'heavy' });
+        return await fetchAiPathsSettingsCached();
       },
       staleTime: AI_PATHS_SETTINGS_STALE_MS,
     });
   } catch {
-    settingsData = await fetchSettingsCached({ scope: 'heavy' });
+    settingsData = await fetchAiPathsSettingsCached();
   }
 
   const map = new Map<string, string>(

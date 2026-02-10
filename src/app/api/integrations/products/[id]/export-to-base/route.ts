@@ -359,21 +359,21 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
 
     const productProducerIds = !imagesOnly
       ? Array.from(
-          new Set(
-            (product.producers ?? [])
-              .map((producer) => producer.producerId?.trim())
-              .filter((producerId): producerId is string => Boolean(producerId))
-          )
+        new Set(
+          (product.producers ?? [])
+            .map((producer) => producer.producerId?.trim())
+            .filter((producerId): producerId is string => Boolean(producerId))
         )
+      )
       : [];
     const productTagIds = !imagesOnly
       ? Array.from(
-          new Set(
-            (product.tags ?? [])
-              .map((tag) => tag.tagId?.trim())
-              .filter((tagId): tagId is string => Boolean(tagId))
-          )
+        new Set(
+          (product.tags ?? [])
+            .map((tag) => tag.tagId?.trim())
+            .filter((tagId): tagId is string => Boolean(tagId))
         )
+      )
       : [];
     let producerNameById: Record<string, string> | null = null;
     let producerExternalIdByInternalId: Record<string, string> | null = null;

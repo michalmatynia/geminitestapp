@@ -73,7 +73,7 @@ export function useUpdateUserPreferencesMutation(): UseMutationResult<UserPrefer
         Object.entries(payload).filter(([key, value]) => hasPreferenceChanged(current, key, value))
       ) as UserPreferences;
       if (Object.keys(changedPayload).length === 0) {
-        return (current ?? {}) as UserPreferences;
+        return (current ?? {});
       }
       const res = await fetch('/api/user/preferences', {
         method: 'PATCH',

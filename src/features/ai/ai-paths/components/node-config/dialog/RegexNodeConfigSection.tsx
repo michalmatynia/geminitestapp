@@ -1,5 +1,6 @@
 'use client';
 
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import React from 'react';
 
@@ -12,7 +13,10 @@ import {
   renderTemplate,
 } from '@/features/ai/ai-paths/lib';
 import type { AiNode, Edge, RegexConfig, RegexTemplate } from '@/features/ai/ai-paths/lib';
-import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import {
+  fetchAiPathsSettingsCached,
+  updateAiPathsSetting,
+} from '@/features/ai/ai-paths/lib/settings-store-client';
 import {
   Button,
   Input,
@@ -288,9 +292,20 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
   const activeVariant = regexConfig.activeVariant ?? 'manual';
   const aiProposals = React.useMemo(() => regexConfig.aiProposals ?? [], [regexConfig.aiProposals]);
   const regexTemplates = React.useMemo(() => regexConfig.templates ?? [], [regexConfig.templates]);
-  const settingsQuery = useSettingsMap({ scope: 'heavy' });
-  const updateSettingMutation = useUpdateSetting();
-  const globalTemplatesRaw = settingsQuery.data?.get(AI_PATHS_REGEX_TEMPLATES_KEY) ?? null;
+  const settingsQuery = useQuery({
+    queryKey: ['ai-paths-settings'],
+    queryFn: async (): Promise<Array<{ key: string; value: string }>> =>
+      await fetchAiPathsSettingsCached({ bypassCache: true }),
+  });
+  const updateSettingMutation = useMutation({
+    mutationFn: async (payload: { key: string; value: string }): Promise<void> => {
+      await updateAiPathsSetting(payload.key, payload.value);
+    },
+  });
+  const globalTemplatesRaw = React.useMemo(() => {
+    const map = new Map((settingsQuery.data ?? []).map((item) => [item.key, item.value]));
+    return map.get(AI_PATHS_REGEX_TEMPLATES_KEY) ?? null;
+  }, [settingsQuery.data]);
   const parsedGlobalTemplates = React.useMemo(
     () => parseRegexTemplatesStore(globalTemplatesRaw).templates,
     [globalTemplatesRaw]

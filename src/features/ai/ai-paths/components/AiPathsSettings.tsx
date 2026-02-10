@@ -111,7 +111,7 @@ function AiPathsSettingsInner({
     saving: state.saving,
     autoSaveStatus: state.autoSaveStatus,
     autoSaveAt: state.autoSaveAt,
-    savePathConfig: (options) => state.handleSave(options),
+    savePathConfig: (options) => { void state.handleSave(options); },
     // Presets
     clusterPresets: state.clusterPresets,
     presetDraft: state.presetDraft,

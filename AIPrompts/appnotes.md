@@ -2,8 +2,18 @@
 * I can't monitor my singal in Ai Paths
 * My Catalog has too many languages, I want an option to remove languages from
   Catalogs.
+
+
    For my image rerouting, I would like an option to add different routes, not only one, and
   select a default one that is read by the application
+
+
+ * I don't want my AI-Paths to be stored in my USer settings, I want AI Paths
+  and their respective settings to be stored in a separate collection. I only
+  want the last path that the user worked on to be stored in user settings so
+  taht a user can seamlessly continue working on a path even after page refresh
+  or page redirection
+
 
  In Products,  When I reorder CAtegories, I get an error
 

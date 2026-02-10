@@ -14,11 +14,11 @@ import {
 import {
   sanitizeEdges,
 } from '@/features/ai/ai-paths/lib/core/utils/graph';
-import { logClientError } from '@/features/observability/utils/client-error-logger';
 import {
-  invalidateSettingsCache,
-} from '@/shared/api/settings-client';
-import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
+  invalidateAiPathsSettingsCache,
+  updateAiPathsSetting,
+} from '@/features/ai/ai-paths/lib/settings-store-client';
+import { logClientError } from '@/features/observability/utils/client-error-logger';
 import type {
   AiNode,
   PathConfig,
@@ -185,33 +185,17 @@ async function persistRunResults(
     }
     : null;
 
-  const csrfHeaders = withCsrfHeaders({ 'Content-Type': 'application/json' });
   const debugValue = debugSnapshot ? safeJsonStringify(debugSnapshot) : '';
   const nextUiState = {
     ...(uiState && typeof uiState === 'object' ? uiState : {}),
-    activePathId: selectedConfig.id,
     lastTriggeredAt: runAt,
   };
 
   if (debugValue) {
-    await fetch('/api/settings', {
-      method: 'POST',
-      headers: csrfHeaders,
-      body: JSON.stringify({
-        key: `${PATH_DEBUG_PREFIX}${selectedConfig.id}`,
-        value: debugValue,
-      }),
-    });
+    await updateAiPathsSetting(`${PATH_DEBUG_PREFIX}${selectedConfig.id}`, debugValue);
   }
-  await fetch('/api/settings', {
-    method: 'POST',
-    headers: csrfHeaders,
-    body: JSON.stringify({
-      key: AI_PATHS_UI_STATE_KEY,
-      value: JSON.stringify(nextUiState),
-    }),
-  });
-  invalidateSettingsCache();
+  await updateAiPathsSetting(AI_PATHS_UI_STATE_KEY, JSON.stringify(nextUiState));
+  invalidateAiPathsSettingsCache();
 }
 
 export function useAiPathTrigger(): {

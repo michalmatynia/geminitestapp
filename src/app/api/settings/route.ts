@@ -115,6 +115,20 @@ const isPrismaMissingTableError = (
   error instanceof Prisma.PrismaClientKnownRequestError &&
   (error.code === 'P2021' || error.code === 'P2022');
 
+const readPrismaSettingsForScope = async (scope: SettingsScope): Promise<SettingRecord[]> => {
+  if (!process.env['DATABASE_URL'] || !('setting' in prisma)) return [];
+  try {
+    const settings = await prisma.setting.findMany({
+      where: buildPrismaScopeWhere(scope),
+      select: { key: true, value: true },
+    });
+    return applyScopeFilter(settings, scope);
+  } catch (error) {
+    if (isPrismaMissingTableError(error)) return [];
+    throw error;
+  }
+};
+
 const parseUpdatedAtMsFromPathConfig = (raw: string): number | null => {
   try {
     const parsed = JSON.parse(raw) as { updatedAt?: unknown };
@@ -440,13 +454,13 @@ async function GET_handler(
         : null;
     const fallbackFromLight =
       scope === 'all' ? getLastKnownSettings('light') : null;
-    const fallbackData =
+    let fallbackData =
       stale ??
       lastKnown ??
       fallbackFromAll ??
       fallbackFromLight ??
       [];
-    const cacheStatus = stale
+    let cacheStatus = stale
       ? 'timeout-stale'
       : lastKnown
         ? 'timeout-last-known'
@@ -454,7 +468,24 @@ async function GET_handler(
           ? 'timeout-all-fallback'
           : fallbackFromLight
             ? 'timeout-light-fallback'
-        : 'timeout-empty';
+            : 'timeout-empty';
+    if (fallbackData.length === 0) {
+      try {
+        const prismaFallback = await readPrismaSettingsForScope(scope);
+        if (prismaFallback.length > 0) {
+          fallbackData = prismaFallback;
+          cacheStatus = 'timeout-prisma-fallback';
+          setCachedSettings(prismaFallback, scope);
+        }
+      } catch (error) {
+        await logSystemEvent({
+          level: 'warn',
+          message: '[settings] Prisma timeout fallback failed.',
+          error,
+          context: { scope },
+        });
+      }
+    }
     if (shouldLogTiming()) {
       await logSystemEvent({
         level: 'warn',

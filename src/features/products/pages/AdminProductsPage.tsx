@@ -22,6 +22,10 @@ import { getProductColumns } from '@/features/products/components/list/ProductCo
 import { ProductTableSkeleton } from '@/features/products/components/list/ProductTableSkeleton';
 import { ProductListPanel } from '@/features/products/components/ProductListPanel';
 import { ProductModals } from '@/features/products/components/ProductModals';
+import {
+  DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
+  PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
+} from '@/features/products/constants';
 import { ProductListProvider } from '@/features/products/context/ProductListContext';
 import { useCatalogSync } from '@/features/products/hooks/useCatalogSync';
 import {
@@ -36,10 +40,6 @@ import {
 import { useProductOperations } from '@/features/products/hooks/useProductOperations';
 import { useUserPreferences } from '@/features/products/hooks/useUserPreferences';
 import { useQueuedProductIds } from '@/features/products/state/queued-product-ops';
-import {
-  DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
-  PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
-} from '@/features/products/constants';
 import type { ProductWithImages } from '@/features/products/types';
 import type { ProductDraft } from '@/features/products/types/drafts';
 import { useProductListSync } from '@/shared/hooks/sync/useBackgroundSync';

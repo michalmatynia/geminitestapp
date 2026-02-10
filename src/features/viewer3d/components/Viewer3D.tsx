@@ -20,6 +20,7 @@ import * as THREE from 'three';
 
 import { logger } from '@/shared/utils/logger';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { getLastUserAction } from '@/shared/utils/observability/user-action-tracker';
 
 import { useOptionalViewer3D } from '../context/Viewer3DContext';
 import { DitheringPass } from './shaders/DitheringEffect';
@@ -47,7 +48,11 @@ class Model3DErrorBoundary extends Component<
     logger.error('3D Model Error', error, { componentStack: errorInfo.componentStack });
     logClientError(error, {
       componentStack: errorInfo.componentStack,
-      context: { source: 'Viewer3D-error-boundary' },
+      context: {
+        source: 'Viewer3D-error-boundary',
+        lastUserAction: getLastUserAction(),
+        route: typeof window !== 'undefined' ? window.location.pathname : null,
+      },
     });
     this.props.onError?.(error);
   }

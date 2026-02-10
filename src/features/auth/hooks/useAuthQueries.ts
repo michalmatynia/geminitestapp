@@ -9,6 +9,7 @@ import {
   fetchAuthUserSecurity,
   updateAuthUser,
   updateAuthUserSecurity,
+  deleteAuthUser,
   mockSignIn,
   type AuthUsersResponse,
   type AuthUserSecurityProfile,
@@ -92,6 +93,23 @@ export function useUpdateAuthUserSecurity(): UseMutationResult<
       return result.payload;
     },
     onSuccess: (_data: AuthUserSecurityProfile, variables: { userId: string; input: { disabled?: boolean; banned?: boolean; allowedIps?: string[]; disableMfa?: boolean } }): void => {
+      void queryClient.invalidateQueries({ queryKey: authKeys.all });
+      void queryClient.invalidateQueries({ queryKey: authKeys.security(variables.userId) });
+    },
+  });
+}
+
+export function useDeleteAuthUser(): UseMutationResult<
+  { id: string; deleted: boolean },
+  Error,
+  { userId: string }
+  > {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ userId }: { userId: string }): Promise<{ id: string; deleted: boolean }> => {
+      return deleteAuthUser(userId);
+    },
+    onSuccess: (_data: { id: string; deleted: boolean }, variables: { userId: string }): void => {
       void queryClient.invalidateQueries({ queryKey: authKeys.all });
       void queryClient.invalidateQueries({ queryKey: authKeys.security(variables.userId) });
     },

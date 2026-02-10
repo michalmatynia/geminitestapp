@@ -1,6 +1,7 @@
 'use client';
 
 import { AlertTriangleIcon, DatabaseIcon, HardDriveIcon, RefreshCcwIcon, SaveIcon } from 'lucide-react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 
@@ -9,12 +10,15 @@ import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settin
 import {
   DATABASE_ENGINE_BACKUP_SCHEDULE_KEY,
   DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY,
+  DATABASE_ENGINE_OPERATION_CONTROLS_KEY,
   DATABASE_ENGINE_POLICY_KEY,
   DATABASE_ENGINE_SERVICE_ROUTE_MAP_KEY,
   DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE,
+  DEFAULT_DATABASE_ENGINE_OPERATION_CONTROLS,
   DEFAULT_DATABASE_ENGINE_POLICY,
   type DatabaseEngineBackupSchedule,
   type DatabaseEngineBackupType,
+  type DatabaseEngineOperationControls,
   type DatabaseEnginePolicy,
   type DatabaseEngineProvider,
   type DatabaseEngineServiceRoute,
@@ -24,13 +28,18 @@ import {
   isValidDatabaseEngineBackupTimeUtc,
   normalizeDatabaseEngineBackupSchedule,
 } from '@/shared/lib/db/database-engine-backup-schedule';
+import { normalizeDatabaseEngineOperationControls } from '@/shared/lib/db/database-engine-operation-controls';
 import { PageLayout, Button, ConfirmDialog, SectionPanel, useToast } from '@/shared/ui';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
+import { DatabaseBackupsPanel } from '../components/DatabaseBackupsPanel';
+import { DatabaseOperationsPanel } from '../components/DatabaseOperationsPanel';
 import {
   useAllCollectionsSchema,
+  useCancelDatabaseEngineOperationJobMutation,
   useDatabaseBackupRunNowMutation,
   useCopyCollectionMutation,
+  useDatabaseEngineOperationsJobs,
   useDatabaseBackupSchedulerStatus,
   useDatabaseBackupSchedulerTickMutation,
   useDatabaseEngineProviderPreview,
@@ -64,6 +73,8 @@ type ProviderPreviewRow = {
   configuredProvider: 'mongodb' | 'prisma' | 'redis' | null;
   error: string | null;
 };
+
+type DatabaseEngineWorkspaceView = 'engine' | 'backups' | 'operations';
 
 const backupTargetLabels: Record<DatabaseEngineBackupType, string> = {
   mongodb: 'MongoDB',
@@ -123,10 +134,31 @@ const parseEnginePolicy = (raw: string | undefined): DatabaseEnginePolicy =>
 const parseBackupSchedule = (raw: string | undefined): DatabaseEngineBackupSchedule =>
   normalizeDatabaseEngineBackupSchedule(raw);
 
+const parseOperationControls = (raw: string | undefined): DatabaseEngineOperationControls =>
+  normalizeDatabaseEngineOperationControls(raw ?? DEFAULT_DATABASE_ENGINE_OPERATION_CONTROLS);
+
 const isPrimaryProvider = (value: unknown): value is 'mongodb' | 'prisma' =>
   value === 'mongodb' || value === 'prisma';
 
+const formatDateTime = (value: string | null | undefined): string => {
+  if (!value) return 'n/a';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleString();
+};
+
+const shortenId = (value: string): string =>
+  value.length <= 18 ? value : `${value.slice(0, 10)}...${value.slice(-6)}`;
+
+const parseWorkspaceView = (raw: string | null): DatabaseEngineWorkspaceView => {
+  if (raw === 'backups' || raw === 'operations') return raw;
+  return 'engine';
+};
+
 export default function DatabaseEnginePage(): React.JSX.Element {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const settingsQuery = useSettingsMap({ scope: 'all' });
   const updateSettingsBulk = useUpdateSettingsBulk();
@@ -135,8 +167,10 @@ export default function DatabaseEnginePage(): React.JSX.Element {
   const redisQuery = useRedisOverview(400);
   const engineStatusQuery = useDatabaseEngineStatus();
   const backupSchedulerStatusQuery = useDatabaseBackupSchedulerStatus();
+  const operationsJobsQuery = useDatabaseEngineOperationsJobs(30);
   const backupSchedulerTickMutation = useDatabaseBackupSchedulerTickMutation();
   const backupRunNowMutation = useDatabaseBackupRunNowMutation();
+  const cancelOperationJobMutation = useCancelDatabaseEngineOperationJobMutation();
   const syncDatabaseMutation = useSyncDatabaseMutation();
   const backfillMutation = useSettingsBackfillMutation();
   const copyCollectionMutation = useCopyCollectionMutation();
@@ -144,6 +178,13 @@ export default function DatabaseEnginePage(): React.JSX.Element {
   const [backfillLimit, setBackfillLimit] = useState(500);
   const [pendingSyncDirection, setPendingSyncDirection] = useState<SyncDirection | null>(null);
   const [pendingCollectionSync, setPendingCollectionSync] = useState<PendingCollectionSync | null>(null);
+  const [workspaceView, setWorkspaceView] = useState<DatabaseEngineWorkspaceView>(
+    parseWorkspaceView(searchParams.get('view'))
+  );
+
+  useEffect(() => {
+    setWorkspaceView(parseWorkspaceView(searchParams.get('view')));
+  }, [searchParams]);
 
   const policyFromSettings = useMemo<DatabaseEnginePolicy>(() => {
     const raw = settingsQuery.data?.get(DATABASE_ENGINE_POLICY_KEY);
@@ -166,6 +207,10 @@ export default function DatabaseEnginePage(): React.JSX.Element {
     const raw = settingsQuery.data?.get(DATABASE_ENGINE_BACKUP_SCHEDULE_KEY);
     return parseBackupSchedule(raw);
   }, [settingsQuery.data]);
+  const operationControlsFromSettings = useMemo<DatabaseEngineOperationControls>(() => {
+    const raw = settingsQuery.data?.get(DATABASE_ENGINE_OPERATION_CONTROLS_KEY);
+    return parseOperationControls(raw);
+  }, [settingsQuery.data]);
 
   const [policyDraft, setPolicyDraft] = useState<DatabaseEnginePolicy>(policyFromSettings);
   const [serviceRouteMapDraft, setServiceRouteMapDraft] = useState<
@@ -177,6 +222,8 @@ export default function DatabaseEnginePage(): React.JSX.Element {
   const [backupScheduleDraft, setBackupScheduleDraft] = useState<DatabaseEngineBackupSchedule>(
     backupScheduleFromSettings
   );
+  const [operationControlsDraft, setOperationControlsDraft] =
+    useState<DatabaseEngineOperationControls>(operationControlsFromSettings);
 
   useEffect(() => {
     setPolicyDraft(policyFromSettings);
@@ -193,6 +240,10 @@ export default function DatabaseEnginePage(): React.JSX.Element {
   useEffect(() => {
     setBackupScheduleDraft(backupScheduleFromSettings);
   }, [backupScheduleFromSettings]);
+
+  useEffect(() => {
+    setOperationControlsDraft(operationControlsFromSettings);
+  }, [operationControlsFromSettings]);
 
   const rows = useMemo<CollectionRow[]>(() => {
     const data = schemaQuery.data;
@@ -514,6 +565,10 @@ export default function DatabaseEnginePage(): React.JSX.Element {
           key: DATABASE_ENGINE_BACKUP_SCHEDULE_KEY,
           value: JSON.stringify(normalizedBackupSchedule),
         },
+        {
+          key: DATABASE_ENGINE_OPERATION_CONTROLS_KEY,
+          value: JSON.stringify(operationControlsDraft),
+        },
       ]);
       toast('Database Engine configuration saved.', { variant: 'success' });
     } catch (error: unknown) {
@@ -524,6 +579,7 @@ export default function DatabaseEnginePage(): React.JSX.Element {
     backupScheduleDraft,
     collectionRouteMapDraft,
     hasBlockingValidationErrors,
+    operationControlsDraft,
     policyDraft,
     serviceRouteMapDraft,
     toast,
@@ -608,6 +664,22 @@ export default function DatabaseEnginePage(): React.JSX.Element {
     [backupRunNowMutation, backupSchedulerStatusQuery, toast]
   );
 
+  const cancelOperationJob = useCallback(
+    async (jobId: string): Promise<void> => {
+      try {
+        await cancelOperationJobMutation.mutateAsync({ jobId });
+        toast(`Job cancelled: ${jobId}`, { variant: 'success' });
+        void operationsJobsQuery.refetch();
+      } catch (error: unknown) {
+        logClientError(error, {
+          context: { source: 'DatabaseEnginePage', action: 'cancelOperationJob', jobId },
+        });
+        toast('Failed to cancel job.', { variant: 'error' });
+      }
+    },
+    [cancelOperationJobMutation, operationsJobsQuery, toast]
+  );
+
   const confirmCollectionSync = useCallback(async (): Promise<void> => {
     if (!pendingCollectionSync) return;
     const action = pendingCollectionSync;
@@ -639,9 +711,25 @@ export default function DatabaseEnginePage(): React.JSX.Element {
       redisQuery.refetch(),
       engineStatusQuery.refetch(),
       backupSchedulerStatusQuery.refetch(),
+      operationsJobsQuery.refetch(),
       providerPreviewQuery.refetch(),
     ]);
   };
+
+  const setWorkspaceViewWithUrl = useCallback(
+    (nextView: DatabaseEngineWorkspaceView): void => {
+      setWorkspaceView(nextView);
+      const params = new URLSearchParams(searchParams.toString());
+      if (nextView === 'engine') {
+        params.delete('view');
+      } else {
+        params.set('view', nextView);
+      }
+      const query = params.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    },
+    [pathname, router, searchParams]
+  );
 
   const strictModeEnabled = useMemo(
     () =>
@@ -654,41 +742,74 @@ export default function DatabaseEnginePage(): React.JSX.Element {
     [policyDraft]
   );
   const backupSchedulerStatus = backupSchedulerStatusQuery.data;
+  const operationJobs = operationsJobsQuery.data?.jobs ?? [];
+  const operationQueueStatus = operationsJobsQuery.data?.queueStatus ?? null;
 
   return (
     <PageLayout
       title='Database Engine'
       description='Manual control center for provider routing, migrations, synchronisation, backfilling, and fallback behavior across MongoDB, Prisma, and Redis.'
       headerActions={
-        <div className='flex items-center gap-2'>
-          <Button
-            variant='outline'
-            onClick={refreshAll}
-            disabled={
-              settingsQuery.isFetching ||
-              schemaQuery.isFetching ||
-              redisQuery.isFetching ||
-              engineStatusQuery.isFetching ||
-              backupSchedulerStatusQuery.isFetching ||
-              providerPreviewQuery.isFetching
-            }
-          >
-            <RefreshCcwIcon className='mr-2 size-4' />
-            Refresh
-          </Button>
-          <Button
-            onClick={(): void => {
-              void saveEngineConfiguration();
-            }}
-            disabled={updateSettingsBulk.isPending || hasBlockingValidationErrors}
-            title={hasBlockingValidationErrors ? validationErrors[0] : undefined}
-          >
-            <SaveIcon className='mr-2 size-4' />
-            {updateSettingsBulk.isPending ? 'Saving...' : 'Save Engine Config'}
-          </Button>
-        </div>
+        workspaceView === 'engine' ? (
+          <div className='flex items-center gap-2'>
+            <Button
+              variant='outline'
+              onClick={refreshAll}
+              disabled={
+                settingsQuery.isFetching ||
+                schemaQuery.isFetching ||
+                redisQuery.isFetching ||
+                engineStatusQuery.isFetching ||
+                backupSchedulerStatusQuery.isFetching ||
+                operationsJobsQuery.isFetching ||
+                providerPreviewQuery.isFetching
+              }
+            >
+              <RefreshCcwIcon className='mr-2 size-4' />
+              Refresh
+            </Button>
+            <Button
+              onClick={(): void => {
+                void saveEngineConfiguration();
+              }}
+              disabled={updateSettingsBulk.isPending || hasBlockingValidationErrors}
+              title={hasBlockingValidationErrors ? validationErrors[0] : undefined}
+            >
+              <SaveIcon className='mr-2 size-4' />
+              {updateSettingsBulk.isPending ? 'Saving...' : 'Save Engine Config'}
+            </Button>
+          </div>
+        ) : null
       }
     >
+      <SectionPanel className='mb-6 p-3'>
+        <div className='flex flex-wrap gap-2'>
+          <Button
+            variant={workspaceView === 'engine' ? 'default' : 'outline'}
+            size='sm'
+            onClick={(): void => setWorkspaceViewWithUrl('engine')}
+          >
+            Engine
+          </Button>
+          <Button
+            variant={workspaceView === 'backups' ? 'default' : 'outline'}
+            size='sm'
+            onClick={(): void => setWorkspaceViewWithUrl('backups')}
+          >
+            Backups
+          </Button>
+          <Button
+            variant={workspaceView === 'operations' ? 'default' : 'outline'}
+            size='sm'
+            onClick={(): void => setWorkspaceViewWithUrl('operations')}
+          >
+            Operations
+          </Button>
+        </div>
+      </SectionPanel>
+
+      {workspaceView === 'engine' ? (
+        <>
       <ConfirmDialog
         open={pendingSyncDirection !== null}
         onOpenChange={(open: boolean) => !open && setPendingSyncDirection(null)}
@@ -825,6 +946,147 @@ export default function DatabaseEnginePage(): React.JSX.Element {
           {strictModeEnabled
             ? 'Manual-only strict mode is active in the draft.'
             : 'Strict manual-only mode is not fully active. Use "Apply Manual-Only Template" for no automatic fallback/backfill/migration.'}
+        </div>
+      </SectionPanel>
+
+      <SectionPanel className='mt-6 p-5'>
+        <div className='flex flex-wrap items-start justify-between gap-3'>
+          <div>
+            <h2 className='text-lg font-semibold text-white'>Manual Operation Controls</h2>
+            <p className='mt-1 text-sm text-gray-400'>
+              Server-enforced switches for manual engine actions. Disabled actions return explicit API errors.
+            </p>
+          </div>
+          <div className='flex flex-wrap gap-2'>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={(): void => {
+                setOperationControlsDraft({
+                  allowManualFullSync: true,
+                  allowManualCollectionSync: true,
+                  allowManualBackfill: true,
+                  allowManualBackupRunNow: true,
+                  allowManualBackupMaintenance: true,
+                  allowBackupSchedulerTick: true,
+                  allowOperationJobCancellation: true,
+                });
+              }}
+            >
+              Enable All
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={(): void => {
+                setOperationControlsDraft({
+                  allowManualFullSync: false,
+                  allowManualCollectionSync: false,
+                  allowManualBackfill: false,
+                  allowManualBackupRunNow: false,
+                  allowManualBackupMaintenance: false,
+                  allowBackupSchedulerTick: false,
+                  allowOperationJobCancellation: false,
+                });
+              }}
+            >
+              Disable All
+            </Button>
+          </div>
+        </div>
+
+        <div className='mt-4 grid gap-3 md:grid-cols-2'>
+          <label className='flex items-center gap-2 text-sm text-gray-200'>
+            <input
+              type='checkbox'
+              checked={operationControlsDraft.allowManualFullSync}
+              onChange={(event): void =>
+                setOperationControlsDraft((prev) => ({
+                  ...prev,
+                  allowManualFullSync: event.target.checked,
+                }))
+              }
+            />
+            Allow manual full sync (MongoDB &lt;-&gt; Prisma)
+          </label>
+          <label className='flex items-center gap-2 text-sm text-gray-200'>
+            <input
+              type='checkbox'
+              checked={operationControlsDraft.allowManualCollectionSync}
+              onChange={(event): void =>
+                setOperationControlsDraft((prev) => ({
+                  ...prev,
+                  allowManualCollectionSync: event.target.checked,
+                }))
+              }
+            />
+            Allow manual collection sync
+          </label>
+          <label className='flex items-center gap-2 text-sm text-gray-200'>
+            <input
+              type='checkbox'
+              checked={operationControlsDraft.allowManualBackfill}
+              onChange={(event): void =>
+                setOperationControlsDraft((prev) => ({
+                  ...prev,
+                  allowManualBackfill: event.target.checked,
+                }))
+              }
+            />
+            Allow manual settings backfill
+          </label>
+          <label className='flex items-center gap-2 text-sm text-gray-200'>
+            <input
+              type='checkbox'
+              checked={operationControlsDraft.allowManualBackupRunNow}
+              onChange={(event): void =>
+                setOperationControlsDraft((prev) => ({
+                  ...prev,
+                  allowManualBackupRunNow: event.target.checked,
+                }))
+              }
+            />
+            Allow manual backup run-now
+          </label>
+          <label className='flex items-center gap-2 text-sm text-gray-200'>
+            <input
+              type='checkbox'
+              checked={operationControlsDraft.allowManualBackupMaintenance}
+              onChange={(event): void =>
+                setOperationControlsDraft((prev) => ({
+                  ...prev,
+                  allowManualBackupMaintenance: event.target.checked,
+                }))
+              }
+            />
+            Allow manual backup restore/upload/delete
+          </label>
+          <label className='flex items-center gap-2 text-sm text-gray-200'>
+            <input
+              type='checkbox'
+              checked={operationControlsDraft.allowBackupSchedulerTick}
+              onChange={(event): void =>
+                setOperationControlsDraft((prev) => ({
+                  ...prev,
+                  allowBackupSchedulerTick: event.target.checked,
+                }))
+              }
+            />
+            Allow manual backup scheduler tick
+          </label>
+          <label className='flex items-center gap-2 text-sm text-gray-200'>
+            <input
+              type='checkbox'
+              checked={operationControlsDraft.allowOperationJobCancellation}
+              onChange={(event): void =>
+                setOperationControlsDraft((prev) => ({
+                  ...prev,
+                  allowOperationJobCancellation: event.target.checked,
+                }))
+              }
+            />
+            Allow operation job cancellation
+          </label>
         </div>
       </SectionPanel>
 
@@ -1184,7 +1446,10 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                       <Button
                         variant='outline'
                         size='sm'
-                        disabled={!row.existsInMongo}
+                        disabled={
+                          !row.existsInMongo ||
+                          !operationControlsDraft.allowManualCollectionSync
+                        }
                         onClick={(): void => {
                           setPendingCollectionSync({
                             collection: row.name,
@@ -1198,7 +1463,10 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                       <Button
                         variant='outline'
                         size='sm'
-                        disabled={!row.existsInPrisma}
+                        disabled={
+                          !row.existsInPrisma ||
+                          !operationControlsDraft.allowManualCollectionSync
+                        }
                         onClick={(): void => {
                           setPendingCollectionSync({
                             collection: row.name,
@@ -1272,7 +1540,10 @@ export default function DatabaseEnginePage(): React.JSX.Element {
               onClick={(): void => {
                 void runBackupSchedulerTickNow();
               }}
-              disabled={backupSchedulerTickMutation.isPending}
+              disabled={
+                backupSchedulerTickMutation.isPending ||
+                !operationControlsDraft.allowBackupSchedulerTick
+              }
             >
               {backupSchedulerTickMutation.isPending
                 ? 'Checking...'
@@ -1285,7 +1556,10 @@ export default function DatabaseEnginePage(): React.JSX.Element {
               onClick={(): void => {
                 void runBackupNow('all');
               }}
-              disabled={backupRunNowMutation.isPending}
+              disabled={
+                backupRunNowMutation.isPending ||
+                !operationControlsDraft.allowManualBackupRunNow
+              }
             >
               {backupRunNowMutation.isPending ? 'Queueing...' : 'Run All Backups Now'}
             </Button>
@@ -1449,7 +1723,10 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                     variant='outline'
                     size='sm'
                     className='border-emerald-500/40 text-emerald-100 hover:bg-emerald-500/20'
-                    disabled={backupRunNowMutation.isPending}
+                    disabled={
+                      backupRunNowMutation.isPending ||
+                      !operationControlsDraft.allowManualBackupRunNow
+                    }
                     onClick={(): void => {
                       void runBackupNow(dbType);
                     }}
@@ -1464,6 +1741,116 @@ export default function DatabaseEnginePage(): React.JSX.Element {
       </SectionPanel>
 
       <SectionPanel className='mt-6 p-5'>
+        <div className='flex flex-wrap items-start justify-between gap-3'>
+          <div>
+            <h2 className='text-lg font-semibold text-white'>Engine Operations Runtime</h2>
+            <p className='mt-1 text-sm text-gray-400'>
+              Recent db backup/sync jobs queued by Database Engine actions and scheduler.
+            </p>
+          </div>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={(): void => {
+              void operationsJobsQuery.refetch();
+            }}
+            disabled={operationsJobsQuery.isFetching}
+          >
+            {operationsJobsQuery.isFetching ? 'Refreshing...' : 'Refresh Jobs'}
+          </Button>
+        </div>
+
+        <div className='mt-4 grid gap-2 text-xs sm:grid-cols-4'>
+          <div className='rounded border border-gray-800/80 bg-black/20 px-2 py-2 text-gray-300'>
+            Queue: {operationQueueStatus ? (operationQueueStatus.running ? 'Running' : 'Stopped') : 'Unknown'}
+          </div>
+          <div className='rounded border border-gray-800/80 bg-black/20 px-2 py-2 text-gray-300'>
+            Healthy: {operationQueueStatus ? (operationQueueStatus.healthy ? 'Yes' : 'No') : 'Unknown'}
+          </div>
+          <div className='rounded border border-gray-800/80 bg-black/20 px-2 py-2 text-gray-300'>
+            Processing: {operationQueueStatus ? (operationQueueStatus.processing ? 'Yes' : 'No') : 'Unknown'}
+          </div>
+          <div className='rounded border border-gray-800/80 bg-black/20 px-2 py-2 text-gray-300'>
+            Last poll: {operationQueueStatus ? `${Math.floor(operationQueueStatus.timeSinceLastPoll / 1000)}s ago` : 'n/a'}
+          </div>
+        </div>
+
+        <div className='mt-4 overflow-auto'>
+          <table className='min-w-full text-xs'>
+            <thead>
+              <tr className='border-b border-gray-800 text-left text-gray-400'>
+                <th className='px-2 py-2'>Job</th>
+                <th className='px-2 py-2'>Type</th>
+                <th className='px-2 py-2'>Target</th>
+                <th className='px-2 py-2'>Status</th>
+                <th className='px-2 py-2'>Created</th>
+                <th className='px-2 py-2'>Finished</th>
+                <th className='px-2 py-2'>Summary</th>
+                <th className='px-2 py-2'>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {operationJobs.length === 0 && (
+                <tr>
+                  <td colSpan={8} className='px-2 py-4 text-center text-gray-500'>
+                    No Database Engine operation jobs found.
+                  </td>
+                </tr>
+              )}
+              {operationJobs.map((job) => {
+                const statusClassName =
+                  job.status === 'completed'
+                    ? 'text-emerald-300'
+                    : job.status === 'failed'
+                      ? 'text-red-300'
+                      : job.status === 'running'
+                        ? 'text-blue-300'
+                        : job.status === 'pending'
+                          ? 'text-amber-300'
+                          : 'text-gray-300';
+                const canCancel = job.status === 'pending' || job.status === 'running';
+                return (
+                  <tr key={job.id} className='border-b border-gray-900'>
+                    <td className='px-2 py-2 font-mono text-gray-200' title={job.id}>
+                      {shortenId(job.id)}
+                    </td>
+                    <td className='px-2 py-2 text-gray-300'>{job.type}</td>
+                    <td className='px-2 py-2 text-gray-300'>
+                      {job.type === 'db_backup'
+                        ? (job.dbType ?? 'n/a')
+                        : (job.direction ?? 'n/a')}
+                    </td>
+                    <td className={`px-2 py-2 ${statusClassName}`}>{job.status}</td>
+                    <td className='px-2 py-2 text-gray-400'>{formatDateTime(job.createdAt)}</td>
+                    <td className='px-2 py-2 text-gray-400'>{formatDateTime(job.finishedAt)}</td>
+                    <td className='px-2 py-2 text-gray-300'>
+                      {job.errorMessage ?? job.resultSummary ?? '--'}
+                    </td>
+                    <td className='px-2 py-2'>
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        disabled={
+                          !canCancel ||
+                          cancelOperationJobMutation.isPending ||
+                          !operationControlsDraft.allowOperationJobCancellation
+                        }
+                        onClick={(): void => {
+                          void cancelOperationJob(job.id);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </SectionPanel>
+
+      <SectionPanel className='mt-6 p-5'>
         <h2 className='text-lg font-semibold text-white'>Migration and Backfill Controls</h2>
         <p className='mt-1 text-sm text-gray-400'>
           Manual-only controls for full database sync and settings backfill.
@@ -1473,6 +1860,7 @@ export default function DatabaseEnginePage(): React.JSX.Element {
             variant='outline'
             className='border-red-500/40 text-red-100 hover:bg-red-500/20'
             onClick={(): void => setPendingSyncDirection('mongo_to_prisma')}
+            disabled={!operationControlsDraft.allowManualFullSync}
           >
             Run Full Sync: MongoDB to Prisma
           </Button>
@@ -1480,6 +1868,7 @@ export default function DatabaseEnginePage(): React.JSX.Element {
             variant='outline'
             className='border-red-500/40 text-red-100 hover:bg-red-500/20'
             onClick={(): void => setPendingSyncDirection('prisma_to_mongo')}
+            disabled={!operationControlsDraft.allowManualFullSync}
           >
             Run Full Sync: Prisma to MongoDB
           </Button>
@@ -1509,7 +1898,7 @@ export default function DatabaseEnginePage(): React.JSX.Element {
             onClick={(): void => {
               void runBackfill(true);
             }}
-            disabled={backfillMutation.isPending}
+            disabled={backfillMutation.isPending || !operationControlsDraft.allowManualBackfill}
           >
             Dry Run Backfill
           </Button>
@@ -1518,7 +1907,7 @@ export default function DatabaseEnginePage(): React.JSX.Element {
             onClick={(): void => {
               void runBackfill(false);
             }}
-            disabled={backfillMutation.isPending}
+            disabled={backfillMutation.isPending || !operationControlsDraft.allowManualBackfill}
             className='border-amber-500/40 text-amber-100 hover:bg-amber-500/20'
           >
             Run Backfill
@@ -1532,6 +1921,11 @@ export default function DatabaseEnginePage(): React.JSX.Element {
           </div>
         )}
       </SectionPanel>
+        </>
+      ) : null}
+
+      {workspaceView === 'backups' ? <DatabaseBackupsPanel /> : null}
+      {workspaceView === 'operations' ? <DatabaseOperationsPanel /> : null}
     </PageLayout>
   );
 }

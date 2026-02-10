@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { auth } from '@/features/auth/server';
+import { assertDatabaseEngineOperationEnabled } from '@/features/database/services/database-engine-operation-guards';
 import { enqueueProductAiJob, processSingleJob, startProductAiJobQueue } from '@/features/jobs/server';
 import { ActivityTypes, logActivity, logSystemError } from '@/features/observability/server';
 import { authError, forbiddenError } from '@/shared/errors/app-error';
@@ -36,6 +37,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   }
 
   const { direction, skipAuthCollections, manual } = parsed.data;
+  await assertDatabaseEngineOperationEnabled('allowManualFullSync');
+
   const enginePolicy = await getDatabaseEnginePolicy();
   if (!enginePolicy.allowAutomaticMigrations && manual !== true) {
     throw forbiddenError(

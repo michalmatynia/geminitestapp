@@ -5,6 +5,7 @@ import {
   REDACTED_VALUE,
   truncateString,
 } from './client-redaction';
+import { getLastUserAction, initUserActionTracker } from './user-action-tracker';
 
 type ClientErrorContext = Record<string, unknown>;
 type SerializedContext =
@@ -92,8 +93,13 @@ const buildPayload = (
     extra?.context || Object.keys(baseContext).length > 0
       ? { ...baseContext, ...(extra?.context ?? {}) }
       : null;
-  if (mergedContext) {
-    const serialized = safeSerialize(mergedContext);
+  
+  if (mergedContext || getLastUserAction()) {
+    const contextToSerialize = {
+      ...(mergedContext || {}),
+      ...(getLastUserAction() ? { lastAction: getLastUserAction() } : {}),
+    };
+    const serialized = safeSerialize(contextToSerialize);
     if (serialized) payload.context = serialized as ClientErrorContext;
   }
 
@@ -135,6 +141,7 @@ let handlerAttached = false;
 export const initClientErrorReporting = (): void => {
   if (handlerAttached || typeof window === 'undefined') return;
   handlerAttached = true;
+  initUserActionTracker();
 
   // Expose for Playwright tests in non-production environments
   if (process.env['NODE_ENV'] !== 'production') {

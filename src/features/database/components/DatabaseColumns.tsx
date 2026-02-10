@@ -34,6 +34,10 @@ export const getDatabaseColumns = (options?: {
   onPreview?: (backupName: string) => void;
   onRestoreRequest?: (backup: DatabaseInfo) => void;
   onDeleteRequest?: (backupName: string) => void;
+  disableRestore?: boolean;
+  disableDelete?: boolean;
+  restoreDisabledReason?: string;
+  deleteDisabledReason?: string;
 }): ColumnDef<DatabaseInfo>[] => [
   {
     accessorKey: 'name',
@@ -83,6 +87,8 @@ export const getDatabaseColumns = (options?: {
           )}
 
           <Button
+            disabled={Boolean(options?.disableRestore)}
+            title={options?.disableRestore ? options.restoreDisabledReason : undefined}
             onClick={(): void => {
               options?.onRestoreRequest?.(backup);
             }}
@@ -92,6 +98,8 @@ export const getDatabaseColumns = (options?: {
 
           <Button
             variant='destructive'
+            disabled={Boolean(options?.disableDelete)}
+            title={options?.disableDelete ? options.deleteDisabledReason : undefined}
             onClick={(): void => {
               options?.onDeleteRequest?.(backup.name);
             }}

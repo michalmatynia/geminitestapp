@@ -3,7 +3,7 @@ import { api } from '@/shared/lib/api-client';
 import type { AuthUserSummary } from '../types';
 
 export type AuthUsersResponse = {
-  provider: 'mongodb';
+  provider: 'mongodb' | 'prisma';
   users: AuthUserSummary[];
 };
 
@@ -62,6 +62,12 @@ export const updateAuthUserSecurity = async (
       payload: { userId, mfaEnabled: false, allowedIps: [], disabledAt: null, bannedAt: null } 
     };
   }
+};
+
+export const deleteAuthUser = async (
+  userId: string
+): Promise<{ id: string; deleted: boolean }> => {
+  return api.delete<{ id: string; deleted: boolean }>(`/api/auth/users/${userId}`);
 };
 
 export const mockSignIn = async (input: { email: string; password: string }): Promise<{ ok: boolean; payload: { ok?: boolean; message?: string } }> => {

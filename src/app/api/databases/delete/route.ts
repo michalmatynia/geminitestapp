@@ -11,11 +11,16 @@ import {
   mongoBackupsDir,
   assertValidMongoBackupName,
 } from '@/features/database/server';
+import { assertDatabaseEngineManageAccess } from '@/features/database/services/database-engine-access';
+import { assertDatabaseEngineOperationEnabled } from '@/features/database/services/database-engine-operation-guards';
 import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  await assertDatabaseEngineManageAccess();
+  await assertDatabaseEngineOperationEnabled('allowManualBackupMaintenance');
+
   const { backupName, type } = (await req.json()) as {
     backupName: string;
     type?: 'postgresql' | 'mongodb';

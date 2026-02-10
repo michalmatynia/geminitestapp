@@ -6,6 +6,7 @@ import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 
 import type { DatabaseInfo } from '@/features/database';
+import { assertDatabaseEngineManageAccess } from '@/features/database/services/database-engine-access';
 import {
   pgBackupsDir,
   ensurePgBackupsDir,
@@ -57,6 +58,8 @@ async function getBackups(type: 'postgresql' | 'mongodb'): Promise<DatabaseInfo[
 }
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  await assertDatabaseEngineManageAccess();
+
   const { searchParams } = new URL(req.url);
   const type = (searchParams.get('type') as 'postgresql' | 'mongodb') || 'postgresql';
 

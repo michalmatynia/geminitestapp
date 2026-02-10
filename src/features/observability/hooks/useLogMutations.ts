@@ -6,10 +6,14 @@ import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { AiInsightRecord } from '@/shared/types';
 
-export function useClearLogsMutation(): UseMutationResult<boolean, Error, void> {
+type ClearLogsResponse = {
+  deleted: number;
+};
+
+export function useClearLogsMutation(): UseMutationResult<ClearLogsResponse, Error, void> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => api.delete<boolean>('/api/system/logs'),
+    mutationFn: () => api.delete<ClearLogsResponse>('/api/system/logs'),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.system.logs.all });
     },

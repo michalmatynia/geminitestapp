@@ -83,7 +83,7 @@ type SystemLogsContextValue = {
   insightsQuery: UseQueryResult<{ insights: AiInsightRecord[] }, Error>;
   runInsightMutation: UseMutationResult<{ insight: AiInsightRecord }, Error, void>;
   interpretLogMutation: UseMutationResult<{ insight: AiInsightRecord }, Error, string>;
-  clearLogsMutation: UseMutationResult<boolean, Error, void>;
+  clearLogsMutation: UseMutationResult<{ deleted: number }, Error, void>;
   rebuildIndexesMutation: UseMutationResult<unknown, Error, void>;
   isClearLogsConfirmOpen: boolean;
   setIsClearLogsConfirmOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -251,9 +251,14 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
   };
 
   const handleClearLogs = async (): Promise<void> => {
+    setIsClearLogsConfirmOpen(false);
     try {
-      await clearLogsMutation.mutateAsync();
-      toast('System logs cleared.', { variant: 'success' });
+      const result = await clearLogsMutation.mutateAsync();
+      const deleted = typeof result?.deleted === 'number' ? result.deleted : 0;
+      toast(`System logs cleared (${deleted}).`, { variant: 'success' });
+      void logsQuery.refetch();
+      void metricsQuery.refetch();
+      void insightsQuery.refetch();
     } catch (error: unknown) {
       toast(error instanceof Error ? error.message : 'Failed to clear logs.', {
         variant: 'error',

@@ -5,6 +5,7 @@ import { RefreshCw } from 'lucide-react';
 import { ErrorBoundary, type FallbackProps } from 'react-error-boundary';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { getLastUserAction } from '@/shared/utils/observability/user-action-tracker';
 
 import { Button } from './button';
 
@@ -43,7 +44,11 @@ export function QueryErrorBoundary({ children }: QueryErrorBoundaryProps) {
       onError={(error, info) => {
         logClientError(error, {
           componentStack: info.componentStack,
-          context: { source: 'QueryErrorBoundary' },
+          context: {
+            source: 'QueryErrorBoundary',
+            lastUserAction: getLastUserAction(),
+            route: typeof window !== 'undefined' ? window.location.pathname : null,
+          },
         });
       }}
       resetKeys={[]}

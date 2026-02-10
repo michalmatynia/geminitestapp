@@ -91,6 +91,10 @@ const UNSUPPORTED_IMAGE_EXTENSIONS = new Set([
   '.svg',
 ]);
 
+const BASE_IMAGE_MAX_BYTES = 1_900_000;
+const BASE_IMAGE_CLAMP_DIMENSIONS = [1600, 1400, 1200, 1000, 900, 800, 700, 600];
+const BASE_IMAGE_CLAMP_QUALITIES = [85, 75, 65, 55, 45];
+
 const normalizeMimeType = (value?: string | null): string | null => {
   if (!value) return null;
   const trimmed = value.trim().toLowerCase();
@@ -287,6 +291,9 @@ const PRODUCER_TARGET_FIELDS = new Set([
   'producer',
   'producer_id',
   'producer_ids',
+  'manufacturer',
+  'manufacturer_id',
+  'manufacturer_ids',
 ]);
 
 const TAG_TARGET_FIELDS = new Set([
@@ -332,6 +339,17 @@ const normalizeExportTargetField = (targetField: string): string => {
     return 'producer_id';
   }
   if (normalized === 'producerids') {
+    return 'producer_ids';
+  }
+  if (
+    normalized === 'producer' ||
+    normalized === 'manufacturer' ||
+    normalized === 'manufacturerid' ||
+    normalized === 'manufacturer_id'
+  ) {
+    return 'producer_id';
+  }
+  if (normalized === 'manufacturerids' || normalized === 'manufacturer_ids') {
     return 'producer_ids';
   }
   if (normalized === 'tagid') {
@@ -496,9 +514,25 @@ const buildTagNameToExternalIdLookup = (
 
 const normalizeProducerTargetField = (targetField: string): string | null => {
   const normalized = targetField.trim().toLowerCase();
-  if (normalized === 'producerid') return 'producer_id';
-  if (normalized === 'producerids') return 'producer_ids';
-  if (PRODUCER_TARGET_FIELDS.has(normalized)) return normalized;
+  if (
+    normalized === 'producer' ||
+    normalized === 'producerid' ||
+    normalized === 'producer_id' ||
+    normalized === 'manufacturer' ||
+    normalized === 'manufacturerid' ||
+    normalized === 'manufacturer_id'
+  ) {
+    return 'producer_id';
+  }
+  if (
+    normalized === 'producerids' ||
+    normalized === 'producer_ids' ||
+    normalized === 'manufacturerids' ||
+    normalized === 'manufacturer_ids'
+  ) {
+    return 'producer_ids';
+  }
+  if (PRODUCER_TARGET_FIELDS.has(normalized)) return 'producer_id';
   return null;
 };
 
@@ -1077,6 +1111,100 @@ const imageToBase64DataUri = async (
       }
     }
 
+    if (outputBuffer.length > BASE_IMAGE_MAX_BYTES) {
+      const dimensionCandidates = Array.from(
+        new Set(
+          [
+            maxDimension ?? null,
+            ...(metadataWidth && metadataHeight
+              ? [Math.min(Math.max(metadataWidth, metadataHeight), 1600)]
+              : []),
+            ...BASE_IMAGE_CLAMP_DIMENSIONS,
+          ]
+            .filter((value): value is number => Boolean(value) && value > 0)
+            .map((value: number) => Math.round(value))
+        )
+      );
+      const qualityCandidates = Array.from(
+        new Set(
+          [
+            transform?.jpegQuality ?? null,
+            ...BASE_IMAGE_CLAMP_QUALITIES,
+          ]
+            .filter((value): value is number => Boolean(value) && value > 0)
+            .map((value: number) => Math.round(value))
+        )
+      );
+
+      let bestBuffer = outputBuffer;
+      let bestDimension: number | null = null;
+      let bestQuality: number | null = null;
+      let reachedLimit = false;
+
+      outer: for (const dimension of dimensionCandidates) {
+        for (const quality of qualityCandidates) {
+          try {
+            const candidate = await sharp(buffer, { failOnError: false })
+              .resize({
+                width: dimension,
+                height: dimension,
+                fit: 'inside',
+                withoutEnlargement: true,
+              })
+              .jpeg({ quality, mozjpeg: true })
+              .toBuffer();
+
+            if (candidate.length < bestBuffer.length) {
+              bestBuffer = candidate;
+              bestDimension = dimension;
+              bestQuality = quality;
+            }
+
+            if (candidate.length <= BASE_IMAGE_MAX_BYTES) {
+              reachedLimit = true;
+              break outer;
+            }
+          } catch (error: unknown) {
+            diagnostics?.log('Image clamp candidate failed', {
+              source: filepath,
+              sourceType,
+              index,
+              dimension,
+              quality,
+              error: error instanceof Error ? error.message : String(error),
+            });
+          }
+        }
+      }
+
+      outputBuffer = bestBuffer;
+      outputFormat = 'image/jpeg';
+      converted = true;
+      resized = resized || bestDimension !== null;
+
+      diagnostics?.log('Applied image size clamp for Base export', {
+        source: filepath,
+        sourceType,
+        index,
+        targetMaxBytes: BASE_IMAGE_MAX_BYTES,
+        outputBytes: outputBuffer.length,
+        dimension: bestDimension,
+        quality: bestQuality,
+        reachedLimit,
+      });
+    }
+
+    if (outputBuffer.length > BASE_IMAGE_MAX_BYTES) {
+      diagnostics?.log('Skipping image: exceeds Base.com size limit after compression', {
+        source: filepath,
+        sourceType,
+        index,
+        outputBytes: outputBuffer.length,
+        maxBytes: BASE_IMAGE_MAX_BYTES,
+      });
+      return null;
+    }
+
     const base64 = outputBuffer.toString('base64');
     diagnostics?.log('Prepared image for Base export', {
       source: filepath,
@@ -1368,6 +1496,7 @@ function applyExportTemplateMappings(
 
     const producerTarget = normalizeProducerTargetField(targetField);
     if (producerTarget) {
+      const normalizedTargetField = targetField.trim().toLowerCase();
       const producerValues =
         producerTarget === 'producer'
           ? toProducerNameValueList(rawValue, producerNameById)
@@ -1378,9 +1507,36 @@ function applyExportTemplateMappings(
           );
       if (producerValues.length === 0) continue;
       if (producerTarget === 'producer' || producerTarget === 'producer_id') {
-        result[targetField] = producerValues[0] ?? null;
+        const producerValue = producerValues[0] ?? null;
+        result[targetField] = producerValue;
+        if (
+          (normalizedTargetField === 'producer' ||
+            normalizedTargetField === 'producer_id') &&
+          result['manufacturer_id'] === undefined
+        ) {
+          result['manufacturer_id'] = producerValue;
+        }
+        if (
+          (normalizedTargetField === 'manufacturer' ||
+            normalizedTargetField === 'manufacturer_id') &&
+          result['producer_id'] === undefined
+        ) {
+          result['producer_id'] = producerValue;
+        }
       } else {
         result[targetField] = producerValues;
+        if (
+          normalizedTargetField === 'producer_ids' &&
+          result['manufacturer_ids'] === undefined
+        ) {
+          result['manufacturer_ids'] = producerValues;
+        }
+        if (
+          normalizedTargetField === 'manufacturer_ids' &&
+          result['producer_ids'] === undefined
+        ) {
+          result['producer_ids'] = producerValues;
+        }
       }
       continue;
     }

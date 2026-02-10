@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMut
 
 import type {
   DatabaseEngineBackupSchedulerStatusDto as DatabaseEngineBackupSchedulerStatusResponse,
+  DatabaseEngineOperationsJobsDto as DatabaseEngineOperationsJobsResponse,
   DatabaseEngineProviderPreviewDto as DatabaseEngineProviderPreviewResponse,
   DatabaseEngineStatusDto as DatabaseEngineStatusResponse,
   RedisOverviewDto as RedisOverviewResponse,
@@ -21,9 +22,11 @@ import {
   executeCrudOperation,
   fetchAllCollectionsSchema,
   fetchDatabaseEngineBackupSchedulerStatus,
+  fetchDatabaseEngineOperationsJobs,
   fetchDatabaseEngineStatus,
   fetchDatabaseEngineProviderPreview,
   fetchRedisOverview,
+  cancelDatabaseEngineOperationJob,
   runDatabaseEngineBackupNow,
   runDatabaseEngineBackupSchedulerTick,
   copyCollectionBetweenProviders,
@@ -209,6 +212,17 @@ export function useDatabaseBackupSchedulerStatus(): UseQueryResult<
   });
 }
 
+export function useDatabaseEngineOperationsJobs(
+  limit = 30
+): UseQueryResult<DatabaseEngineOperationsJobsResponse, Error> {
+  return useQuery({
+    queryKey: dbKeys.engineOperationsJobs({ limit }),
+    queryFn: () => fetchDatabaseEngineOperationsJobs(limit),
+    staleTime: 10_000,
+    refetchInterval: 20_000,
+  });
+}
+
 export function useDatabaseBackupSchedulerTickMutation(): UseMutationResult<
   DatabaseEngineBackupSchedulerTickResponse,
   Error,
@@ -235,6 +249,22 @@ export function useDatabaseBackupRunNowMutation(): UseMutationResult<
       void queryClient.invalidateQueries({ queryKey: dbKeys.engineBackupSchedulerStatus });
       payload.queued.forEach((item) => {
         void queryClient.invalidateQueries({ queryKey: dbKeys.backups(item.dbType) });
+      });
+    },
+  });
+}
+
+export function useCancelDatabaseEngineOperationJobMutation(): UseMutationResult<
+  { success: boolean; job: unknown },
+  Error,
+  { jobId: string }
+  > {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ jobId }) => cancelDatabaseEngineOperationJob(jobId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: dbKeys.engineOperationsJobs({ limit: 30 }),
       });
     },
   });

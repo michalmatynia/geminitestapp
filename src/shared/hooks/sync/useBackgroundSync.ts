@@ -1,7 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { logClientError } from '@/features/observability';
-import { logger } from '@/shared/utils/logger';
 
 interface BackgroundSyncOptions {
   queryKey: unknown[];

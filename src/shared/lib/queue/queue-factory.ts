@@ -1,6 +1,5 @@
 import 'server-only';
 
-import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
 import { Queue, Worker } from 'bullmq';
 
 import { logger } from '@/shared/utils/logger';
@@ -65,7 +64,9 @@ export function createManagedQueue<TJobData>(
     if (workerStarted) return;
     const connection = getRedisConnection();
     if (!connection) {
-      void logSystemEvent({ level: 'info', message: `Redis not available for queue ${config.name}, using inline processing mode`, source: `queue-factory:${config.name}` });
+      logger.info(
+        `[queue-factory:${config.name}] Redis not available, using inline processing mode`,
+      );
       return;
     }
     workerStarted = true;
@@ -100,22 +101,13 @@ export function createManagedQueue<TJobData>(
     }
 
     worker.on('error', (err: Error) => {
-      void (async (): Promise<void> => {
-        try {
-          await ErrorSystem.captureException(err, {
-            service: `queue-worker:${config.name}`,
-            category: 'SYSTEM',
-          });
-        } catch (logError) {
-          logger.error(
-            `[${config.name}] Failed to log worker error to ErrorSystem`,
-            logError,
-          );
-        }
-      })();
+      logger.error(`[queue-factory:${config.name}] Worker error`, err);
     });
 
-    void logSystemEvent({ level: 'info', message: `BullMQ worker started (concurrency: ${config.concurrency})`, source: `queue-factory:${config.name}`, context: { concurrency: config.concurrency } });
+    logger.info(
+      `[queue-factory:${config.name}] BullMQ worker started (concurrency: ${config.concurrency})`,
+      { concurrency: config.concurrency },
+    );
   };
 
   const stopWorker = async (): Promise<void> => {
@@ -128,7 +120,7 @@ export function createManagedQueue<TJobData>(
       queue = null;
     }
     workerStarted = false;
-    void logSystemEvent({ level: 'info', message: 'Worker stopped', source: `queue-factory:${config.name}` });
+    logger.info(`[queue-factory:${config.name}] Worker stopped`);
   };
 
   const getHealthStatus = async (): Promise<QueueHealthStatus> => {

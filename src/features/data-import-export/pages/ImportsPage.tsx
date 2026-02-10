@@ -19,6 +19,7 @@ import type {
 import {
   Button,
   Checkbox,
+  ConfirmDialog,
   Input,
   Tabs,
   TabsContent,
@@ -41,6 +42,7 @@ function ImportsPageContent(): React.JSX.Element {
     templateScope,
     setTemplateScope,
     handleNewTemplate,
+    handleDuplicateTemplate,
     handleSaveTemplate,
     handleDeleteTemplate,
     savingImportTemplate,
@@ -67,6 +69,7 @@ function ImportsPageContent(): React.JSX.Element {
   } = useImportExport();
 
   const isImportTemplateScope = templateScope === 'import';
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const currentTemplates = isImportTemplateScope ? importTemplates : exportTemplates;
   const currentActiveTemplateId = isImportTemplateScope ? importActiveTemplateId : exportActiveTemplateId;
   const currentTemplateMappings = isImportTemplateScope ? importTemplateMappings : exportTemplateMappings;
@@ -122,8 +125,21 @@ function ImportsPageContent(): React.JSX.Element {
               </Tabs>
               <div className='flex gap-2'>
                 <Button variant='secondary' onClick={handleNewTemplate}>New</Button>
+                <Button
+                  variant='secondary'
+                  onClick={() => { void handleDuplicateTemplate(); }}
+                  disabled={!currentActiveTemplateId || savingImportTemplate || savingExportTemplate}
+                >
+                  Duplicate
+                </Button>
                 <Button onClick={() => { void handleSaveTemplate(); }} disabled={savingImportTemplate || savingExportTemplate}>Save</Button>
-                <Button variant='destructive' onClick={() => { void handleDeleteTemplate(); }} disabled={!currentActiveTemplateId}>Delete</Button>
+                <Button
+                  variant='destructive'
+                  onClick={() => setDeleteDialogOpen(true)}
+                  disabled={!currentActiveTemplateId}
+                >
+                  Delete
+                </Button>
               </div>
             </div>
             <div className='grid md:grid-cols-[220px_1fr] gap-4'>
@@ -199,6 +215,20 @@ function ImportsPageContent(): React.JSX.Element {
           </div>
         </TabsContent>
       </Tabs>
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title='Delete template'
+        description='Are you sure you want to delete this template? This action cannot be undone.'
+        confirmText='Delete'
+        variant='destructive'
+        loading={savingImportTemplate || savingExportTemplate}
+        onConfirm={() => {
+          void handleDeleteTemplate().finally(() => setDeleteDialogOpen(false));
+        }}
+        onCancel={() => setDeleteDialogOpen(false)}
+      />
     </SectionPanel>
   );
 }

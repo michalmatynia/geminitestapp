@@ -20,6 +20,7 @@ import { invalidateCollectionProviderMapCache } from '@/shared/lib/db/collection
 import {
   DATABASE_ENGINE_BACKUP_SCHEDULE_KEY,
   DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY,
+  DATABASE_ENGINE_OPERATION_CONTROLS_KEY,
   DATABASE_ENGINE_POLICY_KEY,
   DATABASE_ENGINE_SERVICE_ROUTE_MAP_KEY,
 } from '@/shared/lib/db/database-engine-constants';
@@ -751,6 +752,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     setting.key === DATABASE_ENGINE_SERVICE_ROUTE_MAP_KEY ||
     setting.key === DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY ||
     setting.key === DATABASE_ENGINE_BACKUP_SCHEDULE_KEY ||
+    setting.key === DATABASE_ENGINE_OPERATION_CONTROLS_KEY ||
     setting.key === 'collection_provider_map'
   ) {
     invalidateDatabaseEnginePolicyCache();

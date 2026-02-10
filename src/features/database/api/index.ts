@@ -1,5 +1,6 @@
 import type {
   DatabaseEngineBackupSchedulerStatusDto as DatabaseEngineBackupSchedulerStatusResponse,
+  DatabaseEngineOperationsJobsDto as DatabaseEngineOperationsJobsResponse,
   DatabaseEngineProviderPreviewDto as DatabaseEngineProviderPreviewResponse,
   DatabaseEngineStatusDto as DatabaseEngineStatusResponse,
   RedisOverviewDto as RedisOverviewResponse,
@@ -278,6 +279,19 @@ export const fetchDatabaseEngineProviderPreview = async (
   return res.json() as Promise<DatabaseEngineProviderPreviewResponse>;
 };
 
+export const fetchDatabaseEngineOperationsJobs = async (
+  limit = 30
+): Promise<DatabaseEngineOperationsJobsResponse> => {
+  const res = await fetch(
+    `/api/databases/engine/operations/jobs?limit=${encodeURIComponent(String(limit))}`,
+    { cache: 'no-store' }
+  );
+  if (!res.ok) {
+    throw new Error('Failed to fetch Database Engine operations jobs');
+  }
+  return res.json() as Promise<DatabaseEngineOperationsJobsResponse>;
+};
+
 export const runDatabaseEngineBackupSchedulerTick = async (): Promise<DatabaseEngineBackupSchedulerTickResponse> => {
   const res = await fetch('/api/databases/engine/backup-scheduler/tick', {
     method: 'POST',
@@ -303,6 +317,20 @@ export const runDatabaseEngineBackupNow = async (
     throw new Error(payload?.error || 'Failed to queue manual database backup');
   }
   return res.json() as Promise<DatabaseEngineBackupRunNowResponse>;
+};
+
+export const cancelDatabaseEngineOperationJob = async (
+  jobId: string
+): Promise<{ success: boolean; job: unknown }> => {
+  const res = await fetch(`/api/databases/engine/operations/jobs/${encodeURIComponent(jobId)}/cancel`, {
+    method: 'POST',
+    headers: withCsrfHeaders(),
+  });
+  if (!res.ok) {
+    const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(payload?.error || 'Failed to cancel Database Engine operation job');
+  }
+  return res.json() as Promise<{ success: boolean; job: unknown }>;
 };
 
 export const copyCollectionBetweenProviders = async (

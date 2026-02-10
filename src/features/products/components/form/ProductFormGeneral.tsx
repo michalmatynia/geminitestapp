@@ -262,6 +262,8 @@ export default function ProductFormGeneral({
     [filteredLanguages]
   );
   const firstLanguageTab = languageTabValues[0] ?? '';
+  const resolvedActiveNameTab = activeNameTab || firstLanguageTab;
+  const resolvedActiveDescriptionTab = activeDescriptionTab || firstLanguageTab;
 
   useEffect(() => {
     if (!firstLanguageTab) {
@@ -360,7 +362,7 @@ export default function ProductFormGeneral({
       {hasCatalogs && languagesReady && (
         <FormSection>
           <Tabs
-            value={activeNameTab}
+            value={resolvedActiveNameTab}
             onValueChange={setActiveNameTab}
             className='w-full'
           >
@@ -433,7 +435,7 @@ export default function ProductFormGeneral({
           </Tabs>
 
           <Tabs
-            value={activeDescriptionTab}
+            value={resolvedActiveDescriptionTab}
             onValueChange={setActiveDescriptionTab}
             className='w-full mt-4'
           >

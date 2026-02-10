@@ -1,7 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { logClientError } from '@/features/observability';
-import { logger } from '@/shared/utils/logger';
 
 interface WebSocketSyncOptions {
   url: string;

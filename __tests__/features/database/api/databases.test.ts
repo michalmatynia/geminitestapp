@@ -13,8 +13,14 @@ import { GET as GET_BACKUPS } from '@/app/api/databases/backups/route';
 import { POST as POST_DELETE } from '@/app/api/databases/delete/route';
 import { POST as POST_RESTORE } from '@/app/api/databases/restore/route';
 import { POST as POST_UPLOAD } from '@/app/api/databases/upload/route';
+import { auth } from '@/features/auth/server';
 import { execFileAsync } from '@/features/database/utils/postgres';
-import { enqueueProductAiJob, processSingleJob, startProductAiJobQueue } from '@/features/jobs/server';
+import {
+  enqueueProductAiJob,
+  enqueueProductAiJobToQueue,
+  startProductAiJobQueue,
+} from '@/features/jobs/server';
+import { getDatabaseEngineOperationControls } from '@/shared/lib/db/database-engine-policy';
 import prisma from '@/shared/lib/db/prisma';
 
 
@@ -28,13 +34,37 @@ vi.mock('@/features/database/utils/postgres', async (importOriginal) => {
 
 vi.mock('@/features/jobs/server', () => ({
   enqueueProductAiJob: vi.fn(),
-  processSingleJob: vi.fn(),
+  enqueueProductAiJobToQueue: vi.fn(),
   startProductAiJobQueue: vi.fn(),
+}));
+
+vi.mock('@/features/auth/server', () => ({
+  auth: vi.fn(),
+}));
+
+vi.mock('@/shared/lib/db/database-engine-policy', () => ({
+  getDatabaseEngineOperationControls: vi.fn(),
 }));
 
 describe('Databases API', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.mocked(auth).mockResolvedValue({
+      user: {
+        id: 'user-1',
+        isElevated: true,
+        permissions: ['settings.manage'],
+      },
+    } as Awaited<ReturnType<typeof auth>>);
+    vi.mocked(getDatabaseEngineOperationControls).mockResolvedValue({
+      allowManualFullSync: true,
+      allowManualCollectionSync: true,
+      allowManualBackfill: true,
+      allowManualBackupRunNow: true,
+      allowManualBackupMaintenance: true,
+      allowBackupSchedulerTick: true,
+      allowOperationJobCancellation: true,
+    });
     (execFileAsync as Mock).mockResolvedValue({ stdout: 'stdout', stderr: 'stderr' });
     vi.mocked(enqueueProductAiJob).mockResolvedValue({
       id: 'job-backup-1',
@@ -51,7 +81,7 @@ describe('Databases API', () => {
       finishedAt: null,
       completedAt: null,
     });
-    vi.mocked(processSingleJob).mockResolvedValue(undefined);
+    vi.mocked(enqueueProductAiJobToQueue).mockResolvedValue(undefined);
     vi.mocked(startProductAiJobQueue).mockImplementation(() => {});
     process.env['DATABASE_URL'] = 'postgresql://localhost:5432/test';
     vi.mocked(prisma.$queryRaw).mockResolvedValue([]);
@@ -83,8 +113,13 @@ describe('Databases API', () => {
           source: 'db_backup',
         })
       );
-      expect(processSingleJob).toHaveBeenCalledWith('job-backup-1');
-      expect(startProductAiJobQueue).not.toHaveBeenCalled();
+      expect(startProductAiJobQueue).toHaveBeenCalledTimes(1);
+      expect(enqueueProductAiJobToQueue).toHaveBeenCalledWith(
+        'job-backup-1',
+        'system',
+        'db_backup',
+        expect.any(Object),
+      );
     });
   });
 
@@ -104,6 +139,30 @@ describe('Databases API', () => {
       expect(res.status).toEqual(200);
       expect(execFileAsync).toHaveBeenCalledTimes(1);
       expect(fs.writeFile).toHaveBeenCalledTimes(2);
+    });
+
+    it('should reject restore when backup maintenance is disabled', async () => {
+      vi.mocked(getDatabaseEngineOperationControls).mockResolvedValue({
+        allowManualFullSync: true,
+        allowManualCollectionSync: true,
+        allowManualBackfill: true,
+        allowManualBackupRunNow: true,
+        allowManualBackupMaintenance: false,
+        allowBackupSchedulerTick: true,
+        allowOperationJobCancellation: true,
+      });
+
+      const res = await POST_RESTORE(
+        new NextRequest('http://localhost/api/databases/restore', {
+          method: 'POST',
+          body: JSON.stringify({
+            backupName: 'test-backup.dump',
+          }),
+        })
+      );
+
+      expect(res.status).toEqual(403);
+      expect(execFileAsync).not.toHaveBeenCalled();
     });
   });
 

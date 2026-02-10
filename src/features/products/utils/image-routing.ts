@@ -32,6 +32,11 @@ export const resolveProductImageUrl = (
     return value;
   }
 
+  // Keep local object URLs used for in-modal previews.
+  if (value.startsWith('blob:')) {
+    return value;
+  }
+
   const normalizedBase = normalizeProductImageExternalBaseUrl(externalBaseUrl);
 
   if (value.startsWith('/')) {
@@ -41,6 +46,10 @@ export const resolveProductImageUrl = (
   if (/^[a-z][a-z0-9+.-]*:/i.test(value)) {
     try {
       const parsed = new URL(value);
+      const protocol = parsed.protocol.toLowerCase();
+      if (protocol !== 'http:' && protocol !== 'https:') {
+        return value;
+      }
       const path = `${parsed.pathname}${parsed.search}${parsed.hash}`;
       return joinPathToBase(path, normalizedBase) || value;
     } catch {

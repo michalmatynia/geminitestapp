@@ -511,7 +511,7 @@ function SystemLogsContent(): React.JSX.Element {
             size='sm'
             onClick={() => setIsClearLogsConfirmOpen(true)}
             className='border-red-500/40 text-red-200 hover:bg-red-500/10'
-            disabled={logs.length === 0 || clearLogsMutation.isPending}
+            disabled={clearLogsMutation.isPending}
           >
             <Trash2 className='mr-2 h-4 w-4' />
             {clearLogsMutation.isPending ? 'Clearing...' : 'Clear Logs'}

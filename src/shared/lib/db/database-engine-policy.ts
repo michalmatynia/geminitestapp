@@ -8,14 +8,18 @@ import {
   DATABASE_ENGINE_SERVICE_ROUTE_MAP_KEY,
   DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY,
   DATABASE_ENGINE_BACKUP_SCHEDULE_KEY,
+  DATABASE_ENGINE_OPERATION_CONTROLS_KEY,
   DEFAULT_DATABASE_ENGINE_POLICY,
+  DEFAULT_DATABASE_ENGINE_OPERATION_CONTROLS,
   type DatabaseEnginePolicy,
   type DatabaseEngineBackupSchedule,
+  type DatabaseEngineOperationControls,
   type DatabaseEngineProvider,
   type DatabaseEnginePrimaryProvider,
   type DatabaseEngineServiceRoute,
 } from './database-engine-constants';
 import { normalizeDatabaseEngineBackupSchedule } from './database-engine-backup-schedule';
+import { normalizeDatabaseEngineOperationControls } from './database-engine-operation-controls';
 
 const CACHE_TTL_MS = 30_000;
 
@@ -32,6 +36,9 @@ let collectionRouteMapInflight: Promise<Record<string, DatabaseEngineProvider>> 
 
 let backupScheduleCache: CachedValue<DatabaseEngineBackupSchedule> | null = null;
 let backupScheduleInflight: Promise<DatabaseEngineBackupSchedule> | null = null;
+
+let operationControlsCache: CachedValue<DatabaseEngineOperationControls> | null = null;
+let operationControlsInflight: Promise<DatabaseEngineOperationControls> | null = null;
 
 const isValidProvider = (value: string): value is DatabaseEngineProvider =>
   value === 'mongodb' || value === 'prisma' || value === 'redis';
@@ -106,6 +113,9 @@ const parseCollectionRouteMap = (raw: unknown): Record<string, DatabaseEnginePro
 
 const parseBackupSchedule = (raw: unknown): DatabaseEngineBackupSchedule =>
   normalizeDatabaseEngineBackupSchedule(raw);
+
+const parseOperationControls = (raw: unknown): DatabaseEngineOperationControls =>
+  normalizeDatabaseEngineOperationControls(raw);
 
 const readPrismaSetting = async (key: string): Promise<string | null> => {
   if (!process.env['DATABASE_URL']) return null;
@@ -237,6 +247,30 @@ export async function getDatabaseEngineBackupSchedule(): Promise<DatabaseEngineB
   }
 }
 
+export async function getDatabaseEngineOperationControls(): Promise<DatabaseEngineOperationControls> {
+  const now = Date.now();
+  if (operationControlsCache && now - operationControlsCache.ts < CACHE_TTL_MS) {
+    return operationControlsCache.value;
+  }
+  if (operationControlsInflight) {
+    return operationControlsInflight;
+  }
+
+  operationControlsInflight = (async (): Promise<DatabaseEngineOperationControls> => {
+    const raw = await readSettingValue(DATABASE_ENGINE_OPERATION_CONTROLS_KEY);
+    if (!raw) return { ...DEFAULT_DATABASE_ENGINE_OPERATION_CONTROLS };
+    return parseOperationControls(raw);
+  })();
+
+  try {
+    const value = await operationControlsInflight;
+    operationControlsCache = { value, ts: Date.now() };
+    return value;
+  } finally {
+    operationControlsInflight = null;
+  }
+}
+
 export async function getDatabaseEngineServiceProvider(
   service: DatabaseEngineServiceRoute
 ): Promise<DatabaseEngineProvider | null> {
@@ -260,4 +294,6 @@ export const invalidateDatabaseEnginePolicyCache = (): void => {
   collectionRouteMapInflight = null;
   backupScheduleCache = null;
   backupScheduleInflight = null;
+  operationControlsCache = null;
+  operationControlsInflight = null;
 };

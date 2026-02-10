@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
 
 export default function Page(): never {
-  redirect('/admin/databases/engine?view=operations');
+  redirect('/admin/databases/engine?view=backups');
 }

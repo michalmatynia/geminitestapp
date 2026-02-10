@@ -131,6 +131,7 @@ interface ImportExportContextType {
   handleSaveExportSettings: () => Promise<void>;
   handleClearInventory: () => Promise<void>;
   handleNewTemplate: () => void;
+  handleDuplicateTemplate: () => Promise<void>;
   handleSaveTemplate: () => Promise<void>;
   handleDeleteTemplate: () => Promise<void>;
   applyTemplate: (template: Template, scope: 'import' | 'export') => void;
@@ -191,6 +192,8 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   const hasInitializedPrefs = useRef(false);
   const hasInitializedInventories = useRef(false);
   const hasInitializedImportListSelection = useRef(false);
+  const hasHydratedImportActiveTemplatePref = useRef(false);
+  const hasHydratedExportActiveTemplatePref = useRef(false);
 
   // Queries
   const { data: integrationsWithConnections = [], isLoading: checkingIntegration } = useIntegrationsWithConnections();
@@ -246,11 +249,11 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     'last-template',
     '/api/integrations/imports/base/last-template'
   );
-  const { data: activeImportTemplatePref } = useImportPreference<{ templateId?: string | null }>(
+  const { data: activeImportTemplatePref, isFetched: hasFetchedActiveImportTemplatePref } = useImportPreference<{ templateId?: string | null }>(
     'active-template',
     '/api/integrations/imports/base/active-template'
   );
-  const { data: activeExportTemplatePref } = useImportPreference<{ templateId?: string | null }>(
+  const { data: activeExportTemplatePref, isFetched: hasFetchedActiveExportTemplatePref } = useImportPreference<{ templateId?: string | null }>(
     'export-active-template',
     '/api/integrations/exports/base/active-template'
   );
@@ -322,22 +325,40 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   }, [lastImportTemplatePref, defaultExportInventoryPref, defaultConnectionPref, exportStockFallbackPref, imageRetryPresetsPref, sampleProductPref, baseConnections]);
 
   useEffect(() => {
-    if (activeImportTemplatePref?.templateId && importTemplates.length > 0 && !importActiveTemplateId) {
+    if (hasHydratedImportActiveTemplatePref.current) return;
+    if (!hasFetchedActiveImportTemplatePref || importTemplates.length === 0) return;
+    if (activeImportTemplatePref?.templateId && !importActiveTemplateId) {
       const preferred = importTemplates.find((t: Template) => t.id === activeImportTemplatePref.templateId);
       if (preferred) {
         requestAnimationFrame(() => applyTemplate(preferred, 'import'));
       }
     }
-  }, [activeImportTemplatePref, importTemplates, importActiveTemplateId, applyTemplate]);
+    hasHydratedImportActiveTemplatePref.current = true;
+  }, [
+    activeImportTemplatePref,
+    hasFetchedActiveImportTemplatePref,
+    importTemplates,
+    importActiveTemplateId,
+    applyTemplate,
+  ]);
 
   useEffect(() => {
-    if (activeExportTemplatePref?.templateId && exportTemplates.length > 0 && !exportActiveTemplateId) {
+    if (hasHydratedExportActiveTemplatePref.current) return;
+    if (!hasFetchedActiveExportTemplatePref || exportTemplates.length === 0) return;
+    if (activeExportTemplatePref?.templateId && !exportActiveTemplateId) {
       const preferred = exportTemplates.find((t: Template) => t.id === activeExportTemplatePref.templateId);
       if (preferred) {
         requestAnimationFrame(() => applyTemplate(preferred, 'export'));
       }
     }
-  }, [activeExportTemplatePref, exportTemplates, exportActiveTemplateId, applyTemplate]);
+    hasHydratedExportActiveTemplatePref.current = true;
+  }, [
+    activeExportTemplatePref,
+    hasFetchedActiveExportTemplatePref,
+    exportTemplates,
+    exportActiveTemplateId,
+    applyTemplate,
+  ]);
 
   // Mutations
   const savePreferenceMutation = useSavePreferenceMutation();
@@ -346,6 +367,8 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   const clearInventoryMutation = useClearInventoryMutation();
   const saveImportTemplateMutation = useTemplateMutation('import', importActiveTemplateId);
   const saveExportTemplateMutation = useTemplateMutation('export', exportActiveTemplateId);
+  const createImportTemplateMutation = useTemplateMutation('import');
+  const createExportTemplateMutation = useTemplateMutation('export');
 
   // Auto-save preferences
   useEffect(() => {
@@ -567,6 +590,49 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     }
   };
 
+  const handleDuplicateTemplate = async (): Promise<void> => {
+    const isImport = templateScope === 'import';
+    const activeId = isImport ? importActiveTemplateId : exportActiveTemplateId;
+    if (!activeId) {
+      toast('Select a template to duplicate.', { variant: 'error' });
+      return;
+    }
+
+    const sourceTemplate = (isImport ? importTemplates : exportTemplates).find(
+      (template: Template) => template.id === activeId,
+    );
+    if (!sourceTemplate) {
+      toast('Selected template is missing.', { variant: 'error' });
+      return;
+    }
+
+    const cleanMappings = (sourceTemplate.mappings ?? [])
+      .map((mapping: TemplateMapping) => ({
+        sourceKey: mapping.sourceKey?.trim() ?? '',
+        targetField: mapping.targetField?.trim() ?? '',
+      }))
+      .filter((mapping: TemplateMapping) => mapping.sourceKey && mapping.targetField);
+
+    const mutation = isImport ? createImportTemplateMutation : createExportTemplateMutation;
+    const duplicatedName = `${(sourceTemplate.name || 'Template').trim()} Copy`;
+
+    try {
+      const duplicated = (await mutation.mutateAsync({
+        data: {
+          name: duplicatedName,
+          description: sourceTemplate.description?.trim() || undefined,
+          mappings: cleanMappings,
+          ...(isImport ? {} : { exportImagesAsBase64: sourceTemplate.exportImagesAsBase64 ?? false }),
+        },
+      })) as Template;
+      applyTemplate(duplicated, isImport ? 'import' : 'export');
+      toast('Template duplicated.', { variant: 'success' });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Template duplicate failed';
+      toast(message, { variant: 'error' });
+    }
+  };
+
   const handleSaveTemplate = async (): Promise<void> => {
     const isImport = templateScope === 'import';
     const name = isImport ? importTemplateName : exportTemplateName;
@@ -604,7 +670,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   const handleDeleteTemplate = async (): Promise<void> => {
     const isImport = templateScope === 'import';
     const activeId = isImport ? importActiveTemplateId : exportActiveTemplateId;
-    if (!activeId || !confirm('Are you sure?')) return;
+    if (!activeId) return;
     
     const mutation = isImport ? saveImportTemplateMutation : saveExportTemplateMutation;
     try {
@@ -709,14 +775,15 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     handleSaveExportSettings,
     handleClearInventory,
     handleNewTemplate,
+    handleDuplicateTemplate,
     handleSaveTemplate,
     handleDeleteTemplate,
     applyTemplate,
 
     importing: importMutation.isPending,
     savingExportSettings: saveExportSettingsMutation.isPending,
-    savingImportTemplate: saveImportTemplateMutation.isPending,
-    savingExportTemplate: saveExportTemplateMutation.isPending,
+    savingImportTemplate: saveImportTemplateMutation.isPending || createImportTemplateMutation.isPending,
+    savingExportTemplate: saveExportTemplateMutation.isPending || createExportTemplateMutation.isPending,
   };
 
   return (

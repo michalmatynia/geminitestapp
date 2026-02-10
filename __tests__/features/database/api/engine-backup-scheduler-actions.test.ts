@@ -13,7 +13,12 @@ import {
   tickDatabaseBackupScheduler,
 } from '@/features/database/services/database-backup-scheduler';
 import { auth } from '@/features/auth/server';
-import { enqueueProductAiJob, processSingleJob, startProductAiJobQueue } from '@/features/jobs/server';
+import {
+  enqueueProductAiJob,
+  enqueueProductAiJobToQueue,
+  startProductAiJobQueue,
+} from '@/features/jobs/server';
+import { getDatabaseEngineOperationControls } from '@/shared/lib/db/database-engine-policy';
 import {
   DATABASE_BACKUP_SCHEDULER_REPEAT_EVERY_MS,
   getDatabaseBackupSchedulerQueueStatus,
@@ -33,6 +38,10 @@ vi.mock('@/features/auth/server', () => ({
   auth: vi.fn(),
 }));
 
+vi.mock('@/shared/lib/db/database-engine-policy', () => ({
+  getDatabaseEngineOperationControls: vi.fn(),
+}));
+
 vi.mock('@/features/database/services/database-backup-scheduler', () => ({
   tickDatabaseBackupScheduler: vi.fn(),
   getDatabaseBackupSchedulerStatus: vi.fn(),
@@ -47,7 +56,7 @@ vi.mock('@/features/jobs/workers/databaseBackupSchedulerQueue', () => ({
 
 vi.mock('@/features/jobs/server', () => ({
   enqueueProductAiJob: vi.fn(),
-  processSingleJob: vi.fn(),
+  enqueueProductAiJobToQueue: vi.fn(),
   startProductAiJobQueue: vi.fn(),
 }));
 
@@ -58,6 +67,15 @@ vi.mock('@/features/observability/server', () => ({
 describe('Database Engine backup scheduler actions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getDatabaseEngineOperationControls).mockResolvedValue({
+      allowManualFullSync: true,
+      allowManualCollectionSync: true,
+      allowManualBackfill: true,
+      allowManualBackupRunNow: true,
+      allowManualBackupMaintenance: true,
+      allowBackupSchedulerTick: true,
+      allowOperationJobCancellation: true,
+    });
     vi.mocked(auth).mockResolvedValue({
       user: {
         id: 'user-1',
@@ -147,7 +165,7 @@ describe('Database Engine backup scheduler actions', () => {
         productId: 'system',
         status: 'pending',
       } as Awaited<ReturnType<typeof enqueueProductAiJob>>);
-    vi.mocked(processSingleJob).mockResolvedValue(undefined);
+    vi.mocked(enqueueProductAiJobToQueue).mockResolvedValue(undefined);
 
     const res = await POST_RUN_NOW(
       new NextRequest('http://localhost/api/databases/engine/backup-scheduler/run-now', {
@@ -168,7 +186,52 @@ describe('Database Engine backup scheduler actions', () => {
     });
     expect(enqueueProductAiJob).toHaveBeenCalledTimes(2);
     expect(markDatabaseBackupJobQueued).toHaveBeenCalledTimes(2);
-    expect(processSingleJob).toHaveBeenCalledTimes(2);
-    expect(startProductAiJobQueue).not.toHaveBeenCalled();
+    expect(startProductAiJobQueue).toHaveBeenCalledTimes(1);
+    expect(enqueueProductAiJobToQueue).toHaveBeenCalledTimes(2);
+  });
+
+  it('POST /api/databases/engine/backup-scheduler/tick returns forbidden when manual tick is disabled', async () => {
+    vi.mocked(getDatabaseEngineOperationControls).mockResolvedValue({
+      allowManualFullSync: true,
+      allowManualCollectionSync: true,
+      allowManualBackfill: true,
+      allowManualBackupRunNow: true,
+      allowManualBackupMaintenance: true,
+      allowBackupSchedulerTick: false,
+      allowOperationJobCancellation: true,
+    });
+
+    await expect(
+      POST_TICK(
+        new NextRequest('http://localhost/api/databases/engine/backup-scheduler/tick', {
+          method: 'POST',
+        })
+      )
+    ).rejects.toThrow('disabled by Database Engine controls');
+    expect(startDatabaseBackupSchedulerQueue).not.toHaveBeenCalled();
+    expect(tickDatabaseBackupScheduler).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/databases/engine/backup-scheduler/run-now returns forbidden when manual backup is disabled', async () => {
+    vi.mocked(getDatabaseEngineOperationControls).mockResolvedValue({
+      allowManualFullSync: true,
+      allowManualCollectionSync: true,
+      allowManualBackfill: true,
+      allowManualBackupRunNow: false,
+      allowManualBackupMaintenance: true,
+      allowBackupSchedulerTick: true,
+      allowOperationJobCancellation: true,
+    });
+
+    await expect(
+      POST_RUN_NOW(
+        new NextRequest('http://localhost/api/databases/engine/backup-scheduler/run-now', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ dbType: 'all' }),
+        })
+      )
+    ).rejects.toThrow('disabled by Database Engine controls');
+    expect(enqueueProductAiJob).not.toHaveBeenCalled();
   });
 });

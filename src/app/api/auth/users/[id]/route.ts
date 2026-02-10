@@ -4,14 +4,19 @@ import { z } from 'zod';
 
 import { normalizeAuthEmail } from '@/features/auth/server';
 import { auth } from '@/features/auth/server';
+import { invalidateAuthAccessCache } from '@/features/auth/services/auth-access';
 import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/services/auth-provider';
+import { invalidateAuthSecurityProfileCache } from '@/features/auth/services/auth-security-profile';
+import { invalidateUserPreferencesCache } from '@/features/auth/services/user-preferences-repository';
+import { AUTH_SETTINGS_KEYS, type AuthUserRoleMap } from '@/features/auth/utils/auth-management';
 import { logAuthEvent } from '@/features/auth/utils/auth-request-logger';
 import type { AuthUserDto } from '@/shared/dtos/auth';
-import { authError, badRequestError, conflictError, internalError, notFoundError } from '@/shared/errors/app-error';
+import { authError, badRequestError, conflictError, forbiddenError, internalError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
+import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 export const runtime = 'nodejs';
 
@@ -22,13 +27,91 @@ const updateSchema = z.object({
 });
 
 type MongoUserDoc = {
-  _id: ObjectId;
+  _id: ObjectId | string;
   email?: string | null;
   name?: string | null;
   image?: string | null;
   emailVerified?: Date | null;
   createdAt?: Date | null;
   updatedAt?: Date | null;
+};
+
+type MongoSettingDoc = {
+  _id?: string;
+  key?: string;
+  value?: string | null;
+  createdAt?: Date;
+  updatedAt?: Date;
+};
+
+const USER_ROLES_SETTING_KEY = AUTH_SETTINGS_KEYS.userRoles;
+
+const buildMongoUserIdFilter = (userId: string): {
+  _id: ObjectId | string | { $in: Array<ObjectId | string> };
+} => {
+  if (ObjectId.isValid(userId)) {
+    return { _id: { $in: [new ObjectId(userId), userId] } };
+  }
+  return { _id: userId };
+};
+
+const buildMongoUserIdCandidates = (userId: string): Array<ObjectId | string> => {
+  if (ObjectId.isValid(userId)) {
+    return [new ObjectId(userId), userId];
+  }
+  return [userId];
+};
+
+const removeRoleMappingForUser = async (provider: 'prisma' | 'mongodb', userId: string): Promise<boolean> => {
+  if (provider === 'prisma') {
+    const current = await prisma.setting.findUnique({
+      where: { key: USER_ROLES_SETTING_KEY },
+      select: { value: true },
+    });
+    const userRoles = parseJsonSetting<AuthUserRoleMap>(current?.value ?? null, {});
+    if (!(userId in userRoles)) {
+      return false;
+    }
+
+    delete userRoles[userId];
+    const nextValue = serializeSetting(userRoles);
+    await prisma.setting.upsert({
+      where: { key: USER_ROLES_SETTING_KEY },
+      update: { value: nextValue },
+      create: { key: USER_ROLES_SETTING_KEY, value: nextValue },
+    });
+    return true;
+  }
+
+  if (!process.env['MONGODB_URI']) {
+    return false;
+  }
+  const db = await getMongoDb();
+  const settingsCollection = db.collection<MongoSettingDoc>('settings');
+  const current = await settingsCollection.findOne({
+    $or: [{ _id: USER_ROLES_SETTING_KEY }, { key: USER_ROLES_SETTING_KEY }],
+  });
+  const userRoles = parseJsonSetting<AuthUserRoleMap>(current?.value ?? null, {});
+  if (!(userId in userRoles)) {
+    return false;
+  }
+
+  delete userRoles[userId];
+  const now = new Date();
+  await settingsCollection.updateOne(
+    { $or: [{ _id: USER_ROLES_SETTING_KEY }, { key: USER_ROLES_SETTING_KEY }] },
+    {
+      $set: {
+        _id: USER_ROLES_SETTING_KEY,
+        key: USER_ROLES_SETTING_KEY,
+        value: serializeSetting(userRoles),
+        updatedAt: now,
+      },
+      $setOnInsert: { createdAt: now },
+    },
+    { upsert: true }
+  );
+  return true;
 };
 
 async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
@@ -134,14 +217,11 @@ async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext, params: {
   if (!process.env['MONGODB_URI']) {
     throw internalError('MongoDB is not configured.');
   }
-  if (!ObjectId.isValid(userId)) {
-    throw notFoundError('User not found.');
-  }
   const db = await getMongoDb();
-  const objectId = new ObjectId(userId);
+  const userIdFilter = buildMongoUserIdFilter(userId);
   const existing = await db
     .collection<MongoUserDoc>('users')
-    .findOne({ _id: objectId });
+    .findOne(userIdFilter);
   if (!existing) {
     throw notFoundError('User not found.');
   }
@@ -167,13 +247,13 @@ async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext, params: {
   };
 
   await db.collection<MongoUserDoc>('users').updateOne(
-    { _id: objectId },
+    userIdFilter,
     { $set: updateDoc }
   );
 
   const updated = await db
     .collection<MongoUserDoc>('users')
-    .findOne({ _id: objectId });
+    .findOne(userIdFilter);
   if (!updated) {
     throw notFoundError('User not found.');
   }
@@ -201,6 +281,109 @@ async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext, params: {
   return NextResponse.json(payload);
 }
 
+async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+  const session = await auth();
+  const hasAccess =
+    session?.user?.isElevated ||
+    session?.user?.permissions?.includes('auth.users.write');
+  if (!hasAccess) {
+    throw authError('Unauthorized.');
+  }
+
+  const { id: userId } = params;
+  if (!userId) {
+    throw badRequestError('Missing user id.');
+  }
+  if (session?.user?.id === userId) {
+    throw forbiddenError('You cannot delete your own account while signed in.');
+  }
+
+  await logAuthEvent({
+    req,
+    action: 'auth.users.delete',
+    stage: 'start',
+    userId: session?.user?.id ?? null,
+    body: { targetUserId: userId },
+  });
+
+  const provider = requireAuthProvider(await getAuthDataProvider());
+
+  if (provider === 'prisma') {
+    if (!process.env['DATABASE_URL']) {
+      throw internalError('Prisma is not configured.');
+    }
+    const existing = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true },
+    });
+    if (!existing) {
+      throw notFoundError('User not found.');
+    }
+
+    await prisma.$transaction([
+      prisma.account.deleteMany({ where: { userId } }),
+      prisma.session.deleteMany({ where: { userId } }),
+      prisma.authSecurityProfile.deleteMany({ where: { userId } }),
+      prisma.userPreferences.deleteMany({ where: { userId } }),
+      prisma.user.delete({ where: { id: userId } }),
+    ]);
+
+    const roleMappingRemoved = await removeRoleMappingForUser(provider, userId);
+    invalidateAuthAccessCache(userId);
+    invalidateAuthSecurityProfileCache(userId);
+    invalidateUserPreferencesCache(userId);
+
+    await logAuthEvent({
+      req,
+      action: 'auth.users.delete',
+      stage: 'success',
+      userId: session?.user?.id ?? null,
+      body: { targetUserId: userId, roleMappingRemoved },
+      status: 200,
+    });
+    return NextResponse.json({ id: userId, deleted: true });
+  }
+
+  if (!process.env['MONGODB_URI']) {
+    throw internalError('MongoDB is not configured.');
+  }
+
+  const db = await getMongoDb();
+  const userIdFilter = buildMongoUserIdFilter(userId);
+  const existing = await db.collection<MongoUserDoc>('users').findOne(userIdFilter);
+  if (!existing) {
+    throw notFoundError('User not found.');
+  }
+  const userIdCandidates = buildMongoUserIdCandidates(userId);
+
+  await Promise.all([
+    db.collection<MongoUserDoc>('users').deleteOne(userIdFilter),
+    db.collection('accounts').deleteMany({ userId: { $in: userIdCandidates } }),
+    db.collection('sessions').deleteMany({ userId: { $in: userIdCandidates } }),
+    db.collection('auth_security_profiles').deleteMany({
+      $or: [{ _id: { $in: userIdCandidates } }, { userId: { $in: userIdCandidates } }],
+    }),
+    db.collection('user_preferences').deleteMany({
+      userId: { $in: userIdCandidates },
+    }),
+  ]);
+
+  const roleMappingRemoved = await removeRoleMappingForUser(provider, userId);
+  invalidateAuthAccessCache(userId);
+  invalidateAuthSecurityProfileCache(userId);
+  invalidateUserPreferencesCache(userId);
+
+  await logAuthEvent({
+    req,
+    action: 'auth.users.delete',
+    stage: 'success',
+    userId: session?.user?.id ?? null,
+    body: { targetUserId: userId, roleMappingRemoved },
+    status: 200,
+  });
+  return NextResponse.json({ id: userId, deleted: true });
+}
+
 export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, {
   source: 'auth.users.[id].PATCH',
   parseJsonBody: true,
@@ -208,5 +391,12 @@ export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, {
   rateLimitKey: 'write',
   maxBodyBytes: 20_000,
   allowedMethods: ['PATCH'],
+  requireCsrf: false,
+});
+
+export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, {
+  source: 'auth.users.[id].DELETE',
+  rateLimitKey: 'write',
+  allowedMethods: ['DELETE'],
   requireCsrf: false,
 });

@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 
 import { auth } from '@/features/auth/server';
+import { assertDatabaseEngineOperationEnabled } from '@/features/database/services/database-engine-operation-guards';
 import { authError, forbiddenError, internalError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -42,6 +43,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   if (!parsed.ok) {
     return parsed.response;
   }
+
+  await assertDatabaseEngineOperationEnabled('allowManualBackfill');
 
   const enginePolicy = await getDatabaseEnginePolicy();
   if (!enginePolicy.allowAutomaticBackfill && parsed.data.manual !== true) {

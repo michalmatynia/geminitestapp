@@ -5,7 +5,6 @@ import { useMutation, useQuery, useQueryClient, type UseMutationResult, type Use
 import { logClientError } from '@/features/observability';
 
 import { api } from '@/shared/lib/api-client';
-import { logger } from '@/shared/utils/logger';
 import type { UserPreferences, UserPreferencesUpdate } from '@/shared/types/domain/user-preferences';
 import {
   normalizeUserPreferencesResponse,

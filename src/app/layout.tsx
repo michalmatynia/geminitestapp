@@ -10,6 +10,7 @@ import { QueryProvider } from '@/shared/providers/QueryProvider';
 import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider';
 import { ThemeProvider } from '@/shared/providers/theme-provider';
 import { UrlGuardProvider } from '@/shared/providers/UrlGuardProvider';
+import { AppErrorBoundary } from '@/shared/ui/AppErrorBoundary';
 import { ToastProvider } from '@/shared/ui/toast';
 import { cn } from '@/shared/utils';
 
@@ -51,7 +52,9 @@ export default function RootLayout({
                     <Suspense fallback={null}>
                       <PageAnalyticsTracker />
                     </Suspense>
-                    {children}
+                    <AppErrorBoundary source="RootLayout">
+                      {children}
+                    </AppErrorBoundary>
                   </ThemeProvider>
                 </SessionProvider>
               </BackgroundSyncProvider>

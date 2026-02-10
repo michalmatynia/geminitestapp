@@ -3,6 +3,7 @@ export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@/features/auth/server';
+import { assertDatabaseEngineOperationEnabled } from '@/features/database/services/database-engine-operation-guards';
 import {
   getDatabaseBackupSchedulerStatus,
   tickDatabaseBackupScheduler,
@@ -25,10 +26,12 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise
     throw authError('Unauthorized.');
   }
 
+  await assertDatabaseEngineOperationEnabled('allowBackupSchedulerTick');
+
   startDatabaseBackupSchedulerQueue();
 
-  const [tick, status, queue] = await Promise.all([
-    tickDatabaseBackupScheduler(),
+  const tick = await tickDatabaseBackupScheduler();
+  const [status, queue] = await Promise.all([
     getDatabaseBackupSchedulerStatus(),
     getDatabaseBackupSchedulerQueueStatus(),
   ]);

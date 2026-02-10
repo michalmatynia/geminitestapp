@@ -8,6 +8,7 @@ import {
   useAuthUserSecurity,
   useMockSignIn,
   useRegisterUser,
+  useDeleteAuthUser,
   useUpdateAuthUser,
   useUpdateAuthUserSecurity,
 } from '@/features/auth/hooks/useAuthQueries';
@@ -19,16 +20,25 @@ import {
 } from '@/features/auth/utils/auth-management';
 import { DEFAULT_AUTH_SECURITY_POLICY } from '@/features/auth/utils/auth-security';
 import { logClientError } from '@/features/observability';
-import { Button, ListPanel, SectionHeader, SectionPanel, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, useToast, Textarea, Checkbox, Badge } from '@/shared/ui';
+import { Badge, Button, Checkbox, ConfirmDialog, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Input, Label, ListPanel, SectionHeader, SectionPanel, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 type CreateUserForm = typeof EMPTY_CREATE;
 
 const EMPTY_CREATE = { name: '', email: '', password: '', roleId: 'none', verified: false };
 
+const getSessionUserId = (sessionValue: unknown): string | null => {
+  if (typeof sessionValue !== 'object' || sessionValue === null) return null;
+  const sessionObject = sessionValue as { user?: unknown };
+  if (typeof sessionObject.user !== 'object' || sessionObject.user === null) return null;
+  const userObject = sessionObject.user as { id?: unknown };
+  return typeof userObject.id === 'string' ? userObject.id : null;
+};
+
 export default function AuthUsersPage(): React.JSX.Element {
   const { toast } = useToast();
   const {
+    session,
     roles,
     userRoles,
     canReadUsers,
@@ -44,6 +54,7 @@ export default function AuthUsersPage(): React.JSX.Element {
   const [dirtyRoles, setDirtyRoles] = useState(false);
 
   const [editingUser, setEditingUser] = useState<AuthUserSummary | null>(null);
+  const [userToDelete, setUserToDelete] = useState<AuthUserSummary | null>(null);
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editVerified, setEditVerified] = useState(false);
@@ -64,6 +75,7 @@ export default function AuthUsersPage(): React.JSX.Element {
   const authUsersQuery = useAuthUsers(canReadUsers);
   const updateAuthUserMutation = useUpdateAuthUser();
   const updateAuthUserSecurityMutation = useUpdateAuthUserSecurity();
+  const deleteAuthUserMutation = useDeleteAuthUser();
   const registerUserMutation = useRegisterUser();
   const mockSignInMutation = useMockSignIn();
 
@@ -71,6 +83,7 @@ export default function AuthUsersPage(): React.JSX.Element {
   const loading = (canReadUsers && authUsersQuery.isPending) || authLoading;
   const loadingSecurity = canManageSecurity && userSecurityQuery.isPending;
   const provider = authUsersQuery.data?.provider ?? 'mongodb';
+  const currentSessionUserId = useMemo(() => getSessionUserId(session), [session]);
 
   useEffect(() => {
     if (!authUsersQuery.error || !canReadUsers) return;
@@ -212,6 +225,51 @@ export default function AuthUsersPage(): React.JSX.Element {
     } catch (error) {
       logClientError(error, { context: { source: 'AuthUsersPage', action: 'disableMfa', userId: editingUser.id } });
       toast('Failed to disable MFA', { variant: 'error' });
+    }
+  };
+
+  const handleDeleteUser = async (): Promise<void> => {
+    if (!userToDelete) return;
+    if (userToDelete.id === currentSessionUserId) {
+      toast('You cannot delete your own account while signed in.', { variant: 'error' });
+      return;
+    }
+    try {
+      await deleteAuthUserMutation.mutateAsync({ userId: userToDelete.id });
+      setUsers((prev: AuthUserSummary[]) =>
+        prev.filter((user: AuthUserSummary) => user.id !== userToDelete.id)
+      );
+      if (localUserRoles[userToDelete.id]) {
+        const nextRoles: AuthUserRoleMap = { ...localUserRoles };
+        delete nextRoles[userToDelete.id];
+        setLocalUserRoles(nextRoles);
+        try {
+          await updateSetting.mutateAsync({
+            key: AUTH_SETTINGS_KEYS.userRoles,
+            value: serializeSetting(nextRoles),
+          });
+          setDirtyRoles(false);
+        } catch (roleUpdateError) {
+          logClientError(roleUpdateError, {
+            context: {
+              source: 'AuthUsersPage',
+              action: 'cleanupRoleAfterDelete',
+              userId: userToDelete.id,
+            },
+          });
+          setDirtyRoles(true);
+        }
+      }
+      if (editingUser?.id === userToDelete.id) {
+        setEditingUser(null);
+      }
+      toast('User deleted', { variant: 'success' });
+      setUserToDelete(null);
+    } catch (error) {
+      logClientError(error, {
+        context: { source: 'AuthUsersPage', action: 'deleteUser', userId: userToDelete.id },
+      });
+      toast('Failed to delete user', { variant: 'error' });
     }
   };
 
@@ -440,6 +498,18 @@ export default function AuthUsersPage(): React.JSX.Element {
                       <Button variant='ghost' size='sm' onClick={() => handleOpenEdit(user)}>
                         Edit
                       </Button>
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        className='text-red-300 hover:text-red-200'
+                        onClick={() => setUserToDelete(user)}
+                        disabled={
+                          deleteAuthUserMutation.isPending ||
+                          user.id === currentSessionUserId
+                        }
+                      >
+                        Delete
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))
@@ -553,6 +623,17 @@ export default function AuthUsersPage(): React.JSX.Element {
             </div>
           </div>
           <DialogFooter className='pt-4'>
+            <Button
+              variant='destructive'
+              onClick={() => setUserToDelete(editingUser)}
+              disabled={
+                !editingUser ||
+                deleteAuthUserMutation.isPending ||
+                editingUser.id === currentSessionUserId
+              }
+            >
+              Delete user
+            </Button>
             <Button variant='outline' onClick={() => setEditingUser(null)}>
               Cancel
             </Button>
@@ -718,6 +799,27 @@ export default function AuthUsersPage(): React.JSX.Element {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={Boolean(userToDelete)}
+        onOpenChange={(open: boolean) => {
+          if (!open) setUserToDelete(null);
+        }}
+        title='Delete user'
+        description={
+          userToDelete?.email
+            ? `Delete ${userToDelete.email}? This action is permanent and will sign the user out from active sessions.`
+            : 'Delete this user? This action is permanent and will sign the user out from active sessions.'
+        }
+        onConfirm={() => {
+          void handleDeleteUser();
+        }}
+        onCancel={() => setUserToDelete(null)}
+        confirmText='Delete user'
+        cancelText='Cancel'
+        variant='destructive'
+        loading={deleteAuthUserMutation.isPending}
+      />
     </>
   );
 }

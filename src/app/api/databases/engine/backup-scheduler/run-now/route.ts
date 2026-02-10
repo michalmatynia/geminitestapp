@@ -4,8 +4,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { auth } from '@/features/auth/server';
+import { assertDatabaseEngineOperationEnabled } from '@/features/database/services/database-engine-operation-guards';
 import { markDatabaseBackupJobQueued } from '@/features/database/services/database-backup-scheduler';
-import { enqueueProductAiJob, processSingleJob, startProductAiJobQueue } from '@/features/jobs/server';
+import { enqueueProductAiJob, enqueueProductAiJobToQueue, startProductAiJobQueue } from '@/features/jobs/server';
 import { logSystemError } from '@/features/observability/server';
 import { authError, badRequestError, forbiddenError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
@@ -36,6 +37,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     throw forbiddenError('Database backups are disabled in production.');
   }
 
+  await assertDatabaseEngineOperationEnabled('allowManualBackupRunNow');
+
   const parsed = await parseJsonBody(req, runNowSchema, {
     logPrefix: 'databases.engine.backup-scheduler.run-now.POST',
   });
@@ -48,11 +51,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     throw badRequestError('No database targets selected for backup.');
   }
 
-  const inlineJobs =
-    process.env['AI_JOBS_INLINE'] === 'true' ||
-    !isProductionRuntime();
-
   const queued: Array<{ dbType: 'mongodb' | 'postgresql'; jobId: string }> = [];
+  startProductAiJobQueue();
 
   for (const dbType of targets) {
     const job = await enqueueProductAiJob('system', 'db_backup', {
@@ -68,20 +68,17 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       // Keep manual queue action resilient even if schedule metadata update fails.
     }
 
-    if (inlineJobs) {
-      processSingleJob(job.id).catch(async (error: unknown) => {
+    void enqueueProductAiJobToQueue(job.id, job.productId, job.type, job.payload).catch(
+      async (error: unknown) => {
         await logSystemError({
-          message: '[databases.engine.backup-scheduler.run-now] Failed to run db backup job',
+          message:
+            '[databases.engine.backup-scheduler.run-now] Failed to enqueue db backup job to runtime queue',
           error,
           source: 'api/databases/engine/backup-scheduler/run-now',
           context: { jobId: job.id, dbType },
         });
-      });
-    }
-  }
-
-  if (!inlineJobs) {
-    startProductAiJobQueue();
+      }
+    );
   }
 
   return NextResponse.json(

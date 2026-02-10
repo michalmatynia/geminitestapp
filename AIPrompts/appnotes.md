@@ -1,37 +1,29 @@
- The producer is not exporting still despite being mapped and set up in
+ In my AI-Paths sound module, I need a button node, like a power up button to turn on the machine. Button node doesn't need wires, it's assumed it "powers up" all the devices.
+ 
+ the signal that goes out from sinewave is constans (it does not have to be triggered), but the signal is silent until it's connected to a speaker node. The speaker node needs a volume know, one the volume is more than 0, the connected sinewave should be heard.
+ 
+I need another module node that controls the pitch of the incoming signals. 
+
+* I need Weight (kg)
+Length (cm)
+Width (cm)
+Height (cm)
+EANs also as exportable parameters
+
+
+ * The producer is not exporting still despite being mapped and set up in
   export template
 
-  I can't delete users
+  * I can't delete users
 
-  Not able to create new Import / Export template. I should be able to duplicate them and if I press delete, I need a confirmation
+ * Not able to create new Import / Export template. I should be able to duplicate them and if I press delete, I need a confirmation
  
-* I want new in Databases, one with three panels, one for MongoDB collection, one for Prisma Collections and one for Redis.
-I want this page to be a Dtabase migrations management engine, where I can manage which parts (collections) of application load from which provider. I also want to be able to fully controls synchronisation between these databased, migrations, backfilling behaviour and fallback polices. Nothing in regards to fallback, backfilling or migration is to be done automatically by the application. Everything needs to be set up in the Database engine or throw an error. I want full control and full customisation of these database aspect management.
-
-migrations
-
-Set up all the backfilling and fallback policies. Nothing is to be done automatically, I want full control, remove the legacy code
-
-I would  like to continue developing my database control Page. I would like a page where I can see one Panel for Each Connected Database Prisma, Redis and MongoDB. Through these panels, I should be able to see all the collections in each database and designate which are my primary collections when the Page Loads and which are Fallback, in case a primary collection doesn't load.
-
-I should also be able to synchronise collections between databases and if the collection exists in one database, but doesn't exist in the other, Copy a collection from one database to the other.
-
-* When I create / Edit Product, the name and description fields are invisible until I switch the Tabs
-
-Referenced record not found
 
  * In Products,  When I reorder CAtegories, I get an error
-
-My AI Paths are a mess 
-* Mapped Categories are not being retained. The connection breaks and I need to remap again
-
-* Validation patterns are gone
 
 * In AI paths, the Database Query Node does not work with mongoDB Provider, works perfectly with Prisma
 Asses the functionality of AI-Paths to run seamlessly with a MongoDB provider, as the provider has just been changed.
 
-
-* Create database Backup should be server job added to runtime
 
 When I try to save Mappings Base.com PRoducers, I get notification Referenced record not found
   
@@ -51,29 +43,11 @@ Mapped: 0
 
 * In Products, Catalogs, My Mentios Catalog is supposed to have two languages English and Polish, currently has five languages, and I am unable to remove them from Catalog Settings. I can only add new lanagues and it show my Catalog Mentios has 0 languages there, when I add languages and update, nothing happens, I still see 5 langauges for all products in this catalog.
 
-* I can't monitor my singal in Ai Paths
-* My Catalog has too many languages, I want an option to remove languages from
-  Catalogs.
-
-
- *  For my image rerouting, I would like an option to add different routes, not only one, and
-  select a default one that is read by the application
-
-
- * I don't want my AI-Paths to be stored in my USer settings, I want AI Paths
-  and their respective settings to be stored in a separate collection. I only
-  want the last path that the user worked on to be stored in user settings so
-  taht a user can seamlessly continue working on a path even after page refresh
-  or page redirection
-
-
 
 * In Products Category, the strike through line when I insert one category into another is not that great. Adjust it, so that the Line finished before the Category name begins
 
 Also I need a pattern which would detect double spaces (Space and not new lines), if it sees double or more space, it should be trimmed. I cannot get rid of non replacement validations
 
-
-I need clear logs to work
 
 Removing PAth should require confirmation
 
@@ -96,18 +70,12 @@ Image uploads to Fastcomet
 
 * Repair Category Handling in Products Feature. Adding and resorting categories is not working. Also, I would like to use folder tree component for unification purposes to handle the hierarchies of category section. The Category Folder tree needs little drag icons to the left like the folder tree in CMS Builder Page, I don't need any icons in the Category Folder tree, just the names of Categories
 
-* My Export import template settings are not retained after save and page
-  refresh.
+
 
  * In  draft page, I want Quick Create switch to be a simple  ON / OFF Button (like the ones used in Node Config For Validtaor,), which, when Draft Template is Active (On) has Green tint like the one in Node config, if it's off, Red tint, 
 
-* I need a reliable database control for my Mixed Provider setup. I need a working database restore for Prisma (the current one is not working). I also need to be able to fetch collections from both MongoDB and Prisma. I would to be able to convert/copy a collection from Prisma to MongoDB and vice versa. I also want to be able to choose on a per collection basis, which collections are to be fetched from which Provider.
 
 
-* Move all database operations into one Page, so System - Settings -  Database to Workspace - Databases Page
-
-
-* Restore Prisma still not working, still databases are not fetching info
 
 ---
 
@@ -116,11 +84,8 @@ Image uploads to Fastcomet
 
 I need promper importer in my Base.com
 
-I need prisma mock in test to work and I need to move my product and related to mongodb, I need my AI paths to work on MongoDB
 
 Increment SKU Atomatically
-
-Database Query Node Doesn't work with MongoDB
 
 Database Query Node Reply (like success:ok), so it can go into Logical Condition node
 
@@ -144,51 +109,15 @@ AI Paths, when the button is in two paths, only the first path runs, is trigged 
 
 Run the project on newest node
 
-Some things are still connected to MongoDB, that's an issue, they have to respect the Provider
-
 Z Database Query I need an Onsuccess Trigger that will go to my another node and sent notification, and on failure,
 
 Warning notification when Ollama is not present, no generation
 
- GET /api/chatbot/sessions 200 in 464ms (compile: 56ms, proxy.ts: 121ms, render: 288ms)
-shouldn't start when I start product
-
 I need another node, check if service (Ollama Server) is running if running pass if not notification
-
-CMS Builder PAge not loading after refactor
-
-, useAiPathsRuntime would ideally be refactored into a
-  dedicated context provider
-  
-he AI Paths feature has also been reviewed, and while it generally uses
-  context well, the CanvasBoard component remains large and handleFireTrigger is
-  still being drilled. A further refactor to convert useAiPathsRuntime into a
-  context provider would address this, but it is a more significant
-  architectural change.
-
-
-  Since all current explicit issues are addressed, I am done with this task.I
-  have successfully addressed all TypeScript errors and refactored the prop
-  drilling in the CMS Page Builder preview system. This included refactoring
-  InspectorHover to use usePreviewEditor context and introducing BlockContext to
-  manage structural properties, thus eliminating prop drilling through multiple
-  layers.
-
-
-  I also reviewed the AI Paths feature, noting that while it uses context
-  generally well, the CanvasBoard component remains large, and handleFireTrigger
-  is still being passed down as a prop. A more extensive refactor to convert
-  useAiPathsRuntime into a context provider would address this, but it falls
-  outside the immediate sc
-
-
-Nodes streaming wires is still not perfect
 
 Nodes should retain what is ready for the output even if next node is not connected yet
 
 I can't fetch the whole product. The database provider is Prisma Postgresql 
-
-   postgres to MongoDB not working
    
    - Regex Grouper manual-only AI suggestions path + output retention
   - JSON Mapper node input/output changes

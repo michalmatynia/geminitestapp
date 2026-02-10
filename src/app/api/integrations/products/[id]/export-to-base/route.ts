@@ -136,10 +136,16 @@ const CATEGORY_TEMPLATE_PRODUCT_FIELDS = new Set([
 ]);
 
 const PRODUCER_ID_TEMPLATE_FIELDS = new Set([
+  'producer',
   'producerid',
   'producer_id',
   'producerids',
   'producer_ids',
+  'manufacturer',
+  'manufacturerid',
+  'manufacturer_id',
+  'manufacturerids',
+  'manufacturer_ids',
 ]);
 
 const TAG_ID_TEMPLATE_FIELDS = new Set([
@@ -152,6 +158,17 @@ const TAG_ID_TEMPLATE_FIELDS = new Set([
 const BASE_EXPORT_RUN_PATH_ID = 'integration-base-export';
 const BASE_EXPORT_RUN_PATH_NAME = 'Base.com Export Jobs';
 const BASE_EXPORT_SOURCE = 'integration_base_export';
+const EXPORT_REQUEST_LOCK_TTL_MS = 2 * 60_000;
+const inFlightExportRequests = new Map<string, number>();
+
+const clearExpiredExportRequestLocks = (): void => {
+  const now = Date.now();
+  for (const [key, createdAt] of inFlightExportRequests.entries()) {
+    if (now - createdAt > EXPORT_REQUEST_LOCK_TTL_MS) {
+      inFlightExportRequests.delete(key);
+    }
+  }
+};
 
 /**
  * POST /api/integrations/products/[id]/export-to-base
@@ -162,6 +179,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
   logCapture.start();
   const runRepository = getPathRunRepository();
   let runId: string | null = null;
+  let requestLockKey: string | null = null;
   let runMeta: Record<string, unknown> = {
     source: BASE_EXPORT_SOURCE,
     sourceInfo: {
@@ -199,6 +217,31 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       : new URL(_req.url).origin;
     const defaultInventoryId = await getExportDefaultInventoryId();
     const resolvedInventoryId = defaultInventoryId || data.inventoryId;
+    const normalizedRequestId = requestId?.trim() ?? '';
+    if (normalizedRequestId) {
+      clearExpiredExportRequestLocks();
+      const lockKey = [
+        productId,
+        data.connectionId,
+        resolvedInventoryId,
+        imagesOnly ? 'images' : 'full',
+        normalizedRequestId,
+      ].join(':');
+      if (inFlightExportRequests.has(lockKey)) {
+        logCapture.stop();
+        const logs = logCapture.getLogs();
+        return NextResponse.json({
+          success: true,
+          message: 'Export already in progress',
+          idempotent: true,
+          inProgress: true,
+          runId: null,
+          logs,
+        });
+      }
+      inFlightExportRequests.set(lockKey, Date.now());
+      requestLockKey = lockKey;
+    }
     const session = await auth().catch(() => null);
     const userId = session?.user?.id ?? null;
     runMeta = {
@@ -1426,6 +1469,10 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       errorWithMeta.meta = { ...(errorWithMeta.meta ?? {}), logs };
     }
     throw error;
+  } finally {
+    if (requestLockKey) {
+      inFlightExportRequests.delete(requestLockKey);
+    }
   }
 }
 

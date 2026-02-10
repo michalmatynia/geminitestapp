@@ -1,7 +1,5 @@
-import { JSX } from 'react';
+import { redirect } from 'next/navigation';
 
-import { DatabasesPage } from '@/features/database';
-
-export default function Page(): JSX.Element {
-  return <DatabasesPage />;
+export default function Page(): never {
+  redirect('/admin/databases/engine');
 }

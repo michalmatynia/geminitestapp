@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { enqueueProductAiJob, processSingleJob, startProductAiJobQueue } from '@/features/jobs/server';
+import { assertDatabaseEngineManageAccess } from '@/features/database/services/database-engine-access';
+import { assertDatabaseEngineOperationEnabled } from '@/features/database/services/database-engine-operation-guards';
+import { enqueueProductAiJob, enqueueProductAiJobToQueue, startProductAiJobQueue } from '@/features/jobs/server';
 import { logSystemError } from '@/features/observability/server';
 import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
@@ -13,9 +15,13 @@ const backupTypeSchema = z.enum(['mongodb', 'postgresql']);
 const isProductionRuntime = (): boolean => process.env['NODE_ENV'] === 'production';
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  await assertDatabaseEngineManageAccess();
+
   if (isProductionRuntime()) {
     throw forbiddenError('Database backups are disabled in production.');
   }
+
+  await assertDatabaseEngineOperationEnabled('allowManualBackupRunNow');
 
   const { searchParams } = new URL(req.url);
   const parsedType = backupTypeSchema.safeParse(searchParams.get('type') ?? 'postgresql');
@@ -32,21 +38,17 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     source: 'db_backup',
   });
 
-  const inlineJobs =
-    process.env['AI_JOBS_INLINE'] === 'true' ||
-    !isProductionRuntime();
-  if (inlineJobs) {
-    processSingleJob(job.id).catch(async (error: unknown) => {
+  startProductAiJobQueue();
+  void enqueueProductAiJobToQueue(job.id, job.productId, job.type, job.payload).catch(
+    async (error: unknown) => {
       await logSystemError({
-        message: '[databases.backup] Failed to run db backup job',
+        message: '[databases.backup] Failed to enqueue db backup job to runtime queue',
         error,
         source: 'api/databases/backup',
         context: { jobId: job.id, dbType },
       });
-    });
-  } else {
-    startProductAiJobQueue();
-  }
+    }
+  );
 
   return NextResponse.json({
     success: true,

@@ -267,3 +267,38 @@ export interface DatabaseEngineBackupSchedulerStatusDto {
     postgresql: DatabaseEngineBackupTargetStatusDto;
   };
 }
+
+export type DatabaseEngineOperationJobStatusDto =
+  | 'pending'
+  | 'running'
+  | 'completed'
+  | 'failed'
+  | 'cancelled';
+
+export type DatabaseEngineOperationJobTypeDto = 'db_backup' | 'db_sync';
+
+export interface DatabaseEngineOperationJobDto {
+  id: string;
+  type: DatabaseEngineOperationJobTypeDto;
+  status: DatabaseEngineOperationJobStatusDto;
+  dbType: 'mongodb' | 'postgresql' | null;
+  direction: 'mongo_to_prisma' | 'prisma_to_mongo' | null;
+  source: string | null;
+  createdAt: string;
+  startedAt: string | null;
+  finishedAt: string | null;
+  errorMessage: string | null;
+  resultSummary: string | null;
+}
+
+export interface DatabaseEngineOperationsJobsDto {
+  timestamp: string;
+  queueStatus: {
+    running: boolean;
+    healthy: boolean;
+    processing: boolean;
+    lastPollTime: number;
+    timeSinceLastPoll: number;
+  };
+  jobs: DatabaseEngineOperationJobDto[];
+}

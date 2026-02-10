@@ -20,6 +20,8 @@ import {
   getMongoRestoreCommand,
   mongoExecFileAsync,
 } from '@/features/database/server';
+import { assertDatabaseEngineManageAccess } from '@/features/database/services/database-engine-access';
+import { assertDatabaseEngineOperationEnabled } from '@/features/database/services/database-engine-operation-guards';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -36,6 +38,9 @@ type ExecOutputishError = {
 };
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  await assertDatabaseEngineManageAccess();
+  await assertDatabaseEngineOperationEnabled('allowManualBackupMaintenance');
+
   let stage = 'parse';
   let backupName: string | null = null;
   let truncateBeforeRestore = false;

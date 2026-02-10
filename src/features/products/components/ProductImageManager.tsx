@@ -56,6 +56,7 @@ export default function ProductImageManager(): React.JSX.Element {
   const [base64LoadingSlots, setBase64LoadingSlots] = useState<Record<number, boolean>>({});
   const currentSlotIndexRef = React.useRef<number | null>(null);
   const fileInputRefs = React.useRef<Array<HTMLInputElement | null>>([]);
+  const reportedImageErrorsRef = React.useRef<Set<string>>(new Set());
 
   // Drag and drop state
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -278,6 +279,9 @@ export default function ProductImageManager(): React.JSX.Element {
     }
     return resolveProductImageUrl(slot.previewUrl, externalBaseSetting) ?? slot.previewUrl;
   };
+
+  const isLocalPreviewUrl = (url: string): boolean =>
+    url.startsWith('blob:') || url.startsWith('data:');
 
   // Drag and drop handlers
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number): void => {
@@ -632,23 +636,56 @@ export default function ProductImageManager(): React.JSX.Element {
                           <GripVertical className='h-3 w-3' />
                         </div>
                       ) : null}
-                      <NextImage
-                        src={displayUrl}
-                        alt={`Product Image ${index + 1}`}
-                        width={128}
-                        height={128}
-                        unoptimized
-                        className='rounded-md object-cover pointer-events-none'
-                        draggable={false}
-                        onDragStart={(event: React.DragEvent<HTMLImageElement>) => event.preventDefault()}
-                        onError={() =>
-                          pushDebug({
-                            action: 'image-load',
-                            message: 'Failed to load preview',
-                            slotIndex: index,
-                          })
-                        }
-                      />
+                      {isLocalPreviewUrl(displayUrl) ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={displayUrl}
+                          alt={`Product Image ${index + 1}`}
+                          className='h-full w-full rounded-md object-cover pointer-events-none'
+                          draggable={false}
+                          onDragStart={(event: React.DragEvent<HTMLImageElement>) => event.preventDefault()}
+                          onError={() => {
+                            const signature = `${index}:${displayUrl}`;
+                            if (reportedImageErrorsRef.current.has(signature)) return;
+                            reportedImageErrorsRef.current.add(signature);
+                            pushDebug({
+                              action: 'image-load',
+                              message: 'Failed to load preview',
+                              slotIndex: index,
+                            });
+                          }}
+                          onLoad={() => {
+                            const signature = `${index}:${displayUrl}`;
+                            reportedImageErrorsRef.current.delete(signature);
+                          }}
+                        />
+                      ) : (
+                        <NextImage
+                          src={displayUrl}
+                          alt={`Product Image ${index + 1}`}
+                          width={96}
+                          height={96}
+                          sizes='96px'
+                          unoptimized
+                          className='h-full w-full rounded-md object-cover pointer-events-none'
+                          draggable={false}
+                          onDragStart={(event: React.DragEvent<HTMLImageElement>) => event.preventDefault()}
+                          onError={() => {
+                            const signature = `${index}:${displayUrl}`;
+                            if (reportedImageErrorsRef.current.has(signature)) return;
+                            reportedImageErrorsRef.current.add(signature);
+                            pushDebug({
+                              action: 'image-load',
+                              message: 'Failed to load preview',
+                              slotIndex: index,
+                            });
+                          }}
+                          onLoad={() => {
+                            const signature = `${index}:${displayUrl}`;
+                            reportedImageErrorsRef.current.delete(signature);
+                          }}
+                        />
+                      )}
                       {hasUpload ? (
                         <Button
                           type='button'

@@ -50,6 +50,7 @@ export * from './item-library';
 export * from './theme-toggle';
 export * from './table-skeleton';
 export * from './QueryDevPanel';
+export * from './AppErrorBoundary';
 export * from './QueryErrorBoundary';
 export * from './PromptGenerationSection';
 

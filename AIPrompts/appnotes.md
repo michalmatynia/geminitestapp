@@ -1,18 +1,18 @@
 
 In my AI Paths, the data signal flow seems a bit off. In the Category Inference Path, when I use the Simulation Node which provides data readily available, the data flow starts with node-wi2740 JSON Mapper Value output and flows into node-z6sjck Configure Database Query input where it is immediately available, before it is availabe in the input of the preceding node JSON Mapper node-wi2740, which does not make sense, cause it looks as if the signal was skipping Nodes.
 
-Connect Validator to product description and name
-Conditional Replacer (for example, only for certain fields)
+* Connect Validator to product description and name
+* Conditional Replacer (for example, only for certain fields)
 
 
 The Drafter Icon doesn't refresh immediately in Product List
 
-In Product List, One Click Base.com Export exports two times and duplicates start to appear in Base.com. Also.
+* In Product List, One Click Base.com Export exports two times and duplicates start to appear in Base.com. Also.
 When I export the product successfully, The button doesn't turn green immediately, but I need to refresh the page.
 
+Do Producer eXprot ?
 
-
-Hierarchies in Category don't work
+Hierarchies in Category don't work, they don't refresh and they don't sort properly. I don't want these placeholders which flicker the whole design. If I move cateogry A over category B I want the Top of the Cateogry be to turn into a gentle Gradient, signifying Category A can be dropped over Category B. When Category A is dropped over Category B, the Categories gently move down in a smooth movement. When I insert Category C in Between Category D which is at the top and Cateogry E which is a the bottom, I want the same gradient to appear at the bottom of Category D and at the top of Category E. When I drop the Category in between them, I want the Categories to realign in a smooth movement.
 
 
 In product Edit Create Field, I want to see the actual name of the producer in the selector field, instead of 1, selected. Also, in Drafter, I want the producer field to have the same selector as the PRoduct Create / Edit Modal, The same goes for images, Drafter needs the same component as Product Create / Edit modal

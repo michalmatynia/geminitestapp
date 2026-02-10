@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { JSX } from 'react';
+import type { JSX } from 'react';
 
 import { AdminLayout } from '@/features/admin/layout/AdminLayout';
 import { auth, getUserPreferences } from '@/features/auth/server';

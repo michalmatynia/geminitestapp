@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { JSX } from 'react';
+import type { JSX } from 'react';
 
 export default function NotFound(): JSX.Element {
   return (

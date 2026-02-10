@@ -4,13 +4,12 @@ import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useAiPathRuntimeAnalytics } from '@/features/ai/ai-paths/hooks/useAiPathQueries';
-import { triggers } from '@/features/ai/ai-paths/lib';
 import type {
   AiNode,
   ClusterPreset,
   NodeDefinition,
 } from '@/features/ai/ai-paths/lib';
-import type { PathConfig, PathMeta } from '@/shared/types/domain/ai-paths';
+import type { PathMeta } from '@/shared/types/domain/ai-paths';
 import { Button, Input, Label, SharedModal, UnifiedSelect, useToast } from '@/shared/ui';
 
 import { useGraphState, usePersistenceActions, usePersistenceState, useRuntimeActions, useRuntimeState, useSelectionState } from '../../context';
@@ -31,6 +30,7 @@ import {
   DOCS_DESCRIPTION_SNIPPET,
   DOCS_JOBS_SNIPPET,
 } from './docs-snippets';
+import { usePathConfigHandlers } from './usePathConfigHandlers';
 
 import type { AiPathsSettingsState } from './useAiPathsSettingsState';
 
@@ -81,14 +81,14 @@ export function AiPathsSettingsView({
 }: AiPathsSettingsViewProps): React.JSX.Element {
   // Domain: Persistence — read from context
   const { loading, saving, autoSaveStatus, autoSaveAt } = usePersistenceState();
-  const { incrementLoadNonce } = usePersistenceActions();
+  const { incrementLoadNonce, savePathConfig } = usePersistenceActions();
 
   // Domain: Runtime — read from context
   const { runtimeState, lastRunAt, lastError, runtimeRunStatus, runtimeNodeStatuses, runtimeEvents } = useRuntimeState();
-  const { setLastError } = useRuntimeActions();
+  const { setLastError, runSimulation } = useRuntimeActions();
 
   // Domain: Graph — read from context (synced state only)
-  const { activePathId, pathName, isPathLocked, isPathActive, activeTrigger, executionMode, flowIntensity, runMode, paths, pathConfigs, nodes } = useGraphState();
+  const { activePathId, pathName, isPathLocked, isPathActive, executionMode, flowIntensity, runMode, paths, pathConfigs, nodes } = useGraphState();
 
   // Domain: Selection — read from context
   const { nodeConfigDirty } = useSelectionState();
@@ -96,15 +96,14 @@ export function AiPathsSettingsView({
   // Utility — imported directly
   const { toast } = useToast();
 
+  // Domain: Path config — read from dedicated hook
+  const { handleExecutionModeChange, handleFlowIntensityChange, handleRunModeChange } = usePathConfigHandlers();
+
   const {
     handleCreatePath,
-    handleSave,
     handleDeletePath,
     handleTogglePathLock,
     handleTogglePathActive,
-    handleFlowIntensityChange,
-    handleExecutionModeChange,
-    handleRunModeChange,
     persistLastError,
     setPathName,
     updateActivePathMeta,
@@ -130,7 +129,6 @@ export function AiPathsSettingsView({
     handleResumeRun,
     handleCancelRun,
     handleRequeueDeadLetter,
-    handleRunSimulation,
     handleImportPresets,
     reportAiPathsError,
   } = state;
@@ -175,23 +173,41 @@ export function AiPathsSettingsView({
   const isFocusMode = isFocusModeProp ?? isFocusModeInternal;
   const setIsFocusMode = onFocusModeChange ?? setIsFocusModeInternal;
 
-  const activePathConfig: PathConfig | undefined = activePathId ? pathConfigs?.[activePathId] : undefined;
-  const groupKey: string | null =
-    (activePathConfig?.trigger && activePathConfig.trigger.trim().length > 0
-      ? activePathConfig.trigger
-      : activeTrigger?.trim()
-        ? activeTrigger
-        : triggers?.[0]) ?? null;
-
-  const groupPaths = useMemo(() => {
-    if (!groupKey) return paths;
-    const filtered = paths.filter((p: PathMeta) => {
-      const cfg = pathConfigs?.[p.id];
-      const trig = typeof cfg?.trigger === 'string' ? cfg.trigger : '';
-      return trig === groupKey;
+  const sortedPaths = useMemo(
+    () =>
+      [...paths].sort((a: PathMeta, b: PathMeta): number => {
+        const isTemplateName = (name: string): boolean =>
+          /^new path\b/i.test(name) || /^e2e test path\b/i.test(name);
+        const templateA = isTemplateName(a.name);
+        const templateB = isTemplateName(b.name);
+        if (templateA !== templateB) {
+          return templateA ? 1 : -1;
+        }
+        if (a.updatedAt !== b.updatedAt) {
+          return b.updatedAt.localeCompare(a.updatedAt);
+        }
+        return a.name.localeCompare(b.name);
+      }),
+    [paths]
+  );
+  const switchPathOptions = useMemo(() => {
+    const nameCounts = sortedPaths.reduce<Map<string, number>>((acc, path: PathMeta) => {
+      acc.set(path.name, (acc.get(path.name) ?? 0) + 1);
+      return acc;
+    }, new Map<string, number>());
+    return sortedPaths.map((path: PathMeta) => {
+      const isDuplicateName = (nameCounts.get(path.name) ?? 0) > 1;
+      const isGenericName = /^new path\b/i.test(path.name) || /^path\b/i.test(path.name);
+      const suffix =
+        isDuplicateName || isGenericName
+          ? ` · ${path.id.slice(-6)}`
+          : '';
+      return {
+        value: path.id,
+        label: `${path.name}${suffix}`,
+      };
     });
-    return filtered.length > 0 ? filtered : paths;
-  }, [groupKey, pathConfigs, paths]);
+  }, [sortedPaths]);
 
   const executionOptions = useMemo(
     () => [
@@ -410,7 +426,7 @@ export function AiPathsSettingsView({
                             { variant: 'info' }
                           );
                         }
-                        void handleSave();
+                        void savePathConfig();
                       }}
                       disabled={saving}
                     >
@@ -501,10 +517,7 @@ export function AiPathsSettingsView({
                     if (!value || value === activePathId) return;
                     handleSwitchPath(value);
                   }}
-                  options={groupPaths.map((path: PathMeta) => ({
-                    value: path.id,
-                    label: path.name
-                  }))}
+                  options={switchPathOptions}
                   placeholder='Switch path'
                   className='w-[320px]'
                   triggerClassName='h-9 border-border bg-card/60 px-3 text-sm text-white'
@@ -552,7 +565,7 @@ export function AiPathsSettingsView({
                     setPathName(nextName);
                     updateActivePathMeta(nextName);
                     setRenameOpen(false);
-                    void handleSave({ pathNameOverride: nextName });
+                    void savePathConfig({ pathNameOverride: nextName });
                   }}
                 >
                   Save
@@ -593,7 +606,7 @@ export function AiPathsSettingsView({
                 onUpdateSelectedNode={(patch, options) => { updateSelectedNode(patch, options); }}
                 onDeleteSelectedNode={() => { handleDeleteSelectedNode(); }}
                 onRemoveEdge={(edgeId: string) => { handleRemoveEdge(edgeId); }}
-                savePathConfig={handleSave}
+                savePathConfig={savePathConfig}
               />
               <ClusterPresetsPanelMigrated
                 onPresetFromSelection={handlePresetFromSelection}
@@ -812,7 +825,12 @@ export function AiPathsSettingsView({
         />
       )}
 
-      <NodeConfigDialogMigrated state={state} />
+      <NodeConfigDialogMigrated
+        modelOptions={state.modelOptions}
+        updateSelectedNode={state.updateSelectedNode}
+        updateSelectedNodeConfig={state.updateSelectedNodeConfig}
+        clearNodeHistory={state.handleClearNodeHistory}
+      />
       <RunDetailDialogWithContext />
       <PresetsDialogWithContext
         onImportPresets={() => { void handleImportPresets('merge').catch(() => {}); }}
@@ -822,8 +840,8 @@ export function AiPathsSettingsView({
 
       <SimulationDialogMigrated
         setNodes={setNodesFromUser}
-        onRunSimulation={(node) => { handleRunSimulation(node); }}
-        savePathConfig={handleSave}
+        onRunSimulation={(node) => { void runSimulation(node); }}
+        savePathConfig={savePathConfig}
       />
     </div>
   );

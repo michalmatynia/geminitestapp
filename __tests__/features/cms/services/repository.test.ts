@@ -76,7 +76,7 @@ describe('CMS Repository (Prisma)', () => {
       const result = await prismaCmsRepository.createPage({ name: 'New Page' });
 
       expect(prisma.page.create).toHaveBeenCalledWith({
-        data: { name: 'New Page' },
+        data: { name: 'New Page', themeId: null },
       });
       expect(result).toEqual(mockPage);
     });

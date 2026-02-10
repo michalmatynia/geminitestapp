@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import type {
@@ -232,24 +232,6 @@ export function useAiPathsPersistence({
       });
     },
   });
-  const settingsQuery = useQuery({
-    queryKey: ['ai-paths-settings'],
-    queryFn: async (): Promise<Array<{ key: string; value: string }>> => {
-      return await fetchAiPathsSettingsCached({ bypassCache: true });
-    },
-    enabled: false,
-  });
-  const userPreferencesQuery = useQuery({
-    queryKey: ['user-preferences', 'ai-paths'],
-    queryFn: async (): Promise<AiPathsUserPreferences> => {
-      const res = await fetch('/api/user/preferences', { credentials: 'include' });
-      if (!res.ok) {
-        throw new Error('Failed to load user preferences');
-      }
-      return (await res.json()) as AiPathsUserPreferences;
-    },
-    enabled: false,
-  });
   const [saving, setSaving] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<
     'idle' | 'saving' | 'saved' | 'error'
@@ -340,15 +322,21 @@ export function useAiPathsPersistence({
     setLoading(true);
     const loadConfig = async (): Promise<void> => {
       try {
-        const [settingsResult, userPreferencesResult] = await Promise.all([
-          settingsQuery.refetch(),
-          userPreferencesQuery.refetch(),
+        const [data, userPreferences] = await Promise.all([
+          fetchAiPathsSettingsCached({ bypassCache: true }),
+          (async (): Promise<AiPathsUserPreferences | null> => {
+            try {
+              const res = await fetch('/api/user/preferences', {
+                credentials: 'include',
+                cache: 'no-store',
+              });
+              if (!res.ok) return null;
+              return (await res.json()) as AiPathsUserPreferences;
+            } catch {
+              return null;
+            }
+          })(),
         ]);
-        if (settingsResult.error || !settingsResult.data) {
-          throw settingsResult.error ?? new Error('Failed to load AI Paths settings.');
-        }
-        const userPreferences = userPreferencesResult?.data;
-        const data = settingsResult.data as Array<{ key: string; value: string }>;
         const map = new Map(
           data.map((item: { key: string; value: string }): [string, string] => [
             item.key,
@@ -640,8 +628,6 @@ export function useAiPathsPersistence({
     toast,
     reportAiPathsError,
     loadNonce,
-    settingsQuery,
-    userPreferencesQuery,
     updateAiPathsSettingsMutation,
     normalizeConfigForHash,
     persistLastError,

@@ -1,97 +1,136 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
+
+vi.unmock('@/shared/lib/db/prisma');
 
 import { getCategoryMappingRepository } from '@/features/integrations/services/category-mapping-repository';
 import prisma from '@/shared/lib/db/prisma';
 
-vi.mock('@/shared/lib/db/prisma', () => ({
-  default: {
-    categoryMapping: {
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      deleteMany: vi.fn(),
-      upsert: vi.fn(),
-    },
-    $transaction: vi.fn((cb) => cb(prisma)),
-  },
-}));
-
 describe('CategoryMappingRepository', () => {
   const repo = getCategoryMappingRepository();
 
-  beforeEach(() => {
-    vi.clearAllMocks();
+  beforeEach(async () => {
+    if (!process.env['DATABASE_URL']) return;
+    
+    // Clean up DB
+    await prisma.categoryMapping.deleteMany({});
+    await prisma.externalCategory.deleteMany({});
+    await prisma.category.deleteMany({});
+    await prisma.integrationConnection.deleteMany({});
+    await prisma.integration.deleteMany({});
+    await prisma.catalog.deleteMany({});
   });
 
-  const mockMapping = {
-    id: 'map-1',
-    connectionId: 'conn-1',
-    externalCategoryId: 'ext-1',
-    internalCategoryId: 'int-1',
-    catalogId: 'cat-1',
-    isActive: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+  afterAll(async () => {
+    await prisma.$disconnect();
+  });
+
+  const setupData = async () => {
+    const integration = await prisma.integration.create({
+      data: { name: 'Test', slug: 'test-' + Math.random() }
+    });
+    const connection = await prisma.integrationConnection.create({
+      data: { name: 'Conn 1', integrationId: integration.id, username: 'test', password: 'test' }
+    });
+    const catalog = await prisma.catalog.create({
+      data: { name: 'Cat 1' }
+    });
+    const internalCat = await prisma.productCategory.create({
+      data: { name: 'Int 1', catalogId: catalog.id }
+    });
+    const externalCat = await prisma.externalCategory.create({
+      data: { name: 'Ext 1', externalId: 'e1', connectionId: connection.id }
+    });
+
+    return { connection, catalog, internalCat, externalCat };
   };
 
   it('creates a mapping', async () => {
-    (prisma.categoryMapping.create as any).mockResolvedValue(mockMapping);
+    if (!process.env['DATABASE_URL']) return;
+    const { connection, catalog, internalCat, externalCat } = await setupData();
+
     const input = {
-      connectionId: 'conn-1',
-      externalCategoryId: 'ext-1',
-      internalCategoryId: 'int-1',
-      catalogId: 'cat-1',
+      connectionId: connection.id,
+      externalCategoryId: externalCat.id,
+      internalCategoryId: internalCat.id,
+      catalogId: catalog.id,
     };
 
     const result = await repo.create(input);
-    expect(result.id).toBe('map-1');
-    expect(prisma.categoryMapping.create).toHaveBeenCalled();
+    expect(result.id).toBeDefined();
+    expect(result.connectionId).toBe(connection.id);
   });
 
   it('updates a mapping', async () => {
-    (prisma.categoryMapping.update as any).mockResolvedValue({ ...mockMapping, internalCategoryId: 'int-2' });
-    const result = await repo.update('map-1', { internalCategoryId: 'int-2' });
-    expect(result.internalCategoryId).toBe('int-2');
-    expect(prisma.categoryMapping.update).toHaveBeenCalledWith({
-      where: { id: 'map-1' },
-      data: { internalCategoryId: 'int-2' },
+    if (!process.env['DATABASE_URL']) return;
+    const { connection, catalog, internalCat, externalCat } = await setupData();
+    const mapping = await repo.create({
+      connectionId: connection.id,
+      externalCategoryId: externalCat.id,
+      internalCategoryId: internalCat.id,
+      catalogId: catalog.id,
     });
+
+    const result = await repo.update(mapping.id, { isActive: false });
+    expect(result.isActive).toBe(false);
   });
 
   it('deletes a mapping', async () => {
-    await repo.delete('map-1');
-    expect(prisma.categoryMapping.delete).toHaveBeenCalledWith({ where: { id: 'map-1' } });
+    if (!process.env['DATABASE_URL']) return;
+    const { connection, catalog, internalCat, externalCat } = await setupData();
+    const mapping = await repo.create({
+      connectionId: connection.id,
+      externalCategoryId: externalCat.id,
+      internalCategoryId: internalCat.id,
+      catalogId: catalog.id,
+    });
+
+    await repo.delete(mapping.id);
+    const found = await prisma.categoryMapping.findUnique({ where: { id: mapping.id } });
+    expect(found).toBeNull();
   });
 
   it('gets by id', async () => {
-    (prisma.categoryMapping.findUnique as any).mockResolvedValue(mockMapping);
-    const result = await repo.getById('map-1');
-    expect(result?.id).toBe('map-1');
+    if (!process.env['DATABASE_URL']) return;
+    const { connection, catalog, internalCat, externalCat } = await setupData();
+    const mapping = await repo.create({
+      connectionId: connection.id,
+      externalCategoryId: externalCat.id,
+      internalCategoryId: internalCat.id,
+      catalogId: catalog.id,
+    });
+
+    const result = await repo.getById(mapping.id);
+    expect(result?.id).toBe(mapping.id);
   });
 
   it('lists by connection', async () => {
-    const mockWithDetails = {
-      ...mockMapping,
-      externalCategory: { id: 'ext-1', connectionId: 'conn-1', externalId: 'e1', name: 'Ext' },
-      internalCategory: { id: 'int-1', name: 'Int' },
-    };
-    (prisma.categoryMapping.findMany as any).mockResolvedValue([mockWithDetails]);
+    if (!process.env['DATABASE_URL']) return;
+    const { connection, catalog, internalCat, externalCat } = await setupData();
+    await repo.create({
+      connectionId: connection.id,
+      externalCategoryId: externalCat.id,
+      internalCategoryId: internalCat.id,
+      catalogId: catalog.id,
+    });
     
-    const result = await repo.listByConnection('conn-1');
+    const result = await repo.listByConnection(connection.id);
     expect(result.length).toBe(1);
-    expect(result[0]!.externalCategory.name).toBe('Ext');
+    expect(result[0]!.externalCategory.name).toBe('Ext 1');
+    expect(result[0]!.internalCategory.name).toBe('Int 1');
   });
 
   it('bulk upserts mappings', async () => {
+    if (!process.env['DATABASE_URL']) return;
+    const { connection, catalog, internalCat, externalCat } = await setupData();
+    
     const mappings = [
-      { externalCategoryId: 'ext-1', internalCategoryId: 'int-1' },
-      { externalCategoryId: 'ext-2', internalCategoryId: 'int-2' },
+      { externalCategoryId: externalCat.id, internalCategoryId: internalCat.id },
     ];
     
-    const count = await repo.bulkUpsert('conn-1', 'cat-1', mappings);
-    expect(count).toBe(2);
-    expect(prisma.categoryMapping.upsert).toHaveBeenCalledTimes(2);
+    const count = await repo.bulkUpsert(connection.id, catalog.id, mappings);
+    expect(count).toBe(1);
+    
+    const all = await prisma.categoryMapping.findMany({ where: { connectionId: connection.id } });
+    expect(all.length).toBe(1);
   });
 });

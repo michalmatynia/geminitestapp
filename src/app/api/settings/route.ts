@@ -5,6 +5,7 @@ import { WithId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { upsertAiPathsSetting } from '@/features/ai/ai-paths/server/settings-store';
 import { AUTH_SETTINGS_KEYS } from '@/features/auth/utils/auth-management';
 import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
 import { internalError } from '@/shared/errors/app-error';
@@ -43,9 +44,11 @@ type SettingDocument = {
 
 const SETTINGS_COLLECTION = 'settings';
 const AI_PATHS_CONFIG_PREFIX = 'ai_paths_config_';
+const AI_PATHS_KEY_PREFIX = 'ai_paths_';
 const HEAVY_PREFIXES = ['image_studio_', 'base_import_', 'base_export_'];
 const HEAVY_KEYS = new Set<string>(['agent_personas']);
 const HEAVY_PREFIX_REGEX = new RegExp(`^(${HEAVY_PREFIXES.map((p) => p.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|')})`);
+const AI_PATHS_PREFIX_REGEX = new RegExp(`^${AI_PATHS_KEY_PREFIX.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}`);
 const DEFAULT_SCOPE: SettingsScope = 'light';
 let settingsIndexesEnsured: Promise<void> | null = null;
 
@@ -105,6 +108,7 @@ const authSettingKeys: Set<string> = new Set(Object.values(AUTH_SETTINGS_KEYS));
 const isMongoPreferredSettingKey = (key: string) => authSettingKeys.has(key);
 const isHeavySettingKey = (key: string): boolean =>
   HEAVY_KEYS.has(key) || HEAVY_PREFIXES.some((prefix) => key.startsWith(prefix));
+const isAiPathsSettingKey = (key: string): boolean => key.startsWith(AI_PATHS_KEY_PREFIX);
 
 const canUsePrismaSettings = (provider: 'prisma' | 'mongodb') =>
   provider === 'prisma' && Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
@@ -241,25 +245,46 @@ const normalizeScope = (scope?: string | null): SettingsScope => {
 };
 
 const applyScopeFilter = (settings: SettingRecord[], scope: SettingsScope): SettingRecord[] => {
-  if (scope === 'all') return settings;
-  if (scope === 'heavy') return settings.filter((setting: SettingRecord) => isHeavySettingKey(setting.key));
-  return settings.filter((setting: SettingRecord) => !isHeavySettingKey(setting.key));
+  const withoutAiPaths = settings.filter(
+    (setting: SettingRecord) => !isAiPathsSettingKey(setting.key)
+  );
+  if (scope === 'all') return withoutAiPaths;
+  if (scope === 'heavy') {
+    return withoutAiPaths.filter((setting: SettingRecord) =>
+      isHeavySettingKey(setting.key)
+    );
+  }
+  return withoutAiPaths.filter(
+    (setting: SettingRecord) => !isHeavySettingKey(setting.key)
+  );
 };
 
 const buildPrismaScopeWhere = (scope: SettingsScope): Record<string, unknown> => {
-  if (scope === 'all') return {};
+  const aiPathsExclusion = { key: { startsWith: AI_PATHS_KEY_PREFIX } };
+  if (scope === 'all') return { NOT: aiPathsExclusion };
   const heavyOr = [
     ...HEAVY_PREFIXES.map((prefix) => ({ key: { startsWith: prefix } })),
     { key: { in: Array.from(HEAVY_KEYS) } },
   ];
   if (scope === 'heavy') {
-    return { OR: heavyOr };
+    return { AND: [{ OR: heavyOr }, { NOT: aiPathsExclusion }] };
   }
-  return { NOT: { OR: heavyOr } };
+  return {
+    AND: [
+      { NOT: { OR: heavyOr } },
+      { NOT: aiPathsExclusion },
+    ],
+  };
 };
 
 const buildMongoScopeQuery = (scope: SettingsScope): Record<string, unknown> => {
-  if (scope === 'all') return {};
+  const aiPathsFilter = {
+    $nor: [
+      { key: { $regex: AI_PATHS_PREFIX_REGEX } },
+      { _id: { $type: 'string', $regex: AI_PATHS_PREFIX_REGEX } },
+    ],
+  };
+  if (scope === 'all') return aiPathsFilter;
   const heavyOr = [
     { key: { $regex: HEAVY_PREFIX_REGEX } },
     { key: { $in: Array.from(HEAVY_KEYS) } },
@@ -267,9 +292,9 @@ const buildMongoScopeQuery = (scope: SettingsScope): Record<string, unknown> => 
     { _id: { $type: 'string', $regex: HEAVY_PREFIX_REGEX } },
   ];
   if (scope === 'heavy') {
-    return { $or: heavyOr };
+    return { $and: [{ $or: heavyOr }, aiPathsFilter] };
   }
-  return { $nor: heavyOr };
+  return { $and: [{ $nor: heavyOr }, aiPathsFilter] };
 };
 
 const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]> => {
@@ -616,6 +641,10 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   }
   const { key } = parsed.data;
   let value = parsed.data.value;
+  if (isAiPathsSettingKey(key)) {
+    const migrated = await upsertAiPathsSetting(key, value);
+    return NextResponse.json(migrated);
+  }
   if (shouldLog()) {
     await ErrorSystem.logInfo('[settings] upserting', { service: 'api/settings', key, valuePreview: value.slice(0, 40) });
   }

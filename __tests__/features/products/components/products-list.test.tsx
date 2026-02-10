@@ -72,7 +72,12 @@ describe('Admin Products List UI', () => {
       }),
       http.get('/api/catalogs', () => {
         return HttpResponse.json([]);
-      })
+      }),
+      http.get('/api/products/validator-config', () => HttpResponse.json([])),
+      http.get('/api/integrations/with-connections', () => HttpResponse.json([])),
+      http.get('/api/integrations/exports/base/default-connection', () => HttpResponse.json({ connectionId: null })),
+      http.get('/api/ai-paths/trigger-buttons', () => HttpResponse.json([])),
+      http.post('/api/client-errors', () => HttpResponse.json({ success: true }))
     );
   });
 

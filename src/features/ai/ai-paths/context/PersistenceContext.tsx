@@ -22,6 +22,7 @@ export interface SavePathConfigOptions {
   silent?: boolean | undefined;
   includeNodeConfig?: boolean | undefined;
   force?: boolean | undefined;
+  pathNameOverride?: string | undefined;
   nodesOverride?: AiNode[] | undefined;
   nodeOverride?: AiNode | undefined;
   edgesOverride?: Edge[] | undefined;

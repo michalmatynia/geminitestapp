@@ -82,5 +82,10 @@ export const ActivityTypes = {
     CONNECTION_CREATED: 'integration.connection_created',
     CONNECTION_UPDATED: 'integration.connection_updated',
     CONNECTION_DELETED: 'integration.connection_deleted',
+  },
+  NOTE: {
+    CREATED: 'note.created',
+    UPDATED: 'note.updated',
+    DELETED: 'note.deleted',
   }
 } as const;

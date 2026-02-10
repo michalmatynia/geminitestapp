@@ -61,6 +61,8 @@ describe('EditProductForm', () => {
       http.get('/api/products/categories', () => HttpResponse.json([])),
       http.get('/api/products/tags', () => HttpResponse.json([])),
       http.get('/api/products/parameters', () => HttpResponse.json([])),
+      http.get('/api/products/validator-config', () => HttpResponse.json([])),
+      http.post('/api/client-errors', () => HttpResponse.json({ success: true })),
     );
   });
 

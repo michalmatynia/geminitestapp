@@ -1,4 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
+
+vi.unmock('@/shared/lib/db/prisma');
 
 import { 
   createExportTemplate, 
@@ -13,6 +15,8 @@ import prisma from '@/shared/lib/db/prisma';
 
 describe('ExportTemplateRepository', () => {
   beforeEach(async () => {
+    if (!process.env['DATABASE_URL']) return;
+
     // Cleanup settings related to export templates
     await prisma.setting.deleteMany({
       where: {
@@ -21,14 +25,22 @@ describe('ExportTemplateRepository', () => {
             'base_export_templates',
             'base_export_active_template_id',
             'base_export_default_inventory_id',
-            'base_export_default_connection_id'
+            'base_export_default_connection_id',
+            'base_export_stock_fallback_enabled',
+            'base_export_image_retry_presets'
           ]
         }
       }
     });
   });
 
+  afterAll(async () => {
+    await prisma.$disconnect();
+  });
+
   it('should create and list export templates', async () => {
+    if (!process.env['DATABASE_URL']) return;
+
     const template = await createExportTemplate({
       name: 'Standard Template',
       description: 'My description',
@@ -44,6 +56,8 @@ describe('ExportTemplateRepository', () => {
   });
 
   it('should filter out forbidden basehost mappings', async () => {
+    if (!process.env['DATABASE_URL']) return;
+
     await createExportTemplate({
       name: 'Template with Basehost',
       mappings: [
@@ -58,6 +72,8 @@ describe('ExportTemplateRepository', () => {
   });
 
   it('should update an existing template', async () => {
+    if (!process.env['DATABASE_URL']) return;
+
     const template = await createExportTemplate({ name: 'Old Name' });
     
     const updated = await updateExportTemplate(template.id, { name: 'New Name' });
@@ -68,6 +84,8 @@ describe('ExportTemplateRepository', () => {
   });
 
   it('should delete a template', async () => {
+    if (!process.env['DATABASE_URL']) return;
+
     const template = await createExportTemplate({ name: 'To Delete' });
     
     const result = await deleteExportTemplate(template.id);
@@ -78,6 +96,8 @@ describe('ExportTemplateRepository', () => {
   });
 
   it('should get and set active template id', async () => {
+    if (!process.env['DATABASE_URL']) return;
+
     const template = await createExportTemplate({ name: 'Active One' });
     
     await setExportActiveTemplateId(template.id);

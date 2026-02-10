@@ -10,6 +10,7 @@ import type {
   UpdateProductValidationPatternInput,
 } from '@/features/products/types/services/validation-pattern-repository';
 import { operationFailedError } from '@/shared/errors/app-error';
+import { ErrorSystem } from '@/features/observability/server';
 import prisma from '@/shared/lib/db/prisma';
 import type {
   ProductValidationPattern,
@@ -133,10 +134,7 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
       return rows.map(toDomain);
     } catch (error) {
       if (isSchemaMismatchError(error)) {
-        console.warn(
-          '[validation-pattern-repository] Prisma schema mismatch while listing patterns; returning empty set.',
-          { code: error.code }
-        );
+        void ErrorSystem.logWarning('Prisma schema mismatch while listing patterns; returning empty set.', { source: 'validation-pattern-repository', code: error.code });
         return [];
       }
       throw error;
@@ -155,10 +153,7 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
       return row ? toDomain(row) : null;
     } catch (error) {
       if (isSchemaMismatchError(error)) {
-        console.warn(
-          '[validation-pattern-repository] Prisma schema mismatch while reading pattern by id; returning null.',
-          { code: error.code, id }
-        );
+        void ErrorSystem.logWarning('Prisma schema mismatch while reading pattern by id; returning null.', { source: 'validation-pattern-repository', code: error.code, id });
         return null;
       }
       throw error;

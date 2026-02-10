@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { ErrorSystem } from '@/features/observability/services/error-system';
 import { randomUUID } from 'crypto';
 
 import { logAgentAudit, runAgentControlLoop } from '@/features/ai/agent-runtime/server';
@@ -12,7 +13,7 @@ export async function processAgentRun(runId: string): Promise<void> {
 
   if (!('chatbotAgentRun' in prisma)) {
     if (debugEnabled) {
-      console.warn('[chatbot][agent][processor] Agent tables not initialized.');
+      void ErrorSystem.logWarning('Agent tables not initialized.', { service: 'agent-processor' });
     }
     return;
   }
@@ -39,15 +40,10 @@ export async function processAgentRun(runId: string): Promise<void> {
   try {
     await runAgentControlLoop(nextRun.id);
   } catch (error: unknown) {
-    try {
-      const { ErrorSystem } = await import('@/features/observability/services/error-system');
-      void ErrorSystem.captureException(error, {
-        service: 'agent-queue',
-        runId: nextRun.id
-      });
-    } catch (logError) {
-      console.error('[chatbot][agent][processor] Failed to log exception to ErrorSystem', logError);
-    }
+    void ErrorSystem.captureException(error, {
+      service: 'agent-queue',
+      runId: nextRun.id
+    });
     await logAgentFailure(nextRun.id, error);
   }
 }

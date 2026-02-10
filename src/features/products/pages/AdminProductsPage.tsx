@@ -213,8 +213,31 @@ export function AdminProductsPage(): React.JSX.Element {
   }, [preferencesLoading, preferences.currencyCode, setCurrencyCode]);
 
   const handleOpenEditModal = useCallback((product: ProductWithImages) => {
-    setEditingProduct(product);
-  }, [setEditingProduct]);
+    const run = async (): Promise<void> => {
+      setActionError(null);
+      try {
+        const fullProduct = await queryClient.fetchQuery({
+          queryKey: ['products', product.id],
+          queryFn: () => api.get<ProductWithImages>(`/api/products/${product.id}`),
+          staleTime: 10_000,
+        });
+        setEditingProduct(fullProduct);
+      } catch (error) {
+        logClientError(error, {
+          context: {
+            source: 'AdminProductsPage',
+            action: 'openEditModal',
+            productId: product.id,
+          },
+        });
+        setEditingProduct(product);
+        toast('Could not load full product details. Opened with limited data.', {
+          variant: 'info',
+        });
+      }
+    };
+    void run();
+  }, [setActionError, queryClient, setEditingProduct, toast]);
 
   const handleOpenCreate = useCallback(() => {
     setCreateDraft(null);

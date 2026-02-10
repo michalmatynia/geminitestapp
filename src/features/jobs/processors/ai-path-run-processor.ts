@@ -4,6 +4,7 @@ import { executePathRun } from '@/features/ai/ai-paths/services/path-run-executo
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
 import { recordRuntimeRunFinished } from '@/features/ai/ai-paths/services/runtime-analytics-service';
+import { logSystemEvent } from '@/features/observability/server';
 import { ErrorSystem } from '@/features/observability/services/error-system';
 import type { AiPathRunRecord } from '@/shared/types/domain/ai-paths';
 
@@ -13,10 +14,16 @@ const DEFAULT_BACKOFF_MS = Number(process.env['AI_PATHS_RUN_BACKOFF_MS'] ?? '500
 const DEFAULT_BACKOFF_MAX_MS = Number(process.env['AI_PATHS_RUN_BACKOFF_MAX_MS'] ?? '60000');
 const TERMINAL_RUN_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
 const DEBUG_AI_PATH_QUEUE = process.env['AI_PATHS_QUEUE_DEBUG'] === 'true';
+const LOG_SOURCE = 'ai-path-run-processor';
 
-const debugQueueLog = (...args: unknown[]): void => {
+const debugQueueLog = (message: string, context?: Record<string, unknown>): void => {
   if (!DEBUG_AI_PATH_QUEUE) return;
-  console.log(...args);
+  void logSystemEvent({
+    level: 'info',
+    source: LOG_SOURCE,
+    message,
+    context: context ?? null
+  });
 };
 
 const normalizeNumber = (value: number, fallback: number, min: number = 0): number => {
@@ -113,15 +120,15 @@ export type ProcessRunResult =
 
 export const processRun = async (run: AiPathRunRecord): Promise<ProcessRunResult> => {
   const repo = getPathRunRepository();
-  debugQueueLog(`[aiPathRunQueue] Processing run ${run.id}`);
+  debugQueueLog(`Processing run ${run.id}`, { runId: run.id });
   try {
     await executePathRun(run);
     const latest = await repo.findRunById(run.id);
     if (latest?.status === 'canceled') {
-      debugQueueLog(`[aiPathRunQueue] Run ${run.id} was canceled during execution`);
+      debugQueueLog(`Run ${run.id} was canceled during execution`, { runId: run.id });
       return;
     }
-    debugQueueLog(`[aiPathRunQueue] Run ${run.id} completed`);
+    debugQueueLog(`Run ${run.id} completed`, { runId: run.id });
     return;
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Run failed.';
@@ -235,7 +242,8 @@ export const processStaleRunRecovery = async (): Promise<void> => {
     const result = await repo.markStaleRunningRuns(STALE_RUNNING_THRESHOLD_MS);
     if (result.count > 0) {
       debugQueueLog(
-        `[aiPathRunQueue] Recovery: marked ${result.count} stale running run(s) as failed`
+        `Recovery: marked ${result.count} stale running run(s) as failed`,
+        { count: result.count, thresholdMs: STALE_RUNNING_THRESHOLD_MS }
       );
       void ErrorSystem.logWarning(
         `Stale run recovery: marked ${result.count} run(s) as failed`,

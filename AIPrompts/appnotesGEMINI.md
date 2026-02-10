@@ -79,7 +79,7 @@ Connect tanstack queries to a unified error logging and handling system.
 -Create a single QueryClient with global QueryCache + MutationCache callbacks that forward errors into the central error handler (with queryKey/mutationKey). Do not throw from global callbacks.
 -Define a global retry policy: do not retry 4xx, limit retries for 5xx/timeouts, and align SSR/server retries to be fast.
 -Standardize query keys and introduce a key factory per domain (usersKeys.list(), ordersKeys.detail(id)), then refactor existing hooks to use it.
-Integrate React Query (TanStack Query) properly. Create a single QueryClient instance and configure its global handlers. 
+Integrate TanStack Query properly. Create a single QueryClient instance and configure its global handlers. 
 React Query supports global onError/onSuccess callbacks at the QueryCache level. You can use these hooks to funnel all query/mutation errors into your logging system. 
 Initialize a shared QueryClient with default onError callback that logs errors centrally
 Convert existing data fetching hooks to use TanStack Query and remove ad-hoc fetch logic. Connect those error callbacks to your central error logger.

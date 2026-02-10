@@ -5,65 +5,25 @@ import { describe, it, expect } from 'vitest';
 import { GET as GET_TREE } from '@/app/api/products/categories/tree/route';
 import prisma from '@/shared/lib/db/prisma';
 
-// Mock Prisma client
-vi.mock('@/shared/lib/db/prisma', () => ({
-  default: {
-    productCategory: {
-      findMany: vi.fn(),
-      findFirst: vi.fn(),
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    },
-    systemLog: {
-      create: vi.fn().mockResolvedValue({}),
-    },
-    $disconnect: vi.fn(),
-  },
-}));
-
-// Mock data provider
-vi.mock('@/features/products/server', async (importOriginal) => {
-  const actual = await importOriginal() as any;
-  return {
-    ...actual,
-    getProductDataProvider: vi.fn().mockResolvedValue('prisma'),
-    parseJsonBody: async (req: any, schema: any) => {
-      try {
-        const body = await req.json();
-        const result = schema.safeParse(body);
-        if (!result.success) {
-          return { ok: false, response: new Response(JSON.stringify(result.error), { status: 400 }) };
-        }
-        return { ok: true, data: result.data };
-      } catch {
-        return { ok: false, response: new Response('Invalid JSON', { status: 400 }) };
-      }
-    },
-  };
-});
-
 describe('Product Categories API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env['DATABASE_URL'] = 'postgresql://mock';
   });
 
-  afterAll(() => {
-    vi.restoreAllMocks();
-    delete process.env['DATABASE_URL'];
+  afterAll(async () => {
+    await prisma.$disconnect();
   });
 
   describe('GET /api/products/categories/tree', () => {
     it('should return categories as a tree', async () => {
       const now = new Date();
+      // Provide a flat list - the repository builds the tree.
       const mockCategories = [
         { 
-          id: '1', name: 'Parent', catalogId: 'cat1', parentId: null, createdAt: now, updatedAt: now,
-          children: [
-            { id: '2', name: 'Child', catalogId: 'cat1', parentId: '1', createdAt: now, updatedAt: now, children: [] }
-          ]
+          id: '1', name: 'Parent', catalogId: 'cat1', parentId: null, createdAt: now, updatedAt: now, sortIndex: 0
+        },
+        { 
+          id: '2', name: 'Child', catalogId: 'cat1', parentId: '1', createdAt: now, updatedAt: now, sortIndex: 0
         },
       ];
       vi.mocked(prisma.productCategory.findMany).mockResolvedValue(mockCategories as any);
@@ -74,7 +34,9 @@ describe('Product Categories API', () => {
       const data = await res.json();
       expect(res.status).toEqual(200);
       expect(data).toHaveLength(1);
+      expect(data[0].id).toBe('1');
       expect(data[0].children).toHaveLength(1);
+      expect(data[0].children[0].id).toBe('2');
     });
   });
 });

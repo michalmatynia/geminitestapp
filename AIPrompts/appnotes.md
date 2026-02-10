@@ -1,10 +1,34 @@
 
+ * In Products,  When I reorder CAtegories, I get an error
+
+Mapped Categories are not being retained. The connection breaks and I need to remap again
+
+Validation patterns are gone
+  
+  › again, my AI Paths are gone, I had them retrieved and they are gone again.
+
+Referenced record not found in Producer mappings when I try to save the mapping fetched from Base.com
+
+In AI paths, the Database Query Node does not work with mongoDB Provider, works perfectly with Prisma
+Asses the functionality of AI-Paths to run seamlessly with a MongoDB provider, as the provider has just been changed.
+
+Base.com Producers
+Connection: Baselinker Connection
+
+Fetch Producers
+Save (0)
+Total: 1
+Mapped: 0
+
+
+* In Products, Catalogs, My Mentios Catalog is supposed to have two languages English and Polish, currently has five languages, and I am unable to remove them from Catalog Settings. I can only add new lanagues and it show my Catalog Mentios has 0 languages there, when I add languages and update, nothing happens, I still see 5 langauges for all products in this catalog.
+
 * I can't monitor my singal in Ai Paths
 * My Catalog has too many languages, I want an option to remove languages from
   Catalogs.
 
 
-   For my image rerouting, I would like an option to add different routes, not only one, and
+ *  For my image rerouting, I would like an option to add different routes, not only one, and
   select a default one that is read by the application
 
 
@@ -15,21 +39,15 @@
   or page redirection
 
 
- In Products,  When I reorder CAtegories, I get an error
-
-In AI paths, the Database Query Node does not work with mongoDB Provider, works perfectly with Prisma
-Asses the functionality of AI-Paths to run seamlessly with a MongoDB provider, as the provider has just been changed.
-
-Currency Doesn't change in product list
 
 In Products Category, the strike through line when I insert one category into another is not that great. Adjust it, so that the Line finished before the Category name begins
 
-Also I need a pattern which would detect double spaces (Space and not new lines), if it sees double or more space, it should be trimmed
+Also I need a pattern which would detect double spaces (Space and not new lines), if it sees double or more space, it should be trimmed. I cannot get rid of non replacement validations
+
 
 I need clear logs to work
 
 
-I cannot get rid of non replacement validations
 
 Move all Database operatons into one page
 
@@ -40,6 +58,9 @@ I should also be able to synchronise collections between databases and if the co
 
 I had AiTranslation and AI Description functionalities that were configured through my Products Settings, these functionalities have been taken over by the AI-Paths, so any remainder code from them can be removed.
 
+
+
+Image uploads to Fastcomet
 
 * In my AI Paths, the data signal flow seems a bit off. In the Category Inference Path, when I use the Simulation Node which provides data readily available, the data flow starts with node-wi2740 JSON Mapper Value output and flows into node-z6sjck Configure Database Query input where it is immediately available, before it is availabe in the input of the preceding node JSON Mapper node-wi2740, which does not make sense, cause it looks as if the signal was skipping Nodes.
 

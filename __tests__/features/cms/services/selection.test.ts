@@ -1,7 +1,7 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import { getCmsDataProvider } from '@/features/cms/services/cms-provider';
-import { getCmsRepository } from '@/features/cms/services/cms-repository';
+import { getCmsRepository, resetCmsRepositoryCache } from '@/features/cms/services/cms-repository';
 
 vi.mock('@/features/cms/services/cms-provider', () => ({
   getCmsDataProvider: vi.fn(),
@@ -18,6 +18,7 @@ vi.mock('@/features/cms/services/cms-repository/mongo-cms-repository', () => ({
 describe('CMS Repository Selection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetCmsRepositoryCache();
   });
 
   it('should return mongo repository when provider is mongodb', async () => {

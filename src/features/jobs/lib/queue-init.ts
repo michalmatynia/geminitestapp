@@ -2,11 +2,13 @@ import 'server-only';
 
 import { Redis } from 'ioredis';
 
+import { logSystemEvent } from '@/features/observability/server';
 import { isRedisAvailable } from '@/shared/lib/queue/redis-connection';
 import { startAllWorkers } from '@/shared/lib/queue/registry';
 
 let initialized = false;
 const REDIS_PING_TIMEOUT_MS = 1500;
+const LOG_SOURCE = 'queue-init';
 
 const isRedisReachable = async (): Promise<boolean> => {
   const url = process.env['REDIS_URL'];
@@ -38,19 +40,31 @@ export const initializeQueues = (): void => {
   initialized = true;
 
   if (process.env['DISABLE_QUEUE_WORKERS'] === 'true') {
-    console.log('[queues] Worker startup disabled by DISABLE_QUEUE_WORKERS');
+    void logSystemEvent({
+      level: 'info',
+      source: LOG_SOURCE,
+      message: 'Worker startup disabled by DISABLE_QUEUE_WORKERS'
+    });
     return;
   }
 
   if (!isRedisAvailable()) {
-    console.log('[queues] Redis not available, using inline processing mode');
+    void logSystemEvent({
+      level: 'info',
+      source: LOG_SOURCE,
+      message: 'Redis not available, using inline processing mode'
+    });
     return;
   }
 
   void (async (): Promise<void> => {
     const redisReachable = await isRedisReachable();
     if (!redisReachable) {
-      console.warn('[queues] Redis unreachable, skipping BullMQ workers');
+      void logSystemEvent({
+        level: 'warn',
+        source: LOG_SOURCE,
+        message: 'Redis unreachable, skipping BullMQ workers'
+      });
       return;
     }
 
@@ -63,7 +77,11 @@ export const initializeQueues = (): void => {
       import('@/features/jobs/workers/aiInsightsQueue'),
     ]);
 
-    console.log('[queues] Starting BullMQ workers...');
+    void logSystemEvent({
+      level: 'info',
+      source: LOG_SOURCE,
+      message: 'Starting BullMQ workers...'
+    });
     startAllWorkers();
   })();
 };

@@ -9,7 +9,7 @@ import {
   normalizeImageRetryPresets,
 } from '@/features/data-import-export';
 import type { ImageRetryPreset } from '@/features/data-import-export';
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
 import { getProductDataProvider } from '@/features/products/server';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
@@ -22,10 +22,16 @@ const toMongoId = (id: string): string | ObjectId => {
 };
 
 type ExportTemplateProvider = 'mongodb' | 'prisma';
+const LOG_SOURCE = 'export-template-repository';
 
 const getExportTemplateProvider = async (): Promise<ExportTemplateProvider> => {
   const provider = await getProductDataProvider();
-  console.log(`[ExportTemplateRepository] Provider: ${provider}`);
+  await logSystemEvent({
+    level: 'info',
+    source: LOG_SOURCE,
+    message: `Provider: ${provider}`,
+    context: { provider }
+  });
   return provider as ExportTemplateProvider;
 };
 
@@ -102,20 +108,24 @@ const readTemplatesValue = async (): Promise<string | null> => {
         $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }],
       });
     const val = typeof doc?.value === 'string' ? doc.value : null;
-    console.log(
-      '[ExportTemplateRepository] Read templates (Mongo):',
-      val ? `${val.length} chars` : 'null'
-    );
+    await logSystemEvent({
+      level: 'info',
+      source: LOG_SOURCE,
+      message: 'Read templates (Mongo)',
+      context: { length: val ? val.length : 0 }
+    });
     return val;
   }
   const setting = await prisma.setting.findUnique({
     where: { key: SETTINGS_KEY },
     select: { value: true },
   });
-  console.log(
-    '[ExportTemplateRepository] Read templates (Prisma):',
-    setting?.value ? `${setting.value.length} chars` : 'null'
-  );
+  await logSystemEvent({
+    level: 'info',
+    source: LOG_SOURCE,
+    message: 'Read templates (Prisma)',
+    context: { length: setting?.value ? setting.value.length : 0 }
+  });
   return setting?.value ?? null;
 };
 
@@ -211,7 +221,12 @@ const readImageRetryPresetsValue = async (): Promise<string | null> => {
 
 const writeTemplatesValue = async (value: string): Promise<void> => {
   const provider = await getExportTemplateProvider();
-  console.log(`[ExportTemplateRepository] Writing templates... Length: ${value.length}`);
+  await logSystemEvent({
+    level: 'info',
+    source: LOG_SOURCE,
+    message: 'Writing templates...',
+    context: { length: value.length, provider }
+  });
   if (provider === 'mongodb') {
     const mongo = await getMongoDb();
     await mongo.collection<SettingDoc>('settings').updateMany(
@@ -233,7 +248,11 @@ const writeTemplatesValue = async (value: string): Promise<void> => {
     update: { value },
     create: { key: SETTINGS_KEY, value },
   });
-  console.log('[ExportTemplateRepository] Wrote templates (Prisma).');
+  await logSystemEvent({
+    level: 'info',
+    source: LOG_SOURCE,
+    message: 'Wrote templates (Prisma)'
+  });
 };
 
 const writeActiveTemplateValue = async (value: string): Promise<void> => {

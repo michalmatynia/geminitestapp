@@ -19,7 +19,7 @@ export type CmsRepository = {
   getPages(): Promise<Page[]>;
   getPageById(id: string): Promise<Page | null>;
   getPageBySlug(slug: string): Promise<Page | null>;
-  createPage(data: { name: string }): Promise<Page>;
+  createPage(data: { name: string; themeId?: string | null | undefined }): Promise<Page>;
   updatePage(id: string, data: PageUpdateData): Promise<Page | null>;
   deletePage(id: string): Promise<Page | null>;
   replacePageSlugs(pageId: string, slugIds: string[]): Promise<void>;

@@ -3,14 +3,6 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit/index';
 import prisma from '@/shared/lib/db/prisma';
 
-vi.mock('@/shared/lib/db/prisma', () => ({
-  default: {
-    agentAuditLog: {
-      create: vi.fn(),
-    },
-  },
-}));
-
 describe('Agent Runtime - Audit Logging', () => {
   beforeEach(() => {
     vi.clearAllMocks();

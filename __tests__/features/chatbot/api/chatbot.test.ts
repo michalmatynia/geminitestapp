@@ -13,11 +13,13 @@ describe('Chatbot API', () => {
 
   beforeEach(() => {
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    process.env['OLLAMA_MODEL'] = 'test-model';
   });
 
   afterEach(() => {
     consoleErrorSpy.mockRestore();
     vi.resetAllMocks();
+    delete process.env['OLLAMA_MODEL'];
   });
 
   it('should list available Ollama models', async () => {
@@ -36,7 +38,7 @@ describe('Chatbot API', () => {
     expect(data.models).toEqual(['test-model', 'llava']);
   });
 
-  it('should return an error when model listing fails', async () => {
+  it('should return fallback models when model listing fails', async () => {
     server.use(
       http.get(`${OLLAMA_BASE_URL}/api/tags`, () => {
         return new HttpResponse('Provider down', { status: 502 });
@@ -44,11 +46,11 @@ describe('Chatbot API', () => {
     );
 
     const res = await GET(new NextRequest('http://localhost/api/chatbot'));
-    const data = (await res.json()) as { error: string; errorId?: string };
+    const data = (await res.json()) as { models: string[]; warning?: any };
 
-    expect(res.status).toBe(502);
-    expect(data.error).toContain('Failed to load models');
-    expect(data.errorId).toBeDefined();
+    expect(res.status).toBe(200);
+    expect(data.models).toBeDefined();
+    expect(data.warning.code).toBe('OLLAMA_UNAVAILABLE');
   });
 
   it('should reject invalid chat payloads', async () => {
@@ -127,7 +129,7 @@ describe('Chatbot API', () => {
     const res = await POST(req);
     const data = (await res.json()) as { errorId?: string };
 
-    expect(res.status).toBe(502);
+    expect(res.status).toBe(500);
     expect(data.errorId).toBeDefined();
   });
 });

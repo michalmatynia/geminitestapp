@@ -510,11 +510,11 @@ export function useAiPathTriggerEvent(): {
               const result = await entityApi.getByType(entityType, entityId);
               return result.ok ? result.data : null;
             },
-            reportAiPathsError: (error, meta, summary) => {
+            reportAiPathsError: (error: unknown, meta: Record<string, unknown>, summary?: string) => {
               logger.error(summary ?? 'AI Paths run error', { error, ...meta });
             },
             toast,
-            onNodeFinish: ({ node }) => {
+            onNodeFinish: ({ node }: { node: AiNode }) => {
               if (!completed.has(node.id)) {
                 completed.add(node.id);
               }

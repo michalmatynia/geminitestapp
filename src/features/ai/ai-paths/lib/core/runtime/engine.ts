@@ -693,17 +693,11 @@ export async function evaluateGraph({
     )
     : {};
   let inputs: Record<string, RuntimePortValues> = {};
-  const shouldReuseHashes = Boolean(
-    seedRunId &&
-    seedRunStartedAt &&
-    seedRunId === resolvedRunId &&
-    seedRunStartedAt === resolvedRunStartedAt
-  );
   const inputHashes = new Map<string, string>(
-    shouldReuseHashes && seedHashes ? Object.entries(seedHashes) : []
+    seedHashes ? Object.entries(seedHashes) : []
   );
   const hashTimestamps = new Map<string, number>(
-    shouldReuseHashes && seedHashTimestamps
+    seedHashTimestamps
       ? Object.entries(seedHashTimestamps).map(([k, v]: [string, number]) => [k, v])
       : []
   );

@@ -1,4 +1,7 @@
 import { NextRequest } from 'next/server';
+import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
+
+vi.unmock('@/shared/lib/db/prisma');
 
 import { DELETE, PUT } from '@/app/api/languages/[id]/route';
 import { GET, POST } from '@/app/api/languages/route';

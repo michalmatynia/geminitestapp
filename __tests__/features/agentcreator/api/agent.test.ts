@@ -9,13 +9,6 @@ import prisma from '@/shared/lib/db/prisma';
 describe('Agent API', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
-    vi.mocked(prisma.agentBrowserLog.deleteMany).mockClear();
-    vi.mocked(prisma.agentBrowserSnapshot.deleteMany).mockClear();
-    vi.mocked(prisma.agentAuditLog.deleteMany).mockClear();
-    vi.mocked(prisma.agentMemoryItem.deleteMany).mockClear();
-    vi.mocked(prisma.chatbotAgentRun.deleteMany).mockClear();
-    vi.mocked(prisma.chatbotAgentRun.create).mockClear();
-    vi.mocked(prisma.chatbotAgentRun.findMany).mockClear();
 
     await prisma.agentBrowserLog.deleteMany({});
     await prisma.agentBrowserSnapshot.deleteMany({});
@@ -97,13 +90,16 @@ describe('Agent API', () => {
     const run = await prisma.chatbotAgentRun.create({
       data: { prompt: 'Logs test', tools: ['agent-mode'] },
     });
-    await prisma.agentBrowserLog.create({
-      data: {
-        runId: run.id,
-        level: 'info',
-        message: 'Log entry',
-      },
+    const logData = {
+      runId: run.id,
+      level: 'info',
+      message: 'Log entry',
+    };
+    const log = await prisma.agentBrowserLog.create({
+      data: logData,
     });
+
+    vi.mocked(prisma.agentBrowserLog.findMany).mockResolvedValueOnce([log]);
 
     const res = await getLogs(new NextRequest('http://localhost'), {
       params: Promise.resolve({ runId: run.id }),
@@ -119,14 +115,17 @@ describe('Agent API', () => {
     const run = await prisma.chatbotAgentRun.create({
       data: { prompt: 'Audit test', tools: ['agent-mode'] },
     });
-    await prisma.agentAuditLog.create({
-      data: {
-        runId: run.id,
-        level: 'info',
-        message: 'Audit entry',
-        metadata: { step: 'tool' },
-      },
+    const auditData = {
+      runId: run.id,
+      level: 'info' as const,
+      message: 'Audit entry',
+      metadata: { step: 'tool' },
+    };
+    const audit = await prisma.agentAuditLog.create({
+      data: auditData,
     });
+
+    vi.mocked(prisma.agentAuditLog.findMany).mockResolvedValueOnce([audit]);
 
     const res = await getAudits(new NextRequest('http://localhost'), {
       params: Promise.resolve({ runId: run.id }),

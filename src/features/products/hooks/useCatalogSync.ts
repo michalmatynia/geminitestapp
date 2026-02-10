@@ -205,10 +205,17 @@ export function useCatalogSync(catalogFilter: string): UseCatalogSyncResult {
       ? catalogs.find((entry) => entry.id === catalogFilter)
       : undefined;
     const allowedIds = catalog?.languageIds ?? [];
+    const normalizedAllowed = new Set(
+      allowedIds.map((value) => String(value).trim().toUpperCase()).filter(Boolean)
+    );
 
     const scopedLanguages =
       allowedIds.length > 0
-        ? languages.filter((lang) => allowedIds.includes(lang.id))
+        ? languages.filter((lang) => {
+          const idKey = String(lang.id).trim().toUpperCase();
+          const codeKey = String(lang.code).trim().toUpperCase();
+          return normalizedAllowed.has(idKey) || normalizedAllowed.has(codeKey);
+        })
         : languages;
 
     const seen = new Set<string>();
@@ -221,14 +228,29 @@ export function useCatalogSync(catalogFilter: string): UseCatalogSyncResult {
     });
 
     if (options.length === 0) {
-      options.push(supportedLanguageMap['EN']!);
-      options.push(supportedLanguageMap['PL']!);
-      options.push(supportedLanguageMap['DE']!);
+      if (normalizedAllowed.size > 0) {
+        normalizedAllowed.forEach((code) => {
+          const option = supportedLanguageMap[code];
+          if (!option || seen.has(option.value)) return;
+          seen.add(option.value);
+          options.push(option);
+        });
+      }
+      if (options.length === 0) {
+        options.push(supportedLanguageMap['EN']!);
+        options.push(supportedLanguageMap['PL']!);
+        options.push(supportedLanguageMap['DE']!);
+      }
     }
 
     const defaultLanguageId = catalog?.defaultLanguageId ?? null;
     const defaultLang = defaultLanguageId
-      ? languages.find((lang) => lang.id === defaultLanguageId)
+      ? languages.find((lang) => {
+        const value = String(defaultLanguageId).trim().toUpperCase();
+        const idKey = String(lang.id).trim().toUpperCase();
+        const codeKey = String(lang.code).trim().toUpperCase();
+        return value === idKey || value === codeKey;
+      })
       : null;
     const defaultOption = defaultLang
       ? supportedLanguageMap[defaultLang.code?.trim().toUpperCase() || '']

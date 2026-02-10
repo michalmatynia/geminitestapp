@@ -342,7 +342,19 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         void reportAiPathsError(error, meta, summary);
       },
       toast,
-      onNodeStart: async ({ node, nodeInputs, prevOutputs, iteration, runStartedAt: cbRunStartedAt }) => {
+      onNodeStart: async ({
+        node,
+        nodeInputs,
+        prevOutputs,
+        iteration,
+        runStartedAt: cbRunStartedAt,
+      }: {
+        node: AiNode;
+        nodeInputs: RuntimePortValues;
+        prevOutputs: RuntimePortValues;
+        iteration: number;
+        runStartedAt: string;
+      }) => {
         try {
           resolvedRunId = run.id;
           resolvedRunStartedAt = cbRunStartedAt;
@@ -523,7 +535,21 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           });
         }
       },
-      onNodeError: async ({ node, nodeInputs, prevOutputs, error, iteration, runStartedAt: cbRunStartedAt }) => {
+      onNodeError: async ({
+        node,
+        nodeInputs,
+        prevOutputs,
+        error,
+        iteration,
+        runStartedAt: cbRunStartedAt,
+      }: {
+        node: AiNode;
+        nodeInputs: RuntimePortValues;
+        prevOutputs: RuntimePortValues;
+        error: unknown;
+        iteration: number;
+        runStartedAt: string;
+      }) => {
         try {
           const safeInputs = toJsonSafe(nodeInputs) as RuntimePortValues;
           const safePrevOutputs = toJsonSafe(prevOutputs) as RuntimePortValues;

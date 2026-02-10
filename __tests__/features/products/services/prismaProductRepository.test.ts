@@ -1,4 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
+
+vi.unmock('@/shared/lib/db/prisma');
 
 import { prismaProductRepository } from '@/features/products/services/product-repository/prisma-product-repository';
 import prisma from '@/shared/lib/db/prisma';
@@ -11,6 +13,10 @@ describe('prismaProductRepository', () => {
     await prisma.productImage.deleteMany({});
     await prisma.imageFile.deleteMany({});
     await prisma.product.deleteMany({});
+  });
+
+  afterAll(async () => {
+    await prisma.$disconnect();
   });
 
   it('should create and retrieve a product', async () => {

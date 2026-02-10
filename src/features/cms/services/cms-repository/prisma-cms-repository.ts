@@ -48,9 +48,12 @@ export const prismaCmsRepository: CmsRepository = {
     return page as unknown as Page | null;
   },
 
-  async createPage(data: { name: string }): Promise<Page> {
+  async createPage(data: { name: string; themeId?: string | null | undefined }): Promise<Page> {
     const page = await prisma.page.create({
-      data: { name: data.name },
+      data: { 
+        name: data.name,
+        themeId: data.themeId ?? null,
+      },
     });
     return page as unknown as Page;
   },

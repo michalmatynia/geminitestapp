@@ -1,6 +1,5 @@
-
 import { screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { vi } from 'vitest';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import { render } from '@/__tests__/test-utils';
 import { DraftCreator } from '@/features/drafter/components/DraftCreator';
@@ -14,8 +13,8 @@ vi.mock('next/navigation', () => ({
 }));
 
 // Mock useToast
-vi.mock('@/shared/ui', async () => {
-  const actual = await vi.importActual('@/shared/ui');
+vi.mock('@/shared/ui', async (importOriginal) => {
+  const actual = await importOriginal() as any;
   return {
     ...actual,
     useToast: () => ({ toast: vi.fn() }),
@@ -27,7 +26,7 @@ describe('DraftCreator Component', () => {
     vi.clearAllMocks();
     // Mock global fetch for metadata
     global.fetch = vi.fn().mockImplementation((url) => {
-      if (url === '/api/catalogs') {
+      if (url.includes('/api/catalogs')) {
         return Promise.resolve({
           ok: true,
           json: async () => await Promise.resolve([{ id: 'cat-1', name: 'Default Catalog' }]),
@@ -72,22 +71,12 @@ describe('DraftCreator Component', () => {
     expect(onSaveSuccess).not.toHaveBeenCalled();
   });
 
-  it('should toggle active switch', () => {
+  it('should open icon selector modal', async () => {
     render(<DraftCreator draftId={null} onSaveSuccess={vi.fn()} onCancel={vi.fn()} />);
     
-    const activeSwitch = screen.getByRole('switch', { name: /Active Draft/i });
-    act(() => {
-      fireEvent.click(activeSwitch);
-    });
-  });
-
-  it('should render icon buttons', async () => {
-    render(<DraftCreator draftId={null} onSaveSuccess={vi.fn()} onCancel={vi.fn()} />);
+    const chooseIconButton = screen.getByRole('button', { name: /Choose Icon/i });
+    fireEvent.click(chooseIconButton);
     
-    // availableIcons includes 'package', 'shopping-cart', etc.
-    await waitFor(() => {
-      expect(screen.getByTitle('Package')).toBeInTheDocument();
-      expect(screen.getByTitle('Shopping Cart')).toBeInTheDocument();
-    });
+    expect(screen.getByText(/Search and pick an icon/i)).toBeInTheDocument();
   });
 });

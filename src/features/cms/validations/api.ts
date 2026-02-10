@@ -46,6 +46,7 @@ export const cmsThemeUpdateSchema = z.object({
 export const cmsPageCreateSchema = z.object({
   name: nonEmptyStringSchema,
   slugIds: idArraySchema.optional(),
+  themeId: z.string().nullable().optional(),
 });
 
 export const cmsPageComponentSchema = z.object({

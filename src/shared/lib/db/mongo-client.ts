@@ -43,7 +43,7 @@ const getMongoClientOptions = (): MongoClientOptions => ({
   maxIdleTimeMS: parsePositiveInt(process.env['MONGODB_MAX_IDLE_TIME_MS'], 60_000),
   serverSelectionTimeoutMS: parsePositiveInt(process.env['MONGODB_SERVER_SELECTION_TIMEOUT_MS'], 5_000),
   connectTimeoutMS: parsePositiveInt(process.env['MONGODB_CONNECT_TIMEOUT_MS'], 5_000),
-  socketTimeoutMS: parsePositiveInt(process.env['MONGODB_SOCKET_TIMEOUT_MS'], 20_000),
+  socketTimeoutMS: parsePositiveInt(process.env['MONGODB_SOCKET_TIMEOUT_MS'], 120_000),
   retryWrites: true,
 });
 

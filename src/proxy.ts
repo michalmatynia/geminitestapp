@@ -21,7 +21,10 @@ type HandlerContext = Parameters<NextRequestHandler>[1];
 
 const shouldBypassAuth = (request: NextRequest): boolean => {
   const pathname = request.nextUrl.pathname;
-  return pathname === '/api/products';
+  return (
+    pathname === '/api/products' ||
+    pathname.startsWith('/api/ai-paths')
+  );
 };
 
 export function proxy(

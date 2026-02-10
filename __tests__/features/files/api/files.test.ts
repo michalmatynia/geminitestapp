@@ -3,6 +3,9 @@ import path from 'path';
 
 import { Product, ImageFile } from '@prisma/client';
 import { NextRequest } from 'next/server';
+import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
+
+vi.unmock('@/shared/lib/db/prisma');
 
 import { DELETE } from '@/app/api/files/[id]/route';
 import { GET } from '@/app/api/files/route';

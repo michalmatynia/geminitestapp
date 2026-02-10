@@ -98,6 +98,9 @@ const isProviderAvailable = (provider: ProductDbProvider): boolean =>
     ? Boolean(process.env['MONGODB_URI'])
     : Boolean(process.env['DATABASE_URL']);
 
+const shouldCompareFallbackProvider = (): boolean =>
+  process.env['PRODUCTS_COMPARE_FALLBACK_PROVIDER'] === 'true';
+
 async function getProducts(
   filters: ProductFilters,
   options?: { timings?: ProductQueryTimings; provider?: ProductDbProvider }
@@ -116,7 +119,7 @@ async function getProducts(
   performanceMonitor.record('db.query', repoMs, { operation: 'getProducts', provider });
 
   const fallbackProvider = getFallbackProvider(provider);
-  if (isProviderAvailable(fallbackProvider)) {
+  if (shouldCompareFallbackProvider() && isProviderAvailable(fallbackProvider)) {
     const fallbackRepository = await resolveProductRepository(fallbackProvider);
     const shouldCompareCounts =
       products.length === 0 || Number(filters.page ?? 1) === 1;
@@ -217,7 +220,7 @@ async function countProducts(filters: ProductFilters): Promise<number> {
   const count = await productRepository.countProducts(filters);
 
   const fallbackProvider = getFallbackProvider(provider);
-  if (!isProviderAvailable(fallbackProvider)) {
+  if (!shouldCompareFallbackProvider() || !isProviderAvailable(fallbackProvider)) {
     return count;
   }
 

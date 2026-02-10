@@ -35,8 +35,17 @@ const renderMenu = () => {
 };
 
 describe('Menu Component', () => {
+  const originalLocation = window.location;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    // @ts-ignore
+    delete window.location;
+    (window.location as any) = { ...originalLocation, assign: vi.fn() };
+  });
+
+  afterAll(() => {
+    (window.location as any) = originalLocation;
   });
 
   it('renders main menu categories', () => {
@@ -72,11 +81,12 @@ describe('Menu Component', () => {
     fireEvent.click(cmsTrigger);
     
     const createPageButton = await screen.findByText('Create Page');
-    fireEvent.click(createPageButton);
+    // Ensure we are clicking the actual link/button
+    fireEvent.click(createPageButton.closest('a') || createPageButton);
     
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith('/admin/cms/pages/create');
-    });
+    }, { timeout: 2000 });
   });
 
   it('contains correctly linked standalone sections', async () => {

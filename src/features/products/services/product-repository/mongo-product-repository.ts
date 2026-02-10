@@ -34,6 +34,69 @@ type ProductDocument = Omit<ProductRecord, 'createdAt' | 'updatedAt'> & {
 
 const productCollectionName = 'products';
 
+let productIndexesEnsured: Promise<void> | null = null;
+
+const ensureProductIndexes = async (): Promise<void> => {
+  if (!productIndexesEnsured) {
+    productIndexesEnsured = (async (): Promise<void> => {
+      const db = await getMongoDb();
+      const collection = db.collection<ProductDocument>(productCollectionName);
+      await Promise.all([
+        collection.createIndex({ createdAt: -1 }, { name: 'products_createdAt_desc' }),
+        collection.createIndex({ updatedAt: -1 }, { name: 'products_updatedAt_desc' }),
+        collection.createIndex({ sku: 1 }, { name: 'products_sku' }),
+        collection.createIndex({ id: 1 }, { name: 'products_id' }),
+        collection.createIndex({ baseProductId: 1 }, { name: 'products_baseProductId' }),
+        collection.createIndex({ categoryId: 1 }, { name: 'products_categoryId' }),
+        collection.createIndex({ 'catalogs.catalogId': 1 }, { name: 'products_catalogId' }),
+        collection.createIndex({ name_en: 1 }, { name: 'products_name_en' }),
+        collection.createIndex({ name_pl: 1 }, { name: 'products_name_pl' }),
+        collection.createIndex({ name_de: 1 }, { name: 'products_name_de' }),
+      ]);
+    })();
+  }
+  try {
+    await productIndexesEnsured;
+  } catch (error) {
+    productIndexesEnsured = null;
+    throw error;
+  }
+};
+
+const getProductCollection = async () => {
+  await ensureProductIndexes();
+  const db = await getMongoDb();
+  return db.collection<ProductDocument>(productCollectionName);
+};
+
+const isEmptyFilter = (filter: Filter<ProductDocument>): boolean =>
+  Object.keys(filter as Record<string, unknown>).length === 0;
+
+const buildListProjectStage = (filters: ProductFilters): Document | null => {
+  // List/grid queries should return only fields used by table cells and row actions.
+  // This avoids transferring large document payloads (notably descriptions/base64 arrays).
+  if (typeof filters.sku === 'string' && filters.sku.trim().length > 0) {
+    return null;
+  }
+  return {
+    _id: 1,
+    id: 1,
+    sku: 1,
+    baseProductId: 1,
+    defaultPriceGroupId: 1,
+    name_en: 1,
+    name_pl: 1,
+    name_de: 1,
+    price: 1,
+    stock: 1,
+    createdAt: 1,
+    updatedAt: 1,
+    imageLinks: { $slice: ['$imageLinks', 1] },
+    imageBase64s: { $literal: [] },
+    images: { $slice: ['$images', 1] },
+  };
+};
+
 const buildProductIdFilter = (id: string): Filter<ProductDocument> => {
   const normalized = id.trim();
   const conditions: Array<Record<string, unknown>> = [
@@ -210,44 +273,58 @@ const buildSearchFilter = (filters: ProductFilters): Filter<ProductDocument> => 
 
 export const mongoProductRepository: ProductRepository = {
   async getProducts(filters: ProductFilters) {
-    const db = await getMongoDb();
+    const collection = await getProductCollection();
     const page = filters.page ?? 1;
     const pageSize = filters.pageSize ?? 20;
     const skip = (page - 1) * pageSize;
     const limit = pageSize;
+    const searchFilter = buildSearchFilter(filters);
+    const projectStage = buildListProjectStage(filters);
 
-    let cursor = db
-      .collection<ProductDocument>(productCollectionName)
-      .find(buildSearchFilter(filters))
-      .sort({ createdAt: -1 });
+    if (projectStage) {
+      const pipeline: Document[] = [
+        { $match: searchFilter },
+        { $sort: { createdAt: -1 } },
+        { $skip: skip },
+        { $limit: limit },
+        { $project: projectStage },
+      ];
+      const aggregateOptions = isEmptyFilter(searchFilter)
+        ? { hint: { createdAt: -1 } }
+        : undefined;
+      const docs = await collection
+        .aggregate<ProductDocument>(pipeline, aggregateOptions)
+        .toArray();
+      return docs.map(toProductResponse);
+    }
 
-    cursor = cursor.skip(skip);
-    cursor = cursor.limit(limit);
-
+    let cursor = collection.find(searchFilter).sort({ createdAt: -1 });
+    if (isEmptyFilter(searchFilter)) {
+      cursor = cursor.hint({ createdAt: -1 });
+    }
+    cursor = cursor.skip(skip).limit(limit);
     const docs = await cursor.toArray();
     return docs.map(toProductResponse);
   },
 
   async countProducts(filters: ProductFilters) {
-    const db = await getMongoDb();
-    return db
-      .collection<ProductDocument>(productCollectionName)
-      .countDocuments(buildSearchFilter(filters));
+    const collection = await getProductCollection();
+    const searchFilter = buildSearchFilter(filters);
+    if (isEmptyFilter(searchFilter)) {
+      return collection.estimatedDocumentCount();
+    }
+    return collection.countDocuments(searchFilter);
   },
 
   async getProductById(id: string) {
-    const db = await getMongoDb();
-    const doc = await db
-      .collection<ProductDocument>(productCollectionName)
-      .findOne(buildProductIdFilter(id));
+    const collection = await getProductCollection();
+    const doc = await collection.findOne(buildProductIdFilter(id));
     return doc ? toProductResponse({ ...doc, _id: doc._id }) : null;
   },
 
   async getProductBySku(sku: string) {
-    const db = await getMongoDb();
-    const doc = await db
-      .collection<ProductDocument>(productCollectionName)
-      .findOne({ sku });
+    const collection = await getProductCollection();
+    const doc = await collection.findOne({ sku });
     return doc ? toProductBase(doc) : null;
   },
 

@@ -11,6 +11,8 @@ import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
+const BASE_MARKETPLACE_SLUGS = new Set(['baselinker', 'base', 'base-com']);
+
 /**
  * POST /api/marketplace/categories/fetch
  * Fetches categories from the marketplace API and stores them locally.
@@ -38,7 +40,7 @@ async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext): Prom
 
   // Check if this is a Base.com connection
   const integrationSlug = integration.slug?.toLowerCase();
-  if (integrationSlug !== 'baselinker' && integrationSlug !== 'base') {
+  if (!integrationSlug || !BASE_MARKETPLACE_SLUGS.has(integrationSlug)) {
     throw badRequestError('Only Base.com connections are supported for category fetch');
   }
 

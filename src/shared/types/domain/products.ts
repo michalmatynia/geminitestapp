@@ -180,10 +180,6 @@ export type UserPreferences = {
   productListDraftIconColorMode?: 'theme' | 'custom' | null;
   productListDraftIconColor?: string | null;
   aiPathsActivePathId?: string | null;
-  aiPathsExpandedGroups?: string[] | null;
-  aiPathsPaletteCollapsed?: boolean | null;
-  aiPathsPathIndex?: unknown[] | null;
-  aiPathsPathConfigs?: Record<string, unknown> | string | null;
   adminMenuCollapsed?: boolean | null;
 };
 

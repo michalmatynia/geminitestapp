@@ -1,5 +1,8 @@
 import { Product } from '@prisma/client';
 import { NextRequest } from 'next/server';
+import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
+
+vi.unmock('@/shared/lib/db/prisma');
 
 import { GET as GET_COUNT } from '@/app/api/products/count/route';
 import { GET as GET_LIST } from '@/app/api/products/route';
@@ -57,8 +60,6 @@ describe('Products API - Pagination and Count', () => {
 
     it('should return the correct page of products', async () => {
       // Products are ordered by createdAt desc in repository.
-      // We'll create them with a slight delay or just rely on IDs/Names if we can control order.
-      // For simplicity, let's just check that we get different products on different pages.
       for (let i = 1; i <= 5; i++) {
         await createMockProduct({ name_en: `Product ${i}`, sku: `SKU${i}` });
       }

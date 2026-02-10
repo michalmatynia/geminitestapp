@@ -1,4 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
+
+vi.unmock('@/shared/lib/db/prisma');
 
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import prisma from '@/shared/lib/db/prisma';
@@ -12,6 +14,10 @@ describe('AiPathRunRepository', () => {
     await prisma.aiPathRunEvent.deleteMany();
     await prisma.aiPathRunNode.deleteMany();
     await prisma.aiPathRun.deleteMany();
+  });
+
+  afterAll(async () => {
+    await prisma.$disconnect();
   });
 
   const mockNodes: AiNode[] = [
@@ -174,8 +180,7 @@ describe('AiPathRunRepository', () => {
     });
     expect(updated.status).toBe('completed');
     expect(updated.outputs).toEqual({ foo: 'bar' });
-    expect(updated.attempt).toBe(1); // should preserve if not provided in update? 
-    // Wait, let's check prisma implementation of upsert for attempt.
+    expect(updated.attempt).toBe(1);
   });
 
   it('should create and list run events', async () => {

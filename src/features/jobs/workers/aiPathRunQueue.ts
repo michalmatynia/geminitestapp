@@ -6,21 +6,33 @@ import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-r
 import { getRuntimeAnalyticsSummary, recordRuntimeRunStarted } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { processRun, processStaleRunRecovery } from '@/features/jobs/processors/ai-path-run-processor';
 import { getAiInsightsQueueStatus } from '@/features/jobs/workers/aiInsightsQueue';
+import { logSystemEvent } from '@/features/observability/server';
 import { createManagedQueue, getRedisConnection } from '@/shared/lib/queue';
 
 const DEFAULT_CONCURRENCY = Number(process.env['AI_PATHS_RUN_CONCURRENCY'] ?? '1');
 const AI_PATH_RUN_QUEUE_NAME = 'ai-path-run';
+const LOG_SOURCE = 'ai-path-run-queue';
 const buildRetryJobId = (runId: string): string => `${runId}:retry`;
 const DEBUG_AI_PATH_QUEUE = process.env['AI_PATHS_QUEUE_DEBUG'] === 'true';
 
-const debugQueueLog = (...args: unknown[]): void => {
+const debugQueueLog = (message: string, context?: Record<string, unknown>): void => {
   if (!DEBUG_AI_PATH_QUEUE) return;
-  console.log(...args);
+  void logSystemEvent({
+    level: 'info',
+    source: LOG_SOURCE,
+    message,
+    context: context ?? null
+  });
 };
 
-const debugQueueWarn = (...args: unknown[]): void => {
+const debugQueueWarn = (message: string, context?: Record<string, unknown>): void => {
   if (!DEBUG_AI_PATH_QUEUE) return;
-  console.warn(...args);
+  void logSystemEvent({
+    level: 'warn',
+    source: LOG_SOURCE,
+    message,
+    context: context ?? null
+  });
 };
 
 type AiPathRunJobData = {
@@ -344,11 +356,16 @@ const queue = createManagedQueue<AiPathRunJobData>({
     try {
       const { ErrorSystem } = await import('@/features/observability/services/error-system');
       void ErrorSystem.captureException(error, {
-        service: 'ai-path-run-queue',
+        service: LOG_SOURCE,
         runId: data.runId,
       });
     } catch {
-      console.error('[aiPathRunQueue] Fatal queue error', error);
+      void logSystemEvent({
+        level: 'error',
+        source: LOG_SOURCE,
+        message: 'Fatal queue error',
+        error
+      });
     }
   },
 });
@@ -519,11 +536,16 @@ export const processSingleRun = async (runId: string): Promise<void> => {
     try {
       const { ErrorSystem } = await import('@/features/observability/services/error-system');
       void ErrorSystem.captureException(error, {
-        service: 'ai-path-run-queue-single',
+        service: `${LOG_SOURCE}-single`,
         runId,
       });
     } catch {
-      console.error('[aiPathRunQueue] Fatal inline execution error', error);
+      void logSystemEvent({
+        level: 'error',
+        source: LOG_SOURCE,
+        message: 'Fatal inline execution error',
+        error
+      });
     }
     throw error;
   }

@@ -65,7 +65,7 @@ async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext): Prom
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
-  { source: 'marketplace.tag-mappings.GET' }
+  { source: 'marketplace.tag-mappings.GET', cacheControl: 'no-store' }
 );
 
 export const POST = apiHandler(

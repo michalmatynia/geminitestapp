@@ -3,6 +3,8 @@
 import type {
   AiNode,
   AiPathRuntimeEvent,
+  AiPathRuntimeEventKind,
+  AiPathRuntimeNodeStatus,
   AiPathRuntimeNodeStatusMap,
   Edge,
   ParserSampleState,
@@ -13,7 +15,6 @@ import type {
   RuntimeState,
   RuntimePortValues,
   UpdaterSampleState,
-  AiPathRuntimeNodeStatus,
 } from '@/features/ai/ai-paths/lib';
 
 export const AI_PATHS_SESSION_STALE_MS = 30_000;
@@ -51,7 +52,7 @@ export const IDLE_REHYDRATION_BLOCKED_NODE_STATUSES = new Set<string>([
   'cancelled',
 ]);
 
-export type ToastFn = (message: string, options?: Partial<{ variant: 'success' | 'error' | 'info'; duration: number }>) => void;
+export type ToastFn = (message: string, options?: Partial<{ variant: 'success' | 'error' | 'info' | 'warning'; duration: number }>) => void;
 
 export type QueuedRun = {
   triggerNodeId: string;
@@ -63,6 +64,21 @@ export type QueuedRun = {
 export type RuntimeEventInput = Omit<AiPathRuntimeEvent, 'id' | 'timestamp'> & {
   id?: string | undefined;
   timestamp?: string | undefined;
+};
+
+export type SetNodeStatusInput = {
+  nodeId: string;
+  status: AiPathRuntimeNodeStatus;
+  source: 'local' | 'server';
+  runId?: string | null | undefined;
+  runStartedAt?: string | null | undefined;
+  iteration?: number | undefined;
+  nodeType?: string | null | undefined;
+  nodeTitle?: string | null | undefined;
+  kind?: AiPathRuntimeEventKind | undefined;
+  level?: 'info' | 'warning' | 'error' | undefined;
+  message?: string | undefined;
+  metadata?: Record<string, unknown> | null | undefined;
 };
 
 export type UseAiPathsRuntimeArgs = {
@@ -138,11 +154,11 @@ export type LocalExecutionArgs = UseAiPathsRuntimeArgs & {
   // From useAiPathsRuntimeState
   appendRuntimeEvent: (input: RuntimeEventInput) => void;
   resetRuntimeNodeStatuses: (next?: AiPathRuntimeNodeStatusMap) => void;
-  setNodeStatus: (input: Omit<AiPathRuntimeEvent, 'id' | 'timestamp'> & { status: AiPathRuntimeNodeStatus }) => void;
+  setNodeStatus: (input: SetNodeStatusInput) => void;
   settleTransientNodeStatuses: (terminalStatus: 'completed' | 'failed' | 'canceled', currentOutputs?: Record<string, RuntimePortValues>) => void;
   setRunStatus: (status: RunStatus) => void;
   formatStatusLabel: (status: AiPathRuntimeNodeStatus) => string;
-  normalizeNodeStatus: (value: unknown) => AiPathRuntimeNodeStatus;
+  normalizeNodeStatus: (value: unknown) => AiPathRuntimeNodeStatus | null;
   // Callbacks
   stopServerRunStream: () => void;
   fetchEntityByType: (entityType: string, entityId: string) => Promise<Record<string, unknown> | null>;
@@ -159,9 +175,9 @@ export type ServerExecutionArgs = UseAiPathsRuntimeArgs & {
   // From useAiPathsRuntimeState
   appendRuntimeEvent: (input: RuntimeEventInput) => void;
   resetRuntimeNodeStatuses: (next?: AiPathRuntimeNodeStatusMap) => void;
-  setNodeStatus: (input: Omit<AiPathRuntimeEvent, 'id' | 'timestamp'> & { status: AiPathRuntimeNodeStatus }) => void;
+  setNodeStatus: (input: SetNodeStatusInput) => void;
   settleTransientNodeStatuses: (terminalStatus: 'completed' | 'failed' | 'canceled', currentOutputs?: Record<string, RuntimePortValues>) => void;
-  normalizeNodeStatus: (value: unknown) => AiPathRuntimeNodeStatus;
+  normalizeNodeStatus: (value: unknown) => AiPathRuntimeNodeStatus | null;
   formatStatusLabel: (status: AiPathRuntimeNodeStatus) => string;
   runtimeNodeStatusesRef: React.MutableRefObject<AiPathRuntimeNodeStatusMap>;
   setRuntimeNodeStatuses: React.Dispatch<React.SetStateAction<AiPathRuntimeNodeStatusMap>>;

@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { logSystemEvent } from '@/features/observability/server';
 import { getCatalogRepository } from '@/features/products/server';
 import { getProductDataProvider } from '@/features/products/server';
+import { normalizeCatalogLanguageSelection } from '@/features/products/services/catalog-language-normalization';
 import type { CatalogRecord } from '@/features/products/types';
 import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
@@ -172,14 +173,21 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     return parsed.response;
   }
   const data = parsed.data;
-  if (!data.languageIds || data.languageIds.length === 0) {
+  const provider = await getProductDataProvider();
+  const normalizedLanguages = await normalizeCatalogLanguageSelection({
+    provider,
+    languageIds: data.languageIds ?? [],
+    defaultLanguageId: data.defaultLanguageId ?? null,
+  });
+
+  if (normalizedLanguages.languageIds.length === 0) {
     throw badRequestError('Select at least one language.', {
       field: 'languageIds',
     });
   }
   if (
-    !data.defaultLanguageId ||
-    !data.languageIds.includes(data.defaultLanguageId)
+    !normalizedLanguages.defaultLanguageId ||
+    !normalizedLanguages.languageIds.includes(normalizedLanguages.defaultLanguageId)
   ) {
     throw badRequestError(
       'Default language must be one of the selected languages.',
@@ -200,7 +208,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       { field: 'defaultPriceGroupId' }
     );
   }
-  const catalogRepository = await getCatalogRepository();
+  const catalogRepository = await getCatalogRepository(provider);
   const existingCatalogs = await catalogRepository.listCatalogs();
   const shouldBeDefault =
     existingCatalogs.length === 0 ? true : data.isDefault ?? false;
@@ -208,8 +216,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     name: data.name,
     description: data.description ?? null,
     isDefault: shouldBeDefault,
-    languageIds: data.languageIds ?? [],
-    defaultLanguageId: data.defaultLanguageId ?? null,
+    languageIds: normalizedLanguages.languageIds,
+    defaultLanguageId: normalizedLanguages.defaultLanguageId,
     priceGroupIds: data.priceGroupIds ?? [],
     defaultPriceGroupId: data.defaultPriceGroupId ?? null,
   });

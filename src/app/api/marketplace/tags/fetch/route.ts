@@ -14,6 +14,8 @@ type FetchMarketplaceTagsRequest = {
   connectionId: string;
 };
 
+const BASE_MARKETPLACE_SLUGS = new Set(['baselinker', 'base', 'base-com']);
+
 /**
  * POST /api/marketplace/tags/fetch
  * Fetches tags from Base.com and stores them locally for mapping.
@@ -38,7 +40,7 @@ async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext): Prom
   }
 
   const integrationSlug = integration.slug?.toLowerCase();
-  if (integrationSlug !== 'baselinker' && integrationSlug !== 'base') {
+  if (!integrationSlug || !BASE_MARKETPLACE_SLUGS.has(integrationSlug)) {
     throw badRequestError('Only Base.com connections are supported for tag fetch');
   }
 

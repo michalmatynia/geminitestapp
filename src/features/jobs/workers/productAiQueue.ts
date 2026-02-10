@@ -3,11 +3,12 @@ import 'server-only';
 import { dispatchProductAiJob } from '@/features/jobs/processors/product-ai-processors';
 import type { Job } from '@/features/jobs/processors/product-ai-processors';
 import { getProductAiJobRepository } from '@/features/jobs/services/product-ai-job-repository';
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
 import { notFoundError } from '@/shared/errors/app-error';
 import { createManagedQueue } from '@/shared/lib/queue';
 
 const STALE_RUNNING_TTL_MS = 1000 * 60 * 10;
+const LOG_SOURCE = 'product-ai-queue';
 
 type ProductAiJobData = {
   jobId: string;
@@ -30,16 +31,31 @@ const queue = createManagedQueue<ProductAiJobData>({
     // Mark stale running jobs as failed
     const staleResult = await jobRepository.markStaleRunningJobs(STALE_RUNNING_TTL_MS);
     if (staleResult.count > 0) {
-      console.log(`[productAiQueue] Marked ${staleResult.count} stale running jobs as failed`);
+      await logSystemEvent({
+        level: 'info',
+        source: LOG_SOURCE,
+        message: `Marked ${staleResult.count} stale running jobs as failed`,
+        context: { staleCount: staleResult.count }
+      });
     }
 
     const job = await jobRepository.findJobById(data.jobId);
     if (!job) {
-      console.warn(`[productAiQueue] Job ${data.jobId} not found, skipping`);
+      await logSystemEvent({
+        level: 'warn',
+        source: LOG_SOURCE,
+        message: `Job ${data.jobId} not found, skipping`,
+        context: { jobId: data.jobId }
+      });
       return;
     }
     if (job.status !== 'running' && job.status !== 'pending') {
-      console.log(`[productAiQueue] Job ${data.jobId} has status "${job.status}", skipping`);
+      await logSystemEvent({
+        level: 'info',
+        source: LOG_SOURCE,
+        message: `Job ${data.jobId} has status "${job.status}", skipping`,
+        context: { jobId: data.jobId, status: job.status }
+      });
       return;
     }
 
@@ -55,7 +71,12 @@ const queue = createManagedQueue<ProductAiJobData>({
     }
 
     const typedJob = job as unknown as Job;
-    console.log(`[productAiQueue] Processing job ${job.id} of type "${job.type}"`);
+    await logSystemEvent({
+      level: 'info',
+      source: LOG_SOURCE,
+      message: `Processing job ${job.id} of type "${job.type}"`,
+      context: { jobId: job.id, type: job.type }
+    });
 
     try {
       const result = await dispatchProductAiJob(typedJob);
@@ -68,12 +89,17 @@ const queue = createManagedQueue<ProductAiJobData>({
         payload: job.payload,
         createdAt: job.createdAt,
       });
-      console.log(`[productAiQueue] Job ${job.id} completed`);
+      await logSystemEvent({
+        level: 'info',
+        source: LOG_SOURCE,
+        message: `Job ${job.id} completed`,
+        context: { jobId: job.id }
+      });
       return result;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Job failed.';
       await ErrorSystem.captureException(error, {
-        service: 'product-ai-queue',
+        service: LOG_SOURCE,
         jobId: job.id,
         productId: job.productId,
         jobType: job.type,
@@ -98,7 +124,12 @@ export const startProductAiJobQueue = (): void => {
 
 export const stopProductAiJobQueue = (reason?: string): void => {
   const suffix = reason ? `: ${reason}` : '';
-  console.log(`[productAiQueue] Queue worker stopped${suffix}`);
+  void logSystemEvent({
+    level: 'info',
+    source: LOG_SOURCE,
+    message: `Queue worker stopped${suffix}`,
+    context: { reason }
+  });
   void queue.stopWorker();
 };
 
@@ -134,21 +165,32 @@ export const enqueueProductAiJobToQueue = async (
 
 // Inline processing for serverless/development environments
 export const processSingleJob = async (jobId: string): Promise<void> => {
-  console.log(`[processSingleJob] Processing job ${jobId}`);
+  const SINGLE_LOG_SOURCE = 'product-ai-queue-single';
+  await logSystemEvent({
+    level: 'info',
+    source: SINGLE_LOG_SOURCE,
+    message: `Processing job ${jobId}`,
+    context: { jobId }
+  });
 
   const jobRepository = await getProductAiJobRepository();
   const job = await jobRepository.findJobById(jobId);
 
   if (!job) {
     void ErrorSystem.logWarning(`Job ${jobId} not found`, {
-      service: 'product-ai-queue-single',
+      service: SINGLE_LOG_SOURCE,
       jobId
     });
     throw notFoundError('Job not found', { jobId });
   }
 
   if (job.status !== 'pending') {
-    console.log(`[processSingleJob] Job ${jobId} is not pending (status: ${job.status}), skipping`);
+    await logSystemEvent({
+      level: 'info',
+      source: SINGLE_LOG_SOURCE,
+      message: `Job ${jobId} is not pending (status: ${job.status}), skipping`,
+      context: { jobId, status: job.status }
+    });
     return;
   }
 
@@ -174,11 +216,16 @@ export const processSingleJob = async (jobId: string): Promise<void> => {
       payload: job.payload,
       createdAt: job.createdAt,
     });
-    console.log(`[processSingleJob] Job ${job.id} completed`);
+    await logSystemEvent({
+      level: 'info',
+      source: SINGLE_LOG_SOURCE,
+      message: `Job ${job.id} completed`,
+      context: { jobId: job.id }
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Job failed.';
     await ErrorSystem.captureException(error, {
-      service: 'product-ai-queue-single',
+      service: SINGLE_LOG_SOURCE,
       jobId: job.id,
       productId: job.productId,
       jobType: job.type,

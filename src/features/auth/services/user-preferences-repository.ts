@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { ObjectId, type Collection, type Db } from 'mongodb';
+import { ObjectId } from 'mongodb';
 
 import { operationFailedError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -32,10 +32,6 @@ export type UserPreferencesData = {
   productListDraftIconColorMode?: 'theme' | 'custom' | null;
   productListDraftIconColor?: string | null;
   aiPathsActivePathId?: string | null;
-  aiPathsExpandedGroups?: string[];
-  aiPathsPaletteCollapsed?: boolean | null;
-  aiPathsPathIndex?: JsonValue | null;
-  aiPathsPathConfigs?: JsonValue | null;
   adminMenuCollapsed?: boolean | null;
   adminMenuFavorites?: string[] | null;
   adminMenuSectionColors?: Record<string, string> | null;
@@ -61,10 +57,6 @@ export type UserPreferences = {
   productListDraftIconColorMode: 'theme' | 'custom' | null;
   productListDraftIconColor: string | null;
   aiPathsActivePathId: string | null;
-  aiPathsExpandedGroups: string[];
-  aiPathsPaletteCollapsed: boolean | null;
-  aiPathsPathIndex: JsonValue | null;
-  aiPathsPathConfigs: JsonValue | null;
   adminMenuCollapsed: boolean | null;
   adminMenuFavorites: string[];
   adminMenuSectionColors: Record<string, string>;
@@ -92,10 +84,6 @@ type UserPreferencesDocument = {
   productListDraftIconColorMode: 'theme' | 'custom' | null;
   productListDraftIconColor: string | null;
   aiPathsActivePathId: string | null;
-  aiPathsExpandedGroups: string[];
-  aiPathsPaletteCollapsed: boolean | null;
-  aiPathsPathIndex: JsonValue | null;
-  aiPathsPathConfigs: JsonValue | null;
   adminMenuCollapsed: boolean | null;
   adminMenuFavorites: string[] | null;
   adminMenuSectionColors: Record<string, string> | null;
@@ -113,10 +101,6 @@ type UserPreferencesDocument = {
 };
 
 const USER_PREFERENCES_COLLECTION = 'user_preferences';
-const AI_PATHS_SETTINGS_COLLECTION = 'ai_paths_settings';
-const AI_PATHS_INDEX_KEY = 'ai_paths_index';
-const AI_PATHS_CONFIG_PREFIX = 'ai_paths_config_';
-const AI_PATHS_UI_STATE_KEY = 'ai_paths_ui_state';
 const USER_PREFERENCES_CACHE_TTL_MS = parsePositiveInt(
   process.env['USER_PREFERENCES_CACHE_TTL_MS'],
   60_000
@@ -127,23 +111,11 @@ const IMMUTABLE_PREFERENCE_FIELDS = new Set([
   'userId',
   'createdAt',
   'updatedAt',
-  'aiPathsExpandedGroups',
-  'aiPathsPaletteCollapsed',
-  'aiPathsPathIndex',
-  'aiPathsPathConfigs',
 ]);
 
 type CachedUserPreferences = {
   value: UserPreferences;
   fetchedAt: number;
-};
-
-type AiPathsSettingDocument = {
-  _id?: ObjectId | string;
-  key: string;
-  value: string;
-  createdAt: Date;
-  updatedAt: Date;
 };
 
 const userPreferencesCache = new Map<string, CachedUserPreferences>();
@@ -170,102 +142,6 @@ const setCachedUserPreferences = (cacheKey: string, value: UserPreferences): voi
     value,
     fetchedAt: Date.now(),
   });
-};
-
-const safeStringifyJson = (value: unknown): string | null => {
-  try {
-    return JSON.stringify(value);
-  } catch {
-    return null;
-  }
-};
-
-const upsertAiPathsSettingIfMissing = async (
-  collection: Collection<AiPathsSettingDocument>,
-  key: string,
-  value: string,
-  now: Date
-): Promise<void> => {
-  await collection.updateOne(
-    { key },
-    {
-      $setOnInsert: {
-        key,
-        value,
-        createdAt: now,
-        updatedAt: now,
-      },
-    },
-    { upsert: true }
-  );
-};
-
-const migrateLegacyAiPathsFromUserPreferences = async (
-  db: Db,
-  doc: UserPreferencesDocument
-): Promise<void> => {
-  const settingsCollection = db.collection<AiPathsSettingDocument>(AI_PATHS_SETTINGS_COLLECTION);
-  const now = new Date();
-  const writes: Array<Promise<void>> = [];
-
-  if (doc.aiPathsPathIndex !== null && doc.aiPathsPathIndex !== undefined) {
-    const serialized = safeStringifyJson(doc.aiPathsPathIndex);
-    if (serialized !== null) {
-      writes.push(
-        upsertAiPathsSettingIfMissing(settingsCollection, AI_PATHS_INDEX_KEY, serialized, now)
-      );
-    }
-  }
-
-  if (
-    doc.aiPathsPathConfigs &&
-    typeof doc.aiPathsPathConfigs === 'object' &&
-    !Array.isArray(doc.aiPathsPathConfigs)
-  ) {
-    Object.entries(doc.aiPathsPathConfigs as Record<string, unknown>).forEach(
-      ([rawPathId, rawConfig]: [string, unknown]) => {
-        const pathId = rawPathId.trim();
-        if (!pathId) return;
-        const serialized = safeStringifyJson(rawConfig);
-        if (serialized === null) return;
-        writes.push(
-          upsertAiPathsSettingIfMissing(
-            settingsCollection,
-            `${AI_PATHS_CONFIG_PREFIX}${pathId}`,
-            serialized,
-            now
-          )
-        );
-      }
-    );
-  }
-
-  const uiState: Record<string, unknown> = {};
-  if (Array.isArray(doc.aiPathsExpandedGroups)) {
-    uiState['expandedGroups'] = doc.aiPathsExpandedGroups.filter(
-      (item: string): boolean => typeof item === 'string' && item.trim().length > 0
-    );
-  }
-  if (typeof doc.aiPathsPaletteCollapsed === 'boolean') {
-    uiState['paletteCollapsed'] = doc.aiPathsPaletteCollapsed;
-  }
-  if (Object.keys(uiState).length > 0) {
-    const serialized = safeStringifyJson(uiState);
-    if (serialized !== null) {
-      writes.push(
-        upsertAiPathsSettingIfMissing(
-          settingsCollection,
-          AI_PATHS_UI_STATE_KEY,
-          serialized,
-          now
-        )
-      );
-    }
-  }
-
-  if (writes.length > 0) {
-    await Promise.all(writes);
-  }
 };
 
 export const peekUserPreferencesCache = (
@@ -307,10 +183,6 @@ const toUserPreferences = (doc: UserPreferencesDocument): UserPreferences => ({
   productListDraftIconColorMode: doc.productListDraftIconColorMode ?? 'theme',
   productListDraftIconColor: doc.productListDraftIconColor ?? '#60a5fa',
   aiPathsActivePathId: doc.aiPathsActivePathId ?? null,
-  aiPathsExpandedGroups: [],
-  aiPathsPaletteCollapsed: false,
-  aiPathsPathIndex: null,
-  aiPathsPathConfigs: null,
   adminMenuCollapsed: doc.adminMenuCollapsed ?? false,
   adminMenuFavorites: doc.adminMenuFavorites ?? [],
   adminMenuSectionColors: doc.adminMenuSectionColors ?? {},
@@ -337,10 +209,6 @@ const defaultPreferences = (userId: string): Omit<UserPreferences, 'id' | 'creat
   productListDraftIconColorMode: 'theme',
   productListDraftIconColor: '#60a5fa',
   aiPathsActivePathId: null,
-  aiPathsExpandedGroups: ['Triggers'],
-  aiPathsPaletteCollapsed: false,
-  aiPathsPathIndex: null,
-  aiPathsPathConfigs: null,
   adminMenuCollapsed: false,
   adminMenuFavorites: [],
   adminMenuSectionColors: {},
@@ -389,29 +257,6 @@ export async function getUserPreferences(userId: string): Promise<UserPreference
     const doc = await collection.findOne({ _id: canonicalId });
 
     if (doc) {
-      if (
-        Object.prototype.hasOwnProperty.call(doc, 'aiPathsExpandedGroups') ||
-        Object.prototype.hasOwnProperty.call(doc, 'aiPathsPaletteCollapsed') ||
-        Object.prototype.hasOwnProperty.call(doc, 'aiPathsPathIndex') ||
-        Object.prototype.hasOwnProperty.call(doc, 'aiPathsPathConfigs')
-      ) {
-        try {
-          await migrateLegacyAiPathsFromUserPreferences(db, doc);
-        } catch {
-          // Migration failure should never block loading user preferences.
-        }
-        await collection.updateOne(
-          { _id: canonicalId },
-          {
-            $unset: {
-              aiPathsExpandedGroups: '',
-              aiPathsPaletteCollapsed: '',
-              aiPathsPathIndex: '',
-              aiPathsPathConfigs: '',
-            },
-          }
-        );
-      }
       const normalized = toUserPreferences(doc);
       setCachedUserPreferences(cacheKey, normalized);
       return normalized;
@@ -463,17 +308,10 @@ export async function updateUserPreferences(
   const updateDoc: {
     $set: Record<string, unknown>;
     $setOnInsert?: Record<string, unknown>;
-    $unset?: Record<string, ''>;
   } = {
     $set: {
       ...setData,
       updatedAt: now,
-    },
-    $unset: {
-      aiPathsExpandedGroups: '',
-      aiPathsPaletteCollapsed: '',
-      aiPathsPathIndex: '',
-      aiPathsPathConfigs: '',
     },
   };
   if (Object.keys(insertDefaults).length > 0) {

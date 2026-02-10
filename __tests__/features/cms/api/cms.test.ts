@@ -1,9 +1,13 @@
 import { NextRequest } from 'next/server';
+import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
+
+vi.unmock('@/shared/lib/db/prisma');
 
 import { DELETE } from '@/app/api/cms/slugs/[id]/route';
 import { GET, POST } from '@/app/api/cms/slugs/route';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import type { Slug } from '@/features/cms/types';
+import prisma from '@/shared/lib/db/prisma';
 
 describe('CMS API', () => {
   let cmsRepository: any;
@@ -11,12 +15,14 @@ describe('CMS API', () => {
   beforeEach(async () => {
     cmsRepository = await getCmsRepository();
     // Use a try-catch or ensure deleteMany exists/works for the provider
-    // For prisma it works, for mongo we might need to be careful if it's not implemented
-    // But our repos have basic CRUD.
     const slugs = await cmsRepository.getSlugs();
     for (const s of slugs) {
       await cmsRepository.deleteSlug(s.id);
     }
+  });
+
+  afterAll(async () => {
+    await prisma.$disconnect();
   });
 
   it('should create a new slug', async () => {

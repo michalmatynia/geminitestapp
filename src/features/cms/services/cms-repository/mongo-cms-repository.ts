@@ -153,12 +153,13 @@ export const mongoCmsRepository: CmsRepository = {
     return this.getPageById(pageSlug.pageId);
   },
 
-  async createPage(data: { name: string }): Promise<Page> {
+  async createPage(data: { name: string; themeId?: string | null | undefined }): Promise<Page> {
     const db = await getMongoDb();
     const id = randomUUID();
     const doc: PageDocument = {
       id,
       name: data.name,
+      themeId: data.themeId ?? null,
       status: 'draft',
       showMenu: true,
       components: [],
@@ -166,7 +167,7 @@ export const mongoCmsRepository: CmsRepository = {
       updatedAt: new Date(),
     };
     await db.collection<PageDocument>(pagesCollection).insertOne(doc);
-    return { id, name: doc.name, status: 'draft', showMenu: true, components: [] } as Page;
+    return { id, name: doc.name, status: 'draft', showMenu: true, components: [], themeId: doc.themeId } as Page;
   },
 
   async updatePage(id: string, data: PageUpdateData): Promise<Page | null> {

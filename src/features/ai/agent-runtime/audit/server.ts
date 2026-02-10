@@ -44,8 +44,25 @@ export async function logAgentAudit(
   metadata?: Record<string, unknown>
 ): Promise<void> {
   if (!('agentAuditLog' in prisma)) {
-    if (DEBUG_CHATBOT) {
-      console.warn('[chatbot][agent][audit] Audit table not initialized.');
+    try {
+      const { logSystemEvent } = await import('@/features/observability/server');
+      void logSystemEvent({
+        level: 'info',
+        source: 'agent-audit',
+        message: 'agentAuditLog NOT in prisma'
+      });
+      if (DEBUG_CHATBOT) {
+        void logSystemEvent({
+          level: 'warn',
+          source: 'agent-audit',
+          message: 'Audit table not initialized'
+        });
+      }
+    } catch {
+      console.log('[DEBUG] agentAuditLog NOT in prisma');
+      if (DEBUG_CHATBOT) {
+        console.warn('[chatbot][agent][audit] Audit table not initialized.');
+      }
     }
     return;
   }

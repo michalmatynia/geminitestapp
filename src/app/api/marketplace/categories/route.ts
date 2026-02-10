@@ -36,4 +36,4 @@ async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext): Promi
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
-  { source: 'marketplace.categories.GET' });
+  { source: 'marketplace.categories.GET', cacheControl: 'no-store' });

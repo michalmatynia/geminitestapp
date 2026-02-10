@@ -7,6 +7,7 @@ import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelectio
 import { useCmsDomains } from '@/features/cms/hooks/useCmsQueries';
 import { server } from '@/mocks/server';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
 // Mock the hooks
 vi.mock('@/features/cms/hooks/useCmsQueries', () => ({
@@ -15,6 +16,10 @@ vi.mock('@/features/cms/hooks/useCmsQueries', () => ({
 
 vi.mock('@/shared/hooks/use-settings', () => ({
   useSettingsMap: vi.fn(),
+}));
+
+vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
+  useSettingsStore: vi.fn(),
 }));
 
 const createTestQueryClient = () =>
@@ -42,6 +47,12 @@ describe('useCmsDomainSelection Hook', () => {
     (useSettingsMap as any).mockReturnValue({
       data: new Map([['cms_domain_settings.v1', JSON.stringify({ zoningEnabled: true })]]),
       isLoading: false,
+    });
+    (useSettingsStore as any).mockReturnValue({
+      get: vi.fn((key) => {
+        if (key === 'cms_domain_settings.v1') return JSON.stringify({ zoningEnabled: true });
+        return null;
+      }),
     });
     
     server.use(
@@ -114,6 +125,12 @@ describe('useCmsDomainSelection Hook', () => {
     (useSettingsMap as any).mockReturnValue({
       data: new Map([['cms_domain_settings.v1', JSON.stringify({ zoningEnabled: false })]]),
       isLoading: false,
+    });
+    (useSettingsStore as any).mockReturnValue({
+      get: vi.fn((key) => {
+        if (key === 'cms_domain_settings.v1') return JSON.stringify({ zoningEnabled: false });
+        return null;
+      }),
     });
 
     const { result } = renderHook(() => useCmsDomainSelection(), { wrapper });

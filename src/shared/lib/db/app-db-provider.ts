@@ -59,10 +59,10 @@ export const getAppDbProviderSetting = async (): Promise<AppDbProvider | null> =
     if (process.env['APP_DB_PROVIDER']) {
       return normalizeProvider(process.env['APP_DB_PROVIDER']);
     }
-    const prismaSetting = await readPrismaAppProviderSetting();
-    if (prismaSetting) return prismaSetting;
     const mongoSetting = await readMongoAppProviderSetting();
     if (mongoSetting) return mongoSetting;
+    const prismaSetting = await readPrismaAppProviderSetting();
+    if (prismaSetting) return prismaSetting;
     return null;
   })();
   const value = await providerInflight;

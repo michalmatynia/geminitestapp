@@ -14,6 +14,7 @@ import { POST as POST_DELETE } from '@/app/api/databases/delete/route';
 import { POST as POST_RESTORE } from '@/app/api/databases/restore/route';
 import { POST as POST_UPLOAD } from '@/app/api/databases/upload/route';
 import { execFileAsync } from '@/features/database/utils/postgres';
+import prisma from '@/shared/lib/db/prisma';
 
 
 vi.mock('@/features/database/utils/postgres', async (importOriginal) => {
@@ -28,6 +29,13 @@ describe('Databases API', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     (execFileAsync as Mock).mockResolvedValue({ stdout: 'stdout', stderr: 'stderr' });
+    process.env['DATABASE_URL'] = 'postgresql://localhost:5432/test';
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([]);
+    vi.mocked(prisma.$executeRawUnsafe).mockResolvedValue(0);
+  });
+
+  afterAll(() => {
+    delete process.env['DATABASE_URL'];
   });
 
   describe('POST /api/databases/backup', () => {

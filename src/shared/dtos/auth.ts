@@ -78,10 +78,6 @@ export interface UserPreferencesDto extends DtoBase {
   productListDraftIconColorMode: 'theme' | 'custom';
   productListDraftIconColor: string | null;
   aiPathsActivePathId: string | null;
-  aiPathsExpandedGroups: string[];
-  aiPathsPaletteCollapsed: boolean;
-  aiPathsPathIndex: JsonValue | null;
-  aiPathsPathConfigs: JsonValue | null;
   adminMenuCollapsed: boolean;
   adminMenuFavorites: string[];
   adminMenuSectionColors: Record<string, string>;
@@ -105,10 +101,6 @@ export interface UpdateUserPreferencesDto {
   productListDraftIconColorMode?: 'theme' | 'custom';
   productListDraftIconColor?: string | null;
   aiPathsActivePathId?: string | null;
-  aiPathsExpandedGroups?: string[];
-  aiPathsPaletteCollapsed?: boolean;
-  aiPathsPathIndex?: JsonValue | null;
-  aiPathsPathConfigs?: JsonValue | null;
   adminMenuCollapsed?: boolean;
   adminMenuFavorites?: string[];
   adminMenuSectionColors?: Record<string, string>;

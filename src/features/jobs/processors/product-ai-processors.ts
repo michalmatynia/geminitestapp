@@ -359,7 +359,17 @@ const fetchAllLanguages = async (): Promise<LanguageRecord[]> => {
 
 const resolveFallbackLanguages = async (): Promise<string[]> => {
   const allLanguages = await fetchAllLanguages();
-  console.log(`[processTranslation] Found ${allLanguages.length} available languages`);
+  try {
+    const { logSystemEvent } = await import('@/features/observability/server');
+    void logSystemEvent({
+      level: 'info',
+      source: 'product-ai-processors',
+      message: `Found ${allLanguages.length} available languages`,
+      context: { count: allLanguages.length }
+    });
+  } catch {
+    console.log(`[processTranslation] Found ${allLanguages.length} available languages`);
+  }
   const filtered = allLanguages.filter((lang: LanguageRecord) => lang.code.toUpperCase() !== 'EN');
   if (filtered.length > 0) {
     return filtered.map((lang: LanguageRecord) => lang.name);
@@ -367,7 +377,17 @@ const resolveFallbackLanguages = async (): Promise<string[]> => {
   const defaults = defaultLanguages
     .filter((lang: { code: string }) => lang.code !== 'EN')
     .map((lang: { name: string }) => lang.name);
-  console.log('[processTranslation] Using default languages fallback:', defaults);
+  try {
+    const { logSystemEvent } = await import('@/features/observability/server');
+    void logSystemEvent({
+      level: 'info',
+      source: 'product-ai-processors',
+      message: 'Using default languages fallback',
+      context: { defaults }
+    });
+  } catch {
+    console.log('[processTranslation] Using default languages fallback:', defaults);
+  }
   return defaults;
 };
 

@@ -48,9 +48,9 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<N
     return parsed.response;
   }
 
-  const { name, slugIds } = parsed.data;
+  const { name, slugIds, themeId } = parsed.data;
   const cmsRepository = await getCmsRepository();
-  const created = await cmsRepository.createPage({ name });
+  const created = await cmsRepository.createPage({ name, themeId });
 
   if (slugIds && slugIds.length > 0) {
     for (const slugId of slugIds) {

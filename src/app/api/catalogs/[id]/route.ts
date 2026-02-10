@@ -5,6 +5,8 @@ import { z } from 'zod';
 
 import { getCatalogRepository } from '@/features/products/server';
 import { parseJsonBody } from '@/features/products/server';
+import { normalizeCatalogLanguageSelection } from '@/features/products/services/catalog-language-normalization';
+import { getProductDataProvider } from '@/features/products/services/product-provider';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -36,12 +38,22 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
     return parsed.response;
   }
   const data = parsed.data;
-  if (!data.languageIds || data.languageIds.length === 0) {
+  const provider = await getProductDataProvider();
+  const normalizedLanguages = await normalizeCatalogLanguageSelection({
+    provider,
+    languageIds: data.languageIds ?? [],
+    defaultLanguageId: data.defaultLanguageId ?? null,
+  });
+
+  if (normalizedLanguages.languageIds.length === 0) {
     throw badRequestError('Select at least one language.', {
       field: 'languageIds',
     });
   }
-  if (!data.defaultLanguageId || !data.languageIds.includes(data.defaultLanguageId)) {
+  if (
+    !normalizedLanguages.defaultLanguageId ||
+    !normalizedLanguages.languageIds.includes(normalizedLanguages.defaultLanguageId)
+  ) {
     throw badRequestError(
       'Default language must be one of the selected languages.',
       { field: 'defaultLanguageId' }
@@ -61,13 +73,13 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
       { field: 'defaultPriceGroupId' }
     );
   }
-  const catalogRepository = await getCatalogRepository();
+  const catalogRepository = await getCatalogRepository(provider);
   const catalog = await catalogRepository.updateCatalog(id, removeUndefined({
     name: data.name,
     description: data.description,
     isDefault: data.isDefault,
-    languageIds: data.languageIds,
-    defaultLanguageId: data.defaultLanguageId,
+    languageIds: normalizedLanguages.languageIds,
+    defaultLanguageId: normalizedLanguages.defaultLanguageId,
     priceGroupIds: data.priceGroupIds,
     defaultPriceGroupId: data.defaultPriceGroupId,
   }));

@@ -1,5 +1,6 @@
 import { getProductAiJobRepository } from '@/features/jobs/services/product-ai-job-repository';
 import type { ProductAiJobRecord, ProductAiJobUpdate } from '@/features/jobs/types/product-ai-job-repository';
+import { logSystemEvent } from '@/features/observability/server';
 import { productService } from '@/features/products/server';
 import { invalidStateError, notFoundError } from '@/shared/errors/app-error';
 import type { ProductAiJobType, ProductAiJob, ProductAiJobResult } from '@/shared/types/domain/jobs';
@@ -8,6 +9,8 @@ type ProductSummary = {
   name_en: string | null;
   sku: string | null;
 };
+
+const LOG_SOURCE = 'product-ai-service';
 
 const parseEnvMs = (raw: string | undefined, fallbackMs: number, minMs: number): number => {
   const parsed = Number.parseInt(raw ?? '', 10);
@@ -131,7 +134,12 @@ export async function enqueueProductAiJob(productId: string, type: ProductAiJobT
     });
   } catch {
     // Fallback to console if logging fails
-    console.log(`[enqueueProductAiJob] Creating job for productId: ${productId}, type: ${type}`);
+    void logSystemEvent({
+      level: 'info',
+      source: LOG_SOURCE,
+      message: 'Creating job',
+      context: { productId, type }
+    });
   }
   const jobRepository = await getProductAiJobRepository();
 
@@ -156,9 +164,12 @@ export async function enqueueProductAiJob(productId: string, type: ProductAiJobT
             context: { type, cacheKey, status: reusable.status },
           });
         } catch {
-          console.log(
-            `[enqueueProductAiJob] Reusing graph_model job ${reusable.id} (status: ${reusable.status})`
-          );
+          void logSystemEvent({
+            level: 'info',
+            source: LOG_SOURCE,
+            message: 'Reusing graph_model job',
+            context: { jobId: reusable.id, status: reusable.status, cacheKey }
+          });
         }
         return toProductAiJob(reusable);
       }
@@ -176,7 +187,12 @@ export async function enqueueProductAiJob(productId: string, type: ProductAiJobT
       context: { type }
     });
   } catch {
-    console.log(`[enqueueProductAiJob] Job created with id: ${jobRecord.id}`);
+    void logSystemEvent({
+      level: 'info',
+      source: LOG_SOURCE,
+      message: 'Job created',
+      context: { jobId: jobRecord.id, productId, type }
+    });
   }
   
   return toProductAiJob(jobRecord);
@@ -228,7 +244,13 @@ export async function getProductAiJobs(
             context: { action: 'getProductAiJobs', productId: id }
           });
         } catch (logError) {
-          console.error(`[getProductAiJobs] Failed to fetch product ${id} (and logging failed):`, error, logError);
+          void logSystemEvent({
+            level: 'error',
+            source: LOG_SOURCE,
+            message: 'Failed to fetch product in getProductAiJobs',
+            error,
+            context: { productId: id, logError }
+          });
         }
         return { id, product: null };
       }
@@ -291,9 +313,14 @@ export async function getProductAiJob(
           context: { action: 'getProductAiJob', productId: job.productId, jobId: job.id }
         });
       } catch (logError) {
-        console.error(`[getProductAiJob] Failed to fetch product ${job.productId} (and logging failed):`, error, logError);
-      }
-      // Continue without product details if it fails
+        void logSystemEvent({
+          level: 'error',
+          source: LOG_SOURCE,
+          message: 'Failed to fetch product in getProductAiJob',
+          error,
+          context: { productId: job.productId, jobId: job.id, logError }
+        });
+      }      // Continue without product details if it fails
     }
   }
 

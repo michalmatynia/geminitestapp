@@ -32,10 +32,6 @@ export const userPreferencesUpdateSchema = z.object({
     .optional()
     .nullable(),
   aiPathsActivePathId: nullableIdSchema,
-  aiPathsExpandedGroups: stringArraySchema.optional().nullable(),
-  aiPathsPaletteCollapsed: z.boolean().optional().nullable(),
-  aiPathsPathIndex: jsonValueSchema.optional().nullable(),
-  aiPathsPathConfigs: jsonValueSchema.optional().nullable(),
   adminMenuCollapsed: z.boolean().optional().nullable(),
   adminMenuFavorites: stringArraySchema.optional().nullable(),
   adminMenuSectionColors: z.record(z.string(), z.string()).optional().nullable(),
@@ -62,10 +58,6 @@ export const userPreferencesResponseSchema = z
     productListDraftIconColorMode: z.enum(['theme', 'custom']).optional().nullable(),
     productListDraftIconColor: z.string().regex(USER_PREFERENCES_HEX_COLOR_PATTERN).optional().nullable(),
     aiPathsActivePathId: z.string().optional().nullable(),
-    aiPathsExpandedGroups: z.array(z.string()).optional(),
-    aiPathsPaletteCollapsed: z.boolean().optional().nullable(),
-    aiPathsPathIndex: jsonValueSchema.optional().nullable(),
-    aiPathsPathConfigs: jsonValueSchema.optional().nullable(),
     adminMenuCollapsed: z.boolean().optional().nullable(),
     adminMenuFavorites: z.array(z.string()).optional(),
     adminMenuSectionColors: z.record(z.string(), z.string()).optional(),
@@ -130,18 +122,6 @@ export const normalizeUserPreferencesUpdatePayload = (
   }
   if (payload.aiPathsActivePathId !== undefined) {
     normalized.aiPathsActivePathId = payload.aiPathsActivePathId;
-  }
-  if (payload.aiPathsExpandedGroups !== undefined) {
-    normalized.aiPathsExpandedGroups = normalizeStringArray(payload.aiPathsExpandedGroups) ?? [];
-  }
-  if (payload.aiPathsPaletteCollapsed !== undefined) {
-    normalized.aiPathsPaletteCollapsed = payload.aiPathsPaletteCollapsed;
-  }
-  if (payload.aiPathsPathIndex !== undefined) {
-    normalized.aiPathsPathIndex = payload.aiPathsPathIndex;
-  }
-  if (payload.aiPathsPathConfigs !== undefined) {
-    normalized.aiPathsPathConfigs = payload.aiPathsPathConfigs;
   }
   if (payload.adminMenuCollapsed !== undefined) {
     normalized.adminMenuCollapsed = payload.adminMenuCollapsed;

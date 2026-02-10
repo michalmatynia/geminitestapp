@@ -2,7 +2,9 @@ import 'server-only';
 
 import { Prisma } from '@prisma/client';
 
+import { logSystemEvent } from '@/features/observability/server';
 import prisma from '@/shared/lib/db/prisma';
+
 
 import { getCmsDataProvider } from '../cms-provider';
 import { mongoCmsRepository } from './mongo-cms-repository';
@@ -16,6 +18,7 @@ let prismaReadyCache: { value: boolean; ts: number } | null = null;
 let prismaReadyInflight: Promise<boolean> | null = null;
 
 const PRISMA_READY_TTL_MS = 60_000;
+const LOG_SOURCE = 'cms-repository';
 const shouldLogCms = (): boolean => process.env['DEBUG_CMS'] === 'true';
 
 const isMissingTableError = (error: unknown): boolean =>
@@ -55,7 +58,12 @@ export async function getCmsRepository(): Promise<CmsRepository> {
   if (provider === 'mongodb') {
     cachedRepository = mongoCmsRepository;
     if (shouldLogCms()) {
-      console.log('[cms] repository', { provider: 'mongodb' });
+      void logSystemEvent({
+        level: 'info',
+        source: LOG_SOURCE,
+        message: 'repository',
+        context: { provider: 'mongodb' }
+      });
     }
     return cachedRepository;
   }
@@ -64,17 +72,31 @@ export async function getCmsRepository(): Promise<CmsRepository> {
   if (prismaReady) {
     cachedRepository = prismaCmsRepository;
     if (shouldLogCms()) {
-      console.log('[cms] repository', { provider: 'prisma' });
+      void logSystemEvent({
+        level: 'info',
+        source: LOG_SOURCE,
+        message: 'repository',
+        context: { provider: 'prisma' }
+      });
     }
     return cachedRepository;
   }
 
   if (process.env['MONGODB_URI']) {
-    console.warn('[cms] Prisma CMS tables missing; falling back to MongoDB.');
+    void logSystemEvent({
+      level: 'warn',
+      source: LOG_SOURCE,
+      message: 'Prisma CMS tables missing; falling back to MongoDB'
+    });
     cachedRepository = mongoCmsRepository;
     cachedProvider = 'mongodb';
     if (shouldLogCms()) {
-      console.log('[cms] repository', { provider: 'mongodb', fallback: true });
+      void logSystemEvent({
+        level: 'info',
+        source: LOG_SOURCE,
+        message: 'repository',
+        context: { provider: 'mongodb', fallback: true }
+      });
     }
     return cachedRepository;
   }
@@ -83,3 +105,10 @@ export async function getCmsRepository(): Promise<CmsRepository> {
 }
 
 export const getCmsRepositoryProvider = (): 'mongodb' | 'prisma' | null => cachedProvider;
+
+export function resetCmsRepositoryCache(): void {
+  cachedRepository = null;
+  cachedProvider = null;
+  prismaReadyCache = null;
+  prismaReadyInflight = null;
+}

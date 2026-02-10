@@ -1,32 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
+import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 
 import { GET, POST } from '@/app/api/chatbot/settings/route';
 import prisma from '@/shared/lib/db/prisma';
 
-vi.mock('@/shared/lib/api/api-handler', () => ({
-  apiHandler: (handler: any) => async (req: any) => {
-    try {
-      const body = req.body ? await req.json().catch(() => ({})) : {};
-      return await handler(req, { requestId: 'test', body });
-    } catch (error: any) {
-      return NextResponse.json({ error: error.message }, { status: error.httpStatus || 500 });
-    }
-  },
-}));
-
-vi.mock('@/shared/lib/db/prisma', () => ({
-  default: {
-    chatbotSettings: {
-      findUnique: vi.fn(),
-      upsert: vi.fn(),
-    },
-  },
-}));
-
 describe('Chatbot Settings API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    await prisma.$disconnect();
   });
 
   it('GET: returns settings by key', async () => {

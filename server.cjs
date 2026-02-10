@@ -18,6 +18,7 @@ const app = next({ dev });
 const handle = app.getRequestHandler();
 
 const port = process.env.PORT ? Number(process.env.PORT) : 3000;
+const host = process.env.HOST || '::';
 
 const SCRAPER_GUARD = createScraperGuard({
   enabled: process.env.SCRAPER_GUARD_ENABLED
@@ -283,9 +284,39 @@ app.prepare().then(() => {
   process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
   process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
-  server.listen(port, (err) => {
-    if (err) throw err;
+  const listenWithOptions = (options) =>
+    new Promise((resolve, reject) => {
+      const onError = (error) => {
+        server.off('listening', onListening);
+        reject(error);
+      };
+      const onListening = () => {
+        server.off('error', onError);
+        resolve();
+      };
+      server.once('error', onError);
+      server.once('listening', onListening);
+      server.listen(options);
+    });
+
+  const startServer = async () => {
+    try {
+      await listenWithOptions({
+        port,
+        host,
+        ipv6Only: false,
+      });
+    } catch (error) {
+      if (host === '0.0.0.0') {
+        throw error;
+      }
+      await listenWithOptions({ port, host: '0.0.0.0' });
+    }
     console.log(`> Ready on http://localhost:${port}`);
+  };
+
+  startServer().catch((error) => {
+    throw error;
   });
 });
 

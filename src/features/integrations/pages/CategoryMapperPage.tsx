@@ -8,6 +8,8 @@ import { useIntegrationsWithConnections } from '@/features/integrations/hooks/us
 import type { IntegrationWithConnections } from '@/features/integrations/types/listings';
 import { useToast, SectionHeader, SectionPanel } from '@/shared/ui';
 
+const BASE_MARKETPLACE_SLUGS = new Set(['baselinker', 'base', 'base-com']);
+
 export default function CategoryMapperPage(): React.JSX.Element {
   const [selectedConnectionIdOverride, setSelectedConnectionIdOverride] = useState<string | null>(null);
   const { toast } = useToast();
@@ -25,7 +27,7 @@ export default function CategoryMapperPage(): React.JSX.Element {
   const integrations = useMemo<IntegrationWithConnections[]>((): IntegrationWithConnections[] => {
     const data = integrationsQuery.data ?? [];
     return data.filter(
-      (i: IntegrationWithConnections) => i.slug.toLowerCase() === 'baselinker' || i.slug.toLowerCase() === 'base'
+      (i: IntegrationWithConnections) => BASE_MARKETPLACE_SLUGS.has(i.slug.toLowerCase())
     );
   }, [integrationsQuery.data]);
 
@@ -53,7 +55,7 @@ export default function CategoryMapperPage(): React.JSX.Element {
   const isBaseConnection = ((): boolean => {
     if (!selectedConnection) return false;
     const slug = selectedConnection.integration.slug.toLowerCase();
-    return slug === 'baselinker' || slug === 'base';
+    return BASE_MARKETPLACE_SLUGS.has(slug);
   })();
 
   return (

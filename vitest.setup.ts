@@ -8,6 +8,8 @@ import { server } from "./src/mocks/server";
 process.env['APP_DB_PROVIDER'] = "prisma";
 delete process.env['MONGODB_URI'];
 
+vi.mock("@/shared/lib/db/prisma");
+
 vi.mock("@/shared/lib/db/app-db-provider", () => ({
   getAppDbProvider: vi.fn().mockResolvedValue("prisma"),
   getAppDbProviderSetting: vi.fn().mockResolvedValue("prisma"),
@@ -41,8 +43,8 @@ vi.mock("next/image", () => ({
 // Mock next/link
 vi.mock("next/link", () => ({
   __esModule: true,
-  default: ({ href, children }: { href: string; children: React.ReactNode }) =>
-    React.createElement("a", { href }, children),
+  default: ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: any }) =>
+    React.createElement("a", { href, ...props }, children),
 }));
 
 // Mock next/server (for NextRequest/NextResponse in API routes)
@@ -52,6 +54,9 @@ vi.mock("next/server", () => {
       const url = typeof input === 'string' ? `http://localhost${input}` : input;
       super(url, init);
       this.headers.set('origin', 'http://localhost');
+    }
+    get nextUrl() {
+      return new URL(this.url);
     }
   }
 
@@ -79,6 +84,9 @@ vi.mock("next/server.js", () => {
       super(url, init);
       this.headers.set('origin', 'http://localhost');
     }
+    get nextUrl() {
+      return new URL(this.url);
+    }
   }
 
   class MockResponse extends Response {
@@ -102,24 +110,44 @@ vi.mock("next/server.js", () => {
 vi.mock('@/shared/lib/api/api-handler', () => {
   const { NextResponse } = require('next/server');
   return {
-    apiHandler: (handler: any) => async (req: any) => {
+    apiHandler: (handler: any, options: any) => async (req: any) => {
       try {
         const clonedReq = req.clone ? req.clone() : req;
         const body = clonedReq.body && typeof clonedReq.json === 'function' ? await clonedReq.json().catch(() => ({})) : {};
-        const query = Object.fromEntries(new URL(req.url, 'http://localhost').searchParams.entries());
+        let query = Object.fromEntries(new URL(req.url, 'http://localhost').searchParams.entries());
+        
+        if (options?.querySchema) {
+          query = options.querySchema.parse(query);
+        }
+
         return await handler(req, { requestId: 'global-test-id', body, query, getElapsedMs: () => 0 });
       } catch (error: any) {
+        console.log('[DEBUG] apiHandler mock caught error:', { name: error.name, code: error.code, message: error.message });
+        const status = 
+          (error.name === 'AppError' && error.code === 'NOT_FOUND') || 
+          (error.name === 'PrismaClientKnownRequestError' && error.code === 'P2025')
+            ? 404 : (
+          (error.name === 'AppError' && error.code === 'VALIDATION_ERROR') || 
+          error.code === 'BAD_REQUEST' || 
+          error.name === 'PrismaClientValidationError' ||
+          error.name === 'ZodError'
+            ? 400 : (error.httpStatus || 500));
         return NextResponse.json(
-          { error: error.message, code: error.code },
-          { status: error.httpStatus || 500 }
+          { error: error.message, code: error.code, errorId: 'mock-error-id' },
+          { status }
         );
       }
     },
-    apiHandlerWithParams: (handler: any) => async (req: any, ctx: any) => {
+    apiHandlerWithParams: (handler: any, options: any) => async (req: any, ctx: any) => {
       try {
         const clonedReq = req.clone ? req.clone() : req;
         const body = clonedReq.body && typeof clonedReq.json === 'function' ? await clonedReq.json().catch(() => ({})) : {};
-        const query = Object.fromEntries(new URL(req.url, 'http://localhost').searchParams.entries());
+        let query = Object.fromEntries(new URL(req.url, 'http://localhost').searchParams.entries());
+        
+        if (options?.querySchema) {
+          query = options.querySchema.parse(query);
+        }
+
         const context = {
           ...ctx,
           requestId: 'global-test-id',
@@ -128,11 +156,26 @@ vi.mock('@/shared/lib/api/api-handler', () => {
           getElapsedMs: () => 0,
         };
         const resolvedParams = ctx?.params && typeof ctx.params.then === 'function' ? await ctx.params : (ctx?.params ?? {});
+        
+        if (options?.paramsSchema) {
+          options.paramsSchema.parse(resolvedParams);
+        }
+
         return await handler(req, context, resolvedParams);
       } catch (error: any) {
+        console.log('[DEBUG] apiHandlerWithParams mock caught error:', { name: error.name, code: error.code, message: error.message });
+        const status = 
+          (error.name === 'AppError' && error.code === 'NOT_FOUND') || 
+          (error.name === 'PrismaClientKnownRequestError' && error.code === 'P2025')
+            ? 404 : (
+          (error.name === 'AppError' && error.code === 'VALIDATION_ERROR') || 
+          error.code === 'BAD_REQUEST' || 
+          error.name === 'PrismaClientValidationError' ||
+          error.name === 'ZodError'
+            ? 400 : (error.httpStatus || 500));
         return NextResponse.json(
-          { error: error.message, code: error.code },
-          { status: error.httpStatus || 500 }
+          { error: error.message, code: error.code, errorId: 'mock-error-id' },
+          { status }
         );
       }
     },
@@ -201,6 +244,7 @@ if (typeof window !== 'undefined') {
       addListener: vi.fn(), // deprecated
       removeListener: vi.fn(), // deprecated
       addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
     })),
   });

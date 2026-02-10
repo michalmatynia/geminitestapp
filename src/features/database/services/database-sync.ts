@@ -127,10 +127,6 @@ interface MongoUserPreferencesDoc {
   productListPageSize?: number | null;
   productListThumbnailSource?: string | null;
   aiPathsActivePathId?: string | null;
-  aiPathsExpandedGroups?: string[];
-  aiPathsPaletteCollapsed?: boolean | null;
-  aiPathsPathIndex?: unknown;
-  aiPathsPathConfigs?: unknown;
   createdAt?: Date | string;
   updatedAt?: Date | string;
 }
@@ -733,10 +729,6 @@ async function syncMongoToPrisma(
           productListPageSize: doc.productListPageSize ?? null,
           productListThumbnailSource: doc.productListThumbnailSource ?? null,
           aiPathsActivePathId: doc.aiPathsActivePathId ?? null,
-          aiPathsExpandedGroups: doc.aiPathsExpandedGroups ?? [],
-          aiPathsPaletteCollapsed: doc.aiPathsPaletteCollapsed ?? null,
-          aiPathsPathIndex: toJsonValue(doc.aiPathsPathIndex ?? null),
-          aiPathsPathConfigs: toJsonValue(doc.aiPathsPathConfigs ?? null),
           createdAt: toDate(doc.createdAt) ?? new Date(),
           updatedAt: toDate(doc.updatedAt) ?? new Date(),
         };
@@ -2667,10 +2659,6 @@ async function syncPrismaToMongo(
       productListCurrencyCode: row.productListCurrencyCode,
       productListPageSize: row.productListPageSize,
       aiPathsActivePathId: row.aiPathsActivePathId,
-      aiPathsExpandedGroups: row.aiPathsExpandedGroups ?? [],
-      aiPathsPaletteCollapsed: row.aiPathsPaletteCollapsed ?? null,
-      aiPathsPathIndex: row.aiPathsPathIndex ?? null,
-      aiPathsPathConfigs: row.aiPathsPathConfigs ?? null,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     }));

@@ -1,4 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
+
+vi.unmock('@/shared/lib/db/prisma');
 
 import { migrateProductBatch } from '@/features/products/services/product-migration';
 import { createMockProduct } from '@/features/products/utils/productUtils';
@@ -32,6 +34,10 @@ describe('productMigration', () => {
     await prisma.imageFile.deleteMany({});
     await prisma.product.deleteMany({});
     vi.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    await prisma.$disconnect();
   });
 
   describe('prisma-to-mongo', () => {
@@ -78,8 +84,6 @@ describe('productMigration', () => {
         dryRun: true,
       });
 
-      // If other tests are running in parallel, this might be > 1
-      // So we check >= 1
       expect(result.productsProcessed).toBeGreaterThanOrEqual(1);
       expect(result.productsUpserted).toBe(0);
       expect(mockMongoCollection.bulkWrite).not.toHaveBeenCalled();
@@ -100,7 +104,7 @@ describe('productMigration', () => {
           catalogs: [],
         },
       ];
-      mockMongoCollection.find().toArray.mockResolvedValueOnce(mockDocs);
+      (mockMongoCollection.find().toArray as vi.Mock).mockResolvedValueOnce(mockDocs);
 
       const result = await migrateProductBatch({
         direction: 'mongo-to-prisma',

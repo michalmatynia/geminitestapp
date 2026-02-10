@@ -1,7 +1,6 @@
-
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, fireEvent, act } from '@testing-library/react';
-import { vi } from 'vitest';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import FileManager from '@/features/files/components/FileManager';
 import { useFiles, useDeleteFile, useUpdateFileTags } from '@/features/files/hooks/useFiles';
@@ -14,8 +13,8 @@ vi.mock('@/features/files/hooks/useFiles', () => ({
   useUpdateFileTags: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', async () => {
-  const actual = await vi.importActual('@/shared/ui');
+vi.mock('@/shared/ui', async (importOriginal) => {
+  const actual = await importOriginal() as any;
   return {
     ...actual,
     useToast: () => ({ toast: vi.fn() }),
@@ -111,14 +110,14 @@ describe('FileManager Component', () => {
     expect(screen.getByText('Linked Products')).toBeInTheDocument();
   });
 
-  it('should call delete mutation when X is clicked and confirmed', () => {
+  it('should call delete mutation when Delete is clicked and confirmed', () => {
     const mockDelete = vi.fn().mockResolvedValue({});
     (useDeleteFile as any).mockReturnValue({ mutateAsync: mockDelete });
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     render(<FileManager />, { wrapper });
     
-    const deleteButtons = screen.getAllByText('X');
+    const deleteButtons = screen.getAllByText('Delete');
     act(() => {
       fireEvent.click(deleteButtons[0]!);
     });

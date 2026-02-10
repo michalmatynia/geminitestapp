@@ -39,13 +39,17 @@ interface ServerStreamMessage {
   startedAt?: string;
 }
 
-interface AiPathRunEventRecordExtended extends AiPathRunEventRecord {
-  nodeId?: string | null;
+interface AiPathRunEventRecordExtended {
+  id: string;
   runId?: string | null;
+  level: 'info' | 'warning' | 'error';
+  message: string;
+  nodeId?: string | null;
   status?: string | null;
   iteration?: number | null;
   metadata?: Record<string, unknown> | null;
   timestamp?: string | null;
+  createdAt: string | Date;
 }
 
 export function useAiPathsServerExecution(args: ServerExecutionArgs) {
@@ -97,7 +101,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
             const runtimeNode = args.normalizedNodes.find((n) => n.id === data.nodeId);
             args.setNodeStatus({
               nodeId: data.nodeId,
-              status,
+              status: status || 'idle',
               source: 'server',
               runId: data.runId ?? null,
               runStartedAt: data.runStartedAt ?? null,
@@ -106,14 +110,14 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
               iteration: data.iteration,
               kind: status === 'failed' ? 'node_failed' : 'node_status',
               level: status === 'failed' ? 'error' : 'info',
-              message: `Node ${runtimeNode?.title ?? data.nodeId} ${args.formatStatusLabel(status)}.`,
+              message: `Node ${runtimeNode?.title ?? data.nodeId} ${args.formatStatusLabel(status || 'idle')}.`,
             });
           }
 
           if (data.type === 'run_events' && Array.isArray(data.events)) {
             const logEvents: AiPathRuntimeEvent[] = [];
             data.events.forEach((rawItem: AiPathRunEventRecord): void => {
-              const item = rawItem as AiPathRunEventRecordExtended;
+              const item = rawItem as unknown as AiPathRunEventRecordExtended;
               const nodeId = item.nodeId;
               const runId = item.runId;
               const status = args.normalizeNodeStatus(item.status);
@@ -126,13 +130,13 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                 timestamp: item.timestamp || new Date().toISOString(),
                 source: 'server',
                 kind: 'log',
-                level: item.level as 'info' | 'warning' | 'error',
+                level: item.level || 'info',
                 message: item.message,
-                runId: runId ?? null,
-                nodeId: nodeId ?? null,
+                runId: runId ?? undefined,
+                nodeId: nodeId ?? undefined,
                 nodeType: runtimeNode?.type,
                 nodeTitle: runtimeNode?.title ?? null,
-                status,
+                status: status || undefined,
                 iteration: iteration ?? undefined,
                 metadata: metadata ?? undefined,
               });

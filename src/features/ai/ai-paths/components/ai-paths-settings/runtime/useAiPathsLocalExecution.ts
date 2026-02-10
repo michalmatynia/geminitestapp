@@ -271,6 +271,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
                 nodeTitle: node.title ?? null,
                 iteration,
                 kind: 'node_started',
+                level: 'info',
                 message: `Node ${node.title ?? node.id} started.`,
               });
               args.setRuntimeState((prev: RuntimeState): RuntimeState => {
@@ -472,7 +473,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
         const triggerContextArgs = {
           triggerNode,
           triggerEvent,
-          event: event ?? undefined,
+          event: event || undefined,
           sessionUser: args.sessionUser,
           activePathId: args.activePathId,
           pathName: args.pathName,
@@ -500,6 +501,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
           nodeType: triggerNode.type,
           nodeTitle: triggerNode.title ?? null,
           kind: 'node_status',
+          level: 'info',
           message: `Node ${triggerNode.title ?? triggerNode.id} queued (${position}).`,
         });
         args.toast(`Run queued${position > 1 ? ` (${position} in queue)` : ''}.`, { variant: 'info' });
@@ -536,6 +538,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
       nodeType: triggerNode.type,
       nodeTitle: triggerNode.title ?? null,
       kind: 'node_started',
+      level: 'info',
       message: `Node ${triggerNode.title ?? triggerNode.id} started.`,
     });
     args.abortControllerRef.current = new AbortController();
@@ -543,7 +546,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
     const triggerContextArgs = {
       triggerNode,
       triggerEvent,
-      event: event ?? undefined,
+      event: event || undefined,
       sessionUser: args.sessionUser,
       activePathId: args.activePathId,
       pathName: args.pathName,

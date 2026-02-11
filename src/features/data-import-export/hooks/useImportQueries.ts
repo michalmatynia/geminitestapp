@@ -34,7 +34,7 @@ export function useTemplates(scope: 'import' | 'export'): UseQueryResult<Templat
     
   return useQuery({
     queryKey: importKeys.templates(scope),
-    queryFn: () => api.get<Template[]>(endpoint),
+    queryFn: () => api.get<Template[]>(endpoint, { cache: 'no-store' }),
   });
 }
 
@@ -52,7 +52,7 @@ export function useImportPreference<T>(
     queryKey: importKeys.pref(key),
     queryFn: async (): Promise<T> => {
       try {
-        return await api.get<T>(endpoint);
+        return await api.get<T>(endpoint, { cache: 'no-store' });
       } catch (error) {
         if (options?.fallback !== undefined) return options.fallback;
         throw error;
@@ -91,7 +91,28 @@ export function useTemplateMutation(scope: 'import' | 'export', id?: string): Us
       if (isDelete) return api.delete(url);
       return id ? api.put(url, data) : api.post(url, data);
     },
-    onSuccess: () => {
+    onSuccess: (result: unknown, variables: { data?: unknown; isDelete?: boolean }) => {
+      queryClient.setQueryData<Template[]>(
+        importKeys.templates(scope),
+        (previous: Template[] | undefined): Template[] => {
+          const current = previous ?? [];
+          if (variables.isDelete) {
+            return id ? current.filter((template: Template) => template.id !== id) : current;
+          }
+          if (!result || typeof result !== 'object') return current;
+          const maybeTemplate = result as Partial<Template>;
+          const templateId = typeof maybeTemplate.id === 'string' ? maybeTemplate.id : '';
+          if (!templateId) return current;
+          const nextTemplate = maybeTemplate as Template;
+          const existingIndex = current.findIndex((template: Template) => template.id === templateId);
+          if (existingIndex === -1) {
+            return [nextTemplate, ...current];
+          }
+          return current.map((template: Template, index: number) =>
+            index === existingIndex ? nextTemplate : template
+          );
+        }
+      );
       void queryClient.invalidateQueries({ queryKey: importKeys.templates(scope) });
     }
   });

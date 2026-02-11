@@ -7,6 +7,13 @@ export enum ErrorCategory {
   DATABASE = 'DATABASE'
 }
 
+export interface SuggestedAction {
+  label: string;
+  description: string;
+  actionType: 'RETRY' | 'CONTACT_SUPPORT' | 'CHECK_CONFIG' | 'MIGRATE_DB' | 'REAUTHENTICATE' | 'REFRESH_PAGE' | string;
+  payload?: Record<string, unknown>;
+}
+
 export interface ErrorContext {
   service?: string | null | undefined;
   runId?: string | null | undefined;

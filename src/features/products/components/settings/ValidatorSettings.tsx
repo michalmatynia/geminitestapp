@@ -3,6 +3,10 @@
 import { Copy, GripVertical, Plus, Pencil, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import type {
+  CreateValidationPatternPayload,
+  UpdateValidationPatternPayload,
+} from '@/features/products/api/settings';
 import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/features/products/constants';
 import {
   useCreateValidationPatternMutation,
@@ -12,6 +16,13 @@ import {
   useValidationPatterns,
   useValidatorSettings,
 } from '@/features/products/hooks/useProductSettingsQueries';
+import {
+  normalizeProductValidationPatternDenyBehaviorOverride,
+  normalizeProductValidationPatternLaunchScopes,
+  normalizeProductValidationPatternReplacementScopes,
+  normalizeProductValidationPatternScopes,
+  normalizeProductValidationInstanceDenyBehaviorMap,
+} from '@/features/products/utils/validator-instance-behavior';
 import {
   describeDynamicReplacementRecipe,
   encodeDynamicReplacementRecipe,
@@ -25,8 +36,13 @@ import {
   type DynamicReplacementSourceMode,
 } from '@/features/products/utils/validator-replacement-recipe';
 import type {
+  ProductValidationDenyBehavior,
+  ProductValidationInstanceDenyBehaviorMap,
+  ProductValidationInstanceScope,
   ProductValidationLaunchOperator,
+  ProductValidationPostAcceptBehavior,
   ProductValidationPattern,
+  ProductValidationRuntimeType,
 } from '@/shared/types/domain/products';
 import {
   Button,
@@ -69,6 +85,10 @@ type PatternFormData = {
   replacementAutoApply: boolean;
   replacementValue: string;
   replacementFields: string[];
+  replacementAppliesToScopes: ProductValidationInstanceScope[];
+  postAcceptBehavior: ProductValidationPostAcceptBehavior;
+  denyBehaviorOverride: 'inherit' | ProductValidationDenyBehavior;
+  validationDebounceMs: string;
   replacementMode: ReplacementMode;
   sourceMode: DynamicReplacementSourceMode;
   sourceField: string;
@@ -76,6 +96,7 @@ type PatternFormData = {
   sourceFlags: string;
   sourceMatchGroup: string;
   launchEnabled: boolean;
+  launchAppliesToScopes: ProductValidationInstanceScope[];
   launchSourceMode: DynamicReplacementSourceMode;
   launchSourceField: string;
   launchOperator: ProductValidationLaunchOperator;
@@ -99,6 +120,10 @@ type PatternFormData = {
   chainMode: 'continue' | 'stop_on_match' | 'stop_on_replace';
   maxExecutions: string;
   passOutputToNext: boolean;
+  runtimeEnabled: boolean;
+  runtimeType: ProductValidationRuntimeType;
+  runtimeConfig: string;
+  appliesToScopes: ProductValidationInstanceScope[];
 };
 
 const EMPTY_FORM: PatternFormData = {
@@ -114,6 +139,10 @@ const EMPTY_FORM: PatternFormData = {
   replacementAutoApply: false,
   replacementValue: '',
   replacementFields: [],
+  replacementAppliesToScopes: ['draft_template', 'product_create', 'product_edit'],
+  postAcceptBehavior: 'revalidate',
+  denyBehaviorOverride: 'inherit',
+  validationDebounceMs: '0',
   replacementMode: 'static',
   sourceMode: 'current_field',
   sourceField: '',
@@ -121,6 +150,7 @@ const EMPTY_FORM: PatternFormData = {
   sourceFlags: '',
   sourceMatchGroup: '',
   launchEnabled: false,
+  launchAppliesToScopes: ['draft_template', 'product_create', 'product_edit'],
   launchSourceMode: 'current_field',
   launchSourceField: '',
   launchOperator: 'equals',
@@ -144,6 +174,10 @@ const EMPTY_FORM: PatternFormData = {
   chainMode: 'continue',
   maxExecutions: '1',
   passOutputToNext: true,
+  runtimeEnabled: false,
+  runtimeType: 'none',
+  runtimeConfig: '',
+  appliesToScopes: ['draft_template', 'product_create', 'product_edit'],
 };
 
 const REPLACEMENT_FIELD_LABELS: Record<string, string> = {
@@ -204,6 +238,21 @@ const getReplacementFieldsForTarget = (
 
 const isLocaleTarget = (target: PatternFormData['target']): boolean =>
   target === 'name' || target === 'description';
+
+const isLatestFieldMirrorPattern = (
+  pattern: ProductValidationPattern,
+  field: 'price' | 'stock'
+): boolean => {
+  if (pattern.target !== field) return false;
+  if (!pattern.replacementEnabled || !pattern.replacementValue) return false;
+  const recipe = parseDynamicReplacementRecipe(pattern.replacementValue);
+  if (!recipe) return false;
+  return (
+    recipe.sourceMode === 'latest_product_field' &&
+    recipe.sourceField === field &&
+    recipe.targetApply === 'replace_whole_field'
+  );
+};
 
 const getSourceFieldOptionsForTarget = (
   target: PatternFormData['target'],
@@ -337,6 +386,19 @@ const normalizeSequenceGroupDebounceMs = (value: unknown): number => {
   return Math.min(30_000, Math.max(0, Math.floor(value)));
 };
 
+const INSTANCE_SCOPE_LABELS: Record<ProductValidationInstanceScope, string> = {
+  draft_template: 'Draft Template Form',
+  product_create: 'New Product Form',
+  product_edit: 'Existing Product Form',
+};
+
+const PATTERN_SCOPE_OPTIONS = (
+  Object.keys(INSTANCE_SCOPE_LABELS) as ProductValidationInstanceScope[]
+).map((scope: ProductValidationInstanceScope) => ({
+  value: scope,
+  label: INSTANCE_SCOPE_LABELS[scope],
+}));
+
 const canCompileRegex = (pattern: string, flags: string): boolean => {
   try {
     void new RegExp(pattern, flags || undefined);
@@ -424,6 +486,13 @@ export function ValidatorSettings(): React.JSX.Element {
     return map;
   }, [orderedPatterns]);
   const enabledByDefault = settingsQuery.data?.enabledByDefault ?? true;
+  const instanceDenyBehavior = useMemo(
+    (): ProductValidationInstanceDenyBehaviorMap =>
+      normalizeProductValidationInstanceDenyBehaviorMap(
+        settingsQuery.data?.instanceDenyBehavior ?? null
+      ),
+    [settingsQuery.data?.instanceDenyBehavior]
+  );
   const loading = settingsQuery.isLoading || patternsQuery.isLoading;
   const replacementFieldOptions = useMemo(
     () =>
@@ -477,6 +546,15 @@ export function ValidatorSettings(): React.JSX.Element {
       replacementAutoApply: pattern.replacementAutoApply ?? false,
       replacementValue: getStaticReplacementValue(pattern.replacementValue) ?? '',
       replacementFields: normalizeReplacementFields(pattern.replacementFields),
+      replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
+        pattern.replacementAppliesToScopes,
+        pattern.appliesToScopes
+      ),
+      postAcceptBehavior: pattern.postAcceptBehavior ?? 'revalidate',
+      denyBehaviorOverride:
+        normalizeProductValidationPatternDenyBehaviorOverride(pattern.denyBehaviorOverride) ??
+        'inherit',
+      validationDebounceMs: String(pattern.validationDebounceMs ?? 0),
       replacementMode: recipe ? 'dynamic' : 'static',
       sourceMode: recipe?.sourceMode ?? 'current_field',
       sourceField: recipe?.sourceField ?? '',
@@ -487,6 +565,10 @@ export function ValidatorSettings(): React.JSX.Element {
           ? String(recipe.sourceMatchGroup)
           : '',
       launchEnabled: pattern.launchEnabled ?? false,
+      launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
+        pattern.launchAppliesToScopes,
+        pattern.appliesToScopes
+      ),
       launchSourceMode: pattern.launchSourceMode ?? 'current_field',
       launchSourceField: pattern.launchSourceField ?? '',
       launchOperator: pattern.launchOperator ?? 'equals',
@@ -516,6 +598,13 @@ export function ValidatorSettings(): React.JSX.Element {
       chainMode: pattern.chainMode ?? 'continue',
       maxExecutions: String(pattern.maxExecutions ?? 1),
       passOutputToNext: pattern.passOutputToNext ?? true,
+      runtimeEnabled: pattern.runtimeEnabled ?? false,
+      runtimeType:
+        (pattern.runtimeEnabled ?? false) && (pattern.runtimeType ?? 'none') === 'none'
+          ? 'database_query'
+          : pattern.runtimeType ?? 'none',
+      runtimeConfig: pattern.runtimeConfig ?? '',
+      appliesToScopes: normalizeProductValidationPatternScopes(pattern.appliesToScopes),
     });
     setShowModal(true);
   };
@@ -596,6 +685,27 @@ export function ValidatorSettings(): React.JSX.Element {
         return;
       }
     }
+    let normalizedRuntimeConfig: string | null = null;
+    const runtimeEnabled = formData.runtimeEnabled && formData.runtimeType !== 'none';
+    if (runtimeEnabled) {
+      if (!formData.runtimeConfig.trim()) {
+        toast('Runtime config JSON is required when runtime is enabled.', { variant: 'error' });
+        return;
+      }
+    }
+    if (formData.runtimeConfig.trim()) {
+      try {
+        const parsed = JSON.parse(formData.runtimeConfig) as unknown;
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+          toast('Runtime config must be a JSON object.', { variant: 'error' });
+          return;
+        }
+        normalizedRuntimeConfig = JSON.stringify(parsed);
+      } catch {
+        toast('Runtime config must be valid JSON.', { variant: 'error' });
+        return;
+      }
+    }
 
     try {
       let replacementValue: string | null = null;
@@ -613,6 +723,11 @@ export function ValidatorSettings(): React.JSX.Element {
       }
 
       const payload = {
+        validationDebounceMs:
+          formData.validationDebounceMs.trim().length > 0 &&
+          Number.isFinite(Number(formData.validationDebounceMs))
+            ? Math.min(30_000, Math.max(0, Math.floor(Number(formData.validationDebounceMs))))
+            : 0,
         label: formData.label.trim(),
         target: formData.target,
         locale: isLocaleTarget(formData.target) ? formData.locale.trim().toLowerCase() || null : null,
@@ -625,6 +740,15 @@ export function ValidatorSettings(): React.JSX.Element {
         replacementAutoApply: formData.replacementAutoApply,
         replacementValue,
         replacementFields: normalizeReplacementFields(formData.replacementFields),
+        replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
+          formData.replacementAppliesToScopes,
+          formData.appliesToScopes
+        ),
+        postAcceptBehavior: formData.postAcceptBehavior,
+        denyBehaviorOverride:
+          formData.denyBehaviorOverride === 'inherit'
+            ? null
+            : formData.denyBehaviorOverride,
         sequenceGroupId: editingPattern?.sequenceGroupId ?? null,
         sequenceGroupLabel: editingPattern?.sequenceGroupLabel ?? null,
         sequenceGroupDebounceMs: editingPattern?.sequenceGroupDebounceMs ?? 0,
@@ -639,11 +763,19 @@ export function ValidatorSettings(): React.JSX.Element {
             : 1,
         passOutputToNext: formData.passOutputToNext,
         launchEnabled: formData.launchEnabled,
+        launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
+          formData.launchAppliesToScopes,
+          formData.appliesToScopes
+        ),
         launchSourceMode: formData.launchSourceMode,
         launchSourceField: formData.launchSourceField.trim() || null,
         launchOperator: formData.launchOperator,
         launchValue: formData.launchValue,
         launchFlags: formData.launchFlags.trim() || null,
+        runtimeEnabled,
+        runtimeType: runtimeEnabled ? formData.runtimeType : 'none',
+        runtimeConfig: runtimeEnabled ? normalizedRuntimeConfig : null,
+        appliesToScopes: normalizeProductValidationPatternScopes(formData.appliesToScopes),
       };
 
       if (editingPattern) {
@@ -683,6 +815,22 @@ export function ValidatorSettings(): React.JSX.Element {
     }
   };
 
+  const handleInstanceBehaviorChange = async (
+    scope: ProductValidationInstanceScope,
+    behavior: ProductValidationDenyBehavior
+  ): Promise<void> => {
+    const nextSettings: ProductValidationInstanceDenyBehaviorMap = {
+      ...instanceDenyBehavior,
+      [scope]: behavior,
+    };
+    try {
+      await updateSettings.mutateAsync({ instanceDenyBehavior: nextSettings });
+      toast(`Updated deny behavior for ${INSTANCE_SCOPE_LABELS[scope]}.`, { variant: 'success' });
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to update instance behavior.', { variant: 'error' });
+    }
+  };
+
   const handleDelete = async (): Promise<void> => {
     if (!patternToDelete) return;
     try {
@@ -716,6 +864,15 @@ export function ValidatorSettings(): React.JSX.Element {
         replacementAutoApply: pattern.replacementAutoApply ?? false,
         replacementValue: pattern.replacementValue,
         replacementFields: normalizeReplacementFields(pattern.replacementFields),
+        replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
+          pattern.replacementAppliesToScopes,
+          pattern.appliesToScopes
+        ),
+        postAcceptBehavior: pattern.postAcceptBehavior ?? 'revalidate',
+        denyBehaviorOverride: normalizeProductValidationPatternDenyBehaviorOverride(
+          pattern.denyBehaviorOverride
+        ),
+        validationDebounceMs: pattern.validationDebounceMs ?? 0,
         sequenceGroupId: null,
         sequenceGroupLabel: null,
         sequenceGroupDebounceMs: 0,
@@ -727,11 +884,19 @@ export function ValidatorSettings(): React.JSX.Element {
         maxExecutions: pattern.maxExecutions ?? 1,
         passOutputToNext: pattern.passOutputToNext ?? true,
         launchEnabled: pattern.launchEnabled ?? false,
+        launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
+          pattern.launchAppliesToScopes,
+          pattern.appliesToScopes
+        ),
         launchSourceMode: pattern.launchSourceMode ?? 'current_field',
         launchSourceField: pattern.launchSourceField ?? null,
         launchOperator: pattern.launchOperator ?? 'equals',
         launchValue: pattern.launchValue ?? '',
         launchFlags: pattern.launchFlags ?? null,
+        runtimeEnabled: pattern.runtimeEnabled ?? false,
+        runtimeType: pattern.runtimeType ?? 'none',
+        runtimeConfig: pattern.runtimeConfig ?? null,
+        appliesToScopes: normalizeProductValidationPatternScopes(pattern.appliesToScopes),
       });
       toast('Pattern duplicated.', { variant: 'success' });
     } catch (error) {
@@ -911,6 +1076,8 @@ export function ValidatorSettings(): React.JSX.Element {
         replacementAutoApply: true,
         replacementValue: replacementRecipe,
         replacementFields: ['sku'],
+        postAcceptBehavior: 'revalidate',
+        validationDebounceMs: 300,
         sequenceGroupId,
         sequenceGroupLabel,
         sequenceGroupDebounceMs: 300,
@@ -919,6 +1086,7 @@ export function ValidatorSettings(): React.JSX.Element {
         maxExecutions: 1,
         passOutputToNext: true,
         launchEnabled: true,
+        launchAppliesToScopes: ['draft_template', 'product_create'],
         launchSourceMode: 'current_field',
         launchSourceField: null,
         launchOperator: 'equals',
@@ -940,6 +1108,8 @@ export function ValidatorSettings(): React.JSX.Element {
         replacementAutoApply: false,
         replacementValue: null,
         replacementFields: ['sku'],
+        postAcceptBehavior: 'revalidate',
+        validationDebounceMs: 300,
         sequenceGroupId,
         sequenceGroupLabel,
         sequenceGroupDebounceMs: 300,
@@ -948,6 +1118,7 @@ export function ValidatorSettings(): React.JSX.Element {
         maxExecutions: 1,
         passOutputToNext: false,
         launchEnabled: true,
+        launchAppliesToScopes: ['draft_template', 'product_create'],
         launchSourceMode: 'current_field',
         launchSourceField: null,
         launchOperator: 'equals',
@@ -1016,20 +1187,23 @@ export function ValidatorSettings(): React.JSX.Element {
       });
 
     try {
-      await createPattern.mutateAsync({
+      const pricePatternData: CreateValidationPatternPayload = {
         label: priceLabel,
         target: 'price',
         locale: null,
         regex: '^.*$',
         flags: null,
         message:
-          'Propose price from the latest created product.',
+          'Auto-propose price from the latest created product when current price is empty or 0.',
         severity: 'warning',
         enabled: true,
         replacementEnabled: true,
         replacementAutoApply: false,
         replacementValue: buildLatestFieldRecipe('price'),
         replacementFields: ['price'],
+        replacementAppliesToScopes: ['draft_template', 'product_create'],
+        postAcceptBehavior: 'revalidate',
+        validationDebounceMs: 300,
         sequenceGroupId: null,
         sequenceGroupLabel: null,
         sequenceGroupDebounceMs: 0,
@@ -1038,27 +1212,31 @@ export function ValidatorSettings(): React.JSX.Element {
         maxExecutions: 1,
         passOutputToNext: false,
         launchEnabled: true,
-        launchSourceMode: 'latest_product_field',
-        launchSourceField: 'price',
-        launchOperator: 'is_not_empty',
-        launchValue: null,
+        launchSourceMode: 'current_field',
+        launchSourceField: null,
+        launchOperator: 'regex',
+        launchValue: '^\\s*(?:0+)?\\s*$',
         launchFlags: null,
-      });
+        appliesToScopes: ['draft_template', 'product_create'],
+      };
 
-      await createPattern.mutateAsync({
+      const stockPatternData: CreateValidationPatternPayload = {
         label: stockLabel,
         target: 'stock',
         locale: null,
         regex: '^.*$',
         flags: null,
         message:
-          'Propose stock from the latest created product.',
+          'Auto-propose stock from the latest created product when current stock is empty or 0.',
         severity: 'warning',
         enabled: true,
         replacementEnabled: true,
         replacementAutoApply: false,
         replacementValue: buildLatestFieldRecipe('stock'),
         replacementFields: ['stock'],
+        replacementAppliesToScopes: ['draft_template', 'product_create'],
+        postAcceptBehavior: 'revalidate',
+        validationDebounceMs: 300,
         sequenceGroupId: null,
         sequenceGroupLabel: null,
         sequenceGroupDebounceMs: 0,
@@ -1067,14 +1245,47 @@ export function ValidatorSettings(): React.JSX.Element {
         maxExecutions: 1,
         passOutputToNext: false,
         launchEnabled: true,
-        launchSourceMode: 'latest_product_field',
-        launchSourceField: 'stock',
-        launchOperator: 'is_not_empty',
-        launchValue: null,
+        launchSourceMode: 'current_field',
+        launchSourceField: null,
+        launchOperator: 'regex',
+        launchValue: '^\\s*(?:0+)?\\s*$',
         launchFlags: null,
-      });
+        appliesToScopes: ['draft_template', 'product_create'],
+      };
 
-      toast('Latest price & stock sequence created.', { variant: 'success' });
+      const existingPricePattern = patterns.find((pattern: ProductValidationPattern) =>
+        isLatestFieldMirrorPattern(pattern, 'price')
+      );
+      if (existingPricePattern) {
+        const priceUpdateData: UpdateValidationPatternPayload = {
+          ...pricePatternData,
+          label: existingPricePattern.label,
+        };
+        await updatePattern.mutateAsync({
+          id: existingPricePattern.id,
+          data: priceUpdateData,
+        });
+      } else {
+        await createPattern.mutateAsync(pricePatternData);
+      }
+
+      const existingStockPattern = patterns.find((pattern: ProductValidationPattern) =>
+        isLatestFieldMirrorPattern(pattern, 'stock')
+      );
+      if (existingStockPattern) {
+        const stockUpdateData: UpdateValidationPatternPayload = {
+          ...stockPatternData,
+          label: existingStockPattern.label,
+        };
+        await updatePattern.mutateAsync({
+          id: existingStockPattern.id,
+          data: stockUpdateData,
+        });
+      } else {
+        await createPattern.mutateAsync(stockPatternData);
+      }
+
+      toast('Latest price & stock sequence created or updated.', { variant: 'success' });
     } catch (error) {
       toast(
         error instanceof Error
@@ -1146,6 +1357,8 @@ export function ValidatorSettings(): React.JSX.Element {
         replacementAutoApply: true,
         replacementValue: mirrorRecipe,
         replacementFields: ['name_pl'],
+        postAcceptBehavior: 'revalidate',
+        validationDebounceMs: 300,
         sequenceGroupId,
         sequenceGroupLabel,
         sequenceGroupDebounceMs: 300,
@@ -1174,6 +1387,8 @@ export function ValidatorSettings(): React.JSX.Element {
         replacementAutoApply: true,
         replacementValue: 'Brelok',
         replacementFields: ['name_pl'],
+        postAcceptBehavior: 'revalidate',
+        validationDebounceMs: 300,
         sequenceGroupId,
         sequenceGroupLabel,
         sequenceGroupDebounceMs: 0,
@@ -1202,6 +1417,8 @@ export function ValidatorSettings(): React.JSX.Element {
         replacementAutoApply: true,
         replacementValue: 'Przypinka',
         replacementFields: ['name_pl'],
+        postAcceptBehavior: 'revalidate',
+        validationDebounceMs: 300,
         sequenceGroupId,
         sequenceGroupLabel,
         sequenceGroupDebounceMs: 0,
@@ -1307,6 +1524,41 @@ export function ValidatorSettings(): React.JSX.Element {
               void handleToggleDefault();
             }}
           />
+        </div>
+      </SectionPanel>
+
+      <SectionPanel variant='subtle' className='p-4'>
+        <div className='space-y-1'>
+          <p className='text-sm font-semibold text-white'>Instance Behavior</p>
+          <p className='text-xs text-gray-400'>
+            Set how deny actions behave in each form instance. This controls draft/new/edit contexts separately.
+          </p>
+        </div>
+        <div className='mt-3 grid grid-cols-1 gap-3 md:grid-cols-3'>
+          {(
+            Object.keys(INSTANCE_SCOPE_LABELS) as ProductValidationInstanceScope[]
+          ).map((scope: ProductValidationInstanceScope) => (
+            <div key={scope} className='rounded-md border border-border/70 bg-background/30 p-3'>
+              <p className='text-xs font-medium text-white'>{INSTANCE_SCOPE_LABELS[scope]}</p>
+              <p className='mt-1 text-[11px] text-gray-400'>When a correction is denied</p>
+              <div className='mt-2'>
+                <UnifiedSelect
+                  value={instanceDenyBehavior[scope]}
+                  onValueChange={(value: string): void => {
+                    void handleInstanceBehaviorChange(
+                      scope,
+                      value === 'ask_again' ? 'ask_again' : 'mute_session'
+                    );
+                  }}
+                  options={[
+                    { value: 'mute_session', label: 'Stop For This Session' },
+                    { value: 'ask_again', label: 'Ask Again Next Validation' },
+                  ]}
+                  disabled={updateSettings.isPending || settingsQuery.isLoading}
+                />
+              </div>
+            </div>
+          ))}
         </div>
       </SectionPanel>
 
@@ -1561,6 +1813,35 @@ export function ValidatorSettings(): React.JSX.Element {
                               ? `${pattern.launchSourceMode} ${pattern.launchSourceField ?? ''} ${pattern.launchOperator} ${pattern.launchValue ?? ''}`.trim()
                               : 'always'}
                           </p>
+                          {pattern.launchEnabled && (
+                            <p className='mt-1 text-[11px] text-sky-200/90'>
+                              Launch scopes:{' '}
+                              {normalizeProductValidationPatternLaunchScopes(
+                                pattern.launchAppliesToScopes,
+                                pattern.appliesToScopes
+                              )
+                                .map((scope: ProductValidationInstanceScope) => INSTANCE_SCOPE_LABELS[scope])
+                                .join(' | ')}
+                            </p>
+                          )}
+                          <p className='mt-1 text-[11px] text-fuchsia-200/90'>
+                            Runtime:{' '}
+                            {pattern.runtimeEnabled && pattern.runtimeType !== 'none'
+                              ? `${pattern.runtimeType}${pattern.runtimeConfig ? ' configured' : ''}`
+                              : 'off'}
+                          </p>
+                          <p className='mt-1 text-[11px] text-emerald-200/90'>
+                            Scopes:{' '}
+                            {normalizeProductValidationPatternScopes(pattern.appliesToScopes)
+                              .map((scope: ProductValidationInstanceScope) => INSTANCE_SCOPE_LABELS[scope])
+                              .join(' | ')}
+                          </p>
+                          <p className='mt-1 text-[11px] text-emerald-200/90'>
+                            Deny policy:{' '}
+                            {normalizeProductValidationPatternDenyBehaviorOverride(
+                              pattern.denyBehaviorOverride
+                            ) ?? 'inherit from form'}
+                          </p>
                           {pattern.replacementEnabled && staticReplacement && (
                             <p className='mt-1 text-xs text-emerald-300'>
                             Replacer: <span className='font-mono'>{staticReplacement}</span>
@@ -1574,6 +1855,17 @@ export function ValidatorSettings(): React.JSX.Element {
                           {pattern.replacementEnabled && (
                             <p className='mt-1 text-[11px] text-emerald-200/90'>
                             Fields: {formatReplacementFields(pattern.replacementFields)}
+                            </p>
+                          )}
+                          {pattern.replacementEnabled && (
+                            <p className='mt-1 text-[11px] text-emerald-200/90'>
+                              Replacement scopes:{' '}
+                              {normalizeProductValidationPatternReplacementScopes(
+                                pattern.replacementAppliesToScopes,
+                                pattern.appliesToScopes
+                              )
+                                .map((scope: ProductValidationInstanceScope) => INSTANCE_SCOPE_LABELS[scope])
+                                .join(' | ')}
                             </p>
                           )}
                           {pattern.replacementEnabled && (
@@ -1721,6 +2013,28 @@ export function ValidatorSettings(): React.JSX.Element {
                     ]}
                   />
                 </div>
+              </div>
+            </div>
+
+            <div>
+              <Label className='text-xs text-gray-400'>Apply In Forms</Label>
+              <p className='mt-1 text-[11px] text-gray-500'>
+                Controls where this validator pattern is active.
+              </p>
+              <div className='mt-2'>
+                <MultiSelect
+                  options={PATTERN_SCOPE_OPTIONS}
+                  selected={normalizeProductValidationPatternScopes(formData.appliesToScopes)}
+                  onChange={(values: string[]) =>
+                    setFormData((prev: PatternFormData) => ({
+                      ...prev,
+                      appliesToScopes: normalizeProductValidationPatternScopes(values),
+                    }))
+                  }
+                  placeholder='All forms'
+                  searchPlaceholder='Search form scope...'
+                  emptyMessage='No form scopes found.'
+                />
               </div>
             </div>
 
@@ -1886,6 +2200,34 @@ export function ValidatorSettings(): React.JSX.Element {
 
               {formData.launchEnabled && (
                 <>
+                  <div>
+                    <Label className='text-xs text-gray-300'>Launch In Forms</Label>
+                    <p className='mt-1 text-[11px] text-gray-500'>
+                      Context gate for this launch node (Draft/Create/Edit).
+                    </p>
+                    <div className='mt-2'>
+                      <MultiSelect
+                        options={PATTERN_SCOPE_OPTIONS}
+                        selected={normalizeProductValidationPatternLaunchScopes(
+                          formData.launchAppliesToScopes,
+                          formData.appliesToScopes
+                        )}
+                        onChange={(values: string[]) =>
+                          setFormData((prev: PatternFormData) => ({
+                            ...prev,
+                            launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
+                              values,
+                              prev.appliesToScopes
+                            ),
+                          }))
+                        }
+                        placeholder='Follow pattern scopes'
+                        searchPlaceholder='Search launch scope...'
+                        emptyMessage='No form scopes found.'
+                      />
+                    </div>
+                  </div>
+
                   <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
                     <div>
                       <Label className='text-xs text-gray-300'>Launch Source Mode</Label>
@@ -1988,6 +2330,74 @@ export function ValidatorSettings(): React.JSX.Element {
                   </div>
                 </>
               )}
+            </div>
+
+            <div className='space-y-3 rounded-md border border-fuchsia-500/25 bg-fuchsia-500/5 p-3'>
+              <div className='flex items-center justify-between gap-3'>
+                <div>
+                  <Label className='text-xs text-fuchsia-200'>Runtime Validator</Label>
+                  <p className='mt-1 text-[11px] text-fuchsia-100/70'>
+                    Execute DB or AI runtime checks before showing validation advice.
+                  </p>
+                </div>
+                <ToggleButton
+                  enabled={formData.runtimeEnabled}
+                  onClick={() =>
+                    setFormData((prev: PatternFormData) => {
+                      const nextEnabled = !prev.runtimeEnabled;
+                      return {
+                        ...prev,
+                        runtimeEnabled: nextEnabled,
+                        runtimeType:
+                          nextEnabled && prev.runtimeType === 'none'
+                            ? 'database_query'
+                            : prev.runtimeType,
+                      };
+                    })
+                  }
+                />
+              </div>
+
+              {formData.runtimeEnabled ? (
+                <div className='space-y-3'>
+                  <div>
+                    <Label className='text-xs text-gray-300'>Runtime Type</Label>
+                    <div className='mt-2'>
+                      <UnifiedSelect
+                        value={formData.runtimeType}
+                        onValueChange={(value: string): void =>
+                          setFormData((prev: PatternFormData) => ({
+                            ...prev,
+                            runtimeType: value as ProductValidationRuntimeType,
+                          }))
+                        }
+                        options={[
+                          { value: 'database_query', label: 'Database Query / Action' },
+                          { value: 'ai_prompt', label: 'AI Prompt Segment' },
+                        ]}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className='text-xs text-gray-300'>Runtime Config (JSON)</Label>
+                    <Textarea
+                      className='mt-2 min-h-[160px] font-mono text-[11px]'
+                      value={formData.runtimeConfig}
+                      onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
+                        setFormData((prev: PatternFormData) => ({
+                          ...prev,
+                          runtimeConfig: event.target.value,
+                        }))
+                      }
+                      placeholder={
+                        formData.runtimeType === 'ai_prompt'
+                          ? '{\n  "systemPrompt": "You validate product data.",\n  "promptTemplate": "Check [fieldName]: [fieldValue]. Return JSON: {\\"match\\":boolean,\\"message\\":string,\\"replacementValue\\":string|null}",\n  "model": "gpt-4o-mini"\n}'
+                          : '{\n  "operation": "query",\n  "payload": {\n    "provider": "auto",\n    "collection": "products",\n    "single": false,\n    "limit": 1,\n    "query": { "sku": "[sku]" }\n  },\n  "resultPath": "count",\n  "operator": "gt",\n  "operand": 0,\n  "replacementPath": "items[0].price"\n}'
+                      }
+                    />
+                  </div>
+                </div>
+              ) : null}
             </div>
 
             {formData.replacementMode === 'dynamic' && (
@@ -2345,7 +2755,35 @@ export function ValidatorSettings(): React.JSX.Element {
               </div>
             </div>
 
-            <div className='grid grid-cols-1 gap-4 md:grid-cols-[1fr_140px]'>
+            <div>
+              <Label className='text-xs text-gray-400'>Replacement Applies In Forms</Label>
+              <p className='mt-1 text-[11px] text-gray-500'>
+                Controls where replacement proposals/auto-apply are allowed.
+              </p>
+              <div className='mt-2'>
+                <MultiSelect
+                  options={PATTERN_SCOPE_OPTIONS}
+                  selected={normalizeProductValidationPatternReplacementScopes(
+                    formData.replacementAppliesToScopes,
+                    formData.appliesToScopes
+                  )}
+                  onChange={(values: string[]) =>
+                    setFormData((prev: PatternFormData) => ({
+                      ...prev,
+                      replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
+                        values,
+                        prev.appliesToScopes
+                      ),
+                    }))
+                  }
+                  placeholder='Follow pattern scopes'
+                  searchPlaceholder='Search replacement scope...'
+                  emptyMessage='No form scopes found.'
+                />
+              </div>
+            </div>
+
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-[1fr_140px_170px]'>
               <div>
                 <Label className='text-xs text-gray-400'>Regex</Label>
                 <Input
@@ -2368,6 +2806,23 @@ export function ValidatorSettings(): React.JSX.Element {
                   placeholder='gim'
                 />
               </div>
+              <div>
+                <Label className='text-xs text-gray-400'>Validation Debounce (ms)</Label>
+                <Input
+                  className='mt-2'
+                  type='number'
+                  min={0}
+                  max={30000}
+                  value={formData.validationDebounceMs}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                    setFormData((prev: PatternFormData) => ({
+                      ...prev,
+                      validationDebounceMs: event.target.value,
+                    }))
+                  }
+                  placeholder='0'
+                />
+              </div>
             </div>
 
             <div>
@@ -2380,6 +2835,52 @@ export function ValidatorSettings(): React.JSX.Element {
                 }
                 placeholder='Remove duplicate spaces from product name.'
               />
+            </div>
+
+            <div>
+              <Label className='text-xs text-gray-400'>After Replace Is Accepted</Label>
+              <div className='mt-2'>
+                <UnifiedSelect
+                  value={formData.postAcceptBehavior}
+                  onValueChange={(value: string): void =>
+                    setFormData((prev: PatternFormData) => ({
+                      ...prev,
+                      postAcceptBehavior:
+                        value === 'stop_after_accept' ? 'stop_after_accept' : 'revalidate',
+                    }))
+                  }
+                  options={[
+                    { value: 'revalidate', label: 'Revalidate Continuously' },
+                    { value: 'stop_after_accept', label: 'Stop After First Accept' },
+                  ]}
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label className='text-xs text-gray-400'>Deny Policy Override</Label>
+              <p className='mt-1 text-[11px] text-gray-500'>
+                Override form-level deny policy for this pattern only.
+              </p>
+              <div className='mt-2'>
+                <UnifiedSelect
+                  value={formData.denyBehaviorOverride}
+                  onValueChange={(value: string): void =>
+                    setFormData((prev: PatternFormData) => ({
+                      ...prev,
+                      denyBehaviorOverride:
+                        value === 'ask_again' || value === 'mute_session'
+                          ? value
+                          : 'inherit',
+                    }))
+                  }
+                  options={[
+                    { value: 'inherit', label: 'Inherit Form Policy' },
+                    { value: 'mute_session', label: 'Stop For This Session' },
+                    { value: 'ask_again', label: 'Ask Again Next Validation' },
+                  ]}
+                />
+              </div>
             </div>
 
             <div className='flex items-center justify-between rounded-md border border-border bg-gray-900/70 px-3 py-2'>

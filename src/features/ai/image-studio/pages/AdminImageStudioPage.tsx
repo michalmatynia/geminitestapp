@@ -86,13 +86,13 @@ function AdminImageStudioPageContent(): React.JSX.Element {
   }, [createProjectMutation, newProjectId, setProjectId, toast]);
 
   return (
-    <div className='container mx-auto max-w-none flex min-h-[calc(100vh-5rem)] flex-col gap-4 py-6'>
+    <div className='container mx-auto max-w-none flex min-h-[calc(100vh-4.25rem)] flex-col gap-3 py-3'>
       <ClientOnly fallback={<div className='flex min-h-0 flex-1' />}>
         <Tabs
           id='image-studio-tabs'
           value={activeTab as string}
           onValueChange={handleTabChange}
-          className={hideTopBar ? 'flex min-h-0 flex-1 flex-col gap-0' : 'flex min-h-0 flex-1 flex-col gap-4'}
+          className={hideTopBar ? 'flex min-h-0 flex-1 flex-col gap-0' : 'flex min-h-0 flex-1 flex-col gap-3'}
         >
           {!hideTopBar ? (
             <div className='border-b bg-muted/40 px-4 py-2'>

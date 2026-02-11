@@ -5,6 +5,7 @@ import { ArrowRight } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import { logClientError } from '@/features/observability';
 import * as productsApi from '@/features/products/api/products';
 import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/features/products/constants';
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
@@ -12,12 +13,22 @@ import { useProductValidationSettings } from '@/features/products/context/Produc
 import { useProductValidatorConfig } from '@/features/products/hooks/useProductSettingsQueries';
 import { ProductFormData } from '@/features/products/types';
 import {
+  isPatternEnabledForValidationScope,
+  isPatternLaunchEnabledForValidationScope,
+  isPatternReplacementEnabledForValidationScope,
+} from '@/features/products/utils/validator-instance-behavior';
+import {
   evaluateStringCondition,
   evaluateDynamicReplacementRecipe,
   parseDynamicReplacementRecipe,
 } from '@/features/products/utils/validator-replacement-recipe';
+import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { ProductValidationPattern } from '@/shared/types/domain/products';
+import type {
+  ProductValidationInstanceScope,
+  ProductValidationPattern,
+  ProductValidationPostAcceptBehavior,
+} from '@/shared/types/domain/products';
 import { Button, Input, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -34,6 +45,8 @@ export type FieldValidatorIssue = {
   replacementApplyMode: 'replace_whole_field' | 'replace_matched_segment';
   replacementScope: 'none' | 'global' | 'field';
   replacementActive: boolean;
+  postAcceptBehavior: ProductValidationPostAcceptBehavior;
+  debounceMs: number;
 };
 
 const normalizePatternSequence = (
@@ -88,6 +101,14 @@ const normalizePatternMaxExecutions = (pattern: ProductValidationPattern): numbe
   }
   return Math.min(20, Math.max(1, Math.floor(pattern.maxExecutions)));
 };
+
+const normalizeValidationDebounceMs = (value: unknown): number => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
+  return Math.min(30_000, Math.max(0, Math.floor(value)));
+};
+
+const normalizePostAcceptBehavior = (value: unknown): ProductValidationPostAcceptBehavior =>
+  value === 'stop_after_accept' ? 'stop_after_accept' : 'revalidate';
 
 const sortValidatorPatterns = (patterns: ProductValidationPattern[]): ProductValidationPattern[] =>
   patterns
@@ -166,6 +187,9 @@ const isLatestPriceStockMirrorPattern = (
   );
 };
 
+const isRuntimePatternEnabled = (pattern: ProductValidationPattern): boolean =>
+  Boolean(pattern.runtimeEnabled && pattern.runtimeType !== 'none');
+
 const toStringValue = (value: unknown): string | null => {
   if (typeof value === 'string') return value;
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
@@ -193,16 +217,27 @@ const resolvePatternLaunchSourceValue = ({
 
 const shouldLaunchPattern = ({
   pattern,
+  validationScope,
   fieldValue,
   values,
   latestProductValues,
 }: {
   pattern: ProductValidationPattern;
+  validationScope: ProductValidationInstanceScope;
   fieldValue: string;
   values: ProductFormData;
   latestProductValues: Record<string, unknown> | null;
 }): boolean => {
   if (!pattern.launchEnabled) return true;
+  if (
+    !isPatternLaunchEnabledForValidationScope(
+      pattern.launchAppliesToScopes,
+      validationScope,
+      pattern.appliesToScopes
+    )
+  ) {
+    return false;
+  }
   if (
     pattern.launchSourceMode !== 'current_field' &&
     !pattern.launchSourceField?.trim()
@@ -314,7 +349,8 @@ const buildIssueSnippet = (
 export const buildFieldIssues = (
   values: ProductFormData,
   patterns: ProductValidationPattern[],
-  latestProductValues: Record<string, unknown> | null
+  latestProductValues: Record<string, unknown> | null,
+  validationScope: ProductValidationInstanceScope
 ): Record<string, FieldValidatorIssue[]> => {
   const deriveDiffSegment = (
     before: string,
@@ -345,188 +381,265 @@ export const buildFieldIssues = (
     };
   };
 
-  type SequenceIssueAggregate = {
-    groupId: string;
-    groupLabel: string | null;
-    originalValue: string;
-    finalValue: string;
-    severity: FieldValidatorIssue['severity'];
-  };
+type SequenceIssueAggregate = {
+  groupId: string;
+  groupLabel: string | null;
+  originalValue: string;
+  finalValue: string;
+  severity: FieldValidatorIssue['severity'];
+  postAcceptBehavior: ProductValidationPostAcceptBehavior;
+  debounceMs: number;
+};
 
-  const issues: Record<string, FieldValidatorIssue[]> = {};
-  const entries = Object.entries(values) as Array<[string, unknown]>;
-  const orderedPatterns = sortValidatorPatterns(patterns);
-  const sequenceGroupCounts = buildSequenceGroupCounts(orderedPatterns);
+const issues: Record<string, FieldValidatorIssue[]> = {};
+const entries = Object.entries(values) as Array<[string, unknown]>;
+const orderedPatterns = sortValidatorPatterns(patterns);
+const sequenceGroupCounts = buildSequenceGroupCounts(orderedPatterns);
 
-  for (const [fieldName, rawValue] of entries) {
-    const normalizedRawValue =
+for (const [fieldName, rawValue] of entries) {
+  const normalizedRawValue =
       typeof rawValue === 'string'
         ? rawValue
         : typeof rawValue === 'number' && Number.isFinite(rawValue)
           ? String(rawValue)
           : '';
-    const { target, locale } = resolveFieldTargetAndLocale(fieldName);
-    if (!target) continue;
-    const fieldPatterns = orderedPatterns.filter(
-      (pattern: ProductValidationPattern): boolean =>
-        pattern.enabled &&
+  const { target, locale } = resolveFieldTargetAndLocale(fieldName);
+  if (!target) continue;
+  const fieldPatterns = orderedPatterns.filter(
+    (pattern: ProductValidationPattern): boolean =>
+      pattern.enabled &&
+        isPatternEnabledForValidationScope(pattern.appliesToScopes, validationScope) &&
+        !isRuntimePatternEnabled(pattern) &&
         pattern.target === target &&
         isPatternLocaleMatch(pattern.locale, locale)
-    );
-    if (fieldPatterns.length === 0) continue;
-    const hasExternalLaunchSource = fieldPatterns.some(
-      (pattern: ProductValidationPattern): boolean =>
-        pattern.launchEnabled && pattern.launchSourceMode !== 'current_field'
-    );
-    const hasLatestPriceStockMirror = fieldPatterns.some(
-      (pattern: ProductValidationPattern): boolean =>
-        isLatestPriceStockMirrorPattern(pattern)
-    );
-    if (!normalizedRawValue && !hasExternalLaunchSource && !hasLatestPriceStockMirror) continue;
+  );
+  if (fieldPatterns.length === 0) continue;
+  const hasExternalLaunchSource = fieldPatterns.some(
+    (pattern: ProductValidationPattern): boolean =>
+      pattern.launchEnabled && pattern.launchSourceMode !== 'current_field'
+  );
+  const hasLatestPriceStockMirror = fieldPatterns.some(
+    (pattern: ProductValidationPattern): boolean =>
+      isLatestPriceStockMirrorPattern(pattern)
+  );
+  if (!normalizedRawValue && !hasExternalLaunchSource && !hasLatestPriceStockMirror) continue;
 
-    let workingValue = normalizedRawValue;
-    const sequenceAggregates = new Map<string, SequenceIssueAggregate>();
+  let workingValue = normalizedRawValue;
+  const sequenceAggregates = new Map<string, SequenceIssueAggregate>();
 
-    for (const pattern of fieldPatterns) {
-      const inSequenceGroup = isPatternInSequenceGroup(pattern, sequenceGroupCounts);
-      const sequenceGroupId = inSequenceGroup ? pattern.sequenceGroupId?.trim() || null : null;
-      if (inSequenceGroup && sequenceGroupId && !sequenceAggregates.has(sequenceGroupId)) {
-        sequenceAggregates.set(sequenceGroupId, {
-          groupId: sequenceGroupId,
-          groupLabel: pattern.sequenceGroupLabel?.trim() || null,
-          originalValue: workingValue,
-          finalValue: workingValue,
-          severity: pattern.severity,
-        });
+  for (const pattern of fieldPatterns) {
+    const inSequenceGroup = isPatternInSequenceGroup(pattern, sequenceGroupCounts);
+    const sequenceGroupId = inSequenceGroup ? pattern.sequenceGroupId?.trim() || null : null;
+    if (inSequenceGroup && sequenceGroupId && !sequenceAggregates.has(sequenceGroupId)) {
+      sequenceAggregates.set(sequenceGroupId, {
+        groupId: sequenceGroupId,
+        groupLabel: pattern.sequenceGroupLabel?.trim() || null,
+        originalValue: workingValue,
+        finalValue: workingValue,
+        severity: pattern.severity,
+        postAcceptBehavior: normalizePostAcceptBehavior(pattern.postAcceptBehavior),
+        debounceMs: normalizeValidationDebounceMs(pattern.validationDebounceMs),
+      });
+    }
+    const maxExecutions = normalizePatternMaxExecutions(pattern);
+    let matched = false;
+    let replaced = false;
+    let candidateValue = inSequenceGroup ? workingValue : normalizedRawValue;
+    const patternDebounceMs = normalizeValidationDebounceMs(pattern.validationDebounceMs);
+    for (let execution = 0; execution < maxExecutions; execution += 1) {
+      if (
+        !shouldLaunchPattern({
+          pattern,
+          validationScope,
+          fieldValue: candidateValue,
+          values,
+          latestProductValues,
+        })
+      ) {
+        break;
       }
-      const maxExecutions = normalizePatternMaxExecutions(pattern);
-      let matched = false;
-      let replaced = false;
-      let candidateValue = inSequenceGroup ? workingValue : normalizedRawValue;
-      for (let execution = 0; execution < maxExecutions; execution += 1) {
-        if (
-          !shouldLaunchPattern({
+      try {
+        const regex = new RegExp(pattern.regex, pattern.flags ?? undefined);
+        const match = regex.exec(candidateValue);
+        const allowWithoutRegexMatch = isLatestPriceStockMirrorPattern(pattern);
+        if ((!match || typeof match.index !== 'number') && !allowWithoutRegexMatch) break;
+        matched = true;
+        const matchText = match?.[0] ?? candidateValue;
+        const length = Math.max(1, matchText.length || candidateValue.length || 1);
+        const matchIndex = typeof match?.index === 'number' ? match.index : 0;
+        const replacementFields = normalizeReplacementFields(pattern.replacementFields);
+        const hasReplacer = Boolean(pattern.replacementEnabled && pattern.replacementValue);
+        const replacementEnabledForScope = isPatternReplacementEnabledForValidationScope(
+          pattern.replacementAppliesToScopes,
+          validationScope,
+          pattern.appliesToScopes
+        );
+        const replacementScope: FieldValidatorIssue['replacementScope'] = !hasReplacer
+          ? 'none'
+          : replacementFields.length === 0
+            ? 'global'
+            : 'field';
+        const replacementActive =
+            hasReplacer &&
+            replacementEnabledForScope &&
+            (replacementScope === 'global' || replacementFields.includes(fieldName));
+        const resolvedReplacement = replacementActive
+          ? resolvePatternReplacementValue({
             pattern,
             fieldValue: candidateValue,
             values,
             latestProductValues,
           })
-        ) {
-          break;
-        }
-        try {
-          const regex = new RegExp(pattern.regex, pattern.flags ?? undefined);
-          const match = regex.exec(candidateValue);
-          const allowWithoutRegexMatch = isLatestPriceStockMirrorPattern(pattern);
-          if ((!match || typeof match.index !== 'number') && !allowWithoutRegexMatch) break;
-          matched = true;
-          const matchText = match?.[0] ?? candidateValue;
-          const length = Math.max(1, matchText.length || candidateValue.length || 1);
-          const matchIndex = typeof match?.index === 'number' ? match.index : 0;
-          const replacementFields = normalizeReplacementFields(pattern.replacementFields);
-          const hasReplacer = Boolean(pattern.replacementEnabled && pattern.replacementValue);
-          const replacementScope: FieldValidatorIssue['replacementScope'] = !hasReplacer
-            ? 'none'
-            : replacementFields.length === 0
-              ? 'global'
-              : 'field';
-          const replacementActive =
-            hasReplacer &&
-            (replacementScope === 'global' || replacementFields.includes(fieldName));
-          const resolvedReplacement = replacementActive
-            ? resolvePatternReplacementValue({
-              pattern,
-              fieldValue: candidateValue,
-              values,
-              latestProductValues,
-            })
-            : null;
-          if (!inSequenceGroup) {
-            if (!issues[fieldName]) {
-              issues[fieldName] = [];
-            }
-            issues[fieldName].push({
-              patternId: pattern.id,
-              message: pattern.message,
-              severity: pattern.severity,
-              matchText,
-              index: matchIndex,
-              length,
-              regex: pattern.regex,
-              flags: pattern.flags ?? null,
-              replacementValue: resolvedReplacement?.value ?? null,
-              replacementApplyMode: resolvedReplacement?.applyMode ?? 'replace_matched_segment',
-              replacementScope,
-              replacementActive: replacementActive && Boolean(resolvedReplacement?.value),
-            });
+          : null;
+        const effectiveReplacement = resolvedReplacement;
+        if (!inSequenceGroup) {
+          if (!issues[fieldName]) {
+            issues[fieldName] = [];
           }
-
-          if (!resolvedReplacement?.value) break;
-          const nextValue = applyResolvedReplacement({
-            value: candidateValue,
-            pattern,
-            replacement: resolvedReplacement,
+          issues[fieldName].push({
+            patternId: pattern.id,
+            message: pattern.message,
+            severity: pattern.severity,
+            matchText,
+            index: matchIndex,
+            length,
+            regex: pattern.regex,
+            flags: pattern.flags ?? null,
+            replacementValue: effectiveReplacement?.value ?? null,
+            replacementApplyMode: effectiveReplacement?.applyMode ?? 'replace_matched_segment',
+            replacementScope,
+            replacementActive: replacementActive && Boolean(effectiveReplacement?.value),
+            postAcceptBehavior: normalizePostAcceptBehavior(pattern.postAcceptBehavior),
+            debounceMs: patternDebounceMs,
           });
-          if (nextValue === candidateValue) break;
-          replaced = true;
-          candidateValue = nextValue;
-          if (inSequenceGroup) {
-            workingValue = nextValue;
-            if (sequenceGroupId) {
-              const aggregate = sequenceAggregates.get(sequenceGroupId);
-              if (aggregate) {
-                aggregate.finalValue = nextValue;
-                if (pattern.severity === 'error') {
-                  aggregate.severity = 'error';
-                }
+        }
+
+        if (!effectiveReplacement?.value) break;
+        const nextValue = applyResolvedReplacement({
+          value: candidateValue,
+          pattern,
+          replacement: effectiveReplacement,
+        });
+        if (nextValue === candidateValue) break;
+        replaced = true;
+        candidateValue = nextValue;
+        if (inSequenceGroup) {
+          workingValue = nextValue;
+          if (sequenceGroupId) {
+            const aggregate = sequenceAggregates.get(sequenceGroupId);
+            if (aggregate) {
+              aggregate.finalValue = nextValue;
+              if (pattern.severity === 'error') {
+                aggregate.severity = 'error';
               }
+              if (normalizePostAcceptBehavior(pattern.postAcceptBehavior) === 'stop_after_accept') {
+                aggregate.postAcceptBehavior = 'stop_after_accept';
+              }
+              aggregate.debounceMs = Math.max(aggregate.debounceMs, patternDebounceMs);
             }
           }
-        } catch {
-          // Invalid pattern is blocked at API write time; skip defensively.
-          break;
         }
-      }
-
-      if (!inSequenceGroup) continue;
-      const chainMode = normalizePatternChainMode(pattern);
-      if (matched && chainMode === 'stop_on_match') {
-        break;
-      }
-      if (replaced && chainMode === 'stop_on_replace') {
-        break;
-      }
-      if (replaced && pattern.passOutputToNext === false) {
+      } catch {
+        // Invalid pattern is blocked at API write time; skip defensively.
         break;
       }
     }
 
-    for (const aggregate of sequenceAggregates.values()) {
-      if (aggregate.finalValue === aggregate.originalValue) continue;
-      const diff = deriveDiffSegment(aggregate.originalValue, aggregate.finalValue);
-      if (!issues[fieldName]) {
-        issues[fieldName] = [];
-      }
-      issues[fieldName].push({
-        patternId: `sequence:${aggregate.groupId}`,
-        message: aggregate.groupLabel
-          ? `${aggregate.groupLabel} sequence result`
-          : 'Sequence result',
-        severity: aggregate.severity,
-        matchText: diff.matchText,
-        index: diff.index,
-        length: diff.length,
-        regex: '',
-        flags: null,
-        replacementValue: aggregate.finalValue,
-        replacementApplyMode: 'replace_whole_field',
-        replacementScope: 'field',
-        replacementActive: true,
-      });
+    if (!inSequenceGroup) continue;
+    const chainMode = normalizePatternChainMode(pattern);
+    if (matched && chainMode === 'stop_on_match') {
+      break;
+    }
+    if (replaced && chainMode === 'stop_on_replace') {
+      break;
+    }
+    if (replaced && pattern.passOutputToNext === false) {
+      break;
     }
   }
 
-  return issues;
+  for (const aggregate of sequenceAggregates.values()) {
+    if (aggregate.finalValue === aggregate.originalValue) continue;
+    const diff = deriveDiffSegment(aggregate.originalValue, aggregate.finalValue);
+    if (!issues[fieldName]) {
+      issues[fieldName] = [];
+    }
+    issues[fieldName].push({
+      patternId: `sequence:${aggregate.groupId}`,
+      message: aggregate.groupLabel
+        ? `${aggregate.groupLabel} sequence result`
+        : 'Sequence result',
+      severity: aggregate.severity,
+      matchText: diff.matchText,
+      index: diff.index,
+      length: diff.length,
+      regex: '',
+      flags: null,
+      replacementValue: aggregate.finalValue,
+      replacementApplyMode: 'replace_whole_field',
+      replacementScope: 'field',
+      replacementActive: true,
+      postAcceptBehavior: aggregate.postAcceptBehavior,
+      debounceMs: aggregate.debounceMs,
+    });
+  }
+}
+
+return issues;
+};
+
+export const mergeFieldIssueMaps = (
+  staticIssues: Record<string, FieldValidatorIssue[]>,
+  runtimeIssues: Record<string, FieldValidatorIssue[]>
+): Record<string, FieldValidatorIssue[]> => {
+  const merged: Record<string, FieldValidatorIssue[]> = {};
+  const keys = new Set<string>([
+    ...Object.keys(staticIssues),
+    ...Object.keys(runtimeIssues),
+  ]);
+  for (const key of keys) {
+    merged[key] = [...(staticIssues[key] ?? []), ...(runtimeIssues[key] ?? [])];
+  }
+  return merged;
+};
+
+const areIssueMapsEquivalent = (
+  left: Record<string, FieldValidatorIssue[]>,
+  right: Record<string, FieldValidatorIssue[]>
+): boolean => {
+  if (left === right) return true;
+  const leftKeys = Object.keys(left);
+  const rightKeys = Object.keys(right);
+  if (leftKeys.length !== rightKeys.length) return false;
+  for (const key of leftKeys) {
+    const leftList = left[key] ?? [];
+    const rightList = right[key] ?? [];
+    if (leftList.length !== rightList.length) return false;
+    for (let index = 0; index < leftList.length; index += 1) {
+      const leftIssue = leftList[index];
+      const rightIssue = rightList[index];
+      if (!leftIssue || !rightIssue) return false;
+      if (
+        leftIssue.patternId !== rightIssue.patternId ||
+        leftIssue.message !== rightIssue.message ||
+        leftIssue.severity !== rightIssue.severity ||
+        leftIssue.matchText !== rightIssue.matchText ||
+        leftIssue.index !== rightIssue.index ||
+        leftIssue.length !== rightIssue.length ||
+        leftIssue.regex !== rightIssue.regex ||
+        leftIssue.flags !== rightIssue.flags ||
+        leftIssue.replacementValue !== rightIssue.replacementValue ||
+        leftIssue.replacementApplyMode !== rightIssue.replacementApplyMode ||
+        leftIssue.replacementScope !== rightIssue.replacementScope ||
+        leftIssue.replacementActive !== rightIssue.replacementActive ||
+        leftIssue.postAcceptBehavior !== rightIssue.postAcceptBehavior ||
+        leftIssue.debounceMs !== rightIssue.debounceMs
+      ) {
+        return false;
+      }
+    }
+  }
+  return true;
 };
 
 export const getIssueReplacementPreview = (
@@ -553,10 +666,14 @@ export function ValidatorIssueHint({
   issue,
   value,
   onReplace,
+  onDeny,
+  denyLabel = 'Deny',
 }: {
   issue: FieldValidatorIssue;
   value: string;
   onReplace?: (() => void) | undefined;
+  onDeny?: (() => void) | undefined;
+  denyLabel?: 'Deny' | 'Mute';
 }): React.JSX.Element {
   const snippet = buildIssueSnippet(value, issue.index, issue.length);
   const toneClass =
@@ -598,11 +715,20 @@ export function ValidatorIssueHint({
         <span className={cn('rounded border px-1.5 py-0.5 text-[10px]', replacementBadgeClass)}>
           {replacementBadgeText}
         </span>
+        {onDeny ? (
+          <Button
+            type='button'
+            onClick={onDeny}
+            className='ml-auto h-6 rounded border border-red-500/50 bg-red-500/15 px-2 text-[10px] text-red-100 hover:bg-red-500/25'
+          >
+            {denyLabel}
+          </Button>
+        ) : null}
         {issue.replacementValue && onReplace && (
           <Button
             type='button'
             onClick={onReplace}
-            className='ml-auto h-6 rounded border border-emerald-500/50 bg-emerald-500/15 px-2 text-[10px] text-emerald-100 hover:bg-emerald-500/25'
+            className='h-6 rounded border border-emerald-500/50 bg-emerald-500/15 px-2 text-[10px] text-emerald-100 hover:bg-emerald-500/25'
           >
             Replace
           </Button>
@@ -628,7 +754,16 @@ export function ValidatorIssueHint({
 }
 
 export default function ProductFormGeneral(): React.JSX.Element {
-  const { validatorEnabled, formatterEnabled } = useProductValidationSettings();
+  const {
+    validationInstanceScope,
+    validatorEnabled,
+    formatterEnabled,
+    getDenyActionLabel,
+    isIssueDenied,
+    isIssueAccepted,
+    acceptIssue,
+    denyIssue,
+  } = useProductValidationSettings();
   const {
     filteredLanguages,
     errors,
@@ -640,6 +775,11 @@ export default function ProductFormGeneral(): React.JSX.Element {
   const [activeNameTab, setActiveNameTab] = useState<string>('');
   const [activeDescriptionTab, setActiveDescriptionTab] = useState<string>('');
   const sequenceGroupDebounceRef = useRef<Record<string, number>>({});
+  const fieldEditTimestampsRef = useRef<Record<string, number>>({});
+  const previousFieldValuesRef = useRef<Record<string, string>>({});
+  const debounceRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [debounceTick, setDebounceTick] = useState(0);
+  const [runtimeFieldIssues, setRuntimeFieldIssues] = useState<Record<string, FieldValidatorIssue[]>>({});
 
   const [identifierType, setIdentifierType] = useState<'ean' | 'gtin' | 'asin'>((): 'ean' | 'gtin' | 'asin' => {
     const vals = getValues();
@@ -651,6 +791,13 @@ export default function ProductFormGeneral(): React.JSX.Element {
   const hasCatalogs = (filteredLanguages ?? []).length > 0;
   const languagesReady = (filteredLanguages ?? []).length > 0;
   const validatorPatterns = validatorConfigQuery.data?.patterns ?? [];
+  const runtimePatternIds = useMemo(
+    () =>
+      validatorPatterns
+        .filter((pattern: ProductValidationPattern) => isRuntimePatternEnabled(pattern))
+        .map((pattern: ProductValidationPattern) => pattern.id),
+    [validatorPatterns]
+  );
   const needsLatestProductSource = useMemo(
     () =>
       validatorPatterns.some((pattern: ProductValidationPattern) => {
@@ -674,13 +821,155 @@ export default function ProductFormGeneral(): React.JSX.Element {
     const preferred = list.find((item) => item.id !== product?.id) ?? list[0] ?? null;
     return preferred as unknown as Record<string, unknown>;
   }, [latestProductsQuery.data, product?.id]);
-  const fieldIssues = useMemo(
+  useEffect(() => {
+    if (!validatorEnabled || runtimePatternIds.length === 0) {
+      setRuntimeFieldIssues((previous) =>
+        Object.keys(previous).length === 0 ? previous : {}
+      );
+      return;
+    }
+    const timer = setTimeout(() => {
+      void api
+        .post<{ issues?: Record<string, FieldValidatorIssue[]> }>(
+          '/api/products/validator-runtime/evaluate',
+          {
+            values: allValues as Record<string, unknown>,
+            latestProductValues,
+            patternIds: runtimePatternIds,
+            validationScope: validationInstanceScope,
+          },
+          { logError: false }
+        )
+        .then((response) => {
+          const nextIssues = response.issues ?? {};
+          setRuntimeFieldIssues((previous) =>
+            areIssueMapsEquivalent(previous, nextIssues) ? previous : nextIssues
+          );
+        })
+        .catch((error: unknown) => {
+          setRuntimeFieldIssues((previous) =>
+            Object.keys(previous).length === 0 ? previous : {}
+          );
+          logClientError(
+            error instanceof Error ? error : new Error(String(error)),
+            {
+              context: {
+                source: 'ProductFormGeneral',
+                action: 'runtimeValidatorEvaluate',
+              },
+            }
+          );
+        });
+    }, 250);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [
+    allValues,
+    latestProductValues,
+    runtimePatternIds,
+    validationInstanceScope,
+    validatorEnabled,
+  ]);
+  useEffect(() => {
+    const now = Date.now();
+    for (const [fieldNameRaw, rawUnknown] of Object.entries(allValues as Record<string, unknown>)) {
+      const { target } = resolveFieldTargetAndLocale(fieldNameRaw);
+      if (!target) continue;
+      const normalizedValue =
+        typeof rawUnknown === 'string'
+          ? rawUnknown
+          : typeof rawUnknown === 'number' && Number.isFinite(rawUnknown)
+            ? String(rawUnknown)
+            : '';
+      if (!(fieldNameRaw in previousFieldValuesRef.current)) {
+        previousFieldValuesRef.current[fieldNameRaw] = normalizedValue;
+        continue;
+      }
+      if (previousFieldValuesRef.current[fieldNameRaw] === normalizedValue) continue;
+      previousFieldValuesRef.current[fieldNameRaw] = normalizedValue;
+      fieldEditTimestampsRef.current[fieldNameRaw] = now;
+    }
+  }, [allValues]);
+  const staticFieldIssues = useMemo(
     () =>
       validatorEnabled
-        ? buildFieldIssues(allValues, validatorPatterns, latestProductValues)
+        ? buildFieldIssues(
+          allValues,
+          validatorPatterns,
+          latestProductValues,
+          validationInstanceScope
+        )
         : ({} as Record<string, FieldValidatorIssue[]>),
-    [allValues, latestProductValues, validatorEnabled, validatorPatterns]
+    [
+      allValues,
+      latestProductValues,
+      validationInstanceScope,
+      validatorEnabled,
+      validatorPatterns,
+    ]
   );
+  const fieldIssues = useMemo(
+    () =>
+      mergeFieldIssueMaps(
+        staticFieldIssues,
+        validatorEnabled ? runtimeFieldIssues : {}
+      ),
+    [runtimeFieldIssues, staticFieldIssues, validatorEnabled]
+  );
+  useEffect(() => {
+    if (debounceRefreshTimerRef.current) {
+      clearTimeout(debounceRefreshTimerRef.current);
+      debounceRefreshTimerRef.current = null;
+    }
+    if (!validatorEnabled) return;
+    const now = Date.now();
+    let nextRemainingMs: number | null = null;
+    for (const [fieldName, issueList] of Object.entries(fieldIssues)) {
+      const changedAt = fieldEditTimestampsRef.current[fieldName] ?? 0;
+      if (changedAt <= 0) continue;
+      for (const issue of issueList) {
+        const debounceMs = normalizeValidationDebounceMs(issue.debounceMs);
+        if (debounceMs <= 0) continue;
+        const remaining = debounceMs - (now - changedAt);
+        if (remaining <= 0) continue;
+        nextRemainingMs =
+          nextRemainingMs === null ? remaining : Math.min(nextRemainingMs, remaining);
+      }
+    }
+    if (nextRemainingMs !== null) {
+      debounceRefreshTimerRef.current = setTimeout(() => {
+        setDebounceTick((prev) => prev + 1);
+      }, nextRemainingMs + 10);
+    }
+    return () => {
+      if (debounceRefreshTimerRef.current) {
+        clearTimeout(debounceRefreshTimerRef.current);
+        debounceRefreshTimerRef.current = null;
+      }
+    };
+  }, [fieldIssues, validatorEnabled, debounceTick]);
+  const visibleFieldIssues = useMemo((): Record<string, FieldValidatorIssue[]> => {
+    if (!validatorEnabled) return {};
+    const visible: Record<string, FieldValidatorIssue[]> = {};
+    const now = Date.now();
+    for (const [fieldName, issueList] of Object.entries(fieldIssues)) {
+      const changedAt = fieldEditTimestampsRef.current[fieldName] ?? 0;
+      visible[fieldName] = issueList.filter((issue: FieldValidatorIssue): boolean => {
+        if (isIssueDenied(fieldName, issue.patternId)) return false;
+        if (
+          issue.postAcceptBehavior === 'stop_after_accept' &&
+          isIssueAccepted(fieldName, issue.patternId)
+        ) {
+          return false;
+        }
+        const debounceMs = normalizeValidationDebounceMs(issue.debounceMs);
+        if (debounceMs <= 0 || changedAt <= 0) return true;
+        return now - changedAt >= debounceMs;
+      });
+    }
+    return visible;
+  }, [debounceTick, fieldIssues, isIssueAccepted, isIssueDenied, validatorEnabled]);
   const languageTabValues = useMemo(
     () =>
       filteredLanguages.map((language: { code: string }) => String(language.code).trim().toLowerCase()),
@@ -729,6 +1018,8 @@ export default function ProductFormGeneral(): React.JSX.Element {
 
       const replacementPatterns = orderedPatterns.filter((pattern: ProductValidationPattern) => {
         if (!pattern.enabled) return false;
+        if (!isPatternEnabledForValidationScope(pattern.appliesToScopes, validationInstanceScope)) return false;
+        if (isRuntimePatternEnabled(pattern)) return false;
         if (!pattern.replacementEnabled || !pattern.replacementValue) return false;
         if (!pattern.replacementAutoApply) return false;
         if (pattern.target !== target) return false;
@@ -777,6 +1068,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
           if (
             !shouldLaunchPattern({
               pattern,
+              validationScope: validationInstanceScope,
               fieldValue: candidateValue,
               values: allValues,
               latestProductValues,
@@ -800,10 +1092,16 @@ export default function ProductFormGeneral(): React.JSX.Element {
             values: allValues,
             latestProductValues,
           });
+          const replacementEnabledForScope = isPatternReplacementEnabledForValidationScope(
+            pattern.replacementAppliesToScopes,
+            validationInstanceScope,
+            pattern.appliesToScopes
+          );
+          const effectiveReplacement = replacementEnabledForScope ? replacement : null;
           const replacedValue = applyResolvedReplacement({
             value: candidateValue,
             pattern,
-            replacement,
+            replacement: effectiveReplacement,
           });
           if (replacedValue === candidateValue) break;
           replaced = true;
@@ -847,6 +1145,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
     formatterEnabled,
     latestProductValues,
     setValue,
+    validationInstanceScope,
     validatorEnabled,
     validatorPatterns,
   ]);
@@ -913,7 +1212,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
               const fieldName = `name_${language.code.toLowerCase()}` as keyof ProductFormData;
               const error = errors[fieldName]?.message;
               const fieldNameKey = String(fieldName);
-              const fieldIssueList = validatorEnabled ? fieldIssues[fieldNameKey] ?? [] : [];
+              const fieldIssueList = validatorEnabled ? visibleFieldIssues[fieldNameKey] ?? [] : [];
               const fieldIssue = fieldIssueList[0];
               const fieldValue = (allValues[fieldName] as string | undefined) ?? '';
               return (
@@ -941,6 +1240,13 @@ export default function ProductFormGeneral(): React.JSX.Element {
                             ? () => {
                               const currentValue = ((getValues(fieldName) as string | undefined) ?? '');
                               const nextValue = applyIssueReplacement(currentValue, issue);
+                              acceptIssue({
+                                fieldName: fieldNameKey,
+                                patternId: issue.patternId,
+                                postAcceptBehavior: issue.postAcceptBehavior,
+                                message: issue.message,
+                                replacementValue: issue.replacementValue,
+                              });
                               if (nextValue !== currentValue) {
                                 setValue(fieldName, nextValue as ProductFormData[typeof fieldName], {
                                   shouldDirty: true,
@@ -950,6 +1256,15 @@ export default function ProductFormGeneral(): React.JSX.Element {
                             }
                             : undefined
                         }
+                        onDeny={() => {
+                          denyIssue({
+                            fieldName: fieldNameKey,
+                            patternId: issue.patternId,
+                            message: issue.message,
+                            replacementValue: issue.replacementValue,
+                          });
+                        }}
+                        denyLabel={getDenyActionLabel(issue.patternId)}
                       />
                     ))}
                   </FormField>
@@ -986,7 +1301,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
               const fieldName = `description_${language.code.toLowerCase()}` as keyof ProductFormData;
               const error = errors[fieldName]?.message;
               const fieldNameKey = String(fieldName);
-              const fieldIssueList = validatorEnabled ? fieldIssues[fieldNameKey] ?? [] : [];
+              const fieldIssueList = validatorEnabled ? visibleFieldIssues[fieldNameKey] ?? [] : [];
               const fieldIssue = fieldIssueList[0];
               const fieldValue = (allValues[fieldName] as string | undefined) ?? '';
               return (
@@ -1015,6 +1330,13 @@ export default function ProductFormGeneral(): React.JSX.Element {
                             ? () => {
                               const currentValue = ((getValues(fieldName) as string | undefined) ?? '');
                               const nextValue = applyIssueReplacement(currentValue, issue);
+                              acceptIssue({
+                                fieldName: fieldNameKey,
+                                patternId: issue.patternId,
+                                postAcceptBehavior: issue.postAcceptBehavior,
+                                message: issue.message,
+                                replacementValue: issue.replacementValue,
+                              });
                               if (nextValue !== currentValue) {
                                 setValue(fieldName, nextValue as ProductFormData[typeof fieldName], {
                                   shouldDirty: true,
@@ -1024,6 +1346,15 @@ export default function ProductFormGeneral(): React.JSX.Element {
                             }
                             : undefined
                         }
+                        onDeny={() => {
+                          denyIssue({
+                            fieldName: fieldNameKey,
+                            patternId: issue.patternId,
+                            message: issue.message,
+                            replacementValue: issue.replacementValue,
+                          });
+                        }}
+                        denyLabel={getDenyActionLabel(issue.patternId)}
                       />
                     ))}
                   </FormField>
@@ -1037,7 +1368,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
       <FormSection title='Identifiers' gridClassName='md:grid-cols-2'>
         <FormField label='SKU' required error={errors.sku?.message} id='sku'>
           {(() => {
-            const skuFieldIssueList = validatorEnabled ? fieldIssues['sku'] ?? [] : [];
+            const skuFieldIssueList = validatorEnabled ? visibleFieldIssues['sku'] ?? [] : [];
             const skuFieldIssue = skuFieldIssueList[0];
             const skuValue = (allValues.sku as string | undefined) ?? '';
             return (
@@ -1065,6 +1396,13 @@ export default function ProductFormGeneral(): React.JSX.Element {
                           ? () => {
                             const currentValue = (getValues('sku') as string | undefined) ?? '';
                             const nextValue = applyIssueReplacement(currentValue, issue);
+                            acceptIssue({
+                              fieldName: 'sku',
+                              patternId: issue.patternId,
+                              postAcceptBehavior: issue.postAcceptBehavior,
+                              message: issue.message,
+                              replacementValue: issue.replacementValue,
+                            });
                             if (nextValue !== currentValue) {
                               setValue('sku', nextValue, {
                                 shouldDirty: true,
@@ -1074,6 +1412,15 @@ export default function ProductFormGeneral(): React.JSX.Element {
                           }
                           : undefined
                       }
+                      onDeny={() => {
+                        denyIssue({
+                          fieldName: 'sku',
+                          patternId: issue.patternId,
+                          message: issue.message,
+                          replacementValue: issue.replacementValue,
+                        });
+                      }}
+                      denyLabel={getDenyActionLabel(issue.patternId)}
                     />
                   ))}
               </>

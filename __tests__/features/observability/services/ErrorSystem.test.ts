@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
-import { logSystemEvent } from '@/features/observability/server';
+import { logSystemEvent } from '@/features/observability/lib/system-logger';
 import { ErrorSystem } from '@/features/observability/services/error-system';
 
-// Mock dependencies
-vi.mock('@/features/observability/server', () => ({
+// Mock dependencies — ErrorSystem imports from lib/system-logger, not server barrel
+vi.mock('@/features/observability/lib/system-logger', () => ({
   logSystemEvent: vi.fn().mockResolvedValue(undefined),
-  logSystemError: vi.fn().mockResolvedValue(undefined), getErrorFingerprint: vi.fn().mockResolvedValue('test-fingerprint'),
+  logSystemError: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('@/features/ai/agent-runtime/audit', () => ({

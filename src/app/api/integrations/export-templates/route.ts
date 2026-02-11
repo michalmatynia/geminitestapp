@@ -48,7 +48,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
 export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
-  { source: 'products.export-templates.GET', requireCsrf: false });
+  { source: 'products.export-templates.GET', requireCsrf: false, cacheControl: 'no-store' });
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
-  { source: 'products.export-templates.POST', requireCsrf: false });
+  { source: 'products.export-templates.POST', requireCsrf: false, cacheControl: 'no-store' });

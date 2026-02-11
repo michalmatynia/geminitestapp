@@ -137,6 +137,25 @@ export type Producer = Entity & {
 export type ProductValidationTarget = 'name' | 'description' | 'sku' | 'price' | 'stock';
 
 export type ProductValidationSeverity = 'error' | 'warning';
+export type ProductValidationDenyBehavior = 'ask_again' | 'mute_session';
+export type ProductValidationPatternDenyBehaviorOverride =
+  | ProductValidationDenyBehavior
+  | null;
+export type ProductValidationInstanceScope =
+  | 'draft_template'
+  | 'product_create'
+  | 'product_edit';
+export type ProductValidationInstanceDenyBehaviorMap = Record<
+  ProductValidationInstanceScope,
+  ProductValidationDenyBehavior
+>;
+export type ProductValidationPostAcceptBehavior =
+  | 'revalidate'
+  | 'stop_after_accept';
+export type ProductValidationRuntimeType =
+  | 'none'
+  | 'database_query'
+  | 'ai_prompt';
 export type ProductValidationChainMode = 'continue' | 'stop_on_match' | 'stop_on_replace';
 export type ProductValidationLaunchSourceMode =
   | 'current_field'
@@ -169,6 +188,13 @@ export type ProductValidationPattern = Entity & {
   replacementAutoApply: boolean;
   replacementValue: string | null;
   replacementFields: string[];
+  replacementAppliesToScopes?: ProductValidationInstanceScope[];
+  runtimeEnabled: boolean;
+  runtimeType: ProductValidationRuntimeType;
+  runtimeConfig: string | null;
+  postAcceptBehavior: ProductValidationPostAcceptBehavior;
+  denyBehaviorOverride: ProductValidationPatternDenyBehaviorOverride;
+  validationDebounceMs: number;
   sequenceGroupId: string | null;
   sequenceGroupLabel: string | null;
   sequenceGroupDebounceMs: number;
@@ -177,16 +203,24 @@ export type ProductValidationPattern = Entity & {
   maxExecutions: number;
   passOutputToNext: boolean;
   launchEnabled: boolean;
+  launchAppliesToScopes?: ProductValidationInstanceScope[];
   launchSourceMode: ProductValidationLaunchSourceMode;
   launchSourceField: string | null;
   launchOperator: ProductValidationLaunchOperator;
   launchValue: string | null;
   launchFlags: string | null;
+  appliesToScopes?: ProductValidationInstanceScope[];
 };
 
 export type ProductValidatorConfig = {
   enabledByDefault: boolean;
+  instanceDenyBehavior: ProductValidationInstanceDenyBehaviorMap;
   patterns: ProductValidationPattern[];
+};
+
+export type ProductValidatorSettings = {
+  enabledByDefault: boolean;
+  instanceDenyBehavior: ProductValidationInstanceDenyBehaviorMap;
 };
 
 export interface CreateProductDraftInput extends Partial<CreateProductDto> {

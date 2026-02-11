@@ -19,6 +19,12 @@ export class ApiError extends Error {
   }
 }
 
+const isAbortSignalInstance = (value: unknown): value is AbortSignal => {
+  if (!value || typeof value !== 'object') return false;
+  if (typeof AbortSignal === 'undefined') return false;
+  return value instanceof AbortSignal;
+};
+
 export async function apiClient<T>(
   endpoint: string,
   { params, logError = true, timeout = 15000, ...customConfig }: ApiClientOptions = {}
@@ -41,9 +47,6 @@ export async function apiClient<T>(
     }
   }
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeout);
-
   const config: RequestInit = {
     method: customConfig.method || (customConfig.body ? 'POST' : 'GET'),
     ...customConfig,
@@ -51,12 +54,25 @@ export async function apiClient<T>(
       ...headers,
       ...customConfig.headers,
     } as Record<string, string>),
-    signal: customConfig.signal || controller.signal,
   };
+  if (isAbortSignalInstance(customConfig.signal)) {
+    config.signal = customConfig.signal;
+  }
+
+  let timer: ReturnType<typeof setTimeout> | undefined;
 
   try {
-    const response = await fetch(url, config);
-    clearTimeout(timer);
+    const fetchPromise = fetch(url, config);
+    const response = timeout > 0
+      ? await Promise.race<Response>([
+        fetchPromise,
+        new Promise<Response>((_, reject) => {
+          timer = setTimeout(() => {
+            reject(new Error(`Request timeout after ${timeout}ms`));
+          }, timeout);
+        }),
+      ])
+      : await fetchPromise;
 
     if (response.status === 204) {
       return {} as T;
@@ -103,6 +119,10 @@ export async function apiClient<T>(
       logClientError(genericError, { context: { endpoint, method: config.method, params } });
     }
     throw genericError;
+  } finally {
+    if (timer) {
+      clearTimeout(timer);
+    }
   }
 }
 

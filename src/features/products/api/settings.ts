@@ -3,6 +3,7 @@ import { api } from '@/shared/lib/api-client';
 import type {
   ProductValidationPattern,
   ProductValidatorConfig,
+  ProductValidatorSettings,
 } from '@/shared/types/domain/products';
 
 import { 
@@ -146,29 +147,36 @@ export async function deleteParameter(id: string): Promise<void> {
   return api.delete(`/api/products/parameters/${id}`);
 }
 
-export async function getValidatorSettings(): Promise<{ enabledByDefault: boolean }> {
-  return api.get<{ enabledByDefault: boolean }>('/api/products/validator-settings');
+export async function getValidatorSettings(): Promise<ProductValidatorSettings> {
+  return api.get<ProductValidatorSettings>('/api/products/validator-settings');
 }
 
 export async function updateValidatorSettings(
-  data: { enabledByDefault: boolean }
-): Promise<{ enabledByDefault: boolean }> {
-  return api.put<{ enabledByDefault: boolean }>('/api/products/validator-settings', data);
+  data: Partial<ProductValidatorSettings>
+): Promise<ProductValidatorSettings> {
+  return api.put<ProductValidatorSettings>('/api/products/validator-settings', data);
 }
 
 export async function getValidationPatterns(): Promise<ProductValidationPattern[]> {
   return api.get<ProductValidationPattern[]>('/api/products/validator-patterns');
 }
 
+export type CreateValidationPatternPayload =
+  Pick<ProductValidationPattern, 'label' | 'target' | 'regex' | 'message'> &
+  Partial<Omit<ProductValidationPattern, 'id' | 'createdAt' | 'updatedAt' | 'label' | 'target' | 'regex' | 'message'>>;
+
 export async function createValidationPattern(
-  data: Omit<ProductValidationPattern, 'id' | 'createdAt' | 'updatedAt'>
+  data: CreateValidationPatternPayload
 ): Promise<ProductValidationPattern> {
   return api.post<ProductValidationPattern>('/api/products/validator-patterns', data);
 }
 
+export type UpdateValidationPatternPayload =
+  Partial<Omit<ProductValidationPattern, 'id' | 'createdAt' | 'updatedAt'>>;
+
 export async function updateValidationPattern(
   id: string,
-  data: Partial<Omit<ProductValidationPattern, 'id' | 'createdAt' | 'updatedAt'>>
+  data: UpdateValidationPatternPayload
 ): Promise<ProductValidationPattern> {
   return api.put<ProductValidationPattern>(`/api/products/validator-patterns/${id}`, data);
 }

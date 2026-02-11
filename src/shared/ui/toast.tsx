@@ -11,6 +11,7 @@ import {
 } from 'react';
 
 import { Button } from '@/shared/ui';
+import { classifyError, getSuggestedActions } from '@/features/observability/utils/error-classifier';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type ToastVariant = 'success' | 'error' | 'info' | 'warning';
@@ -20,6 +21,7 @@ type ToastItem = {
   message: string;
   variant: ToastVariant;
   duration: number;
+  error?: unknown;
 };
 
 type ToastSettings = {
@@ -164,7 +166,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }): Reac
     (message: string, options?: Partial<Omit<ToastItem, 'id' | 'message'>>): void => {
       const id = createToastId();
       const variant = options?.variant ?? 'success';
-      const duration = options?.duration ?? 2000;
+      const duration = options?.duration ?? (variant === 'error' ? 8000 : 2000);
+      const error = options?.error;
 
       setToasts((prev: ToastItem[]) => [
         ...prev,
@@ -173,11 +176,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }): Reac
           message,
           variant,
           duration,
+          error,
         },
       ]);
 
       if (variant === 'error') {
-        logClientError(new Error(message), {
+        logClientError(error || new Error(message), {
           context: { source: 'toast-notification' }
         });
       }
@@ -213,25 +217,41 @@ export function ToastProvider({ children }: { children: React.ReactNode }): Reac
             {toasts.map((item) => {
               const classes = getToastClasses(item.variant, settings.accent);
               const IconComponent = getToastIcon(item.variant);
+              const category = item.error ? classifyError(item.error) : null;
+              const actions = category ? getSuggestedActions(category, item.error) : [];
+
               return (
                 <div
                   key={item.id}
-                  className={`pointer-events-auto flex items-center gap-3 rounded-lg border px-4 py-3 text-sm shadow-lg backdrop-blur-sm transition-all animate-in fade-in slide-in-from-right-5 duration-300 ${classes.container}`}
+                  className={`pointer-events-auto flex flex-col gap-1 rounded-lg border px-4 py-3 shadow-lg backdrop-blur-sm transition-all animate-in fade-in slide-in-from-right-5 duration-300 ${classes.container} max-w-sm`}
                   role='alert'
                 >
-                  {IconComponent && (
-                    <IconComponent className={`size-4 flex-shrink-0 ${classes.icon}`} />
+                  <div className='flex items-center gap-3 text-sm'>
+                    {IconComponent && (
+                      <IconComponent className={`size-4 flex-shrink-0 ${classes.icon}`} />
+                    )}
+                    <div className='flex-1 font-medium'>{item.message}</div>
+                    <Button
+                      variant='ghost'
+                      size='icon'
+                      className='h-5 w-5 flex-shrink-0 p-0 hover:bg-transparent'
+                      onClick={() => removeToast(item.id)}
+                      aria-label='Dismiss notification'
+                    >
+                      <X className='size-4' />
+                    </Button>
+                  </div>
+                  {item.variant === 'error' && actions.length > 0 && (
+                    <div className='mt-1 pl-7'>
+                      <ul className='space-y-1 border-t border-red-500/20 pt-1'>
+                        {actions.slice(0, 1).map((action, idx) => (
+                          <li key={idx} className='text-xs opacity-90'>
+                            <span className='font-bold'>{action.label}:</span> {action.description}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   )}
-                  <div className='flex-1'>{item.message}</div>
-                  <Button
-                    variant='ghost'
-                    size='icon'
-                    className='h-5 w-5 flex-shrink-0 p-0 hover:bg-transparent'
-                    onClick={() => removeToast(item.id)}
-                    aria-label='Dismiss notification'
-                  >
-                    <X className='size-4' />
-                  </Button>
                 </div>
               );
             })}

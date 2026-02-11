@@ -1,14 +1,17 @@
 'use client';
 
-import { AlertCircle, RefreshCcw } from 'lucide-react';
+import { AlertCircle, RefreshCcw, Info } from 'lucide-react';
 import { ErrorBoundary, type FallbackProps } from 'react-error-boundary';
 
+import { classifyError, getSuggestedActions } from '@/features/observability/utils/error-classifier';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { getLastUserAction } from '@/shared/utils/observability/user-action-tracker';
 
 import { Button } from './button';
 
 function AppErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
+  const category = classifyError(error);
+  const actions = getSuggestedActions(category, error);
   const errorMessage =
     error instanceof Error ? error.message : 'An unexpected error occurred. Our team has been notified.';
 
@@ -20,9 +23,26 @@ function AppErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
       <h2 className='mb-2 text-2xl font-bold tracking-tight text-slate-900'>
         Something went wrong
       </h2>
-      <p className='mb-8 max-w-md text-slate-600'>
+      <p className='mb-6 max-w-md text-slate-600'>
         {errorMessage}
       </p>
+
+      {actions.length > 0 && (
+        <div className='mb-8 max-w-lg rounded-lg border border-slate-200 bg-slate-50 p-4 text-left'>
+          <div className='mb-2 flex items-center gap-2 font-semibold text-slate-800'>
+            <Info className='h-4 w-4' />
+            Suggested Actions
+          </div>
+          <ul className='space-y-3'>
+            {actions.map((action, idx) => (
+              <li key={idx} className='text-sm text-slate-600'>
+                <span className='font-medium text-slate-700'>{action.label}:</span> {action.description}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className='flex flex-col gap-3 sm:flex-row'>
         <Button
           onClick={resetErrorBoundary}

@@ -16,8 +16,11 @@ export const ErrorSystem = {
   captureException: async (error: unknown, context: ErrorContext = {}): Promise<void> => {
     try {
       const { logSystemEvent } = await import('@/features/observability/lib/system-logger');
+      const { classifyError } = await import('@/features/observability/utils/error-classifier');
+      
       const message = error instanceof Error ? error.message : String(error);
       const service = context.service || 'unknown';
+      const category = context.category || classifyError(error);
 
       // 1. Log to System Log (DB + Console)
       await logSystemEvent({
@@ -27,6 +30,7 @@ export const ErrorSystem = {
         error,
         context: {
           ...context,
+          category,
           jobId: context.jobId,
           runId: context.runId,
           productId: context.productId
@@ -132,16 +136,19 @@ export const ErrorSystem = {
    * Generate a structured error report for debugging or display.
    */
   generateErrorReport: (error: unknown, context: ErrorContext = {}): Record<string, unknown> => {
+    const { classifyError, getSuggestedActions } = require('../utils/error-classifier');
     const message = error instanceof Error ? error.message : String(error);
     const stack = error instanceof Error ? error.stack : undefined;
+    const category = context.category || classifyError(error);
     
     return {
       id: context.errorId || `err_${Date.now()}`,
       timestamp: new Date().toISOString(),
-      category: context.category || ErrorCategory.SYSTEM,
+      category,
       message,
       userMessage: context.userMessage || 'An unexpected error occurred. Please try again or contact support.',
       service: context.service || 'unknown',
+      suggestedActions: getSuggestedActions(category, error),
       context: {
         ...context,
         // Remove sensitive or redundant info

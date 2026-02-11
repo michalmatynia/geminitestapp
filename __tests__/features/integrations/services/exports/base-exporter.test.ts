@@ -42,7 +42,7 @@ const createProduct = (): ProductWithImages =>
   }) as ProductWithImages;
 
 describe('buildBaseProductData producer mapping', () => {
-  it('exports producer name when producer lookup is provided', async () => {
+  it('exports producer_id for producer alias mappings', async () => {
     const product = createProduct();
     const payload = await buildBaseProductData(
       product,
@@ -53,7 +53,7 @@ describe('buildBaseProductData producer mapping', () => {
       }
     );
 
-    expect(payload['producer']).toBe('Noe');
+    expect(payload['producer_id']).toBe('producer-local-1');
   });
 
   it('falls back to producer id when lookup is unavailable', async () => {
@@ -63,7 +63,7 @@ describe('buildBaseProductData producer mapping', () => {
       [{ sourceKey: 'producer', targetField: 'producerIds' }]
     );
 
-    expect(payload['producer']).toBe('producer-local-1');
+    expect(payload['producer_id']).toBe('producer-local-1');
   });
 
   it('normalizes producerids alias and exports producer list', async () => {
@@ -71,6 +71,20 @@ describe('buildBaseProductData producer mapping', () => {
     const payload = await buildBaseProductData(
       product,
       [{ sourceKey: 'producerids', targetField: 'producerIds' }],
+      null,
+      {
+        producerNameById: { 'producer-local-1': 'Noe' },
+      }
+    );
+
+    expect(payload['producer_ids']).toEqual(['producer-local-1']);
+  });
+
+  it('normalizes producers alias and exports producer_ids list', async () => {
+    const product = createProduct();
+    const payload = await buildBaseProductData(
+      product,
+      [{ sourceKey: 'producers', targetField: 'producerIds' }],
       null,
       {
         producerNameById: { 'producer-local-1': 'Noe' },

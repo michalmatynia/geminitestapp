@@ -7,7 +7,6 @@ import { logClientError } from '@/features/observability';
 import { useBulkDeleteProducts, useBulkConvertImagesToBase64 } from '@/features/products/hooks/useProductsMutations';
 import { ProductWithImages } from '@/features/products/types';
 import { Button, useToast, ConfirmDialog } from '@/shared/ui';
-import { logger } from '@/shared/utils/logger';
 
 interface ProductTableFooterProps<TData> {
   table: ReactTable<TData>;
@@ -30,7 +29,9 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
   const { mutateAsync: bulkBase64, isPending: isConverting } = useBulkConvertImagesToBase64();
 
   const handleMassDelete = async (): Promise<void> => {
-    logger.log('Mass delete initiated.');
+    if (process.env['NODE_ENV'] !== 'production') {
+      console.log('[product-table-footer] Mass delete initiated.');
+    }
     const selectedProductIds = table
       .getSelectedRowModel()
       .rows.map((row: Row<TData>) => (row.original as ProductWithImages)?.id)

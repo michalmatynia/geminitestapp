@@ -23,8 +23,9 @@ import {
   ImageStudioSingleSlotManager,
   type ImageStudioSingleSlotManagerHandle,
 } from './ImageStudioSingleSlotManager';
+import { ShapeListPanel } from './ShapeListPanel';
 import { SlotTree } from './SlotTree';
-import { useMaskingActions } from '../context/MaskingContext';
+import { useMaskingActions, useMaskingState } from '../context/MaskingContext';
 import { useProjectsState } from '../context/ProjectsContext';
 import { useSlotsState, useSlotsActions } from '../context/SlotsContext';
 import { useUiState } from '../context/UiContext';
@@ -34,6 +35,7 @@ export function LeftSidebar(): React.JSX.Element {
   const { projectId } = useProjectsState();
   const { isFocusMode } = useUiState();
   const settingsStore = useSettingsStore();
+  const { maskShapes } = useMaskingState();
   const { slots, selectedSlot, selectedFolder, workingSlot } = useSlotsState();
   const {
     setSlotCreateOpen,
@@ -209,6 +211,20 @@ export function LeftSidebar(): React.JSX.Element {
 
           <div className='h-1/2 min-h-[220px] overflow-hidden'>
             <SlotTree key={projectId} />
+          </div>
+
+          <div className='min-h-0 flex-1 overflow-hidden rounded border border-border/60 bg-card/40 p-2'>
+            <div className='mb-1 flex items-center justify-between text-[11px] text-gray-400'>
+              <span>Shape Layers</span>
+              <span>{maskShapes.length}</span>
+            </div>
+            <div className='h-full overflow-auto pr-1'>
+              {maskShapes.length > 0 ? (
+                <ShapeListPanel />
+              ) : (
+                <div className='px-2 py-2 text-xs text-gray-500'>No shapes drawn yet.</div>
+              )}
+            </div>
           </div>
         </div>
       </SectionPanel>

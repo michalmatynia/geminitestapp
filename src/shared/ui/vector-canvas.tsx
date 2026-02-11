@@ -182,10 +182,12 @@ export function VectorCanvas({
   maskPreviewFeather = 0,
   className,
 }: VectorCanvasProps): React.JSX.Element {
+  const SHAPE_VIEWBOX_SIZE = 1000;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const dragRef = useRef<{ shapeId: string; pointIndex: number } | null>(null);
+  const dragShapeRef = useRef<{ shapeId: string; lastPoint: VectorPoint } | null>(null);
   const drawingRef = useRef<{ shapeId: string; type: VectorShapeType } | null>(null);
 
   // --- Zoom & Pan ---
@@ -197,6 +199,7 @@ export function VectorCanvas({
   const panStartRef = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
   const spaceDownRef = useRef(false);
   const [isPanning, setIsPanning] = useState(false);
+  const [canvasRenderSize, setCanvasRenderSize] = useState<{ width: number; height: number }>({ width: 1, height: 1 });
   const panRafIdRef = useRef<number>(0);
   const pendingPanRef = useRef<{ panX: number; panY: number } | null>(null);
 
@@ -263,6 +266,18 @@ export function VectorCanvas({
   );
 
   const canDraw = allowWithoutImage || Boolean(src);
+
+  const getInteractionRect = useCallback((): DOMRect | null => {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    const canvasRect = canvas.getBoundingClientRect();
+    if (canvasRect.width >= 8 && canvasRect.height >= 8) {
+      return canvasRect;
+    }
+    const containerRect = containerRef.current?.getBoundingClientRect() ?? null;
+    if (!containerRect) return canvasRect;
+    return containerRect;
+  }, []);
 
   const draw = useCallback((): void => {
     const canvas = canvasRef.current;
@@ -459,59 +474,42 @@ export function VectorCanvas({
   const syncCanvasSize = useCallback((): void => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const cw = Math.max(1, Math.round(containerRect.width));
+    const ch = Math.max(1, Math.round(containerRect.height));
+
+    let width = cw;
+    let height = ch;
 
     if (src && imgRef.current) {
       const img = imgRef.current;
       const nw = img.naturalWidth;
       const nh = img.naturalHeight;
-      const container = containerRef.current;
-      if (!container || nw === 0 || nh === 0) {
-        // Image not loaded yet — fall back to container size when image bounds are unresolved.
-        const imageRect = img.getBoundingClientRect();
-        const containerRect = container?.getBoundingClientRect();
-        const unresolvedImageBounds = imageRect.width < 2 || imageRect.height < 2;
-        const rect = unresolvedImageBounds && containerRect ? containerRect : imageRect;
-        const width = Math.max(1, Math.round(rect.width));
-        const height = Math.max(1, Math.round(rect.height));
-        canvas.width = width;
-        canvas.height = height;
-        canvas.style.width = `${width}px`;
-        canvas.style.height = `${height}px`;
-        scheduleDraw();
-        return;
+      if (nw > 0 && nh > 0) {
+        const imageAspect = nw / nh;
+        const containerAspect = cw / ch;
+        if (imageAspect > containerAspect) {
+          width = cw;
+          height = Math.max(1, Math.round(cw / imageAspect));
+        } else {
+          height = ch;
+          width = Math.max(1, Math.round(ch * imageAspect));
+        }
       }
-      // Compute the fitted rect that object-contain produces
-      const containerRect = container.getBoundingClientRect();
-      const cw = containerRect.width;
-      const ch = containerRect.height;
-      const imageAspect = nw / nh;
-      const containerAspect = cw / ch;
-      let fitW: number;
-      let fitH: number;
-      if (imageAspect > containerAspect) {
-        fitW = cw;
-        fitH = cw / imageAspect;
-      } else {
-        fitH = ch;
-        fitW = ch * imageAspect;
-      }
-      const width = Math.max(1, Math.round(fitW));
-      const height = Math.max(1, Math.round(fitH));
-      canvas.width = width;
-      canvas.height = height;
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
-    } else {
-      const target = containerRef.current;
-      if (!target) return;
-      const rect = target.getBoundingClientRect();
-      const width = Math.max(1, Math.round(rect.width));
-      const height = Math.max(1, Math.round(rect.height));
-      canvas.width = width;
-      canvas.height = height;
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
     }
+
+    canvas.width = width;
+    canvas.height = height;
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    setCanvasRenderSize((prev) =>
+      prev.width === width && prev.height === height
+        ? prev
+        : { width, height }
+    );
     scheduleDraw();
   }, [scheduleDraw, src]);
 
@@ -674,21 +672,19 @@ export function VectorCanvas({
   }, []);
 
   const toPoint = useCallback((event: React.MouseEvent<HTMLCanvasElement>): VectorPoint | null => {
-    const canvas = canvasRef.current;
-    if (!canvas) return null;
-    const rect = canvas.getBoundingClientRect();
+    const rect = getInteractionRect();
+    if (!rect) return null;
     const x = (event.clientX - rect.left) / rect.width;
     const y = (event.clientY - rect.top) / rect.height;
     return {
       x: Math.min(1, Math.max(0, x)),
       y: Math.min(1, Math.max(0, y)),
     };
-  }, []);
+  }, [getInteractionRect]);
 
   const hitTestPoint = useCallback((event: React.MouseEvent<HTMLCanvasElement>): { shapeId: string; pointIndex: number } | null => {
-    const canvas = canvasRef.current;
-    if (!canvas) return null;
-    const rect = canvas.getBoundingClientRect();
+    const rect = getInteractionRect();
+    if (!rect) return null;
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
     const radius = 8;
@@ -705,14 +701,13 @@ export function VectorCanvas({
       }
     }
     return null;
-  }, [shapes]);
+  }, [getInteractionRect, shapes]);
 
   const hitTestSegment = useCallback((
     event: React.MouseEvent<HTMLCanvasElement>
   ): { shapeId: string; insertIndex: number; point: VectorPoint } | null => {
-    const canvas = canvasRef.current;
-    if (!canvas) return null;
-    const rect = canvas.getBoundingClientRect();
+    const rect = getInteractionRect();
+    if (!rect) return null;
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
     const maxDist = 8;
@@ -767,7 +762,113 @@ export function VectorCanvas({
       }
     }
     return null;
-  }, [shapes]);
+  }, [getInteractionRect, shapes]);
+
+  const hitTestShape = useCallback((event: React.MouseEvent<HTMLCanvasElement>): { shapeId: string } | null => {
+    const rect = getInteractionRect();
+    if (!rect) return null;
+
+    const px = event.clientX - rect.left;
+    const py = event.clientY - rect.top;
+    const strokeThreshold = 8;
+
+    const pointToSegment = (ax: number, ay: number, bx: number, by: number): number => {
+      const abx = bx - ax;
+      const aby = by - ay;
+      const apx = px - ax;
+      const apy = py - ay;
+      const abLenSq = (abx * abx) + (aby * aby);
+      if (abLenSq === 0) return Math.hypot(px - ax, py - ay);
+      const t = Math.max(0, Math.min(1, ((apx * abx) + (apy * aby)) / abLenSq));
+      const nx = ax + (abx * t);
+      const ny = ay + (aby * t);
+      return Math.hypot(px - nx, py - ny);
+    };
+
+    const pointInPolygon = (points: VectorPoint[]): boolean => {
+      if (points.length < 3) return false;
+      let inside = false;
+      for (let i = 0, j = points.length - 1; i < points.length; j = i, i += 1) {
+        const pi = points[i]!;
+        const pj = points[j]!;
+        const xi = pi.x * rect.width;
+        const yi = pi.y * rect.height;
+        const xj = pj.x * rect.width;
+        const yj = pj.y * rect.height;
+        const intersects =
+          ((yi > py) !== (yj > py)) &&
+          (px < (((xj - xi) * (py - yi)) / ((yj - yi) || 1e-6)) + xi);
+        if (intersects) inside = !inside;
+      }
+      return inside;
+    };
+
+    for (let idx = shapes.length - 1; idx >= 0; idx -= 1) {
+      const shape = shapes[idx]!;
+      if (!shape.visible || shape.points.length === 0) continue;
+
+      if (shape.type === 'rect' && shape.points.length >= 2) {
+        const a = shape.points[0]!;
+        const b = shape.points[1]!;
+        const left = Math.min(a.x, b.x) * rect.width;
+        const right = Math.max(a.x, b.x) * rect.width;
+        const top = Math.min(a.y, b.y) * rect.height;
+        const bottom = Math.max(a.y, b.y) * rect.height;
+        const inRect = px >= left && px <= right && py >= top && py <= bottom;
+        if (!inRect) continue;
+        return { shapeId: shape.id };
+      }
+
+      if (shape.type === 'ellipse' && shape.points.length >= 2) {
+        const a = shape.points[0]!;
+        const b = shape.points[1]!;
+        const cx = ((a.x + b.x) / 2) * rect.width;
+        const cy = ((a.y + b.y) / 2) * rect.height;
+        const rx = Math.max(1e-6, (Math.abs(a.x - b.x) / 2) * rect.width);
+        const ry = Math.max(1e-6, (Math.abs(a.y - b.y) / 2) * rect.height);
+        const ellipseEq = (((px - cx) * (px - cx)) / (rx * rx)) + (((py - cy) * (py - cy)) / (ry * ry));
+        if (ellipseEq <= 1.03) return { shapeId: shape.id };
+        continue;
+      }
+
+      const points = shape.points;
+      if (points.length < 2) continue;
+
+      let onStroke = false;
+      for (let pointIndex = 0; pointIndex < points.length - 1; pointIndex += 1) {
+        const a = points[pointIndex]!;
+        const b = points[pointIndex + 1]!;
+        const dist = pointToSegment(
+          a.x * rect.width,
+          a.y * rect.height,
+          b.x * rect.width,
+          b.y * rect.height
+        );
+        if (dist <= strokeThreshold) {
+          onStroke = true;
+          break;
+        }
+      }
+
+      if (!onStroke && shape.closed && points.length >= 3) {
+        const a = points[points.length - 1]!;
+        const b = points[0]!;
+        const dist = pointToSegment(
+          a.x * rect.width,
+          a.y * rect.height,
+          b.x * rect.width,
+          b.y * rect.height
+        );
+        if (dist <= strokeThreshold) onStroke = true;
+      }
+
+      if (onStroke || (shape.closed && pointInPolygon(points))) {
+        return { shapeId: shape.id };
+      }
+    }
+
+    return null;
+  }, [getInteractionRect, shapes]);
 
   const handleMouseDown = useCallback(
     (event: React.MouseEvent<HTMLCanvasElement>): void => {
@@ -803,8 +904,21 @@ export function VectorCanvas({
         const hit = hitTestPoint(event);
         if (hit) {
           dragRef.current = hit;
+          dragShapeRef.current = null;
           onSelectShape(hit.shapeId);
           onSelectPoint?.(hit.pointIndex);
+          return;
+        }
+        const hitShape = hitTestShape(event);
+        if (hitShape) {
+          const startPoint = toPoint(event);
+          onSelectShape(hitShape.shapeId);
+          onSelectPoint?.(null);
+          if (startPoint && event.button === 0) {
+            dragShapeRef.current = { shapeId: hitShape.shapeId, lastPoint: startPoint };
+          } else {
+            dragShapeRef.current = null;
+          }
           return;
         }
         // Select mode acts like hand tool on empty area
@@ -888,7 +1002,7 @@ export function VectorCanvas({
         onChange([...shapes, newShape]);
       }
     },
-    [activeShapeId, beginPan, canDraw, hitTestPoint, hitTestSegment, onChange, onSelectPoint, onSelectShape, shapes, syncCanvasSize, toPoint, tool]
+    [activeShapeId, beginPan, canDraw, hitTestPoint, hitTestSegment, hitTestShape, onChange, onSelectPoint, onSelectShape, shapes, syncCanvasSize, toPoint, tool]
   );
 
   useEffect(() => {
@@ -930,6 +1044,55 @@ export function VectorCanvas({
             return { ...shape, points: nextPoints };
           })
         );
+        return;
+      }
+      if (dragShapeRef.current) {
+        const nextPoint = toPoint(event);
+        if (!nextPoint) return;
+
+        const { shapeId, lastPoint } = dragShapeRef.current;
+        const rawDx = nextPoint.x - lastPoint.x;
+        const rawDy = nextPoint.y - lastPoint.y;
+        if (Math.abs(rawDx) < 1e-6 && Math.abs(rawDy) < 1e-6) return;
+
+        const targetShape = shapes.find((shape: VectorShape) => shape.id === shapeId) ?? null;
+        if (!targetShape || targetShape.points.length === 0) {
+          dragShapeRef.current = null;
+          return;
+        }
+
+        const xs = targetShape.points.map((point: VectorPoint) => point.x);
+        const ys = targetShape.points.map((point: VectorPoint) => point.y);
+        const minX = Math.min(...xs);
+        const maxX = Math.max(...xs);
+        const minY = Math.min(...ys);
+        const maxY = Math.max(...ys);
+
+        const dx = Math.min(1 - maxX, Math.max(-minX, rawDx));
+        const dy = Math.min(1 - maxY, Math.max(-minY, rawDy));
+
+        if (Math.abs(dx) < 1e-6 && Math.abs(dy) < 1e-6) return;
+
+        onChange(
+          shapes.map((shape: VectorShape) => {
+            if (shape.id !== shapeId) return shape;
+            return {
+              ...shape,
+              points: shape.points.map((point: VectorPoint) => ({
+                x: point.x + dx,
+                y: point.y + dy,
+              })),
+            };
+          })
+        );
+
+        dragShapeRef.current = {
+          shapeId,
+          lastPoint: {
+            x: lastPoint.x + dx,
+            y: lastPoint.y + dy,
+          },
+        };
         return;
       }
       if (drawingRef.current) {
@@ -978,6 +1141,7 @@ export function VectorCanvas({
       );
     }
     dragRef.current = null;
+    dragShapeRef.current = null;
     drawingRef.current = null;
   }, [isPanning, onChange, shapes, stopPan]);
 
@@ -1030,6 +1194,68 @@ export function VectorCanvas({
               onDoubleClick={handleDoubleClick}
               onContextMenu={(event) => event.preventDefault()}
             />
+            <svg
+              className='pointer-events-none absolute left-1/2 top-0 z-[21] -translate-x-1/2'
+              style={{ width: `${canvasRenderSize.width}px`, height: `${canvasRenderSize.height}px` }}
+              viewBox={`0 0 ${SHAPE_VIEWBOX_SIZE} ${SHAPE_VIEWBOX_SIZE}`}
+              preserveAspectRatio='none'
+              aria-hidden='true'
+            >
+              {shapes.filter((shape) => shape.visible).map((shape: VectorShape) => {
+                const path = vectorShapeToPath(shape, SHAPE_VIEWBOX_SIZE);
+                if (!path) return null;
+                const isActive = shape.id === activeShapeId;
+                const isMaskEligible =
+                  (shape.type === 'polygon' || shape.type === 'lasso') &&
+                  shape.closed &&
+                  shape.points.length >= 3;
+                const isNonMaskType = shape.type === 'rect' || shape.type === 'ellipse' || shape.type === 'brush';
+                const stroke = isMaskEligible
+                  ? (isActive ? 'rgba(16,185,129,0.95)' : 'rgba(56,189,248,0.95)')
+                  : isNonMaskType
+                    ? (isActive ? 'rgba(251,146,60,0.95)' : 'rgba(251,146,60,0.75)')
+                    : (isActive ? 'rgba(34,211,238,0.98)' : 'rgba(56,189,248,0.9)');
+                const fill = shape.closed && shape.points.length >= 3
+                  ? (isMaskEligible ? 'rgba(56,189,248,0.14)' : 'rgba(251,146,60,0.08)')
+                  : 'transparent';
+                const dash = isMaskEligible ? undefined : (isNonMaskType ? '6 4' : '8 4');
+                return (
+                  <g key={shape.id}>
+                    <path
+                      d={path}
+                      fill={fill}
+                      stroke={stroke}
+                      strokeWidth={isActive ? 2.5 : 2}
+                      strokeDasharray={dash}
+                      vectorEffect='non-scaling-stroke'
+                    />
+                    {(shape.type === 'polygon' || shape.type === 'lasso' || shape.type === 'brush')
+                      ? shape.points.map((point: VectorPoint, index: number) => {
+                        const cx = point.x * SHAPE_VIEWBOX_SIZE;
+                        const cy = point.y * SHAPE_VIEWBOX_SIZE;
+                        const selected = isActive && index === (selectedPointIndex ?? -1);
+                        return (
+                          <g key={`${shape.id}-${index.toString(36)}`}>
+                            <circle cx={cx} cy={cy} r={index === 0 ? 7.5 : 6.5} fill='rgba(2,6,23,0.55)' />
+                            <circle
+                              cx={cx}
+                              cy={cy}
+                              r={index === 0 ? 5.5 : 4.5}
+                              fill={selected
+                                ? 'rgba(251,191,36,0.98)'
+                                : (index === 0 ? 'rgba(16,185,129,0.98)' : 'rgba(56,189,248,0.98)')}
+                              stroke='rgba(255,255,255,0.9)'
+                              strokeWidth={1.5}
+                              vectorEffect='non-scaling-stroke'
+                            />
+                          </g>
+                        );
+                      })
+                      : null}
+                  </g>
+                );
+              })}
+            </svg>
           </div>
           {viewTransform.scale !== 1 && (
             <div className='absolute bottom-2 right-2 z-10 rounded bg-black/60 px-2 py-0.5 text-xs font-medium text-white/90 pointer-events-none'>
@@ -1070,6 +1296,43 @@ export function VectorCanvas({
                 onDoubleClick={handleDoubleClick}
                 onContextMenu={(event) => event.preventDefault()}
               />
+              <svg
+                className='pointer-events-none absolute inset-0 z-[21]'
+                viewBox={`0 0 ${SHAPE_VIEWBOX_SIZE} ${SHAPE_VIEWBOX_SIZE}`}
+                preserveAspectRatio='none'
+                aria-hidden='true'
+              >
+                {shapes.filter((shape) => shape.visible).map((shape: VectorShape) => {
+                  const path = vectorShapeToPath(shape, SHAPE_VIEWBOX_SIZE);
+                  if (!path) return null;
+                  const isActive = shape.id === activeShapeId;
+                  const isMaskEligible =
+                    (shape.type === 'polygon' || shape.type === 'lasso') &&
+                    shape.closed &&
+                    shape.points.length >= 3;
+                  const isNonMaskType = shape.type === 'rect' || shape.type === 'ellipse' || shape.type === 'brush';
+                  const stroke = isMaskEligible
+                    ? (isActive ? 'rgba(16,185,129,0.95)' : 'rgba(56,189,248,0.95)')
+                    : isNonMaskType
+                      ? (isActive ? 'rgba(251,146,60,0.95)' : 'rgba(251,146,60,0.75)')
+                      : (isActive ? 'rgba(34,211,238,0.98)' : 'rgba(56,189,248,0.9)');
+                  const fill = shape.closed && shape.points.length >= 3
+                    ? (isMaskEligible ? 'rgba(56,189,248,0.14)' : 'rgba(251,146,60,0.08)')
+                    : 'transparent';
+                  const dash = isMaskEligible ? undefined : (isNonMaskType ? '6 4' : '8 4');
+                  return (
+                    <path
+                      key={shape.id}
+                      d={path}
+                      fill={fill}
+                      stroke={stroke}
+                      strokeWidth={isActive ? 2.5 : 2}
+                      strokeDasharray={dash}
+                      vectorEffect='non-scaling-stroke'
+                    />
+                  );
+                })}
+              </svg>
             </div>
           ) : null}
           {showEmptyState && !allowWithoutImage ? (

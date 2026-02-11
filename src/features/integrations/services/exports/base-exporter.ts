@@ -289,8 +289,12 @@ const IMAGE_EXPORT_ALIASES = new Set([
 
 const PRODUCER_TARGET_FIELDS = new Set([
   'producer',
+  'producers',
   'producer_id',
   'producer_ids',
+  'producer_name',
+  'producer_names',
+  'producernames',
   'manufacturer',
   'manufacturer_id',
   'manufacturer_ids',
@@ -361,6 +365,15 @@ const normalizeExportTargetField = (targetField: string): string => {
     return 'producer_id';
   }
   if (normalized === 'producerids') {
+    return 'producer_ids';
+  }
+  if (
+    normalized === 'producers' ||
+    normalized === 'producernames' ||
+    normalized === 'producer_names' ||
+    normalized === 'producername' ||
+    normalized === 'producer_name'
+  ) {
     return 'producer_ids';
   }
   if (
@@ -547,6 +560,11 @@ const normalizeProducerTargetField = (targetField: string): string | null => {
     return 'producer_id';
   }
   if (
+    normalized === 'producers' ||
+    normalized === 'producernames' ||
+    normalized === 'producer_names' ||
+    normalized === 'producername' ||
+    normalized === 'producer_name' ||
     normalized === 'producerids' ||
     normalized === 'producer_ids' ||
     normalized === 'manufacturerids' ||
@@ -1350,6 +1368,8 @@ const getProductValue = (
     normalized === 'producer_id' ||
     normalized === 'producers' ||
     normalized === 'producer' ||
+    normalized === 'producername' ||
+    normalized === 'producer_name' ||
     normalized === 'producernames' ||
     normalized === 'producer_names'
   ) {
@@ -1374,7 +1394,11 @@ const getProductValue = (
     ) {
       return producerNames.length > 0 ? producerNames : producerIds;
     }
-    if (normalized === 'producer') {
+    if (
+      normalized === 'producer' ||
+      normalized === 'producername' ||
+      normalized === 'producer_name'
+    ) {
       return producerNames[0] ?? producerIds[0] ?? null;
     }
     return null;
@@ -1525,6 +1549,14 @@ function applyExportTemplateMappings(
     const producerTarget = normalizeProducerTargetField(targetField);
     if (producerTarget) {
       const normalizedTargetField = targetField.trim().toLowerCase();
+      const normalizedOutputField =
+        normalizedTargetField === 'producers' ||
+        normalizedTargetField === 'producernames' ||
+        normalizedTargetField === 'producer_names' ||
+        normalizedTargetField === 'producername' ||
+        normalizedTargetField === 'producer_name'
+          ? 'producer_ids'
+          : targetField;
       const producerValues =
         producerTarget === 'producer'
           ? toProducerNameValueList(rawValue, producerNameById)
@@ -1536,7 +1568,7 @@ function applyExportTemplateMappings(
       if (producerValues.length === 0) continue;
       if (producerTarget === 'producer' || producerTarget === 'producer_id') {
         const producerValue = producerValues[0] ?? null;
-        result[targetField] = producerValue;
+        result[normalizedOutputField] = producerValue;
         if (
           (normalizedTargetField === 'producer' ||
             normalizedTargetField === 'producer_id') &&
@@ -1552,7 +1584,7 @@ function applyExportTemplateMappings(
           result['producer_id'] = producerValue;
         }
       } else {
-        result[targetField] = producerValues;
+        result[normalizedOutputField] = producerValues;
         if (
           normalizedTargetField === 'producer_ids' &&
           result['manufacturer_ids'] === undefined

@@ -639,6 +639,9 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     const name = isImport ? importTemplateName : exportTemplateName;
     const desc = isImport ? importTemplateDescription : exportTemplateDescription;
     const mappings = isImport ? importTemplateMappings : exportTemplateMappings;
+    const activeTemplateId = (
+      isImport ? importActiveTemplateId : exportActiveTemplateId
+    ).trim();
     
     if (!name.trim()) {
       toast('Template name is required.', { variant: 'error' });
@@ -649,7 +652,9 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
       .map((m: TemplateMapping) => ({ sourceKey: m.sourceKey.trim(), targetField: m.targetField.trim() }))
       .filter((m: TemplateMapping) => m.sourceKey && m.targetField);
 
-    const mutation = isImport ? saveImportTemplateMutation : saveExportTemplateMutation;
+    const mutation = isImport
+      ? (activeTemplateId ? saveImportTemplateMutation : createImportTemplateMutation)
+      : (activeTemplateId ? saveExportTemplateMutation : createExportTemplateMutation);
 
     try {
       const res = (await mutation.mutateAsync({

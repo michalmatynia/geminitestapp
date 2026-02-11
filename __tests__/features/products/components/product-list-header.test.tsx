@@ -2,7 +2,8 @@ import React from 'react';
 import { vi } from 'vitest';
 
 import { ProductListHeader } from '@/features/products/components/list/ProductListHeader';
-import { ProductListContext } from '@/features/products/context/ProductListContext';
+import { ProductListProvider } from '@/features/products/context/ProductListContext';
+import type { ProductListContextType } from '@/features/products/context/ProductListContext';
 
 import { render, screen, fireEvent } from '../../../test-utils';
 
@@ -17,7 +18,7 @@ vi.mock('@/shared/ui', async (importOriginal) => {
 });
 
 describe('ProductListHeader Component', () => {
-  const mockContextValue = {
+  const mockContextValue: ProductListContextType = {
     onCreateProduct: vi.fn(),
     onCreateFromDraft: vi.fn(),
     activeDrafts: [],
@@ -60,13 +61,76 @@ describe('ProductListHeader Component', () => {
         priceGroupIds: ['pg-1'],
       },
     ],
+    // Stubs for fields not tested by this component
+    search: '',
+    setSearch: vi.fn(),
+    sku: '',
+    setSku: vi.fn(),
+    minPrice: undefined,
+    setMinPrice: vi.fn(),
+    maxPrice: undefined,
+    setMaxPrice: vi.fn(),
+    startDate: '',
+    setStartDate: vi.fn(),
+    endDate: '',
+    setEndDate: vi.fn(),
+    data: [],
+    isLoading: false,
+    loadError: null,
+    actionError: null,
+    onDismissActionError: vi.fn(),
+    setRefreshTrigger: vi.fn(),
+    rowSelection: {},
+    setRowSelection: vi.fn(),
+    onSelectAllGlobal: vi.fn(),
+    loadingGlobal: false,
+    onDeleteSelected: vi.fn(),
+    onAddToMarketplace: vi.fn(),
+    handleProductsTableRender: vi.fn(),
+    tableColumns: [],
+    getRowId: (row) => row.id,
+    skeletonRows: null,
+    productNameKey: 'name_en',
+    priceGroups: [],
+    onProductNameClick: vi.fn(),
+    onProductEditClick: vi.fn(),
+    onProductDeleteClick: vi.fn(),
+    onIntegrationsClick: vi.fn(),
+    onExportSettingsClick: vi.fn(),
+    integrationBadgeIds: new Set(),
+    integrationBadgeStatuses: new Map(),
+    queuedProductIds: new Set(),
+    isCreateOpen: false,
+    initialSku: '',
+    createDraft: null,
+    initialCatalogId: null,
+    onCloseCreate: vi.fn(),
+    onCreateSuccess: vi.fn(),
+    editingProduct: null,
+    onCloseEdit: vi.fn(),
+    onEditSuccess: vi.fn(),
+    onEditSave: vi.fn(),
+    integrationsProduct: null,
+    onCloseIntegrations: vi.fn(),
+    onStartListing: vi.fn(),
+    showListProductModal: false,
+    onCloseListProduct: vi.fn(),
+    onListProductSuccess: vi.fn(),
+    listProductPreset: null,
+    exportSettingsProduct: null,
+    onCloseExportSettings: vi.fn(),
+    onListingsUpdated: vi.fn(),
+    massListIntegration: null,
+    massListProductIds: [],
+    onCloseMassList: vi.fn(),
+    onMassListSuccess: vi.fn(),
   };
 
   const renderWithContext = (ui: React.ReactNode, contextValue = mockContextValue) => {
     return render(
-      <ProductListContext.Provider value={contextValue as any}>
+      <ProductListProvider value={contextValue}>
         {ui}
-      </ProductListContext.Provider>
+      </ProductListProvider>
     );
   };
 

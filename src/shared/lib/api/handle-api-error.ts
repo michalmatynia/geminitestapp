@@ -110,6 +110,7 @@ export const createErrorResponse = async (
     context: {
       errorId: resolved.errorId,
       code: resolved.code,
+      category: resolved.category,
       critical: resolved.critical,
       retryable: resolved.retryable,
       ...(resolved.retryAfterMs ? { retryAfterMs: resolved.retryAfterMs } : {}),
@@ -122,6 +123,8 @@ export const createErrorResponse = async (
     error: resolved.message,
     code: resolved.code,
     errorId: resolved.errorId,
+    category: resolved.category,
+    suggestedActions: resolved.suggestedActions,
     fingerprint,
   };
 

@@ -34,6 +34,7 @@ export async function reportValidationError(
       keepalive: true,
     });
   } catch (err) {
-    console.error('[ValidationReporter] Failed to report client validation error:', err);
+    const { logger } = await import('@/shared/utils/logger');
+    logger.error('[ValidationReporter] Failed to report client validation error', err);
   }
 }

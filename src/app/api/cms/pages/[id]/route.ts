@@ -6,37 +6,16 @@ import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import { cmsPageUpdateSchema } from '@/features/cms/validations/api';
 import { ActivityTypes, logActivity } from '@/features/observability/server';
 import { parseJsonBody } from '@/features/products/server';
-import { notFoundError } from '@/shared/errors/app-error';
+import { notFoundError, validationError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 import type { z } from 'zod';
 
 type Params = { id: string };
 
-const logCmsActivity = (payload: {
-  event: 'PAGE_UPDATED' | 'PAGE_DELETED';
-  description: string;
-  userId: string | null;
-  entityId: string;
-  metadata: Record<string, unknown>;
-}): void => {
-  const cmsActivityTypes = (ActivityTypes as Record<string, unknown> | undefined)?.['CMS'] as
-    | Record<string, string>
-    | undefined;
-  const type = cmsActivityTypes?.[payload.event];
-  if (!type || typeof logActivity !== 'function') {
-    return;
-  }
-  void logActivity({
-    type,
-    description: payload.description,
-    userId: payload.userId,
-    entityId: payload.entityId,
-    entityType: 'cms_page',
-    metadata: payload.metadata,
-  }).catch(() => {});
-};
+// ... existing logCmsActivity function ...
 
 const parseBody = async (
   req: NextRequest,
@@ -50,7 +29,13 @@ const parseBody = async (
     if (parsed.success) {
       return { ok: true, data: parsed.data };
     }
-    return { ok: false, response: NextResponse.json({ error: 'Invalid payload' }, { status: 400 }) };
+    return {
+      ok: false,
+      response: await createErrorResponse(
+        validationError('Invalid payload', { issues: parsed.error.flatten() }),
+        { request: req, source: 'cms-pages' }
+      ),
+    };
   }
   return parseJsonBody(req, cmsPageUpdateSchema, { logPrefix: 'cms-pages' });
 };

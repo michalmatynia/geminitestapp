@@ -468,6 +468,7 @@ async function createErrorResponseWithTiming(
     context: {
       errorId: resolved.errorId,
       code: resolved.code,
+      category: resolved.category,
       durationMs,
       ...(resolved.meta ? { meta: resolved.meta } : {}),
     },
@@ -478,6 +479,8 @@ async function createErrorResponseWithTiming(
     error: resolved.message,
     code: resolved.code,
     errorId: resolved.errorId,
+    category: resolved.category,
+    suggestedActions: resolved.suggestedActions,
   };
 
   const fingerprint = await getErrorFingerprint({

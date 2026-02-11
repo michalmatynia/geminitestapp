@@ -17,7 +17,6 @@ const { mockCollection, mockInsertOne, mockFindOne } = vi.hoisted(() => {
 
 // Mock server modules
 vi.mock('@/features/auth/server', () => ({
-  getAuthDataProvider: vi.fn().mockResolvedValue('mongodb'),
   getAuthUserPageSettings: vi.fn().mockResolvedValue({
     allowSignup: true,
     requireEmailVerification: false,
@@ -36,6 +35,20 @@ vi.mock('@/features/auth/server', () => ({
   createLoginChallenge: vi.fn(),
 }));
 
+// Route imports getAuthDataProvider from auth-provider, not auth/server
+vi.mock('@/features/auth/services/auth-provider', () => ({
+  getAuthDataProvider: vi.fn().mockResolvedValue('mongodb'),
+  requireAuthProvider: (provider: string) => {
+    if (provider === 'prisma' && !process.env['DATABASE_URL']) {
+      throw new Error('DATABASE_URL is not configured.');
+    }
+    if (provider === 'mongodb' && !process.env['MONGODB_URI']) {
+      throw new Error('MONGODB_URI is not configured.');
+    }
+    return provider;
+  },
+}));
+
 vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: vi.fn().mockResolvedValue({
     collection: mockCollection,
@@ -45,6 +58,16 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
 // Mock bcryptjs
 vi.mock('bcryptjs', () => ({
   hash: vi.fn().mockResolvedValue('hashed_password'),
+}));
+
+vi.mock('@/features/auth/utils/auth-request-logger', () => ({
+  logAuthEvent: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('@/features/observability/server', () => ({
+  ActivityTypes: { AUTH: { REGISTERED: 'auth.registered' } },
+  logActivity: vi.fn().mockResolvedValue(undefined),
+  logSystemEvent: vi.fn().mockResolvedValue(undefined),
 }));
 
 describe('Auth Register API', () => {

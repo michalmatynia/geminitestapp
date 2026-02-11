@@ -5,6 +5,12 @@ import { z } from 'zod';
 
 import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/features/products/constants';
 import { getValidationPatternRepository } from '@/features/products/server';
+import {
+  normalizeProductValidationPatternDenyBehaviorOverride,
+  normalizeProductValidationPatternLaunchScopes,
+  normalizeProductValidationPatternReplacementScopes,
+  normalizeProductValidationPatternScopes,
+} from '@/features/products/utils/validator-instance-behavior';
 import { parseDynamicReplacementRecipe } from '@/features/products/utils/validator-replacement-recipe';
 import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
@@ -25,6 +31,15 @@ const createPatternSchema = z.object({
   replacementAutoApply: z.boolean().optional(),
   replacementValue: z.string().trim().nullable().optional(),
   replacementFields: z.array(replacementFieldSchema).optional(),
+  replacementAppliesToScopes: z
+    .array(z.enum(['draft_template', 'product_create', 'product_edit']))
+    .optional(),
+  runtimeEnabled: z.boolean().optional(),
+  runtimeType: z.enum(['none', 'database_query', 'ai_prompt']).optional(),
+  runtimeConfig: z.string().trim().nullable().optional(),
+  postAcceptBehavior: z.enum(['revalidate', 'stop_after_accept']).optional(),
+  denyBehaviorOverride: z.enum(['ask_again', 'mute_session']).nullable().optional(),
+  validationDebounceMs: z.number().int().min(0).max(30000).optional(),
   sequenceGroupId: z.string().trim().nullable().optional(),
   sequenceGroupLabel: z.string().trim().nullable().optional(),
   sequenceGroupDebounceMs: z.number().int().min(0).max(30000).optional(),
@@ -33,6 +48,9 @@ const createPatternSchema = z.object({
   maxExecutions: z.number().int().min(1).max(20).optional(),
   passOutputToNext: z.boolean().optional(),
   launchEnabled: z.boolean().optional(),
+  launchAppliesToScopes: z
+    .array(z.enum(['draft_template', 'product_create', 'product_edit']))
+    .optional(),
   launchSourceMode: z.enum(['current_field', 'form_field', 'latest_product_field']).optional(),
   launchSourceField: z.string().trim().nullable().optional(),
   launchOperator: z
@@ -53,6 +71,9 @@ const createPatternSchema = z.object({
     .optional(),
   launchValue: z.string().nullable().optional(),
   launchFlags: z.string().trim().nullable().optional(),
+  appliesToScopes: z
+    .array(z.enum(['draft_template', 'product_create', 'product_edit']))
+    .optional(),
 });
 
 const assertValidRegex = (regexSource: string, flags: string | null | undefined): void => {
@@ -106,6 +127,40 @@ const assertValidLaunchConfig = ({
   assertValidRegex(launchValue, launchFlags);
 };
 
+const parseRuntimeConfigObject = (
+  runtimeConfig: string | null
+): Record<string, unknown> | null => {
+  if (!runtimeConfig) return null;
+  try {
+    const parsed = JSON.parse(runtimeConfig) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error('Runtime config must be a JSON object.');
+    }
+    return parsed as Record<string, unknown>;
+  } catch (error) {
+    throw badRequestError('Invalid runtimeConfig JSON.', {
+      runtimeConfig,
+      detail: error instanceof Error ? error.message : String(error),
+    });
+  }
+};
+
+const assertValidRuntimeConfig = ({
+  runtimeEnabled,
+  runtimeType,
+  runtimeConfig,
+}: {
+  runtimeEnabled: boolean;
+  runtimeType: z.infer<typeof createPatternSchema>['runtimeType'];
+  runtimeConfig: string | null;
+}): void => {
+  if (!runtimeEnabled || runtimeType === 'none') return;
+  if (!runtimeConfig) {
+    throw badRequestError('runtimeConfig is required when runtime is enabled.');
+  }
+  void parseRuntimeConfigObject(runtimeConfig);
+};
+
 const normalizeReplacementFields = (fields: string[] | undefined): string[] => {
   if (!Array.isArray(fields) || fields.length === 0) return [];
   return [...new Set(fields)];
@@ -128,15 +183,32 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
   const replacementAutoApply = body.replacementAutoApply ?? false;
   const replacementValue = body.replacementValue?.trim() || null;
   const replacementFields = normalizeReplacementFields(body.replacementFields);
+  const replacementAppliesToScopes = normalizeProductValidationPatternReplacementScopes(
+    body.replacementAppliesToScopes,
+    body.appliesToScopes
+  );
+  const runtimeEnabled = body.runtimeEnabled ?? false;
+  const runtimeType = body.runtimeType ?? 'none';
+  const runtimeConfig = body.runtimeConfig?.trim() || null;
+  const postAcceptBehavior = body.postAcceptBehavior ?? 'revalidate';
+  const denyBehaviorOverride = normalizeProductValidationPatternDenyBehaviorOverride(
+    body.denyBehaviorOverride
+  );
+  const validationDebounceMs = body.validationDebounceMs ?? 0;
   const sequenceGroupId = body.sequenceGroupId?.trim() || null;
   const sequenceGroupLabel = body.sequenceGroupLabel?.trim() || null;
   const sequenceGroupDebounceMs = body.sequenceGroupDebounceMs ?? 0;
   const launchEnabled = body.launchEnabled ?? false;
+  const launchAppliesToScopes = normalizeProductValidationPatternLaunchScopes(
+    body.launchAppliesToScopes,
+    body.appliesToScopes
+  );
   const launchSourceMode = body.launchSourceMode ?? 'current_field';
   const launchSourceField = body.launchSourceField?.trim() || null;
   const launchOperator = body.launchOperator ?? 'equals';
   const launchValue = typeof body.launchValue === 'string' ? body.launchValue : null;
   const launchFlags = body.launchFlags?.trim() || null;
+  const appliesToScopes = normalizeProductValidationPatternScopes(body.appliesToScopes);
   if (replacementEnabled && !replacementValue) {
     throw badRequestError('replacementValue is required when replacementEnabled is true');
   }
@@ -151,6 +223,11 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
     launchOperator,
     launchValue,
     launchFlags,
+  });
+  assertValidRuntimeConfig({
+    runtimeEnabled,
+    runtimeType,
+    runtimeConfig,
   });
 
   const repository = await getValidationPatternRepository();
@@ -167,6 +244,13 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
     replacementAutoApply,
     replacementValue,
     replacementFields,
+    replacementAppliesToScopes,
+    runtimeEnabled,
+    runtimeType,
+    runtimeConfig,
+    postAcceptBehavior,
+    denyBehaviorOverride,
+    validationDebounceMs,
     sequenceGroupId,
     sequenceGroupLabel,
     sequenceGroupDebounceMs,
@@ -175,11 +259,13 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
     maxExecutions: body.maxExecutions ?? 1,
     passOutputToNext: body.passOutputToNext ?? true,
     launchEnabled,
+    launchAppliesToScopes,
     launchSourceMode,
     launchSourceField,
     launchOperator,
     launchValue,
     launchFlags,
+    appliesToScopes,
   });
 
   return NextResponse.json(pattern, { status: 201 });

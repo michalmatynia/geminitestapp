@@ -137,6 +137,11 @@ const CATEGORY_TEMPLATE_PRODUCT_FIELDS = new Set([
 
 const PRODUCER_ID_TEMPLATE_FIELDS = new Set([
   'producer',
+  'producers',
+  'producername',
+  'producer_name',
+  'producernames',
+  'producer_names',
   'producerid',
   'producer_id',
   'producerids',

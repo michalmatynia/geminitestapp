@@ -74,13 +74,13 @@ async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params
 
 export const GET = apiHandlerWithParams<{ id: string }>(
   GET_handler,
-  { source: 'products.import-templates.[id].GET', requireCsrf: false }
+  { source: 'products.import-templates.[id].GET', requireCsrf: false, cacheControl: 'no-store' }
 );
 export const PUT = apiHandlerWithParams<{ id: string }>(
   PUT_handler,
-  { source: 'products.import-templates.[id].PUT', requireCsrf: false }
+  { source: 'products.import-templates.[id].PUT', requireCsrf: false, cacheControl: 'no-store' }
 );
 export const DELETE = apiHandlerWithParams<{ id: string }>(
   DELETE_handler,
-  { source: 'products.import-templates.[id].DELETE', requireCsrf: false }
+  { source: 'products.import-templates.[id].DELETE', requireCsrf: false, cacheControl: 'no-store' }
 );

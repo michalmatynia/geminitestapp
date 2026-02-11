@@ -6,7 +6,9 @@ import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import { cmsPageCreateSchema } from '@/features/cms/validations/api';
 import { ActivityTypes, logActivity } from '@/features/observability/server';
 import { parseJsonBody } from '@/features/products/server';
+import { validationError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
+import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 import type { z } from 'zod';
@@ -23,7 +25,13 @@ const parseBody = async (
     if (parsed.success) {
       return { ok: true, data: parsed.data };
     }
-    return { ok: false, response: NextResponse.json({ error: 'Invalid payload' }, { status: 400 }) };
+    return {
+      ok: false,
+      response: await createErrorResponse(
+        validationError('Invalid payload', { issues: parsed.error.flatten() }),
+        { request: req, source: 'cms-pages' }
+      ),
+    };
   }
   return parseJsonBody(req, cmsPageCreateSchema, { logPrefix: 'cms-pages' });
 };

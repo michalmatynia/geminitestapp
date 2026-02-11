@@ -106,9 +106,8 @@ const ensureSettingsIndexes = async (): Promise<void> => {
         const mongo = await getMongoDb();
         await mongo.collection(SETTINGS_COLLECTION).createIndex({ key: 1 }, { name: 'settings_key' });
       } catch (error) {
-        await logSystemEvent({
-          level: 'warn',
-          message: '[settings] Failed to ensure settings indexes.',
+        await ErrorSystem.logWarning('[settings] Failed to ensure settings indexes.', {
+          service: 'api/settings',
           error,
         });
       }
@@ -380,9 +379,8 @@ const attachProviderHeader = async (response: Response): Promise<void> => {
     const provider = await getAppDbProvider();
     response.headers.set('X-App-Db-Provider', provider);
   } catch (error) {
-    await logSystemEvent({
-      level: 'warn',
-      message: '[settings] Failed to resolve app DB provider.',
+    await ErrorSystem.logWarning('[settings] Failed to resolve app DB provider.', {
+      service: 'api/settings',
       error,
     });
   }
@@ -411,13 +409,11 @@ const fetchAndCacheSettings = async (
     } catch (error) {
       if (isPrismaMissingTableError(error)) {
         await assertAutomaticSettingsFallbackAllowed();
-        prismaMissing = true;
-        await logSystemEvent({
-          level: 'warn',
-          message: '[settings] Prisma settings table missing; falling back to Mongo.',
-          context: { code: error.code },
-        });
-      } else {
+              prismaMissing = true;
+              await ErrorSystem.logWarning('[settings] Prisma settings table missing; falling back to Mongo.', {
+                service: 'api/settings',
+                code: (error as any).code,
+              });      } else {
         throw error;
       }
     } finally {
@@ -471,10 +467,10 @@ const fetchAndCacheSettings = async (
   setCachedSettings(settings, scope);
   if (timings) timings['total'] = performance.now() - totalStart;
   if (timings && shouldLogTiming()) {
-    await logSystemEvent({
-      level: 'info',
-      message: '[timing] settings.fetch',
-      context: { scope, ...timings },
+    await ErrorSystem.logInfo('[timing] settings.fetch', {
+      service: 'api/settings',
+      scope,
+      ...timings,
     });
   }
   return settings;
@@ -545,10 +541,11 @@ async function GET_handler(
       }
     }
     if (shouldLogTiming()) {
-      await logSystemEvent({
-        level: 'warn',
-        message: '[settings] cache',
-        context: { scope, status: cacheStatus, reason },
+      await ErrorSystem.logWarning('[settings] cache fallback', {
+        service: 'api/settings',
+        scope,
+        status: cacheStatus,
+        reason,
       });
     }
     const response = NextResponse.json(fallbackData, {
@@ -565,10 +562,10 @@ async function GET_handler(
   const cached = getCachedSettings(scope);
   if (cached) {
     if (shouldLogTiming()) {
-      await logSystemEvent({
-        level: 'info',
-        message: '[settings] cache',
-        context: { scope, status: 'hit' },
+      await ErrorSystem.logInfo('[settings] cache hit', {
+        service: 'api/settings',
+        scope,
+        status: 'hit',
       });
     }
     const response = NextResponse.json(cached, {
@@ -722,13 +719,11 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     } catch (error) {
       if (isPrismaMissingTableError(error)) {
         await assertAutomaticSettingsFallbackAllowed();
-        prismaMissing = true;
-        await logSystemEvent({
-          level: 'warn',
-          message: '[settings] Prisma settings table missing; falling back to Mongo.',
-          context: { code: error.code },
-        });
-      } else {
+              prismaMissing = true;
+              await ErrorSystem.logWarning('[settings] Prisma settings table missing; falling back to Mongo.', {
+                service: 'api/settings',
+                code: (error as any).code,
+              });      } else {
         throw error;
       }
     }

@@ -4,17 +4,30 @@ import { ErrorSystem } from '@/features/observability/server';
 import {
   PRODUCT_VALIDATION_REPLACEMENT_FIELDS,
   PRODUCT_VALIDATOR_ENABLED_BY_DEFAULT_SETTING_KEY,
+  PRODUCT_VALIDATOR_INSTANCE_DENY_BEHAVIOR_SETTING_KEY,
 } from '@/features/products/constants';
 import type {
   CreateProductValidationPatternInput,
   ProductValidationPatternRepository,
   UpdateProductValidationPatternInput,
 } from '@/features/products/types/services/validation-pattern-repository';
+import {
+  normalizeProductValidationPatternDenyBehaviorOverride,
+  normalizeProductValidationPatternLaunchScopes,
+  normalizeProductValidationPatternReplacementScopes,
+  normalizeProductValidationPatternScopes,
+  normalizeProductValidationInstanceDenyBehaviorMap,
+} from '@/features/products/utils/validator-instance-behavior';
 import { operationFailedError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
 import type {
   ProductValidationChainMode,
+  ProductValidationDenyBehavior,
+  ProductValidationInstanceDenyBehaviorMap,
+  ProductValidationInstanceScope,
+  ProductValidationPostAcceptBehavior,
   ProductValidationPattern,
+  ProductValidationRuntimeType,
   ProductValidationSeverity,
   ProductValidationTarget,
 } from '@/shared/types/domain/products';
@@ -61,6 +74,25 @@ const normalizeReplacementFields = (fields: string[] | null | undefined): string
   return [...unique];
 };
 
+const normalizeValidationDebounceMs = (value: unknown): number => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
+  return Math.min(30_000, Math.max(0, Math.floor(value)));
+};
+
+const normalizePostAcceptBehavior = (value: unknown): ProductValidationPostAcceptBehavior =>
+  value === 'stop_after_accept' ? 'stop_after_accept' : 'revalidate';
+
+const normalizeRuntimeType = (value: unknown): ProductValidationRuntimeType => {
+  if (value === 'database_query' || value === 'ai_prompt') return value;
+  return 'none';
+};
+
+const normalizeRuntimeConfig = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
 type ProductValidationPatternDelegate = {
   findMany: (args: {
     orderBy: Array<{ target: 'asc' | 'desc' } | { label: 'asc' | 'desc' }>;
@@ -79,6 +111,15 @@ type ProductValidationPatternDelegate = {
       replacementEnabled: boolean;
       replacementValue: string | null;
       replacementFields: string[];
+      replacementAppliesToScopes?: ProductValidationInstanceScope[];
+      runtimeEnabled?: boolean;
+      runtimeType?: ProductValidationRuntimeType;
+      runtimeConfig?: string | null;
+      appliesToScopes?: ProductValidationInstanceScope[];
+      postAcceptBehavior?: ProductValidationPostAcceptBehavior;
+      denyBehaviorOverride?: ProductValidationDenyBehavior | null;
+      validationDebounceMs?: number;
+      launchAppliesToScopes?: ProductValidationInstanceScope[];
     };
   }) => Promise<PrismaPattern>;
   update: (args: {
@@ -105,36 +146,87 @@ const requirePatternDelegate = (): ProductValidationPatternDelegate => {
   throw operationFailedError(MISSING_DELEGATE_MESSAGE);
 };
 
-const toDomain = (pattern: PrismaPattern): ProductValidationPattern => ({
-  id: pattern.id,
-  label: pattern.label,
-  target: pattern.target as ProductValidationTarget,
-  locale: pattern.locale ?? null,
-  regex: pattern.regex,
-  flags: pattern.flags ?? null,
-  message: pattern.message,
-  severity: (pattern.severity as ProductValidationSeverity) ?? 'error',
-  enabled: pattern.enabled,
-  replacementEnabled: pattern.replacementEnabled ?? false,
-  replacementAutoApply: false,
-  replacementValue: pattern.replacementValue ?? null,
-  replacementFields: normalizeReplacementFields(pattern.replacementFields),
-  sequenceGroupId: null,
-  sequenceGroupLabel: null,
-  sequenceGroupDebounceMs: 0,
-  sequence: null,
-  chainMode: 'continue' as ProductValidationChainMode,
-  maxExecutions: 1,
-  passOutputToNext: true,
-  launchEnabled: false,
-  launchSourceMode: 'current_field',
-  launchSourceField: null,
-  launchOperator: 'equals',
-  launchValue: null,
-  launchFlags: null,
-  createdAt: pattern.createdAt.toISOString(),
-  updatedAt: pattern.updatedAt.toISOString(),
-});
+const toDomain = (pattern: PrismaPattern): ProductValidationPattern => {
+  // Prisma schema can lag behind Mongo-only fields; coerce safely.
+  const validationDebounceMsRaw = (
+    pattern as PrismaPattern & { validationDebounceMs?: number | null }
+  ).validationDebounceMs;
+  const postAcceptBehaviorRaw = (
+    pattern as PrismaPattern & { postAcceptBehavior?: ProductValidationPostAcceptBehavior | null }
+  ).postAcceptBehavior;
+  const runtimeEnabledRaw = (
+    pattern as PrismaPattern & { runtimeEnabled?: boolean | null }
+  ).runtimeEnabled;
+  const runtimeTypeRaw = (
+    pattern as PrismaPattern & { runtimeType?: ProductValidationRuntimeType | null }
+  ).runtimeType;
+  const runtimeConfigRaw = (
+    pattern as PrismaPattern & { runtimeConfig?: string | null }
+  ).runtimeConfig;
+  const denyBehaviorOverrideRaw = (
+    pattern as PrismaPattern & { denyBehaviorOverride?: ProductValidationDenyBehavior | null }
+  ).denyBehaviorOverride;
+  const appliesToScopesRaw = (
+    pattern as PrismaPattern & { appliesToScopes?: ProductValidationInstanceScope[] | null }
+  ).appliesToScopes;
+  const replacementAppliesToScopesRaw = (
+    pattern as PrismaPattern & {
+      replacementAppliesToScopes?: ProductValidationInstanceScope[] | null;
+    }
+  ).replacementAppliesToScopes;
+  const launchAppliesToScopesRaw = (
+    pattern as PrismaPattern & {
+      launchAppliesToScopes?: ProductValidationInstanceScope[] | null;
+    }
+  ).launchAppliesToScopes;
+  return {
+    id: pattern.id,
+    label: pattern.label,
+    target: pattern.target as ProductValidationTarget,
+    locale: pattern.locale ?? null,
+    regex: pattern.regex,
+    flags: pattern.flags ?? null,
+    message: pattern.message,
+    severity: (pattern.severity as ProductValidationSeverity) ?? 'error',
+    enabled: pattern.enabled,
+    replacementEnabled: pattern.replacementEnabled ?? false,
+    replacementAutoApply: false,
+    replacementValue: pattern.replacementValue ?? null,
+    replacementFields: normalizeReplacementFields(pattern.replacementFields),
+    replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
+      replacementAppliesToScopesRaw,
+      appliesToScopesRaw
+    ),
+    runtimeEnabled: runtimeEnabledRaw ?? false,
+    runtimeType: normalizeRuntimeType(runtimeTypeRaw),
+    runtimeConfig: normalizeRuntimeConfig(runtimeConfigRaw),
+    postAcceptBehavior: normalizePostAcceptBehavior(postAcceptBehaviorRaw),
+    denyBehaviorOverride: normalizeProductValidationPatternDenyBehaviorOverride(
+      denyBehaviorOverrideRaw
+    ),
+    validationDebounceMs: normalizeValidationDebounceMs(validationDebounceMsRaw),
+    sequenceGroupId: null,
+    sequenceGroupLabel: null,
+    sequenceGroupDebounceMs: 0,
+    sequence: null,
+    chainMode: 'continue' as ProductValidationChainMode,
+    maxExecutions: 1,
+    passOutputToNext: true,
+    launchEnabled: false,
+    launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
+      launchAppliesToScopesRaw,
+      appliesToScopesRaw
+    ),
+    launchSourceMode: 'current_field',
+    launchSourceField: null,
+    launchOperator: 'equals',
+    launchValue: null,
+    launchFlags: null,
+    appliesToScopes: normalizeProductValidationPatternScopes(appliesToScopesRaw),
+    createdAt: pattern.createdAt.toISOString(),
+    updatedAt: pattern.updatedAt.toISOString(),
+  };
+};
 
 export const prismaValidationPatternRepository: ProductValidationPatternRepository = {
   async listPatterns(): Promise<ProductValidationPattern[]> {
@@ -177,26 +269,58 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
 
   async createPattern(data: CreateProductValidationPatternInput): Promise<ProductValidationPattern> {
     const delegate = requirePatternDelegate();
+    const baseCreateData = {
+      label: data.label,
+      target: data.target,
+      locale: data.locale?.trim() || null,
+      regex: data.regex,
+      flags: data.flags ?? null,
+      message: data.message,
+      severity: data.severity ?? 'error',
+      enabled: data.enabled ?? true,
+      replacementEnabled: data.replacementEnabled ?? false,
+      replacementValue: data.replacementValue?.trim() || null,
+      replacementFields: normalizeReplacementFields(data.replacementFields),
+      replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
+        data.replacementAppliesToScopes,
+        data.appliesToScopes
+      ),
+      runtimeEnabled: data.runtimeEnabled ?? false,
+      runtimeType: normalizeRuntimeType(data.runtimeType),
+      runtimeConfig: normalizeRuntimeConfig(data.runtimeConfig),
+      launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
+        data.launchAppliesToScopes,
+        data.appliesToScopes
+      ),
+    };
     try {
       const row = await delegate.create({
         data: {
-          label: data.label,
-          target: data.target,
-          locale: data.locale?.trim() || null,
-          regex: data.regex,
-          flags: data.flags ?? null,
-          message: data.message,
-          severity: data.severity ?? 'error',
-          enabled: data.enabled ?? true,
-          replacementEnabled: data.replacementEnabled ?? false,
-          replacementValue: data.replacementValue?.trim() || null,
-          replacementFields: normalizeReplacementFields(data.replacementFields),
+          ...baseCreateData,
+          ...(data.appliesToScopes !== undefined && {
+            appliesToScopes: normalizeProductValidationPatternScopes(data.appliesToScopes),
+          }),
+          postAcceptBehavior: normalizePostAcceptBehavior(data.postAcceptBehavior),
+          denyBehaviorOverride: normalizeProductValidationPatternDenyBehaviorOverride(
+            data.denyBehaviorOverride
+          ),
+          validationDebounceMs: normalizeValidationDebounceMs(data.validationDebounceMs),
         },
       });
       return toDomain(row);
     } catch (error) {
       if (isSchemaMismatchError(error)) {
-        throw schemaMismatchError(error);
+        try {
+          const row = await delegate.create({
+            data: baseCreateData,
+          });
+          return toDomain(row);
+        } catch (fallbackError) {
+          if (isSchemaMismatchError(fallbackError)) {
+            throw schemaMismatchError(fallbackError);
+          }
+          throw fallbackError;
+        }
       }
       throw error;
     }
@@ -204,29 +328,74 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
 
   async updatePattern(id: string, data: UpdateProductValidationPatternInput): Promise<ProductValidationPattern> {
     const delegate = requirePatternDelegate();
+    const baseUpdateData = {
+      ...(data.label !== undefined && { label: data.label }),
+      ...(data.target !== undefined && { target: data.target }),
+      ...(data.locale !== undefined && { locale: data.locale?.trim() || null }),
+      ...(data.regex !== undefined && { regex: data.regex }),
+      ...(data.flags !== undefined && { flags: data.flags ?? null }),
+      ...(data.message !== undefined && { message: data.message }),
+      ...(data.severity !== undefined && { severity: data.severity }),
+      ...(data.enabled !== undefined && { enabled: data.enabled }),
+      ...(data.replacementEnabled !== undefined && { replacementEnabled: data.replacementEnabled }),
+      ...(data.replacementValue !== undefined && { replacementValue: data.replacementValue?.trim() || null }),
+      ...(data.replacementFields !== undefined && {
+        replacementFields: normalizeReplacementFields(data.replacementFields),
+      }),
+      ...(data.replacementAppliesToScopes !== undefined && {
+        replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
+          data.replacementAppliesToScopes,
+          data.appliesToScopes
+        ),
+      }),
+      ...(data.runtimeEnabled !== undefined && { runtimeEnabled: data.runtimeEnabled }),
+      ...(data.runtimeType !== undefined && { runtimeType: normalizeRuntimeType(data.runtimeType) }),
+      ...(data.runtimeConfig !== undefined && {
+        runtimeConfig: normalizeRuntimeConfig(data.runtimeConfig),
+      }),
+      ...(data.launchAppliesToScopes !== undefined && {
+        launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
+          data.launchAppliesToScopes,
+          data.appliesToScopes
+        ),
+      }),
+    };
     try {
       const row = await delegate.update({
         where: { id },
         data: {
-          ...(data.label !== undefined && { label: data.label }),
-          ...(data.target !== undefined && { target: data.target }),
-          ...(data.locale !== undefined && { locale: data.locale?.trim() || null }),
-          ...(data.regex !== undefined && { regex: data.regex }),
-          ...(data.flags !== undefined && { flags: data.flags ?? null }),
-          ...(data.message !== undefined && { message: data.message }),
-          ...(data.severity !== undefined && { severity: data.severity }),
-          ...(data.enabled !== undefined && { enabled: data.enabled }),
-          ...(data.replacementEnabled !== undefined && { replacementEnabled: data.replacementEnabled }),
-          ...(data.replacementValue !== undefined && { replacementValue: data.replacementValue?.trim() || null }),
-          ...(data.replacementFields !== undefined && {
-            replacementFields: normalizeReplacementFields(data.replacementFields),
+          ...baseUpdateData,
+          ...(data.postAcceptBehavior !== undefined && {
+            postAcceptBehavior: normalizePostAcceptBehavior(data.postAcceptBehavior),
+          }),
+          ...(data.validationDebounceMs !== undefined && {
+            validationDebounceMs: normalizeValidationDebounceMs(data.validationDebounceMs),
+          }),
+          ...(data.denyBehaviorOverride !== undefined && {
+            denyBehaviorOverride: normalizeProductValidationPatternDenyBehaviorOverride(
+              data.denyBehaviorOverride
+            ),
+          }),
+          ...(data.appliesToScopes !== undefined && {
+            appliesToScopes: normalizeProductValidationPatternScopes(data.appliesToScopes),
           }),
         },
       });
       return toDomain(row);
     } catch (error) {
       if (isSchemaMismatchError(error)) {
-        throw schemaMismatchError(error);
+        try {
+          const row = await delegate.update({
+            where: { id },
+            data: baseUpdateData,
+          });
+          return toDomain(row);
+        } catch (fallbackError) {
+          if (isSchemaMismatchError(fallbackError)) {
+            throw schemaMismatchError(fallbackError);
+          }
+          throw fallbackError;
+        }
       }
       throw error;
     }
@@ -266,5 +435,39 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
       },
     });
     return enabled;
+  },
+
+  async getInstanceDenyBehavior(): Promise<ProductValidationInstanceDenyBehaviorMap> {
+    const setting = await prisma.setting.findUnique({
+      where: { key: PRODUCT_VALIDATOR_INSTANCE_DENY_BEHAVIOR_SETTING_KEY },
+      select: { value: true },
+    });
+    if (!setting?.value) {
+      return normalizeProductValidationInstanceDenyBehaviorMap(null);
+    }
+    try {
+      return normalizeProductValidationInstanceDenyBehaviorMap(
+        JSON.parse(setting.value) as unknown
+      );
+    } catch {
+      return normalizeProductValidationInstanceDenyBehaviorMap(null);
+    }
+  },
+
+  async setInstanceDenyBehavior(
+    value: ProductValidationInstanceDenyBehaviorMap
+  ): Promise<ProductValidationInstanceDenyBehaviorMap> {
+    const normalized = normalizeProductValidationInstanceDenyBehaviorMap(value);
+    await prisma.setting.upsert({
+      where: { key: PRODUCT_VALIDATOR_INSTANCE_DENY_BEHAVIOR_SETTING_KEY },
+      create: {
+        key: PRODUCT_VALIDATOR_INSTANCE_DENY_BEHAVIOR_SETTING_KEY,
+        value: JSON.stringify(normalized),
+      },
+      update: {
+        value: JSON.stringify(normalized),
+      },
+    });
+    return normalized;
   },
 };

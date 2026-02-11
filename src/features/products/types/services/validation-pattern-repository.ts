@@ -1,7 +1,12 @@
 import type {
   ProductValidationChainMode,
+  ProductValidationDenyBehavior,
+  ProductValidationInstanceDenyBehaviorMap,
+  ProductValidationInstanceScope,
   ProductValidationLaunchOperator,
   ProductValidationLaunchSourceMode,
+  ProductValidationPostAcceptBehavior,
+  ProductValidationRuntimeType,
   ProductValidationPattern,
   ProductValidationSeverity,
   ProductValidationTarget,
@@ -20,6 +25,13 @@ export type CreateProductValidationPatternInput = {
   replacementAutoApply?: boolean;
   replacementValue?: string | null;
   replacementFields?: string[];
+  replacementAppliesToScopes?: ProductValidationInstanceScope[];
+  runtimeEnabled?: boolean;
+  runtimeType?: ProductValidationRuntimeType;
+  runtimeConfig?: string | null;
+  postAcceptBehavior?: ProductValidationPostAcceptBehavior;
+  denyBehaviorOverride?: ProductValidationDenyBehavior | null;
+  validationDebounceMs?: number;
   sequenceGroupId?: string | null;
   sequenceGroupLabel?: string | null;
   sequenceGroupDebounceMs?: number;
@@ -28,11 +40,13 @@ export type CreateProductValidationPatternInput = {
   maxExecutions?: number;
   passOutputToNext?: boolean;
   launchEnabled?: boolean;
+  launchAppliesToScopes?: ProductValidationInstanceScope[];
   launchSourceMode?: ProductValidationLaunchSourceMode;
   launchSourceField?: string | null;
   launchOperator?: ProductValidationLaunchOperator;
   launchValue?: string | null;
   launchFlags?: string | null;
+  appliesToScopes?: ProductValidationInstanceScope[];
 };
 
 export type UpdateProductValidationPatternInput = {
@@ -48,6 +62,13 @@ export type UpdateProductValidationPatternInput = {
   replacementAutoApply?: boolean;
   replacementValue?: string | null;
   replacementFields?: string[];
+  replacementAppliesToScopes?: ProductValidationInstanceScope[];
+  runtimeEnabled?: boolean;
+  runtimeType?: ProductValidationRuntimeType;
+  runtimeConfig?: string | null;
+  postAcceptBehavior?: ProductValidationPostAcceptBehavior;
+  denyBehaviorOverride?: ProductValidationDenyBehavior | null;
+  validationDebounceMs?: number;
   sequenceGroupId?: string | null;
   sequenceGroupLabel?: string | null;
   sequenceGroupDebounceMs?: number;
@@ -56,11 +77,13 @@ export type UpdateProductValidationPatternInput = {
   maxExecutions?: number;
   passOutputToNext?: boolean;
   launchEnabled?: boolean;
+  launchAppliesToScopes?: ProductValidationInstanceScope[];
   launchSourceMode?: ProductValidationLaunchSourceMode;
   launchSourceField?: string | null;
   launchOperator?: ProductValidationLaunchOperator;
   launchValue?: string | null;
   launchFlags?: string | null;
+  appliesToScopes?: ProductValidationInstanceScope[];
 };
 
 export type ProductValidationPatternRepository = {
@@ -71,4 +94,8 @@ export type ProductValidationPatternRepository = {
   deletePattern(id: string): Promise<void>;
   getEnabledByDefault(): Promise<boolean>;
   setEnabledByDefault(enabled: boolean): Promise<boolean>;
+  getInstanceDenyBehavior(): Promise<ProductValidationInstanceDenyBehaviorMap>;
+  setInstanceDenyBehavior(
+    value: ProductValidationInstanceDenyBehaviorMap
+  ): Promise<ProductValidationInstanceDenyBehaviorMap>;
 };

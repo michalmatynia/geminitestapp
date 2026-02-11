@@ -15,9 +15,12 @@ if (
   !process.env['AUTH_SECRET'] &&
   !process.env['NEXTAUTH_SECRET']
 ) {
-  console.warn(
-    '[AUTH] AUTH_SECRET/NEXTAUTH_SECRET not set. Using dev fallback secret.'
-  );
+  void (async () => {
+    const { logger } = await import('@/shared/utils/logger');
+    logger.warn(
+      '[AUTH] AUTH_SECRET/NEXTAUTH_SECRET not set. Using dev fallback secret.'
+    );
+  })();
 }
 
 // Basic config that is edge-compatible

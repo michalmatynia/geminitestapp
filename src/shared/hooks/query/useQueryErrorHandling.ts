@@ -140,7 +140,10 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
 
         // Show toast notification
         if (config.showToast && toast) {
-          toast(message, { variant: "error" });
+          toast(message, { 
+            variant: "error",
+            error: isErrorLike ? error : new Error(message)
+          });
         }
 
         // Custom error handler
@@ -200,7 +203,7 @@ export function useResilientQuery<TData>(
     if (query.isError) {
       logClientError(query.error, { context: { queryKey } });
       if (toast) {
-        toast(query.error.message, { variant: "error" });
+        toast(query.error.message, { variant: "error", error: query.error });
       }
       options?.onError?.(query.error);
     }

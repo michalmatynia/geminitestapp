@@ -11,6 +11,7 @@ import {
   type AppErrorCode,
 } from '@/shared/errors/app-error';
 import { mapErrorToAppError } from '@/shared/errors/error-mapper';
+import { ErrorCategory, type SuggestedAction } from '@/shared/types/observability';
 
 export type ResolvedError = {
   errorId: string;
@@ -20,6 +21,8 @@ export type ResolvedError = {
   expected: boolean;
   critical: boolean;
   retryable: boolean;
+  category: ErrorCategory;
+  suggestedActions: SuggestedAction[];
   retryAfterMs?: number;
   meta?: Record<string, unknown>;
   cause?: unknown;
@@ -37,7 +40,10 @@ export const resolveError = (
   error: unknown,
   options?: ResolveOptions
 ): ResolvedError => {
+  const { classifyError, getSuggestedActions } = require('@/features/observability/utils/error-classifier');
   const errorId = randomUUID();
+  const category = classifyError(error);
+  const suggestedActions = getSuggestedActions(category, error);
 
   const toResolved = (appError: {
     message: string;
@@ -57,6 +63,8 @@ export const resolveError = (
     expected: appError.expected,
     critical: appError.critical,
     retryable: appError.retryable,
+    category,
+    suggestedActions,
     ...(typeof appError.retryAfterMs === 'number' ? { retryAfterMs: appError.retryAfterMs } : {}),
     ...(appError.meta ? { meta: appError.meta } : {}),
     cause: appError.cause,

@@ -3,17 +3,30 @@ import { ObjectId, type Document, type Filter, type UpdateFilter } from 'mongodb
 import {
   PRODUCT_VALIDATION_REPLACEMENT_FIELDS,
   PRODUCT_VALIDATOR_ENABLED_BY_DEFAULT_SETTING_KEY,
+  PRODUCT_VALIDATOR_INSTANCE_DENY_BEHAVIOR_SETTING_KEY,
 } from '@/features/products/constants';
 import type {
   CreateProductValidationPatternInput,
   ProductValidationPatternRepository,
   UpdateProductValidationPatternInput,
 } from '@/features/products/types/services/validation-pattern-repository';
+import {
+  normalizeProductValidationPatternDenyBehaviorOverride,
+  normalizeProductValidationPatternLaunchScopes,
+  normalizeProductValidationPatternReplacementScopes,
+  normalizeProductValidationPatternScopes,
+  normalizeProductValidationInstanceDenyBehaviorMap,
+} from '@/features/products/utils/validator-instance-behavior';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type {
   ProductValidationChainMode,
+  ProductValidationDenyBehavior,
+  ProductValidationInstanceDenyBehaviorMap,
+  ProductValidationInstanceScope,
   ProductValidationLaunchOperator,
   ProductValidationLaunchSourceMode,
+  ProductValidationPostAcceptBehavior,
+  ProductValidationRuntimeType,
   ProductValidationPattern,
   ProductValidationSeverity,
   ProductValidationTarget,
@@ -37,6 +50,13 @@ interface ProductValidationPatternDoc extends Document {
   replacementAutoApply?: boolean;
   replacementValue: string | null;
   replacementFields: string[];
+  replacementAppliesToScopes?: ProductValidationInstanceScope[] | null;
+  runtimeEnabled?: boolean | null;
+  runtimeType?: ProductValidationRuntimeType | null;
+  runtimeConfig?: string | null;
+  postAcceptBehavior?: ProductValidationPostAcceptBehavior | null;
+  denyBehaviorOverride?: ProductValidationDenyBehavior | null;
+  validationDebounceMs?: number | null;
   sequenceGroupId?: string | null;
   sequenceGroupLabel?: string | null;
   sequenceGroupDebounceMs?: number | null;
@@ -45,11 +65,13 @@ interface ProductValidationPatternDoc extends Document {
   maxExecutions?: number | null;
   passOutputToNext?: boolean | null;
   launchEnabled?: boolean | null;
+  launchAppliesToScopes?: ProductValidationInstanceScope[] | null;
   launchSourceMode?: ProductValidationLaunchSourceMode | null;
   launchSourceField?: string | null;
   launchOperator?: ProductValidationLaunchOperator | null;
   launchValue?: string | null;
   launchFlags?: string | null;
+  appliesToScopes?: ProductValidationInstanceScope[] | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -67,6 +89,13 @@ type ProductValidationPatternInsert = {
   replacementAutoApply: boolean;
   replacementValue: string | null;
   replacementFields: string[];
+  replacementAppliesToScopes: ProductValidationInstanceScope[];
+  runtimeEnabled: boolean;
+  runtimeType: ProductValidationRuntimeType;
+  runtimeConfig: string | null;
+  postAcceptBehavior: ProductValidationPostAcceptBehavior;
+  denyBehaviorOverride: ProductValidationDenyBehavior | null;
+  validationDebounceMs: number;
   sequenceGroupId: string | null;
   sequenceGroupLabel: string | null;
   sequenceGroupDebounceMs: number;
@@ -75,11 +104,13 @@ type ProductValidationPatternInsert = {
   maxExecutions: number;
   passOutputToNext: boolean;
   launchEnabled: boolean;
+  launchAppliesToScopes: ProductValidationInstanceScope[];
   launchSourceMode: ProductValidationLaunchSourceMode;
   launchSourceField: string | null;
   launchOperator: ProductValidationLaunchOperator;
   launchValue: string | null;
   launchFlags: string | null;
+  appliesToScopes: ProductValidationInstanceScope[];
   createdAt: Date;
   updatedAt: Date;
 };
@@ -100,6 +131,41 @@ const parseBooleanSetting = (value: string | null | undefined): boolean => {
     return false;
   }
   return true;
+};
+
+const readStringSetting = async (key: string): Promise<string | null> => {
+  const db = await getMongoDb();
+  const setting = await db.collection<SettingDoc>(SETTINGS_COLLECTION).findOne({
+    $or: [
+      { key },
+      { _id: key },
+    ],
+  } as Filter<SettingDoc>);
+  return typeof setting?.value === 'string' ? setting.value : null;
+};
+
+const writeStringSetting = async (key: string, value: string): Promise<void> => {
+  const db = await getMongoDb();
+  const now = new Date();
+  await db.collection<SettingDoc>(SETTINGS_COLLECTION).updateOne(
+    {
+      $or: [
+        { key },
+        { _id: key },
+      ],
+    } as Filter<SettingDoc>,
+    {
+      $set: {
+        key,
+        value,
+        updatedAt: now,
+      },
+      $setOnInsert: {
+        createdAt: now,
+      },
+    } as UpdateFilter<SettingDoc>,
+    { upsert: true }
+  );
 };
 
 const ALLOWED_REPLACEMENT_FIELDS = new Set<string>(PRODUCT_VALIDATION_REPLACEMENT_FIELDS);
@@ -134,6 +200,25 @@ const normalizeSequenceGroupLabel = (value: unknown): string | null => {
 const normalizeSequenceGroupDebounceMs = (value: unknown): number => {
   if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
   return Math.min(30_000, Math.max(0, Math.floor(value)));
+};
+
+const normalizeValidationDebounceMs = (value: unknown): number => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
+  return Math.min(30_000, Math.max(0, Math.floor(value)));
+};
+
+const normalizePostAcceptBehavior = (value: unknown): ProductValidationPostAcceptBehavior =>
+  value === 'stop_after_accept' ? 'stop_after_accept' : 'revalidate';
+
+const normalizeRuntimeType = (value: unknown): ProductValidationRuntimeType => {
+  if (value === 'database_query' || value === 'ai_prompt') return value;
+  return 'none';
+};
+
+const normalizeRuntimeConfig = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
 };
 
 const normalizeChainMode = (value: unknown): ProductValidationChainMode => {
@@ -185,6 +270,18 @@ const toDomain = (doc: ProductValidationPatternDoc): ProductValidationPattern =>
   replacementAutoApply: doc.replacementAutoApply ?? false,
   replacementValue: doc.replacementValue ?? null,
   replacementFields: normalizeReplacementFields(doc.replacementFields),
+  replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
+    doc.replacementAppliesToScopes,
+    doc.appliesToScopes
+  ),
+  runtimeEnabled: doc.runtimeEnabled ?? false,
+  runtimeType: normalizeRuntimeType(doc.runtimeType),
+  runtimeConfig: normalizeRuntimeConfig(doc.runtimeConfig),
+  postAcceptBehavior: normalizePostAcceptBehavior(doc.postAcceptBehavior),
+  denyBehaviorOverride: normalizeProductValidationPatternDenyBehaviorOverride(
+    doc.denyBehaviorOverride
+  ),
+  validationDebounceMs: normalizeValidationDebounceMs(doc.validationDebounceMs),
   sequenceGroupId: normalizeSequenceGroupId(doc.sequenceGroupId),
   sequenceGroupLabel: normalizeSequenceGroupLabel(doc.sequenceGroupLabel),
   sequenceGroupDebounceMs: normalizeSequenceGroupDebounceMs(doc.sequenceGroupDebounceMs),
@@ -193,6 +290,10 @@ const toDomain = (doc: ProductValidationPatternDoc): ProductValidationPattern =>
   maxExecutions: normalizeMaxExecutions(doc.maxExecutions),
   passOutputToNext: doc.passOutputToNext ?? true,
   launchEnabled: doc.launchEnabled ?? false,
+  launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
+    doc.launchAppliesToScopes,
+    doc.appliesToScopes
+  ),
   launchSourceMode: normalizeLaunchSourceMode(doc.launchSourceMode),
   launchSourceField:
     typeof doc.launchSourceField === 'string' && doc.launchSourceField.trim()
@@ -204,6 +305,7 @@ const toDomain = (doc: ProductValidationPatternDoc): ProductValidationPattern =>
     typeof doc.launchFlags === 'string' && doc.launchFlags.trim()
       ? doc.launchFlags.trim()
       : null,
+  appliesToScopes: normalizeProductValidationPatternScopes(doc.appliesToScopes),
   createdAt: doc.createdAt?.toISOString() ?? new Date().toISOString(),
   updatedAt: doc.updatedAt?.toISOString() ?? new Date().toISOString(),
 });
@@ -257,6 +359,18 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
       replacementAutoApply: data.replacementAutoApply ?? false,
       replacementValue: data.replacementValue?.trim() || null,
       replacementFields: normalizeReplacementFields(data.replacementFields),
+      replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
+        data.replacementAppliesToScopes,
+        data.appliesToScopes
+      ),
+      runtimeEnabled: data.runtimeEnabled ?? false,
+      runtimeType: normalizeRuntimeType(data.runtimeType),
+      runtimeConfig: normalizeRuntimeConfig(data.runtimeConfig),
+      postAcceptBehavior: normalizePostAcceptBehavior(data.postAcceptBehavior),
+      denyBehaviorOverride: normalizeProductValidationPatternDenyBehaviorOverride(
+        data.denyBehaviorOverride
+      ),
+      validationDebounceMs: normalizeValidationDebounceMs(data.validationDebounceMs),
       sequenceGroupId: normalizeSequenceGroupId(data.sequenceGroupId),
       sequenceGroupLabel: normalizeSequenceGroupLabel(data.sequenceGroupLabel),
       sequenceGroupDebounceMs: normalizeSequenceGroupDebounceMs(data.sequenceGroupDebounceMs),
@@ -265,11 +379,16 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
       maxExecutions: normalizeMaxExecutions(data.maxExecutions),
       passOutputToNext: data.passOutputToNext ?? true,
       launchEnabled: data.launchEnabled ?? false,
+      launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
+        data.launchAppliesToScopes,
+        data.appliesToScopes
+      ),
       launchSourceMode: normalizeLaunchSourceMode(data.launchSourceMode),
       launchSourceField: data.launchSourceField?.trim() || null,
       launchOperator: normalizeLaunchOperator(data.launchOperator),
       launchValue: typeof data.launchValue === 'string' ? data.launchValue : null,
       launchFlags: data.launchFlags?.trim() || null,
+      appliesToScopes: normalizeProductValidationPatternScopes(data.appliesToScopes),
       createdAt: now,
       updatedAt: now,
     };
@@ -300,6 +419,32 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
     if (data.replacementFields !== undefined) {
       set.replacementFields = normalizeReplacementFields(data.replacementFields);
     }
+    if (data.replacementAppliesToScopes !== undefined) {
+      set.replacementAppliesToScopes = normalizeProductValidationPatternReplacementScopes(
+        data.replacementAppliesToScopes,
+        data.appliesToScopes
+      );
+    }
+    if (data.runtimeEnabled !== undefined) {
+      set.runtimeEnabled = data.runtimeEnabled;
+    }
+    if (data.runtimeType !== undefined) {
+      set.runtimeType = normalizeRuntimeType(data.runtimeType);
+    }
+    if (data.runtimeConfig !== undefined) {
+      set.runtimeConfig = normalizeRuntimeConfig(data.runtimeConfig);
+    }
+    if (data.postAcceptBehavior !== undefined) {
+      set.postAcceptBehavior = normalizePostAcceptBehavior(data.postAcceptBehavior);
+    }
+    if (data.denyBehaviorOverride !== undefined) {
+      set.denyBehaviorOverride = normalizeProductValidationPatternDenyBehaviorOverride(
+        data.denyBehaviorOverride
+      );
+    }
+    if (data.validationDebounceMs !== undefined) {
+      set.validationDebounceMs = normalizeValidationDebounceMs(data.validationDebounceMs);
+    }
     if (data.sequenceGroupId !== undefined) {
       set.sequenceGroupId = normalizeSequenceGroupId(data.sequenceGroupId);
     }
@@ -324,6 +469,12 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
     if (data.launchEnabled !== undefined) {
       set.launchEnabled = data.launchEnabled;
     }
+    if (data.launchAppliesToScopes !== undefined) {
+      set.launchAppliesToScopes = normalizeProductValidationPatternLaunchScopes(
+        data.launchAppliesToScopes,
+        data.appliesToScopes
+      );
+    }
     if (data.launchSourceMode !== undefined) {
       set.launchSourceMode = normalizeLaunchSourceMode(data.launchSourceMode);
     }
@@ -338,6 +489,9 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
     }
     if (data.launchFlags !== undefined) {
       set.launchFlags = data.launchFlags?.trim() || null;
+    }
+    if (data.appliesToScopes !== undefined) {
+      set.appliesToScopes = normalizeProductValidationPatternScopes(data.appliesToScopes);
     }
 
     await db.collection<ProductValidationPatternDoc>(COLLECTION).updateOne(
@@ -361,38 +515,39 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
   },
 
   async getEnabledByDefault(): Promise<boolean> {
-    const db = await getMongoDb();
-    const setting = await db.collection<SettingDoc>(SETTINGS_COLLECTION).findOne({
-      $or: [
-        { key: PRODUCT_VALIDATOR_ENABLED_BY_DEFAULT_SETTING_KEY },
-        { _id: PRODUCT_VALIDATOR_ENABLED_BY_DEFAULT_SETTING_KEY },
-      ],
-    } as Filter<SettingDoc>);
-    return parseBooleanSetting(setting?.value);
+    return parseBooleanSetting(
+      await readStringSetting(PRODUCT_VALIDATOR_ENABLED_BY_DEFAULT_SETTING_KEY)
+    );
   },
 
   async setEnabledByDefault(enabled: boolean): Promise<boolean> {
-    const db = await getMongoDb();
-    const now = new Date();
-    await db.collection<SettingDoc>(SETTINGS_COLLECTION).updateOne(
-      {
-        $or: [
-          { key: PRODUCT_VALIDATOR_ENABLED_BY_DEFAULT_SETTING_KEY },
-          { _id: PRODUCT_VALIDATOR_ENABLED_BY_DEFAULT_SETTING_KEY },
-        ],
-      } as Filter<SettingDoc>,
-      {
-        $set: {
-          key: PRODUCT_VALIDATOR_ENABLED_BY_DEFAULT_SETTING_KEY,
-          value: String(enabled),
-          updatedAt: now,
-        },
-        $setOnInsert: {
-          createdAt: now,
-        },
-      } as UpdateFilter<SettingDoc>,
-      { upsert: true }
+    await writeStringSetting(
+      PRODUCT_VALIDATOR_ENABLED_BY_DEFAULT_SETTING_KEY,
+      String(enabled)
     );
     return enabled;
+  },
+
+  async getInstanceDenyBehavior(): Promise<ProductValidationInstanceDenyBehaviorMap> {
+    const raw = await readStringSetting(PRODUCT_VALIDATOR_INSTANCE_DENY_BEHAVIOR_SETTING_KEY);
+    if (!raw) {
+      return normalizeProductValidationInstanceDenyBehaviorMap(null);
+    }
+    try {
+      return normalizeProductValidationInstanceDenyBehaviorMap(JSON.parse(raw) as unknown);
+    } catch {
+      return normalizeProductValidationInstanceDenyBehaviorMap(null);
+    }
+  },
+
+  async setInstanceDenyBehavior(
+    value: ProductValidationInstanceDenyBehaviorMap
+  ): Promise<ProductValidationInstanceDenyBehaviorMap> {
+    const normalized = normalizeProductValidationInstanceDenyBehaviorMap(value);
+    await writeStringSetting(
+      PRODUCT_VALIDATOR_INSTANCE_DENY_BEHAVIOR_SETTING_KEY,
+      JSON.stringify(normalized)
+    );
+    return normalized;
   },
 };

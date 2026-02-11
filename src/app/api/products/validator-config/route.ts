@@ -9,13 +9,15 @@ import type { ApiHandlerContext } from '@/shared/types/api/api';
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const includeDisabled = req.nextUrl.searchParams.get('includeDisabled') === 'true';
   const repository = await getValidationPatternRepository();
-  const [enabledByDefault, patterns] = await Promise.all([
+  const [enabledByDefault, instanceDenyBehavior, patterns] = await Promise.all([
     repository.getEnabledByDefault(),
+    repository.getInstanceDenyBehavior(),
     repository.listPatterns(),
   ]);
 
   return NextResponse.json({
     enabledByDefault,
+    instanceDenyBehavior,
     patterns: includeDisabled ? patterns : patterns.filter((pattern) => pattern.enabled),
   });
 }

@@ -1,9 +1,10 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import { logClientError } from '@/features/observability';
 import * as productsApi from '@/features/products/api/products';
 import { CatalogMultiSelectField } from '@/features/products/components/form/CatalogMultiSelectField';
 import { CategorySingleSelectField } from '@/features/products/components/form/CategorySingleSelectField';
@@ -14,6 +15,7 @@ import { useProductValidationSettings } from '@/features/products/context/Produc
 import { useProductValidatorConfig } from '@/features/products/hooks/useProductSettingsQueries';
 import { ProductFormData, CatalogRecord, PriceGroupWithDetails } from '@/features/products/types';
 import { parseDynamicReplacementRecipe } from '@/features/products/utils/validator-replacement-recipe';
+import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { ProductValidationPattern } from '@/shared/types/domain/products';
 import { Button, Input, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
@@ -21,6 +23,7 @@ import { Button, Input, UnifiedSelect, FormSection, FormField } from '@/shared/u
 import {
   buildFieldIssues,
   getIssueReplacementPreview,
+  mergeFieldIssueMaps,
   ValidatorIssueHint,
   type FieldValidatorIssue,
 } from './ProductFormGeneral';
@@ -30,6 +33,50 @@ interface PriceGroupWithCalculatedPrice extends PriceGroupWithDetails {
   isCalculated: boolean;
   sourceGroupName: string | undefined;
 }
+
+const normalizeValidationDebounceMs = (value: unknown): number => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
+  return Math.min(30_000, Math.max(0, Math.floor(value)));
+};
+
+const areIssueMapsEquivalent = (
+  left: Record<string, FieldValidatorIssue[]>,
+  right: Record<string, FieldValidatorIssue[]>
+): boolean => {
+  if (left === right) return true;
+  const leftKeys = Object.keys(left);
+  const rightKeys = Object.keys(right);
+  if (leftKeys.length !== rightKeys.length) return false;
+  for (const key of leftKeys) {
+    const leftList = left[key] ?? [];
+    const rightList = right[key] ?? [];
+    if (leftList.length !== rightList.length) return false;
+    for (let index = 0; index < leftList.length; index += 1) {
+      const leftIssue = leftList[index];
+      const rightIssue = rightList[index];
+      if (!leftIssue || !rightIssue) return false;
+      if (
+        leftIssue.patternId !== rightIssue.patternId ||
+        leftIssue.message !== rightIssue.message ||
+        leftIssue.severity !== rightIssue.severity ||
+        leftIssue.matchText !== rightIssue.matchText ||
+        leftIssue.index !== rightIssue.index ||
+        leftIssue.length !== rightIssue.length ||
+        leftIssue.regex !== rightIssue.regex ||
+        leftIssue.flags !== rightIssue.flags ||
+        leftIssue.replacementValue !== rightIssue.replacementValue ||
+        leftIssue.replacementApplyMode !== rightIssue.replacementApplyMode ||
+        leftIssue.replacementScope !== rightIssue.replacementScope ||
+        leftIssue.replacementActive !== rightIssue.replacementActive ||
+        leftIssue.postAcceptBehavior !== rightIssue.postAcceptBehavior ||
+        leftIssue.debounceMs !== rightIssue.debounceMs
+      ) {
+        return false;
+      }
+    }
+  }
+  return true;
+};
 
 export default function ProductFormOther(): React.JSX.Element {
   const {
@@ -42,16 +89,45 @@ export default function ProductFormOther(): React.JSX.Element {
     filteredPriceGroups,
     product,
   } = useProductFormContext();
-  const { validatorEnabled } = useProductValidationSettings();
+  const {
+    validationInstanceScope,
+    validatorEnabled,
+    getDenyActionLabel,
+    isIssueDenied,
+    isIssueAccepted,
+    acceptIssue,
+    denyIssue,
+  } = useProductValidationSettings();
   const validatorConfigQuery = useProductValidatorConfig();
 
   const { register, setValue, watch, getValues } = useFormContext<ProductFormData>();
+  const fieldEditTimestampsRef = useRef<Record<'price' | 'stock', number>>({
+    price: 0,
+    stock: 0,
+  });
+  const previousFieldValuesRef = useRef<Record<'price' | 'stock', string | null>>({
+    price: null,
+    stock: null,
+  });
+  const debounceRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [debounceTick, setDebounceTick] = useState(0);
+  const [runtimeFieldIssues, setRuntimeFieldIssues] = useState<Record<string, FieldValidatorIssue[]>>({});
 
   const allValues = watch();
   const basePrice = watch('price') || 0;
   const selectedDefaultPriceGroupId = watch('defaultPriceGroupId');
   const hasCatalogs = selectedCatalogIds.length > 0;
   const validatorPatterns = validatorConfigQuery.data?.patterns ?? [];
+  const runtimePatternIds = useMemo(
+    () =>
+      validatorPatterns
+        .filter(
+          (pattern: ProductValidationPattern) =>
+            pattern.runtimeEnabled && pattern.runtimeType !== 'none'
+        )
+        .map((pattern: ProductValidationPattern) => pattern.id),
+    [validatorPatterns]
+  );
   const needsLatestProductSource = useMemo(
     () =>
       validatorPatterns.some((pattern: ProductValidationPattern) => {
@@ -75,16 +151,172 @@ export default function ProductFormOther(): React.JSX.Element {
     const preferred = list.find((item) => item.id !== product?.id) ?? list[0] ?? null;
     return preferred as unknown as Record<string, unknown>;
   }, [latestProductsQuery.data, product?.id]);
-  const fieldIssues = useMemo(
+  useEffect(() => {
+    if (!validatorEnabled || runtimePatternIds.length === 0) {
+      setRuntimeFieldIssues((previous) =>
+        Object.keys(previous).length === 0 ? previous : {}
+      );
+      return;
+    }
+    const timer = setTimeout(() => {
+      void api
+        .post<{ issues?: Record<string, FieldValidatorIssue[]> }>(
+          '/api/products/validator-runtime/evaluate',
+          {
+            values: allValues as Record<string, unknown>,
+            latestProductValues,
+            patternIds: runtimePatternIds,
+            validationScope: validationInstanceScope,
+          },
+          { logError: false }
+        )
+        .then((response) => {
+          const nextIssues = response.issues ?? {};
+          setRuntimeFieldIssues((previous) =>
+            areIssueMapsEquivalent(previous, nextIssues) ? previous : nextIssues
+          );
+        })
+        .catch((error: unknown) => {
+          setRuntimeFieldIssues((previous) =>
+            Object.keys(previous).length === 0 ? previous : {}
+          );
+          logClientError(
+            error instanceof Error ? error : new Error(String(error)),
+            {
+              context: {
+                source: 'ProductFormOther',
+                action: 'runtimeValidatorEvaluate',
+              },
+            }
+          );
+        });
+    }, 250);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [
+    allValues,
+    latestProductValues,
+    runtimePatternIds,
+    validationInstanceScope,
+    validatorEnabled,
+  ]);
+  useEffect(() => {
+    const now = Date.now();
+    const trackedFields: Array<'price' | 'stock'> = ['price', 'stock'];
+    for (const fieldName of trackedFields) {
+      const rawUnknown = allValues[fieldName];
+      const normalizedValue =
+        typeof rawUnknown === 'string'
+          ? rawUnknown
+          : typeof rawUnknown === 'number' && Number.isFinite(rawUnknown)
+            ? String(rawUnknown)
+            : '';
+      const previousValue = previousFieldValuesRef.current[fieldName];
+      if (previousValue === null) {
+        previousFieldValuesRef.current[fieldName] = normalizedValue;
+        continue;
+      }
+      if (previousValue === normalizedValue) continue;
+      previousFieldValuesRef.current[fieldName] = normalizedValue;
+      fieldEditTimestampsRef.current[fieldName] = now;
+    }
+  }, [allValues]);
+  const staticFieldIssues = useMemo(
     () =>
       validatorEnabled
-        ? buildFieldIssues(allValues, validatorPatterns, latestProductValues)
+        ? buildFieldIssues(
+          allValues,
+          validatorPatterns,
+          latestProductValues,
+          validationInstanceScope
+        )
         : ({} as Record<string, FieldValidatorIssue[]>),
-    [allValues, latestProductValues, validatorEnabled, validatorPatterns]
+    [
+      allValues,
+      latestProductValues,
+      validationInstanceScope,
+      validatorEnabled,
+      validatorPatterns,
+    ]
   );
-  const priceIssueList = validatorEnabled ? fieldIssues['price'] ?? [] : [];
+  const fieldIssues = useMemo(
+    () =>
+      mergeFieldIssueMaps(
+        staticFieldIssues,
+        validatorEnabled ? runtimeFieldIssues : {}
+      ),
+    [runtimeFieldIssues, staticFieldIssues, validatorEnabled]
+  );
+  useEffect(() => {
+    if (debounceRefreshTimerRef.current) {
+      clearTimeout(debounceRefreshTimerRef.current);
+      debounceRefreshTimerRef.current = null;
+    }
+    if (!validatorEnabled) return;
+    const now = Date.now();
+    let nextRemainingMs: number | null = null;
+    const trackedFields: Array<'price' | 'stock'> = ['price', 'stock'];
+    for (const fieldName of trackedFields) {
+      const changedAt = fieldEditTimestampsRef.current[fieldName];
+      if (changedAt <= 0) continue;
+      for (const issue of fieldIssues[fieldName] ?? []) {
+        const debounceMs = normalizeValidationDebounceMs(issue.debounceMs);
+        if (debounceMs <= 0) continue;
+        const remaining = debounceMs - (now - changedAt);
+        if (remaining <= 0) continue;
+        nextRemainingMs =
+          nextRemainingMs === null ? remaining : Math.min(nextRemainingMs, remaining);
+      }
+    }
+    if (nextRemainingMs !== null) {
+      debounceRefreshTimerRef.current = setTimeout(() => {
+        setDebounceTick((prev) => prev + 1);
+      }, nextRemainingMs + 10);
+    }
+    return () => {
+      if (debounceRefreshTimerRef.current) {
+        clearTimeout(debounceRefreshTimerRef.current);
+        debounceRefreshTimerRef.current = null;
+      }
+    };
+  }, [debounceTick, fieldIssues, validatorEnabled]);
+  const visibleFieldIssues = useMemo((): Record<'price' | 'stock', FieldValidatorIssue[]> => {
+    const now = Date.now();
+    return {
+      price: (fieldIssues['price'] ?? []).filter((issue: FieldValidatorIssue): boolean => {
+        if (!validatorEnabled) return false;
+        if (isIssueDenied('price', issue.patternId)) return false;
+        if (
+          issue.postAcceptBehavior === 'stop_after_accept' &&
+          isIssueAccepted('price', issue.patternId)
+        ) {
+          return false;
+        }
+        const debounceMs = normalizeValidationDebounceMs(issue.debounceMs);
+        const changedAt = fieldEditTimestampsRef.current.price;
+        if (debounceMs <= 0 || changedAt <= 0) return true;
+        return now - changedAt >= debounceMs;
+      }),
+      stock: (fieldIssues['stock'] ?? []).filter((issue: FieldValidatorIssue): boolean => {
+        if (!validatorEnabled) return false;
+        if (isIssueDenied('stock', issue.patternId)) return false;
+        if (
+          issue.postAcceptBehavior === 'stop_after_accept' &&
+          isIssueAccepted('stock', issue.patternId)
+        ) {
+          return false;
+        }
+        const debounceMs = normalizeValidationDebounceMs(issue.debounceMs);
+        const changedAt = fieldEditTimestampsRef.current.stock;
+        if (debounceMs <= 0 || changedAt <= 0) return true;
+        return now - changedAt >= debounceMs;
+      }),
+    };
+  }, [debounceTick, fieldIssues, isIssueAccepted, isIssueDenied, validatorEnabled]);
+  const priceIssueList = validatorEnabled ? visibleFieldIssues.price : [];
   const priceIssue = priceIssueList[0];
-  const stockIssueList = validatorEnabled ? fieldIssues['stock'] ?? [] : [];
+  const stockIssueList = validatorEnabled ? visibleFieldIssues.stock : [];
   const stockIssue = stockIssueList[0];
   const applyNumericIssueReplacement = (
     field: 'price' | 'stock',
@@ -180,9 +412,27 @@ export default function ProductFormOther(): React.JSX.Element {
                   value={String(allValues['price'] ?? '')}
                   onReplace={
                     issue.replacementValue
-                      ? (): void => applyNumericIssueReplacement('price', issue)
+                      ? (): void => {
+                        acceptIssue({
+                          fieldName: 'price',
+                          patternId: issue.patternId,
+                          postAcceptBehavior: issue.postAcceptBehavior,
+                          message: issue.message,
+                          replacementValue: issue.replacementValue,
+                        });
+                        applyNumericIssueReplacement('price', issue);
+                      }
                       : undefined
                   }
+                  onDeny={() => {
+                    denyIssue({
+                      fieldName: 'price',
+                      patternId: issue.patternId,
+                      message: issue.message,
+                      replacementValue: issue.replacementValue,
+                    });
+                  }}
+                  denyLabel={getDenyActionLabel(issue.patternId)}
                 />
               ))}
           </FormField>
@@ -293,9 +543,27 @@ export default function ProductFormOther(): React.JSX.Element {
                 value={String(allValues['stock'] ?? '')}
                 onReplace={
                   issue.replacementValue
-                    ? (): void => applyNumericIssueReplacement('stock', issue)
+                    ? (): void => {
+                      acceptIssue({
+                        fieldName: 'stock',
+                        patternId: issue.patternId,
+                        postAcceptBehavior: issue.postAcceptBehavior,
+                        message: issue.message,
+                        replacementValue: issue.replacementValue,
+                      });
+                      applyNumericIssueReplacement('stock', issue);
+                    }
                     : undefined
                 }
+                onDeny={() => {
+                  denyIssue({
+                    fieldName: 'stock',
+                    patternId: issue.patternId,
+                    message: issue.message,
+                    replacementValue: issue.replacementValue,
+                  });
+                }}
+                denyLabel={getDenyActionLabel(issue.patternId)}
               />
             ))}
         </FormField>

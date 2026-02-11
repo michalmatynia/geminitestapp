@@ -153,6 +153,18 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
   try {
     const errorInfo = input.error ? normalizeErrorInfo(input.error) : null;
     const requestInfo = extractRequestInfo(input.request);
+
+    // Auto-classify error if it exists and category is missing
+    let category = input.context?.['category'];
+    if (!category && input.error) {
+      try {
+        const { classifyError } = await import('../utils/error-classifier');
+        category = classifyError(input.error);
+      } catch {
+        // Fallback if import fails
+      }
+    }
+
     const fingerprint =
       input.level === 'error' || input.level === 'warn' || errorInfo
         ? buildErrorFingerprint({
@@ -165,6 +177,7 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
         : null;
     const context = {
       ...(input.context ?? {}),
+      ...(category ? { category } : {}),
       ...(errorInfo ? { error: errorInfo } : {}),
       ...(fingerprint ? { fingerprint } : {}),
     };

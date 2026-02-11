@@ -20,9 +20,31 @@ const formatMessage = (level: LogLevel, message: string, _context?: Record<strin
 export const logger = {
   info: (message: string, context?: Record<string, unknown>): void => {
     console.info(formatMessage('info', message, context), context || '');
+    if (typeof window === 'undefined') {
+      void (async (): Promise<void> => {
+        try {
+          const { ErrorSystem } = await import('@/features/observability/services/error-system');
+          await ErrorSystem.logInfo(message, {
+            service: (context?.['service'] as string) || 'shared-logger',
+            ...context,
+          });
+        } catch { /* ignore */ }
+      })();
+    }
   },
   warn: (message: string, context?: Record<string, unknown>): void => {
     console.warn(formatMessage('warn', message, context), context || '');
+    if (typeof window === 'undefined') {
+      void (async (): Promise<void> => {
+        try {
+          const { ErrorSystem } = await import('@/features/observability/services/error-system');
+          await ErrorSystem.logWarning(message, {
+            service: (context?.['service'] as string) || 'shared-logger',
+            ...context,
+          });
+        } catch { /* ignore */ }
+      })();
+    }
   },
   error: (message: string, error?: unknown, context?: Record<string, unknown>): void => {
     const combinedContext = { 
@@ -42,9 +64,34 @@ export const logger = {
           // Fallback if logClientError fails or import fails
         }
       })();
+    } else {
+      // Server-side integration
+      void (async (): Promise<void> => {
+        try {
+          const { ErrorSystem } = await import('@/features/observability/services/error-system');
+          await ErrorSystem.captureException(error || message, {
+            service: (context?.['service'] as string) || 'shared-logger',
+            message,
+            ...context,
+          });
+        } catch {
+          // Fallback
+        }
+      })();
     }
   },
   log: (message: string, context?: Record<string, unknown>): void => {
     console.log(formatMessage('log', message, context), context || '');
+    if (typeof window === 'undefined') {
+      void (async (): Promise<void> => {
+        try {
+          const { ErrorSystem } = await import('@/features/observability/services/error-system');
+          await ErrorSystem.logInfo(message, {
+            service: (context?.['service'] as string) || 'shared-logger',
+            ...context,
+          });
+        } catch { /* ignore */ }
+      })();
+    }
   },
 };

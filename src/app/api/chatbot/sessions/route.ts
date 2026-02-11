@@ -6,8 +6,9 @@ import { z } from 'zod';
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
 import { logSystemEvent } from '@/features/observability/server';
 import { parseJsonBody } from '@/features/products/server';
-import { notFoundError } from '@/shared/errors/app-error';
+import { notFoundError, validationError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
+import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 import type { ChatSession, UpdateSessionInput } from '@/shared/types/domain/chatbot';
 
@@ -55,7 +56,13 @@ const parseBody = async <T>(
     if (parsed.success) {
       return { ok: true, data: parsed.data };
     }
-    return { ok: false, response: NextResponse.json({ error: 'Invalid payload' }, { status: 400 }) };
+    return {
+      ok: false,
+      response: await createErrorResponse(
+        validationError('Invalid payload', { issues: parsed.error.flatten() }),
+        { request: req, source: logPrefix }
+      ),
+    };
   }
   return parseJsonBody(req, schema, { logPrefix });
 };

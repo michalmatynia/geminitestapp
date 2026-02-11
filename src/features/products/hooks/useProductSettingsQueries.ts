@@ -1,7 +1,11 @@
 import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { ProductValidationPattern } from '@/shared/types/domain/products';
+import type {
+  ProductValidationPattern,
+  ProductValidatorConfig,
+  ProductValidatorSettings,
+} from '@/shared/types/domain/products';
 
 import * as api from '../api/settings';
 import { PriceGroup, Catalog, CatalogRecord, ProductCategory, ProductTag, ProductParameter, ProductCategoryWithChildren } from '../types';
@@ -46,7 +50,7 @@ export function useParameters(catalogId: string | null): UseQueryResult<ProductP
   });
 }
 
-export function useValidatorSettings(): UseQueryResult<{ enabledByDefault: boolean }, Error> {
+export function useValidatorSettings(): UseQueryResult<ProductValidatorSettings, Error> {
   return useQuery({
     queryKey: productSettingsKeys.validatorSettings(),
     queryFn: api.getValidatorSettings,
@@ -60,10 +64,7 @@ export function useValidationPatterns(): UseQueryResult<ProductValidationPattern
   });
 }
 
-export function useProductValidatorConfig(includeDisabled: boolean = false): UseQueryResult<{
-  enabledByDefault: boolean;
-  patterns: ProductValidationPattern[];
-}, Error> {
+export function useProductValidatorConfig(includeDisabled: boolean = false): UseQueryResult<ProductValidatorConfig, Error> {
   return useQuery({
     queryKey: productSettingsKeys.validatorConfig(includeDisabled),
     queryFn: () => api.getProductValidatorConfig(includeDisabled),
@@ -213,7 +214,7 @@ export function useDeleteParameterMutation(): UseMutationResult<void, Error, { i
   });
 }
 
-export function useUpdateValidatorSettingsMutation(): UseMutationResult<{ enabledByDefault: boolean }, Error, { enabledByDefault: boolean }> {
+export function useUpdateValidatorSettingsMutation(): UseMutationResult<ProductValidatorSettings, Error, Partial<ProductValidatorSettings>> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: api.updateValidatorSettings,
@@ -225,7 +226,7 @@ export function useUpdateValidatorSettingsMutation(): UseMutationResult<{ enable
   });
 }
 
-export function useCreateValidationPatternMutation(): UseMutationResult<ProductValidationPattern, Error, Omit<ProductValidationPattern, 'id' | 'createdAt' | 'updatedAt'>> {
+export function useCreateValidationPatternMutation(): UseMutationResult<ProductValidationPattern, Error, api.CreateValidationPatternPayload> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: api.createValidationPattern,
@@ -237,7 +238,7 @@ export function useCreateValidationPatternMutation(): UseMutationResult<ProductV
   });
 }
 
-export function useUpdateValidationPatternMutation(): UseMutationResult<ProductValidationPattern, Error, { id: string; data: Partial<Omit<ProductValidationPattern, 'id' | 'createdAt' | 'updatedAt'>> }> {
+export function useUpdateValidationPatternMutation(): UseMutationResult<ProductValidationPattern, Error, { id: string; data: api.UpdateValidationPatternPayload }> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }) => api.updateValidationPattern(id, data),

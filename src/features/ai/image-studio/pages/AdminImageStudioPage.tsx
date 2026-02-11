@@ -22,6 +22,7 @@ import {
 
 import { AdminImageStudioSettingsPage } from './AdminImageStudioSettingsPage';
 import { AdminImageStudioValidationPatternsPage } from './AdminImageStudioValidationPatternsPage';
+import { ImageStudioDocsContent } from '../components/ImageStudioDocsContent';
 import { StudioMainContent } from '../components/StudioMainContent';
 import { StudioModals } from '../components/StudioModals';
 import { StudioProjectsList } from '../components/StudioProjectsList';
@@ -29,7 +30,7 @@ import { ImageStudioProvider } from '../context/ImageStudioProvider';
 import { useProjectsActions, useProjectsState } from '../context/ProjectsContext';
 import { useSettingsActions } from '../context/SettingsContext';
 
-type StudioTab = 'studio' | 'projects' | 'settings' | 'validation';
+type StudioTab = 'studio' | 'projects' | 'settings' | 'validation' | 'docs';
 
 function AdminImageStudioPageContent(): React.JSX.Element {
   const { toast } = useToast();
@@ -48,7 +49,9 @@ function AdminImageStudioPageContent(): React.JSX.Element {
   useEffect(() => {
     const rawTab = searchParams?.get('tab');
     const nextTab: StudioTab =
-      rawTab === 'projects' || rawTab === 'settings' || rawTab === 'validation' ? rawTab : 'studio';
+      rawTab === 'projects' || rawTab === 'settings' || rawTab === 'validation' || rawTab === 'docs'
+        ? rawTab
+        : 'studio';
     if (nextTab !== activeTab) {
       setActiveTab(nextTab);
     }
@@ -56,7 +59,9 @@ function AdminImageStudioPageContent(): React.JSX.Element {
 
   const handleTabChange = useCallback((value: string): void => {
     const nextTab: StudioTab =
-      value === 'projects' || value === 'settings' || value === 'validation' ? value : 'studio';
+      value === 'projects' || value === 'settings' || value === 'validation' || value === 'docs'
+        ? value
+        : 'studio';
     setActiveTab(nextTab);
 
     const params = new URLSearchParams(searchParams?.toString() ?? '');
@@ -97,6 +102,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
                   <TabsTrigger value='projects'>Projects</TabsTrigger>
                   <TabsTrigger value='settings'>Settings</TabsTrigger>
                   <TabsTrigger value='validation'>Validation</TabsTrigger>
+                  <TabsTrigger value='docs'>Docs</TabsTrigger>
                 </TabsList>
                 <div className='ml-auto flex w-full max-w-[620px] items-center gap-2'>
                   <Input
@@ -169,6 +175,10 @@ function AdminImageStudioPageContent(): React.JSX.Element {
                 embedded
                 onSaved={handleRefreshSettings}
               />
+            </TabsContent>
+
+            <TabsContent value='docs' className='h-full m-0 overflow-y-auto p-4'>
+              <ImageStudioDocsContent />
             </TabsContent>
           </div>
         </Tabs>

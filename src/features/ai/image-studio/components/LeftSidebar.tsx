@@ -1,23 +1,33 @@
 'use client';
 
 import { FolderPlus, ImageOff, ImagePlus, Plus, Settings2 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 
+import {
+  DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
+  PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
+} from '@/features/products/constants';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   Button,
   FormModal,
   Input,
   Label,
   SectionPanel,
+  Tooltip,
   useToast,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { ImageStudioSingleSlotManager } from './ImageStudioSingleSlotManager';
+import {
+  ImageStudioSingleSlotManager,
+  type ImageStudioSingleSlotManagerHandle,
+} from './ImageStudioSingleSlotManager';
 import { SlotTree } from './SlotTree';
 import { useMaskingActions } from '../context/MaskingContext';
 import { useProjectsState } from '../context/ProjectsContext';
 import { useSlotsState, useSlotsActions } from '../context/SlotsContext';
+import { getImageStudioSlotImageSrc } from '../utils/image-src';
 
 interface LeftSidebarProps {
   isFocusMode: boolean;
@@ -25,11 +35,14 @@ interface LeftSidebarProps {
 
 export function LeftSidebar({ isFocusMode }: LeftSidebarProps): React.JSX.Element {
   const { projectId } = useProjectsState();
-  const { slots, selectedSlot, selectedFolder } = useSlotsState();
+  const settingsStore = useSettingsStore();
+  const { slots, selectedSlot, selectedFolder, workingSlot } = useSlotsState();
   const {
     setSlotCreateOpen,
     setSlotInlineEditOpen,
     setSelectedSlotId,
+    setWorkingSlotId,
+    setPreviewMode,
     createFolderMutation,
   } = useSlotsActions();
   const {
@@ -41,26 +54,47 @@ export function LeftSidebar({ isFocusMode }: LeftSidebarProps): React.JSX.Elemen
   const { toast } = useToast();
   const [folderCreateOpen, setFolderCreateOpen] = useState(false);
   const [folderDraft, setFolderDraft] = useState('');
+  const singleSlotManagerRef = useRef<ImageStudioSingleSlotManagerHandle | null>(null);
+  const productImagesExternalBaseUrl =
+    settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
+    DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
 
   const handleLoadToCanvas = (): void => {
-    if (selectedSlot?.id) {
-      setSelectedSlotId(selectedSlot.id);
-      return;
-    }
-    const normalizedFolder = selectedFolder.trim().replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
-    const slotFromSelectedFolder = normalizedFolder
-      ? slots.find((slot) => (slot.folderPath ?? '').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '') === normalizedFolder) ?? null
-      : null;
-    const fallbackSlot = slotFromSelectedFolder ?? slots[0] ?? null;
-    if (fallbackSlot) {
-      setSelectedSlotId(fallbackSlot.id);
-      return;
-    }
-    setSlotCreateOpen(true);
+    void (async (): Promise<void> => {
+      const consumedTemporaryUpload =
+        (await singleSlotManagerRef.current?.consumeTemporaryObjectUpload({ loadToCanvas: true })) ?? false;
+      if (consumedTemporaryUpload) return;
+
+      if (selectedSlot?.id) {
+        setPreviewMode('image');
+        setWorkingSlotId(selectedSlot.id);
+        if (!getImageStudioSlotImageSrc(selectedSlot, productImagesExternalBaseUrl)) {
+          toast('Selected card has no image source yet.', { variant: 'info' });
+        }
+        return;
+      }
+      const normalizedFolder = selectedFolder.trim().replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+      const slotFromSelectedFolder = normalizedFolder
+        ? slots.find((slot) => (slot.folderPath ?? '').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '') === normalizedFolder) ?? null
+        : null;
+      const slotWithImage =
+        slots.find((slot) => Boolean(getImageStudioSlotImageSrc(slot, productImagesExternalBaseUrl))) ?? null;
+      const fallbackSlot = slotFromSelectedFolder ?? slotWithImage ?? slots[0] ?? null;
+      if (fallbackSlot) {
+        setSelectedSlotId(fallbackSlot.id);
+        setPreviewMode('image');
+        setWorkingSlotId(fallbackSlot.id);
+        if (!getImageStudioSlotImageSrc(fallbackSlot, productImagesExternalBaseUrl)) {
+          toast('Selected card has no image source yet.', { variant: 'info' });
+        }
+        return;
+      }
+      setSlotCreateOpen(true);
+    })();
   };
 
   const handleDeCanvas = (): void => {
-    setSelectedSlotId(null);
+    setWorkingSlotId(null);
     setMaskShapes([]);
     setActiveMaskId(null);
     setSelectedPointIndex(null);
@@ -90,70 +124,92 @@ export function LeftSidebar({ isFocusMode }: LeftSidebarProps): React.JSX.Elemen
         <div className='flex min-h-0 flex-1 flex-col gap-3 p-4'>
           <div className='rounded border border-border/60 bg-card/60 px-2 py-1.5 text-[11px] text-gray-400'>
             {selectedSlot
-              ? `Active slot: ${selectedSlot.name || selectedSlot.id}`
-              : 'No active slot selected. Pick a slot file from the tree.'}
+              ? `Active card: ${selectedSlot.name || selectedSlot.id}`
+              : 'No active card selected. Pick a card from the tree.'}
           </div>
 
-          <ImageStudioSingleSlotManager />
+          <ImageStudioSingleSlotManager ref={singleSlotManagerRef} />
 
-          <div className='flex items-center justify-end gap-2'>
-            <Button
-              type='button'
-              size='icon'
-              variant='outline'
-              title='Load to canvas'
-              onClick={handleLoadToCanvas}
-              disabled={!projectId}
-            >
-              <ImagePlus className='size-4' />
-            </Button>
-            <Button
-              type='button'
-              size='icon'
-              variant='outline'
-              title='De-canvas'
-              onClick={handleDeCanvas}
-              disabled={!selectedSlot}
-            >
-              <ImageOff className='size-4' />
-            </Button>
-            <Button
-              type='button'
-              size='icon'
-              variant='outline'
-              title='New slot'
-              onClick={() => setSlotCreateOpen(true)}
-              disabled={!projectId}
-            >
-              <Plus className='size-4' />
-            </Button>
-            <Button
-              type='button'
-              size='icon'
-              variant='outline'
-              title='New folder'
-              onClick={() => {
-                setFolderDraft(selectedFolder || '');
-                setFolderCreateOpen(true);
-              }}
-              disabled={!projectId || createFolderMutation.isPending}
-            >
-              <FolderPlus className='size-4' />
-            </Button>
-            {selectedSlot ? (
+          <div className='flex items-center justify-end gap-2' data-preserve-slot-selection='true'>
+            <Tooltip content='Load to canvas'>
               <Button
                 type='button'
                 size='icon'
                 variant='outline'
-                title='Edit slot'
-                onClick={() => setSlotInlineEditOpen(true)}
+                title='Load to canvas'
+                onClick={handleLoadToCanvas}
+                disabled={!projectId}
+                aria-label='Load to canvas'
               >
-                <Settings2 className='size-4' />
+                <ImagePlus className='size-4' />
               </Button>
+            </Tooltip>
+            <Tooltip content='De-canvas'>
+              <Button
+                type='button'
+                size='icon'
+                variant='outline'
+                title='De-canvas'
+                onClick={handleDeCanvas}
+                disabled={!workingSlot}
+                aria-label='De-canvas'
+              >
+                <ImageOff className='size-4' />
+              </Button>
+            </Tooltip>
+            <Tooltip content='New card'>
+              <Button
+                type='button'
+                size='icon'
+                variant='outline'
+                title='New card'
+                onClick={() => {
+                  void (async (): Promise<void> => {
+                    const consumedTemporaryUpload =
+                      (await singleSlotManagerRef.current?.consumeTemporaryObjectUpload({ loadToCanvas: false })) ?? false;
+                    if (consumedTemporaryUpload) return;
+                    setSlotCreateOpen(true);
+                  })();
+                }}
+                disabled={!projectId}
+                aria-label='New card'
+              >
+                <Plus className='size-4' />
+              </Button>
+            </Tooltip>
+            <Tooltip content='New folder'>
+              <Button
+                type='button'
+                size='icon'
+                variant='outline'
+                title='New folder'
+                onClick={() => {
+                  setFolderDraft(selectedFolder || '');
+                  setFolderCreateOpen(true);
+                }}
+                disabled={!projectId || createFolderMutation.isPending}
+                aria-label='New folder'
+              >
+                <FolderPlus className='size-4' />
+              </Button>
+            </Tooltip>
+            {selectedSlot ? (
+              <Tooltip content='Edit card'>
+                <Button
+                  type='button'
+                  size='icon'
+                  variant='outline'
+                  title='Edit card'
+                  onClick={() => setSlotInlineEditOpen(true)}
+                  aria-label='Edit card'
+                >
+                  <Settings2 className='size-4' />
+                </Button>
+              </Tooltip>
             ) : null}
           </div>
 
-          <div className='flex-1 overflow-hidden'>
+          <div className='h-1/2 min-h-[220px] overflow-hidden'>
             <SlotTree key={projectId} />
           </div>
         </div>

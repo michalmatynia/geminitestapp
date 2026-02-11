@@ -75,12 +75,12 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
 
   const handleRunGeneration = useCallback(() => {
     if (!projectId || !workingSlot) {
-      toast('Select a project and choose a slot file to generate.', { variant: 'info' });
+      toast('Select a project and choose a card image to generate.', { variant: 'info' });
       return;
     }
     const filepath = workingSlot.imageFile?.filepath;
     if (!filepath) {
-      toast('Working slot has no image file.', { variant: 'info' });
+      toast('Working card has no image file.', { variant: 'info' });
       return;
     }
     if (!promptText.trim()) {

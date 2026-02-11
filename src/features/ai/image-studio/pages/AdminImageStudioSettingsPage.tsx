@@ -12,6 +12,7 @@ import {
   parsePromptValidationRules,
 } from '@/features/prompt-engine/settings';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   Button,
@@ -38,6 +39,33 @@ import {
   type ImageStudioSettings,
 } from '../utils/studio-settings';
 
+type CardBackfillProjectResult = {
+  projectId: string;
+  scannedSlots: number;
+  scannedLinks: number;
+  updatedCards: number;
+  slotLinkBackfilled: number;
+  maskFolderBackfilled: number;
+  inferredGenerationBackfilled: number;
+  errors: string[];
+};
+
+type CardBackfillResult = {
+  dryRun: boolean;
+  includeHeuristicGenerationLinks: boolean;
+  projectCount: number;
+  scannedSlots: number;
+  scannedLinks: number;
+  updatedCards: number;
+  slotLinkBackfilled: number;
+  maskFolderBackfilled: number;
+  inferredGenerationBackfilled: number;
+  projects: CardBackfillProjectResult[];
+};
+
+type CardBackfillResponse = {
+  result: CardBackfillResult;
+};
 
 export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: boolean | undefined } = {}): React.JSX.Element {
   const { toast } = useToast();
@@ -59,6 +87,11 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
     JSON.stringify(defaultPromptEngineSettings.promptValidation.rules, null, 2)
   );
   const [promptValidationRulesError, setPromptValidationRulesError] = useState<string | null>(null);
+  const [backfillProjectId, setBackfillProjectId] = useState<string>('');
+  const [backfillDryRun, setBackfillDryRun] = useState<boolean>(true);
+  const [backfillIncludeHeuristicGenerationLinks, setBackfillIncludeHeuristicGenerationLinks] = useState<boolean>(true);
+  const [backfillRunning, setBackfillRunning] = useState<boolean>(false);
+  const [backfillResultText, setBackfillResultText] = useState<string>('');
 
   // Derived state for settings initialization
   const [prevSettingsData, setPrevSettingsData] = useState<unknown>(null);
@@ -220,6 +253,65 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
     setPromptValidationRulesText(JSON.stringify(defaultPromptEngineSettings.promptValidation.rules, null, 2));
     setPromptValidationRulesError(null);
   }, []);
+
+  const runCardBackfill = useCallback(async (): Promise<void> => {
+    setBackfillRunning(true);
+    setBackfillResultText('');
+
+    try {
+      const response = await api.post<CardBackfillResponse>('/api/image-studio/cards/backfill', {
+        projectId: backfillProjectId.trim() || null,
+        dryRun: backfillDryRun,
+        includeHeuristicGenerationLinks: backfillIncludeHeuristicGenerationLinks,
+      });
+
+      const result = response.result;
+      const summary = [
+        `Mode: ${result.dryRun ? 'dry-run' : 'write'}`,
+        `Projects: ${result.projectCount}`,
+        `Scanned slots: ${result.scannedSlots}`,
+        `Scanned links: ${result.scannedLinks}`,
+        `Updated cards: ${result.updatedCards}`,
+        `Slot-link backfilled: ${result.slotLinkBackfilled}`,
+        `Mask-folder backfilled: ${result.maskFolderBackfilled}`,
+        `Generation inferred: ${result.inferredGenerationBackfilled}`,
+      ].join('\n');
+
+      const projectErrorCount = result.projects.reduce((count: number, project: CardBackfillProjectResult) => {
+        return count + (project.errors.length > 0 ? 1 : 0);
+      }, 0);
+
+      if (projectErrorCount > 0) {
+        toast(`Backfill finished with errors in ${projectErrorCount} project(s).`, { variant: 'error' });
+      } else {
+        toast(
+          result.dryRun
+            ? 'Backfill dry-run completed.'
+            : `Backfill completed. Updated ${result.updatedCards} card(s).`,
+          { variant: 'success' }
+        );
+      }
+
+      const perProject = result.projects
+        .map((project: CardBackfillProjectResult) => {
+          const errors = project.errors.length > 0 ? `\n  errors: ${project.errors.join(' | ')}` : '';
+          return `- ${project.projectId}: updated=${project.updatedCards}, link=${project.slotLinkBackfilled}, mask=${project.maskFolderBackfilled}, inferred=${project.inferredGenerationBackfilled}${errors}`;
+        })
+        .join('\n');
+
+      setBackfillResultText(`${summary}\n\nPer project:\n${perProject || '- none'}`);
+    } catch (error) {
+      logClientError(error, { context: { source: 'AdminImageStudioSettingsPage', action: 'runCardBackfill' } });
+      toast(error instanceof Error ? error.message : 'Failed to run card backfill.', { variant: 'error' });
+    } finally {
+      setBackfillRunning(false);
+    }
+  }, [
+    backfillDryRun,
+    backfillIncludeHeuristicGenerationLinks,
+    backfillProjectId,
+    toast,
+  ]);
 
   const studioSettingsRaw = heavyMap.get(IMAGE_STUDIO_SETTINGS_KEY);
 
@@ -959,6 +1051,72 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
               ) : null}
             </div>
           </div>
+        </div>
+      </SectionPanel>
+
+      <SectionPanel variant='subtle'>
+        <div className='space-y-3'>
+          <div className='flex flex-wrap items-center justify-between gap-2'>
+            <div className='text-xs text-gray-300'>Card Metadata Backfill</div>
+            <Button
+              type='button'
+              size='sm'
+              onClick={() => { void runCardBackfill(); }}
+              disabled={backfillRunning}
+            >
+              {backfillRunning ? 'Running...' : backfillDryRun ? 'Run Dry-Run' : 'Run Backfill'}
+            </Button>
+          </div>
+
+          <div className='text-[11px] text-gray-500'>
+            One-time migration utility for older Image Studio data. It backfills card linkage metadata from slot links,
+            mask folder conventions, and optional generation heuristics.
+          </div>
+
+          <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
+            <div className='space-y-1'>
+              <Label className='text-xs text-gray-400'>Project ID (optional)</Label>
+              <Input
+                value={backfillProjectId}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setBackfillProjectId(event.target.value)}
+                className='h-8'
+                placeholder='Leave empty to process all projects'
+              />
+            </div>
+            <div className='space-y-1'>
+              <Label className='text-xs text-gray-400'>Execution Mode</Label>
+              <Select
+                value={backfillDryRun ? 'dry' : 'write'}
+                onValueChange={(value: string) => setBackfillDryRun(value !== 'write')}
+              >
+                <SelectTrigger className='h-8'>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='dry'>Dry-run (no writes)</SelectItem>
+                  <SelectItem value='write'>Write updates</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <label className='flex items-center gap-2 rounded border border-slate-700/60 bg-slate-900/40 px-3 py-2 text-[11px] text-slate-200'>
+            <input
+              type='checkbox'
+              className='h-3.5 w-3.5'
+              checked={backfillIncludeHeuristicGenerationLinks}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setBackfillIncludeHeuristicGenerationLinks(event.target.checked)
+              }
+            />
+            Include generation heuristic linking for legacy output cards
+          </label>
+
+          {backfillResultText ? (
+            <pre className='max-h-64 overflow-auto rounded border border-border/60 bg-black/30 p-2 font-mono text-[11px] text-gray-200 whitespace-pre-wrap'>
+              {backfillResultText}
+            </pre>
+          ) : null}
         </div>
       </SectionPanel>
     </div>

@@ -146,6 +146,16 @@ export async function countImageStudioSlots(projectId: string): Promise<number> 
   return db.collection<ImageStudioSlotDocument>(COLLECTION).countDocuments({ projectId });
 }
 
+export async function listImageStudioSlotProjectIds(): Promise<string[]> {
+  await ensureIndexesOnce();
+  const db = await getMongoDb();
+  const values = await db.collection<ImageStudioSlotDocument>(COLLECTION).distinct('projectId');
+  return values
+    .filter((value: unknown): value is string => typeof value === 'string' && value.trim().length > 0)
+    .map((value: string) => value.trim())
+    .sort((a: string, b: string) => a.localeCompare(b));
+}
+
 export async function getImageStudioSlotById(slotId: string): Promise<ImageStudioSlotRecord | null> {
   await ensureIndexesOnce();
   const db = await getMongoDb();

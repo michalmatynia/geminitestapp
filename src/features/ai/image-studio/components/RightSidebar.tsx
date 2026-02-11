@@ -11,6 +11,7 @@ import {
   parsePromptEngineSettings,
   PROMPT_ENGINE_SETTINGS_KEY,
 } from '@/features/prompt-engine/settings';
+import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   Button,
@@ -23,7 +24,6 @@ import {
 import { cn } from '@/shared/utils';
 
 import { GenerationHistoryPanel } from './GenerationHistoryPanel';
-import { GenerationToolbar } from './GenerationToolbar';
 import { MaskControlsPanel } from './MaskControlsPanel';
 import { OutputImageGrid, type OutputImage } from './OutputImageGrid';
 import { ParamRow } from './ParamRow';
@@ -34,25 +34,38 @@ import { useProjectsState } from '../context/ProjectsContext';
 import { usePromptActions, usePromptState } from '../context/PromptContext';
 import { useSettingsActions } from '../context/SettingsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
+import {
+  IMAGE_STUDIO_ACTIVE_PROJECT_KEY,
+  type ImageStudioProjectSession,
+  getImageStudioProjectSessionKey,
+  serializeImageStudioActiveProject,
+  serializeImageStudioProjectSession,
+} from '../utils/project-session';
 
 interface RightSidebarProps {
   isFocusMode: boolean;
   maskPreviewEnabled: boolean;
-  onMaskPreviewChange: (enabled: boolean) => void;
 }
 
 export function RightSidebar({
   isFocusMode,
   maskPreviewEnabled,
-  onMaskPreviewChange,
 }: RightSidebarProps): React.JSX.Element {
   const { projectId } = useProjectsState();
-  const { compositeAssetIds, compositeAssetOptions } = useSlotsState();
+  const {
+    compositeAssetIds,
+    compositeAssetOptions,
+    selectedSlotId,
+    workingSlotId,
+    selectedFolder,
+    previewMode,
+  } = useSlotsState();
   const { setCompositeAssetIds, createSlots } = useSlotsActions();
-  const { promptText, paramsState } = usePromptState();
+  const { promptText, paramsState, paramSpecs, paramUiOverrides } = usePromptState();
   const { setPromptText, setExtractReviewOpen, setExtractDraftPrompt } = usePromptActions();
   const { runOutputs, generationHistory } = useGenerationState();
   const { saveStudioSettings } = useSettingsActions();
+  const updateSettingsBulk = useUpdateSettingsBulk();
 
   const { toast } = useToast();
   const settingsStore = useSettingsStore();
@@ -67,6 +80,14 @@ export function RightSidebar({
     () => (paramsState ? flattenParams(paramsState).filter((leaf) => Boolean(leaf.path)) : []),
     [paramsState]
   );
+
+  const cloneSettingValue = <T,>(value: T): T => {
+    try {
+      return JSON.parse(JSON.stringify(value)) as T;
+    } catch {
+      return value;
+    }
+  };
 
   const autoFormatPrompt = (): void => {
     if (!promptText.trim()) {
@@ -118,9 +139,42 @@ export function RightSidebar({
       toast('Select a project first.', { variant: 'info' });
       return;
     }
+    const projectSessionKey = getImageStudioProjectSessionKey(projectId);
+    if (!projectSessionKey) {
+      toast('Invalid project id.', { variant: 'error' });
+      return;
+    }
+
+    const projectSession: ImageStudioProjectSession = {
+      version: 1,
+      projectId: projectId.trim(),
+      savedAt: new Date().toISOString(),
+      selectedFolder,
+      selectedSlotId,
+      workingSlotId,
+      compositeAssetIds: cloneSettingValue(compositeAssetIds),
+      previewMode,
+      promptText,
+      paramsState: cloneSettingValue(paramsState),
+      paramSpecs: cloneSettingValue((paramSpecs ?? null) as Record<string, unknown> | null),
+      paramUiOverrides: cloneSettingValue((paramUiOverrides ?? {}) as Record<string, unknown>),
+    };
+
     if (projectSaveBusy) return;
     setProjectSaveBusy(true);
-    void saveStudioSettings()
+    void Promise.all([
+      saveStudioSettings({ silent: true }),
+      updateSettingsBulk.mutateAsync([
+        {
+          key: IMAGE_STUDIO_ACTIVE_PROJECT_KEY,
+          value: serializeImageStudioActiveProject(projectId),
+        },
+        {
+          key: projectSessionKey,
+          value: serializeImageStudioProjectSession(projectSession),
+        },
+      ]),
+    ])
       .then(() => {
         toast(`Project "${projectId}" saved.`, { variant: 'success' });
       })
@@ -201,20 +255,15 @@ export function RightSidebar({
             options={compositeAssetOptions}
             selected={compositeAssetIds}
             onChange={setCompositeAssetIds}
-            placeholder='Select additional reference slots'
-            searchPlaceholder='Search slots...'
-            emptyMessage='No slot files available.'
+            placeholder='Select additional reference cards'
+            searchPlaceholder='Search cards...'
+            emptyMessage='No cards available.'
             className='w-full'
           />
           <div className='text-[10px] text-gray-500'>
             Selected references are sent with the base image for multi-image generation.
           </div>
         </StudioCard>
-
-        <GenerationToolbar
-          maskPreviewEnabled={maskPreviewEnabled}
-          onMaskPreviewChange={onMaskPreviewChange}
-        />
 
         <MaskControlsPanel maskPreviewEnabled={maskPreviewEnabled} />
 
@@ -224,9 +273,24 @@ export function RightSidebar({
             <OutputImageGrid
               outputs={runOutputs}
               onSaveAsSlot={projectId ? (output: OutputImage) => {
-                createSlots([{ name: output.filename ?? 'Generated', imageFileId: output.id }])
-                  .then(() => toast('Saved to new slot.', { variant: 'success' }))
-                  .catch(() => toast('Failed to save slot.', { variant: 'error' }));
+                createSlots([
+                  {
+                    name: output.filename ?? 'Generated',
+                    imageFileId: output.id,
+                    metadata: workingSlotId
+                      ? {
+                        role: 'generation',
+                        sourceSlotId: workingSlotId,
+                        relationType: 'generation:output',
+                        generationFileId: output.id,
+                      }
+                      : {
+                        role: 'generation',
+                      },
+                  },
+                ])
+                  .then(() => toast('Saved to card history.', { variant: 'success' }))
+                  .catch(() => toast('Failed to save card history item.', { variant: 'error' }));
               } : undefined}
             />
           </div>

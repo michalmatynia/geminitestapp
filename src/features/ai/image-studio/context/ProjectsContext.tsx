@@ -1,6 +1,5 @@
 'use client';
 
-import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 import {
@@ -8,6 +7,11 @@ import {
   useDeleteStudioProject,
 } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
+import { useSettingsMap } from '@/shared/hooks/use-settings';
+
+import { IMAGE_STUDIO_ACTIVE_PROJECT_KEY, parseImageStudioActiveProject } from '../utils/project-session';
+
+import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -37,16 +41,33 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
   const [projectSearch, setProjectSearch] = useState<string>('');
 
   const projectsQuery = useStudioProjects();
+  const heavySettings = useSettingsMap({ scope: 'heavy' });
   const createProjectMutation = useCreateStudioProject();
   const deleteProjectMutation = useDeleteStudioProject();
+  const heavyMap = heavySettings.data ?? new Map<string, string>();
 
-  // Auto-select first project when none is selected and data is available
+  const activeProjectId = useMemo(
+    () => parseImageStudioActiveProject(heavyMap.get(IMAGE_STUDIO_ACTIVE_PROJECT_KEY)),
+    [heavyMap]
+  );
+
+  // Auto-select active project when available, otherwise fall back to first project.
   useEffect(() => {
-    const first = projectsQuery.data?.[0];
-    if (!projectId && first) {
-      setProjectId(first);
+    const availableProjects = projectsQuery.data ?? [];
+    if (availableProjects.length === 0) {
+      if (projectId) setProjectId('');
+      return;
     }
-  }, [projectId, projectsQuery.data]);
+    if (projectId && availableProjects.includes(projectId)) return;
+    if (heavySettings.isLoading) return;
+
+    const preferred = activeProjectId && availableProjects.includes(activeProjectId)
+      ? activeProjectId
+      : availableProjects[0] ?? '';
+    if (preferred && preferred !== projectId) {
+      setProjectId(preferred);
+    }
+  }, [projectId, projectsQuery.data, activeProjectId, heavySettings.isLoading]);
 
   const handleDeleteProject = async (id: string) => {
     if (!window.confirm(`Delete project "${id}" and all its slots?`)) return;

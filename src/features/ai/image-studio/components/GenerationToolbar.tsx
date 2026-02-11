@@ -5,7 +5,12 @@ import { Loader2, Play } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import { studioKeys } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
+import {
+  DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
+  PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
+} from '@/features/products/constants';
 import { api } from '@/shared/lib/api-client';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   Button,
   Select,
@@ -24,6 +29,7 @@ import { useProjectsState } from '../context/ProjectsContext';
 import { usePromptState } from '../context/PromptContext';
 import { useSettingsState, useSettingsActions } from '../context/SettingsContext';
 import { useSlotsState } from '../context/SlotsContext';
+import { getImageStudioSlotImageSrc } from '../utils/image-src';
 
 interface GenerationToolbarProps {
   maskPreviewEnabled: boolean;
@@ -36,6 +42,7 @@ export function GenerationToolbar({
 }: GenerationToolbarProps): React.JSX.Element {
   const { projectId } = useProjectsState();
   const { workingSlot } = useSlotsState();
+  const settingsStore = useSettingsStore();
   const {
     maskShapes,
     activeMaskId,
@@ -79,12 +86,13 @@ export function GenerationToolbar({
   );
 
   const exportMaskCount = exportMaskShapes.length;
+  const productImagesExternalBaseUrl =
+    settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
+    DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
 
   const workingSlotImageSrc = useMemo(() => {
-    if (!workingSlot) return null;
-    if (workingSlot.imageBase64) return workingSlot.imageBase64;
-    return workingSlot.imageUrl || workingSlot.imageFile?.filepath || null;
-  }, [workingSlot]);
+    return getImageStudioSlotImageSrc(workingSlot, productImagesExternalBaseUrl);
+  }, [workingSlot, productImagesExternalBaseUrl]);
 
   const loadImageElement = (src: string): Promise<HTMLImageElement> =>
     new Promise((resolve, reject) => {

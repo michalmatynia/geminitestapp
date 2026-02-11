@@ -59,7 +59,18 @@ function extractUploadedFiles(formData: FormData): UploadedFileLike[] {
     ...formData.getAll('file'),
   ] as unknown[];
 
-  return candidates.filter((value): value is UploadedFileLike => isFileLike(value));
+  // Fallback: some clients use different field names for multipart file payloads.
+  for (const [key, value] of formData.entries()) {
+    const lower = key.toLowerCase();
+    if (!lower.includes('file')) continue;
+    candidates.push(value as unknown);
+  }
+
+  const unique = new Set<UploadedFileLike>();
+  candidates.forEach((value: unknown) => {
+    if (isFileLike(value)) unique.add(value);
+  });
+  return Array.from(unique);
 }
 
 async function listStudioAssetsFromDisk(projectId: string): Promise<ImageFileRecord[]> {

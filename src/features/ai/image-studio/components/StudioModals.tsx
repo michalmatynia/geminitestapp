@@ -120,7 +120,7 @@ const buildPromptDiffLines = (
 
 function toSlotName(filename: string, index: number): string {
   const clean = filename.trim();
-  if (!clean) return `Slot ${index + 1}`;
+  if (!clean) return `Card ${index + 1}`;
   const dotIndex = clean.lastIndexOf('.');
   if (dotIndex <= 0) return clean;
   return clean.slice(0, dotIndex);
@@ -270,7 +270,7 @@ export function StudioModals(): React.JSX.Element {
       if (driveImportMode === 'replace') {
         const targetId = driveImportTargetId ?? selectedSlot?.id ?? null;
         if (!targetId) {
-          throw new Error('No target slot selected for replacement.');
+          throw new Error('No target card selected for replacement.');
         }
         const primary = imported[0]!;
         await updateSlotMutation.mutateAsync({
@@ -282,7 +282,7 @@ export function StudioModals(): React.JSX.Element {
           },
         });
         setSelectedSlotId(targetId);
-        toast('Slot image updated.', { variant: 'success' });
+        toast('Card image updated.', { variant: 'success' });
       } else {
         const primary = imported[0]!;
         const created = await createSlots([
@@ -297,7 +297,7 @@ export function StudioModals(): React.JSX.Element {
         if (created[0]) {
           setSelectedSlotId(created[0].id);
         }
-        toast('Created slot from import.', {
+        toast('Created card from import.', {
           variant: 'success',
         });
       }
@@ -314,13 +314,13 @@ export function StudioModals(): React.JSX.Element {
     try {
       const created = await createSlots([
         {
-          name: `Slot ${slots.length + 1}`,
+          name: `Card ${slots.length + 1}`,
           ...(selectedFolder ? { folderPath: selectedFolder } : {}),
         },
       ]);
       if (created[0]) setSelectedSlotId(created[0].id);
     } catch (error: unknown) {
-      toast(error instanceof Error ? error.message : 'Failed to create slot', { variant: 'error' });
+      toast(error instanceof Error ? error.message : 'Failed to create card', { variant: 'error' });
     }
   };
 
@@ -346,7 +346,7 @@ export function StudioModals(): React.JSX.Element {
       if (localUploadMode === 'replace') {
         const targetId = localUploadTargetId ?? selectedSlot?.id ?? null;
         if (!targetId) {
-          throw new Error('No target slot selected for replacement.');
+          throw new Error('No target card selected for replacement.');
         }
         const primary = uploaded[0]!;
         await updateSlotMutation.mutateAsync({
@@ -358,7 +358,7 @@ export function StudioModals(): React.JSX.Element {
           },
         });
         setSelectedSlotId(targetId);
-        toast('Slot image uploaded and attached.', { variant: 'success' });
+        toast('Card image uploaded and attached.', { variant: 'success' });
       } else {
         const primary = uploaded[0]!;
         const created = await createSlots([
@@ -373,7 +373,7 @@ export function StudioModals(): React.JSX.Element {
         if (created[0]) {
           setSelectedSlotId(created[0].id);
         }
-        toast('Uploaded and created slot.', {
+        toast('Uploaded and created card.', {
           variant: 'success',
         });
       }
@@ -396,7 +396,7 @@ export function StudioModals(): React.JSX.Element {
       await updateSlotMutation.mutateAsync({
         id: selectedSlot.id,
         data: {
-          name: slotNameDraft.trim() || selectedSlot.name || `Slot ${slots.length + 1}`,
+          name: slotNameDraft.trim() || selectedSlot.name || `Card ${slots.length + 1}`,
           folderPath: slotFolderDraft.trim(),
           imageUrl: slotImageUrlDraft.trim() || null,
           imageBase64: slotBase64Draft.trim() || null,
@@ -404,9 +404,9 @@ export function StudioModals(): React.JSX.Element {
         },
       });
       setSlotInlineEditOpen(false);
-      toast('Slot updated.', { variant: 'success' });
+      toast('Card updated.', { variant: 'success' });
     } catch (error: unknown) {
-      toast(error instanceof Error ? error.message : 'Failed to update slot', { variant: 'error' });
+      toast(error instanceof Error ? error.message : 'Failed to update card', { variant: 'error' });
     } finally {
       setSlotUpdateBusy(false);
     }
@@ -426,9 +426,9 @@ export function StudioModals(): React.JSX.Element {
       });
       setSlotImageUrlDraft('');
       setSlotBase64Draft('');
-      toast('Slot image cleared.', { variant: 'success' });
+      toast('Card image cleared.', { variant: 'success' });
     } catch (error: unknown) {
-      toast(error instanceof Error ? error.message : 'Failed to clear slot image', { variant: 'error' });
+      toast(error instanceof Error ? error.message : 'Failed to clear card image', { variant: 'error' });
     } finally {
       setSlotUpdateBusy(false);
     }
@@ -701,7 +701,7 @@ export function StudioModals(): React.JSX.Element {
   };
 
   const driveImportTitle =
-    driveImportMode === 'replace' ? 'Attach Image To Selected Slot' : 'Import Images';
+    driveImportMode === 'replace' ? 'Attach Image To Selected Card' : 'Import Images';
 
   return (
     <>
@@ -751,7 +751,7 @@ export function StudioModals(): React.JSX.Element {
       <SharedModal
         open={slotCreateOpen}
         onClose={() => setSlotCreateOpen(false)}
-        title='New Slot'
+        title='New Card'
         size='md'
       >
         <div className='space-y-4 text-sm text-gray-200'>
@@ -763,7 +763,7 @@ export function StudioModals(): React.JSX.Element {
             disabled={!projectId}
             className='w-full'
           >
-            Create Empty Slot
+            Create Empty Card
           </Button>
           <Button
             onClick={() => {
@@ -775,7 +775,7 @@ export function StudioModals(): React.JSX.Element {
             disabled={!projectId}
             className='w-full'
           >
-            Create Slot From Image
+            Create Card From Image
           </Button>
           <Button
             variant='outline'
@@ -787,7 +787,7 @@ export function StudioModals(): React.JSX.Element {
             className='w-full'
           >
             {uploadMutation.isPending ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-            Create Slot From Local Upload
+            Create Card From Local Upload
           </Button>
         </div>
       </SharedModal>
@@ -795,14 +795,14 @@ export function StudioModals(): React.JSX.Element {
       <SharedModal
         open={slotInlineEditOpen}
         onClose={() => setSlotInlineEditOpen(false)}
-        title='Edit Slot'
+        title='Edit Card'
         size='lg'
       >
         {selectedSlot ? (
           <div className='space-y-4'>
             <div className='grid gap-3 sm:grid-cols-2'>
               <div className='space-y-1'>
-                <Label className='text-xs text-gray-400'>Slot Name</Label>
+                <Label className='text-xs text-gray-400'>Card Name</Label>
                 <Input
                   value={slotNameDraft}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSlotNameDraft(event.target.value)}
@@ -883,12 +883,12 @@ export function StudioModals(): React.JSX.Element {
                 disabled={slotUpdateBusy}
               >
                 {slotUpdateBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-                Save Slot
+                Save Card
               </Button>
             </div>
           </div>
         ) : (
-          <div className='text-sm text-gray-400'>Select a slot first.</div>
+          <div className='text-sm text-gray-400'>Select a card first.</div>
         )}
       </SharedModal>
 

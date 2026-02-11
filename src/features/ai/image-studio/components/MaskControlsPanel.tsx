@@ -2,11 +2,10 @@
 
 import React from 'react';
 
+import { LabeledSlider } from './LabeledSlider';
+import { StudioCard } from './StudioCard';
 import { useMaskingState, useMaskingActions } from '../context/MaskingContext';
 import { useSlotsState } from '../context/SlotsContext';
-import { LabeledSlider } from './LabeledSlider';
-import { ShapeListPanel } from './ShapeListPanel';
-import { StudioCard } from './StudioCard';
 
 interface MaskControlsPanelProps {
   maskPreviewEnabled: boolean;
@@ -14,7 +13,7 @@ interface MaskControlsPanelProps {
 
 export function MaskControlsPanel({ maskPreviewEnabled }: MaskControlsPanelProps): React.JSX.Element {
   const { workingSlot } = useSlotsState();
-  const { maskShapes, maskFeather, maskThresholdSensitivity, maskEdgeSensitivity } = useMaskingState();
+  const { maskFeather, maskThresholdSensitivity, maskEdgeSensitivity } = useMaskingState();
   const { setMaskFeather, setMaskThresholdSensitivity, setMaskEdgeSensitivity } = useMaskingActions();
 
   return (
@@ -44,12 +43,6 @@ export function MaskControlsPanel({ maskPreviewEnabled }: MaskControlsPanelProps
           disabled={!workingSlot}
         />
       </StudioCard>
-
-      {maskShapes.length > 0 && (
-        <StudioCard label='Shapes' count={maskShapes.length}>
-          <ShapeListPanel />
-        </StudioCard>
-      )}
     </>
   );
 }

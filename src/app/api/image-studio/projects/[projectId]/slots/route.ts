@@ -29,11 +29,11 @@ const sanitizeFolderPath = (value: string): string => {
 const slotSchema = z.object({
   name: z.string().trim().min(1).optional(),
   folderPath: z.string().trim().optional().nullable(),
-  imageUrl: z.string().trim().optional(),
-  imageBase64: z.string().trim().optional(),
-  imageFileId: z.string().trim().optional(),
-  asset3dId: z.string().trim().optional(),
-  metadata: z.record(z.string(), z.any()).optional(),
+  imageUrl: z.string().trim().optional().nullable(),
+  imageBase64: z.string().trim().optional().nullable(),
+  imageFileId: z.string().trim().optional().nullable(),
+  asset3dId: z.string().trim().optional().nullable(),
+  metadata: z.record(z.string(), z.any()).optional().nullable(),
 });
 
 const createSchema = z.object({
@@ -91,7 +91,7 @@ async function POST_handler(
     .slice(0, maxCreate)
     .map((slot: SlotInput, index: number) => ({
       projectId,
-      name: slot.name?.trim() || `Slot ${baseName}-${index + 1}`,
+      name: slot.name?.trim() || `Card ${baseName}-${index + 1}`,
       folderPath: slot.folderPath ? sanitizeFolderPath(slot.folderPath) : '',
       imageUrl: slot.imageUrl?.trim() || null,
       imageBase64: slot.imageBase64?.trim() || null,

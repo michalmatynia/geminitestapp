@@ -6,20 +6,29 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { studioKeys } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
+import {
+  DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
+  PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
+} from '@/features/products/constants';
 import { VectorDrawingCanvas, VectorDrawingToolbar, VectorDrawingProvider } from '@/features/vector-drawing';
 import { Viewer3D } from '@/features/viewer3d/components/Viewer3D';
 import { api } from '@/shared/lib/api-client';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, SectionPanel, useToast } from '@/shared/ui';
 
+import { GenerationToolbar } from './GenerationToolbar';
+import { ShapeListPanel } from './ShapeListPanel';
 import { ToggleButtonGroup } from './ToggleButtonGroup';
 import { useMaskingActions, useMaskingState } from '../context/MaskingContext';
 import { useProjectsState } from '../context/ProjectsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
+import { getImageStudioSlotImageSrc } from '../utils/image-src';
 
 interface CenterPreviewProps {
   isFocusMode: boolean;
   onToggleFocusMode: () => void;
   maskPreviewEnabled: boolean;
+  onMaskPreviewChange: (enabled: boolean) => void;
 }
 
 const PREVIEW_MODE_OPTIONS = [
@@ -31,10 +40,12 @@ export function CenterPreview({
   isFocusMode,
   onToggleFocusMode,
   maskPreviewEnabled,
+  onMaskPreviewChange,
 }: CenterPreviewProps): React.JSX.Element {
   const { projectId } = useProjectsState();
   const { workingSlot, previewMode, captureRef } = useSlotsState();
   const { setPreviewMode } = useSlotsActions();
+  const settingsStore = useSettingsStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -57,11 +68,13 @@ export function CenterPreview({
 
   const [screenshotBusy, setScreenshotBusy] = useState(false);
 
+  const productImagesExternalBaseUrl =
+    settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
+    DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
+
   const workingSlotImageSrc = useMemo(() => {
-    if (!workingSlot) return null;
-    if (workingSlot.imageBase64) return workingSlot.imageBase64;
-    return workingSlot.imageUrl || workingSlot.imageFile?.filepath || null;
-  }, [workingSlot]);
+    return getImageStudioSlotImageSrc(workingSlot, productImagesExternalBaseUrl);
+  }, [workingSlot, productImagesExternalBaseUrl]);
 
   const eligibleMaskShapes = useMemo(
     () =>
@@ -210,30 +223,59 @@ export function CenterPreview({
         })()
         : null}
       <div className='flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4 pt-0'>
-        <div className='relative flex-1'>
-          <VectorDrawingProvider value={vectorContextValue}>
-            {previewMode === '3d' && workingSlot?.asset3dId ? (
-              <Viewer3D
-                modelUrl={`/api/assets3d/${workingSlot.asset3dId}/file`}
-                allowUserControls
-                captureRef={captureRef}
-                className='h-full w-full'
+        <div className='grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_120px] gap-3'>
+          <div className='relative min-h-0'>
+            <VectorDrawingProvider value={vectorContextValue}>
+              {previewMode === '3d' && workingSlot?.asset3dId ? (
+                <Viewer3D
+                  modelUrl={`/api/assets3d/${workingSlot.asset3dId}/file`}
+                  allowUserControls
+                  captureRef={captureRef}
+                  className='h-full w-full'
+                />
+              ) : (
+                <VectorDrawingCanvas
+                  key={workingSlot?.id ?? 'canvas-empty'}
+                  maskPreviewEnabled={maskPreviewEnabled}
+                  maskPreviewShapes={liveMaskShapes}
+                  maskPreviewInvert={maskInvert}
+                  maskPreviewOpacity={0.5}
+                  maskPreviewFeather={maskFeather}
+                />
+              )}
+              <VectorDrawingToolbar
+                className='absolute bottom-4 left-1/2 z-20 -translate-x-1/2'
+                onClear={() => { setMaskShapes([]); setActiveMaskId(null); }}
+                disableClear={maskShapes.length === 0}
               />
-            ) : (
-              <VectorDrawingCanvas
-                maskPreviewEnabled={maskPreviewEnabled}
-                maskPreviewShapes={liveMaskShapes}
-                maskPreviewInvert={maskInvert}
-                maskPreviewOpacity={0.5}
-                maskPreviewFeather={maskFeather}
-              />
-            )}
-            <VectorDrawingToolbar
-              className='absolute bottom-4 left-1/2 z-20 -translate-x-1/2'
-              onClear={() => { setMaskShapes([]); setActiveMaskId(null); }}
-              disableClear={maskShapes.length === 0}
-            />
-          </VectorDrawingProvider>
+            </VectorDrawingProvider>
+          </div>
+          <div className='grid min-h-[120px] grid-cols-[minmax(0,30%)_minmax(0,1fr)] gap-3'>
+            <SectionPanel variant='subtle' className='min-h-[120px] overflow-hidden border-border/60 bg-card/40 p-2'>
+              <div className='mb-1 flex items-center justify-between text-[11px] text-gray-400'>
+                <span>Shape Layers</span>
+                <span>{maskShapes.length}</span>
+              </div>
+              <div className='h-[84px] overflow-auto pr-1'>
+                {maskShapes.length > 0 ? (
+                  <ShapeListPanel />
+                ) : (
+                  <div className='px-2 py-2 text-xs text-gray-500'>No shapes drawn yet.</div>
+                )}
+              </div>
+            </SectionPanel>
+            <SectionPanel variant='subtle' className='min-h-[120px] overflow-hidden border-border/60 bg-card/40 p-2'>
+              <div className='mb-1 flex items-center justify-between text-[11px] text-gray-400'>
+                <span>Mask Generation</span>
+              </div>
+              <div className='h-[84px] overflow-auto pr-1'>
+                <GenerationToolbar
+                  maskPreviewEnabled={maskPreviewEnabled}
+                  onMaskPreviewChange={onMaskPreviewChange}
+                />
+              </div>
+            </SectionPanel>
+          </div>
         </div>
       </div>
     </SectionPanel>

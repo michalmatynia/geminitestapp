@@ -1,21 +1,46 @@
 const { createServer } = require('http');
 const { createHash } = require('crypto');
+const fs = require('fs');
+const path = require('path');
+const { pathToFileURL } = require('url');
 
 // Dynamic import for ESM modules from src/features
 let loggingToolsCache = null;
 async function getLoggingTools() {
   if (loggingToolsCache) return loggingToolsCache;
-  try {
-    const { ErrorSystem, logSystemEvent } = await import('./src/features/observability/server.js');
-    loggingToolsCache = { ErrorSystem, logSystemEvent };
-    return loggingToolsCache;
-  } catch (e) {
-    console.error('Failed to load logging modules:', e);
-    return {
-      ErrorSystem: { captureException: console.error, logWarning: console.warn, logInfo: console.log },
-      logSystemEvent: (params) => console.log(params.message, params.context),
-    };
+  const fallback = {
+    ErrorSystem: { captureException: console.error, logWarning: console.warn, logInfo: console.log },
+    logSystemEvent: (params) => console.log(params.message, params.context),
+  };
+
+  const moduleCandidates = [
+    path.resolve(__dirname, 'src/features/observability/server.js'),
+    path.resolve(__dirname, 'src/features/observability/server.ts'),
+  ];
+
+  for (const candidatePath of moduleCandidates) {
+    if (!fs.existsSync(candidatePath)) continue;
+    try {
+      const moduleUrl = pathToFileURL(candidatePath).href;
+      const { ErrorSystem, logSystemEvent } = await import(moduleUrl);
+      loggingToolsCache = { ErrorSystem, logSystemEvent };
+      return loggingToolsCache;
+    } catch (e) {
+      const message = e && typeof e.message === 'string' ? e.message : String(e);
+      const code = e && typeof e === 'object' ? e.code : undefined;
+      const expectedDevError =
+        code === 'ERR_UNKNOWN_FILE_EXTENSION' ||
+        code === 'ERR_MODULE_NOT_FOUND' ||
+        code === 'MODULE_NOT_FOUND' ||
+        message.includes('Unknown file extension ".ts"');
+      if (!expectedDevError) {
+        console.error('Failed to load logging modules:', e);
+      }
+    }
   }
+
+  loggingToolsCache = fallback;
+  return loggingToolsCache;
 }
 
 const dev = process.env.NODE_ENV !== 'production';

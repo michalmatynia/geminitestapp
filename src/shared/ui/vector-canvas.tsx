@@ -12,7 +12,6 @@ import {
   Trash2,
   Unlink,
 } from 'lucide-react';
-import Image from 'next/image';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { VectorPoint, VectorShape, VectorShapeType, VectorToolMode } from '@/shared/types/domain/vector';
@@ -467,8 +466,11 @@ export function VectorCanvas({
       const nh = img.naturalHeight;
       const container = containerRef.current;
       if (!container || nw === 0 || nh === 0) {
-        // Image not loaded yet — fall back to container size
-        const rect = img.getBoundingClientRect();
+        // Image not loaded yet — fall back to container size when image bounds are unresolved.
+        const imageRect = img.getBoundingClientRect();
+        const containerRect = container?.getBoundingClientRect();
+        const unresolvedImageBounds = imageRect.width < 2 || imageRect.height < 2;
+        const rect = unresolvedImageBounds && containerRect ? containerRect : imageRect;
         const width = Math.max(1, Math.round(rect.width));
         const height = Math.max(1, Math.round(rect.height));
         canvas.width = width;
@@ -516,6 +518,15 @@ export function VectorCanvas({
   useEffect(() => {
     syncCanvasSize();
   }, [syncCanvasSize, src, shapes.length]);
+
+  useEffect(() => {
+    if (!src) return;
+    const imageElement = imgRef.current;
+    if (!imageElement) return;
+    if (imageElement.complete) {
+      syncCanvasSize();
+    }
+  }, [src, syncCanvasSize]);
 
   useEffect(() => {
     setViewTransform({ scale: 1, panX: 0, panY: 0 });
@@ -993,20 +1004,19 @@ export function VectorCanvas({
                 : undefined
             }
           >
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               ref={imgRef}
               src={src}
               alt='Selected slot'
-              fill
-              className='select-none object-contain object-top'
-              onLoadingComplete={() => syncCanvasSize()}
+              className='pointer-events-none absolute inset-0 h-full w-full select-none object-contain object-top'
+              onLoad={() => syncCanvasSize()}
               draggable={false}
-              unoptimized
             />
             <canvas
               ref={canvasRef}
               className={cn(
-                'absolute left-1/2 top-0 -translate-x-1/2',
+                'absolute left-1/2 top-0 z-20 -translate-x-1/2',
                 isPanning
                   ? 'cursor-grabbing'
                   : spaceDownRef.current || tool === 'select'
@@ -1046,7 +1056,7 @@ export function VectorCanvas({
               <canvas
                 ref={canvasRef}
                 className={cn(
-                  'absolute inset-0',
+                  'absolute inset-0 z-20',
                   isPanning
                     ? 'cursor-grabbing'
                     : spaceDownRef.current || tool === 'select'

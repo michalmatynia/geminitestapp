@@ -19,6 +19,7 @@ import { useToast } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 import { useProjectsState } from './ProjectsContext';
+import { getImageStudioProjectSessionKey, parseImageStudioProjectSession } from '../utils/project-session';
 import { expandFolderPath, normalizeFolderPaths, IMAGE_STUDIO_TREE_KEY_PREFIX } from '../utils/studio-tree';
 
 import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
@@ -81,6 +82,7 @@ export interface SlotsActions {
   deleteSlotMutation: UseMutationResult<void, Error, string>;
   moveSlotMutation: UseMutationResult<ImageStudioSlotRecord, Error, { slot: ImageStudioSlotRecord; targetFolder: string }>;
   handleMoveFolder: (folderPath: string, targetFolder: string) => Promise<void>;
+  handleRenameFolder: (folderPath: string, nextFolderPath: string) => Promise<void>;
   handleDeleteFolder: (folderPath: string) => Promise<void>;
   createFolderMutation: UseMutationResult<string, Error, string>;
   uploadMutation: UseMutationResult<StudioAssetImportResult, Error, { files: File[]; folder: string }>;
@@ -137,12 +139,6 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     }
   }, [slots, workingSlotId]);
 
-  useEffect(() => {
-    if (workingSlotId !== selectedSlotId) {
-      setWorkingSlotId(selectedSlotId);
-    }
-  }, [selectedSlotId, workingSlotId]);
-
   // ── Folders ──
   const [selectedFolder, setSelectedFolderRaw] = useState<string>('');
   const [virtualFolders, setVirtualFolders] = useState<string[]>([]);
@@ -150,7 +146,10 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
   const heavyMap = heavySettings.data ?? new Map<string, string>();
   const treeKey = useMemo(() => projectId ? `${IMAGE_STUDIO_TREE_KEY_PREFIX}${sanitizeStudioProjectId(projectId)}` : null, [projectId]);
   const treeSettingsRaw = treeKey ? heavyMap.get(treeKey) : undefined;
+  const projectSessionKey = useMemo(() => getImageStudioProjectSessionKey(projectId), [projectId]);
+  const projectSessionRaw = projectSessionKey ? heavyMap.get(projectSessionKey) : undefined;
   const hydratedTreeSignatureRef = useRef<string | null>(null);
+  const hydratedSessionSignatureRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!projectId || !treeKey || settingsStore.isLoading) return;
@@ -177,7 +176,6 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
   const handleSelectFolder = useCallback((folder: string): void => {
     setSelectedFolderRaw(folder);
     setSelectedSlotId(null);
-    setWorkingSlotId(null);
   }, []);
 
   // ── Slot UI state ──
@@ -195,6 +193,36 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
   const [compositeAssetIds, setCompositeAssetIds] = useState<string[]>([]);
   const [previewMode, setPreviewMode] = useState<'image' | '3d'>('image');
   const captureRef = useRef<(() => string | null) | null>(null);
+
+  useEffect(() => {
+    if (!projectId || !projectSessionKey || settingsStore.isLoading || heavySettings.isLoading) return;
+    const signature = `${projectSessionKey}:${projectSessionRaw ?? ''}`;
+    if (hydratedSessionSignatureRef.current === signature) return;
+
+    const session = parseImageStudioProjectSession(projectSessionRaw, projectId);
+    setSelectedSlotId(session?.selectedSlotId ?? null);
+    setWorkingSlotId(session?.workingSlotId ?? null);
+    setSelectedFolderRaw(session?.selectedFolder ?? '');
+    setCompositeAssetIds(session?.compositeAssetIds ?? []);
+    setPreviewMode(session?.previewMode ?? 'image');
+    hydratedSessionSignatureRef.current = signature;
+  }, [
+    projectId,
+    projectSessionKey,
+    projectSessionRaw,
+    settingsStore.isLoading,
+    heavySettings.isLoading,
+  ]);
+
+  useEffect(() => {
+    if (projectId) return;
+    setSelectedSlotId(null);
+    setWorkingSlotId(null);
+    setSelectedFolderRaw('');
+    setCompositeAssetIds([]);
+    setPreviewMode('image');
+    hydratedSessionSignatureRef.current = null;
+  }, [projectId]);
 
   const compositeAssetOptions = useMemo(() => {
     const baseId = workingSlotId ?? selectedSlotId;
@@ -314,6 +342,80 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     void queryClient.invalidateQueries({ queryKey: slotsQueryKey });
   }, [virtualFolders, persistFolders, slots, updateSlotMutation, queryClient, slotsQueryKey]);
 
+  const handleRenameFolder = useCallback(async (folderPath: string, nextFolderPath: string) => {
+    const normalizePath = (value: string): string =>
+      value.replace(/\\/g, '/').replace(/^\/+/, '').replace(/\/+$/, '');
+    const source = normalizePath(folderPath);
+    const target = normalizePath(nextFolderPath);
+    if (!source || !target) return;
+    if (source === target || target.startsWith(`${source}/`)) return;
+
+    const rebasePath = (value: string): string => {
+      const normalized = normalizePath(value);
+      if (!normalized) return normalized;
+      if (normalized === source) return target;
+      if (normalized.startsWith(`${source}/`)) {
+        return `${target}${normalized.slice(source.length)}`;
+      }
+      return normalized;
+    };
+
+    const nextFolders = normalizeFolderPaths(virtualFolders.map((path: string) => rebasePath(path)));
+    setVirtualFolders(nextFolders);
+    void persistFolders(nextFolders);
+
+    const affectedSlots = slots.filter((slot: ImageStudioSlotRecord) => {
+      const current = normalizePath(slot.folderPath ?? '');
+      return current === source || current.startsWith(`${source}/`);
+    });
+
+    if (affectedSlots.length > 0) {
+      const optimisticNextById = new Map<string, string>(
+        affectedSlots.map((slot: ImageStudioSlotRecord) => {
+          const current = normalizePath(slot.folderPath ?? '');
+          return [slot.id, rebasePath(current)];
+        })
+      );
+
+      queryClient.setQueryData<StudioSlotsResponse>(slotsQueryKey, (current) => {
+        if (!current) return current;
+        return {
+          ...current,
+          slots: current.slots.map((slot: ImageStudioSlotRecord) => {
+            const nextPath = optimisticNextById.get(slot.id);
+            if (nextPath === undefined) return slot;
+            return { ...slot, folderPath: nextPath || null };
+          }),
+        };
+      });
+
+      await Promise.allSettled(
+        affectedSlots.map((slot: ImageStudioSlotRecord) => {
+          const next = optimisticNextById.get(slot.id) ?? '';
+          return updateSlotMutation.mutateAsync({
+            id: slot.id,
+            data: { folderPath: next },
+          });
+        })
+      );
+    }
+
+    const normalizedSelectedFolder = normalizePath(selectedFolder);
+    if (normalizedSelectedFolder === source || normalizedSelectedFolder.startsWith(`${source}/`)) {
+      setSelectedFolderRaw(rebasePath(normalizedSelectedFolder));
+    }
+
+    void queryClient.invalidateQueries({ queryKey: slotsQueryKey });
+  }, [
+    virtualFolders,
+    persistFolders,
+    slots,
+    updateSlotMutation,
+    queryClient,
+    slotsQueryKey,
+    selectedFolder,
+  ]);
+
   const handleDeleteFolder = useCallback(async (folderPath: string) => {
     const normalizePath = (value: string): string =>
       value.replace(/\\/g, '/').replace(/^\/+/, '').replace(/\/+$/, '');
@@ -397,7 +499,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     () => ({
       setSelectedSlotId, setWorkingSlotId, setVirtualFolders,
       setSelectedFolder: handleSelectFolder, createSlots,
-      updateSlotMutation, deleteSlotMutation, moveSlotMutation, handleMoveFolder, handleDeleteFolder,
+      updateSlotMutation, deleteSlotMutation, moveSlotMutation, handleMoveFolder, handleRenameFolder, handleDeleteFolder,
       createFolderMutation, uploadMutation, importFromDriveMutation,
       setSlotCreateOpen, setDriveImportOpen, setDriveImportMode, setDriveImportTargetId,
       setSlotUpdateBusy, setSlotInlineEditOpen, setSlotImageUrlDraft, setSlotBase64Draft, setMoveTargetFolder,
@@ -405,7 +507,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     }),
     [
       handleSelectFolder, createSlots,
-      updateSlotMutation, deleteSlotMutation, moveSlotMutation, handleMoveFolder, handleDeleteFolder,
+      updateSlotMutation, deleteSlotMutation, moveSlotMutation, handleMoveFolder, handleRenameFolder, handleDeleteFolder,
       createFolderMutation, uploadMutation, importFromDriveMutation,
     ]
   );

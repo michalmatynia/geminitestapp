@@ -21,10 +21,10 @@ export function StudioMainContent({
 }: StudioMainContentProps): React.JSX.Element {
 
   return (
-    <div className='relative flex min-h-0 flex-1'>
+    <div className='relative flex h-full min-h-0 flex-1'>
       <div
         className={cn(
-          'grid min-h-0 flex-1 transition-[grid-template-columns] duration-300 ease-in-out',
+          'grid h-full min-h-0 flex-1 transition-[grid-template-columns] duration-300 ease-in-out',
           isFocusMode ? 'grid-cols-[0px_1fr_0px] gap-0' : 'grid-cols-[300px_1fr_420px] gap-4'
         )}
       >
@@ -33,11 +33,11 @@ export function StudioMainContent({
           isFocusMode={isFocusMode}
           onToggleFocusMode={() => onFocusModeChange(!isFocusMode)}
           maskPreviewEnabled={maskPreviewEnabled}
+          onMaskPreviewChange={onMaskPreviewChange}
         />
         <RightSidebar
           isFocusMode={isFocusMode}
           maskPreviewEnabled={maskPreviewEnabled}
-          onMaskPreviewChange={onMaskPreviewChange}
         />
       </div>
     </div>

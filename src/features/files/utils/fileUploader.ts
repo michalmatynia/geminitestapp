@@ -20,6 +20,7 @@ const tempFolderName = 'temp';
 
 const publicRoot = path.resolve(process.cwd(), 'public');
 const MAX_IMAGE_BYTES = 30 * 1024 * 1024; // 30MB
+const MAX_STUDIO_IMAGE_BYTES = 100 * 1024 * 1024; // 100MB
 const ALLOWED_MIME_EXACT = new Set(['application/pdf', 'application/octet-stream']);
 
 function isAllowedMimeType(mime: string | null | undefined): boolean {
@@ -152,11 +153,18 @@ export async function uploadFile(
         ? file.name
         : 'upload.bin';
 
-  if (file.size > MAX_IMAGE_BYTES) {
-    throw new Error(`File too large. Max size allowed is ${MAX_IMAGE_BYTES / 1024 / 1024}MB.`);
+  const isStudioUpload = options?.category === 'studio';
+  const maxAllowedBytes = isStudioUpload ? MAX_STUDIO_IMAGE_BYTES : MAX_IMAGE_BYTES;
+
+  if (file.size > maxAllowedBytes) {
+    throw new Error(`File too large. Max size allowed is ${maxAllowedBytes / 1024 / 1024}MB.`);
   }
-  if (!isAllowedMimeType(file.type) && !isAllowedFilenameExtension(rawName)) {
-    throw new Error(`Unsupported file type: ${file.type}`);
+  const normalizedType = typeof file.type === 'string' ? file.type.trim().toLowerCase() : '';
+  const hasAllowedType = isAllowedMimeType(normalizedType);
+  const hasAllowedExt = isAllowedFilenameExtension(rawName);
+  const allowStudioFallbackType = isStudioUpload && (normalizedType === '' || normalizedType === 'application/octet-stream');
+  if (!hasAllowedType && !hasAllowedExt && !allowStudioFallbackType) {
+    throw new Error(`Unsupported file type for "${rawName}": ${normalizedType || 'unknown'}`);
   }
 
   const fileBuffer = Buffer.from(await file.arrayBuffer());

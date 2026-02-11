@@ -1,11 +1,14 @@
 'use client';
 
-import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { extractParamsFromPrompt, inferParamSpecs, validateImageStudioParams, setDeepValue, type ParamIssue, type ParamSpec, type ExtractParamsResult } from '@/features/prompt-engine/prompt-params';
+import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui';
 
+import { useProjectsState } from './ProjectsContext';
 import { type ParamUiControl } from '../utils/param-ui';
+import { getImageStudioProjectSessionKey, parseImageStudioProjectSession } from '../utils/project-session';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -45,6 +48,8 @@ const PromptActionsContext = createContext<PromptActions | null>(null);
 
 export function PromptProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { toast } = useToast();
+  const { projectId } = useProjectsState();
+  const heavySettings = useSettingsMap({ scope: 'heavy' });
 
   const [promptText, setPromptText] = useState<string>('');
   const [paramsState, setParamsState] = useState<Record<string, unknown> | null>(null);
@@ -56,6 +61,43 @@ export function PromptProvider({ children }: { children: React.ReactNode }): Rea
   const [extractDraftPrompt, setExtractDraftPrompt] = useState<string>('');
   const [extractPreviewUiOverrides, setExtractPreviewUiOverrides] = useState<Record<string, ParamUiControl>>({});
   const [extractResult, setExtractResult] = useState<ExtractParamsResult | null>(null);
+  const hydratedSessionSignatureRef = useRef<string | null>(null);
+
+  const heavyMap = heavySettings.data ?? new Map<string, string>();
+  const projectSessionKey = useMemo(() => getImageStudioProjectSessionKey(projectId), [projectId]);
+  const projectSessionRaw = projectSessionKey ? heavyMap.get(projectSessionKey) : undefined;
+
+  useEffect(() => {
+    if (!projectId || !projectSessionKey || heavySettings.isLoading) return;
+    const signature = `${projectSessionKey}:${projectSessionRaw ?? ''}`;
+    if (hydratedSessionSignatureRef.current === signature) return;
+
+    const session = parseImageStudioProjectSession(projectSessionRaw, projectId);
+    setPromptText(session?.promptText ?? '');
+    setParamsState((session?.paramsState ?? null));
+    setParamSpecs((session?.paramSpecs ?? null) as Record<string, ParamSpec> | null);
+    setParamUiOverrides((session?.paramUiOverrides ?? {}) as Record<string, ParamUiControl>);
+    setParamFlipMap({});
+    setExtractReviewOpen(false);
+    setExtractDraftPrompt('');
+    setExtractPreviewUiOverrides({});
+    setExtractResult(null);
+    hydratedSessionSignatureRef.current = signature;
+  }, [projectId, projectSessionKey, projectSessionRaw, heavySettings.isLoading]);
+
+  useEffect(() => {
+    if (projectId) return;
+    setPromptText('');
+    setParamsState(null);
+    setParamSpecs(null);
+    setParamUiOverrides({});
+    setParamFlipMap({});
+    setExtractReviewOpen(false);
+    setExtractDraftPrompt('');
+    setExtractPreviewUiOverrides({});
+    setExtractResult(null);
+    hydratedSessionSignatureRef.current = null;
+  }, [projectId]);
 
   const handleParamChange = useCallback((path: string, value: unknown) => {
     setParamsState(prev => prev ? setDeepValue(prev, path, value) : null);

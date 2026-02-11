@@ -18,7 +18,7 @@ export interface SettingsState {
 
 export interface SettingsActions {
   setStudioSettings: React.Dispatch<React.SetStateAction<ImageStudioSettings>>;
-  saveStudioSettings: () => Promise<void>;
+  saveStudioSettings: (options?: { silent?: boolean }) => Promise<void>;
   resetStudioSettings: () => void;
   handleRefreshSettings: () => void;
 }
@@ -66,12 +66,14 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     setSettingsLoaded(true);
   }, [settingsLoaded, settingsStore.isLoading, heavySettings.isLoading, studioSettingsRaw, openaiModelFallback]);
 
-  const saveStudioSettings = useCallback(async () => {
+  const saveStudioSettings = useCallback(async (options?: { silent?: boolean }) => {
     await updateSetting.mutateAsync({
       key: IMAGE_STUDIO_SETTINGS_KEY,
       value: serializeSetting(studioSettings),
     });
-    toast('Settings saved.', { variant: 'success' });
+    if (!options?.silent) {
+      toast('Settings saved.', { variant: 'success' });
+    }
   }, [studioSettings, updateSetting, toast]);
 
   const resetStudioSettings = useCallback(() => {

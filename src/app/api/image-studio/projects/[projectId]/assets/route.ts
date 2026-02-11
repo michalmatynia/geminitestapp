@@ -214,7 +214,11 @@ async function POST_handler(
   }
 
   if (uploaded.length === 0) {
-    throw badRequestError('Upload failed', { failures });
+    const firstFailure = failures[0]?.error?.trim();
+    throw badRequestError(
+      firstFailure ? `Upload failed: ${firstFailure}` : 'Upload failed',
+      { failures }
+    );
   }
 
   return NextResponse.json({ uploaded, failures }, { status: 201 });

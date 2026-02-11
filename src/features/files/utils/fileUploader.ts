@@ -19,8 +19,34 @@ const studioRoot = path.join(uploadsRoot, 'studio');
 const tempFolderName = 'temp';
 
 const publicRoot = path.resolve(process.cwd(), 'public');
-const MAX_IMAGE_BYTES = 15 * 1024 * 1024; // 15MB
-const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf']);
+const MAX_IMAGE_BYTES = 30 * 1024 * 1024; // 30MB
+const ALLOWED_MIME_EXACT = new Set(['application/pdf', 'application/octet-stream']);
+
+function isAllowedMimeType(mime: string | null | undefined): boolean {
+  const normalized = (mime ?? '').trim().toLowerCase();
+  if (!normalized) return false;
+  if (normalized.startsWith('image/')) return true;
+  return ALLOWED_MIME_EXACT.has(normalized);
+}
+
+function isAllowedFilenameExtension(filename: string): boolean {
+  const ext = path.extname(filename).toLowerCase();
+  return new Set([
+    '.jpg',
+    '.jpeg',
+    '.png',
+    '.webp',
+    '.gif',
+    '.bmp',
+    '.avif',
+    '.heic',
+    '.heif',
+    '.tif',
+    '.tiff',
+    '.svg',
+    '.pdf',
+  ]).has(ext);
+}
 
 export function getDiskPathFromPublicPath(publicPath: string): string {
   const cleaned = publicPath.replace(/^\/+/, '');
@@ -119,20 +145,21 @@ export async function uploadFile(
     filenameOverride?: string | null | undefined;
   }
 ): Promise<ImageFileRecord> {
-  if (file.size > MAX_IMAGE_BYTES) {
-    throw new Error(`File too large. Max size allowed is ${MAX_IMAGE_BYTES / 1024 / 1024}MB.`);
-  }
-  if (!ALLOWED_MIME.has(file.type)) {
-    throw new Error(`Unsupported file type: ${file.type}`);
-  }
-
-  const fileBuffer = Buffer.from(await file.arrayBuffer());
   const rawName =
     options?.filenameOverride && options.filenameOverride.trim().length > 0
       ? options.filenameOverride
       : typeof file.name === 'string' && file.name.trim().length > 0
         ? file.name
         : 'upload.bin';
+
+  if (file.size > MAX_IMAGE_BYTES) {
+    throw new Error(`File too large. Max size allowed is ${MAX_IMAGE_BYTES / 1024 / 1024}MB.`);
+  }
+  if (!isAllowedMimeType(file.type) && !isAllowedFilenameExtension(rawName)) {
+    throw new Error(`Unsupported file type: ${file.type}`);
+  }
+
+  const fileBuffer = Buffer.from(await file.arrayBuffer());
   const filename = sanitizeFilename(rawName);
   const { diskDir, publicDir } = getUploadTarget({
     category: options?.category,
@@ -215,7 +242,7 @@ export async function uploadNoteFile(
   if (file.size > MAX_IMAGE_BYTES) {
     throw new Error(`File too large. Max size allowed is ${MAX_IMAGE_BYTES / 1024 / 1024}MB.`);
   }
-  if (!ALLOWED_MIME.has(file.type)) {
+  if (!isAllowedMimeType(file.type) && !isAllowedFilenameExtension(file.name)) {
     throw new Error(`Unsupported file type: ${file.type}`);
   }
 

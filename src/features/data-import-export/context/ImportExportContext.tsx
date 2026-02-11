@@ -372,15 +372,16 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
 
   // Auto-save preferences
   useEffect(() => {
-    if (importTemplateId) {
-      if (lastSavedImportTemplateId.current === importTemplateId) return;
-      lastSavedImportTemplateId.current = importTemplateId;
-      savePreferenceMutation.mutate({
-        endpoint: '/api/integrations/imports/base/last-template',
-        data: { templateId: importTemplateId },
-      });
-    }
-  }, [importTemplateId, savePreferenceMutation]);
+    const normalized = importTemplateId.trim() || null;
+    const persisted = lastImportTemplatePref?.templateId?.trim() || null;
+    if (persisted === normalized) return;
+    if (lastSavedImportTemplateId.current === normalized) return;
+    lastSavedImportTemplateId.current = normalized;
+    savePreferenceMutation.mutate({
+      endpoint: '/api/integrations/imports/base/last-template',
+      data: normalized ? { templateId: normalized } : {},
+    });
+  }, [importTemplateId, lastImportTemplatePref?.templateId, savePreferenceMutation]);
 
   useEffect(() => {
     const normalized = importActiveTemplateId.trim() || null;

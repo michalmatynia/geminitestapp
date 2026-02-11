@@ -12,6 +12,9 @@ import { useSlotsState, useSlotsActions } from '../context/SlotsContext';
 
 import type { ImageStudioSlotRecord } from '../types';
 
+const ENVIRONMENT_SLOT_INDEX = 0;
+const OBJECT_SLOT_INDEX = 1;
+
 function toManagedSlot(slot: ImageStudioSlotRecord | null): ProductImageSlot {
   if (!slot?.imageFileId) return null;
   const previewPath = slot.imageFile?.filepath || slot.imageUrl || null;
@@ -29,7 +32,7 @@ function toManagedSlot(slot: ImageStudioSlotRecord | null): ProductImageSlot {
 
 export function ImageStudioSingleSlotManager(): React.JSX.Element {
   const { projectId } = useProjectsState();
-  const { selectedFolder, selectedSlot } = useSlotsState();
+  const { slots, selectedFolder, selectedSlot, driveImportOpen } = useSlotsState();
   const {
     setSelectedSlotId,
     createSlots,
@@ -40,63 +43,126 @@ export function ImageStudioSingleSlotManager(): React.JSX.Element {
     setDriveImportTargetId,
   } = useSlotsActions();
 
+  const [environmentSlotId, setEnvironmentSlotId] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [imageLinkDraft, setImageLinkDraft] = useState<string>('');
-  const [imageBase64Draft, setImageBase64Draft] = useState<string>('');
+  const [environmentImageLinkDraft, setEnvironmentImageLinkDraft] = useState<string>('');
+  const [environmentImageBase64Draft, setEnvironmentImageBase64Draft] = useState<string>('');
+  const [objectImageLinkDraft, setObjectImageLinkDraft] = useState<string>('');
+  const [objectImageBase64Draft, setObjectImageBase64Draft] = useState<string>('');
 
-  const linkSyncTimeoutRef = useRef<number | null>(null);
-  const base64SyncTimeoutRef = useRef<number | null>(null);
+  const environmentLinkSyncTimeoutRef = useRef<number | null>(null);
+  const environmentBase64SyncTimeoutRef = useRef<number | null>(null);
+  const objectLinkSyncTimeoutRef = useRef<number | null>(null);
+  const objectBase64SyncTimeoutRef = useRef<number | null>(null);
+  const restoreObjectAfterImportRef = useRef<string | null>(null);
+  const wasDriveImportOpenRef = useRef(false);
+
+  const environmentSlot = useMemo(
+    () => (environmentSlotId ? slots.find((slot: ImageStudioSlotRecord) => slot.id === environmentSlotId) ?? null : null),
+    [environmentSlotId, slots]
+  );
+  const objectSlot = selectedSlot;
 
   useEffect(() => {
     return () => {
-      if (linkSyncTimeoutRef.current) {
-        window.clearTimeout(linkSyncTimeoutRef.current);
+      if (environmentLinkSyncTimeoutRef.current) {
+        window.clearTimeout(environmentLinkSyncTimeoutRef.current);
       }
-      if (base64SyncTimeoutRef.current) {
-        window.clearTimeout(base64SyncTimeoutRef.current);
+      if (environmentBase64SyncTimeoutRef.current) {
+        window.clearTimeout(environmentBase64SyncTimeoutRef.current);
+      }
+      if (objectLinkSyncTimeoutRef.current) {
+        window.clearTimeout(objectLinkSyncTimeoutRef.current);
+      }
+      if (objectBase64SyncTimeoutRef.current) {
+        window.clearTimeout(objectBase64SyncTimeoutRef.current);
       }
     };
   }, []);
 
   useEffect(() => {
+    if (environmentSlotId && !environmentSlot) {
+      setEnvironmentSlotId(null);
+    }
+  }, [environmentSlot, environmentSlotId]);
+
+  useEffect(() => {
+    if (wasDriveImportOpenRef.current && !driveImportOpen && restoreObjectAfterImportRef.current) {
+      const objectId = restoreObjectAfterImportRef.current;
+      restoreObjectAfterImportRef.current = null;
+      setSelectedSlotId(objectId);
+    }
+    wasDriveImportOpenRef.current = driveImportOpen;
+  }, [driveImportOpen, setSelectedSlotId]);
+
+  useEffect(() => {
     setUploadError(null);
-    setImageLinkDraft(selectedSlot?.imageUrl ?? '');
-    setImageBase64Draft(selectedSlot?.imageBase64 ?? '');
-  }, [selectedSlot?.id, selectedSlot?.imageUrl, selectedSlot?.imageBase64]);
+    setEnvironmentImageLinkDraft(environmentSlot?.imageUrl ?? '');
+    setEnvironmentImageBase64Draft(environmentSlot?.imageBase64 ?? '');
+  }, [environmentSlot?.id, environmentSlot?.imageUrl, environmentSlot?.imageBase64]);
+
+  useEffect(() => {
+    setUploadError(null);
+    setObjectImageLinkDraft(objectSlot?.imageUrl ?? '');
+    setObjectImageBase64Draft(objectSlot?.imageBase64 ?? '');
+  }, [objectSlot?.id, objectSlot?.imageUrl, objectSlot?.imageBase64]);
+
+  const getSlotForIndex = useCallback(
+    (index: number): ImageStudioSlotRecord | null =>
+      index === ENVIRONMENT_SLOT_INDEX ? environmentSlot : objectSlot,
+    [environmentSlot, objectSlot]
+  );
+
+  const getFolderForNewSlot = useCallback(
+    (): string => selectedFolder.trim(),
+    [selectedFolder]
+  );
 
   const upsertFromUploadedFile = useCallback(
-    async (uploaded: { id: string; filepath: string; filename?: string }): Promise<void> => {
-      if (selectedSlot) {
+    async (uploaded: { id: string; filepath: string; filename?: string }, index: number): Promise<void> => {
+      const targetSlot = getSlotForIndex(index);
+      if (targetSlot) {
         await updateSlotMutation.mutateAsync({
-          id: selectedSlot.id,
+          id: targetSlot.id,
           data: {
             imageFileId: uploaded.id,
             imageUrl: uploaded.filepath,
             imageBase64: null,
           },
         });
-        setSelectedSlotId(selectedSlot.id);
+        if (index === OBJECT_SLOT_INDEX) {
+          setSelectedSlotId(targetSlot.id);
+        } else {
+          setEnvironmentSlotId(targetSlot.id);
+        }
         return;
       }
 
       const created = await createSlots([
         {
-          name: uploaded.filename?.trim() || `Slot ${Date.now()}`,
-          ...(selectedFolder ? { folderPath: selectedFolder } : {}),
+          name:
+            index === ENVIRONMENT_SLOT_INDEX
+              ? 'Environment'
+              : uploaded.filename?.trim() || `Slot ${Date.now()}`,
+          ...(getFolderForNewSlot() ? { folderPath: getFolderForNewSlot() } : {}),
           imageFileId: uploaded.id,
           imageUrl: uploaded.filepath,
           imageBase64: null,
         },
       ]);
-      if (created[0]) {
+      if (!created[0]) return;
+
+      if (index === ENVIRONMENT_SLOT_INDEX) {
+        setEnvironmentSlotId(created[0].id);
+      } else {
         setSelectedSlotId(created[0].id);
       }
     },
-    [createSlots, selectedFolder, selectedSlot, setSelectedSlotId, updateSlotMutation],
+    [createSlots, getFolderForNewSlot, getSlotForIndex, setSelectedSlotId, updateSlotMutation]
   );
 
   const handleSlotImageChange = useCallback(
-    async (file: File | null, _index: number): Promise<void> => {
+    async (file: File | null, index: number): Promise<void> => {
       if (!file) return;
       if (!projectId) {
         setUploadError('Select a project first.');
@@ -106,31 +172,40 @@ export function ImageStudioSingleSlotManager(): React.JSX.Element {
       try {
         const result = await uploadMutation.mutateAsync({
           files: [file],
-          folder: selectedFolder,
+          folder: getFolderForNewSlot(),
         });
         const uploaded = result.uploaded?.[0] ?? null;
         if (!uploaded) {
           throw new Error(result.failures?.[0]?.error || 'Upload failed');
         }
-        await upsertFromUploadedFile(uploaded);
+        await upsertFromUploadedFile(uploaded, index);
       } catch (error: unknown) {
         setUploadError(error instanceof Error ? error.message : 'Failed to upload image');
       }
     },
-    [projectId, selectedFolder, uploadMutation, upsertFromUploadedFile],
+    [getFolderForNewSlot, projectId, uploadMutation, upsertFromUploadedFile]
   );
 
   const setImageLinkAt = useCallback(
-    (_index: number, value: string): void => {
-      setImageLinkDraft(value);
-      if (!selectedSlot) return;
-      if (linkSyncTimeoutRef.current) {
-        window.clearTimeout(linkSyncTimeoutRef.current);
+    (index: number, value: string): void => {
+      if (index === ENVIRONMENT_SLOT_INDEX) {
+        setEnvironmentImageLinkDraft(value);
+      } else {
+        setObjectImageLinkDraft(value);
       }
-      linkSyncTimeoutRef.current = window.setTimeout(() => {
+
+      const targetSlot = getSlotForIndex(index);
+      if (!targetSlot) return;
+
+      const timeoutRef =
+        index === ENVIRONMENT_SLOT_INDEX ? environmentLinkSyncTimeoutRef : objectLinkSyncTimeoutRef;
+      if (timeoutRef.current) {
+        window.clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = window.setTimeout(() => {
         void updateSlotMutation
           .mutateAsync({
-            id: selectedSlot.id,
+            id: targetSlot.id,
             data: {
               imageUrl: value.trim() || null,
             },
@@ -140,20 +215,29 @@ export function ImageStudioSingleSlotManager(): React.JSX.Element {
           });
       }, 450);
     },
-    [selectedSlot, updateSlotMutation],
+    [getSlotForIndex, updateSlotMutation]
   );
 
   const setImageBase64At = useCallback(
-    (_index: number, value: string): void => {
-      setImageBase64Draft(value);
-      if (!selectedSlot) return;
-      if (base64SyncTimeoutRef.current) {
-        window.clearTimeout(base64SyncTimeoutRef.current);
+    (index: number, value: string): void => {
+      if (index === ENVIRONMENT_SLOT_INDEX) {
+        setEnvironmentImageBase64Draft(value);
+      } else {
+        setObjectImageBase64Draft(value);
       }
-      base64SyncTimeoutRef.current = window.setTimeout(() => {
+
+      const targetSlot = getSlotForIndex(index);
+      if (!targetSlot) return;
+
+      const timeoutRef =
+        index === ENVIRONMENT_SLOT_INDEX ? environmentBase64SyncTimeoutRef : objectBase64SyncTimeoutRef;
+      if (timeoutRef.current) {
+        window.clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = window.setTimeout(() => {
         void updateSlotMutation
           .mutateAsync({
-            id: selectedSlot.id,
+            id: targetSlot.id,
             data: {
               imageBase64: value.trim() || null,
               ...(value.trim() ? { imageFileId: null } : {}),
@@ -164,42 +248,100 @@ export function ImageStudioSingleSlotManager(): React.JSX.Element {
           });
       }, 450);
     },
-    [selectedSlot, updateSlotMutation],
+    [getSlotForIndex, updateSlotMutation]
   );
 
   const handleSlotDisconnectImage = useCallback(
-    async (_index: number): Promise<void> => {
-      if (!selectedSlot) return;
+    async (index: number): Promise<void> => {
+      const targetSlot = getSlotForIndex(index);
+      if (!targetSlot) return;
       setUploadError(null);
       await updateSlotMutation.mutateAsync({
-        id: selectedSlot.id,
+        id: targetSlot.id,
         data: {
           imageFileId: null,
           imageUrl: null,
           imageBase64: null,
         },
       });
-      setImageLinkDraft('');
-      setImageBase64Draft('');
+      if (index === ENVIRONMENT_SLOT_INDEX) {
+        setEnvironmentImageLinkDraft('');
+        setEnvironmentImageBase64Draft('');
+      } else {
+        setObjectImageLinkDraft('');
+        setObjectImageBase64Draft('');
+      }
     },
-    [selectedSlot, updateSlotMutation],
+    [getSlotForIndex, updateSlotMutation]
+  );
+
+  const openFileManagerForIndex = useCallback(
+    (index: number): void => {
+      if (!projectId) {
+        setUploadError('Select a project first.');
+        return;
+      }
+      setUploadError(null);
+      void (async () => {
+        let targetSlot = getSlotForIndex(index);
+        if (!targetSlot) {
+          const created = await createSlots([
+            {
+              name: index === ENVIRONMENT_SLOT_INDEX ? 'Environment' : `Slot ${Date.now()}`,
+              ...(getFolderForNewSlot() ? { folderPath: getFolderForNewSlot() } : {}),
+            },
+          ]);
+          targetSlot = created[0] ?? null;
+          if (!targetSlot) return;
+          if (index === ENVIRONMENT_SLOT_INDEX) {
+            setEnvironmentSlotId(targetSlot.id);
+          } else {
+            setSelectedSlotId(targetSlot.id);
+          }
+        }
+        if (
+          index === ENVIRONMENT_SLOT_INDEX &&
+          objectSlot?.id &&
+          objectSlot.id !== targetSlot.id
+        ) {
+          restoreObjectAfterImportRef.current = objectSlot.id;
+        } else {
+          restoreObjectAfterImportRef.current = null;
+        }
+        setDriveImportMode('replace');
+        setDriveImportTargetId(targetSlot.id);
+        setDriveImportOpen(true);
+      })().catch(() => {
+        // no-op: upload modal will surface import errors
+      });
+    },
+    [
+      createSlots,
+      getFolderForNewSlot,
+      getSlotForIndex,
+      objectSlot?.id,
+      projectId,
+      setUploadError,
+      setDriveImportMode,
+      setDriveImportOpen,
+      setDriveImportTargetId,
+      setSelectedSlotId,
+    ]
   );
 
   const setShowFileManager = useCallback(
     (show: boolean): void => {
-      if (!show || !projectId) return;
-      setDriveImportMode(selectedSlot ? 'replace' : 'create');
-      setDriveImportTargetId(selectedSlot?.id ?? null);
-      setDriveImportOpen(true);
+      if (!show) return;
+      openFileManagerForIndex(OBJECT_SLOT_INDEX);
     },
-    [projectId, selectedSlot, setDriveImportMode, setDriveImportOpen, setDriveImportTargetId],
+    [openFileManagerForIndex]
   );
 
   const controller = useMemo<ProductImageManagerController>(
     () => ({
-      imageSlots: [toManagedSlot(selectedSlot)],
-      imageLinks: [imageLinkDraft],
-      imageBase64s: [imageBase64Draft],
+      imageSlots: [toManagedSlot(environmentSlot), toManagedSlot(objectSlot)],
+      imageLinks: [environmentImageLinkDraft, objectImageLinkDraft],
+      imageBase64s: [environmentImageBase64Draft, objectImageBase64Draft],
       setImageLinkAt,
       setImageBase64At,
       handleSlotImageChange: (file: File | null, index: number): void => {
@@ -207,25 +349,33 @@ export function ImageStudioSingleSlotManager(): React.JSX.Element {
       },
       handleSlotDisconnectImage,
       setShowFileManager,
+      setShowFileManagerForSlot: (index: number): void => {
+        openFileManagerForIndex(index);
+      },
+      slotLabels: ['Environment', 'Object'],
       swapImageSlots: (): void => {
-        // single-slot mode
+        // Fixed order: [environment, object]
       },
       setImagesReordering: (): void => {
-        // single-slot mode
+        // Reordering disabled in this view
       },
       uploadError,
     }),
     [
+      environmentImageBase64Draft,
+      environmentImageLinkDraft,
+      environmentSlot,
       handleSlotDisconnectImage,
       handleSlotImageChange,
-      imageBase64Draft,
-      imageLinkDraft,
-      selectedSlot,
+      objectImageBase64Draft,
+      objectImageLinkDraft,
+      objectSlot,
+      openFileManagerForIndex,
       setImageBase64At,
       setImageLinkAt,
       setShowFileManager,
       uploadError,
-    ],
+    ]
   );
 
   return <ProductImageManager controller={controller} minimalUi />;

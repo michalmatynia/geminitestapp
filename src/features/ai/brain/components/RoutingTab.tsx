@@ -19,11 +19,6 @@ const ROUTING_FEATURES: FeatureConfig[] = [
     description: 'Theme/style generation and design assistants inside the CMS Builder.',
   },
   {
-    key: 'image_studio',
-    label: 'Image Studio',
-    description: 'Prompt extraction, UI extractor, and prompt learning for Image Studio.',
-  },
-  {
     key: 'prompt_engine',
     label: 'Prompt Engine',
     description: 'Validation learning and prompt tooling shared across the app.',

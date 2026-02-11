@@ -1,7 +1,7 @@
 'use client';
 
-import { Sparkles, Wand2 } from 'lucide-react';
-import React, { useMemo } from 'react';
+import { Loader2, Save, Sparkles, Wand2 } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
 import { formatProgrammaticPrompt } from '@/features/prompt-engine/prompt-formatter';
@@ -32,6 +32,7 @@ import { UIPresetsPanel } from './UIPresetsPanel';
 import { useGenerationState } from '../context/GenerationContext';
 import { useProjectsState } from '../context/ProjectsContext';
 import { usePromptActions, usePromptState } from '../context/PromptContext';
+import { useSettingsActions } from '../context/SettingsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 
 interface RightSidebarProps {
@@ -51,9 +52,11 @@ export function RightSidebar({
   const { promptText, paramsState } = usePromptState();
   const { setPromptText, setExtractReviewOpen, setExtractDraftPrompt } = usePromptActions();
   const { runOutputs, generationHistory } = useGenerationState();
+  const { saveStudioSettings } = useSettingsActions();
 
   const { toast } = useToast();
   const settingsStore = useSettingsStore();
+  const [projectSaveBusy, setProjectSaveBusy] = useState(false);
 
   const promptValidationSettings = useMemo(
     () => parsePromptEngineSettings(settingsStore.get(PROMPT_ENGINE_SETTINGS_KEY)).promptValidation,
@@ -110,6 +113,25 @@ export function RightSidebar({
     }
   };
 
+  const handleSaveProject = (): void => {
+    if (!projectId.trim()) {
+      toast('Select a project first.', { variant: 'info' });
+      return;
+    }
+    if (projectSaveBusy) return;
+    setProjectSaveBusy(true);
+    void saveStudioSettings()
+      .then(() => {
+        toast(`Project "${projectId}" saved.`, { variant: 'success' });
+      })
+      .catch((error: unknown) => {
+        toast(error instanceof Error ? error.message : 'Failed to save project.', { variant: 'error' });
+      })
+      .finally(() => {
+        setProjectSaveBusy(false);
+      });
+  };
+
   return (
     <SectionPanel
       className={cn(
@@ -119,7 +141,7 @@ export function RightSidebar({
       variant='subtle'
       aria-hidden={isFocusMode}
     >
-      <div className='flex flex-wrap items-center justify-end gap-2 border-b border-border/60 px-4 py-2'>
+      <div className='flex flex-wrap items-center justify-end gap-2 px-4 py-2'>
         <Button
           variant='outline'
           size='sm'
@@ -152,8 +174,19 @@ export function RightSidebar({
           <Wand2 className='mr-2 size-4' />
           Format
         </Button>
+        <Button
+          variant='outline'
+          size='sm'
+          title='Save current Image Studio project state'
+          aria-label='Save current Image Studio project state'
+          disabled={projectSaveBusy || !projectId.trim()}
+          onClick={handleSaveProject}
+        >
+          {projectSaveBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : <Save className='mr-2 size-4' />}
+          Save Project
+        </Button>
       </div>
-      <div className='relative flex min-h-0 flex-1 flex-col gap-3 p-4'>
+      <div className='relative flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4 pt-0'>
         <Textarea
           value={promptText}
           onChange={(event) => setPromptText(event.target.value)}

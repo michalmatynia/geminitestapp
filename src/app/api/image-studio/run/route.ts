@@ -10,8 +10,10 @@ import OpenAI, { toFile } from 'openai';
 import sharp from 'sharp';
 import { z } from 'zod';
 
-import { getBrainAssignmentForFeature } from '@/features/ai/brain/server';
-import { parseImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
+import {
+  IMAGE_STUDIO_OPENAI_API_KEY_KEY,
+  parseImageStudioSettings,
+} from '@/features/ai/image-studio/utils/studio-settings';
 import { getImageFileRepository } from '@/features/files/server';
 import { getSettingValue } from '@/features/products/services/aiDescriptionService';
 import { badRequestError, configurationError, operationFailedError } from '@/shared/errors/app-error';
@@ -200,16 +202,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   }
 
   const apiKey =
-    (await getSettingValue('openai_api_key')) ?? process.env['OPENAI_API_KEY'] ?? null;
+    (await getSettingValue(IMAGE_STUDIO_OPENAI_API_KEY_KEY))?.trim() ||
+    (await getSettingValue('openai_api_key'))?.trim() ||
+    process.env['OPENAI_API_KEY'] ||
+    null;
   if (!apiKey) {
-    throw configurationError('OpenAI API key is missing. Set it in /admin/settings/brain.');
-  }
-  const brainAssignment = await getBrainAssignmentForFeature('image_studio');
-  if (!brainAssignment.enabled) {
-    throw configurationError('AI Brain is disabled for Image Studio.');
-  }
-  if (brainAssignment.provider === 'agent') {
-    throw configurationError('Image Studio runs do not support agent providers yet.');
+    throw configurationError('OpenAI API key is missing. Set it in Image Studio settings.');
   }
 
   const client = new OpenAI({ apiKey });
@@ -265,7 +263,10 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     throw badRequestError(`Too many input images. Limit is ${maxImages} total.`);
   }
 
-  const resolvedModel = brainAssignment.modelId || settings.targetAi.openai.model;
+  const resolvedModel = settings.targetAi.openai.model?.trim() || null;
+  if (!resolvedModel) {
+    throw configurationError('Image Studio model is missing. Set it in Image Studio settings.');
+  }
   const modelName = (resolvedModel ?? '').toLowerCase();
   if (modelName.includes('dall-e-2') && referencePaths.length > 0) {
     throw badRequestError('Multiple input images are only supported for GPT image models.');

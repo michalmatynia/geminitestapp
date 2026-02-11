@@ -81,6 +81,7 @@ export interface SlotsActions {
   deleteSlotMutation: UseMutationResult<void, Error, string>;
   moveSlotMutation: UseMutationResult<ImageStudioSlotRecord, Error, { slot: ImageStudioSlotRecord; targetFolder: string }>;
   handleMoveFolder: (folderPath: string, targetFolder: string) => Promise<void>;
+  handleDeleteFolder: (folderPath: string) => Promise<void>;
   createFolderMutation: UseMutationResult<string, Error, string>;
   uploadMutation: UseMutationResult<StudioAssetImportResult, Error, { files: File[]; folder: string }>;
   importFromDriveMutation: UseMutationResult<StudioAssetImportResult, Error, { files: ImageFileSelection[]; folder: string }>;
@@ -313,6 +314,52 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     void queryClient.invalidateQueries({ queryKey: slotsQueryKey });
   }, [virtualFolders, persistFolders, slots, updateSlotMutation, queryClient, slotsQueryKey]);
 
+  const handleDeleteFolder = useCallback(async (folderPath: string) => {
+    const normalizePath = (value: string): string =>
+      value.replace(/\\/g, '/').replace(/^\/+/, '').replace(/\/+$/, '');
+    const source = normalizePath(folderPath);
+    if (!source) return;
+
+    const isWithinSource = (value: string): boolean =>
+      value === source || value.startsWith(`${source}/`);
+
+    const nextFolders = normalizeFolderPaths(
+      virtualFolders.filter((path: string) => !isWithinSource(normalizePath(path)))
+    );
+    setVirtualFolders(nextFolders);
+    void persistFolders(nextFolders);
+
+    const slotsToDelete = slots.filter((slot: ImageStudioSlotRecord) =>
+      isWithinSource(normalizePath(slot.folderPath ?? ''))
+    );
+    if (slotsToDelete.length > 0) {
+      const deletingSlotIds = new Set(slotsToDelete.map((slot: ImageStudioSlotRecord) => slot.id));
+      if (selectedSlotId && deletingSlotIds.has(selectedSlotId)) {
+        setSelectedSlotId(null);
+        setWorkingSlotId(null);
+      }
+      await Promise.allSettled(
+        slotsToDelete.map((slot: ImageStudioSlotRecord) => deleteSlotMutation.mutateAsync(slot.id))
+      );
+    }
+
+    const normalizedSelectedFolder = normalizePath(selectedFolder);
+    if (normalizedSelectedFolder && isWithinSource(normalizedSelectedFolder)) {
+      setSelectedFolderRaw('');
+    }
+
+    void queryClient.invalidateQueries({ queryKey: slotsQueryKey });
+  }, [
+    virtualFolders,
+    persistFolders,
+    slots,
+    selectedSlotId,
+    selectedFolder,
+    deleteSlotMutation,
+    queryClient,
+    slotsQueryKey,
+  ]);
+
   const createFolderMutation = useMutation({
     mutationFn: async (folder: string) => {
       const expanded = expandFolderPath(folder);
@@ -350,7 +397,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     () => ({
       setSelectedSlotId, setWorkingSlotId, setVirtualFolders,
       setSelectedFolder: handleSelectFolder, createSlots,
-      updateSlotMutation, deleteSlotMutation, moveSlotMutation, handleMoveFolder,
+      updateSlotMutation, deleteSlotMutation, moveSlotMutation, handleMoveFolder, handleDeleteFolder,
       createFolderMutation, uploadMutation, importFromDriveMutation,
       setSlotCreateOpen, setDriveImportOpen, setDriveImportMode, setDriveImportTargetId,
       setSlotUpdateBusy, setSlotInlineEditOpen, setSlotImageUrlDraft, setSlotBase64Draft, setMoveTargetFolder,
@@ -358,7 +405,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     }),
     [
       handleSelectFolder, createSlots,
-      updateSlotMutation, deleteSlotMutation, moveSlotMutation, handleMoveFolder,
+      updateSlotMutation, deleteSlotMutation, moveSlotMutation, handleMoveFolder, handleDeleteFolder,
       createFolderMutation, uploadMutation, importFromDriveMutation,
     ]
   );

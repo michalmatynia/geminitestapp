@@ -2,9 +2,8 @@
 
 import { Plus } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useState } from 'react';
 
-import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 import {
   Button,
   ClientOnly,
@@ -37,7 +36,6 @@ function AdminImageStudioPageContent(): React.JSX.Element {
   const { handleRefreshSettings } = useSettingsActions();
   const { projectId, projectsQuery } = useProjectsState();
   const { setProjectId, createProjectMutation } = useProjectsActions();
-  const { isMenuCollapsed, setIsMenuCollapsed } = useAdminLayout();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -45,7 +43,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
   const [newProjectId, setNewProjectId] = useState('');
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [maskPreviewEnabled, setMaskPreviewEnabled] = useState(false);
-  const menuCollapsedBeforeFocusRef = useRef<boolean | null>(null);
+  const hideTopBar = activeTab === 'studio' && isFocusMode;
 
   useEffect(() => {
     const rawTab = searchParams?.get('tab');
@@ -82,31 +80,6 @@ function AdminImageStudioPageContent(): React.JSX.Element {
     });
   }, [createProjectMutation, newProjectId, setProjectId, toast]);
 
-  useEffect(() => {
-    if (isFocusMode) {
-      if (menuCollapsedBeforeFocusRef.current === null) {
-        menuCollapsedBeforeFocusRef.current = isMenuCollapsed;
-      }
-      if (!isMenuCollapsed) {
-        setIsMenuCollapsed(true);
-      }
-      return;
-    }
-    if (menuCollapsedBeforeFocusRef.current !== null) {
-      setIsMenuCollapsed(menuCollapsedBeforeFocusRef.current);
-      menuCollapsedBeforeFocusRef.current = null;
-    }
-  }, [isFocusMode, isMenuCollapsed, setIsMenuCollapsed]);
-
-  useEffect(() => {
-    return () => {
-      if (menuCollapsedBeforeFocusRef.current !== null) {
-        setIsMenuCollapsed(menuCollapsedBeforeFocusRef.current);
-        menuCollapsedBeforeFocusRef.current = null;
-      }
-    };
-  }, [setIsMenuCollapsed]);
-
   return (
     <div className='container mx-auto max-w-none flex min-h-[calc(100vh-5rem)] flex-col gap-4 py-6'>
       <ClientOnly fallback={<div className='flex min-h-0 flex-1' />}>
@@ -114,59 +87,61 @@ function AdminImageStudioPageContent(): React.JSX.Element {
           id='image-studio-tabs'
           value={activeTab as string}
           onValueChange={handleTabChange}
-          className='flex min-h-0 flex-1 flex-col gap-4'
+          className={hideTopBar ? 'flex min-h-0 flex-1 flex-col gap-0' : 'flex min-h-0 flex-1 flex-col gap-4'}
         >
-          <div className={`border-b bg-muted/40 px-4 py-2 ${isFocusMode ? 'hidden' : ''}`}>
-            <div className='flex items-center gap-3'>
-              <TabsList className='bg-card'>
-                <TabsTrigger value='studio'>Studio</TabsTrigger>
-                <TabsTrigger value='projects'>Projects</TabsTrigger>
-                <TabsTrigger value='settings'>Settings</TabsTrigger>
-                <TabsTrigger value='validation'>Validation</TabsTrigger>
-              </TabsList>
-              <div className='ml-auto flex w-full max-w-[620px] items-center gap-2'>
-                <Input
-                  placeholder='New project ID...'
-                  value={newProjectId}
-                  onChange={(event) => setNewProjectId(event.target.value)}
-                  className='h-8 flex-1 min-w-[180px] text-xs bg-card'
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                      event.preventDefault();
-                      handleCreateProject();
-                    }
-                  }}
-                />
-                <Button
-                  type='button'
-                  variant='outline'
-                  size='icon'
-                  className='size-8 bg-card'
-                  disabled={!newProjectId.trim() || createProjectMutation.isPending}
-                  onClick={handleCreateProject}
-                  title='Create project'
-                >
-                  <Plus className='size-4' />
-                </Button>
-                <Select
-                  value={projectId || '__none__'}
-                  onValueChange={(value) => setProjectId(value === '__none__' ? '' : value)}
-                >
-                  <SelectTrigger className='h-8 w-full max-w-[320px] bg-card'>
-                    <SelectValue placeholder={projectsQuery.isLoading ? 'Loading projects...' : 'Select project'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='__none__'>No project</SelectItem>
-                    {(projectsQuery.data ?? []).map((id) => (
-                      <SelectItem key={id} value={id}>
-                        {id}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          {!hideTopBar ? (
+            <div className='border-b bg-muted/40 px-4 py-2'>
+              <div className='flex items-center gap-3'>
+                <TabsList className='bg-card'>
+                  <TabsTrigger value='studio'>Studio</TabsTrigger>
+                  <TabsTrigger value='projects'>Projects</TabsTrigger>
+                  <TabsTrigger value='settings'>Settings</TabsTrigger>
+                  <TabsTrigger value='validation'>Validation</TabsTrigger>
+                </TabsList>
+                <div className='ml-auto flex w-full max-w-[620px] items-center gap-2'>
+                  <Input
+                    placeholder='New project ID...'
+                    value={newProjectId}
+                    onChange={(event) => setNewProjectId(event.target.value)}
+                    className='h-8 flex-1 min-w-[180px] text-xs bg-card'
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault();
+                        handleCreateProject();
+                      }
+                    }}
+                  />
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='icon'
+                    className='size-8 bg-card'
+                    disabled={!newProjectId.trim() || createProjectMutation.isPending}
+                    onClick={handleCreateProject}
+                    title='Create project'
+                  >
+                    <Plus className='size-4' />
+                  </Button>
+                  <Select
+                    value={projectId || '__none__'}
+                    onValueChange={(value) => setProjectId(value === '__none__' ? '' : value)}
+                  >
+                    <SelectTrigger className='h-8 w-full max-w-[320px] bg-card'>
+                      <SelectValue placeholder={projectsQuery.isLoading ? 'Loading projects...' : 'Select project'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='__none__'>No project</SelectItem>
+                      {(projectsQuery.data ?? []).map((id) => (
+                        <SelectItem key={id} value={id}>
+                          {id}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
-          </div>
+          ) : null}
 
           <div className='flex-1 overflow-hidden'>
             <TabsContent value='studio' className='h-full m-0 p-0 flex flex-col'>

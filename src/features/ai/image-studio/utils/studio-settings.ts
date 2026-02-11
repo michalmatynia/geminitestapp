@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const IMAGE_STUDIO_SETTINGS_KEY = 'image_studio_settings';
+export const IMAGE_STUDIO_OPENAI_API_KEY_KEY = 'image_studio_openai_api_key';
 
 export type ImageStudioSettings = {
   version: 1;

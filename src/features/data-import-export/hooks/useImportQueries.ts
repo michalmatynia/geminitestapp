@@ -210,16 +210,20 @@ export function useSaveExportSettingsMutation(): UseMutationResult<void, Error, 
       imageRetryPresets?: ImageRetryPreset[];
       exportWarehouseId?: string | null;
     }): Promise<void> => {
+      const normalizedTemplateId = params.exportActiveTemplateId?.trim() || null;
+      const normalizedInventoryId = params.exportInventoryId?.trim() || null;
+      const normalizedConnectionId = params.selectedBaseConnectionId?.trim() || null;
+      const normalizedWarehouseId = params.exportWarehouseId?.trim() || null;
       await Promise.all([
-        api.post('/api/integrations/exports/base/active-template', { templateId: params.exportActiveTemplateId }),
-        api.post('/api/integrations/exports/base/default-inventory', { inventoryId: params.exportInventoryId }),
-        api.post('/api/integrations/exports/base/default-connection', { connectionId: params.selectedBaseConnectionId }),
+        api.post('/api/integrations/exports/base/active-template', { templateId: normalizedTemplateId }),
+        api.post('/api/integrations/exports/base/default-inventory', { inventoryId: normalizedInventoryId }),
+        api.post('/api/integrations/exports/base/default-connection', { connectionId: normalizedConnectionId }),
         api.post('/api/integrations/exports/base/stock-fallback', { enabled: params.exportStockFallbackEnabled }),
         api.post('/api/integrations/exports/base/image-retry-presets', { presets: params.imageRetryPresets }),
-        ...(params.exportInventoryId && params.exportWarehouseId !== undefined ? [
+        ...(normalizedInventoryId ? [
           api.post('/api/integrations/imports/base/export-warehouse', {
-            warehouseId: params.exportWarehouseId,
-            inventoryId: params.exportInventoryId,
+            warehouseId: normalizedWarehouseId,
+            inventoryId: normalizedInventoryId,
           })
         ] : []),
       ]);

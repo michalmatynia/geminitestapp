@@ -4,7 +4,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { z } from 'zod';
 
-import { getBrainAssignmentForFeature } from '@/features/ai/brain/server';
+import {
+  IMAGE_STUDIO_OPENAI_API_KEY_KEY,
+  IMAGE_STUDIO_SETTINGS_KEY,
+  parseImageStudioSettings,
+} from '@/features/ai/image-studio/utils/studio-settings';
 import { auth } from '@/features/auth/server';
 import { getSettingValue } from '@/features/products/services/aiDescriptionService';
 import {
@@ -40,20 +44,20 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const parsed = await parseJsonBody(req, payloadSchema, { logPrefix: 'image-studio.validation-patterns.learn.POST' });
   if (!parsed.ok) return parsed.response;
 
-  const apiKey = (await getSettingValue('openai_api_key')) ?? process.env['OPENAI_API_KEY'] ?? null;
+  const apiKey =
+    (await getSettingValue(IMAGE_STUDIO_OPENAI_API_KEY_KEY))?.trim() ||
+    (await getSettingValue('openai_api_key'))?.trim() ||
+    process.env['OPENAI_API_KEY'] ||
+    null;
   if (!apiKey) {
-    throw configurationError('OpenAI API key is missing. Set it in /admin/settings/brain.');
+    throw configurationError('OpenAI API key is missing. Set it in Image Studio settings.');
   }
 
-  const brainAssignment = await getBrainAssignmentForFeature('prompt_engine');
-  if (!brainAssignment.enabled) {
-    throw configurationError('AI Brain is disabled for Prompt Engine.');
-  }
-  if (brainAssignment.provider === 'agent') {
-    throw configurationError('Prompt Engine pattern learning does not support agent providers yet.');
-  }
+  const studioSettingsRaw = await getSettingValue(IMAGE_STUDIO_SETTINGS_KEY);
+  const studioSettings = parseImageStudioSettings(studioSettingsRaw);
   const model =
-    brainAssignment.modelId ||
+    studioSettings.promptExtraction.gpt.model ||
+    studioSettings.uiExtractor.model ||
     (await getSettingValue('openai_model'))?.trim() ||
     'gpt-4o-mini';
   const settingsRaw = await getSettingValue(PROMPT_ENGINE_SETTINGS_KEY);
@@ -104,7 +108,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
   const response = await client.chat.completions.create({
     model,
-    temperature: 0.2,
+    temperature: studioSettings.promptExtraction.gpt.temperature ?? 0.2,
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt },

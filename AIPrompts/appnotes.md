@@ -1,9 +1,23 @@
- 
- Product Template for Import/Export not saving my settigs
+ Use pre-prompts to incorporate different aspects
+ Show Button should keep the toolbar and collapse admin menu
+ * Dragging image in the image canvas stopped working again
+ Dragging no longer works
+ Save button above format and other buttons
+
+In Folder tree, draggin the bottom file into the top folder in the folder tree is not working.
+ Image Canvas has too much height
+ OpenaAI, where do I put the API and which model do I choose, How does the final prompt willl look like
+
+ when selecting AI model, fetch fresh list of models and divide paid vs ollama
+
+ * Image uploads are still not working in Image Studio
+
+
+
+
+
 
 * Add Validator and Formatter buttons to Draft
-
-I need another Validator pattern action, that will take the price and stock of the last created product and apply to the newly created product.
 
  
  In my AI-Paths sound module, I need a button node, like a power up button to turn on the machine. Button node doesn't need wires, it's assumed it "powers up" all the devices.

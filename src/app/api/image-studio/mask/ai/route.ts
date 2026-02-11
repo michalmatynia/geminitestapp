@@ -8,7 +8,11 @@ import OpenAI from 'openai';
 import { z } from 'zod';
 
 
-import { getBrainAssignmentForFeature } from '@/features/ai/brain/server';
+import {
+  IMAGE_STUDIO_OPENAI_API_KEY_KEY,
+  IMAGE_STUDIO_SETTINGS_KEY,
+  parseImageStudioSettings,
+} from '@/features/ai/image-studio/utils/studio-settings';
 import { auth } from '@/features/auth/server';
 import { getSettingValue } from '@/features/products/services/aiDescriptionService';
 import { authError, configurationError } from '@/shared/errors/app-error';
@@ -31,17 +35,16 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const parsed = await parseJsonBody(req, payloadSchema, { logPrefix: 'image-studio.mask.ai.POST' });
   if (!parsed.ok) return parsed.response;
 
-  const apiKey = (await getSettingValue('openai_api_key')) ?? process.env['OPENAI_API_KEY'] ?? null;
+  const apiKey =
+    (await getSettingValue(IMAGE_STUDIO_OPENAI_API_KEY_KEY))?.trim() ||
+    (await getSettingValue('openai_api_key'))?.trim() ||
+    process.env['OPENAI_API_KEY'] ||
+    null;
   if (!apiKey) {
-    throw configurationError('OpenAI API key is missing. Set it in /admin/settings/brain.');
+    throw configurationError('OpenAI API key is missing. Set it in Image Studio settings.');
   }
-  const brainAssignment = await getBrainAssignmentForFeature('image_studio');
-  if (!brainAssignment.enabled) {
-    throw configurationError('AI Brain is disabled for Image Studio.');
-  }
-  if (brainAssignment.provider === 'agent') {
-    throw configurationError('Image Studio mask generation does not support agent providers yet.');
-  }
+  const settingsRaw = await getSettingValue(IMAGE_STUDIO_SETTINGS_KEY);
+  const settings = parseImageStudioSettings(settingsRaw);
 
   const publicRoot = path.join(process.cwd(), 'public');
   const normalized = parsed.data.imagePath.replace(/^\/+/, '');
@@ -51,10 +54,13 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const ext = path.extname(diskPath).toLowerCase() === '.jpg' ? 'jpeg' : 'png';
 
   const client = new OpenAI({ apiKey });
-  const model = brainAssignment.modelId || 'gpt-4o-mini';
+  const model =
+    settings.promptExtraction.gpt.model ||
+    settings.uiExtractor.model ||
+    'gpt-4o-mini';
   const response = await client.chat.completions.create({
     model,
-    temperature: brainAssignment.temperature ?? 0.1,
+    temperature: settings.uiExtractor.temperature ?? 0.1,
     messages: [
       {
         role: 'system',

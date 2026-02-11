@@ -32,6 +32,7 @@ import { serializeSetting } from '@/shared/utils/settings-json';
 
 import {
   defaultImageStudioSettings,
+  IMAGE_STUDIO_OPENAI_API_KEY_KEY,
   IMAGE_STUDIO_SETTINGS_KEY,
   parseImageStudioSettings,
   type ImageStudioSettings,
@@ -50,6 +51,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
     JSON.stringify(defaultImageStudioSettings.targetAi.openai.advanced_overrides ?? {}, null, 2)
   );
   const [advancedOverridesError, setAdvancedOverridesError] = useState<string | null>(null);
+  const [imageStudioApiKey, setImageStudioApiKey] = useState<string>('');
   const [promptValidationEnabled, setPromptValidationEnabled] = useState<boolean>(
     defaultPromptEngineSettings.promptValidation.enabled
   );
@@ -76,6 +78,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
     const stored = parseImageStudioSettings(heavySettings.data.get(IMAGE_STUDIO_SETTINGS_KEY));
     const promptEngineStored = parsePromptEngineSettings(settingsStore.get(PROMPT_ENGINE_SETTINGS_KEY));
     const openaiModelFallback = settingsStore.get('openai_model');
+    const apiKeyFallback = settingsStore.get(IMAGE_STUDIO_OPENAI_API_KEY_KEY) ?? settingsStore.get('openai_api_key') ?? '';
 
     const hydrated: ImageStudioSettings =
       openaiModelFallback && stored.targetAi.openai.model === defaultImageStudioSettings.targetAi.openai.model
@@ -93,6 +96,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
 
     setStudioSettings(hydrated);
     setAdvancedOverridesText(JSON.stringify(hydrated.targetAi.openai.advanced_overrides ?? {}, null, 2));
+    setImageStudioApiKey(apiKeyFallback);
     setPromptValidationEnabled(promptEngineStored.promptValidation.enabled);
     setPromptValidationRulesText(JSON.stringify(promptEngineStored.promptValidation.rules, null, 2));
     setPromptValidationRulesError(null);
@@ -172,6 +176,10 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
         key: IMAGE_STUDIO_SETTINGS_KEY,
         value: serializeSetting(studioSettings),
       });
+      await updateSetting.mutateAsync({
+        key: IMAGE_STUDIO_OPENAI_API_KEY_KEY,
+        value: imageStudioApiKey.trim(),
+      });
       const parsedRules = parsePromptValidationRules(promptValidationRulesText);
       if (!parsedRules.ok) {
         throw new Error(parsedRules.error);
@@ -197,6 +205,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
     promptValidationEnabled,
     promptValidationRulesError,
     studioSettings,
+    imageStudioApiKey,
     promptValidationRulesText,
     promptEngineSettings,
     toast,
@@ -771,8 +780,20 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
                   placeholder='e.g. user_123'
                 />
               </div>
-              <div className='text-[11px] text-gray-500'>
-                Tip: store your API key at <span className='text-gray-300'>/admin/settings/brain</span>.
+
+              <div className='space-y-1'>
+                <div className='text-[11px] text-gray-500'>OpenAI API Key</div>
+                <Input
+                  type='password'
+                  value={imageStudioApiKey}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setImageStudioApiKey(e.target.value)}
+                  className='h-8'
+                  placeholder='sk-...'
+                  autoComplete='off'
+                />
+                <div className='text-[11px] text-gray-500'>
+                  Used by Image Studio run, prompt extraction, UI extraction, and AI mask detection.
+                </div>
               </div>
             </div>
 

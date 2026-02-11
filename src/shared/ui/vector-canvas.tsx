@@ -197,6 +197,9 @@ export function VectorCanvas({
   const panningRef = useRef(false);
   const panStartRef = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
   const spaceDownRef = useRef(false);
+  const [isPanning, setIsPanning] = useState(false);
+  const panRafIdRef = useRef<number>(0);
+  const pendingPanRef = useRef<{ panX: number; panY: number } | null>(null);
 
   // --- rAF draw batching ---
   const rafIdRef = useRef<number>(0);
@@ -214,8 +217,51 @@ export function VectorCanvas({
   useEffect(() => {
     return (): void => {
       if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+      if (panRafIdRef.current) cancelAnimationFrame(panRafIdRef.current);
     };
   }, []);
+
+  const schedulePanUpdate = useCallback((panX: number, panY: number): void => {
+    pendingPanRef.current = { panX, panY };
+    if (panRafIdRef.current) return;
+    panRafIdRef.current = requestAnimationFrame(() => {
+      panRafIdRef.current = 0;
+      const pending = pendingPanRef.current;
+      if (!pending) return;
+      setViewTransform((prev) => ({ ...prev, panX: pending.panX, panY: pending.panY }));
+    });
+  }, []);
+
+  const beginPan = useCallback((clientX: number, clientY: number): void => {
+    panningRef.current = true;
+    setIsPanning(true);
+    panStartRef.current = {
+      x: clientX,
+      y: clientY,
+      panX: viewTransformRef.current.panX,
+      panY: viewTransformRef.current.panY,
+    };
+  }, []);
+
+  const stopPan = useCallback((): void => {
+    if (panningRef.current) {
+      panningRef.current = false;
+    }
+    setIsPanning(false);
+  }, []);
+
+  const updatePanFromPointer = useCallback(
+    (clientX: number, clientY: number): void => {
+      if (!panningRef.current) return;
+      const dx = clientX - panStartRef.current.x;
+      const dy = clientY - panStartRef.current.y;
+      schedulePanUpdate(
+        panStartRef.current.panX + dx,
+        panStartRef.current.panY + dy
+      );
+    },
+    [schedulePanUpdate]
+  );
 
   const canDraw = allowWithoutImage || Boolean(src);
 
@@ -328,9 +374,9 @@ export function VectorCanvas({
         ctx.setLineDash([6, 4]);
       } else {
         // Open polygon/lasso: dashed blue stroke, no fill
-        ctx.strokeStyle = isActive ? 'rgba(16, 185, 129, 0.95)' : 'rgba(56, 189, 248, 0.7)';
+        ctx.strokeStyle = isActive ? 'rgba(34, 211, 238, 0.98)' : 'rgba(56, 189, 248, 0.9)';
         ctx.fillStyle = 'transparent';
-        ctx.setLineDash([6, 4]);
+        ctx.setLineDash([8, 4]);
       }
 
       ctx.beginPath();
@@ -377,12 +423,22 @@ export function VectorCanvas({
       if (shape.type === 'polygon' || shape.type === 'lasso' || shape.type === 'brush') {
         shape.points.forEach((p: VectorPoint, index: number) => {
           const px = toPx(p);
+          const pointRadius = index === 0 ? 5.5 : 4.5;
+          // Dark halo first, then bright core marker to keep points visible on any image.
           ctx.beginPath();
-          ctx.arc(px.x, px.y, index === 0 ? 5 : 4, 0, Math.PI * 2);
-          const isSelected = isActive && index === (selectedPointIndex ?? -1);
-          ctx.fillStyle = isSelected ? 'rgba(251, 191, 36, 0.95)' : (index === 0 ? 'rgba(16, 185, 129, 0.95)' : 'rgba(56, 189, 248, 0.95)');
+          ctx.arc(px.x, px.y, pointRadius + 2, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(2, 6, 23, 0.55)';
           ctx.fill();
-          ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+
+          ctx.beginPath();
+          ctx.arc(px.x, px.y, pointRadius, 0, Math.PI * 2);
+          const isSelected = isActive && index === (selectedPointIndex ?? -1);
+          ctx.fillStyle = isSelected
+            ? 'rgba(251, 191, 36, 0.98)'
+            : (index === 0 ? 'rgba(16, 185, 129, 0.98)' : 'rgba(56, 189, 248, 0.98)');
+          ctx.fill();
+          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
           ctx.stroke();
         });
       }
@@ -461,6 +517,12 @@ export function VectorCanvas({
     syncCanvasSize();
   }, [syncCanvasSize, src, shapes.length]);
 
+  useEffect(() => {
+    setViewTransform({ scale: 1, panX: 0, panY: 0 });
+    setIsPanning(false);
+    panningRef.current = false;
+  }, [src]);
+
   // Re-draw when shapes/selection/mask-preview change (draw callback updates)
   useEffect(() => {
     scheduleDraw();
@@ -481,6 +543,22 @@ export function VectorCanvas({
     return (): void => observer.disconnect();
   }, [syncCanvasSize]);
 
+  useEffect(() => {
+    if (!isPanning) return;
+    const onWindowMouseMove = (event: MouseEvent): void => {
+      updatePanFromPointer(event.clientX, event.clientY);
+    };
+    const onWindowMouseUp = (): void => {
+      stopPan();
+    };
+    window.addEventListener('mousemove', onWindowMouseMove);
+    window.addEventListener('mouseup', onWindowMouseUp);
+    return (): void => {
+      window.removeEventListener('mousemove', onWindowMouseMove);
+      window.removeEventListener('mouseup', onWindowMouseUp);
+    };
+  }, [isPanning, stopPan, updatePanFromPointer]);
+
   // --- Wheel zoom (attached with passive:false to prevent page scroll) ---
   useEffect(() => {
     const container = containerRef.current;
@@ -491,8 +569,10 @@ export function VectorCanvas({
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
       const prev = viewTransformRef.current;
-      const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+      const zoomDelta = Math.max(-220, Math.min(220, e.deltaY));
+      const factor = Math.exp(-zoomDelta * 0.00135);
       const newScale = Math.min(8, Math.max(0.5, prev.scale * factor));
+      if (newScale === prev.scale) return;
       // Keep the point under cursor fixed
       const newPanX = mouseX - (mouseX - prev.panX) * (newScale / prev.scale);
       const newPanY = mouseY - (mouseY - prev.panY) * (newScale / prev.scale);
@@ -500,18 +580,19 @@ export function VectorCanvas({
     };
     container.addEventListener('wheel', onWheel, { passive: false });
     return (): void => container.removeEventListener('wheel', onWheel);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // --- Space key for pan mode + zoom shortcuts ---
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent): void => {
-      if (e.code === 'Space' && !e.repeat) {
-        spaceDownRef.current = true;
-      }
       // Skip zoom shortcuts if user is typing in an input/textarea
       const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable) {
+      const isTypingTarget = tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable;
+      if (isTypingTarget) {
         return;
+      }
+      if (e.code === 'Space' && !e.repeat) {
+        spaceDownRef.current = true;
       }
       // Zoom in: + or =
       if (!e.ctrlKey && !e.metaKey && (e.key === '+' || e.key === '=')) {
@@ -559,13 +640,27 @@ export function VectorCanvas({
         spaceDownRef.current = false;
       }
     };
+    const resetPanHotkeys = (): void => {
+      spaceDownRef.current = false;
+      panningRef.current = false;
+      setIsPanning(false);
+    };
+    const onVisibilityChange = (): void => {
+      if (document.hidden) {
+        resetPanHotkeys();
+      }
+    };
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
+    window.addEventListener('blur', resetPanHotkeys);
+    document.addEventListener('visibilitychange', onVisibilityChange);
     return (): void => {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('blur', resetPanHotkeys);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const toPoint = useCallback((event: React.MouseEvent<HTMLCanvasElement>): VectorPoint | null => {
     const canvas = canvasRef.current;
@@ -665,16 +760,15 @@ export function VectorCanvas({
 
   const handleMouseDown = useCallback(
     (event: React.MouseEvent<HTMLCanvasElement>): void => {
-      // Pan: middle mouse button or Space + left click
-      if (event.button === 1 || (event.button === 0 && spaceDownRef.current)) {
+      const canvas = canvasRef.current;
+      if (canvas && (canvas.width <= 1 || canvas.height <= 1)) {
+        syncCanvasSize();
+      }
+      // Pan: middle mouse button, right mouse button, or Space + left click.
+      const shouldPanWithSpace = event.button === 0 && spaceDownRef.current;
+      if (event.button === 1 || event.button === 2 || shouldPanWithSpace) {
         event.preventDefault();
-        panningRef.current = true;
-        panStartRef.current = {
-          x: event.clientX,
-          y: event.clientY,
-          panX: viewTransformRef.current.panX,
-          panY: viewTransformRef.current.panY,
-        };
+        beginPan(event.clientX, event.clientY);
         return;
       }
       if (!canDraw) return;
@@ -700,6 +794,11 @@ export function VectorCanvas({
           dragRef.current = hit;
           onSelectShape(hit.shapeId);
           onSelectPoint?.(hit.pointIndex);
+          return;
+        }
+        // Select mode acts like hand tool on empty area
+        if (event.button === 0) {
+          beginPan(event.clientX, event.clientY);
         }
         return;
       }
@@ -778,7 +877,7 @@ export function VectorCanvas({
         onChange([...shapes, newShape]);
       }
     },
-    [activeShapeId, canDraw, hitTestPoint, hitTestSegment, onChange, onSelectPoint, onSelectShape, shapes, toPoint, tool]
+    [activeShapeId, beginPan, canDraw, hitTestPoint, hitTestSegment, onChange, onSelectPoint, onSelectShape, shapes, syncCanvasSize, toPoint, tool]
   );
 
   useEffect(() => {
@@ -805,13 +904,7 @@ export function VectorCanvas({
   const handleMouseMove = useCallback(
     (event: React.MouseEvent<HTMLCanvasElement>): void => {
       if (panningRef.current) {
-        const dx = event.clientX - panStartRef.current.x;
-        const dy = event.clientY - panStartRef.current.y;
-        setViewTransform({
-          scale: viewTransformRef.current.scale,
-          panX: panStartRef.current.panX + dx,
-          panY: panStartRef.current.panY + dy,
-        });
+        updatePanFromPointer(event.clientX, event.clientY);
         return;
       }
       if (!canDraw) return;
@@ -854,7 +947,7 @@ export function VectorCanvas({
         );
       }
     },
-    [brushRadius, canDraw, onChange, shapes, toPoint]
+    [brushRadius, canDraw, onChange, shapes, toPoint, updatePanFromPointer]
   );
 
   const handleDoubleClick = useCallback((): void => {
@@ -862,8 +955,8 @@ export function VectorCanvas({
   }, []);
 
   const handleMouseUp = useCallback((): void => {
-    if (panningRef.current) {
-      panningRef.current = false;
+    if (panningRef.current || isPanning) {
+      stopPan();
       return;
     }
     if (drawingRef.current) {
@@ -875,7 +968,7 @@ export function VectorCanvas({
     }
     dragRef.current = null;
     drawingRef.current = null;
-  }, [onChange, shapes]);
+  }, [isPanning, onChange, shapes, stopPan]);
 
   return (
     <div
@@ -893,9 +986,10 @@ export function VectorCanvas({
             style={
               viewTransform.scale !== 1 || viewTransform.panX !== 0 || viewTransform.panY !== 0
                 ? {
-                    transform: `translate(${viewTransform.panX}px, ${viewTransform.panY}px) scale(${viewTransform.scale})`,
-                    transformOrigin: '0 0',
-                  }
+                  transform: `translate(${viewTransform.panX}px, ${viewTransform.panY}px) scale(${viewTransform.scale})`,
+                  transformOrigin: '0 0',
+                  transition: isPanning ? 'none' : 'transform 120ms cubic-bezier(0.22, 1, 0.36, 1)',
+                }
                 : undefined
             }
           >
@@ -904,7 +998,7 @@ export function VectorCanvas({
               src={src}
               alt='Selected slot'
               fill
-              className='select-none object-contain'
+              className='select-none object-contain object-top'
               onLoadingComplete={() => syncCanvasSize()}
               draggable={false}
               unoptimized
@@ -912,11 +1006,11 @@ export function VectorCanvas({
             <canvas
               ref={canvasRef}
               className={cn(
-                'absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2',
-                spaceDownRef.current || panningRef.current
-                  ? 'cursor-grab'
-                  : tool === 'select'
-                    ? 'cursor-default'
+                'absolute left-1/2 top-0 -translate-x-1/2',
+                isPanning
+                  ? 'cursor-grabbing'
+                  : spaceDownRef.current || tool === 'select'
+                    ? 'cursor-grab'
                     : 'cursor-crosshair'
               )}
               onMouseDown={handleMouseDown}
@@ -924,6 +1018,7 @@ export function VectorCanvas({
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
               onDoubleClick={handleDoubleClick}
+              onContextMenu={(event) => event.preventDefault()}
             />
           </div>
           {viewTransform.scale !== 1 && (
@@ -941,9 +1036,10 @@ export function VectorCanvas({
               style={
                 viewTransform.scale !== 1 || viewTransform.panX !== 0 || viewTransform.panY !== 0
                   ? {
-                      transform: `translate(${viewTransform.panX}px, ${viewTransform.panY}px) scale(${viewTransform.scale})`,
-                      transformOrigin: '0 0',
-                    }
+                    transform: `translate(${viewTransform.panX}px, ${viewTransform.panY}px) scale(${viewTransform.scale})`,
+                    transformOrigin: '0 0',
+                    transition: isPanning ? 'none' : 'transform 120ms cubic-bezier(0.22, 1, 0.36, 1)',
+                  }
                   : undefined
               }
             >
@@ -951,13 +1047,18 @@ export function VectorCanvas({
                 ref={canvasRef}
                 className={cn(
                   'absolute inset-0',
-                  tool === 'select' ? 'cursor-default' : 'cursor-crosshair'
+                  isPanning
+                    ? 'cursor-grabbing'
+                    : spaceDownRef.current || tool === 'select'
+                      ? 'cursor-grab'
+                      : 'cursor-crosshair'
                 )}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
                 onDoubleClick={handleDoubleClick}
+                onContextMenu={(event) => event.preventDefault()}
               />
             </div>
           ) : null}

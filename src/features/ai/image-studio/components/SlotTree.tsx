@@ -99,6 +99,7 @@ export function SlotTree(): React.JSX.Element {
   const [dragOverPath, setDragOverPath] = useState<string | null>(null);
   const draggedSlotIdRef = useRef<string | null>(null);
   const draggedFolderPathRef = useRef<string | null>(null);
+  const lastDropTargetPathRef = useRef<string | null>(null);
   const rootOpen = expanded.has('root');
   const canHandleDrop = useCallback((dataTransfer: DataTransfer): boolean => {
     if (hasDragType(dataTransfer, [DRAG_KEYS.ASSET_ID, DRAG_KEYS.FOLDER_PATH])) return true;
@@ -107,6 +108,7 @@ export function SlotTree(): React.JSX.Element {
   const clearDragState = useCallback((): void => {
     draggedSlotIdRef.current = null;
     draggedFolderPathRef.current = null;
+    lastDropTargetPathRef.current = null;
     setDragOverPath(null);
   }, []);
   const getFolderPathFromEventTarget = useCallback((target: EventTarget | null): string | null => {
@@ -179,6 +181,7 @@ export function SlotTree(): React.JSX.Element {
                   e.preventDefault();
                   e.stopPropagation();
                   setDragOverPath(node.path);
+                  lastDropTargetPathRef.current = node.path;
                   e.dataTransfer.dropEffect = 'move';
                 }}
                 onDragLeave={() => {
@@ -313,7 +316,9 @@ export function SlotTree(): React.JSX.Element {
         if (!canHandleDrop(e.dataTransfer)) return;
         e.preventDefault();
         const hoveredFolderPath = getFolderPathFromEventTarget(e.target);
-        setDragOverPath(hoveredFolderPath ?? '');
+        const resolvedPath = hoveredFolderPath ?? '';
+        setDragOverPath(resolvedPath);
+        lastDropTargetPathRef.current = resolvedPath;
       }}
       onDragLeave={() => {
         if (dragOverPath === '') setDragOverPath(null);
@@ -321,7 +326,7 @@ export function SlotTree(): React.JSX.Element {
       onDrop={(e: React.DragEvent<HTMLDivElement>): void => {
         e.preventDefault();
         const hoveredFolderPath = getFolderPathFromEventTarget(e.target);
-        const targetFolder = hoveredFolderPath ?? '';
+        const targetFolder = hoveredFolderPath ?? lastDropTargetPathRef.current ?? '';
         const slotId = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.ASSET_ID], draggedSlotIdRef.current);
         const folderPath =
           getFirstDragValue(e.dataTransfer, [DRAG_KEYS.FOLDER_PATH], draggedFolderPathRef.current);

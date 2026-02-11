@@ -44,7 +44,10 @@ export type ProductImageManagerController = Pick<
   | 'swapImageSlots'
   | 'setImagesReordering'
   | 'uploadError'
->;
+> & {
+  setShowFileManagerForSlot?: (slotIndex: number) => void;
+  slotLabels?: string[];
+};
 
 type ProductImageManagerProps = {
   controller?: ProductImageManagerController;
@@ -76,6 +79,15 @@ export default function ProductImageManager({
     uploadError,
     setImagesReordering,
   } = resolvedController;
+  const setShowFileManagerForSlot: ((slotIndex: number) => void) | undefined =
+    'setShowFileManagerForSlot' in resolvedController &&
+    typeof resolvedController.setShowFileManagerForSlot === 'function'
+      ? resolvedController.setShowFileManagerForSlot
+      : undefined;
+  const slotLabels: string[] | undefined =
+    'slotLabels' in resolvedController && Array.isArray(resolvedController.slotLabels)
+      ? resolvedController.slotLabels
+      : undefined;
 
   const settingsStore = useSettingsStore();
   const externalBaseSetting =
@@ -223,6 +235,10 @@ export default function ProductImageManager({
       return;
     }
     currentSlotIndexRef.current = index;
+    if (setShowFileManagerForSlot) {
+      setShowFileManagerForSlot(index);
+      return;
+    }
     setShowFileManager(true);
   };
 
@@ -448,8 +464,13 @@ export default function ProductImageManager({
           ) : null}
         </Alert>
       )}
+      {minimalUi && uploadError ? (
+        <Alert variant='error' className='mb-2 p-2 text-[11px]'>
+          {uploadError}
+        </Alert>
+      ) : null}
 
-      <div className={minimalUi ? 'grid grid-cols-1 gap-2 justify-start' : 'grid grid-cols-5 gap-2'}>
+      <div className={minimalUi ? 'ml-auto grid w-fit grid-cols-2 gap-2 justify-end' : 'grid grid-cols-5 gap-2'}>
         {imageSlots.map((slot: ProductImageSlot | null, index: number) => {
           const isDragging = draggedIndex === index;
           const isDragOver = dragOverIndex === index;
@@ -487,6 +508,11 @@ export default function ProductImageManager({
 
           return (
             <div key={slotKey} className='flex flex-col items-center gap-1'>
+              {minimalUi ? (
+                <div className='w-24 text-center text-[10px] font-medium tracking-wide text-gray-400'>
+                  {slotLabels?.[index] ?? `Slot ${index + 1}`}
+                </div>
+              ) : null}
               <input
                 ref={(node: HTMLInputElement | null) => {
                   fileInputRefs.current[index] = node;
@@ -503,7 +529,13 @@ export default function ProductImageManager({
                 aria-hidden='true'
                 tabIndex={-1}
               />
-              <div className='flex w-full items-center justify-between gap-2'>
+              <div
+                className={
+                  minimalUi
+                    ? 'mx-auto flex w-24 items-center justify-between gap-1'
+                    : 'flex w-full items-center justify-between gap-2'
+                }
+              >
                 {minimalUi ? <span /> : (
                   <div className='flex items-center gap-1 text-[10px] text-gray-400'>
                     <span
@@ -779,7 +811,7 @@ export default function ProductImageManager({
                   )}
                 </div>
               </div>
-              {(mode === 'link' || (hasLink && !hasUpload)) ? (
+              {(minimalUi || mode === 'link' || (hasLink && !hasUpload)) ? (
                 <Input
                   type='url'
                   value={linkValue}

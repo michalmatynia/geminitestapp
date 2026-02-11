@@ -4,8 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { z } from 'zod';
 
-import { getBrainAssignmentForFeature } from '@/features/ai/brain/server';
 import {
+  IMAGE_STUDIO_OPENAI_API_KEY_KEY,
   IMAGE_STUDIO_SETTINGS_KEY,
   parseImageStudioSettings,
 } from '@/features/ai/image-studio/utils/studio-settings';
@@ -263,63 +263,57 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     });
   }
 
-  const brainAssignment = await getBrainAssignmentForFeature('image_studio');
-  let model: string | null = null;
-  let temperature = 0;
+  const model = (
+    settings.promptExtraction.gpt.model ||
+    settings.targetAi.openai.model ||
+    (await getSettingValue('openai_model')) ||
+    'gpt-4o-mini'
+  ).trim();
+  let temperature = settings.promptExtraction.gpt.temperature ?? 0;
   let top_p: number | undefined;
-  let max_output_tokens = 1200;
+  let max_output_tokens = settings.promptExtraction.gpt.max_output_tokens ?? 1200;
   let aiError: string | null = null;
-  if (!brainAssignment.enabled) {
-    aiError = 'AI Brain is disabled for Image Studio.';
-  } else if (brainAssignment.provider === 'agent') {
-    aiError = 'Image Studio prompt extraction does not support agent providers yet.';
+  if (!model) {
+    aiError = 'Prompt extraction model is missing. Set it in Image Studio settings.';
   } else {
-    model =
-      brainAssignment.modelId ||
-      settings.promptExtraction.gpt.model ||
-      (await getSettingValue('openai_model')) ||
-      'gpt-4o-mini';
-    if (!model.trim()) {
-      aiError = 'Prompt extraction model is missing. Set it in Image Studio settings.';
-    } else {
-      temperature = brainAssignment.temperature ?? settings.promptExtraction.gpt.temperature ?? 0;
-      top_p = settings.promptExtraction.gpt.top_p ?? undefined;
-      max_output_tokens = brainAssignment.maxTokens ?? settings.promptExtraction.gpt.max_output_tokens ?? 1200;
-
-      const apiKey = (await getSettingValue('openai_api_key')) ?? process.env['OPENAI_API_KEY'] ?? null;
-      if (apiKey) {
-        try {
-          const aiParams = await runAiExtraction(
-            parsed.data.prompt,
+    top_p = settings.promptExtraction.gpt.top_p ?? undefined;
+    const apiKey =
+      (await getSettingValue(IMAGE_STUDIO_OPENAI_API_KEY_KEY))?.trim() ||
+      (await getSettingValue('openai_api_key'))?.trim() ||
+      process.env['OPENAI_API_KEY'] ||
+      null;
+    if (apiKey) {
+      try {
+        const aiParams = await runAiExtraction(
+          parsed.data.prompt,
+          model,
+          temperature,
+          top_p,
+          max_output_tokens,
+          apiKey
+        );
+        return createResponse({
+          params: aiParams,
+          source: 'gpt',
+          modeRequested,
+          fallbackUsed: false,
+          formattedPrompt: programmatic.formattedPrompt,
+          diagnostics: {
+            programmaticError: programmatic.ok ? null : programmatic.error,
+            aiError: null,
             model,
-            temperature,
-            top_p,
-            max_output_tokens,
-            apiKey
-          );
-          return createResponse({
-            params: aiParams,
-            source: 'gpt',
-            modeRequested,
-            fallbackUsed: false,
-            formattedPrompt: programmatic.formattedPrompt,
-            diagnostics: {
-              programmaticError: programmatic.ok ? null : programmatic.error,
-              aiError: null,
-              model,
-              autofixApplied: programmatic.autofixApplied,
-            },
-            validation: {
-              before: programmatic.validationBefore,
-              after: programmatic.validationAfter,
-            },
-          });
-        } catch (error) {
-          aiError = error instanceof Error ? error.message : 'AI extraction failed.';
-        }
-      } else {
-        aiError = 'OpenAI API key is missing. Set it in /admin/settings/brain.';
+            autofixApplied: programmatic.autofixApplied,
+          },
+          validation: {
+            before: programmatic.validationBefore,
+            after: programmatic.validationAfter,
+          },
+        });
+      } catch (error) {
+        aiError = error instanceof Error ? error.message : 'AI extraction failed.';
       }
+    } else {
+      aiError = 'OpenAI API key is missing. Set it in Image Studio settings.';
     }
   }
 
@@ -333,7 +327,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       diagnostics: {
         programmaticError: null,
         aiError,
-        model: model && model.trim().length > 0 ? model : null,
+        model: model && model.length > 0 ? model : null,
         autofixApplied: programmatic.autofixApplied,
       },
       validation: {

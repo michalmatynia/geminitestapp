@@ -1,6 +1,6 @@
 'use client';
 
-import { FolderPlus, Plus, Settings2 } from 'lucide-react';
+import { FolderPlus, ImageOff, ImagePlus, Plus, Settings2 } from 'lucide-react';
 import React, { useState } from 'react';
 
 import {
@@ -15,7 +15,7 @@ import { cn } from '@/shared/utils';
 
 import { ImageStudioSingleSlotManager } from './ImageStudioSingleSlotManager';
 import { SlotTree } from './SlotTree';
-import { StudioCard } from './StudioCard';
+import { useMaskingActions } from '../context/MaskingContext';
 import { useProjectsState } from '../context/ProjectsContext';
 import { useSlotsState, useSlotsActions } from '../context/SlotsContext';
 
@@ -25,16 +25,46 @@ interface LeftSidebarProps {
 
 export function LeftSidebar({ isFocusMode }: LeftSidebarProps): React.JSX.Element {
   const { projectId } = useProjectsState();
-  const { selectedSlot, selectedFolder } = useSlotsState();
+  const { slots, selectedSlot, selectedFolder } = useSlotsState();
   const {
     setSlotCreateOpen,
     setSlotInlineEditOpen,
+    setSelectedSlotId,
     createFolderMutation,
   } = useSlotsActions();
+  const {
+    setMaskShapes,
+    setActiveMaskId,
+    setSelectedPointIndex,
+  } = useMaskingActions();
 
   const { toast } = useToast();
   const [folderCreateOpen, setFolderCreateOpen] = useState(false);
   const [folderDraft, setFolderDraft] = useState('');
+
+  const handleLoadToCanvas = (): void => {
+    if (selectedSlot?.id) {
+      setSelectedSlotId(selectedSlot.id);
+      return;
+    }
+    const normalizedFolder = selectedFolder.trim().replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+    const slotFromSelectedFolder = normalizedFolder
+      ? slots.find((slot) => (slot.folderPath ?? '').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '') === normalizedFolder) ?? null
+      : null;
+    const fallbackSlot = slotFromSelectedFolder ?? slots[0] ?? null;
+    if (fallbackSlot) {
+      setSelectedSlotId(fallbackSlot.id);
+      return;
+    }
+    setSlotCreateOpen(true);
+  };
+
+  const handleDeCanvas = (): void => {
+    setSelectedSlotId(null);
+    setMaskShapes([]);
+    setActiveMaskId(null);
+    setSelectedPointIndex(null);
+  };
 
   const handleCreateFolder = (): void => {
     const normalized = folderDraft.trim();
@@ -64,11 +94,29 @@ export function LeftSidebar({ isFocusMode }: LeftSidebarProps): React.JSX.Elemen
               : 'No active slot selected. Pick a slot file from the tree.'}
           </div>
 
-          <StudioCard>
-            <ImageStudioSingleSlotManager />
-          </StudioCard>
+          <ImageStudioSingleSlotManager />
 
           <div className='flex items-center justify-end gap-2'>
+            <Button
+              type='button'
+              size='icon'
+              variant='outline'
+              title='Load to canvas'
+              onClick={handleLoadToCanvas}
+              disabled={!projectId}
+            >
+              <ImagePlus className='size-4' />
+            </Button>
+            <Button
+              type='button'
+              size='icon'
+              variant='outline'
+              title='De-canvas'
+              onClick={handleDeCanvas}
+              disabled={!selectedSlot}
+            >
+              <ImageOff className='size-4' />
+            </Button>
             <Button
               type='button'
               size='icon'

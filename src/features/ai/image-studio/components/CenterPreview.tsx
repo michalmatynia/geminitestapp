@@ -22,15 +22,6 @@ interface CenterPreviewProps {
   maskPreviewEnabled: boolean;
 }
 
-const DRAWING_TOOL_OPTIONS = [
-  { value: 'select', label: 'Select' },
-  { value: 'polygon', label: 'Polygon' },
-  { value: 'rect', label: 'BBox' },
-  { value: 'lasso', label: 'Lasso' },
-  { value: 'ellipse', label: 'Ellipse' },
-  { value: 'brush', label: 'Brush' },
-] as const;
-
 const PREVIEW_MODE_OPTIONS = [
   { value: 'image', label: 'Image' },
   { value: '3d', label: '3D' },
@@ -42,8 +33,8 @@ export function CenterPreview({
   maskPreviewEnabled,
 }: CenterPreviewProps): React.JSX.Element {
   const { projectId } = useProjectsState();
-  const { selectedSlot, workingSlot, previewMode, captureRef } = useSlotsState();
-  const { setSelectedSlotId, setPreviewMode } = useSlotsActions();
+  const { workingSlot, previewMode, captureRef } = useSlotsState();
+  const { setPreviewMode } = useSlotsActions();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -109,7 +100,7 @@ export function CenterPreview({
     selectedPointIndex,
     brushRadius,
     imageSrc: workingSlotImageSrc,
-    allowWithoutImage: false,
+    allowWithoutImage: true,
     showEmptyState: false,
     emptyStateLabel: '',
     setShapes: setMaskShapes,
@@ -163,18 +154,8 @@ export function CenterPreview({
 
   return (
     <SectionPanel className='order-2 relative flex min-h-0 flex-1 flex-col overflow-hidden p-0' variant='subtle'>
-      <div className='grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-border/60 px-4 py-2'>
+      <div className='grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-2'>
         <div className='flex items-center gap-2'>
-          {selectedSlot ? (
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() => setSelectedSlotId(null)}
-              title='Clear active slot selection'
-            >
-              Empty Slot
-            </Button>
-          ) : null}
           {workingSlot?.asset3dId ? (
             <ToggleButtonGroup
               value={previewMode}
@@ -228,7 +209,7 @@ export function CenterPreview({
           );
         })()
         : null}
-      <div className='flex min-h-0 flex-1 flex-col gap-3 p-4'>
+      <div className='flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4 pt-0'>
         <div className='relative flex-1'>
           <VectorDrawingProvider value={vectorContextValue}>
             {previewMode === '3d' && workingSlot?.asset3dId ? (
@@ -253,14 +234,6 @@ export function CenterPreview({
               disableClear={maskShapes.length === 0}
             />
           </VectorDrawingProvider>
-        </div>
-        <div className='flex justify-center'>
-          <ToggleButtonGroup
-            value={tool}
-            onChange={setTool}
-            options={DRAWING_TOOL_OPTIONS}
-            className='hidden md:flex'
-          />
         </div>
       </div>
     </SectionPanel>

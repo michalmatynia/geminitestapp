@@ -111,6 +111,18 @@ export async function upsertImageStudioSlotLink(
   return toRecord(result);
 }
 
+export async function getImageStudioSlotLinkBySourceAndRelation(
+  projectId: string,
+  sourceSlotId: string,
+  relationType: string
+): Promise<ImageStudioSlotLinkRecord | null> {
+  await ensureIndexesOnce();
+  const db = await getMongoDb();
+  const collection = db.collection<ImageStudioSlotLinkDocument>(COLLECTION);
+  const doc = await collection.findOne({ projectId, sourceSlotId, relationType });
+  return doc ? toRecord(doc) : null;
+}
+
 export async function deleteImageStudioSlotLinksForSlot(slotId: string): Promise<number> {
   await ensureIndexesOnce();
   const db = await getMongoDb();

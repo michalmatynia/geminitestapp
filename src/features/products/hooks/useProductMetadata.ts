@@ -20,15 +20,7 @@ import type { Language } from '@/shared/types/domain/internationalization';
 
 import type { UseFormSetValue, UseFormGetValues } from 'react-hook-form';
 
-export const productMetadataKeys = {
-  catalogs: QUERY_KEYS.products.catalogs,
-  categories: (catalogId: string) => ['categories', catalogId] as const,
-  tags: (catalogId: string) => ['tags', catalogId] as const,
-  producers: ['producers'] as const,
-  parameters: (catalogId: string) => ['parameters', catalogId] as const,
-  languages: ['languages'] as const,
-  priceGroups: ['price-groups'] as const,
-};
+export const productMetadataKeys = QUERY_KEYS.products.metadata;
 
 export function useCatalogs(): UseQueryResult<CatalogRecord[]> {
   return useQuery({

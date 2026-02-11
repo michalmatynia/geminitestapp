@@ -16,7 +16,7 @@ import {
   Textarea,
 } from '@/shared/ui';
 
-import { useImageStudio } from '../context/ImageStudioContext';
+import { useSettings } from '../context/SettingsContext';
 
 export function StudioSettingsContent(): React.JSX.Element {
   const {
@@ -26,7 +26,7 @@ export function StudioSettingsContent(): React.JSX.Element {
     resetStudioSettings,
     handleRefreshSettings,
     settingsLoaded,
-  } = useImageStudio();
+  } = useSettings();
 
   const [advancedOverridesText, setAdvancedOverridesText] = useState<string>(
     JSON.stringify(studioSettings.targetAi.openai.advanced_overrides ?? {}, null, 2)
@@ -112,7 +112,7 @@ export function StudioSettingsContent(): React.JSX.Element {
                     ...prev,
                     promptExtraction: {
                       ...prev.promptExtraction,
-                      mode: value === 'gpt' ? 'gpt' : 'programmatic',
+                      mode: value === 'gpt' || value === 'hybrid' ? value : 'programmatic',
                     },
                   }))
                 }
@@ -123,6 +123,7 @@ export function StudioSettingsContent(): React.JSX.Element {
                 <SelectContent>
                   <SelectItem value='programmatic'>Programmatic</SelectItem>
                   <SelectItem value='gpt'>GPT (AI)</SelectItem>
+                  <SelectItem value='hybrid'>Hybrid (Auto Fallback)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -144,6 +145,59 @@ export function StudioSettingsContent(): React.JSX.Element {
                 placeholder='e.g. gpt-4o-mini'
               />
             </div>
+          </div>
+          <div className='grid grid-cols-1 gap-2 sm:grid-cols-3'>
+            <label className='flex items-center gap-2 rounded border border-slate-700/60 bg-slate-900/40 px-3 py-2 text-[11px] text-slate-200'>
+              <input
+                type='checkbox'
+                className='h-3.5 w-3.5'
+                checked={studioSettings.promptExtraction.applyAutofix}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                  setStudioSettings((prev) => ({
+                    ...prev,
+                    promptExtraction: {
+                      ...prev.promptExtraction,
+                      applyAutofix: event.target.checked,
+                    },
+                  }))
+                }
+              />
+              Apply formatter before extract
+            </label>
+            <label className='flex items-center gap-2 rounded border border-slate-700/60 bg-slate-900/40 px-3 py-2 text-[11px] text-slate-200'>
+              <input
+                type='checkbox'
+                className='h-3.5 w-3.5'
+                checked={studioSettings.promptExtraction.autoApplyFormattedPrompt}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                  setStudioSettings((prev) => ({
+                    ...prev,
+                    promptExtraction: {
+                      ...prev.promptExtraction,
+                      autoApplyFormattedPrompt: event.target.checked,
+                    },
+                  }))
+                }
+              />
+              Auto-apply formatted prompt
+            </label>
+            <label className='flex items-center gap-2 rounded border border-slate-700/60 bg-slate-900/40 px-3 py-2 text-[11px] text-slate-200'>
+              <input
+                type='checkbox'
+                className='h-3.5 w-3.5'
+                checked={studioSettings.promptExtraction.showValidationSummary}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                  setStudioSettings((prev) => ({
+                    ...prev,
+                    promptExtraction: {
+                      ...prev.promptExtraction,
+                      showValidationSummary: event.target.checked,
+                    },
+                  }))
+                }
+              />
+              Show validation summary
+            </label>
           </div>
         </div>
 

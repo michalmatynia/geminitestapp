@@ -15,6 +15,7 @@ import type {
   AiTriggerButtonMode,
   AiTriggerButtonDto,
 } from '@/shared/dtos/ai-trigger-buttons';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { 
   Button, 
   Checkbox, 
@@ -70,7 +71,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   const [draft, setDraft] = useState<TriggerButtonDraft>(() => normalizeDraft(null));
 
   const triggerButtonsQuery = useQuery<AiTriggerButtonDto[]>({
-    queryKey: ['ai-paths', 'trigger-buttons'],
+    queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons(),
     queryFn: async () => {
       const result = await triggerButtonsApi.list();
       if (!result.ok) throw new Error(result.error);
@@ -86,7 +87,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       return result.data;
     },
     onSuccess: async (): Promise<void> => {
-      await queryClient.invalidateQueries({ queryKey: ['ai-paths', 'trigger-buttons'] });
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons() });
       toast('Trigger button created.', { variant: 'success' });
       setEditorOpen(false);
     },
@@ -114,7 +115,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       return result.data;
     },
     onSuccess: async (): Promise<void> => {
-      await queryClient.invalidateQueries({ queryKey: ['ai-paths', 'trigger-buttons'] });
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons() });
       toast('Trigger button updated.', { variant: 'success' });
       setEditorOpen(false);
     },
@@ -129,7 +130,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       if (!result.ok) throw new Error(result.error);
     },
     onSuccess: async (): Promise<void> => {
-      await queryClient.invalidateQueries({ queryKey: ['ai-paths', 'trigger-buttons'] });
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons() });
       toast('Trigger button deleted.', { variant: 'success' });
     },
     onError: (error: unknown): void => {
@@ -144,7 +145,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       return Array.isArray(result.data) ? result.data : [];
     },
     onSuccess: (data: AiTriggerButtonDto[]): void => {
-      queryClient.setQueryData(['ai-paths', 'trigger-buttons'], data);
+      queryClient.setQueryData(QUERY_KEYS.ai.aiPaths.triggerButtons(), data);
       toast('Trigger button order updated.', { variant: 'success' });
     },
     onError: (error: unknown): void => {

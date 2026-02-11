@@ -1,8 +1,10 @@
  
  Product Template for Import/Export not saving my settigs
 
+* Add Validator and Formatter buttons to Draft
 
-Add Validator and Formatter buttons to Draft
+I need another Validator pattern action, that will take the price and stock of the last created product and apply to the newly created product.
+
  
  In my AI-Paths sound module, I need a button node, like a power up button to turn on the machine. Button node doesn't need wires, it's assumed it "powers up" all the devices.
  

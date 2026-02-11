@@ -3,21 +3,18 @@
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 
 import { useRealtimeQuery } from '@/shared/hooks/query/useRealtimeQuery';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import { getJobStatus, getJobStatusDetail, cancelJob } from '../api';
 
 import type { UseQueryResult } from '@tanstack/react-query';
 
-export const jobKeys = {
-  all: ['jobs'] as const,
-  realtime: ['jobs', 'realtime'] as const,
-  status: (id: string) => ['jobs', 'status', id] as const,
-};
+export const jobKeys = QUERY_KEYS.jobs;
 
 // Real-time job monitoring
 export function useRealtimeJobs(): UseQueryResult<unknown, Error> {
   return useRealtimeQuery(
-    jobKeys.realtime,
+    jobKeys.realtime(),
     getJobStatus,
     {
       interval: 5000, // 5 second fallback

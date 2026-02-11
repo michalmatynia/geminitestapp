@@ -4,6 +4,7 @@ import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { TRIGGER_EVENTS, triggerButtonsApi } from '@/features/ai/ai-paths/lib';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
 import { Label, UnifiedSelect } from '@/shared/ui';
 
@@ -11,7 +12,7 @@ import { useAiPathConfig } from '../../AiPathConfigContext';
 
 // Query for trigger buttons (always called)
 const useTriggerButtonsQuery = (): UseQueryResult<AiTriggerButtonRecord[], Error> => useQuery({
-  queryKey: ['ai-paths', 'trigger-buttons'],
+  queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons(),
   queryFn: async (): Promise<AiTriggerButtonRecord[]> => {
     const result = await triggerButtonsApi.list();
     if (!result.ok) return [];

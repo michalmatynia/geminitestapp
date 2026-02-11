@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { VectorDrawingProvider, type VectorDrawingContextValue } from '../context/VectorDrawingContext';
 import { smoothShape, simplifyShape } from '../geometry';
+import { useShapeHistory } from '../useShapeHistory';
 import { vectorShapesToPath } from '../utils';
 import { VectorDrawingCanvas } from './VectorDrawingCanvas';
 import { VectorDrawingToolbar, type VectorDrawingToolbarVariant } from './VectorDrawingToolbar';
@@ -73,14 +74,50 @@ export function VectorDrawing({
   const shapes = value ?? internalShapes;
   const currentTool = tool ?? internalTool;
 
+  // --------------- Undo / Redo ---------------
+  const history = useShapeHistory(50);
+  const isHistoryAction = useRef(false);
+
+  // Seed the history with the initial shapes (once).
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (!seededRef.current) {
+      seededRef.current = true;
+      history.reset(shapes);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleChange = useCallback(
     (nextShapes: VectorShape[]) => {
       if (!value) setInternalShapes(nextShapes);
       onChange?.(nextShapes);
       onOutput?.(buildOutput(nextShapes));
+
+      // Push to history unless this change originated from undo/redo itself.
+      if (!isHistoryAction.current) {
+        history.pushSnapshot(nextShapes);
+      }
     },
-    [onChange, onOutput, value]
+    [onChange, onOutput, value, history]
   );
+
+  const handleUndo = useCallback((): void => {
+    const prev = history.undo();
+    if (prev) {
+      isHistoryAction.current = true;
+      handleChange(prev);
+      isHistoryAction.current = false;
+    }
+  }, [history, handleChange]);
+
+  const handleRedo = useCallback((): void => {
+    const next = history.redo();
+    if (next) {
+      isHistoryAction.current = true;
+      handleChange(next);
+      isHistoryAction.current = false;
+    }
+  }, [history, handleChange]);
 
   const handleToolChange = useCallback(
     (nextTool: VectorToolMode) => {
@@ -116,6 +153,60 @@ export function VectorDrawing({
     onSelectPoint?.(index);
   }, [onSelectPoint]);
 
+  // --------------- Keyboard Shortcuts ---------------
+  const handleUndoRef = useRef(handleUndo);
+  handleUndoRef.current = handleUndo;
+  const handleRedoRef = useRef(handleRedo);
+  handleRedoRef.current = handleRedo;
+  const handleToolChangeRef = useRef(handleToolChange);
+  handleToolChangeRef.current = handleToolChange;
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent): void => {
+      // Skip if user is typing in an input/textarea/contenteditable
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable) {
+        return;
+      }
+
+      // Undo: Ctrl+Z / Cmd+Z
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === 'z') {
+        e.preventDefault();
+        handleUndoRef.current();
+        return;
+      }
+      // Redo: Ctrl+Shift+Z / Cmd+Shift+Z or Ctrl+Y / Cmd+Y
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'z') {
+        e.preventDefault();
+        handleRedoRef.current();
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+        e.preventDefault();
+        handleRedoRef.current();
+        return;
+      }
+
+      // Tool shortcuts (only when no modifier keys)
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const toolMap: Record<string, VectorToolMode> = {
+        v: 'select', '1': 'select',
+        p: 'polygon', '2': 'polygon',
+        l: 'lasso', '3': 'lasso',
+        r: 'rect', '4': 'rect',
+        e: 'ellipse', '5': 'ellipse',
+        b: 'brush', '6': 'brush',
+      };
+      const mappedTool = toolMap[e.key.toLowerCase()];
+      if (mappedTool) {
+        e.preventDefault();
+        handleToolChangeRef.current(mappedTool);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return (): void => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
   const contextValue = useMemo<VectorDrawingContextValue>(() => ({
     shapes,
     tool: currentTool,
@@ -132,6 +223,10 @@ export function VectorDrawing({
     setSelectedPointIndex: handleSelectPoint,
     onSmooth: handleSmooth,
     onSimplify: handleSimplify,
+    onUndo: handleUndo,
+    onRedo: handleRedo,
+    disableUndo: !history.canUndo(),
+    disableRedo: !history.canRedo(),
   }), [
     shapes,
     currentTool,
@@ -148,6 +243,9 @@ export function VectorDrawing({
     handleSelectPoint,
     handleSmooth,
     handleSimplify,
+    handleUndo,
+    handleRedo,
+    history,
   ]);
 
   return (

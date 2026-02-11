@@ -2,31 +2,26 @@ import { useQuery } from '@tanstack/react-query';
 import { Dispatch, SetStateAction, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { IntegrationWithConnections } from '@/features/integrations/types/listings';
+import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 const INTEGRATION_SELECTION_STALE_TIME_MS = 5 * 60 * 1000;
 const INTEGRATION_SELECTION_GC_TIME_MS = 30 * 60 * 1000;
 
-export const integrationSelectionQueryKeys = {
-  defaultConnection: ['integrations', 'base', 'default-connection'] as const,
-  withConnections: ['integrations', 'with-connections', 'selector-v2'] as const,
-};
+const integrationSelectionKeys = {
+  defaultConnection: QUERY_KEYS.integrations.selection.defaultConnection(),
+  withConnections: QUERY_KEYS.integrations.selection.withConnections(),
+} as const;
+export const integrationSelectionQueryKeys = integrationSelectionKeys;
 
 export const fetchPreferredBaseConnection = async (): Promise<{ connectionId?: string | null }> => {
-  const res = await fetch('/api/integrations/exports/base/default-connection', {
-    credentials: 'include',
-  });
-  if (!res.ok) {
-    throw new Error('Failed to load preferred connection');
-  }
-  return (await res.json()) as { connectionId?: string | null };
+  return await api.get<{ connectionId?: string | null }>(
+    '/api/integrations/exports/base/default-connection'
+  );
 };
 
 export const fetchIntegrationsWithConnections = async (): Promise<IntegrationWithConnections[]> => {
-  const res = await fetch('/api/integrations/with-connections', {
-    credentials: 'include',
-  });
-  if (!res.ok) throw new Error('Failed to load integrations');
-  return (await res.json()) as IntegrationWithConnections[];
+  return await api.get<IntegrationWithConnections[]>('/api/integrations/with-connections');
 };
 
 // Why: Integration selection has complex side effects:
@@ -56,7 +51,7 @@ export function useIntegrationSelection(
   const initializedRef = useRef(false);
 
   const preferredConnectionQuery = useQuery({
-    queryKey: integrationSelectionQueryKeys.defaultConnection,
+    queryKey: integrationSelectionKeys.defaultConnection,
     queryFn: fetchPreferredBaseConnection,
     staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
     gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
@@ -64,7 +59,7 @@ export function useIntegrationSelection(
   });
 
   const integrationsQuery = useQuery({
-    queryKey: integrationSelectionQueryKeys.withConnections,
+    queryKey: integrationSelectionKeys.withConnections,
     queryFn: fetchIntegrationsWithConnections,
     staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
     gcTime: INTEGRATION_SELECTION_GC_TIME_MS,

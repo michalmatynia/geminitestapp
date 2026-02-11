@@ -4,26 +4,22 @@ import { useQuery, type UseQueryResult, type Query } from '@tanstack/react-query
 
 import type { ProductAiJob } from '@/shared/types/domain/jobs';
 import type { ProductJob } from '@/shared/types/domain/listing-jobs';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import { getIntegrationJobs, getProductAiJobs, getChatbotJobs } from '../api';
 
-export const jobKeys = {
-  all: ['jobs'] as const,
-  integrations: ['jobs', 'integrations'] as const,
-  productAi: ['jobs', 'product-ai'] as const,
-  chatbot: ['jobs', 'chatbot'] as const,
-};
+export const jobKeys = QUERY_KEYS.jobs;
 
 export function useIntegrationJobs(): UseQueryResult<ProductJob[]> {
   return useQuery({
-    queryKey: jobKeys.integrations,
+    queryKey: jobKeys.integrations(),
     queryFn: getIntegrationJobs,
   });
 }
 
 export function useProductAiJobs(scope: string = 'all'): UseQueryResult<{ jobs: ProductAiJob[] }> {
   return useQuery({
-    queryKey: [...jobKeys.productAi, scope],
+    queryKey: jobKeys.productAi(scope),
     queryFn: () => getProductAiJobs(scope),
     refetchInterval: (query: Query<{ jobs: ProductAiJob[] }, Error>): number | false => {
       const data = query.state.data;
@@ -51,7 +47,7 @@ const hasScheduledMarker = (payload: unknown): boolean => {
 
 export function useChatbotJobs(scope: string = 'all'): UseQueryResult<{ jobs: unknown[] }> {
   return useQuery({
-    queryKey: [...jobKeys.chatbot, scope],
+    queryKey: jobKeys.chatbot(scope),
     queryFn: () => getChatbotJobs(scope),
   });
 }

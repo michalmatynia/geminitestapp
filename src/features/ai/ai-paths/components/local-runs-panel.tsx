@@ -12,6 +12,7 @@ import {
   invalidateAiPathsSettingsCache,
   updateAiPathsSetting,
 } from '@/features/ai/ai-paths/lib/settings-store-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { Button, ConfirmDialog, useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -77,7 +78,7 @@ export function LocalRunsPanel({
 }: LocalRunsPanelProps): React.JSX.Element {
   const { toast } = useToast();
   const settingsQuery = useQuery({
-    queryKey: ['ai-paths-settings'],
+    queryKey: QUERY_KEYS.ai.aiPaths.settings(),
     queryFn: async (): Promise<Array<{ key: string; value: string }>> =>
       await fetchAiPathsSettingsCached({ bypassCache: true }),
   });

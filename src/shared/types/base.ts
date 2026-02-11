@@ -1,5 +1,9 @@
 // Base types for common patterns across the application
 import type { BaseRecord } from './common';
+import type {
+  ApiEnvelopeDto,
+  LegacyPaginatedResponseDto,
+} from '@/shared/dtos/http';
 
 /**
  * Base interface for all entities in the system
@@ -35,16 +39,5 @@ export interface NamedDto extends DtoBase {
   description?: string | null;
 }
 
-export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
-  limit: number;
-}
-
-export interface ApiResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
-}
+export type PaginatedResponse<T> = LegacyPaginatedResponseDto<T>;
+export type ApiResponse<T = unknown> = ApiEnvelopeDto<T>;

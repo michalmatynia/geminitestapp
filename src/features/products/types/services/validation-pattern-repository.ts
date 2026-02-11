@@ -17,6 +17,7 @@ export type CreateProductValidationPatternInput = {
   severity?: ProductValidationSeverity | null;
   enabled?: boolean;
   replacementEnabled?: boolean;
+  replacementAutoApply?: boolean;
   replacementValue?: string | null;
   replacementFields?: string[];
   sequenceGroupId?: string | null;
@@ -44,6 +45,7 @@ export type UpdateProductValidationPatternInput = {
   severity?: ProductValidationSeverity;
   enabled?: boolean;
   replacementEnabled?: boolean;
+  replacementAutoApply?: boolean;
   replacementValue?: string | null;
   replacementFields?: string[];
   sequenceGroupId?: string | null;

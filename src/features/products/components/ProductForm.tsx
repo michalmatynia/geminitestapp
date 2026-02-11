@@ -3,7 +3,6 @@
 import { useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
-
 import DebugPanel from '@/features/products/components/DebugPanel';
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
 import { ProductValidationSettingsProvider } from '@/features/products/context/ProductValidationSettingsContext';
@@ -44,7 +43,9 @@ export default function ProductForm({
   const [formatterEnabled, setFormatterEnabled] = useState<boolean>(
     () => ((draft?.validatorEnabled ?? true) ? (draft?.formatterEnabled ?? false) : false)
   );
-  const [validatorInitialized, setValidatorInitialized] = useState<boolean>(() => typeof draft?.validatorEnabled === 'boolean');
+  const [validatorInitialized, setValidatorInitialized] = useState<boolean>(
+    () => typeof draft?.validatorEnabled === 'boolean'
+  );
   const [validatorManuallyChanged, setValidatorManuallyChanged] = useState(false);
 
   useEffect(() => {
@@ -73,7 +74,11 @@ export default function ProductForm({
     if (typeof enabledByDefault !== 'boolean') return;
     setValidatorEnabled(enabledByDefault);
     setValidatorInitialized(true);
-  }, [validatorConfigQuery.data?.enabledByDefault, validatorInitialized, validatorManuallyChanged]);
+  }, [
+    validatorConfigQuery.data?.enabledByDefault,
+    validatorInitialized,
+    validatorManuallyChanged,
+  ]);
 
   return (
     <form onSubmit={(e: React.FormEvent) => { void handleSubmit(e); }} className='relative min-h-[400px] pb-10'>
@@ -118,7 +123,7 @@ export default function ProductForm({
             <div className='rounded-md border border-border bg-gray-900/70 p-4'>
               <p className='text-sm font-semibold text-white'>Validation Controls</p>
               <p className='mt-1 text-xs text-gray-400'>
-                `Validator` shows correction cues in fields. `Formatter` auto-applies available replacements without confirmation.
+                `Validator` enables validation rules. `Formatter` auto-applies rules configured for formatter mode.
               </p>
               <div className='mt-4 flex flex-wrap items-center gap-2'>
                 <Button

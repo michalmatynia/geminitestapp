@@ -17,6 +17,7 @@ export * from '@/shared/dtos/drafter';
 export * from '@/shared/dtos/files';
 export * from '@/shared/dtos/foldertree';
 export * from '@/shared/dtos/gsap';
+export * from '@/shared/dtos/http';
 export * from '@/shared/dtos/internationalization';
 export * from '@/shared/dtos/integrations';
 export * from '@/shared/dtos/jobs';

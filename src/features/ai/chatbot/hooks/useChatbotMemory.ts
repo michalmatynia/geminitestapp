@@ -2,20 +2,27 @@
 
 import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 
+import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
+
 import type { ChatbotMemoryItem } from '../types';
 
 export const memoryKeys = {
-  all: ['chatbot', 'memory'] as const,
-  list: (params: string) => ['chatbot', 'memory', 'list', params] as const,
+  all: QUERY_KEYS.ai.chatbot.memory(),
+  list: (params: string) => QUERY_KEYS.ai.chatbot.memory(params),
 };
 
 export function useChatbotMemory(params: string = ''): UseQueryResult<ChatbotMemoryItem[], Error> {
   return useQuery({
     queryKey: memoryKeys.list(params),
     queryFn: async (): Promise<ChatbotMemoryItem[]> => {
-      const res = await fetch(`/api/chatbot/memory?${params}`);
-      if (!res.ok) throw new Error('Failed to load memory');
-      const data = (await res.json()) as ChatbotMemoryItem[] | { items?: ChatbotMemoryItem[] };
+      const queryParams = params
+        ? Object.fromEntries(new URLSearchParams(params).entries())
+        : null;
+      const data = await api.get<ChatbotMemoryItem[] | { items?: ChatbotMemoryItem[] }>(
+        '/api/chatbot/memory',
+        queryParams ? { params: queryParams } : undefined
+      );
       if (Array.isArray(data)) return data;
       return Array.isArray(data.items) ? data.items : [];
     },
@@ -27,10 +34,7 @@ export function useDeleteMemoryItem(): UseMutationResult<void, Error, string> {
   
   return useMutation({
     mutationFn: async (id: string): Promise<void> => {
-      const res = await fetch(`/api/chatbot/memory/${id}`, {
-        method: 'DELETE',
-      });
-      if (!res.ok) throw new Error('Failed to delete memory item');
+      await api.delete(`/api/chatbot/memory/${id}`);
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: memoryKeys.all });

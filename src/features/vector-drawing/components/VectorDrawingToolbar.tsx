@@ -9,6 +9,7 @@ import {
   MousePointer2,
   Pentagon,
   RectangleHorizontal,
+  Redo2,
   RotateCcw,
   Sparkles,
   Trash2,
@@ -29,12 +30,14 @@ export interface VectorDrawingToolbarProps {
   tool?: VectorToolMode;
   onSelectTool?: (tool: VectorToolMode) => void;
   onUndo?: (() => void) | undefined;
+  onRedo?: (() => void) | undefined;
   onClose?: (() => void) | undefined;
   onDetach?: (() => void) | undefined;
   onClear?: (() => void) | undefined;
   onSmooth?: (() => void) | undefined;
   onSimplify?: (() => void) | undefined;
   disableUndo?: boolean | undefined;
+  disableRedo?: boolean | undefined;
   disableClose?: boolean | undefined;
   disableDetach?: boolean | undefined;
   disableClear?: boolean | undefined;
@@ -51,12 +54,12 @@ type ToolOption = {
 };
 
 const FULL_TOOLS: ToolOption[] = [
-  { key: 'select', label: 'Select', icon: <MousePointer2 className='size-4' /> },
-  { key: 'polygon', label: 'Polygon', icon: <Pentagon className='size-4' /> },
-  { key: 'lasso', label: 'Lasso', icon: <Lasso className='size-4' /> },
-  { key: 'rect', label: 'Rectangle', icon: <RectangleHorizontal className='size-4' /> },
-  { key: 'ellipse', label: 'Ellipse', icon: <Circle className='size-4' /> },
-  { key: 'brush', label: 'Brush', icon: <Brush className='size-4' /> },
+  { key: 'select', label: 'Select (V)', icon: <MousePointer2 className='size-4' /> },
+  { key: 'polygon', label: 'Polygon (P)', icon: <Pentagon className='size-4' /> },
+  { key: 'lasso', label: 'Lasso (L)', icon: <Lasso className='size-4' /> },
+  { key: 'rect', label: 'Rectangle (R)', icon: <RectangleHorizontal className='size-4' /> },
+  { key: 'ellipse', label: 'Ellipse (E)', icon: <Circle className='size-4' /> },
+  { key: 'brush', label: 'Brush (B)', icon: <Brush className='size-4' /> },
 ];
 
 const MIN_TOOLS: ToolOption[] = [
@@ -75,10 +78,12 @@ export function VectorDrawingToolbar(props: VectorDrawingToolbarProps): React.JS
       onSmooth: context.onSmooth,
       onSimplify: context.onSimplify,
       onUndo: context.onUndo,
+      onRedo: context.onRedo,
       onClear: context.onClear,
       onClose: context.onCloseShape,
       onDetach: context.onDetach,
       disableUndo: context.disableUndo,
+      disableRedo: context.disableRedo,
       disableClear: context.disableClear,
       disableClose: context.disableClose,
       disableDetach: context.disableDetach,
@@ -94,12 +99,14 @@ export function VectorDrawingToolbar(props: VectorDrawingToolbarProps): React.JS
     tool,
     onSelectTool,
     onUndo,
+    onRedo,
     onClose,
     onDetach,
     onClear,
     onSmooth,
     onSimplify,
     disableUndo,
+    disableRedo,
     disableClose,
     disableDetach,
     disableClear,
@@ -114,7 +121,7 @@ export function VectorDrawingToolbar(props: VectorDrawingToolbarProps): React.JS
   }
 
   const toolOptions = variant === 'min' ? MIN_TOOLS : FULL_TOOLS;
-  const hasActions = Boolean(onUndo || onClose || onDetach || onClear || onSmooth || onSimplify);
+  const hasActions = Boolean(onUndo || onRedo || onClose || onDetach || onClear || onSmooth || onSimplify);
 
   return (
     <div
@@ -137,7 +144,7 @@ export function VectorDrawingToolbar(props: VectorDrawingToolbarProps): React.JS
       ))}
       {hasActions ? <div className='mx-1 h-6 w-px bg-border' /> : null}
       {onUndo ? (
-        <Tooltip content='Undo last point'>
+        <Tooltip content='Undo (Ctrl+Z)'>
           <Button
             type='button'
             variant='outline'
@@ -146,6 +153,19 @@ export function VectorDrawingToolbar(props: VectorDrawingToolbarProps): React.JS
             disabled={disableUndo}
           >
             <RotateCcw className='size-4' />
+          </Button>
+        </Tooltip>
+      ) : null}
+      {onRedo ? (
+        <Tooltip content='Redo (Ctrl+Shift+Z)'>
+          <Button
+            type='button'
+            variant='outline'
+            size='icon'
+            onClick={onRedo}
+            disabled={disableRedo}
+          >
+            <Redo2 className='size-4' />
           </Button>
         </Tooltip>
       ) : null}

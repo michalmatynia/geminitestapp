@@ -1,22 +1,12 @@
 import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 
 import type { ProductValidationPattern } from '@/shared/types/domain/products';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import * as api from '../api/settings';
 import { PriceGroup, Catalog, CatalogRecord, ProductCategory, ProductTag, ProductParameter, ProductCategoryWithChildren } from '../types';
 
-export const productSettingsKeys = {
-  all: ['product-settings'] as const,
-  priceGroups: () => [...productSettingsKeys.all, 'price-groups'] as const,
-  catalogs: () => [...productSettingsKeys.all, 'catalogs'] as const,
-  categories: (catalogId: string | null) => [...productSettingsKeys.all, 'categories', catalogId] as const,
-  tags: (catalogId: string | null) => [...productSettingsKeys.all, 'tags', catalogId] as const,
-  parameters: (catalogId: string | null) => [...productSettingsKeys.all, 'parameters', catalogId] as const,
-  validatorSettings: () => [...productSettingsKeys.all, 'validator-settings'] as const,
-  validatorPatterns: () => [...productSettingsKeys.all, 'validator-patterns'] as const,
-  validatorConfig: (includeDisabled: boolean) =>
-    [...productSettingsKeys.all, 'validator-config', includeDisabled] as const,
-};
+export const productSettingsKeys = QUERY_KEYS.products.settings;
 
 export function usePriceGroups(): UseQueryResult<PriceGroup[], Error> {
   return useQuery({
@@ -140,7 +130,7 @@ export function useSaveCategoryMutation(): UseMutationResult<ProductCategory, Er
       const catalogId = variables.data.catalogId ?? null;
       const treeCatalogId = variables.data.catalogId ?? undefined;
       void queryClient.invalidateQueries({ queryKey: productSettingsKeys.categories(catalogId) });
-      void queryClient.invalidateQueries({ queryKey: ['product-categories', 'tree', treeCatalogId] });
+      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.categoryTree(treeCatalogId) });
     },
   });
 }
@@ -151,7 +141,9 @@ export function useDeleteCategoryMutation(): UseMutationResult<void, Error, { id
     mutationFn: ({ id }: { id: string; catalogId: string | null }) => api.deleteCategory(id),
     onSuccess: (_: void, variables: { id: string; catalogId: string | null }) => {
       void queryClient.invalidateQueries({ queryKey: productSettingsKeys.categories(variables.catalogId) });
-      void queryClient.invalidateQueries({ queryKey: ['product-categories', 'tree', variables.catalogId ?? undefined] });
+      void queryClient.invalidateQueries({
+        queryKey: productSettingsKeys.categoryTree(variables.catalogId ?? undefined),
+      });
     },
   });
 }
@@ -171,7 +163,7 @@ export function useReorderCategoryMutation(): UseMutationResult<ProductCategory,
         queryKey: productSettingsKeys.categories(catalogId),
       });
       void queryClient.invalidateQueries({
-        queryKey: ['product-categories', 'tree', treeCatalogId],
+        queryKey: productSettingsKeys.categoryTree(treeCatalogId),
       });
     },
   });

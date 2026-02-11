@@ -7,10 +7,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import {
+  getImageStudioSlotLinkBySourceAndRelation,
+  upsertImageStudioSlotLink,
+} from '@/features/ai/image-studio/server/slot-link-repository';
+import {
   createImageStudioSlots,
   getImageStudioSlotById,
+  updateImageStudioSlot,
 } from '@/features/ai/image-studio/server/slot-repository';
-import { upsertImageStudioSlotLink } from '@/features/ai/image-studio/server/slot-link-repository';
 import { getImageFileRepository } from '@/features/files/server';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
@@ -121,25 +125,51 @@ async function POST_handler(
     });
 
     const relationType = `mask:${mask.variant}${mask.inverted ? ':inverted' : ''}`;
-    const createdMaskSlots = await createImageStudioSlots(sourceSlot.projectId, [
-      {
-        name: `${sourceSlot.name || sourceSlot.id} • ${mask.variant}${mask.inverted ? ' inverted' : ''} mask`,
-        folderPath: maskFolderPath,
-        imageFileId: imageFile.id,
-        imageUrl: imageFile.filepath,
-        imageBase64: null,
-        metadata: {
-          role: 'mask',
-          sourceSlotId: sourceSlot.id,
-          variant: mask.variant,
-          inverted: Boolean(mask.inverted),
-          relationType,
-        },
-      },
-    ]);
-    const maskSlot = createdMaskSlots[0];
+    const metadata = {
+      role: 'mask',
+      sourceSlotId: sourceSlot.id,
+      variant: mask.variant,
+      inverted: Boolean(mask.inverted),
+      relationType,
+    };
+    let maskSlot = null;
+
+    const existingLink = await getImageStudioSlotLinkBySourceAndRelation(
+      sourceSlot.projectId,
+      sourceSlot.id,
+      relationType
+    );
+
+    if (existingLink?.targetSlotId) {
+      const existingSlot = await getImageStudioSlotById(existingLink.targetSlotId);
+      if (existingSlot) {
+        maskSlot = await updateImageStudioSlot(existingSlot.id, {
+          name: `${sourceSlot.name || sourceSlot.id} • ${mask.variant}${mask.inverted ? ' inverted' : ''} mask`,
+          folderPath: maskFolderPath,
+          imageFileId: imageFile.id,
+          imageUrl: imageFile.filepath,
+          imageBase64: null,
+          metadata,
+        });
+      }
+    }
+
     if (!maskSlot) {
-      throw badRequestError('Failed to create mask slot');
+      const createdMaskSlots = await createImageStudioSlots(sourceSlot.projectId, [
+        {
+          name: `${sourceSlot.name || sourceSlot.id} • ${mask.variant}${mask.inverted ? ' inverted' : ''} mask`,
+          folderPath: maskFolderPath,
+          imageFileId: imageFile.id,
+          imageUrl: imageFile.filepath,
+          imageBase64: null,
+          metadata,
+        },
+      ]);
+      maskSlot = createdMaskSlots[0] ?? null;
+    }
+
+    if (!maskSlot) {
+      throw badRequestError('Failed to create or update mask slot');
     }
 
     const link = await upsertImageStudioSlotLink({

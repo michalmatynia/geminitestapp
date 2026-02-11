@@ -7,8 +7,8 @@ import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/features/products/const
 import {
   useCreateValidationPatternMutation,
   useDeleteValidationPatternMutation,
-  useUpdateValidationPatternMutation,
   useUpdateValidatorSettingsMutation,
+  useUpdateValidationPatternMutation,
   useValidationPatterns,
   useValidatorSettings,
 } from '@/features/products/hooks/useProductSettingsQueries';
@@ -66,6 +66,7 @@ type PatternFormData = {
   severity: 'error' | 'warning';
   enabled: boolean;
   replacementEnabled: boolean;
+  replacementAutoApply: boolean;
   replacementValue: string;
   replacementFields: string[];
   replacementMode: ReplacementMode;
@@ -110,6 +111,7 @@ const EMPTY_FORM: PatternFormData = {
   severity: 'error',
   enabled: true,
   replacementEnabled: false,
+  replacementAutoApply: false,
   replacementValue: '',
   replacementFields: [],
   replacementMode: 'static',
@@ -472,6 +474,7 @@ export function ValidatorSettings(): React.JSX.Element {
       severity: pattern.severity,
       enabled: pattern.enabled,
       replacementEnabled: pattern.replacementEnabled,
+      replacementAutoApply: pattern.replacementAutoApply ?? false,
       replacementValue: getStaticReplacementValue(pattern.replacementValue) ?? '',
       replacementFields: normalizeReplacementFields(pattern.replacementFields),
       replacementMode: recipe ? 'dynamic' : 'static',
@@ -619,6 +622,7 @@ export function ValidatorSettings(): React.JSX.Element {
         severity: formData.severity,
         enabled: formData.enabled,
         replacementEnabled: formData.replacementEnabled,
+        replacementAutoApply: formData.replacementAutoApply,
         replacementValue,
         replacementFields: normalizeReplacementFields(formData.replacementFields),
         sequenceGroupId: editingPattern?.sequenceGroupId ?? null,
@@ -658,15 +662,6 @@ export function ValidatorSettings(): React.JSX.Element {
     }
   };
 
-  const handleToggleDefault = async (): Promise<void> => {
-    try {
-      await updateSettings.mutateAsync({ enabledByDefault: !enabledByDefault });
-      toast(`Validator default set to ${!enabledByDefault ? 'ON' : 'OFF'}.`, { variant: 'success' });
-    } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to update validator settings.', { variant: 'error' });
-    }
-  };
-
   const handleTogglePattern = async (pattern: ProductValidationPattern): Promise<void> => {
     try {
       await updatePattern.mutateAsync({
@@ -676,6 +671,15 @@ export function ValidatorSettings(): React.JSX.Element {
       toast(`Pattern ${!pattern.enabled ? 'enabled' : 'disabled'}.`, { variant: 'success' });
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to update pattern.', { variant: 'error' });
+    }
+  };
+
+  const handleToggleDefault = async (): Promise<void> => {
+    try {
+      await updateSettings.mutateAsync({ enabledByDefault: !enabledByDefault });
+      toast(`Validator default set to ${!enabledByDefault ? 'ON' : 'OFF'}.`, { variant: 'success' });
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to update validator settings.', { variant: 'error' });
     }
   };
 
@@ -709,6 +713,7 @@ export function ValidatorSettings(): React.JSX.Element {
         severity: pattern.severity,
         enabled: pattern.enabled,
         replacementEnabled: pattern.replacementEnabled,
+        replacementAutoApply: pattern.replacementAutoApply ?? false,
         replacementValue: pattern.replacementValue,
         replacementFields: normalizeReplacementFields(pattern.replacementFields),
         sequenceGroupId: null,
@@ -903,6 +908,7 @@ export function ValidatorSettings(): React.JSX.Element {
         severity: 'warning',
         enabled: true,
         replacementEnabled: true,
+        replacementAutoApply: true,
         replacementValue: replacementRecipe,
         replacementFields: ['sku'],
         sequenceGroupId,
@@ -931,6 +937,7 @@ export function ValidatorSettings(): React.JSX.Element {
         severity: 'error',
         enabled: true,
         replacementEnabled: false,
+        replacementAutoApply: false,
         replacementValue: null,
         replacementFields: ['sku'],
         sequenceGroupId,
@@ -972,8 +979,6 @@ export function ValidatorSettings(): React.JSX.Element {
         .map((item: ProductValidationPattern) => item.label.trim().toLowerCase())
         .filter((value: string) => value.length > 0),
     );
-    const sequenceGroupId = createSequenceGroupId();
-    const sequenceGroupLabel = 'Latest Price & Stock';
     const maxSequence = orderedPatterns.reduce(
       (max: number, pattern: ProductValidationPattern, index: number) =>
         Math.max(max, getPatternSequence(pattern, index)),
@@ -1015,26 +1020,27 @@ export function ValidatorSettings(): React.JSX.Element {
         label: priceLabel,
         target: 'price',
         locale: null,
-        regex: '^(?:\\s*|0(?:\\.0+)?)$',
+        regex: '^.*$',
         flags: null,
         message:
-          'Auto-propose price from the latest created product when current price is empty or 0.',
+          'Propose price from the latest created product.',
         severity: 'warning',
         enabled: true,
         replacementEnabled: true,
+        replacementAutoApply: false,
         replacementValue: buildLatestFieldRecipe('price'),
         replacementFields: ['price'],
-        sequenceGroupId,
-        sequenceGroupLabel,
+        sequenceGroupId: null,
+        sequenceGroupLabel: null,
         sequenceGroupDebounceMs: 0,
         sequence: firstSequence,
         chainMode: 'continue',
         maxExecutions: 1,
         passOutputToNext: false,
-        launchEnabled: false,
-        launchSourceMode: 'current_field',
-        launchSourceField: null,
-        launchOperator: 'equals',
+        launchEnabled: true,
+        launchSourceMode: 'latest_product_field',
+        launchSourceField: 'price',
+        launchOperator: 'is_not_empty',
         launchValue: null,
         launchFlags: null,
       });
@@ -1043,37 +1049,31 @@ export function ValidatorSettings(): React.JSX.Element {
         label: stockLabel,
         target: 'stock',
         locale: null,
-        regex: '^(?:\\s*|0)$',
+        regex: '^.*$',
         flags: null,
         message:
-          'Auto-propose stock from the latest created product when current stock is empty or 0.',
+          'Propose stock from the latest created product.',
         severity: 'warning',
         enabled: true,
         replacementEnabled: true,
+        replacementAutoApply: false,
         replacementValue: buildLatestFieldRecipe('stock'),
         replacementFields: ['stock'],
-        sequenceGroupId,
-        sequenceGroupLabel,
-        sequenceGroupDebounceMs: 300,
+        sequenceGroupId: null,
+        sequenceGroupLabel: null,
+        sequenceGroupDebounceMs: 0,
         sequence: secondSequence,
         chainMode: 'continue',
         maxExecutions: 1,
         passOutputToNext: false,
-        launchEnabled: false,
-        launchSourceMode: 'current_field',
-        launchSourceField: null,
-        launchOperator: 'equals',
+        launchEnabled: true,
+        launchSourceMode: 'latest_product_field',
+        launchSourceField: 'stock',
+        launchOperator: 'is_not_empty',
         launchValue: null,
         launchFlags: null,
       });
 
-      setGroupDrafts((prev: Record<string, SequenceGroupDraft>) => ({
-        ...prev,
-        [sequenceGroupId]: {
-          label: sequenceGroupLabel,
-          debounceMs: '300',
-        },
-      }));
       toast('Latest price & stock sequence created.', { variant: 'success' });
     } catch (error) {
       toast(
@@ -1143,6 +1143,7 @@ export function ValidatorSettings(): React.JSX.Element {
         severity: 'warning',
         enabled: true,
         replacementEnabled: true,
+        replacementAutoApply: true,
         replacementValue: mirrorRecipe,
         replacementFields: ['name_pl'],
         sequenceGroupId,
@@ -1170,6 +1171,7 @@ export function ValidatorSettings(): React.JSX.Element {
         severity: 'warning',
         enabled: true,
         replacementEnabled: true,
+        replacementAutoApply: true,
         replacementValue: 'Brelok',
         replacementFields: ['name_pl'],
         sequenceGroupId,
@@ -1197,6 +1199,7 @@ export function ValidatorSettings(): React.JSX.Element {
         severity: 'warning',
         enabled: true,
         replacementEnabled: true,
+        replacementAutoApply: true,
         replacementValue: 'Przypinka',
         replacementFields: ['name_pl'],
         sequenceGroupId,
@@ -1571,6 +1574,11 @@ export function ValidatorSettings(): React.JSX.Element {
                           {pattern.replacementEnabled && (
                             <p className='mt-1 text-[11px] text-emerald-200/90'>
                             Fields: {formatReplacementFields(pattern.replacementFields)}
+                            </p>
+                          )}
+                          {pattern.replacementEnabled && (
+                            <p className='mt-1 text-[11px] text-cyan-200/90'>
+                              Apply mode: {pattern.replacementAutoApply ? 'Auto-apply' : 'Proposal only'}
                             </p>
                           )}
                         </div>
@@ -2392,9 +2400,32 @@ export function ValidatorSettings(): React.JSX.Element {
               <ToggleButton
                 enabled={formData.replacementEnabled}
                 onClick={() =>
+                  setFormData((prev: PatternFormData) => {
+                    const nextReplacementEnabled = !prev.replacementEnabled;
+                    return {
+                      ...prev,
+                      replacementEnabled: nextReplacementEnabled,
+                      replacementAutoApply: nextReplacementEnabled ? prev.replacementAutoApply : false,
+                    };
+                  })
+                }
+              />
+            </div>
+
+            <div className='flex items-center justify-between rounded-md border border-border bg-gray-900/70 px-3 py-2'>
+              <div>
+                <span className='text-xs text-gray-300'>Auto-apply replacer</span>
+                <p className='text-[11px] text-gray-500'>
+                  OFF keeps it as a proposal only.
+                </p>
+              </div>
+              <ToggleButton
+                enabled={formData.replacementAutoApply}
+                disabled={!formData.replacementEnabled}
+                onClick={() =>
                   setFormData((prev: PatternFormData) => ({
                     ...prev,
-                    replacementEnabled: !prev.replacementEnabled,
+                    replacementAutoApply: !prev.replacementAutoApply,
                   }))
                 }
               />

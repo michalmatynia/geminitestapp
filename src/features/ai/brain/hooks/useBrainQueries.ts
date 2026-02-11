@@ -3,6 +3,7 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
 import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { 
   AiInsightRecord, 
   AiPathRuntimeAnalyticsSummary, 
@@ -20,15 +21,7 @@ export type InsightsSnapshot = {
   logs: AiInsightRecord[];
 };
 
-export const brainKeys = {
-  all: ['brain'] as const,
-  ollamaModels: () => [...brainKeys.all, 'ollama-models'] as const,
-  metrics: () => [...brainKeys.all, 'metrics'] as const,
-  analyticsSummary: () => [...brainKeys.metrics(), 'analytics-summary'] as const,
-  logMetrics: () => [...brainKeys.metrics(), 'logs'] as const,
-  insights: () => [...brainKeys.metrics(), 'insights'] as const,
-  runtimeAnalytics: () => [...brainKeys.metrics(), 'runtime-analytics'] as const,
-};
+export const brainKeys = QUERY_KEYS.brain;
 
 export function useOllamaModels(): UseQueryResult<ChatbotModelsResponse, Error> {
   return useQuery({

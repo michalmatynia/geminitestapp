@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient, type UseMutationResult, type Use
 
 import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord, AgentTeachingEmbeddingDocumentListItem, AgentTeachingChatSource } from '@/shared/types/domain/agent-teaching';
 import type { ChatMessage } from '@/shared/types/domain/chatbot';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import { 
   getTeachingAgents, 
@@ -19,12 +20,7 @@ import {
   teachingChat
 } from '../api';
 
-export const agentTeachingKeys = {
-  all: ['agent-teaching'] as const,
-  agents: () => [...agentTeachingKeys.all, 'agents'] as const,
-  collections: () => [...agentTeachingKeys.all, 'collections'] as const,
-  documents: (collectionId: string) => [...agentTeachingKeys.all, 'collections', collectionId, 'documents'] as const,
-};
+export const agentTeachingKeys = QUERY_KEYS.agentTeaching;
 
 export function useSearchEmbeddingCollectionMutation(): UseMutationResult<
   AgentTeachingChatSource[],

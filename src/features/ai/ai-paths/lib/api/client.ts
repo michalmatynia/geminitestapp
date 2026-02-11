@@ -14,6 +14,7 @@ import type {
   DatabaseBrowseDto,
   SchemaResponsePayloadDto,
 } from '@/shared/dtos/database';
+import type { HttpResult } from '@/shared/dtos/http';
 import type {
   SettingRecordDto,
   SettingsScopeDto,
@@ -29,13 +30,7 @@ import type { AiPathRuntimeAnalyticsSummary } from '..';
 // ============================================================================
 
 
-export type ApiResponse<T> = {
-  ok: true;
-  data: T;
-} | {
-  ok: false;
-  error: string;
-};
+export type ApiResponse<T> = HttpResult<T>;
 
 export type DbActionPayload = {
   provider?: 'auto' | 'mongodb' | 'prisma';

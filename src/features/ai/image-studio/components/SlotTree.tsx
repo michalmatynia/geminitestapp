@@ -1,13 +1,14 @@
 'use client';
 
 import { Folder, Image as ImageIcon } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { TreeCaret, TreeContextMenu, TreeRow } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { DRAG_KEYS, getFirstDragValue, hasDragType, setDragData } from '@/shared/utils';
 
-import { useImageStudio } from '../context/ImageStudioContext';
+import { useProjectsState } from '../context/ProjectsContext';
+import { useSlotsState, useSlotsActions } from '../context/SlotsContext';
 import { normalizeFolderPaths } from '../utils/studio-tree';
 
 import type { ImageStudioSlotRecord } from '../types';
@@ -81,17 +82,9 @@ function buildSlotTree(projectId: string, slots: ImageStudioSlotRecord[], folder
 }
 
 export function SlotTree(): React.JSX.Element {
-  const {
-    projectId,
-    slots,
-    virtualFolders: folders,
-    selectedFolder,
-    selectedSlotId,
-    setSelectedFolder: onSelectFolder,
-    setSelectedSlotId,
-    moveSlotMutation,
-    handleMoveFolder: onMoveFolder,
-  } = useImageStudio();
+  const { projectId } = useProjectsState();
+  const { slots, virtualFolders: folders, selectedFolder, selectedSlotId } = useSlotsState();
+  const { setSelectedFolder: onSelectFolder, setSelectedSlotId, moveSlotMutation, handleMoveFolder: onMoveFolder } = useSlotsActions();
 
   const onSelectSlot = useCallback((slot: ImageStudioSlotRecord) => {
     setSelectedSlotId(slot.id);
@@ -104,9 +97,24 @@ export function SlotTree(): React.JSX.Element {
   const tree = useMemo(() => buildSlotTree(projectId, slots, folders), [projectId, slots, folders]);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(['root']));
   const [dragOverPath, setDragOverPath] = useState<string | null>(null);
-  const [draggedSlotId, setDraggedSlotId] = useState<string | null>(null);
-  const [draggedFolderPath, setDraggedFolderPath] = useState<string | null>(null);
+  const draggedSlotIdRef = useRef<string | null>(null);
+  const draggedFolderPathRef = useRef<string | null>(null);
   const rootOpen = expanded.has('root');
+  const canHandleDrop = useCallback((dataTransfer: DataTransfer): boolean => {
+    if (hasDragType(dataTransfer, [DRAG_KEYS.ASSET_ID, DRAG_KEYS.FOLDER_PATH])) return true;
+    return Boolean(draggedSlotIdRef.current || draggedFolderPathRef.current);
+  }, []);
+  const clearDragState = useCallback((): void => {
+    draggedSlotIdRef.current = null;
+    draggedFolderPathRef.current = null;
+    setDragOverPath(null);
+  }, []);
+  const getFolderPathFromEventTarget = useCallback((target: EventTarget | null): string | null => {
+    if (!(target instanceof Element)) return null;
+    const folderElement = target.closest<HTMLElement>('[data-folder-path]');
+    if (!folderElement) return null;
+    return folderElement.dataset['folderPath'] ?? null;
+  }, []);
 
   const toggle = useCallback((id: string): void => {
     setExpanded((prev: Set<string>) => {
@@ -120,7 +128,7 @@ export function SlotTree(): React.JSX.Element {
   const renderNode = (node: TreeNode, depth: number): React.JSX.Element | null => {
     if (node.type === 'folder') {
       const isOpen = expanded.has(node.id);
-      const isSelected = node.path === selectedFolder;
+      const isSelected = !selectedSlotId && node.path === selectedFolder;
       const isDragOver = dragOverPath === node.path;
       return (
         <div key={node.id}>
@@ -158,17 +166,16 @@ export function SlotTree(): React.JSX.Element {
                 }}
                 onDoubleClick={() => toggle(node.id)}
                 title={node.path || 'Project root'}
+                data-folder-path={node.path}
                 draggable
                 onDragStart={(e: React.DragEvent<HTMLButtonElement>): void => {
                   setDragData(e.dataTransfer, { [DRAG_KEYS.FOLDER_PATH]: node.path }, { effectAllowed: 'move' });
-                  setDraggedFolderPath(node.path);
+                  draggedSlotIdRef.current = null;
+                  draggedFolderPathRef.current = node.path;
                 }}
-                onDragEnd={() => {
-                  setDraggedFolderPath(null);
-                  setDragOverPath(null);
-                }}
+                onDragEnd={clearDragState}
                 onDragOver={(e: React.DragEvent<HTMLButtonElement>): void => {
-                  if (!hasDragType(e.dataTransfer, [DRAG_KEYS.ASSET_ID, DRAG_KEYS.FOLDER_PATH])) return;
+                  if (!canHandleDrop(e.dataTransfer)) return;
                   e.preventDefault();
                   e.stopPropagation();
                   setDragOverPath(node.path);
@@ -180,10 +187,10 @@ export function SlotTree(): React.JSX.Element {
                 onDrop={(e: React.DragEvent<HTMLButtonElement>): void => {
                   e.preventDefault();
                   e.stopPropagation();
-                  const slotId = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.ASSET_ID], draggedSlotId);
+                  const slotId = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.ASSET_ID], draggedSlotIdRef.current);
                   const folderPath =
-                    getFirstDragValue(e.dataTransfer, [DRAG_KEYS.FOLDER_PATH], draggedFolderPath);
-                  setDragOverPath(null);
+                    getFirstDragValue(e.dataTransfer, [DRAG_KEYS.FOLDER_PATH], draggedFolderPathRef.current);
+                  clearDragState();
                   if (slotId) {
                     const slot = slots.find((item: ImageStudioSlotRecord) => item.id === slotId);
                     if (slot) { onMoveSlot(slot, node.path); }
@@ -271,12 +278,10 @@ export function SlotTree(): React.JSX.Element {
             draggable
             onDragStart={(e: React.DragEvent<HTMLButtonElement>): void => {
               setDragData(e.dataTransfer, { [DRAG_KEYS.ASSET_ID]: slot.id }, { effectAllowed: 'move' });
-              setDraggedSlotId(slot.id);
+              draggedFolderPathRef.current = null;
+              draggedSlotIdRef.current = slot.id;
             }}
-            onDragEnd={() => {
-              setDraggedSlotId(null);
-              setDragOverPath(null);
-            }}
+            onDragEnd={clearDragState}
           >
             <ImageIcon className='size-3.5 text-gray-400' />
             <span className='truncate'>{slot.name || node.name}</span>
@@ -305,26 +310,29 @@ export function SlotTree(): React.JSX.Element {
       }}
       onClick={() => setSelectedSlotId(null)}
       onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
-        if (!hasDragType(e.dataTransfer, [DRAG_KEYS.ASSET_ID, DRAG_KEYS.FOLDER_PATH])) return;
+        if (!canHandleDrop(e.dataTransfer)) return;
         e.preventDefault();
-        setDragOverPath('');
+        const hoveredFolderPath = getFolderPathFromEventTarget(e.target);
+        setDragOverPath(hoveredFolderPath ?? '');
       }}
       onDragLeave={() => {
         if (dragOverPath === '') setDragOverPath(null);
       }}
       onDrop={(e: React.DragEvent<HTMLDivElement>): void => {
         e.preventDefault();
-        const slotId = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.ASSET_ID], draggedSlotId);
+        const hoveredFolderPath = getFolderPathFromEventTarget(e.target);
+        const targetFolder = hoveredFolderPath ?? '';
+        const slotId = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.ASSET_ID], draggedSlotIdRef.current);
         const folderPath =
-          getFirstDragValue(e.dataTransfer, [DRAG_KEYS.FOLDER_PATH], draggedFolderPath);
-        setDragOverPath(null);
+          getFirstDragValue(e.dataTransfer, [DRAG_KEYS.FOLDER_PATH], draggedFolderPathRef.current);
+        clearDragState();
         if (slotId) {
           const slot = slots.find((item: ImageStudioSlotRecord) => item.id === slotId);
-          if (slot) { onMoveSlot(slot, ''); }
+          if (slot) { onMoveSlot(slot, targetFolder); }
           return;
         }
         if (folderPath) {
-          void onMoveFolder(folderPath, '');
+          void onMoveFolder(folderPath, targetFolder);
         }
       }}
     >

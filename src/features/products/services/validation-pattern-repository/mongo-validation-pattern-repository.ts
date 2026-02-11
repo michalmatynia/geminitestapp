@@ -34,6 +34,7 @@ interface ProductValidationPatternDoc extends Document {
   severity: ProductValidationSeverity;
   enabled: boolean;
   replacementEnabled: boolean;
+  replacementAutoApply?: boolean;
   replacementValue: string | null;
   replacementFields: string[];
   sequenceGroupId?: string | null;
@@ -63,6 +64,7 @@ type ProductValidationPatternInsert = {
   severity: ProductValidationSeverity;
   enabled: boolean;
   replacementEnabled: boolean;
+  replacementAutoApply: boolean;
   replacementValue: string | null;
   replacementFields: string[];
   sequenceGroupId: string | null;
@@ -180,6 +182,7 @@ const toDomain = (doc: ProductValidationPatternDoc): ProductValidationPattern =>
   severity: doc.severity ?? 'error',
   enabled: doc.enabled,
   replacementEnabled: doc.replacementEnabled ?? false,
+  replacementAutoApply: doc.replacementAutoApply ?? false,
   replacementValue: doc.replacementValue ?? null,
   replacementFields: normalizeReplacementFields(doc.replacementFields),
   sequenceGroupId: normalizeSequenceGroupId(doc.sequenceGroupId),
@@ -251,6 +254,7 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
       severity: data.severity ?? 'error',
       enabled: data.enabled ?? true,
       replacementEnabled: data.replacementEnabled ?? false,
+      replacementAutoApply: data.replacementAutoApply ?? false,
       replacementValue: data.replacementValue?.trim() || null,
       replacementFields: normalizeReplacementFields(data.replacementFields),
       sequenceGroupId: normalizeSequenceGroupId(data.sequenceGroupId),
@@ -291,6 +295,7 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
     if (data.severity !== undefined) set.severity = data.severity;
     if (data.enabled !== undefined) set.enabled = data.enabled;
     if (data.replacementEnabled !== undefined) set.replacementEnabled = data.replacementEnabled;
+    if (data.replacementAutoApply !== undefined) set.replacementAutoApply = data.replacementAutoApply;
     if (data.replacementValue !== undefined) set.replacementValue = data.replacementValue?.trim() || null;
     if (data.replacementFields !== undefined) {
       set.replacementFields = normalizeReplacementFields(data.replacementFields);

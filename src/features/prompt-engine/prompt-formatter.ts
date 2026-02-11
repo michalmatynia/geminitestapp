@@ -1,4 +1,13 @@
-import { validateProgrammaticPrompt } from './prompt-validator';
+import {
+  buildPromptSequenceGroupCounts,
+  evaluatePromptValidationRule,
+  isPromptRuleInSequenceGroup,
+  normalizePromptRuleChainMode,
+  normalizePromptRuleMaxExecutions,
+  shouldLaunchPromptRule,
+  sortPromptValidationRules,
+  validateProgrammaticPrompt,
+} from './prompt-validator';
 
 import type { PromptAutofixOperation, PromptValidationRule, PromptValidationSettings, PromptValidationSimilarPattern } from './settings';
 
@@ -316,50 +325,81 @@ function applySuggestionFix(prompt: string, suggestion: PromptValidationSimilarP
   }
 }
 
-function getRuleById(rules: PromptValidationRule[], id: string): PromptValidationRule | null {
-  return rules.find((rule: PromptValidationRule) => rule.id === id) ?? null;
-}
-
 export function formatProgrammaticPrompt(prompt: string, settings: PromptValidationSettings): FormatPromptResult {
   const mergedRules: PromptValidationRule[] = [
     ...settings.rules,
     ...(settings.learnedRules ?? []),
   ];
   const validationSettings = { ...settings, enabled: true, rules: mergedRules };
-  const issuesBeforeList = validateProgrammaticPrompt(prompt, validationSettings);
-  const issuesBefore = issuesBeforeList.length;
+  const issuesBefore = validateProgrammaticPrompt(prompt, validationSettings).length;
   if (issuesBefore === 0) {
     return { prompt, changed: false, applied: [], issuesBefore, issuesAfter: 0 };
   }
 
+  const orderedRules = sortPromptValidationRules(mergedRules);
+  const sequenceGroupCounts = buildPromptSequenceGroupCounts(orderedRules);
+
   let nextPrompt = prompt;
   const applied: AppliedFix[] = [];
 
-  for (const issue of issuesBeforeList) {
-    const rule = getRuleById(mergedRules, issue.ruleId);
-    const autofix = rule?.autofix;
-    let appliedFix = false;
-    if (rule && autofix?.enabled && Array.isArray(autofix.operations) && autofix.operations.length > 0) {
-      for (const op of autofix.operations) {
-        const before = nextPrompt;
-        nextPrompt = applyAutofixOperation(nextPrompt, op);
-        if (nextPrompt !== before) {
-          applied.push({ ruleId: rule.id, operationKind: op.kind });
-          appliedFix = true;
+  for (const rule of orderedRules) {
+    if (!rule.enabled) continue;
+
+    const inSequenceGroup = isPromptRuleInSequenceGroup(rule, sequenceGroupCounts);
+    const maxExecutions = normalizePromptRuleMaxExecutions(rule);
+    let candidatePrompt = nextPrompt;
+    let matched = false;
+    let replaced = false;
+
+    for (let execution = 0; execution < maxExecutions; execution += 1) {
+      if (!shouldLaunchPromptRule(rule, candidatePrompt)) break;
+      const issue = evaluatePromptValidationRule(candidatePrompt, rule);
+      if (!issue) break;
+
+      matched = true;
+      let appliedFixInExecution = false;
+
+      const autofix = rule.autofix;
+      if (autofix?.enabled && Array.isArray(autofix.operations) && autofix.operations.length > 0) {
+        for (const op of autofix.operations) {
+          const before = candidatePrompt;
+          candidatePrompt = applyAutofixOperation(candidatePrompt, op);
+          if (candidatePrompt !== before) {
+            applied.push({ ruleId: rule.id, operationKind: op.kind });
+            appliedFixInExecution = true;
+          }
         }
+      }
+
+      if (!appliedFixInExecution && Array.isArray(rule.similar) && rule.similar.length > 0) {
+        for (const sim of rule.similar) {
+          const before = candidatePrompt;
+          candidatePrompt = applySuggestionFix(candidatePrompt, sim);
+          if (candidatePrompt !== before) {
+            applied.push({ ruleId: rule.id, operationKind: 'replace' });
+            appliedFixInExecution = true;
+          }
+        }
+      }
+
+      if (!appliedFixInExecution) break;
+      replaced = true;
+
+      if (rule.passOutputToNext !== false) {
+        nextPrompt = candidatePrompt;
       }
     }
 
-    if (!rule || appliedFix) continue;
+    if (inSequenceGroup) {
+      const chainMode = normalizePromptRuleChainMode(rule);
+      if (matched && chainMode === 'stop_on_match') break;
+      if (replaced && chainMode === 'stop_on_replace') break;
+      if (replaced && rule.passOutputToNext === false) break;
+      continue;
+    }
 
-    if (Array.isArray(rule.similar) && rule.similar.length > 0) {
-      for (const sim of rule.similar) {
-        const before = nextPrompt;
-        nextPrompt = applySuggestionFix(nextPrompt, sim);
-        if (nextPrompt !== before) {
-          applied.push({ ruleId: rule.id, operationKind: 'replace' });
-        }
-      }
+    if (replaced && rule.passOutputToNext !== false && candidatePrompt !== nextPrompt) {
+      nextPrompt = candidatePrompt;
     }
   }
 

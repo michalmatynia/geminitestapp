@@ -4,14 +4,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { fetchAnalyticsSummary, type AnalyticsRange } from '@/features/analytics/api';
 import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { AnalyticsScope, AiInsightRecord } from '@/shared/types';
 
-export const analyticsKeys = {
-  all: ['analytics'] as const,
-  summary: (range: AnalyticsRange, scope: AnalyticsScope | 'all') => 
-    [...analyticsKeys.all, 'summary', range, scope] as const,
-  insights: () => [...analyticsKeys.all, 'insights'] as const,
-};
+export const analyticsKeys = QUERY_KEYS.analytics;
 
 export function useAnalyticsSummary(input?: {
   range?: AnalyticsRange;
@@ -35,7 +31,7 @@ export function useAnalyticsInsights(options: { limit?: number; enabled?: boolea
   const enabled = options.enabled ?? true;
 
   return useQuery({
-    queryKey: analyticsKeys.insights(),
+    queryKey: analyticsKeys.insights(limit),
     queryFn: () => api.get<{ insights: AiInsightRecord[] }>('/api/analytics/insights', {
       params: { limit }
     }),
@@ -49,7 +45,7 @@ export function useRunAnalyticsInsight() {
   return useMutation({
     mutationFn: () => api.post<{ insight: AiInsightRecord }>('/api/analytics/insights'),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: analyticsKeys.insights() });
+      void queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
     },
   });
 }

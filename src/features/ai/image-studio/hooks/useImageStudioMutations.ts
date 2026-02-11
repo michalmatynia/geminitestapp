@@ -12,6 +12,7 @@ import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
 export interface RunStudioPayload {
   projectId: string;
   asset: { filepath: string; id?: string | undefined };
+  referenceAssets?: Array<{ filepath: string; id?: string | undefined }> | undefined;
   prompt: string;
   mask?: {
     type: 'polygons';

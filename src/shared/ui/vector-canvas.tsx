@@ -13,7 +13,7 @@ import {
   Unlink,
 } from 'lucide-react';
 import Image from 'next/image';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { VectorPoint, VectorShape, VectorShapeType, VectorToolMode } from '@/shared/types/domain/vector';
 import { cn } from '@/shared/utils';
@@ -188,6 +188,34 @@ export function VectorCanvas({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const dragRef = useRef<{ shapeId: string; pointIndex: number } | null>(null);
   const drawingRef = useRef<{ shapeId: string; type: VectorShapeType } | null>(null);
+
+  // --- Zoom & Pan ---
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+  const [viewTransform, setViewTransform] = useState({ scale: 1, panX: 0, panY: 0 });
+  const viewTransformRef = useRef(viewTransform);
+  viewTransformRef.current = viewTransform;
+  const panningRef = useRef(false);
+  const panStartRef = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
+  const spaceDownRef = useRef(false);
+
+  // --- rAF draw batching ---
+  const rafIdRef = useRef<number>(0);
+  const drawRef = useRef<(() => void) | null>(null);
+
+  const scheduleDraw = useCallback((): void => {
+    if (rafIdRef.current) return; // Already queued
+    rafIdRef.current = requestAnimationFrame(() => {
+      rafIdRef.current = 0;
+      drawRef.current?.();
+    });
+  }, []);
+
+  // Clean up pending rAF on unmount
+  useEffect(() => {
+    return (): void => {
+      if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+    };
+  }, []);
 
   const canDraw = allowWithoutImage || Boolean(src);
 
@@ -370,6 +398,9 @@ export function VectorCanvas({
     shapes,
   ]);
 
+  // Keep drawRef in sync with latest draw callback
+  drawRef.current = draw;
+
   const syncCanvasSize = useCallback((): void => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -388,7 +419,7 @@ export function VectorCanvas({
         canvas.height = height;
         canvas.style.width = `${width}px`;
         canvas.style.height = `${height}px`;
-        draw();
+        scheduleDraw();
         return;
       }
       // Compute the fitted rect that object-contain produces
@@ -423,12 +454,17 @@ export function VectorCanvas({
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
     }
-    draw();
-  }, [draw, src]);
+    scheduleDraw();
+  }, [scheduleDraw, src]);
 
   useEffect(() => {
     syncCanvasSize();
   }, [syncCanvasSize, src, shapes.length]);
+
+  // Re-draw when shapes/selection/mask-preview change (draw callback updates)
+  useEffect(() => {
+    scheduleDraw();
+  }, [draw, scheduleDraw]);
 
   useEffect(() => {
     const onResize = (): void => syncCanvasSize();
@@ -444,6 +480,92 @@ export function VectorCanvas({
     observer.observe(containerRef.current);
     return (): void => observer.disconnect();
   }, [syncCanvasSize]);
+
+  // --- Wheel zoom (attached with passive:false to prevent page scroll) ---
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const onWheel = (e: WheelEvent): void => {
+      e.preventDefault();
+      const rect = container.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      const prev = viewTransformRef.current;
+      const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+      const newScale = Math.min(8, Math.max(0.5, prev.scale * factor));
+      // Keep the point under cursor fixed
+      const newPanX = mouseX - (mouseX - prev.panX) * (newScale / prev.scale);
+      const newPanY = mouseY - (mouseY - prev.panY) * (newScale / prev.scale);
+      setViewTransform({ scale: newScale, panX: newPanX, panY: newPanY });
+    };
+    container.addEventListener('wheel', onWheel, { passive: false });
+    return (): void => container.removeEventListener('wheel', onWheel);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // --- Space key for pan mode + zoom shortcuts ---
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent): void => {
+      if (e.code === 'Space' && !e.repeat) {
+        spaceDownRef.current = true;
+      }
+      // Skip zoom shortcuts if user is typing in an input/textarea
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable) {
+        return;
+      }
+      // Zoom in: + or =
+      if (!e.ctrlKey && !e.metaKey && (e.key === '+' || e.key === '=')) {
+        e.preventDefault();
+        setViewTransform((prev) => {
+          const newScale = Math.min(8, prev.scale * 1.2);
+          // Zoom toward center of container
+          const container = containerRef.current;
+          if (!container) return { ...prev, scale: newScale };
+          const rect = container.getBoundingClientRect();
+          const cx = rect.width / 2;
+          const cy = rect.height / 2;
+          return {
+            scale: newScale,
+            panX: cx - (cx - prev.panX) * (newScale / prev.scale),
+            panY: cy - (cy - prev.panY) * (newScale / prev.scale),
+          };
+        });
+      }
+      // Zoom out: -
+      if (!e.ctrlKey && !e.metaKey && e.key === '-') {
+        e.preventDefault();
+        setViewTransform((prev) => {
+          const newScale = Math.max(0.5, prev.scale / 1.2);
+          const container = containerRef.current;
+          if (!container) return { ...prev, scale: newScale };
+          const rect = container.getBoundingClientRect();
+          const cx = rect.width / 2;
+          const cy = rect.height / 2;
+          return {
+            scale: newScale,
+            panX: cx - (cx - prev.panX) * (newScale / prev.scale),
+            panY: cy - (cy - prev.panY) * (newScale / prev.scale),
+          };
+        });
+      }
+      // Reset zoom: 0
+      if (!e.ctrlKey && !e.metaKey && e.key === '0') {
+        e.preventDefault();
+        setViewTransform({ scale: 1, panX: 0, panY: 0 });
+      }
+    };
+    const onKeyUp = (e: KeyboardEvent): void => {
+      if (e.code === 'Space') {
+        spaceDownRef.current = false;
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    return (): void => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toPoint = useCallback((event: React.MouseEvent<HTMLCanvasElement>): VectorPoint | null => {
     const canvas = canvasRef.current;
@@ -543,6 +665,18 @@ export function VectorCanvas({
 
   const handleMouseDown = useCallback(
     (event: React.MouseEvent<HTMLCanvasElement>): void => {
+      // Pan: middle mouse button or Space + left click
+      if (event.button === 1 || (event.button === 0 && spaceDownRef.current)) {
+        event.preventDefault();
+        panningRef.current = true;
+        panStartRef.current = {
+          x: event.clientX,
+          y: event.clientY,
+          panX: viewTransformRef.current.panX,
+          panY: viewTransformRef.current.panY,
+        };
+        return;
+      }
       if (!canDraw) return;
       if (tool === 'select') {
         if (event.shiftKey) {
@@ -670,6 +804,16 @@ export function VectorCanvas({
 
   const handleMouseMove = useCallback(
     (event: React.MouseEvent<HTMLCanvasElement>): void => {
+      if (panningRef.current) {
+        const dx = event.clientX - panStartRef.current.x;
+        const dy = event.clientY - panStartRef.current.y;
+        setViewTransform({
+          scale: viewTransformRef.current.scale,
+          panX: panStartRef.current.panX + dx,
+          panY: panStartRef.current.panY + dy,
+        });
+        return;
+      }
       if (!canDraw) return;
       if (dragRef.current) {
         const nextPoint = toPoint(event);
@@ -713,7 +857,15 @@ export function VectorCanvas({
     [brushRadius, canDraw, onChange, shapes, toPoint]
   );
 
+  const handleDoubleClick = useCallback((): void => {
+    setViewTransform({ scale: 1, panX: 0, panY: 0 });
+  }, []);
+
   const handleMouseUp = useCallback((): void => {
+    if (panningRef.current) {
+      panningRef.current = false;
+      return;
+    }
     if (drawingRef.current) {
       onChange(
         shapes.map((shape: VectorShape) =>
@@ -735,7 +887,18 @@ export function VectorCanvas({
     >
       {src ? (
         <>
-          <div className='relative h-full w-full'>
+          <div
+            ref={viewportRef}
+            className='relative h-full w-full'
+            style={
+              viewTransform.scale !== 1 || viewTransform.panX !== 0 || viewTransform.panY !== 0
+                ? {
+                    transform: `translate(${viewTransform.panX}px, ${viewTransform.panY}px) scale(${viewTransform.scale})`,
+                    transformOrigin: '0 0',
+                  }
+                : undefined
+            }
+          >
             <Image
               ref={imgRef}
               src={src}
@@ -746,37 +909,66 @@ export function VectorCanvas({
               draggable={false}
               unoptimized
             />
-          </div>
-          <canvas
-            ref={canvasRef}
-            className={cn(
-              'absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2',
-              tool === 'select' ? 'cursor-default' : 'cursor-crosshair'
-            )}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-          />
-        </>
-      ) : (
-        <>
-          {allowWithoutImage ? (
             <canvas
               ref={canvasRef}
               className={cn(
-                'absolute inset-0',
-                tool === 'select' ? 'cursor-default' : 'cursor-crosshair'
+                'absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2',
+                spaceDownRef.current || panningRef.current
+                  ? 'cursor-grab'
+                  : tool === 'select'
+                    ? 'cursor-default'
+                    : 'cursor-crosshair'
               )}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
+              onDoubleClick={handleDoubleClick}
             />
+          </div>
+          {viewTransform.scale !== 1 && (
+            <div className='absolute bottom-2 right-2 z-10 rounded bg-black/60 px-2 py-0.5 text-xs font-medium text-white/90 pointer-events-none'>
+              {Math.round(viewTransform.scale * 100)}%
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          {allowWithoutImage ? (
+            <div
+              ref={viewportRef}
+              className='absolute inset-0'
+              style={
+                viewTransform.scale !== 1 || viewTransform.panX !== 0 || viewTransform.panY !== 0
+                  ? {
+                      transform: `translate(${viewTransform.panX}px, ${viewTransform.panY}px) scale(${viewTransform.scale})`,
+                      transformOrigin: '0 0',
+                    }
+                  : undefined
+              }
+            >
+              <canvas
+                ref={canvasRef}
+                className={cn(
+                  'absolute inset-0',
+                  tool === 'select' ? 'cursor-default' : 'cursor-crosshair'
+                )}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+                onDoubleClick={handleDoubleClick}
+              />
+            </div>
           ) : null}
           {showEmptyState && !allowWithoutImage ? (
             <div className='text-sm text-gray-400'>{emptyStateLabel}</div>
           ) : null}
+          {viewTransform.scale !== 1 && (
+            <div className='absolute bottom-2 right-2 z-10 rounded bg-black/60 px-2 py-0.5 text-xs font-medium text-white/90 pointer-events-none'>
+              {Math.round(viewTransform.scale * 100)}%
+            </div>
+          )}
         </>
       )}
     </div>

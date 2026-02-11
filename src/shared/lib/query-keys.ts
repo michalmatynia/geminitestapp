@@ -23,6 +23,34 @@ export const QUERY_KEYS = {
       detail: (id: string) => [...QUERY_KEYS.products.aiJobs.all, id] as const,
     },
     catalogs: ['catalogs'] as const,
+    metadata: {
+      catalogs: ['catalogs'] as const,
+      categories: (catalogId: string) => ['categories', catalogId] as const,
+      tags: (catalogId: string) => ['tags', catalogId] as const,
+      producers: ['producers'] as const,
+      parameters: (catalogId: string) => ['parameters', catalogId] as const,
+      languages: ['languages'] as const,
+      priceGroups: ['price-groups'] as const,
+    },
+    settings: {
+      all: ['product-settings'] as const,
+      priceGroups: () => [...QUERY_KEYS.products.settings.all, 'price-groups'] as const,
+      catalogs: () => [...QUERY_KEYS.products.settings.all, 'catalogs'] as const,
+      categories: (catalogId: string | null) =>
+        [...QUERY_KEYS.products.settings.all, 'categories', catalogId] as const,
+      tags: (catalogId: string | null) =>
+        [...QUERY_KEYS.products.settings.all, 'tags', catalogId] as const,
+      parameters: (catalogId: string | null) =>
+        [...QUERY_KEYS.products.settings.all, 'parameters', catalogId] as const,
+      validatorSettings: () =>
+        [...QUERY_KEYS.products.settings.all, 'validator-settings'] as const,
+      validatorPatterns: () =>
+        [...QUERY_KEYS.products.settings.all, 'validator-patterns'] as const,
+      validatorConfig: (includeDisabled: boolean) =>
+        [...QUERY_KEYS.products.settings.all, 'validator-config', includeDisabled] as const,
+      categoryTree: (catalogId?: string) =>
+        ['product-categories', 'tree', catalogId] as const,
+    },
   },
   settings: {
     all: ['settings'] as const,
@@ -66,7 +94,14 @@ export const QUERY_KEYS = {
   integrations: {
     all: ['integrations'] as const,
     connections: () => [...QUERY_KEYS.integrations.all, 'connections'] as const,
+    withConnections: () => [...QUERY_KEYS.integrations.all, 'with-connections'] as const,
     marketplaces: () => [...QUERY_KEYS.integrations.all, 'marketplaces'] as const,
+    selection: {
+      defaultConnection: () =>
+        [...QUERY_KEYS.integrations.all, 'base', 'default-connection'] as const,
+      withConnections: () =>
+        [...QUERY_KEYS.integrations.withConnections(), 'selector-v2'] as const,
+    },
     marketplace: {
       all: ['marketplace'] as const,
       categories: (connectionId: string) => [...QUERY_KEYS.integrations.marketplace.all, 'categories', connectionId] as const,
@@ -105,6 +140,7 @@ export const QUERY_KEYS = {
     aiPaths: {
       all: ['ai', 'ai-paths'] as const,
       settings: () => [...QUERY_KEYS.ai.aiPaths.all, 'settings'] as const,
+      triggerButtons: () => [...QUERY_KEYS.ai.aiPaths.all, 'trigger-buttons'] as const,
       runs: () => [...QUERY_KEYS.ai.aiPaths.all, 'runs'] as const,
       run: (id: string) => [...QUERY_KEYS.ai.aiPaths.runs(), id] as const,
       deadLetter: (filters: unknown) => [...QUERY_KEYS.ai.aiPaths.all, 'dead-letter', filters] as const,
@@ -171,6 +207,58 @@ export const QUERY_KEYS = {
   drafts: {
     all: ['drafts'] as const,
     detail: (id: string) => ['drafts', id] as const,
+  },
+  analytics: {
+    all: ['analytics'] as const,
+    summary: (range: string, scope: string) =>
+      [...QUERY_KEYS.analytics.all, 'summary', range, scope] as const,
+    insights: (limit?: number) =>
+      [...QUERY_KEYS.analytics.all, 'insights', { limit }] as const,
+  },
+  playwright: {
+    all: ['playwright'] as const,
+    personas: () => [...QUERY_KEYS.playwright.all, 'personas'] as const,
+  },
+  jobs: {
+    all: ['jobs'] as const,
+    integrations: () => [...QUERY_KEYS.jobs.all, 'integrations'] as const,
+    productAi: (scope: string) => [...QUERY_KEYS.jobs.all, 'product-ai', scope] as const,
+    chatbot: (scope: string) => [...QUERY_KEYS.jobs.all, 'chatbot', scope] as const,
+    realtime: () => [...QUERY_KEYS.jobs.all, 'realtime'] as const,
+    status: (id: string) => [...QUERY_KEYS.jobs.all, 'status', id] as const,
+  },
+  imageStudio: {
+    all: ['image-studio'] as const,
+    projects: () => [...QUERY_KEYS.imageStudio.all, 'projects'] as const,
+    slots: (projectId: string) => [...QUERY_KEYS.imageStudio.all, 'slots', projectId] as const,
+  },
+  agentRuns: {
+    all: ['agent-runs'] as const,
+    lists: () => [...QUERY_KEYS.agentRuns.all, 'list'] as const,
+    detail: (id: string) => [...QUERY_KEYS.agentRuns.all, 'detail', id] as const,
+    snapshots: (id: string) => [...QUERY_KEYS.agentRuns.detail(id), 'snapshots'] as const,
+    logs: (id: string) => [...QUERY_KEYS.agentRuns.detail(id), 'logs'] as const,
+    audits: (id: string) => [...QUERY_KEYS.agentRuns.detail(id), 'audits'] as const,
+  },
+  agentPersonas: {
+    all: ['agent-personas'] as const,
+    list: () => [...QUERY_KEYS.agentPersonas.all, 'list'] as const,
+  },
+  agentTeaching: {
+    all: ['agent-teaching'] as const,
+    agents: () => [...QUERY_KEYS.agentTeaching.all, 'agents'] as const,
+    collections: () => [...QUERY_KEYS.agentTeaching.all, 'collections'] as const,
+    documents: (collectionId: string) =>
+      [...QUERY_KEYS.agentTeaching.all, 'collections', collectionId, 'documents'] as const,
+  },
+  brain: {
+    all: ['brain'] as const,
+    ollamaModels: () => [...QUERY_KEYS.brain.all, 'ollama-models'] as const,
+    metrics: () => [...QUERY_KEYS.brain.all, 'metrics'] as const,
+    analyticsSummary: () => [...QUERY_KEYS.brain.metrics(), 'analytics-summary'] as const,
+    logMetrics: () => [...QUERY_KEYS.brain.metrics(), 'logs'] as const,
+    insights: () => [...QUERY_KEYS.brain.metrics(), 'insights'] as const,
+    runtimeAnalytics: () => [...QUERY_KEYS.brain.metrics(), 'runtime-analytics'] as const,
   },
   viewer3d: {
     all: ['assets3d'] as const,

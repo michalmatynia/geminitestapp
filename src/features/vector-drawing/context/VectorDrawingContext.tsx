@@ -21,10 +21,12 @@ export interface VectorDrawingContextValue {
   onSmooth?: () => void;
   onSimplify?: () => void;
   onUndo?: () => void;
+  onRedo?: () => void;
   onClear?: () => void;
   onCloseShape?: () => void;
   onDetach?: () => void;
   disableUndo?: boolean;
+  disableRedo?: boolean;
   disableClear?: boolean;
   disableClose?: boolean;
   disableDetach?: boolean;

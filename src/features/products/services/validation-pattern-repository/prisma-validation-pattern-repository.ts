@@ -116,6 +116,7 @@ const toDomain = (pattern: PrismaPattern): ProductValidationPattern => ({
   severity: (pattern.severity as ProductValidationSeverity) ?? 'error',
   enabled: pattern.enabled,
   replacementEnabled: pattern.replacementEnabled ?? false,
+  replacementAutoApply: false,
   replacementValue: pattern.replacementValue ?? null,
   replacementFields: normalizeReplacementFields(pattern.replacementFields),
   sequenceGroupId: null,

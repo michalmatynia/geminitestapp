@@ -5,7 +5,10 @@ export const IMAGE_STUDIO_SETTINGS_KEY = 'image_studio_settings';
 export type ImageStudioSettings = {
   version: 1;
   promptExtraction: {
-    mode: 'programmatic' | 'gpt';
+    mode: 'programmatic' | 'gpt' | 'hybrid';
+    applyAutofix: boolean;
+    autoApplyFormattedPrompt: boolean;
+    showValidationSummary: boolean;
     gpt: {
       model: string;
       temperature: number | null;
@@ -50,7 +53,10 @@ export type ImageStudioSettings = {
 export const defaultImageStudioSettings: ImageStudioSettings = {
   version: 1,
   promptExtraction: {
-    mode: 'programmatic',
+    mode: 'hybrid',
+    applyAutofix: true,
+    autoApplyFormattedPrompt: true,
+    showValidationSummary: true,
     gpt: {
       model: 'gpt-4o-mini',
       temperature: null,
@@ -101,7 +107,10 @@ const imageStudioSettingsSchema: z.ZodType<ImageStudioSettings> = z
     version: z.literal(1).optional().default(1),
     promptExtraction: z
       .object({
-        mode: z.enum(['programmatic', 'gpt']).optional().default('programmatic'),
+        mode: z.enum(['programmatic', 'gpt', 'hybrid']).optional().default(defaultImageStudioSettings.promptExtraction.mode),
+        applyAutofix: z.boolean().optional().default(defaultImageStudioSettings.promptExtraction.applyAutofix),
+        autoApplyFormattedPrompt: z.boolean().optional().default(defaultImageStudioSettings.promptExtraction.autoApplyFormattedPrompt),
+        showValidationSummary: z.boolean().optional().default(defaultImageStudioSettings.promptExtraction.showValidationSummary),
         gpt: z
           .object({
             model: z.string().trim().min(1).optional().default(defaultImageStudioSettings.promptExtraction.gpt.model),

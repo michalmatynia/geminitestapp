@@ -23,6 +23,7 @@ const updatePatternSchema = z
     severity: z.enum(['error', 'warning']).optional(),
     enabled: z.boolean().optional(),
     replacementEnabled: z.boolean().optional(),
+    replacementAutoApply: z.boolean().optional(),
     replacementValue: z.string().trim().nullable().optional(),
     replacementFields: z.array(replacementFieldSchema).optional(),
     sequenceGroupId: z.string().trim().nullable().optional(),
@@ -172,6 +173,9 @@ async function PUT_handler(
     ...(body.severity !== undefined && { severity: body.severity }),
     ...(body.enabled !== undefined && { enabled: body.enabled }),
     ...(body.replacementEnabled !== undefined && { replacementEnabled: body.replacementEnabled }),
+    ...(body.replacementAutoApply !== undefined && {
+      replacementAutoApply: body.replacementAutoApply,
+    }),
     ...(body.replacementValue !== undefined && { replacementValue: body.replacementValue?.trim() || null }),
     ...(body.replacementFields !== undefined && { replacementFields: nextReplacementFields }),
     ...(body.sequenceGroupId !== undefined && { sequenceGroupId: body.sequenceGroupId?.trim() || null }),

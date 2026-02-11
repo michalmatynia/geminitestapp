@@ -17,6 +17,7 @@ export * from './drafter';
 export * from './files';
 export * from './foldertree';
 export * from './gsap';
+export * from './http';
 export * from './integrations';
 export * from './internationalization';
 export * from './jobs';

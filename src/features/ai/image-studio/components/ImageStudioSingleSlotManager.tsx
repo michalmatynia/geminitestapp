@@ -7,7 +7,8 @@ import ProductImageManager, {
 } from '@/features/products/components/ProductImageManager';
 import type { ProductImageSlot } from '@/features/products/types/products-ui';
 
-import { useImageStudio } from '../context/ImageStudioContext';
+import { useProjectsState } from '../context/ProjectsContext';
+import { useSlotsState, useSlotsActions } from '../context/SlotsContext';
 
 import type { ImageStudioSlotRecord } from '../types';
 
@@ -27,10 +28,9 @@ function toManagedSlot(slot: ImageStudioSlotRecord | null): ProductImageSlot {
 }
 
 export function ImageStudioSingleSlotManager(): React.JSX.Element {
+  const { projectId } = useProjectsState();
+  const { selectedFolder, selectedSlot } = useSlotsState();
   const {
-    projectId,
-    selectedFolder,
-    selectedSlot,
     setSelectedSlotId,
     createSlots,
     updateSlotMutation,
@@ -38,7 +38,7 @@ export function ImageStudioSingleSlotManager(): React.JSX.Element {
     setDriveImportOpen,
     setDriveImportMode,
     setDriveImportTargetId,
-  } = useImageStudio();
+  } = useSlotsActions();
 
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [imageLinkDraft, setImageLinkDraft] = useState<string>('');

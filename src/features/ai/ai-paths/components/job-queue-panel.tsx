@@ -15,6 +15,7 @@ import {
   AI_PATHS_RUN_SOURCE_VALUES,
 } from '@/features/ai/ai-paths/lib/run-sources';
 import { fetchAiPathsSettingsCached } from '@/features/ai/ai-paths/lib/settings-store-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   Button,
   ConfirmDialog,
@@ -423,7 +424,7 @@ export function JobQueuePanel({
   const [clearScope, setClearScope] = React.useState<'terminal' | 'all' | null>(null);
   const [runToDelete, setRunToDelete] = React.useState<AiPathRunRecord | null>(null);
   const aiPathsSettingsQuery = useQuery({
-    queryKey: ['ai-paths-settings'],
+    queryKey: QUERY_KEYS.ai.aiPaths.settings(),
     queryFn: async (): Promise<Array<{ key: string; value: string }>> =>
       await fetchAiPathsSettingsCached({ bypassCache: true }),
   });

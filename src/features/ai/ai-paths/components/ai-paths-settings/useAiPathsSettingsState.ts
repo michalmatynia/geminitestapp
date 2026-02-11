@@ -460,7 +460,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
   const queryClient = useQueryClient();
 
   const triggerButtonsQuery = useQuery({
-    queryKey: ['ai-paths', 'trigger-buttons'],
+    queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons(),
     queryFn: async (): Promise<AiTriggerButtonRecord[]> => {
       const result = await triggerButtonsApi.list();
       if (!result.ok) return [];

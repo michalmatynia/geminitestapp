@@ -6,7 +6,7 @@ import React, { useMemo } from 'react';
 import { Button, Input, SectionPanel, useToast } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { useImageStudio } from '../context/ImageStudioContext';
+import { useProjects } from '../context/ProjectsContext';
 
 export function StudioProjectsList(): React.JSX.Element {
   const { toast } = useToast();
@@ -18,7 +18,7 @@ export function StudioProjectsList(): React.JSX.Element {
     handleDeleteProject,
     projectSearch,
     setProjectSearch,
-  } = useImageStudio();
+  } = useProjects();
 
   const [newProjectId, setNewProjectId] = React.useState('');
 

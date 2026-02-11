@@ -344,7 +344,7 @@ export function useAiPathTriggerEvent(): {
       const preferredActivePathId = await loadPreferredActivePathId();
       try {
         settingsData = await queryClient.fetchQuery({
-          queryKey: ['ai-paths-settings'],
+          queryKey: QUERY_KEYS.ai.aiPaths.settings(),
           queryFn: async () => {
             return await fetchAiPathsSettingsCached();
           },
@@ -506,7 +506,9 @@ export function useAiPathTriggerEvent(): {
             JSON.stringify(nextUiState)
           );
           invalidateAiPathsSettingsCache();
-          void queryClient.invalidateQueries({ queryKey: ['ai-paths-settings'] });
+          void queryClient.invalidateQueries({
+            queryKey: QUERY_KEYS.ai.aiPaths.settings(),
+          });
         } catch (error) {
           logClientError(error, { context: { source: 'useAiPathTriggerEvent', action: 'persistRunSnapshot' } });
         }
@@ -574,7 +576,7 @@ export function useAiPathTriggerEvent(): {
           if (args.entityType === 'product') {
             void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
             void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() });
-            void queryClient.invalidateQueries({ queryKey: jobKeys.productAi });
+            void queryClient.invalidateQueries({ queryKey: jobKeys.productAi('all') });
           }
           if (args.entityType === 'note') {
             void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
@@ -635,7 +637,7 @@ export function useAiPathTriggerEvent(): {
       if (args.entityType === 'product') {
         void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
         void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() });
-        void queryClient.invalidateQueries({ queryKey: jobKeys.productAi });
+        void queryClient.invalidateQueries({ queryKey: jobKeys.productAi('all') });
       }
       if (args.entityType === 'note') {
         void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });

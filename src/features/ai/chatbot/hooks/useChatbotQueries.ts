@@ -2,6 +2,7 @@
 
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 
+import { api } from '@/shared/lib/api-client';
 import type { ChatSession } from '@/shared/types/domain/chatbot';
 
 import {
@@ -78,11 +79,7 @@ export function useChatbotModels(options?: { enabled?: boolean }): UseQueryResul
   return useQuery({
     queryKey: chatbotQueryKeys.models(),
     queryFn: async (): Promise<string[]> => {
-      const res = await fetch('/api/chatbot');
-      if (!res.ok) {
-        throw new Error('Failed to fetch models');
-      }
-      const data = (await res.json()) as { models?: string[] };
+      const data = await api.get<{ models?: string[] }>('/api/chatbot');
       return data.models ?? [];
     },
     staleTime: 1000 * 60 * 5, // 5 minutes

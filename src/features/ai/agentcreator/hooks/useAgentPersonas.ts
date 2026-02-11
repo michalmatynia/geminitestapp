@@ -6,12 +6,11 @@ import { AGENT_PERSONA_SETTINGS_KEY } from '@/features/ai/agentcreator/constants
 import type { AgentPersona } from '@/features/ai/agentcreator/types';
 import { fetchAgentPersonas } from '@/features/ai/agentcreator/utils/personas';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
+import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
-export const agentPersonaKeys = {
-  all: ['agent-personas'] as const,
-  list: () => [...agentPersonaKeys.all, 'list'] as const,
-};
+export const agentPersonaKeys = QUERY_KEYS.agentPersonas;
 
 export function useAgentPersonas(): UseQueryResult<AgentPersona[], Error> {
   return useQuery({
@@ -29,19 +28,10 @@ export function useSaveAgentPersonasMutation(): UseMutationResult<
 
   return useMutation({
     mutationFn: async ({ personas }: { personas: AgentPersona[] }): Promise<void> => {
-      const res = await fetch('/api/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          key: AGENT_PERSONA_SETTINGS_KEY,
-          value: serializeSetting(personas),
-        }),
+      await api.post('/api/settings', {
+        key: AGENT_PERSONA_SETTINGS_KEY,
+        value: serializeSetting(personas),
       });
-
-      if (!res.ok) {
-        const payload = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(payload?.error || 'Failed to save agent personas.');
-      }
       invalidateSettingsCache();
     },
     onSuccess: () => {

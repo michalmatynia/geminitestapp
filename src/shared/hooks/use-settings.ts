@@ -15,7 +15,8 @@ import {
   invalidateSettingsCache,
   type SettingsScope,
 } from '@/shared/api/settings-client';
-import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
+import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { SystemSetting } from '@/shared/types/domain/settings';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -27,7 +28,7 @@ const selectSettingsMap = (data: SystemSetting[]): Map<string, string> =>
 export function useSettings(options?: { scope?: SettingsScope; enabled?: boolean }): UseQueryResult<SystemSetting[], Error> {
   const scope = options?.scope ?? 'light';
   return useQuery({
-    queryKey: ['settings', scope],
+    queryKey: QUERY_KEYS.settings.scope(scope),
     queryFn: async (): Promise<SystemSetting[]> => {
       try {
         return (await fetchSettingsCached({ scope })) as SystemSetting[];
@@ -48,7 +49,7 @@ export function useSettings(options?: { scope?: SettingsScope; enabled?: boolean
 export function useSettingsMap(options?: { scope?: SettingsScope; enabled?: boolean }): UseQueryResult<Map<string, string>, Error> {
   const scope = options?.scope ?? 'light';
   return useQuery({
-    queryKey: ['settings', scope],
+    queryKey: QUERY_KEYS.settings.scope(scope),
     queryFn: async (): Promise<SystemSetting[]> => {
       try {
         return (await fetchSettingsCached({ scope })) as SystemSetting[];
@@ -69,7 +70,7 @@ export function useSettingsMap(options?: { scope?: SettingsScope; enabled?: bool
 
 export function useLiteSettingsMap(options?: { enabled?: boolean }): UseQueryResult<Map<string, string>, Error> {
   return useQuery({
-    queryKey: ['settings', 'lite'],
+    queryKey: QUERY_KEYS.settings.scope('lite'),
     queryFn: async (): Promise<SystemSetting[]> => {
       try {
         return (await fetchLiteSettingsCached()) as SystemSetting[];
@@ -103,15 +104,9 @@ export function useUpdateSetting(): UseMutationResult<
       key: string;
       value: string;
     }): Promise<SystemSetting> => {
-      const res = await fetch('/api/settings', {
-        method: 'POST',
-        credentials: 'include',
-        headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ key, value }),
-      });
-      if (!res.ok) throw new Error('Failed to update setting');
+      const res = await api.post<SystemSetting>('/api/settings', { key, value });
       invalidateSettingsCache();
-      return (await res.json()) as SystemSetting;
+      return res;
     },
     onSuccess: (): void => {
       void queryClient.invalidateQueries({
@@ -122,7 +117,7 @@ export function useUpdateSetting(): UseMutationResult<
 }
 
 export function useUpdateSettingsBulk(): UseMutationResult<
-  Response[],
+  SystemSetting[],
   Error,
   Array<{ key: string; value: string }>
   > {
@@ -131,20 +126,10 @@ export function useUpdateSettingsBulk(): UseMutationResult<
   return useMutation({
     mutationFn: async (
       payloads: Array<{ key: string; value: string }>,
-    ): Promise<Response[]> => {
+    ): Promise<SystemSetting[]> => {
       const responses = await Promise.all(
-        payloads.map((payload) =>
-          fetch('/api/settings', {
-            method: 'POST',
-            credentials: 'include',
-            headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-            body: JSON.stringify(payload),
-          }),
-        ),
+        payloads.map((payload) => api.post<SystemSetting>('/api/settings', payload)),
       );
-      if (responses.some((res) => !res.ok)) {
-        throw new Error('Failed to update settings');
-      }
       invalidateSettingsCache();
       return responses;
     },

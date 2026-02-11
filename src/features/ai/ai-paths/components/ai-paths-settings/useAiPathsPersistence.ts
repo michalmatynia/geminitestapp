@@ -51,6 +51,7 @@ import {
 } from '@/features/ai/ai-paths/lib/settings-store-client';
 import { logClientError } from '@/features/observability';
 import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import {
   buildPersistedRuntimeState,
@@ -236,9 +237,7 @@ export function useAiPathsPersistence({
       await updateAiPathsSettingsBulk(payloads),
     onSuccess: (): void => {
       void queryClient.invalidateQueries({
-        predicate: (query): boolean =>
-          Array.isArray(query.queryKey) &&
-          query.queryKey[0] === 'ai-paths-settings',
+        queryKey: QUERY_KEYS.ai.aiPaths.settings(),
       });
     },
   });

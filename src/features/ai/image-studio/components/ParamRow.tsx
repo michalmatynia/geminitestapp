@@ -7,7 +7,7 @@ import { type ParamLeaf, type ParamSpec, type ParamIssue } from '@/features/prom
 import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { useImageStudio } from '../context/ImageStudioContext';
+import { usePrompt } from '../context/PromptContext';
 import { isParamUiControl, paramUiControlLabel, recommendParamUiControl, type ParamUiControl } from '../utils/param-ui';
 
 function safeJsonStringify(value: unknown): string {
@@ -27,7 +27,7 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
     onParamChange,
     onParamFlip,
     onParamUiControlChange,
-  } = useImageStudio();
+  } = usePrompt();
 
   const spec = paramSpecs?.[leaf.path];
   const uiControl = paramUiOverrides[leaf.path] ?? 'auto';

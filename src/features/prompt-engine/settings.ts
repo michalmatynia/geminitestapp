@@ -3,6 +3,20 @@ import { z } from 'zod';
 export const PROMPT_ENGINE_SETTINGS_KEY = 'prompt_engine_settings';
 
 export type PromptValidationSeverity = 'error' | 'warning' | 'info';
+export type PromptValidationChainMode = 'continue' | 'stop_on_match' | 'stop_on_replace';
+export type PromptValidationLaunchOperator =
+  | 'equals'
+  | 'not_equals'
+  | 'contains'
+  | 'starts_with'
+  | 'ends_with'
+  | 'regex'
+  | 'gt'
+  | 'gte'
+  | 'lt'
+  | 'lte'
+  | 'is_empty'
+  | 'is_not_empty';
 
 export type PromptValidationSimilarPattern = {
   pattern: string;
@@ -42,6 +56,17 @@ export type PromptValidationRule =
       message: string;
       similar: PromptValidationSimilarPattern[];
       autofix?: PromptAutofixConfig | undefined;
+      sequenceGroupId?: string | null;
+      sequenceGroupLabel?: string | null;
+      sequenceGroupDebounceMs?: number;
+      sequence?: number | null;
+      chainMode?: PromptValidationChainMode;
+      maxExecutions?: number;
+      passOutputToNext?: boolean;
+      launchEnabled?: boolean;
+      launchOperator?: PromptValidationLaunchOperator;
+      launchValue?: string | null;
+      launchFlags?: string | null;
     }
   | {
       kind: 'params_object';
@@ -53,6 +78,17 @@ export type PromptValidationRule =
       message: string;
       similar: PromptValidationSimilarPattern[];
       autofix?: PromptAutofixConfig | undefined;
+      sequenceGroupId?: string | null;
+      sequenceGroupLabel?: string | null;
+      sequenceGroupDebounceMs?: number;
+      sequence?: number | null;
+      chainMode?: PromptValidationChainMode;
+      maxExecutions?: number;
+      passOutputToNext?: boolean;
+      launchEnabled?: boolean;
+      launchOperator?: PromptValidationLaunchOperator;
+      launchValue?: string | null;
+      launchFlags?: string | null;
     };
 
 export type PromptValidationSettings = {
@@ -90,6 +126,17 @@ export const defaultPromptValidationRules: PromptValidationRule[] = [
         { kind: 'params_json', comment: 'Attempts to convert the params object into strict JSON (quoted keys/strings).' },
       ],
     },
+    sequenceGroupId: 'prompt_core',
+    sequenceGroupLabel: 'Prompt Core',
+    sequenceGroupDebounceMs: 0,
+    sequence: 10,
+    chainMode: 'continue',
+    maxExecutions: 2,
+    passOutputToNext: true,
+    launchEnabled: false,
+    launchOperator: 'contains',
+    launchValue: null,
+    launchFlags: null,
   },
   {
     kind: 'regex',
@@ -112,6 +159,17 @@ export const defaultPromptValidationRules: PromptValidationRule[] = [
         { kind: 'replace', pattern: '^#+\\s*rol\\b.*$', flags: 'mi', replacement: '## ROLE', comment: null },
       ],
     },
+    sequenceGroupId: 'prompt_core',
+    sequenceGroupLabel: 'Prompt Core',
+    sequenceGroupDebounceMs: 0,
+    sequence: 20,
+    chainMode: 'continue',
+    maxExecutions: 1,
+    passOutputToNext: true,
+    launchEnabled: false,
+    launchOperator: 'contains',
+    launchValue: null,
+    launchFlags: null,
   },
   {
     kind: 'regex',
@@ -134,6 +192,17 @@ export const defaultPromptValidationRules: PromptValidationRule[] = [
         { kind: 'replace', pattern: '^#+\\s*non[-\\s]?negotiable\\b.*$', flags: 'mi', replacement: '## NON-NEGOTIABLE GOAL', comment: null },
       ],
     },
+    sequenceGroupId: 'prompt_core',
+    sequenceGroupLabel: 'Prompt Core',
+    sequenceGroupDebounceMs: 0,
+    sequence: 30,
+    chainMode: 'continue',
+    maxExecutions: 1,
+    passOutputToNext: true,
+    launchEnabled: false,
+    launchOperator: 'contains',
+    launchValue: null,
+    launchFlags: null,
   },
   {
     kind: 'regex',
@@ -156,6 +225,17 @@ export const defaultPromptValidationRules: PromptValidationRule[] = [
         { kind: 'replace', pattern: '^#+\\s*params\\b.*$', flags: 'mi', replacement: '## PARAMS', comment: null },
       ],
     },
+    sequenceGroupId: 'prompt_core',
+    sequenceGroupLabel: 'Prompt Core',
+    sequenceGroupDebounceMs: 0,
+    sequence: 40,
+    chainMode: 'continue',
+    maxExecutions: 1,
+    passOutputToNext: true,
+    launchEnabled: false,
+    launchOperator: 'contains',
+    launchValue: null,
+    launchFlags: null,
   },
   {
     kind: 'regex',
@@ -176,6 +256,17 @@ export const defaultPromptValidationRules: PromptValidationRule[] = [
         { kind: 'replace', pattern: '^#+\\s*qa\\b.*$', flags: 'mi', replacement: '## FINAL QA', comment: null },
       ],
     },
+    sequenceGroupId: 'prompt_core',
+    sequenceGroupLabel: 'Prompt Core',
+    sequenceGroupDebounceMs: 0,
+    sequence: 50,
+    chainMode: 'continue',
+    maxExecutions: 1,
+    passOutputToNext: true,
+    launchEnabled: false,
+    launchOperator: 'contains',
+    launchValue: null,
+    launchFlags: null,
   },
 ];
 
@@ -189,6 +280,21 @@ export const defaultPromptEngineSettings: PromptEngineSettings = {
 };
 
 const promptValidationSeveritySchema = z.enum(['error', 'warning', 'info']);
+const promptValidationChainModeSchema = z.enum(['continue', 'stop_on_match', 'stop_on_replace']);
+const promptValidationLaunchOperatorSchema = z.enum([
+  'equals',
+  'not_equals',
+  'contains',
+  'starts_with',
+  'ends_with',
+  'regex',
+  'gt',
+  'gte',
+  'lt',
+  'lte',
+  'is_empty',
+  'is_not_empty',
+]);
 const promptValidationSimilarSchema: z.ZodType<PromptValidationSimilarPattern> = z
   .object({
     pattern: z.string().trim().min(1),
@@ -223,6 +329,22 @@ const promptAutofixSchema: z.ZodType<PromptAutofixConfig> = z
   })
   .strict();
 
+const promptValidationSequenceFieldsSchema = z
+  .object({
+    sequenceGroupId: z.string().trim().min(1).nullable().optional().default(null),
+    sequenceGroupLabel: z.string().trim().min(1).nullable().optional().default(null),
+    sequenceGroupDebounceMs: z.number().int().min(0).max(30000).optional().default(0),
+    sequence: z.number().int().nullable().optional().default(null),
+    chainMode: promptValidationChainModeSchema.optional().default('continue'),
+    maxExecutions: z.number().int().min(1).max(20).optional().default(1),
+    passOutputToNext: z.boolean().optional().default(true),
+    launchEnabled: z.boolean().optional().default(false),
+    launchOperator: promptValidationLaunchOperatorSchema.optional().default('contains'),
+    launchValue: z.string().nullable().optional().default(null),
+    launchFlags: z.string().trim().nullable().optional().default(null),
+  })
+  .strict();
+
 const promptValidationRuleSchema: z.ZodType<PromptValidationRule> = z.discriminatedUnion('kind', [
   z
     .object({
@@ -238,6 +360,7 @@ const promptValidationRuleSchema: z.ZodType<PromptValidationRule> = z.discrimina
       similar: z.array(promptValidationSimilarSchema).optional().default([]),
       autofix: promptAutofixSchema.optional().default({ enabled: true, operations: [] }),
     })
+    .merge(promptValidationSequenceFieldsSchema)
     .strict(),
   z
     .object({
@@ -251,6 +374,7 @@ const promptValidationRuleSchema: z.ZodType<PromptValidationRule> = z.discrimina
       similar: z.array(promptValidationSimilarSchema).optional().default([]),
       autofix: promptAutofixSchema.optional().default({ enabled: true, operations: [] }),
     })
+    .merge(promptValidationSequenceFieldsSchema)
     .strict(),
 ]);
 

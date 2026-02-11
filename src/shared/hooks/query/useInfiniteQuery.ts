@@ -1,22 +1,42 @@
 import { useInfiniteQuery, type UseInfiniteQueryOptions, type InfiniteData, type UseInfiniteQueryResult } from '@tanstack/react-query';
+import type {
+  LegacyPaginatedResponseDto,
+  PaginatedResponseDto,
+  PaginationDto,
+} from '@/shared/dtos/http';
 
-export interface PaginatedResponse<T> {
-  data: T[];
-  pagination: {
-    page: number;
-    pageSize: number;
-    total: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
-  };
-}
+export type PaginatedResponse<T> = PaginatedResponseDto<T> | LegacyPaginatedResponseDto<T>;
 
 export interface InfiniteQueryParams {
   page: number;
   pageSize: number;
   [key: string]: unknown;
 }
+
+const hasNestedPagination = <T>(page: PaginatedResponse<T>): page is PaginatedResponseDto<T> => {
+  return (
+    typeof page === 'object' &&
+    page !== null &&
+    'pagination' in page &&
+    Boolean((page as { pagination?: unknown }).pagination)
+  );
+};
+
+const toPagination = <T>(page: PaginatedResponse<T>): PaginationDto => {
+  if (hasNestedPagination(page)) return page.pagination;
+  const total = typeof page.total === 'number' ? page.total : 0;
+  const currentPage = typeof page.page === 'number' ? page.page : 1;
+  const pageSize = typeof page.limit === 'number' ? page.limit : 1;
+  const totalPages = pageSize > 0 ? Math.max(1, Math.ceil(total / pageSize)) : 1;
+  return {
+    page: currentPage,
+    pageSize,
+    total,
+    totalPages,
+    hasNextPage: currentPage < totalPages,
+    hasPreviousPage: currentPage > 1,
+  };
+};
 
 // Hook for infinite/paginated queries
 export function useInfiniteQueryWithPagination<TData>(
@@ -48,10 +68,14 @@ export function useInfiniteQueryWithPagination<TData>(
         ...initialParams
       }),
     initialPageParam: 1,
-    getNextPageParam: (lastPage: PaginatedResponse<TData>): number | undefined => 
-      lastPage.pagination.hasNextPage ? lastPage.pagination.page + 1 : undefined,
-    getPreviousPageParam: (firstPage: PaginatedResponse<TData>): number | undefined => 
-      firstPage.pagination.hasPreviousPage ? firstPage.pagination.page - 1 : undefined,
+    getNextPageParam: (lastPage: PaginatedResponse<TData>): number | undefined => {
+      const pagination = toPagination(lastPage);
+      return pagination.hasNextPage ? pagination.page + 1 : undefined;
+    },
+    getPreviousPageParam: (firstPage: PaginatedResponse<TData>): number | undefined => {
+      const pagination = toPagination(firstPage);
+      return pagination.hasPreviousPage ? pagination.page - 1 : undefined;
+    },
     ...options,
   });
 }
@@ -70,7 +94,7 @@ export function useFlattenedInfiniteData<T>(infiniteQuery: UseInfiniteQueryResul
 } {
   const pages: PaginatedResponse<T>[] | undefined = infiniteQuery.data?.pages;
   const flatData: T[] = pages?.flatMap((page: PaginatedResponse<T>) => page.data) || [];
-  const totalCount: number = pages?.[0]?.pagination.total || 0;
+  const totalCount: number = pages?.[0] ? toPagination(pages[0]).total : 0;
   
   return {
     data: flatData,

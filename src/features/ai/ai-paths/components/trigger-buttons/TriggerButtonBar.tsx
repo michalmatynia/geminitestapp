@@ -7,6 +7,7 @@ import { useMemo, useState } from 'react';
 import { useAiPathTriggerEvent } from '@/features/ai/ai-paths/hooks/useAiPathTriggerEvent';
 import { triggerButtonsApi } from '@/features/ai/ai-paths/lib';
 import { ICON_LIBRARY_MAP } from '@/features/icons';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { AiTriggerButtonLocation, AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
 import { Button, Switch, useToast } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -85,7 +86,7 @@ export function TriggerButtonBar({
   const [runStates, setRunStates] = useState<Record<string, TriggerRunState>>({});
 
   const triggerButtonsQuery = useQuery({
-    queryKey: ['ai-paths', 'trigger-buttons'],
+    queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons(),
     queryFn: async (): Promise<AiTriggerButtonRecord[]> => {
       const result = await triggerButtonsApi.list();
       if (!result.ok) return [];

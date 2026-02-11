@@ -1,14 +1,29 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import * as productsApi from '@/features/products/api/products';
 import { CatalogMultiSelectField } from '@/features/products/components/form/CatalogMultiSelectField';
 import { CategorySingleSelectField } from '@/features/products/components/form/CategorySingleSelectField';
 import { ProducerMultiSelectField } from '@/features/products/components/form/ProducerMultiSelectField';
 import { TagMultiSelectField } from '@/features/products/components/form/TagMultiSelectField';
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
+import { useProductValidationSettings } from '@/features/products/context/ProductValidationSettingsContext';
+import { useProductValidatorConfig } from '@/features/products/hooks/useProductSettingsQueries';
 import { ProductFormData, CatalogRecord, PriceGroupWithDetails } from '@/features/products/types';
+import { parseDynamicReplacementRecipe } from '@/features/products/utils/validator-replacement-recipe';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import type { ProductValidationPattern } from '@/shared/types/domain/products';
 import { Button, Input, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
+
+import {
+  buildFieldIssues,
+  getIssueReplacementPreview,
+  ValidatorIssueHint,
+  type FieldValidatorIssue,
+} from './ProductFormGeneral';
 
 interface PriceGroupWithCalculatedPrice extends PriceGroupWithDetails {
   calculatedPrice: number | null;
@@ -27,12 +42,69 @@ export default function ProductFormOther(): React.JSX.Element {
     filteredPriceGroups,
     product,
   } = useProductFormContext();
+  const { validatorEnabled } = useProductValidationSettings();
+  const validatorConfigQuery = useProductValidatorConfig();
 
-  const { register, setValue, watch } = useFormContext<ProductFormData>();
+  const { register, setValue, watch, getValues } = useFormContext<ProductFormData>();
 
+  const allValues = watch();
   const basePrice = watch('price') || 0;
   const selectedDefaultPriceGroupId = watch('defaultPriceGroupId');
   const hasCatalogs = selectedCatalogIds.length > 0;
+  const validatorPatterns = validatorConfigQuery.data?.patterns ?? [];
+  const needsLatestProductSource = useMemo(
+    () =>
+      validatorPatterns.some((pattern: ProductValidationPattern) => {
+        const recipe = parseDynamicReplacementRecipe(pattern.replacementValue);
+        return (
+          recipe?.sourceMode === 'latest_product_field' ||
+          (pattern.launchEnabled && pattern.launchSourceMode === 'latest_product_field')
+        );
+      }),
+    [validatorPatterns]
+  );
+  const latestProductsQuery = useQuery({
+    queryKey: [...QUERY_KEYS.products.all, 'validator', 'latest-product-source'],
+    queryFn: () => productsApi.getProducts({ page: 1, pageSize: 4 }),
+    enabled: validatorEnabled && needsLatestProductSource,
+    staleTime: 60_000,
+  });
+  const latestProductValues = useMemo((): Record<string, unknown> | null => {
+    const list = latestProductsQuery.data ?? [];
+    if (list.length === 0) return null;
+    const preferred = list.find((item) => item.id !== product?.id) ?? list[0] ?? null;
+    return preferred as unknown as Record<string, unknown>;
+  }, [latestProductsQuery.data, product?.id]);
+  const fieldIssues = useMemo(
+    () =>
+      validatorEnabled
+        ? buildFieldIssues(allValues, validatorPatterns, latestProductValues)
+        : ({} as Record<string, FieldValidatorIssue[]>),
+    [allValues, latestProductValues, validatorEnabled, validatorPatterns]
+  );
+  const priceIssueList = validatorEnabled ? fieldIssues['price'] ?? [] : [];
+  const priceIssue = priceIssueList[0];
+  const stockIssueList = validatorEnabled ? fieldIssues['stock'] ?? [] : [];
+  const stockIssue = stockIssueList[0];
+  const applyNumericIssueReplacement = (
+    field: 'price' | 'stock',
+    issue: FieldValidatorIssue
+  ): void => {
+    const rawCurrent = getValues(field);
+    const currentValue =
+      typeof rawCurrent === 'number' && Number.isFinite(rawCurrent)
+        ? String(rawCurrent)
+        : '';
+    const nextValue = getIssueReplacementPreview(currentValue, issue);
+    if (nextValue === currentValue) return;
+    const numericValue = Number(nextValue);
+    if (!Number.isFinite(numericValue)) return;
+    const normalizedNumeric = Math.max(0, Math.floor(numericValue));
+    setValue(field, normalizedNumeric as ProductFormData[typeof field], {
+      shouldDirty: true,
+      shouldTouch: true,
+    });
+  };
 
   // Check if price group is auto-assigned from catalog (for new products only)
   const isNewProduct = !product;
@@ -90,9 +162,29 @@ export default function ProductFormOther(): React.JSX.Element {
               id='price'
               type='number'
               step='0.01'
+              className={
+                validatorEnabled && priceIssue
+                  ? priceIssue.severity === 'warning'
+                    ? 'border-amber-500/60'
+                    : 'border-red-500/60'
+                  : undefined
+              }
               {...register('price', { valueAsNumber: true })}
               placeholder='0.00'
             />
+            {validatorEnabled &&
+              priceIssueList.map((issue: FieldValidatorIssue) => (
+                <ValidatorIssueHint
+                  key={issue.patternId}
+                  issue={issue}
+                  value={String(allValues['price'] ?? '')}
+                  onReplace={
+                    issue.replacementValue
+                      ? (): void => applyNumericIssueReplacement('price', issue)
+                      : undefined
+                  }
+                />
+              ))}
           </FormField>
 
           <FormField 
@@ -180,7 +272,32 @@ export default function ProductFormOther(): React.JSX.Element {
         </FormField>
 
         <FormField label='Stock' error={errors.stock?.message} id='stock'>
-          <Input id='stock' type='number' {...register('stock', { valueAsNumber: true })} placeholder='0' />
+          <Input
+            id='stock'
+            type='number'
+            className={
+              validatorEnabled && stockIssue
+                ? stockIssue.severity === 'warning'
+                  ? 'border-amber-500/60'
+                  : 'border-red-500/60'
+                : undefined
+            }
+            {...register('stock', { valueAsNumber: true })}
+            placeholder='0'
+          />
+          {validatorEnabled &&
+            stockIssueList.map((issue: FieldValidatorIssue) => (
+              <ValidatorIssueHint
+                key={issue.patternId}
+                issue={issue}
+                value={String(allValues['stock'] ?? '')}
+                onReplace={
+                  issue.replacementValue
+                    ? (): void => applyNumericIssueReplacement('stock', issue)
+                    : undefined
+                }
+              />
+            ))}
         </FormField>
       </FormSection>
 

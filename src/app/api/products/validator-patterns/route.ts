@@ -22,6 +22,7 @@ const createPatternSchema = z.object({
   severity: z.enum(['error', 'warning']).optional(),
   enabled: z.boolean().optional(),
   replacementEnabled: z.boolean().optional(),
+  replacementAutoApply: z.boolean().optional(),
   replacementValue: z.string().trim().nullable().optional(),
   replacementFields: z.array(replacementFieldSchema).optional(),
   sequenceGroupId: z.string().trim().nullable().optional(),
@@ -124,6 +125,7 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
   const flags = body.flags?.trim() || null;
   const message = body.message.trim();
   const replacementEnabled = body.replacementEnabled ?? false;
+  const replacementAutoApply = body.replacementAutoApply ?? false;
   const replacementValue = body.replacementValue?.trim() || null;
   const replacementFields = normalizeReplacementFields(body.replacementFields);
   const sequenceGroupId = body.sequenceGroupId?.trim() || null;
@@ -162,6 +164,7 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
     severity: body.severity ?? 'error',
     enabled: body.enabled ?? true,
     replacementEnabled,
+    replacementAutoApply,
     replacementValue,
     replacementFields,
     sequenceGroupId,

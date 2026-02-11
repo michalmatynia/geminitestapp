@@ -17,6 +17,7 @@ import {
   fetchAiPathsSettingsCached,
   updateAiPathsSetting,
 } from '@/features/ai/ai-paths/lib/settings-store-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   Button,
   Input,
@@ -293,7 +294,7 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
   const aiProposals = React.useMemo(() => regexConfig.aiProposals ?? [], [regexConfig.aiProposals]);
   const regexTemplates = React.useMemo(() => regexConfig.templates ?? [], [regexConfig.templates]);
   const settingsQuery = useQuery({
-    queryKey: ['ai-paths-settings'],
+    queryKey: QUERY_KEYS.ai.aiPaths.settings(),
     queryFn: async (): Promise<Array<{ key: string; value: string }>> =>
       await fetchAiPathsSettingsCached({ bypassCache: true }),
   });

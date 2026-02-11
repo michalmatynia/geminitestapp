@@ -75,7 +75,7 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
         <Label>Validation Controls</Label>
         <div className='rounded-md border border-border bg-gray-900/70 p-3'>
           <p className='text-xs text-gray-400'>
-            `Validator` shows correction hints when creating from this draft. `Formatter` auto-applies replacements on launch.
+            `Validator` enables all validation rules. `Formatter` auto-applies only rules configured for formatter mode.
           </p>
           <div className='mt-3 flex flex-wrap items-center gap-2'>
             <Button

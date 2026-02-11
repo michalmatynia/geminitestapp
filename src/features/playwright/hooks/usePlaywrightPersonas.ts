@@ -7,12 +7,10 @@ import type { PlaywrightPersona } from '@/features/playwright/types';
 import { fetchPlaywrightPersonas } from '@/features/playwright/utils/personas';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
-export const playwrightKeys = {
-  all: ['playwright'] as const,
-  personas: () => [...playwrightKeys.all, 'personas'] as const,
-};
+export const playwrightKeys = QUERY_KEYS.playwright;
 
 export function usePlaywrightPersonas(): UseQueryResult<PlaywrightPersona[], Error> {
   return useQuery({

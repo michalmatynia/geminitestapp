@@ -2,17 +2,11 @@ import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResul
 
 import { AiPathRunRecord } from '@/shared/types/domain/ai-paths';
 import { AgentSnapshot, AgentBrowserLog, AgentAuditLog } from '@/shared/types/domain/chatbot';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import * as api from '../api/client';
 
-export const agentRunsKeys = {
-  all: ['agent-runs'] as const,
-  lists: () => [...agentRunsKeys.all, 'list'] as const,
-  detail: (id: string) => [...agentRunsKeys.all, 'detail', id] as const,
-  snapshots: (id: string) => [...agentRunsKeys.detail(id), 'snapshots'] as const,
-  logs: (id: string) => [...agentRunsKeys.detail(id), 'logs'] as const,
-  audits: (id: string) => [...agentRunsKeys.detail(id), 'audits'] as const,
-};
+export const agentRunsKeys = QUERY_KEYS.agentRuns;
 
 export function useAgentRuns(): UseQueryResult<AiPathRunRecord[], Error> {
   return useQuery({

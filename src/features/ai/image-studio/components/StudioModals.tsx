@@ -5,7 +5,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import FileManager from '@/features/files/components/FileManager';
 import {
-  extractParamsFromPrompt,
   flattenParams,
   inferParamSpecs,
   type ParamSpec,
@@ -14,12 +13,109 @@ import { api } from '@/shared/lib/api-client';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
 import { Button, Input, Label, SharedModal, Textarea, useToast } from '@/shared/ui';
 
-import { useImageStudio } from '../context/ImageStudioContext';
+import { useProjectsState } from '../context/ProjectsContext';
+import { usePromptActions, usePromptState } from '../context/PromptContext';
+import { useSettingsState } from '../context/SettingsContext';
+import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { isParamUiControl, recommendParamUiControl, type ParamUiControl } from '../utils/param-ui';
 
 type UiExtractorSuggestion = {
   path: string;
   control: ParamUiControl;
+};
+
+type PromptExtractValidationIssue = {
+  ruleId?: string;
+  severity?: string;
+  title?: string;
+  message?: string;
+  suggestions?: Array<{
+    suggestion?: string;
+    found?: string;
+    comment?: string | null;
+  }>;
+};
+
+type PromptExtractApiResponse = {
+  params?: Record<string, unknown>;
+  source?: 'programmatic' | 'programmatic_autofix' | 'gpt';
+  modeRequested?: 'programmatic' | 'gpt' | 'hybrid';
+  fallbackUsed?: boolean;
+  formattedPrompt?: string | null;
+  validation?: {
+    before?: PromptExtractValidationIssue[];
+    after?: PromptExtractValidationIssue[];
+  };
+  diagnostics?: {
+    programmaticError?: string | null;
+    aiError?: string | null;
+    model?: string | null;
+    autofixApplied?: boolean;
+  };
+};
+
+type PromptExtractRunKind = 'programmatic' | 'smart' | 'ai';
+
+type PromptExtractHistoryEntry = {
+  id: string;
+  createdAt: number;
+  runKind: PromptExtractRunKind;
+  source: 'programmatic' | 'programmatic_autofix' | 'gpt' | null;
+  modeRequested: 'programmatic' | 'gpt' | 'hybrid' | null;
+  fallbackUsed: boolean;
+  autofixApplied: boolean;
+  promptBefore: string;
+  promptAfter: string;
+  validationBeforeCount: number;
+  validationAfterCount: number;
+};
+
+type PromptDiffLine = {
+  before: string | null;
+  after: string | null;
+  changed: boolean;
+};
+
+const getPromptSourceLabel = (
+  source: PromptExtractHistoryEntry['source']
+): string => {
+  if (source === 'programmatic_autofix') return 'Programmatic + Autofix';
+  if (source === 'programmatic') return 'Programmatic';
+  if (source === 'gpt') return 'AI';
+  return 'Unknown';
+};
+
+const getPromptRunKindLabel = (runKind: PromptExtractRunKind): string => {
+  if (runKind === 'programmatic') return 'Programmatic Extract';
+  if (runKind === 'ai') return 'AI Extract';
+  return 'Smart Extract';
+};
+
+const formatHistoryTime = (timestamp: number): string =>
+  new Date(timestamp).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+
+const buildPromptDiffLines = (
+  beforePrompt: string,
+  afterPrompt: string,
+): PromptDiffLine[] => {
+  const beforeLines = beforePrompt.split(/\r?\n/);
+  const afterLines = afterPrompt.split(/\r?\n/);
+  const maxLines = Math.max(beforeLines.length, afterLines.length);
+  const rows: PromptDiffLine[] = [];
+  for (let index = 0; index < maxLines; index += 1) {
+    const before = beforeLines[index] ?? null;
+    const after = afterLines[index] ?? null;
+    rows.push({
+      before,
+      after,
+      changed: before !== after,
+    });
+  }
+  return rows;
 };
 
 function toSlotName(filename: string, index: number): string {
@@ -46,52 +142,61 @@ function buildHeuristicControls(
 
 export function StudioModals(): React.JSX.Element {
   const { toast } = useToast();
+  const { projectId } = useProjectsState();
   const {
-    projectId,
     slots,
     selectedFolder,
     selectedSlot,
+    slotCreateOpen,
+    driveImportOpen,
+    driveImportMode,
+    driveImportTargetId,
+    slotInlineEditOpen,
+    slotImageUrlDraft,
+    slotBase64Draft,
+    slotUpdateBusy,
+  } = useSlotsState();
+  const {
     setSelectedSlotId,
     createSlots,
     updateSlotMutation,
-    slotCreateOpen,
     setSlotCreateOpen,
-    driveImportOpen,
     setDriveImportOpen,
-    driveImportMode,
     setDriveImportMode,
-    driveImportTargetId,
     setDriveImportTargetId,
     importFromDriveMutation,
     uploadMutation,
-    slotInlineEditOpen,
     setSlotInlineEditOpen,
-    slotImageUrlDraft,
     setSlotImageUrlDraft,
-    slotBase64Draft,
     setSlotBase64Draft,
-    slotUpdateBusy,
     setSlotUpdateBusy,
-    extractReviewOpen,
+  } = useSlotsActions();
+  const { extractReviewOpen, extractDraftPrompt } = usePromptState();
+  const {
     setExtractReviewOpen,
-    extractDraftPrompt,
     setExtractDraftPrompt,
     setPromptText,
     setParamsState,
     setParamSpecs,
     setParamUiOverrides,
     setExtractPreviewUiOverrides,
-    studioSettings,
-  } = useImageStudio();
+  } = usePromptActions();
+  const { studioSettings } = useSettingsState();
 
   const [slotNameDraft, setSlotNameDraft] = useState('');
   const [slotFolderDraft, setSlotFolderDraft] = useState('');
 
-  const [extractBusy, setExtractBusy] = useState<'none' | 'programmatic' | 'ai' | 'ui'>('none');
+  const [extractBusy, setExtractBusy] = useState<'none' | 'programmatic' | 'smart' | 'ai' | 'ui'>('none');
   const [extractError, setExtractError] = useState<string | null>(null);
   const [previewParams, setPreviewParams] = useState<Record<string, unknown> | null>(null);
   const [previewSpecs, setPreviewSpecs] = useState<Record<string, ParamSpec> | null>(null);
   const [previewControls, setPreviewControls] = useState<Record<string, ParamUiControl>>({});
+  const [previewValidation, setPreviewValidation] = useState<{
+    before: PromptExtractValidationIssue[];
+    after: PromptExtractValidationIssue[];
+  } | null>(null);
+  const [extractHistory, setExtractHistory] = useState<PromptExtractHistoryEntry[]>([]);
+  const [selectedExtractHistoryId, setSelectedExtractHistoryId] = useState<string | null>(null);
   const localUploadInputRef = useRef<HTMLInputElement | null>(null);
   const [localUploadMode, setLocalUploadMode] = useState<'create' | 'replace'>('create');
   const [localUploadTargetId, setLocalUploadTargetId] = useState<string | null>(null);
@@ -99,6 +204,29 @@ export function StudioModals(): React.JSX.Element {
   const previewLeaves = useMemo(
     () => (previewParams ? flattenParams(previewParams).filter((leaf) => Boolean(leaf.path)) : []),
     [previewParams]
+  );
+  const selectedExtractHistory = useMemo(() => {
+    if (extractHistory.length === 0) return null;
+    if (!selectedExtractHistoryId) return extractHistory[0] ?? null;
+    return (
+      extractHistory.find((entry: PromptExtractHistoryEntry) => entry.id === selectedExtractHistoryId) ??
+      extractHistory[0] ??
+      null
+    );
+  }, [extractHistory, selectedExtractHistoryId]);
+  const selectedExtractDiffLines = useMemo(() => {
+    if (!selectedExtractHistory) return [] as PromptDiffLine[];
+    return buildPromptDiffLines(
+      selectedExtractHistory.promptBefore,
+      selectedExtractHistory.promptAfter
+    );
+  }, [selectedExtractHistory]);
+  const selectedExtractChanged = useMemo(
+    () =>
+      selectedExtractHistory
+        ? selectedExtractHistory.promptBefore !== selectedExtractHistory.promptAfter
+        : false,
+    [selectedExtractHistory]
   );
 
   useEffect(() => {
@@ -121,6 +249,7 @@ export function StudioModals(): React.JSX.Element {
     setPreviewParams(null);
     setPreviewSpecs(null);
     setPreviewControls({});
+    setPreviewValidation(null);
     setExtractPreviewUiOverrides({});
   }, [extractReviewOpen, setExtractPreviewUiOverrides]);
 
@@ -305,21 +434,71 @@ export function StudioModals(): React.JSX.Element {
     }
   };
 
+  const appendExtractHistoryEntry = (
+    entry: Omit<PromptExtractHistoryEntry, 'id' | 'createdAt'>
+  ): void => {
+    const nextId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    setExtractHistory((prev: PromptExtractHistoryEntry[]) => {
+      const next: PromptExtractHistoryEntry[] = [
+        {
+          id: nextId,
+          createdAt: Date.now(),
+          ...entry,
+        },
+        ...prev,
+      ];
+      return next.slice(0, 25);
+    });
+    setSelectedExtractHistoryId(nextId);
+  };
+
   const handleProgrammaticExtraction = async () => {
+    const promptBefore = extractDraftPrompt;
     setExtractBusy('programmatic');
     setExtractError(null);
     try {
-      const result = extractParamsFromPrompt(extractDraftPrompt);
-      if (!result.ok) {
-        throw new Error(result.error);
+      const result = await api.post<PromptExtractApiResponse>('/api/image-studio/prompt-extract', {
+        prompt: promptBefore,
+        mode: 'programmatic',
+        applyAutofix: studioSettings.promptExtraction.applyAutofix,
+      });
+      if (!result.params || typeof result.params !== 'object') {
+        throw new Error('Invalid extraction response.');
       }
-      const specs = inferParamSpecs(result.params, result.rawObjectText);
+      const promptAfter = result.formattedPrompt ?? promptBefore;
+      if (
+        studioSettings.promptExtraction.autoApplyFormattedPrompt &&
+        promptAfter !== promptBefore
+      ) {
+        setExtractDraftPrompt(promptAfter);
+      }
+
+      const specs = inferParamSpecs(result.params, JSON.stringify(result.params, null, 2));
       const heuristic = buildHeuristicControls(result.params, specs);
       setPreviewParams(result.params);
       setPreviewSpecs(specs);
       setPreviewControls(heuristic);
       setExtractPreviewUiOverrides(heuristic);
-      toast('Programmatic extraction completed.', { variant: 'success' });
+      const before = Array.isArray(result.validation?.before) ? result.validation?.before : [];
+      const after = Array.isArray(result.validation?.after) ? result.validation?.after : [];
+      setPreviewValidation({ before, after });
+      appendExtractHistoryEntry({
+        runKind: 'programmatic',
+        source: result.source ?? null,
+        modeRequested: result.modeRequested ?? 'programmatic',
+        fallbackUsed: Boolean(result.fallbackUsed),
+        autofixApplied:
+          Boolean(result.diagnostics?.autofixApplied) ||
+          result.source === 'programmatic_autofix',
+        promptBefore,
+        promptAfter,
+        validationBeforeCount: before.length,
+        validationAfterCount: after.length,
+      });
+      const validationSuffix = studioSettings.promptExtraction.showValidationSummary
+        ? ` Validation: ${before.length} -> ${after.length}.`
+        : '';
+      toast(`Programmatic extraction completed.${validationSuffix}`, { variant: 'success' });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Programmatic extraction failed';
       setExtractError(message);
@@ -329,15 +508,95 @@ export function StudioModals(): React.JSX.Element {
     }
   };
 
-  const handleAiExtraction = async () => {
-    setExtractBusy('ai');
+  const handleSmartExtraction = async () => {
+    const promptBefore = extractDraftPrompt;
+    setExtractBusy('smart');
     setExtractError(null);
     try {
-      const result = await api.post<{ params?: Record<string, unknown> }>('/api/image-studio/prompt-extract', {
-        prompt: extractDraftPrompt,
+      const result = await api.post<PromptExtractApiResponse>('/api/image-studio/prompt-extract', {
+        prompt: promptBefore,
+        mode: studioSettings.promptExtraction.mode,
+        applyAutofix: studioSettings.promptExtraction.applyAutofix,
       });
       if (!result.params || typeof result.params !== 'object') {
         throw new Error('Invalid extraction response.');
+      }
+      const promptAfter = result.formattedPrompt ?? promptBefore;
+
+      if (
+        studioSettings.promptExtraction.autoApplyFormattedPrompt &&
+        promptAfter !== promptBefore
+      ) {
+        setExtractDraftPrompt(promptAfter);
+      }
+
+      const specs = inferParamSpecs(result.params, JSON.stringify(result.params, null, 2));
+      const heuristic = buildHeuristicControls(result.params, specs);
+      setPreviewParams(result.params);
+      setPreviewSpecs(specs);
+      setPreviewControls(heuristic);
+      setExtractPreviewUiOverrides(heuristic);
+      const before = Array.isArray(result.validation?.before) ? result.validation?.before : [];
+      const after = Array.isArray(result.validation?.after) ? result.validation?.after : [];
+      setPreviewValidation({ before, after });
+      appendExtractHistoryEntry({
+        runKind: 'smart',
+        source: result.source ?? null,
+        modeRequested: result.modeRequested ?? studioSettings.promptExtraction.mode,
+        fallbackUsed: Boolean(result.fallbackUsed),
+        autofixApplied:
+          Boolean(result.diagnostics?.autofixApplied) ||
+          result.source === 'programmatic_autofix',
+        promptBefore,
+        promptAfter,
+        validationBeforeCount: before.length,
+        validationAfterCount: after.length,
+      });
+
+      const sourceLabel =
+        result.source === 'gpt'
+          ? 'AI'
+          : result.source === 'programmatic_autofix'
+            ? 'Programmatic + Autofix'
+            : 'Programmatic';
+      const fallbackSuffix = result.fallbackUsed ? ' (fallback used)' : '';
+      const beforeCount = before.length;
+      const afterCount = after.length;
+      const validationSuffix = studioSettings.promptExtraction.showValidationSummary
+        ? ` Validation: ${beforeCount} -> ${afterCount}.`
+        : '';
+      toast(
+        `Smart extraction completed via ${sourceLabel}${fallbackSuffix}.${validationSuffix}`,
+        { variant: 'success' }
+      );
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Smart extraction failed';
+      setExtractError(message);
+      toast(message, { variant: 'error' });
+    } finally {
+      setExtractBusy('none');
+    }
+  };
+
+  const handleAiExtraction = async () => {
+    const promptBefore = extractDraftPrompt;
+    setExtractBusy('ai');
+    setExtractError(null);
+    try {
+      const result = await api.post<PromptExtractApiResponse>('/api/image-studio/prompt-extract', {
+        prompt: promptBefore,
+        mode: 'gpt',
+        applyAutofix: studioSettings.promptExtraction.applyAutofix,
+      });
+      if (!result.params || typeof result.params !== 'object') {
+        throw new Error('Invalid extraction response.');
+      }
+      const promptAfter = result.formattedPrompt ?? promptBefore;
+      if (
+        studioSettings.promptExtraction.autoApplyFormattedPrompt &&
+        promptAfter !== promptBefore
+      ) {
+        setExtractDraftPrompt(promptAfter);
       }
       const specs = inferParamSpecs(result.params, JSON.stringify(result.params, null, 2));
       const heuristic = buildHeuristicControls(result.params, specs);
@@ -345,7 +604,28 @@ export function StudioModals(): React.JSX.Element {
       setPreviewSpecs(specs);
       setPreviewControls(heuristic);
       setExtractPreviewUiOverrides(heuristic);
-      toast('AI extraction completed.', { variant: 'success' });
+      const before = Array.isArray(result.validation?.before) ? result.validation?.before : [];
+      const after = Array.isArray(result.validation?.after) ? result.validation?.after : [];
+      setPreviewValidation({ before, after });
+      appendExtractHistoryEntry({
+        runKind: 'ai',
+        source: result.source ?? null,
+        modeRequested: result.modeRequested ?? 'gpt',
+        fallbackUsed: Boolean(result.fallbackUsed),
+        autofixApplied:
+          Boolean(result.diagnostics?.autofixApplied) ||
+          result.source === 'programmatic_autofix',
+        promptBefore,
+        promptAfter,
+        validationBeforeCount: before.length,
+        validationAfterCount: after.length,
+      });
+      const sourceLabel = result.source === 'gpt' ? 'AI' : 'Programmatic fallback';
+      const fallbackSuffix = result.fallbackUsed ? ' (fallback used)' : '';
+      const validationSuffix = studioSettings.promptExtraction.showValidationSummary
+        ? ` Validation: ${before.length} -> ${after.length}.`
+        : '';
+      toast(`${sourceLabel} extraction completed${fallbackSuffix}.${validationSuffix}`, { variant: 'success' });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'AI extraction failed';
       setExtractError(message);
@@ -632,6 +912,16 @@ export function StudioModals(): React.JSX.Element {
           <div className='flex flex-wrap items-center gap-2'>
             <Button
               type='button'
+              onClick={() => {
+                void handleSmartExtraction();
+              }}
+              disabled={extractBusy !== 'none'}
+            >
+              {extractBusy === 'smart' ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+              Smart Extract
+            </Button>
+            <Button
+              type='button'
               variant='outline'
               onClick={() => {
                 void handleProgrammaticExtraction();
@@ -650,7 +940,7 @@ export function StudioModals(): React.JSX.Element {
               disabled={extractBusy !== 'none'}
             >
               {extractBusy === 'ai' ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-              AI Extract
+              AI Only
             </Button>
             <Button
               type='button'
@@ -675,6 +965,147 @@ export function StudioModals(): React.JSX.Element {
           {extractError ? (
             <div className='rounded border border-red-500/40 bg-red-500/10 p-2 text-xs text-red-200'>
               {extractError}
+            </div>
+          ) : null}
+
+          {extractHistory.length > 0 ? (
+            <div className='space-y-2 rounded border border-indigo-500/30 bg-indigo-500/5 p-3'>
+              <div className='flex flex-wrap items-center justify-between gap-2'>
+                <div className='text-xs font-semibold text-indigo-100'>Extraction History</div>
+                <Button
+                  type='button'
+                  variant='ghost'
+                  className='h-7 px-2 text-xs text-indigo-100 hover:bg-indigo-500/20'
+                  onClick={() => {
+                    setExtractHistory([]);
+                    setSelectedExtractHistoryId(null);
+                  }}
+                >
+                  Clear History
+                </Button>
+              </div>
+              <div className='grid gap-3 md:grid-cols-[220px_minmax(0,1fr)]'>
+                <div className='max-h-60 space-y-1 overflow-auto pr-1'>
+                  {extractHistory.map((entry: PromptExtractHistoryEntry) => {
+                    const isSelected = selectedExtractHistory?.id === entry.id;
+                    const changed = entry.promptBefore !== entry.promptAfter;
+                    return (
+                      <button
+                        key={entry.id}
+                        type='button'
+                        onClick={() => setSelectedExtractHistoryId(entry.id)}
+                        className={`w-full rounded border px-2 py-1.5 text-left text-[11px] transition-colors ${
+                          isSelected
+                            ? 'border-indigo-400/60 bg-indigo-500/20 text-indigo-100'
+                            : 'border-indigo-500/25 bg-indigo-500/5 text-indigo-100/80 hover:bg-indigo-500/15'
+                        }`}
+                      >
+                        <div className='font-medium'>{getPromptRunKindLabel(entry.runKind)}</div>
+                        <div className='text-[10px] text-indigo-100/70'>
+                          {formatHistoryTime(entry.createdAt)} | {getPromptSourceLabel(entry.source)}
+                        </div>
+                        <div className='text-[10px] text-indigo-100/70'>
+                          {changed ? 'Prompt changed' : 'No prompt change'} | Validation {entry.validationBeforeCount}
+                          {' -> '}
+                          {entry.validationAfterCount}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className='space-y-2'>
+                  {selectedExtractHistory ? (
+                    <>
+                      <div className='rounded border border-indigo-500/30 bg-indigo-500/10 p-2 text-[11px] text-indigo-100/90'>
+                        <div>
+                          <span className='font-semibold'>Run:</span>{' '}
+                          {getPromptRunKindLabel(selectedExtractHistory.runKind)}
+                        </div>
+                        <div>
+                          <span className='font-semibold'>Mode:</span>{' '}
+                          {selectedExtractHistory.modeRequested ?? 'n/a'}
+                          {' | '}
+                          <span className='font-semibold'>Source:</span>{' '}
+                          {getPromptSourceLabel(selectedExtractHistory.source)}
+                          {' | '}
+                          <span className='font-semibold'>Autofix:</span>{' '}
+                          {selectedExtractHistory.autofixApplied ? 'ON' : 'OFF'}
+                          {' | '}
+                          <span className='font-semibold'>Fallback:</span>{' '}
+                          {selectedExtractHistory.fallbackUsed ? 'YES' : 'NO'}
+                        </div>
+                      </div>
+                      {selectedExtractChanged ? (
+                        <div className='max-h-60 overflow-auto rounded border border-indigo-500/30 bg-gray-950/30'>
+                          <div className='grid grid-cols-2 border-b border-indigo-500/25 text-[10px] uppercase tracking-wide text-indigo-200/80'>
+                            <div className='px-2 py-1'>Before Autofix</div>
+                            <div className='px-2 py-1'>After Autofix</div>
+                          </div>
+                          <div className='divide-y divide-indigo-500/10 font-mono text-[11px]'>
+                            {selectedExtractDiffLines.map((line: PromptDiffLine, index: number) => (
+                              <div key={`diff-${index}`} className='grid grid-cols-2'>
+                                <div
+                                  className={`whitespace-pre-wrap break-words px-2 py-1 ${
+                                    line.changed ? 'bg-red-500/10 text-red-100' : 'text-gray-300'
+                                  }`}
+                                >
+                                  {line.before ?? '\u2205'}
+                                </div>
+                                <div
+                                  className={`whitespace-pre-wrap break-words px-2 py-1 ${
+                                    line.changed ? 'bg-emerald-500/10 text-emerald-100' : 'text-gray-300'
+                                  }`}
+                                >
+                                  {line.after ?? '\u2205'}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className='rounded border border-indigo-500/25 bg-indigo-500/5 p-2 text-xs text-indigo-100/80'>
+                          No prompt formatting differences for this extraction.
+                        </div>
+                      )}
+                    </>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          {studioSettings.promptExtraction.showValidationSummary && previewValidation ? (
+            <div className='grid gap-2 rounded border border-cyan-500/35 bg-cyan-500/5 p-3 text-xs text-cyan-100 md:grid-cols-2'>
+              <div className='space-y-1'>
+                <div className='font-medium text-cyan-200'>Validation Before: {previewValidation.before.length}</div>
+                {previewValidation.before.length === 0 ? (
+                  <div className='text-cyan-100/70'>No issues.</div>
+                ) : (
+                  <div className='space-y-1'>
+                    {previewValidation.before.slice(0, 6).map((issue, index) => (
+                      <div key={`before-${issue.ruleId ?? index}`} className='rounded border border-cyan-500/20 bg-cyan-500/5 px-2 py-1'>
+                        <div className='text-cyan-100'>{issue.title ?? issue.ruleId ?? 'Issue'}</div>
+                        <div className='text-cyan-100/70'>{issue.message ?? ''}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className='space-y-1'>
+                <div className='font-medium text-cyan-200'>Validation After: {previewValidation.after.length}</div>
+                {previewValidation.after.length === 0 ? (
+                  <div className='text-cyan-100/70'>No issues.</div>
+                ) : (
+                  <div className='space-y-1'>
+                    {previewValidation.after.slice(0, 6).map((issue, index) => (
+                      <div key={`after-${issue.ruleId ?? index}`} className='rounded border border-cyan-500/20 bg-cyan-500/5 px-2 py-1'>
+                        <div className='text-cyan-100'>{issue.title ?? issue.ruleId ?? 'Issue'}</div>
+                        <div className='text-cyan-100/70'>{issue.message ?? ''}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           ) : null}
 

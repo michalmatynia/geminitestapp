@@ -27,6 +27,8 @@ export type RuleDraft = {
   error: string | null;
 };
 
+type RulePatch = Partial<PromptValidationRule>;
+
 interface PromptEngineContextType {
   // State
   promptEngineSettings: PromptEngineSettings;
@@ -50,6 +52,12 @@ interface PromptEngineContextType {
   setSeverity: (severity: SeverityFilter) => void;
   setIncludeDisabled: (include: boolean) => void;
   handleRuleTextChange: (uid: string, nextText: string) => void;
+  handlePatchRule: (uid: string, patch: RulePatch) => void;
+  handleToggleRuleEnabled: (uid: string, enabled: boolean) => void;
+  handleDuplicateRule: (uid: string) => void;
+  handleSequenceDrop: (draggedUid: string, targetUid: string) => void;
+  handleSaveSequenceGroup: (groupId: string, label: string, debounceMs: number) => void;
+  handleUngroupSequenceGroup: (groupId: string) => void;
   handleLearnedRuleTextChange: (uid: string, nextText: string) => void;
   handleAddRule: () => void;
   handleAddLearnedRule: () => void;
@@ -72,6 +80,55 @@ const createRuleDraft = (rule: PromptValidationRule, uid: string = rule.id): Rul
   parsed: rule,
   error: null,
 });
+
+const DEFAULT_SEQUENCE_STEP = 10;
+
+const createSequenceGroupId = (): string => {
+  const random = Math.random().toString(36).slice(2, 8);
+  return `seq_${Date.now().toString(36)}_${random}`;
+};
+
+const normalizeSequenceGroupDebounceMs = (value: unknown): number => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
+  return Math.min(30_000, Math.max(0, Math.floor(value)));
+};
+
+const getSequenceGroupId = (rule: PromptValidationRule | null | undefined): string | null => {
+  const value = rule?.sequenceGroupId?.trim();
+  return value ? value : null;
+};
+
+const getRuleSequence = (rule: PromptValidationRule, fallbackIndex: number): number => {
+  if (typeof rule.sequence === 'number' && Number.isFinite(rule.sequence)) {
+    return Math.max(0, Math.floor(rule.sequence));
+  }
+  return (fallbackIndex + 1) * DEFAULT_SEQUENCE_STEP;
+};
+
+const sortRuleDraftsBySequence = (drafts: RuleDraft[]): RuleDraft[] =>
+  drafts
+    .map((draft: RuleDraft, index: number) => ({ draft, index }))
+    .sort((a, b) => {
+      if (!a.draft.parsed && !b.draft.parsed) return 0;
+      if (!a.draft.parsed) return 1;
+      if (!b.draft.parsed) return -1;
+      const aSeq = getRuleSequence(a.draft.parsed, a.index);
+      const bSeq = getRuleSequence(b.draft.parsed, b.index);
+      if (aSeq !== bSeq) return aSeq - bSeq;
+      return a.draft.parsed.id.localeCompare(b.draft.parsed.id);
+    })
+    .map((entry) => entry.draft);
+
+const applyRulePatch = (draft: RuleDraft, patch: RulePatch): RuleDraft => {
+  if (!draft.parsed) return draft;
+  const nextRule = { ...draft.parsed, ...patch } as PromptValidationRule;
+  return {
+    ...draft,
+    parsed: nextRule,
+    text: JSON.stringify(nextRule, null, 2),
+    error: null,
+  };
+};
 
 const createNewRule = (): PromptValidationRule => ({
   kind: 'regex',
@@ -120,12 +177,6 @@ const ruleSearchText = (rule: PromptValidationRule): string => {
   return parts.filter(Boolean).join(' ').toLowerCase();
 };
 
-const SEVERITY_ORDER: Record<PromptValidationSeverity, number> = {
-  error: 0,
-  warning: 1,
-  info: 2,
-};
-
 export function PromptEngineProvider({
   children,
   onSaved,
@@ -165,18 +216,7 @@ export function PromptEngineProvider({
     }
   }, [settingsQuery.isSuccess, settingsQuery.dataUpdatedAt, rawSettings, initializedAt]);
 
-  const sortedDrafts = useMemo((): RuleDraft[] => {
-    const list = [...drafts];
-    list.sort((a: RuleDraft, b: RuleDraft): number => {
-      if (!a.parsed && !b.parsed) return 0;
-      if (!a.parsed) return 1;
-      if (!b.parsed) return -1;
-      const severityCompare = (SEVERITY_ORDER[a.parsed.severity] ?? 99) - (SEVERITY_ORDER[b.parsed.severity] ?? 99);
-      if (severityCompare !== 0) return severityCompare;
-      return a.parsed.title.localeCompare(b.parsed.title);
-    });
-    return list;
-  }, [drafts]);
+  const sortedDrafts = useMemo((): RuleDraft[] => sortRuleDraftsBySequence(drafts), [drafts]);
 
   const filteredDrafts = useMemo((): RuleDraft[] => {
     const term = query.trim().toLowerCase();
@@ -212,6 +252,173 @@ export function PromptEngineProvider({
             error: error instanceof Error ? error.message : 'Invalid JSON.',
           };
         }
+      })
+    );
+    setIsDirty(true);
+    setSaveError(null);
+  }, []);
+
+  const handlePatchRule = useCallback((uid: string, patch: RulePatch): void => {
+    setDrafts((prev: RuleDraft[]) =>
+      prev.map((draft: RuleDraft) => (draft.uid === uid ? applyRulePatch(draft, patch) : draft))
+    );
+    setIsDirty(true);
+    setSaveError(null);
+  }, []);
+
+  const handleToggleRuleEnabled = useCallback((uid: string, enabled: boolean): void => {
+    handlePatchRule(uid, { enabled });
+  }, [handlePatchRule]);
+
+  const handleDuplicateRule = useCallback((uid: string): void => {
+    setDrafts((prev: RuleDraft[]) => {
+      const draft = prev.find((item: RuleDraft) => item.uid === uid);
+      if (!draft?.parsed) return prev;
+
+      const existingIds = new Set(
+        prev
+          .map((item: RuleDraft) => item.parsed?.id)
+          .filter((value: string | undefined): value is string => Boolean(value)),
+      );
+      const base = `${draft.parsed.id}.copy`;
+      let candidate = base;
+      let counter = 2;
+      while (existingIds.has(candidate)) {
+        candidate = `${base}.${counter}`;
+        counter += 1;
+      }
+
+      const duplicatedRule: PromptValidationRule = {
+        ...draft.parsed,
+        id: candidate,
+        title: `${draft.parsed.title} (copy)`,
+        sequence:
+          typeof draft.parsed.sequence === 'number' && Number.isFinite(draft.parsed.sequence)
+            ? Math.max(0, Math.floor(draft.parsed.sequence) + DEFAULT_SEQUENCE_STEP)
+            : null,
+      };
+      return [createRuleDraft(duplicatedRule, `${duplicatedRule.id}-${Date.now()}`), ...prev];
+    });
+    setIsDirty(true);
+    setSaveError(null);
+  }, []);
+
+  const handleSequenceDrop = useCallback((draggedUid: string, targetUid: string): void => {
+    if (!draggedUid || !targetUid || draggedUid === targetUid) return;
+    setDrafts((prev: RuleDraft[]) => {
+      const ordered = sortRuleDraftsBySequence(prev);
+      const fromIndex = ordered.findIndex((item: RuleDraft) => item.uid === draggedUid);
+      const targetIndex = ordered.findIndex((item: RuleDraft) => item.uid === targetUid);
+      if (fromIndex < 0 || targetIndex < 0) return prev;
+
+      const dragged = ordered[fromIndex];
+      const target = ordered[targetIndex];
+      if (!dragged?.parsed || !target?.parsed) return prev;
+
+      const reordered = [...ordered];
+      const [removed] = reordered.splice(fromIndex, 1);
+      if (!removed) return prev;
+      let insertIndex = targetIndex + 1;
+      if (fromIndex < insertIndex) insertIndex -= 1;
+      reordered.splice(Math.max(0, Math.min(insertIndex, reordered.length)), 0, removed);
+
+      const targetGroupId = getSequenceGroupId(target.parsed);
+      const draggedGroupId = getSequenceGroupId(dragged.parsed);
+      const nextGroupId = targetGroupId ?? createSequenceGroupId();
+      const nextGroupLabel =
+        target.parsed.sequenceGroupLabel?.trim() ||
+        dragged.parsed.sequenceGroupLabel?.trim() ||
+        'Sequence / Group';
+      const nextGroupDebounceMs = normalizeSequenceGroupDebounceMs(
+        target.parsed.sequenceGroupDebounceMs ?? dragged.parsed.sequenceGroupDebounceMs ?? 0
+      );
+
+      const updates = new Map<string, RulePatch>();
+      const appendUpdate = (uid: string, patch: RulePatch): void => {
+        const current = updates.get(uid) ?? {};
+        updates.set(uid, { ...current, ...patch });
+      };
+
+      for (const [index, draft] of reordered.entries()) {
+        if (!draft.parsed) continue;
+        const nextSequence = (index + 1) * DEFAULT_SEQUENCE_STEP;
+        const currentSequence =
+          typeof draft.parsed.sequence === 'number' && Number.isFinite(draft.parsed.sequence)
+            ? Math.floor(draft.parsed.sequence)
+            : null;
+        if (currentSequence !== nextSequence) {
+          appendUpdate(draft.uid, { sequence: nextSequence });
+        }
+      }
+
+      appendUpdate(dragged.uid, {
+        sequenceGroupId: nextGroupId,
+        sequenceGroupLabel: nextGroupLabel,
+        sequenceGroupDebounceMs: nextGroupDebounceMs,
+      });
+      if (!targetGroupId) {
+        appendUpdate(target.uid, {
+          sequenceGroupId: nextGroupId,
+          sequenceGroupLabel: nextGroupLabel,
+          sequenceGroupDebounceMs: nextGroupDebounceMs,
+        });
+      }
+
+      if (draggedGroupId && draggedGroupId !== nextGroupId) {
+        const remaining = reordered.filter(
+          (draft: RuleDraft) =>
+            getSequenceGroupId(draft.parsed) === draggedGroupId && draft.uid !== dragged.uid
+        );
+        if (remaining.length === 1) {
+          const lone = remaining[0];
+          if (lone) {
+            appendUpdate(lone.uid, {
+              sequenceGroupId: null,
+              sequenceGroupLabel: null,
+              sequenceGroupDebounceMs: 0,
+            });
+          }
+        }
+      }
+
+      if (updates.size === 0) return prev;
+      return reordered.map((draft: RuleDraft) => {
+        const patch = updates.get(draft.uid);
+        return patch ? applyRulePatch(draft, patch) : draft;
+      });
+    });
+    setIsDirty(true);
+    setSaveError(null);
+  }, []);
+
+  const handleSaveSequenceGroup = useCallback((groupId: string, label: string, debounceMs: number): void => {
+    const normalizedLabel = label.trim() || 'Sequence / Group';
+    const normalizedDebounce = normalizeSequenceGroupDebounceMs(debounceMs);
+    setDrafts((prev: RuleDraft[]) =>
+      prev.map((draft: RuleDraft) => {
+        if (!draft.parsed) return draft;
+        if (getSequenceGroupId(draft.parsed) !== groupId) return draft;
+        return applyRulePatch(draft, {
+          sequenceGroupId: groupId,
+          sequenceGroupLabel: normalizedLabel,
+          sequenceGroupDebounceMs: normalizedDebounce,
+        });
+      })
+    );
+    setIsDirty(true);
+    setSaveError(null);
+  }, []);
+
+  const handleUngroupSequenceGroup = useCallback((groupId: string): void => {
+    setDrafts((prev: RuleDraft[]) =>
+      prev.map((draft: RuleDraft) => {
+        if (!draft.parsed) return draft;
+        if (getSequenceGroupId(draft.parsed) !== groupId) return draft;
+        return applyRulePatch(draft, {
+          sequenceGroupId: null,
+          sequenceGroupLabel: null,
+          sequenceGroupDebounceMs: 0,
+        });
       })
     );
     setIsDirty(true);
@@ -449,6 +656,12 @@ export function PromptEngineProvider({
       setSeverity,
       setIncludeDisabled,
       handleRuleTextChange,
+      handlePatchRule,
+      handleToggleRuleEnabled,
+      handleDuplicateRule,
+      handleSequenceDrop,
+      handleSaveSequenceGroup,
+      handleUngroupSequenceGroup,
       handleLearnedRuleTextChange,
       handleAddRule,
       handleAddLearnedRule,
@@ -474,8 +687,15 @@ export function PromptEngineProvider({
       saveError,
       settingsQuery.isLoading,
       updateSetting.isPending,
+      rawSettings,
       filteredDrafts,
       handleRuleTextChange,
+      handlePatchRule,
+      handleToggleRuleEnabled,
+      handleDuplicateRule,
+      handleSequenceDrop,
+      handleSaveSequenceGroup,
+      handleUngroupSequenceGroup,
       handleLearnedRuleTextChange,
       handleAddRule,
       handleAddLearnedRule,
@@ -487,6 +707,7 @@ export function PromptEngineProvider({
       handleImport,
       handleImportLearned,
       handleSave,
+      handleCopy,
     ]
   );
 

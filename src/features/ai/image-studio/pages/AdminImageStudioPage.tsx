@@ -29,6 +29,7 @@ import { StudioProjectsList } from '../components/StudioProjectsList';
 import { ImageStudioProvider } from '../context/ImageStudioProvider';
 import { useProjectsActions, useProjectsState } from '../context/ProjectsContext';
 import { useSettingsActions } from '../context/SettingsContext';
+import { useUiState } from '../context/UiContext';
 
 type StudioTab = 'studio' | 'projects' | 'settings' | 'validation' | 'docs';
 
@@ -42,8 +43,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<StudioTab>('studio');
   const [newProjectId, setNewProjectId] = useState('');
-  const [isFocusMode, setIsFocusMode] = useState(false);
-  const [maskPreviewEnabled, setMaskPreviewEnabled] = useState(false);
+  const { isFocusMode } = useUiState();
   const hideTopBar = activeTab === 'studio' && isFocusMode;
 
   useEffect(() => {
@@ -151,12 +151,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
 
           <div className='flex-1 overflow-hidden'>
             <TabsContent value='studio' className='h-full m-0 p-0 flex flex-col'>
-              <StudioMainContent
-                isFocusMode={isFocusMode}
-                onFocusModeChange={setIsFocusMode}
-                maskPreviewEnabled={maskPreviewEnabled}
-                onMaskPreviewChange={setMaskPreviewEnabled}
-              />
+              <StudioMainContent />
             </TabsContent>
 
             <TabsContent value='projects' className='h-full m-0 overflow-y-auto'>

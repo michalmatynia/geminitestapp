@@ -22,26 +22,17 @@ import { ToggleButtonGroup } from './ToggleButtonGroup';
 import { useMaskingActions, useMaskingState } from '../context/MaskingContext';
 import { useProjectsState } from '../context/ProjectsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
+import { useUiActions, useUiState } from '../context/UiContext';
 import { getImageStudioSlotImageSrc } from '../utils/image-src';
-
-interface CenterPreviewProps {
-  isFocusMode: boolean;
-  onToggleFocusMode: () => void;
-  maskPreviewEnabled: boolean;
-  onMaskPreviewChange: (enabled: boolean) => void;
-}
 
 const PREVIEW_MODE_OPTIONS = [
   { value: 'image', label: 'Image' },
   { value: '3d', label: '3D' },
 ] as const;
 
-export function CenterPreview({
-  isFocusMode,
-  onToggleFocusMode,
-  maskPreviewEnabled,
-  onMaskPreviewChange,
-}: CenterPreviewProps): React.JSX.Element {
+export function CenterPreview(): React.JSX.Element {
+  const { isFocusMode, maskPreviewEnabled } = useUiState();
+  const { toggleFocusMode } = useUiActions();
   const { projectId } = useProjectsState();
   const { workingSlot, previewMode, captureRef } = useSlotsState();
   const { setPreviewMode } = useSlotsActions();
@@ -195,7 +186,7 @@ export function CenterPreview({
             <Button
               variant='outline'
               size='sm'
-              onClick={onToggleFocusMode}
+              onClick={toggleFocusMode}
               title='Show canvas only'
             >
               Show
@@ -213,7 +204,7 @@ export function CenterPreview({
               type='button'
               variant='outline'
               size='sm'
-              onClick={onToggleFocusMode}
+              onClick={toggleFocusMode}
               title='Show side panels'
             >
               Edit
@@ -269,10 +260,7 @@ export function CenterPreview({
                 <span>Mask Generation</span>
               </div>
               <div className='h-[84px] overflow-auto pr-1'>
-                <GenerationToolbar
-                  maskPreviewEnabled={maskPreviewEnabled}
-                  onMaskPreviewChange={onMaskPreviewChange}
-                />
+                <GenerationToolbar />
               </div>
             </SectionPanel>
           </div>

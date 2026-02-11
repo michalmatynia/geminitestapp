@@ -1,4 +1,5 @@
 import { useInfiniteQuery, type UseInfiniteQueryOptions, type InfiniteData, type UseInfiniteQueryResult } from '@tanstack/react-query';
+
 import type {
   LegacyPaginatedResponseDto,
   PaginatedResponseDto,

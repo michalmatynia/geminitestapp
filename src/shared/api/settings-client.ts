@@ -16,13 +16,102 @@ type SettingsCache = {
 
 const SETTINGS_CACHE_TTL_MS = 120_000;
 const LITE_SETTINGS_CACHE_TTL_MS = 120_000;
+const SETTINGS_FETCH_RETRY_DELAY_MS = 250;
+const SETTINGS_FETCH_ERROR_LOG_COOLDOWN_MS = 15_000;
 const settingsCache = new Map<SettingsScope, SettingsCache>();
 const settingsInflight = new Map<SettingsScope, Promise<SettingRecord[]>>();
 let liteSettingsCache: SettingsCache | null = null;
 let liteSettingsInflight: Promise<SettingRecord[]> | null = null;
+const settingsSnapshotByScope = new Map<SettingsScope, SettingsCache>();
+let settingsSnapshotAny: SettingsCache | null = null;
+let liteSettingsSnapshot: SettingsCache | null = null;
+const settingsFetchErrorLoggedAt = new Map<string, number>();
 
 const normalizeScope = (scope?: SettingsScope): SettingsScope =>
   scope === 'heavy' || scope === 'light' || scope === 'all' ? scope : 'light';
+
+const cloneSettings = (data: SettingRecord[]): SettingRecord[] =>
+  data.map((item: SettingRecord) => ({ ...item }));
+
+const toError = (error: unknown): Error =>
+  error instanceof Error ? error : new Error(String(error));
+
+const delay = (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    globalThis.setTimeout(resolve, ms);
+  });
+
+const isTransientFetchError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) return false;
+  if (error.name === 'AbortError') return true;
+  const message = error.message.trim().toLowerCase();
+  if (message === 'failed to fetch' || message.includes('networkerror')) return true;
+  return false;
+};
+
+async function fetchWithRetry(url: string, init: RequestInit): Promise<Response> {
+  try {
+    return await fetch(url, init);
+  } catch (error) {
+    if (!isTransientFetchError(error)) throw error;
+    await delay(SETTINGS_FETCH_RETRY_DELAY_MS);
+    return fetch(url, init);
+  }
+}
+
+function logSettingsFetchError(
+  action: 'fetchSettingsFromApi' | 'fetchLiteSettingsFromApi',
+  message: string,
+  error: Error,
+  extra?: Record<string, unknown>
+): void {
+  const fingerprint = `${action}:${message}:${error.name}:${error.message}`;
+  const lastLoggedAt = settingsFetchErrorLoggedAt.get(fingerprint) ?? 0;
+  const now = Date.now();
+  if (now - lastLoggedAt < SETTINGS_FETCH_ERROR_LOG_COOLDOWN_MS) return;
+  settingsFetchErrorLoggedAt.set(fingerprint, now);
+  logClientError(error, {
+    context: {
+      source: 'settings-client',
+      action,
+      message,
+      level: isTransientFetchError(error) ? 'warn' : 'error',
+      ...(extra ?? {}),
+    },
+  });
+}
+
+function saveSettingsSnapshot(scope: SettingsScope, data: SettingRecord[]): void {
+  if (data.length === 0) return;
+  const snapshot: SettingsCache = {
+    data: cloneSettings(data),
+    fetchedAt: Date.now(),
+  };
+  settingsSnapshotByScope.set(scope, snapshot);
+  settingsSnapshotAny = snapshot;
+}
+
+function saveLiteSettingsSnapshot(data: SettingRecord[]): void {
+  if (data.length === 0) return;
+  liteSettingsSnapshot = {
+    data: cloneSettings(data),
+    fetchedAt: Date.now(),
+  };
+}
+
+function getScopeSnapshot(scope: SettingsScope): SettingRecord[] | null {
+  return settingsSnapshotByScope.get(scope)?.data ?? settingsSnapshotAny?.data ?? null;
+}
+
+function getLiteSnapshot(): SettingRecord[] | null {
+  return (
+    liteSettingsSnapshot?.data ??
+    settingsSnapshotByScope.get('light')?.data ??
+    settingsSnapshotByScope.get('all')?.data ??
+    settingsSnapshotAny?.data ??
+    null
+  );
+}
 
 async function fetchSettingsFromApi(
   bypassCache: boolean,
@@ -34,7 +123,7 @@ async function fetchSettingsFromApi(
     // Heavy settings drive AI Paths graph/config hydration; always bypass browser HTTP cache
     // to prevent stale config on hard refresh after recent writes.
     const cacheMode: RequestCache = bypassCache || scopeValue === 'heavy' ? 'no-store' : 'default';
-    const res = await fetch(url, {
+    const res = await fetchWithRetry(url, {
       cache: cacheMode,
       credentials: 'include',
     });
@@ -42,21 +131,42 @@ async function fetchSettingsFromApi(
       throw new Error(`Failed to fetch settings (${res.status})`);
     }
     return (await res.json()) as SettingRecord[];
-  } catch (error) {
+  } catch (error: unknown) {
+    const normalizedError = toError(error);
     const scopeValue = normalizeScope(scope);
     const cached = settingsCache.get(scopeValue);
     if (cached) {
-      logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'settings-client', action: 'fetchSettingsFromApi', scope: scopeValue, message: 'Failed to fetch settings, using cached data.' } });
+      logSettingsFetchError(
+        'fetchSettingsFromApi',
+        'Failed to fetch settings, using cached data.',
+        normalizedError,
+        { scope: scopeValue }
+      );
       return cached.data;
     }
-    logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'settings-client', action: 'fetchSettingsFromApi', scope: scopeValue, message: 'Failed to fetch settings, returning empty list.' } });
+    const snapshot = getScopeSnapshot(scopeValue);
+    if (snapshot && snapshot.length > 0) {
+      logSettingsFetchError(
+        'fetchSettingsFromApi',
+        'Failed to fetch settings, using in-memory snapshot.',
+        normalizedError,
+        { scope: scopeValue }
+      );
+      return cloneSettings(snapshot);
+    }
+    logSettingsFetchError(
+      'fetchSettingsFromApi',
+      'Failed to fetch settings, returning empty list.',
+      normalizedError,
+      { scope: scopeValue }
+    );
     return [];
   }
 }
 
 async function fetchLiteSettingsFromApi(bypassCache: boolean): Promise<SettingRecord[]> {
   try {
-    const res = await fetch('/api/settings/lite', {
+    const res = await fetchWithRetry('/api/settings/lite', {
       cache: bypassCache ? 'no-store' : 'default',
       credentials: 'include',
     });
@@ -65,12 +175,30 @@ async function fetchLiteSettingsFromApi(bypassCache: boolean): Promise<SettingRe
       throw new Error(`Failed to fetch lite settings (${res.status})`);
     }
     return (await res.json()) as SettingRecord[];
-  } catch (error) {
+  } catch (error: unknown) {
+    const normalizedError = toError(error);
     if (liteSettingsCache) {
-      logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'settings-client', action: 'fetchLiteSettingsFromApi', message: 'Failed to fetch lite settings, using cached data.' } });
+      logSettingsFetchError(
+        'fetchLiteSettingsFromApi',
+        'Failed to fetch lite settings, using cached data.',
+        normalizedError
+      );
       return liteSettingsCache.data;
     }
-    logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'settings-client', action: 'fetchLiteSettingsFromApi', message: 'Failed to fetch lite settings, returning empty list.' } });
+    const snapshot = getLiteSnapshot();
+    if (snapshot && snapshot.length > 0) {
+      logSettingsFetchError(
+        'fetchLiteSettingsFromApi',
+        'Failed to fetch lite settings, using in-memory snapshot.',
+        normalizedError
+      );
+      return cloneSettings(snapshot);
+    }
+    logSettingsFetchError(
+      'fetchLiteSettingsFromApi',
+      'Failed to fetch lite settings, returning empty list.',
+      normalizedError
+    );
     return [];
   }
 }
@@ -82,8 +210,9 @@ export async function fetchSettingsCached(options?: {
   const bypassCache = options?.bypassCache === true;
   const scope = normalizeScope(options?.scope);
   if (bypassCache) {
-    const data = await fetchSettingsFromApi(true, scope);
+    const data = cloneSettings(await fetchSettingsFromApi(true, scope));
     settingsCache.set(scope, { data, fetchedAt: Date.now() });
+    saveSettingsSnapshot(scope, data);
     settingsInflight.delete(scope);
     return data;
   }
@@ -100,8 +229,10 @@ export async function fetchSettingsCached(options?: {
 
   const inflightPromise = fetchSettingsFromApi(false, scope)
     .then((data: SettingRecord[]) => {
-      settingsCache.set(scope, { data, fetchedAt: Date.now() });
-      return data;
+      const safeData = cloneSettings(data);
+      settingsCache.set(scope, { data: safeData, fetchedAt: Date.now() });
+      saveSettingsSnapshot(scope, safeData);
+      return safeData;
     })
     .finally(() => {
       settingsInflight.delete(scope);
@@ -115,8 +246,9 @@ export async function fetchLiteSettingsCached(options?: {
 }): Promise<SettingRecord[]> {
   const bypassCache = options?.bypassCache === true;
   if (bypassCache) {
-    const data = await fetchLiteSettingsFromApi(true);
+    const data = cloneSettings(await fetchLiteSettingsFromApi(true));
     liteSettingsCache = { data, fetchedAt: Date.now() };
+    saveLiteSettingsSnapshot(data);
     liteSettingsInflight = null;
     return data;
   }
@@ -131,8 +263,10 @@ export async function fetchLiteSettingsCached(options?: {
 
   const inflightPromise = fetchLiteSettingsFromApi(false)
     .then((data: SettingRecord[]) => {
-      liteSettingsCache = { data, fetchedAt: Date.now() };
-      return data;
+      const safeData = cloneSettings(data);
+      liteSettingsCache = { data: safeData, fetchedAt: Date.now() };
+      saveLiteSettingsSnapshot(safeData);
+      return safeData;
     })
     .finally(() => {
       liteSettingsInflight = null;

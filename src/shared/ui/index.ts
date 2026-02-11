@@ -53,6 +53,7 @@ export * from './QueryDevPanel';
 export * from './AppErrorBoundary';
 export * from './QueryErrorBoundary';
 export * from './PromptGenerationSection';
+export * from './validator-formatter-toggle';
 
 export { default as FilePreviewModal } from './file-preview-modal';
 export { default as MissingImagePlaceholder } from './missing-image-placeholder';

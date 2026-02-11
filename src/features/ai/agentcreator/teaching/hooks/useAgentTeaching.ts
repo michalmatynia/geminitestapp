@@ -2,9 +2,9 @@
 
 import { useMutation, useQuery, useQueryClient, type UseMutationResult, type UseQueryResult } from '@tanstack/react-query';
 
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord, AgentTeachingEmbeddingDocumentListItem, AgentTeachingChatSource } from '@/shared/types/domain/agent-teaching';
 import type { ChatMessage } from '@/shared/types/domain/chatbot';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import { 
   getTeachingAgents, 

@@ -2,9 +2,9 @@
 
 import { useQuery, type UseQueryResult, type Query } from '@tanstack/react-query';
 
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { ProductAiJob } from '@/shared/types/domain/jobs';
 import type { ProductJob } from '@/shared/types/domain/listing-jobs';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import { getIntegrationJobs, getProductAiJobs, getChatbotJobs } from '../api';
 

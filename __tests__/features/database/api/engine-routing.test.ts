@@ -3,7 +3,7 @@
  */
 
 import { NextRequest } from 'next/server';
-import { Mock, vi } from 'vitest';
+import { vi } from 'vitest';
 
 import { POST as POST_CRUD } from '@/app/api/databases/crud/route';
 import { POST as POST_EXECUTE } from '@/app/api/databases/execute/route';

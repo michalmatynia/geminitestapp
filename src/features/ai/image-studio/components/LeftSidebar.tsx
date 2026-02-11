@@ -27,14 +27,12 @@ import { SlotTree } from './SlotTree';
 import { useMaskingActions } from '../context/MaskingContext';
 import { useProjectsState } from '../context/ProjectsContext';
 import { useSlotsState, useSlotsActions } from '../context/SlotsContext';
+import { useUiState } from '../context/UiContext';
 import { getImageStudioSlotImageSrc } from '../utils/image-src';
 
-interface LeftSidebarProps {
-  isFocusMode: boolean;
-}
-
-export function LeftSidebar({ isFocusMode }: LeftSidebarProps): React.JSX.Element {
+export function LeftSidebar(): React.JSX.Element {
   const { projectId } = useProjectsState();
+  const { isFocusMode } = useUiState();
   const settingsStore = useSettingsStore();
   const { slots, selectedSlot, selectedFolder, workingSlot } = useSlotsState();
   const {

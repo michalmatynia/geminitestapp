@@ -6,12 +6,10 @@ import { LabeledSlider } from './LabeledSlider';
 import { StudioCard } from './StudioCard';
 import { useMaskingState, useMaskingActions } from '../context/MaskingContext';
 import { useSlotsState } from '../context/SlotsContext';
+import { useUiState } from '../context/UiContext';
 
-interface MaskControlsPanelProps {
-  maskPreviewEnabled: boolean;
-}
-
-export function MaskControlsPanel({ maskPreviewEnabled }: MaskControlsPanelProps): React.JSX.Element {
+export function MaskControlsPanel(): React.JSX.Element {
+  const { maskPreviewEnabled } = useUiState();
   const { workingSlot } = useSlotsState();
   const { maskFeather, maskThresholdSensitivity, maskEdgeSensitivity } = useMaskingState();
   const { setMaskFeather, setMaskThresholdSensitivity, setMaskEdgeSensitivity } = useMaskingActions();

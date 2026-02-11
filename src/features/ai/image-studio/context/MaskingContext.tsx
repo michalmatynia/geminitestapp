@@ -2,8 +2,8 @@
 
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 
-import { api } from '@/shared/lib/api-client';
 import { type VectorShape, type VectorToolMode } from '@/features/vector-drawing';
+import { api } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
 
 import { useSlotsState } from './SlotsContext';

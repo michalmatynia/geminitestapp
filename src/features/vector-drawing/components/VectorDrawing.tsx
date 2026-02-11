@@ -85,7 +85,7 @@ export function VectorDrawing({
       seededRef.current = true;
       history.reset(shapes);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);  
 
   const handleChange = useCallback(
     (nextShapes: VectorShape[]) => {

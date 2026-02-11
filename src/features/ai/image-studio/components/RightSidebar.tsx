@@ -1,6 +1,6 @@
 'use client';
 
-import { Loader2, Save, Sparkles, Wand2 } from 'lucide-react';
+import { Loader2, Save, Sparkles } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
@@ -19,6 +19,7 @@ import {
   MultiSelect,
   SectionPanel,
   Textarea,
+  ValidatorFormatterToggle,
   useToast,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -34,6 +35,7 @@ import { useProjectsState } from '../context/ProjectsContext';
 import { usePromptActions, usePromptState } from '../context/PromptContext';
 import { useSettingsActions } from '../context/SettingsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
+import { useUiActions, useUiState } from '../context/UiContext';
 import {
   IMAGE_STUDIO_ACTIVE_PROJECT_KEY,
   type ImageStudioProjectSession,
@@ -42,15 +44,9 @@ import {
   serializeImageStudioProjectSession,
 } from '../utils/project-session';
 
-interface RightSidebarProps {
-  isFocusMode: boolean;
-  maskPreviewEnabled: boolean;
-}
-
-export function RightSidebar({
-  isFocusMode,
-  maskPreviewEnabled,
-}: RightSidebarProps): React.JSX.Element {
+export function RightSidebar(): React.JSX.Element {
+  const { isFocusMode, validatorEnabled, formatterEnabled } = useUiState();
+  const { setValidatorEnabled, setFormatterEnabled } = useUiActions();
   const { projectId } = useProjectsState();
   const {
     compositeAssetIds,
@@ -89,15 +85,26 @@ export function RightSidebar({
     }
   };
 
-  const autoFormatPrompt = (): void => {
-    if (!promptText.trim()) {
-      toast('Enter prompt text first.', { variant: 'info' });
-      return;
-    }
+  const preparePromptForExtraction = (): string => {
+    const trimmedPrompt = promptText.trim();
+    if (!trimmedPrompt) return promptText;
+    if (!validatorEnabled) return promptText;
+
+    let nextPrompt = promptText;
     try {
-      const beforeIssues = validateProgrammaticPrompt(promptText, promptValidationSettings);
-      const result = formatProgrammaticPrompt(promptText, promptValidationSettings);
+      const beforeIssues = validateProgrammaticPrompt(nextPrompt, promptValidationSettings);
+      if (!formatterEnabled) {
+        if (beforeIssues.length === 0) {
+          toast('Prompt validation passed.', { variant: 'success' });
+        } else {
+          toast(`Prompt validation found ${beforeIssues.length} issue(s).`, { variant: 'warning' });
+        }
+        return nextPrompt;
+      }
+
+      const result = formatProgrammaticPrompt(nextPrompt, promptValidationSettings);
       if (result.changed) {
+        nextPrompt = result.prompt;
         setPromptText(result.prompt);
       }
       toast(
@@ -106,32 +113,31 @@ export function RightSidebar({
           : `No formatter changes applied. Validation issues: ${beforeIssues.length}.`,
         { variant: result.changed ? 'success' : 'info' }
       );
+      return nextPrompt;
     } catch (error) {
       logClientError(error, {
-        context: { source: 'RightSidebar', action: 'autoFormatPrompt', level: 'error' },
+        context: { source: 'RightSidebar', action: 'preparePromptForExtraction', level: 'error' },
       });
-      toast(error instanceof Error ? error.message : 'Failed to format prompt.', { variant: 'error' });
+      toast(
+        error instanceof Error
+          ? error.message
+          : formatterEnabled
+            ? 'Failed to format prompt.'
+            : 'Failed to validate prompt.',
+        { variant: 'error' }
+      );
+      return promptText;
     }
   };
 
-  const validatePrompt = (): void => {
+  const handleExtractReviewOpen = (): void => {
     if (!promptText.trim()) {
       toast('Enter prompt text first.', { variant: 'info' });
       return;
     }
-    try {
-      const issues = validateProgrammaticPrompt(promptText, promptValidationSettings);
-      if (issues.length === 0) {
-        toast('Prompt validation passed.', { variant: 'success' });
-        return;
-      }
-      toast(`Prompt validation found ${issues.length} issue(s).`, { variant: 'warning' });
-    } catch (error) {
-      logClientError(error, {
-        context: { source: 'RightSidebar', action: 'validatePrompt', level: 'error' },
-      });
-      toast(error instanceof Error ? error.message : 'Failed to validate prompt.', { variant: 'error' });
-    }
+    const preparedPrompt = preparePromptForExtraction();
+    setExtractDraftPrompt(preparedPrompt);
+    setExtractReviewOpen(true);
   };
 
   const handleSaveProject = (): void => {
@@ -202,32 +208,19 @@ export function RightSidebar({
           title='Extract functions and selectors from prompt'
           aria-label='Extract functions and selectors from prompt'
           disabled={!promptText.trim()}
-          onClick={() => { setExtractDraftPrompt(promptText); setExtractReviewOpen(true); }}
+          onClick={handleExtractReviewOpen}
         >
           <Sparkles className='mr-2 size-4' />
           Extract
         </Button>
-        <Button
-          variant='outline'
-          size='sm'
-          title='Validate prompt against prompt-engine patterns'
-          aria-label='Validate prompt against prompt-engine patterns'
-          disabled={!promptText.trim()}
-          onClick={validatePrompt}
-        >
-          Validate
-        </Button>
-        <Button
-          variant='outline'
-          size='sm'
-          title='Auto format prompt'
-          aria-label='Auto format prompt'
-          disabled={!promptText.trim()}
-          onClick={autoFormatPrompt}
-        >
-          <Wand2 className='mr-2 size-4' />
-          Format
-        </Button>
+        <ValidatorFormatterToggle
+          validatorLabel='Validate'
+          formatterLabel='Format'
+          validatorEnabled={validatorEnabled}
+          formatterEnabled={formatterEnabled}
+          onValidatorChange={setValidatorEnabled}
+          onFormatterChange={setFormatterEnabled}
+        />
         <Button
           variant='outline'
           size='sm'
@@ -265,7 +258,7 @@ export function RightSidebar({
           </div>
         </StudioCard>
 
-        <MaskControlsPanel maskPreviewEnabled={maskPreviewEnabled} />
+        <MaskControlsPanel />
 
         {runOutputs.length > 0 ? (
           <div className='space-y-1'>

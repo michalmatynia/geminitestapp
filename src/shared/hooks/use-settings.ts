@@ -31,7 +31,7 @@ export function useSettings(options?: { scope?: SettingsScope; enabled?: boolean
     queryKey: QUERY_KEYS.settings.scope(scope),
     queryFn: async (): Promise<SystemSetting[]> => {
       try {
-        return (await fetchSettingsCached({ scope })) as SystemSetting[];
+        return (await fetchSettingsCached({ scope }));
       } catch (error) {
         logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useSettings', action: 'fetchSettings', scope, level: 'warn' } });
         return [];
@@ -52,7 +52,7 @@ export function useSettingsMap(options?: { scope?: SettingsScope; enabled?: bool
     queryKey: QUERY_KEYS.settings.scope(scope),
     queryFn: async (): Promise<SystemSetting[]> => {
       try {
-        return (await fetchSettingsCached({ scope })) as SystemSetting[];
+        return (await fetchSettingsCached({ scope }));
       } catch (error) {
         logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useSettings', action: 'fetchSettings', scope, level: 'warn' } });
         return [];
@@ -73,7 +73,7 @@ export function useLiteSettingsMap(options?: { enabled?: boolean }): UseQueryRes
     queryKey: QUERY_KEYS.settings.scope('lite'),
     queryFn: async (): Promise<SystemSetting[]> => {
       try {
-        return (await fetchLiteSettingsCached()) as SystemSetting[];
+        return (await fetchLiteSettingsCached());
       } catch (error) {
         logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useLiteSettingsMap', action: 'fetchLiteSettings', level: 'warn' } });
         return [];

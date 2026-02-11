@@ -29,17 +29,12 @@ import { useProjectsState } from '../context/ProjectsContext';
 import { usePromptState } from '../context/PromptContext';
 import { useSettingsState, useSettingsActions } from '../context/SettingsContext';
 import { useSlotsState } from '../context/SlotsContext';
+import { useUiActions, useUiState } from '../context/UiContext';
 import { getImageStudioSlotImageSrc } from '../utils/image-src';
 
-interface GenerationToolbarProps {
-  maskPreviewEnabled: boolean;
-  onMaskPreviewChange: (enabled: boolean) => void;
-}
-
-export function GenerationToolbar({
-  maskPreviewEnabled,
-  onMaskPreviewChange,
-}: GenerationToolbarProps): React.JSX.Element {
+export function GenerationToolbar(): React.JSX.Element {
+  const { maskPreviewEnabled } = useUiState();
+  const { setMaskPreviewEnabled } = useUiActions();
   const { projectId } = useProjectsState();
   const { workingSlot } = useSlotsState();
   const settingsStore = useSettingsStore();
@@ -284,7 +279,7 @@ ${filterBlock}
         variant='outline'
         size='sm'
         onClick={() => {
-          onMaskPreviewChange(true);
+          setMaskPreviewEnabled(true);
         }}
         disabled={!workingSlot || exportMaskCount === 0 || maskPreviewEnabled}
         title='Generate and enable mask preview'
@@ -295,7 +290,7 @@ ${filterBlock}
         <span>Mask Preview</span>
         <Switch
           checked={maskPreviewEnabled}
-          onCheckedChange={(checked: boolean) => onMaskPreviewChange(Boolean(checked))}
+          onCheckedChange={(checked: boolean) => setMaskPreviewEnabled(Boolean(checked))}
           disabled={!workingSlot || exportMaskCount === 0}
           aria-label='Toggle mask preview'
         />

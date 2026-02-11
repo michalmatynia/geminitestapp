@@ -178,7 +178,7 @@ export function useNoteOperations({
       }
       
       if (selectedNote?.id === noteId) {
-        setSelectedNote(updatedNote as NoteWithRelations);
+        setSelectedNote(updatedNote);
       }
       toast('Note renamed successfully');
     } catch (error: unknown) {

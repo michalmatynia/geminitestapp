@@ -7,7 +7,7 @@ import DebugPanel from '@/features/products/components/DebugPanel';
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
 import { ProductValidationSettingsProvider } from '@/features/products/context/ProductValidationSettingsContext';
 import { useProductValidatorConfig } from '@/features/products/hooks/useProductSettingsQueries';
-import { Button, Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui';
+import { Tabs, TabsList, TabsTrigger, TabsContent, ValidatorFormatterToggle } from '@/shared/ui';
 
 import ProductFormGeneral from './form/ProductFormGeneral';
 import ProductFormImages from './form/ProductFormImages';
@@ -125,40 +125,17 @@ export default function ProductForm({
               <p className='mt-1 text-xs text-gray-400'>
                 `Validator` enables validation rules. `Formatter` auto-applies rules configured for formatter mode.
               </p>
-              <div className='mt-4 flex flex-wrap items-center gap-2'>
-                <Button
-                  type='button'
-                  onClick={() => {
-                    setValidatorManuallyChanged(true);
-                    setValidatorInitialized(true);
-                    setValidatorEnabled((prev: boolean) => {
-                      const next = !prev;
-                      if (!next) setFormatterEnabled(false);
-                      return next;
-                    });
-                  }}
-                  className={`h-8 rounded border px-2.5 text-[10px] font-semibold tracking-wide ${
-                    validatorEnabled
-                      ? 'border-cyan-500/60 bg-cyan-500/15 text-cyan-100 hover:bg-cyan-500/25'
-                      : 'border-slate-500/40 bg-slate-500/10 text-slate-300 hover:bg-slate-500/20'
-                  }`}
-                >
-                  Validator {validatorEnabled ? 'ON' : 'OFF'}
-                </Button>
-                {validatorEnabled ? (
-                  <Button
-                    type='button'
-                    onClick={() => setFormatterEnabled((prev: boolean) => !prev)}
-                    className={`h-7 rounded border px-2 text-[10px] font-semibold tracking-wide ${
-                      formatterEnabled
-                        ? 'border-emerald-500/60 bg-emerald-500/15 text-emerald-100 hover:bg-emerald-500/25'
-                        : 'border-slate-500/40 bg-slate-500/10 text-slate-300 hover:bg-slate-500/20'
-                    }`}
-                  >
-                    Formatter {formatterEnabled ? 'ON' : 'OFF'}
-                  </Button>
-                ) : null}
-              </div>
+              <ValidatorFormatterToggle
+                className='mt-4'
+                validatorEnabled={validatorEnabled}
+                formatterEnabled={formatterEnabled}
+                onValidatorChange={(next: boolean): void => {
+                  setValidatorManuallyChanged(true);
+                  setValidatorInitialized(true);
+                  setValidatorEnabled(next);
+                }}
+                onFormatterChange={(next: boolean): void => setFormatterEnabled(next)}
+              />
             </div>
           </TabsContent>
         </Tabs>

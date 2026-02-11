@@ -4,7 +4,7 @@
 
 import { ObjectId } from 'mongodb';
 import { NextRequest } from 'next/server';
-import { Mock, vi } from 'vitest';
+import { vi } from 'vitest';
 
 import { POST as POST_DB_QUERY } from '@/app/api/ai-paths/db-query/route';
 import { isCollectionAllowed, requireAiPathsAccessOrInternal } from '@/features/ai/ai-paths/server';

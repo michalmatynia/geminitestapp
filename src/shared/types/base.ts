@@ -1,9 +1,10 @@
 // Base types for common patterns across the application
-import type { BaseRecord } from './common';
 import type {
   ApiEnvelopeDto,
   LegacyPaginatedResponseDto,
 } from '@/shared/dtos/http';
+
+import type { BaseRecord } from './common';
 
 /**
  * Base interface for all entities in the system

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 
-import type { ProductValidationPattern } from '@/shared/types/domain/products';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import type { ProductValidationPattern } from '@/shared/types/domain/products';
 
 import * as api from '../api/settings';
 import { PriceGroup, Catalog, CatalogRecord, ProductCategory, ProductTag, ProductParameter, ProductCategoryWithChildren } from '../types';

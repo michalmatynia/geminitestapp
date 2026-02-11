@@ -2,11 +2,18 @@ import 'server-only';
 
 import { Redis } from 'ioredis';
 
-import { ErrorSystem } from '@/features/observability/server';
-
 const REDIS_URL = process.env['REDIS_URL'];
 
 let redis: Redis | null = null;
+
+const captureException = async (error: unknown, context: { service: string; action: string }): Promise<void> => {
+  try {
+    const { ErrorSystem } = await import('@/features/observability/server');
+    await ErrorSystem.captureException(error, context as any);
+  } catch {
+    // ignore
+  }
+};
 
 if (REDIS_URL) {
   try {
@@ -16,10 +23,10 @@ if (REDIS_URL) {
     });
     
     redis.on('error', (err) => {
-      void ErrorSystem.captureException(err, { service: 'redis', action: 'connection_error' });
+      void captureException(err, { service: 'redis', action: 'connection_error' });
     });
   } catch (error) {
-    void ErrorSystem.captureException(error, { service: 'redis', action: 'initialize_failed' });
+    void captureException(error, { service: 'redis', action: 'initialize_failed' });
   }
 }
 

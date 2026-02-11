@@ -15,12 +15,13 @@ import type {
 } from '@/features/products/types';
 import type { ProductFormData } from '@/features/products/types';
 import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { Language } from '@/shared/types/domain/internationalization';
 
 import type { UseFormSetValue, UseFormGetValues } from 'react-hook-form';
 
 export const productMetadataKeys = {
-  catalogs: ['catalogs'] as const,
+  catalogs: QUERY_KEYS.products.catalogs,
   categories: (catalogId: string) => ['categories', catalogId] as const,
   tags: (catalogId: string) => ['tags', catalogId] as const,
   producers: ['producers'] as const,

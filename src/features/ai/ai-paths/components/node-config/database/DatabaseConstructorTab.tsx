@@ -109,7 +109,7 @@ const formatCollectionLabel = (
 ): string =>
   isMulti && collection.provider ? `${collection.name} (${collection.provider})` : collection.name;
 
-type DatabaseConstructorTabProps = {
+export type DatabaseConstructorTabProps = {
   queryInputControls: React.ReactNode;
   pendingAiQuery: string;
   setPendingAiQuery: React.Dispatch<React.SetStateAction<string>>;
@@ -165,54 +165,82 @@ type DatabaseConstructorTabProps = {
   uniqueTargetPathOptions: Array<{ label: string; value: string }>;
 };
 
-export function DatabaseConstructorTab({
-  queryInputControls,
-  pendingAiQuery,
-  setPendingAiQuery,
-  aiQueries,
-  setAiQueries,
-  selectedAiQueryId,
-  setSelectedAiQueryId,
-  presetOptions,
-  applyDatabasePreset,
-  openSaveQueryPresetModal,
-  databaseConfig,
-  queryConfig,
-  operation,
-  queryTemplateValue,
-  queryTemplateRef,
-  sampleState,
-  parsedSampleError,
-  updaterSampleLoading,
-  selectedNodeId,
-  setUpdaterSamples,
-  onFetchUpdaterSample,
-  updateSelectedNodeConfig,
-  updateQueryConfig,
-  connectedPlaceholders,
-  hasSchemaConnection,
-  fetchedDbSchema,
-  schemaMatrix,
-  onSyncSchema,
-  schemaSyncing,
-  schemaLoading,
-  nodes,
-  edges,
-  selectedNode,
-  runtimeState,
-  onSendToAi,
-  sendingToAi,
-  mapInputsToTargets,
-  bundleKeys,
-  toast,
-  aiPromptRef,
-  mappings,
-  updateMapping,
-  removeMapping,
-  addMapping,
-  availablePorts,
-  uniqueTargetPathOptions,
-}: DatabaseConstructorTabProps): React.JSX.Element {
+const DatabaseConstructorTabContext =
+  React.createContext<DatabaseConstructorTabProps | null>(null);
+
+export function DatabaseConstructorTabProvider({
+  value,
+  children,
+}: {
+  value: DatabaseConstructorTabProps;
+  children: React.ReactNode;
+}): React.JSX.Element {
+  return (
+    <DatabaseConstructorTabContext.Provider value={value}>
+      {children}
+    </DatabaseConstructorTabContext.Provider>
+  );
+}
+
+function useDatabaseConstructorTab(): DatabaseConstructorTabProps {
+  const context = React.useContext(DatabaseConstructorTabContext);
+  if (!context) {
+    throw new Error(
+      'DatabaseConstructorTab must be used within DatabaseConstructorTabProvider'
+    );
+  }
+  return context;
+}
+
+export function DatabaseConstructorTab(): React.JSX.Element {
+  const {
+    queryInputControls,
+    pendingAiQuery,
+    setPendingAiQuery,
+    aiQueries,
+    setAiQueries,
+    selectedAiQueryId,
+    setSelectedAiQueryId,
+    presetOptions,
+    applyDatabasePreset,
+    openSaveQueryPresetModal,
+    databaseConfig,
+    queryConfig,
+    operation,
+    queryTemplateValue,
+    queryTemplateRef,
+    sampleState,
+    parsedSampleError,
+    updaterSampleLoading,
+    selectedNodeId,
+    setUpdaterSamples,
+    onFetchUpdaterSample,
+    updateSelectedNodeConfig,
+    updateQueryConfig,
+    connectedPlaceholders,
+    hasSchemaConnection,
+    fetchedDbSchema,
+    schemaMatrix,
+    onSyncSchema,
+    schemaSyncing,
+    schemaLoading,
+    nodes,
+    edges,
+    selectedNode,
+    runtimeState,
+    onSendToAi,
+    sendingToAi,
+    mapInputsToTargets,
+    bundleKeys,
+    toast,
+    aiPromptRef,
+    mappings,
+    updateMapping,
+    removeMapping,
+    addMapping,
+    availablePorts,
+    uniqueTargetPathOptions,
+  } = useDatabaseConstructorTab();
   const isUpdateAction =
     databaseConfig.useMongoActions && databaseConfig.actionCategory === 'update';
   const isPrismaProvider = queryConfig.provider === 'prisma';

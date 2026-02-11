@@ -3,11 +3,11 @@ export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@/features/auth/server';
-import { assertDatabaseEngineOperationEnabled } from '@/features/database/services/database-engine-operation-guards';
 import {
   copyCollection,
   getSupportedCollections,
 } from '@/features/database/services/database-collection-copy';
+import { assertDatabaseEngineOperationEnabled } from '@/features/database/services/database-engine-operation-guards';
 import type { DatabaseSyncDirection } from '@/features/database/services/database-sync';
 import { authError, badRequestError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';

@@ -118,7 +118,7 @@ const createMockModel = () => {
     }),
     upsert: vi.fn().mockImplementation((args: { where: Record<string, any>; create: Record<string, unknown>; update: Record<string, unknown> }) => {
       const index = items.findIndex(i => {
-        if (args.where && args.where['runId_nodeId']) {
+        if (args.where?.['runId_nodeId']) {
           return i.runId === args.where['runId_nodeId'].runId && i.nodeId === args.where['runId_nodeId'].nodeId;
         }
         return Object.entries(args.where).every(([k, v]) => i[k] === v);

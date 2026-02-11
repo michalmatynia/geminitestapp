@@ -21,7 +21,7 @@ const sanitizeFolderPath = (value: string): string => {
 
 const patchSchema = z.object({
   name: z.string().trim().min(1).optional(),
-  folderPath: z.string().trim().optional(),
+  folderPath: z.string().trim().optional().nullable(),
   imageUrl: z.string().trim().optional().nullable(),
   imageBase64: z.string().trim().optional().nullable(),
   imageFileId: z.string().trim().optional().nullable(),

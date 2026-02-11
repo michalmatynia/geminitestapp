@@ -28,6 +28,7 @@ import {
 import { jobKeys } from '@/features/jobs/hooks/useJobQueries';
 import { logClientError } from '@/features/observability';
 import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type {
   AiNode,
   Edge,
@@ -571,12 +572,12 @@ export function useAiPathTriggerEvent(): {
             source: 'trigger_button',
           });
           if (args.entityType === 'product') {
-            void queryClient.invalidateQueries({ queryKey: ['products'] });
-            void queryClient.invalidateQueries({ queryKey: ['products-count'] });
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() });
             void queryClient.invalidateQueries({ queryKey: jobKeys.productAi });
           }
           if (args.entityType === 'note') {
-            void queryClient.invalidateQueries({ queryKey: ['notes'] });
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
           }
           await persistRunSnapshot(runAt);
         } catch (error) {
@@ -632,12 +633,12 @@ export function useAiPathTriggerEvent(): {
       toast('AI Path run queued.', { variant: 'success' });
 
       if (args.entityType === 'product') {
-        void queryClient.invalidateQueries({ queryKey: ['products'] });
-        void queryClient.invalidateQueries({ queryKey: ['products-count'] });
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() });
         void queryClient.invalidateQueries({ queryKey: jobKeys.productAi });
       }
       if (args.entityType === 'note') {
-        void queryClient.invalidateQueries({ queryKey: ['notes'] });
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
       }
 
       await persistRunSnapshot(runAt);

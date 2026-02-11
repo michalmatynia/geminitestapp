@@ -7,31 +7,31 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST as POST_RUN_NOW } from '@/app/api/databases/engine/backup-scheduler/run-now/route';
 import { POST as POST_TICK } from '@/app/api/databases/engine/backup-scheduler/tick/route';
+import { auth } from '@/features/auth/server';
 import {
   getDatabaseBackupSchedulerStatus,
   markDatabaseBackupJobQueued,
   tickDatabaseBackupScheduler,
 } from '@/features/database/services/database-backup-scheduler';
-import { auth } from '@/features/auth/server';
 import {
   enqueueProductAiJob,
   enqueueProductAiJobToQueue,
   startProductAiJobQueue,
 } from '@/features/jobs/server';
-import { getDatabaseEngineOperationControls } from '@/shared/lib/db/database-engine-policy';
 import {
   DATABASE_BACKUP_SCHEDULER_REPEAT_EVERY_MS,
   getDatabaseBackupSchedulerQueueStatus,
   startDatabaseBackupSchedulerQueue,
 } from '@/features/jobs/workers/databaseBackupSchedulerQueue';
+import { getDatabaseEngineOperationControls } from '@/shared/lib/db/database-engine-policy';
 
 vi.mock('@/shared/lib/api/api-handler', () => ({
   apiHandler:
     (handler: (req: NextRequest, ctx: unknown) => Promise<Response>) =>
-    async (req: NextRequest): Promise<Response> =>
-      handler(req, {
-        requestId: 'test-request-id',
-      }),
+      async (req: NextRequest): Promise<Response> =>
+        handler(req, {
+          requestId: 'test-request-id',
+        }),
 }));
 
 vi.mock('@/features/auth/server', () => ({

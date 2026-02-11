@@ -1,14 +1,13 @@
 'use client';
 
+import React from 'react';
+
 import type { DatabaseAction, DatabaseActionCategory, DbQueryConfig } from '@/features/ai/ai-paths/lib';
 import { Button, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
-
-
-
 import type { QueryValidationResult } from './query-utils';
 
-type DatabaseQueryInputControlsProps = {
+export type DatabaseQueryInputControlsProps = {
   provider: DbQueryConfig['provider'];
   actionCategory: DatabaseActionCategory;
   action: DatabaseAction;
@@ -38,35 +37,63 @@ type DatabaseQueryInputControlsProps = {
   onFilterFocus?: () => void;
 };
 
-export function DatabaseQueryInputControls({
-  provider,
-  actionCategory,
-  action,
-  actionCategoryOptions,
-  actionOptions,
-  queryTemplateValue,
-  queryPlaceholder,
-  showFilterInput,
-  filterTemplateValue,
-  filterPlaceholder,
-  onFilterChange,
-  runDry,
-  onToggleRunDry,
-  queryValidation,
-  queryFormatterEnabled,
-  queryValidatorEnabled,
-  testQueryLoading,
-  queryTemplateRef,
-  onActionCategoryChange,
-  onActionChange,
-  onFormatClick,
-  onFormatContextMenu,
-  onToggleValidator,
-  onRunQuery,
-  onQueryChange,
-  onQueryFocus,
-  onFilterFocus,
-}: DatabaseQueryInputControlsProps): React.JSX.Element {
+const DatabaseQueryInputControlsContext =
+  React.createContext<DatabaseQueryInputControlsProps | null>(null);
+
+export function DatabaseQueryInputControlsProvider({
+  value,
+  children,
+}: {
+  value: DatabaseQueryInputControlsProps;
+  children: React.ReactNode;
+}): React.JSX.Element {
+  return (
+    <DatabaseQueryInputControlsContext.Provider value={value}>
+      {children}
+    </DatabaseQueryInputControlsContext.Provider>
+  );
+}
+
+function useDatabaseQueryInputControls(): DatabaseQueryInputControlsProps {
+  const context = React.useContext(DatabaseQueryInputControlsContext);
+  if (!context) {
+    throw new Error(
+      'DatabaseQueryInputControls must be used within DatabaseQueryInputControlsProvider'
+    );
+  }
+  return context;
+}
+
+export function DatabaseQueryInputControls(): React.JSX.Element {
+  const {
+    provider,
+    actionCategory,
+    action,
+    actionCategoryOptions,
+    actionOptions,
+    queryTemplateValue,
+    queryPlaceholder,
+    showFilterInput,
+    filterTemplateValue,
+    filterPlaceholder,
+    onFilterChange,
+    runDry,
+    onToggleRunDry,
+    queryValidation,
+    queryFormatterEnabled,
+    queryValidatorEnabled,
+    testQueryLoading,
+    queryTemplateRef,
+    onActionCategoryChange,
+    onActionChange,
+    onFormatClick,
+    onFormatContextMenu,
+    onToggleValidator,
+    onRunQuery,
+    onQueryChange,
+    onQueryFocus,
+    onFilterFocus,
+  } = useDatabaseQueryInputControls();
   const isPrismaProvider = provider === 'prisma';
   const filterLabel = isPrismaProvider ? 'Where' : 'Filter';
   const filterHint = isPrismaProvider ? 'Matches records' : 'Matches documents';

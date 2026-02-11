@@ -3,11 +3,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState, useRef, useMemo } from 'react';
 
+import { logClientError } from '@/features/observability';
 import type { Catalog } from '@/features/products/types';
 import type { PriceGroupWithDetails } from '@/features/products/types';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { logClientError } from '@/features/observability';
 
 type LanguageRecord = { id: string; code: string; name: string };
 type LanguageOption = {

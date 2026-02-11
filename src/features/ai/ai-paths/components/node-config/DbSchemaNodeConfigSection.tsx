@@ -7,6 +7,7 @@ import { dbApi } from '@/features/ai/ai-paths/lib/api';
 import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
 import { useAiPathConfig } from '../AiPathConfigContext';
+
 import type { CollectionSchema, SchemaData } from './database/types';
 
 const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema[] => {

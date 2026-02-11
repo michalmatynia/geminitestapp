@@ -8,41 +8,40 @@
 
 import React from 'react';
 
-import type { AiNode, NodeDefinition } from '@/features/ai/ai-paths/lib';
+import type { NodeDefinition } from '@/features/ai/ai-paths/lib';
 
+import { usePersistenceActions } from '../../context';
+import { useAiPathsSettingsOrchestrator } from '../ai-paths-settings/AiPathsSettingsOrchestratorContext';
 import { CanvasSidebar } from '../canvas-sidebar';
 
 
 export type CanvasSidebarWrapperProps = {
   /** Palette node definitions - not in context, passed from parent */
   palette: NodeDefinition[];
-  /** Callback when dragging a node from palette */
-  onDragStart: (event: React.DragEvent<HTMLDivElement>, node: NodeDefinition) => void;
-  
-  onUpdateSelectedNode?: (
-    patch: Partial<AiNode>,
-    meta: { nodeId: string }
-  ) => void;
-  onDeleteSelectedNode?: () => void;
-  onRemoveEdge?: (edgeId: string) => void;
-  executionMode?: 'local' | 'server';
-  /** Save path config - for persisting node changes */
-  savePathConfig?: ((options?: {
-    silent?: boolean | undefined;
-    includeNodeConfig?: boolean | undefined;
-    force?: boolean | undefined;
-    nodesOverride?: AiNode[] | undefined;
-    nodeOverride?: AiNode | undefined;
-  }) => Promise<boolean>) | undefined;
 };
 
 /**
  * CanvasSidebarWrapper - Context-based wrapper.
  */
-export function CanvasSidebarWrapper(props: CanvasSidebarWrapperProps): React.JSX.Element {
+export function CanvasSidebarWrapper({ palette }: CanvasSidebarWrapperProps): React.JSX.Element {
+  const {
+    handleDragStart,
+    updateSelectedNode,
+    handleDeleteSelectedNode,
+    handleRemoveEdge,
+  } = useAiPathsSettingsOrchestrator();
+  const { savePathConfig } = usePersistenceActions();
+
   return (
     <CanvasSidebar
-      {...props}
+      palette={palette}
+      onDragStart={handleDragStart}
+      onUpdateSelectedNode={(patch, options) => {
+        updateSelectedNode(patch, options);
+      }}
+      onDeleteSelectedNode={handleDeleteSelectedNode}
+      onRemoveEdge={handleRemoveEdge}
+      savePathConfig={savePathConfig}
     />
   );
 }

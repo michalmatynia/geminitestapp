@@ -6,33 +6,26 @@ import { createPortal } from 'react-dom';
 import { useAiPathRuntimeAnalytics } from '@/features/ai/ai-paths/hooks/useAiPathQueries';
 import type {
   AiNode,
-  ClusterPreset,
-  NodeDefinition,
 } from '@/features/ai/ai-paths/lib';
 import type { PathMeta } from '@/shared/types/domain/ai-paths';
 import { Button, Input, Label, SharedModal, UnifiedSelect, useToast } from '@/shared/ui';
 
-import { useGraphState, usePersistenceActions, usePersistenceState, useRuntimeActions, useRuntimeState, useSelectionState } from '../../context';
+import { useGraphActions, useGraphState, usePersistenceActions, usePersistenceState, useRuntimeActions, useRuntimeState, useSelectionState } from '../../context';
 import { CanvasBoardMigrated } from '../examples/CanvasBoardMigrated';
 import { CanvasSidebarWrapper } from '../examples/CanvasSidebarWrapper';
 import { ClusterPresetsPanelMigrated } from '../examples/ClusterPresetsPanelMigrated';
+import { DocsTabPanelMigrated } from '../examples/DocsTabPanelMigrated';
 import { NodeConfigDialogMigrated } from '../examples/NodeConfigDialogMigrated';
+import { PathsTabPanelMigrated } from '../examples/PathsTabPanelMigrated';
+import { PresetsDialogMigrated } from '../examples/PresetsDialogMigrated';
 import { RunHistoryPanelMigrated } from '../examples/RunHistoryPanelMigrated';
 import { SimulationDialogMigrated } from '../examples/SimulationDialogMigrated';
 import { GraphModelDebugPanel } from '../graph-model-debug-panel';
-import { PresetsDialogWithContext } from '../presets-dialog';
 import { RunDetailDialogWithContext } from '../run-detail-dialog';
 import { RuntimeEventLogPanel } from '../runtime-event-log-panel';
-import { DocsTabPanel, PathsTabPanel } from '../ui-panels';
-import {
-  DOCS_OVERVIEW_SNIPPET,
-  DOCS_WIRING_SNIPPET,
-  DOCS_DESCRIPTION_SNIPPET,
-  DOCS_JOBS_SNIPPET,
-} from './docs-snippets';
+import { useAiPathsSettingsOrchestrator } from './AiPathsSettingsOrchestratorContext';
+import { useAiPathsErrorReporting } from './useAiPathsErrorReporting';
 import { usePathConfigHandlers } from './usePathConfigHandlers';
-
-import type { AiPathsSettingsState } from './useAiPathsSettingsState';
 
 type AiPathsSettingsViewProps = {
   activeTab: 'canvas' | 'paths' | 'docs';
@@ -40,7 +33,6 @@ type AiPathsSettingsViewProps = {
   onTabChange?: ((tab: 'canvas' | 'paths' | 'docs') => void) | undefined;
   isFocusMode?: boolean | undefined;
   onFocusModeChange?: ((next: boolean) => void) | undefined;
-  state: AiPathsSettingsState;
 };
 
 const formatDurationMs = (value: number | null | undefined): string => {
@@ -77,18 +69,20 @@ export function AiPathsSettingsView({
   onTabChange,
   isFocusMode: isFocusModeProp,
   onFocusModeChange,
-  state,
 }: AiPathsSettingsViewProps): React.JSX.Element {
+  const state = useAiPathsSettingsOrchestrator();
+
   // Domain: Persistence — read from context
   const { loading, saving, autoSaveStatus, autoSaveAt } = usePersistenceState();
   const { incrementLoadNonce, savePathConfig } = usePersistenceActions();
 
   // Domain: Runtime — read from context
   const { runtimeState, lastRunAt, lastError, runtimeRunStatus, runtimeNodeStatuses, runtimeEvents } = useRuntimeState();
-  const { setLastError, runSimulation } = useRuntimeActions();
+  const { setLastError } = useRuntimeActions();
 
   // Domain: Graph — read from context (synced state only)
-  const { activePathId, pathName, isPathLocked, isPathActive, executionMode, flowIntensity, runMode, paths, pathConfigs, nodes } = useGraphState();
+  const { activePathId, pathName, isPathLocked, isPathActive, executionMode, flowIntensity, runMode, paths, nodes } = useGraphState();
+  const { setPathName, setPaths } = useGraphActions();
 
   // Domain: Selection — read from context
   const { nodeConfigDirty } = useSelectionState();
@@ -99,41 +93,22 @@ export function AiPathsSettingsView({
   // Domain: Path config — read from dedicated hook
   const { handleExecutionModeChange, handleFlowIntensityChange, handleRunModeChange } = usePathConfigHandlers();
 
+  // Domain: Error reporting — read from dedicated hook
+  const { persistLastError } = useAiPathsErrorReporting(activeTab);
+
   const {
     handleCreatePath,
     handleDeletePath,
     handleTogglePathLock,
     handleTogglePathActive,
-    persistLastError,
-    setPathName,
-    updateActivePathMeta,
     handleSwitchPath,
-    savePathIndex,
     historyRetentionPasses,
     historyRetentionOptionsMax,
     handleHistoryRetentionChange,
-    setNodes,
     palette,
-    handleDragStart,
-    handleRemoveEdge,
-    updateSelectedNode,
-    handleDeleteSelectedNode,
     handleClearConnectorData,
     handleClearHistory,
-    handlePresetFromSelection,
-    handleSavePreset,
-    handleApplyPreset,
-    handleDeletePreset,
-    handleExportPresets,
     lastGraphModelPayload,
-    runList,
-    runsQuery,
-    handleOpenRunDetail,
-    handleResumeRun,
-    handleCancelRun,
-    handleRequeueDeadLetter,
-    handleImportPresets,
-    reportAiPathsError,
   } = state;
 
   // Derived from Persistence context
@@ -154,19 +129,6 @@ export function AiPathsSettingsView({
         : autoSaveStatus === 'saving'
           ? 'border-sky-500/40 bg-sky-500/10 text-sky-200'
           : 'border bg-card/60 text-gray-300';
-
-  // Derived from Graph context
-  const pathFlagsById = useMemo((): Record<string, { isLocked: boolean; isActive: boolean }> => {
-    const next: Record<string, { isLocked: boolean; isActive: boolean }> = {};
-    paths.forEach((meta: PathMeta) => {
-      const config = pathConfigs[meta.id];
-      next[meta.id] = {
-        isLocked: config?.isLocked ?? false,
-        isActive: config?.isActive ?? true,
-      };
-    });
-    return next;
-  }, [pathConfigs, paths]);
 
   const hasHistory = Object.keys(runtimeState.history ?? {}).length > 0;
 
@@ -302,16 +264,6 @@ export function AiPathsSettingsView({
     () => runtimeEvents.slice(Math.max(0, runtimeEvents.length - 80)).reverse(),
     [runtimeEvents]
   );
-
-  const setNodesFromUser: React.Dispatch<React.SetStateAction<AiNode[]>> = (
-    next: React.SetStateAction<AiNode[]>
-  ): void => {
-    if (isPathLocked) {
-      toast('This path is locked. Unlock it to edit nodes or connections.', { variant: 'info' });
-      return;
-    }
-    setNodes(next);
-  };
 
   if (loading) {
     return <div className='text-sm text-gray-400'>Loading AI Paths...</div>;
@@ -594,7 +546,10 @@ export function AiPathsSettingsView({
                       return;
                     }
                     setPathName(nextName);
-                    updateActivePathMeta(nextName);
+                    if (activePathId) {
+                      const updatedAt = new Date().toISOString();
+                      setPaths((prev) => prev.map((p) => p.id === activePathId ? { ...p, name: nextName, updatedAt } : p));
+                    }
                     setRenameOpen(false);
                     void savePathConfig({ pathNameOverride: nextName });
                   }}
@@ -631,31 +586,10 @@ export function AiPathsSettingsView({
             >
               <CanvasSidebarWrapper
                 palette={palette}
-                onDragStart={(e: React.DragEvent<HTMLDivElement>, node: NodeDefinition) => {
-                  handleDragStart(e, node);
-                }}
-                onUpdateSelectedNode={(patch, options) => { updateSelectedNode(patch, options); }}
-                onDeleteSelectedNode={() => { handleDeleteSelectedNode(); }}
-                onRemoveEdge={(edgeId: string) => { handleRemoveEdge(edgeId); }}
-                savePathConfig={savePathConfig}
               />
-              <ClusterPresetsPanelMigrated
-                onPresetFromSelection={handlePresetFromSelection}
-                onSavePreset={() => { handleSavePreset().catch(() => {}); }}
-                onApplyPreset={(preset: ClusterPreset) => { handleApplyPreset(preset); }}
-                onDeletePreset={(presetId: string) => { handleDeletePreset(presetId).catch(() => {}); }}
-                onExportPresets={handleExportPresets}
-              />
+              <ClusterPresetsPanelMigrated />
               <GraphModelDebugPanel payload={lastGraphModelPayload} />
-              <RunHistoryPanelMigrated
-                runs={runList}
-                isRefreshing={runsQuery.isFetching}
-                onRefresh={() => { runsQuery.refetch().catch(() => {}); }}
-                onOpenRunDetail={(runId: string) => { handleOpenRunDetail(runId).catch(() => {}); }}
-                onResumeRun={(runId: string, mode: 'resume' | 'replay') => { handleResumeRun(runId, mode).catch(() => {}); }}
-                onCancelRun={(runId: string) => { handleCancelRun(runId).catch(() => {}); }}
-                onRequeueDeadLetter={(runId: string) => { handleRequeueDeadLetter(runId).catch(() => {}); }}
-              />
+              <RunHistoryPanelMigrated />
             </div>
             <div className={`relative ${isFocusMode ? 'h-full min-h-0' : ''}`}>
               <CanvasBoardMigrated
@@ -802,78 +736,16 @@ export function AiPathsSettingsView({
       )}
 
       {activeTab === 'paths' && (
-        <PathsTabPanel
-          paths={paths}
-          pathFlagsById={pathFlagsById}
-          onCreatePath={() => { handleCreatePath(); }}
-          onSaveList={() => { void savePathIndex(paths).catch(() => {}); }}
-          onEditPath={(pathId: string): void => {
-            handleSwitchPath(pathId);
-            onTabChange?.('canvas');
-          }}
-          onDeletePath={(pathId: string): void => {
-            void handleDeletePath(pathId).catch(() => {});
-          }}
-        />
+        <PathsTabPanelMigrated onTabChange={onTabChange} />
       )}
 
-      {activeTab === 'docs' && (
-        <DocsTabPanel
-          docsOverviewSnippet={DOCS_OVERVIEW_SNIPPET}
-          docsWiringSnippet={DOCS_WIRING_SNIPPET}
-          docsDescriptionSnippet={DOCS_DESCRIPTION_SNIPPET}
-          docsJobsSnippet={DOCS_JOBS_SNIPPET}
-          onCopyDocsWiring={() => {
-            const promise = navigator.clipboard.writeText(DOCS_WIRING_SNIPPET);
-            promise.then(
-              () => toast('Wiring copied to clipboard.', { variant: 'success' }),
-              (err: unknown) => { 
-                reportAiPathsError(err, { action: 'copyDocsWiring' }, 'Failed to copy wiring:'); 
-                toast('Failed to copy wiring.', { variant: 'error' }); 
-              }
-            ).catch(() => {});
-          }}
-          onCopyDocsDescription={() => {
-            const promise = navigator.clipboard.writeText(DOCS_DESCRIPTION_SNIPPET);
-            promise.then(
-              () => toast('AI Description wiring copied.', { variant: 'success' }),
-              (err: unknown) => { 
-                reportAiPathsError(err, { action: 'copyDocsDescription' }, 'Failed to copy wiring:'); 
-                toast('Failed to copy wiring.', { variant: 'error' }); 
-              }
-            ).catch(() => {});
-          }}
-          onCopyDocsJobs={() => {
-            const promise = navigator.clipboard.writeText(DOCS_JOBS_SNIPPET);
-            promise.then(
-              () => toast('AI job wiring copied.', { variant: 'success' }),
-              (err: unknown) => { 
-                reportAiPathsError(err, { action: 'copyDocsJobs' }, 'Failed to copy wiring:'); 
-                toast('Failed to copy wiring.', { variant: 'error' }); 
-              }
-            ).catch(() => {});
-          }}
-        />
-      )}
+      {activeTab === 'docs' && <DocsTabPanelMigrated />}
 
-      <NodeConfigDialogMigrated
-        modelOptions={state.modelOptions}
-        updateSelectedNode={state.updateSelectedNode}
-        updateSelectedNodeConfig={state.updateSelectedNodeConfig}
-        clearNodeHistory={state.handleClearNodeHistory}
-      />
+      <NodeConfigDialogMigrated />
       <RunDetailDialogWithContext />
-      <PresetsDialogWithContext
-        onImportPresets={() => { void handleImportPresets('merge').catch(() => {}); }}
-        toast={toast}
-        reportAiPathsError={reportAiPathsError}
-      />
+      <PresetsDialogMigrated />
 
-      <SimulationDialogMigrated
-        setNodes={setNodesFromUser}
-        onRunSimulation={(node) => { void runSimulation(node); }}
-        savePathConfig={savePathConfig}
-      />
+      <SimulationDialogMigrated />
     </div>
   );
 }

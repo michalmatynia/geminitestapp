@@ -4,7 +4,6 @@ import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import { ProfilerOnRenderCallback, useCallback, useEffect, useMemo, useState } from 'react';
 
-
 import { useDrafts, draftKeys } from '@/features/drafter/hooks/useDrafts';
 import {
   fetchIntegrationsWithConnections,
@@ -44,6 +43,7 @@ import type { ProductWithImages } from '@/features/products/types';
 import type { ProductDraft } from '@/features/products/types/drafts';
 import { useProductListSync } from '@/shared/hooks/sync/useBackgroundSync';
 import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast, ConfirmDialog } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -217,7 +217,7 @@ export function AdminProductsPage(): React.JSX.Element {
       setActionError(null);
       try {
         const fullProduct = await queryClient.fetchQuery({
-          queryKey: ['products', product.id],
+          queryKey: QUERY_KEYS.products.detail(product.id),
           queryFn: () => api.get<ProductWithImages>(`/api/products/${product.id}`),
           staleTime: 10_000,
         });
@@ -398,7 +398,7 @@ export function AdminProductsPage(): React.JSX.Element {
       };
 
       const allProducts = await queryClient.fetchQuery({
-        queryKey: ['products-all', filters],
+        queryKey: QUERY_KEYS.products.list({ scope: 'all', ...filters }),
         queryFn: () => getProducts(filters)
       });
 
@@ -462,8 +462,8 @@ export function AdminProductsPage(): React.JSX.Element {
   useEffect(() => {
     setIsMounted(true);
     // Force fresh product queries on mount to avoid showing stale persisted caches.
-    void queryClient.invalidateQueries({ queryKey: ['products'] });
-    void queryClient.invalidateQueries({ queryKey: ['products-count'] });
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() });
   }, [queryClient]);
 
   useEffect(() => {

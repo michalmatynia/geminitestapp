@@ -1,21 +1,7 @@
-import { ImageFileRecord, ImageFileSelection } from '@/shared/types/domain/files';
+import type { ManagedImageSlot } from '@/features/image-slots';
+import { ImageFileRecord } from '@/shared/types/domain/files';
 
-export type ProductImageSlot =
-  | {
-      type: 'file'; // A new File object
-      data: File;
-      previewUrl: string;
-      slotId: string;
-      originalIndex?: number | undefined; // Optional: original index if moved
-    }
-  | {
-      type: 'existing'; // An existing ImageFile from the DB
-      data: ImageFileSelection;
-      previewUrl: string; // The filepath of the existing image
-      slotId: string;
-      originalIndex?: number | undefined; // Optional: original index if moved
-    }
-  | null; // Empty slot
+export type ProductImageSlot = ManagedImageSlot;
 
 export type ExpandedImageFile = ImageFileRecord & {
   products: {

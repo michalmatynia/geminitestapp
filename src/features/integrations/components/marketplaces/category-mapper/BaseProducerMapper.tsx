@@ -1,8 +1,9 @@
 'use client';
 
 import { Download, RefreshCw, Save } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 
+import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
 import {
   useFetchExternalProducersMutation,
   useSaveProducerMappingsMutation,
@@ -11,32 +12,21 @@ import {
   useExternalProducers,
   useProducerMappings,
 } from '@/features/integrations/hooks/useMarketplaceQueries';
-import type { ProducerMappingWithDetails } from '@/features/integrations/types/producer-mapping';
 import { logClientError } from '@/features/observability';
 import { useProducers } from '@/features/products/hooks/useProductMetadata';
 import type { Producer } from '@/features/products/types';
 import { Button, SectionHeader, UnifiedSelect, useToast } from '@/shared/ui';
 
-type BaseProducerMapperProps = {
-  connectionId: string;
-  connectionName: string;
-};
+import { usePendingExternalMappings } from './usePendingExternalMappings';
 
-export function BaseProducerMapper({
-  connectionId,
-  connectionName,
-}: BaseProducerMapperProps): React.JSX.Element {
+export function BaseProducerMapper(): React.JSX.Element {
+  const { connectionId, connectionName } = useCategoryMapper();
   const { toast } = useToast();
   const producersQuery = useProducers();
   const externalProducersQuery = useExternalProducers(connectionId);
   const mappingsQuery = useProducerMappings(connectionId);
   const fetchMutation = useFetchExternalProducersMutation();
   const saveMutation = useSaveProducerMappingsMutation();
-  const [pendingMappings, setPendingMappings] = useState<Map<string, string | null>>(new Map());
-
-  useEffect(() => {
-    setPendingMappings(new Map());
-  }, [connectionId]);
 
   const internalProducers = useMemo(
     (): Producer[] =>
@@ -57,43 +47,23 @@ export function BaseProducerMapper({
     [externalProducersQuery.data]
   );
 
-  const mappingByInternalProducerId = useMemo(() => {
-    const next = new Map<string, ProducerMappingWithDetails>();
-    (mappingsQuery.data ?? []).forEach((mapping: ProducerMappingWithDetails) => {
-      if (mapping.isActive) {
-        next.set(mapping.internalProducerId, mapping);
-      }
-    });
-    return next;
-  }, [mappingsQuery.data]);
+  const {
+    pendingMappings,
+    getCurrentMapping,
+    handleMappingChange,
+    resetPendingMappings,
+    stats,
+  } = usePendingExternalMappings({
+    mappings: mappingsQuery.data ?? [],
+    internalIds: internalProducers.map((producer: Producer) => producer.id),
+    getInternalId: (mapping) => mapping.internalProducerId,
+    getExternalId: (mapping) => mapping.externalProducerId,
+    isActive: (mapping) => Boolean(mapping.isActive),
+  });
 
-  const getCurrentMapping = useCallback(
-    (internalProducerId: string): string | null => {
-      if (pendingMappings.has(internalProducerId)) {
-        return pendingMappings.get(internalProducerId) ?? null;
-      }
-      return mappingByInternalProducerId.get(internalProducerId)?.externalProducerId ?? null;
-    },
-    [mappingByInternalProducerId, pendingMappings]
-  );
-
-  const handleMappingChange = useCallback(
-    (internalProducerId: string, externalProducerId: string | null): void => {
-      setPendingMappings((prev: Map<string, string | null>) => {
-        const next = new Map(prev);
-        const savedValue =
-          mappingByInternalProducerId.get(internalProducerId)?.externalProducerId ?? null;
-
-        if (savedValue === externalProducerId) {
-          next.delete(internalProducerId);
-        } else {
-          next.set(internalProducerId, externalProducerId);
-        }
-        return next;
-      });
-    },
-    [mappingByInternalProducerId]
-  );
+  useEffect(() => {
+    resetPendingMappings();
+  }, [connectionId, resetPendingMappings]);
 
   const handleFetch = async (): Promise<void> => {
     try {
@@ -127,7 +97,7 @@ export function BaseProducerMapper({
         mappings,
       });
       toast(result.message, { variant: 'success' });
-      setPendingMappings(new Map());
+      resetPendingMappings();
     } catch (error: unknown) {
       logClientError(error, {
         context: { source: 'BaseProducerMapper', action: 'saveMappings', connectionId },
@@ -136,18 +106,6 @@ export function BaseProducerMapper({
       toast(message, { variant: 'error' });
     }
   };
-
-  const stats = useMemo(() => {
-    const total = internalProducers.length;
-    const mapped = internalProducers.filter(
-      (producer: Producer) => getCurrentMapping(producer.id) !== null
-    ).length;
-    return {
-      total,
-      mapped,
-      pending: pendingMappings.size,
-    };
-  }, [getCurrentMapping, internalProducers, pendingMappings.size]);
 
   const loading =
     producersQuery.isLoading || externalProducersQuery.isLoading || mappingsQuery.isLoading;

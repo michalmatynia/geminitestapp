@@ -18,8 +18,8 @@ import {
   safeStringify,
   toggleContextTarget,
 } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 import { logClientError } from '@/features/observability';
+import { Button, Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
 import { useAiPathConfig } from '../AiPathConfigContext';
 

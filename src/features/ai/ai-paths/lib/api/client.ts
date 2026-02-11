@@ -14,6 +14,10 @@ import type {
   DatabaseBrowseDto,
   SchemaResponsePayloadDto,
 } from '@/shared/dtos/database';
+import type {
+  SettingRecordDto,
+  SettingsScopeDto,
+} from '@/shared/dtos/settings';
 import type { AgentTeachingAgentRecord, AgentTeachingChatSource } from '@/shared/types/domain/agent-teaching';
 import type { AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
 import type { ChatMessage } from '@/shared/types/domain/chatbot';
@@ -81,12 +85,8 @@ export type EntityUpdatePayload = {
 export type SchemaResponse = SchemaResponsePayloadDto;
 export type BrowseResponse = DatabaseBrowseDto;
 
-export type SettingRecord = {
-  key: string;
-  value: string;
-};
-
-export type SettingsScope = 'all' | 'light' | 'heavy';
+export type SettingRecord = SettingRecordDto;
+export type SettingsScope = SettingsScopeDto;
 
 export type AgentEnqueuePayload = {
   prompt: string;

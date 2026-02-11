@@ -2,7 +2,7 @@
 import dynamic from 'next/dynamic';
 import { Profiler, memo, useMemo } from 'react';
 
-import { useProductListContext } from '@/features/products/context/ProductListContext';
+import { useProductListTableContext } from '@/features/products/context/ProductListContext';
 import { DataTable, Button, ListPanel, Alert } from '@/shared/ui';
 
 const ProductListHeader = dynamic(
@@ -42,7 +42,7 @@ export const ProductListPanel = memo(function ProductListPanel() {
     getRowId,
     isLoading,
     skeletonRows,
-  } = useProductListContext();
+  } = useProductListTableContext();
 
   const tableProps = useMemo(
     () => ({

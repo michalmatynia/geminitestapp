@@ -8,6 +8,7 @@ import { useAdaptiveQuery } from '@/shared/hooks/query/useSmartCache';
 import { useNormalizedQuery, useComposedQuery } from '@/shared/hooks/useQueryComposition';
 import { useQueryScheduler, useBackgroundQueries } from '@/shared/hooks/useQueryScheduler';
 import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 
 interface EnhancedProductsQueryResult {
@@ -23,7 +24,7 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
 
   // Normalized products query
   const productsQuery = useNormalizedQuery<ProductDto>(
-    ['products', 'enhanced'],
+    [...QUERY_KEYS.products.all, 'enhanced'],
     async (): Promise<ProductDto[]> => {
       return await api.get<ProductDto[]>('/api/products');
     }
@@ -32,7 +33,7 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
   // Composed query for product statistics
   const productStats = useComposedQuery(
     {
-      queryKey: ['products', 'enhanced'],
+      queryKey: [...QUERY_KEYS.products.all, 'enhanced'],
       queryFn: async (): Promise<ProductDto[]> => {
         return await api.get<ProductDto[]>('/api/products');
       },
@@ -49,7 +50,7 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
   useEffect((): void => {
     scheduler.scheduleQuery(
       'product-categories',
-      ['products', 'categories'],
+      [...QUERY_KEYS.products.all, 'categories'],
       async (): Promise<ProductCategoryDto[]> => {
         type Catalog = { id: string };
         const catalogs = await api.get<Catalog[]>('/api/catalogs');
@@ -64,7 +65,7 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
 
     scheduler.scheduleQuery(
       'product-tags',
-      ['products', 'tags'],
+      [...QUERY_KEYS.products.all, 'tags'],
       async (): Promise<ProductTagDto[]> => {
         return await api.get<ProductTagDto[]>('/api/products/tags');
       },
@@ -75,7 +76,7 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
   // Background sync for critical data
   useBackgroundQueries([
     {
-      queryKey: ['products', 'count'],
+      queryKey: [...QUERY_KEYS.products.all, 'enhanced-count'],
       queryFn: async (): Promise<{ count: number }> => {
         return await api.get<{ count: number }>('/api/products/count');
       },

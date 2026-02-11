@@ -104,11 +104,11 @@ export const noteService: NoteRepository = {
     const note = await repoCall('create', data);
     const populated = populateRelations(note);
     void logActivity({
-        type: ActivityTypes.NOTE.CREATED,
-        description: `Created note ${populated.title}`,
-        entityId: populated.id,
-        entityType: 'note',
-        metadata: { title: populated.title, notebookId: populated.notebookId }
+      type: ActivityTypes.NOTE.CREATED,
+      description: `Created note ${populated.title}`,
+      entityId: populated.id,
+      entityType: 'note',
+      metadata: { title: populated.title, notebookId: populated.notebookId }
     }).catch(() => {});
     return populated;
   },
@@ -165,11 +165,11 @@ export const noteService: NoteRepository = {
 
     const populated = populateRelations(note);
     void logActivity({
-        type: ActivityTypes.NOTE.UPDATED,
-        description: `Updated note ${populated.title}`,
-        entityId: populated.id,
-        entityType: 'note',
-        metadata: { changes: Object.keys(data) }
+      type: ActivityTypes.NOTE.UPDATED,
+      description: `Updated note ${populated.title}`,
+      entityId: populated.id,
+      entityType: 'note',
+      metadata: { changes: Object.keys(data) }
     }).catch(() => {});
     return populated;
   },

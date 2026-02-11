@@ -14,11 +14,12 @@ import type {
   ProductParameter,
 } from '@/features/products/types';
 import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { Language } from '@/shared/types/domain/internationalization';
 
 export function useCatalogs(): UseQueryResult<CatalogRecord[]> {
   return useQuery({
-    queryKey: ['catalogs'],
+    queryKey: QUERY_KEYS.products.catalogs,
     queryFn: async () => await api.get<CatalogRecord[]>('/api/catalogs'),
   });
 }

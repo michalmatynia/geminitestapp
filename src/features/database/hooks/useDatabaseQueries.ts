@@ -337,7 +337,7 @@ export function useCreateBackupMutation(): UseMutationResult<
   ApiPayloadResult<DatabaseBackupResponse>,
   Error,
   DatabaseType
-> {
+  > {
   const queryClient = useQueryClient();
   return useMutation(databaseMutationOptions.createBackup(queryClient));
 }
@@ -346,7 +346,7 @@ export function useRestoreBackupMutation(): UseMutationResult<
   ApiPayloadResult<DatabaseRestoreResponse>,
   Error,
   { dbType: DatabaseType; backupName: string; truncateBeforeRestore: boolean }
-> {
+  > {
   return useMutation(databaseMutationOptions.restoreBackup());
 }
 
@@ -354,7 +354,7 @@ export function useUploadBackupMutation(): UseMutationResult<
   ApiPayloadResult<DatabaseBackupResponse>,
   Error,
   { dbType: DatabaseType; file: File; onProgress?: (loaded: number, total?: number) => void }
-> {
+  > {
   const queryClient = useQueryClient();
   return useMutation(databaseMutationOptions.uploadBackup(queryClient));
 }
@@ -363,7 +363,7 @@ export function useDeleteBackupMutation(): UseMutationResult<
   ApiPayloadResult<DatabaseBackupResponse>,
   Error,
   { dbType: DatabaseType; backupName: string }
-> {
+  > {
   const queryClient = useQueryClient();
   return useMutation(databaseMutationOptions.deleteBackup(queryClient));
 }
@@ -403,7 +403,7 @@ export function useSqlQueryMutation(): UseMutationResult<
     update?: Record<string, unknown>;
     pipeline?: Record<string, unknown>[];
   }
-> {
+  > {
   return useMutation(databaseMutationOptions.sqlQuery());
 }
 
@@ -428,7 +428,7 @@ export function useDatabaseEngineStatus(): UseQueryResult<DatabaseEngineStatusRe
 export function useDatabaseBackupSchedulerStatus(): UseQueryResult<
   DatabaseEngineBackupSchedulerStatusResponse,
   Error
-> {
+  > {
   return useQuery(databaseQueryOptions.backupSchedulerStatus());
 }
 
@@ -442,7 +442,7 @@ export function useDatabaseBackupSchedulerTickMutation(): UseMutationResult<
   DatabaseEngineBackupSchedulerTickResponse,
   Error,
   void
-> {
+  > {
   const queryClient = useQueryClient();
   return useMutation(databaseMutationOptions.backupSchedulerTick(queryClient));
 }
@@ -451,7 +451,7 @@ export function useDatabaseBackupRunNowMutation(): UseMutationResult<
   DatabaseEngineBackupRunNowResponse,
   Error,
   { dbType: 'mongodb' | 'postgresql' | 'all' }
-> {
+  > {
   const queryClient = useQueryClient();
   return useMutation(databaseMutationOptions.backupRunNow(queryClient));
 }
@@ -460,7 +460,7 @@ export function useCancelDatabaseEngineOperationJobMutation(): UseMutationResult
   { success: boolean; job: unknown },
   Error,
   { jobId: string }
-> {
+  > {
   const queryClient = useQueryClient();
   return useMutation(databaseMutationOptions.cancelEngineOperationJob(queryClient));
 }
@@ -475,7 +475,7 @@ export function useCopyCollectionMutation(): UseMutationResult<
   CollectionCopyResult,
   Error,
   { collection: string; direction: 'mongo_to_prisma' | 'prisma_to_mongo' }
-> {
+  > {
   const queryClient = useQueryClient();
   return useMutation(databaseMutationOptions.copyCollection(queryClient));
 }
@@ -484,7 +484,7 @@ export function useCreateJsonBackupMutation(): UseMutationResult<
   DatabaseBackupResponse,
   Error,
   void
-> {
+  > {
   const queryClient = useQueryClient();
   return useMutation(databaseMutationOptions.createJsonBackup(queryClient));
 }
@@ -493,7 +493,7 @@ export function useRestoreJsonBackupMutation(): UseMutationResult<
   DatabaseRestoreResponse,
   Error,
   string
-> {
+  > {
   return useMutation(databaseMutationOptions.restoreJsonBackup());
 }
 

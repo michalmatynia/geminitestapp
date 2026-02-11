@@ -13,26 +13,26 @@ function AppErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
     error instanceof Error ? error.message : 'An unexpected error occurred. Our team has been notified.';
 
   return (
-    <div className="flex min-h-[400px] w-full flex-col items-center justify-center p-6 text-center">
-      <div className="mb-4 rounded-full bg-red-100 p-3 text-red-600">
-        <AlertCircle className="h-10 w-10" />
+    <div className='flex min-h-[400px] w-full flex-col items-center justify-center p-6 text-center'>
+      <div className='mb-4 rounded-full bg-red-100 p-3 text-red-600'>
+        <AlertCircle className='h-10 w-10' />
       </div>
-      <h2 className="mb-2 text-2xl font-bold tracking-tight text-slate-900">
+      <h2 className='mb-2 text-2xl font-bold tracking-tight text-slate-900'>
         Something went wrong
       </h2>
-      <p className="mb-8 max-w-md text-slate-600">
+      <p className='mb-8 max-w-md text-slate-600'>
         {errorMessage}
       </p>
-      <div className="flex flex-col gap-3 sm:flex-row">
+      <div className='flex flex-col gap-3 sm:flex-row'>
         <Button
           onClick={resetErrorBoundary}
-          className="flex items-center gap-2"
+          className='flex items-center gap-2'
         >
-          <RefreshCcw className="h-4 w-4" />
+          <RefreshCcw className='h-4 w-4' />
           Try again
         </Button>
         <Button
-          variant="outline"
+          variant='outline'
           onClick={() => window.location.reload()}
         >
           Reload page
@@ -56,10 +56,10 @@ interface AppErrorBoundaryProps {
 export function AppErrorBoundary({ children, source = 'AppErrorBoundary', onReset }: AppErrorBoundaryProps) {
   const resetProps = onReset
     ? {
-        onReset: (): void => {
-          onReset();
-        },
-      }
+      onReset: (): void => {
+        onReset();
+      },
+    }
     : {};
 
   return (

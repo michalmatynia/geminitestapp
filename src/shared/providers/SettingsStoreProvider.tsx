@@ -2,9 +2,9 @@
 
 import React, { createContext, useContext, useMemo } from 'react';
 
-import { logClientError } from '@/features/observability';
-
 import { useLiteSettingsMap, useSettingsMap } from '@/shared/hooks/use-settings';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 
 type SettingsStoreValue = {
   map: Map<string, string>;

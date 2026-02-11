@@ -1,8 +1,5 @@
 import 'server-only';
 
-
-
-import { logSystemEvent } from '@/features/observability/server';
 import { internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
@@ -12,6 +9,15 @@ import {
   getDatabaseEngineServiceProvider,
   isPrimaryProviderConfigured,
 } from './database-engine-policy';
+
+const logSystemEvent = async (params: { level: string; message: string; source: string; context?: Record<string, unknown> }): Promise<void> => {
+  try {
+    const { logSystemEvent: realLogSystemEvent } = await import('@/features/observability/server');
+    await realLogSystemEvent(params as any);
+  } catch {
+    // ignore
+  }
+};
 
 export const APP_DB_PROVIDER_SETTING_KEY = 'app_db_provider';
 

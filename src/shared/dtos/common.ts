@@ -3,6 +3,7 @@
 
 export * from './auth';
 export * from './products';
+export * from './settings';
 export * from './chatbot';
 export * from './cms';
 export * from './files';

@@ -24,5 +24,5 @@ export * from '@/shared/dtos/notesapp';
 export * from '@/shared/dtos/observability';
 export * from '@/shared/dtos/playwright';
 export * from '@/shared/dtos/products';
+export * from '@/shared/dtos/settings';
 export * from '@/shared/dtos/viewer3d';
-

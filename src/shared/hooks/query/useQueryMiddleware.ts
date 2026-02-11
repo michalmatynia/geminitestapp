@@ -1,8 +1,9 @@
-"use client";
+'use client';
 
-import { useQueryClient, type Query } from "@tanstack/react-query";
-import { useEffect } from "react";
-import { logClientError } from "@/features/observability";
+import { useQueryClient, type Query } from '@tanstack/react-query';
+import { useEffect } from 'react';
+
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 interface QueryMiddleware {
   name: string;
@@ -13,35 +14,35 @@ interface QueryMiddleware {
 }
 
 const parseEnvNumber = (value: string | undefined, fallback: number): number => {
-  const parsed = Number.parseInt(value ?? "", 10);
+  const parsed = Number.parseInt(value ?? '', 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 };
 
 const isEnabled = (value: string | undefined, fallback: boolean): boolean => {
   if (!value) return fallback;
   const normalized = value.trim().toLowerCase();
-  return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
+  return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on';
 };
 
 const SLOW_QUERY_THRESHOLD_MS = parseEnvNumber(
-  process.env["NEXT_PUBLIC_QUERY_SLOW_THRESHOLD_MS"],
-  process.env["NODE_ENV"] === "production" ? 2000 : 5000
+  process.env['NEXT_PUBLIC_QUERY_SLOW_THRESHOLD_MS'],
+  process.env['NODE_ENV'] === 'production' ? 2000 : 5000
 );
 const SLOW_QUERY_COOLDOWN_MS = parseEnvNumber(
-  process.env["NEXT_PUBLIC_QUERY_SLOW_COOLDOWN_MS"],
+  process.env['NEXT_PUBLIC_QUERY_SLOW_COOLDOWN_MS'],
   60_000
 );
 const QUERY_WARNING_COOLDOWN_MS = parseEnvNumber(
-  process.env["NEXT_PUBLIC_QUERY_WARNING_COOLDOWN_MS"],
+  process.env['NEXT_PUBLIC_QUERY_WARNING_COOLDOWN_MS'],
   60_000
 );
 const REPORT_SLOW_QUERIES = isEnabled(
-  process.env["NEXT_PUBLIC_QUERY_SLOW_REPORTING_ENABLED"],
-  process.env["NODE_ENV"] === "production"
+  process.env['NEXT_PUBLIC_QUERY_SLOW_REPORTING_ENABLED'],
+  process.env['NODE_ENV'] === 'production'
 );
 const REPORT_QUERY_WARNINGS = isEnabled(
-  process.env["NEXT_PUBLIC_QUERY_WARNING_REPORTING_ENABLED"],
-  process.env["NODE_ENV"] === "production"
+  process.env['NEXT_PUBLIC_QUERY_WARNING_REPORTING_ENABLED'],
+  process.env['NODE_ENV'] === 'production'
 );
 
 const queryStartTimes = new WeakMap<Query, number>();
@@ -52,7 +53,7 @@ const getQueryKeyLabel = (query: Query): string => {
   try {
     return JSON.stringify(query.queryKey);
   } catch {
-    return String((query as { queryHash?: string }).queryHash ?? "unknown-query");
+    return String((query as { queryHash?: string }).queryHash ?? 'unknown-query');
   }
 };
 
@@ -63,7 +64,7 @@ const shouldReportWithCooldown = (
 ): boolean => {
   const now = Date.now();
   const lastReportedAt = bucket.get(key);
-  if (typeof lastReportedAt === "number" && now - lastReportedAt < cooldownMs) {
+  if (typeof lastReportedAt === 'number' && now - lastReportedAt < cooldownMs) {
     return false;
   }
   bucket.set(key, now);
@@ -108,13 +109,13 @@ export const loggingMiddleware: QueryMiddleware = {
 
 
   onQueryError: (query: Query, error: Error): void => {
-    const message = error?.message?.trim() || "";
-    if (!message || ["{}", "[]", "[object Object]"].includes(message)) {
+    const message = error?.message?.trim() || '';
+    if (!message || ['{}', '[]', '[object Object]'].includes(message)) {
       return;
     }
     logClientError(error, { 
       context: { 
-        source: "QueryMiddleware", 
+        source: 'QueryMiddleware', 
         queryKey: query.queryKey,
         fetchStatus: query.state.fetchStatus
       } 

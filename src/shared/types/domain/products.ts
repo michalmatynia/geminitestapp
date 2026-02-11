@@ -134,9 +134,27 @@ export type Producer = Entity & {
   website: string | null;
 };
 
-export type ProductValidationTarget = 'name' | 'description';
+export type ProductValidationTarget = 'name' | 'description' | 'sku';
 
 export type ProductValidationSeverity = 'error' | 'warning';
+export type ProductValidationChainMode = 'continue' | 'stop_on_match' | 'stop_on_replace';
+export type ProductValidationLaunchSourceMode =
+  | 'current_field'
+  | 'form_field'
+  | 'latest_product_field';
+export type ProductValidationLaunchOperator =
+  | 'equals'
+  | 'not_equals'
+  | 'contains'
+  | 'starts_with'
+  | 'ends_with'
+  | 'regex'
+  | 'gt'
+  | 'gte'
+  | 'lt'
+  | 'lte'
+  | 'is_empty'
+  | 'is_not_empty';
 
 export type ProductValidationPattern = Entity & {
   label: string;
@@ -150,6 +168,19 @@ export type ProductValidationPattern = Entity & {
   replacementEnabled: boolean;
   replacementValue: string | null;
   replacementFields: string[];
+  sequenceGroupId: string | null;
+  sequenceGroupLabel: string | null;
+  sequenceGroupDebounceMs: number;
+  sequence: number | null;
+  chainMode: ProductValidationChainMode;
+  maxExecutions: number;
+  passOutputToNext: boolean;
+  launchEnabled: boolean;
+  launchSourceMode: ProductValidationLaunchSourceMode;
+  launchSourceField: string | null;
+  launchOperator: ProductValidationLaunchOperator;
+  launchValue: string | null;
+  launchFlags: string | null;
 };
 
 export type ProductValidatorConfig = {

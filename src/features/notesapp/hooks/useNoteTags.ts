@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 
+import { useCreateNoteTag } from '@/features/notesapp/api/useNoteMutations';
 import { logClientError } from '@/features/observability';
 import type { TagRecord } from '@/shared/types/domain/notes';
 import { useToast } from '@/shared/ui';
@@ -29,6 +30,7 @@ export function useNoteTags(
   handleRemoveTag: (tagId: string) => void;
 } {
   const { toast } = useToast();
+  const createTagMutation = useCreateNoteTag();
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(initialTagIds);
   const [tagInput, setTagInput] = useState('');
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
@@ -66,22 +68,14 @@ export function useNoteTags(
     }
 
     try {
-      const response = await fetch('/api/notes/tags', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: tagInput.trim(),
-          notebookId: notebookId ?? noteNotebookId ?? null,
-        }),
+      const newTag = await createTagMutation.mutateAsync({
+        name: tagInput.trim(),
+        notebookId: notebookId ?? noteNotebookId ?? null,
       });
-
-      if (response.ok) {
-        const newTag = (await response.json()) as TagRecord;
-        onTagCreated?.();
-        setSelectedTagIds((prev: string[]) => [...prev, newTag.id]);
-        setTagInput('');
-        setIsTagDropdownOpen(false);
-      }
+      onTagCreated?.();
+      setSelectedTagIds((prev: string[]) => [...prev, newTag.id]);
+      setTagInput('');
+      setIsTagDropdownOpen(false);
     } catch (error: unknown) {
       logClientError(error, { context: { source: 'useNoteTags', action: 'createTag', name: tagInput.trim(), notebookId: notebookId ?? noteNotebookId } });
       toast('Failed to create tag', { variant: 'error' });

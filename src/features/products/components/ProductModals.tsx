@@ -8,7 +8,7 @@ import { MassListProductModal } from '@/features/integrations/components/listing
 import { ProductListingsModal } from '@/features/integrations/components/listings/ProductListingsModal';
 import ProductForm from '@/features/products/components/ProductForm';
 import { ProductFormProvider, useProductFormContext } from '@/features/products/context/ProductFormContext';
-import { useProductListContext } from '@/features/products/context/ProductListContext';
+import { useProductListModalsContext } from '@/features/products/context/ProductListContext';
 import { AppModal, Button } from '@/shared/ui';
 
 
@@ -42,7 +42,7 @@ export function ProductModals(): React.JSX.Element {
     massListProductIds,
     onCloseMassList,
     onMassListSuccess,
-  } = useProductListContext();
+  } = useProductListModalsContext();
 
   return (
     <>

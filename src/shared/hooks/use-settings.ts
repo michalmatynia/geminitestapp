@@ -15,9 +15,9 @@ import {
   invalidateSettingsCache,
   type SettingsScope,
 } from '@/shared/api/settings-client';
-import { logClientError } from '@/features/observability';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import type { SystemSetting } from '@/shared/types/domain/settings';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export type { SystemSetting };
 

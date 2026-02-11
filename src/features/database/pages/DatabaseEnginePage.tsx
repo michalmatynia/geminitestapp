@@ -8,6 +8,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { logClientError } from '@/features/observability';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import {
+  DATABASE_ENGINE_BACKUP_WEEKDAYS,
+  isValidDatabaseEngineBackupTimeUtc,
+  normalizeDatabaseEngineBackupSchedule,
+} from '@/shared/lib/db/database-engine-backup-schedule';
+import {
   DATABASE_ENGINE_BACKUP_SCHEDULE_KEY,
   DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY,
   DATABASE_ENGINE_OPERATION_CONTROLS_KEY,
@@ -23,11 +28,6 @@ import {
   type DatabaseEngineProvider,
   type DatabaseEngineServiceRoute,
 } from '@/shared/lib/db/database-engine-constants';
-import {
-  DATABASE_ENGINE_BACKUP_WEEKDAYS,
-  isValidDatabaseEngineBackupTimeUtc,
-  normalizeDatabaseEngineBackupSchedule,
-} from '@/shared/lib/db/database-engine-backup-schedule';
 import { normalizeDatabaseEngineOperationControls } from '@/shared/lib/db/database-engine-operation-controls';
 import { PageLayout, Button, ConfirmDialog, SectionPanel, useToast } from '@/shared/ui';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
@@ -810,995 +810,995 @@ export default function DatabaseEnginePage(): React.JSX.Element {
 
       {workspaceView === 'engine' ? (
         <>
-      <ConfirmDialog
-        open={pendingSyncDirection !== null}
-        onOpenChange={(open: boolean) => !open && setPendingSyncDirection(null)}
-        title='Run Full Database Sync'
-        description={
-          pendingSyncDirection
-            ? `Run full database sync (${pendingSyncDirection})? This can overwrite target data.`
-            : ''
-        }
-        confirmText='Run Sync'
-        variant='destructive'
-        onConfirm={(): void => {
-          if (!pendingSyncDirection) return;
-          void runDatabaseSync(pendingSyncDirection);
-        }}
-      />
-
-      <ConfirmDialog
-        open={pendingCollectionSync !== null}
-        onOpenChange={(open: boolean) => !open && setPendingCollectionSync(null)}
-        title='Sync Collection'
-        description={
-          pendingCollectionSync
-            ? `Sync collection "${pendingCollectionSync.collection}" (${pendingCollectionSync.label})? Target data will be replaced.`
-            : ''
-        }
-        confirmText='Sync'
-        variant='destructive'
-        onConfirm={(): void => {
-          void confirmCollectionSync();
-        }}
-      />
-
-      <SectionPanel className='p-5'>
-        <div className='flex items-start justify-between gap-4'>
-          <div>
-            <h2 className='text-lg font-semibold text-white'>Policy Mode</h2>
-            <p className='mt-1 text-sm text-gray-400'>
-              Define whether fallback, backfill, and migrations are automatic or strictly manual.
-            </p>
-          </div>
-          <Button variant='outline' onClick={applyManualOnlyTemplate}>
-            Apply Manual-Only Template
-          </Button>
-        </div>
-        <div className='mt-4 grid gap-3 md:grid-cols-2'>
-          <label className='flex items-center gap-2 text-sm text-gray-200'>
-            <input
-              type='checkbox'
-              checked={policyDraft.requireExplicitServiceRouting}
-              onChange={(event): void =>
-                setPolicyDraft((prev) => ({
-                  ...prev,
-                  requireExplicitServiceRouting: event.target.checked,
-                }))
-              }
-            />
-            Require explicit service routing
-          </label>
-          <label className='flex items-center gap-2 text-sm text-gray-200'>
-            <input
-              type='checkbox'
-              checked={policyDraft.requireExplicitCollectionRouting}
-              onChange={(event): void =>
-                setPolicyDraft((prev) => ({
-                  ...prev,
-                  requireExplicitCollectionRouting: event.target.checked,
-                }))
-              }
-            />
-            Require explicit collection routing
-          </label>
-          <label className='flex items-center gap-2 text-sm text-gray-200'>
-            <input
-              type='checkbox'
-              checked={policyDraft.allowAutomaticFallback}
-              onChange={(event): void =>
-                setPolicyDraft((prev) => ({
-                  ...prev,
-                  allowAutomaticFallback: event.target.checked,
-                }))
-              }
-            />
-            Allow automatic fallback
-          </label>
-          <label className='flex items-center gap-2 text-sm text-gray-200'>
-            <input
-              type='checkbox'
-              checked={policyDraft.allowAutomaticBackfill}
-              onChange={(event): void =>
-                setPolicyDraft((prev) => ({
-                  ...prev,
-                  allowAutomaticBackfill: event.target.checked,
-                }))
-              }
-            />
-            Allow automatic backfill
-          </label>
-          <label className='flex items-center gap-2 text-sm text-gray-200'>
-            <input
-              type='checkbox'
-              checked={policyDraft.allowAutomaticMigrations}
-              onChange={(event): void =>
-                setPolicyDraft((prev) => ({
-                  ...prev,
-                  allowAutomaticMigrations: event.target.checked,
-                }))
-              }
-            />
-            Allow automatic migrations
-          </label>
-          <label className='flex items-center gap-2 text-sm text-gray-200'>
-            <input
-              type='checkbox'
-              checked={policyDraft.strictProviderAvailability}
-              onChange={(event): void =>
-                setPolicyDraft((prev) => ({
-                  ...prev,
-                  strictProviderAvailability: event.target.checked,
-                }))
-              }
-            />
-            Enforce provider availability (throw on missing env)
-          </label>
-        </div>
-
-        <div
-          className={`mt-4 rounded-md border p-3 text-sm ${
-            strictModeEnabled
-              ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-100'
-              : 'border-amber-500/40 bg-amber-500/10 text-amber-100'
-          }`}
-        >
-          {strictModeEnabled
-            ? 'Manual-only strict mode is active in the draft.'
-            : 'Strict manual-only mode is not fully active. Use "Apply Manual-Only Template" for no automatic fallback/backfill/migration.'}
-        </div>
-      </SectionPanel>
-
-      <SectionPanel className='mt-6 p-5'>
-        <div className='flex flex-wrap items-start justify-between gap-3'>
-          <div>
-            <h2 className='text-lg font-semibold text-white'>Manual Operation Controls</h2>
-            <p className='mt-1 text-sm text-gray-400'>
-              Server-enforced switches for manual engine actions. Disabled actions return explicit API errors.
-            </p>
-          </div>
-          <div className='flex flex-wrap gap-2'>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={(): void => {
-                setOperationControlsDraft({
-                  allowManualFullSync: true,
-                  allowManualCollectionSync: true,
-                  allowManualBackfill: true,
-                  allowManualBackupRunNow: true,
-                  allowManualBackupMaintenance: true,
-                  allowBackupSchedulerTick: true,
-                  allowOperationJobCancellation: true,
-                });
-              }}
-            >
-              Enable All
-            </Button>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={(): void => {
-                setOperationControlsDraft({
-                  allowManualFullSync: false,
-                  allowManualCollectionSync: false,
-                  allowManualBackfill: false,
-                  allowManualBackupRunNow: false,
-                  allowManualBackupMaintenance: false,
-                  allowBackupSchedulerTick: false,
-                  allowOperationJobCancellation: false,
-                });
-              }}
-            >
-              Disable All
-            </Button>
-          </div>
-        </div>
-
-        <div className='mt-4 grid gap-3 md:grid-cols-2'>
-          <label className='flex items-center gap-2 text-sm text-gray-200'>
-            <input
-              type='checkbox'
-              checked={operationControlsDraft.allowManualFullSync}
-              onChange={(event): void =>
-                setOperationControlsDraft((prev) => ({
-                  ...prev,
-                  allowManualFullSync: event.target.checked,
-                }))
-              }
-            />
-            Allow manual full sync (MongoDB &lt;-&gt; Prisma)
-          </label>
-          <label className='flex items-center gap-2 text-sm text-gray-200'>
-            <input
-              type='checkbox'
-              checked={operationControlsDraft.allowManualCollectionSync}
-              onChange={(event): void =>
-                setOperationControlsDraft((prev) => ({
-                  ...prev,
-                  allowManualCollectionSync: event.target.checked,
-                }))
-              }
-            />
-            Allow manual collection sync
-          </label>
-          <label className='flex items-center gap-2 text-sm text-gray-200'>
-            <input
-              type='checkbox'
-              checked={operationControlsDraft.allowManualBackfill}
-              onChange={(event): void =>
-                setOperationControlsDraft((prev) => ({
-                  ...prev,
-                  allowManualBackfill: event.target.checked,
-                }))
-              }
-            />
-            Allow manual settings backfill
-          </label>
-          <label className='flex items-center gap-2 text-sm text-gray-200'>
-            <input
-              type='checkbox'
-              checked={operationControlsDraft.allowManualBackupRunNow}
-              onChange={(event): void =>
-                setOperationControlsDraft((prev) => ({
-                  ...prev,
-                  allowManualBackupRunNow: event.target.checked,
-                }))
-              }
-            />
-            Allow manual backup run-now
-          </label>
-          <label className='flex items-center gap-2 text-sm text-gray-200'>
-            <input
-              type='checkbox'
-              checked={operationControlsDraft.allowManualBackupMaintenance}
-              onChange={(event): void =>
-                setOperationControlsDraft((prev) => ({
-                  ...prev,
-                  allowManualBackupMaintenance: event.target.checked,
-                }))
-              }
-            />
-            Allow manual backup restore/upload/delete
-          </label>
-          <label className='flex items-center gap-2 text-sm text-gray-200'>
-            <input
-              type='checkbox'
-              checked={operationControlsDraft.allowBackupSchedulerTick}
-              onChange={(event): void =>
-                setOperationControlsDraft((prev) => ({
-                  ...prev,
-                  allowBackupSchedulerTick: event.target.checked,
-                }))
-              }
-            />
-            Allow manual backup scheduler tick
-          </label>
-          <label className='flex items-center gap-2 text-sm text-gray-200'>
-            <input
-              type='checkbox'
-              checked={operationControlsDraft.allowOperationJobCancellation}
-              onChange={(event): void =>
-                setOperationControlsDraft((prev) => ({
-                  ...prev,
-                  allowOperationJobCancellation: event.target.checked,
-                }))
-              }
-            />
-            Allow operation job cancellation
-          </label>
-        </div>
-      </SectionPanel>
-
-      <SectionPanel className='mt-6 p-5'>
-        <div className='flex flex-wrap items-start justify-between gap-3'>
-          <div>
-            <h2 className='text-lg font-semibold text-white'>Engine Validation</h2>
-            <p className='mt-1 text-sm text-gray-400'>
-              Validate strict policy requirements before saving routing changes.
-            </p>
-          </div>
-          <div className='flex flex-wrap gap-2'>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={(): void => assignUnmappedCollections('prisma')}
-            >
-              Assign Unmapped -&gt; Prisma
-            </Button>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={(): void => assignUnmappedCollections('mongodb')}
-            >
-              Assign Unmapped -&gt; MongoDB
-            </Button>
-            {orphanedCollectionRoutes.length > 0 && (
-              <Button variant='outline' size='sm' onClick={clearOrphanedCollectionRoutes}>
-                Clear Orphaned Routes
-              </Button>
-            )}
-          </div>
-        </div>
-
-        <div className='mt-4 grid gap-2 text-xs sm:grid-cols-3'>
-          <div className='rounded border border-gray-800/80 bg-black/20 px-2 py-2 text-gray-300'>
-            Prisma env: {providerAvailability.prisma === null ? 'Unknown' : providerAvailability.prisma ? 'Configured' : 'Missing'}
-          </div>
-          <div className='rounded border border-gray-800/80 bg-black/20 px-2 py-2 text-gray-300'>
-            MongoDB env: {providerAvailability.mongodb === null ? 'Unknown' : providerAvailability.mongodb ? 'Configured' : 'Missing'}
-          </div>
-          <div className='rounded border border-gray-800/80 bg-black/20 px-2 py-2 text-gray-300'>
-            Redis env: {providerAvailability.redis === null ? 'Unknown' : providerAvailability.redis ? 'Configured' : 'Missing'}
-          </div>
-        </div>
-
-        {validationErrors.length > 0 ? (
-          <div className='mt-4 rounded-md border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-100'>
-            <div className='font-semibold'>Blocking issues</div>
-            <div className='mt-1 space-y-1'>
-              {validationErrors.map((issue) => (
-                <div key={issue}>- {issue}</div>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className='mt-4 rounded-md border border-emerald-500/40 bg-emerald-500/10 p-3 text-xs text-emerald-100'>
-            No blocking validation issues detected.
-          </div>
-        )}
-
-        {serverBlockingIssues.length > 0 && (
-          <div className='mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100'>
-            <div className='font-semibold'>Saved engine configuration issues (server)</div>
-            <div className='mt-1 space-y-1'>
-              {serverBlockingIssues.slice(0, 8).map((issue) => (
-                <div key={issue}>- {issue}</div>
-              ))}
-              {serverBlockingIssues.length > 8 && (
-                <div>+{serverBlockingIssues.length - 8} more issue(s)</div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {orphanedCollectionRoutes.length > 0 && (
-          <div className='mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100'>
-            Orphaned collection routes detected: {orphanedCollectionRoutes.slice(0, 8).join(', ')}
-            {orphanedCollectionRoutes.length > 8
-              ? ` (+${orphanedCollectionRoutes.length - 8} more)`
-              : ''}
-          </div>
-        )}
-
-        {providerPreviewErrors.length > 0 && (
-          <div className='mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100'>
-            Effective provider preview currently reports {providerPreviewErrors.length} error(s).
-            Save routing or policy changes and resolve these before running sync/migration operations.
-          </div>
-        )}
-      </SectionPanel>
-
-      <div className='mt-6 grid gap-4 lg:grid-cols-3'>
-        <SectionPanel className='p-5'>
-          <div className='flex items-center gap-2'>
-            <DatabaseIcon className='size-4 text-emerald-300' />
-            <h3 className='text-base font-semibold text-white'>
-              MongoDB Collections ({mongoCollections.length})
-            </h3>
-          </div>
-          <div className='mt-3 max-h-72 space-y-1 overflow-auto text-xs'>
-            {mongoCollections.length === 0 && (
-              <p className='text-gray-500'>No MongoDB collections detected.</p>
-            )}
-            {mongoCollections.map((row) => (
-              <div key={row.name} className='flex items-center justify-between rounded border border-gray-800/80 bg-black/20 px-2 py-1'>
-                <span className='font-mono text-gray-200'>{row.name}</span>
-                <span className='text-gray-400'>
-                  {row.mongoDocumentCount === null ? '?' : row.mongoDocumentCount.toLocaleString()}
-                </span>
-              </div>
-            ))}
-          </div>
-        </SectionPanel>
-
-        <SectionPanel className='p-5'>
-          <div className='flex items-center gap-2'>
-            <DatabaseIcon className='size-4 text-blue-300' />
-            <h3 className='text-base font-semibold text-white'>
-              Prisma Collections ({prismaCollections.length})
-            </h3>
-          </div>
-          <div className='mt-3 max-h-72 space-y-1 overflow-auto text-xs'>
-            {prismaCollections.length === 0 && (
-              <p className='text-gray-500'>No Prisma collections detected.</p>
-            )}
-            {prismaCollections.map((row) => (
-              <div key={row.name} className='flex items-center justify-between rounded border border-gray-800/80 bg-black/20 px-2 py-1'>
-                <span className='font-mono text-gray-200'>{row.name}</span>
-                <span className='text-gray-400'>
-                  {row.prismaRowCount === null ? '?' : row.prismaRowCount.toLocaleString()}
-                </span>
-              </div>
-            ))}
-          </div>
-        </SectionPanel>
-
-        <SectionPanel className='p-5'>
-          <div className='flex items-center gap-2'>
-            <HardDriveIcon className='size-4 text-orange-300' />
-            <h3 className='text-base font-semibold text-white'>Redis</h3>
-          </div>
-          <div className='mt-3 text-xs text-gray-300'>
-            <div>Status: {redisQuery.data?.enabled ? (redisQuery.data.connected ? 'Connected' : 'Disconnected') : 'Disabled'}</div>
-            <div>DB Size: {redisQuery.data?.dbSize ?? 0}</div>
-            <div>Used Memory: {redisQuery.data?.usedMemory ?? 'n/a'}</div>
-            <div>Max Memory: {redisQuery.data?.maxMemory ?? 'n/a'}</div>
-          </div>
-          <div className='mt-3 max-h-56 space-y-1 overflow-auto text-xs'>
-            {(redisQuery.data?.namespaces ?? []).length === 0 && (
-              <p className='text-gray-500'>No Redis namespaces detected.</p>
-            )}
-            {(redisQuery.data?.namespaces ?? []).map((item) => (
-              <div key={item.namespace} className='flex items-center justify-between rounded border border-gray-800/80 bg-black/20 px-2 py-1'>
-                <span className='font-mono text-gray-200'>{item.namespace}</span>
-                <span className='text-gray-400'>{item.keyCount.toLocaleString()}</span>
-              </div>
-            ))}
-          </div>
-        </SectionPanel>
-      </div>
-
-      <SectionPanel className='mt-6 p-5'>
-        <div className='flex flex-wrap items-start justify-between gap-3'>
-          <div>
-            <h2 className='text-lg font-semibold text-white'>Service Routing</h2>
-            <p className='mt-1 text-sm text-gray-400'>
-              Route each application service to a primary data provider.
-            </p>
-          </div>
-          <div className='flex flex-wrap gap-2'>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={(): void => {
-                setServiceRouteMapDraft({
-                  app: 'prisma',
-                  auth: 'prisma',
-                  product: 'prisma',
-                  integrations: 'prisma',
-                  cms: 'prisma',
-                });
-              }}
-            >
-              Set All -&gt; Prisma
-            </Button>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={(): void => {
-                setServiceRouteMapDraft({
-                  app: 'mongodb',
-                  auth: 'mongodb',
-                  product: 'mongodb',
-                  integrations: 'mongodb',
-                  cms: 'mongodb',
-                });
-              }}
-            >
-              Set All -&gt; MongoDB
-            </Button>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={(): void => {
-                setServiceRouteMapDraft({});
-              }}
-            >
-              Clear Service Routes
-            </Button>
-          </div>
-        </div>
-        {policyDraft.requireExplicitServiceRouting && missingServiceRoutes.length > 0 && (
-          <div className='mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100'>
-            Explicit service routing is enabled, but {missingServiceRoutes.length} service route(s) are missing.
-          </div>
-        )}
-        <div className='mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5'>
-          {services.map((service) => (
-            <div key={service}>
-              <label className='mb-1 block text-xs text-gray-400'>{serviceLabels[service]}</label>
-              <select
-                value={
-                  serviceRouteMapDraft[service] === 'mongodb' ||
-                  serviceRouteMapDraft[service] === 'prisma'
-                    ? serviceRouteMapDraft[service]
-                    : ''
-                }
-                onChange={(event): void => {
-                  const value = event.target.value;
-                  setServiceRouteMapDraft((prev) => {
-                    const next = { ...prev };
-                    if (value === 'mongodb' || value === 'prisma') {
-                      next[service] = value;
-                    } else {
-                      delete next[service];
-                    }
-                    return next;
-                  });
-                }}
-                className='w-full rounded-md border border-gray-700 bg-gray-900 px-2 py-2 text-xs text-gray-200'
-              >
-                <option value=''>Inherit/Unset</option>
-                <option value='mongodb'>MongoDB</option>
-                <option value='prisma'>Prisma</option>
-              </select>
-            </div>
-          ))}
-        </div>
-      </SectionPanel>
-
-      <SectionPanel className='mt-6 p-5'>
-        <div className='flex flex-wrap items-start justify-between gap-3'>
-          <div>
-            <h2 className='text-lg font-semibold text-white'>Collection Routing and Sync</h2>
-            <p className='mt-1 text-sm text-gray-400'>
-              Assign collection-level providers and run manual collection sync operations.
-            </p>
-          </div>
-          <div className='flex flex-wrap gap-2'>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={(): void => {
-                setCollectionRouteMapDraft({});
-              }}
-            >
-              Clear All Collection Routes
-            </Button>
-          </div>
-        </div>
-        {policyDraft.requireExplicitCollectionRouting && missingCollectionRoutes.length > 0 && (
-          <div className='mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100'>
-            Explicit collection routing is enabled, but {missingCollectionRoutes.length} collection(s) are still set to auto.
-          </div>
-        )}
-        <div className='mt-4 overflow-auto'>
-          <table className='min-w-full text-xs'>
-            <thead>
-              <tr className='border-b border-gray-800 text-left text-gray-400'>
-                <th className='px-2 py-2'>Collection</th>
-                <th className='px-2 py-2'>MongoDB</th>
-                <th className='px-2 py-2'>Prisma</th>
-                <th className='px-2 py-2'>Assigned Provider</th>
-                <th className='px-2 py-2'>Effective (Auto)</th>
-                <th className='px-2 py-2'>Manual Sync</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.name} className='border-b border-gray-900'>
-                  <td className='px-2 py-2 font-mono text-gray-100'>{row.name}</td>
-                  <td className='px-2 py-2 text-gray-300'>
-                    {row.existsInMongo
-                      ? (row.mongoDocumentCount ?? 0).toLocaleString()
-                      : '--'}
-                  </td>
-                  <td className='px-2 py-2 text-gray-300'>
-                    {row.existsInPrisma
-                      ? (row.prismaRowCount ?? 0).toLocaleString()
-                      : '--'}
-                  </td>
-                  <td className='px-2 py-2'>
-                    <select
-                      value={collectionRouteMapDraft[row.name] ?? 'auto'}
-                      onChange={(event): void => {
-                        const value = event.target.value;
-                        setCollectionRouteMapDraft((prev) => {
-                          const next = { ...prev };
-                          if (value === 'mongodb' || value === 'prisma' || value === 'redis') {
-                            next[row.name] = value;
-                          } else {
-                            delete next[row.name];
-                          }
-                          return next;
-                        });
-                      }}
-                      className='rounded-md border border-gray-700 bg-gray-900 px-2 py-1 text-xs text-gray-200'
-                    >
-                      <option value='auto'>Auto</option>
-                      <option value='mongodb'>MongoDB</option>
-                      <option value='prisma'>Prisma</option>
-                      <option value='redis'>Redis</option>
-                    </select>
-                  </td>
-                  <td className='px-2 py-2'>
-                    {(() => {
-                      const preview = effectivePreviewByCollection.get(row.name);
-                      if (!preview) {
-                        return <span className='text-gray-500'>--</span>;
-                      }
-                      if (preview.error) {
-                        return (
-                          <span className='text-red-300' title={preview.error}>
-                            Error
-                          </span>
-                        );
-                      }
-                      const sourceLabel =
-                        preview.source === 'collection_route' ? 'route' : 'app';
-                      return (
-                        <span
-                          className='text-gray-200'
-                          title={
-                            preview.configuredProvider
-                              ? `Configured: ${preview.configuredProvider}`
-                              : 'Configured: auto'
-                          }
-                        >
-                          {preview.effectiveProvider ?? '--'} ({sourceLabel})
-                        </span>
-                      );
-                    })()}
-                  </td>
-                  <td className='px-2 py-2'>
-                    <div className='flex gap-1'>
-                      <Button
-                        variant='outline'
-                        size='sm'
-                        disabled={
-                          !row.existsInMongo ||
-                          !operationControlsDraft.allowManualCollectionSync
-                        }
-                        onClick={(): void => {
-                          setPendingCollectionSync({
-                            collection: row.name,
-                            direction: 'mongo_to_prisma',
-                            label: 'MongoDB to Prisma',
-                          });
-                        }}
-                      >
-                        M to P
-                      </Button>
-                      <Button
-                        variant='outline'
-                        size='sm'
-                        disabled={
-                          !row.existsInPrisma ||
-                          !operationControlsDraft.allowManualCollectionSync
-                        }
-                        onClick={(): void => {
-                          setPendingCollectionSync({
-                            collection: row.name,
-                            direction: 'prisma_to_mongo',
-                            label: 'Prisma to MongoDB',
-                          });
-                        }}
-                      >
-                        P to M
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </SectionPanel>
-
-      <SectionPanel className='mt-6 p-5'>
-        <div className='flex flex-wrap items-start justify-between gap-3'>
-          <div>
-            <h2 className='text-lg font-semibold text-white'>Scheduled Backups</h2>
-            <p className='mt-1 text-sm text-gray-400'>
-              Runtime scheduler for controlled backup execution. Nothing runs until enabled here.
-            </p>
-          </div>
-          <div className='flex flex-wrap gap-2'>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={(): void => {
-                setBackupScheduleDraft((prev) => ({
-                  ...prev,
-                  schedulerEnabled: true,
-                  mongodb: { ...prev.mongodb, enabled: true },
-                  postgresql: { ...prev.postgresql, enabled: true },
-                }));
-              }}
-            >
-              Enable All
-            </Button>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={(): void => {
-                setBackupScheduleDraft((prev) => ({
-                  ...prev,
-                  schedulerEnabled: false,
-                  mongodb: { ...prev.mongodb, enabled: false },
-                  postgresql: { ...prev.postgresql, enabled: false },
-                }));
-              }}
-            >
-              Disable All
-            </Button>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={(): void => {
-                setBackupScheduleDraft(
-                  normalizeDatabaseEngineBackupSchedule(DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE)
-                );
-              }}
-            >
-              Reset Defaults
-            </Button>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={(): void => {
-                void runBackupSchedulerTickNow();
-              }}
-              disabled={
-                backupSchedulerTickMutation.isPending ||
-                !operationControlsDraft.allowBackupSchedulerTick
-              }
-            >
-              {backupSchedulerTickMutation.isPending
-                ? 'Checking...'
-                : 'Run Scheduler Check Now'}
-            </Button>
-            <Button
-              variant='outline'
-              size='sm'
-              className='border-emerald-500/40 text-emerald-100 hover:bg-emerald-500/20'
-              onClick={(): void => {
-                void runBackupNow('all');
-              }}
-              disabled={
-                backupRunNowMutation.isPending ||
-                !operationControlsDraft.allowManualBackupRunNow
-              }
-            >
-              {backupRunNowMutation.isPending ? 'Queueing...' : 'Run All Backups Now'}
-            </Button>
-          </div>
-        </div>
-
-        <label className='mt-4 flex items-center gap-2 text-sm text-gray-200'>
-          <input
-            type='checkbox'
-            checked={backupScheduleDraft.schedulerEnabled}
-            onChange={(event): void => {
-              const enabled = event.target.checked;
-              setBackupScheduleDraft((prev) => ({
-                ...prev,
-                schedulerEnabled: enabled,
-              }));
+          <ConfirmDialog
+            open={pendingSyncDirection !== null}
+            onOpenChange={(open: boolean) => !open && setPendingSyncDirection(null)}
+            title='Run Full Database Sync'
+            description={
+              pendingSyncDirection
+                ? `Run full database sync (${pendingSyncDirection})? This can overwrite target data.`
+                : ''
+            }
+            confirmText='Run Sync'
+            variant='destructive'
+            onConfirm={(): void => {
+              if (!pendingSyncDirection) return;
+              void runDatabaseSync(pendingSyncDirection);
             }}
           />
-          Enable backup scheduler runtime
-        </label>
 
-        <div className='mt-4 rounded-md border border-gray-800/80 bg-black/20 p-3 text-xs text-gray-300'>
-          {backupSchedulerStatus ? (
-            <div className='space-y-1'>
-              <div>
-                Runtime queue: {backupSchedulerStatus.queue.running ? 'Running' : 'Stopped'} /{' '}
-                {backupSchedulerStatus.queue.healthy ? 'Healthy' : 'Unhealthy'}
-              </div>
-              <div>
-                Tick interval: every {Math.max(1, Math.floor(backupSchedulerStatus.repeatEveryMs / 1000))}s
-              </div>
-              <div>
-                Last scheduler check: {backupSchedulerStatus.lastCheckedAt ?? 'n/a'}
-              </div>
-            </div>
-          ) : (
-            <div>
-              {backupSchedulerStatusQuery.isFetching
-                ? 'Loading scheduler status...'
-                : 'Scheduler status unavailable.'}
-            </div>
-          )}
-        </div>
-
-        <div className='mt-4 grid gap-4 lg:grid-cols-2'>
-          {(['mongodb', 'postgresql'] as const).map((dbType) => {
-            const draftTarget = backupScheduleDraft[dbType];
-            const runtimeTarget = backupSchedulerStatus?.targets[dbType];
-            return (
-              <div key={dbType} className='rounded-md border border-gray-800/80 bg-black/20 p-4'>
-                <div className='flex items-start justify-between gap-3'>
-                  <div>
-                    <h3 className='text-sm font-semibold text-white'>
-                      {backupTargetLabels[dbType]}
-                    </h3>
-                    <p className='mt-1 text-xs text-gray-400'>
-                      Last run: {runtimeTarget?.lastRunAt ?? draftTarget.lastRunAt ?? 'never'}
-                    </p>
-                  </div>
-                  <label className='flex items-center gap-2 text-xs text-gray-200'>
-                    <input
-                      type='checkbox'
-                      checked={draftTarget.enabled}
-                      onChange={(event): void =>
-                        updateBackupTargetDraft(dbType, (target) => ({
-                          ...target,
-                          enabled: event.target.checked,
-                        }))
-                      }
-                    />
-                    Enabled
-                  </label>
-                </div>
-
-                <div className='mt-3 grid gap-3 sm:grid-cols-2'>
-                  <div>
-                    <label className='mb-1 block text-xs text-gray-400'>Cadence</label>
-                    <select
-                      value={draftTarget.cadence}
-                      onChange={(event): void => {
-                        const cadence = event.target.value as DatabaseEngineBackupSchedule['mongodb']['cadence'];
-                        updateBackupTargetDraft(dbType, (target) => ({ ...target, cadence }));
-                      }}
-                      className='w-full rounded-md border border-gray-700 bg-gray-900 px-2 py-2 text-xs text-gray-200'
-                    >
-                      {Object.entries(backupCadenceLabels).map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className='mb-1 block text-xs text-gray-400'>UTC Time</label>
-                    <input
-                      type='time'
-                      step={60}
-                      value={draftTarget.timeUtc}
-                      onChange={(event): void => {
-                        const value = event.target.value;
-                        updateBackupTargetDraft(dbType, (target) => ({ ...target, timeUtc: value }));
-                      }}
-                      className='w-full rounded-md border border-gray-700 bg-gray-900 px-2 py-2 text-xs text-gray-200'
-                    />
-                  </div>
-                  {draftTarget.cadence === 'every_n_days' && (
-                    <div>
-                      <label className='mb-1 block text-xs text-gray-400'>Interval Days</label>
-                      <input
-                        type='number'
-                        min={1}
-                        max={365}
-                        value={draftTarget.intervalDays}
-                        onChange={(event): void => {
-                          const parsed = Number.parseInt(event.target.value, 10);
-                          if (!Number.isFinite(parsed)) return;
-                          updateBackupTargetDraft(dbType, (target) => ({
-                            ...target,
-                            intervalDays: Math.min(365, Math.max(1, parsed)),
-                          }));
-                        }}
-                        className='w-full rounded-md border border-gray-700 bg-gray-900 px-2 py-2 text-xs text-gray-200'
-                      />
-                    </div>
-                  )}
-                  {draftTarget.cadence === 'weekly' && (
-                    <div>
-                      <label className='mb-1 block text-xs text-gray-400'>Weekday</label>
-                      <select
-                        value={draftTarget.weekday}
-                        onChange={(event): void => {
-                          const parsed = Number.parseInt(event.target.value, 10);
-                          if (!Number.isFinite(parsed)) return;
-                          updateBackupTargetDraft(dbType, (target) => ({
-                            ...target,
-                            weekday: Math.min(6, Math.max(0, parsed)),
-                          }));
-                        }}
-                        className='w-full rounded-md border border-gray-700 bg-gray-900 px-2 py-2 text-xs text-gray-200'
-                      >
-                        {DATABASE_ENGINE_BACKUP_WEEKDAYS.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                </div>
-
-                <div className='mt-3 rounded-md border border-gray-800/70 bg-gray-950/50 p-2 text-xs text-gray-300'>
-                  <div>Next due: {runtimeTarget?.nextDueAt ?? draftTarget.nextDueAt ?? 'n/a'}</div>
-                  <div>Last status: {runtimeTarget?.lastStatus ?? draftTarget.lastStatus}</div>
-                  <div>Last job: {runtimeTarget?.lastJobId ?? draftTarget.lastJobId ?? 'n/a'}</div>
-                  <div>Last error: {runtimeTarget?.lastError ?? draftTarget.lastError ?? 'none'}</div>
-                  <div>Due now: {runtimeTarget?.dueNow ? 'Yes' : 'No'}</div>
-                </div>
-
-                <div className='mt-3 flex flex-wrap gap-2'>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    className='border-emerald-500/40 text-emerald-100 hover:bg-emerald-500/20'
-                    disabled={
-                      backupRunNowMutation.isPending ||
-                      !operationControlsDraft.allowManualBackupRunNow
-                    }
-                    onClick={(): void => {
-                      void runBackupNow(dbType);
-                    }}
-                  >
-                    Run {backupTargetLabels[dbType]} Backup Now
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </SectionPanel>
-
-      <SectionPanel className='mt-6 p-5'>
-        <div className='flex flex-wrap items-start justify-between gap-3'>
-          <div>
-            <h2 className='text-lg font-semibold text-white'>Engine Operations Runtime</h2>
-            <p className='mt-1 text-sm text-gray-400'>
-              Recent db backup/sync jobs queued by Database Engine actions and scheduler.
-            </p>
-          </div>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={(): void => {
-              void operationsJobsQuery.refetch();
+          <ConfirmDialog
+            open={pendingCollectionSync !== null}
+            onOpenChange={(open: boolean) => !open && setPendingCollectionSync(null)}
+            title='Sync Collection'
+            description={
+              pendingCollectionSync
+                ? `Sync collection "${pendingCollectionSync.collection}" (${pendingCollectionSync.label})? Target data will be replaced.`
+                : ''
+            }
+            confirmText='Sync'
+            variant='destructive'
+            onConfirm={(): void => {
+              void confirmCollectionSync();
             }}
-            disabled={operationsJobsQuery.isFetching}
-          >
-            {operationsJobsQuery.isFetching ? 'Refreshing...' : 'Refresh Jobs'}
-          </Button>
-        </div>
+          />
 
-        <div className='mt-4 grid gap-2 text-xs sm:grid-cols-4'>
-          <div className='rounded border border-gray-800/80 bg-black/20 px-2 py-2 text-gray-300'>
-            Queue: {operationQueueStatus ? (operationQueueStatus.running ? 'Running' : 'Stopped') : 'Unknown'}
-          </div>
-          <div className='rounded border border-gray-800/80 bg-black/20 px-2 py-2 text-gray-300'>
-            Healthy: {operationQueueStatus ? (operationQueueStatus.healthy ? 'Yes' : 'No') : 'Unknown'}
-          </div>
-          <div className='rounded border border-gray-800/80 bg-black/20 px-2 py-2 text-gray-300'>
-            Processing: {operationQueueStatus ? (operationQueueStatus.processing ? 'Yes' : 'No') : 'Unknown'}
-          </div>
-          <div className='rounded border border-gray-800/80 bg-black/20 px-2 py-2 text-gray-300'>
-            Last poll: {operationQueueStatus ? `${Math.floor(operationQueueStatus.timeSinceLastPoll / 1000)}s ago` : 'n/a'}
-          </div>
-        </div>
+          <SectionPanel className='p-5'>
+            <div className='flex items-start justify-between gap-4'>
+              <div>
+                <h2 className='text-lg font-semibold text-white'>Policy Mode</h2>
+                <p className='mt-1 text-sm text-gray-400'>
+              Define whether fallback, backfill, and migrations are automatic or strictly manual.
+                </p>
+              </div>
+              <Button variant='outline' onClick={applyManualOnlyTemplate}>
+            Apply Manual-Only Template
+              </Button>
+            </div>
+            <div className='mt-4 grid gap-3 md:grid-cols-2'>
+              <label className='flex items-center gap-2 text-sm text-gray-200'>
+                <input
+                  type='checkbox'
+                  checked={policyDraft.requireExplicitServiceRouting}
+                  onChange={(event): void =>
+                    setPolicyDraft((prev) => ({
+                      ...prev,
+                      requireExplicitServiceRouting: event.target.checked,
+                    }))
+                  }
+                />
+            Require explicit service routing
+              </label>
+              <label className='flex items-center gap-2 text-sm text-gray-200'>
+                <input
+                  type='checkbox'
+                  checked={policyDraft.requireExplicitCollectionRouting}
+                  onChange={(event): void =>
+                    setPolicyDraft((prev) => ({
+                      ...prev,
+                      requireExplicitCollectionRouting: event.target.checked,
+                    }))
+                  }
+                />
+            Require explicit collection routing
+              </label>
+              <label className='flex items-center gap-2 text-sm text-gray-200'>
+                <input
+                  type='checkbox'
+                  checked={policyDraft.allowAutomaticFallback}
+                  onChange={(event): void =>
+                    setPolicyDraft((prev) => ({
+                      ...prev,
+                      allowAutomaticFallback: event.target.checked,
+                    }))
+                  }
+                />
+            Allow automatic fallback
+              </label>
+              <label className='flex items-center gap-2 text-sm text-gray-200'>
+                <input
+                  type='checkbox'
+                  checked={policyDraft.allowAutomaticBackfill}
+                  onChange={(event): void =>
+                    setPolicyDraft((prev) => ({
+                      ...prev,
+                      allowAutomaticBackfill: event.target.checked,
+                    }))
+                  }
+                />
+            Allow automatic backfill
+              </label>
+              <label className='flex items-center gap-2 text-sm text-gray-200'>
+                <input
+                  type='checkbox'
+                  checked={policyDraft.allowAutomaticMigrations}
+                  onChange={(event): void =>
+                    setPolicyDraft((prev) => ({
+                      ...prev,
+                      allowAutomaticMigrations: event.target.checked,
+                    }))
+                  }
+                />
+            Allow automatic migrations
+              </label>
+              <label className='flex items-center gap-2 text-sm text-gray-200'>
+                <input
+                  type='checkbox'
+                  checked={policyDraft.strictProviderAvailability}
+                  onChange={(event): void =>
+                    setPolicyDraft((prev) => ({
+                      ...prev,
+                      strictProviderAvailability: event.target.checked,
+                    }))
+                  }
+                />
+            Enforce provider availability (throw on missing env)
+              </label>
+            </div>
 
-        <div className='mt-4 overflow-auto'>
-          <table className='min-w-full text-xs'>
-            <thead>
-              <tr className='border-b border-gray-800 text-left text-gray-400'>
-                <th className='px-2 py-2'>Job</th>
-                <th className='px-2 py-2'>Type</th>
-                <th className='px-2 py-2'>Target</th>
-                <th className='px-2 py-2'>Status</th>
-                <th className='px-2 py-2'>Created</th>
-                <th className='px-2 py-2'>Finished</th>
-                <th className='px-2 py-2'>Summary</th>
-                <th className='px-2 py-2'>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {operationJobs.length === 0 && (
-                <tr>
-                  <td colSpan={8} className='px-2 py-4 text-center text-gray-500'>
-                    No Database Engine operation jobs found.
-                  </td>
-                </tr>
+            <div
+              className={`mt-4 rounded-md border p-3 text-sm ${
+                strictModeEnabled
+                  ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-100'
+                  : 'border-amber-500/40 bg-amber-500/10 text-amber-100'
+              }`}
+            >
+              {strictModeEnabled
+                ? 'Manual-only strict mode is active in the draft.'
+                : 'Strict manual-only mode is not fully active. Use "Apply Manual-Only Template" for no automatic fallback/backfill/migration.'}
+            </div>
+          </SectionPanel>
+
+          <SectionPanel className='mt-6 p-5'>
+            <div className='flex flex-wrap items-start justify-between gap-3'>
+              <div>
+                <h2 className='text-lg font-semibold text-white'>Manual Operation Controls</h2>
+                <p className='mt-1 text-sm text-gray-400'>
+              Server-enforced switches for manual engine actions. Disabled actions return explicit API errors.
+                </p>
+              </div>
+              <div className='flex flex-wrap gap-2'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={(): void => {
+                    setOperationControlsDraft({
+                      allowManualFullSync: true,
+                      allowManualCollectionSync: true,
+                      allowManualBackfill: true,
+                      allowManualBackupRunNow: true,
+                      allowManualBackupMaintenance: true,
+                      allowBackupSchedulerTick: true,
+                      allowOperationJobCancellation: true,
+                    });
+                  }}
+                >
+              Enable All
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={(): void => {
+                    setOperationControlsDraft({
+                      allowManualFullSync: false,
+                      allowManualCollectionSync: false,
+                      allowManualBackfill: false,
+                      allowManualBackupRunNow: false,
+                      allowManualBackupMaintenance: false,
+                      allowBackupSchedulerTick: false,
+                      allowOperationJobCancellation: false,
+                    });
+                  }}
+                >
+              Disable All
+                </Button>
+              </div>
+            </div>
+
+            <div className='mt-4 grid gap-3 md:grid-cols-2'>
+              <label className='flex items-center gap-2 text-sm text-gray-200'>
+                <input
+                  type='checkbox'
+                  checked={operationControlsDraft.allowManualFullSync}
+                  onChange={(event): void =>
+                    setOperationControlsDraft((prev) => ({
+                      ...prev,
+                      allowManualFullSync: event.target.checked,
+                    }))
+                  }
+                />
+            Allow manual full sync (MongoDB &lt;-&gt; Prisma)
+              </label>
+              <label className='flex items-center gap-2 text-sm text-gray-200'>
+                <input
+                  type='checkbox'
+                  checked={operationControlsDraft.allowManualCollectionSync}
+                  onChange={(event): void =>
+                    setOperationControlsDraft((prev) => ({
+                      ...prev,
+                      allowManualCollectionSync: event.target.checked,
+                    }))
+                  }
+                />
+            Allow manual collection sync
+              </label>
+              <label className='flex items-center gap-2 text-sm text-gray-200'>
+                <input
+                  type='checkbox'
+                  checked={operationControlsDraft.allowManualBackfill}
+                  onChange={(event): void =>
+                    setOperationControlsDraft((prev) => ({
+                      ...prev,
+                      allowManualBackfill: event.target.checked,
+                    }))
+                  }
+                />
+            Allow manual settings backfill
+              </label>
+              <label className='flex items-center gap-2 text-sm text-gray-200'>
+                <input
+                  type='checkbox'
+                  checked={operationControlsDraft.allowManualBackupRunNow}
+                  onChange={(event): void =>
+                    setOperationControlsDraft((prev) => ({
+                      ...prev,
+                      allowManualBackupRunNow: event.target.checked,
+                    }))
+                  }
+                />
+            Allow manual backup run-now
+              </label>
+              <label className='flex items-center gap-2 text-sm text-gray-200'>
+                <input
+                  type='checkbox'
+                  checked={operationControlsDraft.allowManualBackupMaintenance}
+                  onChange={(event): void =>
+                    setOperationControlsDraft((prev) => ({
+                      ...prev,
+                      allowManualBackupMaintenance: event.target.checked,
+                    }))
+                  }
+                />
+            Allow manual backup restore/upload/delete
+              </label>
+              <label className='flex items-center gap-2 text-sm text-gray-200'>
+                <input
+                  type='checkbox'
+                  checked={operationControlsDraft.allowBackupSchedulerTick}
+                  onChange={(event): void =>
+                    setOperationControlsDraft((prev) => ({
+                      ...prev,
+                      allowBackupSchedulerTick: event.target.checked,
+                    }))
+                  }
+                />
+            Allow manual backup scheduler tick
+              </label>
+              <label className='flex items-center gap-2 text-sm text-gray-200'>
+                <input
+                  type='checkbox'
+                  checked={operationControlsDraft.allowOperationJobCancellation}
+                  onChange={(event): void =>
+                    setOperationControlsDraft((prev) => ({
+                      ...prev,
+                      allowOperationJobCancellation: event.target.checked,
+                    }))
+                  }
+                />
+            Allow operation job cancellation
+              </label>
+            </div>
+          </SectionPanel>
+
+          <SectionPanel className='mt-6 p-5'>
+            <div className='flex flex-wrap items-start justify-between gap-3'>
+              <div>
+                <h2 className='text-lg font-semibold text-white'>Engine Validation</h2>
+                <p className='mt-1 text-sm text-gray-400'>
+              Validate strict policy requirements before saving routing changes.
+                </p>
+              </div>
+              <div className='flex flex-wrap gap-2'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={(): void => assignUnmappedCollections('prisma')}
+                >
+              Assign Unmapped -&gt; Prisma
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={(): void => assignUnmappedCollections('mongodb')}
+                >
+              Assign Unmapped -&gt; MongoDB
+                </Button>
+                {orphanedCollectionRoutes.length > 0 && (
+                  <Button variant='outline' size='sm' onClick={clearOrphanedCollectionRoutes}>
+                Clear Orphaned Routes
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            <div className='mt-4 grid gap-2 text-xs sm:grid-cols-3'>
+              <div className='rounded border border-gray-800/80 bg-black/20 px-2 py-2 text-gray-300'>
+            Prisma env: {providerAvailability.prisma === null ? 'Unknown' : providerAvailability.prisma ? 'Configured' : 'Missing'}
+              </div>
+              <div className='rounded border border-gray-800/80 bg-black/20 px-2 py-2 text-gray-300'>
+            MongoDB env: {providerAvailability.mongodb === null ? 'Unknown' : providerAvailability.mongodb ? 'Configured' : 'Missing'}
+              </div>
+              <div className='rounded border border-gray-800/80 bg-black/20 px-2 py-2 text-gray-300'>
+            Redis env: {providerAvailability.redis === null ? 'Unknown' : providerAvailability.redis ? 'Configured' : 'Missing'}
+              </div>
+            </div>
+
+            {validationErrors.length > 0 ? (
+              <div className='mt-4 rounded-md border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-100'>
+                <div className='font-semibold'>Blocking issues</div>
+                <div className='mt-1 space-y-1'>
+                  {validationErrors.map((issue) => (
+                    <div key={issue}>- {issue}</div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className='mt-4 rounded-md border border-emerald-500/40 bg-emerald-500/10 p-3 text-xs text-emerald-100'>
+            No blocking validation issues detected.
+              </div>
+            )}
+
+            {serverBlockingIssues.length > 0 && (
+              <div className='mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100'>
+                <div className='font-semibold'>Saved engine configuration issues (server)</div>
+                <div className='mt-1 space-y-1'>
+                  {serverBlockingIssues.slice(0, 8).map((issue) => (
+                    <div key={issue}>- {issue}</div>
+                  ))}
+                  {serverBlockingIssues.length > 8 && (
+                    <div>+{serverBlockingIssues.length - 8} more issue(s)</div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {orphanedCollectionRoutes.length > 0 && (
+              <div className='mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100'>
+            Orphaned collection routes detected: {orphanedCollectionRoutes.slice(0, 8).join(', ')}
+                {orphanedCollectionRoutes.length > 8
+                  ? ` (+${orphanedCollectionRoutes.length - 8} more)`
+                  : ''}
+              </div>
+            )}
+
+            {providerPreviewErrors.length > 0 && (
+              <div className='mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100'>
+            Effective provider preview currently reports {providerPreviewErrors.length} error(s).
+            Save routing or policy changes and resolve these before running sync/migration operations.
+              </div>
+            )}
+          </SectionPanel>
+
+          <div className='mt-6 grid gap-4 lg:grid-cols-3'>
+            <SectionPanel className='p-5'>
+              <div className='flex items-center gap-2'>
+                <DatabaseIcon className='size-4 text-emerald-300' />
+                <h3 className='text-base font-semibold text-white'>
+              MongoDB Collections ({mongoCollections.length})
+                </h3>
+              </div>
+              <div className='mt-3 max-h-72 space-y-1 overflow-auto text-xs'>
+                {mongoCollections.length === 0 && (
+                  <p className='text-gray-500'>No MongoDB collections detected.</p>
+                )}
+                {mongoCollections.map((row) => (
+                  <div key={row.name} className='flex items-center justify-between rounded border border-gray-800/80 bg-black/20 px-2 py-1'>
+                    <span className='font-mono text-gray-200'>{row.name}</span>
+                    <span className='text-gray-400'>
+                      {row.mongoDocumentCount === null ? '?' : row.mongoDocumentCount.toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </SectionPanel>
+
+            <SectionPanel className='p-5'>
+              <div className='flex items-center gap-2'>
+                <DatabaseIcon className='size-4 text-blue-300' />
+                <h3 className='text-base font-semibold text-white'>
+              Prisma Collections ({prismaCollections.length})
+                </h3>
+              </div>
+              <div className='mt-3 max-h-72 space-y-1 overflow-auto text-xs'>
+                {prismaCollections.length === 0 && (
+                  <p className='text-gray-500'>No Prisma collections detected.</p>
+                )}
+                {prismaCollections.map((row) => (
+                  <div key={row.name} className='flex items-center justify-between rounded border border-gray-800/80 bg-black/20 px-2 py-1'>
+                    <span className='font-mono text-gray-200'>{row.name}</span>
+                    <span className='text-gray-400'>
+                      {row.prismaRowCount === null ? '?' : row.prismaRowCount.toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </SectionPanel>
+
+            <SectionPanel className='p-5'>
+              <div className='flex items-center gap-2'>
+                <HardDriveIcon className='size-4 text-orange-300' />
+                <h3 className='text-base font-semibold text-white'>Redis</h3>
+              </div>
+              <div className='mt-3 text-xs text-gray-300'>
+                <div>Status: {redisQuery.data?.enabled ? (redisQuery.data.connected ? 'Connected' : 'Disconnected') : 'Disabled'}</div>
+                <div>DB Size: {redisQuery.data?.dbSize ?? 0}</div>
+                <div>Used Memory: {redisQuery.data?.usedMemory ?? 'n/a'}</div>
+                <div>Max Memory: {redisQuery.data?.maxMemory ?? 'n/a'}</div>
+              </div>
+              <div className='mt-3 max-h-56 space-y-1 overflow-auto text-xs'>
+                {(redisQuery.data?.namespaces ?? []).length === 0 && (
+                  <p className='text-gray-500'>No Redis namespaces detected.</p>
+                )}
+                {(redisQuery.data?.namespaces ?? []).map((item) => (
+                  <div key={item.namespace} className='flex items-center justify-between rounded border border-gray-800/80 bg-black/20 px-2 py-1'>
+                    <span className='font-mono text-gray-200'>{item.namespace}</span>
+                    <span className='text-gray-400'>{item.keyCount.toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            </SectionPanel>
+          </div>
+
+          <SectionPanel className='mt-6 p-5'>
+            <div className='flex flex-wrap items-start justify-between gap-3'>
+              <div>
+                <h2 className='text-lg font-semibold text-white'>Service Routing</h2>
+                <p className='mt-1 text-sm text-gray-400'>
+              Route each application service to a primary data provider.
+                </p>
+              </div>
+              <div className='flex flex-wrap gap-2'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={(): void => {
+                    setServiceRouteMapDraft({
+                      app: 'prisma',
+                      auth: 'prisma',
+                      product: 'prisma',
+                      integrations: 'prisma',
+                      cms: 'prisma',
+                    });
+                  }}
+                >
+              Set All -&gt; Prisma
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={(): void => {
+                    setServiceRouteMapDraft({
+                      app: 'mongodb',
+                      auth: 'mongodb',
+                      product: 'mongodb',
+                      integrations: 'mongodb',
+                      cms: 'mongodb',
+                    });
+                  }}
+                >
+              Set All -&gt; MongoDB
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={(): void => {
+                    setServiceRouteMapDraft({});
+                  }}
+                >
+              Clear Service Routes
+                </Button>
+              </div>
+            </div>
+            {policyDraft.requireExplicitServiceRouting && missingServiceRoutes.length > 0 && (
+              <div className='mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100'>
+            Explicit service routing is enabled, but {missingServiceRoutes.length} service route(s) are missing.
+              </div>
+            )}
+            <div className='mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5'>
+              {services.map((service) => (
+                <div key={service}>
+                  <label className='mb-1 block text-xs text-gray-400'>{serviceLabels[service]}</label>
+                  <select
+                    value={
+                      serviceRouteMapDraft[service] === 'mongodb' ||
+                  serviceRouteMapDraft[service] === 'prisma'
+                        ? serviceRouteMapDraft[service]
+                        : ''
+                    }
+                    onChange={(event): void => {
+                      const value = event.target.value;
+                      setServiceRouteMapDraft((prev) => {
+                        const next = { ...prev };
+                        if (value === 'mongodb' || value === 'prisma') {
+                          next[service] = value;
+                        } else {
+                          delete next[service];
+                        }
+                        return next;
+                      });
+                    }}
+                    className='w-full rounded-md border border-gray-700 bg-gray-900 px-2 py-2 text-xs text-gray-200'
+                  >
+                    <option value=''>Inherit/Unset</option>
+                    <option value='mongodb'>MongoDB</option>
+                    <option value='prisma'>Prisma</option>
+                  </select>
+                </div>
+              ))}
+            </div>
+          </SectionPanel>
+
+          <SectionPanel className='mt-6 p-5'>
+            <div className='flex flex-wrap items-start justify-between gap-3'>
+              <div>
+                <h2 className='text-lg font-semibold text-white'>Collection Routing and Sync</h2>
+                <p className='mt-1 text-sm text-gray-400'>
+              Assign collection-level providers and run manual collection sync operations.
+                </p>
+              </div>
+              <div className='flex flex-wrap gap-2'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={(): void => {
+                    setCollectionRouteMapDraft({});
+                  }}
+                >
+              Clear All Collection Routes
+                </Button>
+              </div>
+            </div>
+            {policyDraft.requireExplicitCollectionRouting && missingCollectionRoutes.length > 0 && (
+              <div className='mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100'>
+            Explicit collection routing is enabled, but {missingCollectionRoutes.length} collection(s) are still set to auto.
+              </div>
+            )}
+            <div className='mt-4 overflow-auto'>
+              <table className='min-w-full text-xs'>
+                <thead>
+                  <tr className='border-b border-gray-800 text-left text-gray-400'>
+                    <th className='px-2 py-2'>Collection</th>
+                    <th className='px-2 py-2'>MongoDB</th>
+                    <th className='px-2 py-2'>Prisma</th>
+                    <th className='px-2 py-2'>Assigned Provider</th>
+                    <th className='px-2 py-2'>Effective (Auto)</th>
+                    <th className='px-2 py-2'>Manual Sync</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row) => (
+                    <tr key={row.name} className='border-b border-gray-900'>
+                      <td className='px-2 py-2 font-mono text-gray-100'>{row.name}</td>
+                      <td className='px-2 py-2 text-gray-300'>
+                        {row.existsInMongo
+                          ? (row.mongoDocumentCount ?? 0).toLocaleString()
+                          : '--'}
+                      </td>
+                      <td className='px-2 py-2 text-gray-300'>
+                        {row.existsInPrisma
+                          ? (row.prismaRowCount ?? 0).toLocaleString()
+                          : '--'}
+                      </td>
+                      <td className='px-2 py-2'>
+                        <select
+                          value={collectionRouteMapDraft[row.name] ?? 'auto'}
+                          onChange={(event): void => {
+                            const value = event.target.value;
+                            setCollectionRouteMapDraft((prev) => {
+                              const next = { ...prev };
+                              if (value === 'mongodb' || value === 'prisma' || value === 'redis') {
+                                next[row.name] = value;
+                              } else {
+                                delete next[row.name];
+                              }
+                              return next;
+                            });
+                          }}
+                          className='rounded-md border border-gray-700 bg-gray-900 px-2 py-1 text-xs text-gray-200'
+                        >
+                          <option value='auto'>Auto</option>
+                          <option value='mongodb'>MongoDB</option>
+                          <option value='prisma'>Prisma</option>
+                          <option value='redis'>Redis</option>
+                        </select>
+                      </td>
+                      <td className='px-2 py-2'>
+                        {(() => {
+                          const preview = effectivePreviewByCollection.get(row.name);
+                          if (!preview) {
+                            return <span className='text-gray-500'>--</span>;
+                          }
+                          if (preview.error) {
+                            return (
+                              <span className='text-red-300' title={preview.error}>
+                            Error
+                              </span>
+                            );
+                          }
+                          const sourceLabel =
+                        preview.source === 'collection_route' ? 'route' : 'app';
+                          return (
+                            <span
+                              className='text-gray-200'
+                              title={
+                                preview.configuredProvider
+                                  ? `Configured: ${preview.configuredProvider}`
+                                  : 'Configured: auto'
+                              }
+                            >
+                              {preview.effectiveProvider ?? '--'} ({sourceLabel})
+                            </span>
+                          );
+                        })()}
+                      </td>
+                      <td className='px-2 py-2'>
+                        <div className='flex gap-1'>
+                          <Button
+                            variant='outline'
+                            size='sm'
+                            disabled={
+                              !row.existsInMongo ||
+                          !operationControlsDraft.allowManualCollectionSync
+                            }
+                            onClick={(): void => {
+                              setPendingCollectionSync({
+                                collection: row.name,
+                                direction: 'mongo_to_prisma',
+                                label: 'MongoDB to Prisma',
+                              });
+                            }}
+                          >
+                        M to P
+                          </Button>
+                          <Button
+                            variant='outline'
+                            size='sm'
+                            disabled={
+                              !row.existsInPrisma ||
+                          !operationControlsDraft.allowManualCollectionSync
+                            }
+                            onClick={(): void => {
+                              setPendingCollectionSync({
+                                collection: row.name,
+                                direction: 'prisma_to_mongo',
+                                label: 'Prisma to MongoDB',
+                              });
+                            }}
+                          >
+                        P to M
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </SectionPanel>
+
+          <SectionPanel className='mt-6 p-5'>
+            <div className='flex flex-wrap items-start justify-between gap-3'>
+              <div>
+                <h2 className='text-lg font-semibold text-white'>Scheduled Backups</h2>
+                <p className='mt-1 text-sm text-gray-400'>
+              Runtime scheduler for controlled backup execution. Nothing runs until enabled here.
+                </p>
+              </div>
+              <div className='flex flex-wrap gap-2'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={(): void => {
+                    setBackupScheduleDraft((prev) => ({
+                      ...prev,
+                      schedulerEnabled: true,
+                      mongodb: { ...prev.mongodb, enabled: true },
+                      postgresql: { ...prev.postgresql, enabled: true },
+                    }));
+                  }}
+                >
+              Enable All
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={(): void => {
+                    setBackupScheduleDraft((prev) => ({
+                      ...prev,
+                      schedulerEnabled: false,
+                      mongodb: { ...prev.mongodb, enabled: false },
+                      postgresql: { ...prev.postgresql, enabled: false },
+                    }));
+                  }}
+                >
+              Disable All
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={(): void => {
+                    setBackupScheduleDraft(
+                      normalizeDatabaseEngineBackupSchedule(DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE)
+                    );
+                  }}
+                >
+              Reset Defaults
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={(): void => {
+                    void runBackupSchedulerTickNow();
+                  }}
+                  disabled={
+                    backupSchedulerTickMutation.isPending ||
+                !operationControlsDraft.allowBackupSchedulerTick
+                  }
+                >
+                  {backupSchedulerTickMutation.isPending
+                    ? 'Checking...'
+                    : 'Run Scheduler Check Now'}
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  className='border-emerald-500/40 text-emerald-100 hover:bg-emerald-500/20'
+                  onClick={(): void => {
+                    void runBackupNow('all');
+                  }}
+                  disabled={
+                    backupRunNowMutation.isPending ||
+                !operationControlsDraft.allowManualBackupRunNow
+                  }
+                >
+                  {backupRunNowMutation.isPending ? 'Queueing...' : 'Run All Backups Now'}
+                </Button>
+              </div>
+            </div>
+
+            <label className='mt-4 flex items-center gap-2 text-sm text-gray-200'>
+              <input
+                type='checkbox'
+                checked={backupScheduleDraft.schedulerEnabled}
+                onChange={(event): void => {
+                  const enabled = event.target.checked;
+                  setBackupScheduleDraft((prev) => ({
+                    ...prev,
+                    schedulerEnabled: enabled,
+                  }));
+                }}
+              />
+          Enable backup scheduler runtime
+            </label>
+
+            <div className='mt-4 rounded-md border border-gray-800/80 bg-black/20 p-3 text-xs text-gray-300'>
+              {backupSchedulerStatus ? (
+                <div className='space-y-1'>
+                  <div>
+                Runtime queue: {backupSchedulerStatus.queue.running ? 'Running' : 'Stopped'} /{' '}
+                    {backupSchedulerStatus.queue.healthy ? 'Healthy' : 'Unhealthy'}
+                  </div>
+                  <div>
+                Tick interval: every {Math.max(1, Math.floor(backupSchedulerStatus.repeatEveryMs / 1000))}s
+                  </div>
+                  <div>
+                Last scheduler check: {backupSchedulerStatus.lastCheckedAt ?? 'n/a'}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  {backupSchedulerStatusQuery.isFetching
+                    ? 'Loading scheduler status...'
+                    : 'Scheduler status unavailable.'}
+                </div>
               )}
-              {operationJobs.map((job) => {
-                const statusClassName =
+            </div>
+
+            <div className='mt-4 grid gap-4 lg:grid-cols-2'>
+              {(['mongodb', 'postgresql'] as const).map((dbType) => {
+                const draftTarget = backupScheduleDraft[dbType];
+                const runtimeTarget = backupSchedulerStatus?.targets[dbType];
+                return (
+                  <div key={dbType} className='rounded-md border border-gray-800/80 bg-black/20 p-4'>
+                    <div className='flex items-start justify-between gap-3'>
+                      <div>
+                        <h3 className='text-sm font-semibold text-white'>
+                          {backupTargetLabels[dbType]}
+                        </h3>
+                        <p className='mt-1 text-xs text-gray-400'>
+                      Last run: {runtimeTarget?.lastRunAt ?? draftTarget.lastRunAt ?? 'never'}
+                        </p>
+                      </div>
+                      <label className='flex items-center gap-2 text-xs text-gray-200'>
+                        <input
+                          type='checkbox'
+                          checked={draftTarget.enabled}
+                          onChange={(event): void =>
+                            updateBackupTargetDraft(dbType, (target) => ({
+                              ...target,
+                              enabled: event.target.checked,
+                            }))
+                          }
+                        />
+                    Enabled
+                      </label>
+                    </div>
+
+                    <div className='mt-3 grid gap-3 sm:grid-cols-2'>
+                      <div>
+                        <label className='mb-1 block text-xs text-gray-400'>Cadence</label>
+                        <select
+                          value={draftTarget.cadence}
+                          onChange={(event): void => {
+                            const cadence = event.target.value as DatabaseEngineBackupSchedule['mongodb']['cadence'];
+                            updateBackupTargetDraft(dbType, (target) => ({ ...target, cadence }));
+                          }}
+                          className='w-full rounded-md border border-gray-700 bg-gray-900 px-2 py-2 text-xs text-gray-200'
+                        >
+                          {Object.entries(backupCadenceLabels).map(([value, label]) => (
+                            <option key={value} value={value}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className='mb-1 block text-xs text-gray-400'>UTC Time</label>
+                        <input
+                          type='time'
+                          step={60}
+                          value={draftTarget.timeUtc}
+                          onChange={(event): void => {
+                            const value = event.target.value;
+                            updateBackupTargetDraft(dbType, (target) => ({ ...target, timeUtc: value }));
+                          }}
+                          className='w-full rounded-md border border-gray-700 bg-gray-900 px-2 py-2 text-xs text-gray-200'
+                        />
+                      </div>
+                      {draftTarget.cadence === 'every_n_days' && (
+                        <div>
+                          <label className='mb-1 block text-xs text-gray-400'>Interval Days</label>
+                          <input
+                            type='number'
+                            min={1}
+                            max={365}
+                            value={draftTarget.intervalDays}
+                            onChange={(event): void => {
+                              const parsed = Number.parseInt(event.target.value, 10);
+                              if (!Number.isFinite(parsed)) return;
+                              updateBackupTargetDraft(dbType, (target) => ({
+                                ...target,
+                                intervalDays: Math.min(365, Math.max(1, parsed)),
+                              }));
+                            }}
+                            className='w-full rounded-md border border-gray-700 bg-gray-900 px-2 py-2 text-xs text-gray-200'
+                          />
+                        </div>
+                      )}
+                      {draftTarget.cadence === 'weekly' && (
+                        <div>
+                          <label className='mb-1 block text-xs text-gray-400'>Weekday</label>
+                          <select
+                            value={draftTarget.weekday}
+                            onChange={(event): void => {
+                              const parsed = Number.parseInt(event.target.value, 10);
+                              if (!Number.isFinite(parsed)) return;
+                              updateBackupTargetDraft(dbType, (target) => ({
+                                ...target,
+                                weekday: Math.min(6, Math.max(0, parsed)),
+                              }));
+                            }}
+                            className='w-full rounded-md border border-gray-700 bg-gray-900 px-2 py-2 text-xs text-gray-200'
+                          >
+                            {DATABASE_ENGINE_BACKUP_WEEKDAYS.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className='mt-3 rounded-md border border-gray-800/70 bg-gray-950/50 p-2 text-xs text-gray-300'>
+                      <div>Next due: {runtimeTarget?.nextDueAt ?? draftTarget.nextDueAt ?? 'n/a'}</div>
+                      <div>Last status: {runtimeTarget?.lastStatus ?? draftTarget.lastStatus}</div>
+                      <div>Last job: {runtimeTarget?.lastJobId ?? draftTarget.lastJobId ?? 'n/a'}</div>
+                      <div>Last error: {runtimeTarget?.lastError ?? draftTarget.lastError ?? 'none'}</div>
+                      <div>Due now: {runtimeTarget?.dueNow ? 'Yes' : 'No'}</div>
+                    </div>
+
+                    <div className='mt-3 flex flex-wrap gap-2'>
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        className='border-emerald-500/40 text-emerald-100 hover:bg-emerald-500/20'
+                        disabled={
+                          backupRunNowMutation.isPending ||
+                      !operationControlsDraft.allowManualBackupRunNow
+                        }
+                        onClick={(): void => {
+                          void runBackupNow(dbType);
+                        }}
+                      >
+                    Run {backupTargetLabels[dbType]} Backup Now
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </SectionPanel>
+
+          <SectionPanel className='mt-6 p-5'>
+            <div className='flex flex-wrap items-start justify-between gap-3'>
+              <div>
+                <h2 className='text-lg font-semibold text-white'>Engine Operations Runtime</h2>
+                <p className='mt-1 text-sm text-gray-400'>
+              Recent db backup/sync jobs queued by Database Engine actions and scheduler.
+                </p>
+              </div>
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={(): void => {
+                  void operationsJobsQuery.refetch();
+                }}
+                disabled={operationsJobsQuery.isFetching}
+              >
+                {operationsJobsQuery.isFetching ? 'Refreshing...' : 'Refresh Jobs'}
+              </Button>
+            </div>
+
+            <div className='mt-4 grid gap-2 text-xs sm:grid-cols-4'>
+              <div className='rounded border border-gray-800/80 bg-black/20 px-2 py-2 text-gray-300'>
+            Queue: {operationQueueStatus ? (operationQueueStatus.running ? 'Running' : 'Stopped') : 'Unknown'}
+              </div>
+              <div className='rounded border border-gray-800/80 bg-black/20 px-2 py-2 text-gray-300'>
+            Healthy: {operationQueueStatus ? (operationQueueStatus.healthy ? 'Yes' : 'No') : 'Unknown'}
+              </div>
+              <div className='rounded border border-gray-800/80 bg-black/20 px-2 py-2 text-gray-300'>
+            Processing: {operationQueueStatus ? (operationQueueStatus.processing ? 'Yes' : 'No') : 'Unknown'}
+              </div>
+              <div className='rounded border border-gray-800/80 bg-black/20 px-2 py-2 text-gray-300'>
+            Last poll: {operationQueueStatus ? `${Math.floor(operationQueueStatus.timeSinceLastPoll / 1000)}s ago` : 'n/a'}
+              </div>
+            </div>
+
+            <div className='mt-4 overflow-auto'>
+              <table className='min-w-full text-xs'>
+                <thead>
+                  <tr className='border-b border-gray-800 text-left text-gray-400'>
+                    <th className='px-2 py-2'>Job</th>
+                    <th className='px-2 py-2'>Type</th>
+                    <th className='px-2 py-2'>Target</th>
+                    <th className='px-2 py-2'>Status</th>
+                    <th className='px-2 py-2'>Created</th>
+                    <th className='px-2 py-2'>Finished</th>
+                    <th className='px-2 py-2'>Summary</th>
+                    <th className='px-2 py-2'>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {operationJobs.length === 0 && (
+                    <tr>
+                      <td colSpan={8} className='px-2 py-4 text-center text-gray-500'>
+                    No Database Engine operation jobs found.
+                      </td>
+                    </tr>
+                  )}
+                  {operationJobs.map((job) => {
+                    const statusClassName =
                   job.status === 'completed'
                     ? 'text-emerald-300'
                     : job.status === 'failed'
@@ -1808,119 +1808,119 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                         : job.status === 'pending'
                           ? 'text-amber-300'
                           : 'text-gray-300';
-                const canCancel = job.status === 'pending' || job.status === 'running';
-                return (
-                  <tr key={job.id} className='border-b border-gray-900'>
-                    <td className='px-2 py-2 font-mono text-gray-200' title={job.id}>
-                      {shortenId(job.id)}
-                    </td>
-                    <td className='px-2 py-2 text-gray-300'>{job.type}</td>
-                    <td className='px-2 py-2 text-gray-300'>
-                      {job.type === 'db_backup'
-                        ? (job.dbType ?? 'n/a')
-                        : (job.direction ?? 'n/a')}
-                    </td>
-                    <td className={`px-2 py-2 ${statusClassName}`}>{job.status}</td>
-                    <td className='px-2 py-2 text-gray-400'>{formatDateTime(job.createdAt)}</td>
-                    <td className='px-2 py-2 text-gray-400'>{formatDateTime(job.finishedAt)}</td>
-                    <td className='px-2 py-2 text-gray-300'>
-                      {job.errorMessage ?? job.resultSummary ?? '--'}
-                    </td>
-                    <td className='px-2 py-2'>
-                      <Button
-                        variant='outline'
-                        size='sm'
-                        disabled={
-                          !canCancel ||
+                    const canCancel = job.status === 'pending' || job.status === 'running';
+                    return (
+                      <tr key={job.id} className='border-b border-gray-900'>
+                        <td className='px-2 py-2 font-mono text-gray-200' title={job.id}>
+                          {shortenId(job.id)}
+                        </td>
+                        <td className='px-2 py-2 text-gray-300'>{job.type}</td>
+                        <td className='px-2 py-2 text-gray-300'>
+                          {job.type === 'db_backup'
+                            ? (job.dbType ?? 'n/a')
+                            : (job.direction ?? 'n/a')}
+                        </td>
+                        <td className={`px-2 py-2 ${statusClassName}`}>{job.status}</td>
+                        <td className='px-2 py-2 text-gray-400'>{formatDateTime(job.createdAt)}</td>
+                        <td className='px-2 py-2 text-gray-400'>{formatDateTime(job.finishedAt)}</td>
+                        <td className='px-2 py-2 text-gray-300'>
+                          {job.errorMessage ?? job.resultSummary ?? '--'}
+                        </td>
+                        <td className='px-2 py-2'>
+                          <Button
+                            variant='outline'
+                            size='sm'
+                            disabled={
+                              !canCancel ||
                           cancelOperationJobMutation.isPending ||
                           !operationControlsDraft.allowOperationJobCancellation
-                        }
-                        onClick={(): void => {
-                          void cancelOperationJob(job.id);
-                        }}
-                      >
+                            }
+                            onClick={(): void => {
+                              void cancelOperationJob(job.id);
+                            }}
+                          >
                         Cancel
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </SectionPanel>
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </SectionPanel>
 
-      <SectionPanel className='mt-6 p-5'>
-        <h2 className='text-lg font-semibold text-white'>Migration and Backfill Controls</h2>
-        <p className='mt-1 text-sm text-gray-400'>
+          <SectionPanel className='mt-6 p-5'>
+            <h2 className='text-lg font-semibold text-white'>Migration and Backfill Controls</h2>
+            <p className='mt-1 text-sm text-gray-400'>
           Manual-only controls for full database sync and settings backfill.
-        </p>
-        <div className='mt-4 flex flex-wrap items-center gap-2'>
-          <Button
-            variant='outline'
-            className='border-red-500/40 text-red-100 hover:bg-red-500/20'
-            onClick={(): void => setPendingSyncDirection('mongo_to_prisma')}
-            disabled={!operationControlsDraft.allowManualFullSync}
-          >
+            </p>
+            <div className='mt-4 flex flex-wrap items-center gap-2'>
+              <Button
+                variant='outline'
+                className='border-red-500/40 text-red-100 hover:bg-red-500/20'
+                onClick={(): void => setPendingSyncDirection('mongo_to_prisma')}
+                disabled={!operationControlsDraft.allowManualFullSync}
+              >
             Run Full Sync: MongoDB to Prisma
-          </Button>
-          <Button
-            variant='outline'
-            className='border-red-500/40 text-red-100 hover:bg-red-500/20'
-            onClick={(): void => setPendingSyncDirection('prisma_to_mongo')}
-            disabled={!operationControlsDraft.allowManualFullSync}
-          >
+              </Button>
+              <Button
+                variant='outline'
+                className='border-red-500/40 text-red-100 hover:bg-red-500/20'
+                onClick={(): void => setPendingSyncDirection('prisma_to_mongo')}
+                disabled={!operationControlsDraft.allowManualFullSync}
+              >
             Run Full Sync: Prisma to MongoDB
-          </Button>
-        </div>
+              </Button>
+            </div>
 
-        <div className='mt-5 flex flex-wrap items-end gap-2'>
-          <div>
-            <label htmlFor='backfill-limit' className='mb-1 block text-xs text-gray-400'>
+            <div className='mt-5 flex flex-wrap items-end gap-2'>
+              <div>
+                <label htmlFor='backfill-limit' className='mb-1 block text-xs text-gray-400'>
               Backfill Batch Size
-            </label>
-            <input
-              id='backfill-limit'
-              type='number'
-              min={1}
-              max={5000}
-              value={backfillLimit}
-              onChange={(event): void => {
-                const parsed = Number.parseInt(event.target.value, 10);
-                if (!Number.isFinite(parsed)) return;
-                setBackfillLimit(Math.min(Math.max(parsed, 1), 5000));
-              }}
-              className='w-36 rounded-md border border-gray-700 bg-gray-900 px-2 py-2 text-xs text-gray-200'
-            />
-          </div>
-          <Button
-            variant='outline'
-            onClick={(): void => {
-              void runBackfill(true);
-            }}
-            disabled={backfillMutation.isPending || !operationControlsDraft.allowManualBackfill}
-          >
+                </label>
+                <input
+                  id='backfill-limit'
+                  type='number'
+                  min={1}
+                  max={5000}
+                  value={backfillLimit}
+                  onChange={(event): void => {
+                    const parsed = Number.parseInt(event.target.value, 10);
+                    if (!Number.isFinite(parsed)) return;
+                    setBackfillLimit(Math.min(Math.max(parsed, 1), 5000));
+                  }}
+                  className='w-36 rounded-md border border-gray-700 bg-gray-900 px-2 py-2 text-xs text-gray-200'
+                />
+              </div>
+              <Button
+                variant='outline'
+                onClick={(): void => {
+                  void runBackfill(true);
+                }}
+                disabled={backfillMutation.isPending || !operationControlsDraft.allowManualBackfill}
+              >
             Dry Run Backfill
-          </Button>
-          <Button
-            variant='outline'
-            onClick={(): void => {
-              void runBackfill(false);
-            }}
-            disabled={backfillMutation.isPending || !operationControlsDraft.allowManualBackfill}
-            className='border-amber-500/40 text-amber-100 hover:bg-amber-500/20'
-          >
+              </Button>
+              <Button
+                variant='outline'
+                onClick={(): void => {
+                  void runBackfill(false);
+                }}
+                disabled={backfillMutation.isPending || !operationControlsDraft.allowManualBackfill}
+                className='border-amber-500/40 text-amber-100 hover:bg-amber-500/20'
+              >
             Run Backfill
-          </Button>
-        </div>
+              </Button>
+            </div>
 
-        {!policyDraft.allowAutomaticFallback && (
-          <div className='mt-4 flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100'>
-            <AlertTriangleIcon className='mt-0.5 size-4 shrink-0' />
+            {!policyDraft.allowAutomaticFallback && (
+              <div className='mt-4 flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100'>
+                <AlertTriangleIcon className='mt-0.5 size-4 shrink-0' />
             Automatic fallback is disabled. Unconfigured or unavailable providers should now fail fast.
-          </div>
-        )}
-      </SectionPanel>
+              </div>
+            )}
+          </SectionPanel>
         </>
       ) : null}
 

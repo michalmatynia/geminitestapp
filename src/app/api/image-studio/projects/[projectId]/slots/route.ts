@@ -28,7 +28,7 @@ const sanitizeFolderPath = (value: string): string => {
 
 const slotSchema = z.object({
   name: z.string().trim().min(1).optional(),
-  folderPath: z.string().trim().optional(),
+  folderPath: z.string().trim().optional().nullable(),
   imageUrl: z.string().trim().optional(),
   imageBase64: z.string().trim().optional(),
   imageFileId: z.string().trim().optional(),

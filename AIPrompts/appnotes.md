@@ -1,3 +1,9 @@
+ 
+ Product Template for Import/Export not saving my settigs
+
+
+Add Validator and Formatter buttons to Draft
+ 
  In my AI-Paths sound module, I need a button node, like a power up button to turn on the machine. Button node doesn't need wires, it's assumed it "powers up" all the devices.
  
  the signal that goes out from sinewave is constans (it does not have to be triggered), but the signal is silent until it's connected to a speaker node. The speaker node needs a volume know, one the volume is more than 0, the connected sinewave should be heard.

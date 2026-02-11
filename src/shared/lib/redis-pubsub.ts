@@ -1,11 +1,28 @@
 import 'server-only';
 
-import { ErrorSystem } from '@/features/observability/server';
 import { Redis } from 'ioredis';
 
 import { getRedisClient, isRedisEnabled } from '@/shared/lib/redis';
 
 let subscriber: Redis | null = null;
+
+const logWarning = async (message: string, context: { service: string; circuitId: string; failures: number; resetTimeoutMs: number; lastError: string }): Promise<void> => {
+  try {
+    const { ErrorSystem } = await import('@/features/observability/server');
+    await ErrorSystem.logWarning(message, context as any);
+  } catch {
+    // ignore
+  }
+};
+
+const captureException = async (error: unknown, context: { source: string; context: { action: string } }): Promise<void> => {
+  try {
+    const { ErrorSystem } = await import('@/features/observability/server');
+    await ErrorSystem.captureException(error, context as any);
+  } catch {
+    // ignore
+  }
+};
 
 const PUBLISH_CIRCUIT_ID = 'redis-pubsub-publish';
 const PUBLISH_FAILURE_THRESHOLD = 5;
@@ -24,7 +41,7 @@ const recordPublishFailure = (err: unknown): void => {
 
   if (publishFailures >= PUBLISH_FAILURE_THRESHOLD && !publishCircuitOpen) {
     publishCircuitOpen = true;
-    void ErrorSystem.logWarning(
+    void logWarning(
       `[redis-pubsub] Circuit breaker opened after ${publishFailures} publish failures`,
       {
         service: 'redis-pubsub',
@@ -76,10 +93,10 @@ export function getRedisSubscriber(): Redis | null {
       ...(process.env['REDIS_TLS'] === 'true' ? { tls: {} } : {}),
     });
     subscriber.on('error', (err) => {
-      void ErrorSystem.captureException(err, { source: 'redis-pubsub', context: { action: 'subscriber_connection_error' } });
+      void captureException(err, { source: 'redis-pubsub', context: { action: 'subscriber_connection_error' } });
     });
   } catch (error) {
-    void ErrorSystem.captureException(error, { source: 'redis-pubsub', context: { action: 'create_subscriber_failed' } });
+    void captureException(error, { source: 'redis-pubsub', context: { action: 'create_subscriber_failed' } });
     return null;
   }
 

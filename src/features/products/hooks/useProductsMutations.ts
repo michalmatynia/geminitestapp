@@ -9,6 +9,7 @@ import {
 import { createProduct, updateProduct, deleteProduct } from '@/features/products/api/products';
 import type { ProductWithImages } from '@/features/products/types';
 import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { DeleteResponse } from '@/shared/types/api/api';
 import { delay } from '@/shared/utils';
 
@@ -31,8 +32,8 @@ export function useCreateProduct(): UseMutationResult<
       // Small delay to ensure DB consistency before refetch
       await delay(500);
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['products'] }),
-        queryClient.invalidateQueries({ queryKey: ['products-count'] }),
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all }),
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() }),
       ]);
     },
   });
@@ -50,8 +51,8 @@ export function useUpdateProduct(): UseMutationResult<
     mutationFn: ({ id, data }: UpdateProductPayload) => updateProduct(id, data),
     onSuccess: async (): Promise<void> => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['products'] }),
-        queryClient.invalidateQueries({ queryKey: ['products-count'] }),
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all }),
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() }),
       ]);
     },
   });
@@ -69,8 +70,8 @@ export function useDeleteProduct(): UseMutationResult<
     mutationFn: (id: string) => deleteProduct(id),
     onSuccess: async (): Promise<void> => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['products'] }),
-        queryClient.invalidateQueries({ queryKey: ['products-count'] }),
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all }),
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() }),
       ]);
     },
   });
@@ -89,8 +90,8 @@ export function useBulkDeleteProducts(): UseMutationResult<{ success: boolean },
     },
     onSuccess: async (): Promise<void> => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['products'] }),
-        queryClient.invalidateQueries({ queryKey: ['products-count'] }),
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all }),
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() }),
       ]);
     },
   });
@@ -105,7 +106,7 @@ export function useConvertAllImagesToBase64(): UseMutationResult<{ ok: boolean }
       return { ok: true };
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['products'] });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
     },
   });
 }
@@ -119,7 +120,7 @@ export function useBulkConvertImagesToBase64(): UseMutationResult<{ ok: boolean 
       return { ok: true };
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['products'] });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
     },
   });
 }
@@ -131,8 +132,8 @@ export function useDuplicateProduct(): UseMutationResult<{ id: string }, Error, 
     mutationFn: async ({ id, sku }): Promise<{ id: string }> =>
       await api.post<{ id: string }>(`/api/products/${id}/duplicate`, { sku }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['products'] });
-      void queryClient.invalidateQueries({ queryKey: ['products-count'] });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() });
     },
   });
 }
@@ -145,8 +146,8 @@ export function useUpdateProductField(): UseMutationResult<void, Error, { id: st
       await api.patch<unknown>(`/api/products/${id}`, { [field]: value });
     },
     onSuccess: (_, variables) => {
-      void queryClient.invalidateQueries({ queryKey: ['products'] });
-      void queryClient.invalidateQueries({ queryKey: ['products', variables.id] });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.detail(variables.id) });
     },
   });
 }

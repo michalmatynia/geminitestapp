@@ -13,12 +13,13 @@ import { fetchProductListings, productListingsQueryKey } from '@/features/integr
 import { useGenericExportToBaseMutation } from '@/features/integrations/hooks/useProductListingMutations';
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
 import { EditableCell } from '@/features/products/components/EditableCell';
-import { useProductListContext } from '@/features/products/context/ProductListContext';
+import { useProductListActionsContext } from '@/features/products/context/ProductListContext';
 import { useDuplicateProduct } from '@/features/products/hooks/useProductsMutations';
 import type { ProductWithImages } from '@/features/products/types';
 import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
 import { calculatePriceForCurrency, normalizeCurrencyCode } from '@/features/products/utils/priceCalculation';
 import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   Badge,
   Button,
@@ -265,7 +266,7 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
     onProductEditClick,
     onProductDeleteClick,
     setRefreshTrigger,
-  } = useProductListContext();
+  } = useProductListActionsContext();
 
   const handleDuplicate = async (): Promise<void> => {
     const sku: string | null = window.prompt('Enter a new unique SKU for the duplicate:');
@@ -425,7 +426,7 @@ export const getProductColumns = (
         productNameKey,
         onProductNameClick,
         queuedProductIds,
-      } = useProductListContext();
+      } = useProductListActionsContext();
 
       const nameKey: ProductNameKey = productNameKey ?? 'name_en';
       const nameValue: string | null | undefined =
@@ -509,7 +510,7 @@ export const getProductColumns = (
         setRefreshTrigger,
         currencyCode,
         priceGroups,
-      } = useProductListContext();
+      } = useProductListActionsContext();
       const queryClient = useQueryClient();
 
       // Calculate price for the selected currency
@@ -565,7 +566,7 @@ export const getProductColumns = (
             field='price'
             onUpdate={(nextValue: number): void => {
               queryClient.setQueriesData(
-                { queryKey: ['products'] },
+                { queryKey: QUERY_KEYS.products.lists() },
                 (old: ProductWithImages[] | undefined) => {
                   if (!Array.isArray(old)) return old;
                   let changed = false;
@@ -578,7 +579,7 @@ export const getProductColumns = (
                 }
               );
               queryClient.setQueriesData(
-                { queryKey: ['products', product.id] },
+                { queryKey: QUERY_KEYS.products.detail(product.id) },
                 (old: ProductWithImages | undefined) => (old ? { ...old, price: nextValue } : old)
               );
               setRefreshTrigger((prev: number): number => prev + 1);
@@ -604,7 +605,7 @@ export const getProductColumns = (
     ),
     cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => {
       const product: ProductWithImages = row.original;
-      const { setRefreshTrigger } = useProductListContext();
+      const { setRefreshTrigger } = useProductListActionsContext();
       const queryClient = useQueryClient();
 
       if (!setRefreshTrigger) {
@@ -618,7 +619,7 @@ export const getProductColumns = (
           field='stock'
           onUpdate={(nextValue: number): void => {
             queryClient.setQueriesData(
-              { queryKey: ['products'] },
+              { queryKey: QUERY_KEYS.products.lists() },
               (old: ProductWithImages[] | undefined) => {
                 if (!Array.isArray(old)) return old;
                 let changed = false;
@@ -631,7 +632,7 @@ export const getProductColumns = (
               }
             );
             queryClient.setQueriesData(
-              { queryKey: ['products', product.id] },
+              { queryKey: QUERY_KEYS.products.detail(product.id) },
               (old: ProductWithImages | undefined) => (old ? { ...old, stock: nextValue } : old)
             );
             setRefreshTrigger((prev: number): number => prev + 1);
@@ -661,7 +662,7 @@ export const getProductColumns = (
         onExportSettingsClick: handleOpenExportSettings,
         integrationBadgeIds,
         integrationBadgeStatuses,
-      } = useProductListContext();
+      } = useProductListActionsContext();
       const queryClient = useQueryClient();
 
       if (!handleClick) return null;

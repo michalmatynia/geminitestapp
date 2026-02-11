@@ -2,8 +2,9 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { Download, RefreshCw, Save } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 
+import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
 import {
   useFetchExternalTagsMutation,
   useSaveTagMappingsMutation,
@@ -12,37 +13,27 @@ import {
   useExternalTags,
   useTagMappings,
 } from '@/features/integrations/hooks/useMarketplaceQueries';
-import type { TagMappingWithDetails } from '@/features/integrations/types/tag-mapping';
 import { logClientError } from '@/features/observability';
 import { useCatalogs } from '@/features/products/hooks/useProductMetadata';
 import type { CatalogRecord, ProductTag } from '@/features/products/types';
 import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { Button, SectionHeader, UnifiedSelect, useToast } from '@/shared/ui';
 
-type BaseTagMapperProps = {
-  connectionId: string;
-  connectionName: string;
-};
+import { usePendingExternalMappings } from './usePendingExternalMappings';
 
-export function BaseTagMapper({
-  connectionId,
-  connectionName,
-}: BaseTagMapperProps): React.JSX.Element {
+export function BaseTagMapper(): React.JSX.Element {
+  const { connectionId, connectionName } = useCategoryMapper();
   const { toast } = useToast();
   const catalogsQuery = useCatalogs();
   const internalTagsQuery = useQuery({
-    queryKey: ['products', 'tags', 'all'],
+    queryKey: [...QUERY_KEYS.products.all, 'tags', 'all'],
     queryFn: () => api.get<ProductTag[]>('/api/products/tags/all'),
   });
   const externalTagsQuery = useExternalTags(connectionId);
   const mappingsQuery = useTagMappings(connectionId);
   const fetchMutation = useFetchExternalTagsMutation();
   const saveMutation = useSaveTagMappingsMutation();
-  const [pendingMappings, setPendingMappings] = useState<Map<string, string | null>>(new Map());
-
-  useEffect(() => {
-    setPendingMappings(new Map());
-  }, [connectionId]);
 
   const catalogsById = useMemo(
     () =>
@@ -71,41 +62,23 @@ export function BaseTagMapper({
     [externalTagsQuery.data]
   );
 
-  const mappingByInternalTagId = useMemo(() => {
-    const next = new Map<string, TagMappingWithDetails>();
-    (mappingsQuery.data ?? []).forEach((mapping: TagMappingWithDetails) => {
-      if (mapping.isActive) {
-        next.set(mapping.internalTagId, mapping);
-      }
-    });
-    return next;
-  }, [mappingsQuery.data]);
+  const {
+    pendingMappings,
+    getCurrentMapping,
+    handleMappingChange,
+    resetPendingMappings,
+    stats,
+  } = usePendingExternalMappings({
+    mappings: mappingsQuery.data ?? [],
+    internalIds: internalTags.map((tag: ProductTag) => tag.id),
+    getInternalId: (mapping) => mapping.internalTagId,
+    getExternalId: (mapping) => mapping.externalTagId,
+    isActive: (mapping) => Boolean(mapping.isActive),
+  });
 
-  const getCurrentMapping = useCallback(
-    (internalTagId: string): string | null => {
-      if (pendingMappings.has(internalTagId)) {
-        return pendingMappings.get(internalTagId) ?? null;
-      }
-      return mappingByInternalTagId.get(internalTagId)?.externalTagId ?? null;
-    },
-    [mappingByInternalTagId, pendingMappings]
-  );
-
-  const handleMappingChange = useCallback(
-    (internalTagId: string, externalTagId: string | null): void => {
-      setPendingMappings((prev: Map<string, string | null>) => {
-        const next = new Map(prev);
-        const savedValue = mappingByInternalTagId.get(internalTagId)?.externalTagId ?? null;
-        if (savedValue === externalTagId) {
-          next.delete(internalTagId);
-        } else {
-          next.set(internalTagId, externalTagId);
-        }
-        return next;
-      });
-    },
-    [mappingByInternalTagId]
-  );
+  useEffect(() => {
+    resetPendingMappings();
+  }, [connectionId, resetPendingMappings]);
 
   const handleFetch = async (): Promise<void> => {
     try {
@@ -139,7 +112,7 @@ export function BaseTagMapper({
         mappings,
       });
       toast(result.message, { variant: 'success' });
-      setPendingMappings(new Map());
+      resetPendingMappings();
     } catch (error: unknown) {
       logClientError(error, {
         context: { source: 'BaseTagMapper', action: 'saveMappings', connectionId },
@@ -148,16 +121,6 @@ export function BaseTagMapper({
       toast(message, { variant: 'error' });
     }
   };
-
-  const stats = useMemo(() => {
-    const total = internalTags.length;
-    const mapped = internalTags.filter((tag: ProductTag) => getCurrentMapping(tag.id) !== null).length;
-    return {
-      total,
-      mapped,
-      pending: pendingMappings.size,
-    };
-  }, [getCurrentMapping, internalTags, pendingMappings.size]);
 
   const loading =
     internalTagsQuery.isLoading ||

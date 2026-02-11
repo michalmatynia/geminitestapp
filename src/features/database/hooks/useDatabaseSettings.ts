@@ -45,7 +45,7 @@ export function useSyncDatabaseMutation(): UseMutationResult<
   { error?: string },
   Error,
   DatabaseSyncDirection
-> {
+  > {
   return useMutation(databaseSettingsMutationOptions.syncDatabase());
 }
 
@@ -53,6 +53,6 @@ export function useSettingsBackfillMutation(): UseMutationResult<
   SettingsBackfillResult,
   Error,
   { dryRun: boolean; limit: number }
-> {
+  > {
   return useMutation(databaseSettingsMutationOptions.settingsBackfill());
 }

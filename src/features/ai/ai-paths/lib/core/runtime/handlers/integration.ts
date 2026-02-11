@@ -1,3 +1,4 @@
+import type { CollectionSchemaDto } from '@/shared/dtos/database';
 import type {
   DbSchemaConfig,
   DatabaseConfig,
@@ -12,7 +13,6 @@ import type {
 } from '@/shared/types/domain/ai-paths';
 import type { AiNode, Edge } from '@/shared/types/domain/ai-paths';
 import type { NodeHandler, NodeHandlerContext } from '@/shared/types/domain/ai-paths-runtime';
-import type { CollectionSchemaDto } from '@/shared/dtos/database';
 
 import { dbApi, entityApi, ApiResponse } from '../../../api';
 import { DEFAULT_DB_QUERY, DB_PROVIDER_PLACEHOLDERS } from '../../constants';

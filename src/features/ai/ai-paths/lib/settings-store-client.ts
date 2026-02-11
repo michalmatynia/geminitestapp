@@ -1,12 +1,10 @@
 'use client';
 
 import { logClientError } from '@/features/observability';
+import type { SettingRecordDto } from '@/shared/dtos/settings';
 import { ApiError, api } from '@/shared/lib/api-client';
 
-export type AiPathsSettingRecord = {
-  key: string;
-  value: string;
-};
+export type AiPathsSettingRecord = SettingRecordDto;
 
 const AI_PATHS_SETTINGS_STALE_MS = 10_000;
 const AI_PATHS_SETTINGS_BACKUP_KEY = 'ai_paths_settings_backup_v1';

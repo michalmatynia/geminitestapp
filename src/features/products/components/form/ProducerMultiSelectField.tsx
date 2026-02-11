@@ -1,0 +1,66 @@
+'use client';
+
+import { useContext } from 'react';
+
+import { ProductFormContext } from '@/features/products/context/ProductFormContext';
+import type { Producer } from '@/features/products/types';
+import { MultiSelect } from '@/shared/ui';
+
+type ProducerMultiSelectFieldProps = {
+  producers?: Producer[] | undefined;
+  selectedProducerIds?: string[] | undefined;
+  onChange?: ((nextIds: string[]) => void) | undefined;
+  loading?: boolean | undefined;
+  disabled?: boolean | undefined;
+  placeholder?: string | undefined;
+};
+
+export function ProducerMultiSelectField({
+  producers: producersProp,
+  selectedProducerIds: selectedProducerIdsProp,
+  onChange: onChangeProp,
+  loading = false,
+  disabled = false,
+  placeholder = 'Select producers',
+}: ProducerMultiSelectFieldProps): React.JSX.Element {
+  const formContext = useContext(ProductFormContext);
+  const producers = producersProp ?? formContext?.producers ?? [];
+  const selectedProducerIds = selectedProducerIdsProp ?? formContext?.selectedProducerIds ?? [];
+  const resolvedLoading = producersProp ? loading : (formContext?.producersLoading ?? loading);
+  const resolvedOnChange =
+    onChangeProp ??
+    (formContext
+      ? (nextIds: string[]): void => {
+        const previous = new Set(formContext.selectedProducerIds);
+        const next = new Set(nextIds);
+        for (const id of nextIds) {
+          if (!previous.has(id)) formContext.toggleProducer(id);
+        }
+        for (const id of formContext.selectedProducerIds) {
+          if (!next.has(id)) formContext.toggleProducer(id);
+        }
+      }
+      : null);
+
+  if (!resolvedOnChange) {
+    throw new Error(
+      'ProducerMultiSelectField requires `onChange` prop when used outside ProductFormContext.'
+    );
+  }
+
+  return (
+    <MultiSelect
+      label='Producers'
+      options={producers.map((producer: Producer) => ({
+        value: producer.id,
+        label: producer.name,
+      }))}
+      selected={selectedProducerIds}
+      onChange={resolvedOnChange}
+      loading={resolvedLoading}
+      disabled={disabled}
+      placeholder={placeholder}
+      searchPlaceholder='Search producers...'
+    />
+  );
+}

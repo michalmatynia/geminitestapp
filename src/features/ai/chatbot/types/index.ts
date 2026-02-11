@@ -1,4 +1,4 @@
-export type { SettingRecord } from '@/shared/types/core/base-types';
+export type { SettingRecordDto as SettingRecord } from '@/shared/dtos/settings';
 export type { ChatbotSessionListItem } from './api';
 
 // DTO type exports

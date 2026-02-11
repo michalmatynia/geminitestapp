@@ -4,11 +4,11 @@ import type {
   DatabaseEngineCollectionProviderPreviewItemDto,
   DatabaseEngineProviderPreviewDto,
 } from '@/shared/dtos/database';
+import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import {
   getCollectionProvider,
   getCollectionRouteMap,
 } from '@/shared/lib/db/collection-provider-map';
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getDatabaseEnginePolicy } from '@/shared/lib/db/database-engine-policy';
 
 import { getDatabaseEngineStatus } from './database-engine-status';

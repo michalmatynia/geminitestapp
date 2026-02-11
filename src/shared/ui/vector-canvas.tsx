@@ -198,9 +198,30 @@ export function VectorCanvas({
       if (!shape.visible) return;
       if (shape.points.length === 0) return;
       const isActive = shape.id === activeShapeId;
+      const isMaskEligible =
+        (shape.type === 'polygon' || shape.type === 'lasso') &&
+        shape.closed &&
+        shape.points.length >= 3;
+      const isNonMaskType = shape.type === 'rect' || shape.type === 'ellipse' || shape.type === 'brush';
+
       ctx.lineWidth = isActive ? 2.5 : 2;
-      ctx.strokeStyle = isActive ? 'rgba(16, 185, 129, 0.95)' : 'rgba(56, 189, 248, 0.95)';
-      ctx.fillStyle = 'rgba(56, 189, 248, 0.15)';
+      ctx.setLineDash([]);
+
+      if (isMaskEligible) {
+        // Mask-eligible: solid stroke + fill
+        ctx.strokeStyle = isActive ? 'rgba(16, 185, 129, 0.95)' : 'rgba(56, 189, 248, 0.95)';
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.15)';
+      } else if (isNonMaskType) {
+        // Non-mask types: dashed orange stroke
+        ctx.strokeStyle = isActive ? 'rgba(251, 146, 60, 0.95)' : 'rgba(251, 146, 60, 0.7)';
+        ctx.fillStyle = 'rgba(251, 146, 60, 0.08)';
+        ctx.setLineDash([6, 4]);
+      } else {
+        // Open polygon/lasso: dashed blue stroke, no fill
+        ctx.strokeStyle = isActive ? 'rgba(16, 185, 129, 0.95)' : 'rgba(56, 189, 248, 0.7)';
+        ctx.fillStyle = 'transparent';
+        ctx.setLineDash([6, 4]);
+      }
 
       ctx.beginPath();
       if (shape.type === 'rect' && shape.points.length >= 2) {
@@ -233,6 +254,15 @@ export function VectorCanvas({
         ctx.fill();
       }
       ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Draw "M" badge on mask-eligible shapes
+      if (isMaskEligible) {
+        const firstPt = toPx(shape.points[0]!);
+        ctx.font = 'bold 10px sans-serif';
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.95)';
+        ctx.fillText('M', firstPt.x + 8, firstPt.y - 6);
+      }
 
       if (shape.type === 'polygon' || shape.type === 'lasso' || shape.type === 'brush') {
         shape.points.forEach((p: VectorPoint, index: number) => {
@@ -252,15 +282,56 @@ export function VectorCanvas({
   const syncCanvasSize = useCallback((): void => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const target = src ? imgRef.current : containerRef.current;
-    if (!target) return;
-    const rect = target.getBoundingClientRect();
-    const width = Math.max(1, Math.round(rect.width));
-    const height = Math.max(1, Math.round(rect.height));
-    canvas.width = width;
-    canvas.height = height;
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
+
+    if (src && imgRef.current) {
+      const img = imgRef.current;
+      const nw = img.naturalWidth;
+      const nh = img.naturalHeight;
+      const container = containerRef.current;
+      if (!container || nw === 0 || nh === 0) {
+        // Image not loaded yet — fall back to container size
+        const rect = img.getBoundingClientRect();
+        const width = Math.max(1, Math.round(rect.width));
+        const height = Math.max(1, Math.round(rect.height));
+        canvas.width = width;
+        canvas.height = height;
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+        draw();
+        return;
+      }
+      // Compute the fitted rect that object-contain produces
+      const containerRect = container.getBoundingClientRect();
+      const cw = containerRect.width;
+      const ch = containerRect.height;
+      const imageAspect = nw / nh;
+      const containerAspect = cw / ch;
+      let fitW: number;
+      let fitH: number;
+      if (imageAspect > containerAspect) {
+        fitW = cw;
+        fitH = cw / imageAspect;
+      } else {
+        fitH = ch;
+        fitW = ch * imageAspect;
+      }
+      const width = Math.max(1, Math.round(fitW));
+      const height = Math.max(1, Math.round(fitH));
+      canvas.width = width;
+      canvas.height = height;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+    } else {
+      const target = containerRef.current;
+      if (!target) return;
+      const rect = target.getBoundingClientRect();
+      const width = Math.max(1, Math.round(rect.width));
+      const height = Math.max(1, Math.round(rect.height));
+      canvas.width = width;
+      canvas.height = height;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+    }
     draw();
   }, [draw, src]);
 

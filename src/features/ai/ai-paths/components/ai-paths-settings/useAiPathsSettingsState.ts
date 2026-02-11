@@ -57,6 +57,7 @@ import {
 import { deleteAiPathsSettings, updateAiPathsSetting } from '@/features/ai/ai-paths/lib/settings-store-client';
 import { logClientError } from '@/features/observability';
 import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
 import { useToast } from '@/shared/ui';
 
@@ -516,7 +517,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       let sample: Record<string, unknown> | null = null;
       if (resolvedType === 'product') {
         sample = await queryClient.fetchQuery({
-          queryKey: ['products', entityId],
+          queryKey: QUERY_KEYS.products.detail(entityId),
           queryFn: async () => {
             const result = await entityApi.getProduct(entityId);
             return result.ok ? result.data : null;
@@ -525,7 +526,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
         });
       } else if (resolvedType === 'note') {
         sample = await queryClient.fetchQuery({
-          queryKey: ['notes', entityId],
+          queryKey: QUERY_KEYS.notes.detail(entityId),
           queryFn: async () => {
             const result = await entityApi.getNote(entityId);
             return result.ok ? result.data : null;
@@ -646,7 +647,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
         const normalized = entityType.toLowerCase();
         if (normalized === 'product') {
           sample = await queryClient.fetchQuery({
-            queryKey: ['products', entityId],
+            queryKey: QUERY_KEYS.products.detail(entityId),
             queryFn: async () => {
               const result = await entityApi.getProduct(entityId);
               return result.ok ? result.data : null;
@@ -655,7 +656,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
           });
         } else if (normalized === 'note') {
           sample = await queryClient.fetchQuery({
-            queryKey: ['notes', entityId],
+            queryKey: QUERY_KEYS.notes.detail(entityId),
             queryFn: async () => {
               const result = await entityApi.getNote(entityId);
               return result.ok ? result.data : null;

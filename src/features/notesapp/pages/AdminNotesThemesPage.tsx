@@ -66,18 +66,16 @@ export function AdminNotesThemesPage(): React.JSX.Element {
       await createTheme.mutateAsync({
         name: form.name.trim(),
         notebookId: selectedNotebookId,
-        colors: {
-          textColor: form.textColor,
-          backgroundColor: form.backgroundColor,
-          markdownHeadingColor: form.markdownHeadingColor,
-          markdownLinkColor: form.markdownLinkColor,
-          markdownCodeBackground: form.markdownCodeBackground,
-          markdownCodeText: form.markdownCodeText,
-          relatedNoteBorderWidth: String(form.relatedNoteBorderWidth ?? 1),
-          relatedNoteBorderColor: form.relatedNoteBorderColor,
-          relatedNoteBackgroundColor: form.relatedNoteBackgroundColor,
-          relatedNoteTextColor: form.relatedNoteTextColor,
-        },
+        textColor: form.textColor,
+        backgroundColor: form.backgroundColor,
+        markdownHeadingColor: form.markdownHeadingColor,
+        markdownLinkColor: form.markdownLinkColor,
+        markdownCodeBackground: form.markdownCodeBackground,
+        markdownCodeText: form.markdownCodeText,
+        relatedNoteBorderWidth: form.relatedNoteBorderWidth ?? 1,
+        relatedNoteBorderColor: form.relatedNoteBorderColor,
+        relatedNoteBackgroundColor: form.relatedNoteBackgroundColor,
+        relatedNoteTextColor: form.relatedNoteTextColor,
       });
       setForm(defaultTheme);
       toast('Theme created', { variant: 'success' });
@@ -129,7 +127,8 @@ export function AdminNotesThemesPage(): React.JSX.Element {
     try {
       await updateTheme.mutateAsync({
         id: themeId,
-        data: { ...editingForm, name: editingForm.name.trim() },
+        ...editingForm,
+        name: editingForm.name.trim(),
       });
       toast('Theme updated', { variant: 'success' });
       handleEditCancel();

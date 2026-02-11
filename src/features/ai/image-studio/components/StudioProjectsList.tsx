@@ -35,6 +35,7 @@ export function StudioProjectsList(): React.JSX.Element {
     try {
       await createProjectMutation.mutateAsync(id);
       setNewProjectId('');
+      setProjectId(id);
     } catch (error: unknown) {
       toast(error instanceof Error ? error.message : 'Failed to create project', { variant: 'error' });
     }

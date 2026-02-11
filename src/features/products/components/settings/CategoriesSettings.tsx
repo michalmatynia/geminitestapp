@@ -22,6 +22,7 @@ import {
 import { DRAG_KEYS, getFirstDragValue } from '@/shared/utils/drag-drop';
 
 import { CategoryForm, type CategoryFormData } from './CategoryForm';
+import { CategoryTreeProvider, type CategoryDropTarget } from './CategoryTreeContext';
 import { CategoryTreeItem } from './CategoryTreeItem';
 
 type CategoriesSettingsProps = {
@@ -31,12 +32,6 @@ type CategoriesSettingsProps = {
   selectedCatalogId: string | null;
   onCatalogChange: (catalogId: string) => void;
   onRefresh: () => void;
-};
-
-type CategoryDropTarget = {
-  parentId: string | null;
-  position: 'inside' | 'before' | 'after';
-  targetId: string | null;
 };
 
 const cloneCategoryTree = (
@@ -463,30 +458,34 @@ export function CategoriesSettings({
                 }}
                 onDrop={handleRootDrop}
               >
-                <div ref={treeBodyRef} className='space-y-0.5'>
-                  {treeData.map((category: ProductCategoryWithChildren): React.JSX.Element => (
-                    <CategoryTreeItem
-                      key={category.id}
-                      category={category}
-                      level={0}
-                      expandedIds={expandedIds}
-                      onToggleExpand={handleToggleExpand}
-                      onEdit={handleOpenEditModal}
-                      onDelete={handleDelete}
-                      onCreateChild={handleOpenCreateModal}
-                      draggedId={draggedId}
-                      onDragStart={setDraggedId}
-                      onDragEnd={(): void => {
-                        setDraggedId(null);
-                      }}
-                      onDrop={(
-                        e: string,
-                        target: CategoryDropTarget
-                      ): void => void handleDrop(e, target)}
-                      allCategories={treeData}
-                    />
-                  ))}
-                </div>
+                <CategoryTreeProvider
+                  value={{
+                    expandedIds,
+                    onToggleExpand: handleToggleExpand,
+                    onEdit: handleOpenEditModal,
+                    onDelete: handleDelete,
+                    onCreateChild: handleOpenCreateModal,
+                    draggedId,
+                    onDragStart: setDraggedId,
+                    onDragEnd: (): void => {
+                      setDraggedId(null);
+                    },
+                    onDrop: (e: string, target: CategoryDropTarget): void => {
+                      void handleDrop(e, target);
+                    },
+                    allCategories: treeData,
+                  }}
+                >
+                  <div ref={treeBodyRef} className='space-y-0.5'>
+                    {treeData.map((category: ProductCategoryWithChildren): React.JSX.Element => (
+                      <CategoryTreeItem
+                        key={category.id}
+                        category={category}
+                        level={0}
+                      />
+                    ))}
+                  </div>
+                </CategoryTreeProvider>
               </FolderTreePanel>
             )}
           </SectionPanel>

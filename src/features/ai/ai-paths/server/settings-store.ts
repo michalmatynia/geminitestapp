@@ -2,12 +2,10 @@ import 'server-only';
 
 import { ObjectId } from 'mongodb';
 
+import type { SettingRecordDto } from '@/shared/dtos/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
-export type AiPathsSettingRecord = {
-  key: string;
-  value: string;
-};
+export type AiPathsSettingRecord = SettingRecordDto;
 
 type MongoAiPathsSettingDoc = {
   _id?: string | ObjectId;

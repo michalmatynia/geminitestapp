@@ -8,7 +8,10 @@ import { memo, useState } from 'react';
 
 import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { ICON_LIBRARY_MAP } from '@/features/icons';
-import { useProductListContext } from '@/features/products/context/ProductListContext';
+import {
+  useProductListActionsContext,
+  useProductListFiltersContext,
+} from '@/features/products/context/ProductListContext';
 import { useConvertAllImagesToBase64 } from '@/features/products/hooks/useProductsMutations';
 import type { Catalog } from '@/features/products/types';
 import type { ProductDraft } from '@/features/products/types/drafts';
@@ -35,6 +38,8 @@ export const ProductListHeader = memo(function ProductListHeader({
     onCreateProduct,
     onCreateFromDraft,
     activeDrafts,
+  } = useProductListActionsContext();
+  const {
     page,
     totalPages,
     setPage,
@@ -49,7 +54,7 @@ export const ProductListHeader = memo(function ProductListHeader({
     catalogFilter,
     setCatalogFilter,
     catalogs,
-  } = useProductListContext();
+  } = useProductListFiltersContext();
 
   const { toast } = useToast();
   const [showBase64AllConfirm, setShowBase64AllConfirm] = useState(false);

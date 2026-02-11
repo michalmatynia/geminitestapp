@@ -3,11 +3,33 @@
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 
 import { api } from '@/shared/lib/api-client';
-import type { ImageFileSelection } from '@/shared/types/domain/files';
+import type { ImageFileRecord, ImageFileSelection } from '@/shared/types/domain/files';
 
 import { studioKeys } from './useImageStudioQueries';
 
 import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
+
+export interface RunStudioPayload {
+  projectId: string;
+  asset: { filepath: string; id?: string | undefined };
+  prompt: string;
+  mask?: {
+    type: 'polygons';
+    polygons: Array<Array<{ x: number; y: number }>>;
+    invert?: boolean | undefined;
+    feather?: number | undefined;
+  } | null | undefined;
+  studioSettings?: Record<string, unknown> | undefined;
+}
+
+export interface RunStudioResult {
+  outputs: ImageFileRecord[];
+}
+
+export interface StudioAssetImportResult {
+  uploaded: ImageFileRecord[];
+  failures: Array<{ filename?: string; filepath?: string; error: string }>;
+}
 
 export function useCreateStudioProject(): UseMutationResult<string, Error, string> {
   const queryClient = useQueryClient();
@@ -50,8 +72,13 @@ export function useCreateStudioSlots(projectId: string) {
 export function useUpdateStudioSlot(projectId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<ImageStudioSlotRecord> }) => 
-      api.patch<ImageStudioSlotRecord>(`/api/image-studio/slots/${encodeURIComponent(id)}`, data),
+    mutationFn: async ({ id, data }: { id: string; data: Partial<ImageStudioSlotRecord> }): Promise<ImageStudioSlotRecord> => {
+      const response = await api.patch<{ slot?: ImageStudioSlotRecord }>(`/api/image-studio/slots/${encodeURIComponent(id)}`, data);
+      if (!response.slot) {
+        throw new Error('Failed to update image studio slot');
+      }
+      return response.slot;
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: studioKeys.slots(projectId) });
     },
@@ -71,10 +98,13 @@ export function useDeleteStudioSlot(projectId: string) {
 export function useUploadStudioAssets(projectId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ files }: { files: File[]; folder: string }) => {
+    mutationFn: ({ files, folder }: { files: File[]; folder: string }) => {
       const formData = new FormData();
-      files.forEach(f => formData.append('files', f));
-      return api.post<{ assets: string[] }>(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets`, formData);
+      files.forEach((file: File) => formData.append('files', file));
+      if (folder.trim()) {
+        formData.append('folder', folder.trim());
+      }
+      return api.post<StudioAssetImportResult>(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets`, formData);
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: studioKeys.slots(projectId) });
@@ -85,10 +115,18 @@ export function useUploadStudioAssets(projectId: string) {
 export function useImportStudioAssetsFromDrive(projectId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ files, folder }: { files: ImageFileSelection[]; folder: string }) => 
-      api.post<{ assets: string[] }>(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets/import`, { files, folder }),
+    mutationFn: ({ files, folder }: { files: ImageFileSelection[]; folder: string }) =>
+      api.post<StudioAssetImportResult>(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets/import`, { files, folder }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: studioKeys.slots(projectId) });
+    },
+  });
+}
+
+export function useRunStudio(): UseMutationResult<RunStudioResult, Error, RunStudioPayload> {
+  return useMutation({
+    mutationFn: async (payload: RunStudioPayload): Promise<RunStudioResult> => {
+      return api.post<RunStudioResult>('/api/image-studio/run', payload);
     },
   });
 }

@@ -52,7 +52,7 @@ export default function RootLayout({
                     <Suspense fallback={null}>
                       <PageAnalyticsTracker />
                     </Suspense>
-                    <AppErrorBoundary source="RootLayout">
+                    <AppErrorBoundary source='RootLayout'>
                       {children}
                     </AppErrorBoundary>
                   </ThemeProvider>

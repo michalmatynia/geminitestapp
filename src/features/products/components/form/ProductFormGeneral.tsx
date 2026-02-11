@@ -1,13 +1,22 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import { ArrowRight } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import * as productsApi from '@/features/products/api/products';
 import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/features/products/constants';
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
+import { useProductValidationSettings } from '@/features/products/context/ProductValidationSettingsContext';
 import { useProductValidatorConfig } from '@/features/products/hooks/useProductSettingsQueries';
 import { ProductFormData } from '@/features/products/types';
+import {
+  evaluateStringCondition,
+  evaluateDynamicReplacementRecipe,
+  parseDynamicReplacementRecipe,
+} from '@/features/products/utils/validator-replacement-recipe';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { ProductValidationPattern } from '@/shared/types/domain/products';
 import { Button, Input, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -22,23 +31,82 @@ type FieldValidatorIssue = {
   regex: string;
   flags: string | null;
   replacementValue: string | null;
+  replacementApplyMode: 'replace_whole_field' | 'replace_matched_segment';
   replacementScope: 'none' | 'global' | 'field';
   replacementActive: boolean;
 };
 
-type ProductFormGeneralProps = {
-  validatorEnabled: boolean;
-  formatterEnabled: boolean;
+const normalizePatternSequence = (
+  pattern: ProductValidationPattern,
+  fallbackIndex: number
+): number => {
+  if (typeof pattern.sequence === 'number' && Number.isFinite(pattern.sequence)) {
+    return Math.max(0, Math.floor(pattern.sequence));
+  }
+  return (fallbackIndex + 1) * 10;
 };
+
+const normalizePatternChainMode = (
+  pattern: ProductValidationPattern
+): 'continue' | 'stop_on_match' | 'stop_on_replace' => {
+  if (pattern.chainMode === 'stop_on_match' || pattern.chainMode === 'stop_on_replace') {
+    return pattern.chainMode;
+  }
+  return 'continue';
+};
+
+const buildSequenceGroupCounts = (patterns: ProductValidationPattern[]): Map<string, number> => {
+  const counts = new Map<string, number>();
+  for (const pattern of patterns) {
+    if (!pattern.enabled) continue;
+    const groupId = pattern.sequenceGroupId?.trim();
+    if (!groupId) continue;
+    counts.set(groupId, (counts.get(groupId) ?? 0) + 1);
+  }
+  return counts;
+};
+
+const isPatternInSequenceGroup = (
+  pattern: ProductValidationPattern,
+  counts: Map<string, number>
+): boolean => {
+  const groupId = pattern.sequenceGroupId?.trim();
+  if (!groupId) return false;
+  return (counts.get(groupId) ?? 0) > 1;
+};
+
+const normalizePatternMaxExecutions = (pattern: ProductValidationPattern): number => {
+  if (typeof pattern.maxExecutions !== 'number' || !Number.isFinite(pattern.maxExecutions)) {
+    return 1;
+  }
+  return Math.min(20, Math.max(1, Math.floor(pattern.maxExecutions)));
+};
+
+const sortValidatorPatterns = (patterns: ProductValidationPattern[]): ProductValidationPattern[] =>
+  patterns
+    .map((pattern: ProductValidationPattern, index: number) => ({ pattern, index }))
+    .sort((a, b) => {
+      const aSeq = normalizePatternSequence(a.pattern, a.index);
+      const bSeq = normalizePatternSequence(b.pattern, b.index);
+      if (aSeq !== bSeq) return aSeq - bSeq;
+      if (a.pattern.target !== b.pattern.target) {
+        return a.pattern.target.localeCompare(b.pattern.target);
+      }
+      return a.pattern.label.localeCompare(b.pattern.label);
+    })
+    .map((entry) => entry.pattern);
 
 const resolveFieldTargetAndLocale = (
   fieldName: string
-): { target: 'name' | 'description' | null; locale: string | null } => {
-  const target: 'name' | 'description' | null = fieldName.startsWith('name_')
-    ? 'name'
-    : fieldName.startsWith('description_')
-      ? 'description'
-      : null;
+): { target: 'name' | 'description' | 'sku' | null; locale: string | null } => {
+  let target: 'name' | 'description' | 'sku' | null = null;
+  if (fieldName.startsWith('name_')) {
+    target = 'name';
+  } else if (fieldName.startsWith('description_')) {
+    target = 'description';
+  } else if (fieldName === 'sku') {
+    target = 'sku';
+  }
   const localeMatch = /_(en|pl|de)$/i.exec(fieldName);
   const locale = localeMatch?.[1]?.toLowerCase() ?? null;
   return {
@@ -74,15 +142,127 @@ const isReplacementAllowedForField = (
   return replacementFields.includes(fieldName);
 };
 
-const applyPatternReplacement = (value: string, pattern: ProductValidationPattern): string => {
-  if (!pattern.replacementEnabled || !pattern.replacementValue) return value;
-  const replacementValue = pattern.replacementValue;
+const toStringValue = (value: unknown): string | null => {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  return null;
+};
+
+const resolvePatternLaunchSourceValue = ({
+  pattern,
+  fieldValue,
+  values,
+  latestProductValues,
+}: {
+  pattern: ProductValidationPattern;
+  fieldValue: string;
+  values: ProductFormData;
+  latestProductValues: Record<string, unknown> | null;
+}): string => {
+  if (!pattern.launchEnabled) return fieldValue;
+  if (pattern.launchSourceMode === 'current_field') return fieldValue;
+  if (pattern.launchSourceMode === 'form_field') {
+    return toStringValue(values[(pattern.launchSourceField ?? '') as keyof ProductFormData]) ?? '';
+  }
+  return toStringValue(latestProductValues?.[pattern.launchSourceField ?? '']) ?? '';
+};
+
+const shouldLaunchPattern = ({
+  pattern,
+  fieldValue,
+  values,
+  latestProductValues,
+}: {
+  pattern: ProductValidationPattern;
+  fieldValue: string;
+  values: ProductFormData;
+  latestProductValues: Record<string, unknown> | null;
+}): boolean => {
+  if (!pattern.launchEnabled) return true;
+  if (
+    pattern.launchSourceMode !== 'current_field' &&
+    !pattern.launchSourceField?.trim()
+  ) {
+    return false;
+  }
+  const sourceValue = resolvePatternLaunchSourceValue({
+    pattern,
+    fieldValue,
+    values,
+    latestProductValues,
+  });
+  return evaluateStringCondition({
+    operator: pattern.launchOperator ?? 'equals',
+    value: sourceValue,
+    operand: pattern.launchValue ?? null,
+    flags: pattern.launchFlags ?? null,
+  });
+};
+
+type ResolvedReplacement = {
+  value: string;
+  kind: 'static' | 'dynamic';
+  applyMode: 'replace_whole_field' | 'replace_matched_segment';
+} | null;
+
+const resolvePatternReplacementValue = ({
+  pattern,
+  fieldValue,
+  values,
+  latestProductValues,
+}: {
+  pattern: ProductValidationPattern;
+  fieldValue: string;
+  values: ProductFormData;
+  latestProductValues: Record<string, unknown> | null;
+}): ResolvedReplacement => {
+  if (!pattern.replacementEnabled || !pattern.replacementValue) return null;
+  const recipe = parseDynamicReplacementRecipe(pattern.replacementValue);
+  if (!recipe) {
+    return {
+      value: pattern.replacementValue,
+      kind: 'static',
+      applyMode: 'replace_matched_segment',
+    };
+  }
+  const evaluated = evaluateDynamicReplacementRecipe(recipe, {
+    pattern,
+    fieldValue,
+    formValues: values as unknown as Record<string, unknown>,
+    latestProductValues,
+  });
+  if (!evaluated) return null;
+  return {
+    value: evaluated,
+    kind: 'dynamic',
+    // Dynamic recipe evaluation returns the final target value.
+    applyMode: 'replace_whole_field',
+  };
+};
+
+const applyResolvedReplacement = ({
+  value,
+  pattern,
+  replacement,
+}: {
+  value: string;
+  pattern: ProductValidationPattern;
+  replacement: ResolvedReplacement;
+}): string => {
+  if (!replacement?.value) return value;
+  if (replacement.applyMode === 'replace_whole_field') {
+    return replacement.value;
+  }
   try {
-    const currentFlags = pattern.flags ?? '';
-    const replacementFlags = currentFlags.includes('g') ? currentFlags : `${currentFlags}g`;
-    const regex = new RegExp(pattern.regex, replacementFlags || undefined);
+    const flags =
+      replacement.kind === 'static'
+        ? (pattern.flags ?? '').includes('g')
+          ? pattern.flags ?? undefined
+          : `${pattern.flags ?? ''}g`
+        : pattern.flags ?? undefined;
+    const regex = new RegExp(pattern.regex, flags);
     return value.replace(regex, (match: string) =>
-      match === replacementValue ? match : replacementValue
+      match === replacement.value ? match : replacement.value
     );
   } catch {
     return value;
@@ -109,53 +289,110 @@ const buildIssueSnippet = (
 
 const buildFieldIssues = (
   values: ProductFormData,
-  patterns: ProductValidationPattern[]
+  patterns: ProductValidationPattern[],
+  latestProductValues: Record<string, unknown> | null
 ): Record<string, FieldValidatorIssue[]> => {
   const issues: Record<string, FieldValidatorIssue[]> = {};
   const entries = Object.entries(values) as Array<[string, unknown]>;
+  const orderedPatterns = sortValidatorPatterns(patterns);
+  const sequenceGroupCounts = buildSequenceGroupCounts(orderedPatterns);
 
   for (const [fieldName, rawValue] of entries) {
     if (typeof rawValue !== 'string' || !rawValue) continue;
     const { target, locale } = resolveFieldTargetAndLocale(fieldName);
     if (!target) continue;
+    let workingValue = rawValue;
 
-    for (const pattern of patterns) {
+    for (const pattern of orderedPatterns) {
       if (!pattern.enabled || pattern.target !== target) continue;
       if (!isPatternLocaleMatch(pattern.locale, locale)) continue;
-      try {
-        const regex = new RegExp(pattern.regex, pattern.flags ?? undefined);
-        const match = regex.exec(rawValue);
-        if (!match || typeof match.index !== 'number') continue;
-        const matched = match[0] ?? '';
-        const length = Math.max(1, matched.length);
-        const replacementFields = normalizeReplacementFields(pattern.replacementFields);
-        const hasReplacer = Boolean(pattern.replacementEnabled && pattern.replacementValue);
-        const replacementScope: FieldValidatorIssue['replacementScope'] = !hasReplacer
-          ? 'none'
-          : replacementFields.length === 0
-            ? 'global'
-            : 'field';
-        const replacementActive =
-          hasReplacer &&
-          (replacementScope === 'global' || replacementFields.includes(fieldName));
-        if (!issues[fieldName]) {
-          issues[fieldName] = [];
+      const inSequenceGroup = isPatternInSequenceGroup(pattern, sequenceGroupCounts);
+      const maxExecutions = normalizePatternMaxExecutions(pattern);
+      let matched = false;
+      let replaced = false;
+      let candidateValue = inSequenceGroup ? workingValue : rawValue;
+      for (let execution = 0; execution < maxExecutions; execution += 1) {
+        if (
+          !shouldLaunchPattern({
+            pattern,
+            fieldValue: candidateValue,
+            values,
+            latestProductValues,
+          })
+        ) {
+          break;
         }
-        issues[fieldName].push({
-          patternId: pattern.id,
-          message: pattern.message,
-          severity: pattern.severity,
-          matchText: matched,
-          index: match.index,
-          length,
-          regex: pattern.regex,
-          flags: pattern.flags ?? null,
-          replacementValue: replacementActive ? pattern.replacementValue : null,
-          replacementScope,
-          replacementActive,
-        });
-      } catch {
-        // Invalid pattern is blocked at API write time; skip defensively.
+        try {
+          const regex = new RegExp(pattern.regex, pattern.flags ?? undefined);
+          const match = regex.exec(candidateValue);
+          if (!match || typeof match.index !== 'number') break;
+          matched = true;
+          const matchText = match[0] ?? '';
+          const length = Math.max(1, matchText.length);
+          const replacementFields = normalizeReplacementFields(pattern.replacementFields);
+          const hasReplacer = Boolean(pattern.replacementEnabled && pattern.replacementValue);
+          const replacementScope: FieldValidatorIssue['replacementScope'] = !hasReplacer
+            ? 'none'
+            : replacementFields.length === 0
+              ? 'global'
+              : 'field';
+          const replacementActive =
+            hasReplacer &&
+            (replacementScope === 'global' || replacementFields.includes(fieldName));
+          const resolvedReplacement = replacementActive
+            ? resolvePatternReplacementValue({
+              pattern,
+              fieldValue: candidateValue,
+              values,
+              latestProductValues,
+            })
+            : null;
+          if (!issues[fieldName]) {
+            issues[fieldName] = [];
+          }
+          issues[fieldName].push({
+            patternId: pattern.id,
+            message: pattern.message,
+            severity: pattern.severity,
+            matchText,
+            index: match.index,
+            length,
+            regex: pattern.regex,
+            flags: pattern.flags ?? null,
+            replacementValue: resolvedReplacement?.value ?? null,
+            replacementApplyMode: resolvedReplacement?.applyMode ?? 'replace_matched_segment',
+            replacementScope,
+            replacementActive: replacementActive && Boolean(resolvedReplacement?.value),
+          });
+
+          if (!resolvedReplacement?.value) break;
+          const nextValue = applyResolvedReplacement({
+            value: candidateValue,
+            pattern,
+            replacement: resolvedReplacement,
+          });
+          if (nextValue === candidateValue) break;
+          replaced = true;
+          candidateValue = nextValue;
+          if (inSequenceGroup) {
+            workingValue = nextValue;
+          }
+        } catch {
+          // Invalid pattern is blocked at API write time; skip defensively.
+          break;
+        }
+      }
+
+      if (!inSequenceGroup) continue;
+      const chainMode = normalizePatternChainMode(pattern);
+      if (matched && chainMode === 'stop_on_match') {
+        break;
+      }
+      if (replaced && chainMode === 'stop_on_replace') {
+        break;
+      }
+      if (replaced && pattern.passOutputToNext === false) {
+        break;
       }
     }
   }
@@ -225,19 +462,19 @@ function ValidatorIssueHint({
   );
 }
 
-export default function ProductFormGeneral({
-  validatorEnabled,
-  formatterEnabled,
-}: ProductFormGeneralProps): React.JSX.Element {
+export default function ProductFormGeneral(): React.JSX.Element {
+  const { validatorEnabled, formatterEnabled } = useProductValidationSettings();
   const {
     filteredLanguages,
     errors,
+    product,
   } = useProductFormContext();
 
   const { register, getValues, setValue, watch } = useFormContext<ProductFormData>();
   const validatorConfigQuery = useProductValidatorConfig();
   const [activeNameTab, setActiveNameTab] = useState<string>('');
   const [activeDescriptionTab, setActiveDescriptionTab] = useState<string>('');
+  const sequenceGroupDebounceRef = useRef<Record<string, number>>({});
 
   const [identifierType, setIdentifierType] = useState<'ean' | 'gtin' | 'asin'>((): 'ean' | 'gtin' | 'asin' => {
     const vals = getValues();
@@ -249,12 +486,35 @@ export default function ProductFormGeneral({
   const hasCatalogs = (filteredLanguages ?? []).length > 0;
   const languagesReady = (filteredLanguages ?? []).length > 0;
   const validatorPatterns = validatorConfigQuery.data?.patterns ?? [];
+  const needsLatestProductSource = useMemo(
+    () =>
+      validatorPatterns.some((pattern: ProductValidationPattern) => {
+        const recipe = parseDynamicReplacementRecipe(pattern.replacementValue);
+        return (
+          recipe?.sourceMode === 'latest_product_field' ||
+          (pattern.launchEnabled && pattern.launchSourceMode === 'latest_product_field')
+        );
+      }),
+    [validatorPatterns]
+  );
+  const latestProductsQuery = useQuery({
+    queryKey: [...QUERY_KEYS.products.all, 'validator', 'latest-product-source'],
+    queryFn: () => productsApi.getProducts({ page: 1, pageSize: 4 }),
+    enabled: (validatorEnabled || formatterEnabled) && needsLatestProductSource,
+    staleTime: 60_000,
+  });
+  const latestProductValues = useMemo((): Record<string, unknown> | null => {
+    const list = latestProductsQuery.data ?? [];
+    if (list.length === 0) return null;
+    const preferred = list.find((item) => item.id !== product?.id) ?? list[0] ?? null;
+    return preferred as unknown as Record<string, unknown>;
+  }, [latestProductsQuery.data, product?.id]);
   const fieldIssues = useMemo(
     () =>
       validatorEnabled
-        ? buildFieldIssues(allValues, validatorPatterns)
+        ? buildFieldIssues(allValues, validatorPatterns, latestProductValues)
         : ({} as Record<string, FieldValidatorIssue[]>),
-    [allValues, validatorEnabled, validatorPatterns]
+    [allValues, latestProductValues, validatorEnabled, validatorPatterns]
   );
   const languageTabValues = useMemo(
     () =>
@@ -284,6 +544,9 @@ export default function ProductFormGeneral({
     issue: FieldValidatorIssue
   ): string => {
     if (!issue.replacementValue) return value;
+    if (issue.replacementApplyMode === 'replace_whole_field') {
+      return issue.replacementValue;
+    }
     try {
       const regex = new RegExp(issue.regex, issue.flags ?? undefined);
       const probe = regex.exec(value);
@@ -298,13 +561,16 @@ export default function ProductFormGeneral({
 
   useEffect(() => {
     if (!formatterEnabled) return;
-    for (const [fieldNameRaw, rawValue] of Object.entries(allValues)) {
-      if (typeof rawValue !== 'string' || !rawValue) continue;
+    const orderedPatterns = sortValidatorPatterns(validatorPatterns);
+    const sequenceGroupCounts = buildSequenceGroupCounts(orderedPatterns);
+    for (const [fieldNameRaw, rawUnknown] of Object.entries(allValues as Record<string, unknown>)) {
+      if (typeof rawUnknown !== 'string' || !rawUnknown) continue;
+      const rawValue: string = rawUnknown;
       const fieldName = fieldNameRaw as keyof ProductFormData;
       const { target, locale } = resolveFieldTargetAndLocale(fieldNameRaw);
       if (!target) continue;
 
-      const replacementPatterns = validatorPatterns.filter((pattern: ProductValidationPattern) => {
+      const replacementPatterns = orderedPatterns.filter((pattern: ProductValidationPattern) => {
         if (!pattern.enabled) return false;
         if (!pattern.replacementEnabled || !pattern.replacementValue) return false;
         if (pattern.target !== target) return false;
@@ -313,9 +579,79 @@ export default function ProductFormGeneral({
       });
 
       if (replacementPatterns.length === 0) continue;
-      let nextValue = rawValue;
+      let nextValue: string = rawValue;
+      const fieldProcessedGroups = new Set<string>();
       for (const pattern of replacementPatterns) {
-        nextValue = applyPatternReplacement(nextValue, pattern);
+        const inSequenceGroup = isPatternInSequenceGroup(pattern, sequenceGroupCounts);
+        let candidateValue: string = inSequenceGroup ? nextValue : rawValue;
+        if (inSequenceGroup) {
+          const groupId = pattern.sequenceGroupId?.trim();
+          if (groupId && !fieldProcessedGroups.has(groupId)) {
+            const debounceMs = Math.max(0, Math.floor(pattern.sequenceGroupDebounceMs ?? 0));
+            if (debounceMs > 0) {
+              const key = `${groupId}:${fieldNameRaw}`;
+              const now = Date.now();
+              const previous = sequenceGroupDebounceRef.current[key] ?? 0;
+              if (now - previous < debounceMs) {
+                continue;
+              }
+              sequenceGroupDebounceRef.current[key] = now;
+            }
+            fieldProcessedGroups.add(groupId);
+          }
+        }
+        const maxExecutions = normalizePatternMaxExecutions(pattern);
+        let matched = false;
+        let replaced = false;
+        for (let execution = 0; execution < maxExecutions; execution += 1) {
+          if (
+            !shouldLaunchPattern({
+              pattern,
+              fieldValue: candidateValue,
+              values: allValues,
+              latestProductValues,
+            })
+          ) {
+            break;
+          }
+          let hasMatch = false;
+          try {
+            const regex = new RegExp(pattern.regex, pattern.flags ?? undefined);
+            hasMatch = regex.test(candidateValue);
+          } catch {
+            hasMatch = false;
+          }
+          if (!hasMatch) break;
+          matched = true;
+          const replacement = resolvePatternReplacementValue({
+            pattern,
+            fieldValue: candidateValue,
+            values: allValues,
+            latestProductValues,
+          });
+          const replacedValue = applyResolvedReplacement({
+            value: candidateValue,
+            pattern,
+            replacement,
+          });
+          if (replacedValue === candidateValue) break;
+          replaced = true;
+          candidateValue = replacedValue;
+          if (inSequenceGroup) {
+            nextValue = replacedValue;
+          }
+        }
+
+        if (!inSequenceGroup) {
+          if (candidateValue !== rawValue) {
+            nextValue = candidateValue;
+          }
+          continue;
+        }
+        const chainMode = normalizePatternChainMode(pattern);
+        if (matched && chainMode === 'stop_on_match') break;
+        if (replaced && chainMode === 'stop_on_replace') break;
+        if (replaced && pattern.passOutputToNext === false) break;
       }
 
       if (nextValue !== rawValue) {
@@ -325,7 +661,7 @@ export default function ProductFormGeneral({
         });
       }
     }
-  }, [allValues, formatterEnabled, setValue, validatorPatterns]);
+  }, [allValues, formatterEnabled, latestProductValues, setValue, validatorPatterns]);
 
   return (
     <div className='space-y-6'>
@@ -512,11 +848,49 @@ export default function ProductFormGeneral({
 
       <FormSection title='Identifiers' gridClassName='md:grid-cols-2'>
         <FormField label='SKU' required error={errors.sku?.message} id='sku'>
-          <Input
-            id='sku'
-            {...register('sku')}
-            placeholder='Unique stock keeping unit'
-          />
+          {(() => {
+            const skuFieldIssueList = validatorEnabled ? fieldIssues['sku'] ?? [] : [];
+            const skuFieldIssue = skuFieldIssueList[0];
+            const skuValue = (allValues.sku as string | undefined) ?? '';
+            return (
+              <>
+                <Input
+                  id='sku'
+                  className={cn(
+                    validatorEnabled &&
+                      skuFieldIssue &&
+                      (skuFieldIssue.severity === 'warning'
+                        ? 'border-amber-500/60'
+                        : 'border-red-500/60')
+                  )}
+                  {...register('sku')}
+                  placeholder='Unique stock keeping unit'
+                />
+                {validatorEnabled &&
+                  skuFieldIssueList.map((issue: FieldValidatorIssue) => (
+                    <ValidatorIssueHint
+                      key={issue.patternId}
+                      issue={issue}
+                      value={skuValue}
+                      onReplace={
+                        issue.replacementValue
+                          ? () => {
+                            const currentValue = (getValues('sku') as string | undefined) ?? '';
+                            const nextValue = applyIssueReplacement(currentValue, issue);
+                            if (nextValue !== currentValue) {
+                              setValue('sku', nextValue, {
+                                shouldDirty: true,
+                                shouldTouch: true,
+                              });
+                            }
+                          }
+                          : undefined
+                      }
+                    />
+                  ))}
+              </>
+            );
+          })()}
         </FormField>
         
         <FormField label='Product Identifier' description='EAN, GTIN or ASIN code.'>

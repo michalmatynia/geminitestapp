@@ -4,6 +4,10 @@ export const PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY = 'product_images_exte
 export const PRODUCT_IMAGES_EXTERNAL_ROUTES_SETTING_KEY = 'product_images_external_routes';
 export const DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL = 'http://localhost:3000';
 export const PRODUCT_VALIDATION_REPLACEMENT_FIELDS = [
+  'sku',
+  'ean',
+  'gtin',
+  'asin',
   'name_en',
   'name_pl',
   'name_de',

@@ -3,9 +3,9 @@ import { Table as ReactTable, Row } from '@tanstack/react-table';
 import { Trash2, Image as ImageIcon } from 'lucide-react';
 import React, { JSX, memo, useState } from 'react';
 
+import { logClientError } from '@/features/observability';
 import { useBulkDeleteProducts, useBulkConvertImagesToBase64 } from '@/features/products/hooks/useProductsMutations';
 import { ProductWithImages } from '@/features/products/types';
-import { logClientError } from '@/features/observability';
 import { Button, useToast, ConfirmDialog } from '@/shared/ui';
 import { logger } from '@/shared/utils/logger';
 

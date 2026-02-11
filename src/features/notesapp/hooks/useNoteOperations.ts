@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 import { findFolderParentId, findFolderById } from '@/features/foldertree';
 import type { UseNoteOperationsProps } from '@/features/notesapp/types/notes-hooks';
 import type { UndoAction } from '@/features/notesapp/types/notes-hooks';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { NoteWithRelations, CategoryWithChildren } from '@/shared/types/domain/notes';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -103,7 +104,7 @@ export function useNoteOperations({
   const handleDuplicateNote = useCallback(async (noteId: string): Promise<void> => {
     try {
       const note = await queryClient.fetchQuery<NoteWithRelations>({
-        queryKey: ['notes', noteId],
+        queryKey: QUERY_KEYS.notes.detail(noteId),
         queryFn: async (): Promise<NoteWithRelations> => {
           const response = await fetch(`/api/notes/${noteId}`);
           if (!response.ok) throw new Error('Failed to fetch note');
@@ -279,7 +280,7 @@ export function useNoteOperations({
     try {
       const [sourceNote, targetNote] = await Promise.all([
         queryClient.fetchQuery<NoteWithRelations>({
-          queryKey: ['notes', sourceNoteId],
+          queryKey: QUERY_KEYS.notes.detail(sourceNoteId),
           queryFn: async (): Promise<NoteWithRelations> => {
             const res = await fetch(`/api/notes/${sourceNoteId}`);
             if (!res.ok) throw new Error('Failed to fetch source note');
@@ -288,7 +289,7 @@ export function useNoteOperations({
           staleTime: NOTES_STALE_MS,
         }),
         queryClient.fetchQuery<NoteWithRelations>({
-          queryKey: ['notes', targetNoteId],
+          queryKey: QUERY_KEYS.notes.detail(targetNoteId),
           queryFn: async (): Promise<NoteWithRelations> => {
             const res = await fetch(`/api/notes/${targetNoteId}`);
             if (!res.ok) throw new Error('Failed to fetch target note');

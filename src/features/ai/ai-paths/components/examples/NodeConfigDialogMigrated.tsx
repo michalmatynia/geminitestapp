@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react';
 
-import type { AiNode, NodeConfig } from '@/features/ai/ai-paths/lib';
 import { useToast } from '@/shared/ui';
 
 import {
@@ -15,26 +14,21 @@ import {
   useSelectionActions,
   useSelectionState,
 } from '../../context';
+import { useAiPathsSettingsOrchestrator } from '../ai-paths-settings/AiPathsSettingsOrchestratorContext';
 import { AiPathConfigProvider } from '../AiPathConfigContext';
 import { NodeConfigDialog } from '../node-config-dialog';
 
-export type NodeConfigDialogMigratedProps = {
-  /** Model ID options for AI model nodes */
-  modelOptions: string[];
-  /** Update a node (partial patch) */
-  updateSelectedNode: (update: Partial<AiNode>, options?: { nodeId?: string }) => void;
-  /** Replace node config entirely */
-  updateSelectedNodeConfig: (config: NodeConfig) => void;
-  /** Clear history for a specific node (involves API) */
-  clearNodeHistory: (nodeId: string) => Promise<void>;
-};
+export type NodeConfigDialogMigratedProps = Record<string, never>;
 
-export function NodeConfigDialogMigrated({
-  modelOptions,
-  updateSelectedNode,
-  updateSelectedNodeConfig,
-  clearNodeHistory,
-}: NodeConfigDialogMigratedProps): React.JSX.Element | null {
+export function NodeConfigDialogMigrated(
+  _props: NodeConfigDialogMigratedProps = {}
+): React.JSX.Element | null {
+  const {
+    modelOptions,
+    updateSelectedNode,
+    updateSelectedNodeConfig,
+    handleClearNodeHistory,
+  } = useAiPathsSettingsOrchestrator();
   const { toast } = useToast();
   const { selectedNodeId, configOpen } = useSelectionState();
   const selectionActions = useSelectionActions();
@@ -82,7 +76,7 @@ export function NodeConfigDialogMigrated({
       handleRunSimulation={runtimeActions.runSimulation}
       clearRuntimeForNode={runtimeActions.clearNodeRuntime}
       clearNodeCache={runtimeActions.clearNodeRuntime}
-      clearNodeHistory={clearNodeHistory}
+      clearNodeHistory={handleClearNodeHistory}
       onSendToAi={runtimeActions.sendToAi}
       sendingToAi={runtimeState.sendingToAi}
       dbQueryPresets={presetsState.dbQueryPresets}

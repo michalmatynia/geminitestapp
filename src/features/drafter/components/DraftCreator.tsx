@@ -6,8 +6,12 @@ import { useDraft, useCreateDraft, useUpdateDraft } from '@/features/drafter/hoo
 import { draftSubmitSchema } from '@/features/drafter/validations/draft-form';
 import { IconSelector, ICON_LIBRARY_MAP } from '@/features/icons';
 import { CreateProductDraftInput, UpdateProductDraftInput } from '@/features/products';
-import type { CatalogRecord } from '@/features/products';
-import type { ProductCategoryDto, ProductTag, ProductParameter, ProductParameterValue, Producer } from '@/features/products';
+import { CatalogMultiSelectField } from '@/features/products/components/form/CatalogMultiSelectField';
+import { CategorySingleSelectField } from '@/features/products/components/form/CategorySingleSelectField';
+import { ProductImagesTabContent } from '@/features/products/components/form/ProductImagesTabContent';
+import { ProducerMultiSelectField } from '@/features/products/components/form/ProducerMultiSelectField';
+import { TagMultiSelectField } from '@/features/products/components/form/TagMultiSelectField';
+import type { ProductCategoryDto, ProductTag, ProductParameter, ProductParameterValue } from '@/features/products';
 import { getCategoriesFlat, getTags, getParameters } from '@/features/products/api/settings';
 import { useProductImages } from '@/features/products/hooks/useProductImages';
 import { useCatalogs, useProducers } from '@/features/products/hooks/useProductMetadata';
@@ -57,7 +61,7 @@ export function DraftCreator({
 
   // Queries
   const { data: catalogs = [] } = useCatalogs();
-  const { data: producers = [] } = useProducers();
+  const { data: producers = [], isLoading: producersLoading } = useProducers();
   const draftQuery = useDraft(draftId);
   const createDraftMutation = useCreateDraft();
   const updateDraftMutation = useUpdateDraft();
@@ -133,6 +137,12 @@ export function DraftCreator({
     handleSlotImageChange,
     setImageLinkAt,
     setImageBase64At,
+    showFileManager,
+    setShowFileManager,
+    handleSlotDisconnectImage,
+    handleMultiFileSelect,
+    swapImageSlots,
+    setImagesReordering,
   } = useProductImages(undefined, []);
 
   const setActive = (value: boolean): void => {
@@ -350,24 +360,6 @@ export function DraftCreator({
     }
   };
 
-  const toggleCatalog = (catalogId: string): void => {
-    setSelectedCatalogIds((prev: string[]): string[] =>
-      prev.includes(catalogId) ? prev.filter((id: string): boolean => id !== catalogId) : [...prev, catalogId]
-    );
-  };
-
-  const toggleCategory = (categoryId: string): void => {
-    setSelectedCategoryId((prev: string | null): string | null =>
-      prev === categoryId ? null : categoryId
-    );
-  };
-
-  const toggleTag = (tagId: string): void => {
-    setSelectedTagIds((prev: string[]): string[] =>
-      prev.includes(tagId) ? prev.filter((id: string): boolean => id !== tagId) : [...prev, tagId]
-    );
-  };
-
   const addParameterValue = (): void => {
     setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => [...prev, { parameterId: '', value: '' }]);
   };
@@ -431,6 +423,7 @@ export function DraftCreator({
           <Tabs defaultValue='details' className='w-full'>
             <TabsList className='mb-6'>
               <TabsTrigger value='details'>Details</TabsTrigger>
+              <TabsTrigger value='images'>Images</TabsTrigger>
               <TabsTrigger value='parameters'>Parameters</TabsTrigger>
             </TabsList>
             <TabsContent value='details' className='mt-0 space-y-6'>
@@ -776,44 +769,29 @@ export function DraftCreator({
               {/* Catalogs */}
               <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
                 <h3 className='text-sm font-semibold text-white'>Catalogs</h3>
-                <div className='flex flex-wrap gap-2'>
-                  {catalogs.map((catalog: CatalogRecord): React.JSX.Element => (
-                    <Button
-                      key={catalog.id}
-                      type='button'
-                      onClick={(): void => toggleCatalog(catalog.id)}
-                      className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
-                        selectedCatalogIds.includes(catalog.id)
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                      }`}
-                    >
-                      {catalog.name}
-                    </Button>
-                  ))}
-                </div>
+                <CatalogMultiSelectField
+                  catalogs={catalogs}
+                  selectedCatalogIds={selectedCatalogIds}
+                  onChange={setSelectedCatalogIds}
+                />
               </div>
 
               {/* Categories */}
               {categories.length > 0 && (
                 <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
                   <h3 className='text-sm font-semibold text-white'>Categories</h3>
-                  <div className='flex flex-wrap gap-2'>
-                    {categories.map((category: ProductCategoryDto): React.JSX.Element => (
-                      <Button
-                        key={category.id}
-                        type='button'
-                        onClick={(): void => toggleCategory(category.id)}
-                        className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
-                          selectedCategoryId === category.id
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                        }`}
-                      >
-                        {category.name}
-                      </Button>
-                    ))}
-                  </div>
+                  <CategorySingleSelectField
+                    categories={categories}
+                    selectedCategoryId={selectedCategoryId}
+                    onChange={setSelectedCategoryId}
+                    loading={categoryQueries.some((query) => query.isLoading)}
+                    disabled={selectedCatalogIds.length === 0}
+                    placeholder={
+                      selectedCatalogIds.length > 0
+                        ? 'Select category'
+                        : 'Select a catalog first'
+                    }
+                  />
                 </div>
               )}
 
@@ -821,48 +799,29 @@ export function DraftCreator({
               {tags.length > 0 && (
                 <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
                   <h3 className='text-sm font-semibold text-white'>Tags</h3>
-                  <div className='flex flex-wrap gap-2'>
-                    {tags.map((tag: ProductTag): React.JSX.Element => (
-                      <Button
-                        key={tag.id}
-                        type='button'
-                        onClick={(): void => toggleTag(tag.id)}
-                        className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
-                          selectedTagIds.includes(tag.id)
-                            ? 'bg-purple-600 text-white'
-                            : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                        }`}
-                      >
-                        {tag.name}
-                      </Button>
-                    ))}
-                  </div>
+                  <TagMultiSelectField
+                    tags={tags}
+                    selectedTagIds={selectedTagIds}
+                    onChange={setSelectedTagIds}
+                    loading={tagQueries.some((query) => query.isLoading)}
+                    disabled={selectedCatalogIds.length === 0}
+                    placeholder={
+                      selectedCatalogIds.length > 0
+                        ? 'Select tags'
+                        : 'Select a catalog first'
+                    }
+                  />
                 </div>
               )}
 
               {/* Producers */}
               <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
-                <h3 className='text-sm font-semibold text-white'>Producers</h3>
-                <div className='flex flex-wrap gap-2'>
-                  {producers.map((producer: Producer): React.JSX.Element => (
-                    <Button
-                      key={producer.id}
-                      type='button'
-                      onClick={(): void => {
-                        setSelectedProducerIds((prev: string[]): string[] =>
-                          prev.includes(producer.id) ? prev.filter((id: string): boolean => id !== producer.id) : [...prev, producer.id]
-                        );
-                      }}
-                      className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
-                        selectedProducerIds.includes(producer.id)
-                          ? 'bg-orange-600 text-white'
-                          : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                      }`}
-                    >
-                      {producer.name}
-                    </Button>
-                  ))}
-                </div>
+                <ProducerMultiSelectField
+                  producers={producers}
+                  selectedProducerIds={selectedProducerIds}
+                  onChange={setSelectedProducerIds}
+                  loading={producersLoading}
+                />
               </div>
 
               {/* Price Group Info */}
@@ -892,6 +851,27 @@ export function DraftCreator({
                   </p>
                 </div>
               </div>
+            </TabsContent>
+            <TabsContent value='images' className='mt-0 space-y-4'>
+              <ProductImagesTabContent
+                showFileManager={showFileManager}
+                onShowFileManager={setShowFileManager}
+                onSelectFiles={handleMultiFileSelect}
+                inlineFileManager
+                imageManagerController={{
+                  imageSlots,
+                  imageLinks,
+                  imageBase64s,
+                  setImageLinkAt,
+                  setImageBase64At,
+                  handleSlotImageChange,
+                  handleSlotDisconnectImage,
+                  setShowFileManager,
+                  swapImageSlots,
+                  setImagesReordering,
+                  uploadError: null,
+                }}
+              />
             </TabsContent>
             <TabsContent value='parameters' className='mt-0 space-y-4'>
               <div className='rounded-lg border border-border bg-card/50 p-4 space-y-4'>

@@ -11,6 +11,9 @@ import type {
 } from '@/features/products/types/services/validation-pattern-repository';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type {
+  ProductValidationChainMode,
+  ProductValidationLaunchOperator,
+  ProductValidationLaunchSourceMode,
   ProductValidationPattern,
   ProductValidationSeverity,
   ProductValidationTarget,
@@ -33,6 +36,19 @@ interface ProductValidationPatternDoc extends Document {
   replacementEnabled: boolean;
   replacementValue: string | null;
   replacementFields: string[];
+  sequenceGroupId?: string | null;
+  sequenceGroupLabel?: string | null;
+  sequenceGroupDebounceMs?: number | null;
+  sequence?: number | null;
+  chainMode?: ProductValidationChainMode | null;
+  maxExecutions?: number | null;
+  passOutputToNext?: boolean | null;
+  launchEnabled?: boolean | null;
+  launchSourceMode?: ProductValidationLaunchSourceMode | null;
+  launchSourceField?: string | null;
+  launchOperator?: ProductValidationLaunchOperator | null;
+  launchValue?: string | null;
+  launchFlags?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -49,6 +65,19 @@ type ProductValidationPatternInsert = {
   replacementEnabled: boolean;
   replacementValue: string | null;
   replacementFields: string[];
+  sequenceGroupId: string | null;
+  sequenceGroupLabel: string | null;
+  sequenceGroupDebounceMs: number;
+  sequence: number | null;
+  chainMode: ProductValidationChainMode;
+  maxExecutions: number;
+  passOutputToNext: boolean;
+  launchEnabled: boolean;
+  launchSourceMode: ProductValidationLaunchSourceMode;
+  launchSourceField: string | null;
+  launchOperator: ProductValidationLaunchOperator;
+  launchValue: string | null;
+  launchFlags: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -83,6 +112,63 @@ const normalizeReplacementFields = (fields: string[] | null | undefined): string
   return [...unique];
 };
 
+const normalizeSequence = (value: unknown): number | null => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+  return Math.max(0, Math.floor(value));
+};
+
+const normalizeSequenceGroupId = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const normalizeSequenceGroupLabel = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const normalizeSequenceGroupDebounceMs = (value: unknown): number => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
+  return Math.min(30_000, Math.max(0, Math.floor(value)));
+};
+
+const normalizeChainMode = (value: unknown): ProductValidationChainMode => {
+  if (value === 'stop_on_match' || value === 'stop_on_replace') return value;
+  return 'continue';
+};
+
+const normalizeMaxExecutions = (value: unknown): number => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 1;
+  return Math.min(20, Math.max(1, Math.floor(value)));
+};
+
+const normalizeLaunchSourceMode = (value: unknown): ProductValidationLaunchSourceMode => {
+  if (value === 'form_field' || value === 'latest_product_field') return value;
+  return 'current_field';
+};
+
+const normalizeLaunchOperator = (value: unknown): ProductValidationLaunchOperator => {
+  switch (value) {
+    case 'equals':
+    case 'not_equals':
+    case 'contains':
+    case 'starts_with':
+    case 'ends_with':
+    case 'regex':
+    case 'gt':
+    case 'gte':
+    case 'lt':
+    case 'lte':
+    case 'is_empty':
+    case 'is_not_empty':
+      return value;
+    default:
+      return 'equals';
+  }
+};
+
 const toDomain = (doc: ProductValidationPatternDoc): ProductValidationPattern => ({
   id: doc._id.toString(),
   label: doc.label,
@@ -96,6 +182,25 @@ const toDomain = (doc: ProductValidationPatternDoc): ProductValidationPattern =>
   replacementEnabled: doc.replacementEnabled ?? false,
   replacementValue: doc.replacementValue ?? null,
   replacementFields: normalizeReplacementFields(doc.replacementFields),
+  sequenceGroupId: normalizeSequenceGroupId(doc.sequenceGroupId),
+  sequenceGroupLabel: normalizeSequenceGroupLabel(doc.sequenceGroupLabel),
+  sequenceGroupDebounceMs: normalizeSequenceGroupDebounceMs(doc.sequenceGroupDebounceMs),
+  sequence: normalizeSequence(doc.sequence),
+  chainMode: normalizeChainMode(doc.chainMode),
+  maxExecutions: normalizeMaxExecutions(doc.maxExecutions),
+  passOutputToNext: doc.passOutputToNext ?? true,
+  launchEnabled: doc.launchEnabled ?? false,
+  launchSourceMode: normalizeLaunchSourceMode(doc.launchSourceMode),
+  launchSourceField:
+    typeof doc.launchSourceField === 'string' && doc.launchSourceField.trim()
+      ? doc.launchSourceField.trim()
+      : null,
+  launchOperator: normalizeLaunchOperator(doc.launchOperator),
+  launchValue: typeof doc.launchValue === 'string' ? doc.launchValue : null,
+  launchFlags:
+    typeof doc.launchFlags === 'string' && doc.launchFlags.trim()
+      ? doc.launchFlags.trim()
+      : null,
   createdAt: doc.createdAt?.toISOString() ?? new Date().toISOString(),
   updatedAt: doc.updatedAt?.toISOString() ?? new Date().toISOString(),
 });
@@ -108,7 +213,7 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
     const rows = await db
       .collection<ProductValidationPatternDoc>(COLLECTION)
       .find({})
-      .sort({ target: 1, label: 1 })
+      .sort({ sequence: 1, target: 1, label: 1 })
       .toArray();
     return rows.map(toDomain);
   },
@@ -125,6 +230,17 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
   async createPattern(data: CreateProductValidationPatternInput): Promise<ProductValidationPattern> {
     const db = await getMongoDb();
     const now = new Date();
+    const maxSequenceRow = await db
+      .collection<ProductValidationPatternDoc>(COLLECTION)
+      .find({})
+      .project<{ sequence?: number | null }>({ sequence: 1 })
+      .sort({ sequence: -1 })
+      .limit(1)
+      .next();
+    const fallbackSequence =
+      typeof maxSequenceRow?.sequence === 'number' && Number.isFinite(maxSequenceRow.sequence)
+        ? Math.floor(maxSequenceRow.sequence) + 10
+        : 10;
     const payload: ProductValidationPatternInsert = {
       label: data.label,
       target: data.target,
@@ -137,6 +253,19 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
       replacementEnabled: data.replacementEnabled ?? false,
       replacementValue: data.replacementValue?.trim() || null,
       replacementFields: normalizeReplacementFields(data.replacementFields),
+      sequenceGroupId: normalizeSequenceGroupId(data.sequenceGroupId),
+      sequenceGroupLabel: normalizeSequenceGroupLabel(data.sequenceGroupLabel),
+      sequenceGroupDebounceMs: normalizeSequenceGroupDebounceMs(data.sequenceGroupDebounceMs),
+      sequence: normalizeSequence(data.sequence) ?? fallbackSequence,
+      chainMode: normalizeChainMode(data.chainMode),
+      maxExecutions: normalizeMaxExecutions(data.maxExecutions),
+      passOutputToNext: data.passOutputToNext ?? true,
+      launchEnabled: data.launchEnabled ?? false,
+      launchSourceMode: normalizeLaunchSourceMode(data.launchSourceMode),
+      launchSourceField: data.launchSourceField?.trim() || null,
+      launchOperator: normalizeLaunchOperator(data.launchOperator),
+      launchValue: typeof data.launchValue === 'string' ? data.launchValue : null,
+      launchFlags: data.launchFlags?.trim() || null,
       createdAt: now,
       updatedAt: now,
     };
@@ -165,6 +294,45 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
     if (data.replacementValue !== undefined) set.replacementValue = data.replacementValue?.trim() || null;
     if (data.replacementFields !== undefined) {
       set.replacementFields = normalizeReplacementFields(data.replacementFields);
+    }
+    if (data.sequenceGroupId !== undefined) {
+      set.sequenceGroupId = normalizeSequenceGroupId(data.sequenceGroupId);
+    }
+    if (data.sequenceGroupLabel !== undefined) {
+      set.sequenceGroupLabel = normalizeSequenceGroupLabel(data.sequenceGroupLabel);
+    }
+    if (data.sequenceGroupDebounceMs !== undefined) {
+      set.sequenceGroupDebounceMs = normalizeSequenceGroupDebounceMs(data.sequenceGroupDebounceMs);
+    }
+    if (data.sequence !== undefined) {
+      set.sequence = normalizeSequence(data.sequence);
+    }
+    if (data.chainMode !== undefined) {
+      set.chainMode = normalizeChainMode(data.chainMode);
+    }
+    if (data.maxExecutions !== undefined) {
+      set.maxExecutions = normalizeMaxExecutions(data.maxExecutions);
+    }
+    if (data.passOutputToNext !== undefined) {
+      set.passOutputToNext = data.passOutputToNext;
+    }
+    if (data.launchEnabled !== undefined) {
+      set.launchEnabled = data.launchEnabled;
+    }
+    if (data.launchSourceMode !== undefined) {
+      set.launchSourceMode = normalizeLaunchSourceMode(data.launchSourceMode);
+    }
+    if (data.launchSourceField !== undefined) {
+      set.launchSourceField = data.launchSourceField?.trim() || null;
+    }
+    if (data.launchOperator !== undefined) {
+      set.launchOperator = normalizeLaunchOperator(data.launchOperator);
+    }
+    if (data.launchValue !== undefined) {
+      set.launchValue = typeof data.launchValue === 'string' ? data.launchValue : null;
+    }
+    if (data.launchFlags !== undefined) {
+      set.launchFlags = data.launchFlags?.trim() || null;
     }
 
     await db.collection<ProductValidationPatternDoc>(COLLECTION).updateOne(

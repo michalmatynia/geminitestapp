@@ -1,72 +1,44 @@
 'use client';
 
-import { useQuery, useQueryClient, type UseMutationResult, type UseQueryResult } from '@tanstack/react-query';
+import { useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 
 import { 
-  getProducts, 
-  countProducts, 
   createProduct, 
   updateProduct, 
   deleteProduct 
 } from '@/features/products/api';
+import {
+  type UseProductsFilters,
+  type UseProductsOptions,
+  useProducts as useProductsQuery,
+  useProductsCount as useProductsCountQuery,
+} from '@/features/products/hooks/useProductsQuery';
 import { addQueuedProductId, removeQueuedProductId } from '@/features/products/state/queued-product-ops';
 import type { 
   ProductWithImages, 
 } from '@/features/products/types';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { DeleteResponse } from '@/shared/types/api/api';
 
 // --- Queries ---
 
-export interface UseProductsFilters {
-  search?: string | undefined;
-  sku?: string | undefined;
-  minPrice?: number | undefined;
-  maxPrice?: number | undefined;
-  startDate?: string | undefined;
-  endDate?: string | undefined;
-  page?: number | undefined;
-  pageSize?: number | undefined;
-  catalogId?: string | undefined;
-  searchLanguage?: string | undefined;
-}
-
-const PRODUCTS_STALE_MS = 10_000;
+export type { UseProductsFilters };
 
 export function useProducts(
   filters: UseProductsFilters,
-  options: { enabled?: boolean } = {}
-): UseQueryResult<ProductWithImages[], Error> {
-  const { enabled = true } = options;
-
-  return useQuery({
-    queryKey: ['products', filters],
-    queryFn: () => getProducts(filters),
-    enabled,
-    staleTime: PRODUCTS_STALE_MS,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
-    networkMode: 'always',
-  });
+  options: UseProductsOptions = {}
+) {
+  return useProductsQuery(filters, options);
 }
 
 export function useProductsCount(
   filters: UseProductsFilters,
-  options: { enabled?: boolean } = {}
-): UseQueryResult<number, Error> {
-  const { enabled = true } = options;
-
-  return useQuery({
-    queryKey: ['products-count', filters],
-    queryFn: () => countProducts(filters),
-    enabled,
-    staleTime: PRODUCTS_STALE_MS,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
-    networkMode: 'always',
-  });
+  options: UseProductsOptions = {}
+) {
+  return useProductsCountQuery(filters, options);
 }
 
 // --- Mutations ---
@@ -75,8 +47,8 @@ export function useCreateProductMutation(): UseMutationResult<unknown, Error, Fo
   return useOfflineMutation(
     (formData: FormData) => createProduct(formData),
     {
-      queryKey: ['products'],
-      extraInvalidateKeys: [['products-count']],
+      queryKey: QUERY_KEYS.products.all,
+      extraInvalidateKeys: [QUERY_KEYS.products.counts()],
       queuedMessage: 'Product creation queued in runtime queue.',
       processedMessage: 'Queued product creation completed.',
       errorMessage: 'Failed to create product',
@@ -172,12 +144,12 @@ export function useUpdateProductMutation(): UseMutationResult<
       return updateProduct(id, data);
     },
     {
-      queryKey: ['products'],
+      queryKey: QUERY_KEYS.products.all,
       extraInvalidateKeys: (variables: {
         id: string;
         data: Partial<ProductWithImages> | FormData;
         originalSku?: string | null;
-      }) => [['products', variables.id]],
+      }) => [QUERY_KEYS.products.detail(variables.id)],
       queuedMessage: 'Product update queued in runtime queue.',
       processedMessage: 'Queued product update completed.',
       errorMessage: 'Failed to update product',
@@ -199,8 +171,8 @@ export function useDeleteProductMutation(): UseMutationResult<DeleteResponse | n
   return useOfflineMutation(
     (id: string) => deleteProduct(id) as Promise<DeleteResponse>,
     {
-      queryKey: ['products'],
-      extraInvalidateKeys: [['products-count']],
+      queryKey: QUERY_KEYS.products.all,
+      extraInvalidateKeys: [QUERY_KEYS.products.counts()],
       queuedMessage: 'Product deletion queued in runtime queue.',
       processedMessage: 'Queued product deletion completed.',
       errorMessage: 'Failed to delete product',
@@ -220,8 +192,8 @@ export function useBulkDeleteProductsMutation(): UseMutationResult<{ success: bo
       return { success: true };
     },
     {
-      queryKey: ['products'],
-      extraInvalidateKeys: [['products-count']],
+      queryKey: QUERY_KEYS.products.all,
+      extraInvalidateKeys: [QUERY_KEYS.products.counts()],
       queuedMessage: 'Product deletion queued in runtime queue.',
       processedMessage: 'Queued product deletion completed.',
       errorMessage: 'Failed to delete some products',
@@ -351,8 +323,8 @@ export function useProductData({
   }
 
   const refresh = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: ['products'] });
-    void queryClient.invalidateQueries({ queryKey: ['products-count'] });
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() });
   }, [queryClient]);
 
   // Invalidate when refreshTrigger changes

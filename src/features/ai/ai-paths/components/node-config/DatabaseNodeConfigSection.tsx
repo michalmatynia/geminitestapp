@@ -59,9 +59,15 @@ type ActionResult = {
 };
 
 import { useAiPathConfig } from '../AiPathConfigContext';
-import { DatabaseConstructorTab } from './database/DatabaseConstructorTab';
+import {
+  DatabaseConstructorTab,
+  DatabaseConstructorTabProvider,
+} from './database/DatabaseConstructorTab';
 import { DatabasePresetsTab } from './database/DatabasePresetsTab';
-import { DatabaseQueryInputControls } from './database/DatabaseQueryInputControls';
+import {
+  DatabaseQueryInputControls,
+  DatabaseQueryInputControlsProvider,
+} from './database/DatabaseQueryInputControls';
 import { DatabaseQueryValidatorPanel } from './database/DatabaseQueryValidatorPanel';
 import { DatabaseSaveQueryPresetDialog } from './database/DatabaseSaveQueryPresetDialog';
 import { DatabaseSettingsTab } from './database/DatabaseSettingsTab';
@@ -2009,41 +2015,43 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
   };
   // Shared query input controls (used in both Query and Constructor tabs)
   const queryInputControls = (
-    <DatabaseQueryInputControls
-      provider={resolvedProvider}
-      actionCategory={actionCategory}
-      action={action}
-      actionCategoryOptions={[...actionCategoryOptions]}
-                
-      actionOptions={[...actionOptions]}
-      queryTemplateValue={activeQueryValue}
-      queryPlaceholder={activeQueryPlaceholder}
-      showFilterInput={isUpdateAction}
-      filterTemplateValue={queryTemplateValue}
-      filterPlaceholder={queryPlaceholder}
-      onFilterChange={handleFilterChange}
-      runDry={runDry}
-      onToggleRunDry={() =>
-        updateSelectedNodeConfig({
-          database: {
-            ...databaseConfig,
-            dryRun: !runDry,
-          },
-        })
-      }
-      queryValidation={queryValidation}
-      queryFormatterEnabled={queryFormatterEnabled}
-      queryValidatorEnabled={queryValidatorEnabled}
-      testQueryLoading={testQueryLoading}
-      queryTemplateRef={queryTemplateRef}
-      onActionCategoryChange={(value: DatabaseActionCategory) => handleActionCategoryChange(value)}
-      onActionChange={(value: DatabaseAction) => handleActionChange(value)}
-      onFormatClick={handleFormatClick}
-      onFormatContextMenu={handleFormatContextMenu}
-      onToggleValidator={handleToggleValidator}
-      onRunQuery={() => void handleRunQuery()}
-      onQueryChange={handleQueryChange}
-    />
+    <DatabaseQueryInputControlsProvider
+      value={{
+        provider: resolvedProvider,
+        actionCategory,
+        action,
+        actionCategoryOptions: [...actionCategoryOptions],
+        actionOptions: [...actionOptions],
+        queryTemplateValue: activeQueryValue,
+        queryPlaceholder: activeQueryPlaceholder,
+        showFilterInput: isUpdateAction,
+        filterTemplateValue: queryTemplateValue,
+        filterPlaceholder: queryPlaceholder,
+        onFilterChange: handleFilterChange,
+        runDry,
+        onToggleRunDry: () =>
+          updateSelectedNodeConfig({
+            database: {
+              ...databaseConfig,
+              dryRun: !runDry,
+            },
+          }),
+        queryValidation,
+        queryFormatterEnabled,
+        queryValidatorEnabled,
+        testQueryLoading,
+        queryTemplateRef,
+        onActionCategoryChange: (value: DatabaseActionCategory) => handleActionCategoryChange(value),
+        onActionChange: (value: DatabaseAction) => handleActionChange(value),
+        onFormatClick: handleFormatClick,
+        onFormatContextMenu: handleFormatContextMenu,
+        onToggleValidator: handleToggleValidator,
+        onRunQuery: () => void handleRunQuery(),
+        onQueryChange: handleQueryChange,
+      }}
+    >
+      <DatabaseQueryInputControls />
+    </DatabaseQueryInputControlsProvider>
   );
   const liveDebugPayload = (runtimeState.outputs[selectedNode.id] as
                   | { debugPayload?: unknown }
@@ -2582,54 +2590,60 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
           />
         </TabsContent>
         <TabsContent value='constructor'>
-          <DatabaseConstructorTab
-            queryInputControls={queryInputControls}
-            pendingAiQuery={pendingAiQuery}
-            setPendingAiQuery={setPendingAiQuery}
-            aiQueries={aiQueries}
-            setAiQueries={setAiQueries}
-            selectedAiQueryId={selectedAiQueryId}
-            setSelectedAiQueryId={setSelectedAiQueryId}
-            presetOptions={presetOptions}
-            applyDatabasePreset={applyDatabasePreset}
-            openSaveQueryPresetModal={openSaveQueryPresetModal}
-            databaseConfig={databaseConfig}
-            queryConfig={queryConfig}
-            operation={operation}
-            queryTemplateValue={activeQueryValue}
-            queryTemplateRef={queryTemplateRef}
-            sampleState={sampleState}
-            parsedSampleError={parsedSample.error}
-            updaterSampleLoading={updaterSampleLoading}
-            selectedNodeId={selectedNode.id}
-            setUpdaterSamples={setUpdaterSamples}
-            onFetchUpdaterSample={handleFetchUpdaterSample}
-            updateSelectedNodeConfig={updateSelectedNodeConfig}
-            updateQueryConfig={updateQueryConfig}
-            connectedPlaceholders={connectedPlaceholders}
-            hasSchemaConnection={schemaConnection.hasSchemaConnection || Boolean(schemaSnapshot?.collections?.length)}
-            fetchedDbSchema={effectiveSchema}
-            schemaMatrix={schemaMatrix}
-            onSyncSchema={handleSyncSchema}
-            schemaSyncing={schemaSyncing}
-            schemaLoading={schemaLoading}
-            nodes={nodes}
-            edges={edges}
-            selectedNode={selectedNode}
-            runtimeState={runtimeState}
-            onSendToAi={onSendToAi}
-            sendingToAi={sendingToAi}
-            mapInputsToTargets={mapInputsToTargets}
-            bundleKeys={bundleKeys}
-            toast={toast}
-            aiPromptRef={aiPromptRef}
-            mappings={mappings}
-            updateMapping={updateMapping}
-            removeMapping={removeMapping}
-            addMapping={addMapping}
-            availablePorts={availablePorts}
-            uniqueTargetPathOptions={uniqueTargetPathOptions}
-          />
+          <DatabaseConstructorTabProvider
+            value={{
+              queryInputControls,
+              pendingAiQuery,
+              setPendingAiQuery,
+              aiQueries,
+              setAiQueries,
+              selectedAiQueryId,
+              setSelectedAiQueryId,
+              presetOptions,
+              applyDatabasePreset,
+              openSaveQueryPresetModal,
+              databaseConfig,
+              queryConfig,
+              operation,
+              queryTemplateValue: activeQueryValue,
+              queryTemplateRef,
+              sampleState,
+              parsedSampleError: parsedSample.error,
+              updaterSampleLoading,
+              selectedNodeId: selectedNode.id,
+              setUpdaterSamples,
+              onFetchUpdaterSample: handleFetchUpdaterSample,
+              updateSelectedNodeConfig,
+              updateQueryConfig,
+              connectedPlaceholders,
+              hasSchemaConnection:
+                schemaConnection.hasSchemaConnection ||
+                Boolean(schemaSnapshot?.collections?.length),
+              fetchedDbSchema: effectiveSchema,
+              schemaMatrix,
+              onSyncSchema: handleSyncSchema,
+              schemaSyncing,
+              schemaLoading,
+              nodes,
+              edges,
+              selectedNode,
+              runtimeState,
+              onSendToAi,
+              sendingToAi,
+              mapInputsToTargets,
+              bundleKeys,
+              toast,
+              aiPromptRef,
+              mappings,
+              updateMapping,
+              removeMapping,
+              addMapping,
+              availablePorts,
+              uniqueTargetPathOptions,
+            }}
+          >
+            <DatabaseConstructorTab />
+          </DatabaseConstructorTabProvider>
         </TabsContent>
         <TabsContent value='presets'>
           <DatabasePresetsTab

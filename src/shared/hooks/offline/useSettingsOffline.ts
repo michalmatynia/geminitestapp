@@ -4,13 +4,11 @@ import {
   fetchSettingsCached,
   invalidateSettingsCache,
 } from '@/shared/api/settings-client';
+import type { SettingRecordDto } from '@/shared/dtos/settings';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
-export interface SettingRecord {
-  key: string;
-  value: string;
-}
+type SettingRecord = SettingRecordDto;
 
 export interface SettingsOfflineHookResult {
   settings: SettingRecord[] | undefined;

@@ -24,8 +24,8 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
         <CategoryMapperCatalogSelector />
         <CategoryMapperStats />
         <CategoryMapperTable />
-        <BaseProducerMapper connectionId={connectionId} connectionName={connectionName} />
-        <BaseTagMapper connectionId={connectionId} connectionName={connectionName} />
+        <BaseProducerMapper />
+        <BaseTagMapper />
       </div>
     </CategoryMapperProvider>
   );

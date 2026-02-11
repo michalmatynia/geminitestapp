@@ -1,4 +1,7 @@
 import type {
+  ProductValidationChainMode,
+  ProductValidationLaunchOperator,
+  ProductValidationLaunchSourceMode,
   ProductValidationPattern,
   ProductValidationSeverity,
   ProductValidationTarget,
@@ -16,6 +19,19 @@ export type CreateProductValidationPatternInput = {
   replacementEnabled?: boolean;
   replacementValue?: string | null;
   replacementFields?: string[];
+  sequenceGroupId?: string | null;
+  sequenceGroupLabel?: string | null;
+  sequenceGroupDebounceMs?: number;
+  sequence?: number | null;
+  chainMode?: ProductValidationChainMode;
+  maxExecutions?: number;
+  passOutputToNext?: boolean;
+  launchEnabled?: boolean;
+  launchSourceMode?: ProductValidationLaunchSourceMode;
+  launchSourceField?: string | null;
+  launchOperator?: ProductValidationLaunchOperator;
+  launchValue?: string | null;
+  launchFlags?: string | null;
 };
 
 export type UpdateProductValidationPatternInput = {
@@ -30,6 +46,19 @@ export type UpdateProductValidationPatternInput = {
   replacementEnabled?: boolean;
   replacementValue?: string | null;
   replacementFields?: string[];
+  sequenceGroupId?: string | null;
+  sequenceGroupLabel?: string | null;
+  sequenceGroupDebounceMs?: number;
+  sequence?: number | null;
+  chainMode?: ProductValidationChainMode;
+  maxExecutions?: number;
+  passOutputToNext?: boolean;
+  launchEnabled?: boolean;
+  launchSourceMode?: ProductValidationLaunchSourceMode;
+  launchSourceField?: string | null;
+  launchOperator?: ProductValidationLaunchOperator;
+  launchValue?: string | null;
+  launchFlags?: string | null;
 };
 
 export type ProductValidationPatternRepository = {

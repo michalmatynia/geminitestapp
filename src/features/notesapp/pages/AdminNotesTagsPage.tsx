@@ -89,7 +89,8 @@ export function AdminNotesTagsPage(): React.JSX.Element {
     try {
       await updateTag.mutateAsync({
         id: tagId,
-        data: { name: editingName.trim(), color: editingColor },
+        name: editingName.trim(),
+        color: editingColor,
       });
       toast('Tag updated', { variant: 'success' });
       handleEditCancel();

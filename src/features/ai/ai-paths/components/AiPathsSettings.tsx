@@ -1,6 +1,9 @@
 'use client';
 
+import { AppErrorBoundary } from '@/shared/ui/AppErrorBoundary';
+
 import { AiPathsProvider, useStateBridgeAll } from '../context';
+import { AiPathsSettingsOrchestratorProvider } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
 import { AiPathsSettingsView } from './ai-paths-settings/AiPathsSettingsView';
 import { useAiPathsSettingsState, type AiPathsSettingsState } from './ai-paths-settings/useAiPathsSettingsState';
 
@@ -27,15 +30,17 @@ export function AiPathsSettings({
   onFocusModeChange,
 }: AiPathsSettingsProps): React.JSX.Element {
   return (
-    <AiPathsProvider>
-      <AiPathsSettingsInner
-        activeTab={activeTab}
-        renderActions={renderActions}
-        onTabChange={onTabChange}
-        isFocusMode={isFocusMode}
-        onFocusModeChange={onFocusModeChange}
-      />
-    </AiPathsProvider>
+    <AppErrorBoundary source='AiPathsSettings'>
+      <AiPathsProvider>
+        <AiPathsSettingsInner
+          activeTab={activeTab}
+          renderActions={renderActions}
+          onTabChange={onTabChange}
+          isFocusMode={isFocusMode}
+          onFocusModeChange={onFocusModeChange}
+        />
+      </AiPathsProvider>
+    </AppErrorBoundary>
   );
 }
 
@@ -127,13 +132,14 @@ function AiPathsSettingsInner({
   });
 
   return (
-    <AiPathsSettingsView
-      activeTab={activeTab}
-      renderActions={renderActions}
-      onTabChange={onTabChange}
-      isFocusMode={isFocusMode}
-      onFocusModeChange={onFocusModeChange}
-      state={state}
-    />
+    <AiPathsSettingsOrchestratorProvider value={state}>
+      <AiPathsSettingsView
+        activeTab={activeTab}
+        renderActions={renderActions}
+        onTabChange={onTabChange}
+        isFocusMode={isFocusMode}
+        onFocusModeChange={onFocusModeChange}
+      />
+    </AiPathsSettingsOrchestratorProvider>
   );
 }

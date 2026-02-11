@@ -24,5 +24,6 @@ export * from './notesapp';
 export * from './observability';
 export * from './playwright';
 export * from './products';
+export * from './settings';
 export * from './system';
 export * from './viewer3d';

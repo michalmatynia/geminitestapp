@@ -1,5 +1,6 @@
 import { Prisma, ProductValidationPattern as PrismaPattern } from '@prisma/client';
 
+import { ErrorSystem } from '@/features/observability/server';
 import {
   PRODUCT_VALIDATION_REPLACEMENT_FIELDS,
   PRODUCT_VALIDATOR_ENABLED_BY_DEFAULT_SETTING_KEY,
@@ -10,9 +11,9 @@ import type {
   UpdateProductValidationPatternInput,
 } from '@/features/products/types/services/validation-pattern-repository';
 import { operationFailedError } from '@/shared/errors/app-error';
-import { ErrorSystem } from '@/features/observability/server';
 import prisma from '@/shared/lib/db/prisma';
 import type {
+  ProductValidationChainMode,
   ProductValidationPattern,
   ProductValidationSeverity,
   ProductValidationTarget,
@@ -117,6 +118,19 @@ const toDomain = (pattern: PrismaPattern): ProductValidationPattern => ({
   replacementEnabled: pattern.replacementEnabled ?? false,
   replacementValue: pattern.replacementValue ?? null,
   replacementFields: normalizeReplacementFields(pattern.replacementFields),
+  sequenceGroupId: null,
+  sequenceGroupLabel: null,
+  sequenceGroupDebounceMs: 0,
+  sequence: null,
+  chainMode: 'continue' as ProductValidationChainMode,
+  maxExecutions: 1,
+  passOutputToNext: true,
+  launchEnabled: false,
+  launchSourceMode: 'current_field',
+  launchSourceField: null,
+  launchOperator: 'equals',
+  launchValue: null,
+  launchFlags: null,
   createdAt: pattern.createdAt.toISOString(),
   updatedAt: pattern.updatedAt.toISOString(),
 });

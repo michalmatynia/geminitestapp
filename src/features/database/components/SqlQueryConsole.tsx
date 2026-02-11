@@ -8,8 +8,8 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { Badge, Button, SectionPanel } from '@/shared/ui';
 import { logClientError } from '@/features/observability';
+import { Badge, Button, SectionPanel } from '@/shared/ui';
 
 import { useDatabase } from '../context/DatabaseContext';
 import { useSqlQueryMutation } from '../hooks/useDatabaseQueries';

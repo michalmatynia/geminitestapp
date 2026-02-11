@@ -4,21 +4,25 @@ import { useMutation, useQueryClient, type UseQueryResult, type UseMutationResul
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
-import { 
-  useCreateStudioProject, 
-  useDeleteStudioProject, 
-  useCreateStudioSlots, 
-  useUpdateStudioSlot, 
-  useDeleteStudioSlot, 
-  useUploadStudioAssets, 
-  useImportStudioAssetsFromDrive 
+import {
+  useCreateStudioProject,
+  useDeleteStudioProject,
+  useCreateStudioSlots,
+  useUpdateStudioSlot,
+  useDeleteStudioSlot,
+  useUploadStudioAssets,
+  useImportStudioAssetsFromDrive,
+  useRunStudio,
+  type RunStudioPayload,
+  type RunStudioResult,
+  type StudioAssetImportResult,
 } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
-import { useStudioProjects, useStudioSlots } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
+import { studioKeys, useStudioProjects, useStudioSlots } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import { extractParamsFromPrompt, inferParamSpecs, validateImageStudioParams, setDeepValue, type ParamIssue, type ParamSpec, type ExtractParamsResult } from '@/features/prompt-engine/prompt-params';
 import { type VectorShape, type VectorToolMode } from '@/features/vector-drawing';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import type { ImageFileSelection } from '@/shared/types/domain/files';
+import type { ImageFileRecord, ImageFileSelection } from '@/shared/types/domain/files';
 import { useToast } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
@@ -82,8 +86,8 @@ interface ImageStudioContextValue {
   moveSlotMutation: UseMutationResult<ImageStudioSlotRecord, Error, { slot: ImageStudioSlotRecord; targetFolder: string }>;
   handleMoveFolder: (folderPath: string, targetFolder: string) => Promise<void>;
   createFolderMutation: UseMutationResult<string, Error, string>;
-  uploadMutation: UseMutationResult<{ assets: string[] }, Error, { files: File[]; folder: string }>;
-  importFromDriveMutation: UseMutationResult<{ assets: string[] }, Error, { files: ImageFileSelection[]; folder: string }>;
+  uploadMutation: UseMutationResult<StudioAssetImportResult, Error, { files: File[]; folder: string }>;
+  importFromDriveMutation: UseMutationResult<StudioAssetImportResult, Error, { files: ImageFileSelection[]; folder: string }>;
   
   // Slot UI
   slotCreateOpen: boolean;
@@ -139,7 +143,9 @@ interface ImageStudioContextValue {
   paramsState: Record<string, unknown> | null;
   setParamsState: React.Dispatch<React.SetStateAction<Record<string, unknown> | null>>;
   paramSpecs: Record<string, ParamSpec> | null;
+  setParamSpecs: React.Dispatch<React.SetStateAction<Record<string, ParamSpec> | null>>;
   paramUiOverrides: Record<string, ParamUiControl>;
+  setParamUiOverrides: React.Dispatch<React.SetStateAction<Record<string, ParamUiControl>>>;
   paramFlipMap: Record<string, boolean>;
   issuesByPath: Record<string, ParamIssue[]>;
   onParamChange: (path: string, value: unknown) => void;
@@ -155,6 +161,12 @@ interface ImageStudioContextValue {
   setExtractPreviewUiOverrides: React.Dispatch<React.SetStateAction<Record<string, ParamUiControl>>>;
   extractResult: ExtractParamsResult | null;
   applyProgrammaticExtraction: (sourcePrompt: string, options?: { toast?: boolean }) => ExtractParamsResult;
+
+  // Run / Generate
+  runMutation: UseMutationResult<RunStudioResult, Error, RunStudioPayload>;
+  runOutputs: ImageFileRecord[];
+  handleRunGeneration: () => void;
+  maskEligibleCount: number;
 
   // Settings
   studioSettings: ImageStudioSettings;
@@ -189,6 +201,15 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
   const [projectId, setProjectId] = useState<string>('');
 
   const projectsQuery = useStudioProjects();
+
+  // Auto-select first project when none is selected and data is available
+  useEffect(() => {
+    const first = projectsQuery.data?.[0];
+    if (!projectId && first) {
+      setProjectId(first);
+    }
+  }, [projectId, projectsQuery.data]);
+
   const slotsQuery = useStudioSlots(projectId);
 
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
@@ -197,6 +218,25 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
   const slots = useMemo(() => slotsQuery.data?.slots ?? [], [slotsQuery.data?.slots]);
   const selectedSlot = useMemo(() => slots.find((s: ImageStudioSlotRecord) => s.id === selectedSlotId) ?? null, [slots, selectedSlotId]);
   const workingSlot = useMemo(() => slots.find((s: ImageStudioSlotRecord) => s.id === workingSlotId) ?? null, [slots, workingSlotId]);
+
+  useEffect(() => {
+    if (selectedSlotId && !slots.some((slot: ImageStudioSlotRecord) => slot.id === selectedSlotId)) {
+      setSelectedSlotId(null);
+    }
+  }, [slots, selectedSlotId]);
+
+  useEffect(() => {
+    if (workingSlotId && !slots.some((slot: ImageStudioSlotRecord) => slot.id === workingSlotId)) {
+      setWorkingSlotId(null);
+    }
+  }, [slots, workingSlotId]);
+
+  // Image Studio uses a single active slot in preview; selected tree file drives active preview.
+  useEffect(() => {
+    if (workingSlotId !== selectedSlotId) {
+      setWorkingSlotId(selectedSlotId);
+    }
+  }, [selectedSlotId, workingSlotId]);
 
   const [settingsLoaded, setSettingsLoaded] = useState<boolean>(false);
   const [studioSettings, setStudioSettings] = useState<ImageStudioSettings>(defaultImageStudioSettings);
@@ -292,9 +332,12 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
 
   const treeKey = useMemo(() => projectId ? `${IMAGE_STUDIO_TREE_KEY_PREFIX}${sanitizeStudioProjectId(projectId)}` : null, [projectId]);
   const treeSettingsRaw = treeKey ? heavyMap.get(treeKey) : undefined;
+  const hydratedTreeSignatureRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!projectId || !treeKey || settingsStore.isLoading) return;
+    const signature = `${treeKey}:${treeSettingsRaw ?? ''}`;
+    if (hydratedTreeSignatureRef.current === signature) return;
     const storedFolders = parseSlotFoldersSetting(treeSettingsRaw);
     if (storedFolders.length > 0) {
       setVirtualFolders(storedFolders);
@@ -302,6 +345,7 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
       const derived = normalizeFolderPaths(slots.map((s: ImageStudioSlotRecord) => s.folderPath || '').filter(Boolean));
       setVirtualFolders(derived);
     }
+    hydratedTreeSignatureRef.current = signature;
   }, [projectId, treeKey, treeSettingsRaw, settingsStore.isLoading, slots]);
 
   const persistFolders = useCallback(async (nextFolders: string[]) => {
@@ -323,23 +367,54 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
 
   const moveSlotMutation = useMutation({
     mutationFn: async ({ slot, targetFolder }: { slot: ImageStudioSlotRecord; targetFolder: string }): Promise<ImageStudioSlotRecord> => {
-      return updateSlotMutation.mutateAsync({ id: slot.id, data: { folderPath: targetFolder || null } });
+      return updateSlotMutation.mutateAsync({ id: slot.id, data: { folderPath: targetFolder } });
     },
   });
 
   const handleMoveFolder = useCallback(async (folderPath: string, targetFolder: string) => {
-    const nextFolders = normalizeFolderPaths(virtualFolders.map(p => {
-      if (p === folderPath) return targetFolder ? `${targetFolder}/${p.split('/').pop()}` : p.split('/').pop()!;
-      if (p.startsWith(`${folderPath}/`)) {
-        const base = targetFolder ? `${targetFolder}/${folderPath.split('/').pop()}` : folderPath.split('/').pop()!;
-        return `${base}${p.slice(folderPath.length)}`;
+    const normalizePath = (value: string): string =>
+      value.replace(/\\/g, '/').replace(/^\/+/, '').replace(/\/+$/, '');
+    const source = normalizePath(folderPath);
+    const target = normalizePath(targetFolder);
+    if (!source) return;
+    if (source === target || target.startsWith(`${source}/`)) return;
+
+    const sourceLeaf = source.split('/').pop() ?? source;
+    const rebasedRoot = target ? `${target}/${sourceLeaf}` : sourceLeaf;
+    const rebasePath = (value: string): string => {
+      const normalized = normalizePath(value);
+      if (!normalized) return normalized;
+      if (normalized === source) return rebasedRoot;
+      if (normalized.startsWith(`${source}/`)) {
+        return `${rebasedRoot}${normalized.slice(source.length)}`;
       }
-      return p;
-    }));
+      return normalized;
+    };
+
+    const nextFolders = normalizeFolderPaths(virtualFolders.map((path: string) => rebasePath(path)));
     setVirtualFolders(nextFolders);
     void persistFolders(nextFolders);
-    void queryClient.invalidateQueries({ queryKey: ['image-studio', 'slots', projectId] });
-  }, [virtualFolders, persistFolders, queryClient, projectId]);
+
+    const affectedSlots = slots.filter((slot: ImageStudioSlotRecord) => {
+      const current = normalizePath(slot.folderPath ?? '');
+      return current === source || current.startsWith(`${source}/`);
+    });
+
+    if (affectedSlots.length > 0) {
+      await Promise.allSettled(
+        affectedSlots.map((slot: ImageStudioSlotRecord) => {
+          const current = normalizePath(slot.folderPath ?? '');
+          const next = rebasePath(current);
+          return updateSlotMutation.mutateAsync({
+            id: slot.id,
+            data: { folderPath: next },
+          });
+        })
+      );
+    }
+
+    void queryClient.invalidateQueries({ queryKey: studioKeys.slots(projectId) });
+  }, [virtualFolders, persistFolders, slots, updateSlotMutation, queryClient, projectId]);
 
   const createFolderMutation = useMutation({
     mutationFn: async (folder: string) => {
@@ -420,6 +495,68 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
     void heavySettings.refetch().catch(() => {});
   }, [settingsStore, heavySettings]);
 
+  const handleSelectFolder = useCallback((folder: string): void => {
+    setSelectedFolder(folder);
+    setSelectedSlotId(null);
+    setWorkingSlotId(null);
+  }, []);
+
+  // Run / Generate
+  const runMutation = useRunStudio();
+  const [runOutputs, setRunOutputs] = useState<ImageFileRecord[]>([]);
+
+  const maskEligibleCount = useMemo(
+    () => maskShapes.filter((s) => s.visible && s.closed && (s.type === 'polygon' || s.type === 'lasso') && s.points.length >= 3).length,
+    [maskShapes]
+  );
+
+  const handleRunGeneration = useCallback(() => {
+    if (!projectId || !workingSlot) {
+      toast('Select a project and choose a slot file to generate.', { variant: 'info' });
+      return;
+    }
+    const filepath = workingSlot.imageFile?.filepath;
+    if (!filepath) {
+      toast('Working slot has no image file.', { variant: 'info' });
+      return;
+    }
+    if (!promptText.trim()) {
+      toast('Enter a prompt before generating.', { variant: 'info' });
+      return;
+    }
+
+    const eligibleShapes = maskShapes.filter(
+      (s) => s.visible && s.closed && (s.type === 'polygon' || s.type === 'lasso') && s.points.length >= 3
+    );
+    const mask: RunStudioPayload['mask'] =
+      eligibleShapes.length > 0
+        ? {
+          type: 'polygons' as const,
+          polygons: eligibleShapes.map((s) => s.points.map((p) => ({ x: p.x, y: p.y }))),
+          invert: maskInvert || undefined,
+          feather: maskFeather > 0 ? maskFeather : undefined,
+        }
+        : null;
+
+    runMutation.mutate(
+      {
+        projectId,
+        asset: { filepath },
+        prompt: promptText,
+        mask,
+      },
+      {
+        onSuccess: (data) => {
+          setRunOutputs(data.outputs);
+          toast(`Generated ${data.outputs.length} image(s).`, { variant: 'success' });
+        },
+        onError: (error) => {
+          toast(error.message || 'Generation failed.', { variant: 'error' });
+        },
+      }
+    );
+  }, [projectId, workingSlot, promptText, maskShapes, maskInvert, maskFeather, runMutation, toast]);
+
   const compositeAssetOptions = useMemo(() => {
     const baseId = workingSlotId ?? selectedSlotId;
     return slots
@@ -434,7 +571,7 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
   const value = {
     activeTab, setActiveTab, handleTabChange,
     projectId, setProjectId, projectsQuery, createProjectMutation, deleteProjectMutation, handleDeleteProject, projectSearch, setProjectSearch,
-    slots, slotsQuery, virtualFolders, setVirtualFolders, selectedFolder, setSelectedFolder, selectedSlotId, setSelectedSlotId, selectedSlot,
+    slots, slotsQuery, virtualFolders, setVirtualFolders, selectedFolder, setSelectedFolder: handleSelectFolder, selectedSlotId, setSelectedSlotId, selectedSlot,
     workingSlotId, setWorkingSlotId, workingSlot, createSlots, updateSlotMutation, deleteSlotMutation, moveSlotMutation, handleMoveFolder,
     createFolderMutation, uploadMutation, importFromDriveMutation,
     slotCreateOpen, setSlotCreateOpen, driveImportOpen, setDriveImportOpen, driveImportMode, setDriveImportMode,
@@ -443,10 +580,11 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
     compositeAssetIds, setCompositeAssetIds, compositeAssets, compositeAssetOptions, previewMode, setPreviewMode, captureRef,
     tool, setTool, maskShapes, setMaskShapes, activeMaskId, setActiveMaskId, selectedPointIndex, setSelectedPointIndex, maskInvert, setMaskInvert, maskFeather, setMaskFeather,
     brushRadius, setBrushRadius, maskGenLoading, maskGenMode, setMaskGenMode,
-    promptText, setPromptText, paramsState, setParamsState, paramSpecs, paramUiOverrides, paramFlipMap, issuesByPath,
+    promptText, setPromptText, paramsState, setParamsState, paramSpecs, setParamSpecs, paramUiOverrides, setParamUiOverrides, paramFlipMap, issuesByPath,
     onParamChange: handleParamChange, onParamFlip: handleParamFlip, onParamUiControlChange: handleParamUiControlChange,
     extractReviewOpen, setExtractReviewOpen, extractDraftPrompt, setExtractDraftPrompt, extractPreviewUiOverrides, setExtractPreviewUiOverrides,
     extractResult, applyProgrammaticExtraction,
+    runMutation, runOutputs, handleRunGeneration, maskEligibleCount,
     studioSettings, setStudioSettings, saveStudioSettings, resetStudioSettings, handleRefreshSettings,
     settingsLoaded
   };

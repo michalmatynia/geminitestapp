@@ -3,8 +3,8 @@ import 'server-only';
 import { isRetryableError } from '@/shared/errors/app-error';
 import { withRetry, type RetryOptions, withCircuitBreaker, type CircuitBreakerOptions } from '@/shared/utils/retry';
 
-import { logSystemEvent } from '../../server';
 import { getTransientRecoverySettings } from './settings';
+import { logSystemEvent } from '../../server';
 
 import type { TransientRecoverySettings } from './constants';
 

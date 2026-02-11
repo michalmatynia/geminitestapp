@@ -1,13 +1,13 @@
 'use client';
 
-import { logClientError } from '@/features/observability';
+import type {
+  SettingRecordDto,
+  SettingsScopeDto,
+} from '@/shared/dtos/settings';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-export type SettingRecord = {
-  key: string;
-  value: string;
-};
-
-export type SettingsScope = 'all' | 'light' | 'heavy';
+export type SettingRecord = SettingRecordDto;
+export type SettingsScope = SettingsScopeDto;
 
 type SettingsCache = {
   data: SettingRecord[];

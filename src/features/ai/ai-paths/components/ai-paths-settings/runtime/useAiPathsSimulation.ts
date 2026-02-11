@@ -14,6 +14,7 @@ import {
   TRIGGER_EVENTS,
   entityApi,
 } from '@/features/ai/ai-paths/lib';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import {
   AI_PATHS_ENTITY_STALE_MS,
@@ -43,7 +44,7 @@ export function useAiPathsSimulation(args: SimulationArgs) {
     async (productId: string): Promise<Record<string, unknown> | null> => {
       try {
         return await queryClient.fetchQuery({
-          queryKey: ['products', productId],
+          queryKey: QUERY_KEYS.products.detail(productId),
           queryFn: async (): Promise<Record<string, unknown> | null> => {
             const result = await entityApi.getProduct(productId);
             return result.ok ? result.data : null;
@@ -62,7 +63,7 @@ export function useAiPathsSimulation(args: SimulationArgs) {
     async (noteId: string): Promise<Record<string, unknown> | null> => {
       try {
         return await queryClient.fetchQuery({
-          queryKey: ['notes', noteId],
+          queryKey: QUERY_KEYS.notes.detail(noteId),
           queryFn: async (): Promise<Record<string, unknown> | null> => {
             const result = await entityApi.getNote(noteId);
             return result.ok ? result.data : null;

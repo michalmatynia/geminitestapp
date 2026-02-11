@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 
 import DebugPanel from '@/features/products/components/DebugPanel';
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
+import { ProductValidationSettingsProvider } from '@/features/products/context/ProductValidationSettingsContext';
 import { useProductValidatorConfig } from '@/features/products/hooks/useProductSettingsQueries';
 import { Button, Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui';
 
@@ -59,74 +60,80 @@ export default function ProductForm({
   return (
     <form onSubmit={(e: React.FormEvent) => { void handleSubmit(e); }} className='relative min-h-[400px] pb-10'>
       {isDebugOpen && <DebugPanel />}
-      <Tabs defaultValue='general' className='w-full'>
-        <TabsList className='grid w-full grid-cols-4 md:grid-cols-7'>
-          <TabsTrigger value='general'>General</TabsTrigger>
-          <TabsTrigger value='other'>Other</TabsTrigger>
-          <TabsTrigger value='parameters'>Parameters</TabsTrigger>
-          <TabsTrigger value='images'>Images</TabsTrigger>
-          <TabsTrigger value='import-info'>Import Info</TabsTrigger>
-          <TabsTrigger value='note-link'>Note Link</TabsTrigger>
-          <TabsTrigger value='validation'>Validation</TabsTrigger>
-        </TabsList>
-        <TabsContent value='general' className='mt-4'>
-          <ProductFormGeneral
-            validatorEnabled={validatorEnabled}
-            formatterEnabled={formatterEnabled}
-          />
-        </TabsContent>
-        <TabsContent value='other' className='mt-4'>
-          <ProductFormOther />
-        </TabsContent>
-        <TabsContent value='parameters' className='mt-4'>
-          <ProductFormParameters />
-        </TabsContent>
-        <TabsContent value='images' className='mt-4'>
-          <ProductFormImages />
-        </TabsContent>
-        <TabsContent value='import-info' className='mt-4'>
-          <ProductFormImportInfo />
-        </TabsContent>
-        <TabsContent value='note-link' className='mt-4'>
-          <ProductFormNoteLink />
-        </TabsContent>
-        <TabsContent value='validation' className='mt-4 space-y-4'>
-          <div className='rounded-md border border-border bg-gray-900/70 p-4'>
-            <p className='text-sm font-semibold text-white'>Validation Controls</p>
-            <p className='mt-1 text-xs text-gray-400'>
-              `Validator` shows correction cues in fields. `Formatter` auto-applies available replacements without confirmation.
-            </p>
-            <div className='mt-4 flex flex-wrap items-center gap-2'>
-              <Button
-                type='button'
-                onClick={() => {
-                  setValidatorManuallyChanged(true);
-                  setValidatorInitialized(true);
-                  setValidatorEnabled((prev: boolean) => !prev);
-                }}
-                className={`h-8 rounded border px-2.5 text-[10px] font-semibold tracking-wide ${
-                  validatorEnabled
-                    ? 'border-cyan-500/60 bg-cyan-500/15 text-cyan-100 hover:bg-cyan-500/25'
-                    : 'border-slate-500/40 bg-slate-500/10 text-slate-300 hover:bg-slate-500/20'
-                }`}
-              >
-                Validator {validatorEnabled ? 'ON' : 'OFF'}
-              </Button>
-              <Button
-                type='button'
-                onClick={() => setFormatterEnabled((prev: boolean) => !prev)}
-                className={`h-7 rounded border px-2 text-[10px] font-semibold tracking-wide ${
-                  formatterEnabled
-                    ? 'border-emerald-500/60 bg-emerald-500/15 text-emerald-100 hover:bg-emerald-500/25'
-                    : 'border-slate-500/40 bg-slate-500/10 text-slate-300 hover:bg-slate-500/20'
-                }`}
-              >
-                Formatter {formatterEnabled ? 'ON' : 'OFF'}
-              </Button>
+      <ProductValidationSettingsProvider
+        value={{
+          validatorEnabled,
+          formatterEnabled,
+          setValidatorEnabled,
+          setFormatterEnabled,
+        }}
+      >
+        <Tabs defaultValue='general' className='w-full'>
+          <TabsList className='grid w-full grid-cols-4 md:grid-cols-7'>
+            <TabsTrigger value='general'>General</TabsTrigger>
+            <TabsTrigger value='other'>Other</TabsTrigger>
+            <TabsTrigger value='parameters'>Parameters</TabsTrigger>
+            <TabsTrigger value='images'>Images</TabsTrigger>
+            <TabsTrigger value='import-info'>Import Info</TabsTrigger>
+            <TabsTrigger value='note-link'>Note Link</TabsTrigger>
+            <TabsTrigger value='validation'>Validation</TabsTrigger>
+          </TabsList>
+          <TabsContent value='general' className='mt-4'>
+            <ProductFormGeneral />
+          </TabsContent>
+          <TabsContent value='other' className='mt-4'>
+            <ProductFormOther />
+          </TabsContent>
+          <TabsContent value='parameters' className='mt-4'>
+            <ProductFormParameters />
+          </TabsContent>
+          <TabsContent value='images' className='mt-4'>
+            <ProductFormImages />
+          </TabsContent>
+          <TabsContent value='import-info' className='mt-4'>
+            <ProductFormImportInfo />
+          </TabsContent>
+          <TabsContent value='note-link' className='mt-4'>
+            <ProductFormNoteLink />
+          </TabsContent>
+          <TabsContent value='validation' className='mt-4 space-y-4'>
+            <div className='rounded-md border border-border bg-gray-900/70 p-4'>
+              <p className='text-sm font-semibold text-white'>Validation Controls</p>
+              <p className='mt-1 text-xs text-gray-400'>
+                `Validator` shows correction cues in fields. `Formatter` auto-applies available replacements without confirmation.
+              </p>
+              <div className='mt-4 flex flex-wrap items-center gap-2'>
+                <Button
+                  type='button'
+                  onClick={() => {
+                    setValidatorManuallyChanged(true);
+                    setValidatorInitialized(true);
+                    setValidatorEnabled((prev: boolean) => !prev);
+                  }}
+                  className={`h-8 rounded border px-2.5 text-[10px] font-semibold tracking-wide ${
+                    validatorEnabled
+                      ? 'border-cyan-500/60 bg-cyan-500/15 text-cyan-100 hover:bg-cyan-500/25'
+                      : 'border-slate-500/40 bg-slate-500/10 text-slate-300 hover:bg-slate-500/20'
+                  }`}
+                >
+                  Validator {validatorEnabled ? 'ON' : 'OFF'}
+                </Button>
+                <Button
+                  type='button'
+                  onClick={() => setFormatterEnabled((prev: boolean) => !prev)}
+                  className={`h-7 rounded border px-2 text-[10px] font-semibold tracking-wide ${
+                    formatterEnabled
+                      ? 'border-emerald-500/60 bg-emerald-500/15 text-emerald-100 hover:bg-emerald-500/25'
+                      : 'border-slate-500/40 bg-slate-500/10 text-slate-300 hover:bg-slate-500/20'
+                  }`}
+                >
+                  Formatter {formatterEnabled ? 'ON' : 'OFF'}
+                </Button>
+              </div>
             </div>
-          </div>
-        </TabsContent>
-      </Tabs>
+          </TabsContent>
+        </Tabs>
+      </ProductValidationSettingsProvider>
       {product?.id && (
         <div className='absolute bottom-0 right-0 text-[10px] text-muted-foreground/50 hover:text-muted-foreground transition-colors'>
           <span className='mr-1'>ID:</span>

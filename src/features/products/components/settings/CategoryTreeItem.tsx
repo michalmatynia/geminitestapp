@@ -8,26 +8,11 @@ import { TreeActionButton, TreeActionSlot, TreeCaret, TreeRow } from '@/shared/u
 import { cn } from '@/shared/utils';
 import { DRAG_KEYS, getFirstDragValue, resolveVerticalDropPosition, setDragData } from '@/shared/utils/drag-drop';
 
+import { useCategoryTreeContext } from './CategoryTreeContext';
+
 export type CategoryNodeProps = {
   category: ProductCategoryWithChildren;
   level: number;
-  expandedIds: Set<string>;
-  onToggleExpand: (id: string) => void;
-  onEdit: (category: ProductCategoryWithChildren) => void;
-  onDelete: (category: ProductCategoryWithChildren) => void;
-  onCreateChild: (parentId: string) => void;
-  draggedId: string | null;
-  onDragStart: (id: string) => void;
-  onDragEnd: () => void;
-  onDrop: (
-    draggedId: string,
-    target: {
-      parentId: string | null;
-      position: 'inside' | 'before' | 'after';
-      targetId: string | null;
-    }
-  ) => void;
-  allCategories: ProductCategoryWithChildren[];
 };
 
 type DropTarget = 'before' | 'inside' | 'after' | null;
@@ -57,17 +42,19 @@ const isDescendant = (
 export function CategoryTreeItem({
   category,
   level,
-  expandedIds,
-  onToggleExpand,
-  onEdit,
-  onDelete,
-  onCreateChild,
-  draggedId,
-  onDragStart,
-  onDragEnd,
-  onDrop,
-  allCategories,
 }: CategoryNodeProps): React.JSX.Element {
+  const {
+    expandedIds,
+    onToggleExpand,
+    onEdit,
+    onDelete,
+    onCreateChild,
+    draggedId,
+    onDragStart,
+    onDragEnd,
+    onDrop,
+    allCategories,
+  } = useCategoryTreeContext();
   const [dropTarget, setDropTarget] = useState<DropTarget>(null);
   const hasChildren: boolean = category.children.length > 0;
   const isExpanded: boolean = expandedIds.has(category.id);
@@ -292,16 +279,6 @@ export function CategoryTreeItem({
               key={child.id}
               category={child}
               level={level + 1}
-              expandedIds={expandedIds}
-              onToggleExpand={onToggleExpand}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onCreateChild={onCreateChild}
-              draggedId={draggedId}
-              onDragStart={onDragStart}
-              onDragEnd={onDragEnd}
-              onDrop={onDrop}
-              allCategories={allCategories}
             />
           ))}
         </div>

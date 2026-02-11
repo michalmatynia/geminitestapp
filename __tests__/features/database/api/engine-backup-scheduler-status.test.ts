@@ -16,10 +16,10 @@ import {
 vi.mock('@/shared/lib/api/api-handler', () => ({
   apiHandler:
     (handler: (req: NextRequest, ctx: unknown) => Promise<Response>) =>
-    async (req: NextRequest): Promise<Response> =>
-      handler(req, {
-        requestId: 'test-request-id',
-      }),
+      async (req: NextRequest): Promise<Response> =>
+        handler(req, {
+          requestId: 'test-request-id',
+        }),
 }));
 
 vi.mock('@/features/database/services/database-backup-scheduler', () => ({

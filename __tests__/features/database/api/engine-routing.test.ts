@@ -83,6 +83,6 @@ describe('Database Engine routing in database operations APIs', () => {
     });
     expect(resolveCollectionProviderForRequest).toHaveBeenCalledWith('products', 'auto');
     expect(find).toHaveBeenCalledWith({ sku: 'SKU-1' });
-    expect((limit as Mock).mock.calls[0]?.[0]).toBe(200);
+    expect((limit).mock.calls[0]?.[0]).toBe(200);
   });
 });

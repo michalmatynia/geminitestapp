@@ -10,7 +10,7 @@ export function sanitizeHtml(html: string): string {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
     
-    if (!doc || !doc.body) {
+    if (!doc?.body) {
       return html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '');
     }
     

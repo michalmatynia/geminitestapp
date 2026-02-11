@@ -1,5 +1,13 @@
 import { z } from 'zod';
-import { ErrorSystem } from '@/features/observability/server';
+
+const captureException = async (error: unknown, context: { source: string; context?: Record<string, unknown>; critical?: boolean }): Promise<void> => {
+  try {
+    const { ErrorSystem } = await import('@/features/observability/server');
+    await ErrorSystem.captureException(error, context as any);
+  } catch {
+    // ignore
+  }
+};
 
 /**
  * Schema for all application environment variables.
@@ -56,7 +64,7 @@ function getEnv() {
     const issues = result.error.flatten().fieldErrors;
     const missing = Object.keys(issues).join(', ');
     
-    void ErrorSystem.captureException(new Error(`Invalid environment variables: ${missing}`), {
+    void captureException(new Error(`Invalid environment variables: ${missing}`), {
       source: 'env-validation',
       context: { missing, issues },
       critical: true,

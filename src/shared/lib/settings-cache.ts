@@ -2,8 +2,13 @@ import 'server-only';
 
 import { LRUCache } from 'lru-cache';
 
-export type SettingRecord = { key: string; value: string };
-export type SettingsScope = 'all' | 'light' | 'heavy';
+import type {
+  SettingRecordDto,
+  SettingsScopeDto,
+} from '@/shared/dtos/settings';
+
+export type SettingRecord = SettingRecordDto;
+export type SettingsScope = SettingsScopeDto;
 
 const SETTINGS_CACHE_TTL_MS = 120_000;
 const SETTINGS_CACHE_STALE_TTL_MS = 10 * 60_000;

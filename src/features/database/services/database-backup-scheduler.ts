@@ -1,6 +1,7 @@
 import 'server-only';
 
-import prisma from '@/shared/lib/db/prisma';
+import { enqueueProductAiJob } from '@/features/jobs/services/productAiService';
+import { ErrorSystem } from '@/features/observability/server';
 import {
   DATABASE_ENGINE_BACKUP_SCHEDULE_KEY,
   type DatabaseEngineBackupSchedule,
@@ -12,9 +13,7 @@ import {
   invalidateDatabaseEnginePolicyCache,
 } from '@/shared/lib/db/database-engine-policy';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-
-import { enqueueProductAiJob } from '@/features/jobs/services/productAiService';
-import { ErrorSystem } from '@/features/observability/server';
+import prisma from '@/shared/lib/db/prisma';
 
 type TargetEvaluation = {
   dueNow: boolean;

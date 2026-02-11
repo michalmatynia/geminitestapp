@@ -8,6 +8,7 @@ import { logClientError } from '@/features/observability';
 import type { ProductWithImages } from '@/features/products/types';
 import type { ProductDraft } from '@/features/products/types/drafts';
 import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui';
 
 export function useProductOperations(
@@ -50,7 +51,7 @@ export function useProductOperations(
     }
     try {
       const products = await queryClient.fetchQuery({
-        queryKey: ['products', { sku }],
+        queryKey: QUERY_KEYS.products.list({ sku }),
         queryFn: async (): Promise<ProductWithImages[]> =>
           await api.get<ProductWithImages[]>(`/api/products?sku=${encodeURIComponent(sku)}`),
       });

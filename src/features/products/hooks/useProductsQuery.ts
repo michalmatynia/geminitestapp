@@ -10,8 +10,9 @@ import { useCallback } from 'react';
 
 import { getProducts, countProducts } from '@/features/products/api/products';
 import type { ProductWithImages } from '@/features/products/types';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-interface UseProductsFilters {
+export interface UseProductsFilters {
   search?: string | undefined;
   sku?: string | undefined;
   minPrice?: number | undefined;
@@ -24,7 +25,7 @@ interface UseProductsFilters {
   searchLanguage?: string | undefined;
 }
 
-interface UseProductsOptions {
+export interface UseProductsOptions {
   enabled?: boolean;
 }
 
@@ -37,7 +38,7 @@ export function useProducts(
   const { enabled = true } = options;
 
   return useQuery({
-    queryKey: ['products', filters],
+    queryKey: QUERY_KEYS.products.list(filters),
     queryFn: () => getProducts(filters),
     enabled,
     staleTime: PRODUCTS_STALE_MS,
@@ -54,7 +55,7 @@ export function useProductsCount(
   const { enabled = true } = options;
 
   return useQuery({
-    queryKey: ['products-count', filters],
+    queryKey: QUERY_KEYS.products.count(filters),
     queryFn: () => countProducts(filters),
     enabled,
     staleTime: PRODUCTS_STALE_MS,
@@ -81,13 +82,13 @@ export function useProductsWithCount(
   const results = useQueries({
     queries: [
       {
-        queryKey: ['products', filters],
+        queryKey: QUERY_KEYS.products.list(filters),
         queryFn: (): Promise<ProductWithImages[]> => getProducts(filters),
         enabled,
         staleTime: PRODUCTS_STALE_MS,
       },
       {
-        queryKey: ['products-count', filters],
+        queryKey: QUERY_KEYS.products.count(filters),
         queryFn: (): Promise<number> => countProducts(filters),
         enabled,
         staleTime: PRODUCTS_STALE_MS,
@@ -99,8 +100,8 @@ export function useProductsWithCount(
 
   const refetch = useCallback(async (): Promise<void> => {
     await Promise.all([
-      queryClient.refetchQueries({ queryKey: ['products'] }),
-      queryClient.refetchQueries({ queryKey: ['products-count'] }),
+      queryClient.refetchQueries({ queryKey: QUERY_KEYS.products.lists() }),
+      queryClient.refetchQueries({ queryKey: QUERY_KEYS.products.counts() }),
     ]);
   }, [queryClient]);
 

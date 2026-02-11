@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 interface CatalogOption {
   id: string;
@@ -12,7 +13,7 @@ interface CatalogOption {
 
 export function useCatalogs(): ReturnType<typeof useQuery<CatalogOption[]>> {
   return useQuery({
-    queryKey: ['catalogs'],
+    queryKey: QUERY_KEYS.products.catalogs,
     queryFn: async () => await api.get<CatalogOption[]>('/api/catalogs'),
   });
 }

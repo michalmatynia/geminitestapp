@@ -3,7 +3,10 @@
 import { Store } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
 
-import { useProductListContext } from '@/features/products/context/ProductListContext';
+import {
+  useProductListFiltersContext,
+  useProductListSelectionContext,
+} from '@/features/products/context/ProductListContext';
 import type { ProductWithImages } from '@/features/products/types';
 import { DynamicFilters, SelectionBar, DropdownMenuItem, type FilterField } from '@/shared/ui';
 
@@ -21,7 +24,7 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
     setStartDate,
     endDate,
     setEndDate,
-  } = useProductListContext();
+  } = useProductListFiltersContext();
 
   const hasActiveFilters = Boolean(search || sku || minPrice || maxPrice || startDate || endDate);
 
@@ -73,7 +76,7 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
     loadingGlobal,
     onDeleteSelected,
     onAddToMarketplace,
-  } = useProductListContext();
+  } = useProductListSelectionContext();
 
   const getRowId = useCallback((p: ProductWithImages) => p.id, []);
 

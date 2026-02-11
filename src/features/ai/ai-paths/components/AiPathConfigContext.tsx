@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useMemo } from 'react';
 
-import { logClientError } from '@/features/observability';
 import type {
   AiNode,
   DbNodePreset,
@@ -14,6 +13,7 @@ import type {
   RuntimeState,
   UpdaterSampleState,
 } from '@/features/ai/ai-paths/lib';
+import { logClientError } from '@/features/observability';
 
 export interface AiPathConfigData {
   configOpen: boolean;

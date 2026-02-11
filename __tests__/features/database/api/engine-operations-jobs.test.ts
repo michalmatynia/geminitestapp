@@ -19,10 +19,10 @@ import { getDatabaseEngineOperationControls } from '@/shared/lib/db/database-eng
 vi.mock('@/shared/lib/api/api-handler', () => ({
   apiHandler:
     (handler: (req: NextRequest, ctx: unknown) => Promise<Response>) =>
-    async (req: NextRequest): Promise<Response> =>
-      handler(req, {
-        requestId: 'test-request-id',
-      }),
+      async (req: NextRequest): Promise<Response> =>
+        handler(req, {
+          requestId: 'test-request-id',
+        }),
   apiHandlerWithParams:
     (
       handler: (
@@ -31,17 +31,17 @@ vi.mock('@/shared/lib/api/api-handler', () => ({
         params: Record<string, string>
       ) => Promise<Response>
     ) =>
-    async (
-      req: NextRequest,
-      routeCtx: { params: Promise<Record<string, string>> }
-    ): Promise<Response> =>
-      handler(
-        req,
-        {
-          requestId: 'test-request-id',
-        },
-        await routeCtx.params
-      ),
+      async (
+        req: NextRequest,
+        routeCtx: { params: Promise<Record<string, string>> }
+      ): Promise<Response> =>
+        handler(
+          req,
+          {
+            requestId: 'test-request-id',
+          },
+          await routeCtx.params
+        ),
 }));
 
 vi.mock('@/features/auth/server', () => ({
@@ -82,31 +82,31 @@ describe('Database Engine operations jobs API', () => {
 
   it('GET /api/databases/engine/operations/jobs returns filtered db operation jobs', async () => {
     vi.mocked(getProductAiJobs).mockResolvedValue([
-        {
-          id: 'job-db-backup-1',
-          productId: 'system',
-          status: 'completed',
-          type: 'db_backup',
-          payload: { dbType: 'mongodb', source: 'database_backup_scheduler' },
-          result: { message: 'Backup created' },
-          errorMessage: null,
-          createdAt: '2026-02-10T10:00:00.000Z',
-          startedAt: '2026-02-10T10:00:01.000Z',
-          finishedAt: '2026-02-10T10:00:15.000Z',
-        },
-        {
-          id: 'job-translation-1',
-          productId: 'p1',
-          status: 'completed',
-          type: 'translation',
-          payload: {},
-          result: null,
-          errorMessage: null,
-          createdAt: '2026-02-10T09:00:00.000Z',
-          startedAt: null,
-          finishedAt: null,
-        },
-      ] as Awaited<ReturnType<typeof getProductAiJobs>>);
+      {
+        id: 'job-db-backup-1',
+        productId: 'system',
+        status: 'completed',
+        type: 'db_backup',
+        payload: { dbType: 'mongodb', source: 'database_backup_scheduler' },
+        result: { message: 'Backup created' },
+        errorMessage: null,
+        createdAt: '2026-02-10T10:00:00.000Z',
+        startedAt: '2026-02-10T10:00:01.000Z',
+        finishedAt: '2026-02-10T10:00:15.000Z',
+      },
+      {
+        id: 'job-translation-1',
+        productId: 'p1',
+        status: 'completed',
+        type: 'translation',
+        payload: {},
+        result: null,
+        errorMessage: null,
+        createdAt: '2026-02-10T09:00:00.000Z',
+        startedAt: null,
+        finishedAt: null,
+      },
+    ] as Awaited<ReturnType<typeof getProductAiJobs>>);
     vi.mocked(getQueueStatus).mockResolvedValue({
       running: true,
       healthy: true,

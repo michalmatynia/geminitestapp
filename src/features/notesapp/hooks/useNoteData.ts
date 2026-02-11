@@ -1,14 +1,45 @@
 'use client';
 
-import { useQuery, useQueryClient, useMutation, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQueryClient,
+  type UseMutationResult,
+  type UseQueryResult,
+} from '@tanstack/react-query';
 import { useRef, useEffect, useMemo, useCallback } from 'react';
 
+import {
+  useCreateNote,
+  useCreateNotebook,
+  useCreateNoteFolder,
+  useCreateNoteTag,
+  useCreateNoteTheme,
+  useDeleteNote,
+  useDeleteNotebook,
+  useDeleteNoteFolder,
+  useDeleteNoteTag,
+  useDeleteNoteTheme,
+  useUpdateNote,
+  useUpdateNotebook,
+  useUpdateNoteFolder,
+  useUpdateNoteTag,
+  useUpdateNoteTheme,
+} from '@/features/notesapp/api/useNoteMutations';
+import {
+  useNote as useNoteQuery,
+  useNoteCategories as useNoteCategoriesQuery,
+  useNotebooks as useNotebooksQuery,
+  useNotes as useNotesQuery,
+  useNoteTags as useNoteTagsQuery,
+  useNoteThemes as useNoteThemesQuery,
+  type FetchNotesParams,
+} from '@/features/notesapp/api/useNoteQueries';
 import type { UseNoteDataProps } from '@/features/notesapp/types/notes-hooks';
 import { useDebounce } from '@/shared/hooks/ui/use-debounce';
 import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { DeleteResponse } from '@/shared/types/api/api';
 import type {
-  NoteRecord,
   NoteWithRelations,
   NoteFilters,
   NotebookRecord,
@@ -31,260 +62,124 @@ import type {
 
 // --- Queries ---
 
-const NOTES_STALE_MS = 10_000;
+const NOTES_QUERY_DEBOUNCE_MS = 300;
+
+type QueryOptions = {
+  enabled?: boolean;
+};
+
+function toFetchNotesParams(filters: NoteFilters): FetchNotesParams {
+  return {
+    notebookId: filters.notebookId ?? undefined,
+    search: filters.search || undefined,
+    searchScope: filters.searchScope || undefined,
+    isPinned: filters.isPinned,
+    isArchived: filters.isArchived,
+    isFavorite: filters.isFavorite,
+    tagIds: filters.tagIds,
+    categoryIds: filters.categoryIds,
+    truncateContent: filters.truncateContent,
+  };
+}
 
 export const useNotes = (
   filters: NoteFilters,
-  options?: { enabled?: boolean }
+  options?: QueryOptions
 ): UseQueryResult<NoteWithRelations[], Error> => {
-  const debouncedFilters = useDebounce(filters, 300);
-
-  return useQuery<NoteWithRelations[], Error>({
-    queryKey: ['notes', debouncedFilters],
-    queryFn: () => api.get<NoteWithRelations[]>('/api/notes', {
-      params: {
-        search: debouncedFilters.search || undefined,
-        searchScope: debouncedFilters.searchScope || undefined,
-        isPinned: debouncedFilters.isPinned !== undefined ? String(debouncedFilters.isPinned) : undefined,
-        isArchived: debouncedFilters.isArchived !== undefined ? String(debouncedFilters.isArchived) : undefined,
-        isFavorite: debouncedFilters.isFavorite !== undefined ? String(debouncedFilters.isFavorite) : undefined,
-        notebookId: debouncedFilters.notebookId || undefined,
-        tagIds: debouncedFilters.tagIds?.length ? debouncedFilters.tagIds.join(',') : undefined,
-        categoryIds: debouncedFilters.categoryIds?.length ? debouncedFilters.categoryIds.join(',') : undefined,
-        truncateContent: debouncedFilters.truncateContent ? 'true' : undefined,
-      }
-    }),
-    enabled: options?.enabled ?? true,
-    staleTime: NOTES_STALE_MS,
-  });
+  const debouncedFilters = useDebounce(filters, NOTES_QUERY_DEBOUNCE_MS);
+  return useNotesQuery(toFetchNotesParams(debouncedFilters), options);
 };
 
 export const useNote = (
   noteId: string,
-  options?: { enabled?: boolean }
+  options?: QueryOptions
 ): UseQueryResult<NoteWithRelations, Error> => {
-  return useQuery<NoteWithRelations, Error>({
-    queryKey: ['notes', noteId],
-    queryFn: () => api.get<NoteWithRelations>(`/api/notes/${noteId}`),
-    enabled: !!noteId && (options?.enabled ?? true),
-    staleTime: NOTES_STALE_MS,
-  });
+  return useNoteQuery(noteId || null, options) as UseQueryResult<NoteWithRelations, Error>;
 };
 
-export const useNoteTree = (options?: { enabled?: boolean }): UseQueryResult<NotebookRecord[], Error> => {
-  return useQuery<NotebookRecord[], Error>({
-    queryKey: ['notes', 'notebooks'],
-    queryFn: () => api.get<NotebookRecord[]>('/api/notes/notebooks'),
-    enabled: options?.enabled ?? true,
-    staleTime: NOTES_STALE_MS,
-  });
+export const useNoteTree = (options?: QueryOptions): UseQueryResult<NotebookRecord[], Error> => {
+  return useNotebooksQuery(options);
 };
 
-export const useNoteTags = (options?: { enabled?: boolean }): UseQueryResult<TagRecord[], Error> => {
-  return useQuery<TagRecord[], Error>({
-    queryKey: ['notes', 'tags'],
-    queryFn: () => api.get<TagRecord[]>('/api/notes/tags'),
-    enabled: options?.enabled ?? true,
-    staleTime: NOTES_STALE_MS,
-  });
+export const useNoteTags = (options?: QueryOptions): UseQueryResult<TagRecord[], Error> => {
+  return useNoteTagsQuery(undefined, options);
 };
 
-export const useNoteCategories = (notebookId?: string | null, options?: { enabled?: boolean }): UseQueryResult<CategoryRecord[], Error> => {
-  return useQuery<CategoryRecord[], Error>({
-    queryKey: ['notes', 'categories', notebookId],
-    queryFn: () => 
-      notebookId 
-        ? api.get<CategoryRecord[]>('/api/notes/categories', { params: { notebookId } })
-        : Promise.resolve([] as CategoryRecord[]),
-    enabled: (options?.enabled ?? true) && !!notebookId,
-    staleTime: NOTES_STALE_MS,
-  });
+export const useNoteCategories = (
+  notebookId?: string | null,
+  options?: QueryOptions
+): UseQueryResult<CategoryRecord[], Error> => {
+  return useNoteCategoriesQuery(notebookId, options);
 };
 
-export const useNoteThemes = (options?: { enabled?: boolean }): UseQueryResult<ThemeRecord[], Error> => {
-  return useQuery<ThemeRecord[], Error>({
-    queryKey: ['notes', 'themes'],
-    queryFn: () => api.get<ThemeRecord[]>('/api/notes/themes'),
-    enabled: options?.enabled ?? true,
-    staleTime: NOTES_STALE_MS,
-  });
+export const useNoteThemes = (options?: QueryOptions): UseQueryResult<ThemeRecord[], Error> => {
+  return useNoteThemesQuery(undefined, options);
 };
 
 // --- Mutations ---
 
-export const useCreateNoteMutation = (): UseMutationResult<NoteRecord, Error, NoteCreateInput> => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: NoteCreateInput) => api.post<NoteRecord>('/api/notes', data),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['notes'] });
-    },
-  });
+export const useCreateNoteMutation = (): UseMutationResult<NoteWithRelations, Error, NoteCreateInput> => {
+  return useCreateNote();
 };
 
-export const useUpdateNoteMutation = (): UseMutationResult<NoteRecord, Error, NoteUpdateInput & { id: string }> => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ id, ...updateData }: NoteUpdateInput & { id: string }) => 
-      api.patch<NoteRecord>(`/api/notes/${id}`, updateData),
-    onSuccess: (_: NoteRecord, variables: NoteUpdateInput & { id: string }) => {
-      void queryClient.invalidateQueries({ queryKey: ['notes', variables.id] });
-      void queryClient.invalidateQueries({ queryKey: ['notes'] });
-    },
-  });
+export const useUpdateNoteMutation = (): UseMutationResult<
+  NoteWithRelations,
+  Error,
+  NoteUpdateInput & { id: string }
+> => {
+  return useUpdateNote();
 };
 
 export const useDeleteNoteMutation = (): UseMutationResult<DeleteResponse, Error, string> => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/${id}`),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['notes'] });
-    },
-  });
+  return useDeleteNote();
 };
 
 export const useCreateNotebookMutation = (): UseMutationResult<NotebookRecord, Error, NotebookCreateInput> => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: NotebookCreateInput) => api.post<NotebookRecord>('/api/notes/notebooks', data),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['notes', 'notebooks'] });
-    },
-  });
+  return useCreateNotebook();
 };
 
 export const useUpdateNotebookMutation = (): UseMutationResult<NotebookRecord, Error, NotebookUpdateInput & { id: string }> => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ id, ...updateData }: NotebookUpdateInput & { id: string }) => 
-      api.patch<NotebookRecord>(`/api/notes/notebooks/${id}`, updateData),
-    onSuccess: (_: NotebookRecord, variables: NotebookUpdateInput & { id: string }) => {
-      void queryClient.invalidateQueries({ queryKey: ['notes', 'notebooks'] });
-      void queryClient.invalidateQueries({ queryKey: ['notes', variables.id] });
-    },
-  });
+  return useUpdateNotebook();
 };
 
 export const useDeleteNotebookMutation = (): UseMutationResult<DeleteResponse, Error, string> => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/notebooks/${id}`),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['notes', 'notebooks'] });
-    },
-  });
+  return useDeleteNotebook();
 };
 
 export const useCreateTagMutation = (): UseMutationResult<TagRecord, Error, TagCreateInput> => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: TagCreateInput) => api.post<TagRecord>('/api/notes/tags', data),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['notes', 'tags'] });
-    },
-  });
+  return useCreateNoteTag();
 };
 
 export const useUpdateTagMutation = (): UseMutationResult<TagRecord, Error, TagUpdateInput & { id: string }> => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ id, ...updateData }: TagUpdateInput & { id: string }) => 
-      api.patch<TagRecord>(`/api/notes/tags/${id}`, updateData),
-    onSuccess: (_: TagRecord, variables: TagUpdateInput & { id: string }) => {
-      void queryClient.invalidateQueries({ queryKey: ['notes', 'tags'] });
-      void queryClient.invalidateQueries({ queryKey: ['notes', variables.id] });
-    },
-  });
+  return useUpdateNoteTag();
 };
 
 export const useDeleteTagMutation = (): UseMutationResult<DeleteResponse, Error, string> => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/tags/${id}`),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['notes', 'tags'] });
-    },
-  });
+  return useDeleteNoteTag();
 };
 
 export const useCreateCategoryMutation = (): UseMutationResult<CategoryRecord, Error, CategoryCreateInput> => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: CategoryCreateInput) => api.post<CategoryRecord>('/api/notes/categories', data),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['notes', 'categories'] });
-    },
-  });
+  return useCreateNoteFolder();
 };
 
 export const useUpdateCategoryMutation = (): UseMutationResult<CategoryRecord, Error, CategoryUpdateInput & { id: string }> => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ id, ...updateData }: CategoryUpdateInput & { id: string }) => 
-      api.patch<CategoryRecord>(`/api/notes/categories/${id}`, updateData),
-    onSuccess: (_: CategoryRecord, variables: CategoryUpdateInput & { id: string }) => {
-      void queryClient.invalidateQueries({ queryKey: ['notes', 'categories'] });
-      void queryClient.invalidateQueries({ queryKey: ['notes', variables.id] });
-    },
-  });
+  return useUpdateNoteFolder();
 };
 
 export const useDeleteCategoryMutation = (): UseMutationResult<DeleteResponse, Error, string> => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/categories/${id}`),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['notes', 'categories'] });
-    },
-  });
+  return useDeleteNoteFolder();
 };
 
 export const useCreateThemeMutation = (): UseMutationResult<ThemeRecord, Error, ThemeCreateInput> => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: ThemeCreateInput) => api.post<ThemeRecord>('/api/notes/themes', data),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['notes', 'themes'] });
-    },
-  });
+  return useCreateNoteTheme();
 };
 
 export const useUpdateThemeMutation = (): UseMutationResult<ThemeRecord, Error, ThemeUpdateInput & { id: string }> => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ id, ...updateData }: ThemeUpdateInput & { id: string }) => 
-      api.patch<ThemeRecord>(`/api/notes/themes/${id}`, updateData),
-    onSuccess: (_: ThemeRecord, variables: ThemeUpdateInput & { id: string }) => {
-      void queryClient.invalidateQueries({ queryKey: ['notes', 'themes'] });
-      void queryClient.invalidateQueries({ queryKey: ['notes', variables.id] });
-    },
-  });
+  return useUpdateNoteTheme();
 };
 
 export const useDeleteThemeMutation = (): UseMutationResult<DeleteResponse, Error, string> => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/themes/${id}`),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['notes', 'themes'] });
-    },
-  });
+  return useDeleteNoteTheme();
 };
 
 export const useUpdateNoteRelationsMutation = (noteId: string): UseMutationResult<void, Error, {
@@ -297,7 +192,7 @@ export const useUpdateNoteRelationsMutation = (noteId: string): UseMutationResul
     mutationFn: (data: { relationsFrom?: string[]; relationsTo?: string[] }) => 
       api.put<void>(`/api/notes/${noteId}/relations`, data),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['notes', noteId] });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.detail(noteId) });
     },
   });
 };
@@ -342,7 +237,7 @@ export const useCreateNoteFileMutation = (
     },
     onSuccess: () => {
       if (noteId) {
-        void queryClient.invalidateQueries({ queryKey: ['notes', noteId] });
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.detail(noteId) });
       }
     },
   });
@@ -358,7 +253,7 @@ export const useDeleteNoteFileMutation = (noteId?: string): UseMutationResult<De
     },
     onSuccess: () => {
       if (noteId) {
-        void queryClient.invalidateQueries({ queryKey: ['notes', noteId] });
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.detail(noteId) });
       }
     },
   });
@@ -486,12 +381,12 @@ export function useNoteData({
 
   // Setters (wrappers for query updates or optimistic UI - simplified for now)
   const setNotes = useCallback((updater: NoteWithRelations[] | ((prev: NoteWithRelations[] | undefined) => NoteWithRelations[])): void => {
-    queryClient.setQueryData(['notes', filters], updater);
+    queryClient.setQueryData(QUERY_KEYS.notes.list(toFetchNotesParams(filters)), updater);
   }, [queryClient, filters]);
 
   const setNotebook = useCallback((newNotebook: NotebookRecord): void => {
     // This might need to update the notebook in the list
-    queryClient.setQueryData(['notes', 'notebooks'], (old: NotebookRecord[] | undefined) => {
+    queryClient.setQueryData(QUERY_KEYS.notes.notebooks, (old: NotebookRecord[] | undefined) => {
       if (!old) return [newNotebook];
       return old.map((n: NotebookRecord) => n.id === newNotebook.id ? newNotebook : n);
     });

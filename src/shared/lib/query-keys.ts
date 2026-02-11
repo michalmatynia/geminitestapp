@@ -22,7 +22,7 @@ export const QUERY_KEYS = {
       all: ['products', 'ai-jobs'] as const,
       detail: (id: string) => [...QUERY_KEYS.products.aiJobs.all, id] as const,
     },
-    catalogs: ['products', 'catalogs'] as const,
+    catalogs: ['catalogs'] as const,
   },
   settings: {
     all: ['settings'] as const,
@@ -35,9 +35,11 @@ export const QUERY_KEYS = {
     detail: (id: string) => [...QUERY_KEYS.notes.all, 'detail', id] as const,
     search: (query: string) => [...QUERY_KEYS.notes.all, 'search', { query }] as const,
     lookup: (ids: string[]) => [...QUERY_KEYS.notes.all, 'lookup', { ids }] as const,
-    notebooks: ['notebooks'] as const,
-    tags: ['tags'] as const,
-    categories: ['categories'] as const,
+    notebooks: ['notes', 'notebooks'] as const,
+    tags: ['notes', 'tags'] as const,
+    categories: ['notes', 'categories'] as const,
+    folderTree: (notebookId?: string) => [...QUERY_KEYS.notes.all, 'folder-tree', notebookId] as const,
+    themes: (notebookId?: string) => [...QUERY_KEYS.notes.all, 'themes', notebookId] as const,
   },
   cms: {
     all: ['cms'] as const,

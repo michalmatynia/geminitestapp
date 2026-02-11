@@ -2,9 +2,13 @@
 
 import { useFormContext } from 'react-hook-form';
 
+import { CatalogMultiSelectField } from '@/features/products/components/form/CatalogMultiSelectField';
+import { CategorySingleSelectField } from '@/features/products/components/form/CategorySingleSelectField';
+import { ProducerMultiSelectField } from '@/features/products/components/form/ProducerMultiSelectField';
+import { TagMultiSelectField } from '@/features/products/components/form/TagMultiSelectField';
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
-import { ProductFormData, CatalogRecord, ProductCategory, ProductTag, PriceGroupWithDetails, Producer } from '@/features/products/types';
-import { Button, Input, UnifiedSelect, FormSection, FormField, MultiSelect } from '@/shared/ui';
+import { ProductFormData, CatalogRecord, PriceGroupWithDetails } from '@/features/products/types';
+import { Button, Input, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
 
 interface PriceGroupWithCalculatedPrice extends PriceGroupWithDetails {
   calculatedPrice: number | null;
@@ -16,22 +20,10 @@ export default function ProductFormOther(): React.JSX.Element {
   const {
     errors,
     catalogs,
-    catalogsLoading,
     catalogsError,
     selectedCatalogIds,
-    toggleCatalog,
-    categories,
-    categoriesLoading,
     selectedCategoryId,
     setCategoryId,
-    tags,
-    tagsLoading,
-    selectedTagIds,
-    toggleTag,
-    producers,
-    producersLoading,
-    selectedProducerIds,
-    toggleProducer,
     filteredPriceGroups,
     product,
   } = useProductFormContext();
@@ -194,34 +186,13 @@ export default function ProductFormOther(): React.JSX.Element {
 
       <FormSection title='Relationships' gridClassName='md:grid-cols-2'>
         <div className='space-y-4 md:col-span-2'>
-          <MultiSelect
-            label='Catalogs'
-            options={catalogs.map((c: CatalogRecord) => ({ value: c.id, label: c.name }))}
-            selected={selectedCatalogIds}
-            onChange={(values: string[]) => {
-              const added = values.find((id: string) => !selectedCatalogIds.includes(id));
-              const removed = selectedCatalogIds.find((id: string) => !values.includes(id));
-              if (added) toggleCatalog(added);
-              if (removed) toggleCatalog(removed);
-            }}
-            loading={catalogsLoading}
+          <CatalogMultiSelectField
             emptyMessage={catalogsError || 'No catalogs found'}
-            placeholder='Select catalogs'
-            searchPlaceholder='Search catalogs...'
           />
 
-          <MultiSelect
-            label='Categories'
-            options={categories.map((c: ProductCategory) => ({ value: c.id, label: c.name }))}
-            selected={selectedCategoryId ? [selectedCategoryId] : []}
-            onChange={(values: string[]) => {
-              setCategoryId(values[0] || null);
-            }}
-            loading={categoriesLoading}
+          <CategorySingleSelectField
             disabled={!hasCatalogs}
             placeholder={hasCatalogs ? 'Select category' : 'Select a catalog first'}
-            searchPlaceholder='Search categories...'
-            single
           />
           {selectedCategoryId ? (
             <div className='-mt-2 flex justify-end'>
@@ -236,35 +207,12 @@ export default function ProductFormOther(): React.JSX.Element {
             </div>
           ) : null}
 
-          <MultiSelect
-            label='Tags'
-            options={tags.map((t: ProductTag) => ({ value: t.id, label: t.name }))}
-            selected={selectedTagIds}
-            onChange={(values: string[]) => {
-              const added = values.find((id: string) => !selectedTagIds.includes(id));
-              const removed = selectedTagIds.find((id: string) => !values.includes(id));
-              if (added) toggleTag(added);
-              if (removed) toggleTag(removed);
-            }}
-            loading={tagsLoading}
+          <TagMultiSelectField
             disabled={!hasCatalogs}
             placeholder={hasCatalogs ? 'Select tags' : 'Select a catalog first'}
-            searchPlaceholder='Search tags...'
           />
 
-          <MultiSelect
-            label='Producers'
-            options={producers.map((p: Producer) => ({ value: p.id, label: p.name }))}
-            selected={selectedProducerIds}
-            onChange={(values: string[]) => {
-              const added = values.find((id: string) => !selectedProducerIds.includes(id));
-              const removed = selectedProducerIds.find((id: string) => !values.includes(id));
-              if (added) toggleProducer(added);
-              if (removed) toggleProducer(removed);
-            }}
-            loading={producersLoading}
-            placeholder='Select producers'
-            searchPlaceholder='Search producers...'
+          <ProducerMultiSelectField
           />
         </div>
       </FormSection>

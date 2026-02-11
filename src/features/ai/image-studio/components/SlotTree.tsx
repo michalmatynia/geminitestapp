@@ -4,6 +4,7 @@ import { Folder, Image as ImageIcon } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { TreeCaret, TreeContextMenu, TreeRow } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 import { DRAG_KEYS, getFirstDragValue, hasDragType, setDragData } from '@/shared/utils';
 
 import { useImageStudio } from '../context/ImageStudioContext';
@@ -103,8 +104,8 @@ export function SlotTree(): React.JSX.Element {
   const tree = useMemo(() => buildSlotTree(projectId, slots, folders), [projectId, slots, folders]);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(['root']));
   const [dragOverPath, setDragOverPath] = useState<string | null>(null);
-  const [_draggedSlotId, setDraggedSlotId] = useState<string | null>(null);
-  const [_draggedFolderPath, setDraggedFolderPath] = useState<string | null>(null);
+  const [draggedSlotId, setDraggedSlotId] = useState<string | null>(null);
+  const [draggedFolderPath, setDraggedFolderPath] = useState<string | null>(null);
   const rootOpen = expanded.has('root');
 
   const toggle = useCallback((id: string): void => {
@@ -141,16 +142,20 @@ export function SlotTree(): React.JSX.Element {
               asChild
               depth={depth}
               baseIndent={8}
-              indent={10}
+              indent={12}
               tone='subtle'
               selected={isSelected}
               dragOver={isDragOver}
-              className='text-xs'
+              dragOverClassName='bg-transparent text-gray-100 ring-0'
+              className='relative min-h-8 text-xs'
             >
               <button
                 type='button'
                 className='w-full text-left cursor-grab active:cursor-grabbing'
-                onClick={() => onSelectFolder(node.path)}
+                onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+                  event.stopPropagation();
+                  onSelectFolder(node.path);
+                }}
                 onDoubleClick={() => toggle(node.id)}
                 title={node.path || 'Project root'}
                 draggable
@@ -175,9 +180,9 @@ export function SlotTree(): React.JSX.Element {
                 onDrop={(e: React.DragEvent<HTMLButtonElement>): void => {
                   e.preventDefault();
                   e.stopPropagation();
-                  const slotId = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.ASSET_ID]);
+                  const slotId = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.ASSET_ID], draggedSlotId);
                   const folderPath =
-                    getFirstDragValue(e.dataTransfer, [DRAG_KEYS.FOLDER_PATH]) ?? _draggedFolderPath;
+                    getFirstDragValue(e.dataTransfer, [DRAG_KEYS.FOLDER_PATH], draggedFolderPath);
                   setDragOverPath(null);
                   if (slotId) {
                     const slot = slots.find((item: ImageStudioSlotRecord) => item.id === slotId);
@@ -189,6 +194,12 @@ export function SlotTree(): React.JSX.Element {
                   }
                 }}
               >
+                <div
+                  className={cn(
+                    'pointer-events-none absolute left-2.5 top-1.5 bottom-1.5 w-px rounded-full bg-sky-300/60 transition-opacity duration-150',
+                    isDragOver ? 'opacity-100' : 'opacity-0'
+                  )}
+                />
                 <TreeCaret
                   isOpen={isOpen}
                   hasChildren={node.children.length > 0}
@@ -198,7 +209,7 @@ export function SlotTree(): React.JSX.Element {
                   buttonClassName='hover:bg-gray-700'
                   placeholderClassName='w-4'
                 />
-                <Folder className='size-4 text-gray-400' />
+                <Folder className='size-3.5 text-gray-400' />
                 <span className='truncate'>{node.name}</span>
               </button>
             </TreeRow>
@@ -235,16 +246,19 @@ export function SlotTree(): React.JSX.Element {
           key={node.id}
           asChild
           depth={depth}
-          baseIndent={18}
-          indent={10}
+          baseIndent={20}
+          indent={12}
           tone='subtle'
           selected={isSelected}
-          className='text-xs'
+          className='min-h-8 text-xs'
         >
           <button
             type='button'
             className='w-full text-left cursor-grab active:cursor-grabbing'
-            onClick={() => onSelectSlot(slot)}
+            onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+              event.stopPropagation();
+              onSelectSlot(slot);
+            }}
             title={slot.name || slot.id}
             draggable
             onDragStart={(e: React.DragEvent<HTMLButtonElement>): void => {
@@ -256,7 +270,7 @@ export function SlotTree(): React.JSX.Element {
               setDragOverPath(null);
             }}
           >
-            <ImageIcon className='size-4 text-gray-400' />
+            <ImageIcon className='size-3.5 text-gray-400' />
             <span className='truncate'>{slot.name || node.name}</span>
           </button>
         </TreeRow>
@@ -266,7 +280,8 @@ export function SlotTree(): React.JSX.Element {
 
   return (
     <div
-      className='h-full overflow-auto rounded border border-border bg-card/40 p-2'
+      className='relative h-full overflow-auto rounded border border-border bg-card/40 p-2'
+      onClick={() => setSelectedSlotId(null)}
       onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
         if (!hasDragType(e.dataTransfer, [DRAG_KEYS.ASSET_ID, DRAG_KEYS.FOLDER_PATH])) return;
         e.preventDefault();
@@ -277,9 +292,9 @@ export function SlotTree(): React.JSX.Element {
       }}
       onDrop={(e: React.DragEvent<HTMLDivElement>): void => {
         e.preventDefault();
-        const slotId = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.ASSET_ID]);
+        const slotId = getFirstDragValue(e.dataTransfer, [DRAG_KEYS.ASSET_ID], draggedSlotId);
         const folderPath =
-          getFirstDragValue(e.dataTransfer, [DRAG_KEYS.FOLDER_PATH]) ?? _draggedFolderPath;
+          getFirstDragValue(e.dataTransfer, [DRAG_KEYS.FOLDER_PATH], draggedFolderPath);
         setDragOverPath(null);
         if (slotId) {
           const slot = slots.find((item: ImageStudioSlotRecord) => item.id === slotId);
@@ -291,6 +306,20 @@ export function SlotTree(): React.JSX.Element {
         }
       }}
     >
+      <div
+        className={cn(
+          'pointer-events-none absolute left-3 right-3 top-2 h-px rounded-full bg-sky-300/60 transition-opacity duration-150',
+          dragOverPath === '' ? 'opacity-100' : 'opacity-0'
+        )}
+      />
+      <div
+        className={cn(
+          'pointer-events-none absolute right-3 top-3 text-[10px] uppercase tracking-wide text-sky-200/80 transition-opacity duration-150',
+          dragOverPath === '' ? 'opacity-100' : 'opacity-0'
+        )}
+      >
+        Drop To Root
+      </div>
       {tree.children.length === 0 ? (
         <div className='flex h-full items-center justify-center px-2 text-center text-xs text-gray-500'>
           No folders yet. Create a folder or add slots here.

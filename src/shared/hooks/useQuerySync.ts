@@ -2,7 +2,8 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useCallback } from 'react';
-import { logClientError } from '@/features/observability';
+
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 interface SyncConfig {
   queryKey: unknown[];

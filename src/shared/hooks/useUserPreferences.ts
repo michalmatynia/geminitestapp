@@ -2,10 +2,10 @@
 
 import { useMutation, useQuery, useQueryClient, type UseMutationResult, type UseQueryResult } from '@tanstack/react-query';
 
-import { logClientError } from '@/features/observability';
 
 import { api } from '@/shared/lib/api-client';
 import type { UserPreferences, UserPreferencesUpdate } from '@/shared/types/domain/user-preferences';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   normalizeUserPreferencesResponse,
   normalizeUserPreferencesUpdatePayload,

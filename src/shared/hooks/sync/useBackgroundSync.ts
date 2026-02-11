@@ -1,6 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
-import { logClientError } from '@/features/observability';
+
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 interface BackgroundSyncOptions {
   queryKey: unknown[];
@@ -66,7 +68,7 @@ export function useJobStatusSync(jobId: string, enabled: boolean = true): { forc
 // Hook for product list updates
 export function useProductListSync(filters: Record<string, unknown>, enabled: boolean = true): { forceSync: () => Promise<void> } {
   return useBackgroundSync({
-    queryKey: ['products', filters],
+    queryKey: [...QUERY_KEYS.products.list(filters)],
     interval: 60000, // 1 minute for products
     enabled,
   });

@@ -43,6 +43,7 @@
 
 import type { AiPathRunRecord } from '@/features/ai/ai-paths/lib';
 
+import { useAiPathsSettingsOrchestrator } from '../ai-paths-settings/AiPathsSettingsOrchestratorContext';
 import { RunHistoryPanel } from '../run-history-panel';
 
 /**
@@ -51,19 +52,19 @@ import { RunHistoryPanel } from '../run-history-panel';
  */
 export type RunHistoryPanelMigratedProps = {
   /** List of runs - from query data */
-  runs: AiPathRunRecord[];
+  runs?: AiPathRunRecord[] | undefined;
   /** Whether the query is refreshing */
-  isRefreshing: boolean;
+  isRefreshing?: boolean | undefined;
   /** Callback to refresh the query */
-  onRefresh: () => void;
+  onRefresh?: (() => void) | undefined;
   /** Callback to open run detail */
-  onOpenRunDetail: (runId: string) => void;
+  onOpenRunDetail?: ((runId: string) => void) | undefined;
   /** Callback to resume a run */
-  onResumeRun: (runId: string, mode: 'resume' | 'replay') => void;
+  onResumeRun?: ((runId: string, mode: 'resume' | 'replay') => void) | undefined;
   /** Callback to cancel a run */
-  onCancelRun: (runId: string) => void;
+  onCancelRun?: ((runId: string) => void) | undefined;
   /** Callback to requeue a dead-lettered run */
-  onRequeueDeadLetter: (runId: string) => void;
+  onRequeueDeadLetter?: ((runId: string) => void) | undefined;
 };
 
 /**
@@ -78,17 +79,26 @@ export function RunHistoryPanelMigrated({
   onCancelRun,
   onRequeueDeadLetter,
 }: RunHistoryPanelMigratedProps): React.JSX.Element {
+  const {
+    runList,
+    runsQuery,
+    handleOpenRunDetail,
+    handleResumeRun,
+    handleCancelRun,
+    handleRequeueDeadLetter,
+  } = useAiPathsSettingsOrchestrator();
+
   return (
     <RunHistoryPanel
       // Data from props (query-based)
-      runs={runs}
-      isRefreshing={isRefreshing}
-      onRefresh={onRefresh}
+      runs={runs ?? runList}
+      isRefreshing={isRefreshing ?? runsQuery.isFetching}
+      onRefresh={onRefresh ?? (() => { runsQuery.refetch().catch(() => {}); })}
       // Callback props passed through
-      onOpenRunDetail={onOpenRunDetail}
-      onResumeRun={onResumeRun}
-      onCancelRun={onCancelRun}
-      onRequeueDeadLetter={onRequeueDeadLetter}
+      onOpenRunDetail={onOpenRunDetail ?? ((runId: string) => { handleOpenRunDetail(runId).catch(() => {}); })}
+      onResumeRun={onResumeRun ?? ((runId: string, mode: 'resume' | 'replay') => { handleResumeRun(runId, mode).catch(() => {}); })}
+      onCancelRun={onCancelRun ?? ((runId: string) => { handleCancelRun(runId).catch(() => {}); })}
+      onRequeueDeadLetter={onRequeueDeadLetter ?? ((runId: string) => { handleRequeueDeadLetter(runId).catch(() => {}); })}
     />
   );
 }

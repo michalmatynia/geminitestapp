@@ -10,7 +10,10 @@ import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/features/products/constants';
-import { useProductFormContext } from '@/features/products/context/ProductFormContext';
+import {
+  ProductFormContext,
+  type ProductFormContextType,
+} from '@/features/products/context/ProductFormContext';
 import { DebugInfo, ProductImageSlot } from '@/features/products/types/products-ui';
 import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -28,7 +31,36 @@ import { DRAG_KEYS, getFirstDragValue, parseDragIndex, setDragData } from '@/sha
 
 type SlotViewMode = 'upload' | 'link' | 'base64';
 
-export default function ProductImageManager(): React.JSX.Element {
+export type ProductImageManagerController = Pick<
+  ProductFormContextType,
+  | 'imageSlots'
+  | 'imageLinks'
+  | 'imageBase64s'
+  | 'setImageLinkAt'
+  | 'setImageBase64At'
+  | 'handleSlotImageChange'
+  | 'handleSlotDisconnectImage'
+  | 'setShowFileManager'
+  | 'swapImageSlots'
+  | 'setImagesReordering'
+  | 'uploadError'
+>;
+
+type ProductImageManagerProps = {
+  controller?: ProductImageManagerController;
+};
+
+export default function ProductImageManager({
+  controller,
+}: ProductImageManagerProps = {}): React.JSX.Element {
+  const formContext = React.useContext(ProductFormContext);
+  const resolvedController = controller ?? formContext;
+  if (!resolvedController) {
+    throw new Error(
+      'ProductImageManager requires ProductFormContext or an explicit controller prop.'
+    );
+  }
+
   const {
     imageSlots,
     imageLinks,
@@ -41,7 +73,7 @@ export default function ProductImageManager(): React.JSX.Element {
     swapImageSlots,
     uploadError,
     setImagesReordering,
-  } = useProductFormContext();
+  } = resolvedController;
 
   const settingsStore = useSettingsStore();
   const externalBaseSetting =

@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 
 import type { FolderNode } from '@/features/foldertree/utils/folderImporter';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 interface ImportFolderPayload {
   notebookId: string;
@@ -36,16 +37,16 @@ export function useImportFolderMutation(): UseMutationResult<ImportFolderRespons
     },
     onSuccess: (_data: ImportFolderResponse, variables: ImportFolderPayload) => {
       // Invalidate folder tree for the specific notebook
-      void queryClient.invalidateQueries({ 
-        queryKey: ['note-folder-tree', variables.notebookId] 
+      void queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.notes.folderTree(variables.notebookId),
       });
       // Invalidate notes list as new notes are added
-      void queryClient.invalidateQueries({ 
-        queryKey: ['notes'] 
+      void queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.notes.all,
       });
       // Also invalidate stats or other related queries if they exist
-      void queryClient.invalidateQueries({ 
-        queryKey: ['notebooks'] 
+      void queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.notes.notebooks,
       });
     },
   });

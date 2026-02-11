@@ -1,14 +1,22 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useCallback, useRef, useEffect } from 'react';
 
+import {
+  DEFAULT_IMAGE_SLOT_COUNT,
+  buildEmptySlots,
+  createExistingImageSlot,
+  createFileImageSlot,
+  swapSlots,
+} from '@/features/image-slots';
 import { logClientError } from '@/features/observability';
 import type { ProductWithImages, ProductImageRecord } from '@/features/products/types';
 import type { ProductImageSlot } from '@/features/products/types/products-ui';
 import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
 import { logger } from '@/shared/utils/logger';
 
-const TOTAL_IMAGE_SLOTS = 15;
+const TOTAL_IMAGE_SLOTS = DEFAULT_IMAGE_SLOT_COUNT;
 
 const normalizeImageLinks = (links?: string[] | null): string[] => {
   const next: string[] = new Array<string>(TOTAL_IMAGE_SLOTS).fill('');
@@ -47,28 +55,15 @@ const normalizeImageBase64s = (
 const buildImageSlotsFromProduct = (
   product?: ProductWithImages,
 ): (ProductImageSlot | null)[] => {
-  const slots: (ProductImageSlot | null)[] = Array.from(
-    { length: TOTAL_IMAGE_SLOTS },
-    () => null,
-  );
+  const slots: (ProductImageSlot | null)[] = buildEmptySlots(TOTAL_IMAGE_SLOTS);
   if (!product?.images?.length) return slots;
   product.images.slice(0, TOTAL_IMAGE_SLOTS).forEach((pImg: ProductImageRecord, index: number) => {
     if (pImg.imageFile) {
-      slots[index] = {
-        type: 'existing',
-        data: pImg.imageFile as ImageFileSelection,
-        previewUrl: pImg.imageFile.filepath,
-        slotId: pImg.imageFile.id,
-      };
+      slots[index] = createExistingImageSlot(pImg.imageFile as ImageFileSelection);
     }
   });
   return slots;
 };
-
-const createSlotId = (): string =>
-  typeof crypto !== 'undefined' && 'randomUUID' in crypto
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
 export interface ProductImagesHookResult {
   imageSlots: (ProductImageSlot | null)[];
@@ -112,7 +107,7 @@ export function useProductImages(
       await api.delete<unknown>(`/api/products/${productId}/images/${imageFileId}`);
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['products'] });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
     }
   });
 
@@ -150,12 +145,7 @@ export function useProductImages(
           if (existingSlot?.type === 'file') {
             URL.revokeObjectURL(existingSlot.previewUrl);
           }
-          newSlots[index] = {
-            type: 'file',
-            data: file,
-            previewUrl: URL.createObjectURL(file),
-            slotId: createSlotId(),
-          };
+          newSlots[index] = createFileImageSlot(file);
         } else {
           // Revoke object URL if clearing the slot
           const existingSlot = newSlots[index];
@@ -180,12 +170,7 @@ export function useProductImages(
           if (existingSlot?.type === 'file') {
             URL.revokeObjectURL(existingSlot.previewUrl);
           }
-          newSlots[index] = {
-            type: 'existing',
-            data: file,
-            previewUrl: file.filepath,
-            slotId: file.id,
-          };
+          newSlots[index] = createExistingImageSlot(file);
         } else {
           // Revoke object URL if clearing the slot
           const existingSlot = newSlots[index];
@@ -254,12 +239,7 @@ export function useProductImages(
         if (newSlots[i] === null) {
           const file = files[fileIndex];
           if (file) {
-            newSlots[i] = {
-              type: 'file',
-              data: file,
-              previewUrl: URL.createObjectURL(file),
-              slotId: createSlotId(),
-            };
+            newSlots[i] = createFileImageSlot(file);
           }
           fileIndex++;
         }
@@ -276,12 +256,7 @@ export function useProductImages(
         if (newSlots[i] === null) {
           const file = files[fileIndex];
           if (file) {
-            newSlots[i] = {
-              type: 'existing',
-              data: file,
-              previewUrl: file.filepath,
-              slotId: file.id,
-            };
+            newSlots[i] = createExistingImageSlot(file);
           }
           fileIndex++;
         }
@@ -297,11 +272,7 @@ export function useProductImages(
     if (toIndex < 0 || toIndex >= TOTAL_IMAGE_SLOTS) return;
 
     setImageSlots((prevSlots: (ProductImageSlot | null)[]) => {
-      const newSlots = [...prevSlots];
-      const temp = newSlots[fromIndex];
-      newSlots[fromIndex] = newSlots[toIndex]!;
-      newSlots[toIndex] = temp!;
-      return newSlots;
+      return swapSlots(prevSlots, fromIndex, toIndex);
     });
 
     setImageLinks((prevLinks: string[]) => {
@@ -336,12 +307,7 @@ export function useProductImages(
             existingSlot?.type !== 'existing' ||
             existingSlot.slotId !== pImg.imageFile.id
           ) {
-            newSlots[index] = {
-              type: 'existing',
-              data: pImg.imageFile,
-              previewUrl: pImg.imageFile.filepath,
-              slotId: pImg.imageFile.id,
-            };
+            newSlots[index] = createExistingImageSlot(pImg.imageFile);
           }
         }
       });

@@ -31,9 +31,16 @@
  */
 
 import type { AiNode } from '@/features/ai/ai-paths/lib';
+import { useToast } from '@/shared/ui';
 
-import { useGraphState, useGraphActions } from '../../context/GraphContext';
-import { useSelectionState, useSelectionActions } from '../../context/SelectionContext';
+import {
+  useGraphActions,
+  useGraphState,
+  usePersistenceActions,
+  useRuntimeActions,
+  useSelectionActions,
+  useSelectionState,
+} from '../../context';
 import { SimulationDialog } from '../simulation-dialog';
 
 
@@ -43,9 +50,9 @@ import { SimulationDialog } from '../simulation-dialog';
  */
 export type SimulationDialogMigratedProps = {
   /** Setter for nodes - involves persistence logic */
-  setNodes: React.Dispatch<React.SetStateAction<AiNode[]>>;
+  setNodes?: React.Dispatch<React.SetStateAction<AiNode[]>> | undefined;
   /** Callback to run simulation */
-  onRunSimulation: (node: AiNode) => void | Promise<void>;
+  onRunSimulation?: ((node: AiNode) => void | Promise<void>) | undefined;
 
   openNodeId?: string | null;
   onClose?: () => void;
@@ -72,23 +79,38 @@ export function SimulationDialogMigrated({
   isPathLocked: isPathLockedProp,
   savePathConfig,
 }: SimulationDialogMigratedProps): React.JSX.Element | null {
+  const { toast } = useToast();
   // Read state from GraphContext
   const { nodes: nodesContext, isPathLocked: isPathLockedContext } = useGraphState();
   const { setNodes: setNodesContext } = useGraphActions();
+  const { runSimulation: runSimulationContext } = useRuntimeActions();
+  const { savePathConfig: savePathConfigContext } = usePersistenceActions();
 
   // Read state from SelectionContext
   const { simulationOpenNodeId } = useSelectionState();
   const { setSimulationOpenNodeId } = useSelectionActions();
+  const isPathLocked = isPathLockedProp ?? isPathLockedContext;
+  const setNodes: React.Dispatch<React.SetStateAction<AiNode[]>> =
+    setNodesProp ??
+    ((next: React.SetStateAction<AiNode[]>): void => {
+      if (isPathLocked) {
+        toast('This path is locked. Unlock it to change simulation inputs.', { variant: 'info' });
+        return;
+      }
+      setNodesContext(next);
+    });
+  const handleRunSimulation = onRunSimulation ?? runSimulationContext;
+  const handleSavePathConfig = savePathConfig ?? savePathConfigContext;
 
   return (
     <SimulationDialog
       openNodeId={openNodeIdProp ?? simulationOpenNodeId}
       onClose={onCloseProp ?? (() => setSimulationOpenNodeId(null))}
       nodes={nodesProp ?? nodesContext}
-      setNodes={setNodesProp ?? setNodesContext}
-      isPathLocked={isPathLockedProp ?? isPathLockedContext}
-      onRunSimulation={onRunSimulation}
-      savePathConfig={savePathConfig}
+      setNodes={setNodes}
+      isPathLocked={isPathLocked}
+      onRunSimulation={handleRunSimulation}
+      savePathConfig={handleSavePathConfig}
     />
   );
 }

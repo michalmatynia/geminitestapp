@@ -5,6 +5,7 @@ import { z } from 'zod';
 
 import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/features/products/constants';
 import { getValidationPatternRepository } from '@/features/products/server';
+import { parseDynamicReplacementRecipe } from '@/features/products/utils/validator-replacement-recipe';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -14,7 +15,7 @@ const replacementFieldSchema = z.enum(PRODUCT_VALIDATION_REPLACEMENT_FIELDS);
 const updatePatternSchema = z
   .object({
     label: z.string().trim().min(1).optional(),
-    target: z.enum(['name', 'description']).optional(),
+    target: z.enum(['name', 'description', 'sku']).optional(),
     locale: z.string().trim().nullable().optional(),
     regex: z.string().min(1).optional(),
     flags: z.string().trim().nullable().optional(),
@@ -24,6 +25,34 @@ const updatePatternSchema = z
     replacementEnabled: z.boolean().optional(),
     replacementValue: z.string().trim().nullable().optional(),
     replacementFields: z.array(replacementFieldSchema).optional(),
+    sequenceGroupId: z.string().trim().nullable().optional(),
+    sequenceGroupLabel: z.string().trim().nullable().optional(),
+    sequenceGroupDebounceMs: z.number().int().min(0).max(30000).optional(),
+    sequence: z.number().int().min(0).nullable().optional(),
+    chainMode: z.enum(['continue', 'stop_on_match', 'stop_on_replace']).optional(),
+    maxExecutions: z.number().int().min(1).max(20).optional(),
+    passOutputToNext: z.boolean().optional(),
+    launchEnabled: z.boolean().optional(),
+    launchSourceMode: z.enum(['current_field', 'form_field', 'latest_product_field']).optional(),
+    launchSourceField: z.string().trim().nullable().optional(),
+    launchOperator: z
+      .enum([
+        'equals',
+        'not_equals',
+        'contains',
+        'starts_with',
+        'ends_with',
+        'regex',
+        'gt',
+        'gte',
+        'lt',
+        'lte',
+        'is_empty',
+        'is_not_empty',
+      ])
+      .optional(),
+    launchValue: z.string().nullable().optional(),
+    launchFlags: z.string().trim().nullable().optional(),
   })
   .refine(
     (value: Record<string, unknown>) => Object.keys(value).length > 0,
@@ -41,6 +70,43 @@ const assertValidRegex = (regexSource: string, flags: string | null | undefined)
       detail: error instanceof Error ? error.message : String(error),
     });
   }
+};
+
+const assertValidReplacementRecipe = (
+  replacementEnabled: boolean,
+  replacementValue: string | null,
+): void => {
+  if (!replacementEnabled || !replacementValue) return;
+  const recipe = parseDynamicReplacementRecipe(replacementValue);
+  if (!recipe) return;
+
+  if (recipe.sourceRegex) {
+    assertValidRegex(recipe.sourceRegex, recipe.sourceFlags ?? null);
+  }
+  if (recipe.logicOperator === 'regex') {
+    if (!recipe.logicOperand) {
+      throw badRequestError('Dynamic replacement regex condition requires an operand.');
+    }
+    assertValidRegex(recipe.logicOperand, recipe.logicFlags ?? null);
+  }
+};
+
+const assertValidLaunchConfig = ({
+  launchEnabled,
+  launchOperator,
+  launchValue,
+  launchFlags,
+}: {
+  launchEnabled: boolean;
+  launchOperator: z.infer<typeof updatePatternSchema>['launchOperator'] | undefined;
+  launchValue: string | null;
+  launchFlags: string | null;
+}): void => {
+  if (!launchEnabled || launchOperator !== 'regex') return;
+  if (!launchValue) {
+    throw badRequestError('launchValue is required when launchOperator is regex.');
+  }
+  assertValidRegex(launchValue, launchFlags);
 };
 
 const normalizeReplacementFields = (fields: string[] | undefined): string[] => {
@@ -70,10 +136,31 @@ async function PUT_handler(
     body.replacementFields !== undefined
       ? normalizeReplacementFields(body.replacementFields)
       : current.replacementFields;
+  const nextLaunchEnabled =
+    body.launchEnabled !== undefined ? body.launchEnabled : current.launchEnabled;
+  const nextLaunchSourceMode =
+    body.launchSourceMode !== undefined ? body.launchSourceMode : current.launchSourceMode;
+  const nextLaunchSourceField =
+    body.launchSourceField !== undefined ? body.launchSourceField?.trim() || null : current.launchSourceField;
   if (nextReplacementEnabled && !nextReplacementValue) {
     throw badRequestError('replacementValue is required when replacementEnabled is true');
   }
+  if (nextLaunchEnabled && nextLaunchSourceMode !== 'current_field' && !nextLaunchSourceField) {
+    throw badRequestError('launchSourceField is required when launchSourceMode is not current_field');
+  }
   assertValidRegex(nextRegex, nextFlags);
+  assertValidReplacementRecipe(nextReplacementEnabled, nextReplacementValue);
+  assertValidLaunchConfig({
+    launchEnabled: nextLaunchEnabled,
+    launchOperator: body.launchOperator ?? current.launchOperator,
+    launchValue:
+      body.launchValue !== undefined
+        ? typeof body.launchValue === 'string'
+          ? body.launchValue
+          : null
+        : current.launchValue,
+    launchFlags: body.launchFlags !== undefined ? body.launchFlags?.trim() || null : current.launchFlags,
+  });
 
   const updated = await repository.updatePattern(params.id, {
     ...(body.label !== undefined && { label: body.label.trim() }),
@@ -87,6 +174,25 @@ async function PUT_handler(
     ...(body.replacementEnabled !== undefined && { replacementEnabled: body.replacementEnabled }),
     ...(body.replacementValue !== undefined && { replacementValue: body.replacementValue?.trim() || null }),
     ...(body.replacementFields !== undefined && { replacementFields: nextReplacementFields }),
+    ...(body.sequenceGroupId !== undefined && { sequenceGroupId: body.sequenceGroupId?.trim() || null }),
+    ...(body.sequenceGroupLabel !== undefined && {
+      sequenceGroupLabel: body.sequenceGroupLabel?.trim() || null,
+    }),
+    ...(body.sequenceGroupDebounceMs !== undefined && {
+      sequenceGroupDebounceMs: body.sequenceGroupDebounceMs,
+    }),
+    ...(body.sequence !== undefined && { sequence: body.sequence }),
+    ...(body.chainMode !== undefined && { chainMode: body.chainMode }),
+    ...(body.maxExecutions !== undefined && { maxExecutions: body.maxExecutions }),
+    ...(body.passOutputToNext !== undefined && { passOutputToNext: body.passOutputToNext }),
+    ...(body.launchEnabled !== undefined && { launchEnabled: body.launchEnabled }),
+    ...(body.launchSourceMode !== undefined && { launchSourceMode: body.launchSourceMode }),
+    ...(body.launchSourceField !== undefined && { launchSourceField: body.launchSourceField?.trim() || null }),
+    ...(body.launchOperator !== undefined && { launchOperator: body.launchOperator }),
+    ...(body.launchValue !== undefined && {
+      launchValue: typeof body.launchValue === 'string' ? body.launchValue : null,
+    }),
+    ...(body.launchFlags !== undefined && { launchFlags: body.launchFlags?.trim() || null }),
   });
 
   return NextResponse.json(updated);

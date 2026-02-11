@@ -4,21 +4,23 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useDraft, useCreateDraft, useUpdateDraft } from '@/features/drafter/hooks/useDrafts';
 import { draftSubmitSchema } from '@/features/drafter/validations/draft-form';
-import { IconSelector, ICON_LIBRARY_MAP } from '@/features/icons';
+import { IconSelector } from '@/features/icons';
 import { CreateProductDraftInput, UpdateProductDraftInput } from '@/features/products';
-import { CatalogMultiSelectField } from '@/features/products/components/form/CatalogMultiSelectField';
-import { CategorySingleSelectField } from '@/features/products/components/form/CategorySingleSelectField';
-import { ProductImagesTabContent } from '@/features/products/components/form/ProductImagesTabContent';
-import { ProducerMultiSelectField } from '@/features/products/components/form/ProducerMultiSelectField';
-import { TagMultiSelectField } from '@/features/products/components/form/TagMultiSelectField';
 import type { ProductCategoryDto, ProductTag, ProductParameter, ProductParameterValue } from '@/features/products';
 import { getCategoriesFlat, getTags, getParameters } from '@/features/products/api/settings';
+import type { ProductImageManagerController } from '@/features/products/components/ProductImageManager';
 import { useProductImages } from '@/features/products/hooks/useProductImages';
 import { useCatalogs, useProducers } from '@/features/products/hooks/useProductMetadata';
-import { AppModal, Button, Input, Label, Textarea, Tabs, TabsContent, TabsList, TabsTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast } from '@/shared/ui';
+import { AppModal, Tabs, TabsContent, TabsList, TabsTrigger, useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 
+import { DraftCreatorFormProvider } from './DraftCreatorFormContext';
+import {
+  DraftCreatorDetailsTab,
+  DraftCreatorImagesTab,
+  DraftCreatorParametersTab,
+} from './DraftCreatorFormFields';
 import { useOptionalDrafterContext } from '../context/DrafterContext';
 
 const DEFAULT_ICON_COLOR = '#60a5fa';
@@ -91,6 +93,8 @@ export function DraftCreator({
   const [stock, setStock] = useState<string>('');
   const [baseProductId, setBaseProductId] = useState<string>('');
   const [activeState, setActiveState] = useState<boolean>(true);
+  const [validatorEnabled, setValidatorEnabled] = useState<boolean>(true);
+  const [formatterEnabled, setFormatterEnabled] = useState<boolean>(false);
   const [icon, setIcon] = useState<string | null>(null);
   const [iconColorMode, setIconColorMode] = useState<'theme' | 'custom'>('theme');
   const [iconColor, setIconColor] = useState<string>(DEFAULT_ICON_COLOR);
@@ -239,6 +243,9 @@ export function DraftCreator({
         setStock(draft.stock?.toString() || '');
         setBaseProductId(draft.baseProductId || '');
         setActive(draft.active ?? true);
+        const nextValidatorEnabled = draft.validatorEnabled ?? true;
+        setValidatorEnabled(nextValidatorEnabled);
+        setFormatterEnabled(nextValidatorEnabled ? (draft.formatterEnabled ?? false) : false);
         setIcon(draft.icon || null);
         setIconColorMode(draft.iconColorMode === 'custom' ? 'custom' : 'theme');
         setIconColor(normalizeIconColor(draft.iconColor) || DEFAULT_ICON_COLOR);
@@ -274,6 +281,8 @@ export function DraftCreator({
         setStock('');
         setBaseProductId('');
         setActive(true);
+        setValidatorEnabled(true);
+        setFormatterEnabled(false);
         setIcon(null);
         setIconColorMode('theme');
         setIconColor(DEFAULT_ICON_COLOR);
@@ -337,6 +346,8 @@ export function DraftCreator({
           }))
           .filter((entry: { parameterId: string | undefined; value: string }): entry is { parameterId: string; value: string } => !!entry.parameterId),
         active,
+        validatorEnabled,
+        formatterEnabled: validatorEnabled ? formatterEnabled : false,
         icon,
         iconColorMode,
         iconColor: iconColorMode === 'custom' ? (normalizedIconColor || DEFAULT_ICON_COLOR) : null,
@@ -386,20 +397,181 @@ export function DraftCreator({
     setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => prev.filter((_, i: number): boolean => i !== index));
   };
 
-  const selectedParameterIds: (string | undefined)[] = useMemo(
-    (): (string | undefined)[] => parameterValues.map((entry: ProductParameterValue): string | undefined => entry.parameterId).filter(Boolean),
-    [parameterValues]
-  );
-
-  const getParameterLabel = (parameter: ProductParameter): string =>
-    parameter.name_en || parameter.name_pl || parameter.name_de || 'Unnamed parameter';
-
-  const SelectedIcon = icon ? ICON_LIBRARY_MAP[icon] : null;
   const resolvedIconColor = normalizeIconColor(iconColor) || DEFAULT_ICON_COLOR;
   const handleSelectIcon = (nextIcon: string | null): void => {
     setIcon(nextIcon);
     setIsIconLibraryOpen(false);
   };
+
+  const imageManagerController = useMemo<ProductImageManagerController>(
+    () => ({
+      imageSlots,
+      imageLinks,
+      imageBase64s,
+      setImageLinkAt,
+      setImageBase64At,
+      handleSlotImageChange,
+      handleSlotDisconnectImage,
+      setShowFileManager,
+      swapImageSlots,
+      setImagesReordering,
+      uploadError: null,
+    }),
+    [
+      imageSlots,
+      imageLinks,
+      imageBase64s,
+      setImageLinkAt,
+      setImageBase64At,
+      handleSlotImageChange,
+      handleSlotDisconnectImage,
+      setShowFileManager,
+      swapImageSlots,
+      setImagesReordering,
+    ]
+  );
+
+  const formContextValue = useMemo(
+    () => ({
+      name,
+      setName,
+      description,
+      setDescription,
+      validatorEnabled,
+      setValidatorEnabled,
+      formatterEnabled,
+      setFormatterEnabled,
+      icon,
+      setIcon,
+      iconColorMode,
+      setIconColorMode,
+      iconColor,
+      setIconColor,
+      resolvedIconColor,
+      openIconLibrary: (): void => setIsIconLibraryOpen(true),
+      sku,
+      setSku,
+      identifierType,
+      setIdentifierType,
+      ean,
+      setEan,
+      gtin,
+      setGtin,
+      asin,
+      setAsin,
+      weight,
+      setWeight,
+      sizeLength,
+      setSizeLength,
+      sizeWidth,
+      setSizeWidth,
+      length,
+      setLength,
+      nameEn,
+      setNameEn,
+      namePl,
+      setNamePl,
+      nameDe,
+      setNameDe,
+      descEn,
+      setDescEn,
+      descPl,
+      setDescPl,
+      descDe,
+      setDescDe,
+      price,
+      setPrice,
+      stock,
+      setStock,
+      supplierName,
+      setSupplierName,
+      supplierLink,
+      setSupplierLink,
+      priceComment,
+      setPriceComment,
+      baseProductId,
+      setBaseProductId,
+      catalogs,
+      selectedCatalogIds,
+      setSelectedCatalogIds,
+      categories,
+      categoryLoading: categoryQueries.some((query) => query.isLoading),
+      selectedCategoryId,
+      setSelectedCategoryId,
+      tags,
+      tagLoading: tagQueries.some((query) => query.isLoading),
+      selectedTagIds,
+      setSelectedTagIds,
+      producers,
+      producersLoading,
+      selectedProducerIds,
+      setSelectedProducerIds,
+      showFileManager,
+      setShowFileManager,
+      handleMultiFileSelect,
+      imageManagerController,
+      parameters,
+      parametersLoading,
+      parameterValues,
+      addParameterValue,
+      updateParameterId,
+      updateParameterValue,
+      removeParameterValue,
+    }),
+    [
+      name,
+      description,
+      validatorEnabled,
+      formatterEnabled,
+      icon,
+      iconColorMode,
+      iconColor,
+      resolvedIconColor,
+      sku,
+      identifierType,
+      ean,
+      gtin,
+      asin,
+      weight,
+      sizeLength,
+      sizeWidth,
+      length,
+      nameEn,
+      namePl,
+      nameDe,
+      descEn,
+      descPl,
+      descDe,
+      price,
+      stock,
+      supplierName,
+      supplierLink,
+      priceComment,
+      baseProductId,
+      catalogs,
+      selectedCatalogIds,
+      categories,
+      categoryQueries,
+      selectedCategoryId,
+      tags,
+      tagQueries,
+      selectedTagIds,
+      producers,
+      producersLoading,
+      selectedProducerIds,
+      showFileManager,
+      setShowFileManager,
+      handleMultiFileSelect,
+      imageManagerController,
+      parameters,
+      parametersLoading,
+      parameterValues,
+      addParameterValue,
+      updateParameterId,
+      updateParameterValue,
+      removeParameterValue,
+    ]
+  );
 
   if (draftQuery.isLoading) {
     return (
@@ -411,556 +583,35 @@ export function DraftCreator({
 
   return (
     <>
-      <form
-        ref={formRef}
-        onSubmit={(e: React.FormEvent): void => {
-          e.preventDefault();
-          void handleSave();
-        }}
-        className='space-y-6'
-      >
-        <div className='space-y-6'>
-          <Tabs defaultValue='details' className='w-full'>
-            <TabsList className='mb-6'>
-              <TabsTrigger value='details'>Details</TabsTrigger>
-              <TabsTrigger value='images'>Images</TabsTrigger>
-              <TabsTrigger value='parameters'>Parameters</TabsTrigger>
-            </TabsList>
-            <TabsContent value='details' className='mt-0 space-y-6'>
-              {/* Draft Info */}
-              <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
-                <h3 className='text-sm font-semibold text-white'>Draft Information</h3>
-
-                <div className='space-y-2'>
-                  <Label htmlFor='name'>
-                    Draft Name <span className='text-red-500'>*</span>
-                  </Label>
-                  <Input
-                    id='name'
-                    value={name}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setName(e.target.value)}
-                    placeholder='e.g., Standard Product Template'
-                  />
-                </div>
-
-                <div className='space-y-2'>
-                  <Label htmlFor='description'>Draft Description</Label>
-                  <Textarea
-                    id='description'
-                    value={description}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setDescription(e.target.value)}
-                    placeholder='Describe what this draft is for...'
-                    rows={2}
-                  />
-                </div>
-
-                <div className='space-y-2'>
-                  <Label>Icon</Label>
-                  <div className='flex items-center gap-3 rounded-md border border-border bg-gray-900 px-3 py-2'>
-                    <div
-                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-gray-800 ${
-                        iconColorMode === 'custom' ? '' : 'text-gray-200'
-                      }`}
-                      style={iconColorMode === 'custom' ? { color: resolvedIconColor } : undefined}
-                    >
-                      {SelectedIcon ? (
-                        <SelectedIcon className='h-4 w-4' />
-                      ) : (
-                        <span className='text-xs text-gray-500'>None</span>
-                      )}
-                    </div>
-                    <div className='flex items-center gap-2'>
-                      <Button
-                        type='button'
-                        variant='outline'
-                        onClick={(): void => setIsIconLibraryOpen(true)}
-                      >
-                        Choose Icon
-                      </Button>
-                      {icon ? (
-                        <Button
-                          type='button'
-                          variant='ghost'
-                          onClick={(): void => setIcon(null)}
-                        >
-                          Clear
-                        </Button>
-                      ) : null}
-                    </div>
-                  </div>
-                  <div className='grid grid-cols-1 gap-3 md:grid-cols-[12rem_minmax(0,1fr)]'>
-                    <div className='space-y-2'>
-                      <Label htmlFor='iconColorMode'>Icon Color</Label>
-                      <Select
-                        value={iconColorMode}
-                        onValueChange={(value: string): void =>
-                          setIconColorMode(value === 'custom' ? 'custom' : 'theme')
-                        }
-                      >
-                        <SelectTrigger id='iconColorMode'>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value='theme'>Match Theme</SelectItem>
-                          <SelectItem value='custom'>Custom Color</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    {iconColorMode === 'custom' ? (
-                      <div className='space-y-2'>
-                        <Label htmlFor='iconColor'>Custom Icon Color</Label>
-                        <div className='flex items-center gap-2'>
-                          <Input
-                            id='iconColorPicker'
-                            type='color'
-                            value={resolvedIconColor}
-                            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setIconColor(event.target.value)}
-                            className='h-10 w-14 cursor-pointer p-1'
-                            aria-label='Pick icon color'
-                          />
-                          <Input
-                            id='iconColor'
-                            value={iconColor}
-                            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setIconColor(event.target.value)}
-                            onBlur={(): void => setIconColor((current: string): string => normalizeIconColor(current) || DEFAULT_ICON_COLOR)}
-                            placeholder='#60a5fa'
-                            className='font-mono uppercase'
-                          />
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                  <p className='text-xs text-gray-500'>
-                    Icons are shown only after you click Choose Icon.
-                  </p>
-                </div>
-              </div>
-
-              {/* Product Fields */}
-              <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
-                <h3 className='text-sm font-semibold text-white'>Default Product Values</h3>
-
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='sku'>SKU</Label>
-                    <Input
-                      id='sku'
-                      value={sku}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSku(e.target.value)}
-                      placeholder='Product SKU'
-                    />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label>Product Identifier</Label>
-                    <div className='flex gap-2'>
-                      <Select
-                        value={identifierType}
-                        onValueChange={(value: string): void =>
-                          setIdentifierType(value as 'ean' | 'gtin' | 'asin')
-                        }
-                      >
-                        <SelectTrigger className='w-[100px]'>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value='ean'>EAN</SelectItem>
-                          <SelectItem value='gtin'>GTIN</SelectItem>
-                          <SelectItem value='asin'>ASIN</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      {identifierType === 'ean' && (
-                        <Input
-                          id='ean'
-                          value={ean}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setEan(e.target.value)}
-                          placeholder='Enter EAN'
-                        />
-                      )}
-                      {identifierType === 'gtin' && (
-                        <Input
-                          id='gtin'
-                          value={gtin}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setGtin(e.target.value)}
-                          placeholder='Enter GTIN'
-                        />
-                      )}
-                      {identifierType === 'asin' && (
-                        <Input
-                          id='asin'
-                          value={asin}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setAsin(e.target.value)}
-                          placeholder='Enter ASIN'
-                        />
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='weight'>Weight (kg)</Label>
-                    <Input
-                      id='weight'
-                      type='number'
-                      step='0.01'
-                      value={weight}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setWeight(e.target.value)}
-                      placeholder='0.00'
-                    />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='sizeLength'>Length (cm)</Label>
-                    <Input
-                      id='sizeLength'
-                      type='number'
-                      step='0.01'
-                      value={sizeLength}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSizeLength(e.target.value)}
-                      placeholder='0.00'
-                    />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='sizeWidth'>Width (cm)</Label>
-                    <Input
-                      id='sizeWidth'
-                      type='number'
-                      step='0.01'
-                      value={sizeWidth}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSizeWidth(e.target.value)}
-                      placeholder='0.00'
-                    />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='length'>Height (cm)</Label>
-                    <Input
-                      id='length'
-                      type='number'
-                      step='0.01'
-                      value={length}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setLength(e.target.value)}
-                      placeholder='0.00'
-                    />
-                  </div>
-                </div>
-
-                <div className='grid grid-cols-3 gap-4'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='nameEn'>Name (English)</Label>
-                    <Input
-                      id='nameEn'
-                      value={nameEn}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNameEn(e.target.value)}
-                      placeholder='Product name'
-                    />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='namePl'>Name (Polish)</Label>
-                    <Input
-                      id='namePl'
-                      value={namePl}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNamePl(e.target.value)}
-                      placeholder='Nazwa produktu'
-                    />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='nameDe'>Name (German)</Label>
-                    <Input
-                      id='nameDe'
-                      value={nameDe}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNameDe(e.target.value)}
-                      placeholder='Produktname'
-                    />
-                  </div>
-                </div>
-
-                <div className='grid grid-cols-3 gap-4'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='descEn'>Description (English)</Label>
-                    <Textarea
-                      id='descEn'
-                      value={descEn}
-                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setDescEn(e.target.value)}
-                      placeholder='Product description'
-                      rows={3}
-                    />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='descPl'>Description (Polish)</Label>
-                    <Textarea
-                      id='descPl'
-                      value={descPl}
-                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setDescPl(e.target.value)}
-                      placeholder='Opis produktu'
-                      rows={3}
-                    />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='descDe'>Description (German)</Label>
-                    <Textarea
-                      id='descDe'
-                      value={descDe}
-                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setDescDe(e.target.value)}
-                      placeholder='Produktbeschreibung'
-                      rows={3}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Pricing and Supplier */}
-              <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
-                <h3 className='text-sm font-semibold text-white'>Pricing & Supplier Information</h3>
-
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='price'>Base Price</Label>
-                    <Input
-                      id='price'
-                      type='number'
-                      step='0.01'
-                      value={price}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setPrice(e.target.value)}
-                      placeholder='0.00'
-                    />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='stock'>Stock</Label>
-                    <Input
-                      id='stock'
-                      type='number'
-                      value={stock}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setStock(e.target.value)}
-                      placeholder='0'
-                    />
-                  </div>
-                </div>
-
-                <div className='space-y-2'>
-                  <Label htmlFor='supplierName'>Supplier Name</Label>
-                  <Input
-                    id='supplierName'
-                    value={supplierName}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSupplierName(e.target.value)}
-                    placeholder='Supplier name'
-                  />
-                </div>
-
-                <div className='space-y-2'>
-                  <Label htmlFor='supplierLink'>Supplier Link</Label>
-                  <Input
-                    id='supplierLink'
-                    value={supplierLink}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSupplierLink(e.target.value)}
-                    placeholder='https://...'
-                  />
-                </div>
-
-                <div className='space-y-2'>
-                  <Label htmlFor='priceComment'>Price Comment</Label>
-                  <Input
-                    id='priceComment'
-                    value={priceComment}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setPriceComment(e.target.value)}
-                    placeholder='Additional price information'
-                  />
-                </div>
-              </div>
-
-              {/* Catalogs */}
-              <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
-                <h3 className='text-sm font-semibold text-white'>Catalogs</h3>
-                <CatalogMultiSelectField
-                  catalogs={catalogs}
-                  selectedCatalogIds={selectedCatalogIds}
-                  onChange={setSelectedCatalogIds}
-                />
-              </div>
-
-              {/* Categories */}
-              {categories.length > 0 && (
-                <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
-                  <h3 className='text-sm font-semibold text-white'>Categories</h3>
-                  <CategorySingleSelectField
-                    categories={categories}
-                    selectedCategoryId={selectedCategoryId}
-                    onChange={setSelectedCategoryId}
-                    loading={categoryQueries.some((query) => query.isLoading)}
-                    disabled={selectedCatalogIds.length === 0}
-                    placeholder={
-                      selectedCatalogIds.length > 0
-                        ? 'Select category'
-                        : 'Select a catalog first'
-                    }
-                  />
-                </div>
-              )}
-
-              {/* Tags */}
-              {tags.length > 0 && (
-                <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
-                  <h3 className='text-sm font-semibold text-white'>Tags</h3>
-                  <TagMultiSelectField
-                    tags={tags}
-                    selectedTagIds={selectedTagIds}
-                    onChange={setSelectedTagIds}
-                    loading={tagQueries.some((query) => query.isLoading)}
-                    disabled={selectedCatalogIds.length === 0}
-                    placeholder={
-                      selectedCatalogIds.length > 0
-                        ? 'Select tags'
-                        : 'Select a catalog first'
-                    }
-                  />
-                </div>
-              )}
-
-              {/* Producers */}
-              <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
-                <ProducerMultiSelectField
-                  producers={producers}
-                  selectedProducerIds={selectedProducerIds}
-                  onChange={setSelectedProducerIds}
-                  loading={producersLoading}
-                />
-              </div>
-
-              {/* Price Group Info */}
-              {selectedCatalogIds.length > 0 && (
-                <div className='rounded-lg border border-blue-900/50 bg-blue-950/20 p-4'>
-                  <h3 className='text-sm font-semibold text-blue-400 mb-2'>Price Group Information</h3>
-                  <p className='text-sm text-blue-300/70'>
-              Products created from this draft will automatically use the default price group from the selected catalog(s).
-              Price groups are configured per catalog and cannot be manually overridden in drafts.
-                  </p>
-                </div>
-              )}
-
-              {/* Import Info */}
-              <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
-                <h3 className='text-sm font-semibold text-white'>Import Information</h3>
-                <div className='space-y-2'>
-                  <Label htmlFor='baseProductId'>Base Product ID</Label>
-                  <Input
-                    id='baseProductId'
-                    value={baseProductId}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setBaseProductId(e.target.value)}
-                    placeholder='Imported from Base.com'
-                  />
-                  <p className='text-xs text-gray-400'>
-              This ID is used for products imported from Base.com
-                  </p>
-                </div>
-              </div>
-            </TabsContent>
-            <TabsContent value='images' className='mt-0 space-y-4'>
-              <ProductImagesTabContent
-                showFileManager={showFileManager}
-                onShowFileManager={setShowFileManager}
-                onSelectFiles={handleMultiFileSelect}
-                inlineFileManager
-                imageManagerController={{
-                  imageSlots,
-                  imageLinks,
-                  imageBase64s,
-                  setImageLinkAt,
-                  setImageBase64At,
-                  handleSlotImageChange,
-                  handleSlotDisconnectImage,
-                  setShowFileManager,
-                  swapImageSlots,
-                  setImagesReordering,
-                  uploadError: null,
-                }}
-              />
-            </TabsContent>
-            <TabsContent value='parameters' className='mt-0 space-y-4'>
-              <div className='rounded-lg border border-border bg-card/50 p-4 space-y-4'>
-                <div className='flex items-center justify-between gap-3'>
-                  <div>
-                    <h3 className='text-sm font-semibold text-white'>Parameters</h3>
-                    <p className='text-xs text-gray-400'>
-                    Set default parameter values for products created from this draft.
-                    </p>
-                  </div>
-                  <Button
-                    type='button'
-                    variant='outline'
-                    onClick={addParameterValue}
-                    disabled={parametersLoading || parameters.length === 0}
-                  >
-                  Add parameter
-                  </Button>
-                </div>
-
-                {parametersLoading ? (
-                  <div className='rounded-md border border-dashed border p-4 text-center text-sm text-gray-400'>
-                  Loading parameters...
-                  </div>
-                ) : parameters.length === 0 ? (
-                  <div className='rounded-md border border-dashed border p-4 text-center text-sm text-gray-400'>
-                  No parameters available for the selected catalog(s).
-                  </div>
-                ) : parameterValues.length === 0 ? (
-                  <div className='rounded-md border border-dashed border p-4 text-center text-sm text-gray-400'>
-                  Add your first parameter to start defining defaults.
-                  </div>
-                ) : (
-                  <div className='space-y-3'>
-                    {parameterValues.map((entry: ProductParameterValue, index: number): React.JSX.Element => {
-                      const availableOptions: ProductParameter[] = parameters.filter(
-                        (parameter: ProductParameter): boolean =>
-                          !selectedParameterIds.includes(parameter.id) ||
-                        parameter.id === entry.parameterId
-                      );
-                      return (
-                        <div
-                          key={`${entry.parameterId || 'new'}-${index}`}
-                          className='flex flex-col gap-3 rounded-md border border-border bg-card/60 p-3 md:flex-row md:items-center'
-                        >
-                          <div className='w-full md:w-64'>
-                            <Select
-                              value={entry.parameterId}
-                              onValueChange={(value: string): void => updateParameterId(index, value)}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder='Select parameter' />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {availableOptions.map((parameter: ProductParameter): React.JSX.Element => (
-                                  <SelectItem key={parameter.id} value={parameter.id}>
-                                    {getParameterLabel(parameter)}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className='flex-1'>
-                            <Input
-                              value={entry.value}
-                              onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                                updateParameterValue(index, event.target.value)
-                              }
-                              placeholder='Value'
-                              disabled={!entry.parameterId}
-                            />
-                          </div>
-                          <Button
-                            type='button'
-                            variant='ghost'
-                            onClick={(): void => removeParameterValue(index)}
-                          >
-                          Remove
-                          </Button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </form>
+      <DraftCreatorFormProvider value={formContextValue}>
+        <form
+          ref={formRef}
+          onSubmit={(e: React.FormEvent): void => {
+            e.preventDefault();
+            void handleSave();
+          }}
+          className='space-y-6'
+        >
+          <div className='space-y-6'>
+            <Tabs defaultValue='details' className='w-full'>
+              <TabsList className='mb-6'>
+                <TabsTrigger value='details'>Details</TabsTrigger>
+                <TabsTrigger value='images'>Images</TabsTrigger>
+                <TabsTrigger value='parameters'>Parameters</TabsTrigger>
+              </TabsList>
+              <TabsContent value='details' className='mt-0 space-y-6'>
+                <DraftCreatorDetailsTab />
+              </TabsContent>
+              <TabsContent value='images' className='mt-0 space-y-4'>
+                <DraftCreatorImagesTab />
+              </TabsContent>
+              <TabsContent value='parameters' className='mt-0 space-y-4'>
+                <DraftCreatorParametersTab />
+              </TabsContent>
+            </Tabs>
+          </div>
+        </form>
+      </DraftCreatorFormProvider>
 
       <AppModal
         open={isIconLibraryOpen}

@@ -38,6 +38,8 @@ const draftPayloadSchema = z.object({
     .optional(),
   defaultPriceGroupId: z.string().optional().nullable(),
   active: z.boolean().optional(),
+  validatorEnabled: z.boolean().optional(),
+  formatterEnabled: z.boolean().optional(),
   icon: z.string().optional().nullable(),
   iconColorMode: z.enum(['theme', 'custom']).optional().nullable(),
   iconColor: z.string().regex(HEX_COLOR_PATTERN).optional().nullable(),

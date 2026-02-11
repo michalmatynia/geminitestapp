@@ -48,10 +48,12 @@ export type ProductImageManagerController = Pick<
 
 type ProductImageManagerProps = {
   controller?: ProductImageManagerController;
+  minimalUi?: boolean;
 };
 
 export default function ProductImageManager({
   controller,
+  minimalUi = false,
 }: ProductImageManagerProps = {}): React.JSX.Element {
   const formContext = React.useContext(ProductFormContext);
   const resolvedController = controller ?? formContext;
@@ -94,6 +96,7 @@ export default function ProductImageManager({
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [isReordering, setIsReordering] = useState(false);
+  const canReorder = !minimalUi && imageSlots.length > 1;
 
   useEffect(() => {
     if (isReordering) return;
@@ -391,38 +394,42 @@ export default function ProductImageManager({
 
   return (
     <div>
-      <div className='mb-3 flex items-center justify-between'>
-        <div className='flex flex-col gap-1'>
-          <div className='flex items-center gap-2'>
-            <span className='text-xs text-gray-400'>Image slots</span>
-            <span className='text-xs text-gray-500'>(drag to reorder)</span>
+      {!minimalUi ? (
+        <div className='mb-3 flex items-center justify-between'>
+          <div className='flex flex-col gap-1'>
+            <div className='flex items-center gap-2'>
+              <span className='text-xs text-gray-400'>Image slots</span>
+              {canReorder ? <span className='text-xs text-gray-500'>(drag to reorder)</span> : null}
+            </div>
+            <span className='text-[11px] text-gray-500'>
+              Image host is configured globally in Product Settings - Images.
+            </span>
           </div>
-          <span className='text-[11px] text-gray-500'>
-            Image host is configured globally in Product Settings - Images.
-          </span>
+          <div className='flex items-center gap-2'>
+            {imageSlots.length > 1 ? (
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                onClick={() => void convertAllSlotsToBase64()}
+                className='h-7 px-2 text-xs'
+              >
+                Convert All to Base64
+              </Button>
+            ) : null}
+            <Button
+              type='button'
+              variant='ghost'
+              size='sm'
+              onClick={() => setShowDebug((prev: boolean) => !prev)}
+              className='h-7 px-2 text-xs'
+            >
+              {showDebug ? 'Hide debug' : 'Show debug'}
+            </Button>
+          </div>
         </div>
-        <div className='flex items-center gap-2'>
-          <Button
-            type='button'
-            variant='outline'
-            size='sm'
-            onClick={() => void convertAllSlotsToBase64()}
-            className='h-7 px-2 text-xs'
-          >
-            Convert All to Base64
-          </Button>
-          <Button
-            type='button'
-            variant='ghost'
-            size='sm'
-            onClick={() => setShowDebug((prev: boolean) => !prev)}
-            className='h-7 px-2 text-xs'
-          >
-            {showDebug ? 'Hide debug' : 'Show debug'}
-          </Button>
-        </div>
-      </div>
-      {showDebug && (uploadError || debugInfo) && (
+      ) : null}
+      {!minimalUi && showDebug && (uploadError || debugInfo) && (
         <Alert variant='error' className='mb-3 p-3 text-xs'>
           {uploadError ? <div>Upload error: {uploadError}</div> : null}
           {debugInfo ? (
@@ -442,7 +449,7 @@ export default function ProductImageManager({
         </Alert>
       )}
 
-      <div className='grid grid-cols-5 gap-2'>
+      <div className={minimalUi ? 'grid grid-cols-1 gap-2 justify-start' : 'grid grid-cols-5 gap-2'}>
         {imageSlots.map((slot: ProductImageSlot | null, index: number) => {
           const isDragging = draggedIndex === index;
           const isDragOver = dragOverIndex === index;
@@ -497,38 +504,40 @@ export default function ProductImageManager({
                 tabIndex={-1}
               />
               <div className='flex w-full items-center justify-between gap-2'>
-                <div className='flex items-center gap-1 text-[10px] text-gray-400'>
-                  <span
-                    className={`rounded-full border px-1 ${
-                      hasUpload
-                        ? 'border-emerald-400 text-emerald-300'
-                        : 'border-gray-600 text-gray-500'
-                    }`}
-                    title='Uploaded image'
-                  >
-                    U
-                  </span>
-                  <span
-                    className={`rounded-full border px-1 ${
-                      hasLink
-                        ? 'border-sky-400 text-sky-300'
-                        : 'border-gray-600 text-gray-500'
-                    }`}
-                    title='Image link'
-                  >
-                    L
-                  </span>
-                  <span
-                    className={`rounded-full border px-1 ${
-                      hasBase64
-                        ? 'border-purple-400 text-purple-300'
-                        : 'border-gray-600 text-gray-500'
-                    }`}
-                    title='Base64 image'
-                  >
-                    B
-                  </span>
-                </div>
+                {minimalUi ? <span /> : (
+                  <div className='flex items-center gap-1 text-[10px] text-gray-400'>
+                    <span
+                      className={`rounded-full border px-1 ${
+                        hasUpload
+                          ? 'border-emerald-400 text-emerald-300'
+                          : 'border-gray-600 text-gray-500'
+                      }`}
+                      title='Uploaded image'
+                    >
+                      U
+                    </span>
+                    <span
+                      className={`rounded-full border px-1 ${
+                        hasLink
+                          ? 'border-sky-400 text-sky-300'
+                          : 'border-gray-600 text-gray-500'
+                      }`}
+                      title='Image link'
+                    >
+                      L
+                    </span>
+                    <span
+                      className={`rounded-full border px-1 ${
+                        hasBase64
+                          ? 'border-purple-400 text-purple-300'
+                          : 'border-gray-600 text-gray-500'
+                      }`}
+                      title='Base64 image'
+                    >
+                      B
+                    </span>
+                  </div>
+                )}
                 <div className='flex items-center gap-1'>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -646,7 +655,7 @@ export default function ProductImageManager({
                 </div>
               </div>
               <div
-                draggable={hasUpload}
+                draggable={canReorder && hasUpload}
                 onDragStart={(e: React.DragEvent<HTMLDivElement>) => handleDragStart(e, index)}
                 onDragEnd={handleDragEnd}
                 onDragOver={(e: React.DragEvent<HTMLDivElement>) => handleDragOver(e, index)}

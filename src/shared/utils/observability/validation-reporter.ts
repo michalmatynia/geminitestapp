@@ -10,7 +10,8 @@ export async function reportValidationError(
   context: ErrorContext = {}
 ): Promise<void> {
   if (typeof window === 'undefined') {
-    console.warn(`[ValidationReporter] ${message}`, {
+    const { logger } = await import('@/shared/utils/logger');
+    logger.warn(`[ValidationReporter] ${message}`, {
       service: (context as Record<string, unknown>)['service'] || 'validation',
       ...context,
     });

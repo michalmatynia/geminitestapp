@@ -134,7 +134,7 @@ export type Producer = Entity & {
   website: string | null;
 };
 
-export type ProductValidationTarget = 'name' | 'description' | 'sku';
+export type ProductValidationTarget = 'name' | 'description' | 'sku' | 'price' | 'stock';
 
 export type ProductValidationSeverity = 'error' | 'warning';
 export type ProductValidationChainMode = 'continue' | 'stop_on_match' | 'stop_on_replace';

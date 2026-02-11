@@ -82,7 +82,8 @@ const parseTemplates = async (value: string | null): Promise<Template[]> => {
         context: { action: 'parseTemplates' }
       });
     } catch (logError) {
-      console.error('[ImportTemplateRepository] Failed to parse templates (and logging failed):', error, logError);
+      const { logger } = await import('@/shared/utils/logger');
+      logger.error('[ImportTemplateRepository] Failed to parse templates (and logging failed):', logError, { originalError: error });
     }
     return [];
   }

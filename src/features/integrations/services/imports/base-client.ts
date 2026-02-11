@@ -753,7 +753,8 @@ export async function checkBaseSkuExists(
         context: { action: 'checkBaseSkuExists', sku }
       });
     } catch (logError) {
-      console.error('[base-client] Error checking SKU existence (and logging failed):', error, logError);
+      const { logger } = await import('@/shared/utils/logger');
+      logger.error('[base-client] Error checking SKU existence (and logging failed):', logError, { originalError: error, sku });
     }
     // On error, assume SKU doesn't exist to avoid blocking export
     return { exists: false };

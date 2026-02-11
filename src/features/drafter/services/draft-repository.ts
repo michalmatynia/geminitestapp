@@ -43,6 +43,8 @@ type MongoDraftDoc = {
   parameters?: ProductParameterValue[];
   defaultPriceGroupId?: string | null;
   active?: boolean;
+  validatorEnabled?: boolean;
+  formatterEnabled?: boolean;
   icon?: string | null;
   iconColorMode?: 'theme' | 'custom' | null;
   iconColor?: string | null;
@@ -122,6 +124,8 @@ const listDrafts_Mongo = async (): Promise<ProductDraft[]> => {
       : [],
     defaultPriceGroupId: draft.defaultPriceGroupId || null,
     active: draft.active ?? true,
+    validatorEnabled: draft.validatorEnabled ?? true,
+    formatterEnabled: draft.formatterEnabled ?? false,
     icon: draft.icon || null,
     iconColorMode: normalizeIconColorMode(draft.iconColorMode),
     iconColor: normalizeIconColor(draft.iconColor),
@@ -170,6 +174,8 @@ const getDraft_Mongo = async (id: string): Promise<ProductDraft | null> => {
       : [],
     defaultPriceGroupId: draft.defaultPriceGroupId || null,
     active: draft.active ?? true,
+    validatorEnabled: draft.validatorEnabled ?? true,
+    formatterEnabled: draft.formatterEnabled ?? false,
     icon: draft.icon || null,
     iconColorMode: normalizeIconColorMode(draft.iconColorMode),
     iconColor: normalizeIconColor(draft.iconColor),
@@ -215,6 +221,8 @@ const createDraft_Mongo = async (input: CreateProductDraftInput): Promise<Produc
     tagIds: input.tagIds || [],
     producerIds: normalizeStringArray(input.producerIds),
     parameters: input.parameters || [],
+    validatorEnabled: input.validatorEnabled ?? true,
+    formatterEnabled: input.formatterEnabled ?? false,
     icon: input.icon || null,
     iconColorMode: normalizeIconColorMode(input.iconColorMode),
     iconColor: normalizeIconColor(input.iconColor),
@@ -256,6 +264,8 @@ const createDraft_Mongo = async (input: CreateProductDraftInput): Promise<Produc
     parameters: draft.parameters || [],
     defaultPriceGroupId: input.defaultPriceGroupId || null,
     active: draft.active ?? true,
+    validatorEnabled: draft.validatorEnabled ?? true,
+    formatterEnabled: draft.formatterEnabled ?? false,
     icon: draft.icon || null,
     iconColorMode: normalizeIconColorMode(draft.iconColorMode),
     iconColor: normalizeIconColor(draft.iconColor),
@@ -348,6 +358,8 @@ const updateDraft_Mongo = async (id: string, input: UpdateProductDraftInput): Pr
       : [],
     defaultPriceGroupId: doc.defaultPriceGroupId || null,
     active: doc.active ?? true,
+    validatorEnabled: doc.validatorEnabled ?? true,
+    formatterEnabled: doc.formatterEnabled ?? false,
     icon: doc.icon || null,
     iconColorMode: normalizeIconColorMode(doc.iconColorMode),
     iconColor: normalizeIconColor(doc.iconColor),
@@ -377,6 +389,8 @@ const listDrafts_Prisma = async (): Promise<ProductDraft[]> => {
     tagIds: draft.tagIds as string[],
     producerIds: normalizeStringArray(draft.producerIds),
     parameters: draft.parameters as ProductParameterValue[],
+    validatorEnabled: true,
+    formatterEnabled: false,
     iconColorMode: normalizeIconColorMode(draft.iconColorMode),
     iconColor: normalizeIconColor(draft.iconColor),
     imageLinks: draft.imageLinks as string[],
@@ -397,6 +411,8 @@ const getDraft_Prisma = async (id: string): Promise<ProductDraft | null> => {
     tagIds: draft.tagIds as string[],
     producerIds: normalizeStringArray(draft.producerIds),
     parameters: draft.parameters as ProductParameterValue[],
+    validatorEnabled: true,
+    formatterEnabled: false,
     iconColorMode: normalizeIconColorMode(draft.iconColorMode),
     iconColor: normalizeIconColor(draft.iconColor),
     imageLinks: draft.imageLinks as string[],
@@ -449,6 +465,8 @@ const createDraft_Prisma = async (input: CreateProductDraftInput): Promise<Produ
     tagIds: draft.tagIds as string[],
     producerIds: normalizeStringArray(draft.producerIds),
     parameters: draft.parameters as ProductParameterValue[],
+    validatorEnabled: true,
+    formatterEnabled: false,
     iconColorMode: normalizeIconColorMode(draft.iconColorMode),
     iconColor: normalizeIconColor(draft.iconColor),
     imageLinks: draft.imageLinks as string[],
@@ -457,7 +475,11 @@ const createDraft_Prisma = async (input: CreateProductDraftInput): Promise<Produ
 
 const updateDraft_Prisma = async (id: string, input: UpdateProductDraftInput): Promise<ProductDraft | null> => {
   try {
-    const updateData: UpdateProductDraftInput = { ...input };
+    const {
+      validatorEnabled: _validatorEnabled,
+      formatterEnabled: _formatterEnabled,
+      ...updateData
+    } = input;
     if ('iconColorMode' in input) {
       updateData.iconColorMode = normalizeIconColorMode(input.iconColorMode);
     }
@@ -477,6 +499,8 @@ const updateDraft_Prisma = async (id: string, input: UpdateProductDraftInput): P
       tagIds: draft.tagIds as string[],
       producerIds: normalizeStringArray(draft.producerIds),
       parameters: draft.parameters as ProductParameterValue[],
+      validatorEnabled: true,
+      formatterEnabled: false,
       iconColorMode: normalizeIconColorMode(draft.iconColorMode),
       iconColor: normalizeIconColor(draft.iconColor),
       imageLinks: draft.imageLinks as string[],

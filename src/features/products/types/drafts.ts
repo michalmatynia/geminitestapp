@@ -43,6 +43,8 @@ export type ProductDraft = {
 
   // Status
   active?: boolean;
+  validatorEnabled?: boolean;
+  formatterEnabled?: boolean;
 
   // Icon
   icon?: string | null;
@@ -65,6 +67,8 @@ export interface CreateProductDraftInput extends Omit<CreateProductDto, 'sku'> {
   description?: string | null; // Draft internal description
   sku?: string | null; // Drafts might not have SKU yet or it might be optional
   active?: boolean;
+  validatorEnabled?: boolean;
+  formatterEnabled?: boolean;
   icon?: string | null;
   iconColorMode?: 'theme' | 'custom' | null;
   iconColor?: string | null;

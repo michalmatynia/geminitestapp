@@ -155,6 +155,11 @@ export interface VectorCanvasProps {
   allowWithoutImage?: boolean;
   showEmptyState?: boolean;
   emptyStateLabel?: string;
+  maskPreviewEnabled?: boolean;
+  maskPreviewShapes?: VectorShape[];
+  maskPreviewInvert?: boolean;
+  maskPreviewOpacity?: number;
+  maskPreviewFeather?: number;
   className?: string;
 }
 
@@ -171,6 +176,11 @@ export function VectorCanvas({
   allowWithoutImage = false,
   showEmptyState = true,
   emptyStateLabel = 'Select an image slot to preview.',
+  maskPreviewEnabled = false,
+  maskPreviewShapes = [],
+  maskPreviewInvert = false,
+  maskPreviewOpacity = 0.48,
+  maskPreviewFeather = 0,
   className,
 }: VectorCanvasProps): React.JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -193,6 +203,78 @@ export function VectorCanvas({
       x: p.x * canvas.width,
       y: p.y * canvas.height,
     });
+
+    const drawMaskPath = (shape: VectorShape): boolean => {
+      if (!shape.visible || shape.points.length === 0) return false;
+
+      if (shape.type === 'rect') {
+        if (shape.points.length < 2) return false;
+        const a = toPx(shape.points[0]!);
+        const b = toPx(shape.points[1]!);
+        const x = Math.min(a.x, b.x);
+        const y = Math.min(a.y, b.y);
+        const w = Math.abs(a.x - b.x);
+        const h = Math.abs(a.y - b.y);
+        if (w <= 0 || h <= 0) return false;
+        ctx.beginPath();
+        ctx.rect(x, y, w, h);
+        return true;
+      }
+
+      if (shape.type === 'ellipse') {
+        if (shape.points.length < 2) return false;
+        const a = toPx(shape.points[0]!);
+        const b = toPx(shape.points[1]!);
+        const cx = (a.x + b.x) / 2;
+        const cy = (a.y + b.y) / 2;
+        const rx = Math.abs(a.x - b.x) / 2;
+        const ry = Math.abs(a.y - b.y) / 2;
+        if (rx <= 0 || ry <= 0) return false;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+        return true;
+      }
+
+      if (!shape.closed || shape.points.length < 3) return false;
+      const first = toPx(shape.points[0]!);
+      ctx.beginPath();
+      ctx.moveTo(first.x, first.y);
+      shape.points.slice(1).forEach((p: VectorPoint) => {
+        const px = toPx(p);
+        ctx.lineTo(px.x, px.y);
+      });
+      ctx.closePath();
+      return true;
+    };
+
+    const previewShapes = maskPreviewShapes.filter((shape: VectorShape) => shape.visible);
+    if (maskPreviewEnabled && previewShapes.length > 0) {
+      const opacity = Math.max(0, Math.min(maskPreviewOpacity, 1));
+      const shade = `rgba(2, 6, 23, ${opacity})`;
+      const featherPx = Math.max(0, Math.min(maskPreviewFeather, 100));
+      ctx.save();
+      if (featherPx > 0) {
+        ctx.filter = `blur(${(featherPx / 100) * 6}px)`;
+      }
+      if (maskPreviewInvert) {
+        ctx.fillStyle = shade;
+        previewShapes.forEach((shape: VectorShape) => {
+          if (drawMaskPath(shape)) {
+            ctx.fill();
+          }
+        });
+      } else {
+        ctx.fillStyle = shade;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.globalCompositeOperation = 'destination-out';
+        previewShapes.forEach((shape: VectorShape) => {
+          if (drawMaskPath(shape)) {
+            ctx.fill();
+          }
+        });
+      }
+      ctx.restore();
+    }
 
     shapes.forEach((shape: VectorShape) => {
       if (!shape.visible) return;
@@ -277,7 +359,16 @@ export function VectorCanvas({
         });
       }
     });
-  }, [activeShapeId, selectedPointIndex, shapes]);
+  }, [
+    activeShapeId,
+    maskPreviewEnabled,
+    maskPreviewFeather,
+    maskPreviewInvert,
+    maskPreviewOpacity,
+    maskPreviewShapes,
+    selectedPointIndex,
+    shapes,
+  ]);
 
   const syncCanvasSize = useCallback((): void => {
     const canvas = canvasRef.current;

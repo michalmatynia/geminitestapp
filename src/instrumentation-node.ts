@@ -26,7 +26,8 @@ export async function registerNodeInstrumentation() {
           source: 'process.unhandledRejection',
         });
       } catch {
-        console.error('Fatal: Unhandled Rejection (and logging failed)', reason);  
+        const { logger } = await import('@/shared/utils/logger');
+        logger.error('Fatal: Unhandled Rejection (and logging failed)', reason);  
       }
     })();
   });
@@ -42,7 +43,8 @@ export async function registerNodeInstrumentation() {
           critical: true,
         });
       } catch {
-        console.error('Fatal: Uncaught Exception (and logging failed)', error);  
+        const { logger } = await import('@/shared/utils/logger');
+        logger.error('Fatal: Uncaught Exception (and logging failed)', error);  
       }
       // Give some time for logging to complete before exiting.
       setTimeout(() => process.exit(1), 1000);

@@ -58,7 +58,7 @@ type SequenceGroupView = {
 
 type PatternFormData = {
   label: string;
-  target: 'name' | 'description' | 'sku';
+  target: 'name' | 'description' | 'sku' | 'price' | 'stock';
   locale: string;
   regex: string;
   flags: string;
@@ -149,6 +149,8 @@ const REPLACEMENT_FIELD_LABELS: Record<string, string> = {
   ean: 'EAN',
   gtin: 'GTIN',
   asin: 'ASIN',
+  price: 'Price',
+  stock: 'Stock',
   name_en: 'Name (EN)',
   name_pl: 'Name (PL)',
   name_de: 'Name (DE)',
@@ -193,8 +195,13 @@ const getReplacementFieldsForTarget = (
       field.startsWith('description_')
     );
   }
+  if (target === 'price') return ['price'];
+  if (target === 'stock') return ['stock'];
   return ['sku'];
 };
+
+const isLocaleTarget = (target: PatternFormData['target']): boolean =>
+  target === 'name' || target === 'description';
 
 const getSourceFieldOptionsForTarget = (
   target: PatternFormData['target'],
@@ -605,7 +612,7 @@ export function ValidatorSettings(): React.JSX.Element {
       const payload = {
         label: formData.label.trim(),
         target: formData.target,
-        locale: formData.locale.trim().toLowerCase() || null,
+        locale: isLocaleTarget(formData.target) ? formData.locale.trim().toLowerCase() || null : null,
         regex: formData.regex.trim(),
         flags: formData.flags.trim() || null,
         message: formData.message.trim(),
@@ -959,6 +966,272 @@ export function ValidatorSettings(): React.JSX.Element {
     }
   };
 
+  const handleCreateLatestPriceStockSequence = async (): Promise<void> => {
+    const existingLabels = new Set(
+      patterns
+        .map((item: ProductValidationPattern) => item.label.trim().toLowerCase())
+        .filter((value: string) => value.length > 0),
+    );
+    const sequenceGroupId = createSequenceGroupId();
+    const sequenceGroupLabel = 'Latest Price & Stock';
+    const maxSequence = orderedPatterns.reduce(
+      (max: number, pattern: ProductValidationPattern, index: number) =>
+        Math.max(max, getPatternSequence(pattern, index)),
+      0,
+    );
+    const firstSequence = maxSequence + 10;
+    const secondSequence = maxSequence + 20;
+
+    const priceLabel = buildUniqueLabel('Price from latest product', existingLabels);
+    existingLabels.add(priceLabel.toLowerCase());
+    const stockLabel = buildUniqueLabel('Stock from latest product', existingLabels);
+
+    const buildLatestFieldRecipe = (field: 'price' | 'stock'): string =>
+      encodeDynamicReplacementRecipe({
+        version: 1,
+        sourceMode: 'latest_product_field',
+        sourceField: field,
+        sourceRegex: null,
+        sourceFlags: null,
+        sourceMatchGroup: null,
+        mathOperation: 'none',
+        mathOperand: null,
+        roundMode: 'none',
+        padLength: null,
+        padChar: null,
+        logicOperator: 'none',
+        logicOperand: null,
+        logicFlags: null,
+        logicWhenTrueAction: 'keep',
+        logicWhenTrueValue: null,
+        logicWhenFalseAction: 'keep',
+        logicWhenFalseValue: null,
+        resultAssembly: 'segment_only',
+        targetApply: 'replace_whole_field',
+      });
+
+    try {
+      await createPattern.mutateAsync({
+        label: priceLabel,
+        target: 'price',
+        locale: null,
+        regex: '^(?:\\s*|0(?:\\.0+)?)$',
+        flags: null,
+        message:
+          'Auto-propose price from the latest created product when current price is empty or 0.',
+        severity: 'warning',
+        enabled: true,
+        replacementEnabled: true,
+        replacementValue: buildLatestFieldRecipe('price'),
+        replacementFields: ['price'],
+        sequenceGroupId,
+        sequenceGroupLabel,
+        sequenceGroupDebounceMs: 0,
+        sequence: firstSequence,
+        chainMode: 'continue',
+        maxExecutions: 1,
+        passOutputToNext: false,
+        launchEnabled: false,
+        launchSourceMode: 'current_field',
+        launchSourceField: null,
+        launchOperator: 'equals',
+        launchValue: null,
+        launchFlags: null,
+      });
+
+      await createPattern.mutateAsync({
+        label: stockLabel,
+        target: 'stock',
+        locale: null,
+        regex: '^(?:\\s*|0)$',
+        flags: null,
+        message:
+          'Auto-propose stock from the latest created product when current stock is empty or 0.',
+        severity: 'warning',
+        enabled: true,
+        replacementEnabled: true,
+        replacementValue: buildLatestFieldRecipe('stock'),
+        replacementFields: ['stock'],
+        sequenceGroupId,
+        sequenceGroupLabel,
+        sequenceGroupDebounceMs: 300,
+        sequence: secondSequence,
+        chainMode: 'continue',
+        maxExecutions: 1,
+        passOutputToNext: false,
+        launchEnabled: false,
+        launchSourceMode: 'current_field',
+        launchSourceField: null,
+        launchOperator: 'equals',
+        launchValue: null,
+        launchFlags: null,
+      });
+
+      setGroupDrafts((prev: Record<string, SequenceGroupDraft>) => ({
+        ...prev,
+        [sequenceGroupId]: {
+          label: sequenceGroupLabel,
+          debounceMs: '300',
+        },
+      }));
+      toast('Latest price & stock sequence created.', { variant: 'success' });
+    } catch (error) {
+      toast(
+        error instanceof Error
+          ? error.message
+          : 'Failed to create latest price & stock sequence.',
+        { variant: 'error' },
+      );
+    }
+  };
+
+  const handleCreateNameMirrorPolishSequence = async (): Promise<void> => {
+    const existingLabels = new Set(
+      patterns
+        .map((item: ProductValidationPattern) => item.label.trim().toLowerCase())
+        .filter((value: string) => value.length > 0),
+    );
+    const sequenceGroupId = createSequenceGroupId();
+    const sequenceGroupLabel = 'Name EN -> PL Mirror';
+    const maxSequence = orderedPatterns.reduce(
+      (max: number, pattern: ProductValidationPattern, index: number) =>
+        Math.max(max, getPatternSequence(pattern, index)),
+      0,
+    );
+    const firstSequence = maxSequence + 10;
+    const secondSequence = maxSequence + 20;
+    const thirdSequence = maxSequence + 30;
+
+    const mirrorLabel = buildUniqueLabel('Mirror Name EN to Name PL', existingLabels);
+    existingLabels.add(mirrorLabel.toLowerCase());
+    const keychainLabel = buildUniqueLabel('Name PL: Keychain -> Brelok', existingLabels);
+    existingLabels.add(keychainLabel.toLowerCase());
+    const pinLabel = buildUniqueLabel('Name PL: Pin -> Przypinka', existingLabels);
+
+    const mirrorRecipe = encodeDynamicReplacementRecipe({
+      version: 1,
+      sourceMode: 'form_field',
+      sourceField: 'name_en',
+      sourceRegex: null,
+      sourceFlags: null,
+      sourceMatchGroup: null,
+      mathOperation: 'none',
+      mathOperand: null,
+      roundMode: 'none',
+      padLength: null,
+      padChar: null,
+      logicOperator: 'none',
+      logicOperand: null,
+      logicFlags: null,
+      logicWhenTrueAction: 'keep',
+      logicWhenTrueValue: null,
+      logicWhenFalseAction: 'keep',
+      logicWhenFalseValue: null,
+      resultAssembly: 'segment_only',
+      targetApply: 'replace_whole_field',
+    });
+
+    try {
+      await createPattern.mutateAsync({
+        label: mirrorLabel,
+        target: 'name',
+        locale: 'pl',
+        regex: '^.*$',
+        flags: null,
+        message:
+          'Mirror English name into Polish name before running Polish replacement rules.',
+        severity: 'warning',
+        enabled: true,
+        replacementEnabled: true,
+        replacementValue: mirrorRecipe,
+        replacementFields: ['name_pl'],
+        sequenceGroupId,
+        sequenceGroupLabel,
+        sequenceGroupDebounceMs: 300,
+        sequence: firstSequence,
+        chainMode: 'continue',
+        maxExecutions: 1,
+        passOutputToNext: true,
+        launchEnabled: true,
+        launchSourceMode: 'form_field',
+        launchSourceField: 'name_en',
+        launchOperator: 'is_not_empty',
+        launchValue: null,
+        launchFlags: null,
+      });
+
+      await createPattern.mutateAsync({
+        label: keychainLabel,
+        target: 'name',
+        locale: 'pl',
+        regex: 'Keychain',
+        flags: 'gi',
+        message: 'Replace "Keychain" with "Brelok" in Polish name.',
+        severity: 'warning',
+        enabled: true,
+        replacementEnabled: true,
+        replacementValue: 'Brelok',
+        replacementFields: ['name_pl'],
+        sequenceGroupId,
+        sequenceGroupLabel,
+        sequenceGroupDebounceMs: 0,
+        sequence: secondSequence,
+        chainMode: 'continue',
+        maxExecutions: 3,
+        passOutputToNext: true,
+        launchEnabled: false,
+        launchSourceMode: 'current_field',
+        launchSourceField: null,
+        launchOperator: 'equals',
+        launchValue: null,
+        launchFlags: null,
+      });
+
+      await createPattern.mutateAsync({
+        label: pinLabel,
+        target: 'name',
+        locale: 'pl',
+        regex: '\\bPin\\b',
+        flags: 'gi',
+        message: 'Replace "Pin" with "Przypinka" in Polish name.',
+        severity: 'warning',
+        enabled: true,
+        replacementEnabled: true,
+        replacementValue: 'Przypinka',
+        replacementFields: ['name_pl'],
+        sequenceGroupId,
+        sequenceGroupLabel,
+        sequenceGroupDebounceMs: 0,
+        sequence: thirdSequence,
+        chainMode: 'continue',
+        maxExecutions: 3,
+        passOutputToNext: false,
+        launchEnabled: false,
+        launchSourceMode: 'current_field',
+        launchSourceField: null,
+        launchOperator: 'equals',
+        launchValue: null,
+        launchFlags: null,
+      });
+
+      setGroupDrafts((prev: Record<string, SequenceGroupDraft>) => ({
+        ...prev,
+        [sequenceGroupId]: {
+          label: sequenceGroupLabel,
+          debounceMs: '0',
+        },
+      }));
+      toast('Name EN -> PL mirror sequence created.', { variant: 'success' });
+    } catch (error) {
+      toast(
+        error instanceof Error
+          ? error.message
+          : 'Failed to create Name EN -> PL mirror sequence.',
+        { variant: 'error' },
+      );
+    }
+  };
+
   const handleSaveSequenceGroup = async (groupId: string): Promise<void> => {
     const group = sequenceGroups.get(groupId);
     if (!group || group.patternIds.length === 0) return;
@@ -1051,6 +1324,24 @@ export function ValidatorSettings(): React.JSX.Element {
               className='border border-cyan-500/40 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/20'
             >
               + SKU Auto Sequence
+            </Button>
+            <Button
+              onClick={() => {
+                void handleCreateLatestPriceStockSequence();
+              }}
+              disabled={patternActionsPending}
+              className='border border-emerald-500/40 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/20'
+            >
+              + Latest Price & Stock
+            </Button>
+            <Button
+              onClick={() => {
+                void handleCreateNameMirrorPolishSequence();
+              }}
+              disabled={patternActionsPending}
+              className='border border-indigo-500/40 bg-indigo-500/10 text-indigo-100 hover:bg-indigo-500/20'
+            >
+              + Name EN to PL
             </Button>
             <Button
               onClick={openCreate}
@@ -1239,7 +1530,9 @@ export function ValidatorSettings(): React.JSX.Element {
                               {pattern.target}
                             </span>
                             <span className='rounded border border-indigo-500/40 bg-indigo-500/10 px-2 py-0.5 text-[10px] uppercase text-indigo-200'>
-                              {pattern.locale || 'any locale'}
+                              {pattern.target === 'name' || pattern.target === 'description'
+                                ? pattern.locale || 'any locale'
+                                : 'n/a'}
                             </span>
                             <span
                               className={`rounded border px-2 py-0.5 text-[10px] uppercase ${
@@ -1370,7 +1663,7 @@ export function ValidatorSettings(): React.JSX.Element {
                     value={formData.target}
                     onValueChange={(value: string): void =>
                       setFormData((prev: PatternFormData) => {
-                        const nextTarget = value as 'name' | 'description' | 'sku';
+                        const nextTarget = value as PatternFormData['target'];
                         const allowed = new Set<string>(getReplacementFieldsForTarget(nextTarget));
                         const nextSourceOptions = getSourceFieldOptionsForTarget(nextTarget);
                         const hasSourceField = nextSourceOptions.some(
@@ -1382,7 +1675,7 @@ export function ValidatorSettings(): React.JSX.Element {
                         return {
                           ...prev,
                           target: nextTarget,
-                          locale: nextTarget === 'sku' ? '' : prev.locale,
+                          locale: isLocaleTarget(nextTarget) ? prev.locale : '',
                           replacementFields: prev.replacementFields.filter((field: string) => allowed.has(field)),
                           sourceField: hasSourceField ? prev.sourceField : '',
                           launchSourceField: hasLaunchSourceField ? prev.launchSourceField : '',
@@ -1393,6 +1686,8 @@ export function ValidatorSettings(): React.JSX.Element {
                       { value: 'name', label: 'Name' },
                       { value: 'description', label: 'Description' },
                       { value: 'sku', label: 'SKU' },
+                      { value: 'price', label: 'Price' },
+                      { value: 'stock', label: 'Stock' },
                     ]}
                   />
                 </div>
@@ -1402,14 +1697,14 @@ export function ValidatorSettings(): React.JSX.Element {
                 <Label className='text-xs text-gray-400'>Locale Context</Label>
                 <div className='mt-2'>
                   <UnifiedSelect
-                    value={formData.target === 'sku' ? 'any' : formData.locale || 'any'}
+                    value={isLocaleTarget(formData.target) ? formData.locale || 'any' : 'any'}
                     onValueChange={(value: string): void =>
                       setFormData((prev: PatternFormData) => ({
                         ...prev,
-                        locale: prev.target === 'sku' ? '' : value === 'any' ? '' : value,
+                        locale: isLocaleTarget(prev.target) ? (value === 'any' ? '' : value) : '',
                       }))
                     }
-                    disabled={formData.target === 'sku'}
+                    disabled={!isLocaleTarget(formData.target)}
                     options={[
                       { value: 'any', label: 'Any locale' },
                       { value: 'en', label: 'English (en)' },

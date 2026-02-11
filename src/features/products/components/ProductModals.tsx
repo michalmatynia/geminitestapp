@@ -187,7 +187,9 @@ function ProductFormModal({
         >
           {uploading ? 'Saving...' : submitButtonText}
         </Button>
-        <h2 className='text-2xl font-bold text-white'>{title}</h2>
+        <div className='flex items-center gap-2'>
+          <h2 className='text-2xl font-bold text-white'>{title}</h2>
+        </div>
       </div>
       <div className='flex items-center gap-2'>
         <TriggerButtonBar

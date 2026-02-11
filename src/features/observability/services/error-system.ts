@@ -44,12 +44,14 @@ export const ErrorSystem = {
             ...context
           });
         } catch (auditError) {
-          // Fallback to console if audit logging fails
-          console.error('[ErrorSystem] Failed to log to Agent Audit:', auditError);
+          // Fallback to logger if audit logging fails
+          const { logger } = await import('@/shared/utils/logger');
+          logger.error('[ErrorSystem] Failed to log to Agent Audit:', auditError);
         }
       }
     } catch (importError) {
-      console.error('[ErrorSystem] Failed to import dependencies:', importError);
+      const { logger } = await import('@/shared/utils/logger');
+      logger.error('[ErrorSystem] Failed to import dependencies:', importError);
     }
   },
 
@@ -73,11 +75,13 @@ export const ErrorSystem = {
           const { logAgentAudit } = await import('@/features/ai/agent-runtime/audit');
           await logAgentAudit(context.runId, 'warning', message, context);
         } catch (auditError) {
-          console.warn('[ErrorSystem] Failed to log warning to Agent Audit:', auditError);
+          const { logger } = await import('@/shared/utils/logger');
+          logger.warn('[ErrorSystem] Failed to log warning to Agent Audit:', { error: auditError });
         }
       }
     } catch (importError) {
-      console.error('[ErrorSystem] Failed to import dependencies:', importError);
+      const { logger } = await import('@/shared/utils/logger');
+      logger.error('[ErrorSystem] Failed to import dependencies:', importError);
     }
   },
 
@@ -99,7 +103,8 @@ export const ErrorSystem = {
         }
       });
     } catch (importError) {
-      console.error('[ErrorSystem] Failed to import dependencies:', importError);
+      const { logger } = await import('@/shared/utils/logger');
+      logger.error('[ErrorSystem] Failed to import dependencies:', importError);
     }
   },
 
@@ -118,7 +123,8 @@ export const ErrorSystem = {
         context
       });
     } catch (importError) {
-      console.error('[ErrorSystem] Failed to import dependencies:', importError);
+      const { logger } = await import('@/shared/utils/logger');
+      logger.error('[ErrorSystem] Failed to import dependencies:', importError);
     }
   },
 

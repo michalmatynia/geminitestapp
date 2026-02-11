@@ -196,7 +196,7 @@ export function SlotTree(): React.JSX.Element {
               >
                 <div
                   className={cn(
-                    'pointer-events-none absolute left-2.5 top-1.5 bottom-1.5 w-px rounded-full bg-sky-300/60 transition-opacity duration-150',
+                    'pointer-events-none absolute left-2.5 top-2 bottom-2 w-px rounded-full bg-sky-300/35 transition-opacity duration-150',
                     isDragOver ? 'opacity-100' : 'opacity-0'
                   )}
                 />
@@ -211,6 +211,14 @@ export function SlotTree(): React.JSX.Element {
                 />
                 <Folder className='size-3.5 text-gray-400' />
                 <span className='truncate'>{node.name}</span>
+                <span
+                  className={cn(
+                    'ml-auto text-[10px] text-sky-200/70 transition-opacity duration-150',
+                    isDragOver ? 'opacity-100' : 'opacity-0'
+                  )}
+                >
+                  drop
+                </span>
               </button>
             </TreeRow>
           </TreeContextMenu>
@@ -272,6 +280,12 @@ export function SlotTree(): React.JSX.Element {
           >
             <ImageIcon className='size-3.5 text-gray-400' />
             <span className='truncate'>{slot.name || node.name}</span>
+            <span
+              className={cn(
+                'ml-auto size-1 rounded-full bg-blue-300/55 transition-opacity duration-150',
+                isSelected ? 'opacity-100' : 'opacity-0'
+              )}
+            />
           </button>
         </TreeRow>
       </TreeContextMenu>
@@ -281,6 +295,14 @@ export function SlotTree(): React.JSX.Element {
   return (
     <div
       className='relative h-full overflow-auto rounded border border-border bg-card/40 p-2'
+      role='tree'
+      tabIndex={0}
+      aria-label='Image slot folders and files'
+      onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
+        if (event.key !== 'Escape') return;
+        event.stopPropagation();
+        setSelectedSlotId(null);
+      }}
       onClick={() => setSelectedSlotId(null)}
       onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
         if (!hasDragType(e.dataTransfer, [DRAG_KEYS.ASSET_ID, DRAG_KEYS.FOLDER_PATH])) return;
@@ -308,13 +330,13 @@ export function SlotTree(): React.JSX.Element {
     >
       <div
         className={cn(
-          'pointer-events-none absolute left-3 right-3 top-2 h-px rounded-full bg-sky-300/60 transition-opacity duration-150',
+          'pointer-events-none absolute left-3 right-3 top-2 h-px rounded-full bg-sky-300/35 transition-opacity duration-150',
           dragOverPath === '' ? 'opacity-100' : 'opacity-0'
         )}
       />
       <div
         className={cn(
-          'pointer-events-none absolute right-3 top-3 text-[10px] uppercase tracking-wide text-sky-200/80 transition-opacity duration-150',
+          'pointer-events-none absolute right-3 top-3 text-[9px] uppercase tracking-wide text-sky-200/55 transition-opacity duration-150',
           dragOverPath === '' ? 'opacity-100' : 'opacity-0'
         )}
       >

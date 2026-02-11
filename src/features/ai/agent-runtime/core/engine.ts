@@ -492,11 +492,11 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
         });
       } catch (logError) {
         if (DEBUG_CHATBOT) {
-          console.error('[chatbot][agent][engine] Failed to persist error (and logging failed)', {
+          const { logger } = await import('@/shared/utils/logger');
+          logger.error('[chatbot][agent][engine] Failed to persist error (and logging failed)', logError, {
             runId,
             errorId,
             innerError,
-            logError
           });
         }
       }

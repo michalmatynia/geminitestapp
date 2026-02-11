@@ -62,10 +62,10 @@ export async function addAgentMemory(params: {
       });
     } catch (logError) {
       if (DEBUG_CHATBOT) {
-        console.error('[chatbot][agent][memory] Failed to add memory (and logging failed)', {
+        const { logger } = await import('@/shared/utils/logger');
+        logger.error('[chatbot][agent][memory] Failed to add memory (and logging failed)', logError, {
           runId: params.runId,
           error,
-          logError
         });
       }
     }
@@ -101,11 +101,11 @@ export async function listAgentMemory(params: {
       });
     } catch (logError) {
       if (DEBUG_CHATBOT) {
-        console.error('[chatbot][agent][memory] Failed to list memory (and logging failed)', {
+        const { logger } = await import('@/shared/utils/logger');
+        logger.error('[chatbot][agent][memory] Failed to list memory (and logging failed)', logError, {
           runId: params.runId,
           scope: params.scope,
           error,
-          logError
         });
       }
     }
@@ -153,11 +153,11 @@ export async function addAgentLongTermMemory(params: {
       });
     } catch (logError) {
       if (DEBUG_CHATBOT) {
-        console.error('[chatbot][agent][memory] Failed to add long-term memory (and logging failed)', {
+        const { logger } = await import('@/shared/utils/logger');
+        logger.error('[chatbot][agent][memory] Failed to add long-term memory (and logging failed)', logError, {
           memoryKey: params.memoryKey,
           runId: params.runId,
           error,
-          logError
         });
       }
     }
@@ -357,10 +357,10 @@ export async function listAgentLongTermMemory(params: {
       });
     } catch (logError) {
       if (DEBUG_CHATBOT) {
-        console.error('[chatbot][agent][memory] Failed to list long-term memory (and logging failed)', {
+        const { logger } = await import('@/shared/utils/logger');
+        logger.error('[chatbot][agent][memory] Failed to list long-term memory (and logging failed)', logError, {
           memoryKey: params.memoryKey,
           error,
-          logError
         });
       }
     }

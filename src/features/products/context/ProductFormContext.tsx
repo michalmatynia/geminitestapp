@@ -93,6 +93,7 @@ export interface ProductFormContextType {
   generationError: string | null;
   setGenerationError: (error: string | null) => void;
   product?: ProductWithImages | undefined;
+  draft?: ProductDraft | null | undefined;
 }
 
 export const ProductFormContext = createContext<ProductFormContextType | null>(
@@ -342,6 +343,7 @@ export function ProductFormProvider({
           generationError,
           setGenerationError,
           product,
+          draft,
         }}
       >
         {children}

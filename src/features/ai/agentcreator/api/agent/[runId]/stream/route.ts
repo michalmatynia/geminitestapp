@@ -39,10 +39,10 @@ async function GET_handler(req: NextRequest,
             });
           } catch (logError) {
             if (DEBUG_CHATBOT) {
-              console.error('[chatbot][agent][stream] Snapshot fetch failed (and logging failed)', {
+              const { logger } = await import('@/shared/utils/logger');
+              logger.error('[chatbot][agent][stream] Snapshot fetch failed (and logging failed)', logError, {
                 runId,
                 error,
-                logError
               });
             }
           }

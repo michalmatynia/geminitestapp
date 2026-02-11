@@ -12,11 +12,14 @@ import {
   Wand2,
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { logClientError } from '@/features/observability';
 import { flattenParams } from '@/features/prompt-engine/prompt-params';
 import { VectorDrawingCanvas, VectorDrawingToolbar, VectorDrawingProvider } from '@/features/vector-drawing';
 import { Viewer3D } from '@/features/viewer3d/components/Viewer3D';
+import { studioKeys } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
+import { api } from '@/shared/lib/api-client';
 import {
   Button,
   Input,
@@ -30,10 +33,12 @@ import {
   SelectTrigger,
   SelectValue,
   Textarea,
+  vectorShapeToPathWithBounds,
   useToast,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
+import { ImageStudioSingleSlotManager } from './ImageStudioSingleSlotManager';
 import { ParamRow } from './ParamRow';
 import { SlotTree } from './SlotTree';
 import { useImageStudio } from '../context/ImageStudioContext';
@@ -66,6 +71,10 @@ export function StudioMainContent(): React.JSX.Element {
     selectedPointIndex,
     setSelectedPointIndex,
     brushRadius,
+    maskInvert,
+    setMaskInvert,
+    maskFeather,
+    setMaskFeather,
     promptText,
     setPromptText,
     paramsState,
@@ -74,14 +83,15 @@ export function StudioMainContent(): React.JSX.Element {
     runMutation,
     runOutputs,
     handleRunGeneration,
-    maskEligibleCount,
   } = useImageStudio();
 
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [newProjectId, setNewProjectId] = useState('');
   const [folderCreateOpen, setFolderCreateOpen] = useState(false);
   const [folderDraft, setFolderDraft] = useState('');
+  const [maskPreviewEnabled, setMaskPreviewEnabled] = useState(false);
 
   const workingSlotImageSrc = useMemo(() => {
     if (!workingSlot) return null;
@@ -102,8 +112,8 @@ export function StudioMainContent(): React.JSX.Element {
     brushRadius,
     imageSrc: workingSlotImageSrc,
     allowWithoutImage: false,
-    showEmptyState: true,
-    emptyStateLabel: 'Select an image slot to preview.',
+    showEmptyState: false,
+    emptyStateLabel: '',
     setShapes: setMaskShapes,
     setTool,
     setActiveShapeId: setActiveMaskId,
@@ -125,6 +135,185 @@ export function StudioMainContent(): React.JSX.Element {
     logClientError(new Error('Auto format triggered'), {
       context: { source: 'StudioMainContent', action: 'autoFormatPrompt', level: 'info' },
     });
+  };
+
+  const eligibleMaskShapes = useMemo(
+    () =>
+      maskShapes.filter(
+        (shape) =>
+          shape.visible &&
+          ((shape.type === 'rect' || shape.type === 'ellipse')
+            ? shape.points.length >= 2
+            : shape.closed && shape.points.length >= 3)
+      ),
+    [maskShapes]
+  );
+
+  const selectedEligibleMaskShapes = useMemo(
+    () =>
+      eligibleMaskShapes.filter(
+        (shape) => activeMaskId && shape.id === activeMaskId
+      ),
+    [eligibleMaskShapes, activeMaskId]
+  );
+
+  const exportMaskShapes = useMemo(
+    () => (selectedEligibleMaskShapes.length > 0 ? selectedEligibleMaskShapes : eligibleMaskShapes),
+    [selectedEligibleMaskShapes, eligibleMaskShapes]
+  );
+
+  const exportMaskCount = exportMaskShapes.length;
+
+  const liveMaskShapes = useMemo(() => {
+    if (!maskPreviewEnabled) return [];
+    return exportMaskShapes;
+  }, [maskPreviewEnabled, exportMaskShapes]);
+
+  const loadImageElement = (src: string): Promise<HTMLImageElement> =>
+    new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = (): void => resolve(img);
+      img.onerror = (): void => reject(new Error('Failed to load working image for mask export.'));
+      img.src = src;
+    });
+
+  const buildMaskSvg = (
+    shapes: typeof exportMaskShapes,
+    width: number,
+    height: number,
+    foreground: 'white' | 'black'
+  ): string => {
+    const pathData = shapes
+      .map((shape) => vectorShapeToPathWithBounds(shape, width, height))
+      .filter((value): value is string => Boolean(value))
+      .join(' ');
+
+    const preferWhite = foreground === 'white';
+    const isInverted = maskInvert;
+    const background = (preferWhite && !isInverted) || (!preferWhite && isInverted) ? '#000000' : '#ffffff';
+    const fill = background === '#000000' ? '#ffffff' : '#000000';
+    const featherStdDev = maskFeather > 0 ? Number(((maskFeather / 100) * 8).toFixed(2)) : 0;
+    const filterBlock = featherStdDev > 0
+      ? `<defs><filter id="mask-feather" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="${featherStdDev}" /></filter></defs>`
+      : '';
+    const filterAttr = featherStdDev > 0 ? ' filter="url(#mask-feather)"' : '';
+
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+${filterBlock}
+<rect x="0" y="0" width="${width}" height="${height}" fill="${background}" />
+<path d="${pathData}" fill="${fill}" fill-rule="nonzero"${filterAttr} />
+</svg>`;
+  };
+
+  const exportMaskFromSelection = async (
+    foreground: 'white' | 'black'
+  ): Promise<void> => {
+    if (!workingSlotImageSrc) {
+      toast('Select a slot image before exporting a mask.', { variant: 'info' });
+      return;
+    }
+
+    const shapes = exportMaskShapes;
+    if (shapes.length === 0) {
+      toast('Draw at least one visible shape first.', {
+        variant: 'info',
+      });
+      return;
+    }
+
+    try {
+      let width = workingSlot?.imageFile?.width ?? 0;
+      let height = workingSlot?.imageFile?.height ?? 0;
+      if (!(width > 0 && height > 0)) {
+        const image = await loadImageElement(workingSlotImageSrc);
+        width = image.naturalWidth || image.width;
+        height = image.naturalHeight || image.height;
+      }
+      if (!(width > 0 && height > 0)) {
+        width = 1024;
+        height = 1024;
+      }
+
+      const svgContent = buildMaskSvg(shapes, width, height, foreground);
+      const svgBlob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+      const svgUrl = URL.createObjectURL(svgBlob);
+
+      let dataUrl = '';
+      try {
+        const image = await loadImageElement(svgUrl);
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const context2d = canvas.getContext('2d');
+        if (!context2d) {
+          throw new Error('Canvas context is unavailable.');
+        }
+        context2d.clearRect(0, 0, width, height);
+        context2d.drawImage(image, 0, 0, width, height);
+        dataUrl = canvas.toDataURL('image/png');
+      } finally {
+        URL.revokeObjectURL(svgUrl);
+      }
+
+      if (!dataUrl) {
+        toast('Failed to build mask image.', { variant: 'error' });
+        return;
+      }
+
+      if (!workingSlot?.id) {
+        toast('No active source slot selected.', { variant: 'info' });
+        return;
+      }
+
+      const response = await api.post<{
+        masks?: Array<{
+          slot?: { id: string; name: string | null };
+          relationType?: string;
+        }>;
+      }>(`/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/masks`, {
+        masks: [
+          {
+            variant: foreground,
+            inverted: maskInvert,
+            dataUrl,
+          },
+        ],
+      });
+
+      void queryClient.invalidateQueries({ queryKey: studioKeys.slots(projectId) });
+
+      const createdCount = Array.isArray(response.masks) ? response.masks.length : 0;
+      if (createdCount === 0) {
+        toast('Mask slot creation returned no records.', { variant: 'error' });
+        return;
+      }
+
+      toast(
+        foreground === 'white'
+          ? 'White mask attached as linked slot.'
+          : 'Black mask attached as linked slot.',
+        { variant: 'success' }
+      );
+    } catch (error) {
+      toast(
+        error instanceof Error
+          ? error.message
+          : 'Failed to export mask from selection.',
+        { variant: 'error' }
+      );
+    }
+  };
+
+  const openSlotUpload = (): void => {
+    if (selectedSlot) {
+      setDriveImportMode('replace');
+      setDriveImportTargetId(selectedSlot.id);
+    } else {
+      setDriveImportMode('create');
+      setDriveImportTargetId(null);
+    }
+    setDriveImportOpen(true);
   };
 
   const handleCreateFolder = (): void => {
@@ -242,16 +431,7 @@ export function StudioMainContent(): React.JSX.Element {
                   variant='outline'
                   size='sm'
                   title='Upload image into active slot (or create a new slot file)'
-                  onClick={() => {
-                    if (selectedSlot) {
-                      setDriveImportMode('replace');
-                      setDriveImportTargetId(selectedSlot.id);
-                    } else {
-                      setDriveImportMode('create');
-                      setDriveImportTargetId(null);
-                    }
-                    setDriveImportOpen(true);
-                  }}
+                  onClick={openSlotUpload}
                   disabled={!projectId}
                 >
                   Upload Image
@@ -289,6 +469,10 @@ export function StudioMainContent(): React.JSX.Element {
               {selectedSlot
                 ? `Active slot: ${selectedSlot.name || selectedSlot.id}`
                 : 'No active slot selected. Pick a slot file from the tree or upload a new image.'}
+            </div>
+
+            <div className='rounded border border-border/60 bg-card/40 p-2'>
+              <ImageStudioSingleSlotManager />
             </div>
 
             <div className='flex-1 overflow-hidden'>
@@ -338,7 +522,13 @@ export function StudioMainContent(): React.JSX.Element {
                     className='h-full w-full'
                   />
                 ) : (
-                  <VectorDrawingCanvas />
+                  <VectorDrawingCanvas
+                    maskPreviewEnabled={maskPreviewEnabled}
+                    maskPreviewShapes={liveMaskShapes}
+                    maskPreviewInvert={maskInvert}
+                    maskPreviewOpacity={0.5}
+                    maskPreviewFeather={maskFeather}
+                  />
                 )}
                 <VectorDrawingToolbar
                   className='absolute bottom-4 left-1/2 z-20 -translate-x-1/2'
@@ -346,40 +536,6 @@ export function StudioMainContent(): React.JSX.Element {
                   disableClear={maskShapes.length === 0}
                 />
               </VectorDrawingProvider>
-              {!workingSlot ? (
-                <div className='pointer-events-none absolute inset-0 z-30 flex items-center justify-center'>
-                  <div className='pointer-events-auto max-w-sm rounded border border-border/70 bg-card/90 p-3 text-center shadow-lg'>
-                    <p className='text-sm text-gray-200'>No Slot Selected</p>
-                    <p className='mt-1 text-xs text-gray-400'>
-                      Upload an image to create a slot file, or create an empty slot and attach an image later.
-                    </p>
-                    <div className='mt-3 flex flex-wrap items-center justify-center gap-2'>
-                      <Button
-                        type='button'
-                        size='sm'
-                        onClick={() => setSlotCreateOpen(true)}
-                        disabled={!projectId}
-                      >
-                        <Plus className='mr-2 size-4' />
-                        New Slot
-                      </Button>
-                      <Button
-                        type='button'
-                        variant='outline'
-                        size='sm'
-                        onClick={() => {
-                          setDriveImportMode('create');
-                          setDriveImportTargetId(null);
-                          setDriveImportOpen(true);
-                        }}
-                        disabled={!projectId}
-                      >
-                        Upload Image
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ) : null}
             </div>
           </div>
         </SectionPanel>
@@ -395,6 +551,7 @@ export function StudioMainContent(): React.JSX.Element {
                   size='sm'
                   title='Extract functions and selectors from prompt'
                   aria-label='Extract functions and selectors from prompt'
+                  disabled={!promptText.trim()}
                   onClick={() => { setExtractDraftPrompt(promptText); setExtractReviewOpen(true); }}
                 >
                   <Sparkles className='mr-2 size-4' />
@@ -405,6 +562,7 @@ export function StudioMainContent(): React.JSX.Element {
                   size='sm'
                   title='Auto format prompt'
                   aria-label='Auto format prompt'
+                  disabled={!promptText.trim()}
                   onClick={autoFormatPrompt}
                 >
                   <Wand2 className='mr-2 size-4' />
@@ -413,7 +571,7 @@ export function StudioMainContent(): React.JSX.Element {
               </div>
             )}
           />
-          <div className='flex min-h-0 flex-1 flex-col gap-3 p-4'>
+          <div className='relative flex min-h-0 flex-1 flex-col gap-3 p-4'>
             <Textarea
               value={promptText}
               onChange={(e) => setPromptText(e.target.value)}
@@ -435,11 +593,77 @@ export function StudioMainContent(): React.JSX.Element {
                 )}
                 {runMutation.isPending ? 'Generating...' : 'Generate'}
               </Button>
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                onClick={() => {
+                  void exportMaskFromSelection('white');
+                }}
+                disabled={!workingSlot || exportMaskCount === 0}
+                title='Export white mask from selected shape (or all visible mask shapes)'
+              >
+                White Mask
+              </Button>
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                onClick={() => {
+                  void exportMaskFromSelection('black');
+                }}
+                disabled={!workingSlot || exportMaskCount === 0}
+                title='Export black mask from selected shape (or all visible mask shapes)'
+              >
+                Black Mask
+              </Button>
+              <Button
+                type='button'
+                variant={maskPreviewEnabled ? 'secondary' : 'outline'}
+                size='sm'
+                onClick={() => {
+                  setMaskPreviewEnabled((prev) => !prev);
+                }}
+                disabled={!workingSlot || exportMaskCount === 0}
+                title='Apply generated mask preview on the image'
+              >
+                {maskPreviewEnabled ? 'Mask On' : 'Generate Mask'}
+              </Button>
+              <Button
+                type='button'
+                variant={maskInvert ? 'secondary' : 'outline'}
+                size='sm'
+                onClick={() => setMaskInvert(!maskInvert)}
+                disabled={!maskPreviewEnabled || exportMaskCount === 0}
+                title='Invert active mask preview'
+              >
+                Invert
+              </Button>
               <span className='text-[11px] text-gray-400 whitespace-nowrap'>
-                {maskEligibleCount > 0
-                  ? `${maskEligibleCount} mask shape${maskEligibleCount > 1 ? 's' : ''}`
+                {exportMaskCount > 0
+                  ? `${exportMaskCount} mask shape${exportMaskCount > 1 ? 's' : ''}`
                   : 'No mask'}
               </span>
+            </div>
+
+            <div className='grid grid-cols-1 gap-2 rounded border border-border/60 bg-card/40 p-2 sm:grid-cols-2'>
+              <Label className='text-[11px] text-gray-300'>Mask Feather</Label>
+              <div className='flex items-center gap-2'>
+                <Input
+                  type='range'
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={maskFeather}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                    const next = Number(event.target.value);
+                    setMaskFeather(Number.isFinite(next) ? next : 0);
+                  }}
+                  disabled={!maskPreviewEnabled}
+                  className='h-8'
+                />
+                <span className='w-10 text-right text-[11px] text-gray-400'>{maskFeather}</span>
+              </div>
             </div>
 
             {runOutputs.length > 0 ? (

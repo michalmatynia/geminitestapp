@@ -1,6 +1,6 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, type Query } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -22,6 +22,34 @@ interface AnalyticsConfig {
   onMetric?: (metric: QueryMetrics) => void;
 }
 
+const parseEnvNumber = (value: string | undefined, fallback: number): number => {
+  const parsed = Number.parseInt(value ?? '', 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+const parseEnvBoolean = (value: string | undefined, fallback: boolean): boolean => {
+  if (!value) return fallback;
+  const normalized = value.trim().toLowerCase();
+  return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on';
+};
+
+const QUERY_PERF_REPORT_INTERVAL_MS = parseEnvNumber(
+  process.env['NEXT_PUBLIC_QUERY_PERF_REPORT_INTERVAL_MS'],
+  30_000
+);
+const QUERY_PERF_REPORT_SLOW_THRESHOLD_MS = parseEnvNumber(
+  process.env['NEXT_PUBLIC_QUERY_PERF_REPORT_SLOW_THRESHOLD_MS'],
+  2_000
+);
+const QUERY_PERF_REPORT_TO_SERVER = parseEnvBoolean(
+  process.env['NEXT_PUBLIC_QUERY_PERF_REPORT_TO_SERVER'],
+  false
+);
+const QUERY_PERF_REPORT_TO_CONSOLE = parseEnvBoolean(
+  process.env['NEXT_PUBLIC_QUERY_PERF_REPORT_TO_CONSOLE'],
+  true
+);
+
 // Hook for query analytics and performance tracking
 export function useQueryAnalytics(config: AnalyticsConfig = {}): {
   getMetrics: () => QueryMetrics[];
@@ -38,6 +66,9 @@ export function useQueryAnalytics(config: AnalyticsConfig = {}): {
 } {
   const queryClient = useQueryClient();
   const metricsRef = useRef<Map<string, QueryMetrics>>(new Map());
+  const fetchStartedAtRef = useRef<WeakMap<Query, number>>(new WeakMap());
+  const handledDataUpdatedAtRef = useRef<WeakMap<Query, number>>(new WeakMap());
+  const handledErrorUpdatedAtRef = useRef<WeakMap<Query, number>>(new WeakMap());
   const enabled = config.enabled !== false;
   const sampleRate = config.sampleRate || 1;
   const maxEntries = config.maxEntries || 1000;
@@ -102,22 +133,62 @@ export function useQueryAnalytics(config: AnalyticsConfig = {}): {
     if (!enabled) return;
 
     const unsubscribe = queryClient.getQueryCache().subscribe((event): void => {
-      if (event.type === 'updated') {
-        const query = event.query;
-        const startTime = Date.now();
+      if (event.type !== 'updated') return;
+      const query = event.query;
 
-        // Track cache hits vs network requests
-        const cacheHit = query.state.dataUpdatedAt > 0 && query.state.fetchStatus === 'idle';
+      if (query.state.fetchStatus === 'fetching') {
+        if (!fetchStartedAtRef.current.has(query)) {
+          fetchStartedAtRef.current.set(query, Date.now());
+        }
+        return;
+      }
 
-        const executionTime = startTime - (query.state.dataUpdatedAt || startTime);
-        const success = query.state.status === 'success';
+      if (query.state.status === 'success') {
+        const dataUpdatedAt = query.state.dataUpdatedAt ?? 0;
+        if (dataUpdatedAt <= 0) return;
+        if (handledDataUpdatedAtRef.current.get(query) === dataUpdatedAt) return;
+        handledDataUpdatedAtRef.current.set(query, dataUpdatedAt);
+
+        const startedAt = fetchStartedAtRef.current.get(query);
+        const hadTrackedFetch = typeof startedAt === 'number';
+        if (hadTrackedFetch) {
+          fetchStartedAtRef.current.delete(query);
+        }
 
         recordMetric(
           query.queryKey,
-          executionTime,
-          cacheHit,
-          success,
+          hadTrackedFetch ? Math.max(0, Date.now() - startedAt) : 0,
+          !hadTrackedFetch,
+          true,
           query.state.data
+        );
+        return;
+      }
+
+      if (query.state.status === 'error') {
+        const errorUpdatedAt = query.state.errorUpdatedAt ?? 0;
+        if (
+          errorUpdatedAt > 0 &&
+          handledErrorUpdatedAtRef.current.get(query) === errorUpdatedAt &&
+          !fetchStartedAtRef.current.has(query)
+        ) {
+          return;
+        }
+        if (errorUpdatedAt > 0) {
+          handledErrorUpdatedAtRef.current.set(query, errorUpdatedAt);
+        }
+
+        const startedAt = fetchStartedAtRef.current.get(query);
+        const hadTrackedFetch = typeof startedAt === 'number';
+        if (hadTrackedFetch) {
+          fetchStartedAtRef.current.delete(query);
+        }
+
+        recordMetric(
+          query.queryKey,
+          hadTrackedFetch ? Math.max(0, Date.now() - startedAt) : 0,
+          false,
+          false
         );
       }
     });
@@ -191,15 +262,40 @@ export function usePerformanceMonitor(): ReturnType<typeof useQueryAnalytics> {
 
   const logPerformanceReport = useCallback((): void => {
     const stats = analytics.getCacheStats();
-    const slowQueries = analytics.getTopSlowQueries(5);
-    const errorQueries = analytics.getErrorProneQueries(5);
+    const slowQueries = analytics
+      .getTopSlowQueries(5)
+      .filter((metric: QueryMetrics): boolean => metric.executionTime >= QUERY_PERF_REPORT_SLOW_THRESHOLD_MS)
+      .map((metric: QueryMetrics) => ({
+        queryKey: metric.queryKey,
+        avgExecutionTimeMs: Math.round(metric.executionTime),
+        successCount: metric.successCount,
+        errorCount: metric.errorCount,
+      }));
+    const errorQueries = analytics.getErrorProneQueries(5).map((metric: QueryMetrics) => ({
+      queryKey: metric.queryKey,
+      avgExecutionTimeMs: Math.round(metric.executionTime),
+      successCount: metric.successCount,
+      errorCount: metric.errorCount,
+    }));
+    if (slowQueries.length === 0 && errorQueries.length === 0) return;
 
-    logClientError(new Error('Query Performance Report'), {
+    const report = {
+      source: 'useQueryAnalytics',
+      stats: {
+        ...stats,
+        avgExecutionTime: Math.round(stats.avgExecutionTime),
+      },
+      slowQueries,
+      errorQueries,
+    };
+    if (process.env['NODE_ENV'] === 'development' && QUERY_PERF_REPORT_TO_CONSOLE) {
+      console.info('[query-performance]', report);
+    }
+    if (!QUERY_PERF_REPORT_TO_SERVER) return;
+
+    logClientError('Query Performance Report', {
       context: {
-        source: 'useQueryAnalytics',
-        stats,
-        slowQueries,
-        errorQueries,
+        ...report,
         level: 'info',
       },
     });
@@ -209,7 +305,7 @@ export function usePerformanceMonitor(): ReturnType<typeof useQueryAnalytics> {
   useEffect((): (() => void) | void => {
     if (process.env['NODE_ENV'] !== 'development') return;
 
-    const interval = setInterval(logPerformanceReport, 30000);
+    const interval = setInterval(logPerformanceReport, QUERY_PERF_REPORT_INTERVAL_MS);
     return (): void => clearInterval(interval);
   }, [logPerformanceReport]);
 

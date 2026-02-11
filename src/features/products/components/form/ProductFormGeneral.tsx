@@ -98,14 +98,18 @@ const sortValidatorPatterns = (patterns: ProductValidationPattern[]): ProductVal
 
 const resolveFieldTargetAndLocale = (
   fieldName: string
-): { target: 'name' | 'description' | 'sku' | null; locale: string | null } => {
-  let target: 'name' | 'description' | 'sku' | null = null;
+): { target: 'name' | 'description' | 'sku' | 'price' | 'stock' | null; locale: string | null } => {
+  let target: 'name' | 'description' | 'sku' | 'price' | 'stock' | null = null;
   if (fieldName.startsWith('name_')) {
     target = 'name';
   } else if (fieldName.startsWith('description_')) {
     target = 'description';
   } else if (fieldName === 'sku') {
     target = 'sku';
+  } else if (fieldName === 'price') {
+    target = 'price';
+  } else if (fieldName === 'stock') {
+    target = 'stock';
   }
   const localeMatch = /_(en|pl|de)$/i.exec(fieldName);
   const locale = localeMatch?.[1]?.toLowerCase() ?? null;
@@ -292,25 +296,89 @@ const buildFieldIssues = (
   patterns: ProductValidationPattern[],
   latestProductValues: Record<string, unknown> | null
 ): Record<string, FieldValidatorIssue[]> => {
+  const deriveDiffSegment = (
+    before: string,
+    after: string
+  ): { index: number; length: number; matchText: string } => {
+    if (before === after) {
+      const fallback = before.slice(0, 1) || ' ';
+      return { index: 0, length: 1, matchText: fallback };
+    }
+
+    let start = 0;
+    while (start < before.length && start < after.length && before[start] === after[start]) {
+      start += 1;
+    }
+
+    let endBefore = before.length - 1;
+    let endAfter = after.length - 1;
+    while (endBefore >= start && endAfter >= start && before[endBefore] === after[endAfter]) {
+      endBefore -= 1;
+      endAfter -= 1;
+    }
+
+    const removed = before.slice(start, endBefore + 1);
+    return {
+      index: start,
+      length: Math.max(1, removed.length),
+      matchText: removed || before.slice(start, start + 1) || ' ',
+    };
+  };
+
+  type SequenceIssueAggregate = {
+    groupId: string;
+    groupLabel: string | null;
+    originalValue: string;
+    finalValue: string;
+    severity: FieldValidatorIssue['severity'];
+  };
+
   const issues: Record<string, FieldValidatorIssue[]> = {};
   const entries = Object.entries(values) as Array<[string, unknown]>;
   const orderedPatterns = sortValidatorPatterns(patterns);
   const sequenceGroupCounts = buildSequenceGroupCounts(orderedPatterns);
 
   for (const [fieldName, rawValue] of entries) {
-    if (typeof rawValue !== 'string' || !rawValue) continue;
+    const normalizedRawValue =
+      typeof rawValue === 'string'
+        ? rawValue
+        : typeof rawValue === 'number' && Number.isFinite(rawValue)
+          ? String(rawValue)
+          : '';
     const { target, locale } = resolveFieldTargetAndLocale(fieldName);
     if (!target) continue;
-    let workingValue = rawValue;
+    const fieldPatterns = orderedPatterns.filter(
+      (pattern: ProductValidationPattern): boolean =>
+        pattern.enabled &&
+        pattern.target === target &&
+        isPatternLocaleMatch(pattern.locale, locale)
+    );
+    if (fieldPatterns.length === 0) continue;
+    const hasExternalLaunchSource = fieldPatterns.some(
+      (pattern: ProductValidationPattern): boolean =>
+        pattern.launchEnabled && pattern.launchSourceMode !== 'current_field'
+    );
+    if (!normalizedRawValue && !hasExternalLaunchSource) continue;
 
-    for (const pattern of orderedPatterns) {
-      if (!pattern.enabled || pattern.target !== target) continue;
-      if (!isPatternLocaleMatch(pattern.locale, locale)) continue;
+    let workingValue = normalizedRawValue;
+    const sequenceAggregates = new Map<string, SequenceIssueAggregate>();
+
+    for (const pattern of fieldPatterns) {
       const inSequenceGroup = isPatternInSequenceGroup(pattern, sequenceGroupCounts);
+      const sequenceGroupId = inSequenceGroup ? pattern.sequenceGroupId?.trim() || null : null;
+      if (inSequenceGroup && sequenceGroupId && !sequenceAggregates.has(sequenceGroupId)) {
+        sequenceAggregates.set(sequenceGroupId, {
+          groupId: sequenceGroupId,
+          groupLabel: pattern.sequenceGroupLabel?.trim() || null,
+          originalValue: workingValue,
+          finalValue: workingValue,
+          severity: pattern.severity,
+        });
+      }
       const maxExecutions = normalizePatternMaxExecutions(pattern);
       let matched = false;
       let replaced = false;
-      let candidateValue = inSequenceGroup ? workingValue : rawValue;
+      let candidateValue = inSequenceGroup ? workingValue : normalizedRawValue;
       for (let execution = 0; execution < maxExecutions; execution += 1) {
         if (
           !shouldLaunchPattern({
@@ -347,23 +415,25 @@ const buildFieldIssues = (
               latestProductValues,
             })
             : null;
-          if (!issues[fieldName]) {
-            issues[fieldName] = [];
+          if (!inSequenceGroup) {
+            if (!issues[fieldName]) {
+              issues[fieldName] = [];
+            }
+            issues[fieldName].push({
+              patternId: pattern.id,
+              message: pattern.message,
+              severity: pattern.severity,
+              matchText,
+              index: match.index,
+              length,
+              regex: pattern.regex,
+              flags: pattern.flags ?? null,
+              replacementValue: resolvedReplacement?.value ?? null,
+              replacementApplyMode: resolvedReplacement?.applyMode ?? 'replace_matched_segment',
+              replacementScope,
+              replacementActive: replacementActive && Boolean(resolvedReplacement?.value),
+            });
           }
-          issues[fieldName].push({
-            patternId: pattern.id,
-            message: pattern.message,
-            severity: pattern.severity,
-            matchText,
-            index: match.index,
-            length,
-            regex: pattern.regex,
-            flags: pattern.flags ?? null,
-            replacementValue: resolvedReplacement?.value ?? null,
-            replacementApplyMode: resolvedReplacement?.applyMode ?? 'replace_matched_segment',
-            replacementScope,
-            replacementActive: replacementActive && Boolean(resolvedReplacement?.value),
-          });
 
           if (!resolvedReplacement?.value) break;
           const nextValue = applyResolvedReplacement({
@@ -376,6 +446,15 @@ const buildFieldIssues = (
           candidateValue = nextValue;
           if (inSequenceGroup) {
             workingValue = nextValue;
+            if (sequenceGroupId) {
+              const aggregate = sequenceAggregates.get(sequenceGroupId);
+              if (aggregate) {
+                aggregate.finalValue = nextValue;
+                if (pattern.severity === 'error') {
+                  aggregate.severity = 'error';
+                }
+              }
+            }
           }
         } catch {
           // Invalid pattern is blocked at API write time; skip defensively.
@@ -394,6 +473,30 @@ const buildFieldIssues = (
       if (replaced && pattern.passOutputToNext === false) {
         break;
       }
+    }
+
+    for (const aggregate of sequenceAggregates.values()) {
+      if (aggregate.finalValue === aggregate.originalValue) continue;
+      const diff = deriveDiffSegment(aggregate.originalValue, aggregate.finalValue);
+      if (!issues[fieldName]) {
+        issues[fieldName] = [];
+      }
+      issues[fieldName].push({
+        patternId: `sequence:${aggregate.groupId}`,
+        message: aggregate.groupLabel
+          ? `${aggregate.groupLabel} sequence result`
+          : 'Sequence result',
+        severity: aggregate.severity,
+        matchText: diff.matchText,
+        index: diff.index,
+        length: diff.length,
+        regex: '',
+        flags: null,
+        replacementValue: aggregate.finalValue,
+        replacementApplyMode: 'replace_whole_field',
+        replacementScope: 'field',
+        replacementActive: true,
+      });
     }
   }
 
@@ -560,12 +663,16 @@ export default function ProductFormGeneral(): React.JSX.Element {
   };
 
   useEffect(() => {
-    if (!formatterEnabled) return;
+    if (!validatorEnabled || !formatterEnabled) return;
     const orderedPatterns = sortValidatorPatterns(validatorPatterns);
     const sequenceGroupCounts = buildSequenceGroupCounts(orderedPatterns);
     for (const [fieldNameRaw, rawUnknown] of Object.entries(allValues as Record<string, unknown>)) {
-      if (typeof rawUnknown !== 'string' || !rawUnknown) continue;
-      const rawValue: string = rawUnknown;
+      const rawValue: string =
+        typeof rawUnknown === 'string'
+          ? rawUnknown
+          : typeof rawUnknown === 'number' && Number.isFinite(rawUnknown)
+            ? String(rawUnknown)
+            : '';
       const fieldName = fieldNameRaw as keyof ProductFormData;
       const { target, locale } = resolveFieldTargetAndLocale(fieldNameRaw);
       if (!target) continue;
@@ -579,6 +686,11 @@ export default function ProductFormGeneral(): React.JSX.Element {
       });
 
       if (replacementPatterns.length === 0) continue;
+      const hasExternalLaunchSource = replacementPatterns.some(
+        (pattern: ProductValidationPattern): boolean =>
+          pattern.launchEnabled && pattern.launchSourceMode !== 'current_field'
+      );
+      if (!rawValue && !hasExternalLaunchSource) continue;
       let nextValue: string = rawValue;
       const fieldProcessedGroups = new Set<string>();
       for (const pattern of replacementPatterns) {
@@ -587,7 +699,10 @@ export default function ProductFormGeneral(): React.JSX.Element {
         if (inSequenceGroup) {
           const groupId = pattern.sequenceGroupId?.trim();
           if (groupId && !fieldProcessedGroups.has(groupId)) {
-            const debounceMs = Math.max(0, Math.floor(pattern.sequenceGroupDebounceMs ?? 0));
+            const debounceMs =
+              pattern.launchEnabled && pattern.launchSourceMode !== 'current_field'
+                ? 0
+                : Math.max(0, Math.floor(pattern.sequenceGroupDebounceMs ?? 0));
             if (debounceMs > 0) {
               const key = `${groupId}:${fieldNameRaw}`;
               const now = Date.now();
@@ -655,13 +770,23 @@ export default function ProductFormGeneral(): React.JSX.Element {
       }
 
       if (nextValue !== rawValue) {
+        if (target === 'price' || target === 'stock') {
+          const numericValue = Number(nextValue);
+          if (!Number.isFinite(numericValue)) continue;
+          const normalizedNumeric = Math.max(0, Math.floor(numericValue));
+          setValue(fieldName, normalizedNumeric as ProductFormData[typeof fieldName], {
+            shouldDirty: true,
+            shouldTouch: true,
+          });
+          continue;
+        }
         setValue(fieldName, nextValue as ProductFormData[typeof fieldName], {
           shouldDirty: true,
           shouldTouch: true,
         });
       }
     }
-  }, [allValues, formatterEnabled, latestProductValues, setValue, validatorPatterns]);
+  }, [allValues, formatterEnabled, latestProductValues, setValue, validatorEnabled, validatorPatterns]);
 
   return (
     <div className='space-y-6'>

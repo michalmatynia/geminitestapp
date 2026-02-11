@@ -14,7 +14,7 @@ const replacementFieldSchema = z.enum(PRODUCT_VALIDATION_REPLACEMENT_FIELDS);
 
 const createPatternSchema = z.object({
   label: z.string().trim().min(1, 'Label is required'),
-  target: z.enum(['name', 'description', 'sku']),
+  target: z.enum(['name', 'description', 'sku', 'price', 'stock']),
   locale: z.string().trim().nullable().optional(),
   regex: z.string().min(1, 'Regex is required'),
   flags: z.string().trim().nullable().optional(),

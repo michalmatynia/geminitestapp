@@ -34,19 +34,37 @@ export default function ProductForm({
   const {
     handleSubmit,
     product,
+    draft,
   } = useProductFormContext();
   
   const searchParams = useSearchParams();
   const [isDebugOpen, setIsDebugOpen] = useState(false);
   const validatorConfigQuery = useProductValidatorConfig();
-  const [validatorEnabled, setValidatorEnabled] = useState(true);
-  const [formatterEnabled, setFormatterEnabled] = useState(false);
-  const [validatorInitialized, setValidatorInitialized] = useState(false);
+  const [validatorEnabled, setValidatorEnabled] = useState<boolean>(() => draft?.validatorEnabled ?? true);
+  const [formatterEnabled, setFormatterEnabled] = useState<boolean>(
+    () => ((draft?.validatorEnabled ?? true) ? (draft?.formatterEnabled ?? false) : false)
+  );
+  const [validatorInitialized, setValidatorInitialized] = useState<boolean>(() => typeof draft?.validatorEnabled === 'boolean');
   const [validatorManuallyChanged, setValidatorManuallyChanged] = useState(false);
 
   useEffect(() => {
     setIsDebugOpen(searchParams.get('debug') === 'true');
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!draft) return;
+    const nextValidatorEnabled = draft.validatorEnabled ?? true;
+    setValidatorEnabled(nextValidatorEnabled);
+    setFormatterEnabled(nextValidatorEnabled ? (draft.formatterEnabled ?? false) : false);
+    setValidatorInitialized(true);
+    setValidatorManuallyChanged(false);
+  }, [draft?.id, draft?.validatorEnabled, draft?.formatterEnabled]);
+
+  useEffect(() => {
+    if (validatorEnabled) return;
+    if (!formatterEnabled) return;
+    setFormatterEnabled(false);
+  }, [validatorEnabled, formatterEnabled]);
 
   useEffect(() => {
     if (validatorInitialized) return;
@@ -108,7 +126,11 @@ export default function ProductForm({
                   onClick={() => {
                     setValidatorManuallyChanged(true);
                     setValidatorInitialized(true);
-                    setValidatorEnabled((prev: boolean) => !prev);
+                    setValidatorEnabled((prev: boolean) => {
+                      const next = !prev;
+                      if (!next) setFormatterEnabled(false);
+                      return next;
+                    });
                   }}
                   className={`h-8 rounded border px-2.5 text-[10px] font-semibold tracking-wide ${
                     validatorEnabled
@@ -118,17 +140,19 @@ export default function ProductForm({
                 >
                   Validator {validatorEnabled ? 'ON' : 'OFF'}
                 </Button>
-                <Button
-                  type='button'
-                  onClick={() => setFormatterEnabled((prev: boolean) => !prev)}
-                  className={`h-7 rounded border px-2 text-[10px] font-semibold tracking-wide ${
-                    formatterEnabled
-                      ? 'border-emerald-500/60 bg-emerald-500/15 text-emerald-100 hover:bg-emerald-500/25'
-                      : 'border-slate-500/40 bg-slate-500/10 text-slate-300 hover:bg-slate-500/20'
-                  }`}
-                >
-                  Formatter {formatterEnabled ? 'ON' : 'OFF'}
-                </Button>
+                {validatorEnabled ? (
+                  <Button
+                    type='button'
+                    onClick={() => setFormatterEnabled((prev: boolean) => !prev)}
+                    className={`h-7 rounded border px-2 text-[10px] font-semibold tracking-wide ${
+                      formatterEnabled
+                        ? 'border-emerald-500/60 bg-emerald-500/15 text-emerald-100 hover:bg-emerald-500/25'
+                        : 'border-slate-500/40 bg-slate-500/10 text-slate-300 hover:bg-slate-500/20'
+                    }`}
+                  >
+                    Formatter {formatterEnabled ? 'ON' : 'OFF'}
+                  </Button>
+                ) : null}
               </div>
             </div>
           </TabsContent>

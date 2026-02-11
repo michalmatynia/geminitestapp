@@ -44,7 +44,10 @@ describe('DraftCreator Component', () => {
     
     // Check if it fetched catalogs
     await waitFor(() => {
-      expect(screen.getByText('Default Catalog')).toBeInTheDocument();
+      const fetchCalls = (global.fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls;
+      expect(
+        fetchCalls.some(([url]) => typeof url === 'string' && url.includes('/api/catalogs'))
+      ).toBe(true);
     });
   });
 

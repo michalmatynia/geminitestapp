@@ -1600,10 +1600,10 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
           });
         } catch (logError) {
           if (debugEnabled) {
-            console.error('[chatbot][agent][tool] Video capture failed (and logging failed)', {
+            const { logger } = await import('@/shared/utils/logger');
+            logger.error('[chatbot][agent][tool] Video capture failed (and logging failed)', logError, {
               runId,
               recordError,
-              logError
             });
           }
         }
@@ -1624,10 +1624,10 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
             });
           } catch (logError) {
             if (debugEnabled) {
-              console.error('[chatbot][agent][tool] Recording update failed (and logging failed)', {
+              const { logger } = await import('@/shared/utils/logger');
+              logger.error('[chatbot][agent][tool] Recording update failed (and logging failed)', logError, {
                 runId,
                 updateError,
-                logError
               });
             }
           }
@@ -1681,7 +1681,8 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
       });
     } catch (logError) {
       if (debugEnabled) {
-        console.error('[chatbot][agent][tool] Failed (and logging failed)', { runId, errorId, error, logError });
+        const { logger } = await import('@/shared/utils/logger');
+        logger.error('[chatbot][agent][tool] Failed (and logging failed)', logError, { runId, errorId, error });
       }
     }
 
@@ -1851,7 +1852,8 @@ export async function runAgentBrowserControl({
       });
     } catch (logError) {
       if (debugEnabled) {
-        console.error('[chatbot][agent][control] Failed (and logging failed)', { runId, errorId, error, logError });
+        const { logger } = await import('@/shared/utils/logger');
+        logger.error('[chatbot][agent][control] Failed (and logging failed)', logError, { runId, errorId, error });
       }
     }
 

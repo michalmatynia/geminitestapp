@@ -31,7 +31,8 @@ const queue = createManagedQueue<AgentJobData>({
         runId: data.runId,
       });
     } catch {
-      console.error('[chatbot][agent][queue] Fatal queue error', error);
+      const { logger } = await import('@/shared/utils/logger');
+      logger.error('[chatbot][agent][queue] Fatal queue error', error, { runId: data.runId });
     }
   },
 });

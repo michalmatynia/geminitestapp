@@ -5,6 +5,8 @@ import type { Asset3DRecord } from '@/features/viewer3d/types';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { ImageFileRecord } from '@/shared/types/domain/files';
 
+import { deleteImageStudioSlotLinksForSlot } from './slot-link-repository';
+
 type ImageStudioSlotDocument = {
   _id: string;
   projectId: string;
@@ -206,5 +208,9 @@ export async function deleteImageStudioSlot(slotId: string): Promise<boolean> {
   await ensureIndexesOnce();
   const db = await getMongoDb();
   const result = await db.collection<ImageStudioSlotDocument>(COLLECTION).deleteOne({ _id: slotId });
-  return result.deletedCount > 0;
+  const deleted = result.deletedCount > 0;
+  if (deleted) {
+    await deleteImageStudioSlotLinksForSlot(slotId).catch(() => {});
+  }
+  return deleted;
 }

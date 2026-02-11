@@ -9,7 +9,8 @@ const reportValidationError = async (
     const { reportValidationError: report } = await import('@/shared/utils/observability/validation-reporter');
     await report(message, context);
   } catch {
-    console.error('[validators] Failed to report validation error', { message });
+    const { logger } = await import('@/shared/utils/logger');
+    logger.error('[validators] Failed to report validation error', { message });
   }
 };
 

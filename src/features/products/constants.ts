@@ -8,6 +8,8 @@ export const PRODUCT_VALIDATION_REPLACEMENT_FIELDS = [
   'ean',
   'gtin',
   'asin',
+  'price',
+  'stock',
   'name_en',
   'name_pl',
   'name_de',

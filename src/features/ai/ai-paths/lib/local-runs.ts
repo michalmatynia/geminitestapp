@@ -3,7 +3,7 @@ import {
   invalidateAiPathsSettingsCache,
   updateAiPathsSetting,
 } from '@/features/ai/ai-paths/lib/settings-store-client';
-import { logger } from '@/shared/utils/logger';
+import { logClientError } from '@/features/observability';
 
 import { AI_PATHS_LOCAL_RUNS_KEY } from './core/constants';
 
@@ -117,7 +117,7 @@ export const appendLocalRun = async (
     }
     return normalized;
   } catch (error) {
-    logger.warn('[ai-paths] Failed to append local run', { error: error instanceof Error ? error.message : String(error) });
+    logClientError(error, { context: { source: 'ai-paths-local-runs', action: 'appendLocalRun' } });
     return null;
   }
 };

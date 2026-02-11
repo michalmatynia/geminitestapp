@@ -5,7 +5,6 @@ import path from 'path';
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import type { DatabaseInfo } from '@/features/database';
 import { assertDatabaseEngineManageAccess } from '@/features/database/services/database-engine-access';
 import {
   pgBackupsDir,
@@ -13,6 +12,7 @@ import {
   mongoBackupsDir,
   ensureMongoBackupsDir,
 } from '@/features/database/server';
+import type { DatabaseBackupFileDto as DatabaseInfo } from '@/shared/dtos/database';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 

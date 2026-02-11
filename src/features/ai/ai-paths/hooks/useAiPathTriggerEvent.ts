@@ -26,6 +26,8 @@ import {
   updateAiPathsSetting,
 } from '@/features/ai/ai-paths/lib/settings-store-client';
 import { jobKeys } from '@/features/jobs/hooks/useJobQueries';
+import { logClientError } from '@/features/observability';
+import { api } from '@/shared/lib/api-client';
 import type {
   AiNode,
   Edge,
@@ -33,7 +35,6 @@ import type {
   PathMeta,
 } from '@/shared/types/domain/ai-paths';
 import { useToast } from '@/shared/ui';
-import { logger } from '@/shared/utils/logger';
 
 type TriggerEventEntityType = 'product' | 'note' | 'custom';
 
@@ -312,9 +313,9 @@ const buildTriggerContext = (args: {
 
 const loadPreferredActivePathId = async (): Promise<string | null> => {
   try {
-    const res = await fetch('/api/user/preferences', { credentials: 'include' });
-    if (!res.ok) return null;
-    const data = (await res.json()) as { aiPathsActivePathId?: unknown };
+    const data = await api.get<{ aiPathsActivePathId?: unknown }>('/api/user/preferences', {
+      logError: false,
+    });
     return typeof data.aiPathsActivePathId === 'string' &&
       data.aiPathsActivePathId.trim().length > 0
       ? data.aiPathsActivePathId.trim()
@@ -506,7 +507,7 @@ export function useAiPathTriggerEvent(): {
           invalidateAiPathsSettingsCache();
           void queryClient.invalidateQueries({ queryKey: ['ai-paths-settings'] });
         } catch (error) {
-          logger.error('Failed to persist AI Paths settings snapshot', error);
+          logClientError(error, { context: { source: 'useAiPathTriggerEvent', action: 'persistRunSnapshot' } });
         }
       };
 
@@ -538,7 +539,7 @@ export function useAiPathTriggerEvent(): {
               return result.ok ? result.data : null;
             },
             reportAiPathsError: (error: unknown, meta: Record<string, unknown>, summary?: string) => {
-              logger.error(summary ?? 'AI Paths run error', { error, ...meta });
+              logClientError(error, { context: { source: 'useAiPathTriggerEvent', action: 'reportAiPathsError', summary: summary ?? 'AI Paths run error', ...meta } });
             },
             toast,
             onNodeFinish: ({ node }: { node: AiNode }) => {
@@ -641,7 +642,7 @@ export function useAiPathTriggerEvent(): {
 
       await persistRunSnapshot(runAt);
     } catch (error) {
-      logger.error('Failed to run AI Path trigger', error);
+      logClientError(error, { context: { source: 'useAiPathTriggerEvent', action: 'fireAiPathTriggerEvent' } });
       toast('Failed to run AI Path trigger.', { variant: 'error' });
     }
   };

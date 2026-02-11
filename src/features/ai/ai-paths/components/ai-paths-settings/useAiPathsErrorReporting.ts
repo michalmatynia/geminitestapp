@@ -5,7 +5,6 @@ import { useCallback } from 'react';
 import { AI_PATHS_LAST_ERROR_KEY, safeStringify } from '@/features/ai/ai-paths/lib';
 import { updateAiPathsSetting } from '@/features/ai/ai-paths/lib/settings-store-client';
 import { logClientError } from '@/features/observability';
-import { logger } from '@/shared/utils/logger';
 
 import { useGraphState, useRuntimeActions } from '../../context';
 
@@ -45,10 +44,7 @@ export function useAiPathsErrorReporting(
           payload ? JSON.stringify(payload) : ''
         );
       } catch (error: unknown) {
-        logger.warn(
-          '[AI Paths] Failed to persist last error',
-          { error: error instanceof Error ? error.message : String(error) }
-        );
+        logClientError(error, { context: { source: 'useAiPathsErrorReporting', action: 'persistLastError' } });
       }
     },
     []
@@ -69,7 +65,6 @@ export function useAiPathsErrorReporting(
         logError.stack = error.stack;
         logError.name = error.name;
       }
-      logger.error(fallbackMessage ?? 'AI Paths error', error);
       const payload = {
         message: summary,
         time: new Date().toISOString(),

@@ -82,7 +82,7 @@ describe('Database Engine backup scheduler actions', () => {
         isElevated: true,
         permissions: ['settings.manage'],
       },
-    } as Awaited<ReturnType<typeof auth>>);
+    } as unknown as Awaited<ReturnType<typeof auth>>);
   });
 
   it('POST /api/databases/engine/backup-scheduler/tick runs scheduler tick and returns status payload', async () => {

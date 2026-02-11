@@ -11,6 +11,7 @@ import React, { useMemo, useState } from 'react';
 
 import { VectorDrawingCanvas, VectorDrawingToolbar, VectorDrawingProvider } from '@/features/vector-drawing';
 import { Viewer3D } from '@/features/viewer3d/components/Viewer3D';
+import { logClientError } from '@/features/observability';
 import {
   Button,
   Label,
@@ -94,7 +95,9 @@ export function StudioMainContent(): React.JSX.Element {
   ]);
 
   const autoFormatPrompt = () => {
-    console.log('Auto format triggered');
+    logClientError(new Error('Auto format triggered'), {
+      context: { source: 'StudioMainContent', action: 'autoFormatPrompt', level: 'info' },
+    });
   };
 
   return (

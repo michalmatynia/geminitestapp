@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { tickDatabaseBackupScheduler } from '@/features/database/services/database-backup-scheduler';
+import { ErrorSystem } from '@/features/observability/server';
 import { createManagedQueue } from '@/shared/lib/queue';
 
 type DatabaseBackupSchedulerJobData = {
@@ -54,14 +55,9 @@ const queue = createManagedQueue<DatabaseBackupSchedulerJobData>({
     await tickDatabaseBackupScheduler();
   },
   onFailed: async (_jobId, error) => {
-    try {
-      const { ErrorSystem } = await import('@/features/observability/services/error-system');
-      void ErrorSystem.captureException(error, {
-        service: 'database-backup-scheduler-queue',
-      });
-    } catch {
-      console.error('[databaseBackupSchedulerQueue] Fatal queue error', error);
-    }
+    void ErrorSystem.captureException(error, {
+      service: 'database-backup-scheduler-queue',
+    });
   },
 });
 
@@ -84,15 +80,10 @@ export const startDatabaseBackupSchedulerQueue = (): void => {
     )
     .catch(async (error) => {
       queueState.schedulerRegistered = false;
-      try {
-        const { ErrorSystem } = await import('@/features/observability/services/error-system');
-        void ErrorSystem.captureException(error, {
-          service: 'database-backup-scheduler-queue',
-          action: 'registerScheduler',
-        });
-      } catch {
-        console.error('[databaseBackupSchedulerQueue] Failed to register repeat scheduler', error);
-      }
+      void ErrorSystem.captureException(error, {
+        service: 'database-backup-scheduler-queue',
+        action: 'registerScheduler',
+      });
     });
 };
 

@@ -18,7 +18,6 @@ import { ToneMappingMode, BlendFunction } from 'postprocessing';
 import { Suspense, useEffect, useRef, useMemo, Component, ErrorInfo } from 'react';
 import * as THREE from 'three';
 
-import { logger } from '@/shared/utils/logger';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { getLastUserAction } from '@/shared/utils/observability/user-action-tracker';
 
@@ -45,7 +44,6 @@ class Model3DErrorBoundary extends Component<
   }
 
   override componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    logger.error('3D Model Error', error, { componentStack: errorInfo.componentStack });
     logClientError(error, {
       componentStack: errorInfo.componentStack,
       context: {
@@ -172,9 +170,14 @@ function Model3D({
   useEffect(() => {
     if (scene) {
       if (replacedTextureRef.current) {
-        logger.warn(
-          '[Viewer3D] Model references blob: textures. Re-export as .glb or embed textures to restore materials.'
-        );
+        logClientError(new Error('Model references blob: textures'), {
+          context: {
+            source: 'Viewer3D',
+            action: 'loadScene',
+            message: 'Model references blob: textures. Re-export as .glb or embed textures to restore materials.',
+            level: 'warn'
+          }
+        });
       }
       // Optimize materials for PBR rendering
       scene.traverse((child: THREE.Object3D) => {

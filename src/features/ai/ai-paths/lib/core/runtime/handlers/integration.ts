@@ -12,6 +12,7 @@ import type {
 } from '@/shared/types/domain/ai-paths';
 import type { AiNode, Edge } from '@/shared/types/domain/ai-paths';
 import type { NodeHandler, NodeHandlerContext } from '@/shared/types/domain/ai-paths-runtime';
+import type { CollectionSchemaDto } from '@/shared/dtos/database';
 
 import { dbApi, entityApi, ApiResponse } from '../../../api';
 import { DEFAULT_DB_QUERY, DB_PROVIDER_PLACEHOLDERS } from '../../constants';
@@ -2345,28 +2346,7 @@ export const handleDatabase: NodeHandler = async ({
   }
 };
 
-type FieldInfo = {
-  name: string;
-  type: string;
-  isRequired?: boolean;
-  isId?: boolean;
-  isUnique?: boolean;
-  hasDefault?: boolean;
-  relationTo?: string;
-};
-
-type CollectionSchema = {
-  name: string;
-  fields?: FieldInfo[];
-  relations?: string[];
-};
-
-type LocalSchemaResponse = {
-  provider: 'mongodb' | 'prisma' | 'multi';
-  collections: CollectionSchema[];
-};
-
-function formatSchemaAsText(schema: LocalSchemaResponse): string {
+function formatSchemaAsText(schema: SchemaResponse): string {
   const lines: string[] = [
     'DATABASE SCHEMA',
     '===============',
@@ -2403,11 +2383,21 @@ function filterCollections(
     return schema;
   }
   const selectedSet = new Set(selectedCollections.map((c: string): string => c.toLowerCase()));
-  return {
-    ...schema,
-    collections: schema.collections.filter((c: CollectionSchema): boolean =>
+  if (schema.provider === 'multi') {
+    const collections = schema.collections.filter((c): boolean =>
       selectedSet.has(c.name.toLowerCase()),
-    ),
+    );
+    return {
+      ...schema,
+      collections,
+    };
+  }
+  const collections = schema.collections.filter((c: CollectionSchemaDto): boolean =>
+    selectedSet.has(c.name.toLowerCase()),
+  );
+  return {
+    provider: schema.provider,
+    collections,
   };
 }
 
@@ -2455,8 +2445,8 @@ export const handleDbSchema: NodeHandler = async ({
 
   // Optionally filter out fields or relations
   if (!config.includeFields || !config.includeRelations) {
-    schema.collections = schema.collections.map((c: CollectionSchema): CollectionSchema => {
-      const result: CollectionSchema = {
+    schema.collections = schema.collections.map((c: CollectionSchemaDto): CollectionSchemaDto => {
+      const result: CollectionSchemaDto = {
         name: c.name,
         fields: config.includeFields ? (c.fields ?? []) : [],
       };

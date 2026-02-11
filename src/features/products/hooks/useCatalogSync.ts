@@ -7,7 +7,7 @@ import type { Catalog } from '@/features/products/types';
 import type { PriceGroupWithDetails } from '@/features/products/types';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { logger } from '@/shared/utils/logger';
+import { logClientError } from '@/features/observability';
 
 type LanguageRecord = { id: string; code: string; name: string };
 type LanguageOption = {
@@ -82,16 +82,16 @@ export function useCatalogSync(catalogFilter: string): UseCatalogSyncResult {
 
   // Log errors
   if (catalogsQuery.error) {
-    logger.error('Failed to load catalogs:', catalogsQuery.error);
+    logClientError(catalogsQuery.error, { context: { source: 'useCatalogSync', action: 'fetchCatalogs' } });
   }
   if (priceGroupsQuery.error) {
-    logger.error('Failed to load price groups:', priceGroupsQuery.error);
+    logClientError(priceGroupsQuery.error, { context: { source: 'useCatalogSync', action: 'fetchPriceGroups' } });
   }
   if (languagesQuery.error) {
-    logger.error('Failed to load languages:', languagesQuery.error);
+    logClientError(languagesQuery.error, { context: { source: 'useCatalogSync', action: 'fetchLanguages' } });
   }
   if (currenciesQuery.error) {
-    logger.error('Failed to load currencies:', currenciesQuery.error);
+    logClientError(currenciesQuery.error, { context: { source: 'useCatalogSync', action: 'fetchCurrencies' } });
   }
 
   // Extract data with defaults

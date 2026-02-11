@@ -10,6 +10,7 @@ import {
 } from '@/features/ai/ai-paths/lib/core/utils/factory';
 import { safeParseJson } from '@/features/ai/ai-paths/lib/core/utils/runtime';
 import { fetchAiPathsSettingsCached } from '@/features/ai/ai-paths/lib/settings-store-client';
+import { api } from '@/shared/lib/api-client';
 import type {
   AiNode,
   PathConfig,
@@ -53,9 +54,9 @@ export async function fetchPathSettings(
     const preferencesResponse = await queryClient.fetchQuery({
       queryKey: ['user-preferences', 'ai-paths'],
       queryFn: async (): Promise<{ aiPathsActivePathId?: unknown }> => {
-        const res = await fetch('/api/user/preferences', { credentials: 'include' });
-        if (!res.ok) return {};
-        return (await res.json()) as { aiPathsActivePathId?: unknown };
+        return await api.get<{ aiPathsActivePathId?: unknown }>('/api/user/preferences', {
+          logError: false,
+        });
       },
       staleTime: AI_PATHS_SETTINGS_STALE_MS,
     });

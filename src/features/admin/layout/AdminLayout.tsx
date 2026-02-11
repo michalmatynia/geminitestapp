@@ -11,6 +11,7 @@ import { UserNav } from '@/features/admin/components/UserNav';
 import { AdminLayoutProvider, useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 import { AuthProvider } from '@/features/auth';
 import { useUserPreferences, useUpdateUserPreferencesMutation } from '@/features/auth/hooks/useUserPreferences';
+import { logClientError } from '@/features/observability';
 import { NoteSettingsProvider } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { QueryProvider } from '@/shared/providers/QueryProvider';
 import { Button, ToastProvider } from '@/shared/ui';
@@ -39,7 +40,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
     try {
       await updatePreferencesMutation.mutateAsync({ adminMenuCollapsed: collapsed });
     } catch (error) {
-      console.warn('Failed to persist menu collapse preference.', error);
+      logClientError(error, { context: { source: 'AdminLayout', action: 'persistMenuCollapsed' } });
     }
   }, [updatePreferencesMutation]);
 

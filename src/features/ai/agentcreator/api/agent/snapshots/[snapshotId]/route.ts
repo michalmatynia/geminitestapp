@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { ErrorSystem } from '@/features/observability/server';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import prisma from '@/shared/lib/db/prisma';
@@ -23,7 +24,8 @@ async function GET_handler(_req: NextRequest,
     throw notFoundError('Snapshot not found.');
   }
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][agent][snapshot] Loaded', {
+    void ErrorSystem.logInfo('Snapshot loaded', {
+      service: 'agent-api',
       snapshotId,
       durationMs: Date.now() - requestStart,
     });

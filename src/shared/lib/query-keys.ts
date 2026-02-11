@@ -145,7 +145,9 @@ export const QUERY_KEYS = {
     databases: {
       all: ['system', 'databases'] as const,
       backups: (dbType: string) => [...QUERY_KEYS.system.databases.all, 'backups', dbType] as const,
+      providerDiagnostics: ['system', 'databases', 'provider-diagnostics'] as const,
       preview: (params: Record<string, unknown>) => [...QUERY_KEYS.system.databases.all, 'preview', params] as const,
+      crudRows: (params: Record<string, unknown>) => [...QUERY_KEYS.system.databases.all, 'crud-rows', params] as const,
       schema: (params: Record<string, unknown>) => [...QUERY_KEYS.system.databases.all, 'schema', params] as const,
       redisOverview: (params: Record<string, unknown>) =>
         [...QUERY_KEYS.system.databases.all, 'redis-overview', params] as const,

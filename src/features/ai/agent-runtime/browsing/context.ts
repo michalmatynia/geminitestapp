@@ -1,4 +1,5 @@
 import { DEBUG_CHATBOT } from '@/features/ai/agent-runtime/core/config';
+import { ErrorSystem } from '@/features/observability/server';
 import prisma from '@/shared/lib/db/prisma';
 
 export async function getBrowserContextSummary(runId: string): Promise<{
@@ -43,7 +44,9 @@ export async function getBrowserContextSummary(runId: string): Promise<{
     };
   } catch (error) {
     if (DEBUG_CHATBOT) {
-      console.warn('[chatbot][agent][engine] Failed to load browser context', {
+      void ErrorSystem.logWarning('Failed to load browser context', {
+        service: 'agent-engine',
+        action: 'get-browser-context',
         runId,
         error: error instanceof Error ? error.message : String(error),
       });

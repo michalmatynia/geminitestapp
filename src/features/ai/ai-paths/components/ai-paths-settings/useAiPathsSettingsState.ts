@@ -56,7 +56,7 @@ import {
 } from '@/features/ai/ai-paths/lib';
 import { deleteAiPathsSettings, updateAiPathsSetting } from '@/features/ai/ai-paths/lib/settings-store-client';
 import { logClientError } from '@/features/observability';
-import { logger } from '@/shared/utils/logger';
+import { api } from '@/shared/lib/api-client';
 import type { AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
 import { useToast } from '@/shared/ui';
 
@@ -727,7 +727,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
           payload ? JSON.stringify(payload) : ''
         );
       } catch (error: unknown) {
-        logger.warn('[AI Paths] Failed to persist last error', { error: error instanceof Error ? error.message : String(error) });
+        logClientError(error, { context: { source: 'useAiPathsSettingsState', action: 'persistLastError' } });
       }
     },
     []
@@ -747,7 +747,6 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
         logError.stack = error.stack;
         logError.name = error.name;
       }
-      logger.error(fallbackMessage ?? 'AI Paths error', error);
       const payload = {
         message: summary,
         time: new Date().toISOString(),
@@ -776,22 +775,11 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     queryKey: ['ai-paths-models'],
     queryFn: async (): Promise<{ models?: string[] }> => {
       try {
-        const res = await fetch('/api/chatbot', {
-          headers: { accept: 'application/json' },
+        return await api.get<{ models?: string[] }>('/api/chatbot', {
+          logError: false,
         });
-        if (!res.ok) {
-          const body = await res.text().catch(() => '');
-          logger.warn('[ai-paths][models] Failed to load models', {
-            status: res.status,
-            statusText: res.statusText,
-            body,
-          });
-          return { models: [] };
-        }
-        const data = (await res.json()) as { models?: string[] };
-        return data ?? { models: [] };
       } catch (error) {
-        logger.warn('[ai-paths][models] Model list fetch failed', { error: error instanceof Error ? error.message : String(error) });
+        logClientError(error, { context: { source: 'useAiPathsSettingsState', action: 'modelsQueryFn' } });
         return { models: [] };
       }
     },
@@ -1945,7 +1933,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
         activePathId,
         nextConfig
       ).catch((error: unknown): void => {
-        logger.warn('[AI Paths] Failed to persist runtime state', { error: error instanceof Error ? error.message : String(error) });
+        logClientError(error, { context: { source: 'useAiPathsSettingsState', action: 'autoPersistRuntimeState', pathId: activePathId } });
       });
     }, 750);
 

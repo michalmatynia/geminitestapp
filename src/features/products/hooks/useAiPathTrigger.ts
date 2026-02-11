@@ -19,6 +19,7 @@ import {
   updateAiPathsSetting,
 } from '@/features/ai/ai-paths/lib/settings-store-client';
 import { logClientError } from '@/features/observability/utils/client-error-logger';
+import { api } from '@/shared/lib/api-client';
 import type {
   AiNode,
   PathConfig,
@@ -28,7 +29,6 @@ import type {
   RuntimeState,
 } from '@/shared/types/domain/ai-paths';
 import { useToast } from '@/shared/ui';
-import { logger } from '@/shared/utils/logger';
 
 import { fetchPathSettings, findTriggerPath } from './useAiPathSettings';
 
@@ -337,16 +337,28 @@ export function useAiPathTrigger(): {
           if (entityType !== 'product') return null;
           return await queryClient.fetchQuery({
             queryKey: ['products', entityId],
-            queryFn: async () => {
-              const res = await fetch(`/api/products/${encodeURIComponent(entityId)}`);
-              if (!res.ok) return null;
-              return (await res.json()) as Record<string, unknown>;
+            queryFn: async (): Promise<Record<string, unknown> | null> => {
+              try {
+                return await api.get<Record<string, unknown>>(
+                  `/api/products/${encodeURIComponent(entityId)}`,
+                  { logError: false }
+                );
+              } catch {
+                return null;
+              }
             },
             staleTime: AI_PATHS_ENTITY_STALE_MS,
           });
         },
         reportAiPathsError: (error: unknown, meta?: Record<string, unknown>, summary?: string): void => {
-          logger.error(summary ?? 'AI Paths trigger failed', error, meta);
+          logClientError(error, {
+            context: {
+              source: 'useAiPathTrigger',
+              action: 'reportAiPathsError',
+              summary: summary ?? 'AI Paths trigger failed',
+              ...meta
+            }
+          });
         },
         toast,
       });

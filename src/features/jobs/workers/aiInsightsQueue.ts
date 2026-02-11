@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { tick } from '@/features/jobs/processors/ai-insights-processor';
+import { ErrorSystem } from '@/features/observability/server';
 import { createManagedQueue } from '@/shared/lib/queue';
 
 type AiInsightsJobData = {
@@ -55,14 +56,9 @@ const queue = createManagedQueue<AiInsightsJobData>({
     await tick();
   },
   onFailed: async (_jobId, error) => {
-    try {
-      const { ErrorSystem } = await import('@/features/observability/services/error-system');
-      void ErrorSystem.captureException(error, {
-        service: 'ai-insights-queue',
-      });
-    } catch {
-      console.error('[aiInsightsQueue] Fatal queue error', error);
-    }
+    void ErrorSystem.captureException(error, {
+      service: 'ai-insights-queue',
+    });
   },
 });
 
@@ -82,15 +78,10 @@ export const startAiInsightsQueue = (): void => {
     )
     .catch(async (error) => {
       aiInsightsQueueState.schedulerRegistered = false;
-      try {
-        const { ErrorSystem } = await import('@/features/observability/services/error-system');
-        void ErrorSystem.captureException(error, {
-          service: 'ai-insights-queue',
-          action: 'registerScheduler'
-        });
-      } catch {
-        console.error('[aiInsightsQueue] Failed to register repeat scheduler', error);
-      }
+      void ErrorSystem.captureException(error, {
+        service: 'ai-insights-queue',
+        action: 'registerScheduler'
+      });
     });
 };
 

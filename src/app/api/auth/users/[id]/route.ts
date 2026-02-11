@@ -355,13 +355,22 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params:
     throw notFoundError('User not found.');
   }
   const userIdCandidates = buildMongoUserIdCandidates(userId);
+  const objectIdCandidates = userIdCandidates.filter(
+    (candidate: ObjectId | string): candidate is ObjectId => candidate instanceof ObjectId
+  );
+  const authSecurityProfileFilters: Array<Record<string, unknown>> = [
+    { userId: { $in: userIdCandidates } },
+  ];
+  if (objectIdCandidates.length > 0) {
+    authSecurityProfileFilters.unshift({ _id: { $in: objectIdCandidates } });
+  }
 
   await Promise.all([
     db.collection<MongoUserDoc>('users').deleteOne(userIdFilter),
     db.collection('accounts').deleteMany({ userId: { $in: userIdCandidates } }),
     db.collection('sessions').deleteMany({ userId: { $in: userIdCandidates } }),
     db.collection('auth_security_profiles').deleteMany({
-      $or: [{ _id: { $in: userIdCandidates } }, { userId: { $in: userIdCandidates } }],
+      $or: authSecurityProfileFilters,
     }),
     db.collection('user_preferences').deleteMany({
       userId: { $in: userIdCandidates },

@@ -19,6 +19,7 @@ import {
   toggleContextTarget,
 } from '@/features/ai/ai-paths/lib';
 import { Button, Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+import { logClientError } from '@/features/observability';
 
 import { useAiPathConfig } from '../AiPathConfigContext';
 
@@ -155,7 +156,7 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
       toast(`${label} copied.`, { variant: 'success' });
     } catch (error) {
       toast('Failed to copy payload.', { variant: 'error' });
-      console.warn('Failed to copy payload', error);
+      logClientError(error, { context: { source: 'ContextNodeConfigSection', action: 'copyPayload', label } });
     }
   };
   const copyDiff = async (): Promise<void> => {
@@ -164,7 +165,7 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
       toast('Diff copied.', { variant: 'success' });
     } catch (error) {
       toast('Failed to copy diff.', { variant: 'error' });
-      console.warn('Failed to copy diff', error);
+      logClientError(error, { context: { source: 'ContextNodeConfigSection', action: 'copyDiff' } });
     }
   };
   const combinedPayload = {

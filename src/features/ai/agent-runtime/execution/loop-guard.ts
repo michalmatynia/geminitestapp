@@ -13,6 +13,7 @@ import type {
   PlanStep,
   PlannerMeta,
 } from '@/features/ai/agent-runtime/types/agent';
+import { ErrorSystem } from '@/features/observability/server';
 import prisma from '@/shared/lib/db/prisma';
 
 type PlanStepSpecInput = {
@@ -270,7 +271,9 @@ export async function buildLoopGuardReview({
     };
   } catch (error) {
     if (DEBUG_CHATBOT) {
-      console.warn('[chatbot][agent][engine] Loop guard failed', {
+      void ErrorSystem.logWarning('Loop guard failed', {
+        service: 'agent-engine',
+        action: 'loop-guard',
         runId,
         error: error instanceof Error ? error.message : String(error),
       });

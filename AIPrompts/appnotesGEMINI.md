@@ -64,7 +64,7 @@ TYPES & DTOS
 -Scan for redundant types and propose unified DTOs and TanStack Query integration.
 -Identify redundant or duplicated TypeScript types/interfaces and consolidate them into shared Data Transfer Objects
 (DTOs) or schemas. Ensure that both frontend and backend use the same interfaces to reduce maintenance overhead and improve type safety.
--Define API request/response schemas (e.g. with Zod or OpenAPI) in a shared module so that validation, documentation, and types all come from a single source of truth. Alternatively, use a monorepo to share TypeScript types across layers.
+-Define API request/response schemas (with Zod) in a shared module so that validation, documentation, and types all come from a single source of truth. Alternatively, use a monorepo to share TypeScript types across layers.
 -Scan the application for potential areas of unnecessary types or type clusters that can be moved into unified into DTOs
 -Scan  Types and Type Clusters and move them over to the respective features localised or shared types folder.
 Detect redundant types and propose unified DTOs and TanStack Query integration.
@@ -86,7 +86,7 @@ Convert existing data fetching hooks to use TanStack Query and remove ad-hoc fet
 
 LOGGING
 -Search for error reporting code blocks and connect them to centralised Error logging and Error handling system
-connect all API to Error logging and handling system
+-connect all API to Error logging and handling system
 -Search for action reporting code blocks and connect them to centralised Logging and handling system
 -Connect Activity logging to a centralised logging system 
 -Scan repository for error handling and centralized logging integration points.

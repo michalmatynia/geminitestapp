@@ -8,6 +8,7 @@ import {
 
 import { createProduct, updateProduct, deleteProduct } from '@/features/products/api/products';
 import type { ProductWithImages } from '@/features/products/types';
+import { api } from '@/shared/lib/api-client';
 import type { DeleteResponse } from '@/shared/types/api/api';
 import { delay } from '@/shared/utils';
 
@@ -99,12 +100,8 @@ export function useConvertAllImagesToBase64(): UseMutationResult<{ ok: boolean }
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async () => {
-      const res = await fetch('/api/products/images/base64/all', { method: 'POST' });
-      if (!res.ok) {
-        const payload = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(payload.error || 'Failed to convert images');
-      }
+    mutationFn: async (): Promise<{ ok: boolean }> => {
+      await api.post<unknown>('/api/products/images/base64/all');
       return { ok: true };
     },
     onSuccess: () => {
@@ -117,16 +114,8 @@ export function useBulkConvertImagesToBase64(): UseMutationResult<{ ok: boolean 
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (productIds: string[]) => {
-      const res = await fetch('/api/products/images/base64', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productIds }),
-      });
-      if (!res.ok) {
-        const payload = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(payload.error || 'Failed to convert images');
-      }
+    mutationFn: async (productIds: string[]): Promise<{ ok: boolean }> => {
+      await api.post<unknown>('/api/products/images/base64', { productIds });
       return { ok: true };
     },
     onSuccess: () => {
@@ -139,18 +128,8 @@ export function useDuplicateProduct(): UseMutationResult<{ id: string }, Error, 
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, sku }): Promise<{ id: string }> => {
-      const res = await fetch(`/api/products/${id}/duplicate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sku }),
-      });
-      if (!res.ok) {
-        const payload = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(payload.error || 'Failed to duplicate product');
-      }
-      return res.json() as Promise<{ id: string }>;
-    },
+    mutationFn: async ({ id, sku }): Promise<{ id: string }> =>
+      await api.post<{ id: string }>(`/api/products/${id}/duplicate`, { sku }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['products'] });
       void queryClient.invalidateQueries({ queryKey: ['products-count'] });
@@ -163,15 +142,7 @@ export function useUpdateProductField(): UseMutationResult<void, Error, { id: st
 
   return useMutation({
     mutationFn: async ({ id, field, value }): Promise<void> => {
-      const res = await fetch(`/api/products/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [field]: value }),
-      });
-      if (!res.ok) {
-        const payload = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(payload.error || `Failed to update ${field}`);
-      }
+      await api.patch<unknown>(`/api/products/${id}`, { [field]: value });
     },
     onSuccess: (_, variables) => {
       void queryClient.invalidateQueries({ queryKey: ['products'] });

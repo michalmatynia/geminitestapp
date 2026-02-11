@@ -15,6 +15,7 @@ import type {
   ProductWithImages, 
 } from '@/features/products/types';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
+import { api } from '@/shared/lib/api-client';
 import type { DeleteResponse } from '@/shared/types/api/api';
 
 // --- Queries ---
@@ -114,12 +115,15 @@ export function useUpdateProductMutation(): UseMutationResult<
       typeof originalSku === 'string' ? originalSku.trim().toUpperCase() : '';
     if (!normalizedSku) return null;
 
-    const response = await fetch(`/api/products?sku=${encodeURIComponent(normalizedSku)}`, {
-      cache: 'no-store',
-    });
-    if (!response.ok) return null;
-
-    const products = (await response.json().catch(() => [])) as ProductWithImages[];
+    let products: ProductWithImages[] = [];
+    try {
+      products = await api.get<ProductWithImages[]>(
+        `/api/products?sku=${encodeURIComponent(normalizedSku)}`,
+        { cache: 'no-store', logError: false }
+      );
+    } catch {
+      return null;
+    }
     const exactMatches = products.filter((product: ProductWithImages): boolean =>
       typeof product.sku === 'string' && product.sku.trim().toUpperCase() === normalizedSku
     );

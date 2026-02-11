@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { Dispatch, SetStateAction } from 'react';
 
 import type { ProductWithImages } from '@/features/products';
+import { api } from '@/shared/lib/api-client';
 
 
 export function useIntegrationOperations(): {
@@ -34,13 +35,18 @@ export function useIntegrationOperations(): {
   const listingsBadgeQuery = useQuery({
     queryKey: ['integrations', 'product-listings-badges'],
     queryFn: async (): Promise<Record<string, string>> => {
-      const res = await fetch('/api/integrations/product-listings', {
-        cache: 'no-store',
-        credentials: 'include',
-      });
-      if (!res.ok) return {};
-      return (await res.json()) as Record<string, string>;
+      try {
+        return await api.get<Record<string, string>>(
+          '/api/integrations/product-listings',
+          {
+            cache: 'no-store',
+          }
+        );
+      } catch {
+        return {};
+      }
     },
+    retry: 1,
   });
 
   const payload = listingsBadgeQuery.data || {};

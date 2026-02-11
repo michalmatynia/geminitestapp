@@ -1,5 +1,6 @@
 'use client';
 
+import { useMutation } from '@tanstack/react-query';
 import React, { createContext, useContext, useState, useCallback, useMemo, useRef, useEffect } from 'react';
 
 import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeaching';
@@ -73,7 +74,6 @@ export function ThemeColorsProvider({ children }: { children: React.ReactNode })
   const [schemeAiPrompt, setSchemeAiPrompt] = useState<string>('');
   const [schemeAiOutput, setSchemeAiOutput] = useState<string>('');
   const [schemeAiError, setSchemeAiError] = useState<string | null>(null);
-  const [schemeAiLoading, setSchemeAiLoading] = useState<boolean>(false);
   const schemeAiAbortRef = useRef<AbortController | null>(null);
   
   const [isGlobalPaletteOpen, setIsGlobalPaletteOpen] = useState(false);
@@ -109,7 +109,6 @@ export function ThemeColorsProvider({ children }: { children: React.ReactNode })
       schemeAiAbortRef.current.abort();
       schemeAiAbortRef.current = null;
     }
-    setSchemeAiLoading(false);
     setSchemeAiError(null);
     setSchemeAiOutput('');
   }, []);
@@ -280,44 +279,21 @@ ${schemeContext}`;
     }
   }, []);
 
-  const handleGenerateScheme = useCallback(async (): Promise<void> => {
-    if (schemeAiLoading) return;
-    setSchemeAiError(null);
-    setSchemeAiOutput('');
-    setSchemeAiLoading(true);
-    try {
-      const prompt = buildSchemeAiPrompt();
-      if (!prompt.trim()) {
-        throw new Error('Prompt is empty.');
-      }
-
-      const messages: ChatMessage[] = [
-        {
-          role: 'system',
-          content:
-            'You are a UI color assistant. Return only a JSON object: {"name":"...","colors":{"background":"#...","surface":"#...","text":"#...","accent":"#...","border":"#..."}}. No markdown or explanations.',
-        },
-        { role: 'user', content: prompt },
-      ];
-
+  const generateSchemeMutation = useMutation({
+    mutationFn: async (payload: {
+      provider: 'model' | 'agent';
+      modelId: string;
+      agentId: string;
+      messages: ChatMessage[];
+    }): Promise<string> => {
       const controller = new AbortController();
       schemeAiAbortRef.current = controller;
-
-      const provider = schemeAiProvider;
-      const modelId = schemeAiProvider === 'model' ? (schemeAiModelId.trim() || modelOptions[0] || '') : '';
-      const agentId = schemeAiProvider === 'agent' ? schemeAiAgentId.trim() : '';
-      if (provider === 'model' && !modelId) {
-        throw new Error('Select an AI model first.');
-      }
-      if (provider === 'agent' && !agentId) {
-        throw new Error('Select a Deepthinking agent first.');
-      }
 
       const res = await fetch('/api/cms/css-ai/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,
-        body: JSON.stringify({ provider, modelId, agentId, messages }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok || !res.body) {
         const data = (await res.json().catch(() => null)) as { error?: string } | null;
@@ -334,19 +310,19 @@ ${schemeContext}`;
         const lines = raw.split('\n').map((line: string) => line.trim());
         const dataLine = lines.find((line: string) => line.startsWith('data:'));
         if (!dataLine) return;
-        const payload = JSON.parse(dataLine.replace(/^data:\s*/, '')) as {
+        const responsePayload = JSON.parse(dataLine.replace(/^data:\s*/, '')) as {
           delta?: string;
           done?: boolean;
           error?: string;
         };
-        if (payload.error) {
-          throw new Error(payload.error);
+        if (responsePayload.error) {
+          throw new Error(responsePayload.error);
         }
-        if (payload.delta) {
-          accumulated += payload.delta;
+        if (responsePayload.delta) {
+          accumulated += responsePayload.delta;
           setSchemeAiOutput(accumulated);
         }
-        if (payload.done) {
+        if (responsePayload.done) {
           doneSignal = true;
         }
       };
@@ -374,6 +350,48 @@ ${schemeContext}`;
         }
       }
 
+      schemeAiAbortRef.current = null;
+      return accumulated;
+    },
+  });
+  const schemeAiLoading = generateSchemeMutation.isPending;
+
+  const handleGenerateScheme = useCallback(async (): Promise<void> => {
+    if (generateSchemeMutation.isPending) return;
+    setSchemeAiError(null);
+    setSchemeAiOutput('');
+    try {
+      const prompt = buildSchemeAiPrompt();
+      if (!prompt.trim()) {
+        throw new Error('Prompt is empty.');
+      }
+
+      const messages: ChatMessage[] = [
+        {
+          role: 'system',
+          content:
+            'You are a UI color assistant. Return only a JSON object: {"name":"...","colors":{"background":"#...","surface":"#...","text":"#...","accent":"#...","border":"#..."}}. No markdown or explanations.',
+        },
+        { role: 'user', content: prompt },
+      ];
+
+      const provider = schemeAiProvider;
+      const modelId = schemeAiProvider === 'model' ? (schemeAiModelId.trim() || modelOptions[0] || '') : '';
+      const agentId = schemeAiProvider === 'agent' ? schemeAiAgentId.trim() : '';
+      if (provider === 'model' && !modelId) {
+        throw new Error('Select an AI model first.');
+      }
+      if (provider === 'agent' && !agentId) {
+        throw new Error('Select a Deepthinking agent first.');
+      }
+
+      const accumulated = await generateSchemeMutation.mutateAsync({
+        provider,
+        modelId,
+        agentId,
+        messages,
+      });
+
       const parsed = parseSchemeFromText(accumulated);
       if (!parsed || !Object.values(parsed.colors).some(Boolean)) {
         throw new Error('AI response did not include a color scheme.');
@@ -390,11 +408,10 @@ ${schemeContext}`;
         toast(message, { variant: 'error' });
       }
     } finally {
-      setSchemeAiLoading(false);
       schemeAiAbortRef.current = null;
     }
   }, [
-    schemeAiLoading,
+    generateSchemeMutation,
     buildSchemeAiPrompt,
     schemeAiProvider,
     schemeAiModelId,

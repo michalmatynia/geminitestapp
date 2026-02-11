@@ -3,6 +3,7 @@ import 'server-only';
 import { isRetryableError } from '@/shared/errors/app-error';
 import { withRetry, type RetryOptions, withCircuitBreaker, type CircuitBreakerOptions } from '@/shared/utils/retry';
 
+import { logSystemEvent } from '../../server';
 import { getTransientRecoverySettings } from './settings';
 
 import type { TransientRecoverySettings } from './constants';
@@ -85,9 +86,11 @@ export async function withTransientRecovery<T>(
     return await execute();
   } catch (error) {
     if (options?.fallback && isTransientError(error)) {
-      console.warn('[transient-recovery] fallback executed', {
+      void logSystemEvent({
+        level: 'warn',
+        message: '[transient-recovery] fallback executed',
         source: options?.source ?? 'transient-recovery',
-        error,
+        context: { error: error instanceof Error ? error.message : String(error) }
       });
       return (await options.fallback()) as T;
     }

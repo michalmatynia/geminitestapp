@@ -77,7 +77,7 @@ describe('Database Engine operations jobs API', () => {
         isElevated: true,
         permissions: ['settings.manage'],
       },
-    } as Awaited<ReturnType<typeof auth>>);
+    } as unknown as Awaited<ReturnType<typeof auth>>);
   });
 
   it('GET /api/databases/engine/operations/jobs returns filtered db operation jobs', async () => {

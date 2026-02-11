@@ -7,38 +7,13 @@ import { dbApi } from '@/features/ai/ai-paths/lib/api';
 import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
 import { useAiPathConfig } from '../AiPathConfigContext';
+import type { CollectionSchema, SchemaData } from './database/types';
 
-type SchemaData = {
-  provider: 'mongodb' | 'prisma' | 'multi';
-  collections: Array<{
-    name: string;
-    fields: Array<{ name: string; type: string }>;
-    relations?: string[];
-    provider?: 'mongodb' | 'prisma' | 'multi';
-  }>;
-  sources?: Partial<Record<'mongodb' | 'prisma', { provider: 'mongodb' | 'prisma'; collections: Array<{
-    name: string;
-    fields: Array<{ name: string; type: string }>;
-    relations?: string[];
-    provider?: 'mongodb' | 'prisma';
-  }> }>>;
-};
-
-const normalizeSchemaCollections = (schema: SchemaData | null): Array<{
-  name: string;
-  fields: Array<{ name: string; type: string }>;
-  relations?: string[];
-  provider?: 'mongodb' | 'prisma' | 'multi';
-}> => {
+const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema[] => {
   if (!schema) return [];
   if (schema.provider === 'multi') {
     if (schema.collections?.length) return schema.collections;
-    const merged: Array<{
-      name: string;
-      fields: Array<{ name: string; type: string }>;
-      relations?: string[];
-      provider?: 'mongodb' | 'prisma';
-    }> = [];
+    const merged: CollectionSchema[] = [];
     (['mongodb', 'prisma'] as const).forEach((provider) => {
       const source = schema.sources?.[provider];
       if (!source?.collections?.length) return;
@@ -52,7 +27,7 @@ const normalizeSchemaCollections = (schema: SchemaData | null): Array<{
 };
 
 const buildCollectionKey = (
-  collection: { name: string; provider?: 'mongodb' | 'prisma' | 'multi' },
+  collection: CollectionSchema,
   includeProvider: boolean
 ): string =>
   includeProvider && collection.provider
@@ -60,7 +35,7 @@ const buildCollectionKey = (
     : collection.name;
 
 const matchesCollectionSelection = (
-  collection: { name: string; provider?: 'mongodb' | 'prisma' | 'multi' },
+  collection: CollectionSchema,
   selectedSet: Set<string>
 ): boolean => {
   const nameKey = collection.name.toLowerCase();
@@ -155,7 +130,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
     if (fetchedDbSchema.provider === 'multi') {
       const providers = new Set<'mongodb' | 'prisma'>();
       schemaCollections.forEach((collection) => {
-        if (collection.provider && collection.provider !== 'multi') providers.add(collection.provider);
+        if (collection.provider) providers.add(collection.provider);
       });
       return Array.from(providers);
     }
@@ -189,7 +164,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
     });
   };
 
-  const toggleCollection = (collection: { name: string; provider?: 'mongodb' | 'prisma' | 'multi' }): void => {
+  const toggleCollection = (collection: CollectionSchema): void => {
     const current = schemaConfig.collections ?? [];
     const includeProvider = fetchedDbSchema?.provider === 'multi';
     const key = buildCollectionKey(collection, includeProvider);

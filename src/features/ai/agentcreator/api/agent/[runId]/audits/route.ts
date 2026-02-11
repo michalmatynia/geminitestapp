@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import type { AgentAuditLogRecord } from '@/features/ai/agent-runtime/types/agent';
+import { ErrorSystem } from '@/features/observability/server';
 import { internalError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import prisma from '@/shared/lib/db/prisma';
@@ -50,7 +51,8 @@ async function GET_handler(req: NextRequest,
     })
     : audits;
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][agent][audits] Loaded', {
+    void ErrorSystem.logInfo('Audits loaded', {
+      service: 'agent-api',
       runId,
       count: filtered.length,
       durationMs: Date.now() - requestStart,

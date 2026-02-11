@@ -1,13 +1,7 @@
 import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
 import { processJob } from '@/features/jobs/processors/chatbot-job-processor';
+import { ErrorSystem } from '@/features/observability/server';
 import { createManagedQueue } from '@/shared/lib/queue';
-
-const DEBUG_CHATBOT = process.env['NODE_ENV'] !== 'production';
-
-const logDebug = (message: string, meta?: Record<string, unknown>): void => {
-  if (!DEBUG_CHATBOT) return;
-  console.info(`[chatbot][jobs] ${message}`, meta || {});
-};
 
 type ChatbotJobData = {
   jobId: string;
@@ -30,29 +24,23 @@ const queue = createManagedQueue<ChatbotJobData>({
       startedAt: new Date(),
     });
 
-    logDebug('Processing job', { jobId: data.jobId });
+    void ErrorSystem.logInfo('Processing job', { service: 'chatbot-job-queue', jobId: data.jobId });
     await processJob(data.jobId);
-    logDebug('Job completed', { jobId: data.jobId });
+    void ErrorSystem.logInfo('Job completed', { service: 'chatbot-job-queue', jobId: data.jobId });
   },
   onFailed: async (_jobId, error, data) => {
     const message = error instanceof Error ? error.message : 'Job failed.';
     
-    try {
-      const { ErrorSystem } = await import('@/features/observability/services/error-system');
-      await ErrorSystem.captureException(error, {
-        service: 'chatbot-job-queue',
-        jobId: data.jobId,
-      });
-    } catch (logError) {
-      console.error('[chatbot][jobs] Failed to log to ErrorSystem:', logError);
-    }
+    void ErrorSystem.captureException(error, {
+      service: 'chatbot-job-queue',
+      jobId: data.jobId,
+    });
 
     await chatbotJobRepository.update(data.jobId, {
       status: 'failed',
       finishedAt: new Date(),
       errorMessage: message,
     });
-    logDebug('Job failed', { jobId: data.jobId, message });
   },
 });
 

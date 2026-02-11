@@ -1,7 +1,6 @@
 import { productCreateSchema, productUpdateSchema, type ProductCreateInput, type ProductUpdateInput } from './schemas';
 
 import type { ZodIssue } from 'zod';
-import { logger } from '@/shared/utils/logger';
 const reportValidationError = async (
   message: string,
   context: Record<string, unknown> = {}
@@ -10,7 +9,7 @@ const reportValidationError = async (
     const { reportValidationError: report } = await import('@/shared/utils/observability/validation-reporter');
     await report(message, context);
   } catch {
-    logger.error('[validators] Failed to report validation error', undefined, { message });
+    console.error('[validators] Failed to report validation error', { message });
   }
 };
 

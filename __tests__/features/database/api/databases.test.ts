@@ -55,7 +55,7 @@ describe('Databases API', () => {
         isElevated: true,
         permissions: ['settings.manage'],
       },
-    } as Awaited<ReturnType<typeof auth>>);
+    } as unknown as Awaited<ReturnType<typeof auth>>);
     vi.mocked(getDatabaseEngineOperationControls).mockResolvedValue({
       allowManualFullSync: true,
       allowManualCollectionSync: true,

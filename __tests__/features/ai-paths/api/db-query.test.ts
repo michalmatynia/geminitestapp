@@ -62,11 +62,11 @@ describe('AI Paths db-query API', () => {
     } as unknown as Awaited<ReturnType<typeof getMongoDb>>);
     vi.mocked(getAppDbProvider).mockResolvedValue('mongodb');
     vi.mocked(requireAiPathsAccessOrInternal).mockResolvedValue({
-      access: { userId: 'u1', ip: '127.0.0.1' },
+      access: { userId: 'u1', permissions: ['ai_paths.manage'], isElevated: true },
       isInternal: true,
     } as Awaited<ReturnType<typeof requireAiPathsAccessOrInternal>>);
     vi.mocked(isCollectionAllowed).mockReturnValue(true);
-    vi.mocked(parseJsonBody).mockImplementation(async (req: NextRequest) => {
+    vi.mocked(parseJsonBody).mockImplementation(async (req: Request) => {
       const raw = await req.text();
       const data = raw ? JSON.parse(raw) : {};
       return { ok: true, data };

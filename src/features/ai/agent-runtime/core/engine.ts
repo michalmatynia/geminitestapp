@@ -46,7 +46,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
   try {
     if (!('chatbotAgentRun' in prisma)) {
       if (DEBUG_CHATBOT) {
-        console.warn('[chatbot][agent][engine] Agent tables not initialized.');
+        void ErrorSystem.logWarning('Agent tables not initialized.', { service: 'agent-engine' });
       }
       return;
     }
@@ -57,7 +57,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
 
     if (!run) {
       if (DEBUG_CHATBOT) {
-        console.warn('[chatbot][agent][engine] Run not found', { runId });
+        void ErrorSystem.logWarning('Run not found', { service: 'agent-engine', runId });
       }
       return;
     }

@@ -7,6 +7,7 @@ import type { ProductDto, ProductCategoryDto, ProductTagDto } from '@/shared/dto
 import { useAdaptiveQuery } from '@/shared/hooks/query/useSmartCache';
 import { useNormalizedQuery, useComposedQuery } from '@/shared/hooks/useQueryComposition';
 import { useQueryScheduler, useBackgroundQueries } from '@/shared/hooks/useQueryScheduler';
+import { api } from '@/shared/lib/api-client';
 
 
 interface EnhancedProductsQueryResult {
@@ -24,8 +25,7 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
   const productsQuery = useNormalizedQuery<ProductDto>(
     ['products', 'enhanced'],
     async (): Promise<ProductDto[]> => {
-      const res = await fetch('/api/products');
-      return res.json() as Promise<ProductDto[]>;
+      return await api.get<ProductDto[]>('/api/products');
     }
   );
 
@@ -34,8 +34,7 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
     {
       queryKey: ['products', 'enhanced'],
       queryFn: async (): Promise<ProductDto[]> => {
-        const res = await fetch('/api/products');
-        return res.json() as Promise<ProductDto[]>;
+        return await api.get<ProductDto[]>('/api/products');
       },
     },
     (products: ProductDto[]): { total: number; published: number; categories: number; avgPrice: number; } => ({
@@ -52,17 +51,13 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
       'product-categories',
       ['products', 'categories'],
       async (): Promise<ProductCategoryDto[]> => {
-        const catalogsRes = await fetch('/api/catalogs');
-        if (!catalogsRes.ok) return [];
         type Catalog = { id: string };
-        const catalogs = (await catalogsRes.json()) as Catalog[];
+        const catalogs = await api.get<Catalog[]>('/api/catalogs');
         const catalogId = Array.isArray(catalogs) && catalogs.length > 0 ? catalogs[0]?.id : undefined;
         if (!catalogId) return [];
-        const res = await fetch(
+        return await api.get<ProductCategoryDto[]>(
           `/api/products/categories?catalogId=${encodeURIComponent(catalogId)}`
         );
-        if (!res.ok) return [];
-        return res.json() as Promise<ProductCategoryDto[]>;
       },
       { priority: 'medium', delay: 2000 }
     );
@@ -71,8 +66,7 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
       'product-tags',
       ['products', 'tags'],
       async (): Promise<ProductTagDto[]> => {
-        const res = await fetch('/api/products/tags');
-        return res.json() as Promise<ProductTagDto[]>;
+        return await api.get<ProductTagDto[]>('/api/products/tags');
       },
       { priority: 'low', delay: 5000 }
     );
@@ -83,8 +77,7 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
     {
       queryKey: ['products', 'count'],
       queryFn: async (): Promise<{ count: number }> => {
-        const res = await fetch('/api/products/count');
-        return res.json() as Promise<{ count: number }>;
+        return await api.get<{ count: number }>('/api/products/count');
       },
       interval: 60000, // 1 minute
     },
@@ -103,57 +96,61 @@ export function useEnhancedUsers(): { users: ReturnType<typeof useAdaptiveQuery>
   // User list with long-term caching
   const users = useAdaptiveQuery(
     ['users', 'list'],
-    async () => {
-      const res = await fetch('/api/users');
-      return res.json();
-    },
+    async () => await api.get('/api/users'),
     { dataType: 'longTerm', priority: 'medium' }
   );
 
   // User permissions with standard caching
   const permissions = useAdaptiveQuery(
     ['users', 'permissions'],
-    async () => {
-      const res = await fetch('/api/users/permissions');
-      return res.json();
-    },
+    async () => await api.get('/api/users/permissions'),
     { dataType: 'standard', priority: 'high' }
   );
 
   // User activity with real-time updates
   const activity = useAdaptiveQuery(
     ['users', 'activity'],
-    async () => {
-      const res = await fetch('/api/users/activity');
-      return res.json();
-    },
+    async () => await api.get('/api/users/activity'),
     { dataType: 'realtime', priority: 'low' }
   );
 
   return { users, permissions, activity };
 }
 
+type SettingsObject = Record<string, unknown>;
+type UserSettingsObject = SettingsObject & {
+  theme?: string | null;
+  language?: string | null;
+};
+type AppSettingsObject = SettingsObject & {
+  defaultTheme?: string | null;
+  defaultLanguage?: string | null;
+};
+
 // Enhanced settings with composition
 export function useEnhancedSettings(): ReturnType<typeof useComposedQuery> {
   // Compose all settings into a single object
-  const settings = useComposedQuery(
+  const settings = useComposedQuery<
+    { app: AppSettingsObject; user: UserSettingsObject; system: SettingsObject },
+    SettingsObject & { system: SettingsObject; theme: string | null; language: string | null }
+  >(
     {
       queryKey: ['settings', 'all'],
       queryFn: async () => {
         const [app, user, system] = await Promise.all([
-          fetch('/api/settings/app').then(r => r.json()),
-          fetch('/api/settings/user').then(r => r.json()),
-          fetch('/api/settings/system').then(r => r.json()),
+          api.get<AppSettingsObject>('/api/settings/app'),
+          api.get<UserSettingsObject>('/api/settings/user'),
+          api.get<SettingsObject>('/api/settings/system'),
         ]);
         return { app, user, system };
       },
     },
-    (data) => ({
+    (data): SettingsObject & { system: SettingsObject; theme: string | null; language: string | null } => ({
       ...data.app,
       ...data.user,
       system: data.system,
-      theme: data.user.theme || data.app.defaultTheme,
-      language: data.user.language || data.app.defaultLanguage,
+      theme: data.user.theme ?? data.app.defaultTheme ?? null,
+      language: data.user.language ?? data.app.defaultLanguage ?? null,
     })
   );
 

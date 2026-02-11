@@ -303,6 +303,13 @@ const TAG_TARGET_FIELDS = new Set([
   'tag_ids',
 ]);
 
+const NUMERIC_TARGET_FIELDS = new Set([
+  'weight',
+  'length',
+  'width',
+  'height',
+]);
+
 type ProducerNameLookup = Record<string, string> | Map<string, string> | null | undefined;
 type ProducerExternalIdLookup = Record<string, string> | Map<string, string> | null | undefined;
 type ProducerLookup = ProducerNameLookup | ProducerExternalIdLookup;
@@ -334,6 +341,21 @@ const normalizeExportTargetField = (targetField: string): string => {
   }
   if (normalized === 'category' || normalized === 'categoryid') {
     return 'category_id';
+  }
+  if (normalized === 'eans') {
+    return 'ean';
+  }
+  if (normalized === 'weightkg' || normalized === 'weight_kg') {
+    return 'weight';
+  }
+  if (normalized === 'lengthcm' || normalized === 'length_cm') {
+    return 'length';
+  }
+  if (normalized === 'widthcm' || normalized === 'width_cm') {
+    return 'width';
+  }
+  if (normalized === 'heightcm' || normalized === 'height_cm') {
+    return 'height';
   }
   if (normalized === 'producerid') {
     return 'producer_id';
@@ -1121,7 +1143,10 @@ const imageToBase64DataUri = async (
               : []),
             ...BASE_IMAGE_CLAMP_DIMENSIONS,
           ]
-            .filter((value): value is number => Boolean(value) && value > 0)
+            .filter(
+              (value): value is number =>
+                typeof value === 'number' && Number.isFinite(value) && value > 0
+            )
             .map((value: number) => Math.round(value))
         )
       );
@@ -1131,7 +1156,10 @@ const imageToBase64DataUri = async (
             transform?.jpegQuality ?? null,
             ...BASE_IMAGE_CLAMP_QUALITIES,
           ]
-            .filter((value): value is number => Boolean(value) && value > 0)
+            .filter(
+              (value): value is number =>
+                typeof value === 'number' && Number.isFinite(value) && value > 0
+            )
             .map((value: number) => Math.round(value))
         )
       );
@@ -1558,6 +1586,15 @@ function applyExportTemplateMappings(
         result[targetField] = tagValues;
       }
       continue;
+    }
+
+    const normalizedTargetField = targetField.trim().toLowerCase();
+    if (NUMERIC_TARGET_FIELDS.has(normalizedTargetField)) {
+      const numericValue = toNumberValue(rawValue);
+      if (numericValue !== null) {
+        result[targetField] = numericValue;
+        continue;
+      }
     }
 
     // Try to convert to string first

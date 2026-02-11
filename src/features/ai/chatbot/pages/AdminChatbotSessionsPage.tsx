@@ -1,39 +1,56 @@
 'use client';
 
+import { useMutation } from '@tanstack/react-query';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { Button, Input, useToast, Label, Checkbox, ListPanel, SectionHeader, SectionPanel, ConfirmDialog, EmptyState, SearchInput } from '@/shared/ui';
 
 import * as chatbotApi from '../api';
+import {
+  useChatbotSessions,
+  useDeleteChatbotSession,
+  useDeleteChatbotSessions,
+  useUpdateSessionTitle,
+} from '../hooks';
 
 import type { ChatbotSessionListItem } from '../types';
 
 export default function ChatbotSessionsPage(): React.JSX.Element {
   const { toast } = useToast();
-  const [sessions, setSessions] = useState<ChatbotSessionListItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftTitle, setDraftTitle] = useState<string>('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [bulkDeleting, setBulkDeleting] = useState<boolean>(false);
-  const [selectingAll, setSelectingAll] = useState<boolean>(false);
   const [skipBulkConfirm, setSkipBulkConfirm] = useState<boolean>(false);
   const [sessionToDelete, setSessionToDelete] = useState<ChatbotSessionListItem | null>(null);
   const [isBulkDeleteConfirmOpen, setIsBulkDeleteConfirmOpen] = useState(false);
+
+  const sessionsQuery = useChatbotSessions();
+  const updateTitleMutation = useUpdateSessionTitle();
+  const deleteSessionMutation = useDeleteChatbotSession();
+  const deleteSessionsMutation = useDeleteChatbotSessions();
+  const selectAllMatchingMutation = useMutation({
+    mutationFn: chatbotApi.fetchChatbotSessionIds,
+  });
+
+  const sessions = sessionsQuery.data ?? [];
+  const loading = sessionsQuery.isLoading;
+  const error = sessionsQuery.isError
+    ? sessionsQuery.error.message
+    : null;
+  const bulkDeleting = deleteSessionsMutation.isPending;
+  const selectingAll = selectAllMatchingMutation.isPending;
 
   const clearSelection = (): void => setSelectedIds(new Set());
   const selectAllVisible = (): void => setSelectedIds(new Set(filteredSessions.map((s: ChatbotSessionListItem): string => s.id)));
   const selectAllMatching = (): void => {
     void (async (): Promise<void> => {
       if (selectingAll) return;
-      setSelectingAll(true);
       try {
         const term: string = searchQuery.trim();
-        const ids: string[] = await chatbotApi.fetchChatbotSessionIds(
+        const ids: string[] = await selectAllMatchingMutation.mutateAsync(
           term || undefined
         );
         setSelectedIds(new Set(ids));
@@ -46,8 +63,6 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
         const message: string =
           error instanceof Error ? error.message : 'Failed to select sessions.';
         toast(message, { variant: 'error' });
-      } finally {
-        setSelectingAll(false);
       }
     })();
   };
@@ -62,34 +77,6 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
       return newSet;
     });
   };
-
-  useEffect((): (() => void) => {
-    let isMounted: boolean = true;
-    const loadSessions = async (): Promise<void> => {
-      setLoading(true);
-      try {
-        const data = await chatbotApi.fetchChatbotSessions<ChatbotSessionListItem>();
-        if (isMounted) {
-          setSessions(data.sessions || []);
-        }
-      } catch (error: unknown) {
-        if (isMounted) {
-          const message: string =
-            error instanceof Error ? error.message : 'Failed to load sessions.';
-          setError(message);
-          toast(message, { variant: 'error' });
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-    void loadSessions();
-    return (): void => {
-      isMounted = false;
-    };
-  }, [toast]);
 
   const filteredSessions = useMemo((): ChatbotSessionListItem[] => {
     const term: string = searchQuery.trim().toLowerCase();
@@ -112,15 +99,10 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
 
   const saveTitle = async (sessionId: string): Promise<void> => {
     try {
-      const updatedSession = await chatbotApi.updateChatbotSessionTitle(
+      await updateTitleMutation.mutateAsync({
         sessionId,
-        draftTitle
-      );
-      setSessions((prev: ChatbotSessionListItem[]): ChatbotSessionListItem[] =>
-        prev.map((session: ChatbotSessionListItem) =>
-          session.id === sessionId ? updatedSession : session
-        )
-      );
+        title: draftTitle,
+      });
       cancelEditing();
       toast('Session title updated', { variant: 'success' });
     } catch (error: unknown) {
@@ -128,7 +110,6 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
         error instanceof Error
           ? error.message
           : 'Failed to update session title.';
-      setError(message);
       toast(message, { variant: 'error' });
     }
   };
@@ -136,8 +117,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
   const deleteSession = async (session: ChatbotSessionListItem): Promise<void> => {
     setDeletingId(session.id);
     try {
-      await chatbotApi.deleteChatbotSession(session.id);
-      setSessions((prev: ChatbotSessionListItem[]): ChatbotSessionListItem[] => prev.filter((item: ChatbotSessionListItem): boolean => item.id !== session.id));
+      await deleteSessionMutation.mutateAsync(session.id);
       if (editingId === session.id) {
         cancelEditing();
       }
@@ -151,7 +131,6 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
     } catch (error: unknown) {
       const message: string =
         error instanceof Error ? error.message : 'Failed to delete session.';
-      setError(message);
       toast(message, { variant: 'error' });
     } finally {
       setDeletingId(null);
@@ -169,19 +148,16 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
   };
 
   const bulkDelete = async (): Promise<void> => {
-    setBulkDeleting(true);
+    const idsToDelete = Array.from(selectedIds);
     try {
-      await chatbotApi.deleteChatbotSessions(Array.from(selectedIds));
-      setSessions((prev: ChatbotSessionListItem[]): ChatbotSessionListItem[] => prev.filter((item: ChatbotSessionListItem): boolean => !selectedIds.has(item.id)));
+      await deleteSessionsMutation.mutateAsync(idsToDelete);
       clearSelection();
       toast('Selected sessions deleted', { variant: 'success' });
     } catch (error: unknown) {
       const message: string =
         error instanceof Error ? error.message : 'Failed to delete sessions.';
-      setError(message);
       toast(message, { variant: 'error' });
     } finally {
-      setBulkDeleting(false);
       setIsBulkDeleteConfirmOpen(false);
     }
   };

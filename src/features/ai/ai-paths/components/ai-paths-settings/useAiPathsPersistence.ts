@@ -49,8 +49,8 @@ import {
   fetchAiPathsSettingsCached,
   updateAiPathsSettingsBulk,
 } from '@/features/ai/ai-paths/lib/settings-store-client';
-import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
-import { logger } from '@/shared/utils/logger';
+import { logClientError } from '@/features/observability';
+import { api } from '@/shared/lib/api-client';
 
 import {
   buildPersistedRuntimeState,
@@ -325,16 +325,9 @@ export function useAiPathsPersistence({
     [updateAiPathsSettingsMutation]
   );
   const persistUserPreferences = useCallback(async (pathId: string | null): Promise<void> => {
-    const csrfHeaders = withCsrfHeaders({ 'Content-Type': 'application/json' });
-    const res = await fetch('/api/user/preferences', {
-      method: 'PATCH',
-      headers: csrfHeaders,
-      credentials: 'include',
-      body: JSON.stringify({ aiPathsActivePathId: pathId }),
+    await api.patch('/api/user/preferences', {
+      aiPathsActivePathId: pathId,
     });
-    if (!res.ok) {
-      throw new Error('Failed to update user preferences');
-    }
   }, []);
   const persistActivePathPreference = useCallback(
     async (pathId: string | null): Promise<void> => {
@@ -345,7 +338,7 @@ export function useAiPathsPersistence({
         await persistUserPreferences(resolved);
         lastUserPrefsActivePathIdRef.current = resolved;
       } catch (error) {
-        logger.warn('[AI Paths] Failed to persist user preferences', { error: error instanceof Error ? error.message : String(error) });
+        logClientError(error, { context: { source: 'useAiPathsPersistence', action: 'persistActivePathPreference', pathId: resolved } });
       }
     },
     [persistUserPreferences, uiStateLoaded]
@@ -363,12 +356,10 @@ export function useAiPathsPersistence({
           fetchAiPathsSettingsCached({ bypassCache: true }),
           (async (): Promise<AiPathsUserPreferences | null> => {
             try {
-              const res = await fetch('/api/user/preferences', {
-                credentials: 'include',
+              return await api.get<AiPathsUserPreferences>('/api/user/preferences', {
                 cache: 'no-store',
+                logError: false,
               });
-              if (!res.ok) return null;
-              return (await res.json()) as AiPathsUserPreferences;
             } catch {
               return null;
             }
@@ -672,7 +663,7 @@ export function useAiPathsPersistence({
           try {
             await updateAiPathsSettingsMutation.mutateAsync(migrationPayload);
           } catch (error) {
-            logger.warn('[AI Paths] Failed to persist migrated AI Paths settings', { error: error instanceof Error ? error.message : String(error) });
+            logClientError(error, { context: { source: 'useAiPathsPersistence', action: 'loadConfigMigration' } });
           }
         }
         setUiStateLoaded(true);
@@ -714,7 +705,7 @@ export function useAiPathsPersistence({
     const shouldPersistUserPrefs = nextActivePathId !== lastUserPrefsActivePathIdRef.current;
     const timeout = setTimeout((): void => {
       void persistUiState(payload).catch((error: unknown) => {
-        logger.warn('[AI Paths] Failed to persist UI state', { error: error instanceof Error ? error.message : String(error) });
+        logClientError(error, { context: { source: 'useAiPathsPersistence', action: 'autoPersistUiState' } });
       });
       if (shouldPersistUserPrefs) {
         void persistUserPreferences(nextActivePathId)
@@ -722,7 +713,7 @@ export function useAiPathsPersistence({
             lastUserPrefsActivePathIdRef.current = nextActivePathId;
           })
           .catch((error: unknown) => {
-            logger.warn('[AI Paths] Failed to persist user preferences', { error: error instanceof Error ? error.message : String(error) });
+            logClientError(error, { context: { source: 'useAiPathsPersistence', action: 'autoPersistUserPrefs', pathId: nextActivePathId } });
           });
       }
     }, 200);

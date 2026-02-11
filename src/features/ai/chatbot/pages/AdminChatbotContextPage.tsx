@@ -1,5 +1,6 @@
 'use client';
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PlusIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -7,17 +8,6 @@ import React, { Suspense, useEffect, useRef, useState } from 'react';
 
 import type { ChatbotContextSegmentDto } from '@/shared/dtos/chatbot';
 import { Button, Input, Textarea, SharedModal, useToast, Label, Checkbox, SectionHeader, SectionPanel, Tag, FileUploadTrigger, type FileUploadHelpers } from '@/shared/ui';
-
-
-
-
-
-
-
-
-
-
-
 
 import * as chatbotApi from '../api';
 
@@ -78,57 +68,91 @@ const buildActiveIds = (rawActive?: string, items?: ContextItem[]): string[] => 
 
 function ChatbotContextPageInner(): React.JSX.Element {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const searchParams: ReturnType<typeof useSearchParams> = useSearchParams();
   const initializedFilters: React.MutableRefObject<boolean> = useRef(false);
+  const hasInitializedData: React.MutableRefObject<boolean> = useRef(false);
   const [contexts, setContexts] = useState<ContextItem[]>([]);
   const [activeIds, setActiveIds] = useState<string[]>([]);
   const [tagDraft, setTagDraft] = useState<string>('');
   const [tagQuery, setTagQuery] = useState<string>('');
   const [tagFilters, setTagFilters] = useState<string[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [saving, setSaving] = useState<boolean>(false);
-  const [uploading, setUploading] = useState<boolean>(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [modalDraft, setModalDraft] = useState<ContextDraft | null>(null);
+  const contextSettingsQuery = useQuery({
+    queryKey: [...chatbotApi.chatbotQueryKeys.settings('global-context'), 'all-settings'],
+    queryFn: chatbotApi.fetchSettings,
+    staleTime: 60_000,
+  });
 
-  useEffect((): void | (() => void) => {
-    let isMounted: boolean = true;
-    const loadContext = async (): Promise<void> => {
-      try {
-        const data = await chatbotApi.fetchSettings();
-        const storedItems = data.find(
-          (item: { key: string; value?: string }): boolean => item.key === 'chatbot_global_context_items'
-        );
-        const storedActive = data.find(
-          (item: { key: string; value?: string }): boolean => item.key === 'chatbot_global_context_active'
-        );
-        const storedLegacy = data.find(
-          (item: { key: string; value?: string }): boolean => item.key === 'chatbot_global_context'
-        );
-        if (isMounted) {
-          const items: ContextItem[] = buildContextItems(
-            storedItems?.value,
-            storedLegacy?.value
-          );
-          const active: string[] = buildActiveIds(storedActive?.value, items);
-          setContexts(items);
-          setActiveIds(active);
-        }
-      } catch (error: unknown) {
-        const message: string =
-          error instanceof Error ? error.message : 'Failed to load context.';
-        toast(message, { variant: 'error' });
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-    void loadContext();
-    return (): void => {
-      isMounted = false;
-    };
-  }, [toast]);
+  const saveContextsMutation = useMutation({
+    mutationFn: async (payload: {
+      nextContexts: ContextItem[];
+      nextActiveIds: string[];
+    }): Promise<void> => {
+      await chatbotApi.saveSetting(
+        'chatbot_global_context_items',
+        JSON.stringify(payload.nextContexts),
+        'Failed to save contexts.'
+      );
+      await chatbotApi.saveSetting(
+        'chatbot_global_context_active',
+        JSON.stringify(payload.nextActiveIds),
+        'Failed to save active contexts.'
+      );
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: [...chatbotApi.chatbotQueryKeys.settings('global-context'), 'all-settings'],
+      });
+    },
+  });
+
+  const uploadPdfMutation = useMutation({
+    mutationFn: async (payload: {
+      file: File;
+      helpers?: FileUploadHelpers;
+    }): Promise<{ segments: ChatbotContextSegmentDto[] }> =>
+      chatbotApi.uploadChatbotContextPdf(
+        payload.file,
+        (loaded: number, total?: number) => payload.helpers?.reportProgress(loaded, total)
+      ),
+  });
+
+  const loading = contextSettingsQuery.isLoading && !hasInitializedData.current;
+  const saving = saveContextsMutation.isPending;
+  const uploading = uploadPdfMutation.isPending;
+
+  useEffect((): void => {
+    if (!contextSettingsQuery.data || hasInitializedData.current) return;
+
+    const storedItems = contextSettingsQuery.data.find(
+      (item: { key: string; value?: string }): boolean => item.key === 'chatbot_global_context_items'
+    );
+    const storedActive = contextSettingsQuery.data.find(
+      (item: { key: string; value?: string }): boolean => item.key === 'chatbot_global_context_active'
+    );
+    const storedLegacy = contextSettingsQuery.data.find(
+      (item: { key: string; value?: string }): boolean => item.key === 'chatbot_global_context'
+    );
+
+    const items: ContextItem[] = buildContextItems(
+      storedItems?.value,
+      storedLegacy?.value
+    );
+    const active: string[] = buildActiveIds(storedActive?.value, items);
+    setContexts(items);
+    setActiveIds(active);
+    hasInitializedData.current = true;
+  }, [contextSettingsQuery.data]);
+
+  useEffect((): void => {
+    if (!contextSettingsQuery.isError) return;
+    const message: string = contextSettingsQuery.error instanceof Error
+      ? contextSettingsQuery.error.message
+      : 'Failed to load context.';
+    toast(message, { variant: 'error' });
+  }, [contextSettingsQuery.isError, contextSettingsQuery.error, toast]);
 
   useEffect((): void => {
     if (initializedFilters.current) {
@@ -209,11 +233,9 @@ function ChatbotContextPageInner(): React.JSX.Element {
   };
 
   const handlePdfUpload = async (file: File, helpers?: FileUploadHelpers): Promise<void> => {
-    setUploading(true);
     try {
-      const data: { segments: ChatbotContextSegmentDto[] } = await chatbotApi.uploadChatbotContextPdf(
-        file,
-        (loaded: number, total?: number) => helpers?.reportProgress(loaded, total)
+      const data = await uploadPdfMutation.mutateAsync(
+        helpers ? { file, helpers } : { file }
       );
       if (data.segments.length === 0) {
         toast('No text found in PDF.', { variant: 'info' });
@@ -235,24 +257,15 @@ function ChatbotContextPageInner(): React.JSX.Element {
       const message: string =
         error instanceof Error ? error.message : 'Failed to parse PDF.';
       toast(message, { variant: 'error' });
-    } finally {
-      setUploading(false);
     }
   };
 
   const handleSaveContexts = async (): Promise<void> => {
-    setSaving(true);
     try {
-      await chatbotApi.saveSetting(
-        'chatbot_global_context_items',
-        JSON.stringify(contexts),
-        'Failed to save contexts.'
-      );
-      await chatbotApi.saveSetting(
-        'chatbot_global_context_active',
-        JSON.stringify(activeIds),
-        'Failed to save active contexts.'
-      );
+      await saveContextsMutation.mutateAsync({
+        nextContexts: contexts,
+        nextActiveIds: activeIds,
+      });
       toast('Global contexts saved', { variant: 'success' });
     } catch (error: unknown) {
       const message: string =
@@ -260,8 +273,6 @@ function ChatbotContextPageInner(): React.JSX.Element {
           ? error.message
           : 'Failed to save contexts.';
       toast(message, { variant: 'error' });
-    } finally {
-      setSaving(false);
     }
   };
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { ErrorSystem } from '@/features/observability/server';
 import { internalError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import prisma from '@/shared/lib/db/prisma';
@@ -26,7 +27,8 @@ async function GET_handler(req: NextRequest,
     take,
   });
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][agent][snapshots] Loaded', {
+    void ErrorSystem.logInfo('Snapshots loaded', {
+      service: 'agent-api',
       runId,
       count: snapshots.length,
       durationMs: Date.now() - requestStart,

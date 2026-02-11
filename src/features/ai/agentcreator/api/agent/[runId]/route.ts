@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { logAgentAudit } from '@/features/ai/agent-runtime/server';
 import { startAgentQueue } from '@/features/jobs/server';
+import { ErrorSystem } from '@/features/observability/server';
 import {
   badRequestError,
   conflictError,
@@ -36,7 +37,8 @@ async function GET_handler(_req: NextRequest,
     throw notFoundError('Run not found.');
   }
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][agent][GET] Run loaded', {
+    void ErrorSystem.logInfo('Run loaded', {
+      service: 'agent-api',
       runId,
       status: run.status,
       durationMs: Date.now() - requestStart,
@@ -76,7 +78,8 @@ async function POST_handler(req: NextRequest,
     throw badRequestError('Unsupported action.');
   }
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][agent][POST] Request', {
+    void ErrorSystem.logInfo('Request', {
+      service: 'agent-api',
       runId,
       action: body.action,
     });
@@ -138,7 +141,8 @@ async function POST_handler(req: NextRequest,
     }
     await logAgentAudit(updated.id, 'info', 'Agent run resume requested.');
     if (DEBUG_CHATBOT) {
-      console.info('[chatbot][agent][POST] Resumed', {
+      void ErrorSystem.logInfo('Resumed', {
+        service: 'agent-api',
         runId,
         status: updated.status,
         durationMs: Date.now() - requestStart,
@@ -208,7 +212,8 @@ async function POST_handler(req: NextRequest,
       stepId: body.stepId,
     });
     if (DEBUG_CHATBOT) {
-      console.info('[chatbot][agent][POST] Step retry queued', {
+      void ErrorSystem.logInfo('Step retry queued', {
+        service: 'agent-api',
         runId,
         stepId: body.stepId,
         durationMs: Date.now() - requestStart,
@@ -272,7 +277,8 @@ async function POST_handler(req: NextRequest,
       status: body.status,
     });
     if (DEBUG_CHATBOT) {
-      console.info('[chatbot][agent][POST] Step overridden', {
+      void ErrorSystem.logInfo('Step overridden', {
+        service: 'agent-api',
         runId,
         stepId: body.stepId,
         status: body.status,
@@ -319,7 +325,8 @@ async function POST_handler(req: NextRequest,
       stepId: body.stepId.trim(),
     });
     if (DEBUG_CHATBOT) {
-      console.info('[chatbot][agent][POST] Step approved', {
+      void ErrorSystem.logInfo('Step approved', {
+        service: 'agent-api',
         runId,
         stepId: body.stepId.trim(),
         durationMs: Date.now() - requestStart,
@@ -330,7 +337,8 @@ async function POST_handler(req: NextRequest,
 
   if (['completed', 'failed', 'stopped'].includes(run.status)) {
     if (DEBUG_CHATBOT) {
-      console.info('[chatbot][agent][POST] Already terminal', {
+      void ErrorSystem.logInfo('Already terminal', {
+        service: 'agent-api',
         runId,
         status: run.status,
         durationMs: Date.now() - requestStart,
@@ -352,7 +360,8 @@ async function POST_handler(req: NextRequest,
   await logAgentAudit(updated.id, 'warning', 'Agent run stopped by user.');
 
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][agent][POST] Stopped', {
+    void ErrorSystem.logInfo('Stopped', {
+      service: 'agent-api',
       runId,
       status: updated.status,
       durationMs: Date.now() - requestStart,
@@ -396,7 +405,8 @@ async function DELETE_handler(req: NextRequest,
     deletedAt: new Date().toISOString(),
   });
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][agent][DELETE] Deleted', {
+    void ErrorSystem.logInfo('Deleted', {
+      service: 'agent-api',
       runId,
       durationMs: Date.now() - requestStart,
     });

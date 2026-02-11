@@ -1,8 +1,15 @@
 import type {
+  DatabaseBackupFileDto as DatabaseInfoResponse,
+  DatabaseBackupOperationResponseDto as DatabaseBackupResponse,
+  DatabaseCollectionCopyResultDto as CollectionCopyResult,
+  DatabaseEngineBackupRunNowResponseDto as DatabaseEngineBackupRunNowResponse,
   DatabaseEngineBackupSchedulerStatusDto as DatabaseEngineBackupSchedulerStatusResponse,
+  DatabaseEngineBackupSchedulerTickResponseDto as DatabaseEngineBackupSchedulerTickResponse,
   DatabaseEngineOperationsJobsDto as DatabaseEngineOperationsJobsResponse,
   DatabaseEngineProviderPreviewDto as DatabaseEngineProviderPreviewResponse,
   DatabaseEngineStatusDto as DatabaseEngineStatusResponse,
+  DatabaseRestoreOperationResponseDto as DatabaseRestoreResponse,
+  MultiSchemaResponseDto as MultiSchemaResponse,
   RedisOverviewDto as RedisOverviewResponse,
 } from '@/shared/dtos/database';
 import type { AppProviderDiagnosticsDto as ProviderDiagnosticsResponse } from '@/shared/dtos/system';
@@ -11,17 +18,26 @@ import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import type {
   CrudRequest,
   CrudResult,
-  DatabaseBackupResponse,
-  DatabaseInfo,
   DatabasePreviewGroup,
   DatabasePreviewMode,
   DatabasePreviewPayload,
   DatabasePreviewRow,
   DatabasePreviewTable,
-  DatabaseRestoreResponse,
   DatabaseType,
   SqlQueryResult,
 } from '../types';
+
+export type {
+  CollectionCopyResult,
+  DatabaseEngineBackupRunNowResponse,
+  DatabaseEngineBackupSchedulerTickResponse,
+  MultiSchemaResponse,
+};
+
+export type ApiPayloadResult<TPayload> = {
+  ok: boolean;
+  payload: TPayload;
+};
 
 const safeJson = async <T>(res: Response): Promise<T> => {
   try {
@@ -29,6 +45,37 @@ const safeJson = async <T>(res: Response): Promise<T> => {
   } catch {
     return {} as T;
   }
+};
+
+const fetchJsonResult = async <TPayload>(
+  input: RequestInfo | URL,
+  init?: RequestInit
+): Promise<ApiPayloadResult<TPayload>> => {
+  const res = await fetch(input, init);
+  const payload = await safeJson<TPayload>(res);
+  return { ok: res.ok, payload };
+};
+
+const resolveApiErrorMessage = (payload: unknown, fallback: string): string => {
+  if (!payload || typeof payload !== 'object') return fallback;
+  const record = payload as Record<string, unknown>;
+  if (typeof record['error'] === 'string' && record['error'].trim()) {
+    return record['error'];
+  }
+  if (typeof record['message'] === 'string' && record['message'].trim()) {
+    return record['message'];
+  }
+  return fallback;
+};
+
+const requireOk = <TPayload>(
+  result: ApiPayloadResult<TPayload>,
+  fallbackErrorMessage: string
+): TPayload => {
+  if (!result.ok) {
+    throw new Error(resolveApiErrorMessage(result.payload, fallbackErrorMessage));
+  }
+  return result.payload;
 };
 
 const normalizeGroups = (
@@ -51,38 +98,36 @@ type PreviewApiResponse = DatabasePreviewPayload & {
 };
 
 export const fetchProviderDiagnostics = async (): Promise<ProviderDiagnosticsResponse> => {
-  const res = await fetch('/api/settings/providers', { cache: 'no-store' });
-  if (!res.ok) {
-    const payload = (await res.json().catch(() => null)) as { error?: string } | null;
-    throw new Error(payload?.error || 'Failed to fetch provider diagnostics.');
-  }
-  return (await res.json()) as ProviderDiagnosticsResponse;
+  return requireOk(
+    await fetchJsonResult<ProviderDiagnosticsResponse>('/api/settings/providers', {
+      cache: 'no-store',
+    }),
+    'Failed to fetch provider diagnostics.'
+  );
 };
 
 export const fetchDatabaseBackups = async (
   dbType: DatabaseType
-): Promise<DatabaseInfo[]> => {
-  const res = await fetch(`/api/databases/backups?type=${dbType}`);
-  if (!res.ok) {
-    throw new Error('Failed to fetch backups');
-  }
-  return res.json() as Promise<DatabaseInfo[]>;
+): Promise<DatabaseInfoResponse[]> => {
+  return requireOk(
+    await fetchJsonResult<DatabaseInfoResponse[]>(`/api/databases/backups?type=${dbType}`),
+    'Failed to fetch backups.'
+  );
 };
 
-export const createDatabaseBackup = async (dbType: DatabaseType): Promise<{ ok: boolean; payload: DatabaseBackupResponse }> => {
-  const res = await fetch(`/api/databases/backup?type=${dbType}`, {
+export const createDatabaseBackup = async (
+  dbType: DatabaseType
+): Promise<ApiPayloadResult<DatabaseBackupResponse>> =>
+  fetchJsonResult<DatabaseBackupResponse>(`/api/databases/backup?type=${dbType}`, {
     method: 'POST',
     headers: withCsrfHeaders(),
   });
-  const payload = await safeJson<DatabaseBackupResponse>(res);
-  return { ok: res.ok, payload };
-};
 
 export const restoreDatabaseBackup = async (
   dbType: DatabaseType,
   input: { backupName: string; truncateBeforeRestore: boolean }
-): Promise<{ ok: boolean; payload: DatabaseRestoreResponse }> => {
-  const res = await fetch(`/api/databases/restore?type=${dbType}`, {
+): Promise<ApiPayloadResult<DatabaseRestoreResponse>> =>
+  fetchJsonResult<DatabaseRestoreResponse>(`/api/databases/restore?type=${dbType}`, {
     method: 'POST',
     headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({
@@ -90,15 +135,12 @@ export const restoreDatabaseBackup = async (
       truncateBeforeRestore: input.truncateBeforeRestore,
     }),
   });
-  const payload = await safeJson<DatabaseRestoreResponse>(res);
-  return { ok: res.ok, payload };
-};
 
 export const uploadDatabaseBackup = async (
   dbType: DatabaseType,
   file: File,
   onProgress?: (loaded: number, total?: number) => void
-): Promise<{ ok: boolean; payload: DatabaseBackupResponse }> => {
+): Promise<ApiPayloadResult<DatabaseBackupResponse>> => {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('type', dbType);
@@ -113,15 +155,12 @@ export const uploadDatabaseBackup = async (
 export const deleteDatabaseBackup = async (
   dbType: DatabaseType,
   backupName: string
-): Promise<{ ok: boolean; payload: DatabaseBackupResponse }> => {
-  const res = await fetch('/api/databases/delete', {
+): Promise<ApiPayloadResult<DatabaseBackupResponse>> =>
+  fetchJsonResult<DatabaseBackupResponse>('/api/databases/delete', {
     method: 'POST',
     headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ backupName, type: dbType }),
   });
-  const payload = await safeJson<DatabaseBackupResponse>(res);
-  return { ok: res.ok, payload };
-};
 
 export const fetchDatabasePreview = async (input: {
   backupName?: string | undefined;
@@ -129,8 +168,8 @@ export const fetchDatabasePreview = async (input: {
   type?: DatabaseType | undefined;
   page?: number | undefined;
   pageSize?: number | undefined;
-}): Promise<{ ok: boolean; payload: DatabasePreviewPayload }> => {
-  const res = await fetch('/api/databases/preview', {
+}): Promise<ApiPayloadResult<DatabasePreviewPayload>> => {
+  const result = await fetchJsonResult<PreviewApiResponse>('/api/databases/preview', {
     method: 'POST',
     headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({
@@ -141,7 +180,7 @@ export const fetchDatabasePreview = async (input: {
       pageSize: input.pageSize,
     }),
   });
-  const raw = await safeJson<PreviewApiResponse>(res);
+  const raw = result.payload;
   const groups = normalizeGroups(raw.groups ?? raw.stats?.groups);
   const tables = raw.tables ?? raw.stats?.tables ?? [];
   const tableRows = raw.tableRows ?? raw.data ?? [];
@@ -155,7 +194,7 @@ export const fetchDatabasePreview = async (input: {
     ...(finalPage !== undefined ? { page: finalPage } : {}),
     ...(finalPageSize !== undefined ? { pageSize: finalPageSize } : {}),
   };
-  return { ok: res.ok, payload };
+  return { ok: result.ok, payload };
 };
 
 export const executeSqlQuery = async (input: {
@@ -169,96 +208,61 @@ export const executeSqlQuery = async (input: {
   update?: Record<string, unknown>;
   pipeline?: Record<string, unknown>[];
 }): Promise<SqlQueryResult> => {
-  const res = await fetch('/api/databases/execute', {
+  const result = await fetchJsonResult<SqlQueryResult>('/api/databases/execute', {
     method: 'POST',
     headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(input),
   });
-  return safeJson<SqlQueryResult>(res);
+  return result.payload;
 };
 
 export const executeCrudOperation = async (
   input: CrudRequest
 ): Promise<CrudResult> => {
-  const res = await fetch('/api/databases/crud', {
+  const result = await fetchJsonResult<CrudResult>('/api/databases/crud', {
     method: 'POST',
     headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(input),
   });
-  return safeJson<CrudResult>(res);
+  return result.payload;
 };
 
 // ── Control Panel APIs ──
 
-export type MultiSchemaResponse = {
-  provider: 'multi';
-  collections: Array<{
-    name: string;
-    fields: { name: string; type: string }[];
-    provider: 'mongodb' | 'prisma';
-    documentCount?: number | undefined;
-  }>;
-  sources: Partial<Record<'mongodb' | 'prisma', { provider: string; collections: unknown[] }>>;
-};
-
-export type CollectionCopyResult = {
-  name: string;
-  status: 'completed' | 'skipped' | 'failed';
-  sourceCount: number;
-  targetDeleted: number;
-  targetInserted: number;
-  warnings?: string[];
-  error?: string;
-};
-
-export type DatabaseEngineBackupSchedulerTickResponse = {
-  success: boolean;
-  tick: {
-    checkedAt: string;
-    schedulerEnabled: boolean;
-    triggered: Array<{ dbType: 'mongodb' | 'postgresql'; jobId: string }>;
-    skipped: Array<{ dbType: 'mongodb' | 'postgresql'; reason: string }>;
-  };
-  status: DatabaseEngineBackupSchedulerStatusResponse;
-};
-
-export type DatabaseEngineBackupRunNowResponse = {
-  success: boolean;
-  queued: Array<{ dbType: 'mongodb' | 'postgresql'; jobId: string }>;
-};
-
 export const fetchAllCollectionsSchema = async (): Promise<MultiSchemaResponse> => {
-  const res = await fetch('/api/databases/schema?provider=all&includeCounts=true');
-  if (!res.ok) {
-    throw new Error('Failed to fetch collections schema');
-  }
-  return res.json() as Promise<MultiSchemaResponse>;
+  return requireOk(
+    await fetchJsonResult<MultiSchemaResponse>('/api/databases/schema?provider=all&includeCounts=true'),
+    'Failed to fetch collections schema.'
+  );
 };
 
 export const fetchRedisOverview = async (limit = 200): Promise<RedisOverviewResponse> => {
-  const res = await fetch(`/api/databases/redis?limit=${encodeURIComponent(String(limit))}`, {
-    cache: 'no-store',
-  });
-  if (!res.ok) {
-    throw new Error('Failed to fetch Redis overview');
-  }
-  return res.json() as Promise<RedisOverviewResponse>;
+  return requireOk(
+    await fetchJsonResult<RedisOverviewResponse>(
+      `/api/databases/redis?limit=${encodeURIComponent(String(limit))}`,
+      { cache: 'no-store' }
+    ),
+    'Failed to fetch Redis overview.'
+  );
 };
 
 export const fetchDatabaseEngineStatus = async (): Promise<DatabaseEngineStatusResponse> => {
-  const res = await fetch('/api/databases/engine/status', { cache: 'no-store' });
-  if (!res.ok) {
-    throw new Error('Failed to fetch Database Engine status');
-  }
-  return res.json() as Promise<DatabaseEngineStatusResponse>;
+  return requireOk(
+    await fetchJsonResult<DatabaseEngineStatusResponse>('/api/databases/engine/status', {
+      cache: 'no-store',
+    }),
+    'Failed to fetch Database Engine status.'
+  );
 };
 
 export const fetchDatabaseEngineBackupSchedulerStatus = async (): Promise<DatabaseEngineBackupSchedulerStatusResponse> => {
-  const res = await fetch('/api/databases/engine/backup-scheduler/status', { cache: 'no-store' });
-  if (!res.ok) {
-    throw new Error('Failed to fetch Database Engine backup scheduler status');
-  }
-  return res.json() as Promise<DatabaseEngineBackupSchedulerStatusResponse>;
+  return requireOk(
+    await fetchJsonResult<DatabaseEngineBackupSchedulerStatusResponse>(
+      '/api/databases/engine/backup-scheduler/status',
+      { cache: 'no-store' }
+    ),
+    'Failed to fetch Database Engine backup scheduler status.'
+  );
 };
 
 export const fetchDatabaseEngineProviderPreview = async (
@@ -272,118 +276,113 @@ export const fetchDatabaseEngineProviderPreview = async (
   const url = query
     ? `/api/databases/engine/provider-preview?${query}`
     : '/api/databases/engine/provider-preview';
-  const res = await fetch(url, { cache: 'no-store' });
-  if (!res.ok) {
-    throw new Error('Failed to fetch Database Engine provider preview');
-  }
-  return res.json() as Promise<DatabaseEngineProviderPreviewResponse>;
+  return requireOk(
+    await fetchJsonResult<DatabaseEngineProviderPreviewResponse>(url, {
+      cache: 'no-store',
+    }),
+    'Failed to fetch Database Engine provider preview.'
+  );
 };
 
 export const fetchDatabaseEngineOperationsJobs = async (
   limit = 30
 ): Promise<DatabaseEngineOperationsJobsResponse> => {
-  const res = await fetch(
-    `/api/databases/engine/operations/jobs?limit=${encodeURIComponent(String(limit))}`,
-    { cache: 'no-store' }
+  return requireOk(
+    await fetchJsonResult<DatabaseEngineOperationsJobsResponse>(
+      `/api/databases/engine/operations/jobs?limit=${encodeURIComponent(String(limit))}`,
+      { cache: 'no-store' }
+    ),
+    'Failed to fetch Database Engine operations jobs.'
   );
-  if (!res.ok) {
-    throw new Error('Failed to fetch Database Engine operations jobs');
-  }
-  return res.json() as Promise<DatabaseEngineOperationsJobsResponse>;
 };
 
 export const runDatabaseEngineBackupSchedulerTick = async (): Promise<DatabaseEngineBackupSchedulerTickResponse> => {
-  const res = await fetch('/api/databases/engine/backup-scheduler/tick', {
-    method: 'POST',
-    headers: withCsrfHeaders(),
-  });
-  if (!res.ok) {
-    const payload = (await res.json().catch(() => null)) as { error?: string } | null;
-    throw new Error(payload?.error || 'Failed to run Database Engine backup scheduler tick');
-  }
-  return res.json() as Promise<DatabaseEngineBackupSchedulerTickResponse>;
+  return requireOk(
+    await fetchJsonResult<DatabaseEngineBackupSchedulerTickResponse>(
+      '/api/databases/engine/backup-scheduler/tick',
+      {
+        method: 'POST',
+        headers: withCsrfHeaders(),
+      }
+    ),
+    'Failed to run Database Engine backup scheduler tick.'
+  );
 };
 
 export const runDatabaseEngineBackupNow = async (
   dbType: 'mongodb' | 'postgresql' | 'all'
 ): Promise<DatabaseEngineBackupRunNowResponse> => {
-  const res = await fetch('/api/databases/engine/backup-scheduler/run-now', {
-    method: 'POST',
-    headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ dbType }),
-  });
-  if (!res.ok) {
-    const payload = (await res.json().catch(() => null)) as { error?: string } | null;
-    throw new Error(payload?.error || 'Failed to queue manual database backup');
-  }
-  return res.json() as Promise<DatabaseEngineBackupRunNowResponse>;
+  return requireOk(
+    await fetchJsonResult<DatabaseEngineBackupRunNowResponse>(
+      '/api/databases/engine/backup-scheduler/run-now',
+      {
+        method: 'POST',
+        headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ dbType }),
+      }
+    ),
+    'Failed to queue manual database backup.'
+  );
 };
 
 export const cancelDatabaseEngineOperationJob = async (
   jobId: string
 ): Promise<{ success: boolean; job: unknown }> => {
-  const res = await fetch(`/api/databases/engine/operations/jobs/${encodeURIComponent(jobId)}/cancel`, {
-    method: 'POST',
-    headers: withCsrfHeaders(),
-  });
-  if (!res.ok) {
-    const payload = (await res.json().catch(() => null)) as { error?: string } | null;
-    throw new Error(payload?.error || 'Failed to cancel Database Engine operation job');
-  }
-  return res.json() as Promise<{ success: boolean; job: unknown }>;
+  return requireOk(
+    await fetchJsonResult<{ success: boolean; job: unknown }>(
+      `/api/databases/engine/operations/jobs/${encodeURIComponent(jobId)}/cancel`,
+      {
+        method: 'POST',
+        headers: withCsrfHeaders(),
+      }
+    ),
+    'Failed to cancel Database Engine operation job.'
+  );
 };
 
 export const copyCollectionBetweenProviders = async (
   collection: string,
   direction: 'mongo_to_prisma' | 'prisma_to_mongo'
-): Promise<CollectionCopyResult> => {
-  const res = await fetch('/api/databases/copy-collection', {
+): Promise<ApiPayloadResult<CollectionCopyResult>> =>
+  fetchJsonResult<CollectionCopyResult>('/api/databases/copy-collection', {
     method: 'POST',
     headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ collection, direction }),
   });
-  return safeJson<CollectionCopyResult>(res);
-};
 
 export const fetchSupportedCollections = async (): Promise<{ collections: string[] }> => {
-  const res = await fetch('/api/databases/copy-collection');
-  if (!res.ok) {
-    throw new Error('Failed to fetch supported collections');
-  }
-  return res.json() as Promise<{ collections: string[] }>;
+  return requireOk(
+    await fetchJsonResult<{ collections: string[] }>('/api/databases/copy-collection'),
+    'Failed to fetch supported collections.'
+  );
 };
 
-export const createJsonBackup = async (): Promise<DatabaseBackupResponse> => {
-  const res = await fetch('/api/databases/json-backup', {
+export const createJsonBackup = async (): Promise<ApiPayloadResult<DatabaseBackupResponse>> =>
+  fetchJsonResult<DatabaseBackupResponse>('/api/databases/json-backup', {
     method: 'POST',
     headers: withCsrfHeaders(),
   });
-  return safeJson<DatabaseBackupResponse>(res);
-};
 
 export const restoreJsonBackup = async (
   backupName: string
-): Promise<DatabaseRestoreResponse> => {
-  const res = await fetch('/api/databases/json-restore', {
+): Promise<ApiPayloadResult<DatabaseRestoreResponse>> =>
+  fetchJsonResult<DatabaseRestoreResponse>('/api/databases/json-restore', {
     method: 'POST',
     headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ backupName }),
   });
-  return safeJson<DatabaseRestoreResponse>(res);
-};
 
 export const fetchJsonBackups = async (): Promise<{ backups: string[] }> => {
-  const res = await fetch('/api/databases/json-backup');
-  if (!res.ok) {
-    throw new Error('Failed to fetch JSON backups');
-  }
-  return res.json() as Promise<{ backups: string[] }>;
+  return requireOk(
+    await fetchJsonResult<{ backups: string[] }>('/api/databases/json-backup'),
+    'Failed to fetch JSON backups.'
+  );
 };
 
 export const updateCollectionProviderMap = async (
   map: Record<string, string>
 ): Promise<void> => {
-  const res = await fetch('/api/settings', {
+  const result = await fetchJsonResult<unknown>('/api/settings', {
     method: 'PUT',
     headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({
@@ -391,8 +390,10 @@ export const updateCollectionProviderMap = async (
       value: JSON.stringify(map),
     }),
   });
-  if (!res.ok) {
-    throw new Error('Failed to update collection provider map');
+  if (!result.ok) {
+    throw new Error(
+      resolveApiErrorMessage(result.payload, 'Failed to update collection provider map')
+    );
   }
 };
 
@@ -401,16 +402,20 @@ export type DatabaseSyncDirection = 'mongo_to_prisma' | 'prisma_to_mongo';
 export const syncDatabase = async (
   direction: DatabaseSyncDirection
 ): Promise<{ error?: string }> => {
-  const res = await fetch('/api/settings/database/sync', {
-    method: 'POST',
-    headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ direction, manual: true }),
-  });
-  if (!res.ok) {
-    const payload = (await res.json()) as { error?: string };
-    throw new Error(payload?.error || 'Failed to enqueue database sync.');
+  const result = await fetchJsonResult<{ error?: string }>(
+    '/api/settings/database/sync',
+    {
+      method: 'POST',
+      headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ direction, manual: true }),
+    }
+  );
+  if (!result.ok) {
+    throw new Error(
+      resolveApiErrorMessage(result.payload, 'Failed to enqueue database sync.')
+    );
   }
-  return {};
+  return result.payload ?? {};
 };
 
 export type SettingsBackfillResult = {
@@ -424,14 +429,12 @@ export const backfillSettings = async (
   dryRun: boolean,
   limit: number
 ): Promise<SettingsBackfillResult> => {
-  const res = await fetch('/api/settings/migrate/backfill-keys', {
-    method: 'POST',
-    headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ dryRun, limit, manual: true }),
-  });
-  if (!res.ok) {
-    const payload = (await res.json().catch(() => null)) as { error?: string } | null;
-    throw new Error(payload?.error || 'Failed to backfill settings keys.');
-  }
-  return res.json() as Promise<SettingsBackfillResult>;
+  return requireOk(
+    await fetchJsonResult<SettingsBackfillResult>('/api/settings/migrate/backfill-keys', {
+      method: 'POST',
+      headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ dryRun, limit, manual: true }),
+    }),
+    'Failed to backfill settings keys.'
+  );
 };

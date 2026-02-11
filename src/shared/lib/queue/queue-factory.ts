@@ -2,13 +2,29 @@ import 'server-only';
 
 import { Queue, Worker } from 'bullmq';
 
-import { logger } from '@/shared/utils/logger';
-
 import { getRedisConnection } from './redis-connection';
 import { registerQueue } from './registry';
 
 import type { QueueConfig, ManagedQueue, QueueHealthStatus } from './types';
 import type { Job } from 'bullmq';
+
+const logSystemEvent = async (params: { level: string; message: string; source: string; context?: Record<string, unknown> }): Promise<void> => {
+  try {
+    const { logSystemEvent: realLogSystemEvent } = await import('@/features/observability/server');
+    await realLogSystemEvent(params as any);
+  } catch {
+    // ignore
+  }
+};
+
+const captureException = async (error: unknown, context: { service: string; category?: string; context?: Record<string, unknown> }): Promise<void> => {
+  try {
+    const { ErrorSystem } = await import('@/features/observability/server');
+    await ErrorSystem.captureException(error, context as any);
+  } catch {
+    // ignore
+  }
+};
 
 export function createManagedQueue<TJobData>(
   config: QueueConfig<TJobData>,
@@ -64,9 +80,11 @@ export function createManagedQueue<TJobData>(
     if (workerStarted) return;
     const connection = getRedisConnection();
     if (!connection) {
-      logger.info(
-        `[queue-factory:${config.name}] Redis not available, using inline processing mode`,
-      );
+      void logSystemEvent({
+        level: 'info',
+        message: `[queue-factory:${config.name}] Redis not available, using inline processing mode`,
+        source: 'queue-factory'
+      });
       return;
     }
     workerStarted = true;
@@ -101,13 +119,18 @@ export function createManagedQueue<TJobData>(
     }
 
     worker.on('error', (err: Error) => {
-      logger.error(`[queue-factory:${config.name}] Worker error`, err);
+      void captureException(err, {
+        service: `queue-worker:${config.name}`,
+        category: 'SYSTEM',
+      });
     });
 
-    logger.info(
-      `[queue-factory:${config.name}] BullMQ worker started (concurrency: ${config.concurrency})`,
-      { concurrency: config.concurrency },
-    );
+    void logSystemEvent({
+      level: 'info',
+      message: `[queue-factory:${config.name}] BullMQ worker started (concurrency: ${config.concurrency})`,
+      source: 'queue-factory',
+      context: { concurrency: config.concurrency }
+    });
   };
 
   const stopWorker = async (): Promise<void> => {
@@ -120,7 +143,11 @@ export function createManagedQueue<TJobData>(
       queue = null;
     }
     workerStarted = false;
-    logger.info(`[queue-factory:${config.name}] Worker stopped`);
+    void logSystemEvent({
+      level: 'info',
+      message: `[queue-factory:${config.name}] Worker stopped`,
+      source: 'queue-factory'
+    });
   };
 
   const getHealthStatus = async (): Promise<QueueHealthStatus> => {

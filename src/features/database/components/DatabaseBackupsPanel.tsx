@@ -10,6 +10,7 @@ import {
   DEFAULT_DATABASE_ENGINE_OPERATION_CONTROLS,
 } from '@/shared/lib/db/database-engine-constants';
 import { normalizeDatabaseEngineOperationControls } from '@/shared/lib/db/database-engine-operation-controls';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   Button,
   ConfirmDialog,
@@ -34,6 +35,7 @@ import {
 import type { DatabaseInfo, DatabaseType } from '../types';
 
 export function DatabaseBackupsPanel(): React.JSX.Element {
+  const dbKeys = QUERY_KEYS.system.databases;
   const [activeTab, setActiveTab] = useState<DatabaseType>('postgresql');
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [logModalContent, setLogModalContent] = useState('');
@@ -71,8 +73,8 @@ export function DatabaseBackupsPanel(): React.JSX.Element {
   const closeLogModal = useCallback((): void => {
     setIsLogModalOpen(false);
     setLogModalContent('');
-    void queryClient.invalidateQueries({ queryKey: ['database-backups', activeTab] });
-  }, [queryClient, activeTab]);
+    void queryClient.invalidateQueries({ queryKey: dbKeys.backups(activeTab) });
+  }, [queryClient, dbKeys, activeTab]);
 
   const handleRestoreRequest = useCallback((backup: DatabaseInfo): void => {
     setSelectedBackupForRestore(backup.name);

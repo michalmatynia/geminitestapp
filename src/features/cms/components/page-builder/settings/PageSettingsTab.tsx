@@ -1,5 +1,6 @@
 'use client';
 
+import { useMutation } from '@tanstack/react-query';
 import { Globe, FileText, Pencil, Check, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -43,7 +44,6 @@ function PageSettingsTab(): React.ReactNode {
   const [activeTab, setActiveTab] = useState<'page' | 'seo' | 'ai'>('page');
   const [pageAiOutput, setPageAiOutput] = useState<string>('');
   const [pageAiError, setPageAiError] = useState<string | null>(null);
-  const [pageAiLoading, setPageAiLoading] = useState<boolean>(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const pageAiAbortRef = useRef<AbortController | null>(null);
   const nameInputRef = useRef<HTMLInputElement | null>(null);
@@ -270,30 +270,13 @@ function PageSettingsTab(): React.ReactNode {
     return `${resolved}\n\nPage context:\n${pageContext}\n\nAvailable templates:\n${templateCatalog}`;
   }, [pageAiPrompt, pageAiTask, pageContext, templateCatalog]);
 
-  const handleGeneratePageAi = useCallback(async (): Promise<void> => {
-    if (pageAiLoading) return;
-    setPageAiError(null);
-    setPageAiOutput('');
-    setPageAiLoading(true);
-    try {
-      const prompt = buildPageAiPrompt();
-      if (!prompt.trim()) throw new Error('Prompt is empty.');
-
-      const provider = pageAiProvider;
-      const modelId = provider === 'model' ? (pageAiModelId.trim() || modelOptions[0] || '') : '';
-      const agentId = provider === 'agent' ? pageAiAgentId.trim() : '';
-      if (provider === 'model' && !modelId) throw new Error('Select an AI model first.');
-      if (provider === 'agent' && !agentId) throw new Error('Select a Deepthinking agent first.');
-
-      const messages: ChatMessage[] = [
-        {
-          role: 'system',
-          content:
-            'You are a CMS page assistant. Return only JSON with the requested fields. No markdown or explanations.',
-        },
-        { role: 'user', content: prompt },
-      ];
-
+  const generatePageAiMutation = useMutation({
+    mutationFn: async (payload: {
+      provider: 'model' | 'agent';
+      modelId: string;
+      agentId: string;
+      messages: ChatMessage[];
+    }): Promise<string> => {
       const controller = new AbortController();
       pageAiAbortRef.current = controller;
 
@@ -301,7 +284,7 @@ function PageSettingsTab(): React.ReactNode {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,
-        body: JSON.stringify({ provider, modelId, agentId, messages }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok || !res.body) {
         const data = (await res.json().catch(() => null)) as { error?: string } | null;
@@ -318,19 +301,19 @@ function PageSettingsTab(): React.ReactNode {
         const lines = raw.split('\n').map((line: string) => line.trim());
         const dataLine = lines.find((line: string) => line.startsWith('data:'));
         if (!dataLine) return;
-        const payload = JSON.parse(dataLine.replace(/^data:\s*/, '')) as {
+        const responsePayload = JSON.parse(dataLine.replace(/^data:\s*/, '')) as {
           delta?: string;
           done?: boolean;
           error?: string;
         };
-        if (payload.error) {
-          throw new Error(payload.error);
+        if (responsePayload.error) {
+          throw new Error(responsePayload.error);
         }
-        if (payload.delta) {
-          accumulated += payload.delta;
+        if (responsePayload.delta) {
+          accumulated += responsePayload.delta;
           setPageAiOutput(accumulated);
         }
-        if (payload.done) {
+        if (responsePayload.done) {
           doneSignal = true;
         }
       };
@@ -358,6 +341,41 @@ function PageSettingsTab(): React.ReactNode {
         }
       }
 
+      pageAiAbortRef.current = null;
+      return accumulated;
+    },
+  });
+
+  const handleGeneratePageAi = useCallback(async (): Promise<void> => {
+    if (generatePageAiMutation.isPending) return;
+    setPageAiError(null);
+    setPageAiOutput('');
+    try {
+      const prompt = buildPageAiPrompt();
+      if (!prompt.trim()) throw new Error('Prompt is empty.');
+
+      const provider = pageAiProvider;
+      const modelId = provider === 'model' ? (pageAiModelId.trim() || modelOptions[0] || '') : '';
+      const agentId = provider === 'agent' ? pageAiAgentId.trim() : '';
+      if (provider === 'model' && !modelId) throw new Error('Select an AI model first.');
+      if (provider === 'agent' && !agentId) throw new Error('Select a Deepthinking agent first.');
+
+      const messages: ChatMessage[] = [
+        {
+          role: 'system',
+          content:
+            'You are a CMS page assistant. Return only JSON with the requested fields. No markdown or explanations.',
+        },
+        { role: 'user', content: prompt },
+      ];
+
+      const accumulated = await generatePageAiMutation.mutateAsync({
+        provider,
+        modelId,
+        agentId,
+        messages,
+      });
+
       const parsed = extractPageAiJson(accumulated);
       if (!parsed) throw new Error('AI response did not include JSON.');
       setPageAiOutput(JSON.stringify(parsed, null, 2));
@@ -372,11 +390,10 @@ function PageSettingsTab(): React.ReactNode {
         toast(message, { variant: 'error' });
       }
     } finally {
-      setPageAiLoading(false);
       pageAiAbortRef.current = null;
     }
   }, [
-    pageAiLoading,
+    generatePageAiMutation,
     buildPageAiPrompt,
     pageAiProvider,
     pageAiModelId,
@@ -849,11 +866,11 @@ function PageSettingsTab(): React.ReactNode {
               type='button'
               size='sm'
               onClick={(): void => void handleGeneratePageAi()}
-              disabled={pageAiLoading}
+              disabled={generatePageAiMutation.isPending}
             >
-              {pageAiLoading ? 'Generating...' : 'Generate'}
+              {generatePageAiMutation.isPending ? 'Generating...' : 'Generate'}
             </Button>
-            {pageAiLoading && (
+            {generatePageAiMutation.isPending && (
               <Button
                 type='button'
                 size='sm'

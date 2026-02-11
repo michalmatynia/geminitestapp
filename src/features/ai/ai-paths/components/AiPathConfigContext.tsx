@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useMemo } from 'react';
 
+import { logClientError } from '@/features/observability';
 import type {
   AiNode,
   DbNodePreset,
@@ -177,7 +178,9 @@ export function useAiPathConfig(): AiPathConfigData {
   const context = useContext(AiPathConfigContext);
   if (!context) {
     if (process.env['NODE_ENV'] !== 'production') {
-      console.warn('[ai-paths] Missing AiPathConfigProvider. Using fallback config context.');
+      logClientError(new Error('Missing AiPathConfigProvider'), {
+        context: { source: 'AiPathConfigContext', message: 'Using fallback config context.' },
+      });
     }
     return fallbackConfigValue;
   }

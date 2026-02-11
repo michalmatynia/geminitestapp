@@ -18,6 +18,7 @@ import {
   GraphExecutionCancelled,
 } from '@/features/ai/ai-paths/lib';
 import { updateAiPathsSetting } from '@/features/ai/ai-paths/lib/settings-store-client';
+import { logClientError } from '@/features/observability';
 
 import {
   LOCAL_RUN_STEP_CHUNK,
@@ -46,7 +47,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
           [pathId]: snapshot,
         }));
       } catch (error) {
-        console.warn('[AI Paths] Failed to persist debug snapshot.', error);
+        logClientError(error, { context: { source: 'useAiPathsLocalExecution', action: 'persistDebugSnapshot', pathId } });
       }
     },
     [args]

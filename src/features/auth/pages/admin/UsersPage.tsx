@@ -1,5 +1,6 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import React, { useState, useEffect, useMemo } from 'react';
 
 import { useAuth } from '@/features/auth/context/AuthContext';
@@ -48,10 +49,10 @@ export default function AuthUsersPage(): React.JSX.Element {
     refetchSettings,
   } = useAuth();
 
-  const [users, setUsers] = useState<AuthUserSummary[]>([]);
   const [localUserRoles, setLocalUserRoles] = useState<AuthUserRoleMap>({});
   const [search, setSearch] = useState('');
   const [dirtyRoles, setDirtyRoles] = useState(false);
+  const queryClient = useQueryClient();
 
   const [editingUser, setEditingUser] = useState<AuthUserSummary | null>(null);
   const [userToDelete, setUserToDelete] = useState<AuthUserSummary | null>(null);
@@ -83,6 +84,10 @@ export default function AuthUsersPage(): React.JSX.Element {
   const loading = (canReadUsers && authUsersQuery.isPending) || authLoading;
   const loadingSecurity = canManageSecurity && userSecurityQuery.isPending;
   const provider = authUsersQuery.data?.provider ?? 'mongodb';
+  const users = useMemo(
+    (): AuthUserSummary[] => authUsersQuery.data?.users ?? [],
+    [authUsersQuery.data]
+  );
   const currentSessionUserId = useMemo(() => getSessionUserId(session), [session]);
 
   useEffect(() => {
@@ -95,15 +100,6 @@ export default function AuthUsersPage(): React.JSX.Element {
     if (!userSecurityQuery.error || !canManageSecurity) return;
     logClientError(userSecurityQuery.error, { context: { source: 'AuthUsersPage', action: 'loadSecurityProfile', userId: editingUser?.id } });
   }, [userSecurityQuery.error, editingUser?.id, canManageSecurity]);
-
-  useEffect(() => {
-    if (!canReadUsers) {
-      setUsers([]);
-      return;
-    }
-    if (!authUsersQuery.data) return;
-    setUsers(authUsersQuery.data.users ?? []);
-  }, [authUsersQuery.data, authUsersQuery.dataUpdatedAt, canReadUsers]);
 
   useEffect(() => {
     setLocalUserRoles(userRoles);
@@ -184,10 +180,10 @@ export default function AuthUsersPage(): React.JSX.Element {
       if (editVerified !== Boolean(editingUser.emailVerified)) {
         payload.emailVerified = editVerified;
       }
-      const updated = (await updateAuthUserMutation.mutateAsync({
+      await updateAuthUserMutation.mutateAsync({
         userId: editingUser.id,
         input: payload,
-      }));
+      });
       const securityPayload = {
         disabled: editDisabled,
         banned: editBanned,
@@ -202,9 +198,7 @@ export default function AuthUsersPage(): React.JSX.Element {
           input: securityPayload,
         });
       }
-      setUsers((prev: AuthUserSummary[]) =>
-        prev.map((user: AuthUserSummary) => (user.id === updated.id ? updated : user))
-      );
+      await queryClient.invalidateQueries({ queryKey: ['auth', 'users'] });
       toast('User updated', { variant: 'success' });
       setEditingUser(null);
     } catch (error) {
@@ -236,9 +230,7 @@ export default function AuthUsersPage(): React.JSX.Element {
     }
     try {
       await deleteAuthUserMutation.mutateAsync({ userId: userToDelete.id });
-      setUsers((prev: AuthUserSummary[]) =>
-        prev.filter((user: AuthUserSummary) => user.id !== userToDelete.id)
-      );
+      await queryClient.invalidateQueries({ queryKey: ['auth', 'users'] });
       if (localUserRoles[userToDelete.id]) {
         const nextRoles: AuthUserRoleMap = { ...localUserRoles };
         delete nextRoles[userToDelete.id];

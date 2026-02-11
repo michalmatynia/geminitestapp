@@ -1,50 +1,16 @@
-// DTO type exports
-export type {
-  DatabaseInfoDto,
-  DatabaseBackupDto,
-  DatabaseRestoreDto,
-  CreateBackupDto,
-  DatabaseSchemaDto,
-  DatabaseTableDto,
-  DatabaseColumnDto,
-  DatabaseIndexDto,
-  DatabaseConstraintDto
-} from '@/shared/dtos';
+import type {
+  DatabaseBackupFileDto,
+  DatabaseBackupOperationResponseDto,
+  DatabaseRestoreOperationResponseDto,
+} from '@/shared/dtos/database';
 
 export type DatabaseType = 'postgresql' | 'mongodb';
 export type DatabasePreviewMode = 'backup' | 'current';
 
-// Integration domain record types
-export type DatabaseInfo = {
-  name: string;
-  size: string;
-  created: string;
-  createdAt: string;
-  lastModified: string;
-  lastModifiedAt: string;
-  lastRestored?: string | undefined;
-};
-
-export type DatabaseBackupResponse = {
-  success?: boolean;
-  jobId?: string;
-  message?: string;
-  backupName?: string;
-  log?: string;
-  warning?: string;
-  error?: string;
-  errorId?: string;
-  stage?: string;
-};
-
-export type DatabaseRestoreResponse = {
-  message?: string;
-  log?: string;
-  error?: string;
-  errorId?: string;
-  stage?: string;
-  backupName?: string;
-};
+// Database transport aliases mapped to shared DTOs.
+export type DatabaseInfo = DatabaseBackupFileDto;
+export type DatabaseBackupResponse = DatabaseBackupOperationResponseDto;
+export type DatabaseRestoreResponse = DatabaseRestoreOperationResponseDto;
 
 export type DatabasePreviewGroup = { type: string; objects: string[] };
 export type DatabasePreviewTable = { name: string; rowEstimate: number };

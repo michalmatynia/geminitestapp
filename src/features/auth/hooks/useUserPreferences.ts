@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from '@tanstack/react-query';
 
 import { logClientError } from '@/features/observability';
-import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
+import { api } from '@/shared/lib/api-client';
 import {
   normalizeUserPreferencesResponse,
   normalizeUserPreferencesUpdatePayload,
@@ -42,17 +42,15 @@ export function useUserPreferences(): UseQueryResult<UserPreferences, Error> {
   return useQuery({
     queryKey: ['user-preferences'],
     queryFn: async (): Promise<UserPreferences> => {
-      const res = await fetch('/api/user/preferences', {
-        credentials: 'include',
-      });
-      if (!res.ok) {
-        logClientError(new Error(`[user-preferences] Failed to load user preferences: ${res.status}`), {
-          context: { status: res.status, source: 'useUserPreferences' },
+      try {
+        const payload = await api.get<unknown>('/api/user/preferences', { logError: false });
+        return normalizeUserPreferencesResponse(payload) as UserPreferences;
+      } catch (error) {
+        logClientError(error, {
+          context: { source: 'useUserPreferences', action: 'loadUserPreferences' },
         });
         return {};
       }
-      const payload: unknown = await res.json();
-      return normalizeUserPreferencesResponse(payload) as UserPreferences;
     },
     staleTime: USER_PREFERENCES_STALE_MS,
     retry: 1,
@@ -75,14 +73,8 @@ export function useUpdateUserPreferencesMutation(): UseMutationResult<UserPrefer
       if (Object.keys(changedPayload).length === 0) {
         return (current ?? {});
       }
-      const res = await fetch('/api/user/preferences', {
-        method: 'PATCH',
-        headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-        credentials: 'include',
-        body: JSON.stringify(changedPayload),
-      });
-      if (!res.ok) throw new Error('Failed to update user preferences.');
-      return normalizeUserPreferencesResponse(await res.json()) as UserPreferences;
+      const updated = await api.patch<unknown>('/api/user/preferences', changedPayload);
+      return normalizeUserPreferencesResponse(updated) as UserPreferences;
     },
     onSuccess: (data: UserPreferences) => {
       queryClient.setQueryData(

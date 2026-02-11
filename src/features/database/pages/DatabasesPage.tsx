@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useState, useCallback } from 'react';
 
 import { logClientError } from '@/features/observability';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   DataTable,
   Button,
@@ -31,6 +32,7 @@ import type { DatabaseInfo, DatabaseType } from '../types';
 
 
 function DatabasesContent(): React.JSX.Element {
+  const dbKeys = QUERY_KEYS.system.databases;
   const { dbType: activeTab, setDbType: setActiveTab } = useDatabase();
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [logModalContent, setLogModalContent] = useState('');
@@ -57,8 +59,8 @@ function DatabasesContent(): React.JSX.Element {
   const closeLogModal = useCallback((): void => {
     setIsLogModalOpen(false);
     setLogModalContent('');
-    void queryClient.invalidateQueries({ queryKey: ['database-backups', activeTab] });
-  }, [queryClient, activeTab]);
+    void queryClient.invalidateQueries({ queryKey: dbKeys.backups(activeTab) });
+  }, [queryClient, dbKeys, activeTab]);
 
 
   const handleRestoreRequest = useCallback((backup: DatabaseInfo): void => {

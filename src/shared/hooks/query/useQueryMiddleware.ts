@@ -12,6 +12,64 @@ interface QueryMiddleware {
   onQueryUpdate?: (query: Query) => void;
 }
 
+const parseEnvNumber = (value: string | undefined, fallback: number): number => {
+  const parsed = Number.parseInt(value ?? "", 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+const isEnabled = (value: string | undefined, fallback: boolean): boolean => {
+  if (!value) return fallback;
+  const normalized = value.trim().toLowerCase();
+  return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
+};
+
+const SLOW_QUERY_THRESHOLD_MS = parseEnvNumber(
+  process.env["NEXT_PUBLIC_QUERY_SLOW_THRESHOLD_MS"],
+  process.env["NODE_ENV"] === "production" ? 2000 : 5000
+);
+const SLOW_QUERY_COOLDOWN_MS = parseEnvNumber(
+  process.env["NEXT_PUBLIC_QUERY_SLOW_COOLDOWN_MS"],
+  60_000
+);
+const QUERY_WARNING_COOLDOWN_MS = parseEnvNumber(
+  process.env["NEXT_PUBLIC_QUERY_WARNING_COOLDOWN_MS"],
+  60_000
+);
+const REPORT_SLOW_QUERIES = isEnabled(
+  process.env["NEXT_PUBLIC_QUERY_SLOW_REPORTING_ENABLED"],
+  process.env["NODE_ENV"] === "production"
+);
+const REPORT_QUERY_WARNINGS = isEnabled(
+  process.env["NEXT_PUBLIC_QUERY_WARNING_REPORTING_ENABLED"],
+  process.env["NODE_ENV"] === "production"
+);
+
+const queryStartTimes = new WeakMap<Query, number>();
+const slowQueryLastReportedAt = new Map<string, number>();
+const queryWarningLastReportedAt = new Map<string, number>();
+
+const getQueryKeyLabel = (query: Query): string => {
+  try {
+    return JSON.stringify(query.queryKey);
+  } catch {
+    return String((query as { queryHash?: string }).queryHash ?? "unknown-query");
+  }
+};
+
+const shouldReportWithCooldown = (
+  bucket: Map<string, number>,
+  key: string,
+  cooldownMs: number
+): boolean => {
+  const now = Date.now();
+  const lastReportedAt = bucket.get(key);
+  if (typeof lastReportedAt === "number" && now - lastReportedAt < cooldownMs) {
+    return false;
+  }
+  bucket.set(key, now);
+  return true;
+};
+
 // Hook for query middleware system
 export function useQueryMiddleware(middlewares: QueryMiddleware[]): void {
   const queryClient = useQueryClient();
@@ -69,23 +127,32 @@ export const loggingMiddleware: QueryMiddleware = {
 export const performanceMiddleware: QueryMiddleware = {
   name: 'performance',
   onQueryStart: (query: Query): void => {
-    if (typeof (query as any)._startTime !== 'number') {
-      (query as any)._startTime = performance.now();
+    if (!queryStartTimes.has(query)) {
+      queryStartTimes.set(query, performance.now());
     }
   },
   onQuerySuccess: (query: Query): void => {
-    const startTime = (query as any)._startTime;
+    const startTime = queryStartTimes.get(query);
     if (typeof startTime !== 'number') return;
     const duration = performance.now() - startTime;
-    delete (query as any)._startTime;
-    if (duration > 1000) { // Log slow queries
-      logClientError(new Error(`Slow query: ${JSON.stringify(query.queryKey)}`), { context: { source: 'PerformanceMiddleware', queryKey: query.queryKey, durationMs: duration, level: 'warn' } });
-    }
+    queryStartTimes.delete(query);
+    if (!REPORT_SLOW_QUERIES) return;
+    if (duration <= SLOW_QUERY_THRESHOLD_MS) return;
+    const queryLabel = getQueryKeyLabel(query);
+    if (!shouldReportWithCooldown(slowQueryLastReportedAt, queryLabel, SLOW_QUERY_COOLDOWN_MS)) return;
+    logClientError(`Slow query: ${queryLabel}`, {
+      context: {
+        source: 'PerformanceMiddleware',
+        queryKey: query.queryKey,
+        durationMs: duration,
+        thresholdMs: SLOW_QUERY_THRESHOLD_MS,
+        cooldownMs: SLOW_QUERY_COOLDOWN_MS,
+        level: 'warn',
+      },
+    });
   },
   onQueryError: (query: Query): void => {
-    if (typeof (query as any)._startTime === 'number') {
-      delete (query as any)._startTime;
-    }
+    queryStartTimes.delete(query);
   },
 };
 
@@ -129,7 +196,18 @@ export const validationMiddleware: QueryMiddleware = {
   onQuerySuccess: (query: Query, data: unknown): void => {
     // Basic data validation
     if (data === null || data === undefined) {
-      logClientError(new Error(`Query returned null/undefined: ${JSON.stringify(query.queryKey)}`), { context: { source: 'ValidationMiddleware', queryKey: query.queryKey, level: 'warn' } });
+      if (!REPORT_QUERY_WARNINGS) return;
+      const queryLabel = getQueryKeyLabel(query);
+      const warningKey = `validation:null-data:${queryLabel}`;
+      if (!shouldReportWithCooldown(queryWarningLastReportedAt, warningKey, QUERY_WARNING_COOLDOWN_MS)) return;
+      logClientError(`Query returned null/undefined: ${queryLabel}`, {
+        context: {
+          source: 'ValidationMiddleware',
+          queryKey: query.queryKey,
+          cooldownMs: QUERY_WARNING_COOLDOWN_MS,
+          level: 'warn',
+        },
+      });
     }
     
 
@@ -141,11 +219,24 @@ export const securityMiddleware: QueryMiddleware = {
   name: 'security',
   onQueryStart: (query: Query): void => {
     // Check for sensitive data in query keys
-    const queryKeyStr = JSON.stringify(query.queryKey).toLowerCase();
+    if (!REPORT_QUERY_WARNINGS) return;
+    const queryLabel = getQueryKeyLabel(query);
+    const queryKeyStr = queryLabel.toLowerCase();
     const sensitivePatterns = ['password', 'token', 'secret', 'key'];
-    
-    if (sensitivePatterns.some((pattern: string) => queryKeyStr.includes(pattern))) {
-      logClientError(new Error(`Potential sensitive data in query key: ${JSON.stringify(query.queryKey)}`), { context: { source: 'SecurityMiddleware', queryKey: query.queryKey, level: 'warn' } });
+
+    const matchedPattern = sensitivePatterns.find((pattern: string) => queryKeyStr.includes(pattern));
+    if (matchedPattern) {
+      const warningKey = `security:sensitive-query-key:${queryLabel}`;
+      if (!shouldReportWithCooldown(queryWarningLastReportedAt, warningKey, QUERY_WARNING_COOLDOWN_MS)) return;
+      logClientError(`Potential sensitive data in query key: ${queryLabel}`, {
+        context: {
+          source: 'SecurityMiddleware',
+          queryKey: query.queryKey,
+          matchedPattern,
+          cooldownMs: QUERY_WARNING_COOLDOWN_MS,
+          level: 'warn',
+        },
+      });
     }
   },
   onQuerySuccess: (_query: Query, data: unknown): void => {

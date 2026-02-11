@@ -2,10 +2,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useCallback, useRef, useEffect } from 'react';
 
 import { logClientError } from '@/features/observability';
-import { logger } from '@/shared/utils/logger';
 import type { ProductWithImages, ProductImageRecord } from '@/features/products/types';
 import type { ProductImageSlot } from '@/features/products/types/products-ui';
+import { api } from '@/shared/lib/api-client';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
+import { logger } from '@/shared/utils/logger';
 
 const TOTAL_IMAGE_SLOTS = 15;
 
@@ -108,10 +109,7 @@ export function useProductImages(
   const queryClient = useQueryClient();
   const disconnectImageMutation = useMutation({
     mutationFn: async ({ productId, imageFileId }: { productId: string; imageFileId: string }): Promise<void> => {
-      const res = await fetch(`/api/products/${productId}/images/${imageFileId}`, {
-        method: 'DELETE',
-      });
-      if (!res.ok) throw new Error('Failed to disconnect image');
+      await api.delete<unknown>(`/api/products/${productId}/images/${imageFileId}`);
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['products'] });

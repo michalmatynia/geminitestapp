@@ -10,6 +10,10 @@ import {
   aiTriggerButtonReorderSchema,
   aiTriggerButtonUpdateSchema,
 } from '@/features/ai/ai-paths/validations/trigger-buttons';
+import type {
+  DatabaseBrowseDto,
+  SchemaResponsePayloadDto,
+} from '@/shared/dtos/database';
 import type { AgentTeachingAgentRecord, AgentTeachingChatSource } from '@/shared/types/domain/agent-teaching';
 import type { AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
 import type { ChatMessage } from '@/shared/types/domain/chatbot';
@@ -74,28 +78,8 @@ export type EntityUpdatePayload = {
   mode?: 'replace' | 'append';
 };
 
-export type SchemaProvider = 'prisma' | 'mongodb';
-export type SchemaCollection = {
-  name: string;
-  fields?: Array<{ name: string; type: string }>;
-  relations?: string[];
-  provider?: SchemaProvider | 'multi';
-};
-export type SchemaResponse =
-  | {
-    provider: SchemaProvider;
-    collections: SchemaCollection[];
-  }
-  | {
-    provider: 'multi';
-    collections: SchemaCollection[];
-    sources?: Partial<Record<SchemaProvider, { provider: SchemaProvider; collections: SchemaCollection[] }>>;
-  };
-
-export type BrowseResponse = {
-  documents: Record<string, unknown>[];
-  total: number;
-};
+export type SchemaResponse = SchemaResponsePayloadDto;
+export type BrowseResponse = DatabaseBrowseDto;
 
 export type SettingRecord = {
   key: string;

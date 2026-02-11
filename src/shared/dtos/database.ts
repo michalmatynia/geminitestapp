@@ -1,70 +1,3 @@
-import { DtoBase } from '../types/base';
-
-// Database DTOs
-export interface DatabaseInfoDto {
-  name: string;
-  type: 'postgresql' | 'mongodb';
-  size: string;
-  tables: number;
-  lastBackup: string | null;
-  status: 'healthy' | 'warning' | 'error';
-}
-
-export interface DatabaseBackupDto extends DtoBase {
-  name: string;
-  type: 'postgresql' | 'mongodb';
-  size: string;
-  path: string;
-  status: 'completed' | 'failed' | 'in_progress';
-}
-
-export interface DatabaseRestoreDto {
-  backupId: string;
-  targetDatabase: string;
-  options?: Record<string, unknown>;
-}
-
-export interface CreateBackupDto {
-  name?: string;
-  type: 'postgresql' | 'mongodb';
-  options?: Record<string, unknown>;
-}
-
-export interface DatabaseSchemaDto {
-  tables: DatabaseTableDto[];
-  indexes: DatabaseIndexDto[];
-  constraints: DatabaseConstraintDto[];
-}
-
-export interface DatabaseTableDto {
-  name: string;
-  columns: DatabaseColumnDto[];
-  rowCount: number;
-  size: string;
-}
-
-export interface DatabaseColumnDto {
-  name: string;
-  type: string;
-  nullable: boolean;
-  defaultValue: string | null;
-  isPrimaryKey: boolean;
-}
-
-export interface DatabaseIndexDto {
-  name: string;
-  table: string;
-  columns: string[];
-  unique: boolean;
-}
-
-export interface DatabaseConstraintDto {
-  name: string;
-  table: string;
-  type: 'primary_key' | 'foreign_key' | 'unique' | 'check';
-  definition: string;
-}
-
 // Database Schema Introspection DTOs
 export interface FieldInfoDto {
   name: string;
@@ -130,6 +63,38 @@ export interface BrowseResponseDto {
   total: number;
   items: Record<string, unknown>[];
   fields: string[];
+}
+
+// Database backup/restore DTOs used by API routes and client features.
+export interface DatabaseBackupFileDto {
+  name: string;
+  size: string;
+  created: string;
+  createdAt: string;
+  lastModified: string;
+  lastModifiedAt: string;
+  lastRestored?: string | undefined;
+}
+
+export interface DatabaseBackupOperationResponseDto {
+  success?: boolean;
+  jobId?: string;
+  message?: string;
+  backupName?: string;
+  log?: string;
+  warning?: string;
+  error?: string;
+  errorId?: string;
+  stage?: string;
+}
+
+export interface DatabaseRestoreOperationResponseDto {
+  message?: string;
+  log?: string;
+  error?: string;
+  errorId?: string;
+  stage?: string;
+  backupName?: string;
 }
 
 export interface RedisNamespaceStatsDto {
@@ -301,4 +266,32 @@ export interface DatabaseEngineOperationsJobsDto {
     timeSinceLastPoll: number;
   };
   jobs: DatabaseEngineOperationJobDto[];
+}
+
+export interface DatabaseCollectionCopyResultDto {
+  name: string;
+  status: 'completed' | 'skipped' | 'failed';
+  sourceCount: number;
+  targetDeleted: number;
+  targetInserted: number;
+  warnings?: string[];
+  error?: string;
+}
+
+export interface DatabaseEngineBackupSchedulerTickResultDto {
+  checkedAt: string;
+  schedulerEnabled: boolean;
+  triggered: Array<{ dbType: 'mongodb' | 'postgresql'; jobId: string }>;
+  skipped: Array<{ dbType: 'mongodb' | 'postgresql'; reason: string }>;
+}
+
+export interface DatabaseEngineBackupSchedulerTickResponseDto {
+  success: boolean;
+  tick: DatabaseEngineBackupSchedulerTickResultDto;
+  status: DatabaseEngineBackupSchedulerStatusDto;
+}
+
+export interface DatabaseEngineBackupRunNowResponseDto {
+  success: boolean;
+  queued: Array<{ dbType: 'mongodb' | 'postgresql'; jobId: string }>;
 }

@@ -211,14 +211,19 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
       let result = '';
       let attempts = 0;
       while (attempts < 30) {
-        const statusRes = await fetch(`/api/products/ai-jobs/${directJobId}`);
-        const statusData = await statusRes.json();
-        if (statusData.job?.status === 'completed') {
-          result = statusData.job.result;
+        const statusRes = await aiJobsApi.poll(directJobId);
+        if (!statusRes.ok) {
+          throw new Error(statusRes.error || 'Failed to fetch AI job status.');
+        }
+        if (statusRes.data.status === 'completed') {
+          result =
+            typeof statusRes.data.result === 'string'
+              ? statusRes.data.result
+              : JSON.stringify(statusRes.data.result ?? '');
           break;
         }
-        if (statusData.job?.status === 'failed') {
-          throw new Error(statusData.job.errorMessage || 'AI job failed.');
+        if (statusRes.data.status === 'failed') {
+          throw new Error(statusRes.data.error || 'AI job failed.');
         }
         await new Promise((r) => setTimeout(r, 2000));
         attempts++;

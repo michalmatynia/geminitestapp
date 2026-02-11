@@ -11,6 +11,7 @@ import type {
   SystemLogRecord,
 } from '@/shared/types/domain/system-logs';
 
+import { ErrorSystem } from '../services/error-system';
 import { withTransientRecovery } from './transient-recovery/with-recovery';
 
 const SETTINGS_COLLECTION = 'settings';
@@ -217,7 +218,8 @@ export const notifyCriticalError = async (
       },
     );
     if (!res.ok) {
-      console.error('[critical-error-notifier] Webhook failed', {
+      void ErrorSystem.logWarning('[critical-error-notifier] Webhook failed', {
+        service: 'critical-error-notifier',
         status: res.status,
         statusText: res.statusText,
       });
@@ -225,7 +227,10 @@ export const notifyCriticalError = async (
     }
     return { delivered: true, throttled: false };
   } catch (error) {
-    console.error('[critical-error-notifier] Webhook error', error);
+    void ErrorSystem.captureException(error, {
+      service: 'critical-error-notifier',
+      action: 'notifyCriticalError'
+    });
     return { delivered: false, throttled: false };
   }
 };

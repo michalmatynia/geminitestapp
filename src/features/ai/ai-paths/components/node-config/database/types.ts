@@ -1,17 +1,35 @@
-export type FieldSchema = { name: string; type: string };
+import type {
+  CollectionSchemaDto,
+  FieldInfoDto,
+  SchemaProviderDto,
+} from '@/shared/dtos/database';
+import type { DbSchemaSnapshot } from '@/shared/types/domain/ai-paths';
 
-export type CollectionSchema = {
-  name: string;
-  fields: FieldSchema[];
-  relations?: string[];
-  provider?: 'mongodb' | 'prisma';
+export type FieldSchema = Pick<FieldInfoDto, 'name' | 'type'>;
+
+export type CollectionSchema = CollectionSchemaDto & {
+  provider?: SchemaProviderDto;
 };
 
-export type SchemaData = {
-  provider: 'mongodb' | 'prisma' | 'multi';
+type SchemaSnapshotMeta = Omit<DbSchemaSnapshot, 'provider' | 'collections' | 'sources'>;
+
+type SchemaSource = {
+  provider: SchemaProviderDto;
   collections: CollectionSchema[];
-  sources?: Partial<Record<'mongodb' | 'prisma', { provider: 'mongodb' | 'prisma'; collections: CollectionSchema[] }>>;
 };
+
+type SingleProviderSchemaData = SchemaSnapshotMeta & {
+  provider: SchemaProviderDto;
+  collections: CollectionSchema[];
+};
+
+type MultiProviderSchemaData = SchemaSnapshotMeta & {
+  provider: 'multi';
+  collections: CollectionSchema[];
+  sources?: Partial<Record<SchemaProviderDto, SchemaSource>>;
+};
+
+export type SchemaData = SingleProviderSchemaData | MultiProviderSchemaData;
 
 export type AiQuery = {
   id: string;

@@ -1,3 +1,4 @@
+import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
 import prisma from '@/shared/lib/db/prisma';
 
 import type { Prisma } from '@prisma/client';
@@ -44,25 +45,17 @@ export async function logAgentAudit(
   metadata?: Record<string, unknown>
 ): Promise<void> {
   if (!('agentAuditLog' in prisma)) {
-    try {
-      const { logSystemEvent } = await import('@/features/observability/server');
+    void logSystemEvent({
+      level: 'info',
+      source: 'agent-audit',
+      message: 'agentAuditLog NOT in prisma'
+    });
+    if (DEBUG_CHATBOT) {
       void logSystemEvent({
-        level: 'info',
+        level: 'warn',
         source: 'agent-audit',
-        message: 'agentAuditLog NOT in prisma'
+        message: 'Audit table not initialized'
       });
-      if (DEBUG_CHATBOT) {
-        void logSystemEvent({
-          level: 'warn',
-          source: 'agent-audit',
-          message: 'Audit table not initialized'
-        });
-      }
-    } catch {
-      console.log('[DEBUG] agentAuditLog NOT in prisma');
-      if (DEBUG_CHATBOT) {
-        console.warn('[chatbot][agent][audit] Audit table not initialized.');
-      }
     }
     return;
   }
@@ -107,24 +100,11 @@ export async function logAgentAudit(
 }
 
 async function reportError(error: unknown, runId: string | null, level: string, message: string): Promise<void> {
-  try {
-    const { ErrorSystem } = await import('@/features/observability/services/error-system');
-    void ErrorSystem.captureException(error, {
-      service: 'agent-audit',
-      action: 'logAgentAudit',
-      originalMessage: message,
-      auditLevel: level,
-      targetRunId: runId,
-    });
-  } catch (logError) {
-    if (DEBUG_CHATBOT) {
-      console.error('[chatbot][agent][audit] Failed to write audit log (and logging failed)', {
-        runId,
-        level,
-        message,
-        error,
-        logError,
-      });
-    }
-  }
+  void ErrorSystem.captureException(error, {
+    service: 'agent-audit',
+    action: 'logAgentAudit',
+    originalMessage: message,
+    auditLevel: level,
+    targetRunId: runId,
+  });
 }

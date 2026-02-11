@@ -32,22 +32,17 @@ export const productMetadataKeys = {
 export function useCatalogs(): UseQueryResult<CatalogRecord[]> {
   return useQuery({
     queryKey: productMetadataKeys.catalogs,
-    queryFn: async (): Promise<CatalogRecord[]> => {
-      const res = await fetch('/api/catalogs');
-      if (!res.ok) throw new Error('Failed to load catalogs');
-      return (await res.json()) as CatalogRecord[];
-    },
+    queryFn: async (): Promise<CatalogRecord[]> => await api.get<CatalogRecord[]>('/api/catalogs'),
   });
 }
 
 export function useCategories(catalogId: string): UseQueryResult<ProductCategory[]> {
   return useQuery({
     queryKey: productMetadataKeys.categories(catalogId),
-    queryFn: async (): Promise<ProductCategory[]> => {
-      const res = await fetch(`/api/products/categories?catalogId=${catalogId}`);
-      if (!res.ok) throw new Error('Failed to load categories');
-      return (await res.json()) as ProductCategory[];
-    },
+    queryFn: async (): Promise<ProductCategory[]> =>
+      await api.get<ProductCategory[]>(
+        `/api/products/categories?catalogId=${encodeURIComponent(catalogId)}`
+      ),
     enabled: !!catalogId,
   });
 }
@@ -55,11 +50,8 @@ export function useCategories(catalogId: string): UseQueryResult<ProductCategory
 export function useTags(catalogId: string): UseQueryResult<ProductTag[]> {
   return useQuery({
     queryKey: productMetadataKeys.tags(catalogId),
-    queryFn: async (): Promise<ProductTag[]> => {
-      const res = await fetch(`/api/products/tags?catalogId=${catalogId}`);
-      if (!res.ok) throw new Error('Failed to load tags');
-      return (await res.json()) as ProductTag[];
-    },
+    queryFn: async (): Promise<ProductTag[]> =>
+      await api.get<ProductTag[]>(`/api/products/tags?catalogId=${encodeURIComponent(catalogId)}`),
     enabled: !!catalogId,
   });
 }
@@ -67,11 +59,7 @@ export function useTags(catalogId: string): UseQueryResult<ProductTag[]> {
 export function useProducers(): UseQueryResult<Producer[]> {
   return useQuery({
     queryKey: productMetadataKeys.producers,
-    queryFn: async (): Promise<Producer[]> => {
-      const res = await fetch('/api/products/producers');
-      if (!res.ok) throw new Error('Failed to load producers');
-      return (await res.json()) as Producer[];
-    },
+    queryFn: async (): Promise<Producer[]> => await api.get<Producer[]>('/api/products/producers'),
   });
 }
 
@@ -99,11 +87,10 @@ export function useDeleteProducerMutation(): UseMutationResult<void, Error, stri
 export function useParameters(catalogId: string): UseQueryResult<ProductParameter[]> {
   return useQuery({
     queryKey: productMetadataKeys.parameters(catalogId),
-    queryFn: async (): Promise<ProductParameter[]> => {
-      const res = await fetch(`/api/products/parameters?catalogId=${catalogId}`);
-      if (!res.ok) throw new Error('Failed to load parameters');
-      return (await res.json()) as ProductParameter[];
-    },
+    queryFn: async (): Promise<ProductParameter[]> =>
+      await api.get<ProductParameter[]>(
+        `/api/products/parameters?catalogId=${encodeURIComponent(catalogId)}`
+      ),
     enabled: !!catalogId,
   });
 }
@@ -118,11 +105,8 @@ export function useLanguages(): UseQueryResult<Language[]> {
 export function usePriceGroups(): UseQueryResult<PriceGroupWithDetails[]> {
   return useQuery({
     queryKey: productMetadataKeys.priceGroups,
-    queryFn: async (): Promise<PriceGroupWithDetails[]> => {
-      const res = await fetch('/api/price-groups');
-      if (!res.ok) throw new Error('Failed to load price groups');
-      return (await res.json()) as PriceGroupWithDetails[];
-    },
+    queryFn: async (): Promise<PriceGroupWithDetails[]> =>
+      await api.get<PriceGroupWithDetails[]>('/api/price-groups'),
   });
 }
 

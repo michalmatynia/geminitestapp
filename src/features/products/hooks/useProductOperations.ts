@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { logClientError } from '@/features/observability';
 import type { ProductWithImages } from '@/features/products/types';
 import type { ProductDraft } from '@/features/products/types/drafts';
+import { api } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
 
 export function useProductOperations(
@@ -50,14 +51,8 @@ export function useProductOperations(
     try {
       const products = await queryClient.fetchQuery({
         queryKey: ['products', { sku }],
-        queryFn: async () => {
-          const res = await fetch(`/api/products?sku=${encodeURIComponent(sku)}`);
-          if (!res.ok) {
-            const payload = (await res.json()) as { error?: string };
-            throw new Error(payload?.error || 'Failed to validate SKU');
-          }
-          return (await res.json()) as ProductWithImages[];
-        }
+        queryFn: async (): Promise<ProductWithImages[]> =>
+          await api.get<ProductWithImages[]>(`/api/products?sku=${encodeURIComponent(sku)}`),
       });
       
       if (products.some((p) => p.sku === sku)) {

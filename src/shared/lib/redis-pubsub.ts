@@ -24,25 +24,16 @@ const recordPublishFailure = (err: unknown): void => {
 
   if (publishFailures >= PUBLISH_FAILURE_THRESHOLD && !publishCircuitOpen) {
     publishCircuitOpen = true;
-    // Log via ErrorSystem (dynamic import to avoid circular dependency)
-    void (async () => {
-      try {
-        // eslint-disable-next-line import/no-restricted-paths
-        const { ErrorSystem } = await import('@/features/observability/services/error-system');
-        void ErrorSystem.logWarning(
-          `[redis-pubsub] Circuit breaker opened after ${publishFailures} publish failures`,
-          {
-            service: 'redis-pubsub',
-            circuitId: PUBLISH_CIRCUIT_ID,
-            failures: publishFailures,
-            resetTimeoutMs: PUBLISH_RESET_TIMEOUT_MS,
-            lastError: err instanceof Error ? err.message : String(err),
-          }
-        );
-      } catch {
-        console.error('[redis-pubsub] Circuit breaker opened, ErrorSystem unavailable');
+    void ErrorSystem.logWarning(
+      `[redis-pubsub] Circuit breaker opened after ${publishFailures} publish failures`,
+      {
+        service: 'redis-pubsub',
+        circuitId: PUBLISH_CIRCUIT_ID,
+        failures: publishFailures,
+        resetTimeoutMs: PUBLISH_RESET_TIMEOUT_MS,
+        lastError: err instanceof Error ? err.message : String(err),
       }
-    })();
+    );
   }
 };
 

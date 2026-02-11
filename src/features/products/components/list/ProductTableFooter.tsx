@@ -5,6 +5,7 @@ import React, { JSX, memo, useState } from 'react';
 
 import { useBulkDeleteProducts, useBulkConvertImagesToBase64 } from '@/features/products/hooks/useProductsMutations';
 import { ProductWithImages } from '@/features/products/types';
+import { logClientError } from '@/features/observability';
 import { Button, useToast, ConfirmDialog } from '@/shared/ui';
 import { logger } from '@/shared/utils/logger';
 
@@ -49,7 +50,7 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
       setRefreshTrigger((prev: number) => prev + 1); // Refresh the product list
       setShowDeleteConfirm(false);
     } catch (error) {
-      logger.error('Error during mass deletion:', error);
+      logClientError(error, { context: { source: 'ProductTableFooter', action: 'handleMassDelete' } });
       setActionError(error instanceof Error ? error.message : 'An error occurred during deletion.');
       toast('An error occurred during deletion', {
         variant: 'error',
@@ -77,7 +78,7 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
       setRefreshTrigger((prev: number) => prev + 1);
       setShowBase64Confirm(false);
     } catch (error) {
-      logger.error('Error during base64 conversion:', error);
+      logClientError(error, { context: { source: 'ProductTableFooter', action: 'handleMassBase64' } });
       setActionError(error instanceof Error ? error.message : 'An error occurred during base64 conversion.');
       toast('An error occurred during base64 conversion', {
         variant: 'error',

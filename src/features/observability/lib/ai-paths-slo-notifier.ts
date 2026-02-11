@@ -8,6 +8,7 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { getRedisConnection } from '@/shared/lib/queue';
 
+import { ErrorSystem } from '../services/error-system';
 import { withTransientRecovery } from './transient-recovery/with-recovery';
 
 const SETTINGS_COLLECTION = 'settings';
@@ -205,7 +206,11 @@ const acquireRedisThrottle = async (
     );
     return result === 'OK';
   } catch (error) {
-    console.error('[ai-paths-slo-notifier] Redis throttle acquisition failed', error);
+    void ErrorSystem.captureException(error, {
+      service: 'ai-paths-slo-notifier',
+      action: 'acquireRedisThrottle',
+      signature
+    });
     return null;
   }
 };
@@ -216,7 +221,11 @@ const releaseRedisThrottle = async (signature: string): Promise<void> => {
   try {
     await redis.del(getThrottleKey(signature));
   } catch (error) {
-    console.error('[ai-paths-slo-notifier] Redis throttle release failed', error);
+    void ErrorSystem.captureException(error, {
+      service: 'ai-paths-slo-notifier',
+      action: 'releaseRedisThrottle',
+      signature
+    });
   }
 };
 
@@ -371,7 +380,8 @@ export const notifyAiPathsSloBreach = async (
 
     if (!res.ok) {
       await releaseThrottleSlot(signature, throttleState.storage);
-      console.error('[ai-paths-slo-notifier] Webhook failed', {
+      void ErrorSystem.logWarning('[ai-paths-slo-notifier] Webhook failed', {
+        service: 'ai-paths-slo-notifier',
         status: res.status,
         statusText: res.statusText,
       });
@@ -394,7 +404,10 @@ export const notifyAiPathsSloBreach = async (
     if (signature && throttleStorage !== 'none') {
       await releaseThrottleSlot(signature, throttleStorage);
     }
-    console.error('[ai-paths-slo-notifier] Webhook error', error);
+    void ErrorSystem.captureException(error, {
+      service: 'ai-paths-slo-notifier',
+      action: 'notifyAiPathsSloBreach'
+    });
     return {
       delivered: false,
       throttled: false,

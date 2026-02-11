@@ -1,5 +1,6 @@
 import { DEBUG_CHATBOT, OLLAMA_BASE_URL } from '@/features/ai/agent-runtime/core/config';
 import type { PlanStep } from '@/features/ai/agent-runtime/types/agent';
+import { ErrorSystem } from '@/features/observability/server';
 
 const parseJsonObject = (content: string): unknown => {
   try {
@@ -100,9 +101,11 @@ export async function evaluateApprovalGateWithLLM({
     };
   } catch (error) {
     if (runId && DEBUG_CHATBOT) {
-      console.warn('[chatbot][agent][engine] Approval gate model failed', {
+      void ErrorSystem.logWarning('Approval gate model failed', {
+        service: 'agent-engine',
+        action: 'approval-gate',
         runId,
-        error: error instanceof Error ? error.message : error,
+        error: error instanceof Error ? error.message : String(error),
       });
     }
     return null;

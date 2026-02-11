@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { runAgentBrowserControl } from '@/features/ai/agent-runtime/server';
+import { ErrorSystem } from '@/features/observability/server';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import prisma from '@/shared/lib/db/prisma';
@@ -36,7 +37,8 @@ async function POST_handler(req: NextRequest,
   }
 
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][agent][control] Request', {
+    void ErrorSystem.logInfo('Control request', {
+      service: 'agent-api',
       runId,
       action,
       url: body.url?.trim(),

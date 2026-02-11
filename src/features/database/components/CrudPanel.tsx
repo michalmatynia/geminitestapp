@@ -1,5 +1,6 @@
 'use client';
 
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   AlertTriangleIcon,
   EditIcon,
@@ -10,6 +11,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   Badge,
   Button,
@@ -18,15 +20,15 @@ import {
   SectionPanel,
 } from '@/shared/ui';
 
+import { executeSqlQuery } from '../api';
 import { useDatabase } from '../context/DatabaseContext';
-import { useCrudMutation, useSqlQueryMutation } from '../hooks/useDatabaseQueries';
+import { useCrudMutation } from '../hooks/useDatabaseQueries';
 
 import type {
   CrudOperation,
   DatabaseColumnInfo,
   DatabaseTableDetail,
   DatabaseType,
-  SqlQueryResult,
 } from '../types';
 
 function formatCellValue(value: unknown): string {
@@ -177,6 +179,7 @@ export function CrudPanel({
   defaultTable?: string;
   dbType?: DatabaseType;
 }): React.JSX.Element {
+  const dbKeys = QUERY_KEYS.system.databases;
   const context = useDatabase();
   const dbType = dbTypeProp ?? context.dbType;
   const tableDetails = tableDetailsProp ?? context.tableDetails;
@@ -184,20 +187,17 @@ export function CrudPanel({
   const [selectedTable, setSelectedTable] = useState(defaultTable ?? '');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const [rows, setRows] = useState<Record<string, unknown>[]>([]);
-  const [totalRows, setTotalRows] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [mutationError, setMutationError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
 
   // Sync when parent changes the default table (e.g. clicking "Manage" on a different table)
   useEffect(() => {
     if (defaultTable && defaultTable !== selectedTable) {
       setSelectedTable(defaultTable);
       setPage(1);
-      setRows([]);
-      setError(null);
+      setMutationError(null);
       setSuccessMessage(null);
     }
   }, [defaultTable, selectedTable]);  
@@ -207,7 +207,6 @@ export function CrudPanel({
   const [editingRow, setEditingRow] = useState<Record<string, unknown> | null>(null);
   const [deletingRow, setDeletingRow] = useState<Record<string, unknown> | null>(null);
 
-  const queryMutation = useSqlQueryMutation();
   const crudMutation = useCrudMutation();
 
   const tableDetail = useMemo(
@@ -220,88 +219,72 @@ export function CrudPanel({
     [tableDetail]
   );
 
-  const fetchRows = useCallback(() => {
-    if (!selectedTable) return;
-    setLoading(true);
-    setError(null);
-    setSuccessMessage(null);
+  const rowsQuery = useQuery({
+    queryKey: dbKeys.crudRows({ dbType, selectedTable, page, pageSize }),
+    enabled: Boolean(selectedTable),
+    queryFn: async (): Promise<{ rows: Record<string, unknown>[]; totalRows: number }> => {
+      if (!selectedTable) {
+        return { rows: [], totalRows: 0 };
+      }
 
-    const offset = (page - 1) * pageSize;
+      const offset = (page - 1) * pageSize;
 
-    if (dbType === 'postgresql') {
-      queryMutation.mutate(
-        {
+      if (dbType === 'postgresql') {
+        const rowsResult = await executeSqlQuery({
           sql: `SELECT * FROM "${selectedTable}" LIMIT ${pageSize} OFFSET ${offset}`,
           type: 'postgresql',
-        },
-        {
-          onSuccess: (data: SqlQueryResult) => {
-            if (data.error) {
-              setError(data.error);
-              setRows([]);
-              setTotalRows(0);
-            } else {
-              setRows(data.rows);
-              // Also get count
-              queryMutation.mutate(
-                {
-                  sql: `SELECT COUNT(*)::bigint AS total FROM "${selectedTable}"`,
-                  type: 'postgresql',
-                },
-                {
-                  onSuccess: (countData: SqlQueryResult) => {
-                    const total = Number((countData.rows[0] as Record<string, unknown>)?.[ 'total' ] ?? 0);
-                    setTotalRows(total);
-                    setLoading(false);
-                  },
-                  onError: (err: Error) => {
-                    logClientError(err, { context: { source: 'CrudPanel', action: 'fetchCount', table: selectedTable } });
-                    setLoading(false);
-                  },
-                }
-              );
-            }
-          },
-          onError: (err: Error) => {
-            logClientError(err, { context: { source: 'CrudPanel', action: 'fetchRows', table: selectedTable } });
-            setError(err.message);
-            setLoading(false);
-          },
-        }
-      );
-    } else {
-      queryMutation.mutate(
-        {
-          type: 'mongodb',
-          collection: selectedTable,
-          operation: 'find',
-          filter: {},
-        },
-        {
-          onSuccess: (data: SqlQueryResult) => {
-            if (data.error) {
-              setError(data.error);
-            } else {
-              setRows(data.rows);
-              setTotalRows(data.rowCount);
-            }
-            setLoading(false);
-          },
-          onError: (err: Error) => {
-            logClientError(err, { context: { source: 'CrudPanel', action: 'fetchRowsMongo', table: selectedTable } });
-            setError(err.message);
-            setLoading(false);
-          },
-        }
-      );
-    }
-  }, [selectedTable, page, pageSize, dbType, queryMutation]);
+        });
 
-  // Fetch when table or page changes
-  useEffect(() => {
-    if (selectedTable) fetchRows();
-     
-  }, [selectedTable, page, pageSize, fetchRows]);
+        if (rowsResult.error) {
+          throw new Error(rowsResult.error);
+        }
+
+        let totalRows = rowsResult.rowCount ?? rowsResult.rows.length;
+        try {
+          const countResult = await executeSqlQuery({
+            sql: `SELECT COUNT(*)::bigint AS total FROM "${selectedTable}"`,
+            type: 'postgresql',
+          });
+          if (!countResult.error) {
+            totalRows = Number(
+              (countResult.rows[0] as Record<string, unknown>)?.['total'] ?? totalRows
+            );
+          }
+        } catch (error: unknown) {
+          logClientError(error, {
+            context: { source: 'CrudPanel', action: 'fetchCount', table: selectedTable },
+          });
+        }
+
+        return { rows: rowsResult.rows, totalRows };
+      }
+
+      const mongoResult = await executeSqlQuery({
+        type: 'mongodb',
+        collection: selectedTable,
+        operation: 'find',
+        filter: {},
+      });
+
+      if (mongoResult.error) {
+        throw new Error(mongoResult.error);
+      }
+
+      return {
+        rows: mongoResult.rows,
+        totalRows: mongoResult.rowCount ?? mongoResult.rows.length,
+      };
+    },
+  });
+
+  const fetchRows = useCallback((): void => {
+    if (!selectedTable) return;
+    setMutationError(null);
+    setSuccessMessage(null);
+    void queryClient.invalidateQueries({
+      queryKey: dbKeys.crudRows({ dbType, selectedTable, page, pageSize }),
+    });
+  }, [dbKeys, dbType, page, pageSize, queryClient, selectedTable]);
 
   const getPrimaryKey = (row: Record<string, unknown>): Record<string, unknown> => {
     const pk: Record<string, unknown> = {};
@@ -321,21 +304,22 @@ export function CrudPanel({
 
   const handleAdd = (data: Record<string, unknown>): void => {
     setSuccessMessage(null);
+    setMutationError(null);
     crudMutation.mutate(
       { table: selectedTable, operation: 'insert' as CrudOperation, type: dbType, data },
       {
         onSuccess: (result) => {
           if (result.error) {
-            setError(result.error);
+            setMutationError(result.error);
           } else {
             setShowAddModal(false);
             setSuccessMessage(`Inserted ${result.rowCount} row(s)`);
-            fetchRows();
+            void rowsQuery.refetch();
           }
         },
         onError: (err: Error) => {
           logClientError(err, { context: { source: 'CrudPanel', action: 'insertRow', table: selectedTable } });
-          setError(err.message);
+          setMutationError(err.message);
         },
       }
     );
@@ -344,6 +328,7 @@ export function CrudPanel({
   const handleEdit = (data: Record<string, unknown>): void => {
     if (!editingRow) return;
     setSuccessMessage(null);
+    setMutationError(null);
     crudMutation.mutate(
       {
         table: selectedTable,
@@ -355,16 +340,16 @@ export function CrudPanel({
       {
         onSuccess: (result) => {
           if (result.error) {
-            setError(result.error);
+            setMutationError(result.error);
           } else {
             setEditingRow(null);
             setSuccessMessage(`Updated ${result.rowCount} row(s)`);
-            fetchRows();
+            void rowsQuery.refetch();
           }
         },
         onError: (err: Error) => {
           logClientError(err, { context: { source: 'CrudPanel', action: 'updateRow', table: selectedTable } });
-          setError(err.message);
+          setMutationError(err.message);
         },
       }
     );
@@ -373,6 +358,7 @@ export function CrudPanel({
   const handleDelete = (): void => {
     if (!deletingRow) return;
     setSuccessMessage(null);
+    setMutationError(null);
     crudMutation.mutate(
       {
         table: selectedTable,
@@ -383,21 +369,26 @@ export function CrudPanel({
       {
         onSuccess: (result) => {
           if (result.error) {
-            setError(result.error);
+            setMutationError(result.error);
           } else {
             setDeletingRow(null);
             setSuccessMessage(`Deleted ${result.rowCount} row(s)`);
-            fetchRows();
+            void rowsQuery.refetch();
           }
         },
         onError: (err: Error) => {
           logClientError(err, { context: { source: 'CrudPanel', action: 'deleteRow', table: selectedTable } });
-          setError(err.message);
+          setMutationError(err.message);
         },
       }
     );
   };
 
+  const rows = rowsQuery.data?.rows ?? [];
+  const totalRows = rowsQuery.data?.totalRows ?? 0;
+  const isLoadingRows = rowsQuery.isLoading;
+  const errorMessage =
+    mutationError ?? (rowsQuery.isError ? rowsQuery.error.message : null);
   const maxPage = Math.max(1, Math.ceil(totalRows / pageSize));
   const columns = tableDetail?.columns ?? [];
   const columnKeys = rows.length > 0 ? Object.keys(rows[0] ?? {}) : columns.map((c: DatabaseColumnInfo) => c.name);
@@ -411,8 +402,7 @@ export function CrudPanel({
           onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => {
             setSelectedTable(e.target.value);
             setPage(1);
-            setRows([]);
-            setError(null);
+            setMutationError(null);
             setSuccessMessage(null);
           }}
           className='h-8 rounded-md border border-border bg-card px-2 text-xs text-gray-200 min-w-[200px]'
@@ -431,7 +421,7 @@ export function CrudPanel({
               variant='outline'
               size='sm'
               onClick={fetchRows}
-              disabled={loading}
+              disabled={rowsQuery.isFetching}
               className='h-8 gap-1 text-xs'
             >
               <RefreshCwIcon className='size-3' />
@@ -450,9 +440,9 @@ export function CrudPanel({
       </div>
 
       {/* Messages */}
-      {error && (
+      {errorMessage && (
         <div className='rounded-md border border-red-500/30 bg-red-900/20 px-3 py-2 text-xs text-red-300'>
-          {error}
+          {errorMessage}
         </div>
       )}
       {successMessage && (
@@ -464,13 +454,13 @@ export function CrudPanel({
       {/* Data browser */}
       {selectedTable && (
         <SectionPanel className='p-0'>
-          {loading && <p className='p-4 text-xs text-gray-400'>Loading rows...</p>}
+          {isLoadingRows && <p className='p-4 text-xs text-gray-400'>Loading rows...</p>}
 
-          {!loading && rows.length === 0 && (
+          {!isLoadingRows && rows.length === 0 && (
             <p className='p-4 text-xs text-gray-500'>No rows found in this table.</p>
           )}
 
-          {!loading && rows.length > 0 && (
+          {!isLoadingRows && rows.length > 0 && (
             <>
               <div className='overflow-auto max-h-[50vh]'>
                 <table className='w-full text-xs'>

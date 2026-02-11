@@ -1,7 +1,7 @@
 'use client';
 
-import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
-import { logger } from '@/shared/utils/logger';
+import { logClientError } from '@/features/observability';
+import { ApiError, api } from '@/shared/lib/api-client';
 
 export type AiPathsSettingRecord = {
   key: string;
@@ -12,6 +12,7 @@ const AI_PATHS_SETTINGS_STALE_MS = 10_000;
 const AI_PATHS_SETTINGS_BACKUP_KEY = 'ai_paths_settings_backup_v1';
 const AI_PATHS_SETTINGS_RETRY_DELAYS_MS = [250, 750, 1500, 3000];
 const AI_PATHS_SETTINGS_BACKUP_MAX_AGE_MS = 60_000;
+const AI_PATHS_SETTINGS_REQUEST_TIMEOUT_MS = 8_000;
 
 let aiPathsSettingsCache: AiPathsSettingRecord[] | null = null;
 let aiPathsSettingsFetchedAt = 0;
@@ -83,18 +84,27 @@ const shouldRetrySettingsFetch = (error: unknown): boolean => {
   return (
     message.includes('failed to fetch') ||
     message.includes('network') ||
-    message.includes('load failed')
+    message.includes('load failed') ||
+    message.includes('aborted') ||
+    message.includes('abort')
   );
 };
 
 const fetchAiPathsSettingsResponse = async (): Promise<Response> => {
   let lastError: unknown;
   for (let attempt = 0; attempt <= AI_PATHS_SETTINGS_RETRY_DELAYS_MS.length; attempt += 1) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(
+      () => controller.abort(),
+      AI_PATHS_SETTINGS_REQUEST_TIMEOUT_MS
+    );
     try {
       const response = await fetch('/api/ai-paths/settings', {
         credentials: 'include',
         cache: 'no-store',
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
       if (response.ok) return response;
       if (response.status >= 500 && attempt < AI_PATHS_SETTINGS_RETRY_DELAYS_MS.length) {
         await sleep(AI_PATHS_SETTINGS_RETRY_DELAYS_MS[attempt] ?? 250);
@@ -102,6 +112,7 @@ const fetchAiPathsSettingsResponse = async (): Promise<Response> => {
       }
       return response;
     } catch (error) {
+      clearTimeout(timeoutId);
       lastError = error;
       if (!shouldRetrySettingsFetch(error) || attempt >= AI_PATHS_SETTINGS_RETRY_DELAYS_MS.length) {
         break;
@@ -152,12 +163,12 @@ export const fetchAiPathsSettingsCached = async (
     })
     .catch((error: unknown) => {
       if (aiPathsSettingsCache) {
-        logger.warn('[ai-paths-settings] GET failed; using stale cache.', { error: error instanceof Error ? error.message : String(error) });
+        logClientError(error, { context: { source: 'ai-paths-settings-client', action: 'fetchCached', message: 'GET failed; using stale cache.', level: 'warn' } });
         return aiPathsSettingsCache;
       }
       const backup = readBackupSettings();
       if (backup && backup.length > 0) {
-        logger.warn('[ai-paths-settings] GET failed; using local backup cache.', { error: error instanceof Error ? error.message : String(error) });
+        logClientError(error, { context: { source: 'ai-paths-settings-client', action: 'fetchCached', message: 'GET failed; using local backup cache.', level: 'warn' } });
         aiPathsSettingsCache = backup;
         aiPathsSettingsFetchedAt = Date.now();
         return backup;
@@ -184,14 +195,14 @@ export const updateAiPathsSettingsBulk = async (
   );
   if (payload.length === 0) return [];
 
-  const res = await fetch('/api/ai-paths/settings', {
-    method: 'POST',
-    credentials: 'include',
-    headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ items: payload }),
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to update AI Paths settings (${res.status})`);
+  let data: unknown;
+  try {
+    data = await api.post<unknown>('/api/ai-paths/settings', { items: payload });
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw new Error(`Failed to update AI Paths settings (${error.status})`);
+    }
+    throw error;
   }
   invalidateAiPathsSettingsCache();
   if (typeof window !== 'undefined') {
@@ -199,7 +210,6 @@ export const updateAiPathsSettingsBulk = async (
       new CustomEvent('ai-paths:settings:updated', { detail: { scope: 'ai-paths' } })
     );
   }
-  const data = (await res.json()) as unknown;
   if (!Array.isArray(data)) return payload;
   return data
     .map((item: unknown): AiPathsSettingRecord | null => {
@@ -216,14 +226,14 @@ export const updateAiPathsSetting = async (
   key: string,
   value: string
 ): Promise<AiPathsSettingRecord> => {
-  const res = await fetch('/api/ai-paths/settings', {
-    method: 'POST',
-    credentials: 'include',
-    headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ key, value }),
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to update AI Paths setting (${res.status})`);
+  let data: unknown;
+  try {
+    data = await api.post<unknown>('/api/ai-paths/settings', { key, value });
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw new Error(`Failed to update AI Paths setting (${error.status})`);
+    }
+    throw error;
   }
   invalidateAiPathsSettingsCache();
   if (typeof window !== 'undefined') {
@@ -231,7 +241,6 @@ export const updateAiPathsSetting = async (
       new CustomEvent('ai-paths:settings:updated', { detail: { scope: 'ai-paths' } })
     );
   }
-  const data = (await res.json()) as unknown;
   if (!data || typeof data !== 'object') return { key, value };
   const nextKey = (data as { key?: unknown }).key;
   const nextValue = (data as { value?: unknown }).value;
@@ -252,14 +261,16 @@ export const deleteAiPathsSettings = async (keys: string[]): Promise<number> => 
   );
   if (normalizedKeys.length === 0) return 0;
 
-  const res = await fetch('/api/ai-paths/settings', {
-    method: 'DELETE',
-    credentials: 'include',
-    headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ keys: normalizedKeys }),
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to delete AI Paths settings (${res.status})`);
+  let data: { deletedCount?: unknown } | null = null;
+  try {
+    data = await api.delete<{ deletedCount?: unknown }>('/api/ai-paths/settings', {
+      body: JSON.stringify({ keys: normalizedKeys }),
+    });
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw new Error(`Failed to delete AI Paths settings (${error.status})`);
+    }
+    throw error;
   }
   invalidateAiPathsSettingsCache();
   if (typeof window !== 'undefined') {
@@ -267,6 +278,5 @@ export const deleteAiPathsSettings = async (keys: string[]): Promise<number> => 
       new CustomEvent('ai-paths:settings:updated', { detail: { scope: 'ai-paths' } })
     );
   }
-  const data = (await res.json()) as { deletedCount?: unknown };
   return typeof data?.deletedCount === 'number' ? data.deletedCount : 0;
 };

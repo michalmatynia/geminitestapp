@@ -4,11 +4,13 @@
  
 I need another module node that controls the pitch of the incoming signals. 
 
+Clear Log stilll not working
 * I need Weight (kg)
 Length (cm)
 Width (cm)
 Height (cm)
 EANs also as exportable parameters
+
 
 
  * The producer is not exporting still despite being mapped and set up in

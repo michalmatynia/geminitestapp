@@ -2,7 +2,7 @@ import 'server-only';
 
 import { Redis } from 'ioredis';
 
-import { logger } from '@/shared/utils/logger';
+import { ErrorSystem } from '@/features/observability/server';
 
 const REDIS_URL = process.env['REDIS_URL'];
 
@@ -16,10 +16,10 @@ if (REDIS_URL) {
     });
     
     redis.on('error', (err) => {
-      logger.error('[redis] connection error', err, { source: 'redis' });
+      void ErrorSystem.captureException(err, { service: 'redis', action: 'connection_error' });
     });
   } catch (error) {
-    logger.error('[redis] failed to initialize client', error, { source: 'redis' });
+    void ErrorSystem.captureException(error, { service: 'redis', action: 'initialize_failed' });
   }
 }
 

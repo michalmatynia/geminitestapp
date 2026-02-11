@@ -134,7 +134,17 @@ export type Producer = Entity & {
   website: string | null;
 };
 
-export type ProductValidationTarget = 'name' | 'description' | 'sku' | 'price' | 'stock';
+export type ProductValidationTarget =
+  | 'name'
+  | 'description'
+  | 'sku'
+  | 'price'
+  | 'stock'
+  | 'category'
+  | 'size_length'
+  | 'size_width'
+  | 'length'
+  | 'weight';
 
 export type ProductValidationSeverity = 'error' | 'warning';
 export type ProductValidationDenyBehavior = 'ask_again' | 'mute_session';
@@ -174,6 +184,7 @@ export type ProductValidationLaunchOperator =
   | 'lte'
   | 'is_empty'
   | 'is_not_empty';
+export type ProductValidationLaunchScopeBehavior = 'gate' | 'condition_only';
 
 export type ProductValidationPattern = Entity & {
   label: string;
@@ -186,6 +197,7 @@ export type ProductValidationPattern = Entity & {
   enabled: boolean;
   replacementEnabled: boolean;
   replacementAutoApply: boolean;
+  skipNoopReplacementProposal: boolean;
   replacementValue: string | null;
   replacementFields: string[];
   replacementAppliesToScopes?: ProductValidationInstanceScope[];
@@ -204,6 +216,7 @@ export type ProductValidationPattern = Entity & {
   passOutputToNext: boolean;
   launchEnabled: boolean;
   launchAppliesToScopes?: ProductValidationInstanceScope[];
+  launchScopeBehavior?: ProductValidationLaunchScopeBehavior;
   launchSourceMode: ProductValidationLaunchSourceMode;
   launchSourceField: string | null;
   launchOperator: ProductValidationLaunchOperator;

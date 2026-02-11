@@ -8,7 +8,7 @@ import {
   type MigrationDirection,
 } from '@/features/products/server';
 import { parseJsonBody } from '@/features/products/server';
-import { badRequestError } from '@/shared/errors/app-error';
+import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 import { removeUndefined } from '@/shared/utils';
@@ -48,7 +48,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   if (shouldBackup) {
     const backupResult = await createFullDatabaseBackup();
     if (!backupResult.mongo || !backupResult.postgres) {
-      throw new Error('Failed to create full database backup.');
+      throw operationFailedError('Failed to create full database backup.');
     }
   }
   const result = await migrateProductBatch(removeUndefined({

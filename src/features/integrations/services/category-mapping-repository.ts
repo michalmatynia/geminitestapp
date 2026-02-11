@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 
 import { Prisma } from '@prisma/client';
-import { ObjectId, type Filter } from 'mongodb';
+import { ObjectId, type Collection, type Filter } from 'mongodb';
 
 import type {
   CategoryMapping,
@@ -228,6 +228,110 @@ const buildExternalCategoryCanonicalMap = async (
   return map;
 };
 
+type UniqueInternalCategoryScope = {
+  connectionId: string;
+  catalogId: string;
+  internalCategoryId: string | null | undefined;
+  excludeExternalCategoryId?: string | null | undefined;
+  excludeId?: string | null | undefined;
+};
+
+const normalizeInternalCategoryId = (
+  value: string | null | undefined
+): string | null => {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+};
+
+const buildMongoUniquenessFilter = (
+  scope: UniqueInternalCategoryScope
+): Filter<MongoCategoryMappingDoc> | null => {
+  const normalizedInternalCategoryId = normalizeInternalCategoryId(
+    scope.internalCategoryId
+  );
+  if (!normalizedInternalCategoryId) return null;
+
+  const filter: Filter<MongoCategoryMappingDoc> = {
+    connectionId: scope.connectionId,
+    catalogId: scope.catalogId,
+    internalCategoryId: normalizedInternalCategoryId,
+    isActive: true,
+  };
+
+  const notConditions: Filter<MongoCategoryMappingDoc>[] = [];
+  const excludeExternalCategoryId = scope.excludeExternalCategoryId?.trim();
+  if (excludeExternalCategoryId) {
+    notConditions.push({ externalCategoryId: excludeExternalCategoryId });
+  }
+  const excludeId = scope.excludeId?.trim();
+  if (excludeId) {
+    notConditions.push(buildMongoIdFilter(excludeId));
+  }
+  if (notConditions.length > 0) {
+    (filter as Record<string, unknown>)['$nor'] = notConditions;
+  }
+
+  return filter;
+};
+
+const deactivateCompetingMongoMappings = async (
+  collection: Collection<MongoCategoryMappingDoc>,
+  scope: UniqueInternalCategoryScope
+): Promise<number> => {
+  const filter = buildMongoUniquenessFilter(scope);
+  if (!filter) return 0;
+  const result = await collection.updateMany(filter, {
+    $set: { isActive: false, updatedAt: new Date() },
+  });
+  return result.modifiedCount ?? 0;
+};
+
+const buildPrismaUniquenessWhere = (
+  scope: UniqueInternalCategoryScope
+): Prisma.CategoryMappingWhereInput | null => {
+  const normalizedInternalCategoryId = normalizeInternalCategoryId(
+    scope.internalCategoryId
+  );
+  if (!normalizedInternalCategoryId) return null;
+
+  const where: Prisma.CategoryMappingWhereInput = {
+    connectionId: scope.connectionId,
+    catalogId: scope.catalogId,
+    internalCategoryId: normalizedInternalCategoryId,
+    isActive: true,
+  };
+
+  const excludeExternalCategoryId = scope.excludeExternalCategoryId?.trim();
+  const excludeId = scope.excludeId?.trim();
+  if (excludeExternalCategoryId && excludeId) {
+    where.NOT = {
+      OR: [
+        { externalCategoryId: excludeExternalCategoryId },
+        { id: excludeId },
+      ],
+    };
+  } else if (excludeExternalCategoryId) {
+    where.NOT = { externalCategoryId: excludeExternalCategoryId };
+  } else if (excludeId) {
+    where.NOT = { id: excludeId };
+  }
+
+  return where;
+};
+
+const deactivateCompetingPrismaMappings = async (
+  tx: Prisma.TransactionClient,
+  scope: UniqueInternalCategoryScope
+): Promise<number> => {
+  const where = buildPrismaUniquenessWhere(scope);
+  if (!where) return 0;
+  const result = await tx.categoryMapping.updateMany({
+    where,
+    data: { isActive: false },
+  });
+  return result.count;
+};
+
 export function getCategoryMappingRepository(): CategoryMappingRepository {
   return {
     async create(input: CategoryMappingCreateInput): Promise<CategoryMapping> {
@@ -253,16 +357,33 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
           updatedAt: now,
         };
         await collection.insertOne(doc);
+        await deactivateCompetingMongoMappings(collection, {
+          connectionId: input.connectionId,
+          catalogId: input.catalogId,
+          internalCategoryId: input.internalCategoryId,
+          excludeExternalCategoryId: canonicalExternalCategoryId,
+          excludeId: doc._id.toString(),
+        });
         return mapMongoCategoryMappingToRecord(doc);
       }
 
-      const record = await prisma.categoryMapping.create({
-        data: {
-          connectionId: input.connectionId,
-          externalCategoryId: input.externalCategoryId,
-          internalCategoryId: input.internalCategoryId,
-          catalogId: input.catalogId,
-        },
+      const record = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        const created = await tx.categoryMapping.create({
+          data: {
+            connectionId: input.connectionId,
+            externalCategoryId: input.externalCategoryId,
+            internalCategoryId: input.internalCategoryId,
+            catalogId: input.catalogId,
+          },
+        });
+        await deactivateCompetingPrismaMappings(tx, {
+          connectionId: created.connectionId,
+          catalogId: created.catalogId,
+          internalCategoryId: created.internalCategoryId,
+          excludeExternalCategoryId: created.externalCategoryId,
+          excludeId: created.id,
+        });
+        return created;
       });
       return mapToRecord(record);
     },
@@ -294,17 +415,38 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
         if (!record) {
           throw new Error('Category mapping not found');
         }
+        if (record.isActive) {
+          await deactivateCompetingMongoMappings(collection, {
+            connectionId: record.connectionId,
+            catalogId: record.catalogId,
+            internalCategoryId: record.internalCategoryId,
+            excludeExternalCategoryId: record.externalCategoryId,
+            excludeId: record._id.toString(),
+          });
+        }
         return mapMongoCategoryMappingToRecord(record);
       }
 
-      const record = await prisma.categoryMapping.update({
-        where: { id },
-        data: {
-          ...(input.internalCategoryId !== undefined && {
-            internalCategoryId: input.internalCategoryId,
-          }),
-          ...(input.isActive !== undefined && { isActive: input.isActive }),
-        },
+      const record = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        const updated = await tx.categoryMapping.update({
+          where: { id },
+          data: {
+            ...(input.internalCategoryId !== undefined && {
+              internalCategoryId: input.internalCategoryId,
+            }),
+            ...(input.isActive !== undefined && { isActive: input.isActive }),
+          },
+        });
+        if (updated.isActive) {
+          await deactivateCompetingPrismaMappings(tx, {
+            connectionId: updated.connectionId,
+            catalogId: updated.catalogId,
+            internalCategoryId: updated.internalCategoryId,
+            excludeExternalCategoryId: updated.externalCategoryId,
+            excludeId: updated.id,
+          });
+        }
+        return updated;
       });
       return mapToRecord(record);
     },
@@ -764,6 +906,12 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
             },
             { upsert: true }
           );
+          await deactivateCompetingMongoMappings(collection, {
+            connectionId,
+            catalogId,
+            internalCategoryId: mapping.internalCategoryId,
+            excludeExternalCategoryId: canonicalExternalCategoryId,
+          });
           count++;
         }
 
@@ -805,6 +953,12 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
               internalCategoryId: mapping.internalCategoryId,
               isActive: true,
             },
+          });
+          await deactivateCompetingPrismaMappings(tx, {
+            connectionId,
+            catalogId,
+            internalCategoryId: mapping.internalCategoryId,
+            excludeExternalCategoryId: mapping.externalCategoryId,
           });
           count++;
         }

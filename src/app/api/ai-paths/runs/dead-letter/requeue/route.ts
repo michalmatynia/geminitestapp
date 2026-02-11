@@ -92,6 +92,14 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     startAiPathRunQueue();
   }
 
+  if (errors.length > 0) {
+    const { logger } = await import('@/shared/utils/logger');
+    logger.warn(`[ai-paths.runs.requeue] ${errors.length} runs failed to requeue`, {
+      errors: errors.slice(0, 5),
+      totalErrors: errors.length
+    });
+  }
+
   return NextResponse.json({
     requeued: requeuedRunIds.length,
     runIds: requeuedRunIds,

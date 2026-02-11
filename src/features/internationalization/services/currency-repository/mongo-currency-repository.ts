@@ -3,6 +3,7 @@ import { ObjectId, type Document, type AnyBulkWriteOperation, type UpdateFilter 
 
 import { defaultCurrencies } from '@/features/internationalization/server';
 import type { CurrencyRepository } from '@/features/internationalization/types/services/currency-repository';
+import { notFoundError, internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { CurrencyRecord } from '@/shared/types/domain/internationalization';
 
@@ -68,7 +69,7 @@ export const mongoCurrencyRepository: CurrencyRepository = {
     const db = await getMongoDb();
     const collection = db.collection<CurrencyDoc>(COLLECTION);
     const existing = await collection.findOne({ id });
-    if (!existing) throw new Error('Currency not found');
+    if (!existing) throw notFoundError('Currency not found', { id });
 
     const now = new Date();
     
@@ -95,7 +96,7 @@ export const mongoCurrencyRepository: CurrencyRepository = {
 
     await collection.updateOne({ id }, { $set: set });
     const updated = await collection.findOne({ id: data.code ?? id });
-    if (!updated) throw new Error('Failed to update currency');
+    if (!updated) throw internalError('Failed to update currency', { id: data.code ?? id });
     return toCurrencyDomain(updated);
   },
 

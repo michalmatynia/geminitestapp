@@ -13,31 +13,15 @@ import {
   SelectValue,
 } from '@/shared/ui';
 
+import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
 import { buildHistoryNodeOptions } from './run-history-utils';
 import { RunHistoryEntries } from './RunHistoryEntries';
 import { useRunHistoryActions, useRunHistoryState } from '../context';
 
 export type RunHistoryFilter = 'all' | 'active' | 'failed' | 'dead';
 
-type RunHistoryPanelProps = {
-  runs: AiPathRunRecord[];
-  isRefreshing: boolean;
-  onRefresh: () => void;
-  onOpenRunDetail: (runId: string) => void;
-  onResumeRun: (runId: string, mode: 'resume' | 'replay') => void;
-  onCancelRun: (runId: string) => void;
-  onRequeueDeadLetter: (runId: string) => void;
-};
-
-export function RunHistoryPanel({
-  runs,
-  isRefreshing,
-  onRefresh,
-  onOpenRunDetail,
-  onResumeRun,
-  onCancelRun,
-  onRequeueDeadLetter,
-}: RunHistoryPanelProps): React.JSX.Element {
+export function RunHistoryPanel(): React.JSX.Element {
+  const orchestrator = useAiPathsSettingsOrchestrator();
   const runHistoryState = useRunHistoryState();
   const {
     expandedRunHistory,
@@ -48,6 +32,23 @@ export function RunHistoryPanel({
     setExpandedRunHistory,
     setRunHistorySelection,
   } = useRunHistoryActions();
+  const resolvedRuns = orchestrator.runList;
+  const resolvedIsRefreshing = orchestrator.runsQuery.isFetching;
+  const handleRefresh = (): void => {
+    void orchestrator.runsQuery.refetch().catch(() => {});
+  };
+  const handleOpenRunDetail = (runId: string): void => {
+    void orchestrator.handleOpenRunDetail(runId).catch(() => {});
+  };
+  const handleResumeRun = (runId: string, mode: 'resume' | 'replay'): void => {
+    void orchestrator.handleResumeRun(runId, mode).catch(() => {});
+  };
+  const handleCancelRun = (runId: string): void => {
+    void orchestrator.handleCancelRun(runId).catch(() => {});
+  };
+  const handleRequeueDeadLetter = (runId: string): void => {
+    void orchestrator.handleRequeueDeadLetter(runId).catch(() => {});
+  };
   const rawRunFilter = runHistoryState.runFilter as string;
 
   const runFilter: RunHistoryFilter = React.useMemo((): RunHistoryFilter => {
@@ -67,19 +68,19 @@ export function RunHistoryPanel({
   );
 
   const filteredRunList = React.useMemo((): AiPathRunRecord[] => {
-    if (runFilter === 'all') return runs;
+    if (runFilter === 'all') return resolvedRuns;
     if (runFilter === 'active') {
-      return runs.filter(
+      return resolvedRuns.filter(
         (run: AiPathRunRecord): boolean => run.status === 'queued' || run.status === 'running'
       );
     }
     if (runFilter === 'failed') {
-      return runs.filter(
+      return resolvedRuns.filter(
         (run: AiPathRunRecord): boolean => run.status === 'failed' || run.status === 'paused'
       );
     }
-    return runs.filter((run: AiPathRunRecord): boolean => run.status === 'dead_lettered');
-  }, [runFilter, runs]);
+    return resolvedRuns.filter((run: AiPathRunRecord): boolean => run.status === 'dead_lettered');
+  }, [runFilter, resolvedRuns]);
 
   return (
     <div className='rounded-lg border border-border bg-card/60 p-4'>
@@ -88,10 +89,10 @@ export function RunHistoryPanel({
         <Button
           type='button'
           className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
-          onClick={onRefresh}
-          disabled={isRefreshing}
+          onClick={handleRefresh}
+          disabled={resolvedIsRefreshing}
         >
-          {isRefreshing ? 'Refreshing...' : 'Refresh'}
+          {resolvedIsRefreshing ? 'Refreshing...' : 'Refresh'}
         </Button>
       </div>
       <div className='mb-3 flex flex-wrap gap-2'>
@@ -184,7 +185,7 @@ export function RunHistoryPanel({
                     <Button
                       type='button'
                       className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
-                      onClick={(): void => onOpenRunDetail(run.id)}
+                      onClick={(): void => handleOpenRunDetail(run.id)}
                     >
                       Details
                     </Button>
@@ -210,7 +211,7 @@ export function RunHistoryPanel({
                       <Button
                         type='button'
                         className='rounded-md border px-2 py-1 text-[10px] text-amber-200 hover:bg-amber-500/10'
-                        onClick={(): void => onResumeRun(run.id, 'resume')}
+                        onClick={(): void => handleResumeRun(run.id, 'resume')}
                       >
                         Resume
                       </Button>
@@ -218,7 +219,7 @@ export function RunHistoryPanel({
                     <Button
                       type='button'
                       className='rounded-md border px-2 py-1 text-[10px] text-sky-200 hover:bg-sky-500/10'
-                      onClick={(): void => onResumeRun(run.id, 'replay')}
+                      onClick={(): void => handleResumeRun(run.id, 'replay')}
                     >
                       Replay
                     </Button>
@@ -226,7 +227,7 @@ export function RunHistoryPanel({
                       <Button
                         type='button'
                         className='rounded-md border px-2 py-1 text-[10px] text-rose-200 hover:bg-rose-500/10'
-                        onClick={(): void => onCancelRun(run.id)}
+                        onClick={(): void => handleCancelRun(run.id)}
                       >
                         Cancel
                       </Button>
@@ -235,7 +236,7 @@ export function RunHistoryPanel({
                       <Button
                         type='button'
                         className='rounded-md border px-2 py-1 text-[10px] text-amber-200 hover:bg-amber-500/10'
-                        onClick={(): void => onRequeueDeadLetter(run.id)}
+                        onClick={(): void => handleRequeueDeadLetter(run.id)}
                       >
                         Requeue
                       </Button>

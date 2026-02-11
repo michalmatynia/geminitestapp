@@ -324,9 +324,13 @@ type EntityLookup = ProducerLookup | TagLookup;
 
 type ProducerEntry = {
   producerId?: string | null;
+  producer_id?: string | null;
   producerName?: string | null;
+  value?: string | null;
+  id?: string | null;
   name?: string | null;
   producer?: {
+    id?: string | null;
     name?: string | null;
   } | null;
 };
@@ -431,6 +435,59 @@ const toTrimmedString = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
   return trimmed || null;
+};
+
+const getProducerEntryId = (entry: ProducerEntry): string | null => {
+  return (
+    toTrimmedString(entry.producerId) ??
+    toTrimmedString(entry.producer_id) ??
+    toTrimmedString(entry.id) ??
+    toTrimmedString(entry.value) ??
+    toTrimmedString(entry.producer?.id)
+  );
+};
+
+const getProducerEntryName = (entry: ProducerEntry): string | null => {
+  return (
+    toTrimmedString(entry.producerName) ??
+    toTrimmedString(entry.name) ??
+    toTrimmedString(entry.producer?.name)
+  );
+};
+
+const getProductCategoryId = (product: ProductWithImages): string | null => {
+  const record = product as unknown as Record<string, unknown>;
+  const direct =
+    toTrimmedString(record['categoryId']) ??
+    toTrimmedString(record['category_id']);
+  if (direct) return direct;
+
+  const categoryValue = record['category'];
+  if (categoryValue && typeof categoryValue === 'object') {
+    const categoryRecord = categoryValue as Record<string, unknown>;
+    const nested =
+      toTrimmedString(categoryRecord['categoryId']) ??
+      toTrimmedString(categoryRecord['category_id']) ??
+      toTrimmedString(categoryRecord['id']) ??
+      toTrimmedString(categoryRecord['value']);
+    if (nested) return nested;
+  }
+
+  const categoriesValue = record['categories'];
+  if (Array.isArray(categoriesValue)) {
+    for (const categoryEntry of categoriesValue) {
+      if (!categoryEntry || typeof categoryEntry !== 'object') continue;
+      const categoryRecord = categoryEntry as Record<string, unknown>;
+      const nested =
+        toTrimmedString(categoryRecord['categoryId']) ??
+        toTrimmedString(categoryRecord['category_id']) ??
+        toTrimmedString(categoryRecord['id']) ??
+        toTrimmedString(categoryRecord['value']);
+      if (nested) return nested;
+    }
+  }
+
+  return null;
 };
 
 const getLookupValue = (
@@ -818,11 +875,8 @@ const getProductProducerValues = (
 
   for (const entry of entries) {
     if (!entry || typeof entry !== 'object') continue;
-    const producerId = toTrimmedString(entry.producerId);
-    const producerName =
-      toTrimmedString(entry.producerName) ??
-      toTrimmedString(entry.name) ??
-      toTrimmedString(entry.producer?.name);
+    const producerId = getProducerEntryId(entry);
+    const producerName = getProducerEntryName(entry);
 
     if (producerId && !seenIds.has(producerId)) {
       seenIds.add(producerId);
@@ -1359,7 +1413,7 @@ const getProductValue = (
 
   const normalized = sourceKey.trim().toLowerCase();
   if (normalized === 'category' || normalized === 'category_id' || normalized === 'categoryid') {
-    return (product as unknown as Record<string, unknown>)['categoryId'] ?? null;
+    return getProductCategoryId(product);
   }
   if (
     normalized === 'producerids' ||
@@ -1585,6 +1639,17 @@ function applyExportTemplateMappings(
         }
       } else {
         result[normalizedOutputField] = producerValues;
+        // Base.com commonly expects a primary producer field to render producer details.
+        // Preserve multi-producer payload while also setting a deterministic primary producer.
+        const primaryProducerId = producerValues[0] ?? null;
+        if (primaryProducerId) {
+          if (result['producer_id'] === undefined) {
+            result['producer_id'] = primaryProducerId;
+          }
+          if (result['manufacturer_id'] === undefined) {
+            result['manufacturer_id'] = primaryProducerId;
+          }
+        }
         if (
           normalizedTargetField === 'producer_ids' &&
           result['manufacturer_ids'] === undefined

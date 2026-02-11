@@ -199,6 +199,8 @@ export function VectorCanvas({
   const panStartRef = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
   const spaceDownRef = useRef(false);
   const [isPanning, setIsPanning] = useState(false);
+  const [isHoveringEditablePoint, setIsHoveringEditablePoint] = useState(false);
+  const [isDraggingEditablePoint, setIsDraggingEditablePoint] = useState(false);
   const [canvasRenderSize, setCanvasRenderSize] = useState<{ width: number; height: number }>({ width: 1, height: 1 });
   const panRafIdRef = useRef<number>(0);
   const pendingPanRef = useRef<{ panX: number; panY: number } | null>(null);
@@ -904,6 +906,7 @@ export function VectorCanvas({
         const hit = hitTestPoint(event);
         if (hit) {
           dragRef.current = hit;
+          setIsDraggingEditablePoint(true);
           dragShapeRef.current = null;
           onSelectShape(hit.shapeId);
           onSelectPoint?.(hit.pointIndex);
@@ -1046,6 +1049,12 @@ export function VectorCanvas({
         );
         return;
       }
+      if (tool === 'select') {
+        const hoveredPoint = hitTestPoint(event);
+        setIsHoveringEditablePoint((prev) => (prev === Boolean(hoveredPoint) ? prev : Boolean(hoveredPoint)));
+      } else {
+        setIsHoveringEditablePoint((prev) => (prev ? false : prev));
+      }
       if (dragShapeRef.current) {
         const nextPoint = toPoint(event);
         if (!nextPoint) return;
@@ -1121,7 +1130,7 @@ export function VectorCanvas({
         );
       }
     },
-    [brushRadius, canDraw, onChange, shapes, toPoint, updatePanFromPointer]
+    [brushRadius, canDraw, hitTestPoint, onChange, shapes, toPoint, tool, updatePanFromPointer]
   );
 
   const handleDoubleClick = useCallback((): void => {
@@ -1141,6 +1150,7 @@ export function VectorCanvas({
       );
     }
     dragRef.current = null;
+    setIsDraggingEditablePoint(false);
     dragShapeRef.current = null;
     drawingRef.current = null;
   }, [isPanning, onChange, shapes, stopPan]);
@@ -1183,14 +1193,21 @@ export function VectorCanvas({
                 'absolute left-1/2 top-0 z-20 -translate-x-1/2',
                 isPanning
                   ? 'cursor-grabbing'
-                  : spaceDownRef.current || tool === 'select'
+                  : isDraggingEditablePoint
+                    ? 'cursor-grabbing'
+                    : isHoveringEditablePoint
+                      ? 'cursor-pointer'
+                      : spaceDownRef.current || tool === 'select'
                     ? 'cursor-grab'
                     : 'cursor-crosshair'
               )}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
+              onMouseLeave={() => {
+                setIsHoveringEditablePoint(false);
+                handleMouseUp();
+              }}
               onDoubleClick={handleDoubleClick}
               onContextMenu={(event) => event.preventDefault()}
             />
@@ -1285,14 +1302,21 @@ export function VectorCanvas({
                   'absolute inset-0 z-20',
                   isPanning
                     ? 'cursor-grabbing'
-                    : spaceDownRef.current || tool === 'select'
+                    : isDraggingEditablePoint
+                      ? 'cursor-grabbing'
+                      : isHoveringEditablePoint
+                        ? 'cursor-pointer'
+                        : spaceDownRef.current || tool === 'select'
                       ? 'cursor-grab'
                       : 'cursor-crosshair'
                 )}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
+                onMouseLeave={() => {
+                  setIsHoveringEditablePoint(false);
+                  handleMouseUp();
+                }}
                 onDoubleClick={handleDoubleClick}
                 onContextMenu={(event) => event.preventDefault()}
               />

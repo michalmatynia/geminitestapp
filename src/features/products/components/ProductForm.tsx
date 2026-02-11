@@ -33,6 +33,7 @@ import ProductFormParameters from './form/ProductFormParameters';
 interface ProductFormProps {
   submitButtonText: string;
   skuRequired?: boolean;
+  validationInstanceScopeOverride?: ProductValidationInstanceScope;
 }
 
 const VALIDATION_DENY_BEHAVIOR_SESSION_KEY = 'product_validation_deny_behavior_by_scope';
@@ -48,6 +49,7 @@ const VALIDATION_DENY_SESSION_ID_KEY = 'product_validation_decision_session_id';
 export default function ProductForm({
   submitButtonText: _submitButtonText,
   skuRequired: _skuRequired = false,
+  validationInstanceScopeOverride,
 }: ProductFormProps): React.JSX.Element {
   const {
     handleSubmit,
@@ -137,11 +139,18 @@ export default function ProductForm({
       ? globalThis.crypto.randomUUID()
       : `draft-validation-${Date.now().toString(36)}`
   );
-  const validationInstanceScope = useMemo((): ProductValidationInstanceScope => {
+  const [productCreateValidationInstanceId] = useState<string>(() =>
+    typeof globalThis.crypto !== 'undefined' &&
+    typeof globalThis.crypto.randomUUID === 'function'
+      ? globalThis.crypto.randomUUID()
+      : `product-create-validation-${Date.now().toString(36)}`
+  );
+  const inferredValidationInstanceScope = useMemo((): ProductValidationInstanceScope => {
     if (product?.id?.trim()) return 'product_edit';
     if (draft?.id?.trim()) return 'draft_template';
     return 'product_create';
   }, [draft?.id, product?.id]);
+  const validationInstanceScope = validationInstanceScopeOverride ?? inferredValidationInstanceScope;
   const configuredInstanceDenyBehavior = useMemo(
     (): ProductValidationInstanceDenyBehaviorMap =>
       normalizeProductValidationInstanceDenyBehaviorMap(
@@ -220,16 +229,61 @@ export default function ProductForm({
   }, [acceptedIssueKeys]);
 
   const validationScopeKey = useMemo((): string => {
-    if (product?.id?.trim()) return `product:${product.id.trim()}`;
-    if (draft?.id?.trim()) return `draft-instance:${draft.id.trim()}:${draftValidationInstanceId}`;
-    return 'product:new';
-  }, [product?.id, draft?.id, draftValidationInstanceId]);
+    if (validationInstanceScope === 'product_edit' && product?.id?.trim()) {
+      return `product:${product.id.trim()}`;
+    }
+    if (validationInstanceScope === 'draft_template') {
+      const draftId = draft?.id?.trim() ?? 'draft';
+      return `draft-instance:${draftId}:${draftValidationInstanceId}`;
+    }
+    return `product-create-instance:${productCreateValidationInstanceId}`;
+  }, [
+    product?.id,
+    draft?.id,
+    draftValidationInstanceId,
+    productCreateValidationInstanceId,
+    validationInstanceScope,
+  ]);
 
   const buildIssueDecisionKey = useCallback(
     (fieldName: string, patternId: string): string =>
       `${validationScopeKey}::${fieldName}::${patternId}`,
     [validationScopeKey]
   );
+
+  useEffect(() => {
+    if (
+      validationInstanceScope !== 'product_create' &&
+      validationInstanceScope !== 'draft_template'
+    ) {
+      return;
+    }
+    const scopePrefix = `${validationScopeKey}::`;
+    setDeniedIssueKeys((prev: Set<string>) => {
+      let changed = false;
+      const next = new Set<string>();
+      for (const key of prev) {
+        if (key.startsWith(scopePrefix)) {
+          changed = true;
+          continue;
+        }
+        next.add(key);
+      }
+      return changed ? next : prev;
+    });
+    setAcceptedIssueKeys((prev: Set<string>) => {
+      let changed = false;
+      const next = new Set<string>();
+      for (const key of prev) {
+        if (key.startsWith(scopePrefix)) {
+          changed = true;
+          continue;
+        }
+        next.add(key);
+      }
+      return changed ? next : prev;
+    });
+  }, [validationInstanceScope, validationScopeKey]);
 
   const setValidationDenyBehavior = useCallback(
     (next: ProductValidationDenyBehavior | ((prev: ProductValidationDenyBehavior) => ProductValidationDenyBehavior)): void => {

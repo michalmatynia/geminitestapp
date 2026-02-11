@@ -14,34 +14,27 @@ import {
   Label,
 } from '@/shared/ui';
 
+import {
+  useGraphActions,
+  useGraphState,
+  usePersistenceActions,
+  useRuntimeActions,
+  useSelectionActions,
+  useSelectionState,
+} from '../context';
 
-type SimulationDialogProps = {
-  openNodeId: string | null;
-  onClose: () => void;
-  nodes: AiNode[];
-  setNodes: React.Dispatch<React.SetStateAction<AiNode[]>>;
-  isPathLocked?: boolean;
-  onRunSimulation: (node: AiNode) => void | Promise<void>;
-  savePathConfig?: ((options?: {
-    silent?: boolean | undefined;
-    includeNodeConfig?: boolean | undefined;
-    force?: boolean | undefined;
-    nodesOverride?: AiNode[] | undefined;
-    nodeOverride?: AiNode | undefined;
-  }) => Promise<boolean>) | undefined;
-};
 
-export function SimulationDialog({
-  openNodeId,
-  onClose,
-  nodes,
-  setNodes,
-  isPathLocked = false,
-  onRunSimulation,
-  savePathConfig,
-}: SimulationDialogProps): React.JSX.Element | null {
-  if (!openNodeId) return null;
-  const simulationNode = nodes.find((node: AiNode): boolean => node.id === openNodeId);
+export function SimulationDialog(): React.JSX.Element | null {
+  const { nodes, isPathLocked } = useGraphState();
+  const { setNodes } = useGraphActions();
+  const { runSimulation } = useRuntimeActions();
+  const { savePathConfig } = usePersistenceActions();
+  const { simulationOpenNodeId } = useSelectionState();
+  const { setSimulationOpenNodeId } = useSelectionActions();
+
+  if (!simulationOpenNodeId) return null;
+
+  const simulationNode = nodes.find((node: AiNode): boolean => node.id === simulationOpenNodeId);
 
   const simulationConfig = simulationNode?.config?.simulation ?? { productId: '' };
   const simulationEntityValue =
@@ -52,17 +45,17 @@ export function SimulationDialog({
 
   React.useEffect((): void => {
     setDraftEntityId(simulationEntityValue);
-  }, [openNodeId, simulationEntityValue]);
+  }, [simulationOpenNodeId, simulationEntityValue]);
 
   return (
     <Dialog
-      open={Boolean(openNodeId)}
+      open={Boolean(simulationOpenNodeId)}
       onOpenChange={(open: boolean): void => {
         if (!open) {
           const entityId = draftEntityId;
           setNodes((prev: AiNode[]): AiNode[] => {
             const next = prev.map((node: AiNode): AiNode =>
-              node.id === openNodeId
+              node.id === simulationOpenNodeId
                 ? {
                   ...node,
                   config: {
@@ -77,18 +70,16 @@ export function SimulationDialog({
                 }
                 : node
             );
-            const persistedNode = next.find((node: AiNode): boolean => node.id === openNodeId);
-            if (savePathConfig) {
-              void savePathConfig({
-                silent: true,
-                includeNodeConfig: true,
-                force: true,
-                ...(persistedNode ? { nodeOverride: persistedNode } : {}),
-              });
-            }
+            const persistedNode = next.find((node: AiNode): boolean => node.id === simulationOpenNodeId);
+            void savePathConfig({
+              silent: true,
+              includeNodeConfig: true,
+              force: true,
+              ...(persistedNode ? { nodeOverride: persistedNode } : {}),
+            });
             return next;
           });
-          onClose();
+          setSimulationOpenNodeId(null);
         }
       }}
     >
@@ -143,15 +134,13 @@ export function SimulationDialog({
                       node.id === simulationNode.id ? runNode : node
                     )
                   );
-                  if (savePathConfig) {
-                    void savePathConfig({
-                      silent: true,
-                      includeNodeConfig: true,
-                      force: true,
-                      nodeOverride: runNode,
-                    });
-                  }
-                  void onRunSimulation(runNode);
+                  void savePathConfig({
+                    silent: true,
+                    includeNodeConfig: true,
+                    force: true,
+                    nodeOverride: runNode,
+                  });
+                  void runSimulation(runNode);
                 }}
               >
                 Simulate Trigger

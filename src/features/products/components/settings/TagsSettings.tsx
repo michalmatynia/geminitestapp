@@ -95,6 +95,8 @@ export function TagsSettings({
       setShowModal(false);
       onRefresh();
     } catch (error) {
+      const { logClientError } = await import('@/shared/utils/observability/client-error-logger');
+      logClientError(error, { context: { source: 'TagsSettings', action: 'saveTag', tagId: editingTag?.id } });
       const message =
         error instanceof Error ? error.message : 'Failed to save tag.';
       toast(message, { variant: 'error' });
@@ -112,6 +114,8 @@ export function TagsSettings({
       toast('Tag deleted.', { variant: 'success' });
       onRefresh();
     } catch (error) {
+      const { logClientError } = await import('@/shared/utils/observability/client-error-logger');
+      logClientError(error, { context: { source: 'TagsSettings', action: 'deleteTag', tagId: tagToDelete.id } });
       const message =
         error instanceof Error ? error.message : 'Failed to delete tag.';
       toast(message, { variant: 'error' });

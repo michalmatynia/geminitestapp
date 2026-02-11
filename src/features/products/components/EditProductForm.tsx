@@ -59,7 +59,7 @@ function EditProductForm(): React.JSX.Element {
       {showFileManager ? (
         <FileManager onSelectFile={handleMultiFileSelect} showFileManager={showFileManager} />
       ) : (
-        <ProductForm submitButtonText='Update' />
+        <ProductForm submitButtonText='Update' validationInstanceScopeOverride='product_edit' />
       )}
     </div>
   );

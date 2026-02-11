@@ -41,6 +41,9 @@ export function Asset3DUploader({
   const handleFileSelect = useCallback(async (selectedFile: File): Promise<void> => {
     const validation = await validate3DFileAsync(selectedFile);
     if (!validation.valid) {
+      logClientError(new Error(validation.error ?? 'Invalid 3D file'), { 
+        context: { source: 'Asset3DUploader', action: 'handleFileSelect', filename: selectedFile.name } 
+      });
       setError(validation.error ?? 'Invalid file');
       return;
     }
@@ -99,6 +102,7 @@ export function Asset3DUploader({
       );
       onUpload(uploaded);
     } catch (err) {
+      logClientError(err, { context: { source: 'Asset3DUploader', action: 'handleUpload', filename: file.name } });
       setError(err instanceof Error ? err.message : 'Upload failed');
     } finally {
       setIsUploading(false);

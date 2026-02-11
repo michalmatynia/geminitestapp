@@ -1,11 +1,7 @@
-import { promises as fs } from 'fs';
-import path from 'path';
-
-import { NextRequest, NextResponse } from 'next/server';
-
 import { logAgentAudit } from '@/features/ai/agent-runtime/server';
 import type { AgentRunStatusType } from '@/features/ai/agent-runtime/types/agent';
 import { startAgentQueue } from '@/features/jobs/server';
+import { ErrorSystem } from '@/features/observability/server';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import prisma from '@/shared/lib/db/prisma';
@@ -47,7 +43,8 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
     },
   });
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][agent][GET] Runs loaded', {
+    void ErrorSystem.logInfo('Runs loaded', {
+      service: 'agent-api',
       count: runs.length,
       durationMs: Date.now() - requestStart,
     });
@@ -143,7 +140,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const planSettings = normalizePlanSettings(body.planSettings);
 
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][agent][POST] Request', {
+    void ErrorSystem.logInfo('Request', {
+      service: 'agent-api',
       promptLength: body.prompt.trim().length,
       model: body.model?.trim() || null,
       tools: body.tools ?? [],
@@ -152,17 +150,6 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       runHeadless: body.runHeadless ?? true,
       ignoreRobotsTxt: body.ignoreRobotsTxt ?? false,
       requireHumanApproval: body.requireHumanApproval ?? false,
-      memoryValidationModel: body.memoryValidationModel?.trim() || null,
-      plannerModel: body.plannerModel?.trim() || null,
-      selfCheckModel: body.selfCheckModel?.trim() || null,
-      extractionValidationModel:
-        body.extractionValidationModel?.trim() || null,
-      toolRouterModel: body.toolRouterModel?.trim() || null,
-      loopGuardModel: body.loopGuardModel?.trim() || null,
-      approvalGateModel: body.approvalGateModel?.trim() || null,
-      memorySummarizationModel: body.memorySummarizationModel?.trim() || null,
-      selectorInferenceModel: body.selectorInferenceModel?.trim() || null,
-      outputNormalizationModel: body.outputNormalizationModel?.trim() || null,
       planSettings,
     });
   }
@@ -259,7 +246,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   startAgentQueue();
 
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][agent][POST] Queued', {
+    void ErrorSystem.logInfo('Queued', {
+      service: 'agent-api',
       runId: run.id,
       status: run.status,
       durationMs: Date.now() - requestStart,
@@ -307,7 +295,8 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promis
     )
   );
   if (DEBUG_CHATBOT) {
-    console.info('[chatbot][agent][DELETE] Deleted', {
+    void ErrorSystem.logInfo('Deleted', {
+      service: 'agent-api',
       count: ids.length,
       durationMs: Date.now() - requestStart,
     });

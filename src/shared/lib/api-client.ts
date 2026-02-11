@@ -1,4 +1,5 @@
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
+import { ErrorCategory, type SuggestedAction } from '@/shared/types/observability';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export interface ApiClientOptions extends RequestInit {
@@ -10,12 +11,22 @@ export interface ApiClientOptions extends RequestInit {
 export class ApiError extends Error {
   status: number;
   errorId?: string | undefined;
+  category?: ErrorCategory | string | undefined;
+  suggestedActions?: SuggestedAction[] | undefined;
 
-  constructor(message: string, status: number, errorId?: string | undefined) {
+  constructor(
+    message: string,
+    status: number,
+    errorId?: string | undefined,
+    category?: ErrorCategory | string | undefined,
+    suggestedActions?: SuggestedAction[] | undefined
+  ) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
     this.errorId = errorId;
+    this.category = category;
+    this.suggestedActions = suggestedActions;
   }
 }
 
@@ -86,6 +97,8 @@ export async function apiClient<T>(
 
     let errorMessage = response.statusText || 'Unknown API Error';
     let errorId: string | undefined;
+    let category: ErrorCategory | string | undefined;
+    let suggestedActions: SuggestedAction[] | undefined;
 
     if (data && typeof data === 'object') {
       const dataObj = data as Record<string, unknown>;
@@ -93,9 +106,15 @@ export async function apiClient<T>(
       if (typeof dataObj['errorId'] === 'string') {
         errorId = dataObj['errorId'];
       }
+      if (typeof dataObj['category'] === 'string') {
+        category = dataObj['category'] as ErrorCategory;
+      }
+      if (Array.isArray(dataObj['suggestedActions'])) {
+        suggestedActions = dataObj['suggestedActions'] as SuggestedAction[];
+      }
     }
 
-    const error = new ApiError(errorMessage, response.status, errorId);
+    const error = new ApiError(errorMessage, response.status, errorId, category, suggestedActions);
 
     if (logError) {
       logClientError(error, { 

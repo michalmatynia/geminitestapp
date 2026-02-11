@@ -3,6 +3,7 @@ import 'server-only';
 export * from './services/error-system';
 export * from './services/activity-repository';
 export * from './services/activityService';
+export * from './utils/error-classifier';
 export * from './lib/system-log-repository';
 export * from './lib/system-logger';
 export * from './lib/critical-error-notifier';

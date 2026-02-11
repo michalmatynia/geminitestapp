@@ -572,6 +572,7 @@ export default function DatabaseEnginePage(): React.JSX.Element {
       ]);
       toast('Database Engine configuration saved.', { variant: 'success' });
     } catch (error: unknown) {
+      const { logClientError } = require('@/features/observability');
       logClientError(error, { context: { source: 'DatabaseEnginePage', action: 'saveEngineConfiguration' } });
       toast('Failed to save Database Engine configuration.', { variant: 'error' });
     }
@@ -594,6 +595,7 @@ export default function DatabaseEnginePage(): React.JSX.Element {
         await syncDatabaseMutation.mutateAsync(direction);
         toast(`Database sync queued (${direction}).`, { variant: 'success' });
       } catch (error: unknown) {
+        const { logClientError } = require('@/features/observability');
         logClientError(error, { context: { source: 'DatabaseEnginePage', action: 'runDatabaseSync', direction } });
         toast('Failed to enqueue database sync.', { variant: 'error' });
       }
@@ -615,6 +617,7 @@ export default function DatabaseEnginePage(): React.JSX.Element {
           { variant: 'success' }
         );
       } catch (error: unknown) {
+        const { logClientError } = require('@/features/observability');
         logClientError(error, { context: { source: 'DatabaseEnginePage', action: 'runBackfill', dryRun, backfillLimit } });
         toast('Backfill failed.', { variant: 'error' });
       }
@@ -636,6 +639,7 @@ export default function DatabaseEnginePage(): React.JSX.Element {
       }
       void backupSchedulerStatusQuery.refetch();
     } catch (error: unknown) {
+      const { logClientError } = require('@/features/observability');
       logClientError(error, {
         context: { source: 'DatabaseEnginePage', action: 'runBackupSchedulerTickNow' },
       });
@@ -655,6 +659,7 @@ export default function DatabaseEnginePage(): React.JSX.Element {
         }
         void backupSchedulerStatusQuery.refetch();
       } catch (error: unknown) {
+        const { logClientError } = require('@/features/observability');
         logClientError(error, {
           context: { source: 'DatabaseEnginePage', action: 'runBackupNow', dbType },
         });
@@ -671,6 +676,7 @@ export default function DatabaseEnginePage(): React.JSX.Element {
         toast(`Job cancelled: ${jobId}`, { variant: 'success' });
         void operationsJobsQuery.refetch();
       } catch (error: unknown) {
+        const { logClientError } = require('@/features/observability');
         logClientError(error, {
           context: { source: 'DatabaseEnginePage', action: 'cancelOperationJob', jobId },
         });
@@ -692,6 +698,7 @@ export default function DatabaseEnginePage(): React.JSX.Element {
       toast(`Collection sync complete: ${action.label}`, { variant: 'success' });
       void schemaQuery.refetch();
     } catch (error: unknown) {
+      const { logClientError } = require('@/features/observability');
       logClientError(error, {
         context: {
           source: 'DatabaseEnginePage',

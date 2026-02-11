@@ -4,16 +4,14 @@ import React from 'react';
 
 import { VectorCanvas, type VectorCanvasProps } from '@/shared/ui';
 
-import { useVectorDrawing } from '../context/VectorDrawingContext';
+import { useOptionalVectorDrawing } from '../context/VectorDrawingContext';
 
 export type { VectorCanvasProps } from '@/shared/ui';
 
 export function VectorDrawingCanvas(props: Partial<VectorCanvasProps>): React.JSX.Element {
-  let contextValues: Partial<VectorCanvasProps> = {};
-  
-  try {
-    const context = useVectorDrawing();
-    contextValues = {
+  const context = useOptionalVectorDrawing();
+  const contextValues: Partial<VectorCanvasProps> = context
+    ? {
       shapes: context.shapes,
       tool: context.tool,
       activeShapeId: context.activeShapeId,
@@ -26,10 +24,8 @@ export function VectorDrawingCanvas(props: Partial<VectorCanvasProps>): React.JS
       allowWithoutImage: context.allowWithoutImage,
       showEmptyState: context.showEmptyState,
       emptyStateLabel: context.emptyStateLabel,
-    };
-  } catch {
-    // If context is not available, we rely on props
-  }
+    }
+    : {};
 
   const mergedProps = {
     ...contextValues,

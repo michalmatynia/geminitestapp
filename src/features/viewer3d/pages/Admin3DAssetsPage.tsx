@@ -98,8 +98,10 @@ export function Admin3DAssetsPage(): React.JSX.Element {
 
     try {
       await deleteMutation.mutateAsync(asset.id);
+      toast(`Asset "${asset.name || asset.filename}" deleted.`, { variant: 'success' });
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete asset');
+      logClientError(err, { context: { source: 'Admin3DAssetsPage', action: 'deleteAsset', assetId: asset.id } });
+      toast(err instanceof Error ? err.message : 'Failed to delete asset', { variant: 'error' });
     }
   };
 
@@ -317,9 +319,13 @@ export function Admin3DAssetsPage(): React.JSX.Element {
                 onClick={(): void => {
                   void reindexMutation
                     .mutateAsync()
-                    .then((): void => { void assetsQuery.refetch(); })
+                    .then((): void => { 
+                      toast('Assets reindexed successfully.', { variant: 'success' });
+                      void assetsQuery.refetch(); 
+                    })
                     .catch((err: unknown): void => {
-                      alert(err instanceof Error ? err.message : 'Failed to reindex assets');
+                      logClientError(err, { context: { source: 'Admin3DAssetsPage', action: 'reindexAssets' } });
+                      toast(err instanceof Error ? err.message : 'Failed to reindex assets', { variant: 'error' });
                     });
                 }}
               >

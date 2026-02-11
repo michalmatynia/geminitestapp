@@ -4,6 +4,8 @@ import { execFile } from 'child_process';
 import { promises as fs } from 'fs';
 import path from 'path';
 
+import { badRequestError, configurationError } from '@/shared/errors/app-error';
+
 export const backupsDir = path.join(process.cwd(), 'mongo', 'backups');
 
 export const ensureBackupsDir = async (): Promise<void> => {
@@ -13,7 +15,7 @@ export const ensureBackupsDir = async (): Promise<void> => {
 export const getMongoConnectionUrl = (): string => {
   const mongoUri = process.env['MONGODB_URI'];
   if (!mongoUri) {
-    throw new Error('MONGODB_URI is not set.');
+    throw configurationError('MONGODB_URI is not set.');
   }
   return mongoUri;
 };
@@ -21,7 +23,7 @@ export const getMongoConnectionUrl = (): string => {
 export const getMongoDatabaseName = (): string => {
   const dbName = process.env['MONGODB_DB'];
   if (!dbName) {
-    throw new Error('MONGODB_DB is not set.');
+    throw configurationError('MONGODB_DB is not set.');
   }
   return dbName;
 };
@@ -54,9 +56,9 @@ export const execFileAsync = (
 export const assertValidBackupName = (backupName: string): void => {
   const basename = path.basename(backupName);
   if (basename !== backupName) {
-    throw new Error('Invalid backup name.');
+    throw badRequestError('Invalid backup name.');
   }
   if (path.extname(backupName) !== '.archive') {
-    throw new Error('Invalid backup file type.');
+    throw badRequestError('Invalid backup file type.');
   }
 };

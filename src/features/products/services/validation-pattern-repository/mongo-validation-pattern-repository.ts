@@ -12,6 +12,8 @@ import type {
 } from '@/features/products/types/services/validation-pattern-repository';
 import {
   normalizeProductValidationPatternDenyBehaviorOverride,
+  normalizeProductValidationLaunchScopeBehavior,
+  normalizeProductValidationSkipNoopReplacementProposal,
   normalizeProductValidationPatternLaunchScopes,
   normalizeProductValidationPatternReplacementScopes,
   normalizeProductValidationPatternScopes,
@@ -23,6 +25,7 @@ import type {
   ProductValidationDenyBehavior,
   ProductValidationInstanceDenyBehaviorMap,
   ProductValidationInstanceScope,
+  ProductValidationLaunchScopeBehavior,
   ProductValidationLaunchOperator,
   ProductValidationLaunchSourceMode,
   ProductValidationPostAcceptBehavior,
@@ -48,6 +51,7 @@ interface ProductValidationPatternDoc extends Document {
   enabled: boolean;
   replacementEnabled: boolean;
   replacementAutoApply?: boolean;
+  skipNoopReplacementProposal?: boolean | null;
   replacementValue: string | null;
   replacementFields: string[];
   replacementAppliesToScopes?: ProductValidationInstanceScope[] | null;
@@ -66,6 +70,7 @@ interface ProductValidationPatternDoc extends Document {
   passOutputToNext?: boolean | null;
   launchEnabled?: boolean | null;
   launchAppliesToScopes?: ProductValidationInstanceScope[] | null;
+  launchScopeBehavior?: ProductValidationLaunchScopeBehavior | null;
   launchSourceMode?: ProductValidationLaunchSourceMode | null;
   launchSourceField?: string | null;
   launchOperator?: ProductValidationLaunchOperator | null;
@@ -87,6 +92,7 @@ type ProductValidationPatternInsert = {
   enabled: boolean;
   replacementEnabled: boolean;
   replacementAutoApply: boolean;
+  skipNoopReplacementProposal: boolean;
   replacementValue: string | null;
   replacementFields: string[];
   replacementAppliesToScopes: ProductValidationInstanceScope[];
@@ -105,6 +111,7 @@ type ProductValidationPatternInsert = {
   passOutputToNext: boolean;
   launchEnabled: boolean;
   launchAppliesToScopes: ProductValidationInstanceScope[];
+  launchScopeBehavior: ProductValidationLaunchScopeBehavior;
   launchSourceMode: ProductValidationLaunchSourceMode;
   launchSourceField: string | null;
   launchOperator: ProductValidationLaunchOperator;
@@ -268,6 +275,9 @@ const toDomain = (doc: ProductValidationPatternDoc): ProductValidationPattern =>
   enabled: doc.enabled,
   replacementEnabled: doc.replacementEnabled ?? false,
   replacementAutoApply: doc.replacementAutoApply ?? false,
+  skipNoopReplacementProposal: normalizeProductValidationSkipNoopReplacementProposal(
+    doc.skipNoopReplacementProposal
+  ),
   replacementValue: doc.replacementValue ?? null,
   replacementFields: normalizeReplacementFields(doc.replacementFields),
   replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
@@ -293,6 +303,9 @@ const toDomain = (doc: ProductValidationPatternDoc): ProductValidationPattern =>
   launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
     doc.launchAppliesToScopes,
     doc.appliesToScopes
+  ),
+  launchScopeBehavior: normalizeProductValidationLaunchScopeBehavior(
+    doc.launchScopeBehavior
   ),
   launchSourceMode: normalizeLaunchSourceMode(doc.launchSourceMode),
   launchSourceField:
@@ -357,6 +370,9 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
       enabled: data.enabled ?? true,
       replacementEnabled: data.replacementEnabled ?? false,
       replacementAutoApply: data.replacementAutoApply ?? false,
+      skipNoopReplacementProposal: normalizeProductValidationSkipNoopReplacementProposal(
+        data.skipNoopReplacementProposal
+      ),
       replacementValue: data.replacementValue?.trim() || null,
       replacementFields: normalizeReplacementFields(data.replacementFields),
       replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
@@ -382,6 +398,9 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
       launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
         data.launchAppliesToScopes,
         data.appliesToScopes
+      ),
+      launchScopeBehavior: normalizeProductValidationLaunchScopeBehavior(
+        data.launchScopeBehavior
       ),
       launchSourceMode: normalizeLaunchSourceMode(data.launchSourceMode),
       launchSourceField: data.launchSourceField?.trim() || null,
@@ -415,6 +434,11 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
     if (data.enabled !== undefined) set.enabled = data.enabled;
     if (data.replacementEnabled !== undefined) set.replacementEnabled = data.replacementEnabled;
     if (data.replacementAutoApply !== undefined) set.replacementAutoApply = data.replacementAutoApply;
+    if (data.skipNoopReplacementProposal !== undefined) {
+      set.skipNoopReplacementProposal = normalizeProductValidationSkipNoopReplacementProposal(
+        data.skipNoopReplacementProposal
+      );
+    }
     if (data.replacementValue !== undefined) set.replacementValue = data.replacementValue?.trim() || null;
     if (data.replacementFields !== undefined) {
       set.replacementFields = normalizeReplacementFields(data.replacementFields);
@@ -473,6 +497,11 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
       set.launchAppliesToScopes = normalizeProductValidationPatternLaunchScopes(
         data.launchAppliesToScopes,
         data.appliesToScopes
+      );
+    }
+    if (data.launchScopeBehavior !== undefined) {
+      set.launchScopeBehavior = normalizeProductValidationLaunchScopeBehavior(
+        data.launchScopeBehavior
       );
     }
     if (data.launchSourceMode !== undefined) {

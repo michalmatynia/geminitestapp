@@ -41,10 +41,18 @@ describe('category-mapping-repository (mongodb)', () => {
       upsertedCount: 0,
       upsertedId: null,
     });
+    const updateMany = vi.fn().mockResolvedValue({
+      acknowledged: true,
+      matchedCount: 0,
+      modifiedCount: 0,
+      upsertedCount: 0,
+      upsertedId: null,
+    });
 
     const mappingCollection = {
       createIndex,
       updateOne,
+      updateMany,
     };
     const externalCollection = {
       find: externalFind,
@@ -68,6 +76,7 @@ describe('category-mapping-repository (mongodb)', () => {
 
     expect(count).toBe(1);
     expect(updateOne).toHaveBeenCalledTimes(1);
+    expect(updateMany).toHaveBeenCalledTimes(1);
 
     const updatePayload = updateOne.mock.calls[0]?.[1] as {
       $set: Record<string, unknown>;

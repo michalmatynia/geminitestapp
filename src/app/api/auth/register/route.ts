@@ -95,7 +95,10 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
       entityId: user.id,
       entityType: 'user',
       metadata: { email: user.email }
-    }).catch(() => {});
+    }).catch((error) => {
+      const { logger } = require('@/shared/utils/logger');
+      logger.warn('Failed to log registration activity', error);
+    });
     return NextResponse.json(
       { id: user.id, email: user.email, name: user.name },
       { status: 201 }
@@ -138,7 +141,10 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
     entityId: result.insertedId.toString(),
     entityType: 'user',
     metadata: { email: doc.email }
-  }).catch(() => {});
+  }).catch((error) => {
+    const { logger } = require('@/shared/utils/logger');
+    logger.warn('Failed to log registration activity', error);
+  });
   return NextResponse.json(
     { id: result.insertedId.toString(), email: doc.email, name: doc.name },
     { status: 201 }

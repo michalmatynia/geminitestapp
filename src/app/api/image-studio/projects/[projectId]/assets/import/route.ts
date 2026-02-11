@@ -350,6 +350,15 @@ async function POST_handler(
     });
   }
 
+  if (failures.length > 0) {
+    const { logger } = await import('@/shared/utils/logger');
+    logger.warn(`[image-studio.assets.import] ${failures.length} files failed to import`, {
+      projectId,
+      failures: failures.slice(0, 5),
+      totalFailures: failures.length
+    });
+  }
+
   if (uploaded.length === 0) {
     throw badRequestError('No files imported', { failures });
   }

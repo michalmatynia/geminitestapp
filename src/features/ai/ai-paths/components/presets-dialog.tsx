@@ -12,6 +12,7 @@ import {
 } from '@/shared/ui';
 
 import { usePresetsState, usePresetsActions } from '../context';
+import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
 
 // ---------------------------------------------------------------------------
 // Props Interface
@@ -116,36 +117,23 @@ export function PresetsDialog({
 // Context-Based Version (New Implementation)
 // ---------------------------------------------------------------------------
 
-type PresetsDialogWithContextProps = {
-  /** Callback to import presets - still needed as it involves API calls */
-  onImportPresets: (mode: 'merge' | 'replace') => void;
-  /** Toast notification function */
-  toast: (message: string, options?: { variant?: 'success' | 'error' }) => void;
-  /** Error reporting function */
-  reportAiPathsError: (
-    error: unknown,
-    meta: Record<string, unknown>,
-    prefix?: string
-  ) => void;
-};
-
 /**
  * PresetsDialogWithContext - Context-based version that reads state from PresetsContext.
  *
- * Props reduced from 8 to 3 by reading from context:
+ * Props reduced from 8 to 0 by reading from context:
  * - presetsModalOpen, presetsJson, clusterPresets (state)
  * - setPresetsModalOpen, setPresetsJson (actions)
- *
- * Only keeps callback props for external operations (API, toast, error reporting).
  */
-export function PresetsDialogWithContext({
-  onImportPresets,
-  toast,
-  reportAiPathsError,
-}: PresetsDialogWithContextProps): React.JSX.Element {
+export function PresetsDialogWithContext(): React.JSX.Element {
+  const orchestrator = useAiPathsSettingsOrchestrator();
   // Read state from context
   const { presetsModalOpen, presetsJson, clusterPresets } = usePresetsState();
   const { setPresetsModalOpen, setPresetsJson } = usePresetsActions();
+  const handleImportPresets = (mode: 'merge' | 'replace'): void => {
+    void orchestrator.handleImportPresets(mode).catch(() => {});
+  };
+  const showToast = orchestrator.toast;
+  const reportError = orchestrator.reportAiPathsError;
 
   return (
     <Dialog open={presetsModalOpen} onOpenChange={setPresetsModalOpen}>
@@ -175,14 +163,14 @@ export function PresetsDialogWithContext({
             <Button
               type='button'
               className='rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10'
-              onClick={() => onImportPresets('merge')}
+              onClick={() => handleImportPresets('merge')}
             >
               Import (Merge)
             </Button>
             <Button
               type='button'
               className='rounded-md border border-rose-500/40 text-xs text-rose-200 hover:bg-rose-500/10'
-              onClick={() => onImportPresets('replace')}
+              onClick={() => handleImportPresets('replace')}
             >
               Replace Existing
             </Button>
@@ -193,14 +181,14 @@ export function PresetsDialogWithContext({
                 const value = presetsJson || JSON.stringify(clusterPresets, null, 2);
                 navigator.clipboard
                   .writeText(value)
-                  .then(() => toast('Presets copied to clipboard.', { variant: 'success' }))
+                  .then(() => showToast('Presets copied to clipboard.', { variant: 'success' }))
                   .catch((error: Error) => {
-                    reportAiPathsError(
+                    reportError(
                       error,
                       { action: 'copyPresets' },
                       'Failed to copy presets:'
                     );
-                    toast('Failed to copy presets.', { variant: 'error' });
+                    showToast('Failed to copy presets.', { variant: 'error' });
                   });
               }}
             >

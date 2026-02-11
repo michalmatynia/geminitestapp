@@ -36,7 +36,6 @@ function FolderTreeContent(): React.JSX.Element {
     undoHistory,
     onUndoAtIndex,
     onRefreshFolders,
-    setDraggedFolderId,
     expandedFolderIds,
     onToggleExpand,
   } = useFolderTree();
@@ -77,14 +76,6 @@ function FolderTreeContent(): React.JSX.Element {
     },
     []
   );
-
-  const handleFolderDragStart = useCallback((folderId: string): void => {
-    setDraggedFolderId(folderId);
-  }, [setDraggedFolderId]);
-
-  const handleFolderDragEnd = useCallback((): void => {
-    setDraggedFolderId(null);
-  }, [setDraggedFolderId]);
 
   const handleToggleSelectedCollapse = useCallback((): void => {
     if (!selectedFolderId) return;
@@ -185,11 +176,9 @@ function FolderTreeContent(): React.JSX.Element {
           key={folder.id}
           folder={folder}
           level={0}
-          onDragStart={handleFolderDragStart}
-          onDragEnd={handleFolderDragEnd}
         />
       )),
-    [folders, handleFolderDragStart, handleFolderDragEnd]
+    [folders]
   );
 
   return (

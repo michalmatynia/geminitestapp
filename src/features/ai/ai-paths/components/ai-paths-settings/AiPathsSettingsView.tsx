@@ -10,22 +10,22 @@ import type {
 import type { PathMeta } from '@/shared/types/domain/ai-paths';
 import { Button, Input, Label, SharedModal, UnifiedSelect, useToast } from '@/shared/ui';
 
-import { useGraphActions, useGraphState, usePersistenceActions, usePersistenceState, useRuntimeActions, useRuntimeState, useSelectionState } from '../../context';
-import { CanvasBoardMigrated } from '../examples/CanvasBoardMigrated';
-import { CanvasSidebarWrapper } from '../examples/CanvasSidebarWrapper';
-import { ClusterPresetsPanelMigrated } from '../examples/ClusterPresetsPanelMigrated';
-import { DocsTabPanelMigrated } from '../examples/DocsTabPanelMigrated';
-import { NodeConfigDialogMigrated } from '../examples/NodeConfigDialogMigrated';
-import { PathsTabPanelMigrated } from '../examples/PathsTabPanelMigrated';
-import { PresetsDialogMigrated } from '../examples/PresetsDialogMigrated';
-import { RunHistoryPanelMigrated } from '../examples/RunHistoryPanelMigrated';
-import { SimulationDialogMigrated } from '../examples/SimulationDialogMigrated';
-import { GraphModelDebugPanel } from '../graph-model-debug-panel';
-import { RunDetailDialogWithContext } from '../run-detail-dialog';
-import { RuntimeEventLogPanel } from '../runtime-event-log-panel';
 import { useAiPathsSettingsOrchestrator } from './AiPathsSettingsOrchestratorContext';
 import { useAiPathsErrorReporting } from './useAiPathsErrorReporting';
 import { usePathConfigHandlers } from './usePathConfigHandlers';
+import { useGraphActions, useGraphState, usePersistenceActions, usePersistenceState, useRuntimeActions, useRuntimeState, useSelectionState } from '../../context';
+import { AiPathConfigProviderWithContext } from '../AiPathConfigContext';
+import { CanvasBoard } from '../canvas-board';
+import { CanvasSidebar } from '../canvas-sidebar';
+import { ClusterPresetsPanel } from '../cluster-presets-panel';
+import { GraphModelDebugPanel } from '../graph-model-debug-panel';
+import { NodeConfigDialog } from '../node-config-dialog';
+import { PresetsDialogWithContext } from '../presets-dialog';
+import { RunDetailDialogWithContext } from '../run-detail-dialog';
+import { RunHistoryPanel } from '../run-history-panel';
+import { RuntimeEventLogPanel } from '../runtime-event-log-panel';
+import { SimulationDialog } from '../simulation-dialog';
+import { DocsTabPanel, PathsTabPanel } from '../ui-panels';
 
 type AiPathsSettingsViewProps = {
   activeTab: 'canvas' | 'paths' | 'docs';
@@ -584,15 +584,15 @@ export function AiPathsSettingsView({
               }`}
               aria-hidden={isFocusMode}
             >
-              <CanvasSidebarWrapper
+              <CanvasSidebar
                 palette={palette}
               />
-              <ClusterPresetsPanelMigrated />
+              <ClusterPresetsPanel />
               <GraphModelDebugPanel payload={lastGraphModelPayload} />
-              <RunHistoryPanelMigrated />
+              <RunHistoryPanel />
             </div>
             <div className={`relative ${isFocusMode ? 'h-full min-h-0' : ''}`}>
-              <CanvasBoardMigrated
+              <CanvasBoard
                 viewportClassName={isFocusMode ? 'h-full min-h-0 rounded-none border-0' : undefined}
               />
             </div>
@@ -736,16 +736,17 @@ export function AiPathsSettingsView({
       )}
 
       {activeTab === 'paths' && (
-        <PathsTabPanelMigrated onTabChange={onTabChange} />
+        <PathsTabPanel onPathOpen={() => onTabChange?.('canvas')} />
       )}
 
-      {activeTab === 'docs' && <DocsTabPanelMigrated />}
+      {activeTab === 'docs' && <DocsTabPanel />}
 
-      <NodeConfigDialogMigrated />
+      <AiPathConfigProviderWithContext>
+        <NodeConfigDialog />
+      </AiPathConfigProviderWithContext>
       <RunDetailDialogWithContext />
-      <PresetsDialogMigrated />
-
-      <SimulationDialogMigrated />
+      <PresetsDialogWithContext />
+      <SimulationDialog />
     </div>
   );
 }

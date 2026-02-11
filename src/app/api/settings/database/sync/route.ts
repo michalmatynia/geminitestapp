@@ -64,7 +64,10 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     entityId: job.id,
     entityType: 'job',
     metadata: { direction, jobId: job.id }
-  }).catch(() => {});
+  }).catch((error) => {
+    const { logger } = require('@/shared/utils/logger');
+    logger.warn('Failed to log database sync activity', error);
+  });
 
   const { env } = await import('@/shared/lib/env');
   const inlineJobs =

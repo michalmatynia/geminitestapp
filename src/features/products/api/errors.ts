@@ -1,4 +1,6 @@
 
+import { ErrorCategory, type SuggestedAction } from '@/shared/types/observability';
+
 export type ErrorCode = 
   | 'VALIDATION_ERROR'
   | 'NOT_FOUND'
@@ -25,6 +27,8 @@ export type ApiError = {
   error: {
     code: ErrorCode;
     message: string;
+    category: ErrorCategory;
+    suggestedActions: SuggestedAction[];
     details?: ErrorDetail[];
     timestamp: string;
     requestId?: string;
@@ -42,11 +46,25 @@ export class ApiErrorBuilder {
   private meta: ApiError['meta'];
 
   constructor(code: ErrorCode, message: string) {
+    const { classifyError, getSuggestedActions } = require('@/features/observability/utils/error-classifier');
+    const dummyError = new Error(message);
+    const category = classifyError(dummyError);
+    const suggestedActions = getSuggestedActions(category, dummyError);
+
     this.error = {
       code,
       message,
+      category,
+      suggestedActions,
       timestamp: new Date().toISOString()
     };
+  }
+
+  withCategory(category: ErrorCategory): this {
+    const { getSuggestedActions } = require('@/features/observability/utils/error-classifier');
+    this.error.category = category;
+    this.error.suggestedActions = getSuggestedActions(category, new Error(this.error.message));
+    return this;
   }
 
   withDetails(details: ErrorDetail[]): this {
@@ -210,7 +228,10 @@ export function createVersionedErrorResponse(
   }
 
   // Handle generic errors
-  const builder = new ApiErrorBuilder('SERVER_ERROR', 'An unexpected error occurred');
+  const { classifyError } = require('@/features/observability/utils/error-classifier');
+  const category = classifyError(error);
+  const builder = new ApiErrorBuilder('SERVER_ERROR', error.message || 'An unexpected error occurred')
+    .withCategory(category);
   
   if (requestId) {
     builder.withRequestId(requestId);

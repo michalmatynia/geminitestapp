@@ -13,6 +13,7 @@ import { getCategoryMappingRepository } from '@/features/integrations/server';
 import { getProducerMappingRepository } from '@/features/integrations/server';
 import { getTagMappingRepository } from '@/features/integrations/server';
 import {
+  getExportActiveTemplateId,
   getExportWarehouseId
 } from '@/features/integrations/server';
 import {
@@ -159,6 +160,49 @@ const TAG_ID_TEMPLATE_FIELDS = new Set([
   'tagids',
   'tag_ids',
 ]);
+
+const toTrimmedString = (value: unknown): string => {
+  if (typeof value !== 'string') return '';
+  return value.trim();
+};
+
+const toTemplateFieldKey = (value: string): string =>
+  value.trim().toLowerCase().replace(/[\s_-]+/g, '');
+
+const matchesTemplateField = (value: string, fields: Set<string>): boolean => {
+  const normalized = value.trim().toLowerCase();
+  if (fields.has(normalized)) return true;
+  const compact = toTemplateFieldKey(normalized);
+  return fields.has(compact);
+};
+
+const isMissingExternalEntity = (
+  entityName: unknown,
+  entityKind: 'category' | 'producer'
+): boolean => {
+  const normalized = toTrimmedString(entityName).toLowerCase();
+  return normalized.startsWith(`[missing external ${entityKind}:`);
+};
+
+const toTimeMs = (value: unknown): number => {
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === 'string' || typeof value === 'number') {
+    const parsed = new Date(value).getTime();
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+};
+
+const getProducerRefId = (value: unknown): string => {
+  if (!value || typeof value !== 'object') return '';
+  const record = value as Record<string, unknown>;
+  return (
+    toTrimmedString(record['producerId']) ||
+    toTrimmedString(record['producer_id']) ||
+    toTrimmedString(record['id']) ||
+    toTrimmedString(record['value'])
+  );
+};
 
 const BASE_EXPORT_RUN_PATH_ID = 'integration-base-export';
 const BASE_EXPORT_RUN_PATH_NAME = 'Base.com Export Jobs';
@@ -372,8 +416,10 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       );
     }
 
-    // Get template mappings if templateId provided
+    // Get template mappings (explicit template first, then active export template fallback)
     let mappings: { sourceKey: string; targetField: string }[] = [];
+    let resolvedTemplateId: string | null = null;
+    const requestedTemplateId = toTrimmedString(data.templateId);
     const hasImageOverrides = Boolean(data.imageBase64Mode || data.imageTransform);
     let exportImagesAsBase64 = imagesOnly
       ? true
@@ -389,18 +435,39 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       if (data.imageTransform.jpegQuality !== undefined)
         imageTransform.jpegQuality = data.imageTransform.jpegQuality;
     }
-    if (data.templateId && !imagesOnly) {
-      const templates = await listExportTemplates();
-      const template = templates.find((t) => t.id === data.templateId);
-      if (template) {
-        mappings = template.mappings;
-        // Use template's exportImagesAsBase64 setting if not explicitly overridden
-        if (
-          !hasImageOverrides &&
-          data.exportImagesAsBase64 === undefined &&
-          template.exportImagesAsBase64 !== undefined
-        ) {
-          exportImagesAsBase64 = template.exportImagesAsBase64;
+    if (!imagesOnly) {
+      const fallbackTemplateId = requestedTemplateId
+        ? ''
+        : toTrimmedString(await getExportActiveTemplateId());
+      const templateIdToUse = requestedTemplateId || fallbackTemplateId;
+      if (templateIdToUse) {
+        const templates = await listExportTemplates();
+        const template = templates.find((entry) => entry.id === templateIdToUse);
+        if (!template) {
+          if (requestedTemplateId) {
+            throw badRequestError(
+              `Export template "${requestedTemplateId}" was not found. Select an existing template and retry.`
+            );
+          }
+          await ErrorSystem.logWarning(
+            '[export-to-base] Active export template not found; continuing without template mappings.',
+            {
+              productId,
+              connectionId: data.connectionId,
+              templateId: templateIdToUse,
+            }
+          );
+        } else {
+          mappings = template.mappings;
+          resolvedTemplateId = template.id;
+          // Use template's exportImagesAsBase64 setting if not explicitly overridden
+          if (
+            !hasImageOverrides &&
+            data.exportImagesAsBase64 === undefined &&
+            template.exportImagesAsBase64 !== undefined
+          ) {
+            exportImagesAsBase64 = template.exportImagesAsBase64;
+          }
         }
       }
     }
@@ -409,7 +476,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       ? Array.from(
         new Set(
           (product.producers ?? [])
-            .map((producer) => producer.producerId?.trim())
+            .map((producer) => getProducerRefId(producer))
             .filter((producerId): producerId is string => Boolean(producerId))
         )
       )
@@ -484,7 +551,11 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
               typeof mapping.externalProducer?.externalId === 'string'
                 ? mapping.externalProducer.externalId.trim()
                 : '';
-            if (!internalProducerId || !externalProducerId) return null;
+            const missingExternalProducer = isMissingExternalEntity(
+              mapping.externalProducer?.name,
+              'producer'
+            );
+            if (!internalProducerId || !externalProducerId || missingExternalProducer) return null;
             return [internalProducerId, externalProducerId] as const;
           })
           .filter(
@@ -585,9 +656,14 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
 
     let exportProduct = product;
     if (!imagesOnly) {
-      const hasProducerIdTemplateMapping = mappings.some((mapping) =>
-        PRODUCER_ID_TEMPLATE_FIELDS.has(mapping['sourceKey'].trim().toLowerCase())
-      );
+      const hasProducerIdTemplateMapping = mappings.some((mapping) => {
+        const sourceKey = mapping['sourceKey'];
+        const targetField = mapping['targetField'];
+        return (
+          matchesTemplateField(sourceKey, PRODUCER_ID_TEMPLATE_FIELDS) ||
+          matchesTemplateField(targetField, PRODUCER_ID_TEMPLATE_FIELDS)
+        );
+      });
       if (hasProducerIdTemplateMapping && productProducerIds.length > 0) {
         const missingProducerIds = productProducerIds.filter((producerId: string) => {
           const direct = producerExternalIdByInternalId?.[producerId];
@@ -606,9 +682,14 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
         }
       }
 
-      const hasTagIdTemplateMapping = mappings.some((mapping) =>
-        TAG_ID_TEMPLATE_FIELDS.has(mapping['sourceKey'].trim().toLowerCase())
-      );
+      const hasTagIdTemplateMapping = mappings.some((mapping) => {
+        const sourceKey = mapping['sourceKey'];
+        const targetField = mapping['targetField'];
+        return (
+          matchesTemplateField(sourceKey, TAG_ID_TEMPLATE_FIELDS) ||
+          matchesTemplateField(targetField, TAG_ID_TEMPLATE_FIELDS)
+        );
+      });
       if (hasTagIdTemplateMapping && productTagIds.length > 0) {
         const missingTagIds = productTagIds.filter((tagId: string) => {
           const direct = tagExternalIdByInternalId?.[tagId];
@@ -627,11 +708,14 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
         }
       }
 
-      const hasCategoryTemplateMapping = mappings.some((mapping) =>
-        CATEGORY_TEMPLATE_PRODUCT_FIELDS.has(
-          mapping['targetField'].trim().toLowerCase()
-        )
-      );
+      const hasCategoryTemplateMapping = mappings.some((mapping) => {
+        const sourceKey = mapping['sourceKey'];
+        const targetField = mapping['targetField'];
+        return (
+          matchesTemplateField(sourceKey, CATEGORY_TEMPLATE_PRODUCT_FIELDS) ||
+          matchesTemplateField(targetField, CATEGORY_TEMPLATE_PRODUCT_FIELDS)
+        );
+      });
 
       if (hasCategoryTemplateMapping) {
         const internalCategoryId =
@@ -654,12 +738,58 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
           (mapping) =>
             mapping.isActive && mapping.internalCategoryId === internalCategoryId
         );
+        const validMappings = matchingMappings.filter((mapping) => {
+          const externalCategoryId = toTrimmedString(
+            mapping.externalCategory?.externalId
+          );
+          if (!externalCategoryId) return false;
+          if (
+            isMissingExternalEntity(mapping.externalCategory?.name, 'category')
+          ) {
+            return false;
+          }
+          return true;
+        });
+        const catalogMatchedMappings = validMappings.filter((mapping) =>
+          productCatalogIds.has(mapping.catalogId)
+        );
+        const prioritizedMappings =
+          catalogMatchedMappings.length > 0
+            ? catalogMatchedMappings
+            : validMappings;
+        const externalCategoryIds = Array.from(
+          new Set(
+            prioritizedMappings
+              .map((mapping) =>
+                toTrimmedString(mapping.externalCategory?.externalId)
+              )
+              .filter(Boolean)
+          )
+        );
+        if (externalCategoryIds.length > 1) {
+          const mappingLabels = prioritizedMappings
+            .map((mapping) => {
+              const categoryName = toTrimmedString(mapping.externalCategory?.name);
+              const externalId = toTrimmedString(mapping.externalCategory?.externalId);
+              if (!externalId) return '';
+              return categoryName ? `${categoryName} (${externalId})` : externalId;
+            })
+            .filter(Boolean);
+          throw badRequestError(
+            `Multiple active Base.com category mappings found for this category. Keep only one active mapping and retry. Found: ${mappingLabels.join(', ')}`
+          );
+        }
         const selectedMapping =
-          matchingMappings.find((mapping) =>
-            productCatalogIds.has(mapping.catalogId)
-          ) ?? matchingMappings[0];
+          [...prioritizedMappings].sort(
+            (a, b) => toTimeMs(b.updatedAt) - toTimeMs(a.updatedAt)
+          )[0] ?? null;
 
-        if (!selectedMapping?.externalCategory?.externalId) {
+        if (!selectedMapping) {
+          if (matchingMappings.length > 0) {
+            throw badRequestError(
+              `Category mapping for internal category "${internalCategoryId}" points to stale external categories. Re-fetch categories and re-save mapping in Category Mapper.`
+            );
+          }
           throw badRequestError(
             `No Base.com category mapping found for internal category "${internalCategoryId}". Map this category in Category Mapper first.`
           );
@@ -718,7 +848,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     let listingRepo = primaryListingRepo;
     const integrations = await integrationRepo.listIntegrations();
     const baseIntegration = integrations.find((i) =>
-      ['baselinker', 'base-com'].includes(i.slug)
+      ['baselinker', 'base-com', 'base'].includes(i.slug)
     );
     const baseIntegrationId = baseIntegration?.id ?? connection.integrationId ?? null;
     if (!baseIntegration && baseIntegrationId) {
@@ -1365,7 +1495,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
           exportedAt: new Date(),
           status: 'failed',
           inventoryId: targetInventoryId,
-          templateId: data.templateId ?? null,
+          templateId: resolvedTemplateId ?? (requestedTemplateId || null),
           warehouseId,
           externalListingId: result.productId || null,
           fields: exportFields,
@@ -1392,7 +1522,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
         exportedAt: new Date(),
         status: 'success',
         inventoryId: targetInventoryId,
-        templateId: data.templateId ?? null,
+        templateId: resolvedTemplateId ?? (requestedTemplateId || null),
         warehouseId,
         externalListingId: result.productId || null,
         fields: exportFields,

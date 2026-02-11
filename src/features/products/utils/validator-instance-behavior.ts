@@ -1,5 +1,6 @@
 import type {
   ProductValidationDenyBehavior,
+  ProductValidationLaunchScopeBehavior,
   ProductValidationPatternDenyBehaviorOverride,
   ProductValidationInstanceDenyBehaviorMap,
   ProductValidationInstanceScope,
@@ -105,6 +106,15 @@ export const isPatternLaunchEnabledForValidationScope = (
   fallbackPatternScopes?: unknown
 ): boolean =>
   normalizeProductValidationPatternLaunchScopes(launchScopes, fallbackPatternScopes).includes(scope);
+
+export const normalizeProductValidationLaunchScopeBehavior = (
+  value: unknown
+): ProductValidationLaunchScopeBehavior =>
+  value === 'condition_only' ? 'condition_only' : 'gate';
+
+export const normalizeProductValidationSkipNoopReplacementProposal = (
+  value: unknown
+): boolean => value !== false;
 
 export const normalizeProductValidationDenyBehavior = (
   value: unknown

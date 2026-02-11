@@ -20,7 +20,7 @@ import React from 'react';
 import { Button, Tooltip } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { useVectorDrawing } from '../context/VectorDrawingContext';
+import { useOptionalVectorDrawing } from '../context/VectorDrawingContext';
 
 import type { VectorToolMode } from '../types';
 
@@ -68,11 +68,9 @@ const MIN_TOOLS: ToolOption[] = [
 ];
 
 export function VectorDrawingToolbar(props: VectorDrawingToolbarProps): React.JSX.Element {
-  let contextValues: Partial<VectorDrawingToolbarProps> = {};
-  
-  try {
-    const context = useVectorDrawing();
-    contextValues = {
+  const context = useOptionalVectorDrawing();
+  const contextValues: Partial<VectorDrawingToolbarProps> = context
+    ? {
       tool: context.tool,
       onSelectTool: context.setTool,
       onSmooth: context.onSmooth,
@@ -89,10 +87,8 @@ export function VectorDrawingToolbar(props: VectorDrawingToolbarProps): React.JS
       disableDetach: context.disableDetach,
       disableSmooth: context.disableSmooth,
       disableSimplify: context.disableSimplify,
-    };
-  } catch {
-    // Context not available
-  }
+    }
+    : {};
 
   const merged = { ...contextValues, ...props };
   const {

@@ -16,13 +16,9 @@ import { useFolderTree } from '../../context/FolderTreeContext';
 export const FolderNode = React.memo(function FolderNode({
   folder,
   level,
-  onDragStart: onDragStartProp,
-  onDragEnd: onDragEndProp,
 }: {
   folder: CategoryWithChildren;
   level: number;
-  onDragStart: (id: string) => void;
-  onDragEnd: () => void;
 }): React.JSX.Element {
   const {
     selectedFolderId,
@@ -37,6 +33,7 @@ export const FolderNode = React.memo(function FolderNode({
     onReorderFolder,
     onRelateNotes,
     draggedFolderId,
+    setDraggedFolderId,
     draggedNoteId,
     folders: allFolders,
     renamingFolderId,
@@ -209,7 +206,7 @@ export const FolderNode = React.memo(function FolderNode({
           onDragStart={(e: React.DragEvent<HTMLDivElement>): void => {
             e.stopPropagation();
             setFolderDragData(e.dataTransfer, folder.id);
-            onDragStartProp(folder.id);
+            setDraggedFolderId(folder.id);
             const target = e.currentTarget as HTMLElement;
             target.style.opacity = '0.5';
           }}
@@ -217,7 +214,7 @@ export const FolderNode = React.memo(function FolderNode({
             const target = e.currentTarget as HTMLElement;
             target.style.opacity = '1';
             setReorderHover(null);
-            onDragEndProp();
+            setDraggedFolderId(null);
           }}
           onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
             e.preventDefault();
@@ -384,8 +381,6 @@ export const FolderNode = React.memo(function FolderNode({
               key={child.id}
               folder={child}
               level={level + 1}
-              onDragStart={onDragStartProp}
-              onDragEnd={onDragEndProp}
             />
           ))}
           {sortedNotes.map((note: NoteRecord) => (

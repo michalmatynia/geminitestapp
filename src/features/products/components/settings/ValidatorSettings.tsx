@@ -1,5 +1,6 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { Copy, GripVertical, Plus, Pencil, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
@@ -9,6 +10,7 @@ import type {
 } from '@/features/products/api/settings';
 import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/features/products/constants';
 import {
+  productSettingsKeys,
   useCreateValidationPatternMutation,
   useDeleteValidationPatternMutation,
   useUpdateValidatorSettingsMutation,
@@ -22,6 +24,7 @@ import {
   normalizeProductValidationPatternReplacementScopes,
   normalizeProductValidationPatternScopes,
   normalizeProductValidationInstanceDenyBehaviorMap,
+  normalizeProductValidationSkipNoopReplacementProposal,
 } from '@/features/products/utils/validator-instance-behavior';
 import {
   describeDynamicReplacementRecipe,
@@ -35,14 +38,17 @@ import {
   type DynamicReplacementRoundMode,
   type DynamicReplacementSourceMode,
 } from '@/features/products/utils/validator-replacement-recipe';
+import { api } from '@/shared/lib/api-client';
 import type {
   ProductValidationDenyBehavior,
   ProductValidationInstanceDenyBehaviorMap,
   ProductValidationInstanceScope,
   ProductValidationLaunchOperator,
+  ProductValidationLaunchScopeBehavior,
   ProductValidationPostAcceptBehavior,
   ProductValidationPattern,
   ProductValidationRuntimeType,
+  ProductValidationTarget,
 } from '@/shared/types/domain/products';
 import {
   Button,
@@ -74,7 +80,7 @@ type SequenceGroupView = {
 
 type PatternFormData = {
   label: string;
-  target: 'name' | 'description' | 'sku' | 'price' | 'stock';
+  target: ProductValidationTarget;
   locale: string;
   regex: string;
   flags: string;
@@ -83,6 +89,7 @@ type PatternFormData = {
   enabled: boolean;
   replacementEnabled: boolean;
   replacementAutoApply: boolean;
+  skipNoopReplacementProposal: boolean;
   replacementValue: string;
   replacementFields: string[];
   replacementAppliesToScopes: ProductValidationInstanceScope[];
@@ -97,6 +104,7 @@ type PatternFormData = {
   sourceMatchGroup: string;
   launchEnabled: boolean;
   launchAppliesToScopes: ProductValidationInstanceScope[];
+  launchScopeBehavior: ProductValidationLaunchScopeBehavior;
   launchSourceMode: DynamicReplacementSourceMode;
   launchSourceField: string;
   launchOperator: ProductValidationLaunchOperator;
@@ -137,6 +145,7 @@ const EMPTY_FORM: PatternFormData = {
   enabled: true,
   replacementEnabled: false,
   replacementAutoApply: false,
+  skipNoopReplacementProposal: true,
   replacementValue: '',
   replacementFields: [],
   replacementAppliesToScopes: ['draft_template', 'product_create', 'product_edit'],
@@ -151,6 +160,7 @@ const EMPTY_FORM: PatternFormData = {
   sourceMatchGroup: '',
   launchEnabled: false,
   launchAppliesToScopes: ['draft_template', 'product_create', 'product_edit'],
+  launchScopeBehavior: 'gate',
   launchSourceMode: 'current_field',
   launchSourceField: '',
   launchOperator: 'equals',
@@ -187,6 +197,11 @@ const REPLACEMENT_FIELD_LABELS: Record<string, string> = {
   asin: 'ASIN',
   price: 'Price',
   stock: 'Stock',
+  categoryId: 'Category',
+  weight: 'Weight',
+  sizeLength: 'Size Length',
+  sizeWidth: 'Size Width',
+  length: 'Height',
   name_en: 'Name (EN)',
   name_pl: 'Name (PL)',
   name_de: 'Name (DE)',
@@ -200,7 +215,16 @@ const REPLACEMENT_FIELD_OPTIONS = PRODUCT_VALIDATION_REPLACEMENT_FIELDS.map((fie
   label: REPLACEMENT_FIELD_LABELS[field] ?? field,
 }));
 
-const SOURCE_FIELD_OPTIONS = REPLACEMENT_FIELD_OPTIONS;
+const SOURCE_FIELD_OPTIONS = [
+  ...REPLACEMENT_FIELD_OPTIONS,
+  { value: 'primaryCatalogId', label: 'Primary Catalog ID' },
+  { value: 'categoryName', label: 'Category Name' },
+  { value: 'nameEnSegment4', label: 'Name EN Segment #4' },
+  {
+    value: 'nameEnSegment4RegexEscaped',
+    label: 'Name EN Segment #4 (Regex Escaped)',
+  },
+];
 
 const ALLOWED_REPLACEMENT_FIELDS = new Set<string>(PRODUCT_VALIDATION_REPLACEMENT_FIELDS);
 
@@ -233,6 +257,11 @@ const getReplacementFieldsForTarget = (
   }
   if (target === 'price') return ['price'];
   if (target === 'stock') return ['stock'];
+  if (target === 'category') return ['categoryId'];
+  if (target === 'weight') return ['weight'];
+  if (target === 'size_length') return ['sizeLength'];
+  if (target === 'size_width') return ['sizeWidth'];
+  if (target === 'length') return ['length'];
   return ['sku'];
 };
 
@@ -254,14 +283,25 @@ const isLatestFieldMirrorPattern = (
   );
 };
 
+const isNameSecondSegmentDimensionPattern = (
+  pattern: ProductValidationPattern,
+  target: 'size_length' | 'length'
+): boolean => {
+  if (pattern.target !== target) return false;
+  if (!pattern.replacementEnabled || !pattern.replacementValue) return false;
+  const recipe = parseDynamicReplacementRecipe(pattern.replacementValue);
+  if (!recipe) return false;
+  return (
+    recipe.sourceMode === 'form_field' &&
+    recipe.sourceField === 'name_en' &&
+    recipe.targetApply === 'replace_whole_field'
+  );
+};
+
 const getSourceFieldOptionsForTarget = (
-  target: PatternFormData['target'],
+  _target: PatternFormData['target'],
 ): Array<{ value: string; label: string }> => {
-  const fieldSet = new Set<string>([
-    ...getReplacementFieldsForTarget(target),
-    'sku',
-  ]);
-  return SOURCE_FIELD_OPTIONS.filter((option) => fieldSet.has(option.value));
+  return SOURCE_FIELD_OPTIONS;
 };
 
 const buildDynamicRecipeFromForm = (formData: PatternFormData): DynamicReplacementRecipe | null => {
@@ -456,6 +496,7 @@ const ToggleButton = ({
 
 export function ValidatorSettings(): React.JSX.Element {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const settingsQuery = useValidatorSettings();
   const patternsQuery = useValidationPatterns();
 
@@ -544,6 +585,9 @@ export function ValidatorSettings(): React.JSX.Element {
       enabled: pattern.enabled,
       replacementEnabled: pattern.replacementEnabled,
       replacementAutoApply: pattern.replacementAutoApply ?? false,
+      skipNoopReplacementProposal: normalizeProductValidationSkipNoopReplacementProposal(
+        pattern.skipNoopReplacementProposal
+      ),
       replacementValue: getStaticReplacementValue(pattern.replacementValue) ?? '',
       replacementFields: normalizeReplacementFields(pattern.replacementFields),
       replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
@@ -569,6 +613,7 @@ export function ValidatorSettings(): React.JSX.Element {
         pattern.launchAppliesToScopes,
         pattern.appliesToScopes
       ),
+      launchScopeBehavior: pattern.launchScopeBehavior ?? 'gate',
       launchSourceMode: pattern.launchSourceMode ?? 'current_field',
       launchSourceField: pattern.launchSourceField ?? '',
       launchOperator: pattern.launchOperator ?? 'equals',
@@ -738,6 +783,7 @@ export function ValidatorSettings(): React.JSX.Element {
         enabled: formData.enabled,
         replacementEnabled: formData.replacementEnabled,
         replacementAutoApply: formData.replacementAutoApply,
+        skipNoopReplacementProposal: formData.skipNoopReplacementProposal,
         replacementValue,
         replacementFields: normalizeReplacementFields(formData.replacementFields),
         replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
@@ -767,6 +813,7 @@ export function ValidatorSettings(): React.JSX.Element {
           formData.launchAppliesToScopes,
           formData.appliesToScopes
         ),
+        launchScopeBehavior: formData.launchScopeBehavior,
         launchSourceMode: formData.launchSourceMode,
         launchSourceField: formData.launchSourceField.trim() || null,
         launchOperator: formData.launchOperator,
@@ -862,6 +909,9 @@ export function ValidatorSettings(): React.JSX.Element {
         enabled: pattern.enabled,
         replacementEnabled: pattern.replacementEnabled,
         replacementAutoApply: pattern.replacementAutoApply ?? false,
+        skipNoopReplacementProposal: normalizeProductValidationSkipNoopReplacementProposal(
+          pattern.skipNoopReplacementProposal
+        ),
         replacementValue: pattern.replacementValue,
         replacementFields: normalizeReplacementFields(pattern.replacementFields),
         replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
@@ -888,6 +938,7 @@ export function ValidatorSettings(): React.JSX.Element {
           pattern.launchAppliesToScopes,
           pattern.appliesToScopes
         ),
+        launchScopeBehavior: pattern.launchScopeBehavior ?? 'gate',
         launchSourceMode: pattern.launchSourceMode ?? 'current_field',
         launchSourceField: pattern.launchSourceField ?? null,
         launchOperator: pattern.launchOperator ?? 'equals',
@@ -1199,6 +1250,7 @@ export function ValidatorSettings(): React.JSX.Element {
         enabled: true,
         replacementEnabled: true,
         replacementAutoApply: false,
+        skipNoopReplacementProposal: true,
         replacementValue: buildLatestFieldRecipe('price'),
         replacementFields: ['price'],
         replacementAppliesToScopes: ['draft_template', 'product_create'],
@@ -1212,6 +1264,8 @@ export function ValidatorSettings(): React.JSX.Element {
         maxExecutions: 1,
         passOutputToNext: false,
         launchEnabled: true,
+        launchAppliesToScopes: ['product_create'],
+        launchScopeBehavior: 'condition_only',
         launchSourceMode: 'current_field',
         launchSourceField: null,
         launchOperator: 'regex',
@@ -1232,6 +1286,7 @@ export function ValidatorSettings(): React.JSX.Element {
         enabled: true,
         replacementEnabled: true,
         replacementAutoApply: false,
+        skipNoopReplacementProposal: true,
         replacementValue: buildLatestFieldRecipe('stock'),
         replacementFields: ['stock'],
         replacementAppliesToScopes: ['draft_template', 'product_create'],
@@ -1245,6 +1300,8 @@ export function ValidatorSettings(): React.JSX.Element {
         maxExecutions: 1,
         passOutputToNext: false,
         launchEnabled: true,
+        launchAppliesToScopes: ['product_create'],
+        launchScopeBehavior: 'condition_only',
         launchSourceMode: 'current_field',
         launchSourceField: null,
         launchOperator: 'regex',
@@ -1291,6 +1348,208 @@ export function ValidatorSettings(): React.JSX.Element {
         error instanceof Error
           ? error.message
           : 'Failed to create latest price & stock sequence.',
+        { variant: 'error' },
+      );
+    }
+  };
+
+  const createNameSecondSegmentDimensionPattern = async ({
+    target,
+    labelBase,
+    message,
+    replacementField,
+  }: {
+    target: 'size_length' | 'length';
+    labelBase: string;
+    message: string;
+    replacementField: 'sizeLength' | 'length';
+  }): Promise<void> => {
+    const existingLabels = new Set(
+      patterns
+        .map((item: ProductValidationPattern) => item.label.trim().toLowerCase())
+        .filter((value: string) => value.length > 0),
+    );
+    const label = buildUniqueLabel(labelBase, existingLabels);
+    const maxSequence = orderedPatterns.reduce(
+      (max: number, pattern: ProductValidationPattern, index: number) =>
+        Math.max(max, getPatternSequence(pattern, index)),
+      0,
+    );
+
+    const replacementRecipe = encodeDynamicReplacementRecipe({
+      version: 1,
+      sourceMode: 'form_field',
+      sourceField: 'name_en',
+      sourceRegex: '^\\s*[^|]+\\|\\s*([0-9]+(?:[.,][0-9]+)?)',
+      sourceFlags: 'i',
+      sourceMatchGroup: 1,
+      mathOperation: 'none',
+      mathOperand: null,
+      roundMode: 'none',
+      padLength: null,
+      padChar: null,
+      logicOperator: 'regex',
+      logicOperand: '^[0-9]+(?:[.,][0-9]+)?$',
+      logicFlags: null,
+      logicWhenTrueAction: 'keep',
+      logicWhenTrueValue: null,
+      logicWhenFalseAction: 'abort',
+      logicWhenFalseValue: null,
+      resultAssembly: 'segment_only',
+      targetApply: 'replace_whole_field',
+    });
+
+    const payload: CreateValidationPatternPayload = {
+      label,
+      target,
+      locale: null,
+      regex: '^.*$',
+      flags: null,
+      message,
+      severity: 'warning',
+      enabled: true,
+      replacementEnabled: true,
+      replacementAutoApply: false,
+      skipNoopReplacementProposal: true,
+      replacementValue: replacementRecipe,
+      replacementFields: [replacementField],
+      replacementAppliesToScopes: ['draft_template', 'product_create', 'product_edit'],
+      postAcceptBehavior: 'revalidate',
+      validationDebounceMs: 250,
+      sequenceGroupId: null,
+      sequenceGroupLabel: null,
+      sequenceGroupDebounceMs: 0,
+      sequence: maxSequence + 10,
+      chainMode: 'continue',
+      maxExecutions: 1,
+      passOutputToNext: false,
+      launchEnabled: true,
+      launchAppliesToScopes: ['draft_template', 'product_create', 'product_edit'],
+      launchScopeBehavior: 'gate',
+      launchSourceMode: 'form_field',
+      launchSourceField: 'name_en',
+      launchOperator: 'regex',
+      launchValue:
+        '^\\s*[^|]+\\s*\\|\\s*[^|]+\\s*\\|\\s*[^|]+\\s*\\|\\s*[^|]+\\s*\\|\\s*[^|]+\\s*$',
+      launchFlags: null,
+      appliesToScopes: ['draft_template', 'product_create', 'product_edit'],
+    };
+
+    const existing = patterns.find((pattern: ProductValidationPattern) =>
+      isNameSecondSegmentDimensionPattern(pattern, target)
+    );
+    if (existing) {
+      await updatePattern.mutateAsync({
+        id: existing.id,
+        data: {
+          ...payload,
+          label: existing.label,
+        },
+      });
+    } else {
+      await createPattern.mutateAsync(payload);
+    }
+  };
+
+  const handleCreateNameLengthMirrorPattern = async (): Promise<void> => {
+    try {
+      const templateResult = await api.post<{
+        outcomes?: Array<{
+          action?: string;
+          target?: string;
+        }>;
+      }>(
+        '/api/products/validator-patterns/templates/name-segment-dimensions',
+        {},
+        { logError: false },
+      );
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorPatterns() }),
+        queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorConfig(true) }),
+        queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorConfig(false) }),
+      ]);
+      const createdCount = (templateResult.outcomes ?? []).filter(
+        (item) => item.action === 'created'
+      ).length;
+      toast('Name segment -> Length & Height patterns created or updated.', {
+        variant: 'success',
+      });
+      if (createdCount > 0) {
+        toast(
+          createdCount === 1
+            ? '1 new pattern was created from the template.'
+            : `${createdCount} new patterns were created from the template.`,
+          { variant: 'info' },
+        );
+      }
+    } catch (error) {
+      try {
+        await createNameSecondSegmentDimensionPattern({
+          target: 'size_length',
+          labelBase: 'Name Segment #2 -> Length',
+          message:
+            'Propose Length (sizeLength) from Name segment #2 (between first and second "|").',
+          replacementField: 'sizeLength',
+        });
+        await createNameSecondSegmentDimensionPattern({
+          target: 'length',
+          labelBase: 'Name Segment #2 -> Height',
+          message:
+            'Propose Height (length) from Name segment #2 (between first and second "|").',
+          replacementField: 'length',
+        });
+        toast('Name segment -> Length & Height patterns created or updated.', {
+          variant: 'success',
+        });
+      } catch (fallbackError) {
+        toast(
+          fallbackError instanceof Error
+            ? fallbackError.message
+            : error instanceof Error
+              ? error.message
+              : 'Failed to create name segment dimension patterns.',
+          { variant: 'error' },
+        );
+      }
+    }
+  };
+
+  const handleCreateNameCategoryMirrorPattern = async (): Promise<void> => {
+    try {
+      const templateResult = await api.post<{
+        outcomes?: Array<{
+          action?: string;
+          target?: string;
+        }>;
+      }>(
+        '/api/products/validator-patterns/templates/name-segment-category',
+        {},
+        { logError: false },
+      );
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorPatterns() }),
+        queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorConfig(true) }),
+        queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorConfig(false) }),
+      ]);
+      const createdCount = (templateResult.outcomes ?? []).filter(
+        (item) => item.action === 'created'
+      ).length;
+      toast('Name segment -> Category pattern created or updated.', {
+        variant: 'success',
+      });
+      if (createdCount > 0) {
+        toast(
+          createdCount === 1
+            ? '1 new pattern was created from the template.'
+            : `${createdCount} new patterns were created from the template.`,
+          { variant: 'info' },
+        );
+      }
+    } catch (error) {
+      toast(
+        error instanceof Error
+          ? error.message
+          : 'Failed to create name segment category pattern.',
         { variant: 'error' },
       );
     }
@@ -1591,6 +1850,24 @@ export function ValidatorSettings(): React.JSX.Element {
             </Button>
             <Button
               onClick={() => {
+                void handleCreateNameLengthMirrorPattern();
+              }}
+              disabled={patternActionsPending}
+              className='border border-teal-500/40 bg-teal-500/10 text-teal-100 hover:bg-teal-500/20'
+            >
+              + Name Segment to Length + Height
+            </Button>
+            <Button
+              onClick={() => {
+                void handleCreateNameCategoryMirrorPattern();
+              }}
+              disabled={patternActionsPending}
+              className='border border-lime-500/40 bg-lime-500/10 text-lime-100 hover:bg-lime-500/20'
+            >
+              + Name Segment to Category
+            </Button>
+            <Button
+              onClick={() => {
                 void handleCreateNameMirrorPolishSequence();
               }}
               disabled={patternActionsPending}
@@ -1873,6 +2150,16 @@ export function ValidatorSettings(): React.JSX.Element {
                               Apply mode: {pattern.replacementAutoApply ? 'Auto-apply' : 'Proposal only'}
                             </p>
                           )}
+                          {pattern.replacementEnabled && (
+                            <p className='mt-1 text-[11px] text-cyan-200/90'>
+                              No-op proposals:{' '}
+                              {normalizeProductValidationSkipNoopReplacementProposal(
+                                pattern.skipNoopReplacementProposal
+                              )
+                                ? 'Skip same-value replacements'
+                                : 'Show same-value replacements'}
+                            </p>
+                          )}
                         </div>
 
                         <div className='flex items-center gap-2'>
@@ -1988,6 +2275,11 @@ export function ValidatorSettings(): React.JSX.Element {
                       { value: 'sku', label: 'SKU' },
                       { value: 'price', label: 'Price' },
                       { value: 'stock', label: 'Stock' },
+                      { value: 'category', label: 'Category' },
+                      { value: 'weight', label: 'Weight' },
+                      { value: 'size_length', label: 'Length (sizeLength)' },
+                      { value: 'size_width', label: 'Width (sizeWidth)' },
+                      { value: 'length', label: 'Height (length)' },
                     ]}
                   />
                 </div>
@@ -2224,6 +2516,31 @@ export function ValidatorSettings(): React.JSX.Element {
                         placeholder='Follow pattern scopes'
                         searchPlaceholder='Search launch scope...'
                         emptyMessage='No form scopes found.'
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className='text-xs text-gray-300'>Launch Scope Behavior</Label>
+                    <p className='mt-1 text-[11px] text-gray-500'>
+                      `Gate` blocks pattern outside selected forms. `Condition Only` skips condition outside selected forms.
+                    </p>
+                    <div className='mt-2'>
+                      <UnifiedSelect
+                        value={formData.launchScopeBehavior}
+                        onValueChange={(value: string): void =>
+                          setFormData((prev: PatternFormData) => ({
+                            ...prev,
+                            launchScopeBehavior:
+                              value === 'condition_only'
+                                ? 'condition_only'
+                                : 'gate',
+                          }))
+                        }
+                        options={[
+                          { value: 'gate', label: 'Gate Pattern By Scope' },
+                          { value: 'condition_only', label: 'Condition Only In Scope' },
+                        ]}
                       />
                     </div>
                   </div>
@@ -2927,6 +3244,25 @@ export function ValidatorSettings(): React.JSX.Element {
                   setFormData((prev: PatternFormData) => ({
                     ...prev,
                     replacementAutoApply: !prev.replacementAutoApply,
+                  }))
+                }
+              />
+            </div>
+
+            <div className='flex items-center justify-between rounded-md border border-border bg-gray-900/70 px-3 py-2'>
+              <div>
+                <span className='text-xs text-gray-300'>Skip same-value proposals</span>
+                <p className='text-[11px] text-gray-500'>
+                  Hide replacement proposals when replacement equals current value.
+                </p>
+              </div>
+              <ToggleButton
+                enabled={formData.skipNoopReplacementProposal}
+                disabled={!formData.replacementEnabled}
+                onClick={() =>
+                  setFormData((prev: PatternFormData) => ({
+                    ...prev,
+                    skipNoopReplacementProposal: !prev.skipNoopReplacementProposal,
                   }))
                 }
               />

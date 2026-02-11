@@ -48,7 +48,7 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
   } = useProductListingsContext();
 
   const imageRetryPresets = useImageRetryPresets();
-  const isBaseListing = ['baselinker', 'base-com'].includes(normalizeIntegrationSlug(listing.integration.slug));
+  const isBaseListing = ['baselinker', 'base-com', 'base'].includes(normalizeIntegrationSlug(listing.integration.slug));
   const normalizedListingStatus = (listing.status ?? '').trim().toLowerCase();
   const isSuccessStatus = ['active', 'success', 'completed', 'listed', 'ok'].includes(normalizedListingStatus);
   const isExportRunningStatus = ['running', 'processing', 'in_progress', 'pending', 'queued'].includes(normalizedListingStatus);

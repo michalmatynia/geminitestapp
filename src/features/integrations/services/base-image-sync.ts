@@ -14,7 +14,7 @@ import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
-const BASE_INTEGRATION_SLUGS = ['baselinker', 'base-com'];
+const BASE_INTEGRATION_SLUGS = ['baselinker', 'base-com', 'base'];
 const LISTINGS_COLLECTION = 'product_listings';
 
 type BaseListingSyncInfo = {

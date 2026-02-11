@@ -6,7 +6,7 @@ import {
   getInternationalizationProvider,
   type InternationalizationProvider,
 } from '@/features/internationalization/server';
-import { logSystemEvent } from '@/features/observability/server';
+import { ErrorSystem } from '@/features/observability/server';
 import { conflictError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -39,13 +39,10 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     currencies = await readCurrencies(primaryProvider);
   } catch (error: unknown) {
     primaryError = error;
-    await logSystemEvent({
-      level: 'warn',
-      message: '[currencies.GET] Failed to read primary provider.',
-      source: 'currencies.GET',
-      request: req,
+    await ErrorSystem.logWarning('[currencies.GET] Failed to read primary provider.', {
+      service: 'currencies.GET',
       error,
-      context: { primaryProvider },
+      primaryProvider,
     });
   }
 
@@ -60,27 +57,20 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       try {
         const fallbackCurrencies = await readCurrencies(fallbackProvider);
         if (fallbackCurrencies.length > 0) {
-          await logSystemEvent({
-            level: 'warn',
-            message: '[currencies.GET] Primary provider returned empty result; using fallback provider.',
-            source: 'currencies.GET',
-            request: req,
-            context: {
-              primaryProvider,
-              fallbackProvider,
-              fallbackCount: fallbackCurrencies.length,
-            },
+          await ErrorSystem.logWarning('[currencies.GET] Primary provider returned empty result; using fallback provider.', {
+            service: 'currencies.GET',
+            primaryProvider,
+            fallbackProvider,
+            fallbackCount: fallbackCurrencies.length,
           });
           return NextResponse.json(fallbackCurrencies);
         }
       } catch (error: unknown) {
-        await logSystemEvent({
-          level: 'warn',
-          message: '[currencies.GET] Failed to read fallback provider.',
-          source: 'currencies.GET',
-          request: req,
+        await ErrorSystem.logWarning('[currencies.GET] Failed to read fallback provider.', {
+          service: 'currencies.GET',
           error,
-          context: { primaryProvider, fallbackProvider },
+          primaryProvider,
+          fallbackProvider,
         });
       }
     }

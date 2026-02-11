@@ -6,7 +6,7 @@ import { getIntegrationRepository, listAllProductListingsAcrossProviders } from 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
-const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com']);
+const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
 
 const normalizeStatus = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();

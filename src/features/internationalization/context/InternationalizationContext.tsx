@@ -97,7 +97,9 @@ export function InternationalizationProvider({ children }: { children: ReactNode
       try {
         await deleteLanguageMutation.mutateAsync(l.id);
         toast(`Language ${l.name} deleted.`, { variant: 'success' });
-      } catch {
+      } catch (error) {
+        const { logClientError } = require('@/shared/utils/observability/client-error-logger');
+        logClientError(error, { context: { source: 'InternationalizationContext', action: 'deleteLanguage', languageId: l.id } });
         toast('Failed to delete language.', { variant: 'error' });
       }
     }
@@ -113,7 +115,9 @@ export function InternationalizationProvider({ children }: { children: ReactNode
       try {
         await deleteCurrencyMutation.mutateAsync(c.id);
         toast(`Currency ${c.code} deleted.`, { variant: 'success' });
-      } catch {
+      } catch (error) {
+        const { logClientError } = require('@/shared/utils/observability/client-error-logger');
+        logClientError(error, { context: { source: 'InternationalizationContext', action: 'deleteCurrency', currencyId: c.id } });
         toast('Failed to delete currency.', { variant: 'error' });
       }
     }
@@ -129,7 +133,9 @@ export function InternationalizationProvider({ children }: { children: ReactNode
       try {
         await deleteCountryMutation.mutateAsync(c.id);
         toast(`Country ${c.name} deleted.`, { variant: 'success' });
-      } catch {
+      } catch (error) {
+        const { logClientError } = require('@/shared/utils/observability/client-error-logger');
+        logClientError(error, { context: { source: 'InternationalizationContext', action: 'deleteCountry', countryId: c.id } });
         toast('Failed to delete country.', { variant: 'error' });
       }
     }

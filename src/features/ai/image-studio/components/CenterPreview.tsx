@@ -110,6 +110,11 @@ export function CenterPreview(): React.JSX.Element {
     setTool,
     setActiveShapeId: setActiveMaskId,
     setSelectedPointIndex,
+    onClear: (): void => {
+      setMaskShapes([]);
+      setActiveMaskId(null);
+    },
+    disableClear: maskShapes.length === 0,
   }), [
     maskShapes,
     tool,
@@ -121,6 +126,7 @@ export function CenterPreview(): React.JSX.Element {
     setTool,
     setActiveMaskId,
     setSelectedPointIndex,
+    maskShapes.length,
   ]);
 
   const handleSaveScreenshot = useCallback(async (): Promise<void> => {
@@ -235,8 +241,6 @@ export function CenterPreview(): React.JSX.Element {
               )}
               <VectorDrawingToolbar
                 className='absolute bottom-4 left-1/2 z-20 -translate-x-1/2'
-                onClear={() => { setMaskShapes([]); setActiveMaskId(null); }}
-                disableClear={maskShapes.length === 0}
               />
             </VectorDrawingProvider>
           </div>

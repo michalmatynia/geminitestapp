@@ -14,6 +14,19 @@ import type {
   UpdaterSampleState,
 } from '@/features/ai/ai-paths/lib';
 import { logClientError } from '@/features/observability';
+import { useToast } from '@/shared/ui';
+
+import {
+  useGraphState,
+  usePersistenceActions,
+  usePresetsActions,
+  usePresetsState,
+  useRuntimeActions,
+  useRuntimeState,
+  useSelectionActions,
+  useSelectionState,
+} from '../context';
+import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
 
 export interface AiPathConfigData {
   configOpen: boolean;
@@ -126,6 +139,108 @@ const fallbackConfigValue: AiPathConfigData = {
   savePathConfig: async () => false,
 };
 
+const useAiPathConfigDefaults = (): AiPathConfigData => {
+  const orchestrator = useAiPathsSettingsOrchestrator();
+  const { toast } = useToast();
+  const { selectedNodeId, configOpen } = useSelectionState();
+  const selectionActions = useSelectionActions();
+  const graphState = useGraphState();
+  const runtimeState = useRuntimeState();
+  const runtimeActions = useRuntimeActions();
+  const presetsState = usePresetsState();
+  const presetsActions = usePresetsActions();
+  const persistenceActions = usePersistenceActions();
+
+  const selectedNode = useMemo(
+    () =>
+      selectedNodeId
+        ? graphState.nodes.find((node: AiNode): boolean => node.id === selectedNodeId) ?? null
+        : null,
+    [graphState.nodes, selectedNodeId]
+  );
+
+  const pathDebugSnapshot = useMemo(
+    () =>
+      graphState.activePathId
+        ? (runtimeState.pathDebugSnapshots[graphState.activePathId] ?? null)
+        : null,
+    [graphState.activePathId, runtimeState.pathDebugSnapshots]
+  );
+
+  return useMemo(
+    (): AiPathConfigData => ({
+      configOpen,
+      setConfigOpen: selectionActions.setConfigOpen,
+      selectedNode,
+      nodes: graphState.nodes,
+      edges: graphState.edges,
+      isPathLocked: graphState.isPathLocked,
+      modelOptions: orchestrator.modelOptions,
+      parserSamples: runtimeState.parserSamples,
+      setParserSamples: runtimeActions.setParserSamples,
+      parserSampleLoading: runtimeState.parserSampleLoading,
+      updaterSamples: runtimeState.updaterSamples,
+      setUpdaterSamples: runtimeActions.setUpdaterSamples,
+      updaterSampleLoading: runtimeState.updaterSampleLoading,
+      runtimeState: runtimeState.runtimeState,
+      pathDebugSnapshot,
+      updateSelectedNode: orchestrator.updateSelectedNode,
+      updateSelectedNodeConfig: orchestrator.updateSelectedNodeConfig,
+      handleFetchParserSample: runtimeActions.fetchParserSample,
+      handleFetchUpdaterSample: runtimeActions.fetchUpdaterSample,
+      handleRunSimulation: runtimeActions.runSimulation,
+      clearRuntimeForNode: runtimeActions.clearNodeRuntime,
+      clearNodeCache: runtimeActions.clearNodeRuntime,
+      clearNodeHistory: orchestrator.handleClearNodeHistory,
+      onSendToAi: runtimeActions.sendToAi,
+      sendingToAi: runtimeState.sendingToAi,
+      dbQueryPresets: presetsState.dbQueryPresets,
+      setDbQueryPresets: presetsActions.setDbQueryPresets,
+      saveDbQueryPresets: presetsActions.saveDbQueryPresets,
+      dbNodePresets: presetsState.dbNodePresets,
+      setDbNodePresets: presetsActions.setDbNodePresets,
+      saveDbNodePresets: presetsActions.saveDbNodePresets,
+      toast,
+      onDirtyChange: selectionActions.setNodeConfigDirty,
+      savePathConfig: persistenceActions.savePathConfig,
+    }),
+    [
+      configOpen,
+      selectionActions.setConfigOpen,
+      selectedNode,
+      graphState.nodes,
+      graphState.edges,
+      graphState.isPathLocked,
+      graphState.activePathId,
+      orchestrator,
+      runtimeState.parserSamples,
+      runtimeState.parserSampleLoading,
+      runtimeState.updaterSamples,
+      runtimeState.updaterSampleLoading,
+      runtimeState.runtimeState,
+      runtimeState.pathDebugSnapshots,
+      runtimeState.sendingToAi,
+      runtimeActions.setParserSamples,
+      runtimeActions.setUpdaterSamples,
+      runtimeActions.fetchParserSample,
+      runtimeActions.fetchUpdaterSample,
+      runtimeActions.runSimulation,
+      runtimeActions.clearNodeRuntime,
+      runtimeActions.sendToAi,
+      presetsState.dbQueryPresets,
+      presetsState.dbNodePresets,
+      presetsActions.setDbQueryPresets,
+      presetsActions.saveDbQueryPresets,
+      presetsActions.setDbNodePresets,
+      presetsActions.saveDbNodePresets,
+      toast,
+      selectionActions.setNodeConfigDirty,
+      persistenceActions.savePathConfig,
+      pathDebugSnapshot,
+    ]
+  );
+};
+
 export function AiPathConfigProvider({
   children,
   ...props
@@ -171,6 +286,34 @@ export function AiPathConfigProvider({
     <AiPathConfigContext.Provider value={value}>
       {children}
     </AiPathConfigContext.Provider>
+  );
+}
+
+type AiPathConfigProviderWithContextProps = {
+  children: React.ReactNode;
+  overrides?: Partial<AiPathConfigData>;
+};
+
+export function AiPathConfigProviderWithContext({
+  children,
+  overrides,
+}: AiPathConfigProviderWithContextProps): React.ReactNode {
+  const defaults = useAiPathConfigDefaults();
+
+  const value = useMemo<AiPathConfigData>(() => {
+    if (!overrides) return defaults;
+    return {
+      ...defaults,
+      ...Object.fromEntries(
+        Object.entries(overrides).filter((entry) => entry[1] !== undefined)
+      ),
+    } as AiPathConfigData;
+  }, [defaults, overrides]);
+
+  return (
+    <AiPathConfigProvider {...value}>
+      {children}
+    </AiPathConfigProvider>
   );
 }
 

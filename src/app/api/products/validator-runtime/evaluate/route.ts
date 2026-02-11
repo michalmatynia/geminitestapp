@@ -18,7 +18,9 @@ import {
   isPatternEnabledForValidationScope,
   isPatternLaunchEnabledForValidationScope,
   isPatternReplacementEnabledForValidationScope,
+  normalizeProductValidationLaunchScopeBehavior,
   normalizeProductValidationInstanceScope,
+  normalizeProductValidationSkipNoopReplacementProposal,
 } from '@/features/products/utils/validator-instance-behavior';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -27,6 +29,7 @@ import type {
   ProductValidationPattern,
   ProductValidationPostAcceptBehavior,
   ProductValidationSeverity,
+  ProductValidationTarget,
 } from '@/shared/types/domain/products';
 
 const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] ?? 'http://localhost:11434';
@@ -177,8 +180,8 @@ const evaluateRuntimeCondition = (
 
 const resolveFieldTargetAndLocale = (
   fieldName: string
-): { target: 'name' | 'description' | 'sku' | 'price' | 'stock' | null; locale: string | null } => {
-  let target: 'name' | 'description' | 'sku' | 'price' | 'stock' | null = null;
+): { target: ProductValidationTarget | null; locale: string | null } => {
+  let target: ProductValidationTarget | null = null;
   if (fieldName.startsWith('name_')) {
     target = 'name';
   } else if (fieldName.startsWith('description_')) {
@@ -189,6 +192,16 @@ const resolveFieldTargetAndLocale = (
     target = 'price';
   } else if (fieldName === 'stock') {
     target = 'stock';
+  } else if (fieldName === 'categoryId') {
+    target = 'category';
+  } else if (fieldName === 'sizeLength') {
+    target = 'size_length';
+  } else if (fieldName === 'sizeWidth') {
+    target = 'size_width';
+  } else if (fieldName === 'length') {
+    target = 'length';
+  } else if (fieldName === 'weight') {
+    target = 'weight';
   }
   const localeMatch = /_(en|pl|de)$/i.exec(fieldName);
   const locale = localeMatch?.[1]?.toLowerCase() ?? null;
@@ -242,7 +255,10 @@ const shouldLaunchPattern = ({
       pattern.appliesToScopes
     )
   ) {
-    return false;
+    return (
+      normalizeProductValidationLaunchScopeBehavior(pattern.launchScopeBehavior) ===
+      'condition_only'
+    );
   }
   if (pattern.launchSourceMode !== 'current_field' && !pattern.launchSourceField?.trim()) {
     return false;
@@ -404,18 +420,73 @@ const deriveDiffSegment = (
   };
 };
 
+const normalizeRuntimeReplacementValue = (value: unknown): string | null => {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const objectValue = value as Record<string, unknown> & {
+    toHexString?: () => string;
+    toString?: () => string;
+  };
+
+  if (typeof objectValue.toHexString === 'function') {
+    const hex = objectValue.toHexString();
+    if (typeof hex === 'string' && hex.trim().length > 0) {
+      return hex.trim();
+    }
+  }
+
+  const directId =
+    normalizeRuntimeReplacementValue(objectValue['id']) ??
+    normalizeRuntimeReplacementValue(objectValue['_id']) ??
+    normalizeRuntimeReplacementValue(objectValue['$oid']);
+  if (directId) return directId;
+
+  if (typeof objectValue.toString === 'function') {
+    const rendered = objectValue.toString();
+    if (rendered && rendered !== '[object Object]') {
+      const trimmed = rendered.trim();
+      return trimmed.length > 0 ? trimmed : null;
+    }
+  }
+
+  const serialized = toComparableString(value).trim();
+  return serialized.length > 0 ? serialized : null;
+};
+
 const resolveReplacementFromResult = (
   config: Record<string, unknown>,
   resultData: unknown,
   context: Record<string, unknown>,
   currentValue: string
 ): string | null => {
-  const replacementPath =
-    typeof config['replacementPath'] === 'string' ? config['replacementPath'].trim() : '';
-  if (replacementPath) {
+  const replacementPaths = [
+    ...(Array.isArray(config['replacementPaths'])
+      ? (config['replacementPaths'] as unknown[])
+        .filter((entry: unknown): entry is string => typeof entry === 'string')
+        .map((entry: string) => entry.trim())
+        .filter((entry: string) => entry.length > 0)
+      : []),
+    ...(typeof config['replacementPath'] === 'string' && config['replacementPath'].trim().length > 0
+      ? [config['replacementPath'].trim()]
+      : []),
+  ];
+
+  for (const replacementPath of replacementPaths) {
     const value = getValueAtMappingPath(resultData, replacementPath);
-    const resolved = toComparableString(value).trim();
-    return resolved.length > 0 ? resolved : null;
+    const resolved = normalizeRuntimeReplacementValue(value);
+    if (resolved) {
+      return resolved;
+    }
   }
   if (typeof config['replacementValue'] === 'string') {
     const rendered = renderTemplate(config['replacementValue'], context, currentValue).trim();
@@ -638,7 +709,7 @@ const buildRuntimeIssue = ({
   message: string;
   severity: ProductValidationSeverity;
   validationScope: 'draft_template' | 'product_create' | 'product_edit';
-}): RuntimeFieldIssue => {
+}): RuntimeFieldIssue | null => {
   const replacementFields = normalizeReplacementFields(pattern.replacementFields);
   const replacementScope: RuntimeFieldIssue['replacementScope'] = !pattern.replacementEnabled
     ? 'none'
@@ -657,6 +728,16 @@ const buildRuntimeIssue = ({
     pattern.replacementEnabled && replacementAllowed && replacementEnabledForScope
       ? replacementValue
       : null;
+  const suppressNoopReplacementProposal = normalizeProductValidationSkipNoopReplacementProposal(
+    pattern.skipNoopReplacementProposal
+  );
+  if (
+    suppressNoopReplacementProposal &&
+    typeof effectiveReplacementValue === 'string' &&
+    effectiveReplacementValue === fieldValue
+  ) {
+    return null;
+  }
 
   const diff = deriveDiffSegment(fieldValue, effectiveReplacementValue ?? fieldValue);
   return {
@@ -786,6 +867,7 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
           severity: runtimeSeverity ?? pattern.severity,
           validationScope,
         });
+        if (!issue) continue;
         if (!issues[fieldName]) {
           issues[fieldName] = [];
         }
@@ -813,6 +895,7 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
           severity: 'warning',
           validationScope,
         });
+        if (!issue) continue;
         if (!issues[fieldName]) {
           issues[fieldName] = [];
         }

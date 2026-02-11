@@ -42,6 +42,8 @@ export function AgentPersonasPage(): React.JSX.Element {
       await savePersonas({ personas: next });
       toast(existing ? 'Persona updated.' : 'Persona created.', { variant: 'success' });
     } catch (error) {
+      const { logClientError } = require('@/shared/utils/observability/client-error-logger');
+      logClientError(error, { context: { source: 'AgentPersonasPage', action: 'savePersona', personaId: draft.id } });
       const errorMessage =
         error instanceof Error ? error.message : 'Failed to save personas.';
       toast(errorMessage, { variant: 'error' });
@@ -54,6 +56,8 @@ export function AgentPersonasPage(): React.JSX.Element {
       await savePersonas({ personas: next });
       toast('Persona deleted.', { variant: 'success' });
     } catch (error) {
+      const { logClientError } = require('@/shared/utils/observability/client-error-logger');
+      logClientError(error, { context: { source: 'AgentPersonasPage', action: 'deletePersona', personaId: persona.id } });
       const errorMessage =
         error instanceof Error ? error.message : 'Failed to delete persona.';
       toast(errorMessage, { variant: 'error' });

@@ -85,7 +85,7 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
     const integrationRepo = await getIntegrationRepository();
     const integrations = await integrationRepo.listIntegrations();
     const baseIntegration = integrations.find((i) =>
-      ['baselinker', 'base-com'].includes(i.slug)
+      ['baselinker', 'base-com', 'base'].includes(i.slug)
     );
 
     if (baseIntegration) {

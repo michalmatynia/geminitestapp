@@ -13,6 +13,8 @@ import type {
 } from '@/features/products/types/services/validation-pattern-repository';
 import {
   normalizeProductValidationPatternDenyBehaviorOverride,
+  normalizeProductValidationLaunchScopeBehavior,
+  normalizeProductValidationSkipNoopReplacementProposal,
   normalizeProductValidationPatternLaunchScopes,
   normalizeProductValidationPatternReplacementScopes,
   normalizeProductValidationPatternScopes,
@@ -25,6 +27,7 @@ import type {
   ProductValidationDenyBehavior,
   ProductValidationInstanceDenyBehaviorMap,
   ProductValidationInstanceScope,
+  ProductValidationLaunchScopeBehavior,
   ProductValidationPostAcceptBehavior,
   ProductValidationPattern,
   ProductValidationRuntimeType,
@@ -109,6 +112,7 @@ type ProductValidationPatternDelegate = {
       severity: string;
       enabled: boolean;
       replacementEnabled: boolean;
+      skipNoopReplacementProposal?: boolean;
       replacementValue: string | null;
       replacementFields: string[];
       replacementAppliesToScopes?: ProductValidationInstanceScope[];
@@ -120,6 +124,7 @@ type ProductValidationPatternDelegate = {
       denyBehaviorOverride?: ProductValidationDenyBehavior | null;
       validationDebounceMs?: number;
       launchAppliesToScopes?: ProductValidationInstanceScope[];
+      launchScopeBehavior?: ProductValidationLaunchScopeBehavior;
     };
   }) => Promise<PrismaPattern>;
   update: (args: {
@@ -179,6 +184,14 @@ const toDomain = (pattern: PrismaPattern): ProductValidationPattern => {
       launchAppliesToScopes?: ProductValidationInstanceScope[] | null;
     }
   ).launchAppliesToScopes;
+  const launchScopeBehaviorRaw = (
+    pattern as PrismaPattern & {
+      launchScopeBehavior?: ProductValidationLaunchScopeBehavior | null;
+    }
+  ).launchScopeBehavior;
+  const skipNoopReplacementProposalRaw = (
+    pattern as PrismaPattern & { skipNoopReplacementProposal?: boolean | null }
+  ).skipNoopReplacementProposal;
   return {
     id: pattern.id,
     label: pattern.label,
@@ -191,6 +204,9 @@ const toDomain = (pattern: PrismaPattern): ProductValidationPattern => {
     enabled: pattern.enabled,
     replacementEnabled: pattern.replacementEnabled ?? false,
     replacementAutoApply: false,
+    skipNoopReplacementProposal: normalizeProductValidationSkipNoopReplacementProposal(
+      skipNoopReplacementProposalRaw
+    ),
     replacementValue: pattern.replacementValue ?? null,
     replacementFields: normalizeReplacementFields(pattern.replacementFields),
     replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
@@ -216,6 +232,9 @@ const toDomain = (pattern: PrismaPattern): ProductValidationPattern => {
     launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
       launchAppliesToScopesRaw,
       appliesToScopesRaw
+    ),
+    launchScopeBehavior: normalizeProductValidationLaunchScopeBehavior(
+      launchScopeBehaviorRaw
     ),
     launchSourceMode: 'current_field',
     launchSourceField: null,
@@ -279,6 +298,9 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
       severity: data.severity ?? 'error',
       enabled: data.enabled ?? true,
       replacementEnabled: data.replacementEnabled ?? false,
+      skipNoopReplacementProposal: normalizeProductValidationSkipNoopReplacementProposal(
+        data.skipNoopReplacementProposal
+      ),
       replacementValue: data.replacementValue?.trim() || null,
       replacementFields: normalizeReplacementFields(data.replacementFields),
       replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
@@ -291,6 +313,9 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
       launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
         data.launchAppliesToScopes,
         data.appliesToScopes
+      ),
+      launchScopeBehavior: normalizeProductValidationLaunchScopeBehavior(
+        data.launchScopeBehavior
       ),
     };
     try {
@@ -338,6 +363,11 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
       ...(data.severity !== undefined && { severity: data.severity }),
       ...(data.enabled !== undefined && { enabled: data.enabled }),
       ...(data.replacementEnabled !== undefined && { replacementEnabled: data.replacementEnabled }),
+      ...(data.skipNoopReplacementProposal !== undefined && {
+        skipNoopReplacementProposal: normalizeProductValidationSkipNoopReplacementProposal(
+          data.skipNoopReplacementProposal
+        ),
+      }),
       ...(data.replacementValue !== undefined && { replacementValue: data.replacementValue?.trim() || null }),
       ...(data.replacementFields !== undefined && {
         replacementFields: normalizeReplacementFields(data.replacementFields),
@@ -357,6 +387,11 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
         launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
           data.launchAppliesToScopes,
           data.appliesToScopes
+        ),
+      }),
+      ...(data.launchScopeBehavior !== undefined && {
+        launchScopeBehavior: normalizeProductValidationLaunchScopeBehavior(
+          data.launchScopeBehavior
         ),
       }),
     };

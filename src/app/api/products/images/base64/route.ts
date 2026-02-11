@@ -31,7 +31,16 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   );
 
   const succeeded = results.filter((r) => r.status === 'fulfilled').length;
-  const failed = results.length - succeeded;
+  const failures = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
+  const failed = failures.length;
+
+  if (failed > 0) {
+    const { logger } = await import('@/shared/utils/logger');
+    logger.error(`[products.images.base64.bulk] ${failed} image conversions failed`, {
+      failures: failures.map(f => String(f.reason)),
+      totalRequested: productIds.length
+    });
+  }
 
   return NextResponse.json({
     status: 'ok',

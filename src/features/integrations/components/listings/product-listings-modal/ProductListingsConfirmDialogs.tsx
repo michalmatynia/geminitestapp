@@ -23,7 +23,7 @@ export function ProductListingsConfirmDialogs(): React.JSX.Element {
   } = useProductListingsContext();
 
   const baseListing = listings.find(
-    (listing) => ['baselinker', 'base-com'].includes(normalizeIntegrationSlug(listing.integration.slug))
+    (listing) => ['baselinker', 'base-com', 'base'].includes(normalizeIntegrationSlug(listing.integration.slug))
   ) ?? null;
 
   return (

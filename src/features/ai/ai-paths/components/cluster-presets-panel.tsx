@@ -4,6 +4,7 @@ import type { ClusterPreset } from '@/features/ai/ai-paths/lib';
 import { Button, Input, Label, Textarea } from '@/shared/ui';
 
 import { usePresetsState, usePresetsActions } from '../context';
+import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
 
 export type ClusterPresetDraft = {
   name: string;
@@ -12,37 +13,23 @@ export type ClusterPresetDraft = {
   template: string;
 };
 
-type ClusterPresetsPanelProps = {
-  /** Callback to create preset from current selection */
-  onPresetFromSelection: () => void;
-  /** Callback to save preset (involves API) */
-  onSavePreset: () => void;
-  /** Callback to apply preset to canvas */
-  onApplyPreset: (preset: ClusterPreset) => void;
-  /** Callback to delete preset (involves API) */
-  onDeletePreset: (presetId: string) => void;
-  /** Callback to open export modal */
-  onExportPresets: () => void;
-
-  presetDraft?: ClusterPresetDraft;
-  setPresetDraft?: (draft: ClusterPresetDraft | ((prev: ClusterPresetDraft) => ClusterPresetDraft)) => void;
-};
-
-export function ClusterPresetsPanel({
-  onPresetFromSelection,
-  onSavePreset,
-  onApplyPreset,
-  onDeletePreset,
-  onExportPresets,
-  presetDraft: presetDraftProp,
-  setPresetDraft: setPresetDraftProp,
-}: ClusterPresetsPanelProps): React.JSX.Element {
+export function ClusterPresetsPanel(): React.JSX.Element {
   // --- Context Hooks ---
+  const orchestrator = useAiPathsSettingsOrchestrator();
   const { presetDraft: presetDraftContext, editingPresetId, clusterPresets } = usePresetsState();
   const { setPresetDraft: setPresetDraftContext, resetPresetDraft, loadPresetIntoDraft } = usePresetsActions();
 
-  const presetDraft = presetDraftProp ?? presetDraftContext;
-  const setPresetDraft = setPresetDraftProp ?? setPresetDraftContext;
+  const presetDraft = presetDraftContext;
+  const setPresetDraft = setPresetDraftContext;
+  const handlePresetFromSelection = orchestrator.handlePresetFromSelection;
+  const handleSavePreset = (): void => {
+    void orchestrator.handleSavePreset().catch(() => {});
+  };
+  const handleApplyPreset = orchestrator.handleApplyPreset;
+  const handleDeletePreset = (presetId: string): void => {
+    void orchestrator.handleDeletePreset(presetId).catch(() => {});
+  };
+  const handleExportPresets = orchestrator.handleExportPresets;
 
   return (
     <div className='rounded-lg border border-border bg-card/60 p-4'>
@@ -52,7 +39,7 @@ export function ClusterPresetsPanel({
           <Button
             type='button'
             className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
-            onClick={onPresetFromSelection}
+            onClick={handlePresetFromSelection}
           >
             From Selection
           </Button>
@@ -113,7 +100,7 @@ export function ClusterPresetsPanel({
         <Button
           className='w-full rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10'
           type='button'
-          onClick={onSavePreset}
+          onClick={handleSavePreset}
         >
           {editingPresetId ? 'Update Preset' : 'Save Preset'}
         </Button>
@@ -148,14 +135,14 @@ export function ClusterPresetsPanel({
                 <Button
                   type='button'
                   className='rounded-md border border-emerald-500/40 px-2 py-1 text-[10px] text-emerald-200 hover:bg-emerald-500/10'
-                  onClick={() => onApplyPreset(preset)}
+                  onClick={() => handleApplyPreset(preset)}
                 >
                   Apply
                 </Button>
                 <Button
                   type='button'
                   className='rounded-md border border-rose-500/40 px-2 py-1 text-[10px] text-rose-200 hover:bg-rose-500/10'
-                  onClick={() => onDeletePreset(preset.id)}
+                  onClick={() => handleDeletePreset(preset.id)}
                 >
                   Delete
                 </Button>
@@ -169,7 +156,7 @@ export function ClusterPresetsPanel({
         <Button
           type='button'
           className='w-full rounded-md border text-xs text-white hover:bg-muted/60'
-          onClick={onExportPresets}
+          onClick={handleExportPresets}
         >
           Export / Import
         </Button>

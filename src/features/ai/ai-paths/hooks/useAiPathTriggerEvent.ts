@@ -521,6 +521,25 @@ export function useAiPathTriggerEvent(): {
         typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
           ? crypto.randomUUID()
           : `run_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
+      const invalidateProductQueries = (productId?: string | null): void => {
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() });
+        if (productId) {
+          void queryClient.invalidateQueries({
+            queryKey: QUERY_KEYS.products.detail(productId),
+          });
+        }
+        void queryClient.invalidateQueries({ queryKey: jobKeys.productAi('all') });
+      };
+      const scheduleQueuedProductRefresh = (productId?: string | null): void => {
+        invalidateProductQueries(productId);
+        const refreshDelaysMs = [1500, 4000, 9000];
+        for (const delayMs of refreshDelaysMs) {
+          setTimeout(() => {
+            invalidateProductQueries(productId);
+          }, delayMs);
+        }
+      };
 
       if (executionMode === 'local') {
         try {
@@ -574,9 +593,7 @@ export function useAiPathTriggerEvent(): {
             source: 'trigger_button',
           });
           if (args.entityType === 'product') {
-            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
-            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() });
-            void queryClient.invalidateQueries({ queryKey: jobKeys.productAi('all') });
+            invalidateProductQueries(args.entityId);
           }
           if (args.entityType === 'note') {
             void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
@@ -635,9 +652,7 @@ export function useAiPathTriggerEvent(): {
       toast('AI Path run queued.', { variant: 'success' });
 
       if (args.entityType === 'product') {
-        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
-        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() });
-        void queryClient.invalidateQueries({ queryKey: jobKeys.productAi('all') });
+        scheduleQueuedProductRefresh(args.entityId);
       }
       if (args.entityType === 'note') {
         void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });

@@ -385,6 +385,9 @@ export function useAiPathTrigger(): {
 
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() });
+      void queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.products.detail(product.id),
+      });
 
       try {
         await persistRunResults(

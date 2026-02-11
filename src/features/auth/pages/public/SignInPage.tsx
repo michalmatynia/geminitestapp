@@ -79,7 +79,10 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }): React.
       try {
         const { ok, payload } = await verifyCredentialsMutation.mutateAsync({ email, password });
         if (!ok || !payload.ok) {
-          setMessage(payload.message ?? 'Sign-in failed. Check your credentials.');
+          const message = payload.message ?? 'Sign-in failed. Check your credentials.';
+          const { logClientError } = await import('@/shared/utils/observability/client-error-logger');
+          logClientError(new Error(message), { context: { source: 'SignInPage', action: 'verifyCredentials', email } });
+          setMessage(message);
           setIsSubmitting(false);
           return;
         }
@@ -99,6 +102,8 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }): React.
             callbackUrl: '/admin',
           });
         } catch (error) {
+          const { logClientError } = await import('@/shared/utils/observability/client-error-logger');
+          logClientError(error, { context: { source: 'SignInPage', action: 'signIn', email } });
           const message =
             error instanceof Error
               ? error.message
@@ -109,6 +114,8 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }): React.
         }
         return;
       } catch (error) {
+        const { logClientError } = await import('@/shared/utils/observability/client-error-logger');
+        logClientError(error, { context: { source: 'SignInPage', action: 'handleSubmit', email } });
         const message =
           error instanceof Error
             ? error.message
@@ -129,6 +136,8 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }): React.
         callbackUrl: '/admin',
       });
     } catch (error) {
+      const { logClientError } = await import('@/shared/utils/observability/client-error-logger');
+      logClientError(error, { context: { source: 'SignInPage', action: 'signInMfa', email } });
       const message =
         error instanceof Error
           ? error.message

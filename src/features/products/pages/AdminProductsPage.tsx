@@ -1,5 +1,5 @@
 'use client';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import { ProfilerOnRenderCallback, useCallback, useEffect, useMemo, useState } from 'react';
@@ -185,6 +185,17 @@ export function AdminProductsPage(): React.JSX.Element {
     handleEditSuccess,
     handleEditSave,
   } = useProductOperations(setRefreshTrigger);
+  const editingProductDetailQuery = useQuery({
+    queryKey: editingProduct
+      ? QUERY_KEYS.products.detail(editingProduct.id)
+      : [...QUERY_KEYS.products.details(), 'inactive'],
+    queryFn: () => api.get<ProductWithImages>(`/api/products/${editingProduct?.id}`),
+    enabled: Boolean(editingProduct?.id),
+    staleTime: 0,
+    refetchInterval: editingProduct?.id ? 5000 : false,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
+  });
 
   const {
     integrationsProduct,
@@ -211,6 +222,14 @@ export function AdminProductsPage(): React.JSX.Element {
       setCurrencyCode(preferences.currencyCode);
     }
   }, [preferencesLoading, preferences.currencyCode, setCurrencyCode]);
+  useEffect(() => {
+    if (!editingProduct?.id) return;
+    const fresh = editingProductDetailQuery.data;
+    if (!fresh) return;
+    if (fresh.id !== editingProduct.id) return;
+    if ((fresh.updatedAt ?? null) === (editingProduct.updatedAt ?? null)) return;
+    setEditingProduct(fresh);
+  }, [editingProduct, editingProductDetailQuery.data, setEditingProduct]);
 
   const handleOpenEditModal = useCallback((product: ProductWithImages) => {
     const run = async (): Promise<void> => {
@@ -219,7 +238,7 @@ export function AdminProductsPage(): React.JSX.Element {
         const fullProduct = await queryClient.fetchQuery({
           queryKey: QUERY_KEYS.products.detail(product.id),
           queryFn: () => api.get<ProductWithImages>(`/api/products/${product.id}`),
-          staleTime: 10_000,
+          staleTime: 0,
         });
         setEditingProduct(fullProduct);
       } catch (error) {

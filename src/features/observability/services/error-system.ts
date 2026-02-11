@@ -65,13 +65,18 @@ export const ErrorSystem = {
   logWarning: async (message: string, context: ErrorContext = {}): Promise<void> => {
     try {
       const { logSystemEvent } = await import('@/features/observability/lib/system-logger');
+      const { classifyError } = await import('@/features/observability/utils/error-classifier');
       const service = context.service || 'unknown';
+      const category = context.category || classifyError(message);
       
       await logSystemEvent({
         level: 'warn',
         message: `[${service}] ${message}`,
         source: service,
-        context
+        context: {
+          ...context,
+          category,
+        }
       });
 
       if (context.runId) {
@@ -118,13 +123,18 @@ export const ErrorSystem = {
   logInfo: async (message: string, context: ErrorContext = {}): Promise<void> => {
     try {
       const { logSystemEvent } = await import('@/features/observability/lib/system-logger');
+      const { classifyError } = await import('@/features/observability/utils/error-classifier');
       const service = context.service || 'unknown';
+      const category = context.category || classifyError(message);
       
       await logSystemEvent({
         level: 'info',
         message: `[${service}] ${message}`,
         source: service,
-        context
+        context: {
+          ...context,
+          category,
+        }
       });
     } catch (importError) {
       const { logger } = await import('@/shared/utils/logger');

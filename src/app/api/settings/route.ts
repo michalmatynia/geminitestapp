@@ -409,11 +409,11 @@ const fetchAndCacheSettings = async (
     } catch (error) {
       if (isPrismaMissingTableError(error)) {
         await assertAutomaticSettingsFallbackAllowed();
-              prismaMissing = true;
-              await ErrorSystem.logWarning('[settings] Prisma settings table missing; falling back to Mongo.', {
-                service: 'api/settings',
-                code: (error as any).code,
-              });      } else {
+        prismaMissing = true;
+        await ErrorSystem.logWarning('[settings] Prisma settings table missing; falling back to Mongo.', {
+          service: 'api/settings',
+          code: (error as any).code,
+        });      } else {
         throw error;
       }
     } finally {
@@ -719,11 +719,11 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     } catch (error) {
       if (isPrismaMissingTableError(error)) {
         await assertAutomaticSettingsFallbackAllowed();
-              prismaMissing = true;
-              await ErrorSystem.logWarning('[settings] Prisma settings table missing; falling back to Mongo.', {
-                service: 'api/settings',
-                code: (error as any).code,
-              });      } else {
+        prismaMissing = true;
+        await ErrorSystem.logWarning('[settings] Prisma settings table missing; falling back to Mongo.', {
+          service: 'api/settings',
+          code: (error as any).code,
+        });      } else {
         throw error;
       }
     }

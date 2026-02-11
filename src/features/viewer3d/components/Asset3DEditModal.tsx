@@ -82,6 +82,7 @@ export function Asset3DEditModal({
       onSave(updated);
       onClose();
     } catch (err) {
+      logClientError(err, { context: { source: 'Asset3DEditModal', action: 'saveAsset', assetId: asset.id } });
       setError(err instanceof Error ? err.message : 'Failed to save');
     } finally {
       setIsSaving(false);

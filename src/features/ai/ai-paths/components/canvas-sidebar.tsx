@@ -6,52 +6,20 @@ import { Button, Input, Label, Textarea, SectionPanel } from '@/shared/ui';
 
 import {
   useGraphState,
-  useGraphActions,
+  usePersistenceActions,
   usePresetsState,
   usePresetsActions,
   useSelectionState,
   useSelectionActions,
-  useCanvasInteractions,
   useRuntimeState,
   useRuntimeActions,
 } from '../context';
+import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
 import { formatPlaceholderLabel, formatPortLabel } from '../utils/ui-utils';
 
 type CanvasSidebarProps = {
-  /** Palette node definitions - still passed as prop for flexibility */
+  /** Palette node definitions are intentionally passed by parent. */
   palette: NodeDefinition[];
-  /** Callback when dragging a node from palette */
-  onDragStart: (event: React.DragEvent<HTMLDivElement>, node: NodeDefinition) => void;
-  /** Callback to fire a trigger */
-  onFireTrigger?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
-  /** Callback to fire a persistent trigger */
-  onFireTriggerPersistent?: ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void) | undefined;
-  
-  onUpdateSelectedNode?: (
-    patch: Partial<AiNode>,
-    meta: { nodeId: string }
-  ) => void;
-  onDeleteSelectedNode?: () => void;
-  onRemoveEdge?: (edgeId: string) => void;
-  executionMode?: 'local' | 'server';
-
-  /** Current run status */
-  runStatus?: 'idle' | 'running' | 'paused' | 'stepping';
-  /** Run control callbacks */
-  onPauseRun?: () => void;
-  onResumeRun?: () => void;
-  onStepRun?: (triggerNode?: AiNode) => void;
-  onCancelRun?: () => void;
-  /** Callback to clear all wires */
-  onClearWires?: () => void;
-  /** Save path config - for persisting node changes */
-  savePathConfig?: ((options?: {
-    silent?: boolean | undefined;
-    includeNodeConfig?: boolean | undefined;
-    force?: boolean | undefined;
-    nodesOverride?: AiNode[] | undefined;
-    nodeOverride?: AiNode | undefined;
-  }) => Promise<boolean>) | undefined;
 };
 
 type PaletteMode = 'data' | 'sound';
@@ -95,51 +63,30 @@ const SOUND_PALETTE_GROUPS: PaletteGroup[] = [
 
 export function CanvasSidebar({
   palette,
-  onDragStart,
-  onFireTrigger,
-  onFireTriggerPersistent,
-  onUpdateSelectedNode,
-  onDeleteSelectedNode,
-  onRemoveEdge,
-  executionMode: executionModeProp,
-  runStatus: runStatusProp,
-  onPauseRun,
-  onResumeRun,
-  onStepRun,
-  onCancelRun,
-  onClearWires,
-  savePathConfig,
 }: CanvasSidebarProps): React.JSX.Element {
   // --- Context Hooks ---
-  const { nodes, edges, executionMode: executionModeContext } = useGraphState();
-  const executionMode = executionModeProp ?? executionModeContext;
-  const { updateNode } = useGraphActions();
-  const { runtimeRunStatus: runtimeRunStatusContext } = useRuntimeState();
+  const orchestrator = useAiPathsSettingsOrchestrator();
+  const { nodes, edges, executionMode } = useGraphState();
+  const { savePathConfig } = usePersistenceActions();
+  const { runtimeRunStatus } = useRuntimeState();
   const {
-    fireTrigger: fireTriggerContext,
-    fireTriggerPersistent: fireTriggerPersistentContext,
-    pauseActiveRun: pauseActiveRunContext,
-    resumeActiveRun: resumeActiveRunContext,
-    stepActiveRun: stepActiveRunContext,
-    cancelActiveRun: cancelActiveRunContext,
-    clearWires: clearWiresContext,
+    fireTrigger,
+    fireTriggerPersistent,
+    pauseActiveRun: pauseRun,
+    resumeActiveRun: resumeRun,
+    stepActiveRun: stepRun,
+    cancelActiveRun: cancelRun,
+    clearWires,
   } = useRuntimeActions();
   const { paletteCollapsed, expandedPaletteGroups } = usePresetsState();
   const { setPaletteCollapsed, togglePaletteGroup } = usePresetsActions();
   const { selectedNodeId, selectedEdgeId } = useSelectionState();
   const { selectEdge, setConfigOpen, setSimulationOpenNodeId } = useSelectionActions();
-  const { handleDeleteSelectedNode: deleteSelectedNodeContext, handleRemoveEdge: removeEdgeContext } = useCanvasInteractions();
-
-  const deleteSelectedNode = onDeleteSelectedNode ?? deleteSelectedNodeContext;
-  const handleRemoveEdge = onRemoveEdge ?? removeEdgeContext;
-  const runStatus = runStatusProp ?? runtimeRunStatusContext;
-  const fireTrigger = onFireTrigger ?? fireTriggerContext;
-  const fireTriggerPersistent = onFireTriggerPersistent ?? fireTriggerPersistentContext;
-  const pauseRun = onPauseRun ?? pauseActiveRunContext;
-  const resumeRun = onResumeRun ?? resumeActiveRunContext;
-  const stepRun = onStepRun ?? stepActiveRunContext;
-  const cancelRun = onCancelRun ?? cancelActiveRunContext;
-  const clearWires = onClearWires ?? clearWiresContext;
+  const handleDragStart = orchestrator.handleDragStart;
+  const updateSelectedNode = orchestrator.updateSelectedNode;
+  const deleteSelectedNode = orchestrator.handleDeleteSelectedNode;
+  const handleRemoveEdge = orchestrator.handleRemoveEdge;
+  const runStatus = runtimeRunStatus;
 
   // --- Derived ---
   const selectedNode = useMemo(() => 
@@ -247,7 +194,7 @@ export function CanvasSidebar({
                           key={node.title}
                           variant='subtle-compact'
                           draggable
-                          onDragStart={(event) => onDragStart(event, node)}
+                          onDragStart={(event) => handleDragStart(event, node)}
                           className='cursor-grab text-xs text-gray-300 transition hover:border-border/60 hover:bg-muted/50 active:cursor-grabbing'
                         >
                           {((): React.JSX.Element => {
@@ -341,16 +288,10 @@ export function CanvasSidebar({
                   value={selectedNode.title}
                   onChange={(event) => {
                     const patch: Partial<AiNode> = { title: event.target.value };
-                    if (onUpdateSelectedNode) {
-                      onUpdateSelectedNode(patch, { nodeId: selectedNode.id });
-                    } else {
-                      updateNode(selectedNode.id, patch);
-                    }
+                    updateSelectedNode(patch, { nodeId: selectedNode.id });
                   }}
                   onBlur={() => {
-                    if (savePathConfig) {
-                      void savePathConfig({ silent: true, includeNodeConfig: true, force: true });
-                    }
+                    void savePathConfig({ silent: true, includeNodeConfig: true, force: true });
                   }}
                 />
               </div>
@@ -361,16 +302,10 @@ export function CanvasSidebar({
                   value={selectedNode.description}
                   onChange={(event) => {
                     const patch: Partial<AiNode> = { description: event.target.value };
-                    if (onUpdateSelectedNode) {
-                      onUpdateSelectedNode(patch, { nodeId: selectedNode.id });
-                    } else {
-                      updateNode(selectedNode.id, patch);
-                    }
+                    updateSelectedNode(patch, { nodeId: selectedNode.id });
                   }}
                   onBlur={() => {
-                    if (savePathConfig) {
-                      void savePathConfig({ silent: true, includeNodeConfig: true, force: true });
-                    }
+                    void savePathConfig({ silent: true, includeNodeConfig: true, force: true });
                   }}
                 />
               </div>

@@ -44,6 +44,10 @@ export function useVectorDrawing(): VectorDrawingContextValue {
   return context;
 }
 
+export function useOptionalVectorDrawing(): VectorDrawingContextValue | null {
+  return useContext(VectorDrawingContext);
+}
+
 export interface VectorDrawingProviderProps {
   children: React.ReactNode;
   value: VectorDrawingContextValue;

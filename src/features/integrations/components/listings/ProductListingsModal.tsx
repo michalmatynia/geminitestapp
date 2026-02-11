@@ -28,7 +28,7 @@ type ProductListingsModalProps = {
   onListingsUpdated?: (() => void) | undefined;
 };
 
-const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com']);
+const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
 
 const normalizeSlug = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();

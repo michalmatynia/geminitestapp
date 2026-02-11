@@ -55,11 +55,11 @@ function RegisterForm({ allowSignup }: { allowSignup: boolean }): React.JSX.Elem
           | { error?: string; details?: { issues?: string[] } }
           | null;
         const details = payload?.details?.issues?.join(' ') ?? '';
-        setError(
-          payload?.error
-            ? `${payload.error}${details ? ` ${details}` : ''}`
-            : 'Failed to create account.'
-        );
+        const message = payload?.error
+          ? `${payload.error}${details ? ` ${details}` : ''}`
+          : 'Failed to create account.';
+        logClientError(new Error(message), { context: { source: 'RegisterPage', action: 'registerUser', email } });
+        setError(message);
         return;
       }
 
@@ -70,6 +70,7 @@ function RegisterForm({ allowSignup }: { allowSignup: boolean }): React.JSX.Elem
           callbackUrl: '/admin',
         });
       } catch (error) {
+        logClientError(error, { context: { source: 'RegisterPage', action: 'signIn', email } });
         const message =
           error instanceof Error
             ? error.message
@@ -77,6 +78,7 @@ function RegisterForm({ allowSignup }: { allowSignup: boolean }): React.JSX.Elem
         setError(message);
       }
     } catch (error) {
+      logClientError(error, { context: { source: 'RegisterPage', action: 'handleSubmit', email } });
       const message =
         error instanceof Error ? error.message : 'Failed to create account.';
       setError(message);

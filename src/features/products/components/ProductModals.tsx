@@ -60,12 +60,14 @@ export function ProductModals(): React.JSX.Element {
             title='Create Product'
             submitButtonText='Create'
             closeOnSubmit
+            validationInstanceScopeOverride={createDraft?.id ? 'draft_template' : 'product_create'}
           />
         </ProductFormProvider>
       )}
 
       {editingProduct && (
         <ProductFormProvider
+          key={editingProduct.id}
           product={editingProduct}
           onSuccess={onEditSuccess}
           onEditSave={onEditSave}
@@ -76,6 +78,7 @@ export function ProductModals(): React.JSX.Element {
             title='Edit Product'
             submitButtonText='Update'
             closeOnSubmit={false}
+            validationInstanceScopeOverride='product_edit'
           />
         </ProductFormProvider>
       )}
@@ -155,12 +158,14 @@ function ProductFormModal({
   title, 
   submitButtonText,
   closeOnSubmit: _closeOnSubmit = false,
+  validationInstanceScopeOverride,
 }: { 
   open: boolean;
   onClose: () => void;
   title: string;
   submitButtonText: string;
   closeOnSubmit?: boolean;
+  validationInstanceScopeOverride?: 'draft_template' | 'product_create' | 'product_edit';
 }): React.JSX.Element {
   const { showFileManager, handleMultiFileSelect, handleSubmit, uploading, getValues, product } =
     useProductFormContext();
@@ -220,7 +225,14 @@ function ProductFormModal({
       {showFileManager ? (
         <FileManager onSelectFile={handleMultiFileSelect} />
       ) : (
-        <ProductForm submitButtonText={submitButtonText} />
+        <ProductForm
+          submitButtonText={submitButtonText}
+          {...(
+            validationInstanceScopeOverride
+              ? { validationInstanceScopeOverride }
+              : {}
+          )}
+        />
       )}
     </AppModal>
   );

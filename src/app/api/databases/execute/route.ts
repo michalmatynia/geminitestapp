@@ -50,7 +50,13 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     if (parsed.collection) {
       const provider = await resolveCollectionProviderForRequest(parsed.collection, 'auto');
       if (provider === 'mongodb') {
-        return handleMongoOperation(parsed);
+        try {
+          return await handleMongoOperation(parsed);
+        } catch (error) {
+          const { ErrorSystem } = await import('@/features/observability/server');
+          void ErrorSystem.captureException(error, { service: 'api/databases/execute', provider: 'mongodb', collection: parsed.collection });
+          throw error;
+        }
       }
       if (hasMongoIntent) {
         throw badRequestError(
@@ -62,8 +68,13 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     }
   }
 
-  return handlePostgresQuery(parsed.sql);
-
+  try {
+    return await handlePostgresQuery(parsed.sql);
+  } catch (error) {
+    const { ErrorSystem } = await import('@/features/observability/server');
+    void ErrorSystem.captureException(error, { service: 'api/databases/execute', provider: 'postgresql', sql: parsed.sql });
+    throw error;
+  }
 }
 
 async function handlePostgresQuery(sql: string | undefined): Promise<Response> {
@@ -96,6 +107,15 @@ async function handlePostgresQuery(sql: string | undefined): Promise<Response> {
       command: result.command ?? '',
       duration,
     });
+  } catch (error) {
+    return NextResponse.json({
+      rows: [],
+      rowCount: 0,
+      fields: [],
+      command: 'query',
+      duration: Date.now() - startTime,
+      error: error instanceof Error ? error.message : 'Unknown database error',
+    });
   } finally {
     await client.end().catch(() => {});
   }
@@ -126,73 +146,84 @@ async function handleMongoOperation(
   const collection = db.collection(collName);
   const startTime = Date.now();
 
-  let result: unknown;
-  let rowCount = 0;
+  try {
+    let result: unknown;
+    let rowCount = 0;
 
-  switch (operation) {
-    case 'find': {
-      const docs = await collection.find(filter ?? {}).limit(200).toArray();
-      result = docs;
-      rowCount = docs.length;
-      break;
-    }
-    case 'insertOne': {
-      if (!document) {
-        throw badRequestError('Document is required for insertOne.');
+    switch (operation) {
+      case 'find': {
+        const docs = await collection.find(filter ?? {}).limit(200).toArray();
+        result = docs;
+        rowCount = docs.length;
+        break;
       }
-      const insertResult = await collection.insertOne(document);
-      result = [{ insertedId: insertResult.insertedId }];
-      rowCount = insertResult.acknowledged ? 1 : 0;
-      break;
-    }
-    case 'updateOne': {
-      if (!update) {
-        throw badRequestError('Update object is required for updateOne.');
+      case 'insertOne': {
+        if (!document) {
+          throw badRequestError('Document is required for insertOne.');
+        }
+        const insertResult = await collection.insertOne(document);
+        result = [{ insertedId: insertResult.insertedId }];
+        rowCount = insertResult.acknowledged ? 1 : 0;
+        break;
       }
-      const updateResult = await collection.updateOne(filter ?? {}, update);
-      result = [{ matchedCount: updateResult.matchedCount, modifiedCount: updateResult.modifiedCount }];
-      rowCount = updateResult.modifiedCount;
-      break;
-    }
-    case 'deleteOne': {
-      const deleteResult = await collection.deleteOne(filter ?? {});
-      result = [{ deletedCount: deleteResult.deletedCount }];
-      rowCount = deleteResult.deletedCount;
-      break;
-    }
-    case 'deleteMany': {
-      const deleteManyResult = await collection.deleteMany(filter ?? {});
-      result = [{ deletedCount: deleteManyResult.deletedCount }];
-      rowCount = deleteManyResult.deletedCount;
-      break;
-    }
-    case 'countDocuments': {
-      const count = await collection.countDocuments(filter ?? {});
-      result = [{ count }];
-      rowCount = 1;
-      break;
-    }
-    case 'aggregate': {
-      if (!pipeline) {
-        throw badRequestError('Pipeline is required for aggregate.');
+      case 'updateOne': {
+        if (!update) {
+          throw badRequestError('Update object is required for updateOne.');
+        }
+        const updateResult = await collection.updateOne(filter ?? {}, update);
+        result = [{ matchedCount: updateResult.matchedCount, modifiedCount: updateResult.modifiedCount }];
+        rowCount = updateResult.modifiedCount;
+        break;
       }
-      const aggDocs = await collection.aggregate(pipeline).toArray();
-      result = aggDocs;
-      rowCount = aggDocs.length;
-      break;
+      case 'deleteOne': {
+        const deleteResult = await collection.deleteOne(filter ?? {});
+        result = [{ deletedCount: deleteResult.deletedCount }];
+        rowCount = deleteResult.deletedCount;
+        break;
+      }
+      case 'deleteMany': {
+        const deleteManyResult = await collection.deleteMany(filter ?? {});
+        result = [{ deletedCount: deleteManyResult.deletedCount }];
+        rowCount = deleteManyResult.deletedCount;
+        break;
+      }
+      case 'countDocuments': {
+        const count = await collection.countDocuments(filter ?? {});
+        result = [{ count }];
+        rowCount = 1;
+        break;
+      }
+      case 'aggregate': {
+        if (!pipeline) {
+          throw badRequestError('Pipeline is required for aggregate.');
+        }
+        const aggDocs = await collection.aggregate(pipeline).toArray();
+        result = aggDocs;
+        rowCount = aggDocs.length;
+        break;
+      }
+      default:
+        throw badRequestError(`Unsupported operation: ${operation}`);
     }
-    default:
-      throw badRequestError(`Unsupported operation: ${operation}`);
+
+    const duration = Date.now() - startTime;
+    return NextResponse.json({
+      rows: Array.isArray(result) ? result : [],
+      rowCount,
+      fields: [],
+      command: operation,
+      duration,
+    });
+  } catch (error) {
+    return NextResponse.json({
+      rows: [],
+      rowCount: 0,
+      fields: [],
+      command: operation || 'unknown',
+      duration: Date.now() - startTime,
+      error: error instanceof Error ? error.message : 'Unknown MongoDB error',
+    });
   }
-
-  const duration = Date.now() - startTime;
-  return NextResponse.json({
-    rows: Array.isArray(result) ? result : [],
-    rowCount,
-    fields: [],
-    command: operation,
-    duration,
-  });
 }
 
 export const POST = apiHandler(

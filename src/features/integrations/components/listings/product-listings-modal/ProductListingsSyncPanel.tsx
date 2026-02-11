@@ -17,7 +17,7 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
   const { product, listings, syncingImages, setIsSyncImagesConfirmOpen } = useProductListingsContext();
 
   const baseListing = listings.find(
-    (listing) => ['baselinker', 'base-com'].includes(normalizeIntegrationSlug(listing.integration.slug))
+    (listing) => ['baselinker', 'base-com', 'base'].includes(normalizeIntegrationSlug(listing.integration.slug))
   );
 
   const getSyncFields = () => {

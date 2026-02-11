@@ -16,6 +16,8 @@ import {
   isPatternEnabledForValidationScope,
   isPatternLaunchEnabledForValidationScope,
   isPatternReplacementEnabledForValidationScope,
+  normalizeProductValidationLaunchScopeBehavior,
+  normalizeProductValidationSkipNoopReplacementProposal,
 } from '@/features/products/utils/validator-instance-behavior';
 import {
   evaluateStringCondition,
@@ -28,6 +30,7 @@ import type {
   ProductValidationInstanceScope,
   ProductValidationPattern,
   ProductValidationPostAcceptBehavior,
+  ProductValidationTarget,
 } from '@/shared/types/domain/products';
 import { Button, Input, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -126,8 +129,8 @@ const sortValidatorPatterns = (patterns: ProductValidationPattern[]): ProductVal
 
 const resolveFieldTargetAndLocale = (
   fieldName: string
-): { target: 'name' | 'description' | 'sku' | 'price' | 'stock' | null; locale: string | null } => {
-  let target: 'name' | 'description' | 'sku' | 'price' | 'stock' | null = null;
+): { target: ProductValidationTarget | null; locale: string | null } => {
+  let target: ProductValidationTarget | null = null;
   if (fieldName.startsWith('name_')) {
     target = 'name';
   } else if (fieldName.startsWith('description_')) {
@@ -138,6 +141,16 @@ const resolveFieldTargetAndLocale = (
     target = 'price';
   } else if (fieldName === 'stock') {
     target = 'stock';
+  } else if (fieldName === 'categoryId') {
+    target = 'category';
+  } else if (fieldName === 'sizeLength') {
+    target = 'size_length';
+  } else if (fieldName === 'sizeWidth') {
+    target = 'size_width';
+  } else if (fieldName === 'length') {
+    target = 'length';
+  } else if (fieldName === 'weight') {
+    target = 'weight';
   }
   const localeMatch = /_(en|pl|de)$/i.exec(fieldName);
   const locale = localeMatch?.[1]?.toLowerCase() ?? null;
@@ -236,7 +249,10 @@ const shouldLaunchPattern = ({
       pattern.appliesToScopes
     )
   ) {
-    return false;
+    return (
+      normalizeProductValidationLaunchScopeBehavior(pattern.launchScopeBehavior) ===
+      'condition_only'
+    );
   }
   if (
     pattern.launchSourceMode !== 'current_field' &&
@@ -492,7 +508,21 @@ for (const [fieldName, rawValue] of entries) {
           })
           : null;
         const effectiveReplacement = resolvedReplacement;
-        if (!inSequenceGroup) {
+        const hasEffectiveReplacement = Boolean(effectiveReplacement?.value);
+        const nextValue = hasEffectiveReplacement
+          ? applyResolvedReplacement({
+            value: candidateValue,
+            pattern,
+            replacement: effectiveReplacement,
+          })
+          : candidateValue;
+        const isNoopReplacement =
+          hasEffectiveReplacement && nextValue === candidateValue;
+        const shouldSuppressNoopReplacementProposal =
+          normalizeProductValidationSkipNoopReplacementProposal(
+            pattern.skipNoopReplacementProposal
+          ) && isNoopReplacement;
+        if (!inSequenceGroup && !shouldSuppressNoopReplacementProposal) {
           if (!issues[fieldName]) {
             issues[fieldName] = [];
           }
@@ -505,22 +535,19 @@ for (const [fieldName, rawValue] of entries) {
             length,
             regex: pattern.regex,
             flags: pattern.flags ?? null,
-            replacementValue: effectiveReplacement?.value ?? null,
-            replacementApplyMode: effectiveReplacement?.applyMode ?? 'replace_matched_segment',
+            replacementValue: hasEffectiveReplacement ? effectiveReplacement?.value ?? null : null,
+            replacementApplyMode: hasEffectiveReplacement
+              ? effectiveReplacement?.applyMode ?? 'replace_matched_segment'
+              : 'replace_matched_segment',
             replacementScope,
-            replacementActive: replacementActive && Boolean(effectiveReplacement?.value),
+            replacementActive: replacementActive && hasEffectiveReplacement,
             postAcceptBehavior: normalizePostAcceptBehavior(pattern.postAcceptBehavior),
             debounceMs: patternDebounceMs,
           });
         }
 
-        if (!effectiveReplacement?.value) break;
-        const nextValue = applyResolvedReplacement({
-          value: candidateValue,
-          pattern,
-          replacement: effectiveReplacement,
-        });
-        if (nextValue === candidateValue) break;
+        if (!hasEffectiveReplacement) break;
+        if (isNoopReplacement) break;
         replaced = true;
         candidateValue = nextValue;
         if (inSequenceGroup) {
@@ -668,12 +695,16 @@ export function ValidatorIssueHint({
   onReplace,
   onDeny,
   denyLabel = 'Deny',
+  proposedValueOverride,
+  hideMatchSnippet = false,
 }: {
   issue: FieldValidatorIssue;
   value: string;
   onReplace?: (() => void) | undefined;
   onDeny?: (() => void) | undefined;
   denyLabel?: 'Deny' | 'Mute';
+  proposedValueOverride?: string | null;
+  hideMatchSnippet?: boolean;
 }): React.JSX.Element {
   const snippet = buildIssueSnippet(value, issue.index, issue.length);
   const toneClass =
@@ -700,45 +731,53 @@ export function ValidatorIssueHint({
           ? 'Field replacer'
           : 'Field replacer (other field)'
         : 'Validation only';
-  const proposedValue = issue.replacementValue
-    ? getIssueReplacementPreview(value, issue)
-    : null;
+  const proposedValue =
+    proposedValueOverride ??
+    (issue.replacementValue ? getIssueReplacementPreview(value, issue) : null);
   const hasProposedChange = Boolean(
     proposedValue !== null && proposedValue !== value
   );
 
   return (
     <div className={cn('mt-2 rounded-md border px-2 py-2 text-xs', toneClass)}>
-      <div className='flex items-center gap-2'>
-        <ArrowRight className='size-4 animate-bounce' />
-        <span>{issue.message}</span>
-        <span className={cn('rounded border px-1.5 py-0.5 text-[10px]', replacementBadgeClass)}>
+      <div className='flex items-start gap-2'>
+        <ArrowRight className='mt-0.5 size-4 shrink-0 animate-bounce' />
+        <span className='min-w-0 flex-1 break-words'>{issue.message}</span>
+      </div>
+      <div className='mt-2 flex flex-wrap items-center gap-1'>
+        <span className={cn('shrink-0 rounded border px-1.5 py-0.5 text-[10px]', replacementBadgeClass)}>
           {replacementBadgeText}
         </span>
-        {onDeny ? (
-          <Button
-            type='button'
-            onClick={onDeny}
-            className='ml-auto h-6 rounded border border-red-500/50 bg-red-500/15 px-2 text-[10px] text-red-100 hover:bg-red-500/25'
-          >
-            {denyLabel}
-          </Button>
+        {onDeny || (issue.replacementValue && onReplace) ? (
+          <div className='ml-auto flex flex-wrap justify-end gap-1'>
+            {onDeny ? (
+              <Button
+                type='button'
+                onClick={onDeny}
+                className='h-6 rounded border border-red-500/50 bg-red-500/15 px-2 text-[10px] text-red-100 hover:bg-red-500/25'
+              >
+                {denyLabel}
+              </Button>
+            ) : null}
+            {issue.replacementValue && onReplace ? (
+              <Button
+                type='button'
+                onClick={onReplace}
+                className='h-6 rounded border border-emerald-500/50 bg-emerald-500/15 px-2 text-[10px] text-emerald-100 hover:bg-emerald-500/25'
+              >
+                Replace
+              </Button>
+            ) : null}
+          </div>
         ) : null}
-        {issue.replacementValue && onReplace && (
-          <Button
-            type='button'
-            onClick={onReplace}
-            className='h-6 rounded border border-emerald-500/50 bg-emerald-500/15 px-2 text-[10px] text-emerald-100 hover:bg-emerald-500/25'
-          >
-            Replace
-          </Button>
-        )}
       </div>
-      <div className='mt-1 font-mono text-[11px] break-all'>
-        <span className='opacity-90'>{snippet.before}</span>
-        <mark className={cn('rounded px-0.5', matchClass)}>{snippet.match}</mark>
-        <span className='opacity-90'>{snippet.after}</span>
-      </div>
+      {!hideMatchSnippet ? (
+        <div className='mt-1 font-mono text-[11px] break-all'>
+          <span className='opacity-90'>{snippet.before}</span>
+          <mark className={cn('rounded px-0.5', matchClass)}>{snippet.match}</mark>
+          <span className='opacity-90'>{snippet.after}</span>
+        </div>
+      ) : null}
       {hasProposedChange ? (
         <div className='mt-2 rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-1.5'>
           <p className='text-[10px] uppercase tracking-wide text-emerald-200/90'>
@@ -1000,6 +1039,35 @@ export default function ProductFormGeneral(): React.JSX.Element {
     return getIssueReplacementPreview(value, issue);
   };
 
+  const toFieldString = (value: unknown): string => {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+    return '';
+  };
+
+  const applyNumericFieldIssueReplacement = (
+    fieldName: 'weight' | 'sizeLength' | 'sizeWidth' | 'length',
+    issue: FieldValidatorIssue
+  ): void => {
+    const currentValue = toFieldString(getValues(fieldName));
+    const nextValue = applyIssueReplacement(currentValue, issue);
+    acceptIssue({
+      fieldName,
+      patternId: issue.patternId,
+      postAcceptBehavior: issue.postAcceptBehavior,
+      message: issue.message,
+      replacementValue: issue.replacementValue,
+    });
+    if (nextValue === currentValue) return;
+    const numericValue = Number(nextValue.replace(',', '.'));
+    if (!Number.isFinite(numericValue)) return;
+    const normalizedNumeric = Math.max(0, Math.floor(numericValue));
+    setValue(fieldName, normalizedNumeric as ProductFormData[typeof fieldName], {
+      shouldDirty: true,
+      shouldTouch: true,
+    });
+  };
+
   useEffect(() => {
     if (!validatorEnabled || !formatterEnabled) return;
     if (validatorPatterns.length === 0) return;
@@ -1124,8 +1192,15 @@ export default function ProductFormGeneral(): React.JSX.Element {
       }
 
       if (nextValue !== rawValue) {
-        if (target === 'price' || target === 'stock') {
-          const numericValue = Number(nextValue);
+        if (
+          target === 'price' ||
+          target === 'stock' ||
+          target === 'weight' ||
+          target === 'size_length' ||
+          target === 'size_width' ||
+          target === 'length'
+        ) {
+          const numericValue = Number(nextValue.replace(',', '.'));
           if (!Number.isFinite(numericValue)) continue;
           const normalizedNumeric = Math.max(0, Math.floor(numericValue));
           setValue(fieldName, normalizedNumeric as ProductFormData[typeof fieldName], {
@@ -1453,63 +1528,219 @@ export default function ProductFormGeneral(): React.JSX.Element {
 
       <FormSection title='Dimensions & Weight' gridClassName='grid-cols-2 md:grid-cols-4'>
         <FormField label='Weight (kg)' error={errors.weight?.message} id='weight'>
-          <div className='relative'>
-            <Input
-              id='weight'
-              type='number'
-              step='0.01'
-              className='pr-8'
-              {...register('weight', { valueAsNumber: true })}
-            />
-            <span className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-500'>
-              KG
-            </span>
-          </div>
+          {(() => {
+            const fieldName = 'weight';
+            const fieldIssueList = validatorEnabled ? visibleFieldIssues[fieldName] ?? [] : [];
+            const fieldIssue = fieldIssueList[0];
+            const fieldValue = toFieldString(allValues[fieldName]);
+            return (
+              <>
+                <div className='relative'>
+                  <Input
+                    id='weight'
+                    type='number'
+                    step='0.01'
+                    className={cn(
+                      'pr-8',
+                      validatorEnabled &&
+                        fieldIssue &&
+                        (fieldIssue.severity === 'warning'
+                          ? 'border-amber-500/60'
+                          : 'border-red-500/60')
+                    )}
+                    {...register('weight', { valueAsNumber: true })}
+                  />
+                  <span className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-500'>
+                    KG
+                  </span>
+                </div>
+                {validatorEnabled &&
+                  fieldIssueList.map((issue: FieldValidatorIssue) => (
+                    <ValidatorIssueHint
+                      key={issue.patternId}
+                      issue={issue}
+                      value={fieldValue}
+                      onReplace={
+                        issue.replacementValue
+                          ? () => applyNumericFieldIssueReplacement('weight', issue)
+                          : undefined
+                      }
+                      onDeny={() => {
+                        denyIssue({
+                          fieldName,
+                          patternId: issue.patternId,
+                          message: issue.message,
+                          replacementValue: issue.replacementValue,
+                        });
+                      }}
+                      denyLabel={getDenyActionLabel(issue.patternId)}
+                    />
+                  ))}
+              </>
+            );
+          })()}
         </FormField>
 
         <FormField label='Length (cm)' error={errors.sizeLength?.message} id='sizeLength'>
-          <div className='relative'>
-            <Input
-              id='sizeLength'
-              type='number'
-              step='0.1'
-              className='pr-8'
-              {...register('sizeLength', { valueAsNumber: true })}
-            />
-            <span className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-500'>
-              CM
-            </span>
-          </div>
+          {(() => {
+            const fieldName = 'sizeLength';
+            const fieldIssueList = validatorEnabled ? visibleFieldIssues[fieldName] ?? [] : [];
+            const fieldIssue = fieldIssueList[0];
+            const fieldValue = toFieldString(allValues[fieldName]);
+            return (
+              <>
+                <div className='relative'>
+                  <Input
+                    id='sizeLength'
+                    type='number'
+                    step='0.1'
+                    className={cn(
+                      'pr-8',
+                      validatorEnabled &&
+                        fieldIssue &&
+                        (fieldIssue.severity === 'warning'
+                          ? 'border-amber-500/60'
+                          : 'border-red-500/60')
+                    )}
+                    {...register('sizeLength', { valueAsNumber: true })}
+                  />
+                  <span className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-500'>
+                    CM
+                  </span>
+                </div>
+                {validatorEnabled &&
+                  fieldIssueList.map((issue: FieldValidatorIssue) => (
+                    <ValidatorIssueHint
+                      key={issue.patternId}
+                      issue={issue}
+                      value={fieldValue}
+                      onReplace={
+                        issue.replacementValue
+                          ? () => applyNumericFieldIssueReplacement('sizeLength', issue)
+                          : undefined
+                      }
+                      onDeny={() => {
+                        denyIssue({
+                          fieldName,
+                          patternId: issue.patternId,
+                          message: issue.message,
+                          replacementValue: issue.replacementValue,
+                        });
+                      }}
+                      denyLabel={getDenyActionLabel(issue.patternId)}
+                    />
+                  ))}
+              </>
+            );
+          })()}
         </FormField>
 
         <FormField label='Width (cm)' error={errors.sizeWidth?.message} id='sizeWidth'>
-          <div className='relative'>
-            <Input
-              id='sizeWidth'
-              type='number'
-              step='0.1'
-              className='pr-8'
-              {...register('sizeWidth', { valueAsNumber: true })}
-            />
-            <span className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-500'>
-              CM
-            </span>
-          </div>
+          {(() => {
+            const fieldName = 'sizeWidth';
+            const fieldIssueList = validatorEnabled ? visibleFieldIssues[fieldName] ?? [] : [];
+            const fieldIssue = fieldIssueList[0];
+            const fieldValue = toFieldString(allValues[fieldName]);
+            return (
+              <>
+                <div className='relative'>
+                  <Input
+                    id='sizeWidth'
+                    type='number'
+                    step='0.1'
+                    className={cn(
+                      'pr-8',
+                      validatorEnabled &&
+                        fieldIssue &&
+                        (fieldIssue.severity === 'warning'
+                          ? 'border-amber-500/60'
+                          : 'border-red-500/60')
+                    )}
+                    {...register('sizeWidth', { valueAsNumber: true })}
+                  />
+                  <span className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-500'>
+                    CM
+                  </span>
+                </div>
+                {validatorEnabled &&
+                  fieldIssueList.map((issue: FieldValidatorIssue) => (
+                    <ValidatorIssueHint
+                      key={issue.patternId}
+                      issue={issue}
+                      value={fieldValue}
+                      onReplace={
+                        issue.replacementValue
+                          ? () => applyNumericFieldIssueReplacement('sizeWidth', issue)
+                          : undefined
+                      }
+                      onDeny={() => {
+                        denyIssue({
+                          fieldName,
+                          patternId: issue.patternId,
+                          message: issue.message,
+                          replacementValue: issue.replacementValue,
+                        });
+                      }}
+                      denyLabel={getDenyActionLabel(issue.patternId)}
+                    />
+                  ))}
+              </>
+            );
+          })()}
         </FormField>
 
         <FormField label='Height (cm)' error={errors.length?.message} id='length'>
-          <div className='relative'>
-            <Input
-              id='length'
-              type='number'
-              step='0.1'
-              className='pr-8'
-              {...register('length', { valueAsNumber: true })}
-            />
-            <span className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-500'>
-              CM
-            </span>
-          </div>
+          {(() => {
+            const fieldName = 'length';
+            const fieldIssueList = validatorEnabled ? visibleFieldIssues[fieldName] ?? [] : [];
+            const fieldIssue = fieldIssueList[0];
+            const fieldValue = toFieldString(allValues[fieldName]);
+            return (
+              <>
+                <div className='relative'>
+                  <Input
+                    id='length'
+                    type='number'
+                    step='0.1'
+                    className={cn(
+                      'pr-8',
+                      validatorEnabled &&
+                        fieldIssue &&
+                        (fieldIssue.severity === 'warning'
+                          ? 'border-amber-500/60'
+                          : 'border-red-500/60')
+                    )}
+                    {...register('length', { valueAsNumber: true })}
+                  />
+                  <span className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-500'>
+                    CM
+                  </span>
+                </div>
+                {validatorEnabled &&
+                  fieldIssueList.map((issue: FieldValidatorIssue) => (
+                    <ValidatorIssueHint
+                      key={issue.patternId}
+                      issue={issue}
+                      value={fieldValue}
+                      onReplace={
+                        issue.replacementValue
+                          ? () => applyNumericFieldIssueReplacement('length', issue)
+                          : undefined
+                      }
+                      onDeny={() => {
+                        denyIssue({
+                          fieldName,
+                          patternId: issue.patternId,
+                          message: issue.message,
+                          replacementValue: issue.replacementValue,
+                        });
+                      }}
+                      denyLabel={getDenyActionLabel(issue.patternId)}
+                    />
+                  ))}
+              </>
+            );
+          })()}
         </FormField>
       </FormSection>
     </div>

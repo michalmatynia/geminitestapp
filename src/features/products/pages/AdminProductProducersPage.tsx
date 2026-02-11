@@ -60,6 +60,8 @@ export function AdminProductProducersPage(): React.JSX.Element {
       toast(editing ? 'Producer updated.' : 'Producer created.', { variant: 'success' });
       setOpen(false);
     } catch (error) {
+      const { logClientError } = await import('@/shared/utils/observability/client-error-logger');
+      logClientError(error, { context: { source: 'AdminProductProducersPage', action: 'saveProducer', producerId: editing?.id } });
       toast(error instanceof Error ? error.message : 'Failed to save producer.', { variant: 'error' });
     }
   };
@@ -70,6 +72,8 @@ export function AdminProductProducersPage(): React.JSX.Element {
       await deleteMutation.mutateAsync(toDelete.id);
       toast('Producer deleted.', { variant: 'success' });
     } catch (error) {
+      const { logClientError } = await import('@/shared/utils/observability/client-error-logger');
+      logClientError(error, { context: { source: 'AdminProductProducersPage', action: 'deleteProducer', producerId: toDelete.id } });
       toast(error instanceof Error ? error.message : 'Failed to delete producer.', { variant: 'error' });
     } finally {
       setToDelete(null);

@@ -15,6 +15,7 @@
     "seed:admin": "tsx scripts/db/seed-admin.ts",
     "cleanup:db-providers": "tsx scripts/cleanup/cleanup-db-provider-settings.ts",
     "cleanup:cms-blocks": "tsx scripts/db/drop-cms-blocks.ts",
+    "cleanup:category-mapping-duplicates": "tsx scripts/cleanup/reconcile-category-mapping-duplicates.ts",
     "check:api-error-sources": "tsx scripts/debug/check-api-error-sources.ts",
     "auth:indexes": "tsx scripts/db/ensure-auth-indexes.ts",
     "debug": "tsx scripts/debug/debug-script.ts",

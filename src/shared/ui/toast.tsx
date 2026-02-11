@@ -10,8 +10,8 @@ import {
   useState,
 } from 'react';
 
-import { Button } from '@/shared/ui';
 import { classifyError, getSuggestedActions } from '@/features/observability/utils/error-classifier';
+import { Button } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type ToastVariant = 'success' | 'error' | 'info' | 'warning';

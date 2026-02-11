@@ -224,6 +224,15 @@ async function POST_handler(
     }
   }
 
+  if (failures.length > 0) {
+    const { logger } = await import('@/shared/utils/logger');
+    logger.warn(`[image-studio.assets.upload] ${failures.length} files failed to upload`, {
+      projectId,
+      failures: failures.slice(0, 5),
+      totalFailures: failures.length
+    });
+  }
+
   if (uploaded.length === 0) {
     const firstFailure = failures[0]?.error?.trim();
     throw badRequestError(

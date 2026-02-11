@@ -92,14 +92,13 @@ export function useProductOperations(
       setLastEditedId(editingProduct.id);
     }
     if (!info?.queued) {
-      setRefreshTrigger((prev) => prev + 1);
       toast('Product updated successfully.', { variant: 'success' });
     }
   };
 
   const handleEditSave = (savedProduct: ProductWithImages): void => {
     setLastEditedId(savedProduct.id);
-    setRefreshTrigger((prev) => prev + 1);
+    setEditingProduct(savedProduct);
   };
 
   return {

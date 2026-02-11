@@ -4,6 +4,18 @@ import { vi } from 'vitest';
 import { RunHistoryPanel } from '@/features/ai/ai-paths/components/run-history-panel';
 import { RunHistoryProvider } from '@/features/ai/ai-paths/context';
 
+const orchestratorMock = vi.hoisted(() => ({
+  runList: [] as unknown[],
+  runsQuery: {
+    isFetching: false,
+    refetch: vi.fn().mockResolvedValue(undefined),
+  },
+  handleOpenRunDetail: vi.fn().mockResolvedValue(undefined),
+  handleResumeRun: vi.fn().mockResolvedValue(undefined),
+  handleCancelRun: vi.fn().mockResolvedValue(undefined),
+  handleRequeueDeadLetter: vi.fn().mockResolvedValue(undefined),
+}));
+
 // Mock child components/utils
 vi.mock('@/features/ai/ai-paths/components/RunHistoryEntries', () => ({
   RunHistoryEntries: () => <div data-testid='history-entries' />,
@@ -11,27 +23,30 @@ vi.mock('@/features/ai/ai-paths/components/RunHistoryEntries', () => ({
 vi.mock('@/features/ai/ai-paths/components/run-history-utils', () => ({
   buildHistoryNodeOptions: () => [],
 }));
+vi.mock(
+  '@/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsOrchestratorContext',
+  () => ({
+    useAiPathsSettingsOrchestrator: () => orchestratorMock,
+  })
+);
 
 describe('RunHistoryPanel Component', () => {
-  const mockOnResumeRun = vi.fn();
-  const mockOnCancelRun = vi.fn();
-  
-  const defaultProps = {
-    runs: [],
-    isRefreshing: false,
-    onRefresh: vi.fn(),
-    onOpenRunDetail: vi.fn(),
-    onResumeRun: mockOnResumeRun,
-    onCancelRun: mockOnCancelRun,
-    onRequeueDeadLetter: vi.fn(),
-  };
-
-  const renderPanel = (props: Partial<typeof defaultProps> = {}) =>
+  const renderPanel = () =>
     render(
       <RunHistoryProvider>
-        <RunHistoryPanel {...defaultProps} {...props} />
+        <RunHistoryPanel />
       </RunHistoryProvider>
     );
+
+  beforeEach(() => {
+    orchestratorMock.runList = [];
+    orchestratorMock.runsQuery.isFetching = false;
+    orchestratorMock.runsQuery.refetch.mockClear();
+    orchestratorMock.handleOpenRunDetail.mockClear();
+    orchestratorMock.handleResumeRun.mockClear();
+    orchestratorMock.handleCancelRun.mockClear();
+    orchestratorMock.handleRequeueDeadLetter.mockClear();
+  });
 
   it('should render empty state', () => {
     renderPanel();
@@ -43,7 +58,8 @@ describe('RunHistoryPanel Component', () => {
       { id: 'run-1', status: 'completed', createdAt: new Date().toISOString() },
       { id: 'run-2', status: 'failed', createdAt: new Date().toISOString() },
     ];
-    renderPanel({ runs: runs as any });
+    orchestratorMock.runList = runs as unknown[];
+    renderPanel();
     
     expect(screen.getByText(/completed/i)).toBeInTheDocument();
     // Use getAllByText because "Failed" also appears in filter buttons
@@ -55,7 +71,8 @@ describe('RunHistoryPanel Component', () => {
       { id: 'run-completed', status: 'completed', createdAt: new Date().toISOString() },
       { id: 'run-running', status: 'running', createdAt: new Date().toISOString() },
     ];
-    renderPanel({ runs: runs as any });
+    orchestratorMock.runList = runs as unknown[];
+    renderPanel();
     
     const activeFilter = screen.getByText('Active');
     fireEvent.click(activeFilter);
@@ -69,7 +86,8 @@ describe('RunHistoryPanel Component', () => {
       { id: 'run-failed', status: 'failed', createdAt: new Date().toISOString() },
       { id: 'run-running', status: 'running', createdAt: new Date().toISOString() },
     ];
-    renderPanel({ runs: runs as any });
+    orchestratorMock.runList = runs as unknown[];
+    renderPanel();
     
     expect(screen.getByText('Resume')).toBeInTheDocument();
     // Replay button is always shown for runs, but let's check count
@@ -79,17 +97,19 @@ describe('RunHistoryPanel Component', () => {
 
   it('should call onResumeRun when Resume is clicked', () => {
     const runs = [{ id: 'run-failed', status: 'failed', createdAt: new Date().toISOString() }];
-    renderPanel({ runs: runs as any });
+    orchestratorMock.runList = runs as unknown[];
+    renderPanel();
     
     fireEvent.click(screen.getByText('Resume'));
-    expect(mockOnResumeRun).toHaveBeenCalledWith('run-failed', 'resume');
+    expect(orchestratorMock.handleResumeRun).toHaveBeenCalledWith('run-failed', 'resume');
   });
 
   it('should call onCancelRun when Cancel is clicked for active runs', () => {
     const runs = [{ id: 'run-active', status: 'running', createdAt: new Date().toISOString() }];
-    renderPanel({ runs: runs as any });
+    orchestratorMock.runList = runs as unknown[];
+    renderPanel();
     
     fireEvent.click(screen.getByText('Cancel'));
-    expect(mockOnCancelRun).toHaveBeenCalledWith('run-active');
+    expect(orchestratorMock.handleCancelRun).toHaveBeenCalledWith('run-active');
   });
 });

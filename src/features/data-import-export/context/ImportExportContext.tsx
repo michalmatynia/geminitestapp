@@ -209,7 +209,8 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     let timer: NodeJS.Timeout | null = null;
     if (integrationsWithConnections) {
       const baseIntegration = integrationsWithConnections.find(
-        (i: IntegrationWithConnections): boolean => i.slug === 'baselinker',
+        (i: IntegrationWithConnections): boolean =>
+          ['baselinker', 'base-com', 'base'].includes((i.slug ?? '').trim().toLowerCase()),
       );
       const connections = baseIntegration?.connections ?? [];
       timer = setTimeout(() => {

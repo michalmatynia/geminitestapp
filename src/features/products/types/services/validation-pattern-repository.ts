@@ -3,6 +3,7 @@ import type {
   ProductValidationDenyBehavior,
   ProductValidationInstanceDenyBehaviorMap,
   ProductValidationInstanceScope,
+  ProductValidationLaunchScopeBehavior,
   ProductValidationLaunchOperator,
   ProductValidationLaunchSourceMode,
   ProductValidationPostAcceptBehavior,
@@ -23,6 +24,7 @@ export type CreateProductValidationPatternInput = {
   enabled?: boolean;
   replacementEnabled?: boolean;
   replacementAutoApply?: boolean;
+  skipNoopReplacementProposal?: boolean;
   replacementValue?: string | null;
   replacementFields?: string[];
   replacementAppliesToScopes?: ProductValidationInstanceScope[];
@@ -41,6 +43,7 @@ export type CreateProductValidationPatternInput = {
   passOutputToNext?: boolean;
   launchEnabled?: boolean;
   launchAppliesToScopes?: ProductValidationInstanceScope[];
+  launchScopeBehavior?: ProductValidationLaunchScopeBehavior;
   launchSourceMode?: ProductValidationLaunchSourceMode;
   launchSourceField?: string | null;
   launchOperator?: ProductValidationLaunchOperator;
@@ -60,6 +63,7 @@ export type UpdateProductValidationPatternInput = {
   enabled?: boolean;
   replacementEnabled?: boolean;
   replacementAutoApply?: boolean;
+  skipNoopReplacementProposal?: boolean;
   replacementValue?: string | null;
   replacementFields?: string[];
   replacementAppliesToScopes?: ProductValidationInstanceScope[];
@@ -78,6 +82,7 @@ export type UpdateProductValidationPatternInput = {
   passOutputToNext?: boolean;
   launchEnabled?: boolean;
   launchAppliesToScopes?: ProductValidationInstanceScope[];
+  launchScopeBehavior?: ProductValidationLaunchScopeBehavior;
   launchSourceMode?: ProductValidationLaunchSourceMode;
   launchSourceField?: string | null;
   launchOperator?: ProductValidationLaunchOperator;

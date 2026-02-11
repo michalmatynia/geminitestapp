@@ -8,23 +8,41 @@ import { AI_PATHS_NODE_DOCS } from '@/features/ai/ai-paths/lib/core/docs/node-do
 import { Button, SearchInput, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SectionPanel } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
+import { useGraphState } from '../context';
+import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
+
 type PathsTabPanelProps = {
-  paths: PathMeta[];
-  pathFlagsById: Record<string, { isLocked?: boolean; isActive?: boolean }>;
-  onCreatePath: () => void;
-  onSaveList: () => void;
-  onEditPath: (id: string) => void;
-  onDeletePath: (id: string) => void;
+  onPathOpen?: ((id: string) => void) | undefined;
 };
 
 export function PathsTabPanel({
-  paths,
-  pathFlagsById,
-  onCreatePath,
-  onSaveList,
-  onEditPath,
-  onDeletePath,
+  onPathOpen,
 }: PathsTabPanelProps): React.JSX.Element {
+  const orchestrator = useAiPathsSettingsOrchestrator();
+  const { paths: graphPaths, pathConfigs } = useGraphState();
+  const resolvedPathFlagsById = useMemo((): Record<string, { isLocked?: boolean; isActive?: boolean }> => {
+    const next: Record<string, { isLocked?: boolean; isActive?: boolean }> = {};
+    graphPaths.forEach((meta: PathMeta) => {
+      const config = pathConfigs[meta.id];
+      next[meta.id] = {
+        isLocked: config?.isLocked ?? false,
+        isActive: config?.isActive ?? true,
+      };
+    });
+    return next;
+  }, [graphPaths, pathConfigs]);
+  const handleCreatePath = orchestrator.handleCreatePath;
+  const handleSaveList = (): void => {
+    void orchestrator.savePathIndex(graphPaths).catch(() => {});
+  };
+  const handleOpenPath = (pathId: string): void => {
+    orchestrator.handleSwitchPath(pathId);
+    onPathOpen?.(pathId);
+  };
+  const handleDeletePath = (pathId: string): void => {
+    void orchestrator.handleDeletePath(pathId).catch(() => {});
+  };
+
   return (
     <div className='space-y-4'>
       <div className='flex flex-wrap items-center justify-between gap-3'>
@@ -35,14 +53,14 @@ export function PathsTabPanel({
           <Button
             className='rounded-md border text-sm text-white hover:bg-muted/60'
             type='button'
-            onClick={onCreatePath}
+            onClick={handleCreatePath}
           >
             New Path
           </Button>
           <Button
             className='rounded-md border text-sm text-white hover:bg-muted/60'
             type='button'
-            onClick={onSaveList}
+            onClick={handleSaveList}
           >
             Save List
           </Button>
@@ -59,8 +77,8 @@ export function PathsTabPanel({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paths.map((path: PathMeta): React.JSX.Element => {
-              const flags = pathFlagsById[path.id] ?? {};
+            {graphPaths.map((path: PathMeta): React.JSX.Element => {
+              const flags = resolvedPathFlagsById[path.id] ?? {};
               const isLocked = Boolean(flags.isLocked);
               const isActive = flags.isActive !== false;
               return (
@@ -75,7 +93,7 @@ export function PathsTabPanel({
                         'inline-flex items-center gap-2 cursor-pointer text-left text-sm transition',
                         isActive ? 'text-white hover:text-gray-200' : 'text-gray-400 hover:text-gray-300'
                       )}
-                      onClick={(): void => onEditPath(path.id)}
+                      onClick={(): void => handleOpenPath(path.id)}
                     >
                       {isLocked ? <Lock className='size-3 text-amber-300/90' /> : null}
                       {path.name?.trim() || `Path ${path.id.slice(0, 6)}`}
@@ -89,14 +107,14 @@ export function PathsTabPanel({
                       <Button
                         className='rounded-md border text-xs text-white hover:bg-muted/60'
                         type='button'
-                        onClick={(): void => onEditPath(path.id)}
+                        onClick={(): void => handleOpenPath(path.id)}
                       >
                       Edit
                       </Button>
                       <Button
                         className='rounded-md border border-border text-xs text-rose-200 hover:bg-rose-500/10'
                         type='button'
-                        onClick={(): void => onDeletePath(path.id)}
+                        onClick={(): void => handleDeletePath(path.id)}
                       >
                       Delete
                       </Button>
@@ -105,7 +123,7 @@ export function PathsTabPanel({
                 </TableRow>
               );
             })}
-            {paths.length === 0 && (
+            {graphPaths.length === 0 && (
               <TableRow>
                 <TableCell
                   colSpan={3}
@@ -122,26 +140,17 @@ export function PathsTabPanel({
   );
 }
 
-type DocsTabPanelProps = {
-  docsOverviewSnippet: string;
-  docsWiringSnippet: string;
-  docsDescriptionSnippet: string;
-  docsJobsSnippet: string;
-  onCopyDocsWiring: () => void;
-  onCopyDocsDescription: () => void;
-  onCopyDocsJobs: () => void;
-};
+export function DocsTabPanel(): React.JSX.Element {
+  const orchestrator = useAiPathsSettingsOrchestrator();
+  const resolvedDocsOverviewSnippet = orchestrator.docsOverviewSnippet;
+  const resolvedDocsWiringSnippet = orchestrator.docsWiringSnippet;
+  const resolvedDocsDescriptionSnippet = orchestrator.docsDescriptionSnippet;
+  const resolvedDocsJobsSnippet = orchestrator.docsJobsSnippet;
+  const handleCopyDocsWiring = orchestrator.handleCopyDocsWiring;
+  const handleCopyDocsDescription = orchestrator.handleCopyDocsDescription;
+  const handleCopyDocsJobs = orchestrator.handleCopyDocsJobs;
 
-export function DocsTabPanel({
-  docsOverviewSnippet,
-  docsWiringSnippet,
-  docsDescriptionSnippet,
-  docsJobsSnippet,
-  onCopyDocsWiring,
-  onCopyDocsDescription,
-  onCopyDocsJobs,
-}: DocsTabPanelProps): React.JSX.Element {
-  const overviewLines = docsOverviewSnippet
+  const overviewLines = resolvedDocsOverviewSnippet
     .split('\n')
     .map((line: string) => line.trim())
     .filter((line: string) => line.length > 0);
@@ -223,7 +232,7 @@ export function DocsTabPanel({
     'Use Light/Medium/Full presets on Context Filter nodes to quickly scope the entity payload.',
     'Target Fields lets you toggle exact fields to include.',
   ]);
-  const showDescriptionFlow = shouldShow(['AI Description Flow', 'AI Description Wiring', docsDescriptionSnippet]);
+  const showDescriptionFlow = shouldShow(['AI Description Flow', 'AI Description Wiring', resolvedDocsDescriptionSnippet]);
   const showJobQueue = shouldShow([
     'AI Job Queue (AI Paths)',
     'Model node enqueues a job and can either wait for completion or emit only a jobId.',
@@ -238,8 +247,8 @@ export function DocsTabPanel({
     'Apply the preset to drop a Bundle + Template pair onto the canvas.',
     'Select a Template or Bundle node connected together and click “From Selection”.',
   ]);
-  const showQuickWiring = shouldShow(['Quick Wiring', docsWiringSnippet]);
-  const showJobsWiring = shouldShow(['AI Job Wiring', docsJobsSnippet]);
+  const showQuickWiring = shouldShow(['Quick Wiring', resolvedDocsWiringSnippet]);
+  const showJobsWiring = shouldShow(['AI Job Wiring', resolvedDocsJobsSnippet]);
   const showNodeDocs =
     !searchQuery ||
     filteredNodeDocs.length > 0 ||
@@ -497,13 +506,13 @@ export function DocsTabPanel({
             <Button
               type='button'
               className='rounded-md border text-xs text-white hover:bg-muted/60'
-              onClick={onCopyDocsWiring}
+              onClick={handleCopyDocsWiring}
             >
               Copy Wiring
             </Button>
           </div>
           <pre className='mt-4 whitespace-pre-wrap rounded-md border border-border bg-card/60 p-3 text-[11px] text-gray-200'>
-            {docsWiringSnippet}
+            {resolvedDocsWiringSnippet}
           </pre>
         </SectionPanel>
       ) : null}
@@ -517,13 +526,13 @@ export function DocsTabPanel({
             <Button
               type='button'
               className='rounded-md border text-xs text-white hover:bg-muted/60'
-              onClick={onCopyDocsDescription}
+              onClick={handleCopyDocsDescription}
             >
               Copy AI Description Wiring
             </Button>
           </div>
           <pre className='mt-4 whitespace-pre-wrap rounded-md border border-border bg-card/60 p-3 text-[11px] text-gray-200'>
-            {docsDescriptionSnippet}
+            {resolvedDocsDescriptionSnippet}
           </pre>
         </SectionPanel>
       ) : null}
@@ -535,13 +544,13 @@ export function DocsTabPanel({
             <Button
               type='button'
               className='rounded-md border text-xs text-white hover:bg-muted/60'
-              onClick={onCopyDocsJobs}
+              onClick={handleCopyDocsJobs}
             >
               Copy Job Wiring
             </Button>
           </div>
           <pre className='mt-4 whitespace-pre-wrap rounded-md border border-border bg-card/60 p-3 text-[11px] text-gray-200'>
-            {docsJobsSnippet}
+            {resolvedDocsJobsSnippet}
           </pre>
         </SectionPanel>
       ) : null}

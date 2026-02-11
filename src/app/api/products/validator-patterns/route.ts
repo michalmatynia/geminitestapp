@@ -7,6 +7,8 @@ import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/features/products/const
 import { getValidationPatternRepository } from '@/features/products/server';
 import {
   normalizeProductValidationPatternDenyBehaviorOverride,
+  normalizeProductValidationLaunchScopeBehavior,
+  normalizeProductValidationSkipNoopReplacementProposal,
   normalizeProductValidationPatternLaunchScopes,
   normalizeProductValidationPatternReplacementScopes,
   normalizeProductValidationPatternScopes,
@@ -20,7 +22,18 @@ const replacementFieldSchema = z.enum(PRODUCT_VALIDATION_REPLACEMENT_FIELDS);
 
 const createPatternSchema = z.object({
   label: z.string().trim().min(1, 'Label is required'),
-  target: z.enum(['name', 'description', 'sku', 'price', 'stock']),
+  target: z.enum([
+    'name',
+    'description',
+    'sku',
+    'price',
+    'stock',
+    'category',
+    'size_length',
+    'size_width',
+    'length',
+    'weight',
+  ]),
   locale: z.string().trim().nullable().optional(),
   regex: z.string().min(1, 'Regex is required'),
   flags: z.string().trim().nullable().optional(),
@@ -29,6 +42,7 @@ const createPatternSchema = z.object({
   enabled: z.boolean().optional(),
   replacementEnabled: z.boolean().optional(),
   replacementAutoApply: z.boolean().optional(),
+  skipNoopReplacementProposal: z.boolean().optional(),
   replacementValue: z.string().trim().nullable().optional(),
   replacementFields: z.array(replacementFieldSchema).optional(),
   replacementAppliesToScopes: z
@@ -51,6 +65,7 @@ const createPatternSchema = z.object({
   launchAppliesToScopes: z
     .array(z.enum(['draft_template', 'product_create', 'product_edit']))
     .optional(),
+  launchScopeBehavior: z.enum(['gate', 'condition_only']).optional(),
   launchSourceMode: z.enum(['current_field', 'form_field', 'latest_product_field']).optional(),
   launchSourceField: z.string().trim().nullable().optional(),
   launchOperator: z
@@ -181,6 +196,9 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
   const message = body.message.trim();
   const replacementEnabled = body.replacementEnabled ?? false;
   const replacementAutoApply = body.replacementAutoApply ?? false;
+  const skipNoopReplacementProposal = normalizeProductValidationSkipNoopReplacementProposal(
+    body.skipNoopReplacementProposal
+  );
   const replacementValue = body.replacementValue?.trim() || null;
   const replacementFields = normalizeReplacementFields(body.replacementFields);
   const replacementAppliesToScopes = normalizeProductValidationPatternReplacementScopes(
@@ -204,6 +222,9 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
     body.appliesToScopes
   );
   const launchSourceMode = body.launchSourceMode ?? 'current_field';
+  const launchScopeBehavior = normalizeProductValidationLaunchScopeBehavior(
+    body.launchScopeBehavior
+  );
   const launchSourceField = body.launchSourceField?.trim() || null;
   const launchOperator = body.launchOperator ?? 'equals';
   const launchValue = typeof body.launchValue === 'string' ? body.launchValue : null;
@@ -242,6 +263,7 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
     enabled: body.enabled ?? true,
     replacementEnabled,
     replacementAutoApply,
+    skipNoopReplacementProposal,
     replacementValue,
     replacementFields,
     replacementAppliesToScopes,
@@ -260,6 +282,7 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
     passOutputToNext: body.passOutputToNext ?? true,
     launchEnabled,
     launchAppliesToScopes,
+    launchScopeBehavior,
     launchSourceMode,
     launchSourceField,
     launchOperator,

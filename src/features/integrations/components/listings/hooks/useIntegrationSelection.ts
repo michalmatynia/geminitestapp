@@ -134,7 +134,7 @@ export function useIntegrationSelection(
   ]);
 
   const selectedIntegration = (integrations || []).find((i: IntegrationWithConnections) => i.id === selectedIntegrationId);
-  const isBaseComIntegration = ['baselinker', 'base-com'].includes(
+  const isBaseComIntegration = ['baselinker', 'base-com', 'base'].includes(
     selectedIntegration?.slug ?? ''
   );
 

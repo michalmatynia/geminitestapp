@@ -1,7 +1,6 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
 import { useCallback, useRef, useState, useEffect } from 'react';
 
 
@@ -140,7 +139,6 @@ export function useProductFormSubmit({
   onEditSave,
 }: UseProductFormSubmitProps): UseProductFormSubmitResult {
   const { toast } = useToast();
-  const router = useRouter();
   const queryClient = useQueryClient();
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
@@ -225,7 +223,6 @@ export function useProductFormSubmit({
         }
         onEditSave?.(savedProduct as ProductWithImages);
         onSuccess?.();
-        router.refresh();
       }
     } catch (error: unknown) {
       logClientError(error, {
@@ -241,7 +238,7 @@ export function useProductFormSubmit({
         setUploadError('An unknown error occurred');
       }
     }
-  }, [product, imageSlots, imageLinks, imageBase64s, selectedCatalogIds, selectedCategoryId, selectedTagIds, selectedProducerIds, selectedNoteIds, parameterValues, createMutation, updateMutation, onSuccess, queryClient, refreshImages, onEditSave, toast, router]);
+  }, [product, imageSlots, imageLinks, imageBase64s, selectedCatalogIds, selectedCategoryId, selectedTagIds, selectedProducerIds, selectedNoteIds, parameterValues, createMutation, updateMutation, onSuccess, queryClient, refreshImages, onEditSave, toast]);
 
   const submitHandler = useCallback(
     (e?: BaseSyntheticEvent): Promise<void> => methods.handleSubmit(onSubmit)(e),

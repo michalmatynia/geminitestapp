@@ -7,6 +7,8 @@ import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/features/products/const
 import { getValidationPatternRepository } from '@/features/products/server';
 import {
   normalizeProductValidationPatternDenyBehaviorOverride,
+  normalizeProductValidationLaunchScopeBehavior,
+  normalizeProductValidationSkipNoopReplacementProposal,
   normalizeProductValidationPatternLaunchScopes,
   normalizeProductValidationPatternReplacementScopes,
   normalizeProductValidationPatternScopes,
@@ -21,7 +23,20 @@ const replacementFieldSchema = z.enum(PRODUCT_VALIDATION_REPLACEMENT_FIELDS);
 const updatePatternSchema = z
   .object({
     label: z.string().trim().min(1).optional(),
-    target: z.enum(['name', 'description', 'sku', 'price', 'stock']).optional(),
+    target: z
+      .enum([
+        'name',
+        'description',
+        'sku',
+        'price',
+        'stock',
+        'category',
+        'size_length',
+        'size_width',
+        'length',
+        'weight',
+      ])
+      .optional(),
     locale: z.string().trim().nullable().optional(),
     regex: z.string().min(1).optional(),
     flags: z.string().trim().nullable().optional(),
@@ -30,6 +45,7 @@ const updatePatternSchema = z
     enabled: z.boolean().optional(),
     replacementEnabled: z.boolean().optional(),
     replacementAutoApply: z.boolean().optional(),
+    skipNoopReplacementProposal: z.boolean().optional(),
     replacementValue: z.string().trim().nullable().optional(),
     replacementFields: z.array(replacementFieldSchema).optional(),
     replacementAppliesToScopes: z
@@ -52,6 +68,7 @@ const updatePatternSchema = z
     launchAppliesToScopes: z
       .array(z.enum(['draft_template', 'product_create', 'product_edit']))
       .optional(),
+    launchScopeBehavior: z.enum(['gate', 'condition_only']).optional(),
     launchSourceMode: z.enum(['current_field', 'form_field', 'latest_product_field']).optional(),
     launchSourceField: z.string().trim().nullable().optional(),
     launchOperator: z
@@ -196,6 +213,10 @@ async function PUT_handler(
     body.launchEnabled !== undefined ? body.launchEnabled : current.launchEnabled;
   const nextLaunchSourceMode =
     body.launchSourceMode !== undefined ? body.launchSourceMode : current.launchSourceMode;
+  const nextLaunchScopeBehavior =
+    body.launchScopeBehavior !== undefined
+      ? normalizeProductValidationLaunchScopeBehavior(body.launchScopeBehavior)
+      : normalizeProductValidationLaunchScopeBehavior(current.launchScopeBehavior);
   const nextLaunchSourceField =
     body.launchSourceField !== undefined ? body.launchSourceField?.trim() || null : current.launchSourceField;
   const nextLaunchAppliesToScopes =
@@ -266,6 +287,11 @@ async function PUT_handler(
     ...(body.replacementAutoApply !== undefined && {
       replacementAutoApply: body.replacementAutoApply,
     }),
+    ...(body.skipNoopReplacementProposal !== undefined && {
+      skipNoopReplacementProposal: normalizeProductValidationSkipNoopReplacementProposal(
+        body.skipNoopReplacementProposal
+      ),
+    }),
     ...(body.replacementValue !== undefined && { replacementValue: body.replacementValue?.trim() || null }),
     ...(body.replacementFields !== undefined && { replacementFields: nextReplacementFields }),
     ...(body.replacementAppliesToScopes !== undefined && {
@@ -295,6 +321,9 @@ async function PUT_handler(
     ...(body.launchEnabled !== undefined && { launchEnabled: body.launchEnabled }),
     ...(body.launchAppliesToScopes !== undefined && {
       launchAppliesToScopes: nextLaunchAppliesToScopes,
+    }),
+    ...(body.launchScopeBehavior !== undefined && {
+      launchScopeBehavior: nextLaunchScopeBehavior,
     }),
     ...(body.launchSourceMode !== undefined && { launchSourceMode: body.launchSourceMode }),
     ...(body.launchSourceField !== undefined && { launchSourceField: body.launchSourceField?.trim() || null }),

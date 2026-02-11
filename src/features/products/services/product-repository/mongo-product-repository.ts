@@ -119,6 +119,50 @@ const normalizeImageFileIds = (imageFileIds: string[]): string[] => {
   return Array.from(unique);
 };
 
+const toTrimmedString = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const resolveCategoryId = (doc: ProductDocument): string | null => {
+  const direct = toTrimmedString(doc.categoryId);
+  if (direct) return direct;
+  if (!Array.isArray(doc.categories)) return null;
+  for (const entry of doc.categories as unknown[]) {
+    if (!entry || typeof entry !== 'object') continue;
+    const record = entry as Record<string, unknown>;
+    const categoryId =
+      toTrimmedString(record['categoryId']) ??
+      toTrimmedString(record['category_id']) ??
+      toTrimmedString(record['id']) ??
+      toTrimmedString(record['value']);
+    if (categoryId) return categoryId;
+  }
+  return null;
+};
+
+const normalizeProducerRefs = (
+  producers: unknown
+): Array<{ producerId: string }> => {
+  if (!Array.isArray(producers)) return [];
+  const normalized: Array<{ producerId: string }> = [];
+  const seen = new Set<string>();
+  for (const entry of producers) {
+    if (!entry || typeof entry !== 'object') continue;
+    const record = entry as Record<string, unknown>;
+    const producerId =
+      toTrimmedString(record['producerId']) ??
+      toTrimmedString(record['producer_id']) ??
+      toTrimmedString(record['id']) ??
+      toTrimmedString(record['value']);
+    if (!producerId || seen.has(producerId)) continue;
+    seen.add(producerId);
+    normalized.push({ producerId });
+  }
+  return normalized;
+};
+
 const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImages => ({
   id: doc.id ?? doc._id,
   sku: doc.sku ?? null,
@@ -152,14 +196,9 @@ const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImages => (
   updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : (doc.updatedAt as unknown as string),
   images: Array.isArray(doc.images) ? doc.images : [],
   catalogs: Array.isArray(doc.catalogs) ? doc.catalogs : [],
-  categoryId:
-    typeof doc.categoryId === 'string'
-      ? doc.categoryId
-      : Array.isArray(doc.categories)
-        ? doc.categories[0]?.categoryId ?? null
-        : null,
+  categoryId: resolveCategoryId(doc),
   tags: Array.isArray(doc.tags) ? doc.tags : [],
-  producers: Array.isArray(doc.producers) ? doc.producers : [],
+  producers: normalizeProducerRefs(doc.producers),
 });
 
 const toProductBase = (doc: ProductDocument): ProductRecord => ({
@@ -193,7 +232,7 @@ const toProductBase = (doc: ProductDocument): ProductRecord => ({
     : [],
   createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : (doc.createdAt as unknown as string),
   updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : (doc.updatedAt as unknown as string),
-  categoryId: typeof doc.categoryId === 'string' ? doc.categoryId : null,
+  categoryId: resolveCategoryId(doc),
 });
 
 const buildSearchFilter = (filters: ProductFilters): Filter<ProductDocument> => {

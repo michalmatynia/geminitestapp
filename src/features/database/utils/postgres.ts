@@ -4,6 +4,8 @@ import { execFile } from 'child_process';
 import { promises as fs } from 'fs';
 import path from 'path';
 
+import { badRequestError, configurationError } from '@/shared/errors/app-error';
+
 export const backupsDir = path.join(process.cwd(), 'prisma', 'backups');
 
 export const ensureBackupsDir = async (): Promise<void> => {
@@ -13,7 +15,7 @@ export const ensureBackupsDir = async (): Promise<void> => {
 export const getDatabaseUrl = (): string => {
   const databaseUrl = process.env['DATABASE_URL'];
   if (!databaseUrl) {
-    throw new Error('DATABASE_URL is not set.');
+    throw configurationError('DATABASE_URL is not set.');
   }
   return databaseUrl;
 };
@@ -66,9 +68,9 @@ export const execFileAsync = (
 export const assertValidBackupName = (backupName: string): void => {
   const basename = path.basename(backupName);
   if (basename !== backupName) {
-    throw new Error('Invalid backup name.');
+    throw badRequestError('Invalid backup name.');
   }
   if (path.extname(backupName) !== '.dump') {
-    throw new Error('Invalid backup file type.');
+    throw badRequestError('Invalid backup file type.');
   }
 };

@@ -19,8 +19,6 @@ type SettingRecord = { key: string; value: string };
 type SettingDocument = { _id?: string; key?: string; value?: string };
 
 const SETTINGS_COLLECTION = 'settings';
-const CACHE_CONTROL = 'private, max-age=120, stale-while-revalidate=600';
-const LITE_CACHE_TTL_MS = 60_000;
 const disableSettingsRateLimit = process.env['NODE_ENV'] !== 'production';
 
 const LITE_SETTINGS_KEYS = [

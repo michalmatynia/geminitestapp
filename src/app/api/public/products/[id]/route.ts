@@ -1,5 +1,5 @@
 export const runtime = 'nodejs';
-export const revalidate = 3600;
+export const revalidate = 60;
 
 import { NextRequest, NextResponse } from 'next/server';
 

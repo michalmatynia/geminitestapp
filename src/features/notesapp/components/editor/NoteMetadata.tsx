@@ -5,7 +5,7 @@ import React from 'react';
 
 import { useNoteFormContext } from '@/features/notesapp/context/NoteFormContext';
 import type { TagRecord, NoteWithRelations } from '@/shared/types/domain/notes';
-import { Button, Input, Label, Checkbox, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+import { Button, Input, Label, Checkbox, UnifiedSelect } from '@/shared/ui';
 
 
 interface NoteMetadataProps {
@@ -83,23 +83,19 @@ export function NoteMetadata({
 
       <div>
         <Label className='mb-2 block text-sm font-medium text-white'>Folder</Label>
-        <Select
+        <UnifiedSelect
           value={selectedFolderId || '__none__'}
           onValueChange={(value: string): void => setSelectedFolderId(value === '__none__' ? '' : value)}
-        >
-          <SelectTrigger className='w-full rounded-lg border bg-gray-800 px-4 py-2 text-white'>
-            <SelectValue placeholder='Select folder' />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value='__none__'>No Folder</SelectItem>
-            {flatFolders.map((folder: { id: string; name: string; level: number }) => (
-              <SelectItem key={folder.id} value={folder.id}>
-                {'  '.repeat(folder.level)}
-                {folder.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          options={[
+            { value: '__none__', label: 'No Folder' },
+            ...flatFolders.map((folder: { id: string; name: string; level: number }) => ({
+              value: folder.id,
+              label: `${'  '.repeat(folder.level)}${folder.name}`,
+            })),
+          ]}
+          placeholder='Select folder'
+          className='w-full'
+        />
       </div>
 
       <div>

@@ -1,4 +1,5 @@
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -67,7 +68,11 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 
   try {
     const backups = await getBackups(type);
-    return NextResponse.json(backups);
+    return NextResponse.json(backups, {
+      headers: {
+        'Cache-Control': 'no-store',
+      },
+    });
   } catch (error) {
     const { ErrorSystem } = await import('@/features/observability/server');
     void ErrorSystem.captureException(error, { service: 'api/databases/backups', type });

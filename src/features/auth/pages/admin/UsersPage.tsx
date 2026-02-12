@@ -23,12 +23,16 @@ import { DEFAULT_AUTH_SECURITY_POLICY } from '@/features/auth/utils/auth-securit
 import { logClientError } from '@/features/observability';
 import { ApiError } from '@/shared/lib/api-client';
 import { invalidateUsers } from '@/shared/lib/query-invalidation';
-import { Badge, Button, Checkbox, ConfirmDialog, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Input, Label, ListPanel, SectionHeader, SectionPanel, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast } from '@/shared/ui';
+import { Badge, Button, Checkbox, ConfirmDialog, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Input, Label, ListPanel, SectionHeader, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, UnifiedSelect, useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 type CreateUserForm = typeof EMPTY_CREATE;
 
 const EMPTY_CREATE = { name: '', email: '', password: '', roleId: 'none', verified: false };
+
+const roleOptions = [
+  { value: 'none', label: 'Unassigned' },
+];
 
 const getSessionUserId = (sessionValue: unknown): string | null => {
   if (typeof sessionValue !== 'object' || sessionValue === null) return null;
@@ -469,22 +473,15 @@ export default function AuthUsersPage(): React.JSX.Element {
                         const isValidRole = currentRoleId && roles.some((r: AuthRole) => r.id === currentRoleId);
                         const selectValue = isValidRole ? currentRoleId : 'none';
                         return (
-                          <Select
+                          <UnifiedSelect
+                            options={roleOptions.concat(
+                              roles.map((role: AuthRole) => ({ value: role.id, label: role.name }))
+                            )}
                             value={selectValue}
                             onValueChange={(value: string) => handleRoleChange(user.id, value)}
-                          >
-                            <SelectTrigger className='h-8 bg-gray-900 border text-white'>
-                              <SelectValue placeholder='Select role' />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value='none'>Unassigned</SelectItem>
-                              {roles.map((role: AuthRole) => (
-                                <SelectItem key={role.id} value={role.id}>
-                                  {role.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                            placeholder='Select role'
+                            className='h-8'
+                          />
                         );
                       })()}
                     </TableCell>
@@ -693,24 +690,16 @@ export default function AuthUsersPage(): React.JSX.Element {
               <Label htmlFor='create-role' className='text-xs text-gray-300'>
                 Role
               </Label>
-              <Select
+              <UnifiedSelect
+                options={roleOptions.concat(
+                  roles.map((role: AuthRole) => ({ value: role.id, label: role.name }))
+                )}
                 value={createForm.roleId}
                 onValueChange={(value: string) =>
                   setCreateForm((prev: CreateUserForm) => ({ ...prev, roleId: value }))
                 }
-              >
-                <SelectTrigger className='bg-gray-900 border text-white'>
-                  <SelectValue placeholder='Select role' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='none'>Unassigned</SelectItem>
-                  {roles.map((role: AuthRole) => (
-                    <SelectItem key={role.id} value={role.id}>
-                      {role.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                placeholder='Select role'
+              />
             </div>
             <div className='flex items-center gap-2'>
               <Checkbox

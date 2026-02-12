@@ -1,4 +1,5 @@
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -53,7 +54,11 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
   // Filter out products with no listings
   const jobsWithListings = jobs.filter((job) => job.listings.length > 0);
 
-  return NextResponse.json(jobsWithListings);
+  return NextResponse.json(jobsWithListings, {
+    headers: {
+      'Cache-Control': 'no-store',
+    },
+  });
 }
 
 export const GET = apiHandler(

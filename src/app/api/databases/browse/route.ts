@@ -1,4 +1,5 @@
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 import { ObjectId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
@@ -167,10 +168,18 @@ async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext): Promi
 
   if (provider === 'mongodb') {
     const result = await browseMongoCollection(params);
-    return NextResponse.json(result);
+    return NextResponse.json(result, {
+      headers: {
+        'Cache-Control': 'no-store',
+      },
+    });
   } else {
     const result = await browsePrismaCollection(params);
-    return NextResponse.json(result);
+    return NextResponse.json(result, {
+      headers: {
+        'Cache-Control': 'no-store',
+      },
+    });
   }
 }
 

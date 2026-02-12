@@ -22,7 +22,7 @@ import type { CountryCode } from '@prisma/client';
 import type { Prisma } from '@prisma/client';
 
 export const runtime = 'nodejs';
-export const revalidate = 86400; 
+export const revalidate = 3600; 
 
 const countrySchema = z.object({
   code: z.enum(['PL', 'DE', 'GB', 'US', 'SE']),

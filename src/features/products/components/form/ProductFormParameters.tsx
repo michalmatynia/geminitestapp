@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
 import type { ProductParameter, ProductParameterValue } from '@/features/products/types';
-import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, FormSection } from '@/shared/ui';
+import { Button, Input, FormSection, UnifiedSelect } from '@/shared/ui';
 
 
 const getParameterLabel = (
@@ -88,21 +88,16 @@ export default function ProductFormParameters(): React.JSX.Element {
                   className='flex flex-col gap-3 rounded-md border border-border bg-card/40 p-3 md:flex-row md:items-center'
                 >
                   <div className='w-full md:w-64'>
-                    <Select
+                    <UnifiedSelect
                       value={entry.parameterId}
                       onValueChange={(value: string) => updateParameterId(index, value)}
-                    >
-                      <SelectTrigger className='h-9 bg-gray-900 border-border/50'>
-                        <SelectValue placeholder='Select parameter' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableOptions.map((param: ProductParameter) => (
-                          <SelectItem key={param.id} value={param.id}>
-                            {getParameterLabel(param, preferredLocale)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      options={availableOptions.map((param: ProductParameter) => ({
+                        value: param.id,
+                        label: getParameterLabel(param, preferredLocale),
+                      }))}
+                      placeholder='Select parameter'
+                      triggerClassName='h-9 bg-gray-900 border-border/50'
+                    />
                   </div>
                   <div className='flex-1'>
                     <Input

@@ -1,5 +1,5 @@
 export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 import { readFileSync } from 'node:fs';
 import path from 'node:path';

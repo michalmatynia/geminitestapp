@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 import { getActivityRepository } from '@/features/observability/server';
 import type { ActivityFilters } from '@/features/observability/types/services/activity-repository';
 import { apiHandler } from '@/shared/lib/api/api-handler';
@@ -35,6 +38,10 @@ async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<R
     total,
     page: query.page,
     pageSize: query.pageSize,
+  }, {
+    headers: {
+      'Cache-Control': 'no-store',
+    },
   });
 }
 

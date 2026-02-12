@@ -15,6 +15,8 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
+export const revalidate = 600;
+
 const catalogSchema = z.object({
   name: z.string().trim().min(1),
   description: z.string().trim().optional(),

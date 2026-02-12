@@ -9,7 +9,7 @@ import { ProducerMultiSelectField } from '@/features/products/components/form/Pr
 import { ProductMetadataFieldProvider } from '@/features/products/components/form/ProductMetadataFieldContext';
 import { TagMultiSelectField } from '@/features/products/components/form/TagMultiSelectField';
 import type { ProductParameter, ProductParameterValue } from '@/features/products/types';
-import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea } from '@/shared/ui';
+import { Button, Input, Label, Textarea, UnifiedSelect } from '@/shared/ui';
 
 import { useDraftCreatorFormContext } from './DraftCreatorFormContext';
 
@@ -149,20 +149,17 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
         <div className='grid grid-cols-1 gap-3 md:grid-cols-[12rem_minmax(0,1fr)]'>
           <div className='space-y-2'>
             <Label htmlFor='iconColorMode'>Icon Color</Label>
-            <Select
+            <UnifiedSelect
+              options={[
+                { value: 'theme', label: 'Match Theme' },
+                { value: 'custom', label: 'Custom Color' },
+              ]}
               value={iconColorMode}
               onValueChange={(value: string): void =>
                 setIconColorMode(value === 'custom' ? 'custom' : 'theme')
               }
-            >
-              <SelectTrigger id='iconColorMode'>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='theme'>Match Theme</SelectItem>
-                <SelectItem value='custom'>Custom Color</SelectItem>
-              </SelectContent>
-            </Select>
+              placeholder='Select color mode'
+            />
           </div>
           {iconColorMode === 'custom' ? (
             <div className='space-y-2'>
@@ -247,21 +244,19 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
         <div className='space-y-2'>
           <Label>Product Identifier</Label>
           <div className='flex gap-2'>
-            <Select
+            <UnifiedSelect
+              options={[
+                { value: 'ean', label: 'EAN' },
+                { value: 'gtin', label: 'GTIN' },
+                { value: 'asin', label: 'ASIN' },
+              ]}
               value={identifierType}
               onValueChange={(value: string): void =>
                 setIdentifierType(value as 'ean' | 'gtin' | 'asin')
               }
-            >
-              <SelectTrigger className='w-[100px]'>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='ean'>EAN</SelectItem>
-                <SelectItem value='gtin'>GTIN</SelectItem>
-                <SelectItem value='asin'>ASIN</SelectItem>
-              </SelectContent>
-            </Select>
+              placeholder='Select type'
+              className='w-[100px]'
+            />
             {identifierType === 'ean' ? (
               <Input
                 id='ean'
@@ -665,21 +660,15 @@ export function DraftCreatorParametersTab(): React.JSX.Element {
                 className='flex flex-col gap-3 rounded-md border border-border bg-card/60 p-3 md:flex-row md:items-center'
               >
                 <div className='w-full md:w-64'>
-                  <Select
+                  <UnifiedSelect
+                    options={availableOptions.map((parameter: ProductParameter) => ({
+                      value: parameter.id,
+                      label: getParameterLabel(parameter),
+                    }))}
                     value={entry.parameterId}
                     onValueChange={(value: string): void => updateParameterId(index, value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder='Select parameter' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableOptions.map((parameter: ProductParameter): React.JSX.Element => (
-                        <SelectItem key={parameter.id} value={parameter.id}>
-                          {getParameterLabel(parameter)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    placeholder='Select parameter'
+                  />
                 </div>
                 <div className='flex-1'>
                   <Input

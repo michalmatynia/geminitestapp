@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { PriceGroup } from '@/features/products/types';
-import { Button, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Badge, SectionHeader, SectionPanel } from '@/shared/ui';
+import { Button, Label, UnifiedSelect, Badge, SectionHeader, SectionPanel } from '@/shared/ui';
 
 
 type PriceGroupsSettingsProps = {
@@ -104,22 +104,16 @@ export function PriceGroupsSettings({
           Required. Select one of the available price groups.
         </p>
         <div className='mt-3'>
-          <Select
+          <UnifiedSelect
             value={defaultGroupId}
             onValueChange={onDefaultGroupChange}
             disabled={priceGroups.length === 0 || defaultGroupSaving}
-          >
-            <SelectTrigger className='w-full bg-gray-900 border-border text-sm text-white'>
-              <SelectValue placeholder='Select default price group' />
-            </SelectTrigger>
-            <SelectContent>
-              {priceGroups.map((group: PriceGroup) => (
-                <SelectItem key={group.id} value={group.id}>
-                  {group.name} ({group.groupId})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={priceGroups.map((group: PriceGroup) => ({
+              value: group.id,
+              label: `${group.name} (${group.groupId})`,
+            }))}
+            placeholder='Select default price group'
+          />
         </div>
         {defaultGroupSaving ? (
           <p className='mt-2 text-xs text-gray-500'>Saving default...</p>

@@ -92,6 +92,45 @@ export type CreatePriceGroupDto = z.infer<typeof createPriceGroupSchema>;
 export type UpdatePriceGroupDto = Partial<CreatePriceGroupDto>;
 
 /**
+ * Producer Contract
+ */
+export const producerSchema = namedDtoSchema.extend({
+  website: z.string().nullable(),
+});
+
+export type ProducerDto = z.infer<typeof producerSchema>;
+
+export const createProducerSchema = producerSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type CreateProducerDto = z.infer<typeof createProducerSchema>;
+
+/**
+ * Product Parameter Contract
+ */
+export const productParameterSchema = namedDtoSchema.extend({
+  catalogId: z.string(),
+  name_en: z.string(),
+  name_pl: z.string().nullable(),
+  name_de: z.string().nullable(),
+});
+
+export type ProductParameterDto = z.infer<typeof productParameterSchema>;
+
+/**
+ * Currency Contract
+ */
+export const currencySchema = namedDtoSchema.extend({
+  code: z.string(),
+  symbol: z.string().nullable(),
+});
+
+export type CurrencyDto = z.infer<typeof currencySchema>;
+
+/**
  * Product Contract
  */
 export const productSchema = dtoBaseSchema.extend({
@@ -103,6 +142,12 @@ export const productSchema = dtoBaseSchema.extend({
   asin: z.string().nullable(),
   name: localizedSchema,
   description: localizedSchema,
+  name_en: z.string().nullable().optional(),
+  name_pl: z.string().nullable().optional(),
+  name_de: z.string().nullable().optional(),
+  description_en: z.string().nullable().optional(),
+  description_pl: z.string().nullable().optional(),
+  description_de: z.string().nullable().optional(),
   supplierName: z.string().nullable(),
   supplierLink: z.string().nullable(),
   priceComment: z.string().nullable(),
@@ -128,11 +173,86 @@ export const productSchema = dtoBaseSchema.extend({
 
 export type ProductDto = z.infer<typeof productSchema>;
 
-export const createProductSchema = productSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+/**
+ * Validation Contracts
+ */
+export const productValidationTargetSchema = z.enum([
+  'name',
+  'description',
+  'sku',
+  'price',
+  'stock',
+  'category',
+  'size_length',
+  'size_width',
+  'length',
+  'weight',
+]);
+
+export const productValidationSeveritySchema = z.enum(['error', 'warning']);
+export const productValidationDenyBehaviorSchema = z.enum(['ask_again', 'mute_session']);
+export const productValidationInstanceScopeSchema = z.enum([
+  'draft_template',
+  'product_create',
+  'product_edit',
+]);
+
+export const productValidationPatternSchema = dtoBaseSchema.extend({
+  label: z.string(),
+  target: productValidationTargetSchema,
+  locale: z.string().nullable(),
+  regex: z.string(),
+  flags: z.string().nullable(),
+  message: z.string(),
+  severity: productValidationSeveritySchema,
+  enabled: z.boolean(),
+  replacementEnabled: z.boolean(),
+  replacementAutoApply: z.boolean(),
+  skipNoopReplacementProposal: z.boolean(),
+  replacementValue: z.string().nullable(),
+  replacementFields: z.array(z.string()),
+  runtimeEnabled: z.boolean(),
+  runtimeType: z.enum(['none', 'database_query', 'ai_prompt']),
+  runtimeConfig: z.string().nullable(),
+  postAcceptBehavior: z.enum(['revalidate', 'stop_after_accept']),
+  denyBehaviorOverride: productValidationDenyBehaviorSchema.nullable(),
+  validationDebounceMs: z.number(),
+  sequenceGroupId: z.string().nullable(),
+  sequenceGroupLabel: z.string().nullable(),
+  sequenceGroupDebounceMs: z.number(),
+  sequence: z.number().nullable(),
+  chainMode: z.enum(['continue', 'stop_on_match', 'stop_on_replace']),
+  maxExecutions: z.number(),
+  passOutputToNext: z.boolean(),
+  launchEnabled: z.boolean(),
+  launchSourceMode: z.enum(['current_field', 'form_field', 'latest_product_field']),
+  launchSourceField: z.string().nullable(),
+  launchOperator: z.enum([
+    'equals',
+    'not_equals',
+    'contains',
+    'starts_with',
+    'ends_with',
+    'regex',
+    'gt',
+    'gte',
+    'lt',
+    'lte',
+    'is_empty',
+    'is_not_empty',
+  ]),
+  launchValue: z.string().nullable(),
+  launchFlags: z.string().nullable(),
 });
 
-export type CreateProductDto = z.infer<typeof createProductSchema>;
-export type UpdateProductDto = Partial<CreateProductDto>;
+export type ProductValidationPatternDto = z.infer<typeof productValidationPatternSchema>;
+
+export const productValidatorSettingsSchema = z.object({
+  enabledByDefault: z.boolean(),
+  instanceDenyBehavior: z.record(
+    productValidationInstanceScopeSchema,
+    productValidationDenyBehaviorSchema
+  ),
+});
+
+export type ProductValidatorSettingsDto = z.infer<typeof productValidatorSettingsSchema>;

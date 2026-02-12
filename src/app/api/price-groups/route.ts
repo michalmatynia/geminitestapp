@@ -18,6 +18,8 @@ import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 import type { Prisma } from '@prisma/client';
 
+export const revalidate = 600;
+
 const priceGroupSchema = z
   .object({
     groupId: z.string().trim().min(1),

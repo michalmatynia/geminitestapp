@@ -8,7 +8,7 @@ import Link from 'next/link';
 
 import { useNoteSettings, DEFAULT_NOTE_SETTINGS } from '@/features/notesapp/hooks/NoteSettingsContext';
 import type { NoteSettings } from '@/features/notesapp/types/notes-settings';
-import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast, Label, Checkbox, RadioGroup, RadioGroupItem, SectionHeader, SectionPanel } from '@/shared/ui';
+import { Button, UnifiedSelect, useToast, Label, Checkbox, RadioGroup, RadioGroupItem, SectionHeader, SectionPanel } from '@/shared/ui';
 
 
 
@@ -89,23 +89,14 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
                   <span className='text-xs text-blue-400'>Modified</span>
                 )}
               </Label>
-              <Select
+              <UnifiedSelect
+                options={sortByOptions}
                 value={settings.sortBy}
                 onValueChange={(value: string): void =>
                   updateSettings({ sortBy: value as NoteSettings['sortBy'] })
                 }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder='Select sort field' />
-                </SelectTrigger>
-                <SelectContent>
-                  {sortByOptions.map((option: { value: string; label: string }) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                placeholder='Select sort field'
+              />
             </div>
 
             <div>
@@ -115,23 +106,14 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
                   <span className='text-xs text-blue-400'>Modified</span>
                 )}
               </Label>
-              <Select
+              <UnifiedSelect
+                options={sortOrderOptions}
                 value={settings.sortOrder}
                 onValueChange={(value: string): void =>
                   updateSettings({ sortOrder: value as NoteSettings['sortOrder'] })
                 }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder='Select sort order' />
-                </SelectTrigger>
-                <SelectContent>
-                  {sortOrderOptions.map((option: { value: string; label: string }) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                placeholder='Select sort order'
+              />
             </div>
           </div>
         </SectionPanel>
@@ -196,23 +178,14 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
                 <span className='text-xs text-blue-400'>Modified</span>
               )}
             </Label>
-            <Select
+            <UnifiedSelect
+              options={searchScopeOptions}
               value={settings.searchScope}
               onValueChange={(value: string): void =>
                 updateSettings({ searchScope: value as NoteSettings['searchScope'] })
               }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder='Select search scope' />
-              </SelectTrigger>
-              <SelectContent>
-                {searchScopeOptions.map((option: { value: string; label: string }) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              placeholder='Select search scope'
+            />
           </div>
         </SectionPanel>
 

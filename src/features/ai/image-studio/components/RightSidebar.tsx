@@ -1,6 +1,6 @@
 'use client';
 
-import { Eye, Loader2, Save, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { Eye, Loader2, Pentagon, Save, SlidersHorizontal, Sparkles } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
@@ -11,6 +11,9 @@ import {
   parsePromptEngineSettings,
   PROMPT_ENGINE_SETTINGS_KEY,
 } from '@/features/prompt-engine/settings';
+import {
+  VectorDrawingToolbar,
+} from '@/features/vector-drawing';
 import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
@@ -32,7 +35,7 @@ import { ParamRow } from './ParamRow';
 import { StudioCard } from './StudioCard';
 import { UIPresetsPanel } from './UIPresetsPanel';
 import { useGenerationState } from '../context/GenerationContext';
-import { useMaskingState } from '../context/MaskingContext';
+import { useMaskingActions, useMaskingState } from '../context/MaskingContext';
 import { useProjectsState } from '../context/ProjectsContext';
 import { usePromptActions, usePromptState } from '../context/PromptContext';
 import { useSettingsState, useSettingsActions } from '../context/SettingsContext';
@@ -51,7 +54,8 @@ export function RightSidebar(): React.JSX.Element {
   const { isFocusMode, validatorEnabled, formatterEnabled } = useUiState();
   const { setValidatorEnabled, setFormatterEnabled } = useUiActions();
   const { projectId } = useProjectsState();
-  const { maskShapes, maskInvert, maskFeather } = useMaskingState();
+  const { tool, maskShapes, maskInvert, maskFeather } = useMaskingState();
+  const { setTool } = useMaskingActions();
   const {
     workingSlot,
     slots,
@@ -76,6 +80,8 @@ export function RightSidebar(): React.JSX.Element {
   const [requestPreviewOpen, setRequestPreviewOpen] = useState(false);
   const [promptControlOpen, setPromptControlOpen] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const [activeToolsPanel, setActiveToolsPanel] = useState<'shape-selector'>('shape-selector');
 
   const promptValidationSettings = useMemo(
     () => parsePromptEngineSettings(settingsStore.get(PROMPT_ENGINE_SETTINGS_KEY)).promptValidation,
@@ -249,7 +255,7 @@ export function RightSidebar(): React.JSX.Element {
     <>
       <SectionPanel
         className={cn(
-          'order-3 flex min-h-0 flex-1 flex-col overflow-hidden p-0 transition-all duration-300 ease-in-out',
+          'order-3 flex h-full min-h-0 flex-1 flex-col overflow-hidden p-0 transition-all duration-300 ease-in-out',
           isFocusMode && 'pointer-events-none opacity-0 translate-x-2'
         )}
         variant='subtle'
@@ -297,6 +303,19 @@ export function RightSidebar(): React.JSX.Element {
           >
             {projectSaveBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : <Save className='mr-2 size-4' />}
           Save Project
+          </Button>
+          <Button
+            variant='outline'
+            size='sm'
+            title='Open tools toolbar'
+            aria-label='Open tools toolbar'
+            onClick={() => {
+              setActiveToolsPanel('shape-selector');
+              setToolsOpen(true);
+            }}
+          >
+            <Pentagon className='mr-2 size-4' />
+            Tools
           </Button>
         </div>
         <div className='relative flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4 pt-0'>
@@ -432,6 +451,46 @@ export function RightSidebar(): React.JSX.Element {
               No extracted controls available yet.
             </div>
           )}
+        </div>
+      </AppModal>
+
+      <AppModal
+        open={toolsOpen}
+        onClose={() => setToolsOpen(false)}
+        title='Tools'
+        size='md'
+      >
+        <div className='space-y-4 text-sm text-gray-200'>
+          <div className='rounded border border-border/60 bg-card/30 p-2'>
+            <div className='mb-2 text-xs text-gray-400'>Toolbar</div>
+            <div className='flex items-center gap-2'>
+              <Button
+                type='button'
+                variant={activeToolsPanel === 'shape-selector' ? 'secondary' : 'outline'}
+                size='icon'
+                title='Shape selector'
+                aria-label='Shape selector'
+                onClick={() => setActiveToolsPanel('shape-selector')}
+              >
+                <Pentagon className='size-4' />
+              </Button>
+              <span className='text-xs text-gray-300'>Shape Selector</span>
+            </div>
+          </div>
+
+          {activeToolsPanel === 'shape-selector' ? (
+            <div className='rounded border border-border/60 bg-card/30 p-3'>
+              <div className='mb-2 text-xs text-gray-400'>Shape Selection</div>
+              <VectorDrawingToolbar
+                tool={tool}
+                onSelectTool={setTool}
+                className='w-full justify-start rounded-xl border-border/60 bg-card/40'
+              />
+              <div className='mt-2 text-[11px] text-gray-500'>
+                Shape tools were moved here from the preview canvas.
+              </div>
+            </div>
+          ) : null}
         </div>
       </AppModal>
 

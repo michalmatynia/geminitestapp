@@ -1715,129 +1715,135 @@ export default function DatabaseEnginePage(): React.JSX.Element {
             </div>
           </FormSection>
 
-          <SectionPanel className='mt-6 p-5'>
-            <div className='flex flex-wrap items-start justify-between gap-3'>
-              <div>
-                <h2 className='text-lg font-semibold text-white'>Engine Operations Runtime</h2>
-                <p className='mt-1 text-sm text-gray-400'>
-              Recent db backup/sync jobs queued by Database Engine actions and scheduler.
-                </p>
-              </div>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={(): void => {
+          <FormSection
+            title='Engine Operations Runtime'
+            description='Recent db backup/sync jobs queued by Database Engine actions and scheduler.'
+            actions={(
+              <RefreshButton
+                onRefresh={(): void => {
                   void operationsJobsQuery.refetch();
                 }}
-                disabled={operationsJobsQuery.isFetching}
-              >
-                {operationsJobsQuery.isFetching ? 'Refreshing...' : 'Refresh Jobs'}
-              </Button>
-            </div>
-
+                isRefreshing={operationsJobsQuery.isFetching}
+              />
+            )}
+            className='mt-6 p-5'
+          >
             <div className='mt-4 grid gap-2 text-xs sm:grid-cols-4'>
-              <div className='rounded border border-gray-800/80 bg-black/20 px-2 py-2 text-gray-300'>
-            Queue: {operationQueueStatus ? (operationQueueStatus.running ? 'Running' : 'Stopped') : 'Unknown'}
+              <div className='flex items-center justify-between rounded border border-gray-800/80 bg-black/20 px-3 py-2 text-gray-300'>
+                <span>Queue:</span>
+                <Badge variant={operationQueueStatus?.running ? 'success' : 'secondary'} className='text-[10px]'>
+                  {operationQueueStatus ? (operationQueueStatus.running ? 'Running' : 'Stopped') : 'Unknown'}
+                </Badge>
               </div>
-              <div className='rounded border border-gray-800/80 bg-black/20 px-2 py-2 text-gray-300'>
-            Healthy: {operationQueueStatus ? (operationQueueStatus.healthy ? 'Yes' : 'No') : 'Unknown'}
+              <div className='flex items-center justify-between rounded border border-gray-800/80 bg-black/20 px-3 py-2 text-gray-300'>
+                <span>Healthy:</span>
+                <Badge variant={operationQueueStatus?.healthy ? 'success' : 'destructive'} className='text-[10px]'>
+                  {operationQueueStatus ? (operationQueueStatus.healthy ? 'Yes' : 'No') : 'Unknown'}
+                </Badge>
               </div>
-              <div className='rounded border border-gray-800/80 bg-black/20 px-2 py-2 text-gray-300'>
-            Processing: {operationQueueStatus ? (operationQueueStatus.processing ? 'Yes' : 'No') : 'Unknown'}
+              <div className='flex items-center justify-between rounded border border-gray-800/80 bg-black/20 px-3 py-2 text-gray-300'>
+                <span>Processing:</span>
+                <Badge variant={operationQueueStatus?.processing ? 'warning' : 'secondary'} className='text-[10px]'>
+                  {operationQueueStatus ? (operationQueueStatus.processing ? 'Yes' : 'No') : 'Unknown'}
+                </Badge>
               </div>
-              <div className='rounded border border-gray-800/80 bg-black/20 px-2 py-2 text-gray-300'>
-            Last poll: {operationQueueStatus ? `${Math.floor(operationQueueStatus.timeSinceLastPoll / 1000)}s ago` : 'n/a'}
+              <div className='flex items-center justify-between rounded border border-gray-800/80 bg-black/20 px-3 py-2 text-gray-300'>
+                <span>Last poll:</span>
+                <span className='font-mono'>{operationQueueStatus ? `${Math.floor(operationQueueStatus.timeSinceLastPoll / 1000)}s ago` : 'n/a'}</span>
               </div>
             </div>
 
-            <div className='mt-4 overflow-auto'>
-              <table className='min-w-full text-xs'>
-                <thead>
-                  <tr className='border-b border-gray-800 text-left text-gray-400'>
-                    <th className='px-2 py-2'>Job</th>
-                    <th className='px-2 py-2'>Type</th>
-                    <th className='px-2 py-2'>Target</th>
-                    <th className='px-2 py-2'>Status</th>
-                    <th className='px-2 py-2'>Created</th>
-                    <th className='px-2 py-2'>Finished</th>
-                    <th className='px-2 py-2'>Summary</th>
-                    <th className='px-2 py-2'>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
+            <div className='mt-4 overflow-auto rounded-md border border-border/60 bg-card/40'>
+              <Table className='text-xs'>
+                <TableHeader>
+                  <TableRow className='bg-gray-900 text-left text-gray-400 hover:bg-transparent'>
+                    <TableHead className='px-2 py-2'>Job</TableHead>
+                    <TableHead className='px-2 py-2'>Type</TableHead>
+                    <TableHead className='px-2 py-2'>Target</TableHead>
+                    <TableHead className='px-2 py-2'>Status</TableHead>
+                    <TableHead className='px-2 py-2'>Created</TableHead>
+                    <TableHead className='px-2 py-2'>Finished</TableHead>
+                    <TableHead className='px-2 py-2'>Summary</TableHead>
+                    <TableHead className='px-2 py-2'>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {operationJobs.length === 0 && (
-                    <tr>
-                      <td colSpan={8} className='px-2 py-4 text-center text-gray-500'>
-                    No Database Engine operation jobs found.
-                      </td>
-                    </tr>
+                    <TableRow>
+                      <TableCell colSpan={8} className='px-2 py-4 text-center text-gray-500'>
+                        No Database Engine operation jobs found.
+                      </TableCell>
+                    </TableRow>
                   )}
                   {operationJobs.map((job) => {
-                    const statusClassName =
-                  job.status === 'completed'
-                    ? 'text-emerald-300'
-                    : job.status === 'failed'
-                      ? 'text-red-300'
-                      : job.status === 'running'
-                        ? 'text-blue-300'
-                        : job.status === 'pending'
-                          ? 'text-amber-300'
-                          : 'text-gray-300';
+                    const statusVariant =
+                      job.status === 'completed'
+                        ? 'success'
+                        : job.status === 'failed'
+                          ? 'destructive'
+                          : job.status === 'running'
+                            ? 'warning'
+                            : 'secondary';
                     const canCancel = job.status === 'pending' || job.status === 'running';
                     return (
-                      <tr key={job.id} className='border-b border-gray-900'>
-                        <td className='px-2 py-2 font-mono text-gray-200' title={job.id}>
+                      <TableRow key={job.id} className='border-b border-gray-900 hover:bg-muted/30'>
+                        <TableCell className='px-2 py-2 font-mono text-gray-200' title={job.id}>
                           {shortenId(job.id)}
-                        </td>
-                        <td className='px-2 py-2 text-gray-300'>{job.type}</td>
-                        <td className='px-2 py-2 text-gray-300'>
+                        </TableCell>
+                        <TableCell className='px-2 py-2 text-gray-300'>{job.type}</TableCell>
+                        <TableCell className='px-2 py-2 text-gray-300'>
                           {job.type === 'db_backup'
                             ? (job.dbType ?? 'n/a')
                             : (job.direction ?? 'n/a')}
-                        </td>
-                        <td className={`px-2 py-2 ${statusClassName}`}>{job.status}</td>
-                        <td className='px-2 py-2 text-gray-400'>{formatDateTime(job.createdAt)}</td>
-                        <td className='px-2 py-2 text-gray-400'>{formatDateTime(job.finishedAt)}</td>
-                        <td className='px-2 py-2 text-gray-300'>
+                        </TableCell>
+                        <TableCell className='px-2 py-2'>
+                          <Badge variant={statusVariant} className='text-[10px]'>
+                            {job.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className='px-2 py-2 text-gray-400'>{formatDateTime(job.createdAt)}</TableCell>
+                        <TableCell className='px-2 py-2 text-gray-400'>{formatDateTime(job.finishedAt)}</TableCell>
+                        <TableCell className='px-2 py-2 text-gray-300'>
                           {job.errorMessage ?? job.resultSummary ?? '--'}
-                        </td>
-                        <td className='px-2 py-2'>
+                        </TableCell>
+                        <TableCell className='px-2 py-2'>
                           <Button
                             variant='outline'
                             size='sm'
                             disabled={
                               !canCancel ||
-                          cancelOperationJobMutation.isPending ||
-                          !operationControlsDraft.allowOperationJobCancellation
+                              cancelOperationJobMutation.isPending ||
+                              !operationControlsDraft.allowOperationJobCancellation
                             }
                             onClick={(): void => {
                               void cancelOperationJob(job.id);
                             }}
+                            className='h-7 px-2 text-[10px]'
                           >
-                        Cancel
+                            Cancel
                           </Button>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     );
                   })}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
-          </SectionPanel>
+          </FormSection>
 
-          <SectionPanel className='mt-6 p-5'>
-            <h2 className='text-lg font-semibold text-white'>Migration and Backfill Controls</h2>
-            <p className='mt-1 text-sm text-gray-400'>
-          Manual-only controls for full database sync and settings backfill.
-            </p>
-            <div className='mt-4 flex flex-wrap items-center gap-2'>
+          <FormSection
+            title='Migration and Backfill Controls'
+            description='Manual-only controls for full database sync and settings backfill.'
+            className='mt-6 p-5'
+          >
+            <div className='flex flex-wrap items-center gap-2'>
               <Button
                 variant='outline'
                 className='border-red-500/40 text-red-100 hover:bg-red-500/20'
                 onClick={(): void => setPendingSyncDirection('mongo_to_prisma')}
                 disabled={!operationControlsDraft.allowManualFullSync}
               >
-            Run Full Sync: MongoDB to Prisma
+                Run Full Sync: MongoDB to Prisma
               </Button>
               <Button
                 variant='outline'
@@ -1845,37 +1851,35 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                 onClick={(): void => setPendingSyncDirection('prisma_to_mongo')}
                 disabled={!operationControlsDraft.allowManualFullSync}
               >
-            Run Full Sync: Prisma to MongoDB
+                Run Full Sync: Prisma to MongoDB
               </Button>
             </div>
 
             <div className='mt-5 flex flex-wrap items-end gap-2'>
-              <div>
-                <label htmlFor='backfill-limit' className='mb-1 block text-xs text-gray-400'>
-              Backfill Batch Size
-                </label>
-                <input
+              <FormField label='Backfill Batch Size'>
+                <Input
                   id='backfill-limit'
                   type='number'
                   min={1}
                   max={5000}
                   value={backfillLimit}
-                  onChange={(event): void => {
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                     const parsed = Number.parseInt(event.target.value, 10);
                     if (!Number.isFinite(parsed)) return;
                     setBackfillLimit(Math.min(Math.max(parsed, 1), 5000));
                   }}
-                  className='w-36 rounded-md border border-gray-700 bg-gray-900 px-2 py-2 text-xs text-gray-200'
+                  className='w-36 h-9'
                 />
-              </div>
+              </FormField>
               <Button
                 variant='outline'
                 onClick={(): void => {
                   void runBackfill(true);
                 }}
                 disabled={backfillMutation.isPending || !operationControlsDraft.allowManualBackfill}
+                className='h-9'
               >
-            Dry Run Backfill
+                Dry Run Backfill
               </Button>
               <Button
                 variant='outline'
@@ -1883,19 +1887,19 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                   void runBackfill(false);
                 }}
                 disabled={backfillMutation.isPending || !operationControlsDraft.allowManualBackfill}
-                className='border-amber-500/40 text-amber-100 hover:bg-amber-500/20'
+                className='h-9 border-amber-500/40 text-amber-100 hover:bg-amber-500/20'
               >
-            Run Backfill
+                Run Backfill
               </Button>
             </div>
 
             {!policyDraft.allowAutomaticFallback && (
               <div className='mt-4 flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100'>
                 <AlertTriangleIcon className='mt-0.5 size-4 shrink-0' />
-            Automatic fallback is disabled. Unconfigured or unavailable providers should now fail fast.
+                Automatic fallback is disabled. Unconfigured or unavailable providers should now fail fast.
               </div>
             )}
-          </SectionPanel>
+          </FormSection>
         </>
       ) : null}
 

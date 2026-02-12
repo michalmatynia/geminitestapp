@@ -1,28 +1,31 @@
 'use client';
 
-import { ChevronRight, ChevronDown } from 'lucide-react';
-import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
+import { MasterFolderTree, useMasterFolderTree } from '@/features/foldertree/master';
+import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { FolderTreePanel, TreeHeader } from '@/shared/ui';
 import {
-  canNestTreeNode,
+  canNestTreeNodeV2,
   cn,
-  FOLDER_TREE_PROFILES_SETTING_KEY,
   getFolderTreePlaceholderClasses,
-  parseFolderTreeProfiles,
+  type MasterTreeNode,
 } from '@/shared/utils';
 
 import { SectionPicker } from './SectionPicker';
-import { PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY, PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY } from './settings/PageBuilderSettingsPage';
+import {
+  PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY,
+  PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY,
+} from './settings/PageBuilderSettingsPage';
 import { SectionNodeItem } from './tree';
 import { useDragState } from '../../hooks/useDragStateContext';
 import { usePageBuilder } from '../../hooks/usePageBuilderContext';
 import { TreeActionsProvider, useTreeActions } from '../../hooks/useTreeActionsContext';
 import { readSectionDragData } from '../../utils/page-builder-dnd';
 
-import type { SectionInstance } from '../../types/page-builder';
-import type { PageZone } from '../../types/page-builder';
+import type { PageZone, SectionInstance } from '../../types/page-builder';
 
 const ZONE_LABELS: Record<PageZone, string> = {
   header: 'Header',
@@ -32,8 +35,20 @@ const ZONE_LABELS: Record<PageZone, string> = {
 
 const ZONE_ORDER: PageZone[] = ['header', 'template', 'footer'];
 
+const CMS_ZONE_NODE_PREFIX = 'cms-zone:';
+const CMS_SECTION_NODE_PREFIX = 'cms-section:';
+const CMS_ZONE_FOOTER_NODE_PREFIX = 'cms-zone-footer:';
+
 // Block types that can be promoted to standalone sections
-const PROMOTABLE_BLOCK_TYPES = ['ImageElement', 'TextElement', 'ButtonElement', 'Block', 'TextAtom', 'Model3DElement', 'Slideshow'];
+const PROMOTABLE_BLOCK_TYPES = [
+  'ImageElement',
+  'TextElement',
+  'ButtonElement',
+  'Block',
+  'TextAtom',
+  'Model3DElement',
+  'Slideshow',
+];
 
 type ComponentTreeClipboard = { type: 'section' | 'block'; data: unknown } | null;
 
@@ -47,7 +62,6 @@ type ComponentTreePanelContextValue = {
   treePlaceholderClasses: ReturnType<typeof getFolderTreePlaceholderClasses>;
   treeInlineDropLabel: string;
   treeRootDropLabel: string;
-  onToggleZone: (zone: PageZone) => void;
 };
 
 const ComponentTreePanelContext = createContext<ComponentTreePanelContextValue | null>(null);
@@ -60,95 +74,214 @@ function useComponentTreePanelContext(): ComponentTreePanelContextValue {
   return context;
 }
 
+const toCmsZoneNodeId = (zone: PageZone): string => `${CMS_ZONE_NODE_PREFIX}${zone}`;
+const toCmsSectionNodeId = (sectionId: string): string => `${CMS_SECTION_NODE_PREFIX}${sectionId}`;
+const toCmsZoneFooterNodeId = (zone: PageZone): string => `${CMS_ZONE_FOOTER_NODE_PREFIX}${zone}`;
+
+const fromCmsSectionNodeId = (value: string): string | null =>
+  value.startsWith(CMS_SECTION_NODE_PREFIX) ? value.slice(CMS_SECTION_NODE_PREFIX.length) : null;
+
+const fromCmsZoneNodeId = (value: string): PageZone | null => {
+  if (!value.startsWith(CMS_ZONE_NODE_PREFIX)) return null;
+  const zone = value.slice(CMS_ZONE_NODE_PREFIX.length);
+  return ZONE_ORDER.includes(zone as PageZone) ? (zone as PageZone) : null;
+};
+
+const fromCmsZoneFooterNodeId = (value: string): PageZone | null => {
+  if (!value.startsWith(CMS_ZONE_FOOTER_NODE_PREFIX)) return null;
+  const zone = value.slice(CMS_ZONE_FOOTER_NODE_PREFIX.length);
+  return ZONE_ORDER.includes(zone as PageZone) ? (zone as PageZone) : null;
+};
+
+const getSectionNodeLabel = (section: SectionInstance): string => {
+  const settings =
+    section.settings && typeof section.settings === 'object'
+      ? section.settings
+      : null;
+  const customLabel = settings?.['label'];
+  if (typeof customLabel === 'string' && customLabel.trim().length > 0) {
+    return customLabel.trim();
+  }
+  return section.type;
+};
+
+const buildCmsMasterNodes = (sections: SectionInstance[]): MasterTreeNode[] => {
+  const nodes: MasterTreeNode[] = [];
+
+  ZONE_ORDER.forEach((zone: PageZone, zoneIndex: number) => {
+    const zoneNodeId = toCmsZoneNodeId(zone);
+    const zoneLabel = ZONE_LABELS[zone];
+    const zoneSections = sections.filter((section: SectionInstance) => section.zone === zone);
+
+    nodes.push({
+      id: zoneNodeId,
+      type: 'folder',
+      kind: 'zone',
+      parentId: null,
+      name: zoneLabel,
+      path: zone,
+      sortOrder: zoneIndex,
+      metadata: { entity: 'zone', zone },
+    });
+
+    zoneSections.forEach((section: SectionInstance, sectionIndex: number) => {
+      nodes.push({
+        id: toCmsSectionNodeId(section.id),
+        type: 'file',
+        kind: 'section',
+        parentId: zoneNodeId,
+        name: getSectionNodeLabel(section),
+        path: `${zone}/${section.id}`,
+        sortOrder: sectionIndex,
+        metadata: { entity: 'section', zone, sectionId: section.id },
+      });
+    });
+
+    nodes.push({
+      id: toCmsZoneFooterNodeId(zone),
+      type: 'file',
+      kind: 'zone_footer',
+      parentId: zoneNodeId,
+      name: `${zoneLabel} controls`,
+      path: `${zone}/controls`,
+      sortOrder: zoneSections.length,
+      metadata: { entity: 'zone_footer', zone },
+    });
+  });
+
+  return nodes;
+};
+
 export function ComponentTreePanel(): React.ReactNode {
   const { state } = usePageBuilder();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const [collapsedZones, setCollapsedZones] = useState<Set<PageZone>>(new Set());
+  const treeProfile = useFolderTreeProfile('cms_page_builder');
   const settingsStore = useSettingsStore();
-  const treeProfilesRaw = settingsStore.get(FOLDER_TREE_PROFILES_SETTING_KEY);
-  const treeProfile = useMemo(
-    () => parseFolderTreeProfiles(treeProfilesRaw).cms_page_builder,
-    [treeProfilesRaw]
-  );
   const treePlaceholderClasses = useMemo(
     () => getFolderTreePlaceholderClasses(treeProfile.placeholders.preset),
     [treeProfile.placeholders.preset]
   );
   const canDropSectionsAtRoot = useMemo(
     () =>
-      canNestTreeNode({
+      canNestTreeNodeV2({
         profile: treeProfile,
         nodeType: 'file',
         nodeKind: 'section',
-        targetIsRoot: true,
+        targetType: 'root',
       }),
     [treeProfile]
   );
   const canDropBlocksAtRoot = useMemo(
     () =>
-      canNestTreeNode({
+      canNestTreeNodeV2({
         profile: treeProfile,
         nodeType: 'file',
         nodeKind: 'block',
-        targetIsRoot: true,
+        targetType: 'root',
       }),
     [treeProfile]
   );
 
-  // Get the settings for showing placeholders
   const extractPlaceholderValue = settingsStore.get(PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY);
   const sectionDropPlaceholderValue = settingsStore.get(PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY);
   const showExtractPlaceholder = extractPlaceholderValue === 'true';
   const showSectionDropPlaceholder = sectionDropPlaceholderValue !== 'false';
 
-  // Ensure drag state context is available
+  // Ensure drag state context is available.
   useDragState();
 
-  const handleToggleZone = useCallback((zone: PageZone): void => {
-    setCollapsedZones((prev) => {
-      const next = new Set(prev);
-      if (next.has(zone)) {
-        next.delete(zone);
-      } else {
-        next.add(zone);
-      }
-      return next;
-    });
-  }, []);
-
-  // Group sections by zone
-  const sectionsByZone = ZONE_ORDER.reduce<Record<PageZone, SectionInstance[]>>(
-    (acc, zone) => {
-      acc[zone] = state.sections.filter((s: SectionInstance) => s.zone === zone);
-      return acc;
-    },
-    { header: [], template: [], footer: [] }
+  const sectionsByZone = useMemo(
+    () =>
+      ZONE_ORDER.reduce<Record<PageZone, SectionInstance[]>>(
+        (acc, zone) => {
+          acc[zone] = state.sections.filter((section: SectionInstance) => section.zone === zone);
+          return acc;
+        },
+        { header: [], template: [], footer: [] }
+      ),
+    [state.sections]
   );
 
+  const sectionById = useMemo(() => {
+    const next = new Map<string, SectionInstance>();
+    state.sections.forEach((section: SectionInstance) => {
+      next.set(section.id, section);
+    });
+    return next;
+  }, [state.sections]);
+
+  const sectionIndexById = useMemo(() => {
+    const next = new Map<string, number>();
+    ZONE_ORDER.forEach((zone: PageZone) => {
+      sectionsByZone[zone].forEach((section: SectionInstance, index: number) => {
+        next.set(section.id, index);
+      });
+    });
+    return next;
+  }, [sectionsByZone]);
+
+  const masterNodes = useMemo(
+    (): MasterTreeNode[] => buildCmsMasterNodes(state.sections),
+    [state.sections]
+  );
+  const structureRevision = useMemo(
+    () =>
+      masterNodes
+        .map((node: MasterTreeNode) => `${node.id}:${node.parentId ?? 'root'}:${node.sortOrder}`)
+        .join('|'),
+    [masterNodes]
+  );
+  const selectedMasterNodeId = useMemo((): string | null => {
+    if (!state.selectedNodeId) return null;
+    return sectionById.has(state.selectedNodeId) ? toCmsSectionNodeId(state.selectedNodeId) : null;
+  }, [sectionById, state.selectedNodeId]);
+  const initiallyExpandedZoneNodeIds = useMemo(
+    () => ZONE_ORDER.map((zone: PageZone) => toCmsZoneNodeId(zone)),
+    []
+  );
+
+  const structureController = useMasterFolderTree({
+    initialNodes: masterNodes,
+    initialSelectedNodeId: selectedMasterNodeId,
+    initiallyExpandedNodeIds: initiallyExpandedZoneNodeIds,
+    profile: treeProfile,
+    externalRevision: structureRevision,
+  });
+  const { replaceNodes, selectNode } = structureController;
+
+  useEffect(() => {
+    void replaceNodes(masterNodes, 'external_sync');
+  }, [masterNodes, replaceNodes]);
+
+  useEffect(() => {
+    selectNode(selectedMasterNodeId);
+  }, [selectedMasterNodeId, selectNode]);
+
   const sectionCount = state.sections.length;
-  const panelContextValue = useMemo<ComponentTreePanelContextValue>(() => ({
-    currentPage: state.currentPage,
-    clipboard: state.clipboard,
-    showExtractPlaceholder,
-    showSectionDropPlaceholder,
-    canDropSectionsAtRoot,
-    canDropBlocksAtRoot,
-    treePlaceholderClasses,
-    treeInlineDropLabel: treeProfile.placeholders.inlineDropLabel,
-    treeRootDropLabel: treeProfile.placeholders.rootDropLabel,
-    onToggleZone: handleToggleZone,
-  }), [
-    state.currentPage,
-    state.clipboard,
-    showExtractPlaceholder,
-    showSectionDropPlaceholder,
-    canDropSectionsAtRoot,
-    canDropBlocksAtRoot,
-    treePlaceholderClasses,
-    treeProfile.placeholders.inlineDropLabel,
-    treeProfile.placeholders.rootDropLabel,
-    handleToggleZone,
-  ]);
+  const panelContextValue = useMemo<ComponentTreePanelContextValue>(
+    () => ({
+      currentPage: state.currentPage,
+      clipboard: state.clipboard,
+      showExtractPlaceholder,
+      showSectionDropPlaceholder,
+      canDropSectionsAtRoot,
+      canDropBlocksAtRoot,
+      treePlaceholderClasses,
+      treeInlineDropLabel: treeProfile.placeholders.inlineDropLabel,
+      treeRootDropLabel: treeProfile.placeholders.rootDropLabel,
+    }),
+    [
+      state.currentPage,
+      state.clipboard,
+      showExtractPlaceholder,
+      showSectionDropPlaceholder,
+      canDropSectionsAtRoot,
+      canDropBlocksAtRoot,
+      treePlaceholderClasses,
+      treeProfile.placeholders.inlineDropLabel,
+      treeProfile.placeholders.rootDropLabel,
+    ]
+  );
 
   return (
     <TreeActionsProvider expandedIds={expandedIds} setExpandedIds={setExpandedIds}>
@@ -166,20 +299,60 @@ export function ComponentTreePanel(): React.ReactNode {
           {!state.currentPage ? (
             <div className='p-4' />
           ) : (
-            ZONE_ORDER.map((zone) => {
-              const isCollapsed = collapsedZones.has(zone);
-              const zoneSections = sectionsByZone[zone];
+            <MasterFolderTree
+              controller={structureController}
+              enableDnd={false}
+              className='space-y-0.5'
+              renderNode={({ node, isExpanded, toggleExpand }) => {
+                const zoneFromNode = fromCmsZoneNodeId(node.id);
+                if (zoneFromNode) {
+                  const zoneSections = sectionsByZone[zoneFromNode];
+                  return (
+                    <div className='border-b border-border/50 px-4 py-2.5'>
+                      <button
+                        type='button'
+                        onClick={toggleExpand}
+                        className='flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-400 transition hover:text-gray-300'
+                      >
+                        {isExpanded ? (
+                          <ChevronDown className='size-3.5' />
+                        ) : (
+                          <ChevronRight className='size-3.5' />
+                        )}
+                        <span>{ZONE_LABELS[zoneFromNode]}</span>
+                        {zoneSections.length > 0 ? (
+                          <span className='ml-1 text-[10px] text-gray-500'>({zoneSections.length})</span>
+                        ) : null}
+                      </button>
+                    </div>
+                  );
+                }
 
-              return (
-                <ZoneGroup
-                  key={zone}
-                  zone={zone}
-                  label={ZONE_LABELS[zone]}
-                  isCollapsed={isCollapsed}
-                  zoneSections={zoneSections}
-                />
-              );
-            })
+                const sectionId = fromCmsSectionNodeId(node.id);
+                if (sectionId) {
+                  const section = sectionById.get(sectionId);
+                  if (!section) return null;
+                  const sectionIndex = sectionIndexById.get(sectionId) ?? 0;
+                  return (
+                    <div className='px-2'>
+                      <SectionDropTarget zone={section.zone} toIndex={sectionIndex} />
+                      <SectionNodeItem section={section} sectionIndex={sectionIndex} />
+                    </div>
+                  );
+                }
+
+                const zoneFromFooter = fromCmsZoneFooterNodeId(node.id);
+                if (!zoneFromFooter) return null;
+                return (
+                  <div className='px-2 pb-2'>
+                    <ZoneFooterNode
+                      zone={zoneFromFooter}
+                      sectionCount={sectionsByZone[zoneFromFooter].length}
+                    />
+                  </div>
+                );
+              }}
+            />
           )}
         </FolderTreePanel>
       </ComponentTreePanelContext.Provider>
@@ -187,139 +360,82 @@ export function ComponentTreePanel(): React.ReactNode {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Zone group (collapsible zone with section list + drop target)
-// ---------------------------------------------------------------------------
-
-interface ZoneGroupProps {
-  zone: PageZone;
-  label: string;
-  isCollapsed: boolean;
-  zoneSections: SectionInstance[];
-}
-
-function ZoneGroup({
+function ZoneFooterNode({
   zone,
-  label,
-  isCollapsed,
-  zoneSections,
-}: ZoneGroupProps): React.ReactNode {
+  sectionCount,
+}: {
+  zone: PageZone;
+  sectionCount: number;
+}): React.ReactNode {
   const {
     currentPage,
     clipboard,
     canDropSectionsAtRoot,
     treePlaceholderClasses,
     treeRootDropLabel,
-    onToggleZone,
   } = useComponentTreePanelContext();
   const [isZoneDragOver, setIsZoneDragOver] = useState(false);
   const { state: dragState, endSectionDrag } = useDragState();
-  const {
-    sectionActions,
-  } = useTreeActions();
+  const { sectionActions } = useTreeActions();
 
   const draggedSectionId = dragState.section.id;
+  const hasSections = sectionCount > 0;
 
   return (
-    <div className='border-b border-border/50'>
-      {/* Zone header */}
-      <div className='px-4 py-2.5'>
-        <button
-          type='button'
-          onClick={() => onToggleZone(zone)}
-          className='flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-400 hover:text-gray-300 transition'
+    <>
+      {hasSections ? (
+        <SectionDropTarget zone={zone} toIndex={sectionCount} />
+      ) : (
+        <div
+          onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
+            if (!draggedSectionId) return;
+            if (!canDropSectionsAtRoot) return;
+            event.preventDefault();
+            event.stopPropagation();
+            setIsZoneDragOver(true);
+          }}
+          onDragLeave={(): void => {
+            setIsZoneDragOver(false);
+          }}
+          onDrop={(event: React.DragEvent<HTMLDivElement>): void => {
+            event.preventDefault();
+            event.stopPropagation();
+            setIsZoneDragOver(false);
+            if (!draggedSectionId) return;
+            if (!canDropSectionsAtRoot) return;
+            sectionActions.dropInZone(draggedSectionId, zone, 0);
+            endSectionDrag();
+          }}
+          className={`rounded border border-dashed px-3 py-3 text-center text-xs transition ${
+            isZoneDragOver
+              ? treePlaceholderClasses.rootActive
+              : treePlaceholderClasses.rootIdle
+          }`}
         >
-          {isCollapsed ? (
-            <ChevronRight className='size-3.5' />
-          ) : (
-            <ChevronDown className='size-3.5' />
-          )}
-          <span>{label}</span>
-          {zoneSections.length > 0 && (
-            <span className='ml-1 text-[10px] text-gray-500'>
-              ({zoneSections.length})
-            </span>
-          )}
-        </button>
-      </div>
-
-      {/* Zone sections */}
-      {!isCollapsed && (
-        <div className='px-2 pb-2'>
-          {zoneSections.length === 0 ? (
-            <div
-              onDragOver={(e: React.DragEvent) => {
-                if (!draggedSectionId) return;
-                if (!canDropSectionsAtRoot) return;
-                e.preventDefault();
-                e.stopPropagation();
-                setIsZoneDragOver(true);
-              }}
-              onDragLeave={() => setIsZoneDragOver(false)}
-              onDrop={(e: React.DragEvent) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setIsZoneDragOver(false);
-                if (!draggedSectionId) return;
-                if (!canDropSectionsAtRoot) return;
-                sectionActions.dropInZone(draggedSectionId, zone, 0);
-                endSectionDrag();
-              }}
-              className={`rounded border border-dashed px-3 py-3 text-center text-xs transition ${
-                isZoneDragOver
-                  ? treePlaceholderClasses.rootActive
-                  : treePlaceholderClasses.rootIdle
-              }`}
-            >
-              {isZoneDragOver ? treeRootDropLabel : 'No sections'}
-            </div>
-          ) : (
-            <div className='space-y-0.5'>
-              {zoneSections.map((section: SectionInstance, index: number) => (
-                <React.Fragment key={section.id}>
-                  <SectionDropTarget
-                    zone={zone}
-                    toIndex={index}
-                  />
-                  <SectionNodeItem
-                    section={section}
-                    sectionIndex={index}
-                  />
-                </React.Fragment>
-              ))}
-              <SectionDropTarget
-                zone={zone}
-                toIndex={zoneSections.length}
-              />
-            </div>
-          )}
-          {/* Add section + paste always at the bottom of the zone */}
-          <div className='mt-2 flex flex-wrap items-center gap-1'>
-            {clipboard?.type === 'section' && (
-              <button
-                type='button'
-                onClick={() => sectionActions.paste(zone)}
-                className='rounded px-1.5 py-0.5 text-[10px] text-gray-400 hover:bg-foreground/10 hover:text-gray-200 transition'
-                title='Paste section'
-              >
-                Paste
-              </button>
-            )}
-            <SectionPicker
-              disabled={!currentPage}
-              zone={zone}
-              onSelect={(sectionType: string) => sectionActions.add(sectionType, zone)}
-            />
-          </div>
+          {isZoneDragOver ? treeRootDropLabel : 'No sections'}
         </div>
       )}
-    </div>
+
+      <div className='mt-2 flex flex-wrap items-center gap-1'>
+        {clipboard?.type === 'section' ? (
+          <button
+            type='button'
+            onClick={(): void => sectionActions.paste(zone)}
+            className='rounded px-1.5 py-0.5 text-[10px] text-gray-400 transition hover:bg-foreground/10 hover:text-gray-200'
+            title='Paste section'
+          >
+            Paste
+          </button>
+        ) : null}
+        <SectionPicker
+          disabled={!currentPage}
+          zone={zone}
+          onSelect={(sectionType: string): void => sectionActions.add(sectionType, zone)}
+        />
+      </div>
+    </>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Drop target between sections (visible when dragging a section or block)
-// ---------------------------------------------------------------------------
 
 interface SectionDropTargetProps {
   zone: PageZone;
@@ -364,9 +480,9 @@ function SectionDropTarget({
 
   return (
     <div
-      onDragOver={(e: React.DragEvent) => {
+      onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
         if (isDraggingSection) {
-          const sectionDrag = readSectionDragData(e.dataTransfer, {
+          const sectionDrag = readSectionDragData(event.dataTransfer, {
             id: draggedSectionId,
             zone: draggedSectionZone,
             index: draggedSectionIndex,
@@ -381,21 +497,21 @@ function SectionDropTarget({
             (toIndex === dragIndex || toIndex === dragIndex + 1);
           if (isSamePosition) return;
         }
-        e.preventDefault();
-        e.stopPropagation();
+        event.preventDefault();
+        event.stopPropagation();
         setIsOver(true);
       }}
-      onDragLeave={(e: React.DragEvent) => {
-        if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+      onDragLeave={(event: React.DragEvent<HTMLDivElement>): void => {
+        if (event.currentTarget.contains(event.relatedTarget as Node)) return;
         setIsOver(false);
       }}
-      onDrop={(e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
+      onDrop={(event: React.DragEvent<HTMLDivElement>): void => {
+        event.preventDefault();
+        event.stopPropagation();
         setIsOver(false);
 
         if (isDraggingSection) {
-          const sectionDrag = readSectionDragData(e.dataTransfer, {
+          const sectionDrag = readSectionDragData(event.dataTransfer, {
             id: draggedSectionId,
             zone: draggedSectionZone,
             index: draggedSectionIndex,
@@ -431,7 +547,7 @@ function SectionDropTarget({
       }`}
     >
       <div
-        className={`absolute inset-x-1 top-1/2 -translate-y-1/2 rounded border-2 border-dashed transition flex items-center justify-center ${
+        className={`absolute inset-x-1 top-1/2 flex -translate-y-1/2 items-center justify-center rounded border-2 border-dashed transition ${
           isOver
             ? canPromoteBlock
               ? 'border-emerald-500 bg-emerald-600/40 h-6'
@@ -441,12 +557,12 @@ function SectionDropTarget({
               : `${treePlaceholderClasses.rootIdle} h-5`
         }`}
       >
-        {canPromoteBlock && (
+        {canPromoteBlock ? (
           <span className={`text-[9px] font-medium ${isOver ? 'text-emerald-200' : 'text-emerald-400'}`}>
             {isOver ? 'Release to extract' : 'Drop here to extract'}
           </span>
-        )}
-        {isDraggingSection && !canPromoteBlock && (
+        ) : null}
+        {isDraggingSection && !canPromoteBlock ? (
           <span
             className={cn(
               'text-[9px] font-medium',
@@ -455,7 +571,7 @@ function SectionDropTarget({
           >
             {isOver ? 'Release to move' : treeInlineDropLabel}
           </span>
-        )}
+        ) : null}
       </div>
     </div>
   );

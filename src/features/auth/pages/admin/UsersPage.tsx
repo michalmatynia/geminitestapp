@@ -23,7 +23,7 @@ import { DEFAULT_AUTH_SECURITY_POLICY } from '@/features/auth/utils/auth-securit
 import { logClientError } from '@/features/observability';
 import { ApiError } from '@/shared/lib/api-client';
 import { invalidateUsers } from '@/shared/lib/query-invalidation';
-import { Badge, Button, Checkbox, ConfirmDialog, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, EmptyState, Input, Label, ListPanel, SectionHeader, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, UnifiedSelect, useToast } from '@/shared/ui';
+import { Badge, Button, Checkbox, ConfirmDialog, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, EmptyState, Input, Label, ListPanel, SectionHeader, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, UnifiedSelect, useToast, FormSection, FormModal, FormField } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 type CreateUserForm = typeof EMPTY_CREATE;
@@ -414,7 +414,7 @@ export default function AuthUsersPage(): React.JSX.Element {
           />
         }
         filters={
-          <SectionPanel>
+          <FormSection className='p-4'>
             <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
               <Input
                 value={search}
@@ -426,7 +426,7 @@ export default function AuthUsersPage(): React.JSX.Element {
                 {dirtyRoles ? 'Unsaved role changes' : 'Roles are up to date'}
               </div>
             </div>
-          </SectionPanel>
+          </FormSection>
         }
       >
         {loading ? (
@@ -514,93 +514,98 @@ export default function AuthUsersPage(): React.JSX.Element {
         )}
       </ListPanel>
 
-      <Dialog open={Boolean(editingUser)} onOpenChange={(open: boolean) => !open && setEditingUser(null)}>
-        <DialogContent className='bg-card border-border text-white'>
-          <DialogHeader>
-            <DialogTitle>Edit User</DialogTitle>
-          </DialogHeader>
-          <div className='space-y-4'>
-            <div className='space-y-2'>
-              <Label htmlFor='edit-name' className='text-xs text-gray-300'>
-                Name
-              </Label>
-              <Input
-                id='edit-name'
-                value={editName}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEditName(event.target.value)}
-                className='bg-gray-900 border text-white'
+      <FormModal
+        open={Boolean(editingUser)}
+        onClose={() => setEditingUser(null)}
+        title='Edit User'
+        onSave={() => void handleSaveUser()}
+        isSaving={updateAuthUserMutation.isPending || updateAuthUserSecurityMutation.isPending}
+        size='md'
+        actions={
+          <Button
+            variant='destructive'
+            onClick={() => setUserToDelete(editingUser)}
+            disabled={
+              !editingUser ||
+              deleteAuthUserMutation.isPending ||
+              editingUser.id === currentSessionUserId
+            }
+          >
+            Delete user
+          </Button>
+        }
+      >
+        <div className='space-y-4'>
+          <FormField label='Name'>
+            <Input
+              id='edit-name'
+              value={editName}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEditName(event.target.value)}
+              className='bg-gray-900 border text-white'
+            />
+          </FormField>
+          <FormField label='Email'>
+            <Input
+              id='edit-email'
+              value={editEmail}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEditEmail(event.target.value)}
+              className='bg-gray-900 border text-white'
+            />
+          </FormField>
+          <div className='flex items-center gap-2'>
+            <Checkbox
+              id='edit-verified'
+              checked={editVerified} onCheckedChange={(checked: boolean | 'indeterminate') => setEditVerified(Boolean(checked))}
+              className='h-4 w-4 rounded border bg-gray-900'
+            />
+            <Label htmlFor='edit-verified' className='text-xs text-gray-300 cursor-pointer'>
+              Email verified
+            </Label>
+          </div>
+          <FormSection title='Security controls' variant='subtle' className='p-3 space-y-3'>
+            {loadingSecurity ? (
+              <div className='text-xs text-gray-500'>Loading security profile...</div>
+            ) : null}
+            {!canManageSecurity ? (
+              <div className='text-xs text-amber-300'>
+                You don&apos;t have permission to view or edit security controls.
+              </div>
+            ) : null}
+            <div className='flex items-center gap-2'>
+              <Checkbox
+                id='edit-disabled'
+                checked={editDisabled}
+                onCheckedChange={(checked: boolean | 'indeterminate') => setEditDisabled(Boolean(checked))}
+                disabled={!canManageSecurity}
+                className='h-4 w-4 rounded border bg-gray-900'
               />
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='edit-email' className='text-xs text-gray-300'>
-                Email
+              <Label htmlFor='edit-disabled' className='text-xs text-gray-300 cursor-pointer'>
+                Disable account
               </Label>
-              <Input
-                id='edit-email'
-                value={editEmail}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEditEmail(event.target.value)}
-                className='bg-gray-900 border text-white'
-              />
             </div>
             <div className='flex items-center gap-2'>
               <Checkbox
-                id='edit-verified'
-                checked={editVerified} onCheckedChange={(checked: boolean | 'indeterminate') => setEditVerified(Boolean(checked))}
+                id='edit-banned'
+                checked={editBanned}
+                onCheckedChange={(checked: boolean | 'indeterminate') => setEditBanned(Boolean(checked))}
+                disabled={!canManageSecurity}
                 className='h-4 w-4 rounded border bg-gray-900'
               />
-              <Label htmlFor='edit-verified' className='text-xs text-gray-300'>
-                Email verified
+              <Label htmlFor='edit-banned' className='text-xs text-gray-300 cursor-pointer'>
+                Ban account
               </Label>
             </div>
-            <div className='rounded-md border border-border bg-card/40 p-3 space-y-3'>
-              <div className='text-xs font-semibold text-gray-300'>
-                Security controls
-              </div>
-              {loadingSecurity ? (
-                <div className='text-xs text-gray-500'>Loading security profile...</div>
-              ) : null}
-              {!canManageSecurity ? (
-                <div className='text-xs text-amber-300'>
-                  You don&apos;t have permission to view or edit security controls.
-                </div>
-              ) : null}
-              <div className='flex items-center gap-2'>
-                <Checkbox
-                  id='edit-disabled'
-                  checked={editDisabled}
-                  onCheckedChange={(checked: boolean | 'indeterminate') => setEditDisabled(Boolean(checked))}
-                  disabled={!canManageSecurity}
-                  className='h-4 w-4 rounded border bg-gray-900'
-                />
-                <Label htmlFor='edit-disabled' className='text-xs text-gray-300'>
-                  Disable account
-                </Label>
-              </div>
-              <div className='flex items-center gap-2'>
-                <Checkbox
-                  id='edit-banned'
-                  checked={editBanned}
-                  onCheckedChange={(checked: boolean | 'indeterminate') => setEditBanned(Boolean(checked))}
-                  disabled={!canManageSecurity}
-                  className='h-4 w-4 rounded border bg-gray-900'
-                />
-                <Label htmlFor='edit-banned' className='text-xs text-gray-300'>
-                  Ban account
-                </Label>
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='edit-allowed-ips' className='text-xs text-gray-300'>
-                  Allowed IPs (optional)
-                </Label>
-                <Textarea
-                  id='edit-allowed-ips'
-                  value={editAllowedIps}
-                  onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => setEditAllowedIps(event.target.value)}
-                  disabled={!canManageSecurity}
-                  className='min-h-[80px] w-full rounded-md border bg-gray-900 px-3 py-2 text-xs text-white'
-                  placeholder='One IP per line or comma-separated'
-                />
-              </div>
+            <FormField label='Allowed IPs (optional)'>
+              <Textarea
+                id='edit-allowed-ips'
+                value={editAllowedIps}
+                onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => setEditAllowedIps(event.target.value)}
+                disabled={!canManageSecurity}
+                className='min-h-[80px] w-full rounded-md border bg-gray-900 px-3 py-2 text-xs text-white'
+                placeholder='One IP per line or comma-separated'
+              />
+            </FormField>
+            <div className='flex items-center justify-between'>
               <div className='text-xs text-gray-500'>
                 MFA status: {editMfaEnabled ? 'enabled' : 'disabled'}
               </div>
@@ -616,176 +621,123 @@ export default function AuthUsersPage(): React.JSX.Element {
                 </Button>
               ) : null}
             </div>
-          </div>
-          <DialogFooter className='pt-4'>
-            <Button
-              variant='destructive'
-              onClick={() => setUserToDelete(editingUser)}
-              disabled={
-                !editingUser ||
-                deleteAuthUserMutation.isPending ||
-                editingUser.id === currentSessionUserId
+          </FormSection>
+        </div>
+      </FormModal>
+
+      <FormModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        title='Create User'
+        onSave={() => void handleCreateUser()}
+        isSaving={registerUserMutation.isPending}
+        size='sm'
+      >
+        <div className='space-y-4'>
+          <FormField label='Name'>
+            <Input
+              id='create-name'
+              value={createForm.name}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setCreateForm((prev: CreateUserForm) => ({ ...prev, name: event.target.value }))
               }
-            >
-              Delete user
-            </Button>
-            <Button variant='outline' onClick={() => setEditingUser(null)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={() => void handleSaveUser()}
-              disabled={updateAuthUserMutation.isPending || updateAuthUserSecurityMutation.isPending}
-            >
-              {updateAuthUserMutation.isPending || updateAuthUserSecurityMutation.isPending
-                ? 'Saving...'
-                : 'Save changes'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className='bg-card border-border text-white'>
-          <DialogHeader>
-            <DialogTitle>Create User</DialogTitle>
-          </DialogHeader>
-          <div className='space-y-4'>
-            <div className='space-y-2'>
-              <Label htmlFor='create-name' className='text-xs text-gray-300'>
-                Name
-              </Label>
-              <Input
-                id='create-name'
-                value={createForm.name}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                  setCreateForm((prev: CreateUserForm) => ({ ...prev, name: event.target.value }))
-                }
-                className='bg-gray-900 border text-white'
-              />
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='create-email' className='text-xs text-gray-300'>
-                Email
-              </Label>
-              <Input
-                id='create-email'
-                value={createForm.email}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                  setCreateForm((prev: CreateUserForm) => ({ ...prev, email: event.target.value }))
-                }
-                className='bg-gray-900 border text-white'
-              />
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='create-password' className='text-xs text-gray-300'>
-                Temporary password
-              </Label>
-              <Input
-                id='create-password'
-                type='password'
-                value={createForm.password}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                  setCreateForm((prev: CreateUserForm) => ({ ...prev, password: event.target.value }))
-                }
-                className='bg-gray-900 border text-white'
-              />
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='create-role' className='text-xs text-gray-300'>
-                Role
-              </Label>
-              <UnifiedSelect
-                options={roleOptions.concat(
-                  roles.map((role: AuthRole) => ({ value: role.id, label: role.name }))
-                )}
-                value={createForm.roleId}
-                onValueChange={(value: string) =>
-                  setCreateForm((prev: CreateUserForm) => ({ ...prev, roleId: value }))
-                }
-                placeholder='Select role'
-              />
-            </div>
-            <div className='flex items-center gap-2'>
-              <Checkbox
-                id='create-verified'
-                checked={createForm.verified} onCheckedChange={(checked: boolean | 'indeterminate') =>
-                  setCreateForm((prev: CreateUserForm) => ({
-                    ...prev,
-                    verified: Boolean(checked),
-                  }))
-                }
-                className='h-4 w-4 rounded border bg-gray-900'
-              />
-              <Label htmlFor='create-verified' className='text-xs text-gray-300'>
-                Mark email as verified
-              </Label>
-            </div>
+              className='bg-gray-900 border text-white'
+            />
+          </FormField>
+          <FormField label='Email'>
+            <Input
+              id='create-email'
+              value={createForm.email}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setCreateForm((prev: CreateUserForm) => ({ ...prev, email: event.target.value }))
+              }
+              className='bg-gray-900 border text-white'
+            />
+          </FormField>
+          <FormField label='Temporary password'>
+            <Input
+              id='create-password'
+              type='password'
+              value={createForm.password}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setCreateForm((prev: CreateUserForm) => ({ ...prev, password: event.target.value }))
+              }
+              className='bg-gray-900 border text-white'
+            />
+          </FormField>
+          <FormField label='Role'>
+            <UnifiedSelect
+              options={roleOptions.concat(
+                roles.map((role: AuthRole) => ({ value: role.id, label: role.name }))
+              )}
+              value={createForm.roleId}
+              onValueChange={(value: string) =>
+                setCreateForm((prev: CreateUserForm) => ({ ...prev, roleId: value }))
+              }
+              placeholder='Select role'
+            />
+          </FormField>
+          <div className='flex items-center gap-2'>
+            <Checkbox
+              id='create-verified'
+              checked={createForm.verified} onCheckedChange={(checked: boolean | 'indeterminate') =>
+                setCreateForm((prev: CreateUserForm) => ({
+                  ...prev,
+                  verified: Boolean(checked),
+                }))
+              }
+              className='h-4 w-4 rounded border bg-gray-900'
+            />
+            <Label htmlFor='create-verified' className='text-xs text-gray-300 cursor-pointer'>
+              Mark email as verified
+            </Label>
           </div>
-          <DialogFooter className='pt-4'>
-            <Button variant='outline' onClick={() => setCreateOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={() => void handleCreateUser()} disabled={registerUserMutation.isPending}>
-              {registerUserMutation.isPending ? 'Creating...' : 'Create user'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      </FormModal>
 
-      <Dialog open={mockOpen} onOpenChange={setMockOpen}>
-        <DialogContent className='bg-card border-border text-white'>
-          <DialogHeader>
-            <DialogTitle>Mock Sign-in</DialogTitle>
-          </DialogHeader>
-          <div className='space-y-4'>
-            <p className='text-xs text-gray-400'>
-              Verify credentials against MongoDB without changing your session.
-            </p>
-            <div className='space-y-2'>
-              <Label htmlFor='mock-email' className='text-xs text-gray-300'>
-                Email
-              </Label>
-              <Input
-                id='mock-email'
-                value={mockEmail}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setMockEmail(event.target.value)}
-                className='bg-gray-900 border text-white'
-              />
+      <FormModal
+        open={mockOpen}
+        onClose={() => setMockOpen(false)}
+        title='Mock Sign-in'
+        onSave={() => void handleMockSignIn()}
+        isSaving={mockSignInMutation.isPending}
+        saveText='Test Sign-in'
+        size='sm'
+      >
+        <div className='space-y-4'>
+          <p className='text-xs text-gray-400'>
+            Verify credentials against MongoDB without changing your session.
+          </p>
+          <FormField label='Email'>
+            <Input
+              id='mock-email'
+              value={mockEmail}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setMockEmail(event.target.value)}
+              className='bg-gray-900 border text-white'
+            />
+          </FormField>
+          <FormField label='Password'>
+            <Input
+              id='mock-password'
+              type='password'
+              value={mockPassword}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setMockPassword(event.target.value)}
+              className='bg-gray-900 border text-white'
+            />
+          </FormField>
+          {mockStatus !== 'idle' ? (
+            <div
+              className={`rounded-md border px-3 py-2 text-xs ${
+                mockStatus === 'success'
+                  ? 'border-green-500/40 bg-green-500/10 text-green-200'
+                  : 'border-red-500/40 bg-red-500/10 text-red-200'
+              }`}
+            >
+              {mockMessage}
             </div>
-            <div className='space-y-2'>
-              <Label htmlFor='mock-password' className='text-xs text-gray-300'>
-                Password
-              </Label>
-              <Input
-                id='mock-password'
-                type='password'
-                value={mockPassword}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setMockPassword(event.target.value)}
-                className='bg-gray-900 border text-white'
-              />
-            </div>
-            {mockStatus !== 'idle' ? (
-              <div
-                className={`rounded-md border px-3 py-2 text-xs ${
-                  mockStatus === 'success'
-                    ? 'border-green-500/40 bg-green-500/10 text-green-200'
-                    : 'border-red-500/40 bg-red-500/10 text-red-200'
-                }`}
-              >
-                {mockMessage}
-              </div>
-            ) : null}
-          </div>
-          <DialogFooter className='pt-4'>
-            <Button variant='outline' onClick={() => setMockOpen(false)}>
-              Close
-            </Button>
-            <Button onClick={() => void handleMockSignIn()} disabled={mockSignInMutation.isPending}>
-              {mockSignInMutation.isPending ? 'Testing...' : 'Test Sign-in'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          ) : null}
+        </div>
+      </FormModal>
 
       <ConfirmDialog
         open={Boolean(userToDelete)}

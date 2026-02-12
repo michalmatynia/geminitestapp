@@ -20,6 +20,8 @@ import {
   Input,
   UnifiedSelect,
   SectionPanel,
+  FormSection,
+  FormField,
 } from '@/shared/ui';
 
 interface TimelineSectionProps {
@@ -215,25 +217,19 @@ export function TimelineSection({ config, onChange }: TimelineSectionProps): Rea
   return (
     <>
       {/* Timeline choreography */}
-      <SectionPanel variant='subtle-compact' className='space-y-2'>
-        <div className='space-y-1.5'>
-          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-            Timeline choreography
-          </Label>
+      <FormSection title='Timeline choreography' variant='subtle-compact' className='p-3 space-y-4'>
+        <FormField label='Mode'>
           <UnifiedSelect
             value={timelineModeValue}
             onValueChange={handleTimelineModeChange}
             options={timelineModeOptions}
           />
-        </div>
+        </FormField>
 
         {timelineModeValue !== 'none' && (
-          <>
+          <div className='mt-4 space-y-4'>
             {(timelineModeValue === 'sequence' || timelineModeValue === 'callResponse') && (
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                  Gap (seconds)
-                </Label>
+              <FormField label='Gap (seconds)'>
                 <Input
                   type='number'
                   min={0}
@@ -241,16 +237,13 @@ export function TimelineSection({ config, onChange }: TimelineSectionProps): Rea
                   step={0.05}
                   value={timelineGapValue}
                   onChange={handleTimelineGapChange}
-                  className='text-sm'
+                  className='h-9'
                 />
-              </div>
+              </FormField>
             )}
 
             {(timelineModeValue === 'overlap' || timelineModeValue === 'domino') && (
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                  Overlap (seconds)
-                </Label>
+              <FormField label='Overlap (seconds)'>
                 <Input
                   type='number'
                   min={0}
@@ -258,16 +251,13 @@ export function TimelineSection({ config, onChange }: TimelineSectionProps): Rea
                   step={0.05}
                   value={timelineOverlapValue}
                   onChange={handleTimelineOverlapChange}
-                  className='text-sm'
+                  className='h-9'
                 />
-              </div>
+              </FormField>
             )}
 
             {timelineModeValue === 'callResponse' && (
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                  Response offset (seconds)
-                </Label>
+              <FormField label='Response offset (seconds)'>
                 <Input
                   type='number'
                   min={0}
@@ -275,18 +265,15 @@ export function TimelineSection({ config, onChange }: TimelineSectionProps): Rea
                   step={0.05}
                   value={timelineResponseOffsetValue}
                   onChange={handleTimelineResponseOffsetChange}
-                  className='text-sm'
+                  className='h-9'
                 />
-              </div>
+              </FormField>
             )}
 
             {(timelineModeValue === 'cascade' ||
               timelineModeValue === 'wave' ||
               timelineModeValue === 'ripple') && (
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                  Stagger each (seconds)
-                </Label>
+              <FormField label='Stagger each (seconds)'>
                 <Input
                   type='number'
                   min={0.01}
@@ -294,16 +281,13 @@ export function TimelineSection({ config, onChange }: TimelineSectionProps): Rea
                   step={0.01}
                   value={timelineStaggerEachValue}
                   onChange={handleTimelineStaggerEachChange}
-                  className='text-sm'
+                  className='h-9'
                 />
-              </div>
+              </FormField>
             )}
 
             {timelineModeValue === 'wave' && (
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                  Wave amount (seconds)
-                </Label>
+              <FormField label='Wave amount (seconds)'>
                 <Input
                   type='number'
                   min={0}
@@ -311,21 +295,21 @@ export function TimelineSection({ config, onChange }: TimelineSectionProps): Rea
                   step={0.05}
                   value={timelineWaveAmountValue}
                   onChange={handleTimelineWaveAmountChange}
-                  className='text-sm'
+                  className='h-9'
                 />
-              </div>
+              </FormField>
             )}
 
             <div className='flex flex-wrap items-center gap-4'>
-              <label className='flex items-center gap-2 text-xs text-gray-300'>
+              <label className='flex items-center gap-2 text-xs text-gray-300 cursor-pointer'>
                 <Checkbox checked={timelineRandomizeValue} onCheckedChange={handleTimelineRandomizeChange} />
                 Random order
               </label>
-              <label className='flex items-center gap-2 text-xs text-gray-300'>
+              <label className='flex items-center gap-2 text-xs text-gray-300 cursor-pointer'>
                 <Checkbox checked={timelineLoopValue} onCheckedChange={handleTimelineLoopChange} />
                 Loop
               </label>
-              <label className='flex items-center gap-2 text-xs text-gray-300'>
+              <label className='flex items-center gap-2 text-xs text-gray-300 cursor-pointer'>
                 <Checkbox checked={timelineYoyoValue} onCheckedChange={handleTimelineYoyoChange} />
                 Yoyo
               </label>
@@ -333,10 +317,7 @@ export function TimelineSection({ config, onChange }: TimelineSectionProps): Rea
 
             {timelineLoopValue && (
               <div className='grid gap-3 sm:grid-cols-2'>
-                <div className='space-y-1.5'>
-                  <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                    Repeat (-1 = infinite)
-                  </Label>
+                <FormField label='Repeat (-1 = infinite)'>
                   <Input
                     type='number'
                     min={-1}
@@ -344,13 +325,10 @@ export function TimelineSection({ config, onChange }: TimelineSectionProps): Rea
                     step={1}
                     value={timelineRepeatValue}
                     onChange={handleTimelineRepeatChange}
-                    className='text-sm'
+                    className='h-9'
                   />
-                </div>
-                <div className='space-y-1.5'>
-                  <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                    Repeat delay (seconds)
-                  </Label>
+                </FormField>
+                <FormField label='Repeat delay (seconds)'>
                   <Input
                     type='number'
                     min={0}
@@ -358,79 +336,64 @@ export function TimelineSection({ config, onChange }: TimelineSectionProps): Rea
                     step={0.05}
                     value={timelineRepeatDelayValue}
                     onChange={handleTimelineRepeatDelayChange}
-                    className='text-sm'
+                    className='h-9'
                   />
-                </div>
+                </FormField>
               </div>
             )}
 
             <p className='text-[10px] text-gray-500'>
               Use selector <span className='text-gray-400'>:scope &gt; *</span> to choreograph children.
             </p>
-          </>
+          </div>
         )}
-      </SectionPanel>
+      </FormSection>
 
       {/* Scroll storytelling */}
-      <SectionPanel variant='subtle-compact' className='space-y-2'>
-        <div className='space-y-1.5'>
-          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-            Scroll storytelling
-          </Label>
+      <FormSection title='Scroll storytelling' variant='subtle-compact' className='p-3 space-y-4'>
+        <FormField label='Mode'>
           <UnifiedSelect
             value={scrollModeValue}
             onValueChange={handleScrollModeChange}
             options={scrollModeOptions}
           />
-        </div>
+        </FormField>
 
         {scrollModeValue !== 'none' && (
-          <>
+          <div className='mt-4 space-y-4'>
             <div className='grid gap-3 sm:grid-cols-2'>
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                  Start
-                </Label>
+              <FormField label='Start'>
                 <Input
                   value={scrollStartValue}
                   onChange={handleScrollStartChange}
                   placeholder='top 85%'
-                  className='text-sm'
+                  className='h-9'
                 />
-              </div>
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                  End
-                </Label>
+              </FormField>
+              <FormField label='End'>
                 <Input
                   value={scrollEndValue}
                   onChange={handleScrollEndChange}
                   placeholder='bottom top'
-                  className='text-sm'
+                  className='h-9'
                 />
-              </div>
+              </FormField>
             </div>
 
             {scrollModeValue === 'reveal' && (
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                  Reveal style
-                </Label>
+              <FormField label='Reveal style'>
                 <UnifiedSelect
                   value={revealStyleValue}
                   onValueChange={handleRevealStyleChange}
                   options={revealStyleOptions}
                 />
-              </div>
+              </FormField>
             )}
 
             {(scrollModeValue === 'scrub' || scrollModeValue === 'pin' || scrollModeValue === 'story') && (
               <>
-                <div className='grid gap-3 sm:grid-cols-2'>
-                  <div className='space-y-1.5'>
-                    <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                      Scrub
-                    </Label>
+                <div className='grid gap-3 sm:grid-cols-2 items-end'>
+                  <FormField label='Scrub'>
                     <Input
                       type='number'
                       min={0}
@@ -438,28 +401,25 @@ export function TimelineSection({ config, onChange }: TimelineSectionProps): Rea
                       step={0.1}
                       value={scrollScrubValue}
                       onChange={handleScrollScrubChange}
-                      className='text-sm'
+                      className='h-9'
                     />
-                  </div>
-                  <label className='flex items-center gap-2 text-xs text-gray-300'>
+                  </FormField>
+                  <div className='flex items-center gap-2 mb-2'>
                     <Checkbox
                       checked={scrollModeValue === 'pin' || scrollModeValue === 'story' ? true : scrollPinValue}
                       onCheckedChange={handleScrollPinChange}
                       disabled={scrollModeValue === 'pin' || scrollModeValue === 'story'}
                     />
-                    Pin section
-                  </label>
+                    <span className='text-xs text-gray-300'>Pin section</span>
+                  </div>
                 </div>
 
-                <div className='grid gap-3 sm:grid-cols-2'>
-                  <label className='flex items-center gap-2 text-xs text-gray-300'>
+                <div className='grid gap-3 sm:grid-cols-2 items-end'>
+                  <div className='flex items-center gap-2 mb-2'>
                     <Checkbox checked={scrollSnapValue} onCheckedChange={handleScrollSnapChange} />
-                    Scroll snap to steps
-                  </label>
-                  <div className='space-y-1.5'>
-                    <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                      Snap duration
-                    </Label>
+                    <span className='text-xs text-gray-300'>Scroll snap to steps</span>
+                  </div>
+                  <FormField label='Snap duration'>
                     <Input
                       type='number'
                       min={0.1}
@@ -467,9 +427,9 @@ export function TimelineSection({ config, onChange }: TimelineSectionProps): Rea
                       step={0.05}
                       value={scrollSnapDurationValue}
                       onChange={handleScrollSnapDurationChange}
-                      className='text-sm'
+                      className='h-9'
                     />
-                  </div>
+                  </FormField>
                 </div>
               </>
             )}
@@ -477,9 +437,9 @@ export function TimelineSection({ config, onChange }: TimelineSectionProps): Rea
             <p className='text-[10px] text-gray-500'>
               Story + pin works best with Timeline modes and multiple targets.
             </p>
-          </>
+          </div>
         )}
-      </SectionPanel>
+      </FormSection>
     </>
   );
 }

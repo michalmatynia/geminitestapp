@@ -133,13 +133,13 @@ export function LeftSidebar(): React.JSX.Element {
     <>
       <SectionPanel
         className={cn(
-          'order-1 flex min-h-0 flex-1 flex-col overflow-hidden transition-all duration-300 ease-in-out p-0',
+          'order-1 flex h-full min-h-0 flex-1 flex-col overflow-hidden transition-all duration-300 ease-in-out p-0',
           isFocusMode && 'pointer-events-none opacity-0 -translate-x-2'
         )}
         variant='subtle'
         aria-hidden={isFocusMode}
       >
-        <div className='flex min-h-0 flex-1 flex-col gap-3 p-4'>
+        <div className='grid min-h-0 flex-1 grid-rows-[auto_auto_auto_clamp(240px,38vh,420px)_minmax(160px,1fr)] gap-3 overflow-hidden p-4'>
           <div className='rounded border border-border/60 bg-card/60 px-2 py-1.5 text-[11px] text-gray-400'>
             {selectedSlot
               ? `Active card: ${selectedSlot.name || selectedSlot.id}`
@@ -240,11 +240,11 @@ export function LeftSidebar(): React.JSX.Element {
             ) : null}
           </div>
 
-          <div className='h-1/2 min-h-[220px] overflow-hidden'>
+          <div className='h-full min-h-0 min-w-0 overflow-hidden'>
             <SlotTree key={projectId} revealRequest={revealRequest} />
           </div>
 
-          <div className='min-h-0 flex-1 overflow-hidden rounded border border-border/60 bg-card/40 p-2'>
+          <div className='min-h-0 overflow-hidden rounded border border-border/60 bg-card/40 p-2'>
             <div className='mb-1 flex items-center justify-between text-[11px] text-gray-400'>
               <span>Shape Layers</span>
               <span>{maskShapes.length}</span>

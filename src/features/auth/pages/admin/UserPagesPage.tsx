@@ -10,7 +10,7 @@ import {
 } from '@/features/auth/utils/auth-user-pages';
 import { logClientError } from '@/features/observability';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Label, Switch, useToast, SectionHeader, SectionPanel } from '@/shared/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Label, Switch, useToast, SectionHeader, SectionPanel, FormSection } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 export default function AuthUserPagesPage(): React.JSX.Element {
@@ -78,21 +78,18 @@ function AuthUserPagesForm({
 
   return (
     <div className='space-y-6'>
-      <SectionPanel className='p-6'>
-        <SectionHeader
-          title='User Pages'
-          description='Configure which authentication flows are available in the public UI.'
-        />
-      </SectionPanel>
+      <FormSection
+        title='User Pages'
+        description='Configure which authentication flows are available in the public UI.'
+        className='p-6'
+      />
 
-      <Card className='bg-card border-border'>
-        <CardHeader>
-          <CardTitle className='text-white text-lg'>Authentication Flows</CardTitle>
-          <CardDescription className='text-gray-500'>
-            Toggle each flow on/off. Password strength rules live in Auth Settings.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className='space-y-4'>
+      <FormSection
+        title='Authentication Flows'
+        description='Toggle each flow on/off. Password strength rules live in Auth Settings.'
+        className='p-6'
+      >
+        <div className='space-y-4 mt-4'>
           {(
             [
               ['allowSignup', 'Allow sign-up', 'Enable self-service user registration.'],
@@ -115,8 +112,8 @@ function AuthUserPagesForm({
               />
             </div>
           ))}
-        </CardContent>
-      </Card>
+        </div>
+      </FormSection>
 
       <div className='flex justify-end'>
         <Button

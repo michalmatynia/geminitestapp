@@ -2,6 +2,7 @@ import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract'
 import { normalizeTreePath } from '@/shared/utils/tree-operations';
 
 import { normalizeFolderPaths } from './studio-tree';
+
 import type { ImageStudioSlotRecord } from '../types';
 
 const FOLDER_NODE_PREFIX = 'folder:';

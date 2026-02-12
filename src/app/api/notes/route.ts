@@ -78,8 +78,16 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
   const resolvedNotebookId =
     parsed.data.notebookId ?? (await noteService.getOrCreateDefaultNotebook()).id;
+  const { color, tagIds, editorType, isPinned, isArchived, isFavorite, categoryIds, ...rest } = parsed.data;
   const note = await noteService.create({
-    ...parsed.data,
+    ...rest,
+    color: color ?? null,
+    tagIds: tagIds ?? [],
+    editorType: editorType ?? 'markdown',
+    isPinned: isPinned ?? false,
+    isArchived: isArchived ?? false,
+    isFavorite: isFavorite ?? false,
+    categoryIds: categoryIds ?? [],
     notebookId: resolvedNotebookId,
   });
   return NextResponse.json(note, { status: 201 });

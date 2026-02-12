@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 import type { PlaywrightPersona } from '@/features/playwright';
 import { PlaywrightSettingsProvider } from '@/features/playwright/context/PlaywrightSettingsContext';
-import { Tabs, TabsContent, TabsList, TabsTrigger, Button, AppModal, Label, UnifiedSelect, SectionPanel } from '@/shared/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger, Button, AppModal, Label, UnifiedSelect, SectionPanel, FormSection, FormField } from '@/shared/ui';
 
 import { AllegroApiConsole } from './AllegroApiConsole';
 import { AllegroSettings } from './AllegroSettings';
@@ -233,45 +233,39 @@ export function IntegrationModal(): React.JSX.Element {
 
         {showPlaywright && (
           <TabsContent value='playwright' className='mt-4 space-y-4'>
-            <SectionPanel variant='subtle' className='p-4'>
-              <div className='flex flex-wrap items-center justify-between gap-3'>
-                <div>
-                  <p className='text-sm font-semibold text-white'>
-                        Playwright persona
-                  </p>
-                  <p className='mt-1 text-xs text-gray-400'>
-                        Apply shared automation presets to this connection.
-                  </p>
-                </div>
+            <FormSection
+              title='Playwright persona'
+              description='Apply shared automation presets to this connection.'
+              actions={(
                 <Button variant='outline' size='sm' asChild>
                   <Link href='/admin/settings/playwright'>
-                        Manage personas
+                    Manage personas
                   </Link>
                 </Button>
-              </div>
-
+              )}
+              className='p-4'
+            >
               {playwrightPersonasLoading ? (
                 <p className='mt-4 text-xs text-gray-500'>
-                      Loading personas...
+                  Loading personas...
                 </p>
               ) : playwrightPersonas.length === 0 ? (
                 <p className='mt-4 text-xs text-gray-500'>
-                      No personas yet. Create one in settings.
+                  No personas yet. Create one in settings.
                 </p>
               ) : (
                 <div className='mt-4 grid gap-4 md:grid-cols-2'>
-                  <div className='space-y-2'>
-                    <Label className='text-xs text-gray-400'>
-                          Persona
-                    </Label>
+                  <FormField
+                    label='Persona'
+                    description='Selecting a persona overwrites the settings below.'
+                  >
                     <UnifiedSelect
                       value={playwrightPersonaId ?? 'custom'}
                       onValueChange={(value: string): void => {
                         void handleSelectPlaywrightPersona(
                           value === 'custom' ? null : value
                         );
-                      }
-                      }
+                      }}
                       options={[
                         { value: 'custom', label: 'Custom' },
                         ...playwrightPersonas.map((persona: PlaywrightPersona) => ({
@@ -281,11 +275,8 @@ export function IntegrationModal(): React.JSX.Element {
                       ]}
                       placeholder='Select persona'
                     />
-                    <p className='text-[11px] text-gray-500'>
-                          Selecting a persona overwrites the settings below.
-                    </p>
-                  </div>
-                  <SectionPanel variant='subtle' className='p-3 text-xs text-gray-400'>
+                  </FormField>
+                  <FormSection variant='subtle' className='p-3 text-xs text-gray-400'>
                     {selectedPersona ? (
                       <>
                         <p className='text-xs font-semibold text-gray-200'>
@@ -293,23 +284,23 @@ export function IntegrationModal(): React.JSX.Element {
                         </p>
                         <p className='mt-1'>
                           {selectedPersona.description ||
-                                'No description provided.'}
+                            'No description provided.'}
                         </p>
                       </>
                     ) : (
                       <>
                         <p className='text-xs font-semibold text-gray-200'>
-                              Custom settings
+                          Custom settings
                         </p>
                         <p className='mt-1'>
-                              Adjust the form below or apply a persona.
+                          Adjust the form below or apply a persona.
                         </p>
                       </>
                     )}
-                  </SectionPanel>
+                  </FormSection>
                 </div>
               )}
-            </SectionPanel>
+            </FormSection>
 
             <DynamicPlaywrightSettingsForm />
           </TabsContent>

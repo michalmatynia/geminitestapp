@@ -28,6 +28,7 @@ export type MasterFolderTreeRenderNodeInput = {
 
 export type MasterFolderTreeProps = {
   controller: MasterFolderTreeController;
+  enableDnd?: boolean | undefined;
   className?: string | undefined;
   emptyLabel?: string | undefined;
   renderToolbar?: ((controller: MasterFolderTreeController) => React.ReactNode) | undefined;
@@ -52,6 +53,7 @@ export type MasterFolderTreeProps = {
           draggedNodeId: MasterTreeId;
           targetId: MasterTreeId | null;
           position: MasterTreeDropPosition;
+          rootDropZone?: 'top' | 'bottom' | undefined;
         },
         controller: MasterFolderTreeController
       ) => Promise<void> | void)
@@ -66,7 +68,18 @@ export type MasterFolderTreeProps = {
         controller: MasterFolderTreeController
       ) => MasterTreeDropPosition)
     | undefined;
+  rootDropUi?:
+    | {
+        enabled?: boolean | undefined;
+        label?: string | undefined;
+        idleClassName?: string | undefined;
+        activeClassName?: string | undefined;
+      }
+    | undefined;
 };
+
+const defaultRootDropIdleClassName = 'border-border/45 bg-card/25 text-gray-400';
+const defaultRootDropActiveClassName = 'border-sky-200/55 bg-sky-500/12 text-sky-100';
 
 const DefaultRow = ({
   node,
@@ -118,6 +131,7 @@ const DefaultRow = ({
 
 export function MasterFolderTree({
   controller,
+  enableDnd = true,
   className,
   emptyLabel = 'No items',
   renderToolbar,
@@ -126,7 +140,11 @@ export function MasterFolderTree({
   canDrop,
   onNodeDrop,
   resolveDropPosition,
+  rootDropUi,
 }: MasterFolderTreeProps): React.JSX.Element {
+  const [externalDraggedNodeId, setExternalDraggedNodeId] = React.useState<MasterTreeId | null>(null);
+  const [rootDropHoverZone, setRootDropHoverZone] = React.useState<'top' | 'bottom' | null>(null);
+
   const resolveDraggedNode = (
     event: React.DragEvent<HTMLElement>
   ): MasterTreeId | null => {
@@ -154,6 +172,47 @@ export function MasterFolderTree({
       controller
     );
   };
+
+  const rootDropEnabled = rootDropUi?.enabled ?? true;
+  const rootDropLabel = rootDropUi?.label?.trim() || 'Drop to Root';
+  const rootDropIdleClassName = rootDropUi?.idleClassName ?? defaultRootDropIdleClassName;
+  const rootDropActiveClassName = rootDropUi?.activeClassName ?? defaultRootDropActiveClassName;
+  const activeDraggedNodeId = controller.dragState?.draggedNodeId ?? externalDraggedNodeId;
+  const canDropToRoot = activeDraggedNodeId
+    ? resolveDropAllowance(activeDraggedNodeId, null, 'inside')
+    : false;
+  const showRootDropZones = enableDnd && rootDropEnabled && canDropToRoot;
+
+  const clearDragIndicators = React.useCallback((): void => {
+    setExternalDraggedNodeId(null);
+    setRootDropHoverZone(null);
+  }, []);
+
+  const applyRootDrop = React.useCallback(
+    async (
+      draggedNodeId: MasterTreeId,
+      rootDropZone?: 'top' | 'bottom' | undefined
+    ): Promise<void> => {
+      if (onNodeDrop) {
+        await onNodeDrop(
+          {
+            draggedNodeId,
+            targetId: null,
+            position: 'inside',
+            ...(rootDropZone ? { rootDropZone } : {}),
+          },
+          controller
+        );
+        return;
+      }
+      if (rootDropZone === 'top') {
+        await controller.dropNodeToRoot(draggedNodeId, 0);
+        return;
+      }
+      await controller.dropNodeToRoot(draggedNodeId);
+    },
+    [controller, onNodeDrop]
+  );
 
   const renderTree = (nodes: MasterTreeViewNode[], depth: number): React.JSX.Element => (
     <div className='space-y-0.5'>
@@ -204,95 +263,117 @@ export function MasterFolderTree({
         return (
           <div key={node.id} className='group'>
             <div
-              draggable
+              draggable={enableDnd}
               data-master-tree-node-id={node.id}
-              onDragStart={(event: React.DragEvent<HTMLDivElement>): void => {
-                controller.startDrag(node.id);
-                event.dataTransfer.effectAllowed = 'move';
-              }}
-              onDragEnd={(): void => {
-                controller.clearDrag();
-              }}
-              onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
-                const draggedNodeId = resolveDraggedNode(event);
-                if (!draggedNodeId) return;
-                const targetRect = event.currentTarget.getBoundingClientRect();
-                const edgePosition = resolveVerticalDropPosition(event.clientY, targetRect, {
-                  thresholdRatio: 0.34,
-                });
-                const requestedPosition =
-                  resolveDropPosition?.(
-                    event,
-                    {
-                      draggedNodeId,
-                      targetId: node.id,
-                    },
-                    controller
-                  ) ??
-                  edgePosition ??
-                  'inside';
-                const resolvedPosition =
-                  resolveDropAllowance(draggedNodeId, node.id, requestedPosition)
-                    ? requestedPosition
-                    : requestedPosition !== 'inside' &&
-                        resolveDropAllowance(draggedNodeId, node.id, 'inside')
-                      ? 'inside'
-                      : null;
-                if (!resolvedPosition) return;
-                event.preventDefault();
-                event.stopPropagation();
-                if (controller.dragState) {
-                  controller.updateDragTarget(node.id, resolvedPosition);
-                }
-                event.dataTransfer.dropEffect = 'move';
-              }}
-              onDrop={(event: React.DragEvent<HTMLDivElement>): void => {
-                const draggedNodeId = resolveDraggedNode(event);
-                if (!draggedNodeId) return;
-                const targetRect = event.currentTarget.getBoundingClientRect();
-                const edgePosition = resolveVerticalDropPosition(event.clientY, targetRect, {
-                  thresholdRatio: 0.34,
-                });
-                const requestedPosition =
-                  resolveDropPosition?.(
-                    event,
-                    {
-                      draggedNodeId,
-                      targetId: node.id,
-                    },
-                    controller
-                  ) ??
-                  edgePosition ??
-                  'inside';
-                const resolvedPosition =
-                  resolveDropAllowance(draggedNodeId, node.id, requestedPosition)
-                    ? requestedPosition
-                    : requestedPosition !== 'inside' &&
-                        resolveDropAllowance(draggedNodeId, node.id, 'inside')
-                      ? 'inside'
-                      : null;
-                if (!resolvedPosition) return;
-                event.preventDefault();
-                event.stopPropagation();
-                void (async (): Promise<void> => {
-                  if (onNodeDrop) {
-                    await onNodeDrop(
-                      {
-                        draggedNodeId,
-                        targetId: node.id,
-                        position: resolvedPosition,
-                      },
-                      controller
-                    );
-                    return;
+              onDragStart={
+                enableDnd
+                  ? (event: React.DragEvent<HTMLDivElement>): void => {
+                    controller.startDrag(node.id);
+                    event.dataTransfer.effectAllowed = 'move';
                   }
-                  if (resolvedPosition === 'inside') {
-                    await controller.moveNode(draggedNodeId, node.id);
-                    return;
+                  : undefined
+              }
+              onDragEnd={
+                enableDnd
+                  ? (): void => {
+                    controller.clearDrag();
+                    clearDragIndicators();
                   }
-                  await controller.reorderNode(draggedNodeId, node.id, resolvedPosition);
-                })();
-              }}
+                  : undefined
+              }
+              onDragOver={
+                enableDnd
+                  ? (event: React.DragEvent<HTMLDivElement>): void => {
+                    const draggedNodeId = resolveDraggedNode(event);
+                    if (!draggedNodeId) return;
+                    setRootDropHoverZone(null);
+                    const targetRect = event.currentTarget.getBoundingClientRect();
+                    const edgePosition = resolveVerticalDropPosition(event.clientY, targetRect, {
+                      thresholdRatio: 0.34,
+                    });
+                    const requestedPosition =
+                      resolveDropPosition?.(
+                        event,
+                        {
+                          draggedNodeId,
+                          targetId: node.id,
+                        },
+                        controller
+                      ) ??
+                      edgePosition ??
+                      'inside';
+                    const resolvedPosition =
+                      resolveDropAllowance(draggedNodeId, node.id, requestedPosition)
+                        ? requestedPosition
+                        : requestedPosition !== 'inside' &&
+                            resolveDropAllowance(draggedNodeId, node.id, 'inside')
+                          ? 'inside'
+                          : null;
+                    if (!resolvedPosition) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    if (!controller.dragState) {
+                      setExternalDraggedNodeId(draggedNodeId);
+                    }
+                    if (controller.dragState) {
+                      controller.updateDragTarget(node.id, resolvedPosition);
+                    }
+                    event.dataTransfer.dropEffect = 'move';
+                  }
+                  : undefined
+              }
+              onDrop={
+                enableDnd
+                  ? (event: React.DragEvent<HTMLDivElement>): void => {
+                    const draggedNodeId = resolveDraggedNode(event);
+                    if (!draggedNodeId) return;
+                    const targetRect = event.currentTarget.getBoundingClientRect();
+                    const edgePosition = resolveVerticalDropPosition(event.clientY, targetRect, {
+                      thresholdRatio: 0.34,
+                    });
+                    const requestedPosition =
+                      resolveDropPosition?.(
+                        event,
+                        {
+                          draggedNodeId,
+                          targetId: node.id,
+                        },
+                        controller
+                      ) ??
+                      edgePosition ??
+                      'inside';
+                    const resolvedPosition =
+                      resolveDropAllowance(draggedNodeId, node.id, requestedPosition)
+                        ? requestedPosition
+                        : requestedPosition !== 'inside' &&
+                            resolveDropAllowance(draggedNodeId, node.id, 'inside')
+                          ? 'inside'
+                          : null;
+                    if (!resolvedPosition) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    clearDragIndicators();
+                    void (async (): Promise<void> => {
+                      if (onNodeDrop) {
+                        await onNodeDrop(
+                          {
+                            draggedNodeId,
+                            targetId: node.id,
+                            position: resolvedPosition,
+                          },
+                          controller
+                        );
+                        return;
+                      }
+                      if (resolvedPosition === 'inside') {
+                        await controller.moveNode(draggedNodeId, node.id);
+                        return;
+                      }
+                      await controller.reorderNode(draggedNodeId, node.id, resolvedPosition);
+                    })();
+                  }
+                  : undefined
+              }
             >
               {row}
             </div>
@@ -307,38 +388,141 @@ export function MasterFolderTree({
     <div className={className}>
       {renderToolbar ? <div>{renderToolbar(controller)}</div> : null}
       <div
-        onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
-          const draggedNodeId = resolveDraggedNode(event);
-          if (!draggedNodeId) return;
-          if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
-          event.preventDefault();
-          if (controller.dragState) {
-            controller.updateDragTarget(null, 'inside');
-          }
-          event.dataTransfer.dropEffect = 'move';
-        }}
-        onDrop={(event: React.DragEvent<HTMLDivElement>): void => {
-          const draggedNodeId = resolveDraggedNode(event);
-          if (!draggedNodeId) return;
-          if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
-          event.preventDefault();
-          void (async (): Promise<void> => {
-            if (onNodeDrop) {
-              await onNodeDrop(
-                {
-                  draggedNodeId,
-                  targetId: null,
-                  position: 'inside',
-                },
-                controller
-              );
-              return;
+        onDragLeave={
+          enableDnd
+            ? (event: React.DragEvent<HTMLDivElement>): void => {
+              const nextTarget = event.relatedTarget;
+              if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) return;
+              clearDragIndicators();
             }
-            await controller.dropNodeToRoot(draggedNodeId);
-          })();
-        }}
-        className='space-y-1'
+            : undefined
+        }
+        onDragOver={
+          enableDnd
+            ? (event: React.DragEvent<HTMLDivElement>): void => {
+              const draggedNodeId = resolveDraggedNode(event);
+              if (!draggedNodeId) {
+                clearDragIndicators();
+                return;
+              }
+              if (!controller.dragState) {
+                setExternalDraggedNodeId(draggedNodeId);
+              }
+              setRootDropHoverZone(null);
+              if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
+              event.preventDefault();
+              if (controller.dragState) {
+                controller.updateDragTarget(null, 'inside');
+              }
+              event.dataTransfer.dropEffect = 'move';
+            }
+            : undefined
+        }
+        onDrop={
+          enableDnd
+            ? (event: React.DragEvent<HTMLDivElement>): void => {
+              const draggedNodeId = resolveDraggedNode(event);
+              if (!draggedNodeId) return;
+              if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
+              event.preventDefault();
+              clearDragIndicators();
+              void (async (): Promise<void> => {
+                await applyRootDrop(draggedNodeId);
+              })();
+            }
+            : undefined
+        }
+        onDragEnd={
+          enableDnd
+            ? (): void => {
+              clearDragIndicators();
+            }
+            : undefined
+        }
+        className='relative space-y-1'
       >
+        {showRootDropZones ? (
+          <>
+            <div
+              data-master-tree-root-drop='top'
+              onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
+                const draggedNodeId = resolveDraggedNode(event);
+                if (!draggedNodeId) return;
+                if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
+                event.preventDefault();
+                event.stopPropagation();
+                setRootDropHoverZone('top');
+                if (!controller.dragState) {
+                  setExternalDraggedNodeId(draggedNodeId);
+                }
+                if (controller.dragState) {
+                  controller.updateDragTarget(null, 'inside');
+                }
+                event.dataTransfer.dropEffect = 'move';
+              }}
+              onDragLeave={(event: React.DragEvent<HTMLDivElement>): void => {
+                const nextTarget = event.relatedTarget;
+                if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) return;
+                setRootDropHoverZone((current) => (current === 'top' ? null : current));
+              }}
+              onDrop={(event: React.DragEvent<HTMLDivElement>): void => {
+                const draggedNodeId = resolveDraggedNode(event);
+                if (!draggedNodeId) return;
+                if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
+                event.preventDefault();
+                event.stopPropagation();
+                clearDragIndicators();
+                void applyRootDrop(draggedNodeId, 'top');
+              }}
+              className={`absolute inset-x-2 top-1 z-20 flex h-8 items-center justify-center rounded-md border border-dashed text-[10px] font-medium uppercase tracking-[0.08em] transition-all duration-150 ${
+                rootDropHoverZone === 'top'
+                  ? rootDropActiveClassName
+                  : rootDropIdleClassName
+              }`}
+            >
+              {rootDropLabel}
+            </div>
+            <div
+              data-master-tree-root-drop='bottom'
+              onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
+                const draggedNodeId = resolveDraggedNode(event);
+                if (!draggedNodeId) return;
+                if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
+                event.preventDefault();
+                event.stopPropagation();
+                setRootDropHoverZone('bottom');
+                if (!controller.dragState) {
+                  setExternalDraggedNodeId(draggedNodeId);
+                }
+                if (controller.dragState) {
+                  controller.updateDragTarget(null, 'inside');
+                }
+                event.dataTransfer.dropEffect = 'move';
+              }}
+              onDragLeave={(event: React.DragEvent<HTMLDivElement>): void => {
+                const nextTarget = event.relatedTarget;
+                if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) return;
+                setRootDropHoverZone((current) => (current === 'bottom' ? null : current));
+              }}
+              onDrop={(event: React.DragEvent<HTMLDivElement>): void => {
+                const draggedNodeId = resolveDraggedNode(event);
+                if (!draggedNodeId) return;
+                if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
+                event.preventDefault();
+                event.stopPropagation();
+                clearDragIndicators();
+                void applyRootDrop(draggedNodeId, 'bottom');
+              }}
+              className={`absolute inset-x-2 bottom-1 z-20 flex h-8 items-center justify-center rounded-md border border-dashed text-[10px] font-medium uppercase tracking-[0.08em] transition-all duration-150 ${
+                rootDropHoverZone === 'bottom'
+                  ? rootDropActiveClassName
+                  : rootDropIdleClassName
+              }`}
+            >
+              {rootDropLabel}
+            </div>
+          </>
+        ) : null}
         {controller.roots.length > 0 ? (
           renderTree(controller.roots, 0)
         ) : (

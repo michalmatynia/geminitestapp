@@ -20,7 +20,7 @@ import type { IntegrationWithConnections, IntegrationConnectionBasic } from '@/f
 import { listProductFormSchema } from '@/features/integrations/validations/listing-forms';
 import { logClientError } from '@/features/observability';
 import { ProductWithImages } from '@/features/products/types';
-import { Button, UnifiedSelect, Label, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, SectionPanel, FormModal } from '@/shared/ui';
+import { Button, UnifiedSelect, Label, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, SectionPanel, FormModal, FormSection, FormField } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 import { BaseListingSettings } from './BaseListingSettings';
@@ -219,25 +219,24 @@ function ListProductModalContent({
         {loading ? (
           <p className='text-sm text-gray-400'>Loading integrations...</p>
         ) : integrationsWithConnections.length === 0 ? (
-          <SectionPanel variant='subtle' className='border-yellow-500/40 bg-yellow-500/10 p-6 text-center'>
+          <FormSection variant='subtle' className='border-yellow-500/40 bg-yellow-500/10 p-6 text-center'>
             <p className='text-sm text-yellow-200'>
               No integrations with configured accounts found.
             </p>
             <p className='mt-2 text-xs text-yellow-300/70'>
               Please set up an integration with at least one account first.
             </p>
-          </SectionPanel>
+          </FormSection>
         ) : (
-          <>
+          <div className='space-y-4'>
             {hasPresetSelection ? (
               <IntegrationAccountSummary 
                 integrationName={selectedIntegration?.name}
                 connectionName={connectionName}
               />
             ) : (
-              <>
-                <div className='space-y-2'>
-                  <Label htmlFor='integration'>Marketplace / Integration</Label>
+              <FormSection title='Integration Target' className='p-4 space-y-4'>
+                <FormField label='Marketplace / Integration'>
                   <UnifiedSelect
                     value={selectedIntegrationId}
                     onValueChange={setSelectedIntegrationId}
@@ -249,11 +248,13 @@ function ListProductModalContent({
                       }))}
                     placeholder='Select a marketplace...'
                   />
-                </div>
+                </FormField>
 
                 {selectedIntegration && (
-                  <div className='space-y-2'>
-                    <Label htmlFor='connection'>Account</Label>
+                  <FormField 
+                    label='Account'
+                    description={`Choose which account to use for listing this product on ${selectedIntegration.name}.`}
+                  >
                     <UnifiedSelect
                       value={selectedConnectionId}
                       onValueChange={setSelectedConnectionId}
@@ -265,19 +266,17 @@ function ListProductModalContent({
                         }))}
                       placeholder='Select an account...'
                     />
-                    <p className='text-xs text-gray-500'>
-                      Choose which account to use for listing this product on{' '}
-                      {selectedIntegration.name}.
-                    </p>
-                  </div>
+                  </FormField>
                 )}
-              </>
+              </FormSection>
             )}
 
             {isBaseComIntegration && selectedConnectionId && (
-              <BaseListingSettings />
+              <div className='pt-4 border-t border-border'>
+                <BaseListingSettings />
+              </div>
             )}
-          </>
+          </div>
         )}
         {exportLogs.length > 0 && (
           <div className='mt-4 border-t border pt-4'>

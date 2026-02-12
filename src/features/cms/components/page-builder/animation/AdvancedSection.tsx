@@ -32,6 +32,8 @@ import {
   Tooltip,
   UnifiedSelect,
   SectionPanel,
+  FormSection,
+  FormField,
   type VectorShape,
 } from '@/shared/ui';
 
@@ -545,26 +547,21 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
   return (
     <>
       {/* Motion Path */}
-      <SectionPanel variant='subtle-compact' className='space-y-2'>
-        <div className='flex items-center justify-between'>
-          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-            Motion Path
-          </Label>
-          <Checkbox checked={motionPathEnabledValue} onCheckedChange={handleMotionPathEnabledChange} />
-        </div>
-
+      <FormSection
+        title='Motion Path'
+        variant='subtle-compact'
+        actions={<Checkbox checked={motionPathEnabledValue} onCheckedChange={handleMotionPathEnabledChange} />}
+        className='p-3 space-y-4'
+      >
         {motionPathEnabledValue && (
-          <>
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                Path / Selector
-              </Label>
+          <div className='mt-4 space-y-4'>
+            <FormField label='Path / Selector'>
               <div className='flex items-center gap-2'>
                 <Input
                   value={motionPathPathValue}
                   onChange={handleMotionPathPathChange}
                   placeholder='SVG path data or selector (#path)'
-                  className='flex-1 text-xs font-mono'
+                  className='flex-1 text-xs font-mono h-9'
                 />
                 <Tooltip content='Draw path on canvas'>
                   <Button
@@ -572,6 +569,7 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
                     size='icon'
                     variant='outline'
                     onClick={handleMotionPathDraw}
+                    className='h-9 w-9'
                   >
                     <PenLine className='size-4' />
                   </Button>
@@ -583,16 +581,16 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
                     variant='ghost'
                     onClick={handleMotionPathClear}
                     disabled={!motionPathPathValue && motionPathShapesValue.length === 0}
+                    className='h-9 w-9'
                   >
                     <Trash2 className='size-4' />
                   </Button>
                 </Tooltip>
               </div>
-            </div>
+            </FormField>
 
             <div className='grid gap-3 sm:grid-cols-2'>
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Start (0-1)</Label>
+              <FormField label='Start (0-1)'>
                 <Input
                   type='number'
                   min={0}
@@ -600,11 +598,10 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
                   step={0.01}
                   value={motionPathStartValue}
                   onChange={handleMotionPathStartChange}
-                  className='text-sm'
+                  className='h-9'
                 />
-              </div>
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>End (0-1)</Label>
+              </FormField>
+              <FormField label='End (0-1)'>
                 <Input
                   type='number'
                   min={0}
@@ -612,27 +609,24 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
                   step={0.01}
                   value={motionPathEndValue}
                   onChange={handleMotionPathEndChange}
-                  className='text-sm'
+                  className='h-9'
                 />
-              </div>
+              </FormField>
             </div>
 
             <div className='grid gap-3 sm:grid-cols-2'>
-              <label className='flex items-center gap-2 text-xs text-gray-300'>
+              <div className='flex items-center gap-2'>
                 <Checkbox checked={motionPathAlignValue} onCheckedChange={handleMotionPathAlignChange} />
-                Align to path
-              </label>
-              <label className='flex items-center gap-2 text-xs text-gray-300'>
+                <span className='text-xs text-gray-300'>Align to path</span>
+              </div>
+              <div className='flex items-center gap-2'>
                 <Checkbox checked={motionPathAutoRotateValue} onCheckedChange={handleMotionPathAutoRotateChange} />
-                Auto rotate
-              </label>
+                <span className='text-xs text-gray-300'>Auto rotate</span>
+              </div>
             </div>
 
             {motionPathAutoRotateValue && (
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                  Rotate offset (deg)
-                </Label>
+              <FormField label='Rotate offset (deg)'>
                 <Input
                   type='number'
                   min={-360}
@@ -640,21 +634,18 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
                   step={1}
                   value={motionPathRotateOffsetValue}
                   onChange={handleMotionPathRotateOffsetChange}
-                  className='text-sm'
+                  className='h-9'
                 />
-              </div>
+              </FormField>
             )}
 
-            <div className='grid gap-3 sm:grid-cols-2'>
-              <label className='flex items-center gap-2 text-xs text-gray-300'>
+            <div className='grid gap-3 sm:grid-cols-2 items-end'>
+              <div className='flex items-center gap-2 mb-2'>
                 <Checkbox checked={motionPathFollowValue} onCheckedChange={handleMotionPathFollowChange} />
-                Follow path (multi)
-              </label>
+                <span className='text-xs text-gray-300'>Follow path (multi)</span>
+              </div>
               {motionPathFollowValue && (
-                <div className='space-y-1.5'>
-                  <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                    Spacing (0-1)
-                  </Label>
+                <FormField label='Spacing (0-1)'>
                   <Input
                     type='number'
                     min={0}
@@ -662,47 +653,42 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
                     step={0.01}
                     value={motionPathSpacingValue}
                     onChange={handleMotionPathSpacingChange}
-                    className='text-sm'
+                    className='h-9'
                   />
-                </div>
+                </FormField>
               )}
             </div>
-          </>
+          </div>
         )}
-      </SectionPanel>
+      </FormSection>
 
       {/* SVG Effects */}
-      <SectionPanel variant='subtle-compact' className='space-y-2'>
-        <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-          SVG Effects
-        </Label>
-        <div className='space-y-3'>
-          <label className='flex items-center gap-2 text-xs text-gray-300'>
+      <FormSection title='SVG Effects' variant='subtle-compact' className='p-3 space-y-4'>
+        <div className='space-y-4 mt-4'>
+          <div className='flex items-center gap-2'>
             <Checkbox checked={svgDrawEnabledValue} onCheckedChange={handleSvgDrawEnabledChange} />
-            Draw SVG strokes
-          </label>
+            <span className='text-xs text-gray-300'>Draw SVG strokes</span>
+          </div>
           {svgDrawEnabledValue && (
-            <>
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Target selector</Label>
+            <div className='space-y-4 pl-2 border-l border-border/40'>
+              <FormField label='Target selector'>
                 <Input
                   value={svgDrawSelectorValue}
                   onChange={handleSvgDrawSelectorChange}
                   placeholder='path, line, circle'
-                  className='text-sm'
+                  className='h-9'
                 />
-              </div>
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Custom path</Label>
+              </FormField>
+              <FormField label='Custom path'>
                 <div className='flex items-center gap-2'>
                   <Input
                     value={svgDrawPathValue}
                     onChange={handleSvgDrawPathChange}
                     placeholder='Draw or paste SVG path'
-                    className='flex-1 text-xs font-mono'
+                    className='flex-1 text-xs font-mono h-9'
                   />
                   <Tooltip content='Draw path on canvas'>
-                    <Button type='button' size='icon' variant='outline' onClick={handleSvgDrawCanvas}>
+                    <Button type='button' size='icon' variant='outline' onClick={handleSvgDrawCanvas} className='h-9 w-9'>
                       <PenLine className='size-4' />
                     </Button>
                   </Tooltip>
@@ -713,15 +699,15 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
                       variant='ghost'
                       onClick={handleSvgDrawClear}
                       disabled={!svgDrawPathValue && svgDrawShapesValue.length === 0}
+                      className='h-9 w-9'
                     >
                       <Trash2 className='size-4' />
                     </Button>
                   </Tooltip>
                 </div>
-              </div>
+              </FormField>
               <div className='grid gap-3 sm:grid-cols-2'>
-                <div className='space-y-1.5'>
-                  <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>From %</Label>
+                <FormField label='From %'>
                   <Input
                     type='number'
                     min={0}
@@ -729,11 +715,10 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
                     step={1}
                     value={svgDrawFromValue}
                     onChange={handleSvgDrawFromChange}
-                    className='text-sm'
+                    className='h-9'
                   />
-                </div>
-                <div className='space-y-1.5'>
-                  <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>To %</Label>
+                </FormField>
+                <FormField label='To %'>
                   <Input
                     type='number'
                     min={0}
@@ -741,39 +726,37 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
                     step={1}
                     value={svgDrawToValue}
                     onChange={handleSvgDrawToChange}
-                    className='text-sm'
+                    className='h-9'
                   />
-                </div>
+                </FormField>
               </div>
-            </>
+            </div>
           )}
 
-          <label className='flex items-center gap-2 text-xs text-gray-300'>
+          <div className='flex items-center gap-2'>
             <Checkbox checked={svgMorphEnabledValue} onCheckedChange={handleSvgMorphEnabledChange} />
-            Morph SVG path (basic)
-          </label>
+            <span className='text-xs text-gray-300'>Morph SVG path (basic)</span>
+          </div>
           {svgMorphEnabledValue && (
-            <>
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Target selector</Label>
+            <div className='space-y-4 pl-2 border-l border-border/40'>
+              <FormField label='Target selector'>
                 <Input
                   value={svgMorphSelectorValue}
                   onChange={handleSvgMorphSelectorChange}
                   placeholder='path'
-                  className='text-sm'
+                  className='h-9'
                 />
-              </div>
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Target path</Label>
+              </FormField>
+              <FormField label='Target path'>
                 <div className='flex items-center gap-2'>
                   <Input
                     value={svgMorphToValue}
                     onChange={handleSvgMorphToChange}
                     placeholder='Target path data or selector (#path)'
-                    className='flex-1 text-xs font-mono'
+                    className='flex-1 text-xs font-mono h-9'
                   />
                   <Tooltip content='Draw path on canvas'>
-                    <Button type='button' size='icon' variant='outline' onClick={handleSvgMorphDraw}>
+                    <Button type='button' size='icon' variant='outline' onClick={handleSvgMorphDraw} className='h-9 w-9'>
                       <PenLine className='size-4' />
                     </Button>
                   </Tooltip>
@@ -784,37 +767,34 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
                       variant='ghost'
                       onClick={handleSvgMorphClear}
                       disabled={!svgMorphToValue && svgMorphShapesValue.length === 0}
+                      className='h-9 w-9'
                     >
                       <Trash2 className='size-4' />
                     </Button>
                   </Tooltip>
                 </div>
-              </div>
-            </>
+              </FormField>
+            </div>
           )}
         </div>
-      </SectionPanel>
+      </FormSection>
 
       {/* Text Effects */}
-      <SectionPanel variant='subtle-compact' className='space-y-2'>
-        <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-          Text Effects
-        </Label>
-        <UnifiedSelect
-          value={textEffectValue}
-          onValueChange={handleTextEffectChange}
-          options={TEXT_EFFECTS}
-        />
+      <FormSection title='Text Effects' variant='subtle-compact' className='p-3 space-y-4'>
+        <FormField label='Mode'>
+          <UnifiedSelect
+            value={textEffectValue}
+            onValueChange={handleTextEffectChange}
+            options={TEXT_EFFECTS}
+          />
+        </FormField>
 
         {textEffectValue !== 'none' && (
-          <>
+          <div className='mt-4 space-y-4'>
             {(textEffectValue === 'splitChars' ||
               textEffectValue === 'splitWords' ||
               textEffectValue === 'splitLines') && (
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                  Stagger (seconds)
-                </Label>
+              <FormField label='Stagger (seconds)'>
                 <Input
                   type='number'
                   min={0.01}
@@ -822,30 +802,24 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
                   step={0.01}
                   value={textStaggerValue}
                   onChange={handleTextStaggerChange}
-                  className='text-sm'
+                  className='h-9'
                 />
-              </div>
+              </FormField>
             )}
 
             {textEffectValue === 'scramble' && (
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                  Scramble chars
-                </Label>
+              <FormField label='Scramble chars'>
                 <Input
                   value={textScrambleCharsValue}
                   onChange={handleTextScrambleCharsChange}
-                  className='text-sm'
+                  className='h-9'
                 />
-              </div>
+              </FormField>
             )}
 
             {textEffectValue === 'typing' && (
               <>
-                <div className='space-y-1.5'>
-                  <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                    Typing speed (chars/sec)
-                  </Label>
+                <FormField label='Typing speed (chars/sec)'>
                   <Input
                     type='number'
                     min={4}
@@ -853,44 +827,35 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
                     step={1}
                     value={textTypingSpeedValue}
                     onChange={handleTextTypingSpeedChange}
-                    className='text-sm'
+                    className='h-9'
                   />
-                </div>
-                <label className='flex items-center gap-2 text-xs text-gray-300'>
+                </FormField>
+                <div className='flex items-center gap-2'>
                   <Checkbox checked={textCursorValue} onCheckedChange={handleTextCursorChange} />
-                  Show cursor
-                </label>
+                  <span className='text-xs text-gray-300'>Show cursor</span>
+                </div>
               </>
             )}
 
             {textEffectValue === 'countUp' && (
               <div className='grid gap-3 sm:grid-cols-2'>
-                <div className='space-y-1.5'>
-                  <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                    From
-                  </Label>
+                <FormField label='From'>
                   <Input
                     type='number'
                     value={textCountFromValue}
                     onChange={handleTextCountFromChange}
-                    className='text-sm'
+                    className='h-9'
                   />
-                </div>
-                <div className='space-y-1.5'>
-                  <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                    To
-                  </Label>
+                </FormField>
+                <FormField label='To'>
                   <Input
                     type='number'
                     value={textCountToValue}
                     onChange={handleTextCountToChange}
-                    className='text-sm'
+                    className='h-9'
                   />
-                </div>
-                <div className='space-y-1.5'>
-                  <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                    Decimals
-                  </Label>
+                </FormField>
+                <FormField label='Decimals'>
                   <Input
                     type='number'
                     min={0}
@@ -898,14 +863,14 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
                     step={1}
                     value={textCountDecimalsValue}
                     onChange={handleTextCountDecimalsChange}
-                    className='text-sm'
+                    className='h-9'
                   />
-                </div>
+                </FormField>
               </div>
             )}
-          </>
+          </div>
         )}
-      </SectionPanel>
+      </FormSection>
 
       {/* Velocity-based FX */}
       <SectionPanel variant='subtle-compact' className='space-y-2'>

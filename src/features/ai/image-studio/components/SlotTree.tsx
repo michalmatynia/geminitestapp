@@ -1,17 +1,17 @@
 'use client';
 
 import { Folder, FolderOpen, GripVertical, Image as ImageIcon, Trash2 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { MasterFolderTree, useMasterFolderTree } from '@/features/foldertree/master';
 import { ICON_LIBRARY_MAP } from '@/features/icons';
 import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
 import { TreeCaret, TreeContextMenu, TreeRow, useToast } from '@/shared/ui';
 import {
-  canNestTreeNode,
+  canNestTreeNodeV2,
   cn,
   getFolderTreePlaceholderClasses,
-  upgradeFolderTreeProfileV1ToV2,
+  resolveFolderTreeIconV2,
   type MasterTreeId,
   type MasterTreeNode,
 } from '@/shared/utils';
@@ -53,18 +53,6 @@ const resolveExternalDraggedNodeId = (dataTransfer: DataTransfer): MasterTreeId 
   return null;
 };
 
-const isRootEdgeDrop = (
-  container: HTMLDivElement | null,
-  event: React.DragEvent<HTMLElement>
-): boolean => {
-  if (!container) return false;
-  const rect = container.getBoundingClientRect();
-  const edgeThreshold = Math.max(18, Math.min(40, Math.floor(rect.height * 0.09)));
-  const offsetTop = event.clientY - rect.top;
-  const offsetBottom = rect.bottom - event.clientY;
-  return offsetTop <= edgeThreshold || offsetBottom <= edgeThreshold;
-};
-
 export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRevealRequest | null }): React.JSX.Element {
   const { slots, virtualFolders: folders, selectedFolder, selectedSlotId } = useSlotsState();
   const {
@@ -76,7 +64,6 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
     handleRenameFolder: onRenameFolder,
   } = useSlotsActions();
   const profile = useFolderTreeProfile('image_studio');
-  const profileV2 = useMemo(() => upgradeFolderTreeProfileV1ToV2(profile), [profile]);
   const { toast } = useToast();
 
   const placeholderClasses = useMemo(
@@ -84,21 +71,21 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
     [profile.placeholders.preset]
   );
   const FolderClosedIcon = useMemo(() => {
-    const iconId = profile.icons.folderClosed ?? 'Folder';
+    const iconId = resolveFolderTreeIconV2(profile, 'folderClosed', 'folder') ?? 'Folder';
     return ICON_LIBRARY_MAP[iconId] ?? Folder;
-  }, [profile.icons.folderClosed]);
+  }, [profile]);
   const FolderOpenIcon = useMemo(() => {
-    const iconId = profile.icons.folderOpen ?? 'FolderOpen';
+    const iconId = resolveFolderTreeIconV2(profile, 'folderOpen', 'folder') ?? 'FolderOpen';
     return ICON_LIBRARY_MAP[iconId] ?? FolderOpen;
-  }, [profile.icons.folderOpen]);
+  }, [profile]);
   const FileIcon = useMemo(() => {
-    const iconId = profile.icons.file ?? 'Image';
+    const iconId = resolveFolderTreeIconV2(profile, 'file', 'card') ?? 'Image';
     return ICON_LIBRARY_MAP[iconId] ?? ImageIcon;
-  }, [profile.icons.file]);
+  }, [profile]);
   const DragHandleIcon = useMemo(() => {
-    const iconId = profile.icons.dragHandle ?? 'GripVertical';
+    const iconId = resolveFolderTreeIconV2(profile, 'dragHandle') ?? 'GripVertical';
     return ICON_LIBRARY_MAP[iconId] ?? GripVertical;
-  }, [profile.icons.dragHandle]);
+  }, [profile]);
 
   const masterNodes = useMemo(
     () => buildMasterNodesFromStudioTree(slots, folders),
@@ -114,7 +101,7 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
   const controller = useMasterFolderTree({
     initialNodes: masterNodes,
     initialSelectedNodeId: selectedMasterNodeId,
-    profile: profileV2,
+    profile,
   });
   const { replaceNodes, selectNode, expandNode } = controller;
 
@@ -170,12 +157,12 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
 
     const slotId = fromSlotMasterNodeId(draggedNodeId);
     if (slotId) {
-      return canNestTreeNode({
+      return canNestTreeNodeV2({
         profile,
         nodeType: 'file',
         nodeKind: 'card',
-        targetFolderKind: 'folder',
-        targetIsRoot,
+        targetType: targetIsRoot ? 'root' : 'folder',
+        ...(targetIsRoot ? {} : { targetFolderKind: 'folder' }),
       });
     }
 
@@ -183,12 +170,12 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
     if (folderPath !== null) {
       return (
         canMoveTreePath(folderPath, targetFolder) &&
-        canNestTreeNode({
+        canNestTreeNodeV2({
           profile,
           nodeType: 'folder',
           nodeKind: 'folder',
-          targetFolderKind: 'folder',
-          targetIsRoot,
+          targetType: targetIsRoot ? 'root' : 'folder',
+          ...(targetIsRoot ? {} : { targetFolderKind: 'folder' }),
         })
       );
     }
@@ -198,19 +185,6 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
 
   const treeRef = useRef<HTMLDivElement | null>(null);
   const lastHandledRevealNonceRef = useRef<number>(-1);
-  const [externalDraggedNodeId, setExternalDraggedNodeId] = useState<MasterTreeId | null>(null);
-  const [rootDropZone, setRootDropZone] = useState<'top' | 'bottom' | null>(null);
-
-  const activeDraggedNodeId = controller.dragState?.draggedNodeId ?? externalDraggedNodeId;
-  const canDropToRoot = activeDraggedNodeId
-    ? canDropNodeToTarget(activeDraggedNodeId, null, controller.nodes)
-    : false;
-  const treeDragActive = Boolean(activeDraggedNodeId) && canDropToRoot;
-
-  const clearDragIndicators = useCallback((): void => {
-    setExternalDraggedNodeId(null);
-    setRootDropZone(null);
-  }, []);
 
   const startFolderRename = useCallback((nodeId: MasterTreeId): void => {
     const folderPath = fromFolderMasterNodeId(nodeId);
@@ -303,65 +277,16 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
         clearSelection();
       }}
       onClick={clearSelection}
-      onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
-        const draggedNodeId = controller.dragState?.draggedNodeId ?? resolveExternalDraggedNodeId(event.dataTransfer);
-        if (!draggedNodeId) {
-          clearDragIndicators();
-          return;
-        }
-        if (!controller.dragState) {
-          setExternalDraggedNodeId(draggedNodeId);
-        }
-
-        if (!canDropNodeToTarget(draggedNodeId, null, controller.nodes)) {
-          setRootDropZone(null);
-          return;
-        }
-
-        if (!isRootEdgeDrop(treeRef.current, event)) {
-          setRootDropZone(null);
-          return;
-        }
-
-        const rect = event.currentTarget.getBoundingClientRect();
-        const zone: 'top' | 'bottom' = event.clientY - rect.top <= rect.height / 2 ? 'top' : 'bottom';
-        setRootDropZone(zone);
-      }}
-      onDragLeave={(event: React.DragEvent<HTMLDivElement>): void => {
-        const nextTarget = event.relatedTarget;
-        if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) return;
-        clearDragIndicators();
-      }}
-      onDrop={(): void => {
-        clearDragIndicators();
-      }}
-      onDragEnd={(): void => {
-        clearDragIndicators();
-      }}
     >
-      <div
-        className={cn(
-          'pointer-events-none absolute inset-x-2 top-1 z-20 flex h-8 items-center justify-center rounded-md border border-dashed text-[10px] font-medium uppercase tracking-[0.08em] transition-all duration-150',
-          treeDragActive ? 'opacity-100' : 'opacity-0',
-          rootDropZone === 'top' ? placeholderClasses.rootActive : placeholderClasses.rootIdle
-        )}
-      >
-        {profile.placeholders.rootDropLabel}
-      </div>
-      <div
-        className={cn(
-          'pointer-events-none absolute inset-x-2 bottom-1 z-20 flex h-8 items-center justify-center rounded-md border border-dashed text-[10px] font-medium uppercase tracking-[0.08em] transition-all duration-150',
-          treeDragActive ? 'opacity-100' : 'opacity-0',
-          rootDropZone === 'bottom' ? placeholderClasses.rootActive : placeholderClasses.rootIdle
-        )}
-      >
-        {profile.placeholders.rootDropLabel}
-      </div>
-
       <MasterFolderTree
         controller={controller}
         className='space-y-0.5'
         emptyLabel='No folders yet. Create a folder or add cards here.'
+        rootDropUi={{
+          label: profile.placeholders.rootDropLabel,
+          idleClassName: placeholderClasses.rootIdle,
+          activeClassName: placeholderClasses.rootActive,
+        }}
         resolveDropPosition={(): 'inside' => 'inside'}
         resolveDraggedNodeId={(event: React.DragEvent<HTMLElement>): MasterTreeId | null =>
           resolveExternalDraggedNodeId(event.dataTransfer)
@@ -406,11 +331,11 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
           if (!folderPath && !slotId) return null;
 
           if (folderPath !== null) {
-            const allowMoveFolderToRoot = canNestTreeNode({
+            const allowMoveFolderToRoot = canNestTreeNodeV2({
               profile,
               nodeType: 'folder',
               nodeKind: 'folder',
-              targetIsRoot: true,
+              targetType: 'root',
             });
             const showInlineDrop = isDropTarget && dropPosition === 'inside';
 
@@ -575,11 +500,11 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
             typeof node.metadata?.['roleLabel'] === 'string'
               ? node.metadata['roleLabel']
               : null;
-          const allowMoveCardToRoot = canNestTreeNode({
+          const allowMoveCardToRoot = canNestTreeNodeV2({
             profile,
             nodeType: 'file',
             nodeKind: 'card',
-            targetIsRoot: true,
+            targetType: 'root',
           });
 
           return (

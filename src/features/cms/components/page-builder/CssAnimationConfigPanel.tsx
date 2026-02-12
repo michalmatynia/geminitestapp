@@ -15,7 +15,7 @@ import {
   type CssAnimationDirection,
   type CssAnimationFillMode,
 } from '@/features/cms/types/css-animations';
-import { Checkbox, Input, Label, SectionPanel, UnifiedSelect } from '@/shared/ui';
+import { Checkbox, Input, Label, SectionPanel, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
 
 interface CssAnimationConfigPanelProps {
   value?: CssAnimationConfig;
@@ -185,45 +185,39 @@ export function CssAnimationConfigPanel({ value, onChange }: CssAnimationConfigP
 
   return (
     <div className='space-y-4'>
-      <SectionPanel variant='subtle-compact' className='space-y-2'>
-        <div className='flex items-center justify-between'>
-          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-            CSS Animation
-          </Label>
-          <Checkbox checked={enabled} onCheckedChange={handleToggleEnabled} />
-        </div>
-
+      <FormSection
+        title='CSS Animation'
+        variant='subtle-compact'
+        actions={<Checkbox checked={enabled} onCheckedChange={handleToggleEnabled} />}
+        className='space-y-2 p-3'
+      >
         {enabled && (
-          <>
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Effect</Label>
+          <div className='mt-4 space-y-4'>
+            <FormField label='Effect'>
               <UnifiedSelect
                 value={effect}
                 onValueChange={handleEffectChange}
                 options={CSS_ANIMATION_EFFECTS}
               />
-            </div>
+            </FormField>
 
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Trigger</Label>
+            <FormField label='Trigger' description={helpText}>
               <UnifiedSelect
                 value={trigger}
                 onValueChange={handleTriggerChange}
                 options={CSS_ANIMATION_TRIGGERS}
               />
-              <p className='text-[10px] text-gray-500'>{helpText}</p>
-            </div>
+            </FormField>
 
             {trigger === 'inView' && (
-              <label className='flex items-center gap-2 text-xs text-gray-300'>
+              <div className='flex items-center gap-2'>
                 <Checkbox checked={replayOnExit} onCheckedChange={handleReplayOnExit} />
-                Replay when leaving/entering
-              </label>
+                <span className='text-xs text-gray-300'>Replay when leaving/entering</span>
+              </div>
             )}
 
             <div className='grid gap-3 sm:grid-cols-2'>
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Duration (ms)</Label>
+              <FormField label='Duration (ms)'>
                 <Input
                   type='number'
                   min={100}
@@ -231,11 +225,10 @@ export function CssAnimationConfigPanel({ value, onChange }: CssAnimationConfigP
                   step={50}
                   value={duration}
                   onChange={handleDurationChange}
-                  className='text-sm'
+                  className='h-9'
                 />
-              </div>
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Delay (ms)</Label>
+              </FormField>
+              <FormField label='Delay (ms)'>
                 <Input
                   type='number'
                   min={0}
@@ -243,13 +236,12 @@ export function CssAnimationConfigPanel({ value, onChange }: CssAnimationConfigP
                   step={50}
                   value={delay}
                   onChange={handleDelayChange}
-                  className='text-sm'
+                  className='h-9'
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Easing</Label>
+            <FormField label='Easing'>
               <UnifiedSelect
                 value={easingSelectValue}
                 onValueChange={handleEasingChange}
@@ -260,19 +252,18 @@ export function CssAnimationConfigPanel({ value, onChange }: CssAnimationConfigP
                   value={easing}
                   onChange={handleCustomEasingChange}
                   placeholder='cubic-bezier(0.22, 0.61, 0.36, 1)'
-                  className='text-xs font-mono'
+                  className='mt-2 text-xs font-mono h-9'
                 />
               )}
-            </div>
+            </FormField>
 
-            <div className='grid gap-3 sm:grid-cols-2'>
-              <label className='flex items-center gap-2 text-xs text-gray-300'>
+            <div className='grid gap-3 sm:grid-cols-2 items-end'>
+              <div className='flex items-center gap-2 mb-2'>
                 <Checkbox checked={loop} onCheckedChange={handleLoopChange} />
-                Loop animation
-              </label>
+                <span className='text-xs text-gray-300'>Loop animation</span>
+              </div>
               {!loop && (
-                <div className='space-y-1.5'>
-                  <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Iterations</Label>
+                <FormField label='Iterations'>
                   <Input
                     type='number'
                     min={1}
@@ -280,42 +271,36 @@ export function CssAnimationConfigPanel({ value, onChange }: CssAnimationConfigP
                     step={1}
                     value={iterations}
                     onChange={handleIterationsChange}
-                    className='text-sm'
+                    className='h-9'
                   />
-                </div>
+                </FormField>
               )}
             </div>
 
             <div className='grid gap-3 sm:grid-cols-2'>
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Direction</Label>
+              <FormField label='Direction'>
                 <UnifiedSelect
                   value={direction}
                   onValueChange={handleDirectionChange}
                   options={CSS_ANIMATION_DIRECTIONS}
                 />
-              </div>
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Fill mode</Label>
+              </FormField>
+              <FormField label='Fill mode'>
                 <UnifiedSelect
                   value={fillMode}
                   onValueChange={handleFillModeChange}
                   options={CSS_ANIMATION_FILL_MODES}
                 />
-              </div>
+              </FormField>
             </div>
-          </>
+          </div>
         )}
-      </SectionPanel>
+      </FormSection>
 
       {enabled && effect !== 'none' && (
-        <SectionPanel variant='subtle-compact' className='space-y-2'>
-          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-            Transform controls
-          </Label>
-          <div className='grid gap-3 sm:grid-cols-2'>
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Distance (px)</Label>
+        <FormSection title='Transform controls' variant='subtle-compact' className='space-y-2 p-3'>
+          <div className='grid gap-3 sm:grid-cols-2 mt-4'>
+            <FormField label='Distance (px)'>
               <Input
                 type='number'
                 min={0}
@@ -323,11 +308,10 @@ export function CssAnimationConfigPanel({ value, onChange }: CssAnimationConfigP
                 step={2}
                 value={distance}
                 onChange={handleDistanceChange}
-                className='text-sm'
+                className='h-9'
               />
-            </div>
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Scale</Label>
+            </FormField>
+            <FormField label='Scale'>
               <Input
                 type='number'
                 min={0.2}
@@ -335,13 +319,12 @@ export function CssAnimationConfigPanel({ value, onChange }: CssAnimationConfigP
                 step={0.02}
                 value={scale}
                 onChange={handleScaleChange}
-                className='text-sm'
+                className='h-9'
               />
-            </div>
+            </FormField>
           </div>
           <div className='grid gap-3 sm:grid-cols-2'>
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Rotate (deg)</Label>
+            <FormField label='Rotate (deg)'>
               <Input
                 type='number'
                 min={-180}
@@ -349,11 +332,10 @@ export function CssAnimationConfigPanel({ value, onChange }: CssAnimationConfigP
                 step={1}
                 value={rotate}
                 onChange={handleRotateChange}
-                className='text-sm'
+                className='h-9'
               />
-            </div>
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Blur (px)</Label>
+            </FormField>
+            <FormField label='Blur (px)'>
               <Input
                 type='number'
                 min={0}
@@ -361,11 +343,11 @@ export function CssAnimationConfigPanel({ value, onChange }: CssAnimationConfigP
                 step={1}
                 value={blur}
                 onChange={handleBlurChange}
-                className='text-sm'
+                className='h-9'
               />
-            </div>
+            </FormField>
           </div>
-        </SectionPanel>
+        </FormSection>
       )}
     </div>
   );

@@ -10,7 +10,7 @@ import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/features/products/constants';
-import { VectorDrawingCanvas, VectorDrawingToolbar, VectorDrawingProvider } from '@/features/vector-drawing';
+import { VectorDrawingCanvas, VectorDrawingProvider } from '@/features/vector-drawing';
 import { Viewer3D } from '@/features/viewer3d/components/Viewer3D';
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -181,7 +181,7 @@ export function CenterPreview(): React.JSX.Element {
     : null;
 
   return (
-    <SectionPanel className='order-2 relative flex min-h-0 flex-1 flex-col overflow-hidden p-0' variant='subtle'>
+    <SectionPanel className='order-2 relative flex h-full min-h-0 flex-1 flex-col overflow-hidden p-0' variant='subtle'>
       <div className='grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-2'>
         <div className='flex items-center gap-2'>
           {workingSlot?.asset3dId ? (
@@ -230,9 +230,6 @@ export function CenterPreview(): React.JSX.Element {
                   maskPreviewFeather={maskFeather}
                 />
               )}
-              <VectorDrawingToolbar
-                className='absolute bottom-4 left-1/2 z-20 -translate-x-1/2'
-              />
             </VectorDrawingProvider>
           </div>
           <div className='grid min-h-[196px] grid-rows-[auto_minmax(0,1fr)] gap-2'>

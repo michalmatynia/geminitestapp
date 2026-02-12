@@ -7,11 +7,7 @@ import {
   Button,
   Input,
   Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  UnifiedSelect,
   Switch,
 } from '@/shared/ui';
 
@@ -110,23 +106,18 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                 <div className='flex flex-wrap items-center justify-between gap-3'>
                   <div className='flex items-center gap-2'>
                     <Label className='text-xs text-gray-400'>Operation {index + 1}</Label>
-                    <Select
+                    <UnifiedSelect
                       value={operation.type}
                       onValueChange={(value: string): void =>
                         replaceOperation(index, value as StringMutatorOperation['type'])
                       }
-                    >
-                      <SelectTrigger className='h-8 w-[160px] border-border bg-card/70 text-xs text-white'>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className='border-border bg-gray-900'>
-                        {Object.entries(OPERATION_LABELS).map(([value, label]) => (
-                          <SelectItem key={value} value={value}>
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      options={Object.entries(OPERATION_LABELS).map(([value, label]) => ({
+                        value,
+                        label,
+                      }))}
+                      triggerClassName='h-8 w-[160px] border-border bg-card/70 text-xs text-white'
+                      contentClassName='border-border bg-gray-900'
+                    />
                   </div>
                   <Button
                     type='button'
@@ -140,21 +131,19 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                 {operation.type === 'trim' && (
                   <div className='mt-3'>
                     <Label className='text-xs text-gray-400'>Trim Mode</Label>
-                    <Select
+                    <UnifiedSelect
                       value={operation.mode ?? 'both'}
                       onValueChange={(value: string): void =>
                         updateOperation(index, { mode: value as 'both' | 'start' | 'end' })
                       }
-                    >
-                      <SelectTrigger className='mt-2 h-8 w-[200px] border-border bg-card/70 text-xs text-white'>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className='border-border bg-gray-900'>
-                        <SelectItem value='both'>Both</SelectItem>
-                        <SelectItem value='start'>Start</SelectItem>
-                        <SelectItem value='end'>End</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      options={[
+                        { value: 'both', label: 'Both' },
+                        { value: 'start', label: 'Start' },
+                        { value: 'end', label: 'End' },
+                      ]}
+                      triggerClassName='mt-2 h-8 w-[200px] border-border bg-card/70 text-xs text-white'
+                      contentClassName='border-border bg-gray-900'
+                    />
                   </div>
                 )}
 
@@ -188,20 +177,18 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                     )}
                     <div>
                       <Label className='text-xs text-gray-400'>Match Mode</Label>
-                      <Select
+                      <UnifiedSelect
                         value={operation.matchMode ?? 'all'}
                         onValueChange={(value: string): void =>
                           updateOperation(index, { matchMode: value as 'first' | 'all' })
                         }
-                      >
-                        <SelectTrigger className='mt-2 h-8 w-full border-border bg-card/70 text-xs text-white'>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className='border-border bg-gray-900'>
-                          <SelectItem value='first'>First Match</SelectItem>
-                          <SelectItem value='all'>All Matches</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        options={[
+                          { value: 'first', label: 'First Match' },
+                          { value: 'all', label: 'All Matches' },
+                        ]}
+                        triggerClassName='mt-2 h-8 w-full border-border bg-card/70 text-xs text-white'
+                        contentClassName='border-border bg-gray-900'
+                      />
                     </div>
                     <div className='flex items-center justify-between rounded-md border border-border bg-card/70 px-3 py-2'>
                       <div>
@@ -236,21 +223,19 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                 {operation.type === 'case' && (
                   <div className='mt-3'>
                     <Label className='text-xs text-gray-400'>Case Mode</Label>
-                    <Select
+                    <UnifiedSelect
                       value={operation.mode ?? 'lower'}
                       onValueChange={(value: string): void =>
                         updateOperation(index, { mode: value as 'upper' | 'lower' | 'title' })
                       }
-                    >
-                      <SelectTrigger className='mt-2 h-8 w-[200px] border-border bg-card/70 text-xs text-white'>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className='border-border bg-gray-900'>
-                        <SelectItem value='lower'>Lowercase</SelectItem>
-                        <SelectItem value='upper'>Uppercase</SelectItem>
-                        <SelectItem value='title'>Title Case</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      options={[
+                        { value: 'lower', label: 'Lowercase' },
+                        { value: 'upper', label: 'Uppercase' },
+                        { value: 'title', label: 'Title Case' },
+                      ]}
+                      triggerClassName='mt-2 h-8 w-[200px] border-border bg-card/70 text-xs text-white'
+                      contentClassName='border-border bg-gray-900'
+                    />
                   </div>
                 )}
 
@@ -269,20 +254,18 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                     </div>
                     <div>
                       <Label className='text-xs text-gray-400'>Position</Label>
-                      <Select
+                      <UnifiedSelect
                         value={operation.position ?? 'suffix'}
                         onValueChange={(value: string): void =>
                           updateOperation(index, { position: value as 'prefix' | 'suffix' })
                         }
-                      >
-                        <SelectTrigger className='mt-2 h-8 w-full border-border bg-card/70 text-xs text-white'>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className='border-border bg-gray-900'>
-                          <SelectItem value='prefix'>Prefix</SelectItem>
-                          <SelectItem value='suffix'>Suffix</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        options={[
+                          { value: 'prefix', label: 'Prefix' },
+                          { value: 'suffix', label: 'Suffix' },
+                        ]}
+                        triggerClassName='mt-2 h-8 w-full border-border bg-card/70 text-xs text-white'
+                        contentClassName='border-border bg-gray-900'
+                      />
                     </div>
                   </div>
                 )}
@@ -321,23 +304,18 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
         </div>
 
         <div className='mt-4 flex flex-wrap items-center gap-2'>
-          <Select
+          <UnifiedSelect
             value={newType}
             onValueChange={(value: string): void =>
               setNewType(value as StringMutatorOperation['type'])
             }
-          >
-            <SelectTrigger className='h-8 w-[180px] border-border bg-card/70 text-xs text-white'>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className='border-border bg-gray-900'>
-              {Object.entries(OPERATION_LABELS).map(([value, label]) => (
-                <SelectItem key={value} value={value}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={Object.entries(OPERATION_LABELS).map(([value, label]) => ({
+              value,
+              label,
+            }))}
+            triggerClassName='h-8 w-[180px] border-border bg-card/70 text-xs text-white'
+            contentClassName='border-border bg-gray-900'
+          />
           <Button
             type='button'
             className='rounded-md border text-xs text-white hover:bg-muted/60'

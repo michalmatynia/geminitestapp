@@ -22,7 +22,8 @@ import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
 import { Button, FolderTreePanel, TreeHeader } from '@/shared/ui';
 import {
-  upgradeFolderTreeProfileV1ToV2,
+  getFolderTreePlaceholderClasses,
+  resolveFolderTreeIconV2,
   type MasterTreeId,
   type MasterTreeNode,
 } from '@/shared/utils';
@@ -52,7 +53,10 @@ const resolveFolderTargetForNode = (
 
 export function NotesAppFolderTree(): React.JSX.Element {
   const profile = useFolderTreeProfile('notes');
-  const profileV2 = useMemo(() => upgradeFolderTreeProfileV1ToV2(profile), [profile]);
+  const placeholderClasses = useMemo(
+    () => getFolderTreePlaceholderClasses(profile.placeholders.preset),
+    [profile.placeholders.preset]
+  );
   const {
     settings,
     filters,
@@ -156,7 +160,7 @@ export function NotesAppFolderTree(): React.JSX.Element {
     initialNodes: masterNodes,
     initialSelectedNodeId: selectedMasterNodeId,
     initiallyExpandedNodeIds: initialExpandedFolderNodeIds,
-    profile: profileV2,
+    profile,
     adapter: notesAdapter,
   });
   const { replaceNodes, selectNode } = controller;
@@ -176,25 +180,25 @@ export function NotesAppFolderTree(): React.JSX.Element {
 
   const isAllNotesActive = !settings.selectedFolderId && !selectedNote;
   const RootIcon = useMemo(() => {
-    const iconId = profile.icons.root ?? 'Folder';
+    const iconId = resolveFolderTreeIconV2(profile, 'root') ?? 'Folder';
     return ICON_LIBRARY_MAP[iconId] ?? Folder;
-  }, [profile.icons.root]);
+  }, [profile]);
   const FolderClosedIcon = useMemo(() => {
-    const iconId = profile.icons.folderClosed ?? 'Folder';
+    const iconId = resolveFolderTreeIconV2(profile, 'folderClosed', 'folder') ?? 'Folder';
     return ICON_LIBRARY_MAP[iconId] ?? Folder;
-  }, [profile.icons.folderClosed]);
+  }, [profile]);
   const FolderOpenIcon = useMemo(() => {
-    const iconId = profile.icons.folderOpen ?? 'FolderOpen';
+    const iconId = resolveFolderTreeIconV2(profile, 'folderOpen', 'folder') ?? 'FolderOpen';
     return ICON_LIBRARY_MAP[iconId] ?? FolderOpen;
-  }, [profile.icons.folderOpen]);
+  }, [profile]);
   const FileIcon = useMemo(() => {
-    const iconId = profile.icons.file ?? 'FileText';
+    const iconId = resolveFolderTreeIconV2(profile, 'file', 'note') ?? 'FileText';
     return ICON_LIBRARY_MAP[iconId] ?? FileText;
-  }, [profile.icons.file]);
+  }, [profile]);
   const DragHandleIcon = useMemo(() => {
-    const iconId = profile.icons.dragHandle ?? 'GripVertical';
+    const iconId = resolveFolderTreeIconV2(profile, 'dragHandle') ?? 'GripVertical';
     return ICON_LIBRARY_MAP[iconId] ?? GripVertical;
-  }, [profile.icons.dragHandle]);
+  }, [profile]);
 
   return (
     <FolderTreePanel
@@ -310,6 +314,11 @@ export function NotesAppFolderTree(): React.JSX.Element {
       <div className='min-h-0 flex-1 overflow-auto p-2'>
         <MasterFolderTree
           controller={controller}
+          rootDropUi={{
+            label: profile.placeholders.rootDropLabel,
+            idleClassName: placeholderClasses.rootIdle,
+            activeClassName: placeholderClasses.rootActive,
+          }}
           resolveDraggedNodeId={(event: React.DragEvent<HTMLElement>): string | null => {
             const noteId = getNoteDragId(event.dataTransfer, draggedNoteId);
             if (noteId) return toNoteMasterNodeId(noteId);
@@ -327,7 +336,7 @@ export function NotesAppFolderTree(): React.JSX.Element {
             }
             return false;
           }}
-          onNodeDrop={async ({ draggedNodeId, targetId }): Promise<void> => {
+          onNodeDrop={async ({ draggedNodeId, targetId, rootDropZone }): Promise<void> => {
             const draggedNote = fromNoteMasterNodeId(draggedNodeId);
             const draggedFolder = fromFolderMasterNodeId(draggedNodeId);
             const targetNote = targetId ? fromNoteMasterNodeId(targetId) : null;
@@ -342,6 +351,17 @@ export function NotesAppFolderTree(): React.JSX.Element {
               return;
             }
             if (draggedFolder) {
+              if (!targetId && rootDropZone === 'top') {
+                const firstRootFolderId =
+                  controller.roots
+                    .map((root: MasterTreeNode): string | null => fromFolderMasterNodeId(root.id))
+                    .find((folderId: string | null): boolean => Boolean(folderId) && folderId !== draggedFolder) ??
+                  null;
+                if (firstRootFolderId) {
+                  await operations.handleReorderFolder(draggedFolder, firstRootFolderId, 'before');
+                  return;
+                }
+              }
               await operations.handleMoveFolderToFolder(draggedFolder, targetFolder);
             }
           }}

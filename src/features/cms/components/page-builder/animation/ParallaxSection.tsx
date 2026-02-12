@@ -18,10 +18,10 @@ import {
 } from '@/features/gsap';
 import {
   Checkbox,
-  Label,
   Input,
   UnifiedSelect,
-  SectionPanel,
+  FormSection,
+  FormField,
 } from '@/shared/ui';
 
 interface ParallaxSectionProps {
@@ -267,54 +267,42 @@ export function ParallaxSection({ config, onChange }: ParallaxSectionProps): Rea
   );
 
   return (
-    <SectionPanel variant='subtle-compact' className='space-y-2'>
-      <div className='space-y-1.5'>
-        <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-          Parallax
-        </Label>
+    <FormSection title='Parallax' variant='subtle-compact' className='p-3 space-y-4'>
+      <FormField label='Preset'>
         <UnifiedSelect
           value={parallaxPresetValue}
           onValueChange={handleParallaxPresetChange}
           options={PARALLAX_PRESETS}
         />
-      </div>
+      </FormField>
 
       {parallaxPresetValue !== 'none' && (
-        <>
-          <div className='grid gap-3 sm:grid-cols-2'>
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                Pattern
-              </Label>
+        <div className='mt-4 space-y-4'>
+          <div className='grid gap-3 sm:grid-cols-2 items-end'>
+            <FormField label='Pattern'>
               <UnifiedSelect
                 value={parallaxPatternValue}
                 onValueChange={handleParallaxPatternChange}
                 options={PARALLAX_PATTERNS}
               />
-            </div>
+            </FormField>
 
-            <label className='flex items-center gap-2 text-xs text-gray-300'>
+            <div className='flex items-center gap-2 mb-2'>
               <Checkbox checked={parallaxReverseValue} onCheckedChange={handleParallaxReverseChange} />
-              Reverse direction
-            </label>
+              <span className='text-xs text-gray-300'>Reverse direction</span>
+            </div>
           </div>
 
-          <div className='space-y-1.5'>
-            <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-              Axis
-            </Label>
+          <FormField label='Axis'>
             <UnifiedSelect
               value={parallaxAxisValue}
               onValueChange={handleParallaxAxisChange}
               options={parallaxAxisOptions}
             />
-          </div>
+          </FormField>
 
           <div className='grid gap-3 sm:grid-cols-2'>
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                Offset (px)
-              </Label>
+            <FormField label='Offset (px)'>
               <Input
                 type='number'
                 min={-300}
@@ -322,14 +310,11 @@ export function ParallaxSection({ config, onChange }: ParallaxSectionProps): Rea
                 step={5}
                 value={parallaxOffsetValue}
                 onChange={handleParallaxOffsetChange}
-                className='text-sm'
+                className='h-9'
               />
-            </div>
+            </FormField>
 
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                Scrub
-              </Label>
+            <FormField label='Scrub'>
               <Input
                 type='number'
                 min={0}
@@ -337,65 +322,50 @@ export function ParallaxSection({ config, onChange }: ParallaxSectionProps): Rea
                 step={0.1}
                 value={parallaxScrubValue}
                 onChange={handleParallaxScrubChange}
-                className='text-sm'
+                className='h-9'
               />
-            </div>
+            </FormField>
           </div>
 
           <div className='grid gap-3 sm:grid-cols-2'>
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                Start
-              </Label>
+            <FormField label='Start'>
               <Input
                 value={parallaxStartValue}
                 onChange={handleParallaxStartChange}
                 placeholder='top bottom'
-                className='text-sm'
+                className='h-9'
               />
-            </div>
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                End
-              </Label>
+            </FormField>
+            <FormField label='End'>
               <Input
                 value={parallaxEndValue}
                 onChange={handleParallaxEndChange}
                 placeholder='bottom top'
-                className='text-sm'
+                className='h-9'
               />
-            </div>
+            </FormField>
           </div>
 
           <div className='grid gap-3 sm:grid-cols-2'>
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                Target selector
-              </Label>
+            <FormField label='Target selector'>
               <Input
                 value={parallaxSelectorValue}
                 onChange={handleParallaxSelectorChange}
                 placeholder=':scope > *'
-                className='text-sm'
+                className='h-9'
               />
-            </div>
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                Ease
-              </Label>
+            </FormField>
+            <FormField label='Ease'>
               <UnifiedSelect
                 value={parallaxEaseValue}
                 onValueChange={handleParallaxEaseChange}
                 options={ANIMATION_EASINGS}
               />
-            </div>
+            </FormField>
           </div>
 
           <div className='grid gap-3 sm:grid-cols-2'>
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                Scale from
-              </Label>
+            <FormField label='Scale from'>
               <Input
                 type='number'
                 min={0.2}
@@ -403,13 +373,10 @@ export function ParallaxSection({ config, onChange }: ParallaxSectionProps): Rea
                 step={0.02}
                 value={parallaxScaleFromValue}
                 onChange={handleParallaxScaleFromChange}
-                className='text-sm'
+                className='h-9'
               />
-            </div>
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                Scale to
-              </Label>
+            </FormField>
+            <FormField label='Scale to'>
               <Input
                 type='number'
                 min={0.2}
@@ -417,16 +384,13 @@ export function ParallaxSection({ config, onChange }: ParallaxSectionProps): Rea
                 step={0.02}
                 value={parallaxScaleToValue}
                 onChange={handleParallaxScaleToChange}
-                className='text-sm'
+                className='h-9'
               />
-            </div>
+            </FormField>
           </div>
 
           <div className='grid gap-3 sm:grid-cols-2'>
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                Rotate from (deg)
-              </Label>
+            <FormField label='Rotate from (deg)'>
               <Input
                 type='number'
                 min={-180}
@@ -434,13 +398,10 @@ export function ParallaxSection({ config, onChange }: ParallaxSectionProps): Rea
                 step={1}
                 value={parallaxRotateFromValue}
                 onChange={handleParallaxRotateFromChange}
-                className='text-sm'
+                className='h-9'
               />
-            </div>
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                Rotate to (deg)
-              </Label>
+            </FormField>
+            <FormField label='Rotate to (deg)'>
               <Input
                 type='number'
                 min={-180}
@@ -448,16 +409,13 @@ export function ParallaxSection({ config, onChange }: ParallaxSectionProps): Rea
                 step={1}
                 value={parallaxRotateToValue}
                 onChange={handleParallaxRotateToChange}
-                className='text-sm'
+                className='h-9'
               />
-            </div>
+            </FormField>
           </div>
 
           <div className='grid gap-3 sm:grid-cols-2'>
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                Opacity from
-              </Label>
+            <FormField label='Opacity from'>
               <Input
                 type='number'
                 min={0}
@@ -465,13 +423,10 @@ export function ParallaxSection({ config, onChange }: ParallaxSectionProps): Rea
                 step={0.05}
                 value={parallaxOpacityFromValue}
                 onChange={handleParallaxOpacityFromChange}
-                className='text-sm'
+                className='h-9'
               />
-            </div>
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                Opacity to
-              </Label>
+            </FormField>
+            <FormField label='Opacity to'>
               <Input
                 type='number'
                 min={0}
@@ -479,16 +434,13 @@ export function ParallaxSection({ config, onChange }: ParallaxSectionProps): Rea
                 step={0.05}
                 value={parallaxOpacityToValue}
                 onChange={handleParallaxOpacityToChange}
-                className='text-sm'
+                className='h-9'
               />
-            </div>
+            </FormField>
           </div>
 
           <div className='grid gap-3 sm:grid-cols-2'>
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                Blur from (px)
-              </Label>
+            <FormField label='Blur from (px)'>
               <Input
                 type='number'
                 min={0}
@@ -496,13 +448,10 @@ export function ParallaxSection({ config, onChange }: ParallaxSectionProps): Rea
                 step={1}
                 value={parallaxBlurFromValue}
                 onChange={handleParallaxBlurFromChange}
-                className='text-sm'
+                className='h-9'
               />
-            </div>
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                Blur to (px)
-              </Label>
+            </FormField>
+            <FormField label='Blur to (px)'>
               <Input
                 type='number'
                 min={0}
@@ -510,15 +459,12 @@ export function ParallaxSection({ config, onChange }: ParallaxSectionProps): Rea
                 step={1}
                 value={parallaxBlurToValue}
                 onChange={handleParallaxBlurToChange}
-                className='text-sm'
+                className='h-9'
               />
-            </div>
+            </FormField>
           </div>
           {parallaxPatternValue === 'increment' && (
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                Per-child step (px)
-              </Label>
+            <FormField label='Per-child step (px)'>
               <Input
                 type='number'
                 min={0}
@@ -526,17 +472,14 @@ export function ParallaxSection({ config, onChange }: ParallaxSectionProps): Rea
                 step={1}
                 value={parallaxChildStepValue}
                 onChange={handleParallaxChildStepChange}
-                className='text-sm'
+                className='h-9'
               />
-            </div>
+            </FormField>
           )}
 
           {parallaxPatternValue === 'layers' && (
             <div className='grid gap-3 sm:grid-cols-2'>
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                  Layer strength
-                </Label>
+              <FormField label='Layer strength'>
                 <Input
                   type='number'
                   min={0}
@@ -544,13 +487,10 @@ export function ParallaxSection({ config, onChange }: ParallaxSectionProps): Rea
                   step={0.05}
                   value={parallaxLayerStrengthValue}
                   onChange={handleParallaxLayerStrengthChange}
-                  className='text-sm'
+                  className='h-9'
                 />
-              </div>
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                  Layer scale step
-                </Label>
+              </FormField>
+              <FormField label='Layer scale step'>
                 <Input
                   type='number'
                   min={0}
@@ -558,17 +498,14 @@ export function ParallaxSection({ config, onChange }: ParallaxSectionProps): Rea
                   step={0.005}
                   value={parallaxLayerScaleStepValue}
                   onChange={handleParallaxLayerScaleStepChange}
-                  className='text-sm'
+                  className='h-9'
                 />
-              </div>
+              </FormField>
             </div>
           )}
 
           {parallaxPatternValue === 'random' && (
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-                Random seed
-              </Label>
+            <FormField label='Random seed'>
               <Input
                 type='number'
                 min={0}
@@ -576,16 +513,16 @@ export function ParallaxSection({ config, onChange }: ParallaxSectionProps): Rea
                 step={1}
                 value={parallaxRandomSeedValue}
                 onChange={handleParallaxRandomSeedChange}
-                className='text-sm'
+                className='h-9'
               />
-            </div>
+            </FormField>
           )}
 
           <p className='text-[10px] text-gray-500'>
             Use a selector like <span className='text-gray-400'>:scope &gt; *</span> for per-child patterns.
           </p>
-        </>
+        </div>
       )}
-    </SectionPanel>
+    </FormSection>
   );
 }

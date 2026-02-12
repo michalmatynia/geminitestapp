@@ -86,7 +86,8 @@ export function PageLayout({
           <Button 
             onClick={() => void onSave()} 
             disabled={isSaving} 
-            className='bg-white text-black hover:bg-gray-200 min-w-[140px]'
+            variant='primary'
+            className='min-w-[140px]'
           >
             {isSaving ? 'Saving...' : saveText}
           </Button>

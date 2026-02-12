@@ -9,7 +9,7 @@ export const localizedSchema = z.record(z.string(), z.string().nullable());
 export const dtoBaseSchema = z.object({
   id: z.string(),
   createdAt: z.string(),
-  updatedAt: z.string(),
+  updatedAt: z.string().nullable(),
 });
 
 export const namedDtoSchema = dtoBaseSchema.extend({

@@ -133,6 +133,8 @@ export const logClientError = (
     headers: { 'Content-Type': 'application/json' },
     body,
     keepalive: true,
+  }).catch(() => {
+    // Swallow network failures for non-blocking client diagnostics.
   });
 };
 

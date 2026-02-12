@@ -67,7 +67,14 @@ function MasterTreeHarness({
   resolveDropPosition,
 }: {
   initialNodes?: MasterTreeNode[];
-  onNodeDrop?: ((payload: { draggedNodeId: string; targetId: string | null; position: 'inside' | 'before' | 'after' }) => Promise<void> | void) | undefined;
+  onNodeDrop?: ((
+    payload: {
+      draggedNodeId: string;
+      targetId: string | null;
+      position: 'inside' | 'before' | 'after';
+      rootDropZone?: 'top' | 'bottom' | undefined;
+    }
+  ) => Promise<void> | void) | undefined;
   canDrop?: (() => boolean) | undefined;
   resolveDropPosition?: (() => 'inside' | 'before' | 'after') | undefined;
 }): React.JSX.Element {
@@ -172,6 +179,32 @@ describe('MasterFolderTree', () => {
       draggedNodeId: 'folder-b',
       targetId: 'folder-a',
       position: 'before',
+    });
+  });
+
+  it('emits root drop payload when dropping on the top root zone', async () => {
+    const onNodeDrop = vi.fn();
+    render(<MasterTreeHarness onNodeDrop={onNodeDrop} />);
+
+    const dragged = document.querySelector('[data-master-tree-node-id="file-1"]');
+    expect(dragged).toBeTruthy();
+    if (!dragged) return;
+
+    const dataTransfer = dataTransferStub();
+    fireEvent.dragStart(dragged, { dataTransfer });
+
+    const topRootDropZone = document.querySelector('[data-master-tree-root-drop="top"]');
+    expect(topRootDropZone).toBeTruthy();
+    if (!topRootDropZone) return;
+
+    fireEvent.dragOver(topRootDropZone, { dataTransfer });
+    fireEvent.drop(topRootDropZone, { dataTransfer });
+
+    expect(onNodeDrop).toHaveBeenCalledWith({
+      draggedNodeId: 'file-1',
+      targetId: null,
+      position: 'inside',
+      rootDropZone: 'top',
     });
   });
 });

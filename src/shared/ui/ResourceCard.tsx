@@ -1,6 +1,6 @@
 import { cn } from '@/shared/utils';
 
-import { CardWithActions } from './CardWithActions';
+import { Card } from './card';
 
 import type { ReactNode } from 'react';
 
@@ -34,14 +34,32 @@ export function ResourceCard({
   className,
 }: ResourceCardProps): React.JSX.Element {
   return (
-    <CardWithActions
-      title={title}
-      description={description ?? ''} // Always pass description, even if empty string
-      {...(actions ? { actions } : {})}
-      {...(onClick ? { onClick } : {})}
-      className={cn('flex h-full flex-col', className)}
+    <Card
+      variant='default'
+      padding='none'
+      onClick={onClick}
+      className={cn(
+        'flex h-full flex-col overflow-hidden',
+        onClick && 'cursor-pointer transition-colors hover:border-blue-500/60',
+        className
+      )}
     >
-      <div className='flex h-full flex-col'>
+      {/* Header */}
+      <div className='flex items-start justify-between gap-2 p-3 pb-0'>
+        <div className='min-w-0 flex-1'>
+          <h3 className='text-sm font-medium truncate' title={title}>
+            {title}
+          </h3>
+          {description && (
+            <p className='text-xs text-muted-foreground truncate mt-0.5' title={description}>
+              {description}
+            </p>
+          )}
+        </div>
+        {actions && <div className='flex-shrink-0 flex items-center gap-1'>{actions}</div>}
+      </div>
+
+      <div className='flex h-full flex-col p-3'>
         {/* Media Top Area */}
         {media && (
           <div className={cn('relative overflow-hidden rounded-md', mediaClassName)}>
@@ -67,6 +85,6 @@ export function ResourceCard({
           </div>
         )}
       </div>
-    </CardWithActions>
+    </Card>
   );
 }

@@ -11,6 +11,10 @@ import {
   SectionPanel,
   ConfirmDialog,
   useToast,
+  FormSection,
+  RefreshButton,
+  UnifiedSelect,
+  FormField,
 } from '@/shared/ui';
 
 import {
@@ -227,52 +231,50 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
       />
 
       {/* Collections Table */}
-      <SectionPanel className='p-6'>
-        <div className='mb-4 flex items-center justify-between'>
-          <h2 className='text-lg font-semibold text-white'>Collections</h2>
-          <Button
-            variant='outline'
-            onClick={(): void => { void schemaQuery.refetch(); }}
-            disabled={schemaQuery.isFetching}
-            className='border-gray-700 text-gray-300 hover:bg-gray-800'
-          >
-            {schemaQuery.isFetching ? 'Refreshing...' : 'Refresh'}
-          </Button>
-        </div>
-
-        {schemaQuery.isLoading && (
-          <p className='py-8 text-center text-gray-400'>Loading collections...</p>
-        )}
-
-        {schemaQuery.isError && (
-          <p className='py-4 text-center text-red-300'>
-            {schemaQuery.error?.message ?? 'Failed to load collections.'}
-          </p>
-        )}
-
-        {!schemaQuery.isLoading && !schemaQuery.isError && (
-          <DataTable
-            columns={columns}
-            data={rows}
-            initialSorting={[{ id: 'name', desc: false }]}
-            sortingStorageKey='stardb:control-panel:sorting'
+      <FormSection
+        title='Collections'
+        actions={(
+          <RefreshButton
+            onRefresh={(): void => { void schemaQuery.refetch(); }}
+            isRefreshing={schemaQuery.isFetching}
           />
         )}
+        className='p-6'
+      >
+        <div className='mt-4'>
+          {schemaQuery.isLoading && (
+            <p className='py-8 text-center text-gray-400 text-sm'>Loading collections...</p>
+          )}
 
-        {copyMutation.isPending && (
-          <div className='mt-3 rounded-md border border-blue-500/30 bg-blue-500/10 px-3 py-2 text-xs text-blue-200'>
-            Copying collection... This may take a moment.
-          </div>
-        )}
-      </SectionPanel>
+          {schemaQuery.isError && (
+            <p className='py-4 text-center text-red-300 text-sm'>
+              {schemaQuery.error?.message ?? 'Failed to load collections.'}
+            </p>
+          )}
+
+          {!schemaQuery.isLoading && !schemaQuery.isError && (
+            <DataTable
+              columns={columns}
+              data={rows}
+              initialSorting={[{ id: 'name', desc: false }]}
+              sortingStorageKey='stardb:control-panel:sorting'
+            />
+          )}
+
+          {copyMutation.isPending && (
+            <div className='mt-3 rounded-md border border-blue-500/30 bg-blue-500/10 px-3 py-2 text-xs text-blue-200'>
+              Copying collection... This may take a moment.
+            </div>
+          )}
+        </div>
+      </FormSection>
 
       {/* JSON Backup & Restore */}
-      <SectionPanel className='mt-6 p-6'>
-        <h2 className='text-lg font-semibold text-white'>JSON Backup &amp; Restore (Prisma)</h2>
-        <p className='mt-1 text-sm text-gray-400'>
-          Export all Prisma tables as JSON. No external tools (pg_dump) required.
-        </p>
-
+      <FormSection
+        title='JSON Backup & Restore (Prisma)'
+        description='Export all Prisma tables as JSON. No external tools (pg_dump) required.'
+        className='mt-6 p-6'
+      >
         <div className='mt-4 flex flex-wrap items-end gap-4'>
           <Button
             onClick={(): void => { void handleCreateJsonBackup(); }}
@@ -282,29 +284,22 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
           </Button>
 
           <div className='flex items-end gap-2'>
-            <div>
-              <label htmlFor='json-backup-select' className='mb-1 block text-xs text-gray-400'>
-                Select backup to restore
-              </label>
-              <select
-                id='json-backup-select'
+            <FormField label='Select backup to restore'>
+              <UnifiedSelect
                 value={selectedJsonBackup}
-                onChange={(e): void => setSelectedJsonBackup(e.target.value)}
-                className='rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-gray-600'
-              >
-                <option value=''>-- Select --</option>
-                {jsonBackups.map((name: string) => (
-                  <option key={name} value={name}>
-                    {name}
-                  </option>
-                ))}
-              </select>
-            </div>
+                onValueChange={setSelectedJsonBackup}
+                options={[
+                  { value: '', label: '-- Select --' },
+                  ...jsonBackups.map((name: string) => ({ value: name, label: name }))
+                ]}
+                triggerClassName='w-[200px]'
+              />
+            </FormField>
             <Button
               variant='outline'
               onClick={(): void => { void handleRestoreJsonBackup(); }}
               disabled={!selectedJsonBackup || restoreJsonBackup.isPending}
-              className='border-gray-700 text-gray-300 hover:bg-gray-800'
+              className='h-9'
             >
               {restoreJsonBackup.isPending ? 'Restoring...' : 'Restore'}
             </Button>
@@ -314,7 +309,7 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
         {jsonBackupsQuery.isLoading && (
           <p className='mt-3 text-xs text-gray-400'>Loading backups...</p>
         )}
-      </SectionPanel>
+      </FormSection>
     </PageLayout>
   );
 }

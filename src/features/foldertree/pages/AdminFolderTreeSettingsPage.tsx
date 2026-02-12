@@ -18,14 +18,19 @@ import {
   useToast,
 } from '@/shared/ui';
 import {
-  createDefaultFolderTreeProfiles,
-  FOLDER_TREE_PROFILES_SETTING_KEY,
   folderTreePlaceholderPresetOptions,
-  parseFolderTreeProfiles,
   type FolderTreeInstance,
-  type FolderTreeProfile,
-  type FolderTreeProfilesMap,
 } from '@/shared/utils/folder-tree-profiles';
+import {
+  createDefaultFolderTreeProfilesV2,
+  FOLDER_TREE_PROFILES_V2_SETTING_KEY,
+  folderTreePlaceholderEmphasisValues,
+  folderTreePlaceholderStyleValues,
+  parseFolderTreeProfilesV2,
+  type FolderTreeNestingRuleV2,
+  type FolderTreeProfileV2,
+  type FolderTreeProfilesV2Map,
+} from '@/shared/utils/folder-tree-profiles-v2';
 
 const INSTANCE_META: Array<{
   id: FolderTreeInstance;
@@ -64,6 +69,43 @@ const INSTANCE_META: Array<{
   },
 ];
 
+type LegacyRuleKey = 'folder_to_folder' | 'file_to_folder' | 'folder_to_root' | 'file_to_root';
+
+const LEGACY_RULE_CONFIG: Record<
+  LegacyRuleKey,
+  {
+    childType: 'folder' | 'file';
+    targetType: 'folder' | 'root';
+    targetKinds: string[];
+    defaultKinds: string[];
+  }
+> = {
+  folder_to_folder: {
+    childType: 'folder',
+    targetType: 'folder',
+    targetKinds: ['*'],
+    defaultKinds: ['*'],
+  },
+  file_to_folder: {
+    childType: 'file',
+    targetType: 'folder',
+    targetKinds: ['*'],
+    defaultKinds: ['*'],
+  },
+  folder_to_root: {
+    childType: 'folder',
+    targetType: 'root',
+    targetKinds: ['root'],
+    defaultKinds: ['*'],
+  },
+  file_to_root: {
+    childType: 'file',
+    targetType: 'root',
+    targetKinds: ['root'],
+    defaultKinds: ['*'],
+  },
+};
+
 const toKindList = (value: string): string[] =>
   value
     .split(',')
@@ -71,6 +113,109 @@ const toKindList = (value: string): string[] =>
     .filter((entry: string) => entry.length > 0);
 
 const listToValue = (values: string[]): string => values.join(', ');
+
+const normalizeKindList = (values: string[] | null | undefined, fallback: string[]): string[] => {
+  if (!Array.isArray(values) || values.length === 0) return [...fallback];
+  const normalized = new Set<string>();
+  values.forEach((entry: string) => {
+    const value = entry.trim().toLowerCase();
+    if (!value) return;
+    normalized.add(value);
+  });
+  return normalized.size > 0 ? Array.from(normalized) : [...fallback];
+};
+
+const toTitleLabel = (value: string): string => `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
+
+const findRuleIndex = (profile: FolderTreeProfileV2, key: LegacyRuleKey): number => {
+  const config = LEGACY_RULE_CONFIG[key];
+  for (let index = profile.nesting.rules.length - 1; index >= 0; index -= 1) {
+    const rule = profile.nesting.rules[index];
+    if (rule.childType !== config.childType) continue;
+    if (rule.targetType !== config.targetType) continue;
+    if (config.targetType === 'root') {
+      const targetKinds = normalizeKindList(rule.targetKinds, ['root']);
+      if (!targetKinds.includes('root') && !targetKinds.includes('*')) continue;
+    }
+    return index;
+  }
+  return -1;
+};
+
+const getRule = (profile: FolderTreeProfileV2, key: LegacyRuleKey): FolderTreeNestingRuleV2 | null => {
+  const index = findRuleIndex(profile, key);
+  return index >= 0 ? profile.nesting.rules[index] ?? null : null;
+};
+
+const getRuleAllow = (profile: FolderTreeProfileV2, key: LegacyRuleKey): boolean => {
+  const rule = getRule(profile, key);
+  return rule ? rule.allow : profile.nesting.defaultAllow;
+};
+
+const getRuleKinds = (profile: FolderTreeProfileV2, key: LegacyRuleKey): string[] => {
+  const config = LEGACY_RULE_CONFIG[key];
+  const rule = getRule(profile, key);
+  return normalizeKindList(rule?.childKinds, config.defaultKinds);
+};
+
+const upsertRule = (
+  profile: FolderTreeProfileV2,
+  key: LegacyRuleKey,
+  update: Partial<Pick<FolderTreeNestingRuleV2, 'allow' | 'childKinds'>>
+): FolderTreeProfileV2 => {
+  const config = LEGACY_RULE_CONFIG[key];
+  const rules = [...profile.nesting.rules];
+  const ruleIndex = findRuleIndex(profile, key);
+  const existing = ruleIndex >= 0 ? rules[ruleIndex] : null;
+  const childKinds = normalizeKindList(
+    update.childKinds ?? existing?.childKinds ?? config.defaultKinds,
+    config.defaultKinds
+  );
+  const targetKinds = normalizeKindList(existing?.targetKinds ?? config.targetKinds, config.targetKinds);
+  const nextRule: FolderTreeNestingRuleV2 = {
+    childType: config.childType,
+    childKinds,
+    targetType: config.targetType,
+    targetKinds,
+    allow: update.allow ?? existing?.allow ?? profile.nesting.defaultAllow,
+  };
+
+  if (ruleIndex >= 0) {
+    rules[ruleIndex] = nextRule;
+  } else {
+    rules.push(nextRule);
+  }
+
+  return {
+    ...profile,
+    nesting: {
+      ...profile.nesting,
+      rules,
+    },
+  };
+};
+
+const byKindToValue = (byKind: Record<string, string | null>): string =>
+  Object.entries(byKind)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([kind, iconId]) => `${kind}=${iconId ?? ''}`)
+    .join('\n');
+
+const valueToByKind = (value: string): Record<string, string | null> => {
+  const entries: Record<string, string | null> = {};
+  value.split('\n').forEach((line: string) => {
+    const normalizedLine = line.trim();
+    if (!normalizedLine) return;
+    const separator = normalizedLine.includes('=') ? '=' : normalizedLine.includes(':') ? ':' : '';
+    if (!separator) return;
+    const parts = normalizedLine.split(separator);
+    const key = parts.shift()?.trim().toLowerCase() ?? '';
+    if (!key) return;
+    const iconId = parts.join(separator).trim();
+    entries[key] = iconId || null;
+  });
+  return entries;
+};
 
 const TREE_ICON_IDS = new Set<string>([
   'Folder',
@@ -104,13 +249,13 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
 
-  const rawProfiles = settingsStore.get(FOLDER_TREE_PROFILES_SETTING_KEY);
+  const rawProfiles = settingsStore.get(FOLDER_TREE_PROFILES_V2_SETTING_KEY);
   const parsedProfiles = useMemo(
-    () => parseFolderTreeProfiles(rawProfiles),
+    (): FolderTreeProfilesV2Map => parseFolderTreeProfilesV2(rawProfiles),
     [rawProfiles]
   );
 
-  const [draftProfiles, setDraftProfiles] = useState<FolderTreeProfilesMap>(parsedProfiles);
+  const [draftProfiles, setDraftProfiles] = useState<FolderTreeProfilesV2Map>(parsedProfiles);
 
   useEffect(() => {
     setDraftProfiles(parsedProfiles);
@@ -122,8 +267,8 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
   );
 
   const updateProfile = useCallback(
-    (instance: FolderTreeInstance, updater: (profile: FolderTreeProfile) => FolderTreeProfile): void => {
-      setDraftProfiles((prev: FolderTreeProfilesMap) => ({
+    (instance: FolderTreeInstance, updater: (profile: FolderTreeProfileV2) => FolderTreeProfileV2): void => {
+      setDraftProfiles((prev: FolderTreeProfilesV2Map) => ({
         ...prev,
         [instance]: updater(prev[instance]),
       }));
@@ -134,7 +279,7 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
   const handleSave = useCallback(async (): Promise<void> => {
     try {
       await updateSetting.mutateAsync({
-        key: FOLDER_TREE_PROFILES_SETTING_KEY,
+        key: FOLDER_TREE_PROFILES_V2_SETTING_KEY,
         value: JSON.stringify(draftProfiles),
       });
       toast('Folder tree profiles saved.', { variant: 'success' });
@@ -146,7 +291,7 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
   }, [draftProfiles, toast, updateSetting]);
 
   const handleResetToDefaults = useCallback((): void => {
-    setDraftProfiles(createDefaultFolderTreeProfiles());
+    setDraftProfiles(createDefaultFolderTreeProfilesV2());
   }, []);
 
   const handleRevert = useCallback((): void => {
@@ -199,6 +344,13 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
       <div className='space-y-6'>
         {INSTANCE_META.map((meta) => {
           const profile = draftProfiles[meta.id];
+          const allowFolderToFolder = getRuleAllow(profile, 'folder_to_folder');
+          const allowFileToFolder = getRuleAllow(profile, 'file_to_folder');
+          const allowFolderToRoot = getRuleAllow(profile, 'folder_to_root');
+          const allowFileToRoot = getRuleAllow(profile, 'file_to_root');
+          const folderKinds = getRuleKinds(profile, 'folder_to_folder');
+          const fileKinds = getRuleKinds(profile, 'file_to_folder');
+
           return (
             <SectionPanel key={meta.id} variant='subtle' className='space-y-5 p-5'>
               <div>
@@ -206,9 +358,9 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                 <p className='mt-1 text-xs text-gray-400'>{meta.description}</p>
               </div>
 
-              <div className='grid gap-4 md:grid-cols-2'>
+              <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
                 <div className='space-y-2'>
-                  <Label className='text-xs text-gray-300'>Placeholder Style</Label>
+                  <Label className='text-xs text-gray-300'>Placeholder Preset</Label>
                   <UnifiedSelect
                     value={profile.placeholders.preset}
                     options={folderTreePlaceholderPresetOptions.map((option) => ({
@@ -220,13 +372,71 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                         ...current,
                         placeholders: {
                           ...current.placeholders,
-                          preset: value as FolderTreeProfile['placeholders']['preset'],
+                          preset: value as FolderTreeProfileV2['placeholders']['preset'],
                         },
                       }));
                     }}
                   />
                 </div>
 
+                <div className='space-y-2'>
+                  <Label className='text-xs text-gray-300'>Placeholder Style</Label>
+                  <UnifiedSelect
+                    value={profile.placeholders.style}
+                    options={folderTreePlaceholderStyleValues.map((value) => ({
+                      value,
+                      label: toTitleLabel(value),
+                    }))}
+                    onValueChange={(value: string): void => {
+                      updateProfile(meta.id, (current) => ({
+                        ...current,
+                        placeholders: {
+                          ...current.placeholders,
+                          style: value as FolderTreeProfileV2['placeholders']['style'],
+                        },
+                      }));
+                    }}
+                  />
+                </div>
+
+                <div className='space-y-2'>
+                  <Label className='text-xs text-gray-300'>Placeholder Emphasis</Label>
+                  <UnifiedSelect
+                    value={profile.placeholders.emphasis}
+                    options={folderTreePlaceholderEmphasisValues.map((value) => ({
+                      value,
+                      label: toTitleLabel(value),
+                    }))}
+                    onValueChange={(value: string): void => {
+                      updateProfile(meta.id, (current) => ({
+                        ...current,
+                        placeholders: {
+                          ...current.placeholders,
+                          emphasis: value as FolderTreeProfileV2['placeholders']['emphasis'],
+                        },
+                      }));
+                    }}
+                  />
+                </div>
+
+                <label className='flex items-start gap-2 rounded border border-border/50 p-3 text-xs text-gray-300'>
+                  <Checkbox
+                    checked={profile.nesting.defaultAllow}
+                    onCheckedChange={(checked: boolean | 'indeterminate'): void => {
+                      updateProfile(meta.id, (current) => ({
+                        ...current,
+                        nesting: {
+                          ...current.nesting,
+                          defaultAllow: checked === true,
+                        },
+                      }));
+                    }}
+                  />
+                  <span>Default allow (fallback)</span>
+                </label>
+              </div>
+
+              <div className='grid gap-4 md:grid-cols-2'>
                 <div className='space-y-2'>
                   <Label className='text-xs text-gray-300'>Root Drop Label</Label>
                   <Input
@@ -242,36 +452,32 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                     }}
                   />
                 </div>
-              </div>
 
-              <div className='space-y-2'>
-                <Label className='text-xs text-gray-300'>Inline Drop Label</Label>
-                <Input
-                  value={profile.placeholders.inlineDropLabel}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                    updateProfile(meta.id, (current) => ({
-                      ...current,
-                      placeholders: {
-                        ...current.placeholders,
-                        inlineDropLabel: event.target.value,
-                      },
-                    }));
-                  }}
-                />
+                <div className='space-y-2'>
+                  <Label className='text-xs text-gray-300'>Inline Drop Label</Label>
+                  <Input
+                    value={profile.placeholders.inlineDropLabel}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                      updateProfile(meta.id, (current) => ({
+                        ...current,
+                        placeholders: {
+                          ...current.placeholders,
+                          inlineDropLabel: event.target.value,
+                        },
+                      }));
+                    }}
+                  />
+                </div>
               </div>
 
               <div className='grid gap-4 md:grid-cols-2'>
                 <label className='flex items-start gap-2 rounded border border-border/50 p-3 text-xs text-gray-300'>
                   <Checkbox
-                    checked={profile.nesting.allowFolderToFolder}
+                    checked={allowFolderToFolder}
                     onCheckedChange={(checked: boolean | 'indeterminate'): void => {
-                      updateProfile(meta.id, (current) => ({
-                        ...current,
-                        nesting: {
-                          ...current.nesting,
-                          allowFolderToFolder: checked === true,
-                        },
-                      }));
+                      updateProfile(meta.id, (current) =>
+                        upsertRule(current, 'folder_to_folder', { allow: checked === true })
+                      );
                     }}
                   />
                   <span>Allow folder inside folder</span>
@@ -279,15 +485,11 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
 
                 <label className='flex items-start gap-2 rounded border border-border/50 p-3 text-xs text-gray-300'>
                   <Checkbox
-                    checked={profile.nesting.allowFileToFolder}
+                    checked={allowFileToFolder}
                     onCheckedChange={(checked: boolean | 'indeterminate'): void => {
-                      updateProfile(meta.id, (current) => ({
-                        ...current,
-                        nesting: {
-                          ...current.nesting,
-                          allowFileToFolder: checked === true,
-                        },
-                      }));
+                      updateProfile(meta.id, (current) =>
+                        upsertRule(current, 'file_to_folder', { allow: checked === true })
+                      );
                     }}
                   />
                   <span>Allow file inside folder</span>
@@ -295,15 +497,11 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
 
                 <label className='flex items-start gap-2 rounded border border-border/50 p-3 text-xs text-gray-300'>
                   <Checkbox
-                    checked={profile.nesting.allowRootFolderDrop}
+                    checked={allowFolderToRoot}
                     onCheckedChange={(checked: boolean | 'indeterminate'): void => {
-                      updateProfile(meta.id, (current) => ({
-                        ...current,
-                        nesting: {
-                          ...current.nesting,
-                          allowRootFolderDrop: checked === true,
-                        },
-                      }));
+                      updateProfile(meta.id, (current) =>
+                        upsertRule(current, 'folder_to_root', { allow: checked === true })
+                      );
                     }}
                   />
                   <span>Allow folder drop to root</span>
@@ -311,15 +509,11 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
 
                 <label className='flex items-start gap-2 rounded border border-border/50 p-3 text-xs text-gray-300'>
                   <Checkbox
-                    checked={profile.nesting.allowRootFileDrop}
+                    checked={allowFileToRoot}
                     onCheckedChange={(checked: boolean | 'indeterminate'): void => {
-                      updateProfile(meta.id, (current) => ({
-                        ...current,
-                        nesting: {
-                          ...current.nesting,
-                          allowRootFileDrop: checked === true,
-                        },
-                      }));
+                      updateProfile(meta.id, (current) =>
+                        upsertRule(current, 'file_to_root', { allow: checked === true })
+                      );
                     }}
                   />
                   <span>Allow file drop to root</span>
@@ -330,15 +524,17 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                 <div className='space-y-2'>
                   <Label className='text-xs text-gray-300'>Allowed Folder Kinds</Label>
                   <Input
-                    value={listToValue(profile.nesting.folderKindsAllowedAsChildren)}
+                    value={listToValue(folderKinds)}
                     onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                      updateProfile(meta.id, (current) => ({
-                        ...current,
-                        nesting: {
-                          ...current.nesting,
-                          folderKindsAllowedAsChildren: toKindList(event.target.value),
-                        },
-                      }));
+                      const nextKinds = toKindList(event.target.value);
+                      updateProfile(meta.id, (current) => {
+                        const withFolderRule = upsertRule(current, 'folder_to_folder', {
+                          childKinds: nextKinds,
+                        });
+                        return upsertRule(withFolderRule, 'folder_to_root', {
+                          childKinds: nextKinds,
+                        });
+                      });
                     }}
                     placeholder={meta.folderHint}
                   />
@@ -347,15 +543,17 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                 <div className='space-y-2'>
                   <Label className='text-xs text-gray-300'>Allowed File Kinds</Label>
                   <Input
-                    value={listToValue(profile.nesting.fileKindsAllowedAsChildren)}
+                    value={listToValue(fileKinds)}
                     onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                      updateProfile(meta.id, (current) => ({
-                        ...current,
-                        nesting: {
-                          ...current.nesting,
-                          fileKindsAllowedAsChildren: toKindList(event.target.value),
-                        },
-                      }));
+                      const nextKinds = toKindList(event.target.value);
+                      updateProfile(meta.id, (current) => {
+                        const withFileRule = upsertRule(current, 'file_to_folder', {
+                          childKinds: nextKinds,
+                        });
+                        return upsertRule(withFileRule, 'file_to_root', {
+                          childKinds: nextKinds,
+                        });
+                      });
                     }}
                     placeholder={meta.fileHint}
                   />
@@ -365,13 +563,13 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
               <div className='space-y-2'>
                 <Label className='text-xs text-gray-300'>Blocked Target Folder Kinds</Label>
                 <Textarea
-                  value={listToValue(profile.nesting.blockedTargetFolderKinds)}
+                  value={listToValue(profile.nesting.blockedTargetKinds)}
                   onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
                     updateProfile(meta.id, (current) => ({
                       ...current,
                       nesting: {
                         ...current.nesting,
-                        blockedTargetFolderKinds: toKindList(event.target.value),
+                        blockedTargetKinds: toKindList(event.target.value),
                       },
                     }));
                   }}
@@ -384,14 +582,17 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                 <div className='space-y-2'>
                   <Label className='text-xs text-gray-300'>Folder Closed Icon</Label>
                   <IconSelector
-                    value={profile.icons.folderClosed}
+                    value={profile.icons.slots.folderClosed}
                     items={TREE_ICON_ITEMS}
                     onChange={(value: string | null): void => {
                       updateProfile(meta.id, (current) => ({
                         ...current,
                         icons: {
                           ...current.icons,
-                          folderClosed: value,
+                          slots: {
+                            ...current.icons.slots,
+                            folderClosed: value,
+                          },
                         },
                       }));
                     }}
@@ -403,14 +604,17 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                 <div className='space-y-2'>
                   <Label className='text-xs text-gray-300'>Folder Open Icon</Label>
                   <IconSelector
-                    value={profile.icons.folderOpen}
+                    value={profile.icons.slots.folderOpen}
                     items={TREE_ICON_ITEMS}
                     onChange={(value: string | null): void => {
                       updateProfile(meta.id, (current) => ({
                         ...current,
                         icons: {
                           ...current.icons,
-                          folderOpen: value,
+                          slots: {
+                            ...current.icons.slots,
+                            folderOpen: value,
+                          },
                         },
                       }));
                     }}
@@ -422,14 +626,17 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                 <div className='space-y-2'>
                   <Label className='text-xs text-gray-300'>File Icon</Label>
                   <IconSelector
-                    value={profile.icons.file}
+                    value={profile.icons.slots.file}
                     items={TREE_ICON_ITEMS}
                     onChange={(value: string | null): void => {
                       updateProfile(meta.id, (current) => ({
                         ...current,
                         icons: {
                           ...current.icons,
-                          file: value,
+                          slots: {
+                            ...current.icons.slots,
+                            file: value,
+                          },
                         },
                       }));
                     }}
@@ -444,14 +651,17 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                     <div className='space-y-1'>
                       <Label className='text-[11px] text-gray-400'>Root</Label>
                       <IconSelector
-                        value={profile.icons.root}
+                        value={profile.icons.slots.root}
                         items={TREE_ICON_ITEMS}
                         onChange={(value: string | null): void => {
                           updateProfile(meta.id, (current) => ({
                             ...current,
                             icons: {
                               ...current.icons,
-                              root: value,
+                              slots: {
+                                ...current.icons.slots,
+                                root: value,
+                              },
                             },
                           }));
                         }}
@@ -462,14 +672,17 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                     <div className='space-y-1'>
                       <Label className='text-[11px] text-gray-400'>Drag Handle</Label>
                       <IconSelector
-                        value={profile.icons.dragHandle}
+                        value={profile.icons.slots.dragHandle}
                         items={TREE_ICON_ITEMS}
                         onChange={(value: string | null): void => {
                           updateProfile(meta.id, (current) => ({
                             ...current,
                             icons: {
                               ...current.icons,
-                              dragHandle: value,
+                              slots: {
+                                ...current.icons.slots,
+                                dragHandle: value,
+                              },
                             },
                           }));
                         }}
@@ -479,6 +692,24 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                     </div>
                   </div>
                 </div>
+              </div>
+
+              <div className='space-y-2'>
+                <Label className='text-xs text-gray-300'>Kind-Specific Icons (kind=IconId, one per line)</Label>
+                <Textarea
+                  value={byKindToValue(profile.icons.byKind)}
+                  onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
+                    updateProfile(meta.id, (current) => ({
+                      ...current,
+                      icons: {
+                        ...current.icons,
+                        byKind: valueToByKind(event.target.value),
+                      },
+                    }));
+                  }}
+                  rows={4}
+                  placeholder='note=FileText'
+                />
               </div>
             </SectionPanel>
           );

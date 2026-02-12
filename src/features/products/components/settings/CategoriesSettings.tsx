@@ -35,7 +35,7 @@ import {
 import {
   cn,
   getFolderTreePlaceholderClasses,
-  upgradeFolderTreeProfileV1ToV2,
+  resolveFolderTreeIconV2,
   type MasterTreeDropPosition,
   type MasterTreeNode,
 } from '@/shared/utils';
@@ -145,10 +145,6 @@ export function CategoriesSettings({
 }: CategoriesSettingsProps): React.JSX.Element {
   const { toast } = useToast();
   const treeProfile = useFolderTreeProfile('product_categories');
-  const treeProfileV2 = useMemo(
-    () => upgradeFolderTreeProfileV1ToV2(treeProfile),
-    [treeProfile]
-  );
   const placeholderClasses = useMemo(
     () => getFolderTreePlaceholderClasses(treeProfile.placeholders.preset),
     [treeProfile.placeholders.preset]
@@ -201,7 +197,7 @@ export function CategoriesSettings({
   const controller = useMasterFolderTree({
     initialNodes: masterNodes,
     initiallyExpandedNodeIds: initialExpandedNodeIds,
-    profile: treeProfileV2,
+    profile: treeProfile,
     externalRevision: masterRevision,
   });
   const { replaceNodes, expandAll } = controller;
@@ -455,17 +451,17 @@ export function CategoriesSettings({
   }, [showModal, parentOptions, formData.parentId]);
 
   const FolderClosedIcon = useMemo(() => {
-    const iconId = treeProfile.icons.folderClosed ?? 'Folder';
+    const iconId = resolveFolderTreeIconV2(treeProfile, 'folderClosed', 'category') ?? 'Folder';
     return ICON_LIBRARY_MAP[iconId] ?? Folder;
-  }, [treeProfile.icons.folderClosed]);
+  }, [treeProfile]);
   const FolderOpenIcon = useMemo(() => {
-    const iconId = treeProfile.icons.folderOpen ?? 'FolderOpen';
+    const iconId = resolveFolderTreeIconV2(treeProfile, 'folderOpen', 'category') ?? 'FolderOpen';
     return ICON_LIBRARY_MAP[iconId] ?? FolderOpen;
-  }, [treeProfile.icons.folderOpen]);
+  }, [treeProfile]);
   const DragHandleIcon = useMemo(() => {
-    const iconId = treeProfile.icons.dragHandle ?? 'GripVertical';
+    const iconId = resolveFolderTreeIconV2(treeProfile, 'dragHandle') ?? 'GripVertical';
     return ICON_LIBRARY_MAP[iconId] ?? GripVertical;
-  }, [treeProfile.icons.dragHandle]);
+  }, [treeProfile]);
 
   return (
     <div className='space-y-5'>
@@ -531,9 +527,29 @@ export function CategoriesSettings({
                 <MasterFolderTree
                   controller={controller}
                   className='space-y-0.5'
-                  onNodeDrop={async ({ draggedNodeId, targetId, position }): Promise<void> => {
+                  rootDropUi={{
+                    label: treeProfile.placeholders.rootDropLabel,
+                    idleClassName: placeholderClasses.rootIdle,
+                    activeClassName: placeholderClasses.rootActive,
+                  }}
+                  onNodeDrop={async ({ draggedNodeId, targetId, position, rootDropZone }): Promise<void> => {
                     const draggedCategoryId = fromCategoryMasterNodeId(draggedNodeId);
                     if (!draggedCategoryId) return;
+
+                    if (!targetId && rootDropZone === 'top') {
+                      const firstRootId =
+                        controller.roots
+                          .map((root: MasterTreeNode): string => root.id)
+                          .find((rootId: string): boolean => rootId !== draggedNodeId) ?? null;
+                      if (firstRootId) {
+                        const topDropTarget = resolveCategoryDropTarget(firstRootId, 'before');
+                        if (topDropTarget) {
+                          await handleDrop(draggedCategoryId, topDropTarget);
+                          return;
+                        }
+                      }
+                    }
+
                     const normalizedPosition: MasterTreeDropPosition =
                       position === 'before' || position === 'after' ? position : 'inside';
                     const dropTarget = resolveCategoryDropTarget(targetId, normalizedPosition);

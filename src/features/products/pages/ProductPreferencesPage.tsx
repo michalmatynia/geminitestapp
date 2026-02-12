@@ -8,7 +8,7 @@ import { useCatalogs } from '@/features/products/hooks/useProductSettingsQueries
 import { useUserPreferences, useUpdateUserPreferencesMutation } from '@/features/products/hooks/useUserPreferences';
 import type { Catalog } from '@/features/products/types';
 import type { ProductListPreferences } from '@/features/products/types/products-ui';
-import { Button, Label, UnifiedSelect, Input, useToast, SectionHeader, SectionPanel } from '@/shared/ui';
+import { Button, Label, UnifiedSelect, Input, useToast, SectionHeader, SectionPanel, FormSection, FormField } from '@/shared/ui';
 
 const DEFAULT_PREFERENCES: ProductListPreferences = {
   nameLocale: 'name_en',
@@ -95,13 +95,17 @@ export function ProductPreferencesPage(): React.JSX.Element {
         />
 
         <div className='space-y-6'>
-          <SectionPanel variant='subtle' className='p-6'>
-            <h2 className='mb-4 text-lg font-semibold text-white'>Product List Settings</h2>
-
+          <FormSection
+            title='Product List Settings'
+            variant='subtle'
+            className='p-6'
+          >
             <div className='space-y-4'>
               {/* Name Locale */}
-              <div className='space-y-2'>
-                <Label htmlFor='nameLocale'>Product Name Language</Label>
+              <FormField
+                label='Product Name Language'
+                description='Default language for product names in the list'
+              >
                 <UnifiedSelect
                   value={preferences.nameLocale || 'name_en'}
                   onValueChange={(value: string) =>
@@ -116,14 +120,13 @@ export function ProductPreferencesPage(): React.JSX.Element {
                     { value: 'name_de', label: 'German' },
                   ]}
                 />
-                <p className='text-xs text-gray-500'>
-                  Default language for product names in the list
-                </p>
-              </div>
+              </FormField>
 
               {/* Default Catalog Filter */}
-              <div className='space-y-2'>
-                <Label htmlFor='catalogFilter'>Default Catalog Filter</Label>
+              <FormField
+                label='Default Catalog Filter'
+                description='Default catalog filter when opening the product list'
+              >
                 <UnifiedSelect
                   value={preferences.catalogFilter || 'all'}
                   onValueChange={(value: string) =>
@@ -140,14 +143,13 @@ export function ProductPreferencesPage(): React.JSX.Element {
                     }))
                   ]}
                 />
-                <p className='text-xs text-gray-500'>
-                  Default catalog filter when opening the product list
-                </p>
-              </div>
+              </FormField>
 
               {/* Currency Code */}
-              <div className='space-y-2'>
-                <Label htmlFor='currencyCode'>Preferred Currency</Label>
+              <FormField
+                label='Preferred Currency'
+                description='Preferred currency code for price display (leave empty for catalog default)'
+              >
                 <Input
                   id='currencyCode'
                   value={preferences.currencyCode || ''}
@@ -159,14 +161,13 @@ export function ProductPreferencesPage(): React.JSX.Element {
                   }
                   placeholder='EUR, USD, PLN, etc.'
                 />
-                <p className='text-xs text-gray-500'>
-                  Preferred currency code for price display (leave empty for catalog default)
-                </p>
-              </div>
+              </FormField>
 
               {/* Thumbnail Source */}
-              <div className='space-y-2'>
-                <Label htmlFor='thumbnailSource'>Thumbnail Source</Label>
+              <FormField
+                label='Thumbnail Source'
+                description='Choose which image source is used for product list thumbnails'
+              >
                 <UnifiedSelect
                   value={preferences.thumbnailSource || 'file'}
                   onValueChange={(value: string) =>
@@ -181,14 +182,13 @@ export function ProductPreferencesPage(): React.JSX.Element {
                     { value: 'base64', label: 'Base64' },
                   ]}
                 />
-                <p className='text-xs text-gray-500'>
-                  Choose which image source is used for product list thumbnails
-                </p>
-              </div>
+              </FormField>
 
               {/* Page Size */}
-              <div className='space-y-2'>
-                <Label htmlFor='pageSize'>Products Per Page</Label>
+              <FormField
+                label='Products Per Page'
+                description='Number of products to display per page'
+              >
                 <UnifiedSelect
                   value={String(preferences.pageSize || 50)}
                   onValueChange={(value: string) =>
@@ -199,12 +199,9 @@ export function ProductPreferencesPage(): React.JSX.Element {
                   }
                   options={['10', '25', '50', '100', '200'].map((size: string) => ({ value: size, label: size }))}
                 />
-                <p className='text-xs text-gray-500'>
-                  Number of products to display per page
-                </p>
-              </div>
+              </FormField>
             </div>
-          </SectionPanel>
+          </FormSection>
 
           {/* Action Buttons */}
           <div className='flex justify-between gap-3'>

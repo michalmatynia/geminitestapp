@@ -19,14 +19,10 @@ import {
 } from '@/features/ai/ai-paths/lib/settings-store-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
+  UnifiedSelect,
   Button,
   Input,
   Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   Switch,
   Tabs,
   TabsContent,
@@ -937,22 +933,21 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
             <Label className='text-xs text-gray-400'>Regex Pattern</Label>
             {hasAiProposal ? (
               <div className='mt-2 flex items-center gap-2'>
-                <Select
+                <UnifiedSelect
                   value={activeVariant}
                   onValueChange={(value: string): void => {
                     if (value === 'ai' || value === 'manual') {
                       applyVariant(value);
                     }
                   }}
-                >
-                  <SelectTrigger className='h-8 w-[180px] border-border bg-card/70 text-xs text-white'>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className='border-border bg-gray-900'>
-                    <SelectItem value='manual'>Manual</SelectItem>
-                    <SelectItem value='ai'>AI Proposal</SelectItem>
-                  </SelectContent>
-                </Select>
+                  placeholder='Select variant'
+                  triggerClassName='h-8 w-[180px] border-border bg-card/70 text-xs text-white'
+                  contentClassName='border-border bg-gray-900'
+                  options={[
+                    { value: 'manual', label: 'Manual' },
+                    { value: 'ai', label: 'AI Proposal' },
+                  ]}
+                />
                 <div className='text-[11px] text-gray-500'>
                   Switch between manual and AI proposal.
                 </div>
@@ -1085,59 +1080,56 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
         <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
           <div>
             <Label className='text-xs text-gray-400'>Mode</Label>
-            <Select
+            <UnifiedSelect
               value={regexMode}
               onValueChange={(value: string): void =>
                 updateRegex({ mode: value as NonNullable<RegexConfig['mode']> })
               }
-            >
-              <SelectTrigger className='mt-2 h-8 w-full border-border bg-card/70 text-xs text-white'>
-                <SelectValue placeholder='Select mode' />
-              </SelectTrigger>
-              <SelectContent className='border-border bg-gray-900'>
-                <SelectItem value='group'>Group matches</SelectItem>
-                <SelectItem value='extract'>Extract value</SelectItem>
-                <SelectItem value='extract_json'>Extract JSON/object</SelectItem>
-              </SelectContent>
-            </Select>
+              placeholder='Select mode'
+              triggerClassName='mt-2 h-8 w-full border-border bg-card/70 text-xs text-white'
+              contentClassName='border-border bg-gray-900'
+              options={[
+                { value: 'group', label: 'Group matches' },
+                { value: 'extract', label: 'Extract value' },
+                { value: 'extract_json', label: 'Extract JSON/object' },
+              ]}
+            />
           </div>
           <div>
             <Label className='text-xs text-gray-400'>Match Mode</Label>
-            <Select
+            <UnifiedSelect
               value={regexConfig.matchMode ?? 'first'}
               onValueChange={(value: string): void =>
                 updateRegex({ matchMode: value as NonNullable<RegexConfig['matchMode']> })
               }
-            >
-              <SelectTrigger className='mt-2 h-8 w-full border-border bg-card/70 text-xs text-white'>
-                <SelectValue placeholder='Select mode' />
-              </SelectTrigger>
-              <SelectContent className='border-border bg-gray-900'>
-                <SelectItem value='first'>First match</SelectItem>
-                <SelectItem value='first_overall'>First overall</SelectItem>
-                <SelectItem value='all'>All matches</SelectItem>
-              </SelectContent>
-            </Select>
+              placeholder='Select mode'
+              triggerClassName='mt-2 h-8 w-full border-border bg-card/70 text-xs text-white'
+              contentClassName='border-border bg-gray-900'
+              options={[
+                { value: 'first', label: 'First match' },
+                { value: 'first_overall', label: 'First overall' },
+                { value: 'all', label: 'All matches' },
+              ]}
+            />
             <p className='mt-1 text-[11px] text-gray-500'>
               First overall stops after the first match across all inputs.
             </p>
           </div>
           <div>
             <Label className='text-xs text-gray-400'>Grouped Output Mode</Label>
-            <Select
+            <UnifiedSelect
               value={regexConfig.outputMode ?? 'object'}
               onValueChange={(value: string): void =>
                 updateRegex({ outputMode: value as NonNullable<RegexConfig['outputMode']> })
               }
-            >
-              <SelectTrigger className='mt-2 h-8 w-full border-border bg-card/70 text-xs text-white'>
-                <SelectValue placeholder='Select output' />
-              </SelectTrigger>
-              <SelectContent className='border-border bg-gray-900'>
-                <SelectItem value='object'>Object (Record)</SelectItem>
-                <SelectItem value='array'>Array (Groups list)</SelectItem>
-              </SelectContent>
-            </Select>
+              placeholder='Select output'
+              triggerClassName='mt-2 h-8 w-full border-border bg-card/70 text-xs text-white'
+              contentClassName='border-border bg-gray-900'
+              options={[
+                { value: 'object', label: 'Object (Record)' },
+                { value: 'array', label: 'Array (Groups list)' },
+              ]}
+            />
           </div>
         </div>
 
@@ -1436,56 +1428,53 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
                 <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
                   <div>
                     <Label className='text-[10px] text-gray-400'>Mode</Label>
-                    <Select
+                    <UnifiedSelect
                       value={template.mode ?? 'group'}
                       onValueChange={(value: string): void =>
                         updateRegexTemplate(template.id, { mode: value as RegexConfig['mode'] })
                       }
-                    >
-                      <SelectTrigger className='mt-1 h-8 w-full border-border bg-card/70 text-xs text-white'>
-                        <SelectValue placeholder='Select mode' />
-                      </SelectTrigger>
-                      <SelectContent className='border-border bg-gray-900'>
-                        <SelectItem value='group'>Group matches</SelectItem>
-                        <SelectItem value='extract'>Extract value</SelectItem>
-                        <SelectItem value='extract_json'>Extract JSON/object</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      placeholder='Select mode'
+                      triggerClassName='mt-1 h-8 w-full border-border bg-card/70 text-xs text-white'
+                      contentClassName='border-border bg-gray-900'
+                      options={[
+                        { value: 'group', label: 'Group matches' },
+                        { value: 'extract', label: 'Extract value' },
+                        { value: 'extract_json', label: 'Extract JSON/object' },
+                      ]}
+                    />
                   </div>
                   <div>
                     <Label className='text-[10px] text-gray-400'>Match Mode</Label>
-                    <Select
+                    <UnifiedSelect
                       value={template.matchMode ?? 'first'}
                       onValueChange={(value: string): void =>
                         updateRegexTemplate(template.id, { matchMode: value as RegexConfig['matchMode'] })
                       }
-                    >
-                      <SelectTrigger className='mt-1 h-8 w-full border-border bg-card/70 text-xs text-white'>
-                        <SelectValue placeholder='Select mode' />
-                      </SelectTrigger>
-                      <SelectContent className='border-border bg-gray-900'>
-                        <SelectItem value='first'>First match</SelectItem>
-                        <SelectItem value='first_overall'>First overall</SelectItem>
-                        <SelectItem value='all'>All matches</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      placeholder='Select mode'
+                      triggerClassName='mt-1 h-8 w-full border-border bg-card/70 text-xs text-white'
+                      contentClassName='border-border bg-gray-900'
+                      options={[
+                        { value: 'first', label: 'First match' },
+                        { value: 'first_overall', label: 'First overall' },
+                        { value: 'all', label: 'All matches' },
+                      ]}
+                    />
                   </div>
                   <div>
                     <Label className='text-[10px] text-gray-400'>Output Mode</Label>
-                    <Select
+                    <UnifiedSelect
                       value={template.outputMode ?? 'object'}
                       onValueChange={(value: string): void =>
                         updateRegexTemplate(template.id, { outputMode: value as RegexConfig['outputMode'] })
                       }
-                    >
-                      <SelectTrigger className='mt-1 h-8 w-full border-border bg-card/70 text-xs text-white'>
-                        <SelectValue placeholder='Select output' />
-                      </SelectTrigger>
-                      <SelectContent className='border-border bg-gray-900'>
-                        <SelectItem value='object'>Object (Record)</SelectItem>
-                        <SelectItem value='array'>Array (Groups list)</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      placeholder='Select output'
+                      triggerClassName='mt-1 h-8 w-full border-border bg-card/70 text-xs text-white'
+                      contentClassName='border-border bg-gray-900'
+                      options={[
+                        { value: 'object', label: 'Object (Record)' },
+                        { value: 'array', label: 'Array (Groups list)' },
+                      ]}
+                    />
                   </div>
                 </div>
 
@@ -1622,56 +1611,53 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
                 <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
                   <div>
                     <Label className='text-[10px] text-gray-400'>Mode</Label>
-                    <Select
+                    <UnifiedSelect
                       value={template.mode ?? 'group'}
                       onValueChange={(value: string): void =>
                         updateGlobalTemplate(template.id, { mode: value as RegexConfig['mode'] })
                       }
-                    >
-                      <SelectTrigger className='mt-1 h-8 w-full border-border bg-card/70 text-xs text-white'>
-                        <SelectValue placeholder='Select mode' />
-                      </SelectTrigger>
-                      <SelectContent className='border-border bg-gray-900'>
-                        <SelectItem value='group'>Group matches</SelectItem>
-                        <SelectItem value='extract'>Extract value</SelectItem>
-                        <SelectItem value='extract_json'>Extract JSON/object</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      placeholder='Select mode'
+                      triggerClassName='mt-1 h-8 w-full border-border bg-card/70 text-xs text-white'
+                      contentClassName='border-border bg-gray-900'
+                      options={[
+                        { value: 'group', label: 'Group matches' },
+                        { value: 'extract', label: 'Extract value' },
+                        { value: 'extract_json', label: 'Extract JSON/object' },
+                      ]}
+                    />
                   </div>
                   <div>
                     <Label className='text-[10px] text-gray-400'>Match Mode</Label>
-                    <Select
+                    <UnifiedSelect
                       value={template.matchMode ?? 'first'}
                       onValueChange={(value: string): void =>
                         updateGlobalTemplate(template.id, { matchMode: value as RegexConfig['matchMode'] })
                       }
-                    >
-                      <SelectTrigger className='mt-1 h-8 w-full border-border bg-card/70 text-xs text-white'>
-                        <SelectValue placeholder='Select mode' />
-                      </SelectTrigger>
-                      <SelectContent className='border-border bg-gray-900'>
-                        <SelectItem value='first'>First match</SelectItem>
-                        <SelectItem value='first_overall'>First overall</SelectItem>
-                        <SelectItem value='all'>All matches</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      placeholder='Select mode'
+                      triggerClassName='mt-1 h-8 w-full border-border bg-card/70 text-xs text-white'
+                      contentClassName='border-border bg-gray-900'
+                      options={[
+                        { value: 'first', label: 'First match' },
+                        { value: 'first_overall', label: 'First overall' },
+                        { value: 'all', label: 'All matches' },
+                      ]}
+                    />
                   </div>
                   <div>
                     <Label className='text-[10px] text-gray-400'>Output Mode</Label>
-                    <Select
+                    <UnifiedSelect
                       value={template.outputMode ?? 'object'}
                       onValueChange={(value: string): void =>
                         updateGlobalTemplate(template.id, { outputMode: value as RegexConfig['outputMode'] })
                       }
-                    >
-                      <SelectTrigger className='mt-1 h-8 w-full border-border bg-card/70 text-xs text-white'>
-                        <SelectValue placeholder='Select output' />
-                      </SelectTrigger>
-                      <SelectContent className='border-border bg-gray-900'>
-                        <SelectItem value='object'>Object (Record)</SelectItem>
-                        <SelectItem value='array'>Array (Groups list)</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      placeholder='Select output'
+                      triggerClassName='mt-1 h-8 w-full border-border bg-card/70 text-xs text-white'
+                      contentClassName='border-border bg-gray-900'
+                      options={[
+                        { value: 'object', label: 'Object (Record)' },
+                        { value: 'array', label: 'Array (Groups list)' },
+                      ]}
+                    />
                   </div>
                 </div>
 

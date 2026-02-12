@@ -37,6 +37,36 @@ const createNodes = (): MasterTreeNode[] => [
   },
 ];
 
+const createRootDropNodes = (): MasterTreeNode[] => [
+  {
+    id: 'folder-a',
+    type: 'folder',
+    kind: 'folder',
+    parentId: null,
+    name: 'Folder A',
+    path: 'Folder A',
+    sortOrder: 0,
+  },
+  {
+    id: 'folder-b',
+    type: 'folder',
+    kind: 'folder',
+    parentId: null,
+    name: 'Folder B',
+    path: 'Folder B',
+    sortOrder: 1,
+  },
+  {
+    id: 'file-1',
+    type: 'file',
+    kind: 'note',
+    parentId: 'folder-b',
+    name: 'Note 1',
+    path: 'Note 1',
+    sortOrder: 0,
+  },
+];
+
 describe('useMasterFolderTree', () => {
   it('initializes nodes and tree view state', () => {
     const { result } = renderHook(() =>
@@ -125,6 +155,22 @@ describe('useMasterFolderTree', () => {
     });
 
     expect(result.current.nodes.find((node) => node.id === 'file-1')?.parentId).toBe('folder-a');
+  });
+
+  it('drops nested nodes to root at a specific index', async () => {
+    const { result } = renderHook(() =>
+      useMasterFolderTree({
+        initialNodes: createRootDropNodes(),
+      })
+    );
+
+    await act(async () => {
+      const dropResult = await result.current.dropNodeToRoot('file-1', 0);
+      expect(dropResult.ok).toBe(true);
+    });
+
+    expect(result.current.nodes.find((node) => node.id === 'file-1')?.parentId).toBeNull();
+    expect(result.current.roots.map((node) => node.id)[0]).toBe('file-1');
   });
 
   it('exposes drag state transitions and drop action', async () => {

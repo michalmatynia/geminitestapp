@@ -14,7 +14,7 @@ import { getDatabaseEnginePolicy } from '@/shared/lib/db/database-engine-policy'
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
-import { FOLDER_TREE_PROFILES_SETTING_KEY } from '@/shared/utils/folder-tree-profiles';
+import { FOLDER_TREE_PROFILES_V2_SETTING_KEY } from '@/shared/utils/folder-tree-profiles-v2';
 
 type SettingRecord = { key: string; value: string };
 type SettingDocument = { _id?: string; key?: string; value?: string };
@@ -32,12 +32,11 @@ const LITE_SETTINGS_KEYS = [
   'noteSettings:selectedNotebookId',
   'noteSettings:autoformatOnPaste',
   'noteSettings:editorMode',
-  FOLDER_TREE_PROFILES_SETTING_KEY,
+  FOLDER_TREE_PROFILES_V2_SETTING_KEY,
   CLIENT_LOGGING_KEYS.featureFlags,
   CLIENT_LOGGING_KEYS.tags,
 ];
 
-let liteCache: { data: SettingRecord[]; fetchedAt: number } | null = null;
 let liteInflight: Promise<SettingRecord[]> | null = null;
 
 const canUsePrismaSettings = (): boolean =>

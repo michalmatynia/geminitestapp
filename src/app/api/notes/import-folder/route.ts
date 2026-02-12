@@ -60,6 +60,9 @@ async function createFolderStructure(
     name: node.name,
     parentId,
     notebookId,
+    themeId: null,
+    color: null,
+    sortIndex: null,
   });
 
   categoryMap.set(node.path, category.id);
@@ -74,6 +77,10 @@ async function createFolderStructure(
       isPinned: false,
       isArchived: false,
       isFavorite: false,
+      color: null,
+      tagIds: [],
+      editorType: 'markdown',
+      relatedNoteIds: [],
     });
   }
 

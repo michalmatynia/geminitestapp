@@ -29,6 +29,7 @@ import {
   Pagination,
   SectionHeader,
   SectionPanel,
+  FormSection,
   Tabs,
   TabsContent,
   TabsList,
@@ -493,8 +494,7 @@ function DatabasePreviewContent(): React.JSX.Element {
         <div className='space-y-6'>
           {/* ── Database Overview ── */}
           {(databaseSize || tableDetails.length > 0 || enums.length > 0) && (
-            <SectionPanel className='p-5'>
-              <h2 className='text-sm font-semibold text-white mb-3'>Database Overview</h2>
+            <FormSection title='Database Overview' className='p-5'>
               <div className='grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5'>
                 {databaseSize && (
                   <div className='rounded-md border border-border bg-card/80 px-3 py-2'>
@@ -519,19 +519,15 @@ function DatabasePreviewContent(): React.JSX.Element {
                   <p className='mt-1 text-sm font-semibold text-gray-200'>{totalFks}</p>
                 </div>
               </div>
-            </SectionPanel>
+            </FormSection>
           )}
 
           {/* ── Tables (Detailed) ── */}
           {tableDetails.length > 0 && (
-            <SectionPanel className='p-5'>
-              <div className='flex flex-wrap items-center justify-between gap-3 mb-4'>
-                <div>
-                  <h2 className='text-sm font-semibold text-white'>Tables</h2>
-                  <span className='text-xs text-gray-500'>
-                    {filteredTableDetails.length} of {tableDetails.length} tables
-                  </span>
-                </div>
+            <FormSection
+              title='Tables'
+              description={`${filteredTableDetails.length} of ${tableDetails.length} tables`}
+              actions={
                 <div className='flex items-center gap-3'>
                   <Input
                     type='search'
@@ -555,8 +551,10 @@ function DatabasePreviewContent(): React.JSX.Element {
                     className='scale-90 origin-right'
                   />
                 </div>
-              </div>
-              <div className='space-y-2'>
+              }
+              className='p-5'
+            >
+              <div className='space-y-2 mt-4'>
                 {filteredTableDetails.map((detail: DatabaseTableDetail) => (
                   <TableDetailCard
                     key={detail.name}
@@ -574,16 +572,16 @@ function DatabasePreviewContent(): React.JSX.Element {
                   />
                 ))}
               </div>
-            </SectionPanel>
+            </FormSection>
           )}
 
           {/* ── Tables fallback (no details, e.g. MongoDB) ── */}
           {tableDetails.length === 0 && tables.length > 0 && (
-            <SectionPanel className='p-5'>
-              <div className='flex items-center justify-between'>
-                <h2 className='text-sm font-semibold text-white'>Tables & Row Estimates</h2>
-                <span className='text-xs text-gray-500'>{tables.length} tables</span>
-              </div>
+            <FormSection
+              title='Tables & Row Estimates'
+              description={`${tables.length} tables`}
+              className='p-5'
+            >
               <div className='mt-3 max-h-64 divide-y divide-border overflow-auto rounded-md border border-border bg-card/60'>
                 {tables.map((table: DatabasePreviewTable) => (
                   <div key={table.name} className='flex items-center justify-between px-3 py-2 text-xs'>
@@ -592,16 +590,13 @@ function DatabasePreviewContent(): React.JSX.Element {
                   </div>
                 ))}
               </div>
-            </SectionPanel>
+            </FormSection>
           )}
 
           {/* ── Enums ── */}
           {enums.length > 0 && (
-            <SectionPanel className='p-5'>
-              <h2 className='text-sm font-semibold text-white mb-3'>
-                Enum Types ({enums.length})
-              </h2>
-              <div className='space-y-2'>
+            <FormSection title={`Enum Types (${enums.length})`} className='p-5'>
+              <div className='space-y-2 mt-4'>
                 {enums.map((enumType: DatabaseEnumInfo) => (
                   <div key={enumType.name} className='rounded-md border border-border bg-card/60 px-4 py-3'>
                     <span className='text-xs font-semibold font-mono text-emerald-300'>{enumType.name}</span>
@@ -615,17 +610,15 @@ function DatabasePreviewContent(): React.JSX.Element {
                   </div>
                 ))}
               </div>
-            </SectionPanel>
+            </FormSection>
           )}
 
           {/* ── Schema Objects (backup mode groups) ── */}
           {groups.length > 0 && (
-            <SectionPanel className='p-5'>
-              <div className='flex flex-wrap items-center justify-between gap-3'>
-                <div>
-                  <h2 className='text-sm font-semibold text-white'>Schema Objects</h2>
-                  <span className='text-xs text-gray-500'>{filteredGroups.length} groups</span>
-                </div>
+            <FormSection
+              title='Schema Objects'
+              description={`${filteredGroups.length} groups`}
+              actions={
                 <Input
                   type='search'
                   value={groupQuery}
@@ -634,7 +627,9 @@ function DatabasePreviewContent(): React.JSX.Element {
                   className='h-8 w-full max-w-xs text-xs'
                   aria-label='Filter schema objects'
                 />
-              </div>
+              }
+              className='p-5'
+            >
               {filteredGroups.length === 0 && (
                 <p className='mt-3 text-xs text-gray-500'>No schema objects match the current filter.</p>
               )}
@@ -669,28 +664,29 @@ function DatabasePreviewContent(): React.JSX.Element {
                   })}
                 </div>
               )}
-            </SectionPanel>
+            </FormSection>
           )}
 
           {/* ── SQL Query Console ── */}
           {dbType === 'postgresql' && (
             <div ref={consoleSectionRef}>
-              <SectionPanel className='p-5'>
-                <button
-                  type='button'
-                  onClick={(): void => setShowConsole(!showConsole)}
-                  className='flex w-full items-center justify-between'
-                >
-                  <div className='flex items-center gap-2'>
-                    <TerminalIcon className='size-4 text-emerald-300' />
-                    <h2 className='text-sm font-semibold text-white'>SQL Console</h2>
-                  </div>
-                  {showConsole ? (
-                    <ChevronDownIcon className='size-4 text-gray-400' />
-                  ) : (
-                    <ChevronRightIcon className='size-4 text-gray-400' />
-                  )}
-                </button>
+              <FormSection
+                title='SQL Console'
+                actions={
+                  <Button
+                    variant='ghost'
+                    size='sm'
+                    onClick={(): void => setShowConsole(!showConsole)}
+                  >
+                    {showConsole ? (
+                      <ChevronDownIcon className='size-4 text-gray-400' />
+                    ) : (
+                      <ChevronRightIcon className='size-4 text-gray-400' />
+                    )}
+                  </Button>
+                }
+                className='p-5'
+              >
                 {showConsole && (
                   <div className='mt-4'>
                     <SqlQueryConsole
@@ -699,34 +695,35 @@ function DatabasePreviewContent(): React.JSX.Element {
                     />
                   </div>
                 )}
-              </SectionPanel>
+              </FormSection>
             </div>
           )}
 
           {/* ── CRUD Panel ── */}
           {showCrud && tableDetails.length > 0 && (
             <div ref={crudSectionRef}>
-              <SectionPanel className='p-5'>
-                <div className='flex items-center justify-between mb-4'>
-                  <div className='flex items-center gap-2'>
-                    <SettingsIcon className='size-4 text-emerald-300' />
-                    <h2 className='text-sm font-semibold text-white'>Table Manager</h2>
-                  </div>
+              <FormSection
+                title='Table Manager'
+                actions={
                   <Button
                     variant='ghost'
                     size='sm'
                     onClick={(): void => setShowCrud(false)}
                     className='text-xs text-gray-400'
                   >
-                  Close
+                    Close
                   </Button>
+                }
+                className='p-5'
+              >
+                <div className='mt-4'>
+                  <CrudPanel
+                    tableDetails={tableDetails}
+                    defaultTable={crudTable}
+                    dbType={dbType}
+                  />
                 </div>
-                <CrudPanel
-                  tableDetails={tableDetails}
-                  defaultTable={crudTable}
-                  dbType={dbType}
-                />
-              </SectionPanel>
+              </FormSection>
             </div>
           )}
         </div>

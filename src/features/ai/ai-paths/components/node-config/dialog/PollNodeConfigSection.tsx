@@ -15,11 +15,7 @@ import {
   Input,
   Label,
   Textarea,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  UnifiedSelect,
 } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
@@ -119,20 +115,19 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
     <div className='space-y-4'>
       <div>
         <Label className='text-xs text-gray-400'>Mode</Label>
-        <Select
+        <UnifiedSelect
           value={resolvedPollConfig.mode || ''}
           onValueChange={(value: string): void =>
             updatePollConfig({ mode: value as 'job' | 'database' })
           }
-        >
-          <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
-            <SelectValue placeholder='Select mode' />
-          </SelectTrigger>
-          <SelectContent className='border-border bg-gray-900'>
-            <SelectItem value='job'>AI Job</SelectItem>
-            <SelectItem value='database'>Database Query</SelectItem>
-          </SelectContent>
-        </Select>
+          options={[
+            { value: 'job', label: 'AI Job' },
+            { value: 'database', label: 'Database Query' },
+          ]}
+          placeholder='Select mode'
+          triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
+          contentClassName='border-border bg-gray-900'
+        />
       </div>
       <div className='grid gap-3 sm:grid-cols-2'>
         <div>
@@ -181,7 +176,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
           <div className='grid gap-3 sm:grid-cols-2'>
             <div>
               <Label className='text-xs text-gray-400'>Provider</Label>
-              <Select
+              <UnifiedSelect
                 value={queryConfig.provider}
                 onValueChange={(value: string): void =>
                   updatePollConfig({
@@ -191,20 +186,19 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                     },
                   })
                 }
-              >
-                <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
-                  <SelectValue placeholder='Select provider' />
-                </SelectTrigger>
-                <SelectContent className='border-border bg-gray-900'>
-                  <SelectItem value='auto'>Auto</SelectItem>
-                  <SelectItem value='mongodb'>MongoDB</SelectItem>
-                  <SelectItem value='prisma'>Prisma</SelectItem>
-                </SelectContent>
-              </Select>
+                options={[
+                  { value: 'auto', label: 'Auto' },
+                  { value: 'mongodb', label: 'MongoDB' },
+                  { value: 'prisma', label: 'Prisma' },
+                ]}
+                placeholder='Select provider'
+                triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
+                contentClassName='border-border bg-gray-900'
+              />
             </div>
             <div>
               <Label className='text-xs text-gray-400'>Collection</Label>
-              <Select
+              <UnifiedSelect
                 value={collectionOption}
                 onValueChange={(value: string): void =>
                   updatePollConfig({
@@ -215,24 +209,17 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                     },
                   })
                 }
-              >
-                <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
-                  <SelectValue placeholder='Select collection' />
-                </SelectTrigger>
-                <SelectContent className='border-border bg-gray-900'>
-                  {DB_COLLECTION_OPTIONS.map(
-                    (option: {
-                      label: string;
-                      value: string;
-                    }): React.JSX.Element => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ),
-                  )}
-                  <SelectItem value='custom'>Custom</SelectItem>
-                </SelectContent>
-              </Select>
+                options={[
+                  ...DB_COLLECTION_OPTIONS.map((option: { label: string; value: string }) => ({
+                    value: option.value,
+                    label: option.label,
+                  })),
+                  { value: 'custom', label: 'Custom' },
+                ]}
+                placeholder='Select collection'
+                triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
+                contentClassName='border-border bg-gray-900'
+              />
             </div>
           </div>
           {collectionOption === 'custom' && (
@@ -264,7 +251,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
           <div className='grid gap-3 sm:grid-cols-2'>
             <div>
               <Label className='text-xs text-gray-400'>Query mode</Label>
-              <Select
+              <UnifiedSelect
                 value={queryConfig.mode}
                 onValueChange={(value: string): void =>
                   updatePollConfig({
@@ -274,19 +261,18 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                     },
                   })
                 }
-              >
-                <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
-                  <SelectValue placeholder='Select mode' />
-                </SelectTrigger>
-                <SelectContent className='border-border bg-gray-900'>
-                  <SelectItem value='preset'>Preset</SelectItem>
-                  <SelectItem value='custom'>Custom</SelectItem>
-                </SelectContent>
-              </Select>
+                options={[
+                  { value: 'preset', label: 'Preset' },
+                  { value: 'custom', label: 'Custom' },
+                ]}
+                placeholder='Select mode'
+                triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
+                contentClassName='border-border bg-gray-900'
+              />
             </div>
             <div>
               <Label className='text-xs text-gray-400'>ID type</Label>
-              <Select
+              <UnifiedSelect
                 value={queryConfig.idType}
                 onValueChange={(value: string): void =>
                   updatePollConfig({
@@ -296,22 +282,21 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                     },
                   })
                 }
-              >
-                <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
-                  <SelectValue placeholder='Select ID type' />
-                </SelectTrigger>
-                <SelectContent className='border-border bg-gray-900'>
-                  <SelectItem value='string'>String</SelectItem>
-                  <SelectItem value='objectId'>ObjectId</SelectItem>
-                </SelectContent>
-              </Select>
+                options={[
+                  { value: 'string', label: 'String' },
+                  { value: 'objectId', label: 'ObjectId' },
+                ]}
+                placeholder='Select ID type'
+                triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
+                contentClassName='border-border bg-gray-900'
+              />
             </div>
           </div>
           {queryConfig.mode === 'preset' && (
             <div className='grid gap-3 sm:grid-cols-2'>
               <div>
                 <Label className='text-xs text-gray-400'>Preset</Label>
-                <Select
+                <UnifiedSelect
                   value={queryConfig.preset}
                   onValueChange={(value: string): void =>
                     updatePollConfig({
@@ -321,17 +306,16 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                       },
                     })
                   }
-                >
-                  <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
-                    <SelectValue placeholder='Select preset' />
-                  </SelectTrigger>
-                  <SelectContent className='border-border bg-gray-900'>
-                    <SelectItem value='by_id'>By _id</SelectItem>
-                    <SelectItem value='by_productId'>By productId</SelectItem>
-                    <SelectItem value='by_entityId'>By entityId</SelectItem>
-                    <SelectItem value='by_field'>By custom field</SelectItem>
-                  </SelectContent>
-                </Select>
+                  options={[
+                    { value: 'by_id', label: 'By _id' },
+                    { value: 'by_productId', label: 'By productId' },
+                    { value: 'by_entityId', label: 'By entityId' },
+                    { value: 'by_field', label: 'By custom field' },
+                  ]}
+                  placeholder='Select preset'
+                  triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
+                  contentClassName='border-border bg-gray-900'
+                />
               </div>
               <div>
                 <Label className='text-xs text-gray-400'>Custom field</Label>
@@ -465,7 +449,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
             </div>
             <div>
               <Label className='text-xs text-gray-400'>Success operator</Label>
-              <Select
+              <UnifiedSelect
                 value={resolvedPollConfig.successOperator ?? 'equals'}
                 onValueChange={(value: string): void =>
                   updatePollConfig({
@@ -476,17 +460,16 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                       | 'notEquals',
                   })
                 }
-              >
-                <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
-                  <SelectValue placeholder='Select operator' />
-                </SelectTrigger>
-                <SelectContent className='border-border bg-gray-900'>
-                  <SelectItem value='truthy'>Truthy</SelectItem>
-                  <SelectItem value='equals'>Equals</SelectItem>
-                  <SelectItem value='notEquals'>Not equals</SelectItem>
-                  <SelectItem value='contains'>Contains</SelectItem>
-                </SelectContent>
-              </Select>
+                options={[
+                  { value: 'truthy', label: 'Truthy' },
+                  { value: 'equals', label: 'Equals' },
+                  { value: 'notEquals', label: 'Not equals' },
+                  { value: 'contains', label: 'Contains' },
+                ]}
+                placeholder='Select operator'
+                triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
+                contentClassName='border-border bg-gray-900'
+              />
             </div>
           </div>
           <div className='grid gap-3 sm:grid-cols-2'>

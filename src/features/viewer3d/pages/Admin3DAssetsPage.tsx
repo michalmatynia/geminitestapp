@@ -30,6 +30,8 @@ import {
   Alert,
   useToast,
   RefreshButton,
+  FormSection,
+  FormField,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -223,10 +225,9 @@ export function Admin3DAssetsPage(): React.JSX.Element {
       footer={stats}
     >
       {showFilters && (
-        <SectionPanel>
-          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-            <div>
-              <Label className='mb-2 block text-sm text-muted-foreground'>Category</Label>
+        <FormSection title='Advanced Filters' className='p-4'>
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2 mt-4'>
+            <FormField label='Category'>
               <UnifiedSelect
                 value={selectedCategory ?? '__all__'}
                 onValueChange={(v: string): void => setSelectedCategory(v === '__all__' ? null : v)}
@@ -239,10 +240,9 @@ export function Admin3DAssetsPage(): React.JSX.Element {
                 ]}
                 placeholder='All categories'
               />
-            </div>
+            </FormField>
 
-            <div>
-              <label className='mb-2 block text-sm text-muted-foreground'>Tags</label>
+            <FormField label='Tags'>
               <div className='flex flex-wrap gap-2'>
                 {allTags.map((tag: string) => (
                   <Button
@@ -263,20 +263,22 @@ export function Admin3DAssetsPage(): React.JSX.Element {
                   <span className='text-sm text-muted-foreground'>No tags available</span>
                 )}
               </div>
-            </div>
+            </FormField>
           </div>
-        </SectionPanel>
+        </FormSection>
       )}
 
       {showUploader && (
-        <SectionPanel>
-          <div className='p-4'>
-            <div className='mb-4 flex items-center justify-between'>
-              <h3 className='text-lg font-semibold text-foreground'>Upload 3D Asset</h3>
-              <Button variant='ghost' size='sm' onClick={() => setShowUploader(false)}>
-                Cancel
-              </Button>
-            </div>
+        <FormSection
+          title='Upload 3D Asset'
+          actions={(
+            <Button variant='ghost' size='sm' onClick={() => setShowUploader(false)}>
+              Cancel
+            </Button>
+          )}
+          className='p-4'
+        >
+          <div className='mt-4'>
             <Asset3DUploader
               onUpload={handleUpload}
               onCancel={() => setShowUploader(false)}
@@ -284,7 +286,7 @@ export function Admin3DAssetsPage(): React.JSX.Element {
               existingTags={allTags}
             />
           </div>
-        </SectionPanel>
+        </FormSection>
       )}
 
       {loading && (

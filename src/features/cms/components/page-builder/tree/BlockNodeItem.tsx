@@ -7,6 +7,9 @@ import { TreeRow, TreeActionButton, TreeActionSlot, TreeContextMenu, type TreeCo
 import { DRAG_KEYS, hasDragType } from '@/shared/utils/drag-drop';
 
 import { BLOCK_ICONS, resolveBlockLabel } from './tree-constants';
+import { useOptionalTreeColumnId } from './TreeColumnContext';
+import { useOptionalTreeParentBlockId } from './TreeParentBlockContext';
+import { useTreeSectionId } from './TreeSectionContext';
 import { useDragStateExtract } from '../../../hooks/useDragStateExtract';
 import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
 import { useTreeActions } from '../../../hooks/useTreeActionsContext';
@@ -17,11 +20,11 @@ import type { BlockNodeItemProps } from './tree-types';
 export function BlockNodeItem({
   block,
   index,
-  sectionId,
-  columnId,
-  parentBlockId,
   disableDrag = false,
 }: BlockNodeItemProps): React.ReactNode {
+  const sectionId = useTreeSectionId();
+  const columnId = useOptionalTreeColumnId();
+  const resolvedParentBlockId = useOptionalTreeParentBlockId();
   const { state: pbState } = usePageBuilder();
   const {
     selectNode,
@@ -61,11 +64,11 @@ export function BlockNodeItem({
         tone: 'danger',
         disabled: isBackgroundMode,
         onSelect: (): void => {
-          if (!isBackgroundMode) blockActions.remove(sectionId, block.id, columnId, parentBlockId);
+          if (!isBackgroundMode) blockActions.remove(sectionId, block.id, columnId, resolvedParentBlockId);
         },
       },
     ],
-    [isBackgroundMode, blockActions, sectionId, block.id, columnId, parentBlockId]
+    [isBackgroundMode, blockActions, sectionId, block.id, columnId, resolvedParentBlockId]
   );
 
   return (
@@ -89,7 +92,7 @@ export function BlockNodeItem({
             type: block.type,
             fromSectionId: sectionId,
             fromColumnId: columnId ?? '',
-            fromParentBlockId: parentBlockId ?? '',
+            fromParentBlockId: resolvedParentBlockId ?? '',
           });
           // Defer state updates to prevent re-render from cancelling drag
           setTimeout(() => {
@@ -98,7 +101,7 @@ export function BlockNodeItem({
               type: block.type,
               fromSectionId: sectionId,
               fromColumnId: columnId ?? null,
-              fromParentBlockId: parentBlockId ?? null,
+              fromParentBlockId: resolvedParentBlockId ?? null,
             });
           }, 0);
         }}
@@ -108,7 +111,7 @@ export function BlockNodeItem({
         }}
         onDragOver={(e: React.DragEvent) => {
           if (disableDrag) return;
-          const hasBlockPayload = hasDragType(e.dataTransfer, [DRAG_KEYS.TEXT]);
+          const hasBlockPayload = hasDragType(e.dataTransfer, [DRAG_KEYS.BLOCK_ID]);
           const blockDrag = readBlockDragData(e.dataTransfer, {
             id: draggedBlockId,
             ...(draggedBlockType !== undefined ? { type: draggedBlockType } : {}),
@@ -150,7 +153,7 @@ export function BlockNodeItem({
               columnId,
               index,
               fromParent || undefined,
-              parentBlockId
+              resolvedParentBlockId
             );
             endBlockDrag();
             return;
@@ -195,7 +198,7 @@ export function BlockNodeItem({
                 type: block.type,
                 fromSectionId: sectionId,
                 fromColumnId: columnId ?? '',
-                fromParentBlockId: parentBlockId ?? '',
+                fromParentBlockId: resolvedParentBlockId ?? '',
               });
               // Defer state updates to prevent re-render from cancelling drag
               setTimeout(() => {
@@ -204,7 +207,7 @@ export function BlockNodeItem({
                   type: block.type,
                   fromSectionId: sectionId,
                   fromColumnId: columnId ?? null,
-                  fromParentBlockId: parentBlockId ?? null,
+                  fromParentBlockId: resolvedParentBlockId ?? null,
                 });
               }, 0);
             }}
@@ -242,7 +245,7 @@ export function BlockNodeItem({
               tone='danger'
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
-                blockActions.remove(sectionId, block.id, columnId, parentBlockId);
+                blockActions.remove(sectionId, block.id, columnId, resolvedParentBlockId);
               }}
               title='Remove block'
             >

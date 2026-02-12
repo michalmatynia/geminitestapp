@@ -1,9 +1,15 @@
 'use client';
 
 import type { NodeCacheMode } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Switch } from '@/shared/ui';
+import { Button, Input, Label, UnifiedSelect, Switch } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
+
+const cacheModeOptions = [
+  { value: 'auto', label: 'Auto (deterministic only)' },
+  { value: 'force', label: 'Force cache' },
+  { value: 'disabled', label: 'Disable cache' },
+];
 
 export function RuntimeNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig, clearNodeCache } = useAiPathConfig();
@@ -19,7 +25,7 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
     <div className='space-y-3 rounded-md border border-border bg-card/50 p-3'>
       <div>
         <Label className='text-xs text-gray-400'>Execution cache</Label>
-        <Select
+        <UnifiedSelect
           value={cacheMode}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
@@ -32,16 +38,10 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
               },
             })
           }
-        >
-          <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
-            <SelectValue placeholder='Cache mode' />
-          </SelectTrigger>
-          <SelectContent className='border-border bg-gray-900'>
-            <SelectItem value='auto'>Auto (deterministic only)</SelectItem>
-            <SelectItem value='force'>Force cache</SelectItem>
-            <SelectItem value='disabled'>Disable cache</SelectItem>
-          </SelectContent>
-        </Select>
+          options={cacheModeOptions}
+          placeholder='Cache mode'
+          className='mt-2'
+        />
       </div>
       {cacheMode !== 'disabled' && (
         <div>

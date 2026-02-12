@@ -1,15 +1,15 @@
 'use client';
 
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
-import { AppModal } from '@/shared/ui';
+import { ContentDisplayModal } from '@/shared/ui/templates';
 
 export function TestLogModal(): React.JSX.Element | null {
   const { selectedStep, setShowTestLogModal } = useIntegrationsContext();
-  
+
   if (!selectedStep) return null;
 
   return (
-    <AppModal
+    <ContentDisplayModal
       open={true}
       onClose={() => setShowTestLogModal(false)}
       title='Playwright Log'
@@ -39,6 +39,6 @@ export function TestLogModal(): React.JSX.Element | null {
             : 'Playwright stopped after this step due to a failure.'}
         </div>
       </div>
-    </AppModal>
+    </ContentDisplayModal>
   );
 }

@@ -7,11 +7,7 @@ import type { AgentConfig } from '@/features/ai/ai-paths/lib';
 import {
   Button,
   Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  UnifiedSelect,
   Textarea,
 } from '@/shared/ui';
 
@@ -28,7 +24,7 @@ const RUNTIME_PERSONA_VALUE = '__runtime__';
 export function AgentNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
   const personasQuery = useAgentPersonas();
-  
+
   if (!selectedNode || selectedNode.type !== 'agent') return null;
 
   const personas = personasQuery.data ?? [];
@@ -37,6 +33,14 @@ export function AgentNodeConfigSection(): React.JSX.Element | null {
     agentConfig.personaId
       ? personas.find((persona: { id: string }) => persona.id === agentConfig.personaId)
       : null;
+
+  const personaOptions = [
+    { value: RUNTIME_PERSONA_VALUE, label: 'Default (runtime settings)' },
+    ...personas.map((persona: { id: string; name: string }) => ({
+      value: persona.id,
+      label: persona.name,
+    })),
+  ];
 
   return (
     <div className='space-y-4'>
@@ -56,27 +60,16 @@ export function AgentNodeConfigSection(): React.JSX.Element | null {
           <Link href='/admin/agentcreator/personas'>Manage Personas</Link>
         </Button>
       </div>
-      <Select
+      <UnifiedSelect
         value={agentConfig.personaId ? agentConfig.personaId : RUNTIME_PERSONA_VALUE}
         onValueChange={(value: string): void =>
           updateSelectedNodeConfig({
             agent: { ...agentConfig, personaId: value === RUNTIME_PERSONA_VALUE ? '' : value },
           })
         }
-      >
-        <SelectTrigger className='w-full border-border bg-card/70 text-sm text-white'>
-          <SelectValue placeholder='Select persona' />
-        </SelectTrigger>
-        <SelectContent className='border-border bg-gray-900'>
-          {/* Radix Select forbids empty item values; we use a sentinel for "runtime defaults". */}
-          <SelectItem value={RUNTIME_PERSONA_VALUE}>Default (runtime settings)</SelectItem>
-          {personas.map((persona: { id: string; name: string }) => (
-            <SelectItem key={persona.id} value={persona.id}>
-              {persona.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        options={personaOptions}
+        placeholder='Select persona'
+      />
       {personasQuery.isLoading && (
         <div className='text-[11px] text-gray-500'>Loading personas…</div>
       )}

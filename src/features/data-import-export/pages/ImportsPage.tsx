@@ -28,11 +28,6 @@ import {
   Label,
   SectionHeader,
   SectionPanel,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
 } from '@/shared/ui';
 
 function ImportsPageContent(): React.JSX.Element {
@@ -178,20 +173,17 @@ function ImportsPageContent(): React.JSX.Element {
                         className='flex-1'
                       />
                       <div className='flex-1'>
-                        <Select
+                        <UnifiedSelect
                           value={m.targetField}
                           onValueChange={(v: string): void => updateMapping(i, { targetField: v })}
-                        >
-                          <SelectTrigger className='bg-gray-900 border border-border p-2 rounded text-sm h-10 text-white'>
-                            <SelectValue placeholder='Target Field' />
-                          </SelectTrigger>
-                          <SelectContent className='bg-gray-900 border-border text-white'>
-                            <SelectItem value='__none__'>Target Field</SelectItem>
-                            {PRODUCT_FIELDS.map((f: { value: string; label: string }) => (
-                              <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          options={[
+                            { value: '__none__', label: 'Target Field' },
+                            ...PRODUCT_FIELDS,
+                          ]}
+                          triggerClassName='bg-gray-900 border border-border p-2 rounded text-sm h-10 text-white'
+                          contentClassName='bg-gray-900 border-border text-white'
+                          placeholder='Target Field'
+                        />
                       </div>
                       <Button variant='ghost' size='icon' onClick={() => removeMappingRow(i)}><Trash2 className='size-4' /></Button>
                     </div>

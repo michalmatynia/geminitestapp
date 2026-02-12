@@ -4,10 +4,11 @@ import React, { createContext, useContext, useState, useCallback, useEffect, use
 
 import { internalError } from '@/shared/errors/app-error';
 import type { CategoryWithChildren } from '@/shared/types/domain/notes';
+import { collectTreeNodeIds, defaultFolderTreeProfiles, type FolderTreeProfile } from '@/shared/utils';
 
 import type { FolderTreeProps } from '../types/folder-tree-ui';
 
-export interface FolderTreeContextType extends FolderTreeProps {
+export interface FolderTreeContextType extends Omit<FolderTreeProps, 'profile'> {
   // Data
   folders: CategoryWithChildren[];
   selectedFolderId: string | null;
@@ -46,6 +47,7 @@ export interface FolderTreeContextType extends FolderTreeProps {
   renamingNoteId: string | null;
   onStartNoteRename: (id: string | null) => void;
   onCancelNoteRename: () => void;
+  profile: FolderTreeProfile;
 }
 
 const FolderTreeContext = createContext<FolderTreeContextType | undefined>(undefined);
@@ -66,19 +68,13 @@ export function FolderTreeProvider({
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
   const [renamingNoteId, setRenamingNoteId] = useState<string | null>(null);
   const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(new Set());
+  const profile = props.profile ?? defaultFolderTreeProfiles.notes;
 
   const collectFolderIds = useCallback((foldersToScan: CategoryWithChildren[]): string[] => {
-    const ids: string[] = [];
-    const walk = (nodes: CategoryWithChildren[]): void => {
-      nodes.forEach((node: CategoryWithChildren) => {
-        ids.push(node.id);
-        if (node.children.length > 0) {
-          walk(node.children);
-        }
-      });
-    };
-    walk(foldersToScan);
-    return ids;
+    return foldersToScan.flatMap((node: CategoryWithChildren): string[] => [
+      node.id,
+      ...collectTreeNodeIds(node.children),
+    ]);
   }, []);
 
   // Track if initial expansion has happened to avoid re-expanding on folder tree refresh
@@ -107,6 +103,7 @@ export function FolderTreeProvider({
   const value = useMemo(
     () => ({
       ...props,
+      profile,
       selectedNotebookId: props.selectedNotebookId,
       selectedNoteId: props.selectedNoteId,
       draggedFolderId,
@@ -122,6 +119,7 @@ export function FolderTreeProvider({
     }),
     [
       props,
+      profile,
       draggedFolderId,
       renamingFolderId,
       renamingNoteId,

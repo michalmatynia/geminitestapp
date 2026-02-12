@@ -4,6 +4,7 @@ import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils
 
 import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
+import { useOptionalSectionBlockData } from './SectionBlockContext';
 import { SectionDataProvider } from './SectionDataContext';
 import { useCmsPageContext } from '../CmsPageContext';
 
@@ -11,17 +12,20 @@ import type { BlockInstance } from '../../../types/page-builder';
 
 interface FrontendSlideshowSectionProps {
   sectionId?: string | undefined;
-  settings: Record<string, unknown>;
-  blocks: BlockInstance[];
+  settings?: Record<string, unknown>;
+  blocks?: BlockInstance[];
   layout?: { fullWidth?: boolean | undefined } | undefined;
 }
 
 export function FrontendSlideshowSection({
   sectionId,
-  settings,
-  blocks,
+  settings: propSettings,
+  blocks: propBlocks,
   layout: propLayout,
 }: FrontendSlideshowSectionProps): React.ReactNode {
+  const sectionBlockData = useOptionalSectionBlockData();
+  const settings = propSettings ?? sectionBlockData?.settings ?? {};
+  const blocks = propBlocks ?? sectionBlockData?.blocks ?? [];
   const { colorSchemes, layout: contextLayout } = useCmsPageContext();
   const layout = propLayout ?? contextLayout;
   const sectionStyles = getSectionStyles(settings, colorSchemes);

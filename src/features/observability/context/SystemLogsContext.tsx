@@ -1,11 +1,12 @@
 'use client';
 
 import { type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 import { useClearLogsMutation, useRebuildIndexesMutation, useRunLogInsight, useInterpretLog } from '@/features/observability/hooks/useLogMutations';
 import { useSystemLogs, useSystemLogMetrics, useMongoDiagnostics, useLogInsights } from '@/features/observability/hooks/useLogQueries';
+import { readSystemLogUrlState, writeSystemLogUrlState } from '@/features/observability/lib/system-log-filter-url-state';
 import { logClientError } from '@/features/observability/utils/client-error-logger';
 import { internalError } from '@/shared/errors/app-error';
 import type { SystemLogMetrics, SystemLogRecord, SystemLogLevel, AiInsightRecord } from '@/shared/types';
@@ -22,6 +23,12 @@ const filterFields: FilterField[] = [
   { key: 'level', label: 'Level', type: 'select', options: [...levelOptions] },
   { key: 'query', label: 'Search', type: 'text', placeholder: 'Message or source' },
   { key: 'source', label: 'Source', type: 'text', placeholder: 'api/products, auth, etc.' },
+  { key: 'method', label: 'Method', type: 'text', placeholder: 'GET, POST, PATCH...' },
+  { key: 'statusCode', label: 'Status', type: 'number', placeholder: '500' },
+  { key: 'requestId', label: 'Request ID', type: 'text', placeholder: 'x-request-id' },
+  { key: 'userId', label: 'User ID', type: 'text', placeholder: 'auth user id' },
+  { key: 'fingerprint', label: 'Fingerprint', type: 'text', placeholder: 'error fingerprint' },
+  { key: 'category', label: 'Category', type: 'text', placeholder: 'validation, db, network...' },
   { key: 'fromDate', label: 'From', type: 'date' },
   { key: 'toDate', label: 'To', type: 'date' },
 ];
@@ -53,6 +60,13 @@ const formatDateParam = (value: string, endOfDay: boolean = false): string | nul
   return date.toISOString();
 };
 
+const parseStatusCodeInput = (value: string): number | null => {
+  if (!value.trim()) return null;
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed)) return null;
+  return parsed;
+};
+
 type ToastFn = (
   message: string,
   options?: { variant?: 'success' | 'error' | 'info' | 'warning' }
@@ -62,6 +76,12 @@ type SystemLogsContextValue = {
   level: SystemLogLevel | 'all';
   query: string;
   source: string;
+  method: string;
+  statusCode: string;
+  requestId: string;
+  userId: string;
+  fingerprint: string;
+  category: string;
   fromDate: string;
   toDate: string;
   page: number;
@@ -110,39 +130,65 @@ export const useSystemLogsContext = (): SystemLogsContextValue => {
 
 export function SystemLogsProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { toast } = useToast();
+  const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const initialUrlState = readSystemLogUrlState(searchParams?.toString() ?? '');
 
-  const [level, setLevel] = useState<SystemLogLevel | 'all'>(() => {
-    const p = searchParams?.get('level');
-    if (p && levelOptions.some((option: (typeof levelOptions)[number]) => option.value === p)) {
-      return p as SystemLogLevel | 'all';
-    }
-    return 'all';
-  });
-
-  const [query, setQuery] = useState(() => searchParams?.get('query') ?? '');
-  const [source, setSource] = useState(() => searchParams?.get('source') ?? '');
-
-  const [fromDate, setFromDate] = useState(() => {
-    const p = searchParams?.get('from');
-    if (!p) return '';
-    const date = new Date(p);
-    return Number.isNaN(date.getTime()) ? '' : date.toISOString().slice(0, 10);
-  });
-
-  const [toDate, setToDate] = useState(() => {
-    const p = searchParams?.get('to');
-    if (!p) return '';
-    const date = new Date(p);
-    return Number.isNaN(date.getTime()) ? '' : date.toISOString().slice(0, 10);
-  });
+  const [level, setLevel] = useState<SystemLogLevel | 'all'>(() => initialUrlState.level);
+  const [query, setQuery] = useState(() => initialUrlState.query);
+  const [source, setSource] = useState(() => initialUrlState.source);
+  const [method, setMethod] = useState(() => initialUrlState.method);
+  const [statusCode, setStatusCode] = useState(() => initialUrlState.statusCode);
+  const [requestId, setRequestId] = useState(() => initialUrlState.requestId);
+  const [userId, setUserId] = useState(() => initialUrlState.userId);
+  const [fingerprint, setFingerprint] = useState(() => initialUrlState.fingerprint);
+  const [category, setCategory] = useState(() => initialUrlState.category);
+  const [fromDate, setFromDate] = useState(() => initialUrlState.fromDate);
+  const [toDate, setToDate] = useState(() => initialUrlState.toDate);
 
   const [isClearLogsConfirmOpen, setIsClearLogsConfirmOpen] = useState(false);
   const [isRebuildIndexesConfirmOpen, setIsRebuildIndexesConfirmOpen] = useState(false);
   const [logInterpretations, setLogInterpretations] = useState<Record<string, AiInsightRecord>>({});
 
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(() => initialUrlState.page);
   const pageSize = 50;
+
+  useEffect(() => {
+    const nextSearch = writeSystemLogUrlState(searchParams?.toString() ?? '', {
+      level,
+      query,
+      source,
+      method,
+      statusCode,
+      requestId,
+      userId,
+      fingerprint,
+      category,
+      fromDate,
+      toDate,
+      page,
+    });
+    const currentSearch = searchParams?.toString() ?? '';
+    if (nextSearch === currentSearch) return;
+    router.replace(nextSearch ? `${pathname}?${nextSearch}` : pathname, { scroll: false });
+  }, [
+    category,
+    fingerprint,
+    fromDate,
+    level,
+    method,
+    page,
+    pathname,
+    query,
+    requestId,
+    router,
+    searchParams,
+    source,
+    statusCode,
+    toDate,
+    userId,
+  ]);
 
   const filters = useMemo(
     () => ({
@@ -151,10 +197,16 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
       level,
       query,
       source,
+      method,
+      statusCode: parseStatusCodeInput(statusCode),
+      requestId,
+      userId,
+      fingerprint,
+      category,
       from: formatDateParam(fromDate),
       to: formatDateParam(toDate, true),
     }),
-    [page, pageSize, level, query, source, fromDate, toDate]
+    [page, pageSize, level, query, source, method, statusCode, requestId, userId, fingerprint, category, fromDate, toDate]
   );
 
   const metricsFilters = useMemo(
@@ -162,10 +214,16 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
       level,
       query,
       source,
+      method,
+      statusCode: parseStatusCodeInput(statusCode),
+      requestId,
+      userId,
+      fingerprint,
+      category,
       from: formatDateParam(fromDate),
       to: formatDateParam(toDate, true),
     }),
-    [level, query, source, fromDate, toDate]
+    [level, query, source, method, statusCode, requestId, userId, fingerprint, category, fromDate, toDate]
   );
 
   const logsQuery = useSystemLogs(filters);
@@ -250,6 +308,12 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
     if (key === 'level') setLevel(value as SystemLogLevel | 'all');
     if (key === 'query') setQuery(value);
     if (key === 'source') setSource(value);
+    if (key === 'method') setMethod(value);
+    if (key === 'statusCode') setStatusCode(value);
+    if (key === 'requestId') setRequestId(value);
+    if (key === 'userId') setUserId(value);
+    if (key === 'fingerprint') setFingerprint(value);
+    if (key === 'category') setCategory(value);
     if (key === 'fromDate') setFromDate(value);
     if (key === 'toDate') setToDate(value);
   };
@@ -258,6 +322,12 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
     setLevel('all');
     setQuery('');
     setSource('');
+    setMethod('');
+    setStatusCode('');
+    setRequestId('');
+    setUserId('');
+    setFingerprint('');
+    setCategory('');
     setFromDate('');
     setToDate('');
     setPage(1);
@@ -302,6 +372,12 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
     level,
     query,
     source,
+    method,
+    statusCode,
+    requestId,
+    userId,
+    fingerprint,
+    category,
     fromDate,
     toDate,
     page,

@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 
 import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
@@ -12,7 +14,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  FormModal,
+  SettingsFormModal,
 } from '@/shared/ui';
 
 export function CurrencyModal(): React.JSX.Element {
@@ -70,16 +72,12 @@ export function CurrencyModal(): React.JSX.Element {
   };
 
   return (
-    <FormModal
+    <SettingsFormModal
       open={isOpen}
       onClose={onClose}
       title={currency ? 'Edit Currency' : 'Add Currency'}
-      onSave={(): void => {
-        void handleSubmit();
-      }}
+      onSave={handleSubmit}
       isSaving={saveMutation.isPending}
-      saveText={currency ? 'Update' : 'Add'}
-      cancelText='Close'
       size='md'
     >
       <div className='space-y-4'>
@@ -121,6 +119,6 @@ export function CurrencyModal(): React.JSX.Element {
           />
         </div>
       </div>
-    </FormModal>
+    </SettingsFormModal>
   );
 }

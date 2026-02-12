@@ -12,6 +12,8 @@ import {
   Alert,
   SectionPanel,
   Checkbox,
+  Textarea,
+  Tag,
 } from '@/shared/ui';
 
 import { updateAsset3D } from '../api';
@@ -148,13 +150,12 @@ export function Asset3DEditModal({
           <Label htmlFor='description' className='text-sm text-gray-300'>
             Description
           </Label>
-          <textarea
+          <Textarea
             id='description'
             value={description}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setDescription(e.target.value)}
             placeholder='Enter description...'
-            rows={3}
-            className='w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm'
+            className='bg-gray-800 border-gray-700 min-h-[80px]'
           />
         </div>
 
@@ -216,19 +217,12 @@ export function Asset3DEditModal({
           {tags.length > 0 && (
             <div className='flex flex-wrap gap-1 mt-2'>
               {tags.map((tag: string) => (
-                <span
+                <Tag
                   key={tag}
-                  className='inline-flex items-center gap-1 px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs'
-                >
-                  {tag}
-                  <button
-                    type='button'
-                    onClick={() => handleRemoveTag(tag)}
-                    className='text-gray-500 hover:text-red-400'
-                  >
-                    <X className='h-3 w-3' />
-                  </button>
-                </span>
+                  label={tag}
+                  onRemove={() => handleRemoveTag(tag)}
+                  className='bg-gray-700 text-gray-300 border-none'
+                />
               ))}
             </div>
           )}

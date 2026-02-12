@@ -50,11 +50,38 @@ export const invalidateCatalogs = (queryClient: QueryClient) => {
   return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.catalogs });
 };
 
-export const invalidateCatalogScopedData = (queryClient: QueryClient, catalogId: string) => {
+export const invalidateCatalogScopedData = (queryClient: QueryClient, catalogId: string | null) => {
   return Promise.all([
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.categories(catalogId) }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.tags(catalogId) }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.parameters(catalogId) }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.categories(catalogId) }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.tags(catalogId) }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.parameters(catalogId) }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.categoryTree(catalogId) }),
+  ]);
+};
+
+export const invalidatePriceGroups = (queryClient: QueryClient) => {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.priceGroups }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.priceGroups() }),
+  ]);
+};
+
+export const invalidateProductSettingsCatalogs = (queryClient: QueryClient) => {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.catalogs }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.catalogs() }),
+  ]);
+};
+
+export const invalidateValidatorConfig = (queryClient: QueryClient) => {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.validatorSettings() }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.validatorPatterns() }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.validatorConfig(true) }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.validatorConfig(false) }),
   ]);
 };
 
@@ -64,8 +91,19 @@ export const invalidateCmsPages = (queryClient: QueryClient) => {
   return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cms.pages.all });
 };
 
+export const invalidateCmsPageDetail = (queryClient: QueryClient, pageId: string) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cms.pages.detail(pageId) });
+};
+
 export const invalidateCmsSlugs = (queryClient: QueryClient) => {
   return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cms.slugs.all });
+};
+
+export const invalidateCmsSlugDetail = (queryClient: QueryClient, slugId: string) => {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cms.slugs.detail(slugId) }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cms.slugs.domains(slugId) }),
+  ]);
 };
 
 export const invalidateCmsDomains = (queryClient: QueryClient) => {
@@ -74,6 +112,10 @@ export const invalidateCmsDomains = (queryClient: QueryClient) => {
 
 export const invalidateCmsThemes = (queryClient: QueryClient) => {
   return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cms.themes.all });
+};
+
+export const invalidateCmsThemeDetail = (queryClient: QueryClient, themeId: string) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cms.themes.detail(themeId) });
 };
 
 // --- Notes ---
@@ -88,6 +130,26 @@ export const invalidateNotebooks = (queryClient: QueryClient) => {
 
 export const invalidateNoteDetail = (queryClient: QueryClient, noteId: string) => {
   return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.detail(noteId) });
+};
+
+export const invalidateNoteTags = (queryClient: QueryClient, notebookId?: string) => {
+  if (!notebookId) {
+    return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all, exact: false });
+  }
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.tags() }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.tags(notebookId) }),
+  ]);
+};
+
+export const invalidateNoteThemes = (queryClient: QueryClient, notebookId?: string) => {
+  if (!notebookId) {
+    return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all, exact: false });
+  }
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.themes() }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.themes(notebookId) }),
+  ]);
 };
 
 // --- Integrations ---
@@ -107,8 +169,38 @@ export const invalidateIntegrationConnections = (
   return Promise.all([
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.connections() }),
     queryClient.invalidateQueries({
-      queryKey: [...QUERY_KEYS.integrations.connections(), integrationId] as const,
+      queryKey: QUERY_KEYS.integrations.connections(integrationId),
     }),
+  ]);
+};
+
+export const invalidateProductListings = (queryClient: QueryClient, productId: string) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.listings(productId) });
+};
+
+export const invalidateListingBadges = (queryClient: QueryClient) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.productListingsBadges() });
+};
+
+export const invalidateProductListingsAndBadges = (queryClient: QueryClient, productId: string) => {
+  return Promise.all([
+    invalidateProductListings(queryClient, productId),
+    invalidateListingBadges(queryClient),
+  ]);
+};
+
+export const invalidateListingRuntimeQueues = (queryClient: QueryClient) => {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.jobs.integrations() }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.aiPaths.jobQueue({}) }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.aiPaths.queueStatus() }),
+  ]);
+};
+
+export const invalidateListingsBadgesAndQueues = (queryClient: QueryClient, productId: string) => {
+  return Promise.all([
+    invalidateProductListingsAndBadges(queryClient, productId),
+    invalidateListingRuntimeQueues(queryClient),
   ]);
 };
 
@@ -136,6 +228,20 @@ export const invalidateMarketplaceTags = (queryClient: QueryClient, connectionId
 
 export const invalidateMarketplaceTagMappings = (queryClient: QueryClient, connectionId: string) => {
   return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.marketplace.tagMappings(connectionId) });
+};
+
+// --- System ---
+
+export const invalidateSystemLogs = (queryClient: QueryClient) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.system.logs.all });
+};
+
+export const invalidateSystemDiagnostics = (queryClient: QueryClient) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.system.diagnostics.all });
+};
+
+export const invalidateSystemActivity = (queryClient: QueryClient) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.system.activity.all });
 };
 
 // --- Settings ---

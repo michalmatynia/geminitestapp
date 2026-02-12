@@ -19,6 +19,7 @@ import type {
   ProductTag,
 } from '@/features/products/types';
 import { api } from '@/shared/lib/api-client';
+import { invalidateProductMetadata } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { Language } from '@/shared/types/domain/internationalization';
 
@@ -98,7 +99,7 @@ export function useSaveProducerMutation(): UseMutationResult<
         ? api.put<Producer>(`/api/products/producers/${id}`, data)
         : api.post<Producer>('/api/products/producers', data),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: productMetadataKeys.producers });
+      void invalidateProductMetadata(queryClient);
     },
   });
 }
@@ -108,7 +109,7 @@ export function useDeleteProducerMutation(): UseMutationResult<void, Error, stri
   return useMutation({
     mutationFn: (id: string) => api.delete<void>(`/api/products/producers/${id}`),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: productMetadataKeys.producers });
+      void invalidateProductMetadata(queryClient);
     },
   });
 }

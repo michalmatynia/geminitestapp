@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import Image from 'next/image';
 import React, { useCallback } from 'react';
 
+import { MarkdownToolbarActionsProvider } from '@/features/notesapp/context/MarkdownToolbarActionsContext';
 import { useNoteFormContext, NoteFormProvider } from '@/features/notesapp/context/NoteFormContext';
 import type { NoteFormProps } from '@/features/notesapp/types/notes-ui';
 import { Button, Label, Input } from '@/shared/ui';
@@ -167,6 +168,22 @@ function NoteFormInner({
     });
   }, [content, setContent, contentRef]);
 
+  const markdownToolbarActions = React.useMemo(() => ({
+    onApplyWrap: applyWrap,
+    onApplyLinePrefix: applyLinePrefix,
+    onInsertAtCursor: insertAtCursor,
+    onApplyBulletList: applyBulletList,
+    onApplyChecklist: applyChecklist,
+    onApplySpanStyle: applySpanStyle,
+  }), [
+    applyWrap,
+    applyLinePrefix,
+    insertAtCursor,
+    applyBulletList,
+    applyChecklist,
+    applySpanStyle,
+  ]);
+
   return (
     <>
       <form
@@ -194,14 +211,9 @@ function NoteFormInner({
           <Label className='mb-2 block text-sm font-medium text-white'>
           Content
           </Label>
-          <MarkdownToolbar
-            onApplyWrap={applyWrap}
-            onApplyLinePrefix={applyLinePrefix}
-            onInsertAtCursor={insertAtCursor}
-            onApplyBulletList={applyBulletList}
-            onApplyChecklist={applyChecklist}
-            onApplySpanStyle={applySpanStyle}
-          />        
+          <MarkdownToolbarActionsProvider value={markdownToolbarActions}>
+            <MarkdownToolbar />
+          </MarkdownToolbarActionsProvider>
           {editorMode === 'markdown' || editorMode === 'code' ? (
             <MarkdownEditor isCodeMode={editorMode === 'code'} />
           ) : (

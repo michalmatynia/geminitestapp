@@ -22,6 +22,7 @@ import {
   FileUploadButton,
   FileUploadTrigger,
   PanelHeader,
+  Textarea,
 } from '@/shared/ui';
 
 import {
@@ -949,11 +950,11 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
                 onChange={updateSetting('customCssSelectors')}
                 placeholder='.product-card, #cart, .footer'
               />
-              <textarea
+              <Textarea
                 value={theme.customCss}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => update('customCss', e.target.value)}
                 placeholder={'.my-class {\n  color: red;\n}'}
-                className='w-full rounded border border-border/50 bg-gray-800/40 p-2 font-mono text-xs text-gray-300 placeholder:text-gray-600 focus:border-blue-500 focus:outline-none min-h-[120px] resize-y'
+                className='w-full bg-gray-800/40 p-2 font-mono text-xs text-gray-300 placeholder:text-gray-600 min-h-[120px]'
                 spellCheck={false}
               />
             </div>

@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Button, useToast, SectionHeader, SectionPanel } from '@/shared/ui';
+import { Button, useToast, SectionHeader, FormSection } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 
@@ -93,13 +93,11 @@ function AdminFrontManageContent({
         className='mb-6'
       />
 
-      <SectionPanel className='p-6'>
-        <SectionHeader
-          title='Front Page Destination'
-          description='Choose one application to serve as the entry point for your site.'
-          size='sm'
-          className='mb-6'
-        />
+      <FormSection
+        title='Front Page Destination'
+        description='Choose one application to serve as the entry point for your site.'
+        className='p-6'
+      >
         <div className='space-y-4'>
           <div className='grid gap-3'>
             {options.map((option: { id: FrontAppOption; title: string; description: string; route: string }) => (
@@ -147,7 +145,7 @@ function AdminFrontManageContent({
             </Button>
           </div>
         </div>
-      </SectionPanel>
+      </FormSection>
     </div>
   );
 }

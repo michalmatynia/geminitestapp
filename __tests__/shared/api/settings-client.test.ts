@@ -68,5 +68,64 @@ describe('settings-client cache guards', () => {
       })
     );
   });
-});
 
+  it('falls back to light scope settings when lite endpoint returns 404', async () => {
+    const settingsPayload = [{ key: 'theme', value: 'dark' }];
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 404 }))
+      .mockResolvedValueOnce(buildResponse(settingsPayload));
+    global.fetch = fetchMock;
+
+    const { fetchLiteSettingsCached } = await import('@/shared/api/settings-client');
+    const result = await fetchLiteSettingsCached();
+
+    expect(result).toEqual(settingsPayload);
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      '/api/settings/lite',
+      expect.objectContaining({
+        cache: 'default',
+        credentials: 'include',
+      })
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      '/api/settings?scope=light',
+      expect.objectContaining({
+        cache: 'default',
+        credentials: 'include',
+      })
+    );
+  });
+
+  it('uses no-store fallback request when bypassCache is true and lite endpoint is missing', async () => {
+    const settingsPayload = [{ key: 'theme', value: 'dark' }];
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 404 }))
+      .mockResolvedValueOnce(buildResponse(settingsPayload));
+    global.fetch = fetchMock;
+
+    const { fetchLiteSettingsCached } = await import('@/shared/api/settings-client');
+    const result = await fetchLiteSettingsCached({ bypassCache: true });
+
+    expect(result).toEqual(settingsPayload);
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      '/api/settings/lite',
+      expect.objectContaining({
+        cache: 'no-store',
+        credentials: 'include',
+      })
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      '/api/settings?scope=light',
+      expect.objectContaining({
+        cache: 'no-store',
+        credentials: 'include',
+      })
+    );
+  });
+});

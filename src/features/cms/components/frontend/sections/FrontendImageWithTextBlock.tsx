@@ -6,16 +6,13 @@ import Image from 'next/image';
 
 
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
+import { useSectionBlockData } from './SectionBlockContext';
 import { useMediaStyles } from '../media-styles-context';
 
 import type { BlockInstance } from '../../../types/page-builder';
 
-interface FrontendImageWithTextBlockProps {
-  settings: Record<string, unknown>;
-  blocks: BlockInstance[];
-}
-
-export function FrontendImageWithTextBlock({ settings, blocks }: FrontendImageWithTextBlockProps): React.ReactNode {
+export function FrontendImageWithTextBlock(): React.ReactNode {
+  const { settings, blocks } = useSectionBlockData();
   const image = settings['image'] as string | undefined;
   const placement = (settings['desktopImagePlacement'] as string) || 'image-first';
   const imageFirst = placement !== 'image-second';

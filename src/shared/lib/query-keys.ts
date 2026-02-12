@@ -103,7 +103,8 @@ export const QUERY_KEYS = {
   },
   integrations: {
     all: ['integrations'] as const,
-    connections: () => [...QUERY_KEYS.integrations.all, 'connections'] as const,
+    connections: (integrationId?: string) =>
+      [...QUERY_KEYS.integrations.all, 'connections', integrationId ?? 'all'] as const,
     connectionSession: (connectionId?: string) =>
       [...QUERY_KEYS.integrations.all, 'connection-session', connectionId ?? 'all'] as const,
     withConnections: () => [...QUERY_KEYS.integrations.all, 'with-connections'] as const,

@@ -7,6 +7,7 @@ import type { AgentPersona } from '@/features/ai/agentcreator/types';
 import { fetchAgentPersonas } from '@/features/ai/agentcreator/utils/personas';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import { api } from '@/shared/lib/api-client';
+import { invalidateAgentPersonas } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -35,7 +36,7 @@ export function useSaveAgentPersonasMutation(): UseMutationResult<
       invalidateSettingsCache();
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: agentPersonaKeys.list() });
+      void invalidateAgentPersonas(queryClient);
     },
   });
 }

@@ -1,9 +1,9 @@
 'use client';
 
-import * as React from 'react';
+import React from 'react';
 
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
-import { AppModal } from '@/shared/ui';
+import { ContentDisplayModal } from '@/shared/ui/templates';
 
 export function TestResultModal(): React.JSX.Element | null {
   const {
@@ -32,7 +32,9 @@ export function TestResultModal(): React.JSX.Element | null {
 
   const footer = (
     <button
-      onClick={() => { void navigator.clipboard.writeText(copyText); }}
+      onClick={() => {
+        void navigator.clipboard.writeText(copyText);
+      }}
       className='border border-white/20 hover:border-white/40 px-4 py-2 rounded'
     >
       Copy
@@ -40,11 +42,10 @@ export function TestResultModal(): React.JSX.Element | null {
   );
 
   return (
-    <AppModal
+    <ContentDisplayModal
       open={true}
       onClose={onClose}
       title={success ? 'Playwright Test Success' : 'Playwright Test Error'}
-      footer={footer}
     >
       <div className='space-y-3'>
         {!success && (
@@ -77,7 +78,10 @@ export function TestResultModal(): React.JSX.Element | null {
             <code className='select-text whitespace-pre-wrap'>{message}</code>
           </pre>
         )}
+        <div className='flex justify-end gap-2 mt-4'>
+          {footer}
+        </div>
       </div>
-    </AppModal>
+    </ContentDisplayModal>
   );
 }

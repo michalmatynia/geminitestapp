@@ -59,6 +59,31 @@ describe('System Logs API', () => {
     }));
   });
 
+  it('GET /api/system/logs should support advanced triage filters', async () => {
+    (prisma.systemLog.count as any).mockResolvedValue(0);
+    (prisma.systemLog.findMany as any).mockResolvedValue([]);
+
+    const req = new NextRequest(
+      'http://localhost/api/system/logs?requestId=req-1&statusCode=500&method=GET&userId=user-1&fingerprint=fp-123&category=DATABASE'
+    );
+    const res = await GET(req);
+
+    expect(res.status).toBe(200);
+    const call = (prisma.systemLog.findMany as any).mock.calls[0]?.[0];
+    const where = call?.where;
+    expect(where).toBeTruthy();
+    expect(where.AND).toEqual(
+      expect.arrayContaining([
+        { statusCode: 500 },
+        { method: { equals: 'GET', mode: 'insensitive' } },
+        { requestId: { contains: 'req-1', mode: 'insensitive' } },
+        { userId: { contains: 'user-1', mode: 'insensitive' } },
+        { context: { path: ['fingerprint'], equals: 'fp-123' } },
+        { context: { path: ['category'], equals: 'DATABASE' } },
+      ])
+    );
+  });
+
   it('POST /api/system/logs should create a new log entry', async () => {
     const logData = {
       level: 'info',

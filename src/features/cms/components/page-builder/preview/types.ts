@@ -9,7 +9,7 @@ import type React from 'react';
 
 export interface PreviewBlockItemProps {
   block: BlockInstance;
-  isSelected: boolean;
+  isSelected?: boolean | undefined;
   isInspecting?: boolean | undefined;
   inspectorSettings?: InspectorSettings | undefined;
   hoveredNodeId?: string | null | undefined;

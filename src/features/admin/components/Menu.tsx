@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import React, { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useDeferredValue, useEffect, useMemo, useState } from 'react';
 
 import {
   ADMIN_MENU_CUSTOM_ENABLED_KEY,
@@ -369,19 +369,33 @@ const applySectionColors = (
     };
   });
 
-function NavTree({
-  items,
-  depth,
-  openIds,
-  onToggleOpen,
-}: {
-  items: NavItem[];
-  depth: number;
+type AdminMenuTreeContextValue = {
+  isMenuCollapsed: boolean;
+  pathname: string;
   openIds: Set<string>;
   onToggleOpen: (id: string) => void;
+};
+
+const AdminMenuTreeContext = createContext<AdminMenuTreeContextValue | null>(null);
+const AdminMenuDepthContext = createContext<number>(0);
+
+const useAdminMenuTreeContext = (): AdminMenuTreeContextValue => {
+  const context = useContext(AdminMenuTreeContext);
+  if (!context) {
+    throw new Error('useAdminMenuTreeContext must be used within AdminMenuTreeContext.Provider');
+  }
+  return context;
+};
+
+const useAdminMenuDepth = (): number => useContext(AdminMenuDepthContext);
+
+function NavTree({
+  items,
+}: {
+  items: NavItem[];
 }): React.ReactNode {
-  const { isMenuCollapsed } = useAdminLayout();
-  const pathname = usePathname();
+  const depth = useAdminMenuDepth();
+  const { isMenuCollapsed, pathname, openIds, onToggleOpen } = useAdminMenuTreeContext();
 
   return (
     <div className={cn(depth === 0 ? 'space-y-1.5' : 'space-y-1')}>
@@ -565,12 +579,11 @@ function NavTree({
 
                 {hasChildren && isOpen ? (
                   <div className='mt-1' id={`${item.id}-children`}>
-                    <NavTree
-                      items={item.children ?? []}
-                      depth={depth + 1}
-                      openIds={openIds}
-                      onToggleOpen={onToggleOpen}
-                    />
+                    <AdminMenuDepthContext.Provider value={depth + 1}>
+                      <NavTree
+                        items={item.children ?? []}
+                      />
+                    </AdminMenuDepthContext.Provider>
                   </div>
                 ) : null}
               </>
@@ -833,6 +846,7 @@ export const buildAdminNav = (handlers: {
           { id: 'system/settings/notifications', label: 'Notifications', href: '/admin/settings/notifications' },
           { id: 'system/settings/playwright', label: 'Playwright Personas', href: '/admin/settings/playwright' },
           { id: 'system/settings/logging', label: 'Logging', href: '/admin/settings/logging' },
+          { id: 'system/settings/folder-trees', label: 'Folder Trees', href: '/admin/settings/folder-trees' },
           { id: 'system/settings/recovery', label: 'Transient Recovery', href: '/admin/settings/recovery' },
           { id: 'system/settings/sync', label: 'Background Sync', href: '/admin/settings/sync' },
           { id: 'system/settings/menu', label: 'Admin Menu', href: '/admin/settings/menu' },
@@ -1077,6 +1091,48 @@ export default function Menu(): React.ReactNode {
 
   const isAnyFolderOpen = effectiveOpenIds.size > 0;
 
+  const handleToggleOpen = useCallback((id: string): void => {
+    if (normalizedQuery) return;
+    const isOpen = effectiveOpenIds.has(id);
+
+    if (isOpen) {
+      // One-click close, even for auto-opened "active route" folders.
+      setUserOpenIds((prev: Set<string>) => {
+        if (!prev.has(id)) return prev;
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      if (autoOpenIds.has(id)) {
+        setClosedAutoIds((prev: Set<string>) => {
+          if (prev.has(id)) return prev;
+          const next = new Set(prev);
+          next.add(id);
+          return next;
+        });
+      }
+      return;
+    }
+
+    setClosedAutoIds((prev: Set<string>) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+    setUserOpenIds((prev: Set<string>) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+  }, [autoOpenIds, effectiveOpenIds, normalizedQuery]);
+
+  const navTreeContextValue = useMemo<AdminMenuTreeContextValue>(() => ({
+    isMenuCollapsed,
+    pathname,
+    openIds: effectiveOpenIds,
+    onToggleOpen: handleToggleOpen,
+  }), [effectiveOpenIds, handleToggleOpen, isMenuCollapsed, pathname]);
+
   const handleToggleAllFolders = useCallback((): void => {
     // While searching, folders are intentionally opened to reveal results.
     if (normalizedQuery) return;
@@ -1143,45 +1199,13 @@ export default function Menu(): React.ReactNode {
         </Tooltip>
       )}
 
-      <NavTree
-        items={filteredNav}
-        depth={0}
-        openIds={effectiveOpenIds}
-        onToggleOpen={(id: string): void => {
-          if (normalizedQuery) return;
-	          const isOpen = effectiveOpenIds.has(id);
-
-	          if (isOpen) {
-	            // One-click close, even for auto-opened "active route" folders.
-	            setUserOpenIds((prev: Set<string>) => {
-	              if (!prev.has(id)) return prev;
-	              const next = new Set(prev);
-	              next.delete(id);
-	              return next;
-	            });
-	            if (autoOpenIds.has(id)) {
-	              setClosedAutoIds((prev: Set<string>) => {
-	                if (prev.has(id)) return prev;
-	                const next = new Set(prev);
-	                next.add(id);
-	                return next;
-	              });
-	            }
-	            return;
-	          }
-
-	          setClosedAutoIds((prev: Set<string>) => {
-	            const next = new Set(prev);
-            next.delete(id);
-            return next;
-          });
-          setUserOpenIds((prev: Set<string>) => {
-            const next = new Set(prev);
-            next.add(id);
-            return next;
-          });
-        }}
-      />
+      <AdminMenuTreeContext.Provider value={navTreeContextValue}>
+        <AdminMenuDepthContext.Provider value={0}>
+          <NavTree
+            items={filteredNav}
+          />
+        </AdminMenuDepthContext.Provider>
+      </AdminMenuTreeContext.Provider>
     </nav>
   );
 }

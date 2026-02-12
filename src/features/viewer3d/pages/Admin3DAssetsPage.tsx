@@ -5,7 +5,6 @@ import {
   Box,
   Upload,
   Loader2,
-  RefreshCw,
   Grid,
   List,
   Filter,
@@ -30,6 +29,7 @@ import {
   SearchInput,
   Alert,
   useToast,
+  RefreshButton,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -146,16 +146,10 @@ export function Admin3DAssetsPage(): React.JSX.Element {
           description='Upload and manage 3D models with dithering preview'
           actions={
             <>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => void assetsQuery.refetch()}
-                disabled={loading}
-                className='gap-2'
-              >
-                <RefreshCw className={cn('h-4 w-4', assetsQuery.isFetching && 'animate-spin')} />
-                Refresh
-              </Button>
+              <RefreshButton
+                onRefresh={() => void assetsQuery.refetch()}
+                isRefreshing={assetsQuery.isFetching}
+              />
               <Button size='sm' onClick={() => setShowUploader(true)}>
                 <Upload className='mr-2 h-4 w-4' />
                 Upload Asset
@@ -316,10 +310,8 @@ export function Admin3DAssetsPage(): React.JSX.Element {
                 <Upload className='mr-2 h-4 w-4' />
                 Upload Asset
               </Button>
-              <Button
-                variant='outline'
-                disabled={reindexMutation.isPending}
-                onClick={(): void => {
+              <RefreshButton
+                onRefresh={(): void => {
                   void reindexMutation
                     .mutateAsync()
                     .then((): void => { 
@@ -331,10 +323,9 @@ export function Admin3DAssetsPage(): React.JSX.Element {
                       toast(err instanceof Error ? err.message : 'Failed to reindex assets', { variant: 'error' });
                     });
                 }}
-              >
-                <RefreshCw className={cn('mr-2 h-4 w-4', reindexMutation.isPending && 'animate-spin')} />
-                {reindexMutation.isPending ? 'Reindexing...' : 'Reindex local uploads'}
-              </Button>
+                isRefreshing={reindexMutation.isPending}
+                label={reindexMutation.isPending ? 'Reindexing...' : 'Reindex local uploads'}
+              />
             </div>
           )}
         </div>

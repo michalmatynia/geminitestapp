@@ -13,6 +13,7 @@ import { FrontendCarousel } from './FrontendCarousel';
 import { FrontendHeroBlock } from './FrontendHeroBlock';
 import { FrontendImageWithTextBlock } from './FrontendImageWithTextBlock';
 import { FrontendSlideshowSection } from './FrontendSlideshowSection';
+import { SectionBlockProvider } from './SectionBlockContext';
 import { SectionDataProvider, useSectionData } from './SectionDataContext';
 import { SectionLayoutProvider, useSectionLayout } from './SectionLayoutContext';
 import { useCmsPageContext } from '../CmsPageContext';
@@ -583,7 +584,7 @@ function SectionBlockRenderer({
           <CssAnimationWrapper>
             {wrapInline(
               <div className={stretchClass} style={stretchStyle}>
-                <FrontendImageWithTextBlock settings={block.settings} blocks={children} />
+                <FrontendImageWithTextBlock />
               </div>
             )}
           </CssAnimationWrapper>
@@ -596,7 +597,7 @@ function SectionBlockRenderer({
           <CssAnimationWrapper>
             {wrapInline(
               <div className={stretchClass} style={stretchStyle}>
-                <FrontendHeroBlock settings={block.settings} blocks={children} />
+                <FrontendHeroBlock />
               </div>
             )}
           </CssAnimationWrapper>
@@ -740,7 +741,7 @@ function SectionBlockRenderer({
           <CssAnimationWrapper>
             {wrapInline(
               <div className={stretchClass} style={stretchStyle}>
-                <FrontendCarousel settings={block.settings} blocks={children} />
+                <FrontendCarousel />
               </div>
             )}
           </CssAnimationWrapper>
@@ -753,7 +754,7 @@ function SectionBlockRenderer({
           <CssAnimationWrapper>
             {wrapInline(
               <div className={stretchClass} style={stretchStyle}>
-                <FrontendSlideshowSection settings={block.settings} blocks={children} layout={{ fullWidth: true }} />
+                <FrontendSlideshowSection layout={{ fullWidth: true }} />
               </div>
             )}
           </CssAnimationWrapper>
@@ -766,7 +767,9 @@ function SectionBlockRenderer({
 
   return (
     <BlockSettingsContext.Provider value={block.settings}>
-      {content}
+      <SectionBlockProvider settings={block.settings} blocks={children}>
+        {content}
+      </SectionBlockProvider>
     </BlockSettingsContext.Provider>
   );
 }

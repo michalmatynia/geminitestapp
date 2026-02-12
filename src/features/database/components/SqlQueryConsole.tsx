@@ -9,7 +9,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
-import { Badge, Button, SectionPanel } from '@/shared/ui';
+import { Badge, Button, SectionPanel, Textarea, UnifiedSelect, Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/shared/ui';
 
 import { useDatabase } from '../context/DatabaseContext';
 import { useSqlQueryMutation } from '../hooks/useDatabaseQueries';
@@ -108,16 +108,17 @@ export function SqlQueryConsole({
       <div>
         <div className='flex items-center justify-between mb-2'>
           <div className='flex items-center gap-2'>
-            <select
+            <UnifiedSelect
               value={dbType}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
-                setDbType(e.target.value as DatabaseType)
+              onValueChange={(v: string): void =>
+                setDbType(v as DatabaseType)
               }
-              className='h-8 rounded-md border border-border bg-card px-2 text-xs text-gray-200'
-            >
-              <option value='postgresql'>PostgreSQL</option>
-              <option value='mongodb'>MongoDB</option>
-            </select>
+              options={[
+                { value: 'postgresql', label: 'PostgreSQL' },
+                { value: 'mongodb', label: 'MongoDB' },
+              ]}
+              triggerClassName='h-8 w-[120px] text-xs'
+            />
             <span className='text-[11px] text-gray-500'>
               {dbType === 'postgresql' ? 'Enter SQL query' : 'Use the CRUD panel for MongoDB operations'}
             </span>
@@ -178,7 +179,7 @@ export function SqlQueryConsole({
           </div>
         </div>
 
-        <textarea
+        <Textarea
           ref={textareaRef}
           value={sql}
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setSql(e.target.value)}
@@ -188,7 +189,7 @@ export function SqlQueryConsole({
               ? 'SELECT * FROM "User" LIMIT 20;\n\n-- Press Ctrl+Enter to execute'
               : 'Use the CRUD panel below for MongoDB operations'
           }
-          className='w-full min-h-[140px] rounded-md border border-border bg-card/60 p-3 font-mono text-xs text-gray-200 placeholder:text-gray-600 focus:border-emerald-500/50 focus:outline-none focus:ring-1 focus:ring-emerald-500/30 resize-y'
+          className='w-full min-h-[140px] bg-card/60 p-3 font-mono text-xs text-gray-200 placeholder:text-gray-600 focus:border-emerald-500/50'
           spellCheck={false}
         />
         <p className='mt-1 text-[11px] text-gray-600'>
@@ -224,46 +225,46 @@ export function SqlQueryConsole({
           {/* Results table */}
           {!result.error && result.rows.length > 0 && (
             <div className='overflow-auto max-h-[50vh] rounded-md border border-border'>
-              <table className='w-full text-xs'>
-                <thead className='sticky top-0 bg-card'>
-                  <tr className='border-b border-border text-left text-gray-500'>
-                    <th className='px-3 py-2 font-medium text-gray-600'>#</th>
+              <Table className='text-xs'>
+                <TableHeader className='sticky top-0 bg-card z-10'>
+                  <TableRow className='hover:bg-transparent'>
+                    <TableHead className='w-12 font-medium text-gray-600'>#</TableHead>
                     {result.fields.length > 0
                       ? result.fields.map((f: { name: string }) => (
-                        <th key={f.name} className='whitespace-nowrap px-3 py-2 font-medium font-mono'>
+                        <TableHead key={f.name} className='whitespace-nowrap font-medium font-mono'>
                           {f.name}
-                        </th>
+                        </TableHead>
                       ))
                       : Object.keys(result.rows[0] ?? {}).map((key: string) => (
-                        <th key={key} className='whitespace-nowrap px-3 py-2 font-medium font-mono'>
+                        <TableHead key={key} className='whitespace-nowrap font-medium font-mono'>
                           {key}
-                        </th>
+                        </TableHead>
                       ))}
-                  </tr>
-                </thead>
-                <tbody className='divide-y divide-border'>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {result.rows.map((row: Record<string, unknown>, i: number) => {
                     const keys =
                       result.fields.length > 0
                         ? result.fields.map((f: { name: string }) => f.name)
                         : Object.keys(row);
                     return (
-                      <tr key={i} className='text-gray-300 hover:bg-muted/30'>
-                        <td className='px-3 py-1.5 text-gray-600'>{i + 1}</td>
+                      <TableRow key={i} className='text-gray-300 hover:bg-muted/30'>
+                        <TableCell className='text-gray-600'>{i + 1}</TableCell>
                         {keys.map((key: string) => (
-                          <td
+                          <TableCell
                             key={key}
-                            className='max-w-[250px] truncate whitespace-nowrap px-3 py-1.5 font-mono'
+                            className='max-w-[250px] truncate whitespace-nowrap font-mono'
                             title={formatCellValue(row[key])}
                           >
                             {formatCellValue(row[key])}
-                          </td>
+                          </TableCell>
                         ))}
-                      </tr>
+                      </TableRow>
                     );
                   })}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           )}
 

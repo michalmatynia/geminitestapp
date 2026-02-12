@@ -19,7 +19,7 @@ import {
   SelectValue,
   Badge,
   Alert,
-  FormModal,
+  SettingsFormModal,
   Button,
 } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -43,10 +43,10 @@ export function CatalogModal({
   loadingGroups,
   defaultGroupId,
 }: CatalogModalProps): React.JSX.Element {
-  const { 
-    languages, 
-    languagesLoading, 
-    languagesError 
+  const {
+    languages,
+    languagesLoading,
+    languagesError,
   } = useInternationalizationContext();
 
   const { toast } = useToast();
@@ -263,16 +263,12 @@ export function CatalogModal({
   };
 
   return (
-    <FormModal
+    <SettingsFormModal
       open={isOpen}
       onClose={onClose}
       title={catalog ? 'Edit Catalog' : 'Create Catalog'}
-      onSave={() => {
-        void handleSubmit();
-      }}
+      onSave={handleSubmit}
       isSaving={saveMutation.isPending}
-      saveText={catalog ? 'Update' : 'Create'}
-      cancelText='Close'
       size='lg'
     >
       <div className='space-y-6'>
@@ -514,6 +510,6 @@ export function CatalogModal({
           )}
         </div>
       </div>
-    </FormModal>
+    </SettingsFormModal>
   );
 }

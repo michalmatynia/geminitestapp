@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { Suspense, useCallback, useEffect, useState } from 'react';
 
+import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 import {
   Button,
   ClientOnly,
@@ -44,6 +45,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<StudioTab>('studio');
   const [newProjectId, setNewProjectId] = useState('');
   const { isFocusMode } = useUiState();
+  const { setIsMenuHidden } = useAdminLayout();
   const hideTopBar = activeTab === 'studio' && isFocusMode;
 
   useEffect(() => {
@@ -56,6 +58,13 @@ function AdminImageStudioPageContent(): React.JSX.Element {
       setActiveTab(nextTab);
     }
   }, [activeTab, searchParams]);
+
+  useEffect(() => {
+    setIsMenuHidden(hideTopBar);
+    return (): void => {
+      setIsMenuHidden(false);
+    };
+  }, [hideTopBar, setIsMenuHidden]);
 
   const handleTabChange = useCallback((value: string): void => {
     const nextTab: StudioTab =

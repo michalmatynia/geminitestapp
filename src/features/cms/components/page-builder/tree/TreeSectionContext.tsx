@@ -1,0 +1,36 @@
+'use client';
+
+import React, { createContext, useContext } from 'react';
+
+type TreeSectionContextValue = {
+  sectionId: string;
+};
+
+const TreeSectionContext = createContext<TreeSectionContextValue | null>(null);
+
+type TreeSectionProviderProps = {
+  sectionId: string;
+  children: React.ReactNode;
+};
+
+export function TreeSectionProvider({
+  sectionId,
+  children,
+}: TreeSectionProviderProps): React.JSX.Element {
+  return (
+    <TreeSectionContext.Provider value={{ sectionId }}>
+      {children}
+    </TreeSectionContext.Provider>
+  );
+}
+
+export function useTreeSectionId(explicitSectionId?: string): string {
+  if (typeof explicitSectionId === 'string' && explicitSectionId.trim().length > 0) {
+    return explicitSectionId;
+  }
+  const context = useContext(TreeSectionContext);
+  if (!context?.sectionId) {
+    throw new Error('useTreeSectionId must be used within TreeSectionProvider or receive a sectionId prop');
+  }
+  return context.sectionId;
+}

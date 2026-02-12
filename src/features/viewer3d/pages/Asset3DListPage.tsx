@@ -3,7 +3,6 @@
 import {
   Box,
   Loader2,
-  RefreshCw,
   Grid,
   List,
   Eye,
@@ -25,6 +24,7 @@ import {
   SearchInput,
   Alert,
   EmptyState,
+  RefreshButton,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -94,16 +94,10 @@ export function Asset3DListPage(): React.JSX.Element {
           title='3D Asset Library'
           description='Browse and preview 3D models'
           actions={
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() => void assetsQuery.refetch()}
-              disabled={loading}
-              className='gap-2'
-            >
-              <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
-              Refresh
-            </Button>
+            <RefreshButton
+              onRefresh={() => void assetsQuery.refetch()}
+              isRefreshing={loading}
+            />
           }
         />
       }

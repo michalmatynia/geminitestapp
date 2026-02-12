@@ -8,7 +8,7 @@ import { useNotebooks, useNoteThemes } from '@/features/notesapp/api/useNoteQuer
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/features/observability';
 import type { ThemeRecord } from '@/shared/types/domain/notes';
-import { Button, useToast, Input, Label, SectionHeader, SectionPanel } from '@/shared/ui';
+import { Button, useToast, Input, Label, SectionHeader, SectionPanel, FormSection, FormField } from '@/shared/ui';
 
 
 
@@ -147,13 +147,9 @@ export function AdminNotesThemesPage(): React.JSX.Element {
       />
 
       <div className='space-y-6'>
-        <SectionPanel className='p-6'>
-          <SectionHeader title='Create Theme' size='sm' className='mb-4' />
+        <FormSection title='Create Theme' className='p-6'>
           <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-            <div className='sm:col-span-2'>
-              <Label className='mb-2 block text-sm font-medium text-gray-200'>
-                Theme Name
-              </Label>
+            <FormField label='Theme Name' className='sm:col-span-2'>
               <Input
                 type='text'
                 value={form.name}
@@ -161,11 +157,8 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                 className='w-full rounded-lg border bg-gray-800 px-4 py-2 text-white'
                 placeholder='Enter theme name'
               />
-            </div>
-            <div>
-              <Label className='mb-2 block text-sm font-medium text-gray-200'>
-                Text Color
-              </Label>
+            </FormField>
+            <FormField label='Text Color'>
               <Input
                 type='color'
                 value={form.textColor}
@@ -174,11 +167,8 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                 }
                 className='h-10 w-full rounded border bg-gray-800'
               />
-            </div>
-            <div>
-              <Label className='mb-2 block text-sm font-medium text-gray-200'>
-                Background Color
-              </Label>
+            </FormField>
+            <FormField label='Background Color'>
               <Input
                 type='color'
                 value={form.backgroundColor}
@@ -187,11 +177,8 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                 }
                 className='h-10 w-full rounded border bg-gray-800'
               />
-            </div>
-            <div>
-              <Label className='mb-2 block text-sm font-medium text-gray-200'>
-                Markdown Heading
-              </Label>
+            </FormField>
+            <FormField label='Markdown Heading'>
               <Input
                 type='color'
                 value={form.markdownHeadingColor}
@@ -200,11 +187,8 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                 }
                 className='h-10 w-full rounded border bg-gray-800'
               />
-            </div>
-            <div>
-              <Label className='mb-2 block text-sm font-medium text-gray-200'>
-                Markdown Link
-              </Label>
+            </FormField>
+            <FormField label='Markdown Link'>
               <Input
                 type='color'
                 value={form.markdownLinkColor}
@@ -213,11 +197,8 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                 }
                 className='h-10 w-full rounded border bg-gray-800'
               />
-            </div>
-            <div>
-              <Label className='mb-2 block text-sm font-medium text-gray-200'>
-                Code Background
-              </Label>
+            </FormField>
+            <FormField label='Code Background'>
               <Input
                 type='color'
                 value={form.markdownCodeBackground}
@@ -226,11 +207,8 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                 }
                 className='h-10 w-full rounded border bg-gray-800'
               />
-            </div>
-            <div>
-              <Label className='mb-2 block text-sm font-medium text-gray-200'>
-                Code Text
-              </Label>
+            </FormField>
+            <FormField label='Code Text'>
               <Input
                 type='color'
                 value={form.markdownCodeText}
@@ -239,11 +217,8 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                 }
                 className='h-10 w-full rounded border bg-gray-800'
               />
-            </div>
-            <div>
-              <Label className='mb-2 block text-sm font-medium text-gray-200'>
-                Related Border Width
-              </Label>
+            </FormField>
+            <FormField label='Related Border Width'>
               <Input
                 type='number'
                 min={0}
@@ -257,11 +232,8 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                 }
                 className='h-10 w-full rounded border bg-gray-800 px-3 text-white'
               />
-            </div>
-            <div>
-              <Label className='mb-2 block text-sm font-medium text-gray-200'>
-                Related Border Color
-              </Label>
+            </FormField>
+            <FormField label='Related Border Color'>
               <Input
                 type='color'
                 value={form.relatedNoteBorderColor}
@@ -270,11 +242,8 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                 }
                 className='h-10 w-full rounded border bg-gray-800'
               />
-            </div>
-            <div>
-              <Label className='mb-2 block text-sm font-medium text-gray-200'>
-                Related Background
-              </Label>
+            </FormField>
+            <FormField label='Related Background'>
               <Input
                 type='color'
                 value={form.relatedNoteBackgroundColor}
@@ -286,11 +255,8 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                 }
                 className='h-10 w-full rounded border bg-gray-800'
               />
-            </div>
-            <div>
-              <Label className='mb-2 block text-sm font-medium text-gray-200'>
-                Related Text Color
-              </Label>
+            </FormField>
+            <FormField label='Related Text Color'>
               <Input
                 type='color'
                 value={form.relatedNoteTextColor}
@@ -299,26 +265,25 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                 }
                 className='h-10 w-full rounded border bg-gray-800'
               />
-            </div>
+            </FormField>
           </div>
           <div className='mt-4'>
             <Button onClick={(): void => { void handleCreate(); }} disabled={isSaving}>
               {isSaving ? 'Saving...' : 'Create'}
             </Button>
           </div>
-        </SectionPanel>
+        </FormSection>
 
-        <SectionPanel className='p-6'>
-          <SectionHeader
-            title='Existing Themes'
-            size='sm'
-            className='mb-4'
-            actions={(
-              <Button variant='outline' onClick={(): void => { void themesQuery.refetch(); }}>
-                Refresh
-              </Button>
-            )}
-          />
+        <FormSection
+          title='Existing Themes'
+          actions={(
+            <RefreshButton
+              onRefresh={(): void => { void themesQuery.refetch(); }}
+              isRefreshing={loading}
+            />
+          )}
+          className='p-6'
+        >
           {loading ? (
             <p className='text-sm text-gray-400'>Loading themes...</p>
           ) : themes.length === 0 ? (
@@ -370,8 +335,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                       </div>
                     </div>
                     <div className='mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-                      <div>
-                        <Label className='mb-2 block text-xs text-gray-400'>Theme Name</Label>
+                      <FormField label='Theme Name'>
                         <Input
                           type='text'
                           value={values.name}
@@ -381,9 +345,8 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           }}
                           className='w-full rounded-md border bg-gray-800 px-3 py-2 text-sm text-white disabled:opacity-60'
                         />
-                      </div>
-                      <div>
-                        <Label className='mb-2 block text-xs text-gray-400'>Text</Label>
+                      </FormField>
+                      <FormField label='Text'>
                         <Input
                           type='color'
                           disabled={!isEditing}
@@ -393,9 +356,8 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           }}
                           className='h-9 w-full rounded border bg-gray-800 disabled:opacity-60'
                         />
-                      </div>
-                      <div>
-                        <Label className='mb-2 block text-xs text-gray-400'>Background</Label>
+                      </FormField>
+                      <FormField label='Background'>
                         <Input
                           type='color'
                           disabled={!isEditing}
@@ -408,9 +370,8 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           }}
                           className='h-9 w-full rounded border bg-gray-800 disabled:opacity-60'
                         />
-                      </div>
-                      <div>
-                        <Label className='mb-2 block text-xs text-gray-400'>Heading</Label>
+                      </FormField>
+                      <FormField label='Heading'>
                         <Input
                           type='color'
                           disabled={!isEditing}
@@ -423,9 +384,8 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           }}
                           className='h-9 w-full rounded border bg-gray-800 disabled:opacity-60'
                         />
-                      </div>
-                      <div>
-                        <Label className='mb-2 block text-xs text-gray-400'>Link</Label>
+                      </FormField>
+                      <FormField label='Link'>
                         <Input
                           type='color'
                           disabled={!isEditing}
@@ -438,9 +398,8 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           }}
                           className='h-9 w-full rounded border bg-gray-800 disabled:opacity-60'
                         />
-                      </div>
-                      <div>
-                        <Label className='mb-2 block text-xs text-gray-400'>Code Bg</Label>
+                      </FormField>
+                      <FormField label='Code Bg'>
                         <Input
                           type='color'
                           disabled={!isEditing}
@@ -453,9 +412,8 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           }}
                           className='h-9 w-full rounded border bg-gray-800 disabled:opacity-60'
                         />
-                      </div>
-                      <div>
-                        <Label className='mb-2 block text-xs text-gray-400'>Code Text</Label>
+                      </FormField>
+                      <FormField label='Code Text'>
                         <Input
                           type='color'
                           disabled={!isEditing}
@@ -468,11 +426,8 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           }}
                           className='h-9 w-full rounded border bg-gray-800 disabled:opacity-60'
                         />
-                      </div>
-                      <div>
-                        <Label className='mb-2 block text-xs text-gray-400'>
-                          Related Border Width
-                        </Label>
+                      </FormField>
+                      <FormField label='Related Border Width'>
                         <Input
                           type='number'
                           min={0}
@@ -487,11 +442,8 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           }}
                           className='h-9 w-full rounded border bg-gray-800 px-3 text-sm text-white disabled:opacity-60'
                         />
-                      </div>
-                      <div>
-                        <Label className='mb-2 block text-xs text-gray-400'>
-                          Related Border Color
-                        </Label>
+                      </FormField>
+                      <FormField label='Related Border Color'>
                         <Input
                           type='color'
                           disabled={!isEditing}
@@ -504,11 +456,8 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           }}
                           className='h-9 w-full rounded border bg-gray-800 disabled:opacity-60'
                         />
-                      </div>
-                      <div>
-                        <Label className='mb-2 block text-xs text-gray-400'>
-                          Related Background
-                        </Label>
+                      </FormField>
+                      <FormField label='Related Background'>
                         <Input
                           type='color'
                           disabled={!isEditing}
@@ -521,11 +470,8 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           }}
                           className='h-9 w-full rounded border bg-gray-800 disabled:opacity-60'
                         />
-                      </div>
-                      <div>
-                        <Label className='mb-2 block text-xs text-gray-400'>
-                          Related Text Color
-                        </Label>
+                      </FormField>
+                      <FormField label='Related Text Color'>
                         <Input
                           type='color'
                           disabled={!isEditing}
@@ -538,14 +484,14 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           }}
                           className='h-9 w-full rounded border bg-gray-800 disabled:opacity-60'
                         />
-                      </div>
+                      </FormField>
                     </div>
                   </div>
                 );
               })}
             </div>
           )}
-        </SectionPanel>
+        </FormSection>
       </div>
     </div>
   );

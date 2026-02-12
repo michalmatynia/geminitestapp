@@ -16,7 +16,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  FormModal,
+  SettingsFormModal,
 } from '@/shared/ui';
 
 export function CountryModal(): React.JSX.Element {
@@ -85,16 +85,12 @@ export function CountryModal(): React.JSX.Element {
   };
 
   return (
-    <FormModal
+    <SettingsFormModal
       open={isOpen}
       onClose={onClose}
       title={country ? 'Edit Country' : 'Add Country'}
-      onSave={() => {
-        void handleSubmit();
-      }}
+      onSave={handleSubmit}
       isSaving={saveMutation.isPending}
-      saveText={country ? 'Update' : 'Add'}
-      cancelText='Close'
       size='md'
     >
       <div className='space-y-4'>
@@ -153,6 +149,6 @@ export function CountryModal(): React.JSX.Element {
           )}
         </div>
       </div>
-    </FormModal>
+    </SettingsFormModal>
   );
 }

@@ -13,7 +13,7 @@ import { useNotebooks } from '@/features/notesapp/api/useNoteQueries';
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/features/observability';
 import type { NotebookRecord } from '@/shared/types/domain/notes';
-import { Button, useToast, Input, Label, SectionPanel, SectionHeader, PageLayout } from '@/shared/ui';
+import { Button, useToast, Input, Label, SectionPanel, SectionHeader, PageLayout, FormSection, FormField, RefreshButton } from '@/shared/ui';
 
 export function AdminNotesNotebooksPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -124,13 +124,9 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
       description='Create and manage notebooks. Notes, folders, and tags are scoped per notebook.'
     >
       <div className='max-w-3xl space-y-6'>
-        <SectionPanel className='p-6'>
-          <SectionHeader title='Create Notebook' size='sm' className='mb-4' />
+        <FormSection title='Create Notebook' className='p-6'>
           <div className='flex flex-col gap-4 sm:flex-row sm:items-end'>
-            <div className='flex-1'>
-              <Label className='mb-2 block text-sm font-medium text-gray-200'>
-                Notebook Name
-              </Label>
+            <FormField label='Notebook Name' className='flex-1'>
               <Input
                 type='text'
                 value={name}
@@ -138,24 +134,23 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
                 className='w-full'
                 placeholder='Enter notebook name'
               />
-            </div>
+            </FormField>
             <Button onClick={(): void => { void handleCreate(); }} disabled={createNotebook.isPending}>
               {createNotebook.isPending ? 'Saving...' : 'Create'}
             </Button>
           </div>
-        </SectionPanel>
+        </FormSection>
 
-        <SectionPanel className='p-6'>
-          <SectionHeader
-            title='Your Notebooks'
-            size='sm'
-            className='mb-4'
-            actions={(
-              <Button variant='outline' onClick={(): void => { void notebooksQuery.refetch(); }}>
-                Refresh
-              </Button>
-            )}
-          />
+        <FormSection
+          title='Your Notebooks'
+          className='p-6'
+          actions={(
+            <RefreshButton
+              onRefresh={(): void => { void notebooksQuery.refetch(); }}
+              isRefreshing={loading}
+            />
+          )}
+        >
           {loading ? (
             <div className='text-sm text-gray-400'>Loading notebooks...</div>
           ) : notebooks.length === 0 ? (
@@ -298,7 +293,7 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
               })}
             </div>
           )}
-        </SectionPanel>
+        </FormSection>
       </div>
     </PageLayout>
   );

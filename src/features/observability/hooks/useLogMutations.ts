@@ -3,6 +3,10 @@
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 
 import { api } from '@/shared/lib/api-client';
+import {
+  invalidateSystemDiagnostics,
+  invalidateSystemLogs,
+} from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { AiInsightRecord } from '@/shared/types';
 
@@ -15,7 +19,7 @@ export function useClearLogsMutation(): UseMutationResult<ClearLogsResponse, Err
   return useMutation({
     mutationFn: () => api.delete<ClearLogsResponse>('/api/system/logs'),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.system.logs.all });
+      void invalidateSystemLogs(queryClient);
     },
   });
 }
@@ -25,7 +29,7 @@ export function useRebuildIndexesMutation(): UseMutationResult<unknown, Error, v
   return useMutation({
     mutationFn: () => api.post<unknown>('/api/system/diagnostics/mongo-indexes'),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.system.diagnostics.all });
+      void invalidateSystemDiagnostics(queryClient);
     },
   });
 }
@@ -42,7 +46,7 @@ export function useRunLogInsight(): UseMutationResult<{ insight: AiInsightRecord
 
     onSuccess: () => {
 
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.system.logs.all });
+      void invalidateSystemLogs(queryClient);
 
     },
 

@@ -1,11 +1,12 @@
 'use client';
 
-import { X, ArrowUp, ArrowDown, Eye, EyeOff } from 'lucide-react';
+import { ArrowUp, ArrowDown, Eye, EyeOff } from 'lucide-react';
 import React from 'react';
 
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import type { TagRecord } from '@/shared/types/domain/notes';
-import { Button, SearchInput, UnifiedSelect, MultiSelect } from '@/shared/ui';
+import { Button, SearchInput, UnifiedSelect, MultiSelect, Tag } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 import { buildBreadcrumbPath } from '../utils';
 
@@ -70,22 +71,17 @@ export function NotesFilters(): React.JSX.Element {
           const tag = tags.find((t: TagRecord) => t.id === tagId);
           if (!tag) return null;
           return (
-            <span
+            <Tag
               key={tag.id}
-              className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-200 border border-blue-500/30 ${
-                highlightTagId === tag.id ? 'ring-2 ring-blue-300/70' : ''
-              }`}
-            >
-              {tag.name}
-              <Button
-                onClick={(): void =>
-                  setFilterTagIds(filterTagIds.filter((id: string) => id !== tag.id))
-                }
-                className='hover:text-white'
-              >
-                <X size={12} />
-              </Button>
-            </span>
+              label={tag.name}
+              onRemove={(): void =>
+                setFilterTagIds(filterTagIds.filter((id: string) => id !== tag.id))
+              }
+              className={cn(
+                'bg-blue-500/20 text-blue-200 border-blue-500/30',
+                highlightTagId === tag.id && 'ring-2 ring-blue-300/70'
+              )}
+            />
           );
         })}
       </div>

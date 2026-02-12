@@ -5,7 +5,7 @@ import React from 'react';
 
 import { buildModelProfile } from '@/features/ai/chatbot/utils';
 import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/domain/agent-teaching';
-import { Input, ItemLibrary, Label, UnifiedSelect, Textarea, useToast } from '@/shared/ui';
+import { Input, ItemLibrary, Label, UnifiedSelect, Textarea, useToast, Checkbox, FormField } from '@/shared/ui';
 
 import { useAgentTeachingContext } from '../context/AgentTeachingContext';
 import { useDeleteTeachingAgentMutation, useUpsertTeachingAgentMutation } from '../hooks/useAgentTeaching';
@@ -145,46 +145,42 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
       renderExtraFields={(draft: Partial<AgentTeachingAgentRecord>, onChange: (changes: Partial<AgentTeachingAgentRecord>) => void) => (
         <div className='space-y-6'>
           <div className='grid gap-4 md:grid-cols-2'>
-            <div className='space-y-2'>
-              <Label>LLM model</Label>
+            <FormField
+              label='LLM model'
+              description='Model used to answer questions.'
+            >
               <UnifiedSelect
                 value={draft.llmModel ?? ''}
                 onValueChange={(value: string) => onChange({ llmModel: value })}
                 options={chatModels.map((model: string) => ({ value: model, label: model }))}
                 placeholder='Select LLM model'
               />
-              <div className='text-[11px] text-gray-500'>
-                Model used to answer questions.
-              </div>
-            </div>
+            </FormField>
 
-            <div className='space-y-2'>
-              <Label>Embedding model</Label>
+            <FormField
+              label='Embedding model'
+              description='Must match the embedding collections you attach.'
+            >
               <UnifiedSelect
                 value={draft.embeddingModel ?? ''}
                 onValueChange={(value: string) => onChange({ embeddingModel: value })}
                 options={embeddingModels.map((model: string) => ({ value: model, label: model }))}
                 placeholder='Select embedding model'
               />
-              <div className='text-[11px] text-gray-500'>
-                Must match the embedding collections you attach.
-              </div>
-            </div>
+            </FormField>
           </div>
 
-          <div className='space-y-2'>
-            <Label>System prompt</Label>
+          <FormField label='System prompt' description='Optional instructions (tone, scope, rules)...'>
             <Textarea
               value={draft.systemPrompt ?? ''}
               onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => onChange({ systemPrompt: event.target.value })}
-              placeholder='Optional instructions (tone, scope, rules)...'
+              placeholder='Enter prompt instructions'
               className='min-h-[120px]'
             />
-          </div>
+          </FormField>
 
           <div className='grid gap-4 md:grid-cols-2'>
-            <div className='space-y-2'>
-              <Label>Temperature</Label>
+            <FormField label='Temperature' description='Higher = more creative, lower = more deterministic.'>
               <Input
                 type='number'
                 min={0}
@@ -195,13 +191,9 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
                   onChange({ temperature: Number(event.target.value) })
                 }
               />
-              <div className='text-[11px] text-gray-500'>
-                Higher = more creative, lower = more deterministic.
-              </div>
-            </div>
+            </FormField>
 
-            <div className='space-y-2'>
-              <Label>Max tokens</Label>
+            <FormField label='Max tokens' description='Response length limit (Ollama: num_predict).'>
               <Input
                 type='number'
                 min={1}
@@ -211,14 +203,10 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
                   onChange({ maxTokens: Number(event.target.value) })
                 }
               />
-              <div className='text-[11px] text-gray-500'>
-                Response length limit (Ollama: num_predict).
-              </div>
-            </div>
+            </FormField>
           </div>
 
-          <div className='space-y-2'>
-            <Label>Max docs scanned per collection</Label>
+          <FormField label='Max docs scanned per collection' description='Limits retrieval scan size (higher = better recall, lower = faster).'>
             <Input
               type='number'
               min={10}
@@ -228,14 +216,10 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
                 onChange({ maxDocsPerCollection: Number(event.target.value) })
               }
             />
-            <div className='text-[11px] text-gray-500'>
-              Limits retrieval scan size (higher = better recall, lower = faster).
-            </div>
-          </div>
+          </FormField>
 
           <div className='grid gap-4 md:grid-cols-2'>
-            <div className='space-y-2'>
-              <Label>Retrieval top K</Label>
+            <FormField label='Retrieval top K'>
               <Input
                 type='number'
                 min={1}
@@ -245,9 +229,8 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
                   onChange({ retrievalTopK: Number(event.target.value) })
                 }
               />
-            </div>
-            <div className='space-y-2'>
-              <Label>Min similarity score</Label>
+            </FormField>
+            <FormField label='Min similarity score' description='Higher = stricter. Lower = more context (and more noise).'>
               <Input
                 type='number'
                 step='0.05'
@@ -258,14 +241,10 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
                   onChange({ retrievalMinScore: Number(event.target.value) })
                 }
               />
-              <div className='text-[11px] text-gray-500'>
-                Higher = stricter. Lower = more context (and more noise).
-              </div>
-            </div>
+            </FormField>
           </div>
 
-          <div className='space-y-2'>
-            <Label>Connected embedding collections</Label>
+          <FormField label='Connected embedding collections'>
             {collections.length === 0 ? (
               <div className='text-sm text-gray-500'>
                 No collections yet. Create one in Embedding Collections first.
@@ -280,22 +259,23 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
                   return (
                     <label
                       key={collection.id}
-                      className={`flex items-start gap-2 rounded-md border px-3 py-2 text-sm ${
-                        checked ? 'border-emerald-500/40 bg-emerald-500/10' : 'border-border bg-card/40'
-                      } ${sameModel ? '' : 'opacity-60'}`}
+                      className={cn(
+                        'flex items-start gap-2 rounded-md border px-3 py-2 text-sm transition-colors cursor-pointer',
+                        checked ? 'border-emerald-500/40 bg-emerald-500/10' : 'border-border bg-card/40 hover:bg-card/60',
+                        !sameModel && 'opacity-60'
+                      )}
                       title={
                         sameModel
                           ? undefined
                           : `Embedding model mismatch (collection: ${collection.embeddingModel})`
                       }
                     >
-                      <input
-                        type='checkbox'
+                      <Checkbox
                         className='mt-1'
                         checked={checked}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                        onCheckedChange={(val: boolean | 'indeterminate') => {
                           const current = Array.isArray(draft.collectionIds) ? draft.collectionIds : [];
-                          const next = event.target.checked
+                          const next = val
                             ? Array.from(new Set([...current, collection.id]))
                             : current.filter((id: string) => id !== collection.id);
                           onChange({ collectionIds: next });
@@ -317,7 +297,7 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
                 Connected: {draft.collectionIds.map(resolveCollectionName).join(', ')}
               </div>
             )}
-          </div>
+          </FormField>
         </div>
       )}
     />

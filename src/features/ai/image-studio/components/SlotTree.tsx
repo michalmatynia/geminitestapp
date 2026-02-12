@@ -1,214 +1,71 @@
 'use client';
 
-import { Folder, GripVertical, Image as ImageIcon, Trash2 } from 'lucide-react';
+import { Folder, FolderOpen, GripVertical, Image as ImageIcon, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { MasterFolderTree, useMasterFolderTree } from '@/features/foldertree/master';
+import { ICON_LIBRARY_MAP } from '@/features/icons';
+import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
 import { TreeCaret, TreeContextMenu, TreeRow, useToast } from '@/shared/ui';
-import { cn } from '@/shared/utils';
-import { DRAG_KEYS, getFirstDragValue, hasDragType, setDragData } from '@/shared/utils';
+import {
+  canNestTreeNode,
+  cn,
+  getFolderTreePlaceholderClasses,
+  upgradeFolderTreeProfileV1ToV2,
+  type MasterTreeId,
+  type MasterTreeNode,
+} from '@/shared/utils';
+import {
+  DRAG_KEYS,
+  getFirstDragValue,
+} from '@/shared/utils/drag-drop';
+import {
+  canMoveTreePath,
+  getTreePathLeaf,
+  normalizeTreePath,
+} from '@/shared/utils/tree-operations';
 
-import { useProjectsState } from '../context/ProjectsContext';
-import { useSlotsState, useSlotsActions } from '../context/SlotsContext';
-import { normalizeFolderPaths } from '../utils/studio-tree';
+import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
+import {
+  buildMasterNodesFromStudioTree,
+  findMasterNodeAncestorIds,
+  fromFolderMasterNodeId,
+  fromSlotMasterNodeId,
+  resolveFolderTargetPathForMasterNode,
+  toFolderMasterNodeId,
+  toSlotMasterNodeId,
+} from '../utils/master-folder-tree';
 
 import type { ImageStudioSlotRecord } from '../types';
 
-type TreeNode = {
-  id: string;
-  name: string;
-  type: 'folder' | 'card';
-  path: string;
-  slot?: ImageStudioSlotRecord;
-  roleLabel?: string | null;
-  derivedFromCard?: boolean;
-  children: TreeNode[];
+type SlotTreeRevealRequest = {
+  slotId: string;
+  nonce: number;
 };
 
-const SLOT_DRAG_TEXT_PREFIX = 'image-studio-slot:';
-const FOLDER_DRAG_TEXT_PREFIX = 'image-studio-folder:';
+const resolveExternalDraggedNodeId = (dataTransfer: DataTransfer): MasterTreeId | null => {
+  const slotId = getFirstDragValue(dataTransfer, [DRAG_KEYS.ASSET_ID], null);
+  if (slotId) return toSlotMasterNodeId(slotId);
 
-type TreeDragPayload = {
-  slotId: string | null;
-  folderPath: string | null;
+  const folderPath = getFirstDragValue(dataTransfer, [DRAG_KEYS.FOLDER_PATH], null);
+  if (folderPath) return toFolderMasterNodeId(folderPath);
+
+  return null;
 };
 
-function parseTreeDragText(value: string | null | undefined): TreeDragPayload {
-  const raw = value?.trim() ?? '';
-  if (!raw) return { slotId: null, folderPath: null };
-  if (raw.startsWith(SLOT_DRAG_TEXT_PREFIX)) {
-    const slotId = raw.slice(SLOT_DRAG_TEXT_PREFIX.length).trim();
-    return { slotId: slotId || null, folderPath: null };
-  }
-  if (raw.startsWith(FOLDER_DRAG_TEXT_PREFIX)) {
-    const folderPath = raw.slice(FOLDER_DRAG_TEXT_PREFIX.length).trim();
-    return { slotId: null, folderPath: folderPath || null };
-  }
-  return { slotId: null, folderPath: null };
-}
+const isRootEdgeDrop = (
+  container: HTMLDivElement | null,
+  event: React.DragEvent<HTMLElement>
+): boolean => {
+  if (!container) return false;
+  const rect = container.getBoundingClientRect();
+  const edgeThreshold = Math.max(18, Math.min(40, Math.floor(rect.height * 0.09)));
+  const offsetTop = event.clientY - rect.top;
+  const offsetBottom = rect.bottom - event.clientY;
+  return offsetTop <= edgeThreshold || offsetBottom <= edgeThreshold;
+};
 
-function buildSlotTree(projectId: string, slots: ImageStudioSlotRecord[], folders: string[]): TreeNode {
-  const root: TreeNode = { id: 'root', name: projectId || 'Project', type: 'folder', path: '', children: [] };
-
-  const getSlotMetadata = (slot: ImageStudioSlotRecord): Record<string, unknown> | null => {
-    if (!slot.metadata || typeof slot.metadata !== 'object' || Array.isArray(slot.metadata)) return null;
-    return slot.metadata;
-  };
-
-  const getSlotRole = (slot: ImageStudioSlotRecord): string | null => {
-    const metadata = getSlotMetadata(slot);
-    const role = metadata?.['role'];
-    if (typeof role !== 'string') return null;
-    const normalized = role.trim().toLowerCase();
-    return normalized || null;
-  };
-
-  const getSlotSourceId = (slot: ImageStudioSlotRecord): string | null => {
-    const metadata = getSlotMetadata(slot);
-    const sourceSlotId = metadata?.['sourceSlotId'];
-    if (typeof sourceSlotId !== 'string') return null;
-    const normalized = sourceSlotId.trim();
-    return normalized || null;
-  };
-
-  const getSlotRelationType = (slot: ImageStudioSlotRecord): string | null => {
-    const metadata = getSlotMetadata(slot);
-    const relationType = metadata?.['relationType'];
-    if (typeof relationType !== 'string') return null;
-    const normalized = relationType.trim().toLowerCase();
-    return normalized || null;
-  };
-
-  const getRoleLabel = (slot: ImageStudioSlotRecord, derivedFromCard: boolean): string | null => {
-    const metadata = getSlotMetadata(slot);
-    const role = getSlotRole(slot);
-    if (role === 'mask') {
-      const variant = typeof metadata?.['variant'] === 'string' ? metadata['variant'].trim().toLowerCase() : '';
-      const inverted = Boolean(metadata?.['inverted']);
-      if (variant) return inverted ? `mask ${variant} inv` : `mask ${variant}`;
-      return inverted ? 'mask inv' : 'mask';
-    }
-    if (role === 'generation') return 'generation';
-    if (role === 'version') return 'version';
-    if (role === 'part') return 'part';
-    if (role === 'variant') return 'variant';
-    const relationType = getSlotRelationType(slot);
-    if (relationType?.startsWith('mask:')) {
-      return relationType.replace(':', ' ');
-    }
-    if (derivedFromCard) return 'derived';
-    return null;
-  };
-
-  const compareNodes = (a: TreeNode, b: TreeNode): number => {
-    if (a.type !== b.type) return a.type === 'folder' ? -1 : 1;
-    return a.name.localeCompare(b.name);
-  };
-
-  const sortNodes = (nodes: TreeNode[]): void => {
-    nodes.sort(compareNodes);
-  };
-
-  const compareSlots = (a: ImageStudioSlotRecord, b: ImageStudioSlotRecord): number => {
-    const left = (a.name ?? a.id).trim().toLowerCase();
-    const right = (b.name ?? b.id).trim().toLowerCase();
-    return left.localeCompare(right);
-  };
-
-  const slotById = new Map<string, ImageStudioSlotRecord>(
-    slots.map((slot: ImageStudioSlotRecord) => [slot.id, slot])
-  );
-  const linkedSlotsBySource = new Map<string, ImageStudioSlotRecord[]>();
-  const rootCardSlots: ImageStudioSlotRecord[] = [];
-
-  slots.forEach((slot: ImageStudioSlotRecord) => {
-    const sourceSlotId = getSlotSourceId(slot);
-    if (sourceSlotId && sourceSlotId !== slot.id && slotById.has(sourceSlotId)) {
-      const current = linkedSlotsBySource.get(sourceSlotId) ?? [];
-      current.push(slot);
-      linkedSlotsBySource.set(sourceSlotId, current);
-      return;
-    }
-    rootCardSlots.push(slot);
-  });
-
-  linkedSlotsBySource.forEach((children: ImageStudioSlotRecord[]) => {
-    children.sort(compareSlots);
-  });
-  rootCardSlots.sort(compareSlots);
-
-  const ensureFolder = (parent: TreeNode, folderName: string, folderPath: string): TreeNode => {
-    const existing = parent.children.find((child: TreeNode) => child.type === 'folder' && child.name === folderName);
-    if (existing) return existing;
-    const node: TreeNode = { id: `folder:${folderPath}`, name: folderName, type: 'folder', path: folderPath, children: [] };
-    parent.children.push(node);
-    sortNodes(parent.children);
-    return node;
-  };
-
-  const buildCardChildren = (sourceSlotId: string, lineage: Set<string>): TreeNode[] => {
-    const children = linkedSlotsBySource.get(sourceSlotId) ?? [];
-    if (children.length === 0) return [];
-    const nodes: TreeNode[] = [];
-    children.forEach((child: ImageStudioSlotRecord) => {
-      if (lineage.has(child.id)) return;
-      const nextLineage = new Set(lineage);
-      nextLineage.add(child.id);
-      nodes.push({
-        id: `card:${child.id}`,
-        name: child.name || child.id,
-        type: 'card',
-        path: (child.folderPath ?? '').replace(/\\/g, '/').replace(/^\/+/, ''),
-        slot: child,
-        roleLabel: getRoleLabel(child, true),
-        derivedFromCard: true,
-        children: buildCardChildren(child.id, nextLineage),
-      });
-    });
-    sortNodes(nodes);
-    return nodes;
-  };
-
-  const normalizedFolders = normalizeFolderPaths(folders);
-  normalizedFolders.forEach((folderPath: string) => {
-    const normalized = folderPath.replace(/\\/g, '/').replace(/^\/+/, '');
-    if (!normalized) return;
-    const parts = normalized.split('/').filter(Boolean);
-    if (parts.length === 0) return;
-    let cursor = root;
-    for (let index = 0; index < parts.length; index += 1) {
-      const part = parts[index]!;
-      const nextFolderPath = parts.slice(0, index + 1).join('/');
-      cursor = ensureFolder(cursor, part, nextFolderPath);
-    }
-  });
-
-  rootCardSlots.forEach((slot: ImageStudioSlotRecord) => {
-    const folderPath = (slot.folderPath ?? '').replace(/\\/g, '/').replace(/^\/+/, '');
-    const parts = folderPath ? folderPath.split('/').filter(Boolean) : [];
-    let cursor = root;
-    for (let index = 0; index < parts.length; index += 1) {
-      const part = parts[index]!;
-      const nextFolderPath = parts.slice(0, index + 1).join('/');
-      cursor = ensureFolder(cursor, part, nextFolderPath);
-    }
-    cursor.children.push({
-      id: `card:${slot.id}`,
-      name: slot.name || slot.id,
-      type: 'card',
-      path: folderPath,
-      slot,
-      roleLabel: getRoleLabel(slot, false),
-      derivedFromCard: false,
-      children: buildCardChildren(slot.id, new Set([slot.id])),
-    });
-    sortNodes(cursor.children);
-  });
-
-  return root;
-}
-
-export function SlotTree(): React.JSX.Element {
-  const { projectId } = useProjectsState();
+export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRevealRequest | null }): React.JSX.Element {
   const { slots, virtualFolders: folders, selectedFolder, selectedSlotId } = useSlotsState();
   const {
     setSelectedFolder: onSelectFolder,
@@ -218,15 +75,70 @@ export function SlotTree(): React.JSX.Element {
     handleMoveFolder: onMoveFolder,
     handleRenameFolder: onRenameFolder,
   } = useSlotsActions();
+  const profile = useFolderTreeProfile('image_studio');
+  const profileV2 = useMemo(() => upgradeFolderTreeProfileV1ToV2(profile), [profile]);
   const { toast } = useToast();
 
-  const onSelectSlot = useCallback((slot: ImageStudioSlotRecord) => {
+  const placeholderClasses = useMemo(
+    () => getFolderTreePlaceholderClasses(profile.placeholders.preset),
+    [profile.placeholders.preset]
+  );
+  const FolderClosedIcon = useMemo(() => {
+    const iconId = profile.icons.folderClosed ?? 'Folder';
+    return ICON_LIBRARY_MAP[iconId] ?? Folder;
+  }, [profile.icons.folderClosed]);
+  const FolderOpenIcon = useMemo(() => {
+    const iconId = profile.icons.folderOpen ?? 'FolderOpen';
+    return ICON_LIBRARY_MAP[iconId] ?? FolderOpen;
+  }, [profile.icons.folderOpen]);
+  const FileIcon = useMemo(() => {
+    const iconId = profile.icons.file ?? 'Image';
+    return ICON_LIBRARY_MAP[iconId] ?? ImageIcon;
+  }, [profile.icons.file]);
+  const DragHandleIcon = useMemo(() => {
+    const iconId = profile.icons.dragHandle ?? 'GripVertical';
+    return ICON_LIBRARY_MAP[iconId] ?? GripVertical;
+  }, [profile.icons.dragHandle]);
+
+  const masterNodes = useMemo(
+    () => buildMasterNodesFromStudioTree(slots, folders),
+    [slots, folders]
+  );
+  const selectedMasterNodeId = useMemo((): MasterTreeId | null => {
+    if (selectedSlotId) return toSlotMasterNodeId(selectedSlotId);
+    const normalizedSelectedFolder = normalizeTreePath(selectedFolder);
+    if (!normalizedSelectedFolder) return null;
+    return toFolderMasterNodeId(normalizedSelectedFolder);
+  }, [selectedFolder, selectedSlotId]);
+
+  const controller = useMasterFolderTree({
+    initialNodes: masterNodes,
+    initialSelectedNodeId: selectedMasterNodeId,
+    profile: profileV2,
+  });
+  const { replaceNodes, selectNode, expandNode } = controller;
+
+  useEffect(() => {
+    void replaceNodes(masterNodes, 'external_sync');
+  }, [masterNodes, replaceNodes]);
+
+  useEffect(() => {
+    selectNode(selectedMasterNodeId);
+  }, [selectedMasterNodeId, selectNode]);
+
+  const slotById = useMemo(
+    () => new Map<string, ImageStudioSlotRecord>(slots.map((slot: ImageStudioSlotRecord) => [slot.id, slot])),
+    [slots]
+  );
+
+  const onSelectSlot = useCallback((slot: ImageStudioSlotRecord): void => {
     setSelectedSlotId(slot.id);
   }, [setSelectedSlotId]);
 
-  const onMoveSlot = useCallback((slot: ImageStudioSlotRecord, targetFolder: string) => {
+  const onMoveSlot = useCallback((slot: ImageStudioSlotRecord, targetFolder: string): void => {
     void moveSlotMutation.mutateAsync({ slot, targetFolder });
   }, [moveSlotMutation]);
+
   const onDeleteSlot = useCallback((slot: ImageStudioSlotRecord): void => {
     const cardLabel = slot.name?.trim() || slot.id;
     if (typeof window !== 'undefined') {
@@ -236,115 +148,108 @@ export function SlotTree(): React.JSX.Element {
     void deleteSlotMutation.mutateAsync(slot.id);
   }, [deleteSlotMutation]);
 
-  const tree = useMemo(() => buildSlotTree(projectId, slots, folders), [projectId, slots, folders]);
-  const [expanded, setExpanded] = useState<Set<string>>(() => new Set(['root']));
-  const [dragOverPath, setDragOverPath] = useState<string | null>(null);
-  const [rootEdgeDropActive, setRootEdgeDropActive] = useState(false);
-  const [renamingFolderPath, setRenamingFolderPath] = useState<string | null>(null);
-  const [renameFolderDraft, setRenameFolderDraft] = useState('');
-  const draggedSlotIdRef = useRef<string | null>(null);
-  const draggedFolderPathRef = useRef<string | null>(null);
-  const treeRef = useRef<HTMLDivElement | null>(null);
-  const rootOpen = expanded.has('root');
-  const resolveDropPayload = useCallback((dataTransfer: DataTransfer): TreeDragPayload => {
-    const parsedText = parseTreeDragText(getFirstDragValue(dataTransfer, [DRAG_KEYS.TEXT]));
-    const slotId = getFirstDragValue(
-      dataTransfer,
-      [DRAG_KEYS.ASSET_ID],
-      draggedSlotIdRef.current ?? parsedText.slotId ?? null
-    );
-    const folderPath = getFirstDragValue(
-      dataTransfer,
-      [DRAG_KEYS.FOLDER_PATH],
-      draggedFolderPathRef.current ?? parsedText.folderPath ?? null
-    );
-    return { slotId, folderPath };
-  }, []);
-  const canHandleDrop = useCallback((dataTransfer: DataTransfer): boolean => {
-    if (hasDragType(dataTransfer, [DRAG_KEYS.ASSET_ID, DRAG_KEYS.FOLDER_PATH])) return true;
-    const parsedText = parseTreeDragText(getFirstDragValue(dataTransfer, [DRAG_KEYS.TEXT]));
-    if (parsedText.slotId || parsedText.folderPath) return true;
-    return Boolean(draggedSlotIdRef.current || draggedFolderPathRef.current);
-  }, []);
-  const clearDragState = useCallback((): void => {
-    draggedSlotIdRef.current = null;
-    draggedFolderPathRef.current = null;
-    setDragOverPath(null);
-    setRootEdgeDropActive(false);
-  }, []);
-  const clearDragStateDeferred = useCallback((): void => {
-    if (typeof window === 'undefined') {
-      clearDragState();
-      return;
-    }
-    window.setTimeout(() => {
-      clearDragState();
-    }, 0);
-  }, [clearDragState]);
-  const applyDropToTarget = useCallback((dataTransfer: DataTransfer, targetFolder: string): void => {
-    const { slotId, folderPath } = resolveDropPayload(dataTransfer);
-    clearDragState();
-    if (slotId) {
-      const slot = slots.find((item: ImageStudioSlotRecord) => item.id === slotId);
-      if (slot) {
-        onMoveSlot(slot, targetFolder);
-      }
-      return;
-    }
-    if (folderPath && folderPath !== targetFolder) {
-      void onMoveFolder(folderPath, targetFolder);
-    }
-  }, [clearDragState, onMoveFolder, onMoveSlot, resolveDropPayload, slots]);
-  const isRootEdgeDrop = useCallback((event: React.DragEvent<HTMLElement>): boolean => {
-    const container = treeRef.current;
-    if (!container) return false;
-    const rect = container.getBoundingClientRect();
-    const edgeThreshold = Math.max(18, Math.min(40, Math.floor(rect.height * 0.09)));
-    const offsetTop = event.clientY - rect.top;
-    const offsetBottom = rect.bottom - event.clientY;
-    return offsetTop <= edgeThreshold || offsetBottom <= edgeThreshold;
-  }, []);
-  const updateRootEdgeDropState = useCallback((event: React.DragEvent<HTMLElement>): void => {
-    setRootEdgeDropActive(isRootEdgeDrop(event));
-  }, [isRootEdgeDrop]);
   const clearSelection = useCallback((): void => {
     onSelectFolder('');
     setSelectedSlotId(null);
-  }, [onSelectFolder, setSelectedSlotId]);
-  const startFolderRename = useCallback((node: TreeNode): void => {
-    if (!node.path) return;
-    setRenamingFolderPath(node.path);
-    setRenameFolderDraft(node.name);
+    selectNode(null);
+  }, [onSelectFolder, selectNode, setSelectedSlotId]);
+
+  const canDropNodeToTarget = useCallback((
+    draggedNodeId: MasterTreeId,
+    targetId: MasterTreeId | null,
+    nodes: MasterTreeNode[]
+  ): boolean => {
+    if (targetId) {
+      const targetNode = nodes.find((node: MasterTreeNode) => node.id === targetId);
+      if (targetNode?.type !== 'folder') return false;
+    }
+
+    const targetFolder = resolveFolderTargetPathForMasterNode(nodes, targetId);
+    if (targetFolder === null) return false;
+    const targetIsRoot = targetFolder.length === 0;
+
+    const slotId = fromSlotMasterNodeId(draggedNodeId);
+    if (slotId) {
+      return canNestTreeNode({
+        profile,
+        nodeType: 'file',
+        nodeKind: 'card',
+        targetFolderKind: 'folder',
+        targetIsRoot,
+      });
+    }
+
+    const folderPath = fromFolderMasterNodeId(draggedNodeId);
+    if (folderPath !== null) {
+      return (
+        canMoveTreePath(folderPath, targetFolder) &&
+        canNestTreeNode({
+          profile,
+          nodeType: 'folder',
+          nodeKind: 'folder',
+          targetFolderKind: 'folder',
+          targetIsRoot,
+        })
+      );
+    }
+
+    return false;
+  }, [profile]);
+
+  const treeRef = useRef<HTMLDivElement | null>(null);
+  const lastHandledRevealNonceRef = useRef<number>(-1);
+  const [externalDraggedNodeId, setExternalDraggedNodeId] = useState<MasterTreeId | null>(null);
+  const [rootDropZone, setRootDropZone] = useState<'top' | 'bottom' | null>(null);
+
+  const activeDraggedNodeId = controller.dragState?.draggedNodeId ?? externalDraggedNodeId;
+  const canDropToRoot = activeDraggedNodeId
+    ? canDropNodeToTarget(activeDraggedNodeId, null, controller.nodes)
+    : false;
+  const treeDragActive = Boolean(activeDraggedNodeId) && canDropToRoot;
+
+  const clearDragIndicators = useCallback((): void => {
+    setExternalDraggedNodeId(null);
+    setRootDropZone(null);
   }, []);
-  const cancelFolderRename = useCallback((): void => {
-    setRenamingFolderPath(null);
-    setRenameFolderDraft('');
-  }, []);
-  const commitFolderRename = useCallback((folderPath: string): void => {
-    const normalizedSource = folderPath.replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+
+  const startFolderRename = useCallback((nodeId: MasterTreeId): void => {
+    const folderPath = fromFolderMasterNodeId(nodeId);
+    if (!folderPath) return;
+    controller.startRename(nodeId);
+  }, [controller]);
+
+  const commitFolderRename = useCallback((folderNodeId: MasterTreeId): void => {
+    const normalizedSource = fromFolderMasterNodeId(folderNodeId);
     if (!normalizedSource) {
-      cancelFolderRename();
+      controller.cancelRename();
       return;
     }
-    const sourceLeaf = normalizedSource.split('/').pop() ?? normalizedSource;
-    const normalizedName = renameFolderDraft.replace(/[\\/]+/g, ' ').trim();
+
+    const sourceLeaf = getTreePathLeaf(normalizedSource);
+    const normalizedName = controller.renameDraft.replace(/[\\/]+/g, ' ').trim();
     if (!normalizedName) {
       toast('Folder name cannot be empty.', { variant: 'info' });
       return;
     }
     if (normalizedName === sourceLeaf) {
-      cancelFolderRename();
+      controller.cancelRename();
       return;
     }
+
     const parentPath = normalizedSource.includes('/')
       ? normalizedSource.slice(0, normalizedSource.lastIndexOf('/'))
       : '';
-    const nextPath = parentPath ? `${parentPath}/${normalizedName}` : normalizedName;
-    cancelFolderRename();
+    const nextPath = normalizeTreePath(parentPath ? `${parentPath}/${normalizedName}` : normalizedName);
+    if (!canMoveTreePath(normalizedSource, nextPath)) {
+      controller.cancelRename();
+      return;
+    }
+
+    controller.cancelRename();
     void onRenameFolder(normalizedSource, nextPath).catch((error: unknown) => {
       toast(error instanceof Error ? error.message : 'Failed to rename folder.', { variant: 'error' });
     });
-  }, [cancelFolderRename, onRenameFolder, renameFolderDraft, toast]);
+  }, [controller, onRenameFolder, toast]);
 
   useEffect(() => {
     const handleDocumentPointerDown = (event: PointerEvent): void => {
@@ -363,322 +268,27 @@ export function SlotTree(): React.JSX.Element {
     };
   }, [clearSelection]);
 
-  const toggle = useCallback((id: string): void => {
-    setExpanded((prev: Set<string>) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
+  useEffect(() => {
+    if (!revealRequest?.slotId) return;
+    if (revealRequest.nonce === lastHandledRevealNonceRef.current) return;
+
+    const targetNodeId = toSlotMasterNodeId(revealRequest.slotId);
+    const targetNodeExists = controller.nodes.some((node: MasterTreeNode) => node.id === targetNodeId);
+    if (!targetNodeExists) return;
+
+    findMasterNodeAncestorIds(controller.nodes, targetNodeId).forEach((ancestorId: string) => {
+      expandNode(ancestorId);
     });
-  }, []);
+    lastHandledRevealNonceRef.current = revealRequest.nonce;
 
-  const renderNode = (node: TreeNode, depth: number): React.JSX.Element | null => {
-    if (node.type === 'folder') {
-      const isOpen = expanded.has(node.id);
-      const isSelected = !selectedSlotId && node.path === selectedFolder;
-      const isDragOver = dragOverPath === node.path;
-      const isRenaming = Boolean(node.path) && renamingFolderPath === node.path;
-      return (
-        <div key={node.id}>
-          <TreeContextMenu
-            items={[
-              { id: 'select-folder', label: 'Select folder', onSelect: () => onSelectFolder(node.path) },
-              ...(node.path
-                ? [
-                  {
-                    id: 'rename-folder',
-                    label: 'Rename folder',
-                    onSelect: () => startFolderRename(node),
-                  },
-                  {
-                    id: 'move-folder-root',
-                    label: 'Move to root',
-                    onSelect: () => onMoveFolder(node.path, ''),
-                  },
-                ]
-                : []),
-            ]}
-          >
-            {isRenaming ? (
-              <TreeRow
-                depth={depth}
-                baseIndent={8}
-                indent={12}
-                tone='subtle'
-                selected={isSelected}
-                dragOver={false}
-                className='relative min-h-8 text-xs'
-              >
-                <div
-                  className='flex w-full items-center gap-2'
-                  onClick={(event: React.MouseEvent<HTMLDivElement>) => {
-                    event.stopPropagation();
-                  }}
-                >
-                  <span className='size-3.5 shrink-0' />
-                  <TreeCaret
-                    isOpen={isOpen}
-                    hasChildren={node.children.length > 0}
-                    ariaLabel={isOpen ? `Collapse ${node.name}` : `Expand ${node.name}`}
-                    onToggle={() => toggle(node.id)}
-                    className='text-gray-400'
-                    buttonClassName='hover:bg-gray-700'
-                    placeholderClassName='w-4'
-                  />
-                  <Folder className='size-3.5 text-gray-400' />
-                  <input
-                    autoFocus
-                    value={renameFolderDraft}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                      setRenameFolderDraft(event.target.value);
-                    }}
-                    onBlur={() => commitFolderRename(node.path)}
-                    onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
-                      event.stopPropagation();
-                      if (event.key === 'Enter') {
-                        event.preventDefault();
-                        commitFolderRename(node.path);
-                        return;
-                      }
-                      if (event.key === 'Escape') {
-                        event.preventDefault();
-                        cancelFolderRename();
-                      }
-                    }}
-                    onPointerDown={(event: React.PointerEvent<HTMLInputElement>) => {
-                      event.stopPropagation();
-                    }}
-                    onClick={(event: React.MouseEvent<HTMLInputElement>) => {
-                      event.stopPropagation();
-                    }}
-                    className='h-6 w-full rounded border border-border/70 bg-card/80 px-2 text-xs text-gray-100 outline-none ring-0 focus:border-sky-400'
-                    aria-label='Rename folder'
-                  />
-                </div>
-              </TreeRow>
-            ) : (
-              <TreeRow
-                asChild
-                depth={depth}
-                baseIndent={8}
-                indent={12}
-                tone='subtle'
-                selected={isSelected}
-                dragOver={isDragOver}
-                dragOverClassName='bg-transparent text-gray-100 ring-0'
-                className='relative min-h-8 text-xs'
-              >
-                <button
-                  type='button'
-                  className='w-full text-left'
-                  onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
-                    event.stopPropagation();
-                    onSelectFolder(node.path);
-                  }}
-                  onDoubleClick={(event: React.MouseEvent<HTMLButtonElement>) => {
-                    event.stopPropagation();
-                    if (!node.path) return;
-                    startFolderRename(node);
-                  }}
-                  title={node.path || 'Project root'}
-                  data-folder-path={node.path}
-                  onDragOver={(e: React.DragEvent<HTMLButtonElement>): void => {
-                    if (!canHandleDrop(e.dataTransfer)) return;
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setDragOverPath(node.path);
-                    e.dataTransfer.dropEffect = 'move';
-                  }}
-                  onDragLeave={() => {
-                    // Keep current drag target until another target claims it.
-                    // Clearing aggressively here causes drag placeholder flicker.
-                  }}
-                  onDrop={(e: React.DragEvent<HTMLButtonElement>): void => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    applyDropToTarget(e.dataTransfer, node.path);
-                  }}
-                >
-                  <span
-                    draggable={Boolean(node.path)}
-                    onDragStart={(event: React.DragEvent<HTMLSpanElement>): void => {
-                      if (!node.path) return;
-                      event.stopPropagation();
-                      setDragData(
-                        event.dataTransfer,
-                        { [DRAG_KEYS.FOLDER_PATH]: node.path },
-                        { text: `${FOLDER_DRAG_TEXT_PREFIX}${node.path}`, effectAllowed: 'move' }
-                      );
-                      draggedSlotIdRef.current = null;
-                      draggedFolderPathRef.current = node.path;
-                    }}
-                    onDragEnd={clearDragStateDeferred}
-                    onMouseDown={(event: React.MouseEvent): void => event.stopPropagation()}
-                    onClick={(event: React.MouseEvent): void => event.stopPropagation()}
-                    className='flex items-center justify-center opacity-0 group-hover:opacity-100'
-                    aria-label={`Drag folder ${node.name}`}
-                    title='Drag folder'
-                  >
-                    <GripVertical className='size-3.5 shrink-0 cursor-grab text-gray-500 active:cursor-grabbing' />
-                  </span>
-                  <div
-                    className={cn(
-                      'pointer-events-none absolute left-2.5 top-2 bottom-2 w-px rounded-full bg-sky-300/35 transition-opacity duration-150',
-                      isDragOver ? 'opacity-100' : 'opacity-0'
-                    )}
-                  />
-                  <TreeCaret
-                    isOpen={isOpen}
-                    hasChildren={node.children.length > 0}
-                    ariaLabel={isOpen ? `Collapse ${node.name}` : `Expand ${node.name}`}
-                    onToggle={() => toggle(node.id)}
-                    className='text-gray-400'
-                    buttonClassName='hover:bg-gray-700'
-                    placeholderClassName='w-4'
-                  />
-                  <Folder className='size-3.5 text-gray-400' />
-                  <span className='truncate'>{node.name}</span>
-                  <span
-                    className={cn(
-                      'ml-auto text-[10px] text-sky-200/70 transition-opacity duration-150',
-                      isDragOver ? 'opacity-100' : 'opacity-0'
-                    )}
-                  >
-                    drop
-                  </span>
-                </button>
-              </TreeRow>
-            )}
-          </TreeContextMenu>
-          {isOpen ? (
-            <div>
-              {node.children.map((child: TreeNode) => renderNode(child, depth + 1))}
-            </div>
-          ) : null}
-        </div>
-      );
-    }
-
-    const card = node.slot;
-    if (!card) return null;
-    const isOpen = node.children.length > 0 && expanded.has(node.id);
-    const isSelected = card.id === selectedSlotId;
-    return (
-      <div key={node.id}>
-        <TreeContextMenu
-          items={[
-            { id: 'select-card', label: 'Select card', onSelect: () => onSelectSlot(card) },
-            ...(card.folderPath
-              ? [
-                {
-                  id: 'move-card-root',
-                  label: 'Move to root',
-                  onSelect: () => onMoveSlot(card, ''),
-                },
-              ]
-              : []),
-            {
-              id: 'delete-card',
-              label: 'Delete card',
-              icon: <Trash2 className='size-3.5' />,
-              tone: 'danger',
-              onSelect: () => onDeleteSlot(card),
-            },
-          ]}
-        >
-          <TreeRow
-            asChild
-            depth={depth}
-            baseIndent={20}
-            indent={12}
-            tone='subtle'
-            selected={isSelected}
-            className='min-h-8 text-xs'
-          >
-            <button
-              type='button'
-              className='w-full text-left'
-              onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
-                event.stopPropagation();
-                onSelectSlot(card);
-              }}
-              onDoubleClick={() => {
-                if (node.children.length > 0) toggle(node.id);
-              }}
-              title={card.name || card.id}
-            >
-              <span
-                draggable
-                onDragStart={(event: React.DragEvent<HTMLSpanElement>): void => {
-                  event.stopPropagation();
-                  setDragData(
-                    event.dataTransfer,
-                    { [DRAG_KEYS.ASSET_ID]: card.id },
-                    { text: `${SLOT_DRAG_TEXT_PREFIX}${card.id}`, effectAllowed: 'move' }
-                  );
-                  draggedFolderPathRef.current = null;
-                  draggedSlotIdRef.current = card.id;
-                }}
-                onDragEnd={clearDragStateDeferred}
-                onMouseDown={(event: React.MouseEvent): void => event.stopPropagation()}
-                onClick={(event: React.MouseEvent): void => event.stopPropagation()}
-                className='flex items-center justify-center opacity-0 group-hover:opacity-100'
-                aria-label={`Drag card ${card.name || card.id}`}
-                title='Drag card'
-              >
-                <GripVertical className='size-3.5 shrink-0 cursor-grab text-gray-500 active:cursor-grabbing' />
-              </span>
-              <TreeCaret
-                isOpen={isOpen}
-                hasChildren={node.children.length > 0}
-                ariaLabel={isOpen ? `Collapse ${node.name}` : `Expand ${node.name}`}
-                onToggle={() => toggle(node.id)}
-                className='text-gray-400'
-                buttonClassName='hover:bg-gray-700'
-                placeholderClassName='w-4'
-              />
-              <ImageIcon className='size-3.5 text-gray-400' />
-              <span className='truncate'>{card.name || node.name}</span>
-              {node.roleLabel ? (
-                <span className='ml-auto max-w-[90px] truncate text-[10px] uppercase tracking-wide text-gray-500'>
-                  {node.roleLabel}
-                </span>
-              ) : null}
-              <span
-                className={cn(
-                  'ml-1 size-1 rounded-full bg-blue-300/55 transition-opacity duration-150',
-                  isSelected ? 'opacity-100' : 'opacity-0'
-                )}
-              />
-              <span
-                className={cn(
-                  'ml-1 inline-flex items-center justify-center rounded p-0.5 text-gray-400 transition',
-                  'opacity-0 group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-300',
-                  deleteSlotMutation.isPending ? 'pointer-events-none opacity-40' : 'cursor-pointer'
-                )}
-                onMouseDown={(event: React.MouseEvent<HTMLSpanElement>): void => {
-                  event.stopPropagation();
-                }}
-                onClick={(event: React.MouseEvent<HTMLSpanElement>): void => {
-                  event.stopPropagation();
-                  onDeleteSlot(card);
-                }}
-                title='Delete card'
-                aria-hidden='true'
-              >
-                <Trash2 className='size-3' />
-              </span>
-            </button>
-          </TreeRow>
-        </TreeContextMenu>
-        {isOpen ? (
-          <div>
-            {node.children.map((child: TreeNode) => renderNode(child, depth + 1))}
-          </div>
-        ) : null}
-      </div>
-    );
-  };
+    if (typeof window === 'undefined') return;
+    window.requestAnimationFrame(() => {
+      const container = treeRef.current;
+      if (!container) return;
+      const row = container.querySelector<HTMLElement>(`[data-slot-id="${revealRequest.slotId}"]`);
+      row?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  }, [controller.nodes, expandNode, revealRequest]);
 
   return (
     <div
@@ -693,70 +303,387 @@ export function SlotTree(): React.JSX.Element {
         clearSelection();
       }}
       onClick={clearSelection}
-      onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
-        if (!canHandleDrop(e.dataTransfer)) return;
-        updateRootEdgeDropState(e);
-        e.preventDefault();
-        const edgeDrop = isRootEdgeDrop(e);
-        if (edgeDrop) {
-          setDragOverPath('');
-          e.stopPropagation();
-        } else if (dragOverPath === '') {
-          setDragOverPath(null);
-        }
-        e.dataTransfer.dropEffect = 'move';
-      }}
-      onDragLeave={(e: React.DragEvent<HTMLDivElement>) => {
-        const nextTarget = e.relatedTarget;
-        if (nextTarget instanceof Node && e.currentTarget.contains(nextTarget)) {
+      onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
+        const draggedNodeId = controller.dragState?.draggedNodeId ?? resolveExternalDraggedNodeId(event.dataTransfer);
+        if (!draggedNodeId) {
+          clearDragIndicators();
           return;
         }
-        if (dragOverPath === '') setDragOverPath(null);
-        setRootEdgeDropActive(false);
+        if (!controller.dragState) {
+          setExternalDraggedNodeId(draggedNodeId);
+        }
+
+        if (!canDropNodeToTarget(draggedNodeId, null, controller.nodes)) {
+          setRootDropZone(null);
+          return;
+        }
+
+        if (!isRootEdgeDrop(treeRef.current, event)) {
+          setRootDropZone(null);
+          return;
+        }
+
+        const rect = event.currentTarget.getBoundingClientRect();
+        const zone: 'top' | 'bottom' = event.clientY - rect.top <= rect.height / 2 ? 'top' : 'bottom';
+        setRootDropZone(zone);
       }}
-      onDropCapture={(e: React.DragEvent<HTMLDivElement>): void => {
-        if (!canHandleDrop(e.dataTransfer)) return;
-        if (!isRootEdgeDrop(e) && !rootEdgeDropActive) return;
-        e.preventDefault();
-        e.stopPropagation();
-        applyDropToTarget(e.dataTransfer, '');
+      onDragLeave={(event: React.DragEvent<HTMLDivElement>): void => {
+        const nextTarget = event.relatedTarget;
+        if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) return;
+        clearDragIndicators();
       }}
-      onDrop={(e: React.DragEvent<HTMLDivElement>): void => {
-        e.preventDefault();
-        setRootEdgeDropActive(false);
-        applyDropToTarget(e.dataTransfer, '');
+      onDrop={(): void => {
+        clearDragIndicators();
       }}
-      onDragEnd={() => {
-        setRootEdgeDropActive(false);
+      onDragEnd={(): void => {
+        clearDragIndicators();
       }}
     >
       <div
         className={cn(
-          'pointer-events-none absolute inset-0 rounded border border-transparent transition-colors duration-150',
-          dragOverPath === '' || rootEdgeDropActive ? 'border-sky-300/55' : 'border-transparent'
+          'pointer-events-none absolute inset-x-2 top-1 z-20 flex h-8 items-center justify-center rounded-md border border-dashed text-[10px] font-medium uppercase tracking-[0.08em] transition-all duration-150',
+          treeDragActive ? 'opacity-100' : 'opacity-0',
+          rootDropZone === 'top' ? placeholderClasses.rootActive : placeholderClasses.rootIdle
         )}
-      />
+      >
+        {profile.placeholders.rootDropLabel}
+      </div>
       <div
         className={cn(
-          'pointer-events-none absolute inset-x-2 top-1 h-px rounded bg-transparent transition-colors duration-150',
-          dragOverPath === '' || rootEdgeDropActive ? 'bg-sky-300/80' : 'bg-transparent'
+          'pointer-events-none absolute inset-x-2 bottom-1 z-20 flex h-8 items-center justify-center rounded-md border border-dashed text-[10px] font-medium uppercase tracking-[0.08em] transition-all duration-150',
+          treeDragActive ? 'opacity-100' : 'opacity-0',
+          rootDropZone === 'bottom' ? placeholderClasses.rootActive : placeholderClasses.rootIdle
         )}
+      >
+        {profile.placeholders.rootDropLabel}
+      </div>
+
+      <MasterFolderTree
+        controller={controller}
+        className='space-y-0.5'
+        emptyLabel='No folders yet. Create a folder or add cards here.'
+        resolveDropPosition={(): 'inside' => 'inside'}
+        resolveDraggedNodeId={(event: React.DragEvent<HTMLElement>): MasterTreeId | null =>
+          resolveExternalDraggedNodeId(event.dataTransfer)
+        }
+        canDrop={({ draggedNodeId, targetId }, ctlr): boolean => {
+          const isInternalNode = ctlr.nodes.some((node: MasterTreeNode) => node.id === draggedNodeId);
+          if (isInternalNode) return false;
+          return canDropNodeToTarget(draggedNodeId, targetId, ctlr.nodes);
+        }}
+        onNodeDrop={async ({ draggedNodeId, targetId }): Promise<void> => {
+          const targetFolder = resolveFolderTargetPathForMasterNode(controller.nodes, targetId);
+          if (targetFolder === null) return;
+
+          const slotId = fromSlotMasterNodeId(draggedNodeId);
+          if (slotId) {
+            const slot = slotById.get(slotId);
+            if (!slot) return;
+            onMoveSlot(slot, targetFolder);
+            return;
+          }
+
+          const folderPath = fromFolderMasterNodeId(draggedNodeId);
+          if (folderPath !== null && canMoveTreePath(folderPath, targetFolder)) {
+            await onMoveFolder(folderPath, targetFolder);
+          }
+        }}
+        renderNode={({
+          node,
+          depth,
+          hasChildren,
+          isExpanded,
+          isSelected,
+          isRenaming,
+          isDropTarget,
+          dropPosition,
+          select,
+          toggleExpand,
+          startRename,
+        }) => {
+          const folderPath = fromFolderMasterNodeId(node.id);
+          const slotId = fromSlotMasterNodeId(node.id);
+          if (!folderPath && !slotId) return null;
+
+          if (folderPath !== null) {
+            const allowMoveFolderToRoot = canNestTreeNode({
+              profile,
+              nodeType: 'folder',
+              nodeKind: 'folder',
+              targetIsRoot: true,
+            });
+            const showInlineDrop = isDropTarget && dropPosition === 'inside';
+
+            return (
+              <TreeContextMenu
+                items={[
+                  {
+                    id: 'select-folder',
+                    label: 'Select folder',
+                    onSelect: (): void => {
+                      onSelectFolder(folderPath);
+                      select();
+                    },
+                  },
+                  {
+                    id: 'rename-folder',
+                    label: 'Rename folder',
+                    onSelect: (): void => startFolderRename(node.id),
+                  },
+                  ...(allowMoveFolderToRoot
+                    ? [
+                      {
+                        id: 'move-folder-root',
+                        label: 'Move to root',
+                        onSelect: (): void => {
+                          void onMoveFolder(folderPath, '');
+                        },
+                      },
+                    ]
+                    : []),
+                ]}
+              >
+                {isRenaming ? (
+                  <TreeRow
+                    depth={depth}
+                    baseIndent={8}
+                    indent={12}
+                    tone='subtle'
+                    selected={isSelected}
+                    className='relative min-h-8 text-xs'
+                  >
+                    <div
+                      className='flex w-full items-center gap-2'
+                      onClick={(event: React.MouseEvent<HTMLDivElement>): void => {
+                        event.stopPropagation();
+                      }}
+                    >
+                      <span className='size-3.5 shrink-0' />
+                      <TreeCaret
+                        isOpen={isExpanded}
+                        hasChildren={hasChildren}
+                        ariaLabel={isExpanded ? `Collapse ${node.name}` : `Expand ${node.name}`}
+                        onToggle={hasChildren ? toggleExpand : undefined}
+                        className='text-gray-400'
+                        buttonClassName='hover:bg-gray-700'
+                        placeholderClassName='w-4'
+                      />
+                      <FolderOpenIcon className='size-3.5 text-gray-400' />
+                      <input
+                        autoFocus
+                        value={controller.renameDraft}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                          controller.updateRenameDraft(event.target.value);
+                        }}
+                        onBlur={(): void => commitFolderRename(node.id)}
+                        onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
+                          event.stopPropagation();
+                          if (event.key === 'Enter') {
+                            event.preventDefault();
+                            commitFolderRename(node.id);
+                            return;
+                          }
+                          if (event.key === 'Escape') {
+                            event.preventDefault();
+                            controller.cancelRename();
+                          }
+                        }}
+                        onPointerDown={(event: React.PointerEvent<HTMLInputElement>): void => {
+                          event.stopPropagation();
+                        }}
+                        onClick={(event: React.MouseEvent<HTMLInputElement>): void => {
+                          event.stopPropagation();
+                        }}
+                        className='h-6 w-full rounded border border-border/70 bg-card/80 px-2 text-xs text-gray-100 outline-none ring-0 focus:border-sky-400'
+                        aria-label='Rename folder'
+                      />
+                    </div>
+                  </TreeRow>
+                ) : (
+                  <TreeRow
+                    asChild
+                    depth={depth}
+                    baseIndent={8}
+                    indent={12}
+                    tone='subtle'
+                    selected={isSelected}
+                    dragOver={showInlineDrop}
+                    dragOverClassName='bg-transparent text-gray-100 ring-0'
+                    className='relative min-h-8 text-xs'
+                  >
+                    <button
+                      type='button'
+                      className='w-full text-left'
+                      onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                        event.stopPropagation();
+                        select();
+                        onSelectFolder(folderPath);
+                      }}
+                      onDoubleClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                        event.stopPropagation();
+                        startRename();
+                      }}
+                      title={folderPath || 'Project root'}
+                      data-folder-path={folderPath}
+                    >
+                      <span className='flex items-center justify-center opacity-0 group-hover:opacity-100'>
+                        <DragHandleIcon className='size-3.5 shrink-0 cursor-grab text-gray-500' />
+                      </span>
+                      <div
+                        className={cn(
+                          'pointer-events-none absolute left-2.5 top-2 bottom-2 w-px rounded-full transition-opacity duration-150',
+                          placeholderClasses.lineActive,
+                          showInlineDrop ? 'opacity-100' : 'opacity-0'
+                        )}
+                      />
+                      <TreeCaret
+                        isOpen={isExpanded}
+                        hasChildren={hasChildren}
+                        ariaLabel={isExpanded ? `Collapse ${node.name}` : `Expand ${node.name}`}
+                        onToggle={hasChildren ? toggleExpand : undefined}
+                        className='text-gray-400'
+                        buttonClassName='hover:bg-gray-700'
+                        placeholderClassName='w-4'
+                      />
+                      {isExpanded ? (
+                        <FolderOpenIcon className='size-3.5 text-gray-400' />
+                      ) : (
+                        <FolderClosedIcon className='size-3.5 text-gray-400' />
+                      )}
+                      <span className='truncate'>{node.name}</span>
+                      <span
+                        className={cn(
+                          'ml-auto text-[10px] transition-opacity duration-150',
+                          showInlineDrop
+                            ? `${placeholderClasses.badgeActive} opacity-100`
+                            : `${placeholderClasses.badgeIdle} opacity-0`
+                        )}
+                      >
+                        {profile.placeholders.inlineDropLabel}
+                      </span>
+                    </button>
+                  </TreeRow>
+                )}
+              </TreeContextMenu>
+            );
+          }
+
+          const card = slotId ? slotById.get(slotId) ?? null : null;
+          if (!card || !slotId) return null;
+
+          const roleLabel =
+            typeof node.metadata?.['roleLabel'] === 'string'
+              ? node.metadata['roleLabel']
+              : null;
+          const allowMoveCardToRoot = canNestTreeNode({
+            profile,
+            nodeType: 'file',
+            nodeKind: 'card',
+            targetIsRoot: true,
+          });
+
+          return (
+            <TreeContextMenu
+              items={[
+                {
+                  id: 'select-card',
+                  label: 'Select card',
+                  onSelect: (): void => {
+                    onSelectSlot(card);
+                    select();
+                  },
+                },
+                ...(card.folderPath && allowMoveCardToRoot
+                  ? [
+                    {
+                      id: 'move-card-root',
+                      label: 'Move to root',
+                      onSelect: (): void => onMoveSlot(card, ''),
+                    },
+                  ]
+                  : []),
+                {
+                  id: 'delete-card',
+                  label: 'Delete card',
+                  icon: <Trash2 className='size-3.5' />,
+                  tone: 'danger',
+                  onSelect: (): void => onDeleteSlot(card),
+                },
+              ]}
+            >
+              <TreeRow
+                asChild
+                depth={depth}
+                baseIndent={20}
+                indent={12}
+                tone='subtle'
+                selected={isSelected}
+                className='min-h-8 text-xs'
+              >
+                <button
+                  type='button'
+                  className='w-full text-left'
+                  data-slot-id={card.id}
+                  onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                    event.stopPropagation();
+                    select();
+                    onSelectSlot(card);
+                  }}
+                  onDoubleClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                    event.stopPropagation();
+                    if (hasChildren) toggleExpand();
+                  }}
+                  title={card.name || card.id}
+                >
+                  <span className='flex items-center justify-center opacity-0 group-hover:opacity-100'>
+                    <DragHandleIcon className='size-3.5 shrink-0 cursor-grab text-gray-500' />
+                  </span>
+                  <TreeCaret
+                    isOpen={isExpanded}
+                    hasChildren={hasChildren}
+                    ariaLabel={isExpanded ? `Collapse ${node.name}` : `Expand ${node.name}`}
+                    onToggle={hasChildren ? toggleExpand : undefined}
+                    className='text-gray-400'
+                    buttonClassName='hover:bg-gray-700'
+                    placeholderClassName='w-4'
+                  />
+                  <FileIcon className='size-3.5 text-gray-400' />
+                  <span className='truncate'>{card.name || node.name}</span>
+                  {roleLabel ? (
+                    <span className='ml-auto max-w-[90px] truncate text-[10px] uppercase tracking-wide text-gray-500'>
+                      {roleLabel}
+                    </span>
+                  ) : null}
+                  <span
+                    className={cn(
+                      'ml-1 size-1 rounded-full bg-blue-300/55 transition-opacity duration-150',
+                      isSelected ? 'opacity-100' : 'opacity-0'
+                    )}
+                  />
+                  <span
+                    className={cn(
+                      'ml-1 inline-flex items-center justify-center rounded p-0.5 text-gray-400 transition',
+                      'opacity-0 group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-300',
+                      deleteSlotMutation.isPending ? 'pointer-events-none opacity-40' : 'cursor-pointer'
+                    )}
+                    onMouseDown={(event: React.MouseEvent<HTMLSpanElement>): void => {
+                      event.stopPropagation();
+                    }}
+                    onClick={(event: React.MouseEvent<HTMLSpanElement>): void => {
+                      event.stopPropagation();
+                      onDeleteSlot(card);
+                    }}
+                    title='Delete card'
+                    aria-hidden='true'
+                  >
+                    <Trash2 className='size-3' />
+                  </span>
+                </button>
+              </TreeRow>
+            </TreeContextMenu>
+          );
+        }}
       />
-      <div
-        className={cn(
-          'pointer-events-none absolute inset-x-2 bottom-1 h-px rounded bg-transparent transition-colors duration-150',
-          dragOverPath === '' || rootEdgeDropActive ? 'bg-sky-300/80' : 'bg-transparent'
-        )}
-      />
-      {tree.children.length === 0 ? (
-        <div className='flex h-full items-center justify-center px-2 text-center text-xs text-gray-500'>
-          No folders yet. Create a folder or add cards here.
-        </div>
-      ) : rootOpen ? (
-        <div>
-          {tree.children.map((child: TreeNode) => renderNode(child, 0))}
-        </div>
-      ) : null}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { Eye, Loader2, Save, Sparkles } from 'lucide-react';
+import { Eye, Loader2, Save, SlidersHorizontal, Sparkles } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
@@ -74,6 +74,8 @@ export function RightSidebar(): React.JSX.Element {
   const settingsStore = useSettingsStore();
   const [projectSaveBusy, setProjectSaveBusy] = useState(false);
   const [requestPreviewOpen, setRequestPreviewOpen] = useState(false);
+  const [promptControlOpen, setPromptControlOpen] = useState(false);
+  const [controlsOpen, setControlsOpen] = useState(false);
 
   const promptValidationSettings = useMemo(
     () => parsePromptEngineSettings(settingsStore.get(PROMPT_ENGINE_SETTINGS_KEY)).promptValidation,
@@ -84,6 +86,7 @@ export function RightSidebar(): React.JSX.Element {
     () => (paramsState ? flattenParams(paramsState).filter((leaf) => Boolean(leaf.path)) : []),
     [paramsState]
   );
+  const hasExtractedControls = flattenedParams.length > 0;
 
   const requestPreview = useMemo(
     () =>
@@ -256,13 +259,12 @@ export function RightSidebar(): React.JSX.Element {
           <Button
             variant='outline'
             size='sm'
-            title='Extract functions and selectors from prompt'
-            aria-label='Extract functions and selectors from prompt'
-            disabled={!promptText.trim()}
-            onClick={handleExtractReviewOpen}
+            title='Open prompt controls'
+            aria-label='Open prompt controls'
+            onClick={() => setPromptControlOpen(true)}
           >
             <Sparkles className='mr-2 size-4' />
-          Extract
+          Control Prompt
           </Button>
           <Button
             variant='outline'
@@ -274,14 +276,17 @@ export function RightSidebar(): React.JSX.Element {
             <Eye className='mr-2 size-4' />
           Preview Request
           </Button>
-          <ValidatorFormatterToggle
-            validatorLabel='Validate'
-            formatterLabel='Format'
-            validatorEnabled={validatorEnabled}
-            formatterEnabled={formatterEnabled}
-            onValidatorChange={setValidatorEnabled}
-            onFormatterChange={setFormatterEnabled}
-          />
+          <Button
+            variant='outline'
+            size='sm'
+            title={hasExtractedControls ? 'Open extracted controls' : 'Extract controls first'}
+            aria-label='Open extracted controls'
+            disabled={!hasExtractedControls}
+            onClick={() => setControlsOpen(true)}
+          >
+            <SlidersHorizontal className='mr-2 size-4' />
+            Controls
+          </Button>
           <Button
             variant='outline'
             size='sm'
@@ -295,15 +300,6 @@ export function RightSidebar(): React.JSX.Element {
           </Button>
         </div>
         <div className='relative flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4 pt-0'>
-          <Textarea
-            value={promptText}
-            onChange={(event) => setPromptText(event.target.value)}
-            className='h-40 font-mono text-[11px]'
-            placeholder='Paste prompt here...'
-          />
-
-          <UIPresetsPanel />
-
           <StudioCard label='Composite References'>
             <MultiSelect
               options={compositeAssetOptions}
@@ -355,26 +351,89 @@ export function RightSidebar(): React.JSX.Element {
               <GenerationHistoryPanel />
             </StudioCard>
           ) : null}
-
-          <div className='flex-1 overflow-auto'>
-            {paramsState ? (
-              <div className='space-y-3'>
-                {flattenedParams.length > 0 ? (
-                  flattenedParams.map((leaf) => (
-                    <ParamRow key={leaf.path} leaf={leaf} />
-                  ))
-                ) : (
-                  <div className='text-xs text-gray-500'>
-                  No editable params were found in the extracted payload.
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className='text-sm text-gray-400'>Extract params to edit.</div>
-            )}
-          </div>
         </div>
       </SectionPanel>
+
+      <AppModal
+        open={promptControlOpen}
+        onClose={() => setPromptControlOpen(false)}
+        title='Control Prompt'
+        size='md'
+      >
+        <div className='space-y-4 text-sm text-gray-200'>
+          <div className='rounded border border-border/60 bg-card/40 p-3 text-xs text-gray-300'>
+            Configure prompt validation and formatting, then open extraction review.
+          </div>
+
+          <div className='space-y-2'>
+            <Label className='text-xs text-gray-400'>Prompt</Label>
+            <Textarea
+              value={promptText}
+              onChange={(event) => setPromptText(event.target.value)}
+              className='h-44 font-mono text-[11px]'
+              placeholder='Paste prompt here...'
+            />
+          </div>
+
+          <UIPresetsPanel />
+
+          <div className='rounded border border-border/60 bg-card/30 p-3'>
+            <ValidatorFormatterToggle
+              validatorLabel='Validate'
+              formatterLabel='Format'
+              validatorEnabled={validatorEnabled}
+              formatterEnabled={formatterEnabled}
+              onValidatorChange={setValidatorEnabled}
+              onFormatterChange={setFormatterEnabled}
+            />
+          </div>
+
+          <div className='flex items-center justify-end gap-2'>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => setPromptControlOpen(false)}
+            >
+              Close
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
+              title='Extract functions and selectors from prompt'
+              aria-label='Extract functions and selectors from prompt'
+              disabled={!promptText.trim()}
+              onClick={() => {
+                setPromptControlOpen(false);
+                handleExtractReviewOpen();
+              }}
+            >
+              <Sparkles className='mr-2 size-4' />
+              Extract
+            </Button>
+          </div>
+        </div>
+      </AppModal>
+
+      <AppModal
+        open={controlsOpen}
+        onClose={() => setControlsOpen(false)}
+        title='Controls'
+        size='lg'
+      >
+        <div className='space-y-4 text-sm text-gray-200'>
+          {hasExtractedControls ? (
+            <div className='max-h-[70vh] space-y-3 overflow-auto pr-1'>
+              {flattenedParams.map((leaf) => (
+                <ParamRow key={leaf.path} leaf={leaf} />
+              ))}
+            </div>
+          ) : (
+            <div className='text-xs text-gray-500'>
+              No extracted controls available yet.
+            </div>
+          )}
+        </div>
+      </AppModal>
 
       <AppModal
         open={requestPreviewOpen}

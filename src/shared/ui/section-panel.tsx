@@ -1,7 +1,8 @@
 import { cn } from '@/shared/utils';
 
-import type { HTMLAttributes, ReactNode } from 'react';
 import { Card, type CardProps } from './card';
+
+import type { HTMLAttributes, ReactNode } from 'react';
 
 type SectionPanelVariant = 'default' | 'compact' | 'subtle' | 'subtle-compact' | 'danger';
 

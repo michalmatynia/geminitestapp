@@ -26,29 +26,13 @@ export function registerPreviewBlockItem(component: React.ComponentType<PreviewB
   _PreviewBlockItem = component;
 }
 
-function PreviewBlockItemProxy(props: Omit<PreviewBlockItemProps, 'isSelected' | 'isInspecting' | 'inspectorSettings' | 'hoveredNodeId' | 'onSelect' | 'onHoverNode' | 'onOpenMedia' | 'sectionId' | 'sectionType' | 'sectionZone' | 'columnId' | 'mediaStyles'>): React.ReactNode {
+function PreviewBlockItemProxy(props: Omit<PreviewBlockItemProps, 'isSelected' | 'isInspecting' | 'inspectorSettings' | 'hoveredNodeId' | 'onSelect' | 'onHoverNode' | 'onOpenMedia' | 'sectionId' | 'sectionType' | 'sectionZone' | 'columnId' | 'parentBlockId' | 'mediaStyles'>): React.ReactNode {
   if (!_PreviewBlockItem) {
     throw new Error('PreviewBlockItem has not been registered. Call registerPreviewBlockItem first.');
   }
-  const { selectedNodeId, isInspecting, inspectorSettings, hoveredNodeId, onSelect, onHoverNode, onOpenMedia } = usePreviewEditor();
-  const { sectionId, sectionType, sectionZone, columnId, mediaStyles } = useBlockContext();
 
   return (
-    <_PreviewBlockItem 
-      {...props} 
-      isSelected={selectedNodeId === props.block.id}
-      isInspecting={isInspecting} 
-      inspectorSettings={inspectorSettings} 
-      hoveredNodeId={hoveredNodeId} 
-      onSelect={onSelect} 
-      onHoverNode={onHoverNode} 
-      onOpenMedia={onOpenMedia}
-      sectionId={sectionId ?? ''}
-      sectionType={sectionType}
-      sectionZone={sectionZone}
-      columnId={columnId}
-      mediaStyles={mediaStyles}
-    />
+    <_PreviewBlockItem {...props} />
   );
 }
 
@@ -102,7 +86,6 @@ export function PreviewImageWithTextBlock({
               key={child.id}
               block={child}
               contained
-              parentBlockId={block.id}
             />
           ))
         ) : showEditorChrome ? (
@@ -149,7 +132,6 @@ export function PreviewHeroBlock({
               key={child.id}
               block={child}
               contained
-              parentBlockId={block.id}
             />
           ))
         ) : (
@@ -186,7 +168,6 @@ export function PreviewRichTextBlock({
             key={child.id}
             block={child}
             contained
-            parentBlockId={block.id}
           />
         ))
       ) : showEditorChrome ? (
@@ -247,7 +228,6 @@ export function PreviewBlockSectionBlock({
               key={child.id}
               block={child}
               contained
-              parentBlockId={block.id}
               stretch={shouldStretchChildren}
             />
           ))}
@@ -309,7 +289,6 @@ export function PreviewTextAtomBlock({
             key={child.id}
             block={child}
             contained
-            parentBlockId={block.id}
           />
         ))
       ) : showEditorChrome ? (

@@ -19,7 +19,7 @@ import {
   parseAdminMenuJson,
 } from '@/features/admin/constants/admin-menu-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Card, SectionHeader, SectionPanel, SearchInput, Badge } from '@/shared/ui';
+import { Card, SectionHeader, SectionPanel, SearchInput, Badge, FormSection } from '@/shared/ui';
 
 type RouteMapEntry = FlattenedNavItem & {
   description: string;
@@ -204,13 +204,15 @@ export function AdminRouteMapPage(): React.JSX.Element {
         <SectionPanel className='text-sm text-gray-400'>No routes match your search.</SectionPanel>
       ) : (
         grouped.map(([section, sectionEntries]: [string, RouteMapEntry[]]) => (
-          <SectionPanel key={section} className='space-y-3'>
-            <div className='flex items-center justify-between'>
-              <h3 className='text-sm font-semibold text-white'>{section}</h3>
+          <FormSection
+            key={section}
+            title={section}
+            actions={
               <Badge variant='outline' className='text-[10px]'>
                 {sectionEntries.length}
               </Badge>
-            </div>
+            }
+          >
             <div className='grid gap-3 md:grid-cols-2'>
               {sectionEntries.map((entry: RouteMapEntry) => (
                 <Card key={entry.id} className='border-border bg-card/60 p-4'>
@@ -235,7 +237,7 @@ export function AdminRouteMapPage(): React.JSX.Element {
                 </Card>
               ))}
             </div>
-          </SectionPanel>
+          </FormSection>
         ))
       )}
     </div>

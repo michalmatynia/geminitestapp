@@ -27,7 +27,7 @@ import {
 } from '@/features/admin/constants/admin-menu-settings';
 import { logClientError } from '@/features/observability';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import { Button, Checkbox, Input, Label, SearchInput, SectionHeader, SectionPanel, Switch, useToast, UnifiedSelect } from '@/shared/ui';
+import { Button, Checkbox, Input, Label, SearchInput, SectionHeader, SectionPanel, Switch, useToast, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
 import { cn, DRAG_KEYS, getFirstDragValue, setDragData } from '@/shared/utils';
 
 const normalize = (value: string): string =>
@@ -519,15 +519,12 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
       />
 
       <div className='grid gap-6 lg:grid-cols-2'>
-        <SectionPanel className='p-6'>
-          <div className='flex items-center justify-between'>
-            <div>
-              <h2 className='text-sm font-semibold text-white'>Favorites</h2>
-              <p className='mt-1 text-xs text-gray-400'>Pin menu items to appear at the top.</p>
-            </div>
-            <Star className='size-4 text-amber-300' />
-          </div>
-
+        <FormSection
+          title='Favorites'
+          description='Pin menu items to appear at the top.'
+          actions={<Star className='size-4 text-amber-300' />}
+          className='p-6'
+        >
           <div className='mt-4 space-y-3'>
             {favoritesList.length === 0 ? (
               <SectionPanel variant='subtle' className='p-3 text-xs text-gray-400'>
@@ -583,14 +580,15 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
           </div>
 
           <div className='mt-5'>
-            <Label className='text-xs text-gray-400'>Add favorites</Label>
-            <SearchInput
-              value={query}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setQuery(event.target.value)}
-              placeholder='Search admin menu…'
-              className='mt-2 h-9 bg-gray-900/40'
-              onClear={() => setQuery('')}
-            />
+            <FormField label='Add favorites'>
+              <SearchInput
+                value={query}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setQuery(event.target.value)}
+                placeholder='Search admin menu…'
+                className='mt-2 h-9 bg-gray-900/40'
+                onClear={() => setQuery('')}
+              />
+            </FormField>
             <div className='mt-3 max-h-72 space-y-2 overflow-auto pr-2'>
               {filteredItems.map((item: AdminNavLeaf) => (
                 <label
@@ -617,12 +615,13 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
               ))}
             </div>
           </div>
-        </SectionPanel>
+        </FormSection>
 
-        <SectionPanel className='p-6'>
-          <h2 className='text-sm font-semibold text-white'>Section Colors</h2>
-          <p className='mt-1 text-xs text-gray-400'>Assign accents to top-level menu sections.</p>
-
+        <FormSection
+          title='Section Colors'
+          description='Assign accents to top-level menu sections.'
+          className='p-6'
+        >
           <div className='mt-4 space-y-4'>
             {sections.map((section: NavItem) => {
               const current = sectionColors[section.id] ?? 'none';
@@ -654,28 +653,27 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
               );
             })}
           </div>
-        </SectionPanel>
+        </FormSection>
       </div>
 
-      <SectionPanel className='mt-6 p-6'>
-        <div className='flex flex-wrap items-start justify-between gap-3'>
-          <div>
-            <h2 className='text-sm font-semibold text-white'>Menu Builder</h2>
-            <p className='mt-1 text-xs text-gray-400'>Create hierarchies, reorder items, and add custom links.</p>
-          </div>
+      <FormSection
+        title='Menu Builder'
+        description='Create hierarchies, reorder items, and add custom links.'
+        actions={(
           <div className='flex items-center gap-2'>
             <Label className='text-xs text-gray-400'>Use custom layout</Label>
             <Switch checked={customEnabled} onCheckedChange={(checked: boolean) => setCustomEnabled(Boolean(checked))} />
           </div>
-        </div>
-
+        )}
+        className='mt-6 p-6'
+      >
         {!customEnabled ? (
-          <div className='mt-3 rounded-md border border-border/60 bg-card/40 px-3 py-2 text-xs text-gray-400'>
+          <div className='mt-1 rounded-md border border-border/60 bg-card/40 px-3 py-2 text-xs text-gray-400'>
             Custom layout is disabled. Enable it to apply this menu structure.
           </div>
         ) : null}
 
-        <div className='mt-4 flex flex-wrap items-center gap-2'>
+        <div className='mt-2 flex flex-wrap items-center gap-2'>
           <Button type='button' size='sm' onClick={() => addCustomNodeAt('link')}>
             <Plus className='mr-2 size-4' />
             Add link
@@ -888,7 +886,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
             </div>
           </div>
         </div>
-      </SectionPanel>
+      </FormSection>
 
       <div className='mt-6 flex flex-wrap gap-2'>
         <Button

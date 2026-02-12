@@ -1,13 +1,23 @@
 'use client';
 
-
-
-
-
 import type { HttpConfig } from '@/features/ai/ai-paths/lib';
-import { Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+import { Input, Label, Textarea, UnifiedSelect } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
+
+const methodOptions = [
+  { value: 'GET', label: 'GET' },
+  { value: 'POST', label: 'POST' },
+  { value: 'PUT', label: 'PUT' },
+  { value: 'PATCH', label: 'PATCH' },
+  { value: 'DELETE', label: 'DELETE' },
+];
+
+const responseModeOptions = [
+  { value: 'json', label: 'JSON' },
+  { value: 'text', label: 'Text' },
+  { value: 'status', label: 'Status only' },
+];
 
 export function HttpNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
@@ -40,29 +50,21 @@ export function HttpNodeConfigSection(): React.JSX.Element | null {
       <div className='grid gap-3 sm:grid-cols-2'>
         <div>
           <Label className='text-xs text-gray-400'>Method</Label>
-          <Select
+          <UnifiedSelect
             value={httpConfig.method}
             onValueChange={(value: string): void =>
               updateSelectedNodeConfig({
                 http: { ...httpConfig, method: value as HttpConfig['method'] },
               })
             }
-          >
-            <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
-              <SelectValue placeholder='Select method' />
-            </SelectTrigger>
-            <SelectContent className='border-border bg-gray-900'>
-              <SelectItem value='GET'>GET</SelectItem>
-              <SelectItem value='POST'>POST</SelectItem>
-              <SelectItem value='PUT'>PUT</SelectItem>
-              <SelectItem value='PATCH'>PATCH</SelectItem>
-              <SelectItem value='DELETE'>DELETE</SelectItem>
-            </SelectContent>
-          </Select>
+            options={methodOptions}
+            placeholder='Select method'
+            className='mt-2'
+          />
         </div>
         <div>
           <Label className='text-xs text-gray-400'>Response Mode</Label>
-          <Select
+          <UnifiedSelect
             value={httpConfig.responseMode}
             onValueChange={(value: string): void =>
               updateSelectedNodeConfig({
@@ -72,16 +74,10 @@ export function HttpNodeConfigSection(): React.JSX.Element | null {
                 },
               })
             }
-          >
-            <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
-              <SelectValue placeholder='Select mode' />
-            </SelectTrigger>
-            <SelectContent className='border-border bg-gray-900'>
-              <SelectItem value='json'>JSON</SelectItem>
-              <SelectItem value='text'>Text</SelectItem>
-              <SelectItem value='status'>Status only</SelectItem>
-            </SelectContent>
-          </Select>
+            options={responseModeOptions}
+            placeholder='Select mode'
+            className='mt-2'
+          />
         </div>
       </div>
       <div>

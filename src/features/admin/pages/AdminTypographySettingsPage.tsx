@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { logClientError } from '@/features/observability';
 import { APP_FONT_SET_SETTING_KEY, APP_FONT_SETS, getAppFontSet, type AppFontSetId } from '@/shared/constants/typography';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Button, Label, SectionHeader, SectionPanel, UnifiedSelect, useToast } from '@/shared/ui';
+import { Button, SectionHeader, UnifiedSelect, useToast, FormSection, FormField } from '@/shared/ui';
 
 export function AdminTypographySettingsPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -59,11 +59,11 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
 
       <div className='grid gap-6 lg:grid-cols-3'>
         <div className='lg:col-span-2 space-y-6'>
-          <SectionPanel className='p-6 space-y-6'>
-            <div>
-              <Label htmlFor='font-set' className='mb-3 block text-sm font-semibold'>
-                Font set
-              </Label>
+          <FormSection title='Typography Settings' className='p-6'>
+            <FormField
+              label='Font set'
+              description='Fonts are defined in src/app/fonts.css and loaded from public/fonts.'
+            >
               <UnifiedSelect
                 value={selected}
                 onValueChange={(val: string) => setSelected(val as AppFontSetId)}
@@ -74,11 +74,7 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
                 }))}
                 placeholder='Select a font set'
               />
-              <p className='mt-2 text-xs text-gray-400'>
-                Fonts are defined in <span className='font-mono'>src/app/fonts.css</span> and loaded from{' '}
-                <span className='font-mono'>public/fonts</span>.
-              </p>
-            </div>
+            </FormField>
 
             <div className='flex flex-wrap gap-3 border-t border-border pt-6'>
               <Button onClick={handleSave} disabled={!isDirty || updateSetting.isPending}>
@@ -88,7 +84,7 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
                 Reset
               </Button>
             </div>
-          </SectionPanel>
+          </FormSection>
         </div>
 
         <div>

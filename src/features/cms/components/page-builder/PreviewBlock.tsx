@@ -516,7 +516,6 @@ export function PreviewSection({
                   <PreviewBlockItem
                     key={block.id}
                     block={block}
-                    isSelected={selectedNodeId === block.id}
                     contained
                   />
                 ))
@@ -541,7 +540,6 @@ export function PreviewSection({
           <PreviewBlockItem
             key={block.id}
             block={block}
-            isSelected={selectedNodeId === block.id}
             contained
           />
         ))}
@@ -1218,10 +1216,6 @@ export function PreviewSection({
                                                       >
                                                         <PreviewBlockItem
                                                           block={block}
-                                                          isSelected={
-                                                            selectedNodeId ===
-                                                          block.id
-                                                          }
                                                           contained
                                                           stretch={shouldStretch}
                                                         />
@@ -1337,7 +1331,6 @@ export function PreviewSection({
                   <PreviewBlockItem
                     key={block.id}
                     block={block}
-                    isSelected={selectedNodeId === block.id}
                     contained
                   />
                 ))
@@ -1416,7 +1409,6 @@ export function PreviewSection({
                 <PreviewBlockItem
                   key={block.id}
                   block={block}
-                  isSelected={selectedNodeId === block.id}
                   contained
                 />
               ))}
@@ -1472,7 +1464,6 @@ export function PreviewSection({
               <PreviewBlockItem
                 key={block.id}
                 block={block}
-                isSelected={selectedNodeId === block.id}
                 contained
               />
             ))}
@@ -1820,7 +1811,6 @@ export function PreviewSection({
                 <PreviewBlockItem
                   key={letter.id}
                   block={letter}
-                  isSelected={selectedNodeId === letter.id}
                   contained
                 />
               ))}
@@ -1832,7 +1822,6 @@ export function PreviewSection({
               <PreviewBlockItem
                 key={letter.id}
                 block={letter}
-                isSelected={selectedNodeId === letter.id}
                 contained
               />
             ))}
@@ -1908,7 +1897,6 @@ export function PreviewSection({
                     <div className='flex w-full items-center justify-between text-left'>
                       <PreviewBlockItem
                         block={item.heading}
-                        isSelected={selectedNodeId === item.heading.id}
                         contained
                       />
                       <span className='ml-4 shrink-0 text-gray-400 text-xl'>
@@ -1919,7 +1907,6 @@ export function PreviewSection({
                       <div className='mt-3'>
                         <PreviewBlockItem
                           block={item.text}
-                          isSelected={selectedNodeId === item.text.id}
                           contained
                         />                      </div>
                     )}
@@ -1982,7 +1969,6 @@ export function PreviewSection({
                   </svg>
                   <PreviewBlockItem
                     block={block}
-                    isSelected={selectedNodeId === block.id}
                     contained
                   />                </div>
               ))}
@@ -2243,7 +2229,6 @@ export function PreviewSection({
                               <div key={triggerKey} style={wrapperStyle}>
                                 <PreviewBlockItem
                                   block={child}
-                                  isSelected={selectedNodeId === child.id}
                                   contained
                                   stretch={shouldFillBlock}
                                 />
@@ -2354,7 +2339,6 @@ export function PreviewSection({
                 <PreviewBlockItem
                   key={block.id}
                   block={block}
-                  isSelected={selectedNodeId === block.id}
                   contained
                 />
               ))}
@@ -2482,7 +2466,7 @@ export function PreviewSection({
 
 function PreviewBlockItem({
   block,
-  isSelected,
+  isSelected: propIsSelected,
   contained,
   sectionId: propSectionId,
   sectionType: propSectionType,
@@ -2493,6 +2477,7 @@ function PreviewBlockItem({
   stretch = false,
 }: PreviewBlockItemProps): React.ReactNode {
   const {
+    selectedNodeId,
     isInspecting = false,
     inspectorSettings,
     hoveredNodeId,
@@ -2507,6 +2492,9 @@ function PreviewBlockItem({
   const columnId = propColumnId ?? blockContext.columnId;
   const parentBlockId = propParentBlockId ?? blockContext.parentBlockId;
   const mediaStyles = propMediaStyles ?? blockContext.mediaStyles;
+  const isSelected = typeof propIsSelected === 'boolean'
+    ? propIsSelected
+    : selectedNodeId === block.id;
 
   const isSectionType = SECTION_BLOCK_TYPES.includes(block.type);
   const showEditorChrome = inspectorSettings?.showEditorChrome ?? false;

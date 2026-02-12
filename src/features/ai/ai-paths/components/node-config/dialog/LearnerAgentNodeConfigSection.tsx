@@ -9,11 +9,7 @@ import type { AgentTeachingAgentRecord } from '@/shared/types/domain/agent-teach
 import {
   Button,
   Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  UnifiedSelect,
   Textarea,
 } from '@/shared/ui';
 
@@ -40,6 +36,14 @@ export function LearnerAgentNodeConfigSection(): React.JSX.Element | null {
       ? agents.find((a: AgentTeachingAgentRecord) => a.id === learnerConfig.agentId) ?? null
       : null;
 
+  const agentOptions = [
+    { value: NO_AGENT_VALUE, label: 'None' },
+    ...agents.map((agent: AgentTeachingAgentRecord) => ({
+      value: agent.id,
+      label: agent.name,
+    })),
+  ];
+
   return (
     <div className='space-y-4'>
       <div className='flex items-start justify-between gap-4'>
@@ -59,7 +63,7 @@ export function LearnerAgentNodeConfigSection(): React.JSX.Element | null {
         </Button>
       </div>
 
-      <Select
+      <UnifiedSelect
         value={learnerConfig.agentId ? learnerConfig.agentId : NO_AGENT_VALUE}
         onValueChange={(value: string): void =>
           updateSelectedNodeConfig({
@@ -69,20 +73,9 @@ export function LearnerAgentNodeConfigSection(): React.JSX.Element | null {
             },
           })
         }
-      >
-        <SelectTrigger className='w-full border-border bg-card/70 text-sm text-white'>
-          <SelectValue placeholder='Select learner agent' />
-        </SelectTrigger>
-        <SelectContent className='border-border bg-gray-900'>
-          {/* Radix Select forbids empty item values; we use a sentinel for "none". */}
-          <SelectItem value={NO_AGENT_VALUE}>None</SelectItem>
-          {agents.map((agent: AgentTeachingAgentRecord) => (
-            <SelectItem key={agent.id} value={agent.id}>
-              {agent.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        options={agentOptions}
+        placeholder='Select learner agent'
+      />
 
       {agentsQuery.isLoading && (
         <div className='text-[11px] text-gray-500'>Loading learner agents…</div>
@@ -129,7 +122,7 @@ export function LearnerAgentNodeConfigSection(): React.JSX.Element | null {
         <Button
           type='button'
           className={`rounded border px-3 py-1 text-xs ${
-            learnerConfig.includeSources !== false
+            learnerConfig.includeSources
               ? 'text-emerald-200 hover:bg-emerald-500/10'
               : 'text-gray-300 hover:bg-muted/50'
           }`}
@@ -137,19 +130,14 @@ export function LearnerAgentNodeConfigSection(): React.JSX.Element | null {
             updateSelectedNodeConfig({
               learnerAgent: {
                 ...learnerConfig,
-                includeSources: learnerConfig.includeSources === false,
+                includeSources: !learnerConfig.includeSources,
               },
             })
           }
         >
-          {learnerConfig.includeSources === false ? 'Disabled' : 'Enabled'}
+          {learnerConfig.includeSources ? 'Enabled' : 'Disabled'}
         </Button>
       </div>
-      <p className='text-[11px] text-gray-500'>
-        When enabled, the node emits <span className='text-gray-300'>sources</span> and includes them in{' '}
-        <span className='text-gray-300'>bundle</span>.
-      </p>
     </div>
   );
 }
-

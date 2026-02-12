@@ -1,5 +1,11 @@
 import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 
+import {
+  invalidateCatalogScopedData,
+  invalidatePriceGroups,
+  invalidateProductSettingsCatalogs,
+  invalidateValidatorConfig,
+} from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type {
   ProductValidationPattern,
@@ -77,8 +83,7 @@ export function useUpdatePriceGroupMutation(): UseMutationResult<PriceGroup, Err
   return useMutation({
     mutationFn: (group: PriceGroup) => api.updatePriceGroup(group),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: productMetadataKeys.priceGroups });
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.priceGroups() });
+      void invalidatePriceGroups(queryClient);
     },
   });
 }
@@ -88,8 +93,7 @@ export function useDeletePriceGroupMutation(): UseMutationResult<void, Error, st
   return useMutation({
     mutationFn: (id: string) => api.deletePriceGroup(id),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: productMetadataKeys.priceGroups });
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.priceGroups() });
+      void invalidatePriceGroups(queryClient);
     },
   });
 }
@@ -99,8 +103,7 @@ export function useSavePriceGroupMutation(): UseMutationResult<PriceGroup, Error
   return useMutation({
     mutationFn: ({ id, data }: { id?: string; data: Partial<PriceGroup> }) => api.savePriceGroup(id, data),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: productMetadataKeys.priceGroups });
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.priceGroups() });
+      void invalidatePriceGroups(queryClient);
     },
   });
 }
@@ -110,8 +113,7 @@ export function useDeleteCatalogMutation(): UseMutationResult<void, Error, strin
   return useMutation({
     mutationFn: (id: string) => api.deleteCatalog(id),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: productMetadataKeys.catalogs });
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.catalogs() });
+      void invalidateProductSettingsCatalogs(queryClient);
     },
   });
 }
@@ -122,8 +124,7 @@ export function useSaveCatalogMutation(): UseMutationResult<Catalog, Error, { id
     mutationFn: ({ id, data }: { id?: string; data: Partial<Catalog> }) =>
       id ? api.updateCatalog(id, data) : api.createCatalog(data),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: productMetadataKeys.catalogs });
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.catalogs() });
+      void invalidateProductSettingsCatalogs(queryClient);
     },
   });
 }
@@ -135,9 +136,7 @@ export function useSaveCategoryMutation(): UseMutationResult<ProductCategory, Er
       id ? api.updateCategory(id, data) : api.createCategory(data),
     onSuccess: (_: ProductCategory, variables: { id: string | undefined; data: Partial<ProductCategory> }) => {
       const catalogId = variables.data.catalogId ?? null;
-      void queryClient.invalidateQueries({ queryKey: productMetadataKeys.categories(catalogId) });
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.categories(catalogId) });
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.categoryTree(catalogId) });
+      void invalidateCatalogScopedData(queryClient, catalogId);
     },
   });
 }
@@ -147,11 +146,7 @@ export function useDeleteCategoryMutation(): UseMutationResult<void, Error, { id
   return useMutation({
     mutationFn: ({ id }: { id: string; catalogId: string | null }) => api.deleteCategory(id),
     onSuccess: (_: void, variables: { id: string; catalogId: string | null }) => {
-      void queryClient.invalidateQueries({ queryKey: productMetadataKeys.categories(variables.catalogId) });
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.categories(variables.catalogId) });
-      void queryClient.invalidateQueries({
-        queryKey: productSettingsKeys.categoryTree(variables.catalogId),
-      });
+      void invalidateCatalogScopedData(queryClient, variables.catalogId);
     },
   });
 }
@@ -166,15 +161,7 @@ export function useReorderCategoryMutation(): UseMutationResult<ProductCategory,
       variables: api.ReorderCategoryPayload
     ) => {
       const catalogId = variables.catalogId ?? null;
-      void queryClient.invalidateQueries({
-        queryKey: productMetadataKeys.categories(catalogId),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: productSettingsKeys.categories(catalogId),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: productSettingsKeys.categoryTree(catalogId),
-      });
+      void invalidateCatalogScopedData(queryClient, catalogId);
     },
   });
 }
@@ -186,8 +173,7 @@ export function useSaveTagMutation(): UseMutationResult<ProductTag, Error, { id:
       id ? api.updateTag(id, data) : api.createTag(data),
     onSuccess: (_: ProductTag, variables: { id: string | undefined; data: Partial<ProductTag> }) => {
       const catalogId = variables.data.catalogId ?? null;
-      void queryClient.invalidateQueries({ queryKey: productMetadataKeys.tags(catalogId) });
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.tags(catalogId) });
+      void invalidateCatalogScopedData(queryClient, catalogId);
     },
   });
 }
@@ -197,8 +183,7 @@ export function useDeleteTagMutation(): UseMutationResult<void, Error, { id: str
   return useMutation({
     mutationFn: ({ id }: { id: string; catalogId: string | null }) => api.deleteTag(id),
     onSuccess: (_: void, variables: { id: string; catalogId: string | null }) => {
-      void queryClient.invalidateQueries({ queryKey: productMetadataKeys.tags(variables.catalogId) });
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.tags(variables.catalogId) });
+      void invalidateCatalogScopedData(queryClient, variables.catalogId);
     },
   });
 }
@@ -210,8 +195,7 @@ export function useSaveParameterMutation(): UseMutationResult<ProductParameter, 
       id ? api.updateParameter(id, data) : api.createParameter(data),
     onSuccess: (_: ProductParameter, variables: { id: string | undefined; data: Partial<ProductParameter> }) => {
       const catalogId = variables.data.catalogId ?? null;
-      void queryClient.invalidateQueries({ queryKey: productMetadataKeys.parameters(catalogId) });
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.parameters(catalogId) });
+      void invalidateCatalogScopedData(queryClient, catalogId);
     },
   });
 }
@@ -221,8 +205,7 @@ export function useDeleteParameterMutation(): UseMutationResult<void, Error, { i
   return useMutation({
     mutationFn: ({ id }: { id: string; catalogId: string | null }) => api.deleteParameter(id),
     onSuccess: (_: void, variables: { id: string; catalogId: string | null }) => {
-      void queryClient.invalidateQueries({ queryKey: productMetadataKeys.parameters(variables.catalogId) });
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.parameters(variables.catalogId) });
+      void invalidateCatalogScopedData(queryClient, variables.catalogId);
     },
   });
 }
@@ -232,9 +215,7 @@ export function useUpdateValidatorSettingsMutation(): UseMutationResult<ProductV
   return useMutation({
     mutationFn: api.updateValidatorSettings,
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorSettings() });
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorConfig(true) });
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorConfig(false) });
+      void invalidateValidatorConfig(queryClient);
     },
   });
 }
@@ -244,9 +225,7 @@ export function useCreateValidationPatternMutation(): UseMutationResult<ProductV
   return useMutation({
     mutationFn: api.createValidationPattern,
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorPatterns() });
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorConfig(true) });
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorConfig(false) });
+      void invalidateValidatorConfig(queryClient);
     },
   });
 }
@@ -256,9 +235,7 @@ export function useUpdateValidationPatternMutation(): UseMutationResult<ProductV
   return useMutation({
     mutationFn: ({ id, data }) => api.updateValidationPattern(id, data),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorPatterns() });
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorConfig(true) });
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorConfig(false) });
+      void invalidateValidatorConfig(queryClient);
     },
   });
 }
@@ -268,9 +245,7 @@ export function useDeleteValidationPatternMutation(): UseMutationResult<void, Er
   return useMutation({
     mutationFn: (id: string) => api.deleteValidationPattern(id),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorPatterns() });
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorConfig(true) });
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.validatorConfig(false) });
+      void invalidateValidatorConfig(queryClient);
     },
   });
 }

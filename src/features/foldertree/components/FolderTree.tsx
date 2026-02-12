@@ -6,10 +6,12 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { useImportFolderMutation } from '@/features/foldertree/hooks/useFolderMutations';
 import type { FolderTreeProps } from '@/features/foldertree/types/folder-tree-ui';
 import { parseMultipleFolders, countMultipleFolders } from '@/features/foldertree/utils/folderImporter';
+import { ICON_LIBRARY_MAP } from '@/features/icons';
 import { logClientError } from '@/features/observability';
 import type { CategoryWithChildren } from '@/shared/types/domain/notes';
 import { Button, TreeHeader, useToast } from '@/shared/ui';
 import { FolderTreePanel } from '@/shared/ui';
+import { canNestTreeNode, collectTreeNodeIds, findTreeNodeById } from '@/shared/utils';
 import { getFolderDragId, getNoteDragId } from '@/shared/utils/drag-drop';
 
 import { FolderNode } from './tree/FolderNode';
@@ -38,6 +40,7 @@ function FolderTreeContent(): React.JSX.Element {
     onRefreshFolders,
     expandedFolderIds,
     onToggleExpand,
+    profile,
   } = useFolderTree();
 
   const { toast } = useToast();
@@ -48,40 +51,11 @@ function FolderTreeContent(): React.JSX.Element {
   const [isImporting, setIsImporting] = useState(false);
   const [showDropzone, setShowDropzone] = useState(false);
 
-  const collectFolderIds = useCallback((foldersToScan: CategoryWithChildren[]): string[] => {
-    const ids: string[] = [];
-    const walk = (nodes: CategoryWithChildren[]): void => {
-      nodes.forEach((node: CategoryWithChildren) => {
-        ids.push(node.id);
-        if (node.children.length > 0) {
-          walk(node.children);
-        }
-      });
-    };
-    walk(foldersToScan);
-    return ids;
-  }, []);
-
-  const findFolderById = useCallback(
-    function findFolderById(
-      foldersToScan: CategoryWithChildren[],
-      id: string
-    ): CategoryWithChildren | null {
-      for (const node of foldersToScan) {
-        if (node.id === id) return node;
-        const found = findFolderById(node.children, id);
-        if (found) return found;
-      }
-      return null;
-    },
-    []
-  );
-
   const handleToggleSelectedCollapse = useCallback((): void => {
     if (!selectedFolderId) return;
-    const target = findFolderById(folders, selectedFolderId);
+    const target = findTreeNodeById(folders, selectedFolderId);
     if (!target) return;
-    const targetIds = [target.id, ...collectFolderIds(target.children)];
+    const targetIds = [target.id, ...collectTreeNodeIds(target.children)];
     
     const allExpanded = targetIds.every((id: string) => expandedFolderIds.has(id));
     targetIds.forEach((id: string) => {
@@ -91,15 +65,15 @@ function FolderTreeContent(): React.JSX.Element {
         if (!expandedFolderIds.has(id)) onToggleExpand(id);
       }
     });
-  }, [selectedFolderId, folders, collectFolderIds, findFolderById, expandedFolderIds, onToggleExpand]);
+  }, [selectedFolderId, folders, expandedFolderIds, onToggleExpand]);
 
   const isSelectedSubtreeExpanded = useMemo((): boolean => {
     if (!selectedFolderId) return false;
-    const target = findFolderById(folders, selectedFolderId);
+    const target = findTreeNodeById(folders, selectedFolderId);
     if (!target) return false;
-    const targetIds = [target.id, ...collectFolderIds(target.children)];
+    const targetIds = [target.id, ...collectTreeNodeIds(target.children)];
     return targetIds.every((id: string) => expandedFolderIds.has(id));
-  }, [selectedFolderId, folders, collectFolderIds, findFolderById, expandedFolderIds]);
+  }, [selectedFolderId, folders, expandedFolderIds]);
 
   const handleFolderImport = useCallback(async (e: React.DragEvent): Promise<void> => {
     e.preventDefault();
@@ -157,6 +131,11 @@ function FolderTreeContent(): React.JSX.Element {
     }
   }, [selectedNotebookId, toast, onRefreshFolders, importFolderMutation]);
 
+  const RootIcon = useMemo(() => {
+    const iconId = profile.icons.root ?? 'Folder';
+    return ICON_LIBRARY_MAP[iconId] ?? Folder;
+  }, [profile.icons.root]);
+
   const handleDropzoneDragOver = useCallback((e: React.DragEvent): void => {
     e.preventDefault();
     e.stopPropagation();
@@ -175,7 +154,6 @@ function FolderTreeContent(): React.JSX.Element {
         <FolderNode
           key={folder.id}
           folder={folder}
-          level={0}
         />
       )),
     [folders]
@@ -306,8 +284,28 @@ function FolderTreeContent(): React.JSX.Element {
               const noteId = getNoteDragId(e.dataTransfer, draggedNoteId) || '';
               const folderId = getFolderDragId(e.dataTransfer);
               if (noteId) {
+                const allowRootDrop = canNestTreeNode({
+                  profile,
+                  nodeType: 'file',
+                  nodeKind: 'note',
+                  targetIsRoot: true,
+                });
+                if (!allowRootDrop) {
+                  toast('Root drop is disabled for notes in this tree profile.', { variant: 'info' });
+                  return;
+                }
                 onDropNote(noteId, null);
               } else if (folderId) {
+                const allowRootDrop = canNestTreeNode({
+                  profile,
+                  nodeType: 'folder',
+                  nodeKind: 'folder',
+                  targetIsRoot: true,
+                });
+                if (!allowRootDrop) {
+                  toast('Root drop is disabled for folders in this tree profile.', { variant: 'info' });
+                  return;
+                }
                 onDropFolder(folderId, null);
               } else {
                 toast('Nothing to drop here', { variant: 'info' });
@@ -321,7 +319,7 @@ function FolderTreeContent(): React.JSX.Element {
                   : 'text-gray-300 hover:bg-muted/50'
             } justify-start text-left`}
           >
-            <Folder className='size-4' />
+            <RootIcon className='size-4' />
             <span>All Notes</span>
           </Button>
           {onToggleFavorites && (

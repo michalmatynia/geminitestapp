@@ -16,11 +16,6 @@ import {
   Label,
   ListPanel,
   SectionHeader,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   useToast,
 } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
@@ -141,24 +136,21 @@ export default function ZonesPage(): React.JSX.Element {
                   )}
                 </div>
                 <div className='flex items-center gap-2'>
-                  <Select
+                  <UnifiedSelect
                     value={item.aliasOf ?? 'none'}
                     onValueChange={(value: string): void => { void handleAliasChange(item.id, value); }}
-                  >
-                    <SelectTrigger className='h-8 w-[220px]'>
-                      <SelectValue placeholder='Independent zone' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='none'>Independent zone</SelectItem>
-                      {domains
+                    options={[
+                      { value: 'none', label: 'Independent zone' },
+                      ...domains
                         .filter((domainOption: CmsDomain) => domainOption.id !== item.id)
-                        .map((domainOption: CmsDomain) => (
-                          <SelectItem key={domainOption.id} value={domainOption.id}>
-                            Share with {domainOption.domain}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
+                        .map((domainOption: CmsDomain) => ({
+                          value: domainOption.id,
+                          label: `Share with ${domainOption.domain}`,
+                        })),
+                    ]}
+                    triggerClassName='h-8 w-[220px]'
+                    placeholder='Independent zone'
+                  />
                   <Button
                     size='sm'
                     variant='destructive'

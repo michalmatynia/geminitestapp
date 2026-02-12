@@ -10,10 +10,11 @@ import {
   RefreshCcw,
   Type,
   Palette,
+  Folder,
 } from 'lucide-react';
 import Link from 'next/link';
 
-import { Card, Button, SectionHeader, SectionPanel } from '@/shared/ui';
+import { Card, Button, SectionHeader, FormSection } from '@/shared/ui';
 
 
 
@@ -73,6 +74,15 @@ const settings: SettingsOption[] = [
     description: 'Configure client logging context and tags.',
     color: 'violet',
     bgColor: 'bg-violet-500/10',
+  },
+  {
+    id: 'folder-trees',
+    href: '/admin/settings/folder-trees',
+    icon: Folder,
+    title: 'Folder Trees',
+    description: 'Configure tree placeholders, nesting rules, and icons per instance.',
+    color: 'blue',
+    bgColor: 'bg-blue-500/10',
   },
   {
     id: 'playwright',
@@ -180,9 +190,8 @@ export function AdminSettingsHomePage(): React.ReactNode {
       </div>
 
       {/* Help Section */}
-      <SectionPanel className='mt-8'>
-        <h3 className='text-sm font-semibold text-white'>Need Help?</h3>
-        <p className='mt-2 text-sm text-gray-400'>
+      <FormSection title='Need Help?' className='mt-8'>
+        <p className='text-sm text-gray-400'>
           Each setting section contains detailed explanations and preview options to help you customize your preferences.
         </p>
         <div className='mt-4 flex gap-2'>
@@ -190,7 +199,7 @@ export function AdminSettingsHomePage(): React.ReactNode {
             <Link href='/admin'>Back to Admin</Link>
           </Button>
         </div>
-      </SectionPanel>
+      </FormSection>
     </div>
   );
 }

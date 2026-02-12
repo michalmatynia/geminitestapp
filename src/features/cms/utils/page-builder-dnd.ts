@@ -27,7 +27,7 @@ export const setSectionDragData = (
       [DRAG_KEYS.SECTION_ZONE]: payload.zone,
       [DRAG_KEYS.SECTION_INDEX]: payload.index,
     },
-    { text: payload.id, effectAllowed: 'move' }
+    { effectAllowed: 'move' }
   );
 };
 
@@ -50,7 +50,7 @@ export const setBlockDragData = (
       [DRAG_KEYS.FROM_COLUMN_ID]: payload.fromColumnId ?? '',
       [DRAG_KEYS.FROM_PARENT_BLOCK_ID]: payload.fromParentBlockId ?? '',
     },
-    { text: payload.id, effectAllowed: 'move' }
+    { effectAllowed: 'move' }
   );
 };
 
@@ -74,7 +74,7 @@ export const readBlockDragData = (
   dataTransfer: DataTransfer,
   fallback?: Partial<BlockDragData>
 ): BlockDragData => {
-  const id = getFirstDragValue(dataTransfer, [DRAG_KEYS.BLOCK_ID, DRAG_KEYS.TEXT], fallback?.id ?? null);
+  const id = getFirstDragValue(dataTransfer, [DRAG_KEYS.BLOCK_ID], fallback?.id ?? null);
   const type = getFirstDragValue(dataTransfer, [DRAG_KEYS.BLOCK_TYPE], fallback?.type ?? null);
   const fromSectionId = getFirstDragValue(
     dataTransfer,

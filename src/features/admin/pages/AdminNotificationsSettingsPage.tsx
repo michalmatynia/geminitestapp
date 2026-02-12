@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import React, { useState } from 'react';
 
-import { Button, Label, UnifiedSelect, useToast, useToastSettings, SectionHeader, SectionPanel } from '@/shared/ui';
+import { Button, UnifiedSelect, useToast, useToastSettings, SectionHeader, SectionPanel, FormSection, FormField } from '@/shared/ui';
 
 const positionOptions = [
   { value: 'top-right', label: 'Top Right', description: 'Corner top right' },
@@ -77,13 +77,13 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
       <div className='grid gap-6 lg:grid-cols-3'>
         {/* Settings Panel */}
         <div className='lg:col-span-2 space-y-6'>
-          <SectionPanel className='p-6'>
+          <FormSection title='Notification Preferences' className='p-6'>
             <div className='space-y-6'>
               {/* Position Setting */}
-              <div>
-                <Label htmlFor='position' className='mb-3 block text-sm font-semibold'>
-                  Toast Position
-                </Label>
+              <FormField
+                label='Toast Position'
+                description='Choose where notifications appear on your screen.'
+              >
                 <UnifiedSelect
                   value={position}
                   onValueChange={(val: string) => setPosition(val as PositionType)}
@@ -94,16 +94,13 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
                   }))}
                   placeholder='Select position'
                 />
-                <p className='mt-2 text-xs text-gray-400'>
-                  Choose where notifications appear on your screen.
-                </p>
-              </div>
+              </FormField>
 
               {/* Accent Color Setting */}
-              <div className='pt-2'>
-                <Label htmlFor='accent' className='mb-3 block text-sm font-semibold'>
-                  Accent Color
-                </Label>
+              <FormField
+                label='Accent Color'
+                description='Select the primary color for success notifications.'
+              >
                 <UnifiedSelect
                   value={accent}
                   onValueChange={(val: string) => setAccent(val as AccentType)}
@@ -114,14 +111,10 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
                   }))}
                   placeholder='Select accent color'
                 />
-                <p className='mt-2 text-xs text-gray-400'>
-                  Select the primary color for success notifications.
-                </p>
-              </div>
+              </FormField>
 
               {/* Color Palette Preview */}
-              <div className='pt-2'>
-                <Label className='mb-3 block text-sm font-semibold'>Available Colors</Label>
+              <FormField label='Available Colors'>
                 <div className='grid grid-cols-5 gap-2'>
                   {accentOptions.map((option: { value: string; label: string; color: string }) => (
                     <Button
@@ -140,7 +133,7 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
                     </Button>
                   ))}
                 </div>
-              </div>
+              </FormField>
 
               {/* Action Buttons */}
               <div className='flex flex-wrap gap-3 border-t border-border pt-6'>
@@ -158,7 +151,7 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
                 </Button>
               </div>
             </div>
-          </SectionPanel>
+          </FormSection>
         </div>
 
         {/* Preview Panel */}

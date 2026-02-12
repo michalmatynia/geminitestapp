@@ -7,7 +7,7 @@ import { cn } from '@/shared/utils';
 
 import { Button } from './button';
 import { Label } from './label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
+import { UnifiedSelect } from './unified-select';
 
 interface PaginationProps {
   page: number;
@@ -74,24 +74,18 @@ export function Pagination({
       {showPageSize && onPageSizeChange && pageSize !== undefined && (
         <div className='flex items-center gap-2'>
           {showLabels && !isCompact && <Label className='text-xs text-muted-foreground whitespace-nowrap'>Rows per page</Label>}
-          <Select
+          <UnifiedSelect
             value={String(pageSize)}
             onValueChange={(value) => {
               onPageSizeChange(Number(value));
               onPageChange(1);
             }}
-          >
-            <SelectTrigger className='h-8 w-24 text-xs'>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {pageSizeOptions.map((size) => (
-                <SelectItem key={size} value={String(size)}>
-                  {size}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={pageSizeOptions.map((size) => ({
+              value: String(size),
+              label: String(size),
+            }))}
+            triggerClassName='h-8 w-24 text-xs'
+          />
         </div>
       )}
     </div>

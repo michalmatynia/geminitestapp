@@ -2,16 +2,13 @@
 
 
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
+import { useSectionBlockData } from './SectionBlockContext';
 import { useMediaStyles } from '../media-styles-context';
 
 import type { BlockInstance } from '../../../types/page-builder';
 
-interface FrontendHeroBlockProps {
-  settings: Record<string, unknown>;
-  blocks: BlockInstance[];
-}
-
-export function FrontendHeroBlock({ settings, blocks }: FrontendHeroBlockProps): React.ReactNode {
+export function FrontendHeroBlock(): React.ReactNode {
+  const { settings, blocks } = useSectionBlockData();
   const image = settings['image'] as string | undefined;
   const mediaStyles = useMediaStyles();
 

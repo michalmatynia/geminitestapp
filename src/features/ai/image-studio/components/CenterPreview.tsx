@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { Camera, Loader2 } from 'lucide-react';
+import { Camera, Eye, EyeOff, Loader2 } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -163,6 +163,23 @@ export function CenterPreview(): React.JSX.Element {
     }
   }, [captureRef, projectId, queryClient, toast, workingSlot]);
 
+  const focusToggleButton = typeof document !== 'undefined'
+    ? createPortal(
+      <Button
+        type='button'
+        variant='outline'
+        size='sm'
+        onClick={toggleFocusMode}
+        title={isFocusMode ? 'Show side panels' : 'Show canvas only'}
+        aria-label={isFocusMode ? 'Show side panels' : 'Show canvas only'}
+        className='fixed left-1/2 top-0 z-40 h-8 w-10 -translate-x-1/2 rounded-b-lg rounded-t-none border-t-0 bg-background/90 px-0 shadow-md backdrop-blur-sm animate-in fade-in slide-in-from-top-2'
+      >
+        {isFocusMode ? <EyeOff className='size-4' /> : <Eye className='size-4' />}
+      </Button>,
+      document.body
+    )
+    : null;
+
   return (
     <SectionPanel className='order-2 relative flex min-h-0 flex-1 flex-col overflow-hidden p-0' variant='subtle'>
       <div className='grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-2'>
@@ -188,38 +205,10 @@ export function CenterPreview(): React.JSX.Element {
             </Button>
           ) : null}
         </div>
-        <div className='flex justify-center'>
-          {!isFocusMode ? (
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={toggleFocusMode}
-              title='Show canvas only'
-            >
-              Show
-            </Button>
-          ) : null}
-        </div>
+        <div />
         <div />
       </div>
-      {isFocusMode && typeof document !== 'undefined'
-        ? (() => {
-          const headerTarget = document.getElementById('ai-paths-header-actions');
-          if (!headerTarget) return null;
-          return createPortal(
-            <Button
-              type='button'
-              variant='outline'
-              size='sm'
-              onClick={toggleFocusMode}
-              title='Show side panels'
-            >
-              Edit
-            </Button>,
-            headerTarget
-          );
-        })()
-        : null}
+      {focusToggleButton}
       <div className='flex min-h-0 flex-1 flex-col gap-3 px-4 pb-3 pt-0'>
         <div className='grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_minmax(196px,242px)] gap-3'>
           <div className='relative min-h-0'>

@@ -1,4 +1,5 @@
 import type { CategoryWithChildren } from '@/shared/types/domain/notes';
+import type { FolderTreeProfile } from '@/shared/utils/folder-tree-profiles';
 
 export interface FolderTreeProps {
   folders: CategoryWithChildren[];
@@ -28,4 +29,5 @@ export interface FolderTreeProps {
   undoHistory?: Array<{ label: string }> | undefined;
   onUndoAtIndex?: ((index: number) => void) | undefined;
   onRefreshFolders?: (() => Promise<void>) | undefined;
+  profile?: FolderTreeProfile | undefined;
 }

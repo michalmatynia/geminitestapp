@@ -8,7 +8,7 @@ import { useNotebooks, useNoteTags } from '@/features/notesapp/api/useNoteQuerie
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/features/observability';
 import type { TagRecord } from '@/shared/types/domain/notes';
-import { Button, useToast, Input, Label, SectionHeader, SectionPanel, SearchInput } from '@/shared/ui';
+import { Button, useToast, Input, Label, SectionHeader, SectionPanel, SearchInput, FormSection, FormField, RefreshButton } from '@/shared/ui';
 
 
 
@@ -114,8 +114,7 @@ export function AdminNotesTagsPage(): React.JSX.Element {
       />
 
       <div className='max-w-3xl space-y-6'>
-        <SectionPanel className='p-6'>
-          <SectionHeader title='Search' size='sm' className='mb-4' />
+        <FormSection title='Search'>
           <SearchInput
             value={searchQuery}
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(event.target.value)}
@@ -123,14 +122,11 @@ export function AdminNotesTagsPage(): React.JSX.Element {
             placeholder='Search tags...'
             className='w-full'
           />
-        </SectionPanel>
-        <SectionPanel className='p-6'>
-          <SectionHeader title='Create Tag' size='sm' className='mb-4' />
+        </FormSection>
+
+        <FormSection title='Create Tag'>
           <div className='flex flex-col gap-4 sm:flex-row sm:items-end'>
-            <div className='flex-1'>
-              <Label className='mb-2 block text-sm font-medium text-gray-200'>
-                Tag Name
-              </Label>
+            <FormField label='Tag Name' className='flex-1'>
               <Input
                 type='text'
                 value={name}
@@ -138,35 +134,30 @@ export function AdminNotesTagsPage(): React.JSX.Element {
                 className='w-full'
                 placeholder='Enter tag name'
               />
-            </div>
-            <div>
-              <Label className='mb-2 block text-sm font-medium text-gray-200'>
-                Color
-              </Label>
+            </FormField>
+            <FormField label='Color'>
               <Input
                 type='color'
                 value={color}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setColor(event.target.value)}
                 className='h-10 w-20'
               />
-            </div>
+            </FormField>
             <Button onClick={(): void => { void handleCreate(); }} disabled={createTag.isPending}>
               {createTag.isPending ? 'Saving...' : 'Create'}
             </Button>
           </div>
-        </SectionPanel>
+        </FormSection>
 
-        <SectionPanel className='p-6'>
-          <SectionHeader
-            title='Existing Tags'
-            size='sm'
-            className='mb-4'
-            actions={(
-              <Button variant='outline' onClick={(): void => { void tagsQuery.refetch(); }}>
-                Refresh
-              </Button>
-            )}
-          />
+        <FormSection
+          title='Existing Tags'
+          actions={(
+            <RefreshButton
+              onRefresh={(): void => { void tagsQuery.refetch(); }}
+              isRefreshing={loading}
+            />
+          )}
+        >
           {loading ? (
             <div className='text-sm text-gray-400'>Loading tags...</div>
           ) : filteredTags.length === 0 ? (
@@ -247,7 +238,7 @@ export function AdminNotesTagsPage(): React.JSX.Element {
               })}
             </div>
           )}
-        </SectionPanel>
+        </FormSection>
       </div>
     </div>
   );

@@ -1,10 +1,19 @@
 'use client';
 
-import { Trash2, Copy } from 'lucide-react';
+import { AlertTriangle, Copy, Link2, Monitor, Server, Shield, Trash2 } from 'lucide-react';
 
 import { SystemLogsProvider, useSystemLogsContext } from '@/features/observability/context/SystemLogsContext';
+import {
+  SYSTEM_LOG_FILTER_DEFAULTS,
+  SYSTEM_LOG_TRIAGE_PRESETS,
+  isSystemLogPresetActive,
+  resolveSystemLogPresetFilters,
+  type LogTriagePreset,
+  type SystemLogFilterFormValues,
+} from '@/features/observability/lib/log-triage-presets';
 import type { SystemLogRecord, AiInsightRecord } from '@/shared/types';
-import { Button, DynamicFilters, ListPanel, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Pagination, StatusBadge, ConfirmDialog, PageLayout, RefreshButton } from '@/shared/ui';
+import { Button, DynamicFilters, ListPanel, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Pagination, StatusBadge, ConfirmDialog, PageLayout, RefreshButton, FormSection } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 const formatTimestamp = (value: Date | string): string => {
   const date = value instanceof Date ? value : new Date(value);
@@ -22,6 +31,84 @@ const getContextValue = (context: unknown, path: string): unknown => {
   return current ?? null;
 };
 
+const triagePresetIcons: Record<LogTriagePreset['id'], React.ComponentType<{ className?: string }>> = {
+  'recent-errors-24h': AlertTriangle,
+  'http-500-last7d': Server,
+  'client-errors-last7d': Monitor,
+  'auth-anomalies-last3d': Shield,
+};
+
+function LogTriagePresets({
+  values,
+  onApplyPreset,
+  onClearPreset,
+}: {
+  values: SystemLogFilterFormValues;
+  onApplyPreset: (preset: LogTriagePreset) => void;
+  onClearPreset: () => void;
+}): React.JSX.Element {
+  const now = new Date();
+  const resolvedPresets = SYSTEM_LOG_TRIAGE_PRESETS.map((preset) => ({
+    preset,
+    filters: resolveSystemLogPresetFilters(preset, now),
+  }));
+
+  const activePresetId =
+    resolvedPresets.find(({ filters }) => isSystemLogPresetActive(values, filters))?.preset.id ??
+    null;
+
+  return (
+    <FormSection
+      title='Saved Triage Presets'
+      description='One-click filters for common incident investigation paths.'
+      variant='subtle-compact'
+      actions={activePresetId ? (
+        <Button variant='ghost' size='sm' onClick={onClearPreset} className='h-8 text-xs'>
+          Clear preset
+        </Button>
+      ) : null}
+      className='p-3'
+    >
+      <div className='grid gap-2 md:grid-cols-2 xl:grid-cols-4'>
+        {resolvedPresets.map(({ preset }) => {
+          const isActive = preset.id === activePresetId;
+          const Icon = triagePresetIcons[preset.id] ?? AlertTriangle;
+          return (
+            <Button
+              key={preset.id}
+              type='button'
+              variant='outline'
+              onClick={(): void => onApplyPreset(preset)}
+              className={cn(
+                'h-auto w-full justify-start px-3 py-2 text-left',
+                isActive && 'border-emerald-400/60 bg-emerald-500/10 hover:bg-emerald-500/20'
+              )}
+            >
+              <span className='flex items-start gap-2'>
+                <Icon
+                  className={cn(
+                    'mt-0.5 h-4 w-4 shrink-0 text-gray-400',
+                    isActive && 'text-emerald-200'
+                  )}
+                />
+                <span className='block'>
+                  <span className='block text-xs font-semibold text-gray-100'>{preset.label}</span>
+                  <span className='block text-[11px] text-gray-400'>{preset.description}</span>
+                  {isActive ? (
+                    <span className='mt-1 inline-flex rounded border border-emerald-400/50 px-1.5 py-0.5 text-[10px] text-emerald-200'>
+                      Active
+                    </span>
+                  ) : null}
+                </span>
+              </span>
+            </Button>
+          );
+        })}
+      </div>
+    </FormSection>
+  );
+}
+
 function LogDiagnostics(): React.JSX.Element {
   const {
     diagnostics,
@@ -32,14 +119,10 @@ function LogDiagnostics(): React.JSX.Element {
   } = useSystemLogsContext();
 
   return (
-    <SectionPanel className='space-y-4'>
-      <div className='flex flex-wrap items-center justify-between gap-3'>
-        <div>
-          <div className='text-lg font-semibold text-white'>Diagnostics</div>
-          <div className='text-xs text-gray-400'>
-            Mongo index status for AI Paths runtime collections.
-          </div>
-        </div>
+    <FormSection
+      title='Diagnostics'
+      description='Mongo index status for AI Paths runtime collections.'
+      actions={
         <div className='flex items-center gap-2 text-xs text-gray-500'>
           <span>
             {diagnosticsUpdatedAt
@@ -66,7 +149,9 @@ function LogDiagnostics(): React.JSX.Element {
             {rebuildIndexesMutation.isPending ? 'Rebuilding...' : 'Rebuild missing indexes'}
           </Button>
         </div>
-      </div>
+      }
+      className='space-y-4'
+    >
       {mongoDiagnosticsQuery.isLoading ? (
         <div className='text-sm text-gray-400'>Loading diagnostics...</div>
       ) : diagnostics.length === 0 ? (
@@ -149,7 +234,7 @@ function LogDiagnostics(): React.JSX.Element {
           </Table>
         </div>
       )}
-    </SectionPanel>
+    </FormSection>
   );
 }
 
@@ -157,18 +242,17 @@ function LogMetrics(): React.JSX.Element {
   const { metricsQuery, metrics, levels } = useSystemLogsContext();
 
   return (
-    <SectionPanel variant='subtle' className='p-4'>
-      <div className='flex flex-wrap items-center justify-between gap-3'>
-        <div>
-          <h2 className='text-lg font-semibold text-white'>Metrics</h2>
-          <p className='text-xs text-gray-400'>
-            Metrics reflect the current filters.
-          </p>
-        </div>
+    <FormSection
+      title='Metrics'
+      description='Metrics reflect the current filters.'
+      variant='subtle'
+      actions={
         <div className='text-xs text-gray-500'>
           {metrics?.generatedAt ? `Updated ${formatTimestamp(metrics.generatedAt)}` : '—'}
         </div>
-      </div>
+      }
+      className='p-4'
+    >
       {metricsQuery.isLoading ? (
         <div className='mt-4 text-sm text-gray-400'>Loading metrics...</div>
       ) : !metrics ? (
@@ -223,7 +307,7 @@ function LogMetrics(): React.JSX.Element {
           </SectionPanel>
         </div>
       )}
-    </SectionPanel>
+    </FormSection>
   );
 }
 
@@ -231,14 +315,11 @@ function AiLogInterpreter(): React.JSX.Element {
   const { runInsightMutation, insightsQuery } = useSystemLogsContext();
 
   return (
-    <SectionPanel variant='subtle' className='p-4'>
-      <div className='flex flex-wrap items-center justify-between gap-3'>
-        <div>
-          <h2 className='text-lg font-semibold text-white'>AI Log Interpreter</h2>
-          <p className='text-xs text-gray-400'>
-            Summarizes error patterns and potential causes using your configured AI model or agent.
-          </p>
-        </div>
+    <FormSection
+      title='AI Log Interpreter'
+      description='Summarizes error patterns and potential causes using your configured AI model or agent.'
+      variant='subtle'
+      actions={
         <Button
           variant='outline'
           size='sm'
@@ -247,32 +328,24 @@ function AiLogInterpreter(): React.JSX.Element {
         >
           {runInsightMutation.isPending ? 'Running...' : 'Run AI Interpretation'}
         </Button>
-      </div>
+      }
+      className='p-4'
+    >
       {insightsQuery.isLoading ? (
-        <div className='mt-3 text-xs text-gray-400'>Loading AI insights...</div>
+        <div className='text-xs text-gray-400'>Loading AI insights...</div>
       ) : insightsQuery.error ? (
-        <div className='mt-3 text-xs text-red-400'>{insightsQuery.error.message}</div>
+        <div className='text-xs text-red-400'>{(insightsQuery.error as Error).message}</div>
       ) : (insightsQuery.data?.insights?.length ?? 0) === 0 ? (
-        <div className='mt-3 text-xs text-gray-500'>No AI insights yet.</div>
+        <div className='text-xs text-gray-500'>No AI insights yet.</div>
       ) : (
-        <div className='mt-3 space-y-3'>
+        <div className='space-y-3'>
           {insightsQuery.data?.insights.map((insight: AiInsightRecord) => (
             <div key={insight.id} className='rounded-md border border-border/60 bg-gray-950/40 p-3 text-xs text-gray-300'>
               <div className='flex items-center justify-between gap-2'>
                 <span className='text-[10px] uppercase text-gray-500'>
                   {formatTimestamp(insight.createdAt)}
                 </span>
-                <span
-                  className={`rounded border px-2 py-0.5 text-[10px] ${
-                    insight.status === 'ok'
-                      ? 'border-emerald-500/40 text-emerald-200'
-                      : insight.status === 'warning'
-                        ? 'border-amber-500/40 text-amber-200'
-                        : 'border-rose-500/40 text-rose-200'
-                  }`}
-                >
-                  {insight.status}
-                </span>
+                <StatusBadge status={insight.status} />
               </div>
               <div className='mt-2 text-sm text-white'>{insight.summary}</div>
               {insight.warnings.length > 0 ? (
@@ -289,7 +362,7 @@ function AiLogInterpreter(): React.JSX.Element {
       <div className='mt-3 text-[10px] text-gray-500'>
         Configure the AI model/agent in Settings → AI.
       </div>
-    </SectionPanel>
+    </FormSection>
   );
 }
 
@@ -342,6 +415,16 @@ function LogList(): React.JSX.Element {
                   {log.source ? (
                     <span className='text-xs text-gray-500'>{log.source}</span>
                   ) : null}
+                  {log.requestId ? (
+                    <span className='rounded border border-border/60 px-1.5 py-0.5 font-mono text-[10px] text-gray-400'>
+                      {log.requestId}
+                    </span>
+                  ) : null}
+                  {log.userId ? (
+                    <span className='rounded border border-border/60 px-1.5 py-0.5 font-mono text-[10px] text-gray-400'>
+                      {log.userId}
+                    </span>
+                  ) : null}
                   <Button
                     variant='outline'
                     size='sm'
@@ -366,6 +449,14 @@ function LogList(): React.JSX.Element {
                   Fingerprint:{' '}
                   <span className='font-mono text-gray-300'>
                     {String(getContextValue(log.context, 'fingerprint'))}
+                  </span>
+                </div>
+              ) : null}
+              {log.context && getContextValue(log.context, 'category') ? (
+                <div className='mt-1 text-xs text-gray-500'>
+                  Category:{' '}
+                  <span className='font-mono text-gray-300'>
+                    {String(getContextValue(log.context, 'category'))}
                   </span>
                 </div>
               ) : null}
@@ -454,6 +545,12 @@ function SystemLogsContent(): React.JSX.Element {
     level,
     query,
     source,
+    method,
+    statusCode,
+    requestId,
+    userId,
+    fingerprint,
+    category,
     fromDate,
     toDate,
     handleFilterChange,
@@ -471,6 +568,37 @@ function SystemLogsContent(): React.JSX.Element {
     clearLogsMutation,
     toast,
   } = useSystemLogsContext();
+
+  const currentFilterValues: SystemLogFilterFormValues = {
+    level,
+    query,
+    source,
+    method,
+    statusCode,
+    requestId,
+    userId,
+    fingerprint,
+    category,
+    fromDate,
+    toDate,
+  };
+
+  const applyFilterValues = (nextValues: SystemLogFilterFormValues): void => {
+    (Object.entries(nextValues) as Array<[keyof SystemLogFilterFormValues, string]>).forEach(
+      ([key, value]) => {
+        handleFilterChange(key, value);
+      }
+    );
+  };
+
+  const handleApplyPreset = (preset: LogTriagePreset): void => {
+    const resolvedPresetValues = resolveSystemLogPresetFilters(preset);
+    const nextValues: SystemLogFilterFormValues = {
+      ...SYSTEM_LOG_FILTER_DEFAULTS,
+      ...resolvedPresetValues,
+    };
+    applyFilterValues(nextValues);
+  };
 
   return (
     <PageLayout
@@ -492,6 +620,25 @@ function SystemLogsContent(): React.JSX.Element {
             }}
             isRefreshing={logsQuery.isFetching || metricsQuery.isFetching}
           />
+          <Button
+            variant='outline'
+            size='sm'
+            className='gap-2'
+            onClick={(): void => {
+              if (typeof window === 'undefined') return;
+              void navigator.clipboard
+                .writeText(window.location.href)
+                .then(() => {
+                  toast('Investigation link copied', { variant: 'success' });
+                })
+                .catch(() => {
+                  toast('Failed to copy link', { variant: 'error' });
+                });
+            }}
+          >
+            <Link2 className='h-4 w-4' />
+            Copy Link
+          </Button>
           <Button
             variant='outline'
             size='sm'
@@ -548,14 +695,33 @@ function SystemLogsContent(): React.JSX.Element {
           </>
         }
         filters={
-          <DynamicFilters
-            fields={filterFields}
-            values={{ level, query, source, fromDate, toDate }}
-            onChange={handleFilterChange}
-            onReset={handleResetFilters}
-            hasActiveFilters={Boolean(level !== 'all' || query || source || fromDate || toDate)}
-            gridClassName='md:grid-cols-5'
-          />
+          <div className='space-y-3'>
+            <LogTriagePresets
+              values={currentFilterValues}
+              onApplyPreset={handleApplyPreset}
+              onClearPreset={handleResetFilters}
+            />
+            <DynamicFilters
+              fields={filterFields}
+              values={currentFilterValues}
+              onChange={handleFilterChange}
+              onReset={handleResetFilters}
+              hasActiveFilters={Boolean(
+                level !== 'all' ||
+                query ||
+                source ||
+                method ||
+                statusCode ||
+                requestId ||
+                userId ||
+                fingerprint ||
+                category ||
+                fromDate ||
+                toDate
+              )}
+              gridClassName='md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6'
+            />
+          </div>
         }
       >
         <div className='space-y-6'>

@@ -1,13 +1,23 @@
 'use client';
 
-
-
-
-
 import type { CompareConfig } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+import { Button, Input, Label, UnifiedSelect } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
+
+const operatorOptions = [
+  { value: 'eq', label: 'Equals' },
+  { value: 'neq', label: 'Not equals' },
+  { value: 'gt', label: 'Greater than' },
+  { value: 'gte', label: 'Greater or equal' },
+  { value: 'lt', label: 'Less than' },
+  { value: 'lte', label: 'Less or equal' },
+  { value: 'contains', label: 'Contains' },
+  { value: 'startsWith', label: 'Starts with' },
+  { value: 'endsWith', label: 'Ends with' },
+  { value: 'isEmpty', label: 'Is empty' },
+  { value: 'notEmpty', label: 'Not empty' },
+];
 
 export function CompareNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
@@ -25,7 +35,7 @@ export function CompareNodeConfigSection(): React.JSX.Element | null {
     <div className='space-y-4'>
       <div>
         <Label className='text-xs text-gray-400'>Operator</Label>
-        <Select
+        <UnifiedSelect
           value={compareConfig.operator}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
@@ -35,24 +45,10 @@ export function CompareNodeConfigSection(): React.JSX.Element | null {
               },
             })
           }
-        >
-          <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
-            <SelectValue placeholder='Select operator' />
-          </SelectTrigger>
-          <SelectContent className='border-border bg-gray-900'>
-            <SelectItem value='eq'>Equals</SelectItem>
-            <SelectItem value='neq'>Not equals</SelectItem>
-            <SelectItem value='gt'>Greater than</SelectItem>
-            <SelectItem value='gte'>Greater or equal</SelectItem>
-            <SelectItem value='lt'>Less than</SelectItem>
-            <SelectItem value='lte'>Less or equal</SelectItem>
-            <SelectItem value='contains'>Contains</SelectItem>
-            <SelectItem value='startsWith'>Starts with</SelectItem>
-            <SelectItem value='endsWith'>Ends with</SelectItem>
-            <SelectItem value='isEmpty'>Is empty</SelectItem>
-            <SelectItem value='notEmpty'>Not empty</SelectItem>
-          </SelectContent>
-        </Select>
+          options={operatorOptions}
+          placeholder='Select operator'
+          className='mt-2'
+        />
       </div>
       <div>
         <Label className='text-xs text-gray-400'>Compare To</Label>

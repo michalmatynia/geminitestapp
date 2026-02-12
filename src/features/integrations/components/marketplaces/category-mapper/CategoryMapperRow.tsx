@@ -8,9 +8,10 @@ import type { ExternalCategory } from '@/features/integrations/types/category-ma
 import { Button, TableCell, TableRow, UnifiedSelect } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
+import { CategoryMapperRowDepthProvider, useCategoryMapperRowDepth } from './CategoryMapperRowDepthContext';
+
 interface CategoryMapperRowProps {
   category: ExternalCategory;
-  depth?: number;
 }
 
 const normalizeParentExternalId = (value: string | null | undefined): string | null => {
@@ -21,7 +22,8 @@ const normalizeParentExternalId = (value: string | null | undefined): string | n
   return candidate;
 };
 
-export function CategoryMapperRow({ category, depth = 0 }: CategoryMapperRowProps): React.JSX.Element {
+export function CategoryMapperRow({ category }: CategoryMapperRowProps): React.JSX.Element {
+  const depth = useCategoryMapperRowDepth();
   const {
     externalCategories,
     expandedIds,
@@ -88,7 +90,9 @@ export function CategoryMapperRow({ category, depth = 0 }: CategoryMapperRowProp
           {children
             .sort((a: ExternalCategory, b: ExternalCategory) => a.name.localeCompare(b.name))
             .map((child: ExternalCategory) => (
-              <CategoryMapperRow key={child.id} category={child} depth={depth + 1} />
+              <CategoryMapperRowDepthProvider key={child.id} depth={depth + 1}>
+                <CategoryMapperRow category={child} />
+              </CategoryMapperRowDepthProvider>
             ))}
         </React.Fragment>
       )}

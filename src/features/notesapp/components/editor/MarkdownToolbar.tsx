@@ -3,28 +3,21 @@
 import { Undo, Redo } from 'lucide-react';
 import React from 'react';
 
+import { useMarkdownToolbarActions } from '@/features/notesapp/context/MarkdownToolbarActionsContext';
 import { useNoteFormContext } from '@/features/notesapp/context/NoteFormContext';
 import type { NoteFileRecord } from '@/shared/types/domain/notes';
 import { Button, Input, Label, UnifiedSelect } from '@/shared/ui';
 
+export function MarkdownToolbar(): React.JSX.Element {
+  const {
+    onApplyWrap,
+    onApplyLinePrefix,
+    onInsertAtCursor,
+    onApplyBulletList,
+    onApplyChecklist,
+    onApplySpanStyle,
+  } = useMarkdownToolbarActions();
 
-interface MarkdownToolbarProps {
-  onApplyWrap: (prefix: string, suffix: string, placeholder: string) => void;
-  onApplyLinePrefix: (prefix: string) => void;
-  onInsertAtCursor: (value: string) => void;
-  onApplyBulletList: () => void;
-  onApplyChecklist: () => void;
-  onApplySpanStyle: (color: string, font: string) => void;
-}
-
-export function MarkdownToolbar({
-  onApplyWrap,
-  onApplyLinePrefix,
-  onInsertAtCursor,
-  onApplyBulletList,
-  onApplyChecklist,
-  onApplySpanStyle,
-}: MarkdownToolbarProps): React.JSX.Element {
   const {
     noteFiles,
     textColor,
@@ -332,4 +325,3 @@ export function MarkdownToolbar({
     </div>
   );
 }
-

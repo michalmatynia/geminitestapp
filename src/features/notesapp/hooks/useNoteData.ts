@@ -37,6 +37,9 @@ import {
 import type { UseNoteDataProps } from '@/features/notesapp/types/notes-hooks';
 import { useDebounce } from '@/shared/hooks/ui/use-debounce';
 import { api, ApiError } from '@/shared/lib/api-client';
+import {
+  invalidateNoteDetail,
+} from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { DeleteResponse } from '@/shared/types/api/api';
 import type {
@@ -192,7 +195,7 @@ export const useUpdateNoteRelationsMutation = (noteId: string): UseMutationResul
     mutationFn: (data: { relationsFrom?: string[]; relationsTo?: string[] }) => 
       api.put<void>(`/api/notes/${noteId}/relations`, data),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.detail(noteId) });
+      void invalidateNoteDetail(queryClient, noteId);
     },
   });
 };
@@ -237,7 +240,7 @@ export const useCreateNoteFileMutation = (
     },
     onSuccess: () => {
       if (noteId) {
-        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.detail(noteId) });
+        void invalidateNoteDetail(queryClient, noteId);
       }
     },
   });
@@ -253,7 +256,7 @@ export const useDeleteNoteFileMutation = (noteId?: string): UseMutationResult<De
     },
     onSuccess: () => {
       if (noteId) {
-        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.detail(noteId) });
+        void invalidateNoteDetail(queryClient, noteId);
       }
     },
   });

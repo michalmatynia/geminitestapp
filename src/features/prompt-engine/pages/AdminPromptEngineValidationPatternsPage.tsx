@@ -9,6 +9,7 @@ import { PromptEngineFilters } from '../components/PromptEngineFilters';
 import { PromptEngineToolbar } from '../components/PromptEngineToolbar';
 import { RuleList } from '../components/RuleList';
 import { PromptEngineProvider, usePromptEngine } from '../context/PromptEngineContext';
+import { PromptEnginePageChromeProvider } from '../context/PromptEnginePageChromeContext';
 
 type AdminPromptEngineValidationPatternsPageProps = {
   embedded?: boolean;
@@ -25,48 +26,51 @@ function AdminPromptEngineValidationPatternsContent({
   backLinkLabel,
 }: Omit<AdminPromptEngineValidationPatternsPageProps, 'onSaved'>): React.JSX.Element {
   const { promptEngineSettings, saveError } = usePromptEngine();
+  const pageChrome = React.useMemo(() => ({
+    embedded,
+    eyebrow,
+    backLinkHref,
+    backLinkLabel,
+  }), [backLinkHref, backLinkLabel, embedded, eyebrow]);
 
   return (
-    <div className='space-y-4'>
-      <PromptEngineToolbar
-        embedded={embedded}
-        eyebrow={eyebrow}
-        backLinkHref={backLinkHref}
-        backLinkLabel={backLinkLabel}
-      />
+    <PromptEnginePageChromeProvider value={pageChrome}>
+      <div className='space-y-4'>
+        <PromptEngineToolbar />
 
-      <SectionPanel variant='subtle'>
-        <div className='flex flex-wrap items-center justify-between gap-2'>
-          <div className='text-sm text-gray-200'>
-            {promptEngineSettings.promptValidation.enabled ? (
-              <span className='rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-200'>
-                Validator enabled
-              </span>
-            ) : (
-              <span className='rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] text-amber-200'>
-                Validator disabled
-              </span>
-            )}
+        <SectionPanel variant='subtle'>
+          <div className='flex flex-wrap items-center justify-between gap-2'>
+            <div className='text-sm text-gray-200'>
+              {promptEngineSettings.promptValidation.enabled ? (
+                <span className='rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-200'>
+                  Validator enabled
+                </span>
+              ) : (
+                <span className='rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] text-amber-200'>
+                  Validator disabled
+                </span>
+              )}
+            </div>
+            <div className='text-[11px] text-gray-400'>
+              Source: {usePromptEngine().isUsingDefaults ? 'defaults' : 'saved settings'}
+            </div>
           </div>
-          <div className='text-[11px] text-gray-400'>
-            Source: {usePromptEngine().isUsingDefaults ? 'defaults' : 'saved settings'}
-          </div>
-        </div>
-      </SectionPanel>
-
-      {saveError ? (
-        <SectionPanel variant='danger'>
-          <div className='text-xs text-red-200'>{saveError}</div>
         </SectionPanel>
-      ) : null}
 
-      <PromptEngineFilters />
+        {saveError ? (
+          <SectionPanel variant='danger'>
+            <div className='text-xs text-red-200'>{saveError}</div>
+          </SectionPanel>
+        ) : null}
 
-      <div className='grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]'>
-        <RuleList />
-        <LearnedRuleList />
+        <PromptEngineFilters />
+
+        <div className='grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]'>
+          <RuleList />
+          <LearnedRuleList />
+        </div>
       </div>
-    </div>
+    </PromptEnginePageChromeProvider>
   );
 }
 

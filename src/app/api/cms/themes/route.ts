@@ -23,7 +23,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   }
 
   const cmsRepository = await getCmsRepository();
-  const theme = await cmsRepository.createTheme(parsed.data);
+  const theme = await cmsRepository.createTheme({ ...parsed.data, isDefault: false });
   return NextResponse.json(theme);
 }
 

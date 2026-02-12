@@ -21,7 +21,7 @@ import {
 } from '@/features/products/validation-engine/core';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { ProductValidationPattern } from '@/shared/types/domain/products';
-import { Button, Input, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
+import { Button, Input, UnifiedSelect, FormSection, FormField, Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/shared/ui';
 
 import { ValidatorIssueHint } from './ProductFormGeneral';
 
@@ -318,18 +318,18 @@ export default function ProductFormOther(): React.JSX.Element {
             <div className='md:col-span-2 space-y-2'>
               <label className='text-[11px] font-medium uppercase tracking-wider text-gray-400'>Price Groups Overview</label>
               <div className='rounded-md border border-border bg-card/40 overflow-hidden'>
-                <table className='w-full text-xs'>
-                  <thead className='border-b bg-muted/50'>
-                    <tr>
-                      <th className='px-3 py-2 text-left font-medium text-gray-400'>Price Group</th>
-                      <th className='px-3 py-2 text-left font-medium text-gray-400'>Currency</th>
-                      <th className='px-3 py-2 text-right font-medium text-gray-400'>Price</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <Table className='text-xs'>
+                  <TableHeader>
+                    <TableRow className='bg-muted/50 hover:bg-muted/50'>
+                      <TableHead className='px-3 py-2 text-left font-medium text-gray-400'>Price Group</TableHead>
+                      <TableHead className='px-3 py-2 text-left font-medium text-gray-400'>Currency</TableHead>
+                      <TableHead className='px-3 py-2 text-right font-medium text-gray-400'>Price</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {priceGroupPrices.map((group: PriceGroupWithCalculatedPrice) => (
-                      <tr key={group.id} className='border-b last:border-0 border-border/50'>
-                        <td className='px-3 py-2'>
+                      <TableRow key={group.id} className='border-b last:border-0 border-border/50'>
+                        <TableCell className='px-3 py-2'>
                           <div className='flex items-center gap-2'>
                             <span className={group.id === selectedDefaultPriceGroupId ? 'font-semibold text-white' : 'text-gray-300'}>
                               {group.name}
@@ -343,9 +343,9 @@ export default function ProductFormOther(): React.JSX.Element {
                               </span>
                             )}
                           </div>
-                        </td>
-                        <td className='px-3 py-2 text-gray-500'>{group.currency?.code ?? group.currencyCode}</td>
-                        <td className='px-3 py-2 text-right font-mono'>
+                        </TableCell>
+                        <TableCell className='px-3 py-2 text-gray-500'>{group.currency?.code ?? group.currencyCode}</TableCell>
+                        <TableCell className='px-3 py-2 text-right font-mono'>
                           {group.calculatedPrice !== null ? (
                             <span className={group.isCalculated ? 'text-blue-400' : 'text-white'}>
                               {group.calculatedPrice.toFixed(2)}
@@ -353,11 +353,11 @@ export default function ProductFormOther(): React.JSX.Element {
                           ) : (
                             <span className='text-gray-600'>-</span>
                           )}
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
               <p className='text-[10px] text-gray-500 italic'>
                 Blue prices are automatically calculated based on the default group.

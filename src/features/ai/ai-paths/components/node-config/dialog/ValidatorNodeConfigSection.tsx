@@ -1,12 +1,14 @@
 'use client';
 
-
-
-
 import { parsePathList } from '@/features/ai/ai-paths/lib';
-import { Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+import { Label, Textarea, UnifiedSelect } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
+
+const validationModeOptions = [
+  { value: 'all', label: 'All paths required' },
+  { value: 'any', label: 'Any path required' },
+];
 
 export function ValidatorNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
@@ -22,7 +24,7 @@ export function ValidatorNodeConfigSection(): React.JSX.Element | null {
     <div className='space-y-4'>
       <div>
         <Label className='text-xs text-gray-400'>Validation Mode</Label>
-        <Select
+        <UnifiedSelect
           value={validatorConfig.mode}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
@@ -32,15 +34,10 @@ export function ValidatorNodeConfigSection(): React.JSX.Element | null {
               },
             })
           }
-        >
-          <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
-            <SelectValue placeholder='Select mode' />
-          </SelectTrigger>
-          <SelectContent className='border-border bg-gray-900'>
-            <SelectItem value='all'>All paths required</SelectItem>
-            <SelectItem value='any'>Any path required</SelectItem>
-          </SelectContent>
-        </Select>
+          options={validationModeOptions}
+          placeholder='Select mode'
+          className='mt-2'
+        />
       </div>
       <div>
         <Label className='text-xs text-gray-400'>

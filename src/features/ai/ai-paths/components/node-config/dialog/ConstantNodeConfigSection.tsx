@@ -1,13 +1,16 @@
 'use client';
 
-
-
-
-
 import type { ConstantConfig } from '@/features/ai/ai-paths/lib';
-import { Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+import { Input, Label, Textarea, UnifiedSelect } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
+
+const valueTypeOptions = [
+  { value: 'string', label: 'String' },
+  { value: 'number', label: 'Number' },
+  { value: 'boolean', label: 'Boolean' },
+  { value: 'json', label: 'JSON' },
+];
 
 export function ConstantNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
@@ -24,7 +27,7 @@ export function ConstantNodeConfigSection(): React.JSX.Element | null {
     <div className='space-y-4'>
       <div>
         <Label className='text-xs text-gray-400'>Value Type</Label>
-        <Select
+        <UnifiedSelect
           value={constantConfig.valueType}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
@@ -34,17 +37,10 @@ export function ConstantNodeConfigSection(): React.JSX.Element | null {
               },
             })
           }
-        >
-          <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
-            <SelectValue placeholder='Select type' />
-          </SelectTrigger>
-          <SelectContent className='border-border bg-gray-900'>
-            <SelectItem value='string'>String</SelectItem>
-            <SelectItem value='number'>Number</SelectItem>
-            <SelectItem value='boolean'>Boolean</SelectItem>
-            <SelectItem value='json'>JSON</SelectItem>
-          </SelectContent>
-        </Select>
+          options={valueTypeOptions}
+          placeholder='Select type'
+          className='mt-2'
+        />
       </div>
       <div>
         <Label className='text-xs text-gray-400'>Value</Label>

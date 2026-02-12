@@ -2,10 +2,8 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  AlertTriangleIcon,
   EditIcon,
   PlusIcon,
-  RefreshCwIcon,
   Trash2Icon,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -19,6 +17,17 @@ import {
   Input,
   Pagination,
   SectionPanel,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  FormModal,
+  ConfirmDialog,
+  RefreshButton,
+  UnifiedSelect,
+  FormField,
 } from '@/shared/ui';
 
 import { executeSqlQuery } from '../api';
@@ -83,6 +92,8 @@ function RowFormModal({
     return initial;
   });
 
+  const formRef = useRef<HTMLFormElement>(null);
+
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
     const parsed: Record<string, unknown> = {};
@@ -96,22 +107,29 @@ function RowFormModal({
   };
 
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/60'>
-      <div className='w-full max-w-lg max-h-[80vh] overflow-auto rounded-lg border border-border bg-background p-6 shadow-lg'>
-        <h3 className='text-sm font-semibold text-white mb-4'>
-          {mode === 'add' ? 'Add New Row' : 'Edit Row'}
-        </h3>
-        <form onSubmit={handleSubmit} className='space-y-3'>
-          {columns.map((col: DatabaseColumnInfo) => (
-            <div key={col.name}>
-              <label className='flex items-center gap-2 text-xs text-gray-400 mb-1'>
-                <span className='font-mono'>{col.name}</span>
-                <span className='text-gray-600'>({col.type})</span>
-                {col.isPrimaryKey && <Badge variant='default' className='text-[9px]'>PK</Badge>}
-                {!col.nullable && !col.isPrimaryKey && (
-                  <span className='text-red-400'>*</span>
-                )}
-              </label>
+    <FormModal
+      open={true}
+      onClose={onClose}
+      title={mode === 'add' ? 'Add New Row' : 'Edit Row'}
+      onSave={() => formRef.current?.requestSubmit()}
+      isSaving={isPending}
+      saveText={mode === 'add' ? 'Insert Row' : 'Update Row'}
+      size='md'
+    >
+      <form ref={formRef} onSubmit={handleSubmit} className='space-y-4'>
+        {columns.map((col: DatabaseColumnInfo) => (
+          <FormField
+            key={col.name}
+            label={col.name}
+            description={col.type}
+            required={!col.nullable && !col.isPrimaryKey}
+          >
+            <div className='flex flex-col gap-1.5'>
+              {col.isPrimaryKey && (
+                <div className='flex items-center gap-2'>
+                  <Badge variant='default' className='text-[9px]'>PK</Badge>
+                </div>
+              )}
               <Input
                 value={formData[col.name] ?? ''}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
@@ -122,50 +140,10 @@ function RowFormModal({
                 disabled={mode === 'edit' && col.isPrimaryKey}
               />
             </div>
-          ))}
-          <div className='flex justify-end gap-2 pt-3'>
-            <Button type='button' variant='outline' size='sm' onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type='submit' size='sm' disabled={isPending}>
-              {isPending ? 'Saving...' : mode === 'add' ? 'Insert Row' : 'Update Row'}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-/* ─── Delete Confirm Modal ─── */
-
-function DeleteConfirmModal({
-  onConfirm,
-  onClose,
-  isPending,
-}: {
-  onConfirm: () => void;
-  onClose: () => void;
-  isPending: boolean;
-}): React.JSX.Element {
-  return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/60'>
-      <div className='w-full max-w-sm rounded-lg border border-border bg-background p-6 shadow-lg'>
-        <div className='flex items-center gap-2 mb-3'>
-          <AlertTriangleIcon className='size-5 text-red-400' />
-          <h3 className='text-sm font-semibold text-white'>Delete Row</h3>
-        </div>
-        <p className='text-xs text-gray-400 mb-4'>
-          Are you sure you want to delete this row? This action cannot be undone.
-        </p>
-        <div className='flex justify-end gap-2'>
-          <Button variant='outline' size='sm' onClick={onClose}>Cancel</Button>
-          <Button variant='destructive' size='sm' onClick={onConfirm} disabled={isPending}>
-            {isPending ? 'Deleting...' : 'Delete'}
-          </Button>
-        </div>
-      </div>
-    </div>
+          </FormField>
+        ))}
+      </form>
+    </FormModal>
   );
 }
 
@@ -398,36 +376,28 @@ export function CrudPanel({
     <div ref={panelRef} className='space-y-4'>
       {/* Table selector */}
       <div className='flex flex-wrap items-center gap-3'>
-        <select
+        <UnifiedSelect
           value={selectedTable}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => {
-            setSelectedTable(e.target.value);
+          onValueChange={(v: string): void => {
+            setSelectedTable(v);
             setPage(1);
             setMutationError(null);
             setSuccessMessage(null);
           }}
-          className='h-8 rounded-md border border-border bg-card px-2 text-xs text-gray-200 min-w-[200px]'
-        >
-          <option value=''>Select a table...</option>
-          {tableDetails.map((t: DatabaseTableDetail) => (
-            <option key={t.name} value={t.name}>
-              {t.name} (~{t.rowEstimate} rows)
-            </option>
-          ))}
-        </select>
+          options={tableDetails.map((t: DatabaseTableDetail) => ({
+            value: t.name,
+            label: `${t.name} (~${t.rowEstimate} rows)`,
+          }))}
+          placeholder='Select a table...'
+          triggerClassName='h-8 min-w-[240px] text-xs'
+        />
 
         {selectedTable && (
           <>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={fetchRows}
-              disabled={rowsQuery.isFetching}
-              className='h-8 gap-1 text-xs'
-            >
-              <RefreshCwIcon className='size-3' />
-              Refresh
-            </Button>
+            <RefreshButton
+              onRefresh={fetchRows}
+              isRefreshing={rowsQuery.isFetching}
+            />
             <Button
               size='sm'
               onClick={(): void => setShowAddModal(true)}
@@ -464,21 +434,21 @@ export function CrudPanel({
           {!isLoadingRows && rows.length > 0 && (
             <>
               <div className='overflow-auto max-h-[50vh]'>
-                <table className='w-full text-xs'>
-                  <thead className='sticky top-0 bg-card'>
-                    <tr className='border-b border-border text-left text-gray-500'>
-                      <th className='px-3 py-2 font-medium'>Actions</th>
+                <Table className='text-xs'>
+                  <TableHeader className='sticky top-0 bg-card z-10'>
+                    <TableRow className='hover:bg-transparent'>
+                      <TableHead className='w-20 font-medium'>Actions</TableHead>
                       {columnKeys.map((key: string) => (
-                        <th key={key} className='whitespace-nowrap px-3 py-2 font-medium font-mono'>
+                        <TableHead key={key} className='whitespace-nowrap font-medium font-mono'>
                           {key}
-                        </th>
+                        </TableHead>
                       ))}
-                    </tr>
-                  </thead>
-                  <tbody className='divide-y divide-border'>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {rows.map((row: Record<string, unknown>, i: number) => (
-                      <tr key={i} className='text-gray-300 hover:bg-muted/30'>
-                        <td className='px-3 py-1.5'>
+                      <TableRow key={i} className='text-gray-300 hover:bg-muted/30'>
+                        <TableCell className='py-1.5'>
                           <div className='flex items-center gap-1'>
                             <button
                               type='button'
@@ -497,20 +467,20 @@ export function CrudPanel({
                               <Trash2Icon className='size-3' />
                             </button>
                           </div>
-                        </td>
+                        </TableCell>
                         {columnKeys.map((key: string) => (
-                          <td
+                          <TableCell
                             key={key}
-                            className='max-w-[200px] truncate whitespace-nowrap px-3 py-1.5 font-mono'
+                            className='max-w-[200px] truncate whitespace-nowrap font-mono py-1.5'
                             title={formatCellValue(row[key])}
                           >
                             {formatCellValue(row[key])}
-                          </td>
+                          </TableCell>
                         ))}
-                      </tr>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
 
               <div className='flex items-center justify-between border-t border-border px-4 py-2'>
@@ -559,10 +529,15 @@ export function CrudPanel({
       )}
 
       {deletingRow && (
-        <DeleteConfirmModal
+        <ConfirmDialog
+          open={true}
+          onOpenChange={(open: boolean) => !open && setDeletingRow(null)}
           onConfirm={handleDelete}
-          onClose={(): void => setDeletingRow(null)}
-          isPending={crudMutation.isPending}
+          title='Delete Row'
+          description='Are you sure you want to delete this row? This action cannot be undone.'
+          confirmText='Delete'
+          variant='destructive'
+          loading={crudMutation.isPending}
         />
       )}
     </div>

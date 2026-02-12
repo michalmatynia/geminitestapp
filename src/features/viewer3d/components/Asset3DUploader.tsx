@@ -4,7 +4,7 @@ import { Upload, Loader2, Plus, X } from 'lucide-react';
 import { useState, useCallback } from 'react';
 
 import { logClientError } from '@/features/observability';
-import { Button, Input, Label, FileUploadTrigger } from '@/shared/ui';
+import { Button, Input, Label, FileUploadTrigger, Textarea, Checkbox, Tag } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { uploadAsset3DFile } from '../api';
@@ -197,13 +197,12 @@ export function Asset3DUploader({
             <Label htmlFor='upload-description' className='text-sm text-gray-300'>
               Description
             </Label>
-            <textarea
+            <Textarea
               id='upload-description'
               value={description}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setDescription(e.target.value)}
               placeholder='Enter description...'
-              rows={2}
-              className='mt-1 w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm'
+              className='mt-1 bg-gray-800 border-gray-700 min-h-[60px]'
               disabled={isUploading}
             />
           </div>
@@ -267,20 +266,13 @@ export function Asset3DUploader({
             {tags.length > 0 && (
               <div className='flex flex-wrap gap-1 mt-2'>
                 {tags.map((tag: string) => (
-                  <span
+                  <Tag
                     key={tag}
-                    className='inline-flex items-center gap-1 px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs'
-                  >
-                    {tag}
-                    <button
-                      type='button'
-                      onClick={() => handleRemoveTag(tag)}
-                      className='text-gray-500 hover:text-red-400'
-                      disabled={isUploading}
-                    >
-                      <X className='h-3 w-3' />
-                    </button>
-                  </span>
+                    label={tag}
+                    onRemove={() => handleRemoveTag(tag)}
+                    className='bg-gray-700 text-gray-300 border-none'
+                    disabled={isUploading}
+                  />
                 ))}
               </div>
             )}
@@ -288,11 +280,9 @@ export function Asset3DUploader({
 
           {/* Visibility */}
           <label className='flex items-center gap-3 cursor-pointer'>
-            <input
-              type='checkbox'
+            <Checkbox
               checked={isPublic}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setIsPublic(e.target.checked)}
-              className='rounded border-gray-600 bg-gray-800 text-blue-500 focus:ring-blue-500'
+              onCheckedChange={(checked: boolean | 'indeterminate') => setIsPublic(Boolean(checked))}
               disabled={isUploading}
             />
             <span className='text-sm text-gray-300'>Make publicly visible</span>

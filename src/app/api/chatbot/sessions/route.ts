@@ -89,6 +89,9 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
 
   const session = await chatbotSessionRepository.create({
     title: title?.trim() || `Chat ${new Date().toLocaleString()}`,
+    userId: ctx.userId ?? null,
+    messages: [],
+    messageCount: 0,
     ...(settings !== undefined ? { settings } : {}),
   });
 

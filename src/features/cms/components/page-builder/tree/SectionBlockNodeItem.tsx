@@ -6,13 +6,16 @@ import React, { useMemo, useState } from 'react';
 import { TreeRow, TreeCaret, TreeActionButton, TreeActionSlot, TreeContextMenu, type TreeContextMenuItem } from '@/shared/ui';
 import { DRAG_KEYS, hasDragType } from '@/shared/utils/drag-drop';
 
+import { BLOCK_ICONS, CONVERTIBLE_SECTION_TYPES, resolveBlockLabel } from './tree-constants';
 import { useDragStateExtract } from '../../../hooks/useDragStateExtract';
 import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
 import { useTreeActions } from '../../../hooks/useTreeActionsContext';
+import { readBlockDragData, setBlockDragData } from '../../../utils/page-builder-dnd';
 import { ColumnBlockPicker } from '../ColumnBlockPicker';
 import { BlockNodeItem } from './BlockNodeItem';
-import { BLOCK_ICONS, CONVERTIBLE_SECTION_TYPES, resolveBlockLabel } from './tree-constants';
-import { readBlockDragData, setBlockDragData } from '../../../utils/page-builder-dnd';
+import { useTreeColumnId } from './TreeColumnContext';
+import { TreeParentBlockProvider } from './TreeParentBlockContext';
+import { useTreeSectionId } from './TreeSectionContext';
 
 import type { SectionBlockNodeItemProps } from './tree-types';
 import type { BlockInstance } from '../../../types/page-builder';
@@ -20,9 +23,9 @@ import type { BlockInstance } from '../../../types/page-builder';
 export function SectionBlockNodeItem({
   block,
   index,
-  sectionId,
-  columnId,
 }: SectionBlockNodeItemProps): React.ReactNode {
+  const sectionId = useTreeSectionId();
+  const columnId = useTreeColumnId();
   const { state: pbState } = usePageBuilder();
   const {
     expandedIds,
@@ -109,7 +112,7 @@ export function SectionBlockNodeItem({
           }}
           onDragOver={(e: React.DragEvent) => {
             const isSectionDrop = draggedSectionId && draggedSectionId !== sectionId && CONVERTIBLE_SECTION_TYPES.includes(draggedSectionType ?? '');
-            const hasBlockPayload = hasDragType(e.dataTransfer, [DRAG_KEYS.TEXT]);
+            const hasBlockPayload = hasDragType(e.dataTransfer, [DRAG_KEYS.BLOCK_ID]);
             const isBlockDrop = (draggedBlockId && draggedBlockId !== block.id) || hasBlockPayload;
             if (isTextAtom) {
               if (!isBlockDrop) return;
@@ -258,14 +261,12 @@ export function SectionBlockNodeItem({
       {isExpanded && hasChildren && (
         <div className='ml-5 border-l border-border/30 pl-1'>
           {(block.blocks ?? []).map((child: BlockInstance, childIndex: number) => (
-            <BlockNodeItem
-              key={child.id}
-              block={child}
-              index={childIndex}
-              sectionId={sectionId}
-              columnId={columnId}
-              parentBlockId={block.id}
-            />
+            <TreeParentBlockProvider key={child.id} parentBlockId={block.id}>
+              <BlockNodeItem
+                block={child}
+                index={childIndex}
+              />
+            </TreeParentBlockProvider>
           ))}
         </div>
       )}

@@ -7,6 +7,7 @@ import type { ExternalCategory } from '@/features/integrations/types/category-ma
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui';
 
 import { CategoryMapperRow } from './CategoryMapperRow';
+import { CategoryMapperRowDepthProvider } from './CategoryMapperRowDepthContext';
 
 export function CategoryMapperTable(): React.JSX.Element {
   const {
@@ -44,7 +45,9 @@ export function CategoryMapperTable(): React.JSX.Element {
             </TableRow>
           ) : (
             categoryTree.map((category: ExternalCategory) => (
-              <CategoryMapperRow key={category.id} category={category} depth={0} />
+              <CategoryMapperRowDepthProvider key={category.id} depth={0}>
+                <CategoryMapperRow category={category} />
+              </CategoryMapperRowDepthProvider>
             ))
           )}
         </TableBody>

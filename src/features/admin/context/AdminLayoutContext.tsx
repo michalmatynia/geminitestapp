@@ -7,6 +7,8 @@ import { internalError } from '@/shared/errors/app-error';
 interface AdminLayoutContextType {
   isMenuCollapsed: boolean;
   setIsMenuCollapsed: (isCollapsed: boolean) => void;
+  isMenuHidden: boolean;
+  setIsMenuHidden: (isHidden: boolean) => void;
   isProgrammaticallyCollapsed: boolean;
   setIsProgrammaticallyCollapsed: (isProgrammaticallyCollapsed: boolean) => void;
   aiDrawerOpen: boolean;
@@ -25,6 +27,7 @@ export function AdminLayoutProvider({
   initialMenuCollapsed?: boolean;
 }): React.ReactNode {
   const [isMenuCollapsed, setIsMenuCollapsed] = useState(initialMenuCollapsed);
+  const [isMenuHidden, setIsMenuHidden] = useState(false);
   const [isProgrammaticallyCollapsed, setIsProgrammaticallyCollapsed] = useState(false);
   const [aiDrawerOpen, setAiDrawerOpen] = useState(false);
 
@@ -33,6 +36,8 @@ export function AdminLayoutProvider({
       value={{
         isMenuCollapsed,
         setIsMenuCollapsed,
+        isMenuHidden,
+        setIsMenuHidden,
         isProgrammaticallyCollapsed,
         setIsProgrammaticallyCollapsed,
         aiDrawerOpen,

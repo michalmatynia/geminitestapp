@@ -2,7 +2,7 @@
 
 import { useAgentCreatorSettings } from '@/features/ai/agentcreator/hooks/useAgentCreatorSettings';
 import type { AgentPersonaSettings } from '@/features/ai/agentcreator/types';
-import { Label, UnifiedSelect } from '@/shared/ui';
+import { UnifiedSelect, FormField } from '@/shared/ui';
 
 const DEFAULT_VALUE = '__default__';
 
@@ -100,11 +100,11 @@ export function AgentPersonaSettingsForm({
     <div className='space-y-4'>
       <div className='grid gap-4 md:grid-cols-2'>
         {MODEL_FIELDS.map((field: ModelField) => (
-          <div key={field.key} className='space-y-2'>
-            <div>
-              <Label className='text-xs text-gray-300'>{field.label}</Label>
-              <p className='text-[11px] text-gray-500'>{field.description}</p>
-            </div>
+          <FormField
+            key={field.key}
+            label={field.label}
+            description={field.description}
+          >
             <UnifiedSelect
               value={toSelectValue(settings[field.key])}
               onValueChange={(value: string): void => handleUpdate(field.key, value)}
@@ -115,7 +115,7 @@ export function AgentPersonaSettingsForm({
               placeholder='Select model'
               triggerClassName='w-full border-border bg-card/70 text-sm text-white'
             />
-          </div>
+          </FormField>
         ))}
       </div>
     </div>

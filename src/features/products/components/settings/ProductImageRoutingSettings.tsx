@@ -10,7 +10,7 @@ import {
 import { normalizeProductImageExternalBaseUrl } from '@/features/products/utils/image-routing';
 import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, Input, Label, useToast } from '@/shared/ui';
+import { Button, Input, Label, RadioGroup, RadioGroupItem, useToast } from '@/shared/ui';
 
 const dedupeRoutes = (routes: string[]): string[] => {
   const next: string[] = [];
@@ -184,22 +184,25 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
 
       <div className='space-y-2'>
         <Label>Available Routes</Label>
-        <div className='space-y-2'>
+        <RadioGroup
+          value={defaultRoute}
+          onValueChange={setDefaultRoute}
+          className='space-y-2'
+          disabled={updateSettingsBulk.isPending}
+        >
           {routes.map((route: string) => {
-            const isDefault = defaultRoute === route;
             return (
               <div
                 key={route}
                 className='flex items-center gap-3 rounded-md border border-gray-200 px-3 py-2'
               >
-                <input
-                  type='radio'
-                  name='productImageDefaultRoute'
-                  checked={isDefault}
-                  onChange={() => setDefaultRoute(route)}
-                  disabled={updateSettingsBulk.isPending}
-                />
-                <span className='min-w-0 flex-1 truncate text-sm'>{route}</span>
+                <RadioGroupItem value={route} id={`route-${route}`} />
+                <Label
+                  htmlFor={`route-${route}`}
+                  className='min-w-0 flex-1 truncate text-sm font-normal cursor-pointer'
+                >
+                  {route}
+                </Label>
                 <Button
                   type='button'
                   variant='ghost'
@@ -211,7 +214,7 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
               </div>
             );
           })}
-        </div>
+        </RadioGroup>
       </div>
 
       <div className='flex items-center gap-3'>

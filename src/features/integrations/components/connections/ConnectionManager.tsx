@@ -2,7 +2,7 @@
 
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 import { IntegrationConnection, TestLogEntry } from '@/features/integrations/types/integrations-ui';
-import { Button, Input, Label, SectionPanel } from '@/shared/ui';
+import { Button, Input, SectionPanel, StatusBadge, FormSection, FormField } from '@/shared/ui';
 
 export function ConnectionManager(): React.JSX.Element {
   const {
@@ -56,13 +56,12 @@ export function ConnectionManager(): React.JSX.Element {
 
   return (
     <div className='grid gap-4 md:grid-cols-2'>
-      <SectionPanel variant='subtle' className='p-4'>
-        <h3 className='text-sm font-semibold text-white'>
-          {editingConnectionId ? 'Connection details' : 'Add connection'}
-        </h3>
-        <div className='mt-3 space-y-3'>
-          <div>
-            <Label className='text-xs text-gray-400'>Connection name</Label>
+      <FormSection
+        title={editingConnectionId ? 'Connection details' : 'Add connection'}
+        className='p-4'
+      >
+        <div className='space-y-3'>
+          <FormField label='Connection name'>
             <Input
               className='w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white'
               placeholder={connectionNamePlaceholder}
@@ -74,9 +73,8 @@ export function ConnectionManager(): React.JSX.Element {
                 }))
               }
             />
-          </div>
-          <div>
-            <Label className='text-xs text-gray-400'>{usernameLabel}</Label>
+          </FormField>
+          <FormField label={usernameLabel}>
             <Input
               className='w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white'
               placeholder={usernamePlaceholder}
@@ -88,9 +86,8 @@ export function ConnectionManager(): React.JSX.Element {
                 }))
               }
             />
-          </div>
-          <div>
-            <Label className='text-xs text-gray-400'>{passwordLabel}</Label>
+          </FormField>
+          <FormField label={passwordLabel}>
             <Input
               className='w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white'
               type='password'
@@ -111,7 +108,7 @@ export function ConnectionManager(): React.JSX.Element {
                 }))
               }
             />
-          </div>
+          </FormField>
           <Button
             className='w-full rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200'
             type='button'
@@ -120,10 +117,9 @@ export function ConnectionManager(): React.JSX.Element {
             {editingConnectionId ? 'Update connection' : 'Save connection'}
           </Button>
         </div>
-      </SectionPanel>
+      </FormSection>
 
-      <SectionPanel variant='subtle' className='p-4'>
-        <h3 className='text-sm font-semibold text-white'>Existing connection</h3>
+      <FormSection title='Existing connection' className='p-4'>
         {connections.length === 0 ? (
           <p className='mt-3 text-sm text-gray-400'>No connections yet.</p>
         ) : (
@@ -172,11 +168,12 @@ export function ConnectionManager(): React.JSX.Element {
           </div>
         )}
         {showPlaywright && (
-          <SectionPanel variant='subtle-compact' className='mt-4 p-3'>
+          <FormSection
+            title='Playwright live update'
+            variant='subtle-compact'
+            className='mt-4 p-3'
+          >
             <div className='flex items-center justify-between'>
-              <p className='text-xs font-semibold text-gray-300'>
-                Playwright live update
-              </p>
               <span className='text-xs text-gray-500'>
                 {isTesting ? 'Running...' : 'Idle'}
               </span>
@@ -195,13 +192,8 @@ export function ConnectionManager(): React.JSX.Element {
                   >
                     <p>{entry.step}</p>
                     {entry.status !== 'pending' && (
-                      <Button
-                        type='button'
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                          entry.status === 'ok'
-                            ? 'bg-emerald-500/20 text-emerald-200'
-                            : 'bg-red-500/20 text-red-200'
-                        }`}
+                      <StatusBadge
+                        status={entry.status === 'ok' ? 'OK' : 'FAILED'}
                         onClick={(): void => {
                           setSelectedStep(
                             entry.status !== 'pending'
@@ -210,17 +202,15 @@ export function ConnectionManager(): React.JSX.Element {
                           );
                           setShowTestLogModal(true);
                         }}
-                      >
-                        {entry.status === 'ok' ? 'OK' : 'FAILED'}
-                      </Button>
+                      />
                     )}
                   </div>
                 ))}
               </div>
             )}
-          </SectionPanel>
+          </FormSection>
         )}
-      </SectionPanel>
+      </FormSection>
     </div>
   );
 }

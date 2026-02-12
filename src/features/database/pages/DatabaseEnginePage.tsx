@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertTriangleIcon, DatabaseIcon, HardDriveIcon, RefreshCcwIcon, SaveIcon } from 'lucide-react';
+import { AlertTriangleIcon, DatabaseIcon, HardDriveIcon, SaveIcon } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -29,7 +29,7 @@ import {
   type DatabaseEngineServiceRoute,
 } from '@/shared/lib/db/database-engine-constants';
 import { normalizeDatabaseEngineOperationControls } from '@/shared/lib/db/database-engine-operation-controls';
-import { PageLayout, Button, ConfirmDialog, SectionPanel, useToast } from '@/shared/ui';
+import { PageLayout, Button, ConfirmDialog, SectionPanel, RefreshButton, useToast, FormSection, FormField, Label, Input, Table, TableHeader, TableRow, TableHead, TableBody, TableCell, Badge, UnifiedSelect, Checkbox, Switch } from '@/shared/ui';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import { DatabaseBackupsPanel } from '../components/DatabaseBackupsPanel';
@@ -752,10 +752,9 @@ export default function DatabaseEnginePage(): React.JSX.Element {
       headerActions={
         workspaceView === 'engine' ? (
           <div className='flex items-center gap-2'>
-            <Button
-              variant='outline'
-              onClick={refreshAll}
-              disabled={
+            <RefreshButton
+              onRefresh={refreshAll}
+              isRefreshing={
                 settingsQuery.isFetching ||
                 schemaQuery.isFetching ||
                 redisQuery.isFetching ||
@@ -764,10 +763,7 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                 operationsJobsQuery.isFetching ||
                 providerPreviewQuery.isFetching
               }
-            >
-              <RefreshCcwIcon className='mr-2 size-4' />
-              Refresh
-            </Button>
+            />
             <Button
               onClick={(): void => {
                 void saveEngineConfiguration();
@@ -843,96 +839,88 @@ export default function DatabaseEnginePage(): React.JSX.Element {
             }}
           />
 
-          <SectionPanel className='p-5'>
-            <div className='flex items-start justify-between gap-4'>
-              <div>
-                <h2 className='text-lg font-semibold text-white'>Policy Mode</h2>
-                <p className='mt-1 text-sm text-gray-400'>
-              Define whether fallback, backfill, and migrations are automatic or strictly manual.
-                </p>
-              </div>
+          <FormSection
+            title='Policy Mode'
+            description='Define whether fallback, backfill, and migrations are automatic or strictly manual.'
+            actions={(
               <Button variant='outline' onClick={applyManualOnlyTemplate}>
-            Apply Manual-Only Template
+                Apply Manual-Only Template
               </Button>
-            </div>
+            )}
+            className='p-5'
+          >
             <div className='mt-4 grid gap-3 md:grid-cols-2'>
-              <label className='flex items-center gap-2 text-sm text-gray-200'>
-                <input
-                  type='checkbox'
+              <label className='flex items-center gap-2 text-sm text-gray-200 cursor-pointer'>
+                <Checkbox
                   checked={policyDraft.requireExplicitServiceRouting}
-                  onChange={(event): void =>
+                  onCheckedChange={(val: boolean | 'indeterminate'): void =>
                     setPolicyDraft((prev) => ({
                       ...prev,
-                      requireExplicitServiceRouting: event.target.checked,
+                      requireExplicitServiceRouting: Boolean(val),
                     }))
                   }
                 />
-            Require explicit service routing
+                Require explicit service routing
               </label>
-              <label className='flex items-center gap-2 text-sm text-gray-200'>
-                <input
-                  type='checkbox'
+              <label className='flex items-center gap-2 text-sm text-gray-200 cursor-pointer'>
+                <Checkbox
                   checked={policyDraft.requireExplicitCollectionRouting}
-                  onChange={(event): void =>
+                  onCheckedChange={(val: boolean | 'indeterminate'): void =>
                     setPolicyDraft((prev) => ({
                       ...prev,
-                      requireExplicitCollectionRouting: event.target.checked,
+                      requireExplicitCollectionRouting: Boolean(val),
                     }))
                   }
                 />
-            Require explicit collection routing
+                Require explicit collection routing
               </label>
-              <label className='flex items-center gap-2 text-sm text-gray-200'>
-                <input
-                  type='checkbox'
+              <label className='flex items-center gap-2 text-sm text-gray-200 cursor-pointer'>
+                <Checkbox
                   checked={policyDraft.allowAutomaticFallback}
-                  onChange={(event): void =>
+                  onCheckedChange={(val: boolean | 'indeterminate'): void =>
                     setPolicyDraft((prev) => ({
                       ...prev,
-                      allowAutomaticFallback: event.target.checked,
+                      allowAutomaticFallback: Boolean(val),
                     }))
                   }
                 />
-            Allow automatic fallback
+                Allow automatic fallback
               </label>
-              <label className='flex items-center gap-2 text-sm text-gray-200'>
-                <input
-                  type='checkbox'
+              <label className='flex items-center gap-2 text-sm text-gray-200 cursor-pointer'>
+                <Checkbox
                   checked={policyDraft.allowAutomaticBackfill}
-                  onChange={(event): void =>
+                  onCheckedChange={(val: boolean | 'indeterminate'): void =>
                     setPolicyDraft((prev) => ({
                       ...prev,
-                      allowAutomaticBackfill: event.target.checked,
+                      allowAutomaticBackfill: Boolean(val),
                     }))
                   }
                 />
-            Allow automatic backfill
+                Allow automatic backfill
               </label>
-              <label className='flex items-center gap-2 text-sm text-gray-200'>
-                <input
-                  type='checkbox'
+              <label className='flex items-center gap-2 text-sm text-gray-200 cursor-pointer'>
+                <Checkbox
                   checked={policyDraft.allowAutomaticMigrations}
-                  onChange={(event): void =>
+                  onCheckedChange={(val: boolean | 'indeterminate'): void =>
                     setPolicyDraft((prev) => ({
                       ...prev,
-                      allowAutomaticMigrations: event.target.checked,
+                      allowAutomaticMigrations: Boolean(val),
                     }))
                   }
                 />
-            Allow automatic migrations
+                Allow automatic migrations
               </label>
-              <label className='flex items-center gap-2 text-sm text-gray-200'>
-                <input
-                  type='checkbox'
+              <label className='flex items-center gap-2 text-sm text-gray-200 cursor-pointer'>
+                <Checkbox
                   checked={policyDraft.strictProviderAvailability}
-                  onChange={(event): void =>
+                  onCheckedChange={(val: boolean | 'indeterminate'): void =>
                     setPolicyDraft((prev) => ({
                       ...prev,
-                      strictProviderAvailability: event.target.checked,
+                      strictProviderAvailability: Boolean(val),
                     }))
                   }
                 />
-            Enforce provider availability (throw on missing env)
+                Enforce provider availability (throw on missing env)
               </label>
             </div>
 
@@ -947,16 +935,12 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                 ? 'Manual-only strict mode is active in the draft.'
                 : 'Strict manual-only mode is not fully active. Use "Apply Manual-Only Template" for no automatic fallback/backfill/migration.'}
             </div>
-          </SectionPanel>
+          </FormSection>
 
-          <SectionPanel className='mt-6 p-5'>
-            <div className='flex flex-wrap items-start justify-between gap-3'>
-              <div>
-                <h2 className='text-lg font-semibold text-white'>Manual Operation Controls</h2>
-                <p className='mt-1 text-sm text-gray-400'>
-              Server-enforced switches for manual engine actions. Disabled actions return explicit API errors.
-                </p>
-              </div>
+          <FormSection
+            title='Manual Operation Controls'
+            description='Server-enforced switches for manual engine actions. Disabled actions return explicit API errors.'
+            actions={(
               <div className='flex flex-wrap gap-2'>
                 <Button
                   variant='outline'
@@ -973,7 +957,7 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                     });
                   }}
                 >
-              Enable All
+                  Enable All
                 </Button>
                 <Button
                   variant='outline'
@@ -990,146 +974,146 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                     });
                   }}
                 >
-              Disable All
+                  Disable All
                 </Button>
               </div>
-            </div>
-
+            )}
+            className='mt-6 p-5'
+          >
             <div className='mt-4 grid gap-3 md:grid-cols-2'>
-              <label className='flex items-center gap-2 text-sm text-gray-200'>
-                <input
-                  type='checkbox'
+              <div className='flex items-center justify-between gap-3 rounded-md border border-border/40 bg-card/30 p-2'>
+                <span className='text-sm text-gray-200'>Allow manual full sync (MongoDB &lt;-&gt; Prisma)</span>
+                <Switch
                   checked={operationControlsDraft.allowManualFullSync}
-                  onChange={(event): void =>
+                  onCheckedChange={(val: boolean): void =>
                     setOperationControlsDraft((prev) => ({
                       ...prev,
-                      allowManualFullSync: event.target.checked,
+                      allowManualFullSync: val,
                     }))
                   }
                 />
-            Allow manual full sync (MongoDB &lt;-&gt; Prisma)
-              </label>
-              <label className='flex items-center gap-2 text-sm text-gray-200'>
-                <input
-                  type='checkbox'
-                  checked={operationControlsDraft.allowManualCollectionSync}
-                  onChange={(event): void =>
-                    setOperationControlsDraft((prev) => ({
-                      ...prev,
-                      allowManualCollectionSync: event.target.checked,
-                    }))
-                  }
-                />
-            Allow manual collection sync
-              </label>
-              <label className='flex items-center gap-2 text-sm text-gray-200'>
-                <input
-                  type='checkbox'
-                  checked={operationControlsDraft.allowManualBackfill}
-                  onChange={(event): void =>
-                    setOperationControlsDraft((prev) => ({
-                      ...prev,
-                      allowManualBackfill: event.target.checked,
-                    }))
-                  }
-                />
-            Allow manual settings backfill
-              </label>
-              <label className='flex items-center gap-2 text-sm text-gray-200'>
-                <input
-                  type='checkbox'
-                  checked={operationControlsDraft.allowManualBackupRunNow}
-                  onChange={(event): void =>
-                    setOperationControlsDraft((prev) => ({
-                      ...prev,
-                      allowManualBackupRunNow: event.target.checked,
-                    }))
-                  }
-                />
-            Allow manual backup run-now
-              </label>
-              <label className='flex items-center gap-2 text-sm text-gray-200'>
-                <input
-                  type='checkbox'
-                  checked={operationControlsDraft.allowManualBackupMaintenance}
-                  onChange={(event): void =>
-                    setOperationControlsDraft((prev) => ({
-                      ...prev,
-                      allowManualBackupMaintenance: event.target.checked,
-                    }))
-                  }
-                />
-            Allow manual backup restore/upload/delete
-              </label>
-              <label className='flex items-center gap-2 text-sm text-gray-200'>
-                <input
-                  type='checkbox'
-                  checked={operationControlsDraft.allowBackupSchedulerTick}
-                  onChange={(event): void =>
-                    setOperationControlsDraft((prev) => ({
-                      ...prev,
-                      allowBackupSchedulerTick: event.target.checked,
-                    }))
-                  }
-                />
-            Allow manual backup scheduler tick
-              </label>
-              <label className='flex items-center gap-2 text-sm text-gray-200'>
-                <input
-                  type='checkbox'
-                  checked={operationControlsDraft.allowOperationJobCancellation}
-                  onChange={(event): void =>
-                    setOperationControlsDraft((prev) => ({
-                      ...prev,
-                      allowOperationJobCancellation: event.target.checked,
-                    }))
-                  }
-                />
-            Allow operation job cancellation
-              </label>
-            </div>
-          </SectionPanel>
-
-          <SectionPanel className='mt-6 p-5'>
-            <div className='flex flex-wrap items-start justify-between gap-3'>
-              <div>
-                <h2 className='text-lg font-semibold text-white'>Engine Validation</h2>
-                <p className='mt-1 text-sm text-gray-400'>
-              Validate strict policy requirements before saving routing changes.
-                </p>
               </div>
+              <div className='flex items-center justify-between gap-3 rounded-md border border-border/40 bg-card/30 p-2'>
+                <span className='text-sm text-gray-200'>Allow manual collection sync</span>
+                <Switch
+                  checked={operationControlsDraft.allowManualCollectionSync}
+                  onCheckedChange={(val: boolean): void =>
+                    setOperationControlsDraft((prev) => ({
+                      ...prev,
+                      allowManualCollectionSync: val,
+                    }))
+                  }
+                />
+              </div>
+              <div className='flex items-center justify-between gap-3 rounded-md border border-border/40 bg-card/30 p-2'>
+                <span className='text-sm text-gray-200'>Allow manual settings backfill</span>
+                <Switch
+                  checked={operationControlsDraft.allowManualBackfill}
+                  onCheckedChange={(val: boolean): void =>
+                    setOperationControlsDraft((prev) => ({
+                      ...prev,
+                      allowManualBackfill: val,
+                    }))
+                  }
+                />
+              </div>
+              <div className='flex items-center justify-between gap-3 rounded-md border border-border/40 bg-card/30 p-2'>
+                <span className='text-sm text-gray-200'>Allow manual backup run-now</span>
+                <Switch
+                  checked={operationControlsDraft.allowManualBackupRunNow}
+                  onCheckedChange={(val: boolean): void =>
+                    setOperationControlsDraft((prev) => ({
+                      ...prev,
+                      allowManualBackupRunNow: val,
+                    }))
+                  }
+                />
+              </div>
+              <div className='flex items-center justify-between gap-3 rounded-md border border-border/40 bg-card/30 p-2'>
+                <span className='text-sm text-gray-200'>Allow manual backup restore/upload/delete</span>
+                <Switch
+                  checked={operationControlsDraft.allowManualBackupMaintenance}
+                  onCheckedChange={(val: boolean): void =>
+                    setOperationControlsDraft((prev) => ({
+                      ...prev,
+                      allowManualBackupMaintenance: val,
+                    }))
+                  }
+                />
+              </div>
+              <div className='flex items-center justify-between gap-3 rounded-md border border-border/40 bg-card/30 p-2'>
+                <span className='text-sm text-gray-200'>Allow manual backup scheduler tick</span>
+                <Switch
+                  checked={operationControlsDraft.allowBackupSchedulerTick}
+                  onCheckedChange={(val: boolean): void =>
+                    setOperationControlsDraft((prev) => ({
+                      ...prev,
+                      allowBackupSchedulerTick: val,
+                    }))
+                  }
+                />
+              </div>
+              <div className='flex items-center justify-between gap-3 rounded-md border border-border/40 bg-card/30 p-2'>
+                <span className='text-sm text-gray-200'>Allow operation job cancellation</span>
+                <Switch
+                  checked={operationControlsDraft.allowOperationJobCancellation}
+                  onCheckedChange={(val: boolean): void =>
+                    setOperationControlsDraft((prev) => ({
+                      ...prev,
+                      allowOperationJobCancellation: val,
+                    }))
+                  }
+                />
+              </div>
+            </div>
+          </FormSection>
+
+          <FormSection
+            title='Engine Validation'
+            description='Validate strict policy requirements before saving routing changes.'
+            actions={(
               <div className='flex flex-wrap gap-2'>
                 <Button
                   variant='outline'
                   size='sm'
                   onClick={(): void => assignUnmappedCollections('prisma')}
                 >
-              Assign Unmapped -&gt; Prisma
+                  Assign Unmapped -&gt; Prisma
                 </Button>
                 <Button
                   variant='outline'
                   size='sm'
                   onClick={(): void => assignUnmappedCollections('mongodb')}
                 >
-              Assign Unmapped -&gt; MongoDB
+                  Assign Unmapped -&gt; MongoDB
                 </Button>
                 {orphanedCollectionRoutes.length > 0 && (
                   <Button variant='outline' size='sm' onClick={clearOrphanedCollectionRoutes}>
-                Clear Orphaned Routes
+                    Clear Orphaned Routes
                   </Button>
                 )}
               </div>
-            </div>
-
+            )}
+            className='mt-6 p-5'
+          >
             <div className='mt-4 grid gap-2 text-xs sm:grid-cols-3'>
-              <div className='rounded border border-gray-800/80 bg-black/20 px-2 py-2 text-gray-300'>
-            Prisma env: {providerAvailability.prisma === null ? 'Unknown' : providerAvailability.prisma ? 'Configured' : 'Missing'}
+              <div className='flex items-center justify-between rounded border border-gray-800/80 bg-black/20 px-3 py-2 text-gray-300'>
+                <span>Prisma env:</span>
+                <Badge variant={providerAvailability.prisma ? 'success' : 'destructive'} className='text-[10px]'>
+                  {providerAvailability.prisma === null ? 'Unknown' : providerAvailability.prisma ? 'Configured' : 'Missing'}
+                </Badge>
               </div>
-              <div className='rounded border border-gray-800/80 bg-black/20 px-2 py-2 text-gray-300'>
-            MongoDB env: {providerAvailability.mongodb === null ? 'Unknown' : providerAvailability.mongodb ? 'Configured' : 'Missing'}
+              <div className='flex items-center justify-between rounded border border-gray-800/80 bg-black/20 px-3 py-2 text-gray-300'>
+                <span>MongoDB env:</span>
+                <Badge variant={providerAvailability.mongodb ? 'success' : 'destructive'} className='text-[10px]'>
+                  {providerAvailability.mongodb === null ? 'Unknown' : providerAvailability.mongodb ? 'Configured' : 'Missing'}
+                </Badge>
               </div>
-              <div className='rounded border border-gray-800/80 bg-black/20 px-2 py-2 text-gray-300'>
-            Redis env: {providerAvailability.redis === null ? 'Unknown' : providerAvailability.redis ? 'Configured' : 'Missing'}
+              <div className='flex items-center justify-between rounded border border-gray-800/80 bg-black/20 px-3 py-2 text-gray-300'>
+                <span>Redis env:</span>
+                <Badge variant={providerAvailability.redis ? 'success' : 'destructive'} className='text-[10px]'>
+                  {providerAvailability.redis === null ? 'Unknown' : providerAvailability.redis ? 'Configured' : 'Missing'}
+                </Badge>
               </div>
             </div>
 
@@ -1177,7 +1161,7 @@ export default function DatabaseEnginePage(): React.JSX.Element {
             Save routing or policy changes and resolve these before running sync/migration operations.
               </div>
             )}
-          </SectionPanel>
+          </FormSection>
 
           <div className='mt-6 grid gap-4 lg:grid-cols-3'>
             <SectionPanel className='p-5'>
@@ -1249,14 +1233,10 @@ export default function DatabaseEnginePage(): React.JSX.Element {
             </SectionPanel>
           </div>
 
-          <SectionPanel className='mt-6 p-5'>
-            <div className='flex flex-wrap items-start justify-between gap-3'>
-              <div>
-                <h2 className='text-lg font-semibold text-white'>Service Routing</h2>
-                <p className='mt-1 text-sm text-gray-400'>
-              Route each application service to a primary data provider.
-                </p>
-              </div>
+          <FormSection
+            title='Service Routing'
+            description='Route each application service to a primary data provider.'
+            actions={(
               <div className='flex flex-wrap gap-2'>
                 <Button
                   variant='outline'
@@ -1271,7 +1251,7 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                     });
                   }}
                 >
-              Set All -&gt; Prisma
+                  Set All -&gt; Prisma
                 </Button>
                 <Button
                   variant='outline'
@@ -1286,7 +1266,7 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                     });
                   }}
                 >
-              Set All -&gt; MongoDB
+                  Set All -&gt; MongoDB
                 </Button>
                 <Button
                   variant='outline'
@@ -1295,28 +1275,28 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                     setServiceRouteMapDraft({});
                   }}
                 >
-              Clear Service Routes
+                  Clear Service Routes
                 </Button>
               </div>
-            </div>
+            )}
+            className='mt-6 p-5'
+          >
             {policyDraft.requireExplicitServiceRouting && missingServiceRoutes.length > 0 && (
               <div className='mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100'>
-            Explicit service routing is enabled, but {missingServiceRoutes.length} service route(s) are missing.
+                Explicit service routing is enabled, but {missingServiceRoutes.length} service route(s) are missing.
               </div>
             )}
             <div className='mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5'>
               {services.map((service) => (
-                <div key={service}>
-                  <label className='mb-1 block text-xs text-gray-400'>{serviceLabels[service]}</label>
-                  <select
+                <FormField key={service} label={serviceLabels[service]}>
+                  <UnifiedSelect
                     value={
                       serviceRouteMapDraft[service] === 'mongodb' ||
-                  serviceRouteMapDraft[service] === 'prisma'
+                      serviceRouteMapDraft[service] === 'prisma'
                         ? serviceRouteMapDraft[service]
                         : ''
                     }
-                    onChange={(event): void => {
-                      const value = event.target.value;
+                    onValueChange={(value: string): void => {
                       setServiceRouteMapDraft((prev) => {
                         const next = { ...prev };
                         if (value === 'mongodb' || value === 'prisma') {
@@ -1327,25 +1307,22 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                         return next;
                       });
                     }}
-                    className='w-full rounded-md border border-gray-700 bg-gray-900 px-2 py-2 text-xs text-gray-200'
-                  >
-                    <option value=''>Inherit/Unset</option>
-                    <option value='mongodb'>MongoDB</option>
-                    <option value='prisma'>Prisma</option>
-                  </select>
-                </div>
+                    options={[
+                      { value: '', label: 'Inherit/Unset' },
+                      { value: 'mongodb', label: 'MongoDB' },
+                      { value: 'prisma', label: 'Prisma' },
+                    ]}
+                    triggerClassName='h-9 text-xs'
+                  />
+                </FormField>
               ))}
             </div>
-          </SectionPanel>
+          </FormSection>
 
-          <SectionPanel className='mt-6 p-5'>
-            <div className='flex flex-wrap items-start justify-between gap-3'>
-              <div>
-                <h2 className='text-lg font-semibold text-white'>Collection Routing and Sync</h2>
-                <p className='mt-1 text-sm text-gray-400'>
-              Assign collection-level providers and run manual collection sync operations.
-                </p>
-              </div>
+          <FormSection
+            title='Collection Routing and Sync'
+            description='Assign collection-level providers and run manual collection sync operations.'
+            actions={(
               <div className='flex flex-wrap gap-2'>
                 <Button
                   variant='outline'
@@ -1354,46 +1331,47 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                     setCollectionRouteMapDraft({});
                   }}
                 >
-              Clear All Collection Routes
+                  Clear All Collection Routes
                 </Button>
               </div>
-            </div>
+            )}
+            className='mt-6 p-5'
+          >
             {policyDraft.requireExplicitCollectionRouting && missingCollectionRoutes.length > 0 && (
               <div className='mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100'>
-            Explicit collection routing is enabled, but {missingCollectionRoutes.length} collection(s) are still set to auto.
+                Explicit collection routing is enabled, but {missingCollectionRoutes.length} collection(s) are still set to auto.
               </div>
             )}
-            <div className='mt-4 overflow-auto'>
-              <table className='min-w-full text-xs'>
-                <thead>
-                  <tr className='border-b border-gray-800 text-left text-gray-400'>
-                    <th className='px-2 py-2'>Collection</th>
-                    <th className='px-2 py-2'>MongoDB</th>
-                    <th className='px-2 py-2'>Prisma</th>
-                    <th className='px-2 py-2'>Assigned Provider</th>
-                    <th className='px-2 py-2'>Effective (Auto)</th>
-                    <th className='px-2 py-2'>Manual Sync</th>
-                  </tr>
-                </thead>
-                <tbody>
+            <div className='mt-4 overflow-auto rounded-md border border-border/60 bg-card/40'>
+              <Table className='text-xs'>
+                <TableHeader>
+                  <TableRow className='bg-gray-900 text-left text-gray-400 hover:bg-transparent'>
+                    <TableHead className='px-2 py-2'>Collection</TableHead>
+                    <TableHead className='px-2 py-2'>MongoDB</TableHead>
+                    <TableHead className='px-2 py-2'>Prisma</TableHead>
+                    <TableHead className='px-2 py-2'>Assigned Provider</TableHead>
+                    <TableHead className='px-2 py-2'>Effective (Auto)</TableHead>
+                    <TableHead className='px-2 py-2'>Manual Sync</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {rows.map((row) => (
-                    <tr key={row.name} className='border-b border-gray-900'>
-                      <td className='px-2 py-2 font-mono text-gray-100'>{row.name}</td>
-                      <td className='px-2 py-2 text-gray-300'>
+                    <TableRow key={row.name} className='border-b border-gray-900 hover:bg-muted/30'>
+                      <TableCell className='px-2 py-2 font-mono text-gray-100'>{row.name}</TableCell>
+                      <TableCell className='px-2 py-2 text-gray-300'>
                         {row.existsInMongo
                           ? (row.mongoDocumentCount ?? 0).toLocaleString()
                           : '--'}
-                      </td>
-                      <td className='px-2 py-2 text-gray-300'>
+                      </TableCell>
+                      <TableCell className='px-2 py-2 text-gray-300'>
                         {row.existsInPrisma
                           ? (row.prismaRowCount ?? 0).toLocaleString()
                           : '--'}
-                      </td>
-                      <td className='px-2 py-2'>
-                        <select
+                      </TableCell>
+                      <TableCell className='px-2 py-2'>
+                        <UnifiedSelect
                           value={collectionRouteMapDraft[row.name] ?? 'auto'}
-                          onChange={(event): void => {
-                            const value = event.target.value;
+                          onValueChange={(value: string): void => {
                             setCollectionRouteMapDraft((prev) => {
                               const next = { ...prev };
                               if (value === 'mongodb' || value === 'prisma' || value === 'redis') {
@@ -1404,15 +1382,16 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                               return next;
                             });
                           }}
-                          className='rounded-md border border-gray-700 bg-gray-900 px-2 py-1 text-xs text-gray-200'
-                        >
-                          <option value='auto'>Auto</option>
-                          <option value='mongodb'>MongoDB</option>
-                          <option value='prisma'>Prisma</option>
-                          <option value='redis'>Redis</option>
-                        </select>
-                      </td>
-                      <td className='px-2 py-2'>
+                          options={[
+                            { value: 'auto', label: 'Auto' },
+                            { value: 'mongodb', label: 'MongoDB' },
+                            { value: 'prisma', label: 'Prisma' },
+                            { value: 'redis', label: 'Redis' },
+                          ]}
+                          triggerClassName='h-7 text-[10px] w-[100px]'
+                        />
+                      </TableCell>
+                      <TableCell className='px-2 py-2'>
                         {(() => {
                           const preview = effectivePreviewByCollection.get(row.name);
                           if (!preview) {
@@ -1421,12 +1400,12 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                           if (preview.error) {
                             return (
                               <span className='text-red-300' title={preview.error}>
-                            Error
+                                Error
                               </span>
                             );
                           }
                           const sourceLabel =
-                        preview.source === 'collection_route' ? 'route' : 'app';
+                            preview.source === 'collection_route' ? 'route' : 'app';
                           return (
                             <span
                               className='text-gray-200'
@@ -1440,15 +1419,15 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                             </span>
                           );
                         })()}
-                      </td>
-                      <td className='px-2 py-2'>
+                      </TableCell>
+                      <TableCell className='px-2 py-2'>
                         <div className='flex gap-1'>
                           <Button
                             variant='outline'
                             size='sm'
                             disabled={
                               !row.existsInMongo ||
-                          !operationControlsDraft.allowManualCollectionSync
+                              !operationControlsDraft.allowManualCollectionSync
                             }
                             onClick={(): void => {
                               setPendingCollectionSync({
@@ -1457,15 +1436,16 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                                 label: 'MongoDB to Prisma',
                               });
                             }}
+                            className='h-7 px-2 text-[10px]'
                           >
-                        M to P
+                            M to P
                           </Button>
                           <Button
                             variant='outline'
                             size='sm'
                             disabled={
                               !row.existsInPrisma ||
-                          !operationControlsDraft.allowManualCollectionSync
+                              !operationControlsDraft.allowManualCollectionSync
                             }
                             onClick={(): void => {
                               setPendingCollectionSync({
@@ -1474,26 +1454,23 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                                 label: 'Prisma to MongoDB',
                               });
                             }}
+                            className='h-7 px-2 text-[10px]'
                           >
-                        P to M
+                            P to M
                           </Button>
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
-          </SectionPanel>
+          </FormSection>
 
-          <SectionPanel className='mt-6 p-5'>
-            <div className='flex flex-wrap items-start justify-between gap-3'>
-              <div>
-                <h2 className='text-lg font-semibold text-white'>Scheduled Backups</h2>
-                <p className='mt-1 text-sm text-gray-400'>
-              Runtime scheduler for controlled backup execution. Nothing runs until enabled here.
-                </p>
-              </div>
+          <FormSection
+            title='Scheduled Backups'
+            description='Runtime scheduler for controlled backup execution. Nothing runs until enabled here.'
+            actions={(
               <div className='flex flex-wrap gap-2'>
                 <Button
                   variant='outline'
@@ -1507,7 +1484,7 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                     }));
                   }}
                 >
-              Enable All
+                  Enable All
                 </Button>
                 <Button
                   variant='outline'
@@ -1521,7 +1498,7 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                     }));
                   }}
                 >
-              Disable All
+                  Disable All
                 </Button>
                 <Button
                   variant='outline'
@@ -1532,7 +1509,7 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                     );
                   }}
                 >
-              Reset Defaults
+                  Reset Defaults
                 </Button>
                 <Button
                   variant='outline'
@@ -1542,7 +1519,7 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                   }}
                   disabled={
                     backupSchedulerTickMutation.isPending ||
-                !operationControlsDraft.allowBackupSchedulerTick
+                    !operationControlsDraft.allowBackupSchedulerTick
                   }
                 >
                   {backupSchedulerTickMutation.isPending
@@ -1558,41 +1535,40 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                   }}
                   disabled={
                     backupRunNowMutation.isPending ||
-                !operationControlsDraft.allowManualBackupRunNow
+                    !operationControlsDraft.allowManualBackupRunNow
                   }
                 >
                   {backupRunNowMutation.isPending ? 'Queueing...' : 'Run All Backups Now'}
                 </Button>
               </div>
-            </div>
-
-            <label className='mt-4 flex items-center gap-2 text-sm text-gray-200'>
-              <input
-                type='checkbox'
+            )}
+            className='mt-6 p-5'
+          >
+            <div className='flex items-center gap-3 rounded-md border border-border/40 bg-card/30 p-3'>
+              <Switch
                 checked={backupScheduleDraft.schedulerEnabled}
-                onChange={(event): void => {
-                  const enabled = event.target.checked;
+                onCheckedChange={(val: boolean): void => {
                   setBackupScheduleDraft((prev) => ({
                     ...prev,
-                    schedulerEnabled: enabled,
+                    schedulerEnabled: val,
                   }));
                 }}
               />
-          Enable backup scheduler runtime
-            </label>
+              <span className='text-sm text-gray-200'>Enable backup scheduler runtime</span>
+            </div>
 
             <div className='mt-4 rounded-md border border-gray-800/80 bg-black/20 p-3 text-xs text-gray-300'>
               {backupSchedulerStatus ? (
                 <div className='space-y-1'>
                   <div>
-                Runtime queue: {backupSchedulerStatus.queue.running ? 'Running' : 'Stopped'} /{' '}
+                    Runtime queue: {backupSchedulerStatus.queue.running ? 'Running' : 'Stopped'} /{' '}
                     {backupSchedulerStatus.queue.healthy ? 'Healthy' : 'Unhealthy'}
                   </div>
                   <div>
-                Tick interval: every {Math.max(1, Math.floor(backupSchedulerStatus.repeatEveryMs / 1000))}s
+                    Tick interval: every {Math.max(1, Math.floor(backupSchedulerStatus.repeatEveryMs / 1000))}s
                   </div>
                   <div>
-                Last scheduler check: {backupSchedulerStatus.lastCheckedAt ?? 'n/a'}
+                    Last scheduler check: {backupSchedulerStatus.lastCheckedAt ?? 'n/a'}
                   </div>
                 </div>
               ) : (
@@ -1616,21 +1592,20 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                           {backupTargetLabels[dbType]}
                         </h3>
                         <p className='mt-1 text-xs text-gray-400'>
-                      Last run: {runtimeTarget?.lastRunAt ?? draftTarget.lastRunAt ?? 'never'}
+                          Last run: {runtimeTarget?.lastRunAt ?? draftTarget.lastRunAt ?? 'never'}
                         </p>
                       </div>
-                      <label className='flex items-center gap-2 text-xs text-gray-200'>
-                        <input
-                          type='checkbox'
+                      <label className='flex items-center gap-2 text-xs text-gray-200 cursor-pointer'>
+                        <Checkbox
                           checked={draftTarget.enabled}
-                          onChange={(event): void =>
+                          onCheckedChange={(val: boolean | 'indeterminate'): void =>
                             updateBackupTargetDraft(dbType, (target) => ({
                               ...target,
-                              enabled: event.target.checked,
+                              enabled: Boolean(val),
                             }))
                           }
                         />
-                    Enabled
+                        Enabled
                       </label>
                     </div>
 
@@ -1738,7 +1713,7 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                 );
               })}
             </div>
-          </SectionPanel>
+          </FormSection>
 
           <SectionPanel className='mt-6 p-5'>
             <div className='flex flex-wrap items-start justify-between gap-3'>

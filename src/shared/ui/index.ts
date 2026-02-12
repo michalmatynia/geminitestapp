@@ -64,3 +64,4 @@ export * from './FormModal';
 export * from './form-section';
 export * from './ResourceCard';
 export * from './DynamicFilters';
+export * from './templates/SettingsFormModal';

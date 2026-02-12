@@ -25,12 +25,8 @@ import {
   invalidateAiPathsSettingsCache,
   updateAiPathsSetting,
 } from '@/features/ai/ai-paths/lib/settings-store-client';
-import { jobKeys } from '@/features/jobs/hooks/useJobQueries';
 import { logClientError } from '@/features/observability';
 import { api } from '@/shared/lib/api-client';
-import {
-  getProductDetailQueryKey,
-} from '@/shared/lib/product-query-keys';
 import {
   invalidateAiPathSettings,
   invalidateNotes,
@@ -531,10 +527,10 @@ export function useAiPathTriggerEvent(): {
         void invalidateProductsAndCounts(queryClient);
         if (productId) {
           void queryClient.invalidateQueries({
-            queryKey: getProductDetailQueryKey(productId),
+            queryKey: QUERY_KEYS.products.detail(productId),
           });
         }
-        void queryClient.invalidateQueries({ queryKey: jobKeys.productAi('all') });
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.jobs.productAi('all') });
       };
       const scheduleQueuedProductRefresh = (productId?: string | null): void => {
         invalidateProductQueries(productId);

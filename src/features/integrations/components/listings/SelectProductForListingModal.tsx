@@ -165,33 +165,29 @@ function SelectProductForListingModalContent({
         </div>
 
         <div className='space-y-4'>
-          <SectionPanel variant='subtle' className='p-4 space-y-4'>
-            <h3 className='text-sm font-semibold text-white'>2. Integration Settings</h3>
-            
+          <FormSection title='2. Integration Settings' variant='subtle' className='p-4 space-y-4'>
             {loadingIntegrations ? (
               <p className='text-xs text-gray-500'>Loading integrations...</p>
             ) : (
               <>
-                <div className='space-y-2'>
-                  <Label>Marketplace</Label>
+                <FormField label='Marketplace'>
                   <UnifiedSelect
                     value={selectedIntegrationId}
                     onValueChange={setSelectedIntegrationId}
                     options={integrationsWithConnections.map(i => ({ value: i.id, label: i.name }))}
                     placeholder='Select marketplace...'
                   />
-                </div>
+                </FormField>
 
                 {selectedIntegration && (
-                  <div className='space-y-2'>
-                    <Label>Account</Label>
+                  <FormField label='Account'>
                     <UnifiedSelect
                       value={selectedConnectionId}
                       onValueChange={setSelectedConnectionId}
                       options={selectedIntegration.connections.map((c: IntegrationConnectionBasic) => ({ value: c.id, label: c.name }))}
                       placeholder='Select account...'
                     />
-                  </div>
+                  </FormField>
                 )}
 
                 {isBaseComIntegration && selectedConnectionId && (
@@ -201,7 +197,7 @@ function SelectProductForListingModalContent({
                 )}
               </>
             )}
-          </SectionPanel>
+          </FormSection>
 
           {error && (
             <SectionPanel variant='subtle-compact' className='border-red-500/40 bg-red-500/10 p-3 text-xs text-red-200'>

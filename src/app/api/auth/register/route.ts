@@ -97,7 +97,7 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
       entityType: 'user',
       metadata: { email: user.email }
     }).catch((error: Error) => {
-      logger.warn('Failed to log registration activity', error);
+      logger.warn('Failed to log registration activity', { error });
     });
     return NextResponse.json(
       { id: user.id, email: user.email, name: user.name },
@@ -142,7 +142,7 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
     entityType: 'user',
     metadata: { email: doc.email },
   }).catch((error: Error) => {
-    logger.warn('Failed to log registration activity', error);
+    logger.warn('Failed to log registration activity', { error });
   });
   return NextResponse.json(
     { id: result.insertedId.toString(), email: doc.email, name: doc.name },

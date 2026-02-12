@@ -4,15 +4,10 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
+import { useSectionBlockData } from './SectionBlockContext';
 import { SectionDataProvider } from './SectionDataContext';
 
 import type { BlockInstance } from '../../../types/page-builder';
-
-
-interface FrontendCarouselProps {
-  settings: Record<string, unknown>;
-  blocks: BlockInstance[];
-}
 
 const getAlignmentClass = (alignment: string): string => {
   if (alignment === 'center') return 'items-center justify-center';
@@ -73,7 +68,8 @@ const parseBoolSetting = (value: unknown, defaultValue: boolean = true): boolean
   return defaultValue;
 };
 
-export function FrontendCarousel({ settings, blocks }: FrontendCarouselProps): React.ReactNode {
+export function FrontendCarousel(): React.ReactNode {
+  const { settings, blocks } = useSectionBlockData();
   const frames = blocks.filter((b: BlockInstance) => b.type === 'CarouselFrame');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);

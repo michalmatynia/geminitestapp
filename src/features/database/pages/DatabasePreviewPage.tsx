@@ -33,6 +33,12 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
 } from '@/shared/ui';
 
 import { CrudPanel } from '../components/CrudPanel';
@@ -195,43 +201,43 @@ function ColumnsTab({ columns }: { columns: DatabaseColumnInfo[] }): React.JSX.E
   }
   return (
     <div className='overflow-auto'>
-      <table className='w-full text-xs'>
-        <thead>
-          <tr className='border-b border-border text-left text-gray-500'>
-            <th className='px-4 py-2 font-medium'>Column</th>
-            <th className='px-4 py-2 font-medium'>Type</th>
-            <th className='px-4 py-2 font-medium'>Nullable</th>
-            <th className='px-4 py-2 font-medium'>Default</th>
-            <th className='px-4 py-2 font-medium'>Key</th>
-          </tr>
-        </thead>
-        <tbody className='divide-y divide-border'>
+      <Table className='text-xs'>
+        <TableHeader>
+          <TableRow className='hover:bg-transparent'>
+            <TableHead className='px-4 py-2 font-medium'>Column</TableHead>
+            <TableHead className='px-4 py-2 font-medium'>Type</TableHead>
+            <TableHead className='px-4 py-2 font-medium'>Nullable</TableHead>
+            <TableHead className='px-4 py-2 font-medium'>Default</TableHead>
+            <TableHead className='px-4 py-2 font-medium'>Key</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {columns.map((col: DatabaseColumnInfo) => (
-            <tr key={col.name} className='text-gray-300'>
-              <td className='px-4 py-2 font-mono'>{col.name}</td>
-              <td className='px-4 py-2 font-mono text-blue-300'>{col.type}</td>
-              <td className='px-4 py-2'>
+            <TableRow key={col.name} className='text-gray-300'>
+              <TableCell className='px-4 py-2 font-mono'>{col.name}</TableCell>
+              <TableCell className='px-4 py-2 font-mono text-blue-300'>{col.type}</TableCell>
+              <TableCell className='px-4 py-2'>
                 {col.nullable ? (
                   <span className='text-yellow-400'>YES</span>
                 ) : (
                   <span className='text-gray-500'>NO</span>
                 )}
-              </td>
-              <td className='px-4 py-2 font-mono text-gray-400'>
+              </TableCell>
+              <TableCell className='px-4 py-2 font-mono text-gray-400'>
                 {col.defaultValue ?? <span className='text-gray-600'>—</span>}
-              </td>
-              <td className='px-4 py-2'>
+              </TableCell>
+              <TableCell className='px-4 py-2'>
                 {col.isPrimaryKey && (
                   <Badge variant='default' className='gap-1 text-[10px]'>
                     <KeyIcon className='size-3' />
                     PK
                   </Badge>
                 )}
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }
@@ -242,36 +248,36 @@ function IndexesTab({ indexes }: { indexes: DatabaseIndexInfo[] }): React.JSX.El
   }
   return (
     <div className='overflow-auto'>
-      <table className='w-full text-xs'>
-        <thead>
-          <tr className='border-b border-border text-left text-gray-500'>
-            <th className='px-4 py-2 font-medium'>Index</th>
-            <th className='px-4 py-2 font-medium'>Columns</th>
-            <th className='px-4 py-2 font-medium'>Unique</th>
-            <th className='px-4 py-2 font-medium'>Definition</th>
-          </tr>
-        </thead>
-        <tbody className='divide-y divide-border'>
+      <Table className='w-full text-xs'>
+        <TableHeader>
+          <TableRow className='hover:bg-transparent'>
+            <TableHead className='px-4 py-2 font-medium'>Index</TableHead>
+            <TableHead className='px-4 py-2 font-medium'>Columns</TableHead>
+            <TableHead className='px-4 py-2 font-medium'>Unique</TableHead>
+            <TableHead className='px-4 py-2 font-medium'>Definition</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {indexes.map((idx: DatabaseIndexInfo) => (
-            <tr key={idx.name} className='text-gray-300'>
-              <td className='px-4 py-2 font-mono'>{idx.name}</td>
-              <td className='px-4 py-2 font-mono text-blue-300'>
+            <TableRow key={idx.name} className='text-gray-300'>
+              <TableCell className='px-4 py-2 font-mono'>{idx.name}</TableCell>
+              <TableCell className='px-4 py-2 font-mono text-blue-300'>
                 {idx.columns.join(', ')}
-              </td>
-              <td className='px-4 py-2'>
+              </TableCell>
+              <TableCell className='px-4 py-2'>
                 {idx.isUnique ? (
                   <Badge variant='outline' className='text-[10px] text-emerald-400'>UNIQUE</Badge>
                 ) : (
                   <span className='text-gray-500'>—</span>
                 )}
-              </td>
-              <td className='max-w-xs truncate px-4 py-2 font-mono text-gray-400' title={idx.definition}>
+              </TableCell>
+              <TableCell className='max-w-xs truncate px-4 py-2 font-mono text-gray-400' title={idx.definition}>
                 {idx.definition}
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }
@@ -282,32 +288,32 @@ function ForeignKeysTab({ foreignKeys }: { foreignKeys: DatabaseForeignKeyInfo[]
   }
   return (
     <div className='overflow-auto'>
-      <table className='w-full text-xs'>
-        <thead>
-          <tr className='border-b border-border text-left text-gray-500'>
-            <th className='px-4 py-2 font-medium'>Constraint</th>
-            <th className='px-4 py-2 font-medium'>Column</th>
-            <th className='px-4 py-2 font-medium'>References</th>
-            <th className='px-4 py-2 font-medium'>On Delete</th>
-            <th className='px-4 py-2 font-medium'>On Update</th>
-          </tr>
-        </thead>
-        <tbody className='divide-y divide-border'>
+      <Table className='w-full text-xs'>
+        <TableHeader>
+          <TableRow className='hover:bg-transparent'>
+            <TableHead className='px-4 py-2 font-medium'>Constraint</TableHead>
+            <TableHead className='px-4 py-2 font-medium'>Column</TableHead>
+            <TableHead className='px-4 py-2 font-medium'>References</TableHead>
+            <TableHead className='px-4 py-2 font-medium'>On Delete</TableHead>
+            <TableHead className='px-4 py-2 font-medium'>On Update</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {foreignKeys.map((fk: DatabaseForeignKeyInfo) => (
-            <tr key={fk.name} className='text-gray-300'>
-              <td className='px-4 py-2 font-mono'>{fk.name}</td>
-              <td className='px-4 py-2 font-mono text-blue-300'>{fk.column}</td>
-              <td className='px-4 py-2 font-mono'>
+            <TableRow key={fk.name} className='text-gray-300'>
+              <TableCell className='px-4 py-2 font-mono'>{fk.name}</TableCell>
+              <TableCell className='px-4 py-2 font-mono text-blue-300'>{fk.column}</TableCell>
+              <TableCell className='px-4 py-2 font-mono'>
                 <span className='text-emerald-300'>{fk.referencedTable}</span>
                 <span className='text-gray-500'>.</span>
                 <span className='text-blue-300'>{fk.referencedColumn}</span>
-              </td>
-              <td className='px-4 py-2 text-gray-400'>{fk.onDelete}</td>
-              <td className='px-4 py-2 text-gray-400'>{fk.onUpdate}</td>
-            </tr>
+              </TableCell>
+              <TableCell className='px-4 py-2 text-gray-400'>{fk.onDelete}</TableCell>
+              <TableCell className='px-4 py-2 text-gray-400'>{fk.onUpdate}</TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }
@@ -328,28 +334,28 @@ function DataTab({
       <p className='px-4 py-2 text-[11px] text-gray-500'>
         Showing rows {startRow}–{startRow + tableRows.rows.length - 1} of {tableRows.totalRows.toLocaleString()}
       </p>
-      <table className='w-full text-xs'>
-        <thead>
-          <tr className='border-b border-border text-left text-gray-500'>
+      <Table className='w-full text-xs'>
+        <TableHeader>
+          <TableRow className='hover:bg-transparent'>
             {columns.map((col: string) => (
-              <th key={col} className='whitespace-nowrap px-3 py-2 font-medium font-mono'>
+              <TableHead key={col} className='whitespace-nowrap px-3 py-2 font-medium font-mono'>
                 {col}
-              </th>
+              </TableHead>
             ))}
-          </tr>
-        </thead>
-        <tbody className='divide-y divide-border'>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {tableRows.rows.map((row: Record<string, unknown>, i: number) => (
-            <tr key={i} className='text-gray-300'>
+            <TableRow key={i} className='text-gray-300'>
               {columns.map((col: string) => (
-                <td key={col} className='max-w-[200px] truncate whitespace-nowrap px-3 py-1.5 font-mono'>
+                <TableCell key={col} className='max-w-[200px] truncate whitespace-nowrap px-3 py-1.5 font-mono'>
                   {formatCellValue(row[col])}
-                </td>
+                </TableCell>
               ))}
-            </tr>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }

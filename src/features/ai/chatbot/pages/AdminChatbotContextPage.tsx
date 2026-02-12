@@ -8,7 +8,7 @@ import React, { Suspense, useEffect, useRef, useState } from 'react';
 
 import type { ChatbotContextSegmentDto } from '@/shared/dtos/chatbot';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { Button, Input, Textarea, AppModal, useToast, Label, Checkbox, SectionHeader, SectionPanel, Tag, FileUploadTrigger, type FileUploadHelpers } from '@/shared/ui';
+import { Button, Input, Textarea, FormModal, useToast, Label, Checkbox, SectionHeader, SectionPanel, Tag, FileUploadTrigger, type FileUploadHelpers, Table, TableHeader, TableRow, TableHead, TableBody, TableCell, FormField } from '@/shared/ui';
 
 import * as chatbotApi from '../api';
 
@@ -396,33 +396,33 @@ function ChatbotContextPageInner(): React.JSX.Element {
           </div>
         </div>
         <div className='overflow-hidden rounded-md border border-border'>
-          <table className='min-w-full text-left text-sm text-gray-200'>
-            <thead className='bg-gray-900 text-xs uppercase text-gray-500'>
-              <tr>
-                <th className='px-4 py-3'>Title</th>
-                <th className='px-4 py-3'>Tags</th>
-                <th className='px-4 py-3'>Source</th>
-                <th className='px-4 py-3'>Active</th>
-                <th className='px-4 py-3 text-right'>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHeader className='bg-gray-900'>
+              <TableRow className='hover:bg-transparent'>
+                <TableHead className='px-4 py-3 uppercase text-gray-500'>Title</TableHead>
+                <TableHead className='px-4 py-3 uppercase text-gray-500'>Tags</TableHead>
+                <TableHead className='px-4 py-3 uppercase text-gray-500'>Source</TableHead>
+                <TableHead className='px-4 py-3 uppercase text-gray-500'>Active</TableHead>
+                <TableHead className='px-4 py-3 text-right uppercase text-gray-500'>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {filteredContexts.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className='px-4 py-6 text-center text-gray-500'>
+                <TableRow>
+                  <TableCell colSpan={5} className='px-4 py-6 text-center text-gray-500'>
                     No contexts match the current filters.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : (
                 filteredContexts.map((item: ContextItem): React.JSX.Element => (
-                  <tr
+                  <TableRow
                     key={item.id}
                     className='border-t border-border bg-card hover:bg-card/60'
                   >
-                    <td className='px-4 py-3 font-semibold text-white'>
+                    <TableCell className='px-4 py-3 font-semibold text-white'>
                       {item.title}
-                    </td>
-                    <td className='px-4 py-3'>
+                    </TableCell>
+                    <TableCell className='px-4 py-3'>
                       <div className='flex flex-wrap gap-1'>
                         {(item.tags || []).length === 0 ? (
                           <span className='text-xs text-gray-500'>None</span>
@@ -435,11 +435,11 @@ function ChatbotContextPageInner(): React.JSX.Element {
                           ))
                         )}
                       </div>
-                    </td>
-                    <td className='px-4 py-3 text-xs text-gray-400'>
+                    </TableCell>
+                    <TableCell className='px-4 py-3 text-xs text-gray-400'>
                       {item.source === 'pdf' ? 'PDF' : 'Manual'}
-                    </td>
-                    <td className='px-4 py-3'>
+                    </TableCell>
+                    <TableCell className='px-4 py-3'>
                       <Label className='flex items-center gap-2 text-xs text-gray-400'>
                         <Checkbox
                           checked={activeIds.includes(item.id)} onCheckedChange={(checked: boolean | 'indeterminate'): void => {
@@ -452,8 +452,8 @@ function ChatbotContextPageInner(): React.JSX.Element {
                         />
                         {activeIds.includes(item.id) ? 'Enabled' : 'Disabled'}
                       </Label>
-                    </td>
-                    <td className='px-4 py-3 text-right'>
+                    </TableCell>
+                    <TableCell className='px-4 py-3 text-right'>
                       <div className='flex justify-end gap-2'>
                         <Button
                           type='button'
@@ -472,12 +472,12 @@ function ChatbotContextPageInner(): React.JSX.Element {
                           Delete
                         </Button>
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
         <div className='mt-6 flex justify-end'>
           <Button
@@ -490,7 +490,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
         </div>
       </SectionPanel>
       {isModalOpen && modalDraft ? (
-        <AppModal
+        <FormModal
           open={isModalOpen}
           onClose={closeModal}
           title={
@@ -498,26 +498,13 @@ function ChatbotContextPageInner(): React.JSX.Element {
               ? 'Edit context'
               : 'New context'
           }
-          footer={
-            <>
-              <Button
-                type='button'
-                variant='outline'
-                onClick={closeModal}
-              >
-                Cancel
-              </Button>
-              <Button type='button' onClick={handleSaveDraft}>
-                Save context
-              </Button>
-            </>
-          }
+          onSave={handleSaveDraft}
+          isSaving={saving}
+          saveText='Save context'
+          size='lg'
         >
           <div className='space-y-4'>
-            <div>
-              <Label className='mb-2 block text-sm font-medium text-gray-200'>
-                  Title
-              </Label>
+            <FormField label='Title'>
               <Input
                 value={modalDraft.title}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
@@ -527,11 +514,9 @@ function ChatbotContextPageInner(): React.JSX.Element {
                 }
                 disabled={saving}
               />
-            </div>
-            <div>
-              <Label className='mb-2 block text-sm font-medium text-gray-200'>
-                    Tags
-              </Label>
+            </FormField>
+
+            <FormField label='Tags'>
               <div className='flex flex-wrap gap-2'>
                 {(modalDraft.tags || []).map((tag: string): React.JSX.Element => (
                   <Tag
@@ -600,11 +585,9 @@ function ChatbotContextPageInner(): React.JSX.Element {
                       Add tag
                 </Button>
               </div>
-            </div>
-            <div>
-              <Label className='mb-2 block text-sm font-medium text-gray-200'>
-                    Content
-              </Label>
+            </FormField>
+
+            <FormField label='Content'>
               <Textarea
                 placeholder='Add instructions...'
                 value={modalDraft.content}
@@ -616,7 +599,8 @@ function ChatbotContextPageInner(): React.JSX.Element {
                 rows={10}
                 disabled={saving}
               />
-            </div>
+            </FormField>
+
             <Label className='flex items-center gap-2 text-sm text-gray-300'>
               <Checkbox
                 checked={modalDraft.active} onCheckedChange={(checked: boolean | 'indeterminate'): void =>
@@ -628,7 +612,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
                   Active in global context
             </Label>
           </div>
-        </AppModal>
+        </FormModal>
       ) : null}
     </div>
   );

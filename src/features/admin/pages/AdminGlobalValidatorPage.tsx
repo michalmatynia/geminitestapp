@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 
 import { AdminImageStudioValidationPatternsPage } from '@/features/ai/image-studio';
 import { ValidatorSettings } from '@/features/products/components/settings/ValidatorSettings';
-import { ClientOnly, SectionHeader, SectionPanel, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
+import { ClientOnly, SectionHeader, Tabs, TabsContent, TabsList, TabsTrigger, FormSection } from '@/shared/ui';
 
 type ValidatorScope = 'products' | 'image-studio';
 
@@ -41,9 +41,9 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
 
       <ClientOnly
         fallback={
-          <SectionPanel variant='subtle' className='p-4'>
+          <FormSection variant='subtle' className='p-4'>
             <p className='text-sm text-gray-400'>Loading validator scopes...</p>
-          </SectionPanel>
+          </FormSection>
         }
       >
         <Tabs value={activeScope} onValueChange={handleScopeChange} className='space-y-4'>
@@ -53,20 +53,20 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
           </TabsList>
 
           <TabsContent value='products' className='space-y-4'>
-            <SectionPanel variant='subtle' className='p-4'>
+            <FormSection variant='subtle' className='p-4'>
               <p className='text-sm text-gray-300'>
                 Product patterns validate and normalize product Name/Description fields.
               </p>
-            </SectionPanel>
+            </FormSection>
             <ValidatorSettings />
           </TabsContent>
 
           <TabsContent value='image-studio' className='space-y-4'>
-            <SectionPanel variant='subtle' className='p-4'>
+            <FormSection variant='subtle' className='p-4'>
               <p className='text-sm text-gray-300'>
                 Image Studio patterns control prompt validation rules used in AI image workflows.
               </p>
-            </SectionPanel>
+            </FormSection>
             <AdminImageStudioValidationPatternsPage embedded />
           </TabsContent>
         </Tabs>

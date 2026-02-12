@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from '@tanstack/react-query';
 
+import { invalidateAgentRuns } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { AiPathRunRecord } from '@/shared/types/domain/ai-paths';
 import { AgentSnapshot, AgentBrowserLog, AgentAuditLog } from '@/shared/types/domain/chatbot';
@@ -47,7 +48,7 @@ export function useDeleteAgentRunMutation(): UseMutationResult<void, Error, { ru
     mutationFn: ({ runId, force }: { runId: string; force?: boolean }) => 
       api.deleteAgentRun(runId, force),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: agentRunsKeys.lists() });
+      void invalidateAgentRuns(queryClient);
     },
   });
 }
@@ -57,7 +58,7 @@ export function useDeleteCompletedAgentRunsMutation(): UseMutationResult<void, E
   return useMutation({
     mutationFn: api.deleteCompletedAgentRuns,
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: agentRunsKeys.lists() });
+      void invalidateAgentRuns(queryClient);
     },
   });
 }

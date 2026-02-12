@@ -569,7 +569,7 @@ export function useCanvasInteractions() {
     setDragData(
       event.dataTransfer,
       { [DRAG_KEYS.AI_NODE]: payload },
-      { text: payload, effectAllowed: 'copy' }
+      { effectAllowed: 'copy' }
     );
   }, [isPathLocked, notifyLocked]);
 
@@ -589,18 +589,9 @@ export function useCanvasInteractions() {
     const viewport = viewportRef.current?.getBoundingClientRect();
     if (!viewport) return;
     const canvasRect = canvasRef.current?.getBoundingClientRect() ?? null;
-    
-    const types = Array.from(event.dataTransfer.types ?? []);
-    const nodeData = getFirstDragValue(event.dataTransfer, [DRAG_KEYS.AI_NODE]);
-    const textData = getFirstDragValue(event.dataTransfer, [DRAG_KEYS.TEXT]);
-    const raw = nodeData || textData;
+
+    const raw = getFirstDragValue(event.dataTransfer, [DRAG_KEYS.AI_NODE]);
     if (!raw) return;
-    
-    if (!nodeData) {
-      const trimmed = raw.trim();
-      if (!trimmed || (trimmed[0] !== '{' && trimmed[0] !== '[')) return;
-      if (!types.includes(DRAG_KEYS.TEXT)) return;
-    }
 
     let payload: NodeDefinition | null = null;
     try {

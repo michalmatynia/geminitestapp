@@ -1,13 +1,13 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
-import { findFolderParentId, findFolderById } from '@/features/foldertree';
 import type { UseNoteOperationsProps } from '@/features/notesapp/types/notes-hooks';
 import type { UndoAction } from '@/features/notesapp/types/notes-hooks';
 import { ApiError } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { NoteWithRelations, CategoryWithChildren } from '@/shared/types/domain/notes';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { findTreeNodeById, findTreeNodeParentId } from '@/shared/utils/tree-operations';
 
 import {
   useCreateCategoryMutation,
@@ -84,7 +84,7 @@ export function useNoteOperations({
   }, [deleteCategoryMutation, toast]);
 
   const handleRenameFolder = useCallback(async (folderId: string, newName: string): Promise<void> => {
-    const currentFolder = findFolderById(folderTreeRef.current, folderId);
+    const currentFolder = findTreeNodeById(folderTreeRef.current, folderId);
     const previousName = currentFolder?.name ?? '';
     try {
       await updateCategoryMutation.mutateAsync({ id: folderId, name: newName });
@@ -211,7 +211,7 @@ export function useNoteOperations({
   }, [notesRef, updateNoteMutation, setUndoStack, toast]);
 
   const handleMoveFolderToFolder = useCallback(async (folderId: string, targetParentId: string | null): Promise<void> => {
-    const previousParentId = findFolderParentId(folderTreeRef.current, folderId);
+    const previousParentId = findTreeNodeParentId(folderTreeRef.current, folderId);
     try {
       await updateCategoryMutation.mutateAsync({
         id: folderId,
@@ -233,15 +233,15 @@ export function useNoteOperations({
 
   const handleReorderFolder = useCallback(async (folderId: string, targetId: string, position: 'before' | 'after'): Promise<void> => {
     const tree = folderTreeRef.current;
-    const draggedFolder = findFolderById(tree, folderId);
+    const draggedFolder = findTreeNodeById(tree, folderId);
     if (!draggedFolder) return;
 
-    const targetParentId = findFolderParentId(tree, targetId);
-    const draggedParentId = findFolderParentId(tree, folderId);
+    const targetParentId = findTreeNodeParentId(tree, targetId);
+    const draggedParentId = findTreeNodeParentId(tree, folderId);
 
     const getSiblings = (parentId: string | null): CategoryWithChildren[] => {
       if (!parentId) return tree;
-      const parent = findFolderById(tree, parentId);
+      const parent = findTreeNodeById(tree, parentId);
       return parent?.children ?? [];
     };
 

@@ -84,7 +84,7 @@ export const setNoteDragData = (dataTransfer: DataTransfer, noteId: string): voi
   setDragData(
     dataTransfer,
     { [DRAG_KEYS.NOTE_ID]: noteId },
-    { text: noteId, effectAllowed: 'linkMove' }
+    { effectAllowed: 'linkMove' }
   );
 };
 
@@ -97,7 +97,7 @@ export const setFolderDragData = (dataTransfer: DataTransfer, folderId: string):
 };
 
 export const getNoteDragId = (dataTransfer: DataTransfer, fallback?: string | null): string | null =>
-  getFirstDragValue(dataTransfer, [DRAG_KEYS.NOTE_ID, DRAG_KEYS.TEXT], fallback);
+  getFirstDragValue(dataTransfer, [DRAG_KEYS.NOTE_ID], fallback);
 
 export const getFolderDragId = (dataTransfer: DataTransfer, fallback?: string | null): string | null =>
   getFirstDragValue(dataTransfer, [DRAG_KEYS.FOLDER_ID], fallback);

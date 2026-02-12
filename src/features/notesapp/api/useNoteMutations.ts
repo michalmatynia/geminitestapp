@@ -6,6 +6,9 @@ import { api } from '@/shared/lib/api-client';
 import {
   invalidateNoteDetail,
   invalidateNotebooks,
+  invalidateNotes,
+  invalidateNoteTags,
+  invalidateNoteThemes,
 } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { DeleteResponse } from '@/shared/types/api/api';
@@ -33,7 +36,7 @@ export function useCreateNote(): UseMutationResult<NoteWithRelations, Error, Not
   return useMutation({
     mutationFn: (payload: NoteCreateInput) => api.post<NoteWithRelations>('/api/notes', payload),
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
+      void invalidateNotes(queryClient);
     },
   });
 }
@@ -45,7 +48,7 @@ export function useUpdateNote(): UseMutationResult<NoteWithRelations, Error, Not
     mutationFn: ({ id, ...data }: NoteUpdateInput & { id: string }) =>
       api.patch<NoteWithRelations>(`/api/notes/${id}`, data),
     onSuccess: (_data: NoteWithRelations, variables): void => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
+      void invalidateNotes(queryClient);
       void invalidateNoteDetail(queryClient, variables.id);
     },
   });
@@ -57,7 +60,7 @@ export function useDeleteNote(): UseMutationResult<DeleteResponse, Error, string
   return useMutation({
     mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/${id}`),
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
+      void invalidateNotes(queryClient);
     },
   });
 }
@@ -69,7 +72,7 @@ export function useCreateNoteFolder(): UseMutationResult<CategoryRecord, Error, 
     mutationFn: (payload: CategoryCreateInput) =>
       api.post<CategoryRecord>('/api/notes/categories', payload),
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
+      void invalidateNotes(queryClient);
     },
   });
 }
@@ -81,7 +84,7 @@ export function useUpdateNoteFolder(): UseMutationResult<CategoryRecord, Error, 
     mutationFn: ({ id, ...data }: CategoryUpdateInput & { id: string }) =>
       api.patch<CategoryRecord>(`/api/notes/categories/${id}`, data),
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
+      void invalidateNotes(queryClient);
     },
   });
 }
@@ -93,7 +96,7 @@ export function useDeleteNoteFolder(): UseMutationResult<DeleteResponse, Error, 
     mutationFn: (folderId: string) =>
       api.delete<DeleteResponse>(`/api/notes/categories/${folderId}`),
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
+      void invalidateNotes(queryClient);
     },
   });
 }
@@ -125,7 +128,7 @@ export function useDeleteNotebook(): UseMutationResult<DeleteResponse, Error, st
   return useMutation({
     mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/notebooks/${id}`),
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
+      void invalidateNotes(queryClient);
     },
   });
 }
@@ -136,10 +139,7 @@ export function useCreateNoteTag(): UseMutationResult<TagRecord, Error, TagCreat
     mutationFn: (payload: TagCreateInput) =>
       api.post<TagRecord>('/api/notes/tags', payload),
     onSuccess: (_data: TagRecord, variables: TagCreateInput): void => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.tags() });
-      if (variables.notebookId) {
-        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.tags(variables.notebookId) });
-      }
+      void invalidateNoteTags(queryClient, variables.notebookId);
     },
   });
 }
@@ -150,7 +150,7 @@ export function useUpdateNoteTag(): UseMutationResult<TagRecord, Error, TagUpdat
     mutationFn: ({ id, ...data }: TagUpdateInput & { id: string }) =>
       api.patch<TagRecord>(`/api/notes/tags/${id}`, data),
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.tags() });
+      void invalidateNoteTags(queryClient);
     },
   });
 }
@@ -160,7 +160,7 @@ export function useDeleteNoteTag(): UseMutationResult<DeleteResponse, Error, str
   return useMutation({
     mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/tags/${id}`),
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.tags() });
+      void invalidateNoteTags(queryClient);
     },
   });
 }
@@ -171,10 +171,7 @@ export function useCreateNoteTheme(): UseMutationResult<ThemeRecord, Error, Them
     mutationFn: (payload: ThemeCreateInput) =>
       api.post<ThemeRecord>('/api/notes/themes', payload),
     onSuccess: (_data: ThemeRecord, variables: ThemeCreateInput): void => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.themes() });
-      if (variables.notebookId) {
-        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.themes(variables.notebookId) });
-      }
+      void invalidateNoteThemes(queryClient, variables.notebookId);
     },
   });
 }
@@ -185,7 +182,7 @@ export function useUpdateNoteTheme(): UseMutationResult<ThemeRecord, Error, Them
     mutationFn: ({ id, ...data }: ThemeUpdateInput & { id: string }) =>
       api.patch<ThemeRecord>(`/api/notes/themes/${id}`, data),
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.themes() });
+      void invalidateNoteThemes(queryClient);
     },
   });
 }
@@ -195,7 +192,7 @@ export function useDeleteNoteTheme(): UseMutationResult<DeleteResponse, Error, s
   return useMutation({
     mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/themes/${id}`),
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.themes() });
+      void invalidateNoteThemes(queryClient);
     },
   });
 }

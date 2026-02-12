@@ -13,6 +13,12 @@ export type LogFilters = {
   level?: string;
   query?: string;
   source?: string;
+  method?: string;
+  statusCode?: number | null;
+  requestId?: string;
+  userId?: string;
+  fingerprint?: string;
+  category?: string;
   from?: string | null;
   to?: string | null;
 };
@@ -45,6 +51,12 @@ export function useSystemLogs(filters: LogFilters): UseQueryResult<SystemLogsRes
           level: filters.level !== 'all' ? filters.level : undefined,
           query: filters.query?.trim() || undefined,
           source: filters.source?.trim() || undefined,
+          method: filters.method?.trim() || undefined,
+          statusCode: filters.statusCode ?? undefined,
+          requestId: filters.requestId?.trim() || undefined,
+          userId: filters.userId?.trim() || undefined,
+          fingerprint: filters.fingerprint?.trim() || undefined,
+          category: filters.category?.trim() || undefined,
           from: filters.from || undefined,
           to: filters.to || undefined,
         }
@@ -76,6 +88,12 @@ export function useSystemLogMetrics(filters: Omit<LogFilters, 'page' | 'pageSize
           level: filters.level !== 'all' ? filters.level : undefined,
           query: filters.query?.trim() || undefined,
           source: filters.source?.trim() || undefined,
+          method: filters.method?.trim() || undefined,
+          statusCode: filters.statusCode ?? undefined,
+          requestId: filters.requestId?.trim() || undefined,
+          userId: filters.userId?.trim() || undefined,
+          fingerprint: filters.fingerprint?.trim() || undefined,
+          category: filters.category?.trim() || undefined,
           from: filters.from || undefined,
           to: filters.to || undefined,
         }

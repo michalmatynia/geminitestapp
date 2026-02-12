@@ -39,6 +39,12 @@ export type ListSystemLogsInput = {
   pageSize?: number | undefined;
   level?: SystemLogLevel | null | undefined;
   source?: string | null | undefined;
+  method?: string | null | undefined;
+  statusCode?: number | null | undefined;
+  requestId?: string | null | undefined;
+  userId?: string | null | undefined;
+  fingerprint?: string | null | undefined;
+  category?: string | null | undefined;
   query?: string | null | undefined;
   from?: Date | null | undefined;
   to?: Date | null | undefined;
@@ -99,26 +105,63 @@ const toSystemLogRecord = (doc: MongoSystemLogDoc): SystemLogRecord => ({
 const buildPrismaWhere = (
   input: ListSystemLogsInput,
 ): Prisma.SystemLogWhereInput => {
-  const where: Prisma.SystemLogWhereInput = {};
+  const filters: Prisma.SystemLogWhereInput[] = [];
+
   if (input.level) {
-    where.level = input.level;
+    filters.push({ level: input.level });
   }
   if (input.source) {
-    where.source = { contains: input.source, mode: 'insensitive' };
+    filters.push({ source: { contains: input.source, mode: 'insensitive' } });
+  }
+  if (input.method) {
+    filters.push({ method: { equals: input.method, mode: 'insensitive' } });
+  }
+  if (input.statusCode !== undefined && input.statusCode !== null) {
+    filters.push({ statusCode: input.statusCode });
+  }
+  if (input.requestId) {
+    filters.push({ requestId: { contains: input.requestId, mode: 'insensitive' } });
+  }
+  if (input.userId) {
+    filters.push({ userId: { contains: input.userId, mode: 'insensitive' } });
+  }
+  if (input.fingerprint) {
+    filters.push({
+      context: {
+        path: ['fingerprint'],
+        equals: input.fingerprint,
+      },
+    });
+  }
+  if (input.category) {
+    filters.push({
+      context: {
+        path: ['category'],
+        equals: input.category,
+      },
+    });
   }
   if (input.query) {
-    where.OR = [
-      { message: { contains: input.query, mode: 'insensitive' } },
-      { source: { contains: input.query, mode: 'insensitive' } },
-    ];
+    filters.push({
+      OR: [
+        { message: { contains: input.query, mode: 'insensitive' } },
+        { source: { contains: input.query, mode: 'insensitive' } },
+        { path: { contains: input.query, mode: 'insensitive' } },
+        { requestId: { contains: input.query, mode: 'insensitive' } },
+        { userId: { contains: input.query, mode: 'insensitive' } },
+      ],
+    });
   }
   if (input.from || input.to) {
-    where.createdAt = {
-      ...(input.from ? { gte: input.from } : {}),
-      ...(input.to ? { lte: input.to } : {}),
-    };
+    filters.push({
+      createdAt: {
+        ...(input.from ? { gte: input.from } : {}),
+        ...(input.to ? { lte: input.to } : {}),
+      },
+    });
   }
-  return where;
+
+  return filters.length > 0 ? { AND: filters } : {};
 };
 
 const mergeWhere = (
@@ -131,20 +174,45 @@ const mergeWhere = (
   return { AND: [base, extra] };
 };
 
+const escapeRegex = (value: string): string =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 const buildMongoFilter = (
   input: ListSystemLogsInput,
 ): Filter<MongoSystemLogDoc> => {
   const filter: Filter<MongoSystemLogDoc> = {};
+  const dynamicFilter = filter as Filter<MongoSystemLogDoc> & Record<string, unknown>;
   if (input.level) {
     filter.level = input.level;
   }
   if (input.source) {
-    filter.source = { $regex: input.source, $options: 'i' };
+    filter.source = { $regex: escapeRegex(input.source), $options: 'i' };
+  }
+  if (input.method) {
+    filter.method = { $regex: `^${escapeRegex(input.method)}$`, $options: 'i' };
+  }
+  if (input.statusCode !== undefined && input.statusCode !== null) {
+    filter.statusCode = input.statusCode;
+  }
+  if (input.requestId) {
+    filter.requestId = { $regex: escapeRegex(input.requestId), $options: 'i' };
+  }
+  if (input.userId) {
+    filter.userId = { $regex: escapeRegex(input.userId), $options: 'i' };
+  }
+  if (input.fingerprint) {
+    dynamicFilter['context.fingerprint'] = input.fingerprint;
+  }
+  if (input.category) {
+    dynamicFilter['context.category'] = input.category;
   }
   if (input.query) {
     filter.$or = [
-      { message: { $regex: input.query, $options: 'i' } },
-      { source: { $regex: input.query, $options: 'i' } },
+      { message: { $regex: escapeRegex(input.query), $options: 'i' } },
+      { source: { $regex: escapeRegex(input.query), $options: 'i' } },
+      { path: { $regex: escapeRegex(input.query), $options: 'i' } },
+      { requestId: { $regex: escapeRegex(input.query), $options: 'i' } },
+      { userId: { $regex: escapeRegex(input.query), $options: 'i' } },
     ];
   }
   if (input.from || input.to) {

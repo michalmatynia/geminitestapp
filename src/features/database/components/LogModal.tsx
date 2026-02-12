@@ -3,8 +3,7 @@
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-import { AppModal } from '@/shared/ui';
-
+import { ContentDisplayModal } from '@/shared/ui/templates';
 
 type LogModalProps = {
   content: string;
@@ -12,22 +11,22 @@ type LogModalProps = {
 };
 
 export const LogModal = ({ content, onClose }: LogModalProps): React.JSX.Element => (
-  <AppModal
+  <ContentDisplayModal
     open={true}
     onClose={onClose}
     title='Operation Log'
     size='md'
   >
-    <SyntaxHighlighter 
-      language='bash' 
+    <SyntaxHighlighter
+      language='bash'
       style={atomDark}
       customStyle={{
         margin: 0,
         borderRadius: '0.5rem',
-        fontSize: '0.875rem'
+        fontSize: '0.875rem',
       }}
     >
       {content}
     </SyntaxHighlighter>
-  </AppModal>
+  </ContentDisplayModal>
 );

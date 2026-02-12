@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import React from 'react';
 
 import type { AgentTeachingChatSource, AgentTeachingEmbeddingCollectionRecord, AgentTeachingEmbeddingDocumentListItem } from '@/shared/types/domain/agent-teaching';
-import { Button, ConfirmDialog, Input, Label, SectionHeader, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast } from '@/shared/ui';
+import { Button, ConfirmDialog, Input, Label, SectionHeader, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast, FormSection, FormField } from '@/shared/ui';
 
 import { useAgentTeachingContext } from '../context/AgentTeachingContext';
 import { useAddEmbeddingDocumentMutation, useDeleteEmbeddingDocumentMutation, useEmbeddingDocuments, useSearchEmbeddingCollectionMutation } from '../hooks/useAgentTeaching';
@@ -105,48 +105,40 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
         ) : undefined}
       />
 
-      <SectionPanel className='p-4 space-y-4'>
+      <FormSection title='Add document' className='p-4 space-y-4'>
         <div className='grid gap-4 md:grid-cols-2'>
-          <div className='space-y-2'>
-            <Label>Title (optional)</Label>
+          <FormField label='Title (optional)'>
             <Input value={title} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)} placeholder='e.g. Product naming rules' />
-          </div>
-          <div className='space-y-2'>
-            <Label>Source (optional)</Label>
+          </FormField>
+          <FormField label='Source (optional)'>
             <Input value={source} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSource(e.target.value)} placeholder='e.g. internal wiki / URL / note id' />
-          </div>
+          </FormField>
         </div>
-        <div className='space-y-2'>
-          <Label>Tags (comma separated)</Label>
+        <FormField label='Tags (comma separated)'>
           <Input value={tags} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTags(e.target.value)} placeholder='pricing, listings, seo' />
-        </div>
-        <div className='space-y-2'>
-          <Label>Text to embed</Label>
+        </FormField>
+        <FormField
+          label='Text to embed'
+          description='This stores both the text and the embedding vector in MongoDB.'
+        >
           <Textarea
             value={text}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setText(e.target.value)}
             placeholder='Paste the original text you want the agent to learn from...'
             className='min-h-[160px]'
           />
-          <div className='flex justify-end'>
+          <div className='flex justify-end mt-2'>
             <Button type='button' onClick={() => void handleAdd()} disabled={adding || deleting || !collectionId || !text.trim()}>
               {adding ? 'Embedding...' : 'Add to collection'}
             </Button>
           </div>
-          <div className='text-[11px] text-gray-500'>
-            This stores both the text and the embedding vector in MongoDB.
-          </div>
-        </div>
-      </SectionPanel>
+        </FormField>
+      </FormSection>
 
-      <SectionPanel className='p-4 space-y-3'>
-        <div className='flex items-center justify-between gap-3'>
-          <div>
-            <div className='text-sm font-semibold text-white'>Search the embedding school</div>
-            <div className='text-[11px] text-gray-500'>
-              Embed a query and preview which documents would be retrieved.
-            </div>
-          </div>
+      <FormSection
+        title='Search the embedding school'
+        description='Embed a query and preview which documents would be retrieved.'
+        actions={(
           <Button
             type='button'
             onClick={() => void handleSearch()}
@@ -154,22 +146,23 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
           >
             {searching ? 'Searching...' : 'Search'}
           </Button>
-        </div>
-
+        )}
+        className='p-4 space-y-3'
+      >
         <div className='grid gap-4 md:grid-cols-3'>
-          <div className='md:col-span-2 space-y-2'>
-            <Label>Query</Label>
-            <Textarea
-              value={searchQuery}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSearchQuery(e.target.value)}
-              placeholder='Ask something you expect the learner agent to answer from this collection...'
-              className='min-h-[90px]'
-              disabled={searching || !collectionId}
-            />
+          <div className='md:col-span-2'>
+            <FormField label='Query'>
+              <Textarea
+                value={searchQuery}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSearchQuery(e.target.value)}
+                placeholder='Ask something you expect the learner agent to answer from this collection...'
+                className='min-h-[90px]'
+                disabled={searching || !collectionId}
+              />
+            </FormField>
           </div>
           <div className='space-y-3'>
-            <div className='space-y-2'>
-              <Label>Top K</Label>
+            <FormField label='Top K'>
               <Input
                 type='number'
                 min={1}
@@ -178,9 +171,8 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTopK(Number(e.target.value))}
                 disabled={searching || !collectionId}
               />
-            </div>
-            <div className='space-y-2'>
-              <Label>Min score</Label>
+            </FormField>
+            <FormField label='Min score'>
               <Input
                 type='number'
                 min={-1}
@@ -190,7 +182,7 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchMinScore(Number(e.target.value))}
                 disabled={searching || !collectionId}
               />
-            </div>
+            </FormField>
           </div>
         </div>
 
@@ -231,7 +223,7 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
             </div>
           )}
         </div>
-      </SectionPanel>
+      </FormSection>
 
       <div className='rounded-md border bg-card/60 backdrop-blur'>
         <Table>

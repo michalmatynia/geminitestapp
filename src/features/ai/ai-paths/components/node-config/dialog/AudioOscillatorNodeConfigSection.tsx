@@ -5,16 +5,14 @@ import { toNumber } from '@/features/ai/ai-paths/lib';
 import {
   Input,
   Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  UnifiedSelect,
 } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
 const WAVEFORM_OPTIONS: AudioWaveform[] = ['sine', 'square', 'triangle', 'sawtooth'];
+
+const waveformOptions = WAVEFORM_OPTIONS.map((w) => ({ value: w, label: w }));
 
 export function AudioOscillatorNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
@@ -31,7 +29,7 @@ export function AudioOscillatorNodeConfigSection(): React.JSX.Element | null {
     <div className='space-y-4'>
       <div>
         <Label className='text-xs text-gray-400'>Waveform</Label>
-        <Select
+        <UnifiedSelect
           value={oscillatorConfig.waveform}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
@@ -41,18 +39,10 @@ export function AudioOscillatorNodeConfigSection(): React.JSX.Element | null {
               },
             })
           }
-        >
-          <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
-            <SelectValue placeholder='Select waveform' />
-          </SelectTrigger>
-          <SelectContent className='border-border bg-gray-900'>
-            {WAVEFORM_OPTIONS.map((waveform: AudioWaveform) => (
-              <SelectItem key={waveform} value={waveform}>
-                {waveform}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          options={waveformOptions}
+          placeholder='Select waveform'
+          className='mt-2'
+        />
       </div>
 
       <div>
@@ -121,4 +111,3 @@ export function AudioOscillatorNodeConfigSection(): React.JSX.Element | null {
     </div>
   );
 }
-

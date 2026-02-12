@@ -1,6 +1,5 @@
 'use client';
 
-import { RefreshCcw } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';
 
@@ -12,6 +11,7 @@ import {
 import { cn } from '@/shared/utils';
 
 import { usePromptEngine } from '../context/PromptEngineContext';
+import { useOptionalPromptEnginePageChrome } from '../context/PromptEnginePageChromeContext';
 
 type PromptEngineToolbarProps = {
   embedded?: boolean | undefined;
@@ -26,6 +26,11 @@ export function PromptEngineToolbar({
   backLinkHref = '/admin/prompt-engine',
   backLinkLabel = 'Back to Prompt Engine',
 }: PromptEngineToolbarProps): React.JSX.Element {
+  const pageChrome = useOptionalPromptEnginePageChrome();
+  const resolvedEmbedded = pageChrome?.embedded ?? embedded;
+  const resolvedEyebrow = pageChrome?.eyebrow ?? eyebrow;
+  const resolvedBackLinkHref = pageChrome?.backLinkHref ?? backLinkHref;
+  const resolvedBackLinkLabel = pageChrome?.backLinkLabel ?? backLinkLabel;
   const {
     isSaving,
     isDirty,
@@ -43,14 +48,14 @@ export function PromptEngineToolbar({
 
   return (
     <SectionHeader
-      eyebrow={eyebrow}
+      eyebrow={resolvedEyebrow}
       title='Validation Patterns'
       description='Browse Prompt Validator rules (patterns, similar matches, and autofix operations).'
       actions={
         <>
-          {!embedded ? (
+          {!resolvedEmbedded ? (
             <Button type='button' variant='outline' asChild>
-              <Link href={backLinkHref}>{backLinkLabel}</Link>
+              <Link href={resolvedBackLinkHref}>{resolvedBackLinkLabel}</Link>
             </Button>
           ) : null}
           <Button type='button' variant='outline' onClick={handleExport}>

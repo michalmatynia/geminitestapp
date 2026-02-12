@@ -35,9 +35,12 @@ import {
 import type { Page, PageSummary, Slug, CmsDomain, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from '@/features/cms/types';
 import {
   invalidateCmsPages,
+  invalidateCmsPageDetail,
   invalidateCmsSlugs,
+  invalidateCmsSlugDetail,
   invalidateCmsDomains,
   invalidateCmsThemes,
+  invalidateCmsThemeDetail,
   invalidateFiles,
 } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -87,7 +90,7 @@ export function useUpdatePage(): UseMutationResult<Page, Error, { id: string; in
       }),
     onSuccess: (_data: Page, variables: { id: string; input: Page & { slugIds?: string[] } }) => {
       void invalidateCmsPages(queryClient);
-      void queryClient.invalidateQueries({ queryKey: cmsKeys.pages.detail(variables.id) });
+      void invalidateCmsPageDetail(queryClient, variables.id);
     },
   });
 }
@@ -161,7 +164,7 @@ export function useUpdateSlug(): UseMutationResult<Slug, Error, { id: string; in
       }),
     onSuccess: (_data: Slug, variables: { id: string; input: Partial<Slug>; domainId?: string | null }) => {
       void invalidateCmsSlugs(queryClient);
-      void queryClient.invalidateQueries({ queryKey: cmsKeys.slugs.detail(variables.id) });
+      void invalidateCmsSlugDetail(queryClient, variables.id);
     },
   });
 }
@@ -175,7 +178,7 @@ export function useUpdateSlugDomains(): UseMutationResult<
   return useMutation({
     mutationFn: ({ id, domainIds }: { id: string; domainIds: string[] }) => updateSlugDomains(id, domainIds),
     onSuccess: (_data: { domainIds: string[] }, variables: { id: string; domainIds: string[] }) => {
-      void queryClient.invalidateQueries({ queryKey: cmsKeys.slugs.domains(variables.id) });
+      void invalidateCmsSlugDetail(queryClient, variables.id);
       void invalidateCmsSlugs(queryClient);
     },
   });
@@ -291,7 +294,7 @@ export function useUpdateTheme(): UseMutationResult<CmsTheme, Error, { id: strin
       }),
     onSuccess: (_data: CmsTheme, variables: { id: string; input: CmsThemeUpdateInput }) => {
       void invalidateCmsThemes(queryClient);
-      void queryClient.invalidateQueries({ queryKey: cmsKeys.themes.detail(variables.id) });
+      void invalidateCmsThemeDetail(queryClient, variables.id);
     },
   });
 }

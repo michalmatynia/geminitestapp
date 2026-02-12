@@ -1,0 +1,111 @@
+import type { SystemLogLevel } from '@/shared/types';
+
+export type SystemLogFilterFormValues = {
+  level: SystemLogLevel | 'all';
+  query: string;
+  source: string;
+  method: string;
+  statusCode: string;
+  requestId: string;
+  userId: string;
+  fingerprint: string;
+  category: string;
+  fromDate: string;
+  toDate: string;
+};
+
+export type LogTriagePreset = {
+  id: 'recent-errors-24h' | 'http-500-last7d' | 'client-errors-last7d' | 'auth-anomalies-last3d';
+  label: string;
+  description: string;
+  resolve: (now: Date) => Partial<SystemLogFilterFormValues>;
+};
+
+export const SYSTEM_LOG_FILTER_DEFAULTS: SystemLogFilterFormValues = {
+  level: 'all',
+  query: '',
+  source: '',
+  method: '',
+  statusCode: '',
+  requestId: '',
+  userId: '',
+  fingerprint: '',
+  category: '',
+  fromDate: '',
+  toDate: '',
+};
+
+const formatDateInput = (value: Date): string => {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const daysAgo = (now: Date, offset: number): string => {
+  const next = new Date(now);
+  next.setDate(next.getDate() - offset);
+  return formatDateInput(next);
+};
+
+export const SYSTEM_LOG_TRIAGE_PRESETS: LogTriagePreset[] = [
+  {
+    id: 'recent-errors-24h',
+    label: 'Recent Errors',
+    description: 'Focus on error-level logs from the last 24 hours.',
+    resolve: (now: Date) => ({
+      level: 'error',
+      fromDate: daysAgo(now, 1),
+      toDate: formatDateInput(now),
+    }),
+  },
+  {
+    id: 'http-500-last7d',
+    label: 'HTTP 500s',
+    description: 'Server-side failures with status code 500 over the past 7 days.',
+    resolve: (now: Date) => ({
+      level: 'error',
+      statusCode: '500',
+      fromDate: daysAgo(now, 7),
+      toDate: formatDateInput(now),
+    }),
+  },
+  {
+    id: 'client-errors-last7d',
+    label: 'Client Crashes',
+    description: 'Front-end error reporter events captured in the last 7 days.',
+    resolve: (now: Date) => ({
+      level: 'error',
+      source: 'client.error.reporter',
+      fromDate: daysAgo(now, 7),
+      toDate: formatDateInput(now),
+    }),
+  },
+  {
+    id: 'auth-anomalies-last3d',
+    label: 'Auth Anomalies',
+    description: 'Authentication-related warnings and errors from the last 3 days.',
+    resolve: (now: Date) => ({
+      query: 'auth',
+      fromDate: daysAgo(now, 3),
+      toDate: formatDateInput(now),
+    }),
+  },
+];
+
+export const resolveSystemLogPresetFilters = (
+  preset: LogTriagePreset,
+  now: Date = new Date(),
+): Partial<SystemLogFilterFormValues> => preset.resolve(now);
+
+export const isSystemLogPresetActive = (
+  current: SystemLogFilterFormValues,
+  presetFilters: Partial<SystemLogFilterFormValues>,
+): boolean => {
+  const keys = Object.keys(SYSTEM_LOG_FILTER_DEFAULTS) as Array<keyof SystemLogFilterFormValues>;
+  for (const key of keys) {
+    const expected = presetFilters[key] ?? SYSTEM_LOG_FILTER_DEFAULTS[key];
+    if (current[key] !== expected) return false;
+  }
+  return true;
+};

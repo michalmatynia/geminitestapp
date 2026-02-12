@@ -13,6 +13,7 @@ interface StatusBadgeProps {
   hideLabel?: boolean;
   className?: string;
   title?: string;
+  onClick?: () => void;
 }
 
 // Map common statuses to variants
@@ -34,6 +35,7 @@ export function StatusBadge({
   hideLabel,
   className,
   title,
+  onClick,
 }: StatusBadgeProps): React.JSX.Element {
   const resolvedVariant = variant || statusToVariant(status);
   const label = status.trim();
@@ -43,9 +45,11 @@ export function StatusBadge({
       variant={resolvedVariant}
       className={cn(
         'gap-1 text-[10px] uppercase tracking-wider',
+        onClick && 'cursor-pointer hover:opacity-80 transition-opacity',
         className
       )}
       title={title}
+      onClick={onClick}
     >
       {icon && <span className='flex-shrink-0'>{icon}</span>}
       {!hideLabel && label ? <span>{label}</span> : null}

@@ -303,7 +303,7 @@ export function TagsSettings({
           </div>
         </FormModal>
       )}
-                </div>
-              );
-            }
+    </div>
+  );
+}
             

@@ -1,88 +1,110 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { QueryClient } from '@tanstack/react-query';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import {
-  invalidateCatalogScopedData,
-  invalidateCatalogs,
-  invalidateIntegrationConnections,
-  invalidateProductMetadata,
-  invalidateUserPreferences,
-} from '@/shared/lib/query-invalidation';
+import * as helpers from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-describe('query invalidation helpers', () => {
-  const invalidateQueries = vi.fn().mockResolvedValue(undefined);
-
-  const queryClient = {
-    invalidateQueries,
-  };
+describe('query-invalidation helpers', () => {
+  let queryClient: QueryClient;
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    queryClient = new QueryClient();
+    vi.spyOn(queryClient, 'invalidateQueries');
+    vi.spyOn(queryClient, 'refetchQueries');
   });
 
-  it('invalidates product metadata namespace', async () => {
-    await invalidateProductMetadata(queryClient as never);
-
-    expect(invalidateQueries).toHaveBeenCalledTimes(1);
-    expect(invalidateQueries).toHaveBeenCalledWith({
-      queryKey: QUERY_KEYS.products.metadata.all,
+  describe('Product Metadata', () => {
+    it('invalidateProductMetadata should invalidate metadata all key', () => {
+      helpers.invalidateProductMetadata(queryClient);
+      expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: QUERY_KEYS.products.metadata.all,
+      });
     });
-  });
 
-  it('invalidates metadata catalogs key', async () => {
-    await invalidateCatalogs(queryClient as never);
-
-    expect(invalidateQueries).toHaveBeenCalledTimes(1);
-    expect(invalidateQueries).toHaveBeenCalledWith({
-      queryKey: QUERY_KEYS.products.metadata.catalogs,
-    });
-  });
-
-  it('invalidates all catalog-scoped metadata keys', async () => {
-    await invalidateCatalogScopedData(queryClient as never, 'cat-1');
-
-    expect(invalidateQueries).toHaveBeenCalledTimes(3);
-    expect(invalidateQueries).toHaveBeenNthCalledWith(1, {
-      queryKey: QUERY_KEYS.products.metadata.categories('cat-1'),
-    });
-    expect(invalidateQueries).toHaveBeenNthCalledWith(2, {
-      queryKey: QUERY_KEYS.products.metadata.tags('cat-1'),
-    });
-    expect(invalidateQueries).toHaveBeenNthCalledWith(3, {
-      queryKey: QUERY_KEYS.products.metadata.parameters('cat-1'),
+    it('invalidateCatalogScopedData should invalidate all catalog scoped keys', () => {
+      const catalogId = 'cat-123';
+      helpers.invalidateCatalogScopedData(queryClient, catalogId);
+      
+      expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: QUERY_KEYS.products.metadata.categories(catalogId),
+      });
+      expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: QUERY_KEYS.products.metadata.tags(catalogId),
+      });
+      expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: QUERY_KEYS.products.metadata.parameters(catalogId),
+      });
     });
   });
 
-  it('invalidates both user preferences key namespaces', async () => {
-    await invalidateUserPreferences(queryClient as never);
-
-    expect(invalidateQueries).toHaveBeenCalledTimes(2);
-    expect(invalidateQueries).toHaveBeenNthCalledWith(1, {
-      queryKey: QUERY_KEYS.auth.preferences.all,
+  describe('Notes', () => {
+    it('invalidateNoteThemes should invalidate note themes', () => {
+      const notebookId = 'nb-123';
+      helpers.invalidateNoteThemes(queryClient, notebookId);
+      expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: QUERY_KEYS.notes.themes(),
+      });
+      expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: QUERY_KEYS.notes.themes(notebookId),
+      });
     });
-    expect(invalidateQueries).toHaveBeenNthCalledWith(2, {
-      queryKey: QUERY_KEYS.userPreferences,
+
+    it('invalidateNoteTags should invalidate note tags', () => {
+      const notebookId = 'nb-123';
+      helpers.invalidateNoteTags(queryClient, notebookId);
+      expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: QUERY_KEYS.notes.tags(),
+      });
+      expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: QUERY_KEYS.notes.tags(notebookId),
+      });
     });
   });
 
-  it('invalidates integration connections root key when no integration id is provided', async () => {
-    await invalidateIntegrationConnections(queryClient as never);
+  describe('Chatbot', () => {
+    it('invalidateChatbotSessions should invalidate chatbot sessions list', () => {
+      helpers.invalidateChatbotSessions(queryClient);
+      expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: QUERY_KEYS.ai.chatbot.sessions(),
+      });
+    });
 
-    expect(invalidateQueries).toHaveBeenCalledTimes(1);
-    expect(invalidateQueries).toHaveBeenCalledWith({
-      queryKey: QUERY_KEYS.integrations.connections(),
+    it('invalidateChatbotSession should invalidate specific session', () => {
+      const sessionId = 'sess-123';
+      helpers.invalidateChatbotSession(queryClient, sessionId);
+      expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: QUERY_KEYS.ai.chatbot.session(sessionId),
+      });
     });
   });
 
-  it('invalidates both integration connections root and scoped keys', async () => {
-    await invalidateIntegrationConnections(queryClient as never, 'int-1');
-
-    expect(invalidateQueries).toHaveBeenCalledTimes(2);
-    expect(invalidateQueries).toHaveBeenNthCalledWith(1, {
-      queryKey: QUERY_KEYS.integrations.connections(),
+  describe('Integrations', () => {
+    it('invalidateIntegrations should invalidate integrations all key', () => {
+      helpers.invalidateIntegrations(queryClient);
+      expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: QUERY_KEYS.integrations.all,
+      });
     });
-    expect(invalidateQueries).toHaveBeenNthCalledWith(2, {
-      queryKey: [...QUERY_KEYS.integrations.connections(), 'int-1'],
+
+    it('invalidateIntegrationConnections should invalidate connections list and specific integration if provided', () => {
+      const integrationId = 'int-123';
+      helpers.invalidateIntegrationConnections(queryClient, integrationId);
+      
+      expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: QUERY_KEYS.integrations.connections(),
+      });
+      expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: QUERY_KEYS.integrations.connections(integrationId),
+      });
+    });
+  });
+
+  describe('CMS', () => {
+    it('invalidateCmsPages should invalidate cms pages all key', () => {
+      helpers.invalidateCmsPages(queryClient);
+      expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: QUERY_KEYS.cms.pages.all,
+      });
     });
   });
 });

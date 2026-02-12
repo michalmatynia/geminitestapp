@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import React, { useState, useCallback, useEffect } from 'react';
 
 
-import { useBlockContext, BlockContextProvider } from './context/BlockContext';
+import { BlockContextProvider } from './context/BlockContext';
 import { usePreviewEditor } from './context/PreviewEditorContext';
 import { normalizeSlideshowAnimationType } from './preview-utils';
 
@@ -24,29 +24,13 @@ export function registerCarouselPreviewBlockItem(component: React.ComponentType<
 
 
 
-function PreviewBlockItemProxy(props: Omit<PreviewBlockItemProps, 'isSelected' | 'isInspecting' | 'inspectorSettings' | 'hoveredNodeId' | 'onSelect' | 'onHoverNode' | 'onOpenMedia' | 'sectionId' | 'sectionType' | 'sectionZone' | 'columnId' | 'mediaStyles'>): React.ReactNode {
+function PreviewBlockItemProxy(props: Omit<PreviewBlockItemProps, 'isSelected' | 'isInspecting' | 'inspectorSettings' | 'hoveredNodeId' | 'onSelect' | 'onHoverNode' | 'onOpenMedia' | 'sectionId' | 'sectionType' | 'sectionZone' | 'columnId' | 'parentBlockId' | 'mediaStyles'>): React.ReactNode {
   if (!_PreviewBlockItem) {
     throw new Error('PreviewBlockItem has not been registered. Call registerCarouselPreviewBlockItem first.');
   }
-  const { selectedNodeId, isInspecting, inspectorSettings, hoveredNodeId, onSelect, onHoverNode, onOpenMedia } = usePreviewEditor();
-  const { sectionId, sectionType, sectionZone, columnId, mediaStyles } = useBlockContext();
 
   return (
-    <_PreviewBlockItem 
-      {...props} 
-      isSelected={selectedNodeId === props.block.id}
-      isInspecting={isInspecting} 
-      inspectorSettings={inspectorSettings} 
-      hoveredNodeId={hoveredNodeId} 
-      onSelect={onSelect} 
-      onHoverNode={onHoverNode} 
-      onOpenMedia={onOpenMedia}
-      sectionId={sectionId}
-      sectionType={sectionType}
-      sectionZone={sectionZone}
-      columnId={columnId}
-      mediaStyles={mediaStyles}
-    />
+    <_PreviewBlockItem {...props} />
   );
 }
 

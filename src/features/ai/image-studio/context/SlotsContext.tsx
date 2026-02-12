@@ -17,6 +17,13 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
 import { useToast } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
+import {
+  canMoveTreePath,
+  getTreePathLeaf,
+  isTreePathWithin,
+  normalizeTreePath,
+  rebaseTreePath,
+} from '@/shared/utils/tree-operations';
 
 import { useProjectsState } from './ProjectsContext';
 import { getImageStudioProjectSessionKey, parseImageStudioProjectSession } from '../utils/project-session';
@@ -292,23 +299,14 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
   });
 
   const handleMoveFolder = useCallback(async (folderPath: string, targetFolder: string) => {
-    const normalizePath = (value: string): string =>
-      value.replace(/\\/g, '/').replace(/^\/+/, '').replace(/\/+$/, '');
-    const source = normalizePath(folderPath);
-    const target = normalizePath(targetFolder);
-    if (!source) return;
-    if (source === target || target.startsWith(`${source}/`)) return;
+    const source = normalizeTreePath(folderPath);
+    const target = normalizeTreePath(targetFolder);
+    if (!canMoveTreePath(source, target)) return;
 
-    const sourceLeaf = source.split('/').pop() ?? source;
+    const sourceLeaf = getTreePathLeaf(source);
     const rebasedRoot = target ? `${target}/${sourceLeaf}` : sourceLeaf;
     const rebasePath = (value: string): string => {
-      const normalized = normalizePath(value);
-      if (!normalized) return normalized;
-      if (normalized === source) return rebasedRoot;
-      if (normalized.startsWith(`${source}/`)) {
-        return `${rebasedRoot}${normalized.slice(source.length)}`;
-      }
-      return normalized;
+      return rebaseTreePath(value, source, rebasedRoot);
     };
 
     const nextFolders = normalizeFolderPaths(virtualFolders.map((path: string) => rebasePath(path)));
@@ -316,14 +314,13 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     void persistFolders(nextFolders);
 
     const affectedSlots = slots.filter((slot: ImageStudioSlotRecord) => {
-      const current = normalizePath(slot.folderPath ?? '');
-      return current === source || current.startsWith(`${source}/`);
+      return isTreePathWithin(slot.folderPath ?? '', source);
     });
 
     if (affectedSlots.length > 0) {
       const optimisticNextById = new Map<string, string>(
         affectedSlots.map((slot: ImageStudioSlotRecord) => {
-          const current = normalizePath(slot.folderPath ?? '');
+          const current = normalizeTreePath(slot.folderPath ?? '');
           return [slot.id, rebasePath(current)];
         })
       );
@@ -355,21 +352,12 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
   }, [virtualFolders, persistFolders, slots, updateSlotMutation, queryClient, slotsQueryKey]);
 
   const handleRenameFolder = useCallback(async (folderPath: string, nextFolderPath: string) => {
-    const normalizePath = (value: string): string =>
-      value.replace(/\\/g, '/').replace(/^\/+/, '').replace(/\/+$/, '');
-    const source = normalizePath(folderPath);
-    const target = normalizePath(nextFolderPath);
-    if (!source || !target) return;
-    if (source === target || target.startsWith(`${source}/`)) return;
+    const source = normalizeTreePath(folderPath);
+    const target = normalizeTreePath(nextFolderPath);
+    if (!canMoveTreePath(source, target)) return;
 
     const rebasePath = (value: string): string => {
-      const normalized = normalizePath(value);
-      if (!normalized) return normalized;
-      if (normalized === source) return target;
-      if (normalized.startsWith(`${source}/`)) {
-        return `${target}${normalized.slice(source.length)}`;
-      }
-      return normalized;
+      return rebaseTreePath(value, source, target);
     };
 
     const nextFolders = normalizeFolderPaths(virtualFolders.map((path: string) => rebasePath(path)));
@@ -377,14 +365,13 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     void persistFolders(nextFolders);
 
     const affectedSlots = slots.filter((slot: ImageStudioSlotRecord) => {
-      const current = normalizePath(slot.folderPath ?? '');
-      return current === source || current.startsWith(`${source}/`);
+      return isTreePathWithin(slot.folderPath ?? '', source);
     });
 
     if (affectedSlots.length > 0) {
       const optimisticNextById = new Map<string, string>(
         affectedSlots.map((slot: ImageStudioSlotRecord) => {
-          const current = normalizePath(slot.folderPath ?? '');
+          const current = normalizeTreePath(slot.folderPath ?? '');
           return [slot.id, rebasePath(current)];
         })
       );
@@ -412,8 +399,8 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
       );
     }
 
-    const normalizedSelectedFolder = normalizePath(selectedFolder);
-    if (normalizedSelectedFolder === source || normalizedSelectedFolder.startsWith(`${source}/`)) {
+    const normalizedSelectedFolder = normalizeTreePath(selectedFolder);
+    if (isTreePathWithin(normalizedSelectedFolder, source)) {
       setSelectedFolderRaw(rebasePath(normalizedSelectedFolder));
     }
 
@@ -429,22 +416,20 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
   ]);
 
   const handleDeleteFolder = useCallback(async (folderPath: string) => {
-    const normalizePath = (value: string): string =>
-      value.replace(/\\/g, '/').replace(/^\/+/, '').replace(/\/+$/, '');
-    const source = normalizePath(folderPath);
+    const source = normalizeTreePath(folderPath);
     if (!source) return;
 
     const isWithinSource = (value: string): boolean =>
-      value === source || value.startsWith(`${source}/`);
+      isTreePathWithin(value, source);
 
     const nextFolders = normalizeFolderPaths(
-      virtualFolders.filter((path: string) => !isWithinSource(normalizePath(path)))
+      virtualFolders.filter((path: string) => !isWithinSource(path))
     );
     setVirtualFolders(nextFolders);
     void persistFolders(nextFolders);
 
     const slotsToDelete = slots.filter((slot: ImageStudioSlotRecord) =>
-      isWithinSource(normalizePath(slot.folderPath ?? ''))
+      isWithinSource(slot.folderPath ?? '')
     );
     if (slotsToDelete.length > 0) {
       const deletingSlotIds = new Set(slotsToDelete.map((slot: ImageStudioSlotRecord) => slot.id));
@@ -457,7 +442,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
       );
     }
 
-    const normalizedSelectedFolder = normalizePath(selectedFolder);
+    const normalizedSelectedFolder = normalizeTreePath(selectedFolder);
     if (normalizedSelectedFolder && isWithinSource(normalizedSelectedFolder)) {
       setSelectedFolderRaw('');
     }

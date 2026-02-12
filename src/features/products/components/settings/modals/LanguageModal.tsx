@@ -10,7 +10,7 @@ import {
   Label,
   Checkbox,
   useToast,
-  FormModal,
+  SettingsFormModal,
 } from '@/shared/ui';
 
 export function LanguageModal(): React.JSX.Element {
@@ -81,16 +81,12 @@ export function LanguageModal(): React.JSX.Element {
   };
 
   return (
-    <FormModal
+    <SettingsFormModal
       open={isOpen}
       onClose={onClose}
       title={language ? 'Edit Language' : 'Add Language'}
-      onSave={() => {
-        void handleSubmit();
-      }}
+      onSave={handleSubmit}
       isSaving={saveMutation.isPending}
-      saveText={language ? 'Update' : 'Add'}
-      cancelText='Close'
       size='md'
     >
       <div className='space-y-4'>
@@ -145,6 +141,6 @@ export function LanguageModal(): React.JSX.Element {
           </div>
         </div>
       </div>
-    </FormModal>
+    </SettingsFormModal>
   );
 }

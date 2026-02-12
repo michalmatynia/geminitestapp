@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 
 import { useInternationalizationContext } from '@/features/internationalization';
@@ -13,7 +15,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  FormModal,
+  SettingsFormModal,
 } from '@/shared/ui';
 
 interface PriceGroupModalProps {
@@ -31,9 +33,9 @@ export function PriceGroupModal({
   priceGroup,
   priceGroups,
 }: PriceGroupModalProps): React.JSX.Element {
-  const { 
-    currencies: currencyOptions, 
-    loadingCurrencies 
+  const {
+    currencies: currencyOptions,
+    loadingCurrencies,
   } = useInternationalizationContext();
 
   const { toast } = useToast();
@@ -81,16 +83,12 @@ export function PriceGroupModal({
   };
 
   return (
-    <FormModal
+    <SettingsFormModal
       open={isOpen}
       onClose={onClose}
       title={priceGroup ? 'Edit Price Group' : 'Create Price Group'}
-      onSave={(): void => {
-        void handleSubmit();
-      }}
+      onSave={handleSubmit}
       isSaving={saveMutation.isPending}
-      saveText={priceGroup ? 'Update' : 'Create'}
-      cancelText='Close'
       size='md'
     >
       <div className='space-y-4'>
@@ -125,6 +123,6 @@ export function PriceGroupModal({
           </Select>
         </div>
       </div>
-    </FormModal>
+    </SettingsFormModal>
   );
 }

@@ -11,12 +11,12 @@ import { useBackgroundSyncStatus } from '@/shared/providers/BackgroundSyncProvid
 import {
   Button,
   Input,
-  Label,
   SectionHeader,
-  SectionPanel,
   Switch,
   useToast,
   ConfirmDialog,
+  FormSection,
+  FormField,
 } from '@/shared/ui';
 
 const BACKGROUND_SYNC_KEYS = {
@@ -130,19 +130,16 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
       />
 
       <div className='grid gap-6 lg:grid-cols-2'>
-        <SectionPanel className='p-6 space-y-6'>
-          <div className='flex items-start justify-between gap-4'>
-            <div>
-              <h3 className='text-sm font-semibold text-white'>Sync Schedule</h3>
-              <p className='mt-1 text-sm text-gray-400'>
-                Toggle background synchronization and set the refresh interval.
-              </p>
-            </div>
-            <Switch checked={enabled} onCheckedChange={(val: boolean): void => setEnabled(val)} />
-          </div>
-
-          <div className='space-y-2'>
-            <Label htmlFor='sync-interval'>Interval (seconds)</Label>
+        <FormSection
+          title='Sync Schedule'
+          description='Toggle background synchronization and set the refresh interval.'
+          actions={<Switch checked={enabled} onCheckedChange={(val: boolean): void => setEnabled(val)} />}
+          className='p-6'
+        >
+          <FormField
+            label='Interval (seconds)'
+            description='Between 10 seconds and 1 hour.'
+          >
             <Input
               id='sync-interval'
               type='number'
@@ -151,8 +148,7 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
               value={intervalSeconds}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setIntervalSeconds(Number(event.target.value))}
             />
-            <p className='text-xs text-gray-400'>Between 10 seconds and 1 hour.</p>
-          </div>
+          </FormField>
 
           <div className='flex flex-wrap items-center gap-3'>
             <Button onClick={handleSave} disabled={!isDirty || updateSettingsBulk.isPending}>
@@ -179,16 +175,13 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
               <span>{syncStatus.intervalSeconds}s</span>
             </div>
           </div>
-        </SectionPanel>
+        </FormSection>
 
-        <SectionPanel className='p-6 space-y-6'>
-          <div>
-            <h3 className='text-sm font-semibold text-white'>Offline Queue</h3>
-            <p className='mt-1 text-sm text-gray-400'>
-              Review queued mutations and clear or process them manually.
-            </p>
-          </div>
-
+        <FormSection
+          title='Offline Queue'
+          description='Review queued mutations and clear or process them manually.'
+          className='p-6'
+        >
           <div className='rounded-lg border border-border bg-muted/20 p-4 text-sm text-gray-300 space-y-1'>
             <div className='flex justify-between'>
               <span>Queued items</span>
@@ -222,7 +215,7 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
               ))
             )}
           </div>
-        </SectionPanel>
+        </FormSection>
       </div>
     </div>
   );

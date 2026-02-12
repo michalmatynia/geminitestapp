@@ -22,6 +22,7 @@ import type { Session } from 'next-auth';
 function AdminLayoutContent({ children }: { children: React.ReactNode }): React.ReactNode {
   const {
     isMenuCollapsed,
+    isMenuHidden,
     setIsMenuCollapsed,
     isProgrammaticallyCollapsed,
     setIsProgrammaticallyCollapsed,
@@ -84,25 +85,30 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
   return (
     <div className='dark flex h-screen bg-gray-900 text-white'>
       <aside
-        className={`flex h-full flex-col transition-all duration-300 bg-gray-800 p-4 ${
-          isMenuCollapsed ? 'w-20' : 'w-64'
+        className={`flex h-full flex-col transition-all duration-300 bg-gray-800 ${
+          isMenuHidden ? 'w-0 p-0 opacity-0 pointer-events-none overflow-hidden' : isMenuCollapsed ? 'w-20 p-4' : 'w-64 p-4'
         }`}
+        aria-hidden={isMenuHidden}
       >
-        <div className={`flex items-center mb-4 ${isMenuCollapsed ? 'justify-center' : 'justify-end'}`}>
-          <Button
-            onClick={handleToggleCollapse}
-            className='p-2 rounded-full hover:bg-gray-700'
-          >
-            <ChevronLeftIcon
-              className={`transition-transform duration-300 ${
-                isMenuCollapsed ? 'rotate-180' : ''
-              }`}
-            />
-          </Button>
-        </div>
-        <div className='flex-1 overflow-y-auto pr-1'>
-          <Menu />
-        </div>
+        {!isMenuHidden ? (
+          <>
+            <div className={`flex items-center mb-4 ${isMenuCollapsed ? 'justify-center' : 'justify-end'}`}>
+              <Button
+                onClick={handleToggleCollapse}
+                className='p-2 rounded-full hover:bg-gray-700'
+              >
+                <ChevronLeftIcon
+                  className={`transition-transform duration-300 ${
+                    isMenuCollapsed ? 'rotate-180' : ''
+                  }`}
+                />
+              </Button>
+            </div>
+            <div className='flex-1 overflow-y-auto pr-1'>
+              <Menu />
+            </div>
+          </>
+        ) : null}
       </aside>
       <div className='relative flex-1 flex flex-col min-w-0'>
         <header className='absolute top-0 right-0 z-10 flex h-14 items-center px-6 pointer-events-none'>

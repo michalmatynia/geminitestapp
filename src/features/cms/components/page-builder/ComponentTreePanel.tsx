@@ -1,10 +1,17 @@
 'use client';
 
 import { ChevronRight, ChevronDown } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { FolderTreePanel, TreeHeader } from '@/shared/ui';
+import {
+  canNestTreeNode,
+  cn,
+  FOLDER_TREE_PROFILES_SETTING_KEY,
+  getFolderTreePlaceholderClasses,
+  parseFolderTreeProfiles,
+} from '@/shared/utils';
 
 import { SectionPicker } from './SectionPicker';
 import { PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY, PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY } from './settings/PageBuilderSettingsPage';
@@ -28,13 +35,67 @@ const ZONE_ORDER: PageZone[] = ['header', 'template', 'footer'];
 // Block types that can be promoted to standalone sections
 const PROMOTABLE_BLOCK_TYPES = ['ImageElement', 'TextElement', 'ButtonElement', 'Block', 'TextAtom', 'Model3DElement', 'Slideshow'];
 
+type ComponentTreeClipboard = { type: 'section' | 'block'; data: unknown } | null;
+
+type ComponentTreePanelContextValue = {
+  currentPage: unknown;
+  clipboard: ComponentTreeClipboard;
+  showExtractPlaceholder: boolean;
+  showSectionDropPlaceholder: boolean;
+  canDropSectionsAtRoot: boolean;
+  canDropBlocksAtRoot: boolean;
+  treePlaceholderClasses: ReturnType<typeof getFolderTreePlaceholderClasses>;
+  treeInlineDropLabel: string;
+  treeRootDropLabel: string;
+  onToggleZone: (zone: PageZone) => void;
+};
+
+const ComponentTreePanelContext = createContext<ComponentTreePanelContextValue | null>(null);
+
+function useComponentTreePanelContext(): ComponentTreePanelContextValue {
+  const context = useContext(ComponentTreePanelContext);
+  if (!context) {
+    throw new Error('useComponentTreePanelContext must be used within ComponentTreePanelContext.Provider');
+  }
+  return context;
+}
+
 export function ComponentTreePanel(): React.ReactNode {
   const { state } = usePageBuilder();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [collapsedZones, setCollapsedZones] = useState<Set<PageZone>>(new Set());
+  const settingsStore = useSettingsStore();
+  const treeProfilesRaw = settingsStore.get(FOLDER_TREE_PROFILES_SETTING_KEY);
+  const treeProfile = useMemo(
+    () => parseFolderTreeProfiles(treeProfilesRaw).cms_page_builder,
+    [treeProfilesRaw]
+  );
+  const treePlaceholderClasses = useMemo(
+    () => getFolderTreePlaceholderClasses(treeProfile.placeholders.preset),
+    [treeProfile.placeholders.preset]
+  );
+  const canDropSectionsAtRoot = useMemo(
+    () =>
+      canNestTreeNode({
+        profile: treeProfile,
+        nodeType: 'file',
+        nodeKind: 'section',
+        targetIsRoot: true,
+      }),
+    [treeProfile]
+  );
+  const canDropBlocksAtRoot = useMemo(
+    () =>
+      canNestTreeNode({
+        profile: treeProfile,
+        nodeType: 'file',
+        nodeKind: 'block',
+        targetIsRoot: true,
+      }),
+    [treeProfile]
+  );
 
   // Get the settings for showing placeholders
-  const settingsStore = useSettingsStore();
   const extractPlaceholderValue = settingsStore.get(PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY);
   const sectionDropPlaceholderValue = settingsStore.get(PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY);
   const showExtractPlaceholder = extractPlaceholderValue === 'true';
@@ -43,7 +104,7 @@ export function ComponentTreePanel(): React.ReactNode {
   // Ensure drag state context is available
   useDragState();
 
-  const handleToggleZone = (zone: PageZone) => {
+  const handleToggleZone = useCallback((zone: PageZone): void => {
     setCollapsedZones((prev) => {
       const next = new Set(prev);
       if (next.has(zone)) {
@@ -53,7 +114,7 @@ export function ComponentTreePanel(): React.ReactNode {
       }
       return next;
     });
-  };
+  }, []);
 
   // Group sections by zone
   const sectionsByZone = ZONE_ORDER.reduce<Record<PageZone, SectionInstance[]>>(
@@ -65,43 +126,63 @@ export function ComponentTreePanel(): React.ReactNode {
   );
 
   const sectionCount = state.sections.length;
+  const panelContextValue = useMemo<ComponentTreePanelContextValue>(() => ({
+    currentPage: state.currentPage,
+    clipboard: state.clipboard,
+    showExtractPlaceholder,
+    showSectionDropPlaceholder,
+    canDropSectionsAtRoot,
+    canDropBlocksAtRoot,
+    treePlaceholderClasses,
+    treeInlineDropLabel: treeProfile.placeholders.inlineDropLabel,
+    treeRootDropLabel: treeProfile.placeholders.rootDropLabel,
+    onToggleZone: handleToggleZone,
+  }), [
+    state.currentPage,
+    state.clipboard,
+    showExtractPlaceholder,
+    showSectionDropPlaceholder,
+    canDropSectionsAtRoot,
+    canDropBlocksAtRoot,
+    treePlaceholderClasses,
+    treeProfile.placeholders.inlineDropLabel,
+    treeProfile.placeholders.rootDropLabel,
+    handleToggleZone,
+  ]);
 
   return (
     <TreeActionsProvider expandedIds={expandedIds} setExpandedIds={setExpandedIds}>
-      <FolderTreePanel
-        className='flex-1 min-h-0'
-        bodyClassName='flex-1 min-h-0 overflow-y-auto'
-        header={(
-          <TreeHeader
-            title='Structure'
-            subtitle={state.currentPage ? `${sectionCount} sections` : 'No page loaded'}
-          />
-        )}
-      >
-        {!state.currentPage ? (
-          <div className='p-4' />
-        ) : (
-          ZONE_ORDER.map((zone) => {
-            const isCollapsed = collapsedZones.has(zone);
-            const zoneSections = sectionsByZone[zone];
+      <ComponentTreePanelContext.Provider value={panelContextValue}>
+        <FolderTreePanel
+          className='flex-1 min-h-0'
+          bodyClassName='flex-1 min-h-0 overflow-y-auto'
+          header={(
+            <TreeHeader
+              title='Structure'
+              subtitle={state.currentPage ? `${sectionCount} sections` : 'No page loaded'}
+            />
+          )}
+        >
+          {!state.currentPage ? (
+            <div className='p-4' />
+          ) : (
+            ZONE_ORDER.map((zone) => {
+              const isCollapsed = collapsedZones.has(zone);
+              const zoneSections = sectionsByZone[zone];
 
-            return (
-              <ZoneGroup
-                key={zone}
-                zone={zone}
-                label={ZONE_LABELS[zone]}
-                isCollapsed={isCollapsed}
-                onToggleZone={handleToggleZone}
-                zoneSections={zoneSections}
-                currentPage={state.currentPage}
-                clipboard={state.clipboard}
-                showExtractPlaceholder={showExtractPlaceholder}
-                showSectionDropPlaceholder={showSectionDropPlaceholder}
-              />
-            );
-          })
-        )}
-      </FolderTreePanel>
+              return (
+                <ZoneGroup
+                  key={zone}
+                  zone={zone}
+                  label={ZONE_LABELS[zone]}
+                  isCollapsed={isCollapsed}
+                  zoneSections={zoneSections}
+                />
+              );
+            })
+          )}
+        </FolderTreePanel>
+      </ComponentTreePanelContext.Provider>
     </TreeActionsProvider>
   );
 }
@@ -114,26 +195,23 @@ interface ZoneGroupProps {
   zone: PageZone;
   label: string;
   isCollapsed: boolean;
-  onToggleZone: (zone: PageZone) => void;
   zoneSections: SectionInstance[];
-  selectedNodeId?: string | null;
-  currentPage: unknown;
-  clipboard: { type: 'section' | 'block'; data: unknown } | null;
-  showExtractPlaceholder: boolean;
-  showSectionDropPlaceholder: boolean;
 }
 
 function ZoneGroup({
   zone,
   label,
   isCollapsed,
-  onToggleZone,
   zoneSections,
-  currentPage,
-  clipboard,
-  showExtractPlaceholder,
-  showSectionDropPlaceholder,
 }: ZoneGroupProps): React.ReactNode {
+  const {
+    currentPage,
+    clipboard,
+    canDropSectionsAtRoot,
+    treePlaceholderClasses,
+    treeRootDropLabel,
+    onToggleZone,
+  } = useComponentTreePanelContext();
   const [isZoneDragOver, setIsZoneDragOver] = useState(false);
   const { state: dragState, endSectionDrag } = useDragState();
   const {
@@ -172,6 +250,7 @@ function ZoneGroup({
             <div
               onDragOver={(e: React.DragEvent) => {
                 if (!draggedSectionId) return;
+                if (!canDropSectionsAtRoot) return;
                 e.preventDefault();
                 e.stopPropagation();
                 setIsZoneDragOver(true);
@@ -182,16 +261,17 @@ function ZoneGroup({
                 e.stopPropagation();
                 setIsZoneDragOver(false);
                 if (!draggedSectionId) return;
+                if (!canDropSectionsAtRoot) return;
                 sectionActions.dropInZone(draggedSectionId, zone, 0);
                 endSectionDrag();
               }}
               className={`rounded border border-dashed px-3 py-3 text-center text-xs transition ${
                 isZoneDragOver
-                  ? 'border-purple-500/50 bg-purple-600/20 text-purple-300'
-                  : 'border-border/30 text-gray-600'
+                  ? treePlaceholderClasses.rootActive
+                  : treePlaceholderClasses.rootIdle
               }`}
             >
-              {isZoneDragOver ? 'Drop section here' : 'No sections'}
+              {isZoneDragOver ? treeRootDropLabel : 'No sections'}
             </div>
           ) : (
             <div className='space-y-0.5'>
@@ -200,8 +280,6 @@ function ZoneGroup({
                   <SectionDropTarget
                     zone={zone}
                     toIndex={index}
-                    showExtractPlaceholder={showExtractPlaceholder}
-                    showSectionDropPlaceholder={showSectionDropPlaceholder}
                   />
                   <SectionNodeItem
                     section={section}
@@ -212,8 +290,6 @@ function ZoneGroup({
               <SectionDropTarget
                 zone={zone}
                 toIndex={zoneSections.length}
-                showExtractPlaceholder={showExtractPlaceholder}
-                showSectionDropPlaceholder={showSectionDropPlaceholder}
               />
             </div>
           )}
@@ -248,16 +324,20 @@ function ZoneGroup({
 interface SectionDropTargetProps {
   zone: PageZone;
   toIndex: number;
-  showExtractPlaceholder: boolean;
-  showSectionDropPlaceholder: boolean;
 }
 
 function SectionDropTarget({
   zone,
   toIndex,
-  showExtractPlaceholder,
-  showSectionDropPlaceholder,
 }: SectionDropTargetProps): React.ReactNode {
+  const {
+    showExtractPlaceholder,
+    showSectionDropPlaceholder,
+    canDropSectionsAtRoot,
+    canDropBlocksAtRoot,
+    treePlaceholderClasses,
+    treeInlineDropLabel,
+  } = useComponentTreePanelContext();
   const [isOver, setIsOver] = useState(false);
   const { state: dragState, endBlockDrag, endSectionDrag } = useDragState();
   const { sectionActions } = useTreeActions();
@@ -272,8 +352,12 @@ function SectionDropTarget({
   const draggedSectionIndex = dragState.section.index;
 
   const isDraggingBlock = Boolean(draggedBlockId);
-  const isDraggingSection = showSectionDropPlaceholder && Boolean(draggedSectionId);
-  const canPromoteBlock = showExtractPlaceholder && isDraggingBlock && PROMOTABLE_BLOCK_TYPES.includes(draggedBlockType ?? '');
+  const isDraggingSection = showSectionDropPlaceholder && canDropSectionsAtRoot && Boolean(draggedSectionId);
+  const canPromoteBlock =
+    showExtractPlaceholder &&
+    canDropBlocksAtRoot &&
+    isDraggingBlock &&
+    PROMOTABLE_BLOCK_TYPES.includes(draggedBlockType ?? '');
   const isDragging = isDraggingSection || canPromoteBlock;
 
   if (!isDragging) return null;
@@ -351,10 +435,10 @@ function SectionDropTarget({
           isOver
             ? canPromoteBlock
               ? 'border-emerald-500 bg-emerald-600/40 h-6'
-              : 'border-purple-500 bg-purple-600/40 h-6'
+              : `${treePlaceholderClasses.rootActive} h-6`
             : canPromoteBlock
               ? 'border-emerald-500/50 bg-emerald-600/20 h-5'
-              : 'border-purple-500/50 bg-purple-600/20 h-5'
+              : `${treePlaceholderClasses.rootIdle} h-5`
         }`}
       >
         {canPromoteBlock && (
@@ -363,8 +447,13 @@ function SectionDropTarget({
           </span>
         )}
         {isDraggingSection && !canPromoteBlock && (
-          <span className={`text-[9px] font-medium ${isOver ? 'text-purple-200' : 'text-purple-400'}`}>
-            {isOver ? 'Release to move' : 'Drop here'}
+          <span
+            className={cn(
+              'text-[9px] font-medium',
+              isOver ? treePlaceholderClasses.badgeActive : treePlaceholderClasses.badgeIdle
+            )}
+          >
+            {isOver ? 'Release to move' : treeInlineDropLabel}
           </span>
         )}
       </div>

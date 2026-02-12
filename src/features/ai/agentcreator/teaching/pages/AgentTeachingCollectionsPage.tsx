@@ -6,7 +6,7 @@ import React from 'react';
 
 import { buildModelProfile } from '@/features/ai/chatbot/utils';
 import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/domain/agent-teaching';
-import { Button, ConfirmDialog, Input, Label, SectionHeader, SectionPanel, AppModal, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast, UnifiedSelect } from '@/shared/ui';
+import { Button, ConfirmDialog, Input, Label, SectionHeader, SectionPanel, FormModal, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast, UnifiedSelect, FormField, FormSection } from '@/shared/ui';
 
 import { useAgentTeachingContext } from '../context/AgentTeachingContext';
 import { useDeleteEmbeddingCollectionMutation, useUpsertEmbeddingCollectionMutation } from '../hooks/useAgentTeaching';
@@ -97,13 +97,13 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
         )}
       />
 
-      <SectionPanel className='p-4'>
+      <FormSection className='p-4'>
         <div className='flex flex-wrap items-center justify-between gap-3'>
           <div className='text-xs text-gray-500'>
             {isLoading ? 'Loading...' : `${collections.length} collection(s)`}
           </div>
         </div>
-      </SectionPanel>
+      </FormSection>
 
       <SectionPanel variant='subtle' className='p-0 overflow-hidden'>
         <Table>
@@ -201,25 +201,16 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
         }}
       />
 
-      <AppModal
+      <FormModal
         open={modalOpen}
         onClose={closeModal}
         size='sm'
         title={editing ? 'Edit Collection' : 'New Collection'}
-        footer={(
-          <>
-            <Button type='button' variant='outline' onClick={closeModal} disabled={saving || deleting}>
-              Cancel
-            </Button>
-            <Button type='button' onClick={() => void handleSave()} disabled={saving || deleting || !draft.name?.trim()}>
-              {saving ? 'Saving...' : 'Save'}
-            </Button>
-          </>
-        )}
+        onSave={() => void handleSave()}
+        isSaving={saving}
       >
         <div className='space-y-4'>
-          <div className='space-y-2'>
-            <Label>Name</Label>
+          <FormField label='Name'>
             <Input
               value={draft.name ?? ''}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
@@ -227,9 +218,8 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
               }
               placeholder='Collection name'
             />
-          </div>
-          <div className='space-y-2'>
-            <Label>Description</Label>
+          </FormField>
+          <FormField label='Description'>
             <Textarea
               value={draft.description ?? ''}
               onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
@@ -238,21 +228,20 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
               placeholder='Optional description'
               className='min-h-[90px]'
             />
-          </div>
-          <div className='space-y-2'>
-            <Label>Embedding model</Label>
+          </FormField>
+          <FormField
+            label='Embedding model'
+            description='This model will be used to embed documents added to this collection.'
+          >
             <UnifiedSelect
               value={draft.embeddingModel ?? ''}
               onValueChange={(value: string): void => setDraft((prev: Partial<AgentTeachingEmbeddingCollectionRecord>): Partial<AgentTeachingEmbeddingCollectionRecord> => ({ ...prev, embeddingModel: value }))}
               options={embeddingModels.map((model: string) => ({ value: model, label: model }))}
               placeholder='Select embedding model'
             />
-            <div className='text-[11px] text-gray-500'>
-              This model will be used to embed documents added to this collection.
-            </div>
-          </div>
+          </FormField>
         </div>
-      </AppModal>
+      </FormModal>
     </div>
   );
 }

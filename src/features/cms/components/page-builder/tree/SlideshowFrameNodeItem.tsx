@@ -14,6 +14,8 @@ import { ColumnBlockPicker } from '../ColumnBlockPicker';
 import { getBlockDefinition } from '../section-registry';
 import { BlockNodeItem } from './BlockNodeItem';
 import { BLOCK_ICONS, CONVERTIBLE_SECTION_TYPES, resolveBlockLabel } from './tree-constants';
+import { TreeParentBlockProvider } from './TreeParentBlockContext';
+import { useTreeSectionId } from './TreeSectionContext';
 
 import type { SlideshowFrameNodeItemProps } from './tree-types';
 import type { BlockInstance } from '../../../types/page-builder';
@@ -21,8 +23,8 @@ import type { BlockInstance } from '../../../types/page-builder';
 export function SlideshowFrameNodeItem({
   frame,
   index,
-  sectionId,
 }: SlideshowFrameNodeItemProps): React.ReactNode {
+  const sectionId = useTreeSectionId();
   const { state: pbState } = usePageBuilder();
   const {
     expandedIds,
@@ -83,7 +85,7 @@ export function SlideshowFrameNodeItem({
             }
           }}
           onDragOver={(e: React.DragEvent) => {
-            const hasBlockPayload = hasDragType(e.dataTransfer, [DRAG_KEYS.TEXT]);
+            const hasBlockPayload = hasDragType(e.dataTransfer, [DRAG_KEYS.BLOCK_ID]);
             const blockDrag = readBlockDragData(e.dataTransfer, {
               id: draggedBlockId,
               type: draggedBlockType,
@@ -237,7 +239,7 @@ export function SlideshowFrameNodeItem({
         <div
           className='ml-5 border-l border-border/30 pl-1'
           onDragOver={(e: React.DragEvent) => {
-            const hasBlockPayload = hasDragType(e.dataTransfer, [DRAG_KEYS.TEXT]);
+            const hasBlockPayload = hasDragType(e.dataTransfer, [DRAG_KEYS.BLOCK_ID]);
             const blockDrag = readBlockDragData(e.dataTransfer, {
               id: draggedBlockId,
               type: draggedBlockType,
@@ -305,13 +307,13 @@ export function SlideshowFrameNodeItem({
                   endBlockDrag();
                 }}
               >
-                <BlockNodeItem
-                  block={child}
-                  index={childIndex}
-                  sectionId={sectionId}
-                  parentBlockId={frame.id}
-                  disableDrag
-                />
+                <TreeParentBlockProvider parentBlockId={frame.id}>
+                  <BlockNodeItem
+                    block={child}
+                    index={childIndex}
+                    disableDrag
+                  />
+                </TreeParentBlockProvider>
               </div>
             ))
           ) : (

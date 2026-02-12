@@ -1,0 +1,91 @@
+import type {
+  CategoryWithChildren,
+  NoteRecord,
+} from '@/shared/types/domain/notes';
+import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
+
+const FOLDER_NODE_PREFIX = 'folder:';
+const NOTE_NODE_PREFIX = 'note:';
+
+export const toFolderMasterNodeId = (folderId: string): string =>
+  `${FOLDER_NODE_PREFIX}${folderId}`;
+
+export const toNoteMasterNodeId = (noteId: string): string =>
+  `${NOTE_NODE_PREFIX}${noteId}`;
+
+export const isFolderMasterNodeId = (value: string): boolean =>
+  value.startsWith(FOLDER_NODE_PREFIX);
+
+export const isNoteMasterNodeId = (value: string): boolean =>
+  value.startsWith(NOTE_NODE_PREFIX);
+
+export const fromFolderMasterNodeId = (value: string): string | null =>
+  isFolderMasterNodeId(value) ? value.slice(FOLDER_NODE_PREFIX.length) : null;
+
+export const fromNoteMasterNodeId = (value: string): string | null =>
+  isNoteMasterNodeId(value) ? value.slice(NOTE_NODE_PREFIX.length) : null;
+
+const buildFolderPath = (parentPath: string, folderName: string): string => {
+  const normalizedName = folderName.trim();
+  if (!parentPath) return normalizedName;
+  return `${parentPath}/${normalizedName}`;
+};
+
+export const buildMasterNodesFromNotesFolderTree = (
+  folders: CategoryWithChildren[]
+): MasterTreeNode[] => {
+  const nodes: MasterTreeNode[] = [];
+
+  const walkFolder = (
+    folder: CategoryWithChildren,
+    parentFolderNodeId: string | null,
+    parentPath: string,
+    siblingIndex: number
+  ): void => {
+    const folderNodeId = toFolderMasterNodeId(folder.id);
+    const folderPath = buildFolderPath(parentPath, folder.name);
+    nodes.push({
+      id: folderNodeId,
+      type: 'folder',
+      kind: 'folder',
+      parentId: parentFolderNodeId,
+      name: folder.name,
+      path: folderPath,
+      sortOrder: siblingIndex,
+      metadata: {
+        entity: 'folder',
+        rawId: folder.id,
+      },
+    });
+
+    folder.children.forEach((child: CategoryWithChildren, index: number) => {
+      walkFolder(child, folderNodeId, folderPath, index);
+    });
+
+    const sortedNotes = [...(folder.notes ?? [])].sort((a: NoteRecord, b: NoteRecord) =>
+      a.title.localeCompare(b.title)
+    );
+    sortedNotes.forEach((note: NoteRecord, index: number) => {
+      nodes.push({
+        id: toNoteMasterNodeId(note.id),
+        type: 'file',
+        kind: 'note',
+        parentId: folderNodeId,
+        name: note.title,
+        path: buildFolderPath(folderPath, note.title),
+        sortOrder: folder.children.length + index,
+        metadata: {
+          entity: 'note',
+          rawId: note.id,
+          parentFolderId: folder.id,
+        },
+      });
+    });
+  };
+
+  folders.forEach((folder: CategoryWithChildren, index: number) => {
+    walkFolder(folder, null, '', index);
+  });
+
+  return nodes;
+};

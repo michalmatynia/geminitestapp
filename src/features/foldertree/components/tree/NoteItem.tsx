@@ -3,21 +3,21 @@
 import { FileText, Edit2, Copy, Trash2, FilePlus } from 'lucide-react';
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 
+import { ICON_LIBRARY_MAP } from '@/features/icons';
 import type { NoteRecord } from '@/shared/types/domain/notes';
 import { TreeRow, TreeActionButton, TreeActionSlot, useToast, Input, TreeContextMenu, type TreeContextMenuItem } from '@/shared/ui';
 import { getNoteDragId, hasDragType, setNoteDragData, DRAG_KEYS } from '@/shared/utils/drag-drop';
 
+import { useFolderTreeFolderId, useFolderTreeNodeLevel } from './FolderTreeNodeContext';
 import { useFolderTree } from '../../context/FolderTreeContext';
 
 export const NoteItem = React.memo(function NoteItem({
   note,
-  level,
-  folderId,
 }: {
   note: NoteRecord;
-  level: number;
-  folderId: string;
 }): React.JSX.Element {
+  const level = useFolderTreeNodeLevel();
+  const folderId = useFolderTreeFolderId();
   const {
     onSelectNote,
     onCreateNote,
@@ -31,6 +31,7 @@ export const NoteItem = React.memo(function NoteItem({
     setDraggedNoteId,
     selectedNoteId,
     renamingNoteId,
+    profile,
   } = useFolderTree();
 
   const isSelected = selectedNoteId === note.id;
@@ -40,6 +41,10 @@ export const NoteItem = React.memo(function NoteItem({
   const renameInputRef = useRef<HTMLInputElement>(null);
   const renameValueRef = useRef(note.title);
   const [isDragOver, setIsDragOver] = useState(false);
+  const FileIcon = useMemo(() => {
+    const iconId = profile.icons.file ?? 'FileText';
+    return ICON_LIBRARY_MAP[iconId] ?? FileText;
+  }, [profile.icons.file]);
   const contextMenuItems = useMemo<TreeContextMenuItem[]>(
     () => [
       { id: 'new-note', label: 'New note', icon: <FilePlus className='size-3.5' />, onSelect: (): void => onCreateNote(folderId) },
@@ -102,7 +107,7 @@ export const NoteItem = React.memo(function NoteItem({
         onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
           const isNoteDrag =
           Boolean(draggedNoteId) ||
-          hasDragType(e.dataTransfer, [DRAG_KEYS.NOTE_ID, DRAG_KEYS.TEXT]);
+          hasDragType(e.dataTransfer, [DRAG_KEYS.NOTE_ID]);
           if (!isNoteDrag) return;
           e.preventDefault();
           e.stopPropagation();
@@ -148,7 +153,7 @@ export const NoteItem = React.memo(function NoteItem({
           }
         }}
       >
-        <FileText className={`size-4 flex-shrink-0 ${isSelected ? 'text-white' : 'text-gray-500 group-hover:text-gray-300'}`} />
+        <FileIcon className={`size-4 flex-shrink-0 ${isSelected ? 'text-white' : 'text-gray-500 group-hover:text-gray-300'}`} />
         {isRenaming ? (
           <Input
             ref={renameInputRef}

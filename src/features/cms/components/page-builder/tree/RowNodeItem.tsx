@@ -9,6 +9,9 @@ import { DRAG_KEYS, hasDragType } from '@/shared/utils/drag-drop';
 import { BlockNodeItem } from './BlockNodeItem';
 import { ColumnNodeItem } from './ColumnNodeItem';
 import { CONVERTIBLE_SECTION_TYPES, resolveNodeLabel } from './tree-constants';
+import { TreeParentBlockProvider } from './TreeParentBlockContext';
+import { TreeRowProvider } from './TreeRowContext';
+import { useTreeSectionId } from './TreeSectionContext';
 import { useDragStateExtract } from '../../../hooks/useDragStateExtract';
 import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
 import { useTreeActions } from '../../../hooks/useTreeActionsContext';
@@ -21,8 +24,8 @@ export function RowNodeItem({
   row,
   rowIndex,
   rowCount,
-  sectionId,
 }: RowNodeItemProps): React.ReactNode {
+  const sectionId = useTreeSectionId();
   const { state: pbState } = usePageBuilder();
   const {
     expandedIds,
@@ -101,7 +104,7 @@ export function RowNodeItem({
               id: draggedBlockId,
               type: draggedBlockType,
             });
-            const hasBlockPayload = hasDragType(e.dataTransfer, [DRAG_KEYS.TEXT]);
+            const hasBlockPayload = hasDragType(e.dataTransfer, [DRAG_KEYS.BLOCK_ID]);
             const dragId = blockDrag.id;
             // Allow section drops (for convertible sections like ImageElement, TextElement, etc.)
             const isSectionDrop = draggedSectionId && draggedSectionId !== sectionId && CONVERTIBLE_SECTION_TYPES.includes(draggedSectionType ?? '');
@@ -239,25 +242,23 @@ export function RowNodeItem({
           {(row.blocks ?? []).map((child: BlockInstance, childIndex: number) => {
             if (child.type === 'Column') {
               return (
-                <ColumnNodeItem
-                  key={child.id}
-                  column={child}
-                  columnIndex={childIndex}
-                  sectionId={sectionId}
-                  rowId={row.id}
-                  rowColumnCount={columns.length}
-                />
+                <TreeRowProvider key={child.id} rowId={row.id}>
+                  <ColumnNodeItem
+                    column={child}
+                    columnIndex={childIndex}
+                    rowColumnCount={columns.length}
+                  />
+                </TreeRowProvider>
               );
             }
             // Render direct element children (non-Column blocks in the Row)
             return (
-              <BlockNodeItem
-                key={child.id}
-                block={child}
-                index={childIndex}
-                sectionId={sectionId}
-                parentBlockId={row.id}
-              />
+              <TreeParentBlockProvider key={child.id} parentBlockId={row.id}>
+                <BlockNodeItem
+                  block={child}
+                  index={childIndex}
+                />
+              </TreeParentBlockProvider>
             );
           })}
         </div>

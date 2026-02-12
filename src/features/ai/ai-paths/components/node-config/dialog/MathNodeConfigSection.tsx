@@ -1,13 +1,20 @@
 'use client';
 
-
-
-
 import type { MathConfig } from '@/features/ai/ai-paths/lib';
 import { toNumber } from '@/features/ai/ai-paths/lib';
-import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+import { Input, Label, UnifiedSelect } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
+
+const operationOptions = [
+  { value: 'add', label: 'Add' },
+  { value: 'subtract', label: 'Subtract' },
+  { value: 'multiply', label: 'Multiply' },
+  { value: 'divide', label: 'Divide' },
+  { value: 'round', label: 'Round' },
+  { value: 'ceil', label: 'Ceil' },
+  { value: 'floor', label: 'Floor' },
+];
 
 export function MathNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
@@ -23,7 +30,7 @@ export function MathNodeConfigSection(): React.JSX.Element | null {
     <div className='space-y-4'>
       <div>
         <Label className='text-xs text-gray-400'>Operation</Label>
-        <Select
+        <UnifiedSelect
           value={mathConfig.operation}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
@@ -33,20 +40,10 @@ export function MathNodeConfigSection(): React.JSX.Element | null {
               },
             })
           }
-        >
-          <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
-            <SelectValue placeholder='Select operation' />
-          </SelectTrigger>
-          <SelectContent className='border-border bg-gray-900'>
-            <SelectItem value='add'>Add</SelectItem>
-            <SelectItem value='subtract'>Subtract</SelectItem>
-            <SelectItem value='multiply'>Multiply</SelectItem>
-            <SelectItem value='divide'>Divide</SelectItem>
-            <SelectItem value='round'>Round</SelectItem>
-            <SelectItem value='ceil'>Ceil</SelectItem>
-            <SelectItem value='floor'>Floor</SelectItem>
-          </SelectContent>
-        </Select>
+          options={operationOptions}
+          placeholder='Select operation'
+          className='mt-2'
+        />
       </div>
       <div>
         <Label className='text-xs text-gray-400'>Operand</Label>

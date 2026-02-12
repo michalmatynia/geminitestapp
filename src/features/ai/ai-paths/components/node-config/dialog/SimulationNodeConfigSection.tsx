@@ -1,11 +1,7 @@
 'use client';
 
-
-
-
-
 import { DB_COLLECTION_OPTIONS } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+import { Button, Input, Label, UnifiedSelect } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -30,11 +26,18 @@ export function SimulationNodeConfigSection(): React.JSX.Element | null {
     Boolean(trimmedEntityId) &&
     (looksLikeUuid ? idLength !== 36 : false);
 
+  const collectionOptions = DB_COLLECTION_OPTIONS
+    .filter((opt: { value: string }): boolean => opt.value !== 'custom')
+    .map((opt: { value: string; label: string }) => ({
+      value: opt.value,
+      label: opt.label,
+    }));
+
   return (
     <div className='space-y-4'>
       <div>
         <Label className='text-xs text-gray-400'>Collection Type</Label>
-        <Select
+        <UnifiedSelect
           value={simulationConfig.entityType ?? 'products'}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
@@ -44,18 +47,10 @@ export function SimulationNodeConfigSection(): React.JSX.Element | null {
               },
             })
           }
-        >
-          <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
-            <SelectValue placeholder='Select collection' />
-          </SelectTrigger>
-          <SelectContent className='border-border bg-gray-900 max-h-60 overflow-y-auto'>
-            {DB_COLLECTION_OPTIONS.filter((opt: { value: string }): boolean => opt.value !== 'custom').map((option: { label: string; value: string }): React.JSX.Element => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          options={collectionOptions}
+          placeholder='Select collection'
+          className='mt-2'
+        />
       </div>
       <div>
         <Label className='text-xs text-gray-400'>Document ID</Label>

@@ -9,4 +9,4 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 export const getIntegrationConnectionsQueryKey = (
   integrationId?: string
-): readonly unknown[] => [...QUERY_KEYS.integrations.connections(), integrationId];
+): readonly unknown[] => QUERY_KEYS.integrations.connections(integrationId);

@@ -8,7 +8,7 @@ import Link from 'next/link';
 
 import { useNoteSettings, DEFAULT_NOTE_SETTINGS } from '@/features/notesapp/hooks/NoteSettingsContext';
 import type { NoteSettings } from '@/features/notesapp/types/notes-settings';
-import { Button, UnifiedSelect, useToast, Label, Checkbox, RadioGroup, RadioGroupItem, SectionHeader, SectionPanel } from '@/shared/ui';
+import { Button, UnifiedSelect, useToast, Label, Checkbox, RadioGroup, RadioGroupItem, SectionHeader, SectionPanel, FormSection, FormField } from '@/shared/ui';
 
 
 
@@ -79,105 +79,79 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
 
       <div className='max-w-xl space-y-6'>
         {/* Sorting Settings */}
-        <SectionPanel className='p-6'>
-          <SectionHeader title='Sorting' size='sm' className='mb-4' />
-          <div className='space-y-4'>
-            <div>
-              <Label className='mb-2 flex items-center justify-between text-sm font-medium text-gray-200'>
-                <span>Sort By</span>
-                {!isDefault('sortBy') && (
-                  <span className='text-xs text-blue-400'>Modified</span>
-                )}
-              </Label>
-              <UnifiedSelect
-                options={sortByOptions}
-                value={settings.sortBy}
-                onValueChange={(value: string): void =>
-                  updateSettings({ sortBy: value as NoteSettings['sortBy'] })
-                }
-                placeholder='Select sort field'
-              />
-            </div>
+        <FormSection title='Sorting' className='p-6'>
+          <FormField
+            label='Sort By'
+            description={!isDefault('sortBy') ? 'Modified from default' : undefined}
+          >
+            <UnifiedSelect
+              options={sortByOptions}
+              value={settings.sortBy}
+              onValueChange={(value: string): void =>
+                updateSettings({ sortBy: value as NoteSettings['sortBy'] })
+              }
+              placeholder='Select sort field'
+            />
+          </FormField>
 
-            <div>
-              <Label className='mb-2 flex items-center justify-between text-sm font-medium text-gray-200'>
-                <span>Sort Order</span>
-                {!isDefault('sortOrder') && (
-                  <span className='text-xs text-blue-400'>Modified</span>
-                )}
-              </Label>
-              <UnifiedSelect
-                options={sortOrderOptions}
-                value={settings.sortOrder}
-                onValueChange={(value: string): void =>
-                  updateSettings({ sortOrder: value as NoteSettings['sortOrder'] })
-                }
-                placeholder='Select sort order'
-              />
-            </div>
-          </div>
-        </SectionPanel>
+          <FormField
+            label='Sort Order'
+            description={!isDefault('sortOrder') ? 'Modified from default' : undefined}
+          >
+            <UnifiedSelect
+              options={sortOrderOptions}
+              value={settings.sortOrder}
+              onValueChange={(value: string): void =>
+                updateSettings({ sortOrder: value as NoteSettings['sortOrder'] })
+              }
+              placeholder='Select sort order'
+            />
+          </FormField>
+        </FormSection>
 
         {/* Visibility Settings */}
-        <SectionPanel className='p-6'>
-          <SectionHeader title='Card Visibility' size='sm' className='mb-4' />
-          <div className='space-y-4'>
-            <Label className='flex items-center justify-between'>
-              <div className='flex items-center gap-3'>
-                <Checkbox
-                  checked={settings.showTimestamps} onCheckedChange={(checked: boolean | 'indeterminate'): void =>
-                    updateSettings({ showTimestamps: Boolean(checked) })
-                  }
-                  className='h-4 w-4 rounded border-border/60 bg-gray-800 text-blue-600 focus:ring-blue-500'
-                />
-                <div>
-                  <span className='text-sm font-medium text-gray-200'>
-                    Show Timestamps
-                  </span>
-                  <p className='text-xs text-gray-500'>
-                    Display created and modified dates on note cards
-                  </p>
-                </div>
-              </div>
+        <FormSection title='Card Visibility' className='p-6'>
+          <FormField
+            label='Show Timestamps'
+            description='Display created and modified dates on note cards'
+          >
+            <div className='flex items-center justify-between'>
+              <Checkbox
+                checked={settings.showTimestamps}
+                onCheckedChange={(checked: boolean | 'indeterminate'): void =>
+                  updateSettings({ showTimestamps: Boolean(checked) })
+                }
+              />
               {!isDefault('showTimestamps') && (
                 <span className='text-xs text-blue-400'>Modified</span>
               )}
-            </Label>
+            </div>
+          </FormField>
 
-            <Label className='flex items-center justify-between'>
-              <div className='flex items-center gap-3'>
-                <Checkbox
-                  checked={settings.showBreadcrumbs} onCheckedChange={(checked: boolean | 'indeterminate'): void =>
-                    updateSettings({ showBreadcrumbs: Boolean(checked) })
-                  }
-                  className='h-4 w-4 rounded border-border/60 bg-gray-800 text-blue-600 focus:ring-blue-500'
-                />
-                <div>
-                  <span className='text-sm font-medium text-gray-200'>
-                    Show Breadcrumbs
-                  </span>
-                  <p className='text-xs text-gray-500'>
-                    Display folder path at the bottom of note cards
-                  </p>
-                </div>
-              </div>
+          <FormField
+            label='Show Breadcrumbs'
+            description='Display folder path at the bottom of note cards'
+          >
+            <div className='flex items-center justify-between'>
+              <Checkbox
+                checked={settings.showBreadcrumbs}
+                onCheckedChange={(checked: boolean | 'indeterminate'): void =>
+                  updateSettings({ showBreadcrumbs: Boolean(checked) })
+                }
+              />
               {!isDefault('showBreadcrumbs') && (
                 <span className='text-xs text-blue-400'>Modified</span>
               )}
-            </Label>
-          </div>
-        </SectionPanel>
+            </div>
+          </FormField>
+        </FormSection>
 
         {/* Search Settings */}
-        <SectionPanel className='p-6'>
-          <SectionHeader title='Search' size='sm' className='mb-4' />
-          <div>
-            <Label className='mb-2 flex items-center justify-between text-sm font-medium text-gray-200'>
-              <span>Default Search Scope</span>
-              {!isDefault('searchScope') && (
-                <span className='text-xs text-blue-400'>Modified</span>
-              )}
-            </Label>
+        <FormSection title='Search' className='p-6'>
+          <FormField
+            label='Default Search Scope'
+            description={!isDefault('searchScope') ? 'Modified from default' : undefined}
+          >
             <UnifiedSelect
               options={searchScopeOptions}
               value={settings.searchScope}
@@ -186,98 +160,77 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
               }
               placeholder='Select search scope'
             />
-          </div>
-        </SectionPanel>
+          </FormField>
+        </FormSection>
 
         {/* Editor Settings */}
-        <SectionPanel className='p-6'>
-          <SectionHeader title='Editor' size='sm' className='mb-4' />
-          <div className='space-y-4'>
-            <div>
-              <Label className='mb-2 flex items-center justify-between text-sm font-medium text-gray-200'>
-                <span>Default Editor Mode</span>
-                {!isDefault('editorMode') && (
-                  <span className='text-xs text-blue-400'>Modified</span>
-                )}
-              </Label>
-              <div className='space-y-2'>
-                <RadioGroup
-                  value={settings.editorMode}
-                  onValueChange={(value: string): void =>
-                    updateSettings({ editorMode: value as NoteSettings['editorMode'] })
-                  }
-                  className='space-y-2'
-                >
-                  {editorModeOptions.map((option: { value: string; label: string; description: string }) => {
-                    const id = `editor-mode-${option.value}`;
-                    const isSelected = settings.editorMode === option.value;
-                    return (
-                      <div
-                        key={option.value}
-                        className={`flex items-start gap-3 rounded-md border p-3 transition-colors ${
-                          isSelected
-                            ? 'border-blue-500 bg-blue-500/10'
-                            : 'border hover:border-border/60'
-                        }`}
-                      >
-                        <RadioGroupItem
-                          id={id}
-                          value={option.value}
-                          className='mt-1 border-border/60 text-blue-600'
-                        />
-                        <Label htmlFor={id} className='flex-1 cursor-pointer'>
-                          <span className='text-sm font-medium text-gray-200'>
-                            {option.label}
-                          </span>
-                          <p className='text-xs text-gray-500'>{option.description}</p>
-                        </Label>
-                      </div>
-                    );
-                  })}
-                </RadioGroup>
-              </div>
-            </div>
+        <FormSection title='Editor' className='p-6'>
+          <FormField
+            label='Default Editor Mode'
+            description={!isDefault('editorMode') ? 'Modified from default' : undefined}
+          >
+            <RadioGroup
+              value={settings.editorMode}
+              onValueChange={(value: string): void =>
+                updateSettings({ editorMode: value as NoteSettings['editorMode'] })
+              }
+              className='space-y-2'
+            >
+              {editorModeOptions.map((option: { value: string; label: string; description: string }) => {
+                const id = `editor-mode-${option.value}`;
+                const isSelected = settings.editorMode === option.value;
+                return (
+                  <div
+                    key={option.value}
+                    className={`flex items-start gap-3 rounded-md border p-3 transition-colors ${
+                      isSelected
+                        ? 'border-blue-500 bg-blue-500/10'
+                        : 'border hover:border-border/60'
+                    }`}
+                  >
+                    <RadioGroupItem
+                      id={id}
+                      value={option.value}
+                      className='mt-1 border-border/60 text-blue-600'
+                    />
+                    <Label htmlFor={id} className='flex-1 cursor-pointer'>
+                      <span className='text-sm font-medium text-gray-200'>
+                        {option.label}
+                      </span>
+                      <p className='text-xs text-gray-500'>{option.description}</p>
+                    </Label>
+                  </div>
+                );
+              })}
+            </RadioGroup>
+          </FormField>
 
-            <Label className='flex items-center justify-between'>
-              <div className='flex items-center gap-3'>
-                <Checkbox
-                  checked={settings.autoformatOnPaste} onCheckedChange={(checked: boolean | 'indeterminate'): void =>
-                    updateSettings({ autoformatOnPaste: Boolean(checked) })
-                  }
-                  className='h-4 w-4 rounded border-border/60 bg-gray-800 text-blue-600 focus:ring-blue-500'
-                />
-                <div>
-                  <span className='text-sm font-medium text-gray-200'>
-                    Autoformat on Paste (Markdown mode only)
-                  </span>
-                  <p className='text-xs text-gray-500'>
-                    Automatically format pasted markdown content (trim spaces,
-                    normalize blank lines, convert URLs to links, normalize list markers)
-                  </p>
-                </div>
-              </div>
+          <FormField
+            label='Autoformat on Paste'
+            description='Automatically format pasted markdown content (Markdown mode only)'
+          >
+            <div className='flex items-center justify-between'>
+              <Checkbox
+                checked={settings.autoformatOnPaste}
+                onCheckedChange={(checked: boolean | 'indeterminate'): void =>
+                  updateSettings({ autoformatOnPaste: Boolean(checked) })
+                }
+              />
               {!isDefault('autoformatOnPaste') && (
                 <span className='text-xs text-blue-400'>Modified</span>
               )}
-            </Label>
-          </div>
-        </SectionPanel>
+            </div>
+          </FormField>
+        </FormSection>
 
         {/* Navigation State */}
-        <SectionPanel className='p-6'>
-          <SectionHeader title='Navigation' size='sm' className='mb-4' />
-          <div className='space-y-2'>
+        <FormSection title='Navigation' className='p-6'>
+          <FormField
+            label='Remember Selected Folder'
+            description='Your selected folder is saved to the database and persists across sessions.'
+          >
             <div className='flex items-center justify-between'>
-              <div>
-                <span className='text-sm font-medium text-gray-200'>
-                  Remember Selected Folder
-                </span>
-                <p className='text-xs text-gray-500'>
-                  Your selected folder is saved to the database. When you return to the Notes app
-                  (even after clearing cache or on a different device), it will open to your last selected folder.
-                </p>
-              </div>
-              {!isDefault('selectedFolderId') && (
+              {!isDefault('selectedFolderId') ? (
                 <div className='flex items-center gap-2'>
                   <span className='text-xs text-green-400'>Saved to database</span>
                   <Button
@@ -289,10 +242,12 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
                     Clear
                   </Button>
                 </div>
+              ) : (
+                <span className='text-xs text-gray-500'>Using default</span>
               )}
             </div>
-          </div>
-        </SectionPanel>
+          </FormField>
+        </FormSection>
 
         {/* Reset Button */}
         <div className='flex justify-end'>

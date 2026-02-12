@@ -4,7 +4,7 @@ import { Repeat2 } from 'lucide-react';
 import React from 'react';
 
 import { type ParamLeaf, type ParamSpec, type ParamIssue } from '@/features/prompt-engine/prompt-params';
-import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea } from '@/shared/ui';
+import { Button, Checkbox, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { usePrompt } from '../context/PromptContext';
@@ -162,7 +162,10 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
               </div>
             ) : (
               <label className='flex cursor-pointer items-center gap-2 text-xs text-gray-200'>
-                <input type='checkbox' checked={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.checked)} />
+                <Checkbox
+                  checked={value}
+                  onCheckedChange={(checked: boolean | 'indeterminate') => onChange(Boolean(checked))}
+                />
                 <span>{value ? 'true' : 'false'}</span>
               </label>
             )

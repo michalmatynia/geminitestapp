@@ -1,7 +1,7 @@
 'use client';
 
-import { FolderPlus, ImageOff, ImagePlus, Plus, Settings2 } from 'lucide-react';
-import React, { useRef, useState } from 'react';
+import { FolderPlus, ImageOff, ImagePlus, Locate, Plus, Settings2 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
@@ -54,6 +54,7 @@ export function LeftSidebar(): React.JSX.Element {
   const { toast } = useToast();
   const [folderCreateOpen, setFolderCreateOpen] = useState(false);
   const [folderDraft, setFolderDraft] = useState('');
+  const [revealRequest, setRevealRequest] = useState<{ slotId: string; nonce: number } | null>(null);
   const singleSlotManagerRef = useRef<ImageStudioSingleSlotManagerHandle | null>(null);
   const productImagesExternalBaseUrl =
     settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
@@ -100,6 +101,19 @@ export function LeftSidebar(): React.JSX.Element {
     setSelectedPointIndex(null);
   };
 
+  const handleRevealInTree = (): void => {
+    const targetSlotId = workingSlot?.id ?? null;
+    if (!targetSlotId) {
+      toast('No card is currently loaded in the preview.', { variant: 'info' });
+      return;
+    }
+    setSelectedSlotId(targetSlotId);
+    setRevealRequest((prev) => ({
+      slotId: targetSlotId,
+      nonce: (prev?.nonce ?? 0) + 1,
+    }));
+  };
+
   const handleCreateFolder = (): void => {
     const normalized = folderDraft.trim();
     if (!normalized) return;
@@ -110,6 +124,10 @@ export function LeftSidebar(): React.JSX.Element {
       toast(error instanceof Error ? error.message : 'Failed to create folder', { variant: 'error' });
     });
   };
+
+  useEffect(() => {
+    setRevealRequest(null);
+  }, [projectId]);
 
   return (
     <>
@@ -155,6 +173,19 @@ export function LeftSidebar(): React.JSX.Element {
                 aria-label='De-canvas'
               >
                 <ImageOff className='size-4' />
+              </Button>
+            </Tooltip>
+            <Tooltip content='Reveal in tree'>
+              <Button
+                type='button'
+                size='icon'
+                variant='outline'
+                title='Reveal in tree'
+                onClick={handleRevealInTree}
+                disabled={!workingSlot}
+                aria-label='Reveal in tree'
+              >
+                <Locate className='size-4' />
               </Button>
             </Tooltip>
             <Tooltip content='New card'>
@@ -210,7 +241,7 @@ export function LeftSidebar(): React.JSX.Element {
           </div>
 
           <div className='h-1/2 min-h-[220px] overflow-hidden'>
-            <SlotTree key={projectId} />
+            <SlotTree key={projectId} revealRequest={revealRequest} />
           </div>
 
           <div className='min-h-0 flex-1 overflow-hidden rounded border border-border/60 bg-card/40 p-2'>

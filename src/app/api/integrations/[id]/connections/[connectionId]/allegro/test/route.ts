@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { decryptSecret, encryptSecret } from '@/features/integrations/server';
+import { configurationError, externalServiceError } from '@/shared/errors/app-error';
 import { mapStatusToAppError } from '@/shared/errors/error-mapper';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -120,7 +121,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
 
   const refreshAccessToken = async (): Promise<string> => {
     if (!refreshToken || !clientId || !clientSecret) {
-      throw new Error('Missing refresh token or client credentials.');
+      throw configurationError('Missing refresh token or client credentials.');
     }
     const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
     const body = new URLSearchParams({
@@ -137,8 +138,9 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     });
     if (!tokenRes.ok) {
       const payload = await tokenRes.text();
-      throw new Error(
-        `Failed to refresh Allegro token: ${tokenRes.status} ${payload}`
+      throw externalServiceError(
+        `Failed to refresh Allegro token: ${tokenRes.status} ${payload}`,
+        { status: tokenRes.status }
       );
     }
     const payload = (await tokenRes.json()) as {

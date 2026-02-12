@@ -23,8 +23,26 @@ export interface RunStudioPayload {
   studioSettings?: Record<string, unknown> | undefined;
 }
 
-export interface RunStudioResult {
+export type ImageStudioRunStatus = 'queued' | 'running' | 'completed' | 'failed';
+
+export interface RunStudioEnqueueResult {
+  runId: string;
+  status: ImageStudioRunStatus;
+  expectedOutputs: number;
+  dispatchMode: 'queued' | 'inline';
+}
+
+export interface ImageStudioRunRecord {
+  id: string;
+  projectId: string;
+  status: ImageStudioRunStatus;
+  expectedOutputs: number;
   outputs: ImageFileRecord[];
+  errorMessage: string | null;
+  createdAt: string;
+  updatedAt: string;
+  startedAt: string | null;
+  finishedAt: string | null;
 }
 
 export interface StudioAssetImportResult {
@@ -124,10 +142,10 @@ export function useImportStudioAssetsFromDrive(projectId: string) {
   });
 }
 
-export function useRunStudio(): UseMutationResult<RunStudioResult, Error, RunStudioPayload> {
+export function useRunStudio(): UseMutationResult<RunStudioEnqueueResult, Error, RunStudioPayload> {
   return useMutation({
-    mutationFn: async (payload: RunStudioPayload): Promise<RunStudioResult> => {
-      return api.post<RunStudioResult>('/api/image-studio/run', payload);
+    mutationFn: async (payload: RunStudioPayload): Promise<RunStudioEnqueueResult> => {
+      return api.post<RunStudioEnqueueResult>('/api/image-studio/run', payload);
     },
   });
 }

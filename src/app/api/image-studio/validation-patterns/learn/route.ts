@@ -17,7 +17,7 @@ import {
   parsePromptValidationRules,
   type PromptValidationRule,
 } from '@/features/prompt-engine';
-import { authError, configurationError } from '@/shared/errors/app-error';
+import { authError, configurationError, internalError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -120,10 +120,10 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   try {
     json = JSON.parse(raw);
   } catch {
-    throw new Error('Model did not return valid JSON.');
+    throw internalError('Model did not return valid JSON.', { raw });
   }
   if (!json || typeof json !== 'object' || Array.isArray(json)) {
-    throw new Error('Invalid response shape.');
+    throw internalError('Invalid response shape.');
   }
 
   const rules = Array.isArray((json as { rules?: unknown }).rules)
@@ -132,7 +132,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
   const parseResult = parsePromptValidationRules(JSON.stringify(rules));
   if (!parseResult.ok) {
-    throw new Error(parseResult.error);
+    throw internalError(parseResult.error || 'Failed to parse prompt validation rules.');
   }
 
   const existingIds = new Set(existingRules.map((rule: PromptValidationRule) => rule.id));

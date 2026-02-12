@@ -31,8 +31,11 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
       { key: APP_FONT_SET_SETTING_KEY, value: selected },
       {
         onSuccess: (): void => toast('Typography settings saved', { variant: 'success' }),
-        onError: (error: Error): void =>
-          toast(error.message || 'Failed to save typography settings', { variant: 'error' }),
+        onError: (error: Error): void => {
+          const { logClientError } = require('@/features/observability');
+          logClientError(error, { context: { source: 'AdminTypographySettingsPage', action: 'save' } });
+          toast(error.message || 'Failed to save typography settings', { variant: 'error' });
+        },
       }
     );
   };

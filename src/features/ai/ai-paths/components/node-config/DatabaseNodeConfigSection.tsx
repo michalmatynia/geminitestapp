@@ -59,18 +59,17 @@ type ActionResult = {
 };
 
 import { useAiPathConfig } from '../AiPathConfigContext';
-import {
-  DatabaseConstructorTab,
-  DatabaseConstructorTabProvider,
-} from './database/DatabaseConstructorTab';
+import { DatabaseConstructorContextProvider } from './database/DatabaseConstructorContext';
+import { DatabaseConstructorTab } from './database/DatabaseConstructorTab';
 import { DatabasePresetsTab } from './database/DatabasePresetsTab';
-import {
-  DatabaseQueryInputControls,
-  DatabaseQueryInputControlsProvider,
-} from './database/DatabaseQueryInputControls';
+import { DatabasePresetsTabContextProvider } from './database/DatabasePresetsTabContext';
+import { DatabaseQueryInputControls } from './database/DatabaseQueryInputControls';
 import { DatabaseQueryValidatorPanel } from './database/DatabaseQueryValidatorPanel';
+import { DatabaseQueryValidatorPanelContextProvider } from './database/DatabaseQueryValidatorPanelContext';
 import { DatabaseSaveQueryPresetDialog } from './database/DatabaseSaveQueryPresetDialog';
+import { DatabaseSaveQueryPresetDialogContextProvider } from './database/DatabaseSaveQueryPresetDialogContext';
 import { DatabaseSettingsTab } from './database/DatabaseSettingsTab';
+import { DatabaseSettingsTabContextProvider } from './database/DatabaseSettingsTabContext';
 import {
   buildJsonQueryValidation,
   buildMongoQueryValidation,
@@ -264,11 +263,7 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
     runtimeState,
     pathDebugSnapshot,
     updateSelectedNodeConfig,
-    onSendToAi,
-    sendingToAi,
     updaterSamples,
-    setUpdaterSamples,
-    updaterSampleLoading,
     handleFetchUpdaterSample,
     dbQueryPresets,
     setDbQueryPresets,
@@ -1116,7 +1111,6 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
       });
     }
   };
-  const writeSource = databaseConfig.writeSource ?? 'bundle';
   const schemaCollectionOptions = React.useMemo(() => {
     if (!effectiveSchema?.collections?.length) return [];
     let collections = normalizeSchemaCollections(effectiveSchema);
@@ -2015,43 +2009,40 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
   };
   // Shared query input controls (used in both Query and Constructor tabs)
   const queryInputControls = (
-    <DatabaseQueryInputControlsProvider
-      value={{
-        provider: resolvedProvider,
-        actionCategory,
-        action,
-        actionCategoryOptions: [...actionCategoryOptions],
-        actionOptions: [...actionOptions],
-        queryTemplateValue: activeQueryValue,
-        queryPlaceholder: activeQueryPlaceholder,
-        showFilterInput: isUpdateAction,
-        filterTemplateValue: queryTemplateValue,
-        filterPlaceholder: queryPlaceholder,
-        onFilterChange: handleFilterChange,
-        runDry,
-        onToggleRunDry: () =>
-          updateSelectedNodeConfig({
-            database: {
-              ...databaseConfig,
-              dryRun: !runDry,
-            },
-          }),
-        queryValidation,
-        queryFormatterEnabled,
-        queryValidatorEnabled,
-        testQueryLoading,
-        queryTemplateRef,
-        onActionCategoryChange: (value: DatabaseActionCategory) => handleActionCategoryChange(value),
-        onActionChange: (value: DatabaseAction) => handleActionChange(value),
-        onFormatClick: handleFormatClick,
-        onFormatContextMenu: handleFormatContextMenu,
-        onToggleValidator: handleToggleValidator,
-        onRunQuery: () => void handleRunQuery(),
-        onQueryChange: handleQueryChange,
-      }}
-    >
-      <DatabaseQueryInputControls />
-    </DatabaseQueryInputControlsProvider>
+    <DatabaseQueryInputControls
+      provider={resolvedProvider}
+      actionCategory={actionCategory}
+      action={action}
+      actionCategoryOptions={[...actionCategoryOptions]}
+      actionOptions={[...actionOptions]}
+      queryTemplateValue={activeQueryValue}
+      queryPlaceholder={activeQueryPlaceholder}
+      showFilterInput={isUpdateAction}
+      filterTemplateValue={queryTemplateValue}
+      filterPlaceholder={queryPlaceholder}
+      onFilterChange={handleFilterChange}
+      runDry={runDry}
+      onToggleRunDry={() =>
+        updateSelectedNodeConfig({
+          database: {
+            ...databaseConfig,
+            dryRun: !runDry,
+          },
+        })
+      }
+      queryValidation={queryValidation}
+      queryFormatterEnabled={queryFormatterEnabled}
+      queryValidatorEnabled={queryValidatorEnabled}
+      testQueryLoading={testQueryLoading}
+      queryTemplateRef={queryTemplateRef}
+      onActionCategoryChange={(value: DatabaseActionCategory) => handleActionCategoryChange(value)}
+      onActionChange={(value: DatabaseAction) => handleActionChange(value)}
+      onFormatClick={handleFormatClick}
+      onFormatContextMenu={handleFormatContextMenu}
+      onToggleValidator={handleToggleValidator}
+      onRunQuery={() => void handleRunQuery()}
+      onQueryChange={handleQueryChange}
+    />
   );
   const liveDebugPayload = (runtimeState.outputs[selectedNode.id] as
                   | { debugPayload?: unknown }
@@ -2093,18 +2084,17 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
         )}
       </div>
       {queryValidatorEnabled && queryValidation && (
-        <DatabaseQueryValidatorPanel
-          queryValidation={queryValidation}
-          queryConfig={queryConfig}
-          operation={operation}
-          queryTemplateValue={queryTemplateValue}
-          databaseConfig={databaseConfig}
-          selectedNode={selectedNode}
-          nodes={nodes}
-          edges={edges}
-          updateSelectedNodeConfig={updateSelectedNodeConfig}
-          toast={toast}
-        />
+        <DatabaseQueryValidatorPanelContextProvider
+          value={{
+            queryValidation,
+            queryConfig,
+            operation,
+            queryTemplateValue,
+            databaseConfig,
+          }}
+        >
+          <DatabaseQueryValidatorPanel />
+        </DatabaseQueryValidatorPanelContextProvider>
       )}
       {queryValidatorEnabled && (
         <div className='rounded-md border border-border bg-card/50 p-3'>
@@ -2579,18 +2569,19 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
           />
         </div>
         <TabsContent value='settings'>
-          <DatabaseSettingsTab
-            queryEditor={queryEditor}
-            availablePorts={availablePorts}
-            bundleKeys={bundleKeys}
-            operation={operation}
-            databaseConfig={databaseConfig}
-            writeSource={writeSource}
-            updateSelectedNodeConfig={updateSelectedNodeConfig}
-          />
+          <DatabaseSettingsTabContextProvider
+            value={{
+              queryEditor,
+              availablePorts,
+              bundleKeys,
+              operation,
+            }}
+          >
+            <DatabaseSettingsTab />
+          </DatabaseSettingsTabContextProvider>
         </TabsContent>
         <TabsContent value='constructor'>
-          <DatabaseConstructorTabProvider
+          <DatabaseConstructorContextProvider
             value={{
               queryInputControls,
               pendingAiQuery,
@@ -2609,11 +2600,6 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
               queryTemplateRef,
               sampleState,
               parsedSampleError: parsedSample.error,
-              updaterSampleLoading,
-              selectedNodeId: selectedNode.id,
-              setUpdaterSamples,
-              onFetchUpdaterSample: handleFetchUpdaterSample,
-              updateSelectedNodeConfig,
               updateQueryConfig,
               connectedPlaceholders,
               hasSchemaConnection:
@@ -2624,15 +2610,8 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
               onSyncSchema: handleSyncSchema,
               schemaSyncing,
               schemaLoading,
-              nodes,
-              edges,
-              selectedNode,
-              runtimeState,
-              onSendToAi,
-              sendingToAi,
               mapInputsToTargets,
               bundleKeys,
-              toast,
               aiPromptRef,
               mappings,
               updateMapping,
@@ -2643,33 +2622,40 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
             }}
           >
             <DatabaseConstructorTab />
-          </DatabaseConstructorTabProvider>
+          </DatabaseConstructorContextProvider>
         </TabsContent>
         <TabsContent value='presets'>
-          <DatabasePresetsTab
-            dbQueryPresets={dbQueryPresets}
-            builtInPresets={presetOptions}
-            onApplyBuiltInPreset={applyDatabasePreset}
-            onRenameQueryPreset={handleRenameQueryPreset}
-            onDeleteQueryPreset={handleDeleteQueryPresetById}
-          />
+          <DatabasePresetsTabContextProvider
+            value={{
+              builtInPresets: presetOptions,
+              onApplyBuiltInPreset: applyDatabasePreset,
+              onRenameQueryPreset: handleRenameQueryPreset,
+              onDeleteQueryPreset: handleDeleteQueryPresetById,
+            }}
+          >
+            <DatabasePresetsTab />
+          </DatabasePresetsTabContextProvider>
         </TabsContent>
       </Tabs>
-      <DatabaseSaveQueryPresetDialog
-        open={saveQueryPresetModalOpen}
-        onOpenChange={(open: boolean) => {
-          if (!open) {
-            closeSaveQueryPresetModal();
-            return;
-          }
-          setSaveQueryPresetModalOpen(true);
+      <DatabaseSaveQueryPresetDialogContextProvider
+        value={{
+          open: saveQueryPresetModalOpen,
+          onOpenChange: (open: boolean) => {
+            if (!open) {
+              closeSaveQueryPresetModal();
+              return;
+            }
+            setSaveQueryPresetModalOpen(true);
+          },
+          newQueryPresetName,
+          setNewQueryPresetName,
+          queryTemplateValue,
+          onCancel: closeSaveQueryPresetModal,
+          onSave: () => void handleSaveQueryPresetFromModal(),
         }}
-        newQueryPresetName={newQueryPresetName}
-        setNewQueryPresetName={setNewQueryPresetName}
-        queryTemplateValue={queryTemplateValue}
-        onCancel={closeSaveQueryPresetModal}
-        onSave={() => void handleSaveQueryPresetFromModal()}
-      />
+      >
+        <DatabaseSaveQueryPresetDialog />
+      </DatabaseSaveQueryPresetDialogContextProvider>
     </>
   );
             

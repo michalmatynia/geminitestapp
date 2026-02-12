@@ -48,8 +48,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     if (settingsStore.isLoading || heavySettings.isLoading) return;
 
     const stored = parseImageStudioSettings(studioSettingsRaw);
+    const hasStoredStudioSettings = Boolean(studioSettingsRaw && studioSettingsRaw.trim().length > 0);
     const hydrated: ImageStudioSettings =
-      openaiModelFallback && stored.targetAi.openai.model === defaultImageStudioSettings.targetAi.openai.model
+      openaiModelFallback && !hasStoredStudioSettings
         ? {
           ...stored,
           targetAi: {

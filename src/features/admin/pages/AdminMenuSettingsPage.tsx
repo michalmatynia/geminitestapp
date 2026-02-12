@@ -492,6 +492,8 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
       ]);
       toast('Admin menu settings saved.', { variant: 'success' });
     } catch (error) {
+      const { logClientError } = require('@/features/observability');
+      logClientError(error, { context: { source: 'AdminMenuSettingsPage', action: 'save' } });
       toast(error instanceof Error ? error.message : 'Failed to save admin menu settings.', { variant: 'error' });
     }
   };

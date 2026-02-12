@@ -76,6 +76,7 @@ export const initializeQueues = (): void => {
       import('@/features/jobs/workers/agentQueue'),
       import('@/features/jobs/workers/aiInsightsQueue'),
       import('@/features/jobs/workers/databaseBackupSchedulerQueue'),
+      import('@/features/jobs/workers/imageStudioRunQueue'),
     ]);
     const backupSchedulerModule = queueModules[5] as {
       startDatabaseBackupSchedulerQueue?: () => void;

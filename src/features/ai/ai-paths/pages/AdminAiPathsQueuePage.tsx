@@ -7,6 +7,7 @@ import { FileUploadEventsPanel } from '@/features/files/components/FileUploadEve
 import ProductListingJobsPanel from '@/features/jobs/components/ProductListingJobsPanel';
 import { SectionHeader, SectionPanel, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
 
+import { ImageStudioRunsQueuePanel } from '../components/ImageStudioRunsQueuePanel';
 import { JobQueuePanel } from '../components/job-queue-panel';
 
 export function AdminAiPathsQueuePage(): React.JSX.Element {
@@ -17,8 +18,10 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
       ? 'paths-external'
       : requestedTab === 'file-uploads'
         ? 'file-uploads'
+        : requestedTab === 'image-studio'
+          ? 'image-studio'
         : 'paths';
-  const [activeTab, setActiveTab] = useState<'paths' | 'paths-external' | 'file-uploads'>(defaultTab);
+  const [activeTab, setActiveTab] = useState<'paths' | 'paths-external' | 'file-uploads' | 'image-studio'>(defaultTab);
 
   useEffect(() => {
     setActiveTab(defaultTab);
@@ -29,7 +32,7 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
       <SectionPanel className='p-6'>
         <SectionHeader
           title='Job Queue'
-          description='Monitor node-system runs, external runs, export jobs, and file uploads.'
+          description='Monitor node-system runs, external runs, image studio runs, export jobs, and file uploads.'
         />
         <div className='mt-6'>
           <Tabs
@@ -40,15 +43,18 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
                   ? 'paths-external'
                   : next === 'file-uploads'
                     ? 'file-uploads'
+                    : next === 'image-studio'
+                      ? 'image-studio'
                     : 'paths'
               )
             }
             className='space-y-6'
           >
-            <TabsList className='grid w-full grid-cols-3'>
+            <TabsList className='grid w-full grid-cols-4'>
               <TabsTrigger value='paths'>Node Runs</TabsTrigger>
               <TabsTrigger value='paths-external'>External Runs</TabsTrigger>
               <TabsTrigger value='file-uploads'>File Uploads</TabsTrigger>
+              <TabsTrigger value='image-studio'>Image Studio</TabsTrigger>
             </TabsList>
 
             <TabsContent value='paths' className='space-y-4'>
@@ -64,6 +70,10 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
 
             <TabsContent value='file-uploads' className='space-y-4'>
               <FileUploadEventsPanel />
+            </TabsContent>
+
+            <TabsContent value='image-studio' className='space-y-4'>
+              <ImageStudioRunsQueuePanel />
             </TabsContent>
 
           </Tabs>

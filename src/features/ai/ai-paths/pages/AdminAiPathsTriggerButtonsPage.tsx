@@ -9,6 +9,7 @@ import {
   type AiTriggerButtonCreatePayload,
 } from '@/features/ai/ai-paths/validations/trigger-buttons';
 import { IconSelector } from '@/features/icons';
+import { logClientError } from '@/features/observability';
 import type {
   AiTriggerButtonDisplay,
   AiTriggerButtonLocation,
@@ -80,6 +81,13 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     staleTime: 10_000,
   });
 
+  useEffect(() => {
+    if (triggerButtonsQuery.error) {
+      logClientError(triggerButtonsQuery.error, { context: { source: 'AdminAiPathsTriggerButtonsPage', action: 'loadTriggerButtons' } });
+      toast(triggerButtonsQuery.error instanceof Error ? triggerButtonsQuery.error.message : 'Failed to load trigger buttons.', { variant: 'error' });
+    }
+  }, [triggerButtonsQuery.error, toast]);
+
   const createMutation = useMutation({
     mutationFn: async (payload: AiTriggerButtonCreatePayload): Promise<AiTriggerButtonDto> => {
       const result = await triggerButtonsApi.create(payload);
@@ -92,6 +100,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       setEditorOpen(false);
     },
     onError: (error: unknown): void => {
+      logClientError(error, { context: { source: 'AdminAiPathsTriggerButtonsPage', action: 'createTriggerButton' } });
       toast(error instanceof Error ? error.message : 'Failed to create trigger button.', { variant: 'error' });
     },
   });
@@ -120,6 +129,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       setEditorOpen(false);
     },
     onError: (error: unknown): void => {
+      logClientError(error, { context: { source: 'AdminAiPathsTriggerButtonsPage', action: 'updateTriggerButton' } });
       toast(error instanceof Error ? error.message : 'Failed to update trigger button.', { variant: 'error' });
     },
   });
@@ -134,6 +144,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       toast('Trigger button deleted.', { variant: 'success' });
     },
     onError: (error: unknown): void => {
+      logClientError(error, { context: { source: 'AdminAiPathsTriggerButtonsPage', action: 'deleteTriggerButton' } });
       toast(error instanceof Error ? error.message : 'Failed to delete trigger button.', { variant: 'error' });
     },
   });
@@ -149,6 +160,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       toast('Trigger button order updated.', { variant: 'success' });
     },
     onError: (error: unknown): void => {
+      logClientError(error, { context: { source: 'AdminAiPathsTriggerButtonsPage', action: 'reorderTriggerButtons' } });
       toast(error instanceof Error ? error.message : 'Failed to reorder trigger buttons.', { variant: 'error' });
       void triggerButtonsQuery.refetch();
     },

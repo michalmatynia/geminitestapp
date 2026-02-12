@@ -5,6 +5,7 @@ import { getDiskPathFromPublicPath } from '@/features/files/server';
 import { ErrorSystem } from '@/features/observability/server';
 import { getAsset3DRepository } from '@/features/viewer3d/services/asset3d-repository';
 import type { Asset3DRecord } from '@/features/viewer3d/types';
+import { badRequestError } from '@/shared/errors/app-error';
 
 import { isValid3DAsset, validate3DFileAsync } from './validateAsset3d';
 
@@ -23,11 +24,11 @@ export async function uploadAsset3D(
   }
 ): Promise<Asset3DRecord> {
   if (!isValid3DAsset(file)) {
-    throw new Error('Invalid 3D asset file type. Supported: .glb, .gltf');
+    throw badRequestError('Invalid 3D asset file type. Supported: .glb, .gltf');
   }
   const validation = await validate3DFileAsync(file);
   if (!validation.valid) {
-    throw new Error(validation.error ?? 'Invalid 3D asset file.');
+    throw badRequestError(validation.error ?? 'Invalid 3D asset file.');
   }
 
   const fileBuffer = Buffer.from(await file.arrayBuffer());

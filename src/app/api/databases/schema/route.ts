@@ -270,16 +270,18 @@ async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext): Promi
       const mongoSchema = await getMongoSchema(includeCounts);
       sources.mongodb = mongoSchema;
       collections.push(...enrichCollections(mongoSchema, 'mongodb'));
-    } catch {
-      // Ignore if Mongo is not configured.
+    } catch (error) {
+      const { ErrorSystem } = await import('@/features/observability/server');
+      void ErrorSystem.logWarning('Failed to fetch MongoDB schema', { error, service: 'api/databases/schema' });
     }
 
     try {
       const prismaSchema = await getPrismaSchema(includeCounts);
       sources.prisma = prismaSchema;
       collections.push(...enrichCollections(prismaSchema, 'prisma'));
-    } catch {
-      // Ignore if Prisma is not configured.
+    } catch (error) {
+      const { ErrorSystem } = await import('@/features/observability/server');
+      void ErrorSystem.logWarning('Failed to fetch Prisma schema', { error, service: 'api/databases/schema' });
     }
 
     const payload: SchemaResponsePayload = {

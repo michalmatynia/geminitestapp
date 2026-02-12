@@ -12,24 +12,29 @@ import {
 import { getValueAtMappingPath } from '@/features/ai/ai-paths/lib/core/utils/json';
 import { renderTemplate } from '@/features/ai/ai-paths/lib/core/utils/template';
 import { ErrorSystem } from '@/features/observability/server';
-import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/features/products/constants';
 import { getSettingValue, getValidationPatternRepository } from '@/features/products/server';
 import {
   isPatternEnabledForValidationScope,
-  isPatternLaunchEnabledForValidationScope,
   isPatternReplacementEnabledForValidationScope,
-  normalizeProductValidationLaunchScopeBehavior,
   normalizeProductValidationInstanceScope,
   normalizeProductValidationSkipNoopReplacementProposal,
 } from '@/features/products/utils/validator-instance-behavior';
+import {
+  deriveDiffSegment,
+  isPatternLocaleMatch,
+  normalizePostAcceptBehavior,
+  normalizeReplacementFields,
+  normalizeValidationDebounceMs,
+  resolveFieldTargetAndLocale,
+  shouldLaunchPattern,
+} from '@/features/products/validation-engine/core';
+import { badRequestError, configurationError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 import type {
-  ProductValidationInstanceScope,
   ProductValidationPattern,
   ProductValidationPostAcceptBehavior,
   ProductValidationSeverity,
-  ProductValidationTarget,
 } from '@/shared/types/domain/products';
 
 const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] ?? 'http://localhost:11434';
@@ -73,26 +78,6 @@ type RuntimeFieldIssue = {
   postAcceptBehavior: ProductValidationPostAcceptBehavior;
   debounceMs: number;
 };
-
-const ALLOWED_REPLACEMENT_FIELDS = new Set<string>(PRODUCT_VALIDATION_REPLACEMENT_FIELDS);
-
-const normalizeReplacementFields = (fields: string[] | null | undefined): string[] => {
-  if (!Array.isArray(fields) || fields.length === 0) return [];
-  const unique = new Set<string>();
-  for (const field of fields) {
-    if (!field || !ALLOWED_REPLACEMENT_FIELDS.has(field)) continue;
-    unique.add(field);
-  }
-  return [...unique];
-};
-
-const normalizeDebounceMs = (value: unknown): number => {
-  if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
-  return Math.min(30_000, Math.max(0, Math.floor(value)));
-};
-
-const normalizePostAcceptBehavior = (value: unknown): ProductValidationPostAcceptBehavior =>
-  value === 'stop_after_accept' ? 'stop_after_accept' : 'revalidate';
 
 const normalizeRuntimeOperator = (value: unknown): RuntimeOperator => {
   switch (value) {
@@ -176,105 +161,6 @@ const evaluateRuntimeCondition = (
     default:
       return Boolean(value);
   }
-};
-
-const resolveFieldTargetAndLocale = (
-  fieldName: string
-): { target: ProductValidationTarget | null; locale: string | null } => {
-  let target: ProductValidationTarget | null = null;
-  if (fieldName.startsWith('name_')) {
-    target = 'name';
-  } else if (fieldName.startsWith('description_')) {
-    target = 'description';
-  } else if (fieldName === 'sku') {
-    target = 'sku';
-  } else if (fieldName === 'price') {
-    target = 'price';
-  } else if (fieldName === 'stock') {
-    target = 'stock';
-  } else if (fieldName === 'categoryId') {
-    target = 'category';
-  } else if (fieldName === 'sizeLength') {
-    target = 'size_length';
-  } else if (fieldName === 'sizeWidth') {
-    target = 'size_width';
-  } else if (fieldName === 'length') {
-    target = 'length';
-  } else if (fieldName === 'weight') {
-    target = 'weight';
-  }
-  const localeMatch = /_(en|pl|de)$/i.exec(fieldName);
-  const locale = localeMatch?.[1]?.toLowerCase() ?? null;
-  return { target, locale };
-};
-
-const isPatternLocaleMatch = (patternLocale: string | null, fieldLocale: string | null): boolean => {
-  if (!patternLocale) return true;
-  if (!fieldLocale) return false;
-  return patternLocale.toLowerCase() === fieldLocale.toLowerCase();
-};
-
-const resolvePatternLaunchSourceValue = ({
-  pattern,
-  fieldValue,
-  values,
-  latestProductValues,
-}: {
-  pattern: ProductValidationPattern;
-  fieldValue: string;
-  values: Record<string, unknown>;
-  latestProductValues: Record<string, unknown> | null;
-}): string => {
-  if (!pattern.launchEnabled || pattern.launchSourceMode === 'current_field') {
-    return fieldValue;
-  }
-  if (pattern.launchSourceMode === 'form_field') {
-    return toComparableString(values[pattern.launchSourceField ?? '']);
-  }
-  return toComparableString(latestProductValues?.[pattern.launchSourceField ?? '']);
-};
-
-const shouldLaunchPattern = ({
-  pattern,
-  validationScope,
-  fieldValue,
-  values,
-  latestProductValues,
-}: {
-  pattern: ProductValidationPattern;
-  validationScope: ProductValidationInstanceScope;
-  fieldValue: string;
-  values: Record<string, unknown>;
-  latestProductValues: Record<string, unknown> | null;
-}): boolean => {
-  if (!pattern.launchEnabled) return true;
-  if (
-    !isPatternLaunchEnabledForValidationScope(
-      pattern.launchAppliesToScopes,
-      validationScope,
-      pattern.appliesToScopes
-    )
-  ) {
-    return (
-      normalizeProductValidationLaunchScopeBehavior(pattern.launchScopeBehavior) ===
-      'condition_only'
-    );
-  }
-  if (pattern.launchSourceMode !== 'current_field' && !pattern.launchSourceField?.trim()) {
-    return false;
-  }
-  const sourceValue = resolvePatternLaunchSourceValue({
-    pattern,
-    fieldValue,
-    values,
-    latestProductValues,
-  });
-  return evaluateRuntimeCondition(
-    normalizeRuntimeOperator(pattern.launchOperator ?? 'equals'),
-    sourceValue,
-    pattern.launchValue ?? null,
-    pattern.launchFlags ?? null
-  );
 };
 
 const buildTemplateContext = ({
@@ -377,7 +263,7 @@ const getClient = (
 
   if (isOpenAI) {
     if (!apiKey) {
-      throw new Error('OpenAI API key is missing for GPT model.');
+      throw configurationError('OpenAI API key is missing for GPT model.');
     }
     return { openai: new OpenAI({ apiKey }), isOllama: false };
   }
@@ -388,35 +274,6 @@ const getClient = (
       apiKey: 'ollama',
     }),
     isOllama: true,
-  };
-};
-
-const deriveDiffSegment = (
-  before: string,
-  after: string
-): { index: number; length: number; matchText: string } => {
-  if (before === after) {
-    const fallback = before.slice(0, 1) || ' ';
-    return { index: 0, length: 1, matchText: fallback };
-  }
-
-  let start = 0;
-  while (start < before.length && start < after.length && before[start] === after[start]) {
-    start += 1;
-  }
-
-  let endBefore = before.length - 1;
-  let endAfter = after.length - 1;
-  while (endBefore >= start && endAfter >= start && before[endBefore] === after[endAfter]) {
-    endBefore -= 1;
-    endAfter -= 1;
-  }
-
-  const removed = before.slice(start, endBefore + 1);
-  return {
-    index: start,
-    length: Math.max(1, removed.length),
-    matchText: removed || before.slice(start, start + 1) || ' ',
   };
 };
 
@@ -539,11 +396,11 @@ const evaluateDatabaseRuntime = async ({
       payload.returnDocument = renderedPayload['returnDocument'];
     }
     if (!payload.collection.trim()) {
-      throw new Error('Runtime DB action requires a collection.');
+      throw badRequestError('Runtime DB action requires a collection.');
     }
     const response = await dbApi.action<Record<string, unknown>>(payload);
     if (!response.ok) {
-      throw new Error(response.error || 'Runtime DB action failed.');
+      throw badRequestError(response.error || 'Runtime DB action failed.');
     }
     const resultData = response.data ?? {};
     const resultPath = typeof config['resultPath'] === 'string' ? config['resultPath'].trim() : '';
@@ -575,11 +432,11 @@ const evaluateDatabaseRuntime = async ({
     ...(typeof renderedPayload['idType'] === 'string' ? { idType: renderedPayload['idType'] } : {}),
   };
   if (!payload.collection.trim()) {
-    throw new Error('Runtime DB query requires a collection.');
+    throw badRequestError('Runtime DB query requires a collection.');
   }
   const response = await dbApi.query<Record<string, unknown>>(payload);
   if (!response.ok) {
-    throw new Error(response.error || 'Runtime DB query failed.');
+    throw badRequestError(response.error || 'Runtime DB query failed.');
   }
   const resultData = response.data ?? {};
   const defaultResultPath = payload.single ? 'item' : 'count';
@@ -754,7 +611,7 @@ const buildRuntimeIssue = ({
     replacementScope,
     replacementActive: Boolean(effectiveReplacementValue),
     postAcceptBehavior: normalizePostAcceptBehavior(pattern.postAcceptBehavior),
-    debounceMs: normalizeDebounceMs(pattern.validationDebounceMs),
+    debounceMs: normalizeValidationDebounceMs(pattern.validationDebounceMs),
   };
 };
 

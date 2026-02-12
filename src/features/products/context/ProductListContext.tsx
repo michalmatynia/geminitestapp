@@ -8,6 +8,7 @@ import {
   ProfilerOnRenderCallback,
 } from 'react';
 
+import { internalError } from '@/shared/errors/app-error';
 import type { Catalog, PriceGroupWithDetails, ProductWithImages } from '@/features/products/types';
 import type { ProductDraft } from '@/features/products/types/drafts';
 
@@ -226,7 +227,7 @@ const ProductListModalsContext =
 export const useProductListContext = () => {
   const context = useContext(ProductListContext);
   if (!context) {
-    throw new Error('useProductListContext must be used within a ProductListProvider');
+    throw internalError('useProductListContext must be used within a ProductListProvider');
   }
   return context;
 };
@@ -234,7 +235,7 @@ export const useProductListContext = () => {
 export const useProductListFiltersContext = (): ProductListFiltersContextType => {
   const context = useContext(ProductListFiltersContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useProductListFiltersContext must be used within a ProductListProvider'
     );
   }
@@ -245,7 +246,7 @@ export const useProductListSelectionContext =
   (): ProductListSelectionContextType => {
     const context = useContext(ProductListSelectionContext);
     if (!context) {
-      throw new Error(
+      throw internalError(
         'useProductListSelectionContext must be used within a ProductListProvider'
       );
     }
@@ -255,7 +256,7 @@ export const useProductListSelectionContext =
 export const useProductListTableContext = (): ProductListTableContextType => {
   const context = useContext(ProductListTableContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useProductListTableContext must be used within a ProductListProvider'
     );
   }
@@ -265,7 +266,7 @@ export const useProductListTableContext = (): ProductListTableContextType => {
 export const useProductListActionsContext = (): ProductListActionsContextType => {
   const context = useContext(ProductListActionsContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useProductListActionsContext must be used within a ProductListProvider'
     );
   }
@@ -275,7 +276,7 @@ export const useProductListActionsContext = (): ProductListActionsContextType =>
 export const useProductListModalsContext = (): ProductListModalsContextType => {
   const context = useContext(ProductListModalsContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useProductListModalsContext must be used within a ProductListProvider'
     );
   }

@@ -117,6 +117,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
   const updateSetting = useUpdateSetting();
 
   const { projectId } = useProjectsState();
+  const slotsQueryKey = studioKeys.slots(projectId);
 
   // ── Slot queries/mutations ──
   const slotsQuery = useStudioSlots(projectId);
@@ -239,14 +240,25 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
   const createSlotsMutation = useCreateStudioSlots(projectId);
   const createSlots = useCallback(async (slotsToCreate: Array<Partial<ImageStudioSlotRecord>>) => {
     const data = await createSlotsMutation.mutateAsync(slotsToCreate);
+    if (data.slots.length > 0) {
+      queryClient.setQueryData<StudioSlotsResponse>(slotsQueryKey, (current) => {
+        if (!current) return { slots: data.slots };
+        const existingById = new Set(current.slots.map((slot: ImageStudioSlotRecord) => slot.id));
+        const appended = data.slots.filter((slot: ImageStudioSlotRecord) => !existingById.has(slot.id));
+        if (appended.length === 0) return current;
+        return {
+          ...current,
+          slots: [...current.slots, ...appended],
+        };
+      });
+    }
     return data.slots;
-  }, [createSlotsMutation]);
+  }, [createSlotsMutation, queryClient, slotsQueryKey]);
 
   const updateSlotMutation = useUpdateStudioSlot(projectId);
   const deleteSlotMutation = useDeleteStudioSlot(projectId);
   const uploadMutation = useUploadStudioAssets(projectId);
   const importFromDriveMutation = useImportStudioAssetsFromDrive(projectId);
-  const slotsQueryKey = studioKeys.slots(projectId);
 
   const moveSlotMutation = useMutation({
     mutationFn: async ({ slot, targetFolder }: { slot: ImageStudioSlotRecord; targetFolder: string }): Promise<ImageStudioSlotRecord> => {

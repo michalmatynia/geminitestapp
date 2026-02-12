@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react'; // Import React explicitly if needed for JSX.Element type
+import React from 'react';
 
-import { AiPathConfigProvider, type AiPathConfigData } from './AiPathConfigContext';
+import { useAiPathConfig } from './AiPathConfigContext';
 import { ContextNodeConfigSection } from './node-config/ContextNodeConfigSection';
 import { DatabaseNodeConfigSection } from './node-config/DatabaseNodeConfigSection';
 import { DbSchemaNodeConfigSection } from './node-config/DbSchemaNodeConfigSection';
@@ -36,46 +36,44 @@ import { ValidatorNodeConfigSection } from './node-config/dialog/ValidatorNodeCo
 import { ViewerNodeConfigSection } from './node-config/dialog/ViewerNodeConfigSection';
 import { ParserNodeConfigSection } from './node-config/ParserNodeConfigSection';
 
-export function NodeConfigurationSections(props: AiPathConfigData): React.JSX.Element | null {
-  const { selectedNode } = props;
+export function NodeConfigurationSections(): React.JSX.Element | null {
+  const { selectedNode } = useAiPathConfig();
   if (!selectedNode) return null;
 
   return (
-    <AiPathConfigProvider {...props}>
-      <div className='space-y-6'>
-        <TriggerNodeConfigSection />
-        <SimulationNodeConfigSection />
-        <AudioOscillatorNodeConfigSection />
-        <AudioSpeakerNodeConfigSection />
-        <ContextNodeConfigSection />
-        <ParserNodeConfigSection />
-        <RegexNodeConfigSection />
-        <IteratorNodeConfigSection />
-        <MapperNodeConfigSection />
-        <MutatorNodeConfigSection />
-        <StringMutatorNodeConfigSection />
-        <ValidatorNodeConfigSection />
-        <ConstantNodeConfigSection />
-        <MathNodeConfigSection />
-        <TemplateNodeConfigSection />
-        <BundleNodeConfigSection />
-        <GateNodeConfigSection />
-        <CompareNodeConfigSection />
-        <RouterNodeConfigSection />
-        <DelayNodeConfigSection />
-        <PollNodeConfigSection />
-        <HttpNodeConfigSection />
-        <PromptNodeConfigSection />
-        <ModelNodeConfigSection />
-        <AgentNodeConfigSection />
-        <LearnerAgentNodeConfigSection />
-        <DatabaseNodeConfigSection />
-        <DbSchemaNodeConfigSection />
-        <ViewerNodeConfigSection />
-        <RuntimeNodeConfigSection />
-        <AiDescriptionNodeConfigSection />
-        <UnsupportedNodeConfigNotice selectedNode={selectedNode} />
-      </div>
-    </AiPathConfigProvider>
+    <div className='space-y-6'>
+      <TriggerNodeConfigSection />
+      <SimulationNodeConfigSection />
+      <AudioOscillatorNodeConfigSection />
+      <AudioSpeakerNodeConfigSection />
+      <ContextNodeConfigSection />
+      <ParserNodeConfigSection />
+      <RegexNodeConfigSection />
+      <IteratorNodeConfigSection />
+      <MapperNodeConfigSection />
+      <MutatorNodeConfigSection />
+      <StringMutatorNodeConfigSection />
+      <ValidatorNodeConfigSection />
+      <ConstantNodeConfigSection />
+      <MathNodeConfigSection />
+      <TemplateNodeConfigSection />
+      <BundleNodeConfigSection />
+      <GateNodeConfigSection />
+      <CompareNodeConfigSection />
+      <RouterNodeConfigSection />
+      <DelayNodeConfigSection />
+      <PollNodeConfigSection />
+      <HttpNodeConfigSection />
+      <PromptNodeConfigSection />
+      <ModelNodeConfigSection />
+      <AgentNodeConfigSection />
+      <LearnerAgentNodeConfigSection />
+      <DatabaseNodeConfigSection />
+      <DbSchemaNodeConfigSection />
+      <ViewerNodeConfigSection />
+      <RuntimeNodeConfigSection />
+      <AiDescriptionNodeConfigSection />
+      <UnsupportedNodeConfigNotice selectedNode={selectedNode} />
+    </div>
   );
 }

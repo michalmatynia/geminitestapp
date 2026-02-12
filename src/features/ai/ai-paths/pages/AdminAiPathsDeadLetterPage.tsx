@@ -4,6 +4,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { Fragment, useEffect, useMemo, useState } from 'react';
 
 import { runsApi } from '@/features/ai/ai-paths/lib';
+import { logClientError } from '@/features/observability';
 import type {
   AiPathRunEventRecord,
   AiPathRunNodeRecord,
@@ -106,13 +107,14 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
 
   useEffect((): void => {
     if (!runsQuery.error) return;
+    logClientError(runsQuery.error, { context: { source: 'AdminAiPathsDeadLetterPage', action: 'loadRuns', pathId: normalizedPathId, query: normalizedQuery } });
     toast(
       runsQuery.error instanceof Error
         ? runsQuery.error.message
         : 'Failed to load dead-letter runs.',
       { variant: 'error' }
     );
-  }, [runsQuery.error, toast]);
+  }, [runsQuery.error, toast, normalizedPathId, normalizedQuery]);
 
   useEffect((): void => {
     setExpandedNodeIds(new Set());
@@ -299,6 +301,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
       void runsQuery.refetch();
     },
     onError: (error: Error): void => {
+      logClientError(error, { context: { source: 'AdminAiPathsDeadLetterPage', action: 'requeueSelected', count: selectedIds.size, mode: requeueMode } });
       toast(error instanceof Error ? error.message : 'Failed to requeue runs.', {
         variant: 'error',
       });
@@ -326,6 +329,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
       void runsQuery.refetch();
     },
     onError: (error: Error): void => {
+      logClientError(error, { context: { source: 'AdminAiPathsDeadLetterPage', action: 'requeueAll', pathId: normalizedPathId, query: normalizedQuery, mode: requeueMode } });
       toast(error instanceof Error ? error.message : 'Failed to requeue runs.', {
         variant: 'error',
       });
@@ -349,6 +353,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
         }
       );
     } catch (error: unknown) {
+      logClientError(error, { context: { source: 'AdminAiPathsDeadLetterPage', action: 'loadDetail', runId } });
       toast(error instanceof Error ? error.message : 'Failed to load run details.', {
         variant: 'error',
       });
@@ -438,7 +443,8 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
         void handleOpenDetail(detail.run.id);
       }
     },
-    onError: (error: Error): void => {
+    onError: (error: Error, variables: { runId: string; nodeId: string }): void => {
+      logClientError(error, { context: { source: 'AdminAiPathsDeadLetterPage', action: 'retryNode', runId: variables.runId, nodeId: variables.nodeId } });
       toast(error instanceof Error ? error.message : 'Failed to retry node.', {
         variant: 'error',
       });
@@ -472,6 +478,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
         void handleOpenDetail(detail.run.id);
       }
     } catch (error: unknown) {
+      logClientError(error, { context: { source: 'AdminAiPathsDeadLetterPage', action: 'retryFailedNodes', runId: detail.run.id } });
       toast(error instanceof Error ? error.message : 'Failed to retry nodes.', {
         variant: 'error',
       });

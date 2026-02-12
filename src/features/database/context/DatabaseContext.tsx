@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useMemo } from 'react';
 
+import { internalError } from '@/shared/errors/app-error';
 import { useDatabasePreview } from '../hooks/useDatabaseQueries';
 
 import type {
@@ -111,7 +112,7 @@ export function DatabaseProvider({
 export function useDatabase(): DatabaseContextType {
   const context = useContext(DatabaseContext);
   if (context === undefined) {
-    throw new Error('useDatabase must be used within a DatabaseProvider');
+    throw internalError('useDatabase must be used within a DatabaseProvider');
   }
   return context;
 }

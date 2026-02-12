@@ -1,37 +1,22 @@
 'use client';
 
-import type { AiNode, DatabaseConfig, DatabaseOperation, DbQueryConfig, Edge, NodeConfig } from '@/features/ai/ai-paths/lib';
+import type { AiNode, Edge } from '@/features/ai/ai-paths/lib';
 import { Button } from '@/shared/ui';
 
+import { useDatabaseQueryValidatorPanelContext } from './DatabaseQueryValidatorPanelContext';
 import { convertMongoToPrismaQuery } from './query-utils';
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
-import type { QueryValidationResult } from './query-utils';
-
-type DatabaseQueryValidatorPanelProps = {
-  queryValidation: QueryValidationResult;
-  queryConfig: DbQueryConfig;
-  operation: DatabaseOperation;
-  queryTemplateValue: string;
-  databaseConfig: DatabaseConfig;
-  selectedNode: AiNode;
-  nodes: AiNode[];
-  edges: Edge[];
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-  toast: (message: string, options?: { variant?: 'success' | 'error' }) => void;
-};
-
-export function DatabaseQueryValidatorPanel({
-  queryValidation,
-  queryConfig,
-  operation,
-  queryTemplateValue,
-  databaseConfig,
-  selectedNode,
-  nodes,
-  edges,
-  updateSelectedNodeConfig,
-  toast,
-}: DatabaseQueryValidatorPanelProps): React.JSX.Element {
+export function DatabaseQueryValidatorPanel(): React.JSX.Element | null {
+  const {
+    queryValidation,
+    queryConfig,
+    operation,
+    queryTemplateValue,
+    databaseConfig,
+  } = useDatabaseQueryValidatorPanelContext();
+  const { selectedNode, nodes, edges, updateSelectedNodeConfig, toast } = useAiPathConfig();
+  if (!selectedNode) return null;
   const providerLabel =
     queryConfig.provider === 'prisma'
       ? 'Prisma'

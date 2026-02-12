@@ -18,6 +18,7 @@ import { Button, SectionPanel, useToast } from '@/shared/ui';
 
 import { GenerationToolbar } from './GenerationToolbar';
 import { ToggleButtonGroup } from './ToggleButtonGroup';
+import { useGenerationState } from '../context/GenerationContext';
 import { useMaskingActions, useMaskingState } from '../context/MaskingContext';
 import { useProjectsState } from '../context/ProjectsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
@@ -38,6 +39,7 @@ export function CenterPreview(): React.JSX.Element {
   const settingsStore = useSettingsStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { landingSlots, isRunInFlight, activeRunStatus, activeRunError } = useGenerationState();
 
   const {
     tool,
@@ -219,7 +221,7 @@ export function CenterPreview(): React.JSX.Element {
         })()
         : null}
       <div className='flex min-h-0 flex-1 flex-col gap-3 px-4 pb-3 pt-0'>
-        <div className='grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_108px] gap-3'>
+        <div className='grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_minmax(196px,242px)] gap-3'>
           <div className='relative min-h-0'>
             <VectorDrawingProvider value={vectorContextValue}>
               {previewMode === '3d' && workingSlot?.asset3dId ? (
@@ -244,13 +246,67 @@ export function CenterPreview(): React.JSX.Element {
               />
             </VectorDrawingProvider>
           </div>
-          <div className='min-h-[108px]'>
-            <SectionPanel variant='subtle' className='h-full min-h-[108px] overflow-hidden border-border/60 bg-card/40 p-2'>
+          <div className='grid min-h-[196px] grid-rows-[auto_minmax(0,1fr)] gap-2'>
+            <SectionPanel variant='subtle' className='min-h-[72px] overflow-hidden border-border/60 bg-card/40 p-2'>
               <div className='mb-1 flex items-center justify-between text-[11px] text-gray-400'>
                 <span>Mask Generation</span>
+                <span>{activeRunStatus ? `Run: ${activeRunStatus}` : 'Run: idle'}</span>
               </div>
               <div className='h-[72px] overflow-auto pr-1'>
                 <GenerationToolbar />
+              </div>
+            </SectionPanel>
+
+            <SectionPanel variant='subtle' className='min-h-0 overflow-hidden border-border/60 bg-card/40 p-2'>
+              <div className='mb-1 flex items-center justify-between text-[11px] text-gray-400'>
+                <span>Generation Landing Slots</span>
+                <span>{landingSlots.length}</span>
+              </div>
+              <div className='h-full overflow-auto pr-1'>
+                {landingSlots.length > 0 ? (
+                  <div className='grid grid-cols-2 gap-2 sm:grid-cols-4'>
+                    {landingSlots.map((slot) => (
+                      <div
+                        key={slot.id}
+                        className={`relative overflow-hidden rounded border p-1 ${
+                          slot.status === 'completed'
+                            ? 'border-emerald-400/40 bg-emerald-500/5'
+                            : slot.status === 'failed'
+                              ? 'border-red-400/40 bg-red-500/5'
+                              : 'border-border/60 bg-card/30'
+                        }`}
+                      >
+                        <div className='mb-1 text-[10px] text-gray-400'>Slot {slot.index}</div>
+                        {slot.output ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={slot.output.filepath}
+                            alt={slot.output.filename || `Generated ${slot.index}`}
+                            className='aspect-square w-full rounded object-cover'
+                          />
+                        ) : (
+                          <div className='flex aspect-square w-full items-center justify-center rounded border border-dashed border-border/70 text-[10px] text-gray-500'>
+                            {slot.status === 'pending' ? (
+                              <span className='inline-flex items-center gap-1'>
+                                {isRunInFlight ? <Loader2 className='size-3 animate-spin' /> : null}
+                                Waiting
+                              </span>
+                            ) : (
+                              <span>Failed</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className='px-2 py-3 text-xs text-gray-500'>
+                    Start generation to prepare output slots under the canvas.
+                  </div>
+                )}
+                {activeRunError ? (
+                  <div className='mt-2 text-[11px] text-red-300'>{activeRunError}</div>
+                ) : null}
               </div>
             </SectionPanel>
           </div>

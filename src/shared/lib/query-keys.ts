@@ -231,6 +231,7 @@ export const QUERY_KEYS = {
     all: ['image-studio'] as const,
     projects: () => [...QUERY_KEYS.imageStudio.all, 'projects'] as const,
     slots: (projectId: string) => [...QUERY_KEYS.imageStudio.all, 'slots', projectId] as const,
+    models: () => [...QUERY_KEYS.imageStudio.all, 'models'] as const,
   },
   agentRuns: {
     all: ['agent-runs'] as const,

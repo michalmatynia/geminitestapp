@@ -385,6 +385,8 @@ function PageSettingsTab(): React.ReactNode {
         setPageAiError('Generation cancelled.');
         toast('Generation cancelled.', { variant: 'info' });
       } else {
+        const { logClientError } = require('@/features/observability');
+        logClientError(error, { context: { source: 'PageSettingsTab', action: 'generatePageAi', task: pageAiTask, provider: pageAiProvider } });
         const message = error instanceof Error ? error.message : 'Failed to generate AI output.';
         setPageAiError(message);
         toast(message, { variant: 'error' });

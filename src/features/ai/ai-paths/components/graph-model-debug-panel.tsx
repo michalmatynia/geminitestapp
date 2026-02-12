@@ -1,14 +1,11 @@
 'use client';
 
+import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
 
+export function GraphModelDebugPanel(): React.JSX.Element {
+  const orchestrator = useAiPathsSettingsOrchestrator();
+  const payload = orchestrator.lastGraphModelPayload;
 
-type GraphModelDebugPanelProps = {
-  payload: unknown;
-};
-
-export function GraphModelDebugPanel({
-  payload,
-}: GraphModelDebugPanelProps): React.JSX.Element {
   return (
     <div className='rounded-lg border border-border bg-card/60 p-4'>
       <div className='mb-2 text-sm font-semibold text-white'>Graph Model Debug</div>

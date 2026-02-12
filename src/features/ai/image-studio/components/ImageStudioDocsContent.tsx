@@ -517,6 +517,24 @@ export function ImageStudioDocsContent(): React.JSX.Element {
         value: metricValue(studioSettings.targetAi.openai.image.n),
       },
       {
+        path: 'targetAi.openai.image.moderation',
+        label: 'Image moderation',
+        description: 'Moderation level sent with image generation requests.',
+        value: metricValue(studioSettings.targetAi.openai.image.moderation),
+      },
+      {
+        path: 'targetAi.openai.image.output_compression',
+        label: 'Image output compression',
+        description: 'Compression level for jpeg/webp output formats.',
+        value: metricValue(studioSettings.targetAi.openai.image.output_compression),
+      },
+      {
+        path: 'targetAi.openai.image.partial_images',
+        label: 'Image partial outputs',
+        description: 'Partial image count requested when streaming is enabled.',
+        value: metricValue(studioSettings.targetAi.openai.image.partial_images),
+      },
+      {
         path: 'targetAi.openai.advanced_overrides',
         label: 'Advanced overrides',
         description: 'Raw provider payload overrides.',

@@ -1,35 +1,20 @@
 'use client';
 
-
-
-
-
-
-
-import type { DatabaseConfig, DatabaseOperation, NodeConfig } from '@/features/ai/ai-paths/lib';
+import type { DatabaseConfig } from '@/features/ai/ai-paths/lib';
 import { DB_COLLECTION_OPTIONS } from '@/features/ai/ai-paths/lib';
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
-type DatabaseSettingsTabProps = {
-  queryEditor: React.ReactNode;
-  availablePorts: string[];
-  bundleKeys: Set<string>;
-  operation: DatabaseOperation;
-  databaseConfig: DatabaseConfig;
-  writeSource: string;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-};
+import { useDatabaseSettingsTabContext } from './DatabaseSettingsTabContext';
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
-export function DatabaseSettingsTab({
-  queryEditor,
-  availablePorts,
-  bundleKeys,
-  operation,
-  databaseConfig,
-  writeSource,
-  updateSelectedNodeConfig,
-}: DatabaseSettingsTabProps): React.JSX.Element {
+export function DatabaseSettingsTab(): React.JSX.Element {
+  const { queryEditor, availablePorts, bundleKeys, operation } = useDatabaseSettingsTabContext();
+  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  if (!selectedNode) return null;
+  const databaseConfig: DatabaseConfig = selectedNode.config?.database ?? {};
+  const writeSource = databaseConfig.writeSource ?? 'bundle';
+
   return (
     <div className='space-y-4'>
       {queryEditor}

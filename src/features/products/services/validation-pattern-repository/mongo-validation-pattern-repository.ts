@@ -19,6 +19,7 @@ import {
   normalizeProductValidationPatternScopes,
   normalizeProductValidationInstanceDenyBehaviorMap,
 } from '@/features/products/utils/validator-instance-behavior';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type {
   ProductValidationChainMode,
@@ -418,7 +419,7 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
 
   async updatePattern(id: string, data: UpdateProductValidationPatternInput): Promise<ProductValidationPattern> {
     if (!ObjectId.isValid(id)) {
-      throw new Error('Invalid pattern ID');
+      throw badRequestError('Invalid pattern ID', { patternId: id });
     }
     const db = await getMongoDb();
     const set: Partial<ProductValidationPatternDoc> = {
@@ -531,13 +532,13 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
     const updated = await db
       .collection<ProductValidationPatternDoc>(COLLECTION)
       .findOne({ _id: toObjectId(id) });
-    if (!updated) throw new Error('Validation pattern not found');
+    if (!updated) throw notFoundError('Validation pattern not found', { patternId: id });
     return toDomain(updated);
   },
 
   async deletePattern(id: string): Promise<void> {
     if (!ObjectId.isValid(id)) {
-      throw new Error('Invalid pattern ID');
+      throw badRequestError('Invalid pattern ID', { patternId: id });
     }
     const db = await getMongoDb();
     await db.collection<ProductValidationPatternDoc>(COLLECTION).deleteOne({ _id: toObjectId(id) });

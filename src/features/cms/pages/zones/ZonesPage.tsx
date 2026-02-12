@@ -51,13 +51,21 @@ export default function ZonesPage(): React.JSX.Element {
       await createDomain.mutateAsync(validation.data);
       setDomain('');
     } catch (err: unknown) {
+      const { logClientError } = require('@/features/observability');
+      logClientError(err, { context: { source: 'ZonesPage', action: 'createDomain', domain } });
       setError(err instanceof Error ? err.message : 'Failed to create domain.');
     }
   };
 
   const handleDelete = async (id: string): Promise<void> => {
     if (!confirm('Remove this domain and its slug assignments?')) return;
-    await deleteDomain.mutateAsync(id);
+    try {
+      await deleteDomain.mutateAsync(id);
+    } catch (err: unknown) {
+      const { logClientError } = require('@/features/observability');
+      logClientError(err, { context: { source: 'ZonesPage', action: 'deleteDomain', domainId: id } });
+      toast(err instanceof Error ? err.message : 'Failed to delete domain.', { variant: 'error' });
+    }
   };
 
   const handleAliasChange = async (id: string, aliasOfValue: string): Promise<void> => {
@@ -72,8 +80,14 @@ export default function ZonesPage(): React.JSX.Element {
       return;
     }
 
-    const input = validation.data.aliasOf === undefined ? {} : { aliasOf: validation.data.aliasOf };
-    await updateDomain.mutateAsync({ id, input });
+    try {
+      const input = validation.data.aliasOf === undefined ? {} : { aliasOf: validation.data.aliasOf };
+      await updateDomain.mutateAsync({ id, input });
+    } catch (err: unknown) {
+      const { logClientError } = require('@/features/observability');
+      logClientError(err, { context: { source: 'ZonesPage', action: 'updateAlias', domainId: id, aliasOf } });
+      toast(err instanceof Error ? err.message : 'Failed to update alias.', { variant: 'error' });
+    }
   };
 
   return (

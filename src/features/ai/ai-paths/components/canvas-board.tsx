@@ -73,11 +73,8 @@ type RuntimeHashes = {
 };
 
 type CanvasBoardProps = {
-  runtimeRunStatus?: 'idle' | 'running' | 'paused' | 'stepping';
   /** Optional class name for the viewport container */
   viewportClassName?: string | undefined;
-  /** Callback to fire a trigger (TODO: move to context) */
-  onFireTrigger?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
 };
 
 const formatRuntimeStatusLabel = (status: string): string =>
@@ -121,9 +118,7 @@ const BLOCKER_PROCESSING_STATUSES = new Set<string>([
 ]);
 
 export function CanvasBoard({
-  runtimeRunStatus: runtimeRunStatusProp,
   viewportClassName,
-  onFireTrigger,
 }: CanvasBoardProps): React.JSX.Element {
   // --- Context Hooks ---
   const { view, panState, dragState, lastDrop, connecting, connectingPos } = useCanvasState();
@@ -133,14 +128,12 @@ export function CanvasBoard({
     runtimeState,
     runtimeNodeStatuses,
     runtimeEvents,
-    runtimeRunStatus: runtimeRunStatusContext,
+    runtimeRunStatus,
     nodeDurations,
   } = useRuntimeState();
-  const { fireTrigger: fireTriggerContext } = useRuntimeActions();
+  const { fireTrigger } = useRuntimeActions();
   const { selectedNodeId, selectedEdgeId } = useSelectionState();
   const { selectEdge, setConfigOpen } = useSelectionActions();
-  const runtimeRunStatus = runtimeRunStatusProp ?? runtimeRunStatusContext;
-  const fireTrigger = onFireTrigger ?? fireTriggerContext;
   const {
     edgePaths,
     handlePointerDownNode,

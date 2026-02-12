@@ -1,10 +1,9 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { logClientError } from '@/features/observability';
 import * as productsApi from '@/features/products/api/products';
 import { CatalogMultiSelectField } from '@/features/products/components/form/CatalogMultiSelectField';
 import { CategorySingleSelectField } from '@/features/products/components/form/CategorySingleSelectField';
@@ -13,70 +12,24 @@ import { TagMultiSelectField } from '@/features/products/components/form/TagMult
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
 import { useProductValidationSettings } from '@/features/products/context/ProductValidationSettingsContext';
 import { useProductValidatorConfig } from '@/features/products/hooks/useProductSettingsQueries';
+import { useProductValidatorIssues } from '@/features/products/hooks/useProductValidatorIssues';
 import { ProductFormData, CatalogRecord, PriceGroupWithDetails, ProductCategory } from '@/features/products/types';
 import { parseDynamicReplacementRecipe } from '@/features/products/utils/validator-replacement-recipe';
-import { api } from '@/shared/lib/api-client';
+import {
+  getIssueReplacementPreview,
+  type FieldValidatorIssue,
+} from '@/features/products/validation-engine/core';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { ProductValidationPattern } from '@/shared/types/domain/products';
 import { Button, Input, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
 
-import {
-  buildFieldIssues,
-  getIssueReplacementPreview,
-  mergeFieldIssueMaps,
-  ValidatorIssueHint,
-  type FieldValidatorIssue,
-} from './ProductFormGeneral';
+import { ValidatorIssueHint } from './ProductFormGeneral';
 
 interface PriceGroupWithCalculatedPrice extends PriceGroupWithDetails {
   calculatedPrice: number | null;
   isCalculated: boolean;
   sourceGroupName: string | undefined;
 }
-
-const normalizeValidationDebounceMs = (value: unknown): number => {
-  if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
-  return Math.min(30_000, Math.max(0, Math.floor(value)));
-};
-
-const areIssueMapsEquivalent = (
-  left: Record<string, FieldValidatorIssue[]>,
-  right: Record<string, FieldValidatorIssue[]>
-): boolean => {
-  if (left === right) return true;
-  const leftKeys = Object.keys(left);
-  const rightKeys = Object.keys(right);
-  if (leftKeys.length !== rightKeys.length) return false;
-  for (const key of leftKeys) {
-    const leftList = left[key] ?? [];
-    const rightList = right[key] ?? [];
-    if (leftList.length !== rightList.length) return false;
-    for (let index = 0; index < leftList.length; index += 1) {
-      const leftIssue = leftList[index];
-      const rightIssue = rightList[index];
-      if (!leftIssue || !rightIssue) return false;
-      if (
-        leftIssue.patternId !== rightIssue.patternId ||
-        leftIssue.message !== rightIssue.message ||
-        leftIssue.severity !== rightIssue.severity ||
-        leftIssue.matchText !== rightIssue.matchText ||
-        leftIssue.index !== rightIssue.index ||
-        leftIssue.length !== rightIssue.length ||
-        leftIssue.regex !== rightIssue.regex ||
-        leftIssue.flags !== rightIssue.flags ||
-        leftIssue.replacementValue !== rightIssue.replacementValue ||
-        leftIssue.replacementApplyMode !== rightIssue.replacementApplyMode ||
-        leftIssue.replacementScope !== rightIssue.replacementScope ||
-        leftIssue.replacementActive !== rightIssue.replacementActive ||
-        leftIssue.postAcceptBehavior !== rightIssue.postAcceptBehavior ||
-        leftIssue.debounceMs !== rightIssue.debounceMs
-      ) {
-        return false;
-      }
-    }
-  }
-  return true;
-};
 
 const extractNameEnSegment = (value: string, segmentIndex: number): string => {
   if (!value.trim()) return '';
@@ -112,11 +65,6 @@ export default function ProductFormOther(): React.JSX.Element {
   const validatorConfigQuery = useProductValidatorConfig();
 
   const { register, setValue, watch, getValues } = useFormContext<ProductFormData>();
-  const fieldEditTimestampsRef = useRef<Record<string, number>>({});
-  const previousFieldValuesRef = useRef<Record<string, string | null>>({});
-  const debounceRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [debounceTick, setDebounceTick] = useState(0);
-  const [runtimeFieldIssues, setRuntimeFieldIssues] = useState<Record<string, FieldValidatorIssue[]>>({});
 
   const allValues = watch();
   const primaryCatalogId = selectedCatalogIds[0] ?? '';
@@ -159,16 +107,6 @@ export default function ProductFormOther(): React.JSX.Element {
   const selectedDefaultPriceGroupId = watch('defaultPriceGroupId');
   const hasCatalogs = selectedCatalogIds.length > 0;
   const validatorPatterns = validatorConfigQuery.data?.patterns ?? [];
-  const runtimePatternIds = useMemo(
-    () =>
-      validatorPatterns
-        .filter(
-          (pattern: ProductValidationPattern) =>
-            pattern.runtimeEnabled && pattern.runtimeType !== 'none'
-        )
-        .map((pattern: ProductValidationPattern) => pattern.id),
-    [validatorPatterns]
-  );
   const needsLatestProductSource = useMemo(
     () =>
       validatorPatterns.some((pattern: ProductValidationPattern) => {
@@ -192,176 +130,37 @@ export default function ProductFormOther(): React.JSX.Element {
     const preferred = list.find((item) => item.id !== product?.id) ?? list[0] ?? null;
     return preferred as unknown as Record<string, unknown>;
   }, [latestProductsQuery.data, product?.id]);
-  useEffect(() => {
-    if (!validatorEnabled || runtimePatternIds.length === 0) {
-      setRuntimeFieldIssues((previous) =>
-        Object.keys(previous).length === 0 ? previous : {}
-      );
-      return;
-    }
-    const timer = setTimeout(() => {
-      void api
-        .post<{ issues?: Record<string, FieldValidatorIssue[]> }>(
-          '/api/products/validator-runtime/evaluate',
-          {
-            values: validatorValues,
-            latestProductValues,
-            patternIds: runtimePatternIds,
-            validationScope: validationInstanceScope,
-          },
-          { logError: false }
-        )
-        .then((response) => {
-          const nextIssues = response.issues ?? {};
-          setRuntimeFieldIssues((previous) =>
-            areIssueMapsEquivalent(previous, nextIssues) ? previous : nextIssues
-          );
-        })
-        .catch((error: unknown) => {
-          setRuntimeFieldIssues((previous) =>
-            Object.keys(previous).length === 0 ? previous : {}
-          );
-          logClientError(
-            error instanceof Error ? error : new Error(String(error)),
-            {
-              context: {
-                source: 'ProductFormOther',
-                action: 'runtimeValidatorEvaluate',
-              },
-            }
-          );
-        });
-    }, 250);
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [
-    validatorValues,
+  const { visibleFieldIssues } = useProductValidatorIssues({
+    values: validatorValues,
+    runtimeValues: validatorValues,
+    patterns: validatorPatterns,
     latestProductValues,
-    runtimePatternIds,
-    validationInstanceScope,
+    validationScope: validationInstanceScope,
     validatorEnabled,
-  ]);
-  useEffect(() => {
-    const now = Date.now();
-    const trackedFields = ['price', 'stock', 'categoryId', 'name_en'];
-    for (const fieldName of trackedFields) {
-      const rawUnknown = validatorValues[fieldName];
-      const normalizedValue =
-        typeof rawUnknown === 'string'
-          ? rawUnknown
-          : typeof rawUnknown === 'number' && Number.isFinite(rawUnknown)
-            ? String(rawUnknown)
-            : '';
-      const previousValue = previousFieldValuesRef.current[fieldName];
-      if (previousValue == null) {
-        previousFieldValuesRef.current[fieldName] = normalizedValue;
-        continue;
+    isIssueDenied,
+    isIssueAccepted,
+    trackedFields: ['price', 'stock', 'categoryId', 'name_en'],
+    resolveChangedAt: (fieldName: string, timestamps: Record<string, number>): number => {
+      if (fieldName === 'categoryId') {
+        return Math.max(
+          timestamps['categoryId'] ?? 0,
+          timestamps['name_en'] ?? 0
+        );
       }
-      if (previousValue === normalizedValue) continue;
-      previousFieldValuesRef.current[fieldName] = normalizedValue;
-      fieldEditTimestampsRef.current[fieldName] = now;
-    }
-  }, [validatorValues]);
-  const staticFieldIssues = useMemo(
-    () =>
-      validatorEnabled
-        ? buildFieldIssues(
-          validatorValues as unknown as ProductFormData,
-          validatorPatterns,
-          latestProductValues,
-          validationInstanceScope
-        )
-        : ({} as Record<string, FieldValidatorIssue[]>),
-    [
-      validatorValues,
-      latestProductValues,
-      validationInstanceScope,
-      validatorEnabled,
-      validatorPatterns,
-    ]
-  );
-  const fieldIssues = useMemo(
-    () =>
-      mergeFieldIssueMaps(
-        staticFieldIssues,
-        validatorEnabled ? runtimeFieldIssues : {}
-      ),
-    [runtimeFieldIssues, staticFieldIssues, validatorEnabled]
-  );
-  useEffect(() => {
-    if (debounceRefreshTimerRef.current) {
-      clearTimeout(debounceRefreshTimerRef.current);
-      debounceRefreshTimerRef.current = null;
-    }
-    if (!validatorEnabled) return;
-    const now = Date.now();
-    let nextRemainingMs: number | null = null;
-    const trackedFields = ['price', 'stock', 'categoryId'];
-    for (const fieldName of trackedFields) {
-      const changedAtRaw = fieldEditTimestampsRef.current[fieldName] ?? 0;
-      const changedAt =
-        fieldName === 'categoryId'
-          ? Math.max(changedAtRaw, fieldEditTimestampsRef.current['name_en'] ?? 0)
-          : changedAtRaw;
-      if (changedAt <= 0) continue;
-      for (const issue of fieldIssues[fieldName] ?? []) {
-        const debounceMs = normalizeValidationDebounceMs(issue.debounceMs);
-        if (debounceMs <= 0) continue;
-        const remaining = debounceMs - (now - changedAt);
-        if (remaining <= 0) continue;
-        nextRemainingMs =
-          nextRemainingMs === null ? remaining : Math.min(nextRemainingMs, remaining);
-      }
-    }
-    if (nextRemainingMs !== null) {
-      debounceRefreshTimerRef.current = setTimeout(() => {
-        setDebounceTick((prev) => prev + 1);
-      }, nextRemainingMs + 10);
-    }
-    return () => {
-      if (debounceRefreshTimerRef.current) {
-        clearTimeout(debounceRefreshTimerRef.current);
-        debounceRefreshTimerRef.current = null;
-      }
-    };
-  }, [debounceTick, fieldIssues, validatorEnabled]);
-  const visibleFieldIssues = useMemo((): Record<'price' | 'stock' | 'categoryId', FieldValidatorIssue[]> => {
-    const now = Date.now();
-    const filterFieldIssues = (
-      fieldName: 'price' | 'stock' | 'categoryId',
-      changedAt: number
-    ): FieldValidatorIssue[] =>
-      (fieldIssues[fieldName] ?? []).filter((issue: FieldValidatorIssue): boolean => {
-        if (!validatorEnabled) return false;
-        if (isIssueDenied(fieldName, issue.patternId)) return false;
-        if (
-          issue.postAcceptBehavior === 'stop_after_accept' &&
-          isIssueAccepted(fieldName, issue.patternId)
-        ) {
-          return false;
-        }
-        const debounceMs = normalizeValidationDebounceMs(issue.debounceMs);
-        if (debounceMs <= 0 || changedAt <= 0) return true;
-        return now - changedAt >= debounceMs;
-      });
-
-    const categoryChangedAt = Math.max(
-      fieldEditTimestampsRef.current['categoryId'] ?? 0,
-      fieldEditTimestampsRef.current['name_en'] ?? 0
-    );
-
-    return {
-      price: filterFieldIssues('price', fieldEditTimestampsRef.current['price'] ?? 0),
-      stock: filterFieldIssues('stock', fieldEditTimestampsRef.current['stock'] ?? 0),
-      categoryId: filterFieldIssues('categoryId', categoryChangedAt),
-    };
-  }, [debounceTick, fieldIssues, isIssueAccepted, isIssueDenied, validatorEnabled]);
-  const priceIssueList = validatorEnabled ? visibleFieldIssues.price : [];
+      return timestamps[fieldName] ?? 0;
+    },
+    source: 'ProductFormOther',
+  });
+  const getIssueList = (fieldName: string): FieldValidatorIssue[] => {
+    if (!validatorEnabled) return [];
+    const issueList = visibleFieldIssues[fieldName];
+    return Array.isArray(issueList) ? issueList : [];
+  };
+  const priceIssueList = getIssueList('price');
   const priceIssue = priceIssueList[0];
-  const stockIssueList = validatorEnabled ? visibleFieldIssues.stock : [];
+  const stockIssueList = getIssueList('stock');
   const stockIssue = stockIssueList[0];
-  const categoryIssueList = validatorEnabled ? visibleFieldIssues.categoryId : [];
+  const categoryIssueList = getIssueList('categoryId');
   const categoryNameById = useMemo((): Map<string, string> => {
     const map = new Map<string, string>();
     for (const category of categories) {

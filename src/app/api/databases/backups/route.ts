@@ -63,8 +63,14 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
   const { searchParams } = new URL(req.url);
   const type = (searchParams.get('type') as 'postgresql' | 'mongodb') || 'postgresql';
 
-  const backups = await getBackups(type);
-  return NextResponse.json(backups);
+  try {
+    const backups = await getBackups(type);
+    return NextResponse.json(backups);
+  } catch (error) {
+    const { ErrorSystem } = await import('@/features/observability/server');
+    void ErrorSystem.captureException(error, { service: 'api/databases/backups', type });
+    throw error;
+  }
 }
 
 export const GET = apiHandler(

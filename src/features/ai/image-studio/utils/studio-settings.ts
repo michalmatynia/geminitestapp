@@ -41,10 +41,13 @@ export type ImageStudioSettings = {
       tool_choice: 'auto' | 'none' | null;
       image: {
         size: string | null;
-        quality: 'standard' | 'high' | null;
-        background: 'transparent' | 'white' | null;
-        format: 'png' | 'jpeg' | null;
+        quality: 'auto' | 'low' | 'medium' | 'high' | 'standard' | 'hd' | null;
+        background: 'auto' | 'transparent' | 'opaque' | 'white' | null;
+        format: 'png' | 'jpeg' | 'webp' | null;
         n: number | null;
+        moderation: 'auto' | 'low' | null;
+        output_compression: number | null;
+        partial_images: number | null;
       };
       advanced_overrides: Record<string, unknown> | null;
     };
@@ -93,6 +96,9 @@ export const defaultImageStudioSettings: ImageStudioSettings = {
         background: null,
         format: 'png',
         n: 1,
+        moderation: null,
+        output_compression: null,
+        partial_images: null,
       },
       advanced_overrides: null,
     },
@@ -154,10 +160,13 @@ const imageStudioSettingsSchema: z.ZodType<ImageStudioSettings> = z
             image: z
               .object({
                 size: nonEmptyStringOrNull,
-                quality: z.enum(['standard', 'high']).nullable().optional().default(null),
-                background: z.enum(['transparent', 'white']).nullable().optional().default(null),
-                format: z.enum(['png', 'jpeg']).nullable().optional().default(defaultImageStudioSettings.targetAi.openai.image.format),
-                n: z.number().int().min(1).nullable().optional().default(defaultImageStudioSettings.targetAi.openai.image.n),
+                quality: z.enum(['auto', 'low', 'medium', 'high', 'standard', 'hd']).nullable().optional().default(null),
+                background: z.enum(['auto', 'transparent', 'opaque', 'white']).nullable().optional().default(null),
+                format: z.enum(['png', 'jpeg', 'webp']).nullable().optional().default(defaultImageStudioSettings.targetAi.openai.image.format),
+                n: z.number().int().min(1).max(10).nullable().optional().default(defaultImageStudioSettings.targetAi.openai.image.n),
+                moderation: z.enum(['auto', 'low']).nullable().optional().default(null),
+                output_compression: z.number().int().min(0).max(100).nullable().optional().default(null),
+                partial_images: z.number().int().min(0).max(3).nullable().optional().default(null),
               })
               .optional()
               .default(defaultImageStudioSettings.targetAi.openai.image),
@@ -170,12 +179,37 @@ const imageStudioSettingsSchema: z.ZodType<ImageStudioSettings> = z
       .default(defaultImageStudioSettings.targetAi),
   });
 
+const extractRawModelFallback = (value: unknown): string | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const targetAi = (value as Record<string, unknown>)['targetAi'];
+  if (!targetAi || typeof targetAi !== 'object' || Array.isArray(targetAi)) return null;
+  const openai = (targetAi as Record<string, unknown>)['openai'];
+  if (!openai || typeof openai !== 'object' || Array.isArray(openai)) return null;
+  const model = (openai as Record<string, unknown>)['model'];
+  if (typeof model !== 'string') return null;
+  const normalized = model.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
 export function parseImageStudioSettings(raw: string | null | undefined): ImageStudioSettings {
   if (!raw) return defaultImageStudioSettings;
   try {
     const parsed = JSON.parse(raw) as unknown;
     const result = imageStudioSettingsSchema.safeParse(parsed);
-    if (!result.success) return defaultImageStudioSettings;
+    if (!result.success) {
+      const modelFallback = extractRawModelFallback(parsed);
+      if (!modelFallback) return defaultImageStudioSettings;
+      return {
+        ...defaultImageStudioSettings,
+        targetAi: {
+          ...defaultImageStudioSettings.targetAi,
+          openai: {
+            ...defaultImageStudioSettings.targetAi.openai,
+            model: modelFallback,
+          },
+        },
+      };
+    }
     return result.data;
   } catch {
     return defaultImageStudioSettings;

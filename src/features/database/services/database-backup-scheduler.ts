@@ -2,6 +2,7 @@ import 'server-only';
 
 import { enqueueProductAiJob } from '@/features/jobs/services/productAiService';
 import { ErrorSystem } from '@/features/observability/server';
+import { configurationError } from '@/shared/errors/app-error';
 import {
   DATABASE_ENGINE_BACKUP_SCHEDULE_KEY,
   type DatabaseEngineBackupSchedule,
@@ -179,7 +180,7 @@ const persistBackupSchedule = async (schedule: DatabaseEngineBackupSchedule): Pr
   }
 
   if (!wrotePrisma && !wroteMongo) {
-    throw new Error('No settings store available to persist backup schedule.');
+    throw configurationError('No settings store available to persist backup schedule.');
   }
 
   invalidateDatabaseEnginePolicyCache();

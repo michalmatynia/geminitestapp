@@ -7,6 +7,7 @@ import { getAuthDataProvider } from '@/features/auth/services/auth-provider';
 import { getCmsDataProvider } from '@/features/cms/services/cms-provider';
 import { getIntegrationDataProvider } from '@/features/integrations/services/integration-provider';
 import { getProductDataProvider } from '@/features/products/services/product-provider';
+import { ErrorSystem } from '@/features/observability/server';
 import type {
   DatabaseEngineCollectionStatusDto,
   DatabaseEnginePrimaryProviderDto,
@@ -85,7 +86,11 @@ const getKnownMongoCollections = async (): Promise<string[]> => {
       .map((collection) => collection.name)
       .filter((name): name is string => Boolean(name && !name.startsWith('system.')))
       .sort((a, b) => a.localeCompare(b));
-  } catch {
+  } catch (error) {
+    void ErrorSystem.logWarning('[database-engine-status] Failed to list Mongo collections', {
+      service: 'database-engine-status',
+      error,
+    });
     return [];
   }
 };

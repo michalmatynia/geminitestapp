@@ -2,7 +2,6 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-
 import type {
   AiNode,
   NodeConfig,
@@ -28,44 +27,20 @@ import {
   TabsTrigger,
 } from '@/shared/ui';
 
-import { useAiPathConfig } from './AiPathConfigContext';
-import { NodeHistoryTab } from './node-config/dialog/NodeHistoryTab'; // Keep NodeHistoryTab import
+import { AiPathConfigProviderWithContext, useAiPathConfig } from './AiPathConfigContext';
+import { NodeHistoryTab } from './node-config/dialog/NodeHistoryTab';
 import { NodeNotesTab } from './node-config/dialog/NodeNotesTab';
-import { NodeConfigurationSections } from './NodeConfigurationSections'; // Import the new component
+import { NodeConfigurationSections } from './NodeConfigurationSections';
 import { useSelectionActions } from '../context';
 
-export function NodeConfigDialog(): React.JSX.Element | null {
+function NodeConfigDialogContent(): React.JSX.Element | null {
   const {
     configOpen,
     setConfigOpen,
     selectedNode,
     nodes,
-    edges,
     isPathLocked,
-    modelOptions,
-    parserSamples,
-    setParserSamples,
-    parserSampleLoading,
-    updaterSamples,
-    setUpdaterSamples,
-    updaterSampleLoading,
-    runtimeState,
-    pathDebugSnapshot,
     updateSelectedNode,
-    handleFetchParserSample,
-    handleFetchUpdaterSample,
-    handleRunSimulation,
-    clearRuntimeForNode,
-    clearNodeCache,
-    clearNodeHistory,
-    onSendToAi,
-    sendingToAi,
-    dbQueryPresets,
-    setDbQueryPresets,
-    saveDbQueryPresets,
-    dbNodePresets,
-    setDbNodePresets,
-    saveDbNodePresets,
     toast,
     savePathConfig,
   } = useAiPathConfig();
@@ -170,6 +145,15 @@ export function NodeConfigDialog(): React.JSX.Element | null {
     },
     [updateDraftNode]
   );
+  const configContextOverrides = useMemo(
+    () => ({
+      selectedNode: draftSelectedNode,
+      nodes: nodesForConfig,
+      updateSelectedNode: updateDraftNode,
+      updateSelectedNodeConfig: updateDraftConfig,
+    }),
+    [draftSelectedNode, nodesForConfig, updateDraftNode, updateDraftConfig]
+  );
 
   const hasUnsavedChanges = useMemo((): boolean => {
     if (!draftNode || !selectedNode) return false;
@@ -189,20 +173,16 @@ export function NodeConfigDialog(): React.JSX.Element | null {
     }
     updateSelectedNode(draftNode, { nodeId: draftNode.id });
     setDraftNode(null);
-    if (savePathConfig) {
-      void savePathConfig({
-        silent: true,
-        includeNodeConfig: true,
-        force: true,
-        nodeOverride: draftNode,
-      }).then((saved: boolean): void => {
-        toast(saved ? 'Node settings saved.' : 'Failed to save node settings.', {
-          variant: saved ? 'success' : 'error',
-        });
+    void savePathConfig({
+      silent: true,
+      includeNodeConfig: true,
+      force: true,
+      nodeOverride: draftNode,
+    }).then((saved: boolean): void => {
+      toast(saved ? 'Node settings saved.' : 'Failed to save node settings.', {
+        variant: saved ? 'success' : 'error',
       });
-    } else {
-      toast('Node settings updated in canvas. Click "Save Path" to persist.', { variant: 'success' });
-    }
+    });
   }, [draftNode, isPathLocked, toast, updateSelectedNode, savePathConfig]);
 
   const handleDiscardChanges = useCallback((): void => {
@@ -252,7 +232,7 @@ export function NodeConfigDialog(): React.JSX.Element | null {
                 <span>Configure {selectedNodeSafe.title}</span>
                 {isScheduledTrigger ? (
                   <span className='rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[10px] uppercase text-amber-200'>
-                  Scheduled
+                    Scheduled
                   </span>
                 ) : null}
               </DialogTitle>
@@ -262,95 +242,55 @@ export function NodeConfigDialog(): React.JSX.Element | null {
                 className='rounded border px-3 py-1 text-xs text-gray-300 hover:bg-muted/50'
                 onClick={requestClose}
               >
-              Close
+                Close
               </Button>
             </div>
           </DialogHeader>
-          <Tabs defaultValue='settings' className='mt-2'>
-            <TabsList className='w-full justify-start'>
-              <TabsTrigger value='settings'>Settings</TabsTrigger>
-              <TabsTrigger value='notes'>Notes</TabsTrigger>
-              <TabsTrigger value='history'>History</TabsTrigger>
-            </TabsList>
-            <TabsContent value='settings'>
-              <div className='mb-4 flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-card/60 px-3 py-2'>
-                <div className='text-[11px] text-gray-400'>
-                  {hasUnsavedChanges
-                    ? 'Unsaved changes (manual update required).'
-                    : 'Node settings are applied in canvas. Click "Save Path" to persist.'}
+          <AiPathConfigProviderWithContext overrides={configContextOverrides}>
+            <Tabs defaultValue='settings' className='mt-2'>
+              <TabsList className='w-full justify-start'>
+                <TabsTrigger value='settings'>Settings</TabsTrigger>
+                <TabsTrigger value='notes'>Notes</TabsTrigger>
+                <TabsTrigger value='history'>History</TabsTrigger>
+              </TabsList>
+              <TabsContent value='settings'>
+                <div className='mb-4 flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-card/60 px-3 py-2'>
+                  <div className='text-[11px] text-gray-400'>
+                    {hasUnsavedChanges
+                      ? 'Unsaved changes (manual update required).'
+                      : 'Node settings are applied in canvas. Click "Save Path" to persist.'}
+                  </div>
+                  <div className='flex items-center gap-2'>
+                    <Button
+                      type='button'
+                      size='sm'
+                      className='rounded-md border border-muted-foreground/40 text-xs text-gray-300 hover:bg-muted/50 disabled:opacity-50'
+                      disabled={!hasUnsavedChanges}
+                      onClick={handleDiscardChanges}
+                    >
+                      Discard Changes
+                    </Button>
+                    <Button
+                      type='button'
+                      size='sm'
+                      className='rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10 disabled:opacity-50'
+                      disabled={!hasUnsavedChanges || isPathLocked}
+                      onClick={handleUpdateNode}
+                    >
+                      Update Node
+                    </Button>
+                  </div>
                 </div>
-                <div className='flex items-center gap-2'>
-                  <Button
-                    type='button'
-                    size='sm'
-                    className='rounded-md border border-muted-foreground/40 text-xs text-gray-300 hover:bg-muted/50 disabled:opacity-50'
-                    disabled={!hasUnsavedChanges}
-                    onClick={handleDiscardChanges}
-                  >
-                  Discard Changes
-                  </Button>
-                  <Button
-                    type='button'
-                    size='sm'
-                    className='rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10 disabled:opacity-50'
-                    disabled={!hasUnsavedChanges || isPathLocked}
-                    onClick={handleUpdateNode}
-                  >
-                  Update Node
-                  </Button>
-                </div>
-              </div>
-              {/* Render the new consolidated component here */}
-              <NodeConfigurationSections
-                configOpen={configOpen}
-                setConfigOpen={setConfigOpen}
-                selectedNode={draftSelectedNode}
-                nodes={nodesForConfig}
-                edges={edges}
-                isPathLocked={isPathLocked}
-                modelOptions={modelOptions}
-                parserSamples={parserSamples}
-                setParserSamples={setParserSamples}
-                parserSampleLoading={parserSampleLoading}
-                updaterSamples={updaterSamples}
-                setUpdaterSamples={setUpdaterSamples}
-                updaterSampleLoading={updaterSampleLoading}
-                runtimeState={runtimeState}
-                pathDebugSnapshot={pathDebugSnapshot}
-                updateSelectedNode={updateDraftNode}
-                updateSelectedNodeConfig={updateDraftConfig}
-                handleFetchParserSample={handleFetchParserSample}
-                handleFetchUpdaterSample={handleFetchUpdaterSample}
-                handleRunSimulation={handleRunSimulation}
-                clearRuntimeForNode={clearRuntimeForNode}
-                clearNodeCache={clearNodeCache}
-                clearNodeHistory={clearNodeHistory}
-                onSendToAi={onSendToAi}
-                sendingToAi={sendingToAi}
-                dbQueryPresets={dbQueryPresets}
-                setDbQueryPresets={setDbQueryPresets}
-                saveDbQueryPresets={saveDbQueryPresets}
-                dbNodePresets={dbNodePresets}
-                setDbNodePresets={setDbNodePresets}
-                saveDbNodePresets={saveDbNodePresets}
-                toast={toast}
-                {...(savePathConfig !== undefined && { savePathConfig })}
-              />
-            </TabsContent>
-            <TabsContent value='notes'>
-              <NodeNotesTab
-                selectedNode={draftSelectedNode}
-                updateSelectedNodeConfig={updateDraftConfig}
-              />
-            </TabsContent>
-            <TabsContent value='history'>
-              <NodeHistoryTab
-                selectedNode={selectedNodeSafe}
-                runtimeState={runtimeState}
-                {...(clearNodeHistory && { onClearNodeHistory: clearNodeHistory })}
-              />
-            </TabsContent>
-          </Tabs>
+                <NodeConfigurationSections />
+              </TabsContent>
+              <TabsContent value='notes'>
+                <NodeNotesTab />
+              </TabsContent>
+              <TabsContent value='history'>
+                <NodeHistoryTab />
+              </TabsContent>
+            </Tabs>
+          </AiPathConfigProviderWithContext>
           <div className='mt-4 flex items-center justify-end gap-2 text-xs text-gray-400'>
             <span className='text-[11px] uppercase tracking-wide text-gray-500'>Node ID</span>
             <span className='max-w-[260px] truncate font-mono text-xs text-gray-300'>
@@ -406,5 +346,13 @@ export function NodeConfigDialog(): React.JSX.Element | null {
         </AlertDialogContent>
       </AlertDialog>
     </>
+  );
+}
+
+export function NodeConfigDialog(): React.JSX.Element {
+  return (
+    <AiPathConfigProviderWithContext>
+      <NodeConfigDialogContent />
+    </AiPathConfigProviderWithContext>
   );
 }

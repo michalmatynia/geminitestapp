@@ -51,6 +51,8 @@ export default function CreatePagePage(): React.JSX.Element {
       });
       router.push('/admin/cms/pages');
     } catch (submitError: unknown) {
+      const { logClientError } = require('@/features/observability');
+      logClientError(submitError, { context: { source: 'CreatePagePage', action: 'createPage', name } });
       setError(submitError instanceof Error ? submitError.message : 'Failed to create page.');
     }
   };

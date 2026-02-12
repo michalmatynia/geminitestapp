@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
 
 import { logClientError } from '@/features/observability';
+import { internalError } from '@/shared/errors/app-error';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
@@ -87,7 +88,7 @@ export function AppEmbedsProvider({ children }: { children: React.ReactNode }): 
 export function useAppEmbeds(): AppEmbedsContextType {
   const context = useContext(AppEmbedsContext);
   if (context === undefined) {
-    throw new Error('useAppEmbeds must be used within an AppEmbedsProvider');
+    throw internalError('useAppEmbeds must be used within an AppEmbedsProvider');
   }
   return context;
 }

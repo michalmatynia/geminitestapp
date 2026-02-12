@@ -15,7 +15,7 @@ import {
 } from '@/features/ai/image-studio/utils/studio-settings';
 import { auth } from '@/features/auth/server';
 import { getSettingValue } from '@/features/products/services/aiDescriptionService';
-import { authError, configurationError } from '@/shared/errors/app-error';
+import { authError, configurationError, internalError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -82,10 +82,10 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const json = JSON.parse(raw) as { bbox?: { x: number; y: number; w: number; h: number } };
   if (parsed.data.mode === 'polygon') {
     const polygon = (json as { polygon?: Array<{ x: number; y: number }> }).polygon;
-    if (!polygon || polygon.length < 3) throw new Error('AI did not return a polygon.');
+    if (!polygon || polygon.length < 3) throw internalError('AI did not return a polygon.');
     return NextResponse.json({ polygon });
   }
-  if (!json?.bbox) throw new Error('AI did not return a bbox.');
+  if (!json?.bbox) throw internalError('AI did not return a bbox.');
   return NextResponse.json({ bbox: json.bbox });
 }
 

@@ -18,6 +18,7 @@ import { addQueuedProductId, removeQueuedProductId } from '@/features/products/s
 import type { 
   ProductWithImages, 
 } from '@/features/products/types';
+import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -133,11 +134,11 @@ export function useUpdateProductMutation(): UseMutationResult<
 
         if (!response.ok) {
           if (response.status === 404) {
-            throw new Error(
+            throw notFoundError(
               'Product not found. It may have been moved or deleted. Refresh the product list and try again.'
             );
           }
-          throw new Error(await parseUpdateError(response));
+          throw badRequestError(await parseUpdateError(response));
         }
         return response.json() as Promise<ProductWithImages>;
       }
@@ -188,7 +189,9 @@ export function useBulkDeleteProductsMutation(): UseMutationResult<{ success: bo
       const responses = await Promise.all(
         ids.map((id: string) => deleteProduct(id))
       );
-      if (responses.some((r: { success: boolean }) => !r.success)) throw new Error('Failed to delete some products');
+      if (responses.some((r: { success: boolean }) => !r.success)) {
+        throw operationFailedError('Failed to delete some products');
+      }
       return { success: true };
     },
     {

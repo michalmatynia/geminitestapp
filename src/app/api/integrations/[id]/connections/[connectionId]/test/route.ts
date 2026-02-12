@@ -8,6 +8,7 @@ import { chromium, devices } from 'playwright';
 
 import { decryptSecret, encryptSecret } from '@/features/integrations/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
+import { internalError } from '@/shared/errors/app-error';
 import { mapStatusToAppError } from '@/shared/errors/error-mapper';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -252,13 +253,13 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       options: Parameters<NonNullable<typeof page>['waitForSelector']>[1],
       label: string
     ) => {
-      if (!page) throw new Error('Browser page not initialized');
+      if (!page) throw internalError('Browser page not initialized');
       try {
         return await page.waitForSelector(selector, options);
       } catch (error) {
         const message =
           error instanceof Error ? error.message : 'Unknown error';
-        throw new Error(`${label} wait failed: ${message}`);
+        throw internalError(`${label} wait failed: ${message}`);
       }
     };
     const safeWaitFor = async (
@@ -271,7 +272,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       } catch (error) {
         const message =
           error instanceof Error ? error.message : 'Unknown error';
-        throw new Error(`${label} wait failed: ${message}`);
+        throw internalError(`${label} wait failed: ${message}`);
       }
     };
     const safeCount = async (
@@ -283,7 +284,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       } catch (error) {
         const message =
           error instanceof Error ? error.message : 'Unknown error';
-        throw new Error(`${label} count failed: ${message}`);
+        throw internalError(`${label} count failed: ${message}`);
       }
     };
     const safeIsVisible = async (
@@ -295,7 +296,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       } catch (error) {
         const message =
           error instanceof Error ? error.message : 'Unknown error';
-        throw new Error(`${label} visibility check failed: ${message}`);
+        throw internalError(`${label} visibility check failed: ${message}`);
       }
     };
     const safeInnerText = async (
@@ -307,7 +308,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       } catch (error) {
         const message =
           error instanceof Error ? error.message : 'Unknown error';
-        throw new Error(`${label} text read failed: ${message}`);
+        throw internalError(`${label} text read failed: ${message}`);
       }
     };
     const safeGoto = async (
@@ -315,13 +316,13 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       options: Parameters<NonNullable<typeof page>['goto']>[1],
       label: string
     ) => {
-      if (!page) throw new Error('Browser page not initialized');
+      if (!page) throw internalError('Browser page not initialized');
       try {
         return await page.goto(url, options);
       } catch (error) {
         const message =
           error instanceof Error ? error.message : 'Unknown error';
-        throw new Error(`${label} navigation failed: ${message}`);
+        throw internalError(`${label} navigation failed: ${message}`);
       }
     };
     const safeWaitForLoadState = async (
@@ -329,13 +330,13 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       options: Parameters<NonNullable<typeof page>['waitForLoadState']>[1],
       label: string
     ) => {
-      if (!page) throw new Error('Browser page not initialized');
+      if (!page) throw internalError('Browser page not initialized');
       try {
         await page.waitForLoadState(state, options); return;
       } catch (error) {
         const message =
           error instanceof Error ? error.message : 'Unknown error';
-        throw new Error(`${label} load state failed: ${message}`);
+        throw internalError(`${label} load state failed: ${message}`);
       }
     };
     const captureDebugArtifacts = async (label: string) => {
@@ -469,7 +470,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
           'Session check'
         );
         await humanizedPause();
-        if (!page) throw new Error('Page not found');
+        if (!page) throw internalError('Page not found');
         const loggedIn = await safeIsVisible(
           page.locator(successSelector).first(),
           'Session check'
@@ -497,7 +498,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       'https://www.tradera.com/en'
     ];
     const openLoginPage = async () => {
-      if (!page) throw new Error('Page not found');
+      if (!page) throw internalError('Page not found');
       for (const url of loginUrls) {
         pushStep('Opening login page', 'pending', url);
         try {
@@ -541,7 +542,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       '#password, input[name="password"], input[type="password"]';
 
     const findInput = async (selectors: string[]) => {
-      if (!page) throw new Error('Page not found');
+      if (!page) throw internalError('Page not found');
       for (const selector of selectors) {
         const locator = page.locator(selector).first();
         if ((await safeCount(locator, `Find input ${selector}`)) > 0) {
@@ -565,14 +566,14 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
           { state: 'attached', timeout: 15000 },
           'Login form'
         );
-        if (!page) throw new Error('Page not found');
+        if (!page) throw internalError('Page not found');
         const formLocator = page.locator(formSelector).first();
         const isVisible = await safeIsVisible(
           formLocator,
           'Login form'
         ).catch(() => false);
         if (!isVisible) {
-          throw new Error('Login form not visible yet');
+          throw internalError('Login form not visible yet');
         }
       } catch (error) {
         const message =
@@ -582,7 +583,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
           'failed',
           `Form not ready: ${message}`
         );
-        if (!page) throw new Error('Page not found');
+        if (!page) throw internalError('Page not found');
         const signInTrigger = page
           .locator(
             [
@@ -635,7 +636,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
         }
       }
       try {
-        if (!page) throw new Error('Page not found');
+        if (!page) throw internalError('Page not found');
         await safeWaitFor(
           page.locator(emailSelector).first(),
           { state: 'visible', timeout: 15000 },
@@ -669,7 +670,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       ];
 
       const findInputInForm = async (selectors: string[]) => {
-        if (!page) throw new Error('Page not found');
+        if (!page) throw internalError('Page not found');
         for (const selector of selectors) {
           const locator = page.locator(formSelector).first().locator(selector).first();
           if ((await safeCount(locator, `Find form input ${selector}`)) > 0) {
@@ -714,7 +715,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
 
     if (!sessionReused) {
       pushStep('Submitting login', 'pending', 'Attempting to submit form');
-      if (!page) throw new Error('Page not found');
+      if (!page) throw internalError('Page not found');
       const stayLoggedIn = page
         .locator('input[name="keepMeLoggedIn"]')
         .first();
@@ -769,7 +770,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       pushStep('Submitting login', 'ok', `Clicked ${submitButton.selector}`);
 
       try {
-        if (!page) throw new Error('Page not found');
+        if (!page) throw internalError('Page not found');
         await page.waitForTimeout(1000);
         const postSubmitUrl = page.url();
         const postSubmitError = await safeInnerText(
@@ -795,7 +796,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
         'captcha:n'
       ];
       try {
-        if (!page) throw new Error('Page not found');
+        if (!page) throw internalError('Page not found');
         const postSubmitErrorLower = (
           await safeInnerText(
             page.locator(errorSelector).first(),
@@ -848,7 +849,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
         'Checking for logged-in state'
       );
       try {
-        if (!page) throw new Error('Page not found');
+        if (!page) throw internalError('Page not found');
         const formLocator = page.locator(formSelector).first();
         const result = await Promise.race([
           safeWaitFor(
@@ -908,7 +909,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       'Storing Playwright session cookies'
     );
     try {
-      if (!page) throw new Error('Page not found');
+      if (!page) throw internalError('Page not found');
       const storageStateResult = await page.context().storageState();
       await repo.updateConnection(connection.id, {
         playwrightStorageState: encryptSecret(JSON.stringify(storageStateResult)),

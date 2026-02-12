@@ -11,6 +11,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
+import { ApiError } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   Badge,
@@ -236,7 +237,7 @@ export function CrudPanel({
         });
 
         if (rowsResult.error) {
-          throw new Error(rowsResult.error);
+          throw new ApiError(rowsResult.error, 400);
         }
 
         let totalRows = rowsResult.rowCount ?? rowsResult.rows.length;
@@ -267,7 +268,7 @@ export function CrudPanel({
       });
 
       if (mongoResult.error) {
-        throw new Error(mongoResult.error);
+        throw new ApiError(mongoResult.error, 400);
       }
 
       return {

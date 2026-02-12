@@ -6,25 +6,19 @@ import React from 'react';
 import type { DbQueryPreset } from '@/features/ai/ai-paths/lib';
 import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Input, Label, Textarea } from '@/shared/ui';
 
-
+import { useDatabasePresetsTabContext } from './DatabasePresetsTabContext';
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
 import type { DatabasePresetOption } from './types';
 
-type DatabasePresetsTabProps = {
-  dbQueryPresets: DbQueryPreset[];
-  builtInPresets?: DatabasePresetOption[];
-  onApplyBuiltInPreset?: (presetId: string) => void;
-  onRenameQueryPreset: (presetId: string, nextName: string) => Promise<void> | void;
-  onDeleteQueryPreset: (presetId: string) => Promise<void> | void;
-};
-
-export function DatabasePresetsTab({
-  dbQueryPresets,
-  builtInPresets,
-  onApplyBuiltInPreset,
-  onRenameQueryPreset,
-  onDeleteQueryPreset,
-}: DatabasePresetsTabProps): React.JSX.Element {
+export function DatabasePresetsTab(): React.JSX.Element {
+  const {
+    builtInPresets,
+    onApplyBuiltInPreset,
+    onRenameQueryPreset,
+    onDeleteQueryPreset,
+  } = useDatabasePresetsTabContext();
+  const { dbQueryPresets } = useAiPathConfig();
   const [queryNameDrafts, setQueryNameDrafts] = React.useState<Record<string, string>>({});
   const [viewPresetId, setViewPresetId] = React.useState<string | null>(null);
   const activePreset = viewPresetId

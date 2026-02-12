@@ -48,6 +48,8 @@ function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.
       await updateTheme.mutateAsync({ id, input });
       router.push('/admin/cms/themes');
     } catch (submitError: unknown) {
+      const { logClientError } = require('@/features/observability');
+      logClientError(submitError, { context: { source: 'EditThemePage', action: 'saveTheme', themeId: id } });
       setError(submitError instanceof Error ? submitError.message : 'Failed to save theme.');
     }
   };

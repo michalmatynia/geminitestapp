@@ -59,6 +59,8 @@ export default function CreateThemePage(): React.ReactNode {
       await createTheme.mutateAsync(validation.data);
       router.push('/admin/cms/themes');
     } catch (submitError: unknown) {
+      const { logClientError } = require('@/features/observability');
+      logClientError(submitError, { context: { source: 'CreateThemePage', action: 'createTheme', name } });
       setError(submitError instanceof Error ? submitError.message : 'Failed to create theme.');
     }
   };

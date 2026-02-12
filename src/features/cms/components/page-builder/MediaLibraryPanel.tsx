@@ -75,6 +75,8 @@ export function MediaLibraryPanel({
         }
       }
     } catch (error) {
+      const { logClientError } = require('@/features/observability');
+      logClientError(error, { context: { source: 'MediaLibraryPanel', action: 'handleUpload' } });
       const message = error instanceof Error ? error.message : 'Upload failed';
       toast(message, { variant: 'error' });
     }

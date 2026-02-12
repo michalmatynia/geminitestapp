@@ -5,6 +5,7 @@ import type {
   ParameterRepository, 
   ParameterFilters 
 } from '@/features/products/types/services/parameter-repository';
+import { internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { 
   ProductParameter 
@@ -89,7 +90,7 @@ export const mongoParameterRepository: ParameterRepository = {
     );
     
     const updated = await this.getParameterById(id);
-    if (!updated) throw new Error('Failed to update parameter');
+    if (!updated) throw internalError('Failed to update parameter', { parameterId: id });
     return updated;
   },
 

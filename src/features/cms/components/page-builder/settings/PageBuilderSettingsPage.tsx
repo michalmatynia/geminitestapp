@@ -48,6 +48,8 @@ export function PageBuilderSettingsPage(): React.JSX.Element {
       setLocalSectionDropPlaceholder(null);
       toast('Settings saved successfully.', { variant: 'success' });
     } catch (error) {
+      const { logClientError } = require('@/features/observability');
+      logClientError(error, { context: { source: 'PageBuilderSettingsPage', action: 'saveSettings' } });
       const message = error instanceof Error ? error.message : 'Failed to save settings';
       toast(message, { variant: 'error' });
     }

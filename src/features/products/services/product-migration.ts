@@ -3,6 +3,7 @@ import 'server-only';
 import { ErrorSystem } from '@/features/observability/server';
 import type { CatalogRecord } from '@/features/products/types';
 import type { ProductMigrationDirection as MigrationDirection, ProductMigrationBatchResult as MigrationBatchResult } from '@/features/products/types';
+import { internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import type { ImageFileRecord } from '@/shared/types/domain/files';
@@ -543,6 +544,6 @@ export async function migrateProductBatch({
       cursor,
     });
     // Re-throw with enriched context for the job runner or API handler
-    throw new Error(`Migration batch failed [${direction}] at cursor ${cursor}: ${error instanceof Error ? error.message : String(error)}`);
+    throw internalError(`Migration batch failed [${direction}] at cursor ${cursor}: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
   }
 }

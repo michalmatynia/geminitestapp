@@ -8,6 +8,7 @@ import {
 
 import { createProduct, updateProduct, deleteProduct } from '@/features/products/api/products';
 import type { ProductWithImages } from '@/features/products/types';
+import { operationFailedError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { DeleteResponse } from '@/shared/types/api/api';
@@ -85,7 +86,9 @@ export function useBulkDeleteProducts(): UseMutationResult<{ success: boolean },
       const responses = await Promise.all(
         ids.map((id: string) => deleteProduct(id))
       );
-      if (responses.some((r: { success: boolean }) => !r.success)) throw new Error('Failed to delete some products');
+      if (responses.some((r: { success: boolean }) => !r.success)) {
+        throw operationFailedError('Failed to delete some products');
+      }
       return { success: true };
     },
     onSuccess: async (): Promise<void> => {

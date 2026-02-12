@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { ErrorSystem } from '@/features/observability/server';
 import type {
   DatabaseEngineCollectionProviderPreviewItemDto,
   DatabaseEngineProviderPreviewDto,
@@ -35,6 +36,10 @@ export async function getDatabaseEngineProviderPreview(input?: {
   try {
     appProvider = await getAppDbProvider();
   } catch (error: unknown) {
+    void ErrorSystem.logWarning('[database-engine-provider-preview] Failed to get app DB provider', {
+      service: 'database-engine-provider-preview',
+      error,
+    });
     appProviderError = toErrorMessage(error);
   }
 
@@ -81,6 +86,11 @@ export async function getDatabaseEngineProviderPreview(input?: {
           error: null,
         };
       } catch (error: unknown) {
+        void ErrorSystem.logWarning('[database-engine-provider-preview] Failed to get collection provider', {
+          service: 'database-engine-provider-preview',
+          collection,
+          error,
+        });
         return {
           collection,
           configuredProvider: null,

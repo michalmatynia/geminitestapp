@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, ReactNode, useMemo, useEffe
 
 import { AiPathRunRecord } from '@/shared/types/domain/ai-paths';
 import { AgentAuditLog, AgentBrowserLog, AgentSnapshot } from '@/shared/types/domain/chatbot';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { useAgentAudits, useAgentLogs, useAgentRuns, useAgentSnapshots } from '../hooks/useAgentRunsQueries';
 
@@ -19,6 +20,7 @@ interface AgentRunContextType {
   setAgentStreamStatus: (status: 'idle' | 'connecting' | 'live' | 'error') => void;
   isLoadingRuns: boolean;
   refetchRuns: () => Promise<unknown>;
+  error: Error | null;
 }
 
 const AgentRunContext = createContext<AgentRunContextType | null>(null);
@@ -35,10 +37,12 @@ export function AgentRunProvider({ children }: { children: ReactNode }): React.J
   const [selectedAgentRunId, setSelectedAgentRunId] = useState<string | null>(null);
   const [agentStreamStatus, setAgentStreamStatus] = useState<'idle' | 'connecting' | 'live' | 'error'>('idle');
 
-  const { data: agentRuns = [], isLoading: isLoadingRuns, refetch: refetchRuns } = useAgentRuns();
-  const { data: agentSnapshots = [] } = useAgentSnapshots(selectedAgentRunId);
-  const { data: agentBrowserLogs = [] } = useAgentLogs(selectedAgentRunId, { refetchInterval: 5000 });
-  const { data: agentAuditLogs = [] } = useAgentAudits(selectedAgentRunId, { refetchInterval: 5000 });
+  const { data: agentRuns = [], isLoading: isLoadingRuns, refetch: refetchRuns, error: runsError } = useAgentRuns();
+  const { data: agentSnapshots = [], error: snapshotsError } = useAgentSnapshots(selectedAgentRunId);
+  const { data: agentBrowserLogs = [], error: logsError } = useAgentLogs(selectedAgentRunId, { refetchInterval: 5000 });
+  const { data: agentAuditLogs = [], error: auditsError } = useAgentAudits(selectedAgentRunId, { refetchInterval: 5000 });
+
+  const error = runsError || snapshotsError || logsError || auditsError || null;
 
   const selectedAgentRun = useMemo(
     () => agentRuns.find((run: AiPathRunRecord) => run.id === selectedAgentRunId) ?? null,
@@ -57,12 +61,14 @@ export function AgentRunProvider({ children }: { children: ReactNode }): React.J
     source.onmessage = (): void => {
       try {
         setAgentStreamStatus('live');
-      } catch {
+      } catch (err: unknown) {
+        logClientError(err, { context: { source: 'AgentRunContext', action: 'onmessage', runId: selectedAgentRunId } });
         setAgentStreamStatus('error');
       }
     };
     
-    source.onerror = (): void => {
+    source.onerror = (err: Event): void => {
+      logClientError(err, { context: { source: 'AgentRunContext', action: 'onerror', runId: selectedAgentRunId } });
       setAgentStreamStatus('error');
       source.close();
     };
@@ -84,7 +90,8 @@ export function AgentRunProvider({ children }: { children: ReactNode }): React.J
     setAgentStreamStatus,
     isLoadingRuns,
     refetchRuns,
-  }), [selectedAgentRunId, selectedAgentRun, agentRuns, agentSnapshots, agentBrowserLogs, agentAuditLogs, agentStreamStatus, setAgentStreamStatus, isLoadingRuns, refetchRuns]);
+    error,
+  }), [selectedAgentRunId, selectedAgentRun, agentRuns, agentSnapshots, agentBrowserLogs, agentAuditLogs, agentStreamStatus, setAgentStreamStatus, isLoadingRuns, refetchRuns, error]);
 
   return (
     <AgentRunContext.Provider value={value}>

@@ -17,11 +17,6 @@ import {
 import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
 import { formatPlaceholderLabel, formatPortLabel } from '../utils/ui-utils';
 
-type CanvasSidebarProps = {
-  /** Palette node definitions are intentionally passed by parent. */
-  palette: NodeDefinition[];
-};
-
 type PaletteMode = 'data' | 'sound';
 
 type PaletteGroup = {
@@ -61,9 +56,7 @@ const SOUND_PALETTE_GROUPS: PaletteGroup[] = [
   },
 ];
 
-export function CanvasSidebar({
-  palette,
-}: CanvasSidebarProps): React.JSX.Element {
+export function CanvasSidebar(): React.JSX.Element {
   // --- Context Hooks ---
   const orchestrator = useAiPathsSettingsOrchestrator();
   const { nodes, edges, executionMode } = useGraphState();
@@ -82,6 +75,7 @@ export function CanvasSidebar({
   const { setPaletteCollapsed, togglePaletteGroup } = usePresetsActions();
   const { selectedNodeId, selectedEdgeId } = useSelectionState();
   const { selectEdge, setConfigOpen, setSimulationOpenNodeId } = useSelectionActions();
+  const palette: NodeDefinition[] = orchestrator.palette;
   const handleDragStart = orchestrator.handleDragStart;
   const updateSelectedNode = orchestrator.updateSelectedNode;
   const deleteSelectedNode = orchestrator.handleDeleteSelectedNode;

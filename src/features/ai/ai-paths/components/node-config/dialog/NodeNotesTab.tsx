@@ -2,8 +2,9 @@
 
 import React, { useMemo } from 'react';
 
-import type { AiNode, NodeConfig } from '@/features/ai/ai-paths/lib';
 import { Input, Label, Textarea } from '@/shared/ui';
+
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
 const DEFAULT_NOTE_COLOR = '#f5e7c3';
 const NOTE_COLOR_SWATCHES = [
@@ -23,12 +24,10 @@ const resolveColor = (value?: string | null): string => {
   return trimmed ? trimmed : DEFAULT_NOTE_COLOR;
 };
 
-type NodeNotesTabProps = {
-  selectedNode: AiNode;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-};
+export function NodeNotesTab(): React.JSX.Element | null {
+  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  if (!selectedNode) return null;
 
-export function NodeNotesTab({ selectedNode, updateSelectedNodeConfig }: NodeNotesTabProps): React.JSX.Element {
   const notes = selectedNode.config?.notes ?? {};
   const noteText = typeof notes.text === 'string' ? notes.text : '';
   const noteColor = resolveColor(notes.color);

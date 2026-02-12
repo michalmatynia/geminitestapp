@@ -9,6 +9,12 @@ import type { StudioProjectsResponse, StudioSlotsResponse } from '../types';
 
 export const studioKeys = QUERY_KEYS.imageStudio;
 
+export type StudioImageModelsResponse = {
+  models?: string[];
+  source?: 'openai' | 'fallback';
+  warning?: string;
+};
+
 export function useStudioProjects(): UseQueryResult<string[], Error> {
   return useQuery({
     queryKey: studioKeys.projects(),
@@ -25,5 +31,13 @@ export function useStudioSlots(projectId: string): UseQueryResult<StudioSlotsRes
     queryKey: studioKeys.slots(projectId),
     queryFn: () => api.get<StudioSlotsResponse>(`/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`),
     enabled: !!projectId,
+  });
+}
+
+export function useStudioImageModels(): UseQueryResult<StudioImageModelsResponse, Error> {
+  return useQuery({
+    queryKey: studioKeys.models(),
+    queryFn: () => api.get<StudioImageModelsResponse>('/api/image-studio/models'),
+    staleTime: 60_000,
   });
 }

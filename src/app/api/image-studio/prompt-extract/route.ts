@@ -22,7 +22,7 @@ import {
   parsePromptEngineSettings,
   PROMPT_ENGINE_SETTINGS_KEY,
 } from '@/features/prompt-engine/settings';
-import { authError, badRequestError } from '@/shared/errors/app-error';
+import { authError, badRequestError, internalError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -183,12 +183,12 @@ async function runAiExtraction(
   const raw = response.choices[0]?.message?.content ?? '';
   const parsedJson = parseJsonCandidate(raw);
   if (!parsedJson) {
-    throw new Error('Model did not return valid JSON.');
+    throw internalError('Model did not return valid JSON.', { raw });
   }
 
   const validated = responseSchema.safeParse(parsedJson);
   if (!validated.success) {
-    throw new Error('Invalid prompt extraction response shape.');
+    throw internalError('Invalid prompt extraction response shape.', { issues: validated.error.flatten() });
   }
 
   return validated.data.params;

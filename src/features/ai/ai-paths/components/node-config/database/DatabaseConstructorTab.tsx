@@ -21,12 +21,7 @@ import {
 } from '@/features/ai/ai-paths/config/query-presets';
 import type {
   AiNode,
-  DatabaseConfig,
-  DatabaseOperation,
-  DbQueryConfig,
   Edge,
-  NodeConfig,
-  RuntimeState,
   UpdaterMapping,
   UpdaterSampleState,
 } from '@/features/ai/ai-paths/lib';
@@ -34,7 +29,9 @@ import { DB_PROVIDER_PLACEHOLDERS } from '@/features/ai/ai-paths/lib';
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import { Button, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Input, Dialog, DialogContent, DialogHeader, DialogTitle, Tooltip } from '@/shared/ui';
 
+import { useDatabaseConstructorContext } from './DatabaseConstructorContext';
 import { PlaceholderMatrixDialog, type PlaceholderGroup, type PlaceholderTarget } from './PlaceholderMatrixDialog';
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
 import type { AiQuery, CollectionSchema, DatabasePresetOption, FieldSchema, SchemaData } from './types';
 
@@ -109,89 +106,6 @@ const formatCollectionLabel = (
 ): string =>
   isMulti && collection.provider ? `${collection.name} (${collection.provider})` : collection.name;
 
-export type DatabaseConstructorTabProps = {
-  queryInputControls: React.ReactNode;
-  pendingAiQuery: string;
-  setPendingAiQuery: React.Dispatch<React.SetStateAction<string>>;
-  aiQueries: AiQuery[];
-  setAiQueries: React.Dispatch<React.SetStateAction<AiQuery[]>>;
-  selectedAiQueryId: string;
-  setSelectedAiQueryId: React.Dispatch<React.SetStateAction<string>>;
-  presetOptions: DatabasePresetOption[];
-  applyDatabasePreset: (presetId: string) => void;
-  openSaveQueryPresetModal: () => void;
-  databaseConfig: DatabaseConfig;
-  queryConfig: DbQueryConfig;
-  operation: DatabaseOperation;
-  queryTemplateValue: string;
-  queryTemplateRef?: React.RefObject<HTMLTextAreaElement | null>;
-  sampleState: UpdaterSampleState;
-  parsedSampleError?: string;
-  updaterSampleLoading: boolean;
-  selectedNodeId: string;
-  setUpdaterSamples: React.Dispatch<
-    React.SetStateAction<Record<string, UpdaterSampleState>>
-  >;
-  onFetchUpdaterSample: (
-    nodeId: string,
-    entityType: string,
-    entityId: string,
-    options?: { notify?: boolean }
-  ) => Promise<void>;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-  updateQueryConfig: (patch: Partial<DbQueryConfig>) => void;
-  connectedPlaceholders: string[];
-  hasSchemaConnection: boolean;
-  fetchedDbSchema: SchemaData | null;
-  schemaMatrix: SchemaData | null;
-  onSyncSchema?: () => void;
-  schemaSyncing?: boolean;
-  schemaLoading: boolean;
-  nodes: AiNode[];
-  edges: Edge[];
-  selectedNode: AiNode;
-  runtimeState: RuntimeState;
-  onSendToAi?: ((databaseNodeId: string, prompt: string) => Promise<void>) | undefined;
-  sendingToAi?: boolean | undefined;
-  mapInputsToTargets: () => void;
-  bundleKeys: Set<string>;
-  toast: (message: string, options?: { variant?: 'success' | 'error' }) => void;
-  aiPromptRef?: React.RefObject<HTMLTextAreaElement | null>;
-  mappings: UpdaterMapping[];
-  updateMapping: (index: number, patch: Partial<UpdaterMapping>) => void;
-  removeMapping: (index: number) => void;
-  addMapping: () => void;
-  availablePorts: string[];
-  uniqueTargetPathOptions: Array<{ label: string; value: string }>;
-};
-
-const DatabaseConstructorTabContext =
-  React.createContext<DatabaseConstructorTabProps | null>(null);
-
-export function DatabaseConstructorTabProvider({
-  value,
-  children,
-}: {
-  value: DatabaseConstructorTabProps;
-  children: React.ReactNode;
-}): React.JSX.Element {
-  return (
-    <DatabaseConstructorTabContext.Provider value={value}>
-      {children}
-    </DatabaseConstructorTabContext.Provider>
-  );
-}
-
-function useDatabaseConstructorTab(): DatabaseConstructorTabProps {
-  const context = React.useContext(DatabaseConstructorTabContext);
-  if (!context) {
-    throw new Error(
-      'DatabaseConstructorTab must be used within DatabaseConstructorTabProvider'
-    );
-  }
-  return context;
-}
-
 export function DatabaseConstructorTab(): React.JSX.Element {
   const {
     queryInputControls,
@@ -211,11 +125,6 @@ export function DatabaseConstructorTab(): React.JSX.Element {
     queryTemplateRef,
     sampleState,
     parsedSampleError,
-    updaterSampleLoading,
-    selectedNodeId,
-    setUpdaterSamples,
-    onFetchUpdaterSample,
-    updateSelectedNodeConfig,
     updateQueryConfig,
     connectedPlaceholders,
     hasSchemaConnection,
@@ -224,15 +133,8 @@ export function DatabaseConstructorTab(): React.JSX.Element {
     onSyncSchema,
     schemaSyncing,
     schemaLoading,
-    nodes,
-    edges,
-    selectedNode,
-    runtimeState,
-    onSendToAi,
-    sendingToAi,
     mapInputsToTargets,
     bundleKeys,
-    toast,
     aiPromptRef,
     mappings,
     updateMapping,
@@ -240,7 +142,22 @@ export function DatabaseConstructorTab(): React.JSX.Element {
     addMapping,
     availablePorts,
     uniqueTargetPathOptions,
-  } = useDatabaseConstructorTab();
+  } = useDatabaseConstructorContext();
+  const {
+    setUpdaterSamples,
+    handleFetchUpdaterSample: onFetchUpdaterSample,
+    updateSelectedNodeConfig,
+    nodes,
+    edges,
+    selectedNode,
+    runtimeState,
+    onSendToAi,
+    sendingToAi,
+    updaterSampleLoading,
+    toast,
+  } = useAiPathConfig();
+  if (!selectedNode) return null;
+  const selectedNodeId = selectedNode.id;
   const isUpdateAction =
     databaseConfig.useMongoActions && databaseConfig.actionCategory === 'update';
   const isPrismaProvider = queryConfig.provider === 'prisma';

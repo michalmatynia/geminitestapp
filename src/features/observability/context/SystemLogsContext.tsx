@@ -6,6 +6,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 
 import { useClearLogsMutation, useRebuildIndexesMutation, useRunLogInsight, useInterpretLog } from '@/features/observability/hooks/useLogMutations';
 import { useSystemLogs, useSystemLogMetrics, useMongoDiagnostics, useLogInsights } from '@/features/observability/hooks/useLogQueries';
+import { logClientError } from '@/features/observability/utils/client-error-logger';
 import type { SystemLogMetrics, SystemLogRecord, SystemLogLevel, AiInsightRecord } from '@/shared/types';
 import { useToast, type FilterField } from '@/shared/ui';
 
@@ -180,6 +181,7 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
         toast('AI log insight generated.', { variant: 'success' });
       }
     } catch (error) {
+      logClientError(error, { context: { source: 'SystemLogsContext', action: 'runInsight' } });
       toast(error instanceof Error ? error.message : 'Failed to generate log insight.', { variant: 'error' });
     }
   };
@@ -197,6 +199,7 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
       }));
       toast('AI interpretation added.', { variant: 'success' });
     } catch (error) {
+      logClientError(error, { context: { source: 'SystemLogsContext', action: 'interpretLog', logId } });
       toast(error instanceof Error ? error.message : 'Failed to interpret log.', { variant: 'error' });
     }
   };
@@ -205,15 +208,24 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
   const rebuildIndexesMutation = useRebuildIndexesMutation();
 
   useEffect(() => {
-    if (logsQuery.error) toast(logsQuery.error.message, { variant: 'error' });
+    if (logsQuery.error) {
+      logClientError(logsQuery.error, { context: { source: 'SystemLogsContext', action: 'loadLogs' } });
+      toast(logsQuery.error.message, { variant: 'error' });
+    }
   }, [logsQuery.error, toast]);
 
   useEffect(() => {
-    if (metricsQuery.error) toast(metricsQuery.error.message, { variant: 'error' });
+    if (metricsQuery.error) {
+      logClientError(metricsQuery.error, { context: { source: 'SystemLogsContext', action: 'loadMetrics' } });
+      toast(metricsQuery.error.message, { variant: 'error' });
+    }
   }, [metricsQuery.error, toast]);
 
   useEffect(() => {
-    if (mongoDiagnosticsQuery.error) toast(mongoDiagnosticsQuery.error.message, { variant: 'error' });
+    if (mongoDiagnosticsQuery.error) {
+      logClientError(mongoDiagnosticsQuery.error, { context: { source: 'SystemLogsContext', action: 'loadDiagnostics' } });
+      toast(mongoDiagnosticsQuery.error.message, { variant: 'error' });
+    }
   }, [mongoDiagnosticsQuery.error, toast]);
 
   const logs = useMemo(() => logsQuery.data?.logs ?? [], [logsQuery.data]);
@@ -260,6 +272,7 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
       void metricsQuery.refetch();
       void insightsQuery.refetch();
     } catch (error: unknown) {
+      logClientError(error, { context: { source: 'SystemLogsContext', action: 'clearLogs' } });
       toast(error instanceof Error ? error.message : 'Failed to clear logs.', {
         variant: 'error',
       });
@@ -277,6 +290,7 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
         { variant: 'success' }
       );
     } catch (error: unknown) {
+      logClientError(error, { context: { source: 'SystemLogsContext', action: 'rebuildIndexes' } });
       toast(error instanceof Error ? error.message : 'Failed to rebuild indexes.', {
         variant: 'error',
       });

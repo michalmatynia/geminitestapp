@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 
+import { internalError } from '@/shared/errors/app-error';
+
 import type { LightingPreset, EnvironmentPreset } from '../components/Viewer3D';
 
 export type OrderedDitheringPresetKey = 'balanced' | 'fineMono' | 'chunkyMono' | 'inverted' | 'custom';
@@ -229,7 +231,7 @@ export function Viewer3DProvider({ children }: { children: React.ReactNode }): R
 export function useViewer3D(): Viewer3DContextType {
   const context = useContext(Viewer3DContext);
   if (context === undefined) {
-    throw new Error('useViewer3D must be used within a Viewer3DProvider');
+    throw internalError('useViewer3D must be used within a Viewer3DProvider');
   }
   return context;
 }

@@ -48,7 +48,7 @@ export function GenerationToolbar(): React.JSX.Element {
   } = useMaskingState();
   const { setMaskInvert, setMaskGenMode, handleAiMaskGeneration } = useMaskingActions();
   const { promptText } = usePromptState();
-  const { runMutation } = useGenerationState();
+  const { runMutation, isRunInFlight, activeRunStatus } = useGenerationState();
   const { handleRunGeneration } = useGenerationActions();
   const { studioSettings } = useSettingsState();
   const { setStudioSettings } = useSettingsActions();
@@ -223,6 +223,13 @@ ${filterBlock}
     }
   };
 
+  const generationBusy = runMutation.isPending || isRunInFlight;
+  const generationLabel = generationBusy
+    ? activeRunStatus === 'queued'
+      ? 'Queued...'
+      : 'Generating...'
+    : `Generate ${(studioSettings.targetAi.openai.image.n ?? 1) > 1 ? `(${studioSettings.targetAi.openai.image.n})` : ''}`;
+
   return (
     <div className='flex flex-wrap items-center gap-2'>
       <Select
@@ -251,16 +258,16 @@ ${filterBlock}
       </Select>
       <Button
         onClick={handleRunGeneration}
-        disabled={!workingSlot || !promptText.trim() || runMutation.isPending}
+        disabled={!workingSlot || !promptText.trim() || generationBusy}
         size='sm'
         className='flex-1'
       >
-        {runMutation.isPending ? (
+        {generationBusy ? (
           <Loader2 className='mr-2 size-4 animate-spin' />
         ) : (
           <Play className='mr-2 size-4' />
         )}
-        {runMutation.isPending ? 'Generating...' : `Generate ${(studioSettings.targetAi.openai.image.n ?? 1) > 1 ? `(${studioSettings.targetAi.openai.image.n})` : ''}`}
+        {generationLabel}
       </Button>
       <Button
         type='button'

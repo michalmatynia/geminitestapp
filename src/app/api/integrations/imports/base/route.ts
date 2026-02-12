@@ -30,7 +30,7 @@ import { getTagRepository } from '@/features/products/services/tag-repository';
 import type { ProductWithImages } from '@/features/products/types/records';
 import { validateProductCreate } from '@/features/products/validations';
 import type { ProductCreateInput } from '@/features/products/validations/schemas';
-import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { badRequestError, externalServiceError, internalError, notFoundError, validationError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
@@ -535,10 +535,9 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
 
   const downloadImage = async (url: string, sku: string, index: number) => {
     const res = await fetch(url);
-    if (!res.ok) {
-      throw new Error(`Failed to download image (${res.status})`);
-    }
-    const contentType = res.headers.get('content-type') || guessMimeType(url);
+          if (!res.ok) {
+            throw externalServiceError(`Failed to download image (${res.status})`, { url, status: res.status });
+          }    const contentType = res.headers.get('content-type') || guessMimeType(url);
     const buffer = Buffer.from(await res.arrayBuffer());
     const folderName = sku ? sanitizeSku(sku) : 'temp';
     const filename = `${Date.now()}-${index}-${extractFilename(url, 'image.jpg')}`;
@@ -581,13 +580,13 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
       });
       
       if (!validationResult.success) {
-        throw new Error(`Validation failed for product ${mapped.sku}: ${JSON.stringify(validationResult.errors)}`);
+        throw validationError(`Validation failed for product ${mapped.sku}`, { errors: validationResult.errors, sku: mapped.sku });
       }
       
       const payload = validationResult.data;
       const created = (await productRepository.createProduct(payload)) as ProductWithImages | null;
       if (!created && payload.sku) {
-        throw new Error('Failed to create product.');
+        throw internalError('Failed to create product.');
       }
 
       // Track newly added SKU to prevent duplicates within this import batch
@@ -663,7 +662,7 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
           });
           
           if (!validationResult.success) {
-            throw new Error(`Validation failed for fallback product: ${JSON.stringify(validationResult.errors)}`);
+            throw validationError('Validation failed for fallback product', { errors: validationResult.errors });
           }
           
           const payload = validationResult.data;

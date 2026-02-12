@@ -7,6 +7,7 @@ import {
   type SetStateAction,
 } from 'react';
 
+import { internalError } from '@/shared/errors/app-error';
 import type {
   ProductValidationDenyBehavior,
   ProductValidationInstanceScope,
@@ -65,7 +66,7 @@ export function ProductValidationSettingsProvider({
 export function useProductValidationSettings(): ProductValidationSettingsValue {
   const context = useContext(ProductValidationSettingsContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useProductValidationSettings must be used within ProductValidationSettingsProvider'
     );
   }

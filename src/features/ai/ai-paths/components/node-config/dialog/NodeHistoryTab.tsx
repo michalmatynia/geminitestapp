@@ -1,19 +1,13 @@
 'use client';
 import { RunHistoryEntries } from '@/features/ai/ai-paths/components/RunHistoryEntries';
-import type { AiNode, RuntimeState } from '@/features/ai/ai-paths/lib';
 import { Button } from '@/shared/ui';
 
-type NodeHistoryTabProps = {
-  selectedNode: AiNode;
-  runtimeState: RuntimeState;
-  onClearNodeHistory?: (nodeId: string) => void | Promise<void>;
-};
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
-export function NodeHistoryTab({
-  selectedNode,
-  runtimeState,
-  onClearNodeHistory,
-}: NodeHistoryTabProps): React.JSX.Element {
+export function NodeHistoryTab(): React.JSX.Element | null {
+  const { selectedNode, runtimeState, clearNodeHistory } = useAiPathConfig();
+  if (!selectedNode) return null;
+
   const history = (runtimeState.history?.[selectedNode.id] ?? []);
   const hasHistory = history.length > 0;
   return (
@@ -22,19 +16,17 @@ export function NodeHistoryTab({
         <div className='text-xs text-gray-400'>
           History entries: {history.length}
         </div>
-        {onClearNodeHistory ? (
-          <Button
-            type='button'
-            className='rounded-md border border-border px-3 py-1 text-xs text-gray-300 hover:bg-card/60'
-            onClick={() => {
-              void onClearNodeHistory(selectedNode.id);
-            }}
-            disabled={!hasHistory}
-            title={hasHistory ? 'Clear history for this node' : 'No history recorded yet'}
-          >
-            Clear Node History
-          </Button>
-        ) : null}
+        <Button
+          type='button'
+          className='rounded-md border border-border px-3 py-1 text-xs text-gray-300 hover:bg-card/60'
+          onClick={() => {
+            void clearNodeHistory(selectedNode.id);
+          }}
+          disabled={!hasHistory}
+          title={hasHistory ? 'Clear history for this node' : 'No history recorded yet'}
+        >
+          Clear Node History
+        </Button>
       </div>
       <RunHistoryEntries
         entries={history}

@@ -2,30 +2,22 @@
 
 import { Button, Input, Label, Textarea, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/shared/ui';
 
+import { useDatabaseSaveQueryPresetDialogContext } from './DatabaseSaveQueryPresetDialogContext';
 
 
 
 
 
-type DatabaseSaveQueryPresetDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  newQueryPresetName: string;
-  setNewQueryPresetName: React.Dispatch<React.SetStateAction<string>>;
-  queryTemplateValue: string;
-  onCancel: () => void;
-  onSave: () => void;
-};
-
-export function DatabaseSaveQueryPresetDialog({
-  open,
-  onOpenChange,
-  newQueryPresetName,
-  setNewQueryPresetName,
-  queryTemplateValue,
-  onCancel,
-  onSave,
-}: DatabaseSaveQueryPresetDialogProps): React.JSX.Element {
+export function DatabaseSaveQueryPresetDialog(): React.JSX.Element {
+  const {
+    open,
+    onOpenChange,
+    newQueryPresetName,
+    setNewQueryPresetName,
+    queryTemplateValue,
+    onCancel,
+    onSave,
+  } = useDatabaseSaveQueryPresetDialogContext();
   return (
     <Dialog open={open} onOpenChange={(open: boolean): void => onOpenChange(open)}>
       <DialogContent className='max-w-md border border-border bg-card text-white'>

@@ -239,6 +239,7 @@ export function SlotTree(): React.JSX.Element {
   const tree = useMemo(() => buildSlotTree(projectId, slots, folders), [projectId, slots, folders]);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(['root']));
   const [dragOverPath, setDragOverPath] = useState<string | null>(null);
+  const [rootEdgeDropActive, setRootEdgeDropActive] = useState(false);
   const [renamingFolderPath, setRenamingFolderPath] = useState<string | null>(null);
   const [renameFolderDraft, setRenameFolderDraft] = useState('');
   const draggedSlotIdRef = useRef<string | null>(null);
@@ -269,6 +270,7 @@ export function SlotTree(): React.JSX.Element {
     draggedSlotIdRef.current = null;
     draggedFolderPathRef.current = null;
     setDragOverPath(null);
+    setRootEdgeDropActive(false);
   }, []);
   const clearDragStateDeferred = useCallback((): void => {
     if (typeof window === 'undefined') {
@@ -293,18 +295,18 @@ export function SlotTree(): React.JSX.Element {
       void onMoveFolder(folderPath, targetFolder);
     }
   }, [clearDragState, onMoveFolder, onMoveSlot, resolveDropPayload, slots]);
-  const handleRootDragOver = useCallback((event: React.DragEvent<HTMLDivElement>): void => {
-    if (!canHandleDrop(event.dataTransfer)) return;
-    event.preventDefault();
-    event.stopPropagation();
-    setDragOverPath('');
-    event.dataTransfer.dropEffect = 'move';
-  }, [canHandleDrop]);
-  const handleRootDrop = useCallback((event: React.DragEvent<HTMLDivElement>): void => {
-    event.preventDefault();
-    event.stopPropagation();
-    applyDropToTarget(event.dataTransfer, '');
-  }, [applyDropToTarget]);
+  const isRootEdgeDrop = useCallback((event: React.DragEvent<HTMLElement>): boolean => {
+    const container = treeRef.current;
+    if (!container) return false;
+    const rect = container.getBoundingClientRect();
+    const edgeThreshold = Math.max(18, Math.min(40, Math.floor(rect.height * 0.09)));
+    const offsetTop = event.clientY - rect.top;
+    const offsetBottom = rect.bottom - event.clientY;
+    return offsetTop <= edgeThreshold || offsetBottom <= edgeThreshold;
+  }, []);
+  const updateRootEdgeDropState = useCallback((event: React.DragEvent<HTMLElement>): void => {
+    setRootEdgeDropActive(isRootEdgeDrop(event));
+  }, [isRootEdgeDrop]);
   const clearSelection = useCallback((): void => {
     onSelectFolder('');
     setSelectedSlotId(null);
@@ -693,55 +695,66 @@ export function SlotTree(): React.JSX.Element {
       onClick={clearSelection}
       onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
         if (!canHandleDrop(e.dataTransfer)) return;
+        updateRootEdgeDropState(e);
         e.preventDefault();
-        setDragOverPath('');
+        const edgeDrop = isRootEdgeDrop(e);
+        if (edgeDrop) {
+          setDragOverPath('');
+          e.stopPropagation();
+        } else if (dragOverPath === '') {
+          setDragOverPath(null);
+        }
         e.dataTransfer.dropEffect = 'move';
       }}
-      onDragLeave={() => {
+      onDragLeave={(e: React.DragEvent<HTMLDivElement>) => {
+        const nextTarget = e.relatedTarget;
+        if (nextTarget instanceof Node && e.currentTarget.contains(nextTarget)) {
+          return;
+        }
         if (dragOverPath === '') setDragOverPath(null);
+        setRootEdgeDropActive(false);
+      }}
+      onDropCapture={(e: React.DragEvent<HTMLDivElement>): void => {
+        if (!canHandleDrop(e.dataTransfer)) return;
+        if (!isRootEdgeDrop(e) && !rootEdgeDropActive) return;
+        e.preventDefault();
+        e.stopPropagation();
+        applyDropToTarget(e.dataTransfer, '');
       }}
       onDrop={(e: React.DragEvent<HTMLDivElement>): void => {
         e.preventDefault();
+        setRootEdgeDropActive(false);
         applyDropToTarget(e.dataTransfer, '');
       }}
+      onDragEnd={() => {
+        setRootEdgeDropActive(false);
+      }}
     >
+      <div
+        className={cn(
+          'pointer-events-none absolute inset-0 rounded border border-transparent transition-colors duration-150',
+          dragOverPath === '' || rootEdgeDropActive ? 'border-sky-300/55' : 'border-transparent'
+        )}
+      />
+      <div
+        className={cn(
+          'pointer-events-none absolute inset-x-2 top-1 h-px rounded bg-transparent transition-colors duration-150',
+          dragOverPath === '' || rootEdgeDropActive ? 'bg-sky-300/80' : 'bg-transparent'
+        )}
+      />
+      <div
+        className={cn(
+          'pointer-events-none absolute inset-x-2 bottom-1 h-px rounded bg-transparent transition-colors duration-150',
+          dragOverPath === '' || rootEdgeDropActive ? 'bg-sky-300/80' : 'bg-transparent'
+        )}
+      />
       {tree.children.length === 0 ? (
         <div className='flex h-full items-center justify-center px-2 text-center text-xs text-gray-500'>
           No folders yet. Create a folder or add cards here.
         </div>
       ) : rootOpen ? (
         <div>
-          {dragOverPath !== null ? (
-            <div
-              className={cn(
-                'mx-1 mb-1 mt-0.5 flex h-9 items-center justify-center rounded border border-dashed text-[10px] uppercase tracking-wide transition-colors duration-150',
-                dragOverPath === ''
-                  ? 'border-sky-300/80 bg-sky-500/10 text-sky-100'
-                  : 'border-sky-300/35 bg-sky-500/5 text-sky-200/70'
-              )}
-              onDragOver={handleRootDragOver}
-              onDragEnter={handleRootDragOver}
-              onDrop={handleRootDrop}
-            >
-              Drop To Root
-            </div>
-          ) : null}
           {tree.children.map((child: TreeNode) => renderNode(child, 0))}
-          {dragOverPath !== null ? (
-            <div
-              className={cn(
-                'mx-1 mb-0.5 mt-1 flex h-9 items-center justify-center rounded border border-dashed text-[10px] uppercase tracking-wide transition-colors duration-150',
-                dragOverPath === ''
-                  ? 'border-sky-300/80 bg-sky-500/10 text-sky-100'
-                  : 'border-sky-300/35 bg-sky-500/5 text-sky-200/70'
-              )}
-              onDragOver={handleRootDragOver}
-              onDragEnter={handleRootDragOver}
-              onDrop={handleRootDrop}
-            >
-              Drop To Root
-            </div>
-          ) : null}
         </div>
       ) : null}
     </div>

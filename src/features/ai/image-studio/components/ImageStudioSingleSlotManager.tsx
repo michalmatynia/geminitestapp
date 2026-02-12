@@ -163,7 +163,7 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
     );
 
     const upsertFromUploadedFile = useCallback(
-      async (uploaded: UploadedAsset, index: number): Promise<void> => {
+      async (uploaded: UploadedAsset, index: number): Promise<ImageStudioSlotRecord | null> => {
         const targetSlot = getSlotForIndex(index);
         if (targetSlot) {
           await updateSlotMutation.mutateAsync({
@@ -179,7 +179,7 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
           } else {
             setEnvironmentSlotId(targetSlot.id);
           }
-          return;
+          return targetSlot;
         }
 
         const created = await createSlots([
@@ -194,13 +194,14 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
             imageBase64: null,
           },
         ]);
-        if (!created[0]) return;
+        if (!created[0]) return null;
 
         if (index === ENVIRONMENT_SLOT_INDEX) {
           setEnvironmentSlotId(created[0].id);
         } else {
           setSelectedSlotId(created[0].id);
         }
+        return created[0];
       },
       [createSlots, getFolderForNewSlot, getSlotForIndex, setSelectedSlotId, updateSlotMutation]
     );
@@ -257,6 +258,7 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
         }
         setUploadError(null);
         try {
+          const previousTemp = index === OBJECT_SLOT_INDEX ? temporaryObjectUpload : null;
           const result = await uploadMutation.mutateAsync({
             files: [file],
             folder: getFolderForNewSlot(),
@@ -265,24 +267,19 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
           if (!uploaded) {
             throw new Error(result.failures?.[0]?.error || 'Upload failed');
           }
-          if (index === OBJECT_SLOT_INDEX) {
-            const previousTemp = temporaryObjectUpload;
-            setTemporaryObjectUpload({
-              id: uploaded.id,
-              filepath: uploaded.filepath,
-              filename: uploaded.filename,
-            });
-            setSelectedSlotId(null);
-            setObjectImageLinkDraft('');
-            setObjectImageBase64Draft('');
-            if (previousTemp && previousTemp.id !== uploaded.id) {
-              await deleteUploadedAsset(previousTemp).catch(() => {
-                // Best effort cleanup of replaced temporary upload.
-              });
-            }
-            return;
+          const upsertedSlot = await upsertFromUploadedFile(uploaded, index);
+
+          if (index === OBJECT_SLOT_INDEX && upsertedSlot?.id) {
+            setTemporaryObjectUpload(null);
+            setSelectedSlotId(upsertedSlot.id);
+            setPreviewMode('image');
+            setWorkingSlotId(upsertedSlot.id);
           }
-          await upsertFromUploadedFile(uploaded, index);
+          if (previousTemp && previousTemp.id !== uploaded.id) {
+            await deleteUploadedAsset(previousTemp).catch(() => {
+              // Best effort cleanup of replaced temporary upload.
+            });
+          }
         } catch (error: unknown) {
           setUploadError(error instanceof Error ? error.message : 'Failed to upload image');
         }
@@ -291,7 +288,9 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
         deleteUploadedAsset,
         getFolderForNewSlot,
         projectId,
+        setPreviewMode,
         setSelectedSlotId,
+        setWorkingSlotId,
         temporaryObjectUpload,
         uploadMutation,
         upsertFromUploadedFile,

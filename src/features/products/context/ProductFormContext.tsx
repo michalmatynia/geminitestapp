@@ -20,6 +20,7 @@ import {
 import { useProductFormSubmit } from '@/features/products/hooks/useProductFormSubmit';
 import { useProductImages } from '@/features/products/hooks/useProductImages';
 import { useProductMetadata } from '@/features/products/hooks/useProductMetadata';
+import { internalError } from '@/shared/errors/app-error';
 import type {
   CatalogRecord,
   ProductWithImages,
@@ -103,7 +104,7 @@ export const ProductFormContext = createContext<ProductFormContextType | null>(
 export const useProductFormContext = (): ProductFormContextType => {
   const context = useContext(ProductFormContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useProductFormContext must be used within a ProductFormProvider'
     );
   }

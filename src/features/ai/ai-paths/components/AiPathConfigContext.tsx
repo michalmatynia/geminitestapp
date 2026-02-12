@@ -13,7 +13,6 @@ import type {
   RuntimeState,
   UpdaterSampleState,
 } from '@/features/ai/ai-paths/lib';
-import { logClientError } from '@/features/observability';
 import { useToast } from '@/shared/ui';
 
 import {
@@ -43,7 +42,7 @@ export interface AiPathConfigData {
   setUpdaterSamples: React.Dispatch<React.SetStateAction<Record<string, UpdaterSampleState>>>;
   updaterSampleLoading: boolean;
   runtimeState: RuntimeState;
-  pathDebugSnapshot?: PathDebugSnapshot | null | undefined;
+  pathDebugSnapshot: PathDebugSnapshot | null;
   updateSelectedNode: (patch: Partial<AiNode>, options?: { nodeId?: string }) => void;
   updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
   handleFetchParserSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
@@ -54,11 +53,11 @@ export interface AiPathConfigData {
     options?: { notify?: boolean }
   ) => Promise<void>;
   handleRunSimulation: (node: AiNode) => void | Promise<void>;
-  clearRuntimeForNode?: ((nodeId: string) => void) | undefined;
-  clearNodeCache?: ((nodeId: string) => void) | undefined;
-  clearNodeHistory?: ((nodeId: string) => void | Promise<void>) | undefined;
-  onSendToAi?: ((databaseNodeId: string, prompt: string) => Promise<void>) | undefined;
-  sendingToAi?: boolean | undefined;
+  clearRuntimeForNode: (nodeId: string) => void;
+  clearNodeCache: (nodeId: string) => void;
+  clearNodeHistory: (nodeId: string) => void | Promise<void>;
+  onSendToAi: (databaseNodeId: string, prompt: string) => Promise<void>;
+  sendingToAi: boolean;
   dbQueryPresets: DbQueryPreset[];
   setDbQueryPresets: React.Dispatch<React.SetStateAction<DbQueryPreset[]>>;
   saveDbQueryPresets: (nextPresets: DbQueryPreset[]) => Promise<void>;
@@ -69,75 +68,18 @@ export interface AiPathConfigData {
     message: string,
     options?: { variant?: 'success' | 'error' | 'info' | 'warning' }
   ) => void;
-  onDirtyChange?: ((dirty: boolean) => void) | undefined;
-  savePathConfig?: ((options?: {
+  onDirtyChange: (dirty: boolean) => void;
+  savePathConfig: (options?: {
     silent?: boolean | undefined;
     includeNodeConfig?: boolean | undefined;
     force?: boolean | undefined;
     nodesOverride?: AiNode[] | undefined;
     nodeOverride?: AiNode | undefined;
     edgesOverride?: Edge[] | undefined;
-  }) => Promise<boolean>) | undefined;
+  }) => Promise<boolean>;
 }
 
 const AiPathConfigContext = createContext<AiPathConfigData | null>(null);
-
-const FALLBACK_NODE: AiNode = {
-  id: '__missing-node__',
-  type: 'constant',
-  title: 'Node',
-  description: '',
-  inputs: [],
-  outputs: [],
-  position: { x: 0, y: 0 },
-  config: {},
-};
-
-const FALLBACK_RUNTIME_STATE: RuntimeState = {
-  inputs: {},
-  outputs: {},
-  history: {},
-};
-
-const noop = (): void => {};
-const asyncNoop = async (): Promise<void> => {};
-
-const fallbackConfigValue: AiPathConfigData = {
-  configOpen: false,
-  setConfigOpen: noop,
-  selectedNode: null,
-  nodes: [FALLBACK_NODE],
-  edges: [],
-  isPathLocked: false,
-  modelOptions: [],
-  parserSamples: {},
-  setParserSamples: noop as React.Dispatch<React.SetStateAction<Record<string, ParserSampleState>>>,
-  parserSampleLoading: false,
-  updaterSamples: {},
-  setUpdaterSamples: noop as React.Dispatch<React.SetStateAction<Record<string, UpdaterSampleState>>>,
-  updaterSampleLoading: false,
-  runtimeState: FALLBACK_RUNTIME_STATE,
-  pathDebugSnapshot: null,
-  updateSelectedNode: noop,
-  updateSelectedNodeConfig: noop,
-  handleFetchParserSample: asyncNoop,
-  handleFetchUpdaterSample: asyncNoop,
-  handleRunSimulation: noop,
-  clearRuntimeForNode: noop,
-  clearNodeCache: noop,
-  clearNodeHistory: asyncNoop,
-  onSendToAi: asyncNoop,
-  sendingToAi: false,
-  dbQueryPresets: [],
-  setDbQueryPresets: noop as React.Dispatch<React.SetStateAction<DbQueryPreset[]>>,
-  saveDbQueryPresets: asyncNoop,
-  dbNodePresets: [],
-  setDbNodePresets: noop as React.Dispatch<React.SetStateAction<DbNodePreset[]>>,
-  saveDbNodePresets: asyncNoop,
-  toast: noop,
-  onDirtyChange: noop,
-  savePathConfig: async () => false,
-};
 
 const useAiPathConfigDefaults = (): AiPathConfigData => {
   const orchestrator = useAiPathsSettingsOrchestrator();
@@ -320,12 +262,7 @@ export function AiPathConfigProviderWithContext({
 export function useAiPathConfig(): AiPathConfigData {
   const context = useContext(AiPathConfigContext);
   if (!context) {
-    if (process.env['NODE_ENV'] !== 'production') {
-      logClientError(new Error('Missing AiPathConfigProvider'), {
-        context: { source: 'AiPathConfigContext', message: 'Using fallback config context.' },
-      });
-    }
-    return fallbackConfigValue;
+    throw new Error('useAiPathConfig must be used within AiPathConfigProvider');
   }
   return context;
 }

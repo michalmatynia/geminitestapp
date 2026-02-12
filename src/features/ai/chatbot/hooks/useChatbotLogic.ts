@@ -460,6 +460,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
       setSettingsSnapshot(payload);
       toast('Chatbot settings saved.', { variant: 'success' });
     } catch (error: unknown) {
+      logClientError(error, { context: { source: 'useChatbotLogic.saveChatbotSettings' } });
       const message =
         error instanceof Error ? error.message : 'Failed to save settings.';
       toast(message, { variant: 'error' });

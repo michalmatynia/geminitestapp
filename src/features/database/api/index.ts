@@ -13,6 +13,7 @@ import type {
   RedisOverviewDto as RedisOverviewResponse,
 } from '@/shared/dtos/database';
 import type { AppProviderDiagnosticsDto as ProviderDiagnosticsResponse } from '@/shared/dtos/system';
+import { api, apiClient, ApiError } from '@/shared/lib/api-client';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
 import type {
@@ -39,21 +40,16 @@ export type ApiPayloadResult<TPayload> = {
   payload: TPayload;
 };
 
-const safeJson = async <T>(res: Response): Promise<T> => {
-  try {
-    return (await res.json()) as T;
-  } catch {
-    return {} as T;
-  }
-};
-
 const fetchJsonResult = async <TPayload>(
-  input: RequestInfo | URL,
+  input: string,
   init?: RequestInit
 ): Promise<ApiPayloadResult<TPayload>> => {
-  const res = await fetch(input, init);
-  const payload = await safeJson<TPayload>(res);
-  return { ok: res.ok, payload };
+  try {
+    const payload = await apiClient<TPayload>(input, init);
+    return { ok: true, payload };
+  } catch (error) {
+    return { ok: false, payload: (error as any).payload ?? { error: (error as Error).message } as any };
+  }
 };
 
 const resolveApiErrorMessage = (payload: unknown, fallback: string): string => {
@@ -73,7 +69,9 @@ const requireOk = <TPayload>(
   fallbackErrorMessage: string
 ): TPayload => {
   if (!result.ok) {
-    throw new Error(resolveApiErrorMessage(result.payload, fallbackErrorMessage));
+    const error = new Error(resolveApiErrorMessage(result.payload, fallbackErrorMessage));
+    (error as any).payload = result.payload;
+    throw error;
   }
   return result.payload;
 };

@@ -6,7 +6,7 @@ import { useCallback } from 'react';
 import { logClientError } from '@/features/observability';
 import type { ProductListPreferences } from '@/features/products/types/products-ui';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
-import { api } from '@/shared/lib/api-client';
+import { api, ApiError } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   normalizeUserPreferencesResponse,
@@ -44,7 +44,7 @@ async function updateUserPreference(
   const apiKey = `productList${key.charAt(0).toUpperCase()}${key.slice(1)}`;
   const validation = userPreferencesUpdateSchema.safeParse({ [apiKey]: value });
   if (!validation.success) {
-    throw new Error('Invalid user preference update payload.');
+    throw new ApiError('Invalid user preference update payload.', 400);
   }
   const payload = normalizeUserPreferencesUpdatePayload(validation.data);
   await api.patch('/api/user/preferences', payload);

@@ -1,6 +1,5 @@
 import { Prisma, ProductValidationPattern as PrismaPattern } from '@prisma/client';
 
-import { ErrorSystem } from '@/features/observability/server';
 import {
   PRODUCT_VALIDATION_REPLACEMENT_FIELDS,
   PRODUCT_VALIDATOR_ENABLED_BY_DEFAULT_SETTING_KEY,
@@ -24,10 +23,9 @@ import { operationFailedError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
 import type {
   ProductValidationChainMode,
-  ProductValidationDenyBehavior,
   ProductValidationInstanceDenyBehaviorMap,
-  ProductValidationInstanceScope,
-  ProductValidationLaunchScopeBehavior,
+  ProductValidationLaunchOperator,
+  ProductValidationLaunchSourceMode,
   ProductValidationPostAcceptBehavior,
   ProductValidationPattern,
   ProductValidationRuntimeType,
@@ -43,9 +41,10 @@ const SCHEMA_MISMATCH_MESSAGE =
 
 const isSchemaMismatchError = (
   error: unknown
-): error is Prisma.PrismaClientKnownRequestError =>
-  error instanceof Prisma.PrismaClientKnownRequestError &&
-  (error.code === 'P2021' || error.code === 'P2022');
+): boolean =>
+  (error instanceof Prisma.PrismaClientKnownRequestError &&
+    (error.code === 'P2021' || error.code === 'P2022')) ||
+  error instanceof Prisma.PrismaClientValidationError;
 
 const schemaMismatchError = (error: unknown) => {
   const code =
@@ -96,36 +95,70 @@ const normalizeRuntimeConfig = (value: unknown): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
+const normalizeSequence = (value: unknown): number | null => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+  return Math.max(0, Math.floor(value));
+};
+
+const normalizeSequenceGroupId = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const normalizeSequenceGroupLabel = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const normalizeSequenceGroupDebounceMs = (value: unknown): number => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
+  return Math.min(30_000, Math.max(0, Math.floor(value)));
+};
+
+const normalizeChainMode = (value: unknown): ProductValidationChainMode => {
+  if (value === 'stop_on_match' || value === 'stop_on_replace') return value;
+  return 'continue';
+};
+
+const normalizeMaxExecutions = (value: unknown): number => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 1;
+  return Math.min(20, Math.max(1, Math.floor(value)));
+};
+
+const normalizeLaunchSourceMode = (value: unknown): ProductValidationLaunchSourceMode => {
+  if (value === 'form_field' || value === 'latest_product_field') return value;
+  return 'current_field';
+};
+
+const normalizeLaunchOperator = (value: unknown): ProductValidationLaunchOperator => {
+  switch (value) {
+    case 'equals':
+    case 'not_equals':
+    case 'contains':
+    case 'starts_with':
+    case 'ends_with':
+    case 'regex':
+    case 'gt':
+    case 'gte':
+    case 'lt':
+    case 'lte':
+    case 'is_empty':
+    case 'is_not_empty':
+      return value;
+    default:
+      return 'equals';
+  }
+};
+
 type ProductValidationPatternDelegate = {
   findMany: (args: {
     orderBy: Array<{ target: 'asc' | 'desc' } | { label: 'asc' | 'desc' }>;
   }) => Promise<PrismaPattern[]>;
   findUnique: (args: { where: { id: string } }) => Promise<PrismaPattern | null>;
   create: (args: {
-    data: {
-      label: string;
-      target: string;
-      locale: string | null;
-      regex: string;
-      flags: string | null;
-      message: string;
-      severity: string;
-      enabled: boolean;
-      replacementEnabled: boolean;
-      skipNoopReplacementProposal?: boolean;
-      replacementValue: string | null;
-      replacementFields: string[];
-      replacementAppliesToScopes?: ProductValidationInstanceScope[];
-      runtimeEnabled?: boolean;
-      runtimeType?: ProductValidationRuntimeType;
-      runtimeConfig?: string | null;
-      appliesToScopes?: ProductValidationInstanceScope[];
-      postAcceptBehavior?: ProductValidationPostAcceptBehavior;
-      denyBehaviorOverride?: ProductValidationDenyBehavior | null;
-      validationDebounceMs?: number;
-      launchAppliesToScopes?: ProductValidationInstanceScope[];
-      launchScopeBehavior?: ProductValidationLaunchScopeBehavior;
-    };
+    data: Record<string, unknown>;
   }) => Promise<PrismaPattern>;
   update: (args: {
     where: { id: string };
@@ -152,46 +185,11 @@ const requirePatternDelegate = (): ProductValidationPatternDelegate => {
 };
 
 const toDomain = (pattern: PrismaPattern): ProductValidationPattern => {
-  // Prisma schema can lag behind Mongo-only fields; coerce safely.
-  const validationDebounceMsRaw = (
-    pattern as PrismaPattern & { validationDebounceMs?: number | null }
-  ).validationDebounceMs;
-  const postAcceptBehaviorRaw = (
-    pattern as PrismaPattern & { postAcceptBehavior?: ProductValidationPostAcceptBehavior | null }
-  ).postAcceptBehavior;
-  const runtimeEnabledRaw = (
-    pattern as PrismaPattern & { runtimeEnabled?: boolean | null }
-  ).runtimeEnabled;
-  const runtimeTypeRaw = (
-    pattern as PrismaPattern & { runtimeType?: ProductValidationRuntimeType | null }
-  ).runtimeType;
-  const runtimeConfigRaw = (
-    pattern as PrismaPattern & { runtimeConfig?: string | null }
-  ).runtimeConfig;
-  const denyBehaviorOverrideRaw = (
-    pattern as PrismaPattern & { denyBehaviorOverride?: ProductValidationDenyBehavior | null }
-  ).denyBehaviorOverride;
-  const appliesToScopesRaw = (
-    pattern as PrismaPattern & { appliesToScopes?: ProductValidationInstanceScope[] | null }
-  ).appliesToScopes;
-  const replacementAppliesToScopesRaw = (
-    pattern as PrismaPattern & {
-      replacementAppliesToScopes?: ProductValidationInstanceScope[] | null;
-    }
-  ).replacementAppliesToScopes;
-  const launchAppliesToScopesRaw = (
-    pattern as PrismaPattern & {
-      launchAppliesToScopes?: ProductValidationInstanceScope[] | null;
-    }
-  ).launchAppliesToScopes;
-  const launchScopeBehaviorRaw = (
-    pattern as PrismaPattern & {
-      launchScopeBehavior?: ProductValidationLaunchScopeBehavior | null;
-    }
-  ).launchScopeBehavior;
-  const skipNoopReplacementProposalRaw = (
-    pattern as PrismaPattern & { skipNoopReplacementProposal?: boolean | null }
-  ).skipNoopReplacementProposal;
+  const patternAny = pattern as PrismaPattern & Record<string, unknown>;
+  const appliesToScopesRaw = patternAny['appliesToScopes'];
+  const replacementAppliesToScopesRaw = patternAny['replacementAppliesToScopes'];
+  const launchAppliesToScopesRaw = patternAny['launchAppliesToScopes'];
+
   return {
     id: pattern.id,
     label: pattern.label,
@@ -203,9 +201,12 @@ const toDomain = (pattern: PrismaPattern): ProductValidationPattern => {
     severity: (pattern.severity as ProductValidationSeverity) ?? 'error',
     enabled: pattern.enabled,
     replacementEnabled: pattern.replacementEnabled ?? false,
-    replacementAutoApply: false,
+    replacementAutoApply:
+      typeof patternAny['replacementAutoApply'] === 'boolean'
+        ? patternAny['replacementAutoApply']
+        : false,
     skipNoopReplacementProposal: normalizeProductValidationSkipNoopReplacementProposal(
-      skipNoopReplacementProposalRaw
+      patternAny['skipNoopReplacementProposal']
     ),
     replacementValue: pattern.replacementValue ?? null,
     replacementFields: normalizeReplacementFields(pattern.replacementFields),
@@ -213,34 +214,54 @@ const toDomain = (pattern: PrismaPattern): ProductValidationPattern => {
       replacementAppliesToScopesRaw,
       appliesToScopesRaw
     ),
-    runtimeEnabled: runtimeEnabledRaw ?? false,
-    runtimeType: normalizeRuntimeType(runtimeTypeRaw),
-    runtimeConfig: normalizeRuntimeConfig(runtimeConfigRaw),
-    postAcceptBehavior: normalizePostAcceptBehavior(postAcceptBehaviorRaw),
+    runtimeEnabled:
+      typeof patternAny['runtimeEnabled'] === 'boolean'
+        ? patternAny['runtimeEnabled']
+        : false,
+    runtimeType: normalizeRuntimeType(patternAny['runtimeType']),
+    runtimeConfig: normalizeRuntimeConfig(patternAny['runtimeConfig']),
+    postAcceptBehavior: normalizePostAcceptBehavior(patternAny['postAcceptBehavior']),
     denyBehaviorOverride: normalizeProductValidationPatternDenyBehaviorOverride(
-      denyBehaviorOverrideRaw
+      patternAny['denyBehaviorOverride']
     ),
-    validationDebounceMs: normalizeValidationDebounceMs(validationDebounceMsRaw),
-    sequenceGroupId: null,
-    sequenceGroupLabel: null,
-    sequenceGroupDebounceMs: 0,
-    sequence: null,
-    chainMode: 'continue' as ProductValidationChainMode,
-    maxExecutions: 1,
-    passOutputToNext: true,
-    launchEnabled: false,
+    validationDebounceMs: normalizeValidationDebounceMs(patternAny['validationDebounceMs']),
+    sequenceGroupId: normalizeSequenceGroupId(patternAny['sequenceGroupId']),
+    sequenceGroupLabel: normalizeSequenceGroupLabel(patternAny['sequenceGroupLabel']),
+    sequenceGroupDebounceMs: normalizeSequenceGroupDebounceMs(
+      patternAny['sequenceGroupDebounceMs']
+    ),
+    sequence: normalizeSequence(patternAny['sequence']),
+    chainMode: normalizeChainMode(patternAny['chainMode']),
+    maxExecutions: normalizeMaxExecutions(patternAny['maxExecutions']),
+    passOutputToNext:
+      typeof patternAny['passOutputToNext'] === 'boolean'
+        ? patternAny['passOutputToNext']
+        : true,
+    launchEnabled:
+      typeof patternAny['launchEnabled'] === 'boolean'
+        ? patternAny['launchEnabled']
+        : false,
     launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
       launchAppliesToScopesRaw,
       appliesToScopesRaw
     ),
     launchScopeBehavior: normalizeProductValidationLaunchScopeBehavior(
-      launchScopeBehaviorRaw
+      patternAny['launchScopeBehavior']
     ),
-    launchSourceMode: 'current_field',
-    launchSourceField: null,
-    launchOperator: 'equals',
-    launchValue: null,
-    launchFlags: null,
+    launchSourceMode: normalizeLaunchSourceMode(patternAny['launchSourceMode']),
+    launchSourceField:
+      typeof patternAny['launchSourceField'] === 'string' &&
+      patternAny['launchSourceField'].trim()
+        ? patternAny['launchSourceField'].trim()
+        : null,
+    launchOperator: normalizeLaunchOperator(patternAny['launchOperator']),
+    launchValue:
+      typeof patternAny['launchValue'] === 'string' ? patternAny['launchValue'] : null,
+    launchFlags:
+      typeof patternAny['launchFlags'] === 'string' &&
+      patternAny['launchFlags'].trim()
+        ? patternAny['launchFlags'].trim()
+        : null,
     appliesToScopes: normalizeProductValidationPatternScopes(appliesToScopesRaw),
     createdAt: pattern.createdAt.toISOString(),
     updatedAt: pattern.updatedAt.toISOString(),
@@ -249,10 +270,7 @@ const toDomain = (pattern: PrismaPattern): ProductValidationPattern => {
 
 export const prismaValidationPatternRepository: ProductValidationPatternRepository = {
   async listPatterns(): Promise<ProductValidationPattern[]> {
-    const delegate = getPatternDelegate();
-    if (!delegate) {
-      return [];
-    }
+    const delegate = requirePatternDelegate();
     try {
       const rows = await delegate.findMany({
         orderBy: [{ target: 'asc' }, { label: 'asc' }],
@@ -260,18 +278,14 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
       return rows.map(toDomain);
     } catch (error) {
       if (isSchemaMismatchError(error)) {
-        void ErrorSystem.logWarning('Prisma schema mismatch while listing patterns; returning empty set.', { source: 'validation-pattern-repository', code: error.code });
-        return [];
+        throw schemaMismatchError(error);
       }
       throw error;
     }
   },
 
   async getPatternById(id: string): Promise<ProductValidationPattern | null> {
-    const delegate = getPatternDelegate();
-    if (!delegate) {
-      return null;
-    }
+    const delegate = requirePatternDelegate();
     try {
       const row = await delegate.findUnique({
         where: { id },
@@ -279,8 +293,7 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
       return row ? toDomain(row) : null;
     } catch (error) {
       if (isSchemaMismatchError(error)) {
-        void ErrorSystem.logWarning('Prisma schema mismatch while reading pattern by id; returning null.', { source: 'validation-pattern-repository', code: error.code, id });
-        return null;
+        throw schemaMismatchError(error);
       }
       throw error;
     }
@@ -288,7 +301,7 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
 
   async createPattern(data: CreateProductValidationPatternInput): Promise<ProductValidationPattern> {
     const delegate = requirePatternDelegate();
-    const baseCreateData = {
+    const createData: Record<string, unknown> = {
       label: data.label,
       target: data.target,
       locale: data.locale?.trim() || null,
@@ -298,6 +311,7 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
       severity: data.severity ?? 'error',
       enabled: data.enabled ?? true,
       replacementEnabled: data.replacementEnabled ?? false,
+      replacementAutoApply: data.replacementAutoApply ?? false,
       skipNoopReplacementProposal: normalizeProductValidationSkipNoopReplacementProposal(
         data.skipNoopReplacementProposal
       ),
@@ -310,6 +324,21 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
       runtimeEnabled: data.runtimeEnabled ?? false,
       runtimeType: normalizeRuntimeType(data.runtimeType),
       runtimeConfig: normalizeRuntimeConfig(data.runtimeConfig),
+      postAcceptBehavior: normalizePostAcceptBehavior(data.postAcceptBehavior),
+      denyBehaviorOverride: normalizeProductValidationPatternDenyBehaviorOverride(
+        data.denyBehaviorOverride
+      ),
+      validationDebounceMs: normalizeValidationDebounceMs(data.validationDebounceMs),
+      sequenceGroupId: normalizeSequenceGroupId(data.sequenceGroupId),
+      sequenceGroupLabel: normalizeSequenceGroupLabel(data.sequenceGroupLabel),
+      sequenceGroupDebounceMs: normalizeSequenceGroupDebounceMs(
+        data.sequenceGroupDebounceMs
+      ),
+      sequence: normalizeSequence(data.sequence),
+      chainMode: normalizeChainMode(data.chainMode),
+      maxExecutions: normalizeMaxExecutions(data.maxExecutions),
+      passOutputToNext: data.passOutputToNext ?? true,
+      launchEnabled: data.launchEnabled ?? false,
       launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
         data.launchAppliesToScopes,
         data.appliesToScopes
@@ -317,35 +346,21 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
       launchScopeBehavior: normalizeProductValidationLaunchScopeBehavior(
         data.launchScopeBehavior
       ),
+      launchSourceMode: normalizeLaunchSourceMode(data.launchSourceMode),
+      launchSourceField: data.launchSourceField?.trim() || null,
+      launchOperator: normalizeLaunchOperator(data.launchOperator),
+      launchValue: data.launchValue ?? null,
+      launchFlags: data.launchFlags?.trim() || null,
+      appliesToScopes: normalizeProductValidationPatternScopes(data.appliesToScopes),
     };
     try {
       const row = await delegate.create({
-        data: {
-          ...baseCreateData,
-          ...(data.appliesToScopes !== undefined && {
-            appliesToScopes: normalizeProductValidationPatternScopes(data.appliesToScopes),
-          }),
-          postAcceptBehavior: normalizePostAcceptBehavior(data.postAcceptBehavior),
-          denyBehaviorOverride: normalizeProductValidationPatternDenyBehaviorOverride(
-            data.denyBehaviorOverride
-          ),
-          validationDebounceMs: normalizeValidationDebounceMs(data.validationDebounceMs),
-        },
+        data: createData,
       });
       return toDomain(row);
     } catch (error) {
       if (isSchemaMismatchError(error)) {
-        try {
-          const row = await delegate.create({
-            data: baseCreateData,
-          });
-          return toDomain(row);
-        } catch (fallbackError) {
-          if (isSchemaMismatchError(fallbackError)) {
-            throw schemaMismatchError(fallbackError);
-          }
-          throw fallbackError;
-        }
+        throw schemaMismatchError(error);
       }
       throw error;
     }
@@ -363,6 +378,9 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
       ...(data.severity !== undefined && { severity: data.severity }),
       ...(data.enabled !== undefined && { enabled: data.enabled }),
       ...(data.replacementEnabled !== undefined && { replacementEnabled: data.replacementEnabled }),
+      ...(data.replacementAutoApply !== undefined && {
+        replacementAutoApply: data.replacementAutoApply,
+      }),
       ...(data.skipNoopReplacementProposal !== undefined && {
         skipNoopReplacementProposal: normalizeProductValidationSkipNoopReplacementProposal(
           data.skipNoopReplacementProposal
@@ -383,6 +401,43 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
       ...(data.runtimeConfig !== undefined && {
         runtimeConfig: normalizeRuntimeConfig(data.runtimeConfig),
       }),
+      ...(data.postAcceptBehavior !== undefined && {
+        postAcceptBehavior: normalizePostAcceptBehavior(data.postAcceptBehavior),
+      }),
+      ...(data.validationDebounceMs !== undefined && {
+        validationDebounceMs: normalizeValidationDebounceMs(data.validationDebounceMs),
+      }),
+      ...(data.denyBehaviorOverride !== undefined && {
+        denyBehaviorOverride: normalizeProductValidationPatternDenyBehaviorOverride(
+          data.denyBehaviorOverride
+        ),
+      }),
+      ...(data.sequenceGroupId !== undefined && {
+        sequenceGroupId: normalizeSequenceGroupId(data.sequenceGroupId),
+      }),
+      ...(data.sequenceGroupLabel !== undefined && {
+        sequenceGroupLabel: normalizeSequenceGroupLabel(data.sequenceGroupLabel),
+      }),
+      ...(data.sequenceGroupDebounceMs !== undefined && {
+        sequenceGroupDebounceMs: normalizeSequenceGroupDebounceMs(
+          data.sequenceGroupDebounceMs
+        ),
+      }),
+      ...(data.sequence !== undefined && {
+        sequence: normalizeSequence(data.sequence),
+      }),
+      ...(data.chainMode !== undefined && {
+        chainMode: normalizeChainMode(data.chainMode),
+      }),
+      ...(data.maxExecutions !== undefined && {
+        maxExecutions: normalizeMaxExecutions(data.maxExecutions),
+      }),
+      ...(data.passOutputToNext !== undefined && {
+        passOutputToNext: data.passOutputToNext,
+      }),
+      ...(data.launchEnabled !== undefined && {
+        launchEnabled: data.launchEnabled,
+      }),
       ...(data.launchAppliesToScopes !== undefined && {
         launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
           data.launchAppliesToScopes,
@@ -394,43 +449,34 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
           data.launchScopeBehavior
         ),
       }),
+      ...(data.launchSourceMode !== undefined && {
+        launchSourceMode: normalizeLaunchSourceMode(data.launchSourceMode),
+      }),
+      ...(data.launchSourceField !== undefined && {
+        launchSourceField: data.launchSourceField?.trim() || null,
+      }),
+      ...(data.launchOperator !== undefined && {
+        launchOperator: normalizeLaunchOperator(data.launchOperator),
+      }),
+      ...(data.launchValue !== undefined && {
+        launchValue: data.launchValue ?? null,
+      }),
+      ...(data.launchFlags !== undefined && {
+        launchFlags: data.launchFlags?.trim() || null,
+      }),
+      ...(data.appliesToScopes !== undefined && {
+        appliesToScopes: normalizeProductValidationPatternScopes(data.appliesToScopes),
+      }),
     };
     try {
       const row = await delegate.update({
         where: { id },
-        data: {
-          ...baseUpdateData,
-          ...(data.postAcceptBehavior !== undefined && {
-            postAcceptBehavior: normalizePostAcceptBehavior(data.postAcceptBehavior),
-          }),
-          ...(data.validationDebounceMs !== undefined && {
-            validationDebounceMs: normalizeValidationDebounceMs(data.validationDebounceMs),
-          }),
-          ...(data.denyBehaviorOverride !== undefined && {
-            denyBehaviorOverride: normalizeProductValidationPatternDenyBehaviorOverride(
-              data.denyBehaviorOverride
-            ),
-          }),
-          ...(data.appliesToScopes !== undefined && {
-            appliesToScopes: normalizeProductValidationPatternScopes(data.appliesToScopes),
-          }),
-        },
+        data: baseUpdateData,
       });
       return toDomain(row);
     } catch (error) {
       if (isSchemaMismatchError(error)) {
-        try {
-          const row = await delegate.update({
-            where: { id },
-            data: baseUpdateData,
-          });
-          return toDomain(row);
-        } catch (fallbackError) {
-          if (isSchemaMismatchError(fallbackError)) {
-            throw schemaMismatchError(fallbackError);
-          }
-          throw fallbackError;
-        }
+        throw schemaMismatchError(error);
       }
       throw error;
     }

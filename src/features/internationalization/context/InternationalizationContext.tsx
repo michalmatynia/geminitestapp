@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useMemo, ReactNode } from '
 
 import { useDeleteCountryMutation, useDeleteCurrencyMutation, useDeleteLanguageMutation } from '@/features/internationalization/hooks/useInternationalizationMutations';
 import { useCountries, useCurrencies, useLanguages } from '@/features/internationalization/hooks/useInternationalizationQueries';
+import { internalError } from '@/shared/errors/app-error';
 import type { CurrencyOption, CountryOption, Language } from '@/shared/types/domain/internationalization';
 import { useToast } from '@/shared/ui';
 
@@ -49,7 +50,7 @@ const InternationalizationContext = createContext<InternationalizationContextTyp
 export function useInternationalizationContext(): InternationalizationContextType {
   const context = useContext(InternationalizationContext);
   if (!context) {
-    throw new Error('useInternationalizationContext must be used within an InternationalizationProvider');
+    throw internalError('useInternationalizationContext must be used within an InternationalizationProvider');
   }
   return context;
 }

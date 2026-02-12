@@ -25,6 +25,7 @@ import type {
   MultiSchemaResponseDto as MultiSchemaResponse,
   RedisOverviewDto as RedisOverviewResponse,
 } from '@/shared/dtos/database';
+import { ApiError } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import {
@@ -88,7 +89,8 @@ const unwrapMutationResult = <TPayload>(
   fallbackMessage: string
 ): TPayload => {
   if (!result.ok) {
-    throw new Error(resolvePayloadErrorMessage(result.payload, fallbackMessage));
+    const message = resolvePayloadErrorMessage(result.payload, fallbackMessage);
+    throw new ApiError(message, 400);
   }
   return result.payload;
 };
@@ -132,11 +134,8 @@ export const databaseQueryOptions = {
           pageSize: input.pageSize,
         });
         if (!result.ok) {
-          const error = new Error(
-            resolvePayloadErrorMessage(result.payload, 'Failed to fetch database preview.')
-          );
-          (error as Error & { payload: unknown }).payload = result.payload;
-          throw error;
+          const message = resolvePayloadErrorMessage(result.payload, 'Failed to fetch database preview.');
+          throw new ApiError(message, 400);
         }
         return result.payload;
       },

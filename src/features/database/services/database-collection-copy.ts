@@ -6,6 +6,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 import 'server-only';
 
+import { ErrorSystem } from '@/features/observability/server';
 import { operationFailedError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
@@ -525,6 +526,12 @@ export async function copyCollection(
       ...(result.warnings?.length ? { warnings: result.warnings } : {}),
     };
   } catch (error) {
+    void ErrorSystem.captureException(error, {
+      service: 'database-collection-copy',
+      action: 'copyCollection',
+      collection: collectionName,
+      direction,
+    });
     return {
       name: collectionName,
       status: 'failed',

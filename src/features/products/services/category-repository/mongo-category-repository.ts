@@ -8,6 +8,7 @@ import type {
   CreateProductCategoryDto, 
   UpdateProductCategoryDto 
 } from '@/shared/dtos';
+import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { 
   ProductCategory, 
@@ -300,7 +301,7 @@ export const mongoCategoryRepository: CategoryRepository = {
       .collection<ProductCategoryDoc>(COLLECTION)
       .findOne(buildIdFilter(id));
     if (!current) {
-      throw new Error('Category not found');
+      throw notFoundError('Category not found', { categoryId: id });
     }
     
     const set: Partial<ProductCategoryDoc> = {
@@ -345,7 +346,7 @@ export const mongoCategoryRepository: CategoryRepository = {
     }
     
     const updated = await this.getCategoryById(id);
-    if (!updated) throw new Error('Failed to update category');
+    if (!updated) throw internalError('Failed to update category', { categoryId: id });
     return updated;
   },
 

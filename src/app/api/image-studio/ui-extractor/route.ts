@@ -11,7 +11,7 @@ import {
 } from '@/features/ai/image-studio/utils/studio-settings';
 import { auth } from '@/features/auth/server';
 import { getSettingValue } from '@/features/products/services/aiDescriptionService';
-import { authError, configurationError } from '@/shared/errors/app-error';
+import { authError, configurationError, internalError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -125,12 +125,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   try {
     json = JSON.parse(raw);
   } catch {
-    throw new Error('Model did not return valid JSON.');
+    throw internalError('Model did not return valid JSON.', { raw });
   }
 
   const validated = responseSchema.safeParse(json);
   if (!validated.success) {
-    throw new Error('Invalid UI extractor response shape.');
+    throw internalError('Invalid UI extractor response shape.', { issues: validated.error.flatten() });
   }
 
   return NextResponse.json({

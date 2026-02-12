@@ -13,6 +13,7 @@ import type { ProductWithImages, ProductImageRecord } from '@/features/products/
 import type { ProductImageSlot } from '@/features/products/types/products-ui';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { logger } from '@/shared/utils/logger';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
 
 const TOTAL_IMAGE_SLOTS = DEFAULT_IMAGE_SLOT_COUNT;
@@ -344,7 +345,7 @@ export function useProductImages(
       if (isReorderingRef.current) {
         pendingRefreshRef.current = savedProduct;
         if (process.env['NODE_ENV'] !== 'production') {
-          console.info('[product-images] Refresh deferred during reorder');
+          logger.info('[product-images] Refresh deferred during reorder');
         }
         return;
       }

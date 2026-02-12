@@ -14,14 +14,13 @@ import { useAiPathsSettingsOrchestrator } from './AiPathsSettingsOrchestratorCon
 import { useAiPathsErrorReporting } from './useAiPathsErrorReporting';
 import { usePathConfigHandlers } from './usePathConfigHandlers';
 import { useGraphActions, useGraphState, usePersistenceActions, usePersistenceState, useRuntimeActions, useRuntimeState, useSelectionState } from '../../context';
-import { AiPathConfigProviderWithContext } from '../AiPathConfigContext';
 import { CanvasBoard } from '../canvas-board';
 import { CanvasSidebar } from '../canvas-sidebar';
 import { ClusterPresetsPanel } from '../cluster-presets-panel';
 import { GraphModelDebugPanel } from '../graph-model-debug-panel';
 import { NodeConfigDialog } from '../node-config-dialog';
-import { PresetsDialogWithContext } from '../presets-dialog';
-import { RunDetailDialogWithContext } from '../run-detail-dialog';
+import { PresetsDialog } from '../presets-dialog';
+import { RunDetailDialog } from '../run-detail-dialog';
 import { RunHistoryPanel } from '../run-history-panel';
 import { RuntimeEventLogPanel } from '../runtime-event-log-panel';
 import { SimulationDialog } from '../simulation-dialog';
@@ -105,10 +104,8 @@ export function AiPathsSettingsView({
     historyRetentionPasses,
     historyRetentionOptionsMax,
     handleHistoryRetentionChange,
-    palette,
     handleClearConnectorData,
     handleClearHistory,
-    lastGraphModelPayload,
   } = state;
 
   // Derived from Persistence context
@@ -584,11 +581,9 @@ export function AiPathsSettingsView({
               }`}
               aria-hidden={isFocusMode}
             >
-              <CanvasSidebar
-                palette={palette}
-              />
+              <CanvasSidebar />
               <ClusterPresetsPanel />
-              <GraphModelDebugPanel payload={lastGraphModelPayload} />
+              <GraphModelDebugPanel />
               <RunHistoryPanel />
             </div>
             <div className={`relative ${isFocusMode ? 'h-full min-h-0' : ''}`}>
@@ -741,11 +736,9 @@ export function AiPathsSettingsView({
 
       {activeTab === 'docs' && <DocsTabPanel />}
 
-      <AiPathConfigProviderWithContext>
-        <NodeConfigDialog />
-      </AiPathConfigProviderWithContext>
-      <RunDetailDialogWithContext />
-      <PresetsDialogWithContext />
+      <NodeConfigDialog />
+      <RunDetailDialog />
+      <PresetsDialog />
       <SimulationDialog />
     </div>
   );

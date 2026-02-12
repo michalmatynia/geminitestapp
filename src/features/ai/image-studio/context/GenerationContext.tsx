@@ -1,12 +1,15 @@
 'use client';
 
-import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   useRunStudio,
+  type ImageStudioRunRecord,
+  type ImageStudioRunStatus,
+  type RunStudioEnqueueResult,
   type RunStudioPayload,
-  type RunStudioResult,
 } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
+import { api } from '@/shared/lib/api-client';
 import type { ImageFileRecord } from '@/shared/types/domain/files';
 import { useToast } from '@/shared/ui';
 
@@ -16,8 +19,8 @@ import { usePromptState, usePromptActions } from './PromptContext';
 import { useSettingsState } from './SettingsContext';
 import { useSlotsState } from './SlotsContext';
 
-import type { ImageStudioSlotRecord } from '../types';
 import type { UseMutationResult } from '@tanstack/react-query';
+import { buildRunRequestPreview } from '../utils/run-request-preview';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -33,11 +36,23 @@ export interface GenerationRecord {
   slotName: string;
 }
 
+export interface GenerationLandingSlot {
+  id: string;
+  index: number;
+  status: 'pending' | 'completed' | 'failed';
+  output: ImageFileRecord | null;
+}
+
 export interface GenerationState {
-  runMutation: UseMutationResult<RunStudioResult, Error, RunStudioPayload>;
+  runMutation: UseMutationResult<RunStudioEnqueueResult, Error, RunStudioPayload>;
   runOutputs: ImageFileRecord[];
   maskEligibleCount: number;
   generationHistory: GenerationRecord[];
+  activeRunId: string | null;
+  activeRunStatus: ImageStudioRunStatus | null;
+  activeRunError: string | null;
+  isRunInFlight: boolean;
+  landingSlots: GenerationLandingSlot[];
 }
 
 export interface GenerationActions {
@@ -45,10 +60,39 @@ export interface GenerationActions {
   restoreGeneration: (record: GenerationRecord) => void;
 }
 
+type PollToken = {
+  runId: string;
+  cancelled: boolean;
+  settled: boolean;
+  eventSource: EventSource | null;
+};
+
 // ── Contexts ─────────────────────────────────────────────────────────────────
 
 const GenerationStateContext = createContext<GenerationState | null>(null);
 const GenerationActionsContext = createContext<GenerationActions | null>(null);
+
+const POLL_INTERVAL_MS = 1200;
+const SSE_FALLBACK_POLL_INTERVAL_MS = 5000;
+const POLL_MAX_ATTEMPTS = 600;
+
+const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
+const normalizeExpectedOutputs = (value: unknown, fallback = 1): number => {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(1, Math.min(10, Math.floor(parsed)));
+};
+
+const buildPendingLandingSlots = (runId: string, expectedOutputs: number): GenerationLandingSlot[] => {
+  const count = normalizeExpectedOutputs(expectedOutputs, 1);
+  return Array.from({ length: count }, (_value, index) => ({
+    id: `${runId}:${index + 1}`,
+    index: index + 1,
+    status: 'pending',
+    output: null,
+  }));
+};
 
 // ── Provider ─────────────────────────────────────────────────────────────────
 
@@ -60,17 +104,215 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
   const { workingSlot, slots, compositeAssetIds } = useSlotsState();
   const { maskShapes, maskInvert, maskFeather } = useMaskingState();
   const { setMaskInvert, setMaskFeather } = useMaskingActions();
-  const { promptText } = usePromptState();
+  const { promptText, paramsState } = usePromptState();
   const { setPromptText } = usePromptActions();
   const { studioSettings } = useSettingsState();
 
   const runMutation = useRunStudio();
   const [runOutputs, setRunOutputs] = useState<ImageFileRecord[]>([]);
   const [generationHistory, setGenerationHistory] = useState<GenerationRecord[]>([]);
+  const [activeRunId, setActiveRunId] = useState<string | null>(null);
+  const [activeRunStatus, setActiveRunStatus] = useState<ImageStudioRunStatus | null>(null);
+  const [activeRunError, setActiveRunError] = useState<string | null>(null);
+  const [landingSlots, setLandingSlots] = useState<GenerationLandingSlot[]>([]);
+
+  const pollTokenRef = useRef<PollToken | null>(null);
 
   const maskEligibleCount = useMemo(
     () => maskShapes.filter((s) => s.visible && s.closed && (s.type === 'polygon' || s.type === 'lasso') && s.points.length >= 3).length,
     [maskShapes]
+  );
+
+  const isRunInFlight = activeRunStatus === 'queued' || activeRunStatus === 'running';
+
+  const cancelCurrentPoll = useCallback((): void => {
+    if (pollTokenRef.current) {
+      pollTokenRef.current.cancelled = true;
+      if (pollTokenRef.current.eventSource) {
+        pollTokenRef.current.eventSource.close();
+        pollTokenRef.current.eventSource = null;
+      }
+      pollTokenRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      cancelCurrentPoll();
+    };
+  }, [cancelCurrentPoll]);
+
+  const pollRunUntilFinished = useCallback(
+    async (params: {
+      runId: string;
+      resolvedPrompt: string;
+      maskShapeCount: number;
+      submittedMaskInvert: boolean;
+      submittedMaskFeather: number;
+      submittedSlotId: string;
+      submittedSlotName: string;
+      expectedOutputs: number;
+    }): Promise<void> => {
+      const token: PollToken = {
+        runId: params.runId,
+        cancelled: false,
+        settled: false,
+        eventSource: null,
+      };
+      cancelCurrentPoll();
+      pollTokenRef.current = token;
+
+      let sseConnected = false;
+
+      const closeEventSource = (): void => {
+        if (token.eventSource) {
+          token.eventSource.close();
+          token.eventSource = null;
+        }
+      };
+
+      const settle = (): void => {
+        if (token.settled) return;
+        token.settled = true;
+        closeEventSource();
+        if (pollTokenRef.current === token) {
+          pollTokenRef.current = null;
+        }
+      };
+
+      const applyRunSnapshot = (run: ImageStudioRunRecord): boolean => {
+        if (token.cancelled || token.settled || pollTokenRef.current !== token) return true;
+
+        setActiveRunId(run.id);
+        setActiveRunStatus(run.status);
+        setActiveRunError(run.errorMessage ?? null);
+
+        const expectedOutputs = normalizeExpectedOutputs(run.expectedOutputs, params.expectedOutputs);
+        if (run.status === 'completed') {
+          const outputs = Array.isArray(run.outputs) ? run.outputs : [];
+          const slotCount = Math.max(expectedOutputs, outputs.length);
+
+          setRunOutputs(outputs);
+          setLandingSlots(
+            Array.from({ length: slotCount }, (_value, index) => {
+              const output = outputs[index] ?? null;
+              return {
+                id: `${run.id}:${index + 1}`,
+                index: index + 1,
+                status: output ? 'completed' : 'failed',
+                output,
+              } satisfies GenerationLandingSlot;
+            })
+          );
+
+          const record: GenerationRecord = {
+            id: `gen_${Date.now().toString(36)}`,
+            timestamp: new Date().toISOString(),
+            prompt: params.resolvedPrompt,
+            maskShapeCount: params.maskShapeCount,
+            maskInvert: params.submittedMaskInvert,
+            maskFeather: params.submittedMaskFeather,
+            outputs,
+            slotId: params.submittedSlotId,
+            slotName: params.submittedSlotName,
+          };
+          setGenerationHistory((prev) => [record, ...prev].slice(0, 50));
+          settle();
+          toast(`Generated ${outputs.length} image(s).`, { variant: 'success' });
+          return true;
+        }
+
+        if (run.status === 'failed') {
+          setLandingSlots((prev) =>
+            prev.map((slot) =>
+              slot.status === 'completed' ? slot : { ...slot, status: 'failed' }
+            )
+          );
+          settle();
+          toast(run.errorMessage || 'Generation failed.', { variant: 'error' });
+          return true;
+        }
+
+        return false;
+      };
+
+      const fetchAndApplyRunStatus = async (): Promise<boolean> => {
+        const response = await api.get<{ run: ImageStudioRunRecord }>(
+          `/api/image-studio/runs/${encodeURIComponent(params.runId)}`
+        );
+        return applyRunSnapshot(response.run);
+      };
+
+      if (typeof EventSource !== 'undefined') {
+        try {
+          const source = new EventSource(`/api/image-studio/runs/${encodeURIComponent(params.runId)}/stream`);
+          token.eventSource = source;
+
+          source.onopen = () => {
+            if (token.cancelled || token.settled || pollTokenRef.current !== token) {
+              source.close();
+              return;
+            }
+            sseConnected = true;
+          };
+
+          source.onmessage = (event) => {
+            if (token.cancelled || token.settled || pollTokenRef.current !== token) return;
+            try {
+              const payload = JSON.parse(event.data) as { type?: string };
+              if (payload?.type === 'heartbeat') return;
+            } catch {
+              // Continue with status refresh for unknown event payloads.
+            }
+            void fetchAndApplyRunStatus().catch(() => {
+              // Polling fallback handles transient failures.
+            });
+          };
+
+          source.onerror = () => {
+            sseConnected = false;
+            if (token.eventSource === source) {
+              source.close();
+              token.eventSource = null;
+            }
+          };
+        } catch {
+          // Polling fallback remains active.
+        }
+      }
+
+      for (let attempt = 0; attempt < POLL_MAX_ATTEMPTS; attempt += 1) {
+        if (token.cancelled || token.settled || pollTokenRef.current !== token) return;
+
+        try {
+          const finished = await fetchAndApplyRunStatus();
+          if (finished) {
+            return;
+          }
+        } catch (error) {
+          if (attempt === 0 && !sseConnected) {
+            toast(error instanceof Error ? error.message : 'Failed to receive generation callback.', {
+              variant: 'error',
+            });
+          }
+        }
+
+        const nextDelay = sseConnected ? SSE_FALLBACK_POLL_INTERVAL_MS : POLL_INTERVAL_MS;
+        await sleep(nextDelay);
+      }
+
+      if (token.cancelled || token.settled || pollTokenRef.current !== token) return;
+      setActiveRunStatus('failed');
+      setActiveRunError('Generation callback timed out.');
+      setLandingSlots((prev) =>
+        prev.map((slot) =>
+          slot.status === 'completed' ? slot : { ...slot, status: 'failed' }
+        )
+      );
+      settle();
+      toast('Generation callback timed out.', { variant: 'error' });
+    },
+    [cancelCurrentPoll, toast]
   );
 
   const handleRunGeneration = useCallback(() => {
@@ -88,72 +330,81 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
       return;
     }
 
-    const eligibleShapes = maskShapes.filter(
-      (s) => s.visible && s.closed && (s.type === 'polygon' || s.type === 'lasso') && s.points.length >= 3
-    );
-    const mask: RunStudioPayload['mask'] =
-      eligibleShapes.length > 0
-        ? {
-          type: 'polygons' as const,
-          polygons: eligibleShapes.map((s) => s.points.map((p) => ({ x: p.x, y: p.y }))),
-          invert: maskInvert || undefined,
-          feather: maskFeather > 0 ? maskFeather : undefined,
+    const requestPreview = buildRunRequestPreview({
+      projectId,
+      workingSlot,
+      slots,
+      compositeAssetIds,
+      promptText,
+      paramsState,
+      maskShapes,
+      maskInvert,
+      maskFeather,
+      studioSettings,
+    });
+    if (!requestPreview.payload) {
+      toast(requestPreview.errors[0] || 'Request payload is not valid.', { variant: 'info' });
+      return;
+    }
+
+    const resolvedPrompt = requestPreview.resolvedPrompt;
+    const submittedSlotId = workingSlot?.id ?? '';
+    const submittedSlotName = workingSlot?.name ?? workingSlot?.id ?? '';
+    const submittedMaskInvert = maskInvert;
+    const submittedMaskFeather = maskFeather;
+    const expectedOutputs = normalizeExpectedOutputs(studioSettings.targetAi.openai.image.n, 1);
+
+    cancelCurrentPoll();
+    setRunOutputs([]);
+    setActiveRunError(null);
+    setActiveRunId('pending');
+    setActiveRunStatus('queued');
+    setLandingSlots(buildPendingLandingSlots('pending', expectedOutputs));
+
+    runMutation.mutate(requestPreview.payload, {
+      onSuccess: (data) => {
+        const queuedExpected = normalizeExpectedOutputs(data.expectedOutputs, expectedOutputs);
+        setActiveRunId(data.runId);
+        setActiveRunStatus(data.status);
+        setActiveRunError(null);
+        setLandingSlots(buildPendingLandingSlots(data.runId, queuedExpected));
+        if (data.dispatchMode === 'inline') {
+          toast('Redis queue unavailable, generation is running inline.', { variant: 'info' });
         }
-        : null;
 
-    const referenceAssets = compositeAssetIds
-      .map((id: string) => slots.find((slot) => slot.id === id))
-      .filter((slot): slot is ImageStudioSlotRecord => Boolean(slot))
-      .map((slot: ImageStudioSlotRecord) => ({
-        id: slot.id,
-        filepath: slot.imageFile?.filepath || slot.imageUrl || '',
-      }))
-      .filter((asset) => Boolean(asset.filepath));
-
-    runMutation.mutate(
-      {
-        projectId,
-        asset: { filepath },
-        ...(referenceAssets.length > 0 ? { referenceAssets } : {}),
-        prompt: promptText,
-        mask,
-        studioSettings: studioSettings as unknown as Record<string, unknown>,
+        void pollRunUntilFinished({
+          runId: data.runId,
+          resolvedPrompt,
+          maskShapeCount: requestPreview.maskShapeCount,
+          submittedMaskInvert,
+          submittedMaskFeather,
+          submittedSlotId,
+          submittedSlotName,
+          expectedOutputs: queuedExpected,
+        });
       },
-      {
-        onSuccess: (data) => {
-          setRunOutputs(data.outputs);
-          const record: GenerationRecord = {
-            id: `gen_${Date.now().toString(36)}`,
-            timestamp: new Date().toISOString(),
-            prompt: promptText,
-            maskShapeCount: maskEligibleCount,
-            maskInvert,
-            maskFeather,
-            outputs: data.outputs,
-            slotId: workingSlot?.id ?? '',
-            slotName: workingSlot?.name ?? workingSlot?.id ?? '',
-          };
-          setGenerationHistory((prev) => [record, ...prev].slice(0, 50));
-          toast(`Generated ${data.outputs.length} image(s).`, { variant: 'success' });
-        },
-        onError: (error) => {
-          toast(error.message || 'Generation failed.', { variant: 'error' });
-        },
-      }
-    );
+      onError: (error) => {
+        setActiveRunStatus('failed');
+        setActiveRunError(error.message || 'Generation failed.');
+        setLandingSlots((prev) => prev.map((slot) => ({ ...slot, status: 'failed' })));
+        toast(error.message || 'Generation failed.', { variant: 'error' });
+      },
+    });
   }, [
+    cancelCurrentPoll,
     projectId,
     workingSlot,
     promptText,
+    paramsState,
     maskShapes,
     maskInvert,
     maskFeather,
-    maskEligibleCount,
     studioSettings,
     runMutation,
     toast,
     compositeAssetIds,
     slots,
+    pollRunUntilFinished,
   ]);
 
   const restoreGeneration = useCallback(
@@ -162,14 +413,45 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
       setMaskInvert(record.maskInvert);
       setMaskFeather(record.maskFeather);
       setRunOutputs(record.outputs);
+      setLandingSlots(
+        record.outputs.map((output, index) => ({
+          id: `${record.id}:${index + 1}`,
+          index: index + 1,
+          status: 'completed',
+          output,
+        }))
+      );
+      setActiveRunId(null);
+      setActiveRunStatus('completed');
+      setActiveRunError(null);
       toast('Restored generation settings.', { variant: 'info' });
     },
     [setPromptText, setMaskInvert, setMaskFeather, toast]
   );
 
   const state = useMemo<GenerationState>(
-    () => ({ runMutation, runOutputs, maskEligibleCount, generationHistory }),
-    [runMutation, runOutputs, maskEligibleCount, generationHistory]
+    () => ({
+      runMutation,
+      runOutputs,
+      maskEligibleCount,
+      generationHistory,
+      activeRunId,
+      activeRunStatus,
+      activeRunError,
+      isRunInFlight,
+      landingSlots,
+    }),
+    [
+      runMutation,
+      runOutputs,
+      maskEligibleCount,
+      generationHistory,
+      activeRunId,
+      activeRunStatus,
+      activeRunError,
+      isRunInFlight,
+      landingSlots,
+    ]
   );
 
   const actions = useMemo<GenerationActions>(

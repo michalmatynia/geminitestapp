@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getImageFileRepository } from '@/features/files/server';
-import { badRequestError } from '@/shared/errors/app-error';
+import { badRequestError, externalServiceError, payloadTooLargeError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 import type { ImageFileRecord } from '@/shared/types/domain/files';
@@ -113,16 +113,16 @@ async function fetchRemoteFile(url: string): Promise<{ buffer: Buffer; mime: str
   try {
     const response = await fetch(url, { signal: controller.signal });
     if (!response.ok) {
-      throw new Error(`Remote fetch failed (${response.status})`);
+      throw externalServiceError(`Remote fetch failed (${response.status})`, { url, status: response.status });
     }
     const mime = response.headers.get('content-type');
     const lengthHeader = response.headers.get('content-length');
     if (lengthHeader && Number(lengthHeader) > MAX_REMOTE_IMPORT_BYTES) {
-      throw new Error('Remote file is too large');
+      throw payloadTooLargeError('Remote file is too large', { limit: MAX_REMOTE_IMPORT_BYTES });
     }
     const buffer = Buffer.from(await response.arrayBuffer());
     if (buffer.length > MAX_REMOTE_IMPORT_BYTES) {
-      throw new Error('Remote file is too large');
+      throw payloadTooLargeError('Remote file is too large', { limit: MAX_REMOTE_IMPORT_BYTES });
     }
     let filename = 'remote-file';
     try {

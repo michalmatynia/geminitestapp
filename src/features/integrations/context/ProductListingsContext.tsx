@@ -101,6 +101,9 @@ export function ProductListingsProvider({
 
   const listingsQuery = useProductListings(product.id);
   const listings = listingsQuery.data ?? [];
+  const isListingsLoading =
+    listingsQuery.isLoading ||
+    (listingsQuery.isFetching && listings.length === 0);
 
   // Mutations
   const deleteFromBaseMutation = useDeleteFromBaseMutation(product.id);
@@ -317,7 +320,7 @@ export function ProductListingsProvider({
   const value = useMemo(() => ({
     product,
     listings,
-    isLoading: listingsQuery.isLoading,
+    isLoading: isListingsLoading,
     error,
     setError,
     deletingFromBase,
@@ -351,7 +354,7 @@ export function ProductListingsProvider({
     onStartListing,
     filterIntegrationSlug,
   }), [
-    product, listings, listingsQuery, error, deletingFromBase, purgingListing, exportingListing,
+    product, listings, listingsQuery, isListingsLoading, error, deletingFromBase, purgingListing, exportingListing,
     savingInventoryId, syncingImages, inventoryOverrides, historyOpenByListing, listingToDelete,
     listingToPurge, isSyncImagesConfirmOpen, exportLogs, logsOpen, lastExportListingId,
     handleDeleteFromBase, handlePurgeListing, handleSaveInventoryId, handleSyncBaseImages,

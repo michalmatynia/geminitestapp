@@ -2,17 +2,19 @@ import 'server-only';
 
 import crypto from 'crypto';
 
+import { badRequestError, configurationError } from '@/shared/errors/app-error';
+
 const AUTH_KEY_ENV = 'AUTH_ENCRYPTION_KEY';
 const FALLBACK_KEY_ENV = 'INTEGRATION_ENCRYPTION_KEY';
 
 const getKey = (): Buffer => {
   const raw = process.env[AUTH_KEY_ENV] || process.env[FALLBACK_KEY_ENV];
   if (!raw) {
-    throw new Error(`${AUTH_KEY_ENV} (or ${FALLBACK_KEY_ENV}) is required for auth secrets`);
+    throw configurationError(`${AUTH_KEY_ENV} (or ${FALLBACK_KEY_ENV}) is required for auth secrets`);
   }
   const key = Buffer.from(raw, 'base64');
   if (key.length !== 32) {
-    throw new Error(`${AUTH_KEY_ENV} must be a base64-encoded 32-byte key`);
+    throw configurationError(`${AUTH_KEY_ENV} must be a base64-encoded 32-byte key`);
   }
   return key;
 };
@@ -34,7 +36,7 @@ export const decryptAuthSecret = (payload: string): string => {
   const key = getKey();
   const [ivB64, tagB64, dataB64] = payload.split(':');
   if (!ivB64 || !tagB64 || !dataB64) {
-    throw new Error('Invalid encrypted payload');
+    throw badRequestError('Invalid encrypted payload');
   }
   const iv = Buffer.from(ivB64, 'base64');
   const tag = Buffer.from(tagB64, 'base64');

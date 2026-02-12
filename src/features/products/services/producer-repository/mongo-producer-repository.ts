@@ -5,6 +5,7 @@ import type {
   ProducerRepository, 
   ProducerFilters 
 } from '@/features/products/types/services/producer-repository';
+import { internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { 
   Producer 
@@ -80,7 +81,7 @@ export const mongoProducerRepository: ProducerRepository = {
     );
     
     const updated = await this.getProducerById(id);
-    if (!updated) throw new Error('Failed to update producer');
+    if (!updated) throw internalError('Failed to update producer', { producerId: id });
     return updated;
   },
 

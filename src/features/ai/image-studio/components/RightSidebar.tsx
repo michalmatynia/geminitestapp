@@ -1,6 +1,6 @@
 'use client';
 
-import { Loader2, Save, Sparkles } from 'lucide-react';
+import { Eye, Loader2, Save, Sparkles } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
@@ -15,6 +15,7 @@ import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   Button,
+  AppModal,
   Label,
   MultiSelect,
   SectionPanel,
@@ -33,9 +34,11 @@ import { UIPresetsPanel } from './UIPresetsPanel';
 import { useGenerationState } from '../context/GenerationContext';
 import { useProjectsState } from '../context/ProjectsContext';
 import { usePromptActions, usePromptState } from '../context/PromptContext';
-import { useSettingsActions } from '../context/SettingsContext';
+import { useMaskingState } from '../context/MaskingContext';
+import { useSettingsState, useSettingsActions } from '../context/SettingsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { useUiActions, useUiState } from '../context/UiContext';
+import { buildRunRequestPreview } from '../utils/run-request-preview';
 import {
   IMAGE_STUDIO_ACTIVE_PROJECT_KEY,
   type ImageStudioProjectSession,
@@ -48,7 +51,10 @@ export function RightSidebar(): React.JSX.Element {
   const { isFocusMode, validatorEnabled, formatterEnabled } = useUiState();
   const { setValidatorEnabled, setFormatterEnabled } = useUiActions();
   const { projectId } = useProjectsState();
+  const { maskShapes, maskInvert, maskFeather } = useMaskingState();
   const {
+    workingSlot,
+    slots,
     compositeAssetIds,
     compositeAssetOptions,
     selectedSlotId,
@@ -59,6 +65,7 @@ export function RightSidebar(): React.JSX.Element {
   const { setCompositeAssetIds, createSlots } = useSlotsActions();
   const { promptText, paramsState, paramSpecs, paramUiOverrides } = usePromptState();
   const { setPromptText, setExtractReviewOpen, setExtractDraftPrompt } = usePromptActions();
+  const { studioSettings } = useSettingsState();
   const { runOutputs, generationHistory } = useGenerationState();
   const { saveStudioSettings } = useSettingsActions();
   const updateSettingsBulk = useUpdateSettingsBulk();
@@ -66,6 +73,7 @@ export function RightSidebar(): React.JSX.Element {
   const { toast } = useToast();
   const settingsStore = useSettingsStore();
   const [projectSaveBusy, setProjectSaveBusy] = useState(false);
+  const [requestPreviewOpen, setRequestPreviewOpen] = useState(false);
 
   const promptValidationSettings = useMemo(
     () => parsePromptEngineSettings(settingsStore.get(PROMPT_ENGINE_SETTINGS_KEY)).promptValidation,
@@ -75,6 +83,48 @@ export function RightSidebar(): React.JSX.Element {
   const flattenedParams = useMemo(
     () => (paramsState ? flattenParams(paramsState).filter((leaf) => Boolean(leaf.path)) : []),
     [paramsState]
+  );
+
+  const requestPreview = useMemo(
+    () =>
+      buildRunRequestPreview({
+        projectId,
+        workingSlot,
+        slots,
+        compositeAssetIds,
+        promptText,
+        paramsState,
+        maskShapes,
+        maskInvert,
+        maskFeather,
+        studioSettings,
+      }),
+    [
+      projectId,
+      workingSlot,
+      slots,
+      compositeAssetIds,
+      promptText,
+      paramsState,
+      maskShapes,
+      maskInvert,
+      maskFeather,
+      studioSettings,
+    ]
+  );
+
+  const requestPreviewJson = useMemo(
+    () =>
+      requestPreview.payload
+        ? JSON.stringify(requestPreview.payload, null, 2)
+        : JSON.stringify(
+          {
+            errors: requestPreview.errors,
+          },
+          null,
+          2
+        ),
+    [requestPreview]
   );
 
   const cloneSettingValue = <T,>(value: T): T => {
@@ -193,15 +243,16 @@ export function RightSidebar(): React.JSX.Element {
   };
 
   return (
-    <SectionPanel
-      className={cn(
-        'order-3 flex min-h-0 flex-1 flex-col overflow-hidden p-0 transition-all duration-300 ease-in-out',
-        isFocusMode && 'pointer-events-none opacity-0 translate-x-2'
-      )}
-      variant='subtle'
-      aria-hidden={isFocusMode}
-    >
-      <div className='flex flex-wrap items-center justify-end gap-2 px-4 py-2'>
+    <>
+      <SectionPanel
+        className={cn(
+          'order-3 flex min-h-0 flex-1 flex-col overflow-hidden p-0 transition-all duration-300 ease-in-out',
+          isFocusMode && 'pointer-events-none opacity-0 translate-x-2'
+        )}
+        variant='subtle'
+        aria-hidden={isFocusMode}
+      >
+        <div className='flex flex-wrap items-center justify-end gap-2 px-4 py-2'>
         <Button
           variant='outline'
           size='sm'
@@ -212,6 +263,16 @@ export function RightSidebar(): React.JSX.Element {
         >
           <Sparkles className='mr-2 size-4' />
           Extract
+        </Button>
+        <Button
+          variant='outline'
+          size='sm'
+          title='Preview generation request payload and input images'
+          aria-label='Preview generation request payload and input images'
+          onClick={() => setRequestPreviewOpen(true)}
+        >
+          <Eye className='mr-2 size-4' />
+          Preview Request
         </Button>
         <ValidatorFormatterToggle
           validatorLabel='Validate'
@@ -232,8 +293,8 @@ export function RightSidebar(): React.JSX.Element {
           {projectSaveBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : <Save className='mr-2 size-4' />}
           Save Project
         </Button>
-      </div>
-      <div className='relative flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4 pt-0'>
+        </div>
+        <div className='relative flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4 pt-0'>
         <Textarea
           value={promptText}
           onChange={(event) => setPromptText(event.target.value)}
@@ -312,7 +373,65 @@ export function RightSidebar(): React.JSX.Element {
             <div className='text-sm text-gray-400'>Extract params to edit.</div>
           )}
         </div>
-      </div>
-    </SectionPanel>
+        </div>
+      </SectionPanel>
+
+      <AppModal
+        open={requestPreviewOpen}
+        onClose={() => setRequestPreviewOpen(false)}
+        title='Generation Request Preview'
+        size='xl'
+      >
+        <div className='space-y-4 text-xs text-gray-200'>
+          <div className='rounded border border-border/60 bg-card/40 p-3 text-[11px] text-gray-300'>
+            This is the exact payload enqueued to <span className='text-gray-100'>`/api/image-studio/run`</span> before Redis runtime processing.
+          </div>
+          <div className='text-[11px] text-gray-400'>
+            Resolved prompt length: <span className='text-gray-200'>{requestPreview.resolvedPrompt.length}</span> ·
+            mask shapes in payload: <span className='text-gray-200'>{requestPreview.maskShapeCount}</span>
+          </div>
+
+          {requestPreview.errors.length > 0 ? (
+            <div className='rounded border border-red-400/40 bg-red-500/10 p-3 text-[11px] text-red-200'>
+              {requestPreview.errors.join(' ')}
+            </div>
+          ) : null}
+
+          <div className='space-y-2'>
+            <div className='text-[11px] text-gray-400'>
+              Input Images ({requestPreview.images.length})
+            </div>
+            {requestPreview.images.length > 0 ? (
+              <div className='grid grid-cols-2 gap-2 md:grid-cols-3'>
+                {requestPreview.images.map((image) => (
+                  <div key={`${image.kind}:${image.id ?? image.filepath}`} className='rounded border border-border/60 bg-card/30 p-2'>
+                    <div className='mb-1 text-[10px] uppercase tracking-wide text-gray-500'>
+                      {image.kind === 'base' ? 'Base' : 'Reference'}
+                    </div>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={image.filepath}
+                      alt={image.name}
+                      className='h-28 w-full rounded object-cover'
+                    />
+                    <div className='mt-1 truncate text-[11px] text-gray-200'>{image.name}</div>
+                    <div className='truncate text-[10px] text-gray-500'>{image.filepath}</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className='text-[11px] text-gray-500'>No request images are available yet.</div>
+            )}
+          </div>
+
+          <div className='space-y-2'>
+            <div className='text-[11px] text-gray-400'>Payload JSON</div>
+            <pre className='max-h-[50vh] overflow-auto rounded border border-border/60 bg-black/30 p-3 font-mono text-[11px] text-gray-100 whitespace-pre-wrap'>
+              {requestPreviewJson}
+            </pre>
+          </div>
+        </div>
+      </AppModal>
+    </>
   );
 }

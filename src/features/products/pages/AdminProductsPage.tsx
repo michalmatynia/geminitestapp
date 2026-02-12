@@ -93,6 +93,15 @@ export function AdminProductsPage(): React.JSX.Element {
     });
   }, [queryClient]);
 
+  const refreshProductListingsData = useCallback((productId: string): void => {
+    if (!productId) return;
+    void queryClient.fetchQuery({
+      queryKey: productListingsQueryKey(productId),
+      queryFn: () => fetchProductListings(productId),
+      staleTime: 0,
+    });
+  }, [queryClient]);
+
   const { data: allDrafts = [] } = useDrafts();
   const activeDrafts = useMemo(() => allDrafts.filter((d: ProductDraft) => d.active !== false), [allDrafts]);
 
@@ -270,9 +279,9 @@ export function AdminProductsPage(): React.JSX.Element {
   }, [prefetchIntegrationSelectionData, prefetchProductListingsData, setIntegrationsProduct]);
 
   const handleOpenExportSettings = useCallback((product: ProductWithImages) => {
-    prefetchProductListingsData(product.id);
     setExportSettingsProduct(product);
-  }, [prefetchProductListingsData, setExportSettingsProduct]);
+    refreshProductListingsData(product.id);
+  }, [refreshProductListingsData, setExportSettingsProduct]);
 
   const handleSetPage = useCallback((p: number) => {
     setPage(p);

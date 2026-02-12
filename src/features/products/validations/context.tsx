@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useReducer, type ReactNode } from 'react';
 
+import { internalError } from '@/shared/errors/app-error';
 import type { ValidationError } from './validators';
 
 type ValidationContextState = {
@@ -72,7 +73,7 @@ export function useValidationContext(): ValidationContextState & {
   } {
   const context = useContext(ValidationContext);
   if (!context) {
-    throw new Error('useValidationContext must be used within ValidationProvider');
+    throw internalError('useValidationContext must be used within ValidationProvider');
   }
 
   const { state, dispatch } = context;

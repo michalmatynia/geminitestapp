@@ -8,6 +8,7 @@ import type {
   CreateProductCategoryDto, 
   UpdateProductCategoryDto 
 } from '@/shared/dtos';
+import { notFoundError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
 import type { 
   ProductCategory, 
@@ -213,7 +214,7 @@ export const prismaCategoryRepository: CategoryRepository = {
         select: { id: true, catalogId: true, parentId: true },
       });
       if (!current) {
-        throw new Error('Category not found');
+        throw notFoundError('Category not found', { categoryId: id });
       }
 
       const nextCatalogId = data.catalogId ?? current.catalogId;

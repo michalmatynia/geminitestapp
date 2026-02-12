@@ -5,6 +5,7 @@ import React, { createContext, useContext, useState, useMemo, ReactNode } from '
 import { useCancelListingMutation, useChatbotJobMutation, useClearChatbotJobsMutation } from '@/features/jobs/hooks/useJobMutations';
 import { useIntegrationJobs, useChatbotJobs } from '@/features/jobs/hooks/useJobQueries';
 import { logClientError } from '@/features/observability';
+import { internalError } from '@/shared/errors/app-error';
 import type { ListingJob, ProductJob } from '@/shared/types/domain/listing-jobs';
 
 export type JobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'canceled' | 'success' | 'listed' | 'deleted' | 'removed' | 'processing' | 'in_progress';
@@ -64,7 +65,7 @@ const JobsContext = createContext<JobsContextType | null>(null);
 export function useJobsContext(): JobsContextType {
   const context = useContext(JobsContext);
   if (!context) {
-    throw new Error('useJobsContext must be used within a JobsProvider');
+    throw internalError('useJobsContext must be used within a JobsProvider');
   }
   return context;
 }

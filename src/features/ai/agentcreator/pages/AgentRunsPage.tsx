@@ -28,6 +28,7 @@ export default function AgentRunsPage(): React.ReactElement {
     setAgentStreamStatus,
     isLoadingRuns: loading,
     refetchRuns: loadAgentRuns,
+    error: contextError,
   } = useAgentRunContext();
 
   const [expandedAuditIds, setExpandedAuditIds] = useState<
@@ -35,7 +36,7 @@ export default function AgentRunsPage(): React.ReactElement {
   >({});
 
   const agentSnapshot = agentSnapshots[0] ?? null;
-  const error = null;
+  const error = contextError ? contextError.message : null;
 
   const filteredRuns = useMemo(() => {
     const term = query.trim().toLowerCase();

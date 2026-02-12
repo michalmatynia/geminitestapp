@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 
+import { internalError } from '@/shared/errors/app-error';
 import type { CategoryWithChildren } from '@/shared/types/domain/notes';
 
 import type { FolderTreeProps } from '../types/folder-tree-ui';
@@ -52,7 +53,7 @@ const FolderTreeContext = createContext<FolderTreeContextType | undefined>(undef
 export function useFolderTree(): FolderTreeContextType {
   const context = useContext(FolderTreeContext);
   if (!context) {
-    throw new Error('useFolderTree must be used within a FolderTreeProvider');
+    throw internalError('useFolderTree must be used within a FolderTreeProvider');
   }
   return context;
 }

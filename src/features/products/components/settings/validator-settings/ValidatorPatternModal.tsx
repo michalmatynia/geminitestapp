@@ -22,7 +22,7 @@ import {
   Input,
   Label,
   MultiSelect,
-  SharedModal,
+  AppModal,
   Textarea,
   UnifiedSelect,
 } from '@/shared/ui';
@@ -53,7 +53,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
   if (!showModal) return null;
 
   return (
-    <SharedModal
+    <AppModal
       open={showModal}
       onClose={closeModal}
       title={editingPattern ? 'Edit Validator Pattern' : 'Create Validator Pattern'}
@@ -1118,6 +1118,6 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
           </Button>
         </div>
       </div>
-    </SharedModal>
+    </AppModal>
   );
 }

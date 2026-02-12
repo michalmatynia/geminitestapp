@@ -8,6 +8,8 @@ import { badRequestError, conflictError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
+export const revalidate = 300;
+
 const productTagCreateSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   color: z.string().nullable().optional(),

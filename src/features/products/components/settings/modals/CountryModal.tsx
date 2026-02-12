@@ -86,7 +86,7 @@ export function CountryModal(): React.JSX.Element {
 
   return (
     <FormModal
-      isOpen={isOpen}
+      open={isOpen}
       onClose={onClose}
       title={country ? 'Edit Country' : 'Add Country'}
       onSave={() => {

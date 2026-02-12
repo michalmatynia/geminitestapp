@@ -14,6 +14,8 @@ import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 import { idParamSchema } from '@/shared/validations/api-schemas';
 
+export const revalidate = 60;
+
 const isLikelyPayloadTooLarge = (error: unknown): boolean => {
   const message = error instanceof Error ? error.message : String(error ?? '');
   const normalized = message.toLowerCase();

@@ -1,5 +1,5 @@
 export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const revalidate = 10;
 
 import fs from 'fs/promises';
 import path from 'path';

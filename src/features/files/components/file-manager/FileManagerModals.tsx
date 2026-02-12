@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import React from 'react';
 
-import { FilePreviewModal, SharedModal } from '@/shared/ui';
+import { FilePreviewModal, AppModal } from '@/shared/ui';
 
 import { useFileManager } from '../../contexts/FileManagerContext';
 
@@ -36,7 +36,7 @@ export function FileManagerModals(): React.JSX.Element {
       )}
 
       {previewAsset && (
-        <SharedModal
+        <AppModal
           open={true}
           onClose={(): void => setPreviewAsset(null)}
           title={previewAsset.name ?? previewAsset.filename}
@@ -70,7 +70,7 @@ export function FileManagerModals(): React.JSX.Element {
               </pre>
             </div>
           </div>
-        </SharedModal>
+        </AppModal>
       )}
     </>
   );

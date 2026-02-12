@@ -6,7 +6,7 @@ import { useState, useCallback } from 'react';
 import { logClientError } from '@/features/observability';
 import { useSaveTagMutation, useDeleteTagMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { Catalog, ProductTag } from '@/features/products/types';
-import { useToast, Button, UnifiedSelect, Input, Label, SharedModal, EmptyState, ConfirmDialog, SectionPanel, Tag as UiTag } from '@/shared/ui';
+import { useToast, Button, UnifiedSelect, Input, Label, AppModal, EmptyState, ConfirmDialog, SectionPanel, Tag as UiTag } from '@/shared/ui';
 
 type TagsSettingsProps = {
   loading: boolean;
@@ -235,7 +235,7 @@ export function TagsSettings({
       />
 
       {showModal && (
-        <SharedModal
+        <AppModal
           open={showModal}
           onClose={(): void => setShowModal(false)}
           title={editingTag ? 'Edit Tag' : 'Create Tag'}
@@ -313,10 +313,11 @@ export function TagsSettings({
               >
                 {saveTagMutation.isPending ? 'Saving...' : 'Save'}
               </Button>
-            </div>
-          </div>
-        </SharedModal>
-      )}
-    </div>
-  );
-}
+                        </div>
+                      </div>
+                    </AppModal>
+                  )}
+                </div>
+              );
+            }
+            

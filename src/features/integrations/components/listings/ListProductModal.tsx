@@ -163,7 +163,7 @@ function ListProductModalContent({
 
   return (
     <FormModal
-      isOpen={true}
+      open={true}
       onClose={onClose}
       title={`List Product - ${productName}`}
       onSave={(): void => { void handleSubmit(); }}

@@ -1,4 +1,5 @@
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -35,13 +36,21 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
       isAppError(error) &&
       (error.code === AppErrorCodes.unauthorized || error.code === AppErrorCodes.forbidden)
     ) {
-      return NextResponse.json([]);
+      return NextResponse.json([], {
+        headers: {
+          'Cache-Control': 'no-store',
+        },
+      });
     }
     throw error;
   }
   const raw = await readTriggerButtonsRaw();
   const triggerButtons = parseAiTriggerButtonsRaw(raw);
-  return NextResponse.json(triggerButtons);
+  return NextResponse.json(triggerButtons, {
+    headers: {
+      'Cache-Control': 'no-store',
+    },
+  });
 }
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

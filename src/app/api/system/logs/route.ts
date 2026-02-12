@@ -79,7 +79,11 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     from: parsed.from ? new Date(parsed.from) : null,
     to: parsed.to ? new Date(parsed.to) : null,
   });
-  return NextResponse.json(result);
+  return NextResponse.json(result, {
+    headers: {
+      'Cache-Control': 'no-store',
+    },
+  });
 }
 
 async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {

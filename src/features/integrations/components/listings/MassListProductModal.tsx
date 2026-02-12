@@ -127,7 +127,7 @@ function MassListProductModalContent({
 
   return (
     <FormModal
-      isOpen={true}
+      open={true}
       onClose={onClose}
       title={`List ${productIds.length} Products to ${selectedIntegration?.name || 'Marketplace'}`}
       onSave={(): void => { void handleSubmit(); }}

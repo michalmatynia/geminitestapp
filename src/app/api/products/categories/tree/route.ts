@@ -8,6 +8,8 @@ import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
+export const revalidate = 300;
+
 /**
  * GET /api/products/categories/tree
  * Fetches product categories as a hierarchical tree structure.
@@ -76,5 +78,4 @@ export const GET = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => getHandlerInternal(req, ctx),
   {
     source: 'products.categories.tree.GET',
-    cacheControl: 'no-store',
   });

@@ -6,7 +6,7 @@ import { useState, useCallback } from 'react';
 import { useSaveParameterMutation, useDeleteParameterMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { CatalogRecord } from '@/features/products/types';
 import type { ProductParameter } from '@/features/products/types';
-import { useToast, Button, Input, Label, UnifiedSelect, SharedModal, EmptyState, ConfirmDialog, SectionPanel } from '@/shared/ui';
+import { useToast, Button, Input, Label, UnifiedSelect, AppModal, EmptyState, ConfirmDialog, SectionPanel } from '@/shared/ui';
 
 type ParametersSettingsProps = {
   loading: boolean;
@@ -239,7 +239,7 @@ export function ParametersSettings({
       />
 
       {showModal && (
-        <SharedModal
+        <AppModal
           open={showModal}
           onClose={(): void => setShowModal(false)}
           title={editingParameter ? 'Edit Parameter' : 'Create Parameter'}
@@ -295,7 +295,7 @@ export function ParametersSettings({
               {saveParameterMutation.isPending ? 'Saving...' : 'Save'}
             </Button>
           </div>
-        </SharedModal>
+        </AppModal>
       )}
     </div>
   );

@@ -1,4 +1,4 @@
-
+remove convert All to Base Button and action 
 Producer and Categories are not going through , long refresh on the button
 
 shared validator button that applies globallu
@@ -6,6 +6,75 @@ fastcomet connection and tradera connection,
 image studio move forward
 
  Use pre-prompts to incorporate different aspects
+
+
+ Send Image to OpenAI 
+
+move save button to left
+
+-Image upload should load image into a Temporary Card, and then only when a new Card Icon is clicked it should create a new card with this image. Also, when Load Into Canvas is clicked, it should create a new card automatically and load the image into canvas. However, if a new image is uploaded into the slot, the old one should be deleted.
+
+Drop to Root still doesn’t work for files inside folders. Also, previous drop to Root placeholders were better and more sublime.
+
+I Need a Reveal button in my toolbar, that will automatically highlight the Card Image loaded into Preview CAnvas
+
+I need final JSON preview with images that are to be sent  prompt
+
+-Folders are collapsed / uncollapsed  by clicking the collapse / uncollapse arrow, not by clicking the folder itself
+
+SHoew button visible at the top 
+
+Flip around canvas
+
+Layouting and cropping decisions should be made by local AI Gemma
+
+
+-Creating polygonal shapes still doesn’t work, I can’t see them on the Preview Canvas
+
+-I still can’t drop folders into folders.
+
+
+Image uploade does’nt work
+The flip of control panel for a extracted parameters doesn’t work, they should have a nice flip animation.
+
+Show should be just an EYE Icon and Instead of Edit, make it SHUT EYE Icon. 
+
+Shapes should be draggable
+
+fit to canvas
+
+
+-In the Image studio, when I click on the slot in the folder tree, it shows a thumbnail in the object slot. When I click Load to canvas, the image is loaded into canvas and stays there until a new image is loaded into canvas or I press Decanvas button to clear the canvas.
+
+-Shape layers Panel is too wide, make it 30 % of current width. Move mask generation panel to the right of Shape Layers.
+
+
+ILLater  - n SHow Panel To the left versions , to the right masks
+
+-After Save, Project is not being saved or retained 
+
+- Clicking Load To Canvas Button doesn’t work, doesn’t load the image into canvas
+
+-Each created / uploaded image, when I click on New Slot, I actually want to change it to new Card. The Card replaces slot in the folder tree. The Card will be a main image slot with the image inside,  a collection of masks created for a given image. Different generations and version of the image or image parts and masks connected to different versions and generations 
+
+
+
+
+Prompt versioning
+
+
+
+When I do Prompt extraction, in the modal that opens I want to see the count for the number of controls for parameters. 
+
+
+Prompt should be divisible and edtiable, since parts of prompt relate to different aspects of the post productuion, so for example handling reports should be taken care of separately
+
+Artist - Persona - the Role should be extracted there
+Non negotiables get their own icon
+conditionals (for example, if apply_studio_relighting= true.
+Pipeline
+
+
  Show Button should keep the toolbar and collapse admin menu
  * Dragging image in the image canvas stopped working again
  Dragging no longer works

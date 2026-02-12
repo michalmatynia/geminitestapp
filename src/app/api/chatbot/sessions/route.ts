@@ -122,7 +122,11 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
     });
   }
 
-  return NextResponse.json({ sessions });
+  return NextResponse.json({ sessions }, {
+    headers: {
+      'Cache-Control': 'no-store',
+    },
+  });
 }
 
 // PATCH /api/chatbot/sessions - Update session (title)

@@ -9,7 +9,7 @@ import {
   AgentAuditLog,
   AgentBrowserLog,
 } from '@/shared/types/domain/chatbot';
-import { Button, SectionHeader, SectionPanel, Tabs, TabsContent, TabsList, TabsTrigger, SharedModal, Input } from '@/shared/ui';
+import { Button, SectionHeader, SectionPanel, Tabs, TabsContent, TabsList, TabsTrigger, AppModal, Input } from '@/shared/ui';
 
 import { useAgentRunContext } from '../context/AgentRunContext';
 
@@ -241,7 +241,7 @@ export default function AgentRunsPage(): React.ReactElement {
       </SectionPanel>
 
       {selectedAgentRunId ? (
-        <SharedModal
+        <AppModal
           open={true}
           onClose={closeAgentModal}
           title='Agent job details'
@@ -951,7 +951,7 @@ export default function AgentRunsPage(): React.ReactElement {
               </div>
             </TabsContent>
           </Tabs>
-        </SharedModal>
+        </AppModal>
       ) : null}
     </div>
   );

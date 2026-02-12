@@ -9,6 +9,8 @@ import { apiHandler, getQueryParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 import { logger } from '@/shared/utils/logger';
 
+export const revalidate = 60;
+
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
@@ -29,14 +31,22 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       ...(tagsStr && { tags: tagsStr.split(',').filter(Boolean) }),
     });
 
-    return NextResponse.json(assets);
+    return NextResponse.json(assets, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+      },
+    });
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       (error.code === 'P2021' || error.code === 'P2022' || error.code === 'P1001' || error.code === 'P1003')
     ) {
       logger.warn('[assets3d] Falling back to empty list due to missing table or database.', { code: error.code });
-      return NextResponse.json([]);
+      return NextResponse.json([], {
+        headers: {
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+        },
+      });
     }
     throw error;
   }

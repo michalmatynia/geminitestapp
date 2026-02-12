@@ -9,6 +9,8 @@ import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 import type { NoteFilters } from '@/shared/types/domain/notes';
 
+export const revalidate = 10;
+
 /**
  * GET /api/notes
  * Fetches a list of notes with optional filters.

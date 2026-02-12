@@ -1,4 +1,5 @@
 import { z } from 'zod';
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 
 import { dtoBaseSchema } from './base';
 
@@ -53,7 +54,7 @@ export type SchemaResponseDto = z.infer<typeof schemaResponseSchema>;
 export const multiSchemaResponseSchema = z.object({
   provider: z.literal('multi'),
   collections: z.array(collectionSchemaSchema.extend({ provider: schemaProviderSchema })),
-  sources: z.record(schemaProviderSchema, schemaResponseSchema).partial(),
+  sources: z.record(schemaProviderSchema, schemaResponseSchema).partial() as unknown,
 });
 
 export type MultiSchemaResponseDto = z.infer<typeof multiSchemaResponseSchema>;

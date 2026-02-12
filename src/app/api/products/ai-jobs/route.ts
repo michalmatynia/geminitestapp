@@ -1,4 +1,5 @@
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
@@ -31,7 +32,11 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
         message: '[api/products/ai-jobs] Queue status',
         context: { status },
       });
-      return NextResponse.json({ status });
+      return NextResponse.json({ status }, {
+        headers: {
+          'Cache-Control': 'no-store',
+        },
+      });
     }
 
     const productId = searchParams.get('productId') || undefined;
@@ -46,7 +51,11 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
         startProductAiJobQueue();
       }
     }
-    return NextResponse.json({ jobs });
+    return NextResponse.json({ jobs }, {
+      headers: {
+        'Cache-Control': 'no-store',
+      },
+    });
   } catch (error: unknown) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&

@@ -6,7 +6,7 @@ import React from 'react';
 
 import { buildModelProfile } from '@/features/ai/chatbot/utils';
 import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/domain/agent-teaching';
-import { Button, ConfirmDialog, Input, Label, SectionHeader, SectionPanel, SharedModal, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast, UnifiedSelect } from '@/shared/ui';
+import { Button, ConfirmDialog, Input, Label, SectionHeader, SectionPanel, AppModal, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast, UnifiedSelect } from '@/shared/ui';
 
 import { useAgentTeachingContext } from '../context/AgentTeachingContext';
 import { useDeleteEmbeddingCollectionMutation, useUpsertEmbeddingCollectionMutation } from '../hooks/useAgentTeaching';
@@ -201,7 +201,7 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
         }}
       />
 
-      <SharedModal
+      <AppModal
         open={modalOpen}
         onClose={closeModal}
         size='sm'
@@ -252,7 +252,7 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
             </div>
           </div>
         </div>
-      </SharedModal>
+      </AppModal>
     </div>
   );
 }

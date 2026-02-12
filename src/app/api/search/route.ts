@@ -97,7 +97,11 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         description: item.description || '',
       })) || [];
 
-    return NextResponse.json({ results });
+    return NextResponse.json({ results }, {
+      headers: {
+        'Cache-Control': 'no-store',
+      },
+    });
   }
 
   if (provider === 'google') {
@@ -130,7 +134,11 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         description: item.snippet || '',
       })) || [];
 
-    return NextResponse.json({ results });
+    return NextResponse.json({ results }, {
+      headers: {
+        'Cache-Control': 'no-store',
+      },
+    });
   }
 
   if (provider === 'serpapi') {
@@ -168,7 +176,11 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         description: item.snippet || '',
       })) || [];
 
-    return NextResponse.json({ results });
+    return NextResponse.json({ results }, {
+      headers: {
+        'Cache-Control': 'no-store',
+      },
+    });
   }
 
   throw badRequestError('Unsupported search provider', { provider });

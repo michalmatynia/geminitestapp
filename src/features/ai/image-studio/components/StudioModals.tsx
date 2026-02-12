@@ -11,7 +11,7 @@ import {
 } from '@/features/prompt-engine/prompt-params';
 import { api } from '@/shared/lib/api-client';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
-import { Button, Input, Label, SharedModal, Textarea, useToast } from '@/shared/ui';
+import { Button, Input, Label, AppModal, Textarea, useToast } from '@/shared/ui';
 
 import { useProjectsState } from '../context/ProjectsContext';
 import { usePromptActions, usePromptState } from '../context/PromptContext';
@@ -715,7 +715,7 @@ export function StudioModals(): React.JSX.Element {
           void handleLocalUpload(event.target.files);
         }}
       />
-      <SharedModal
+      <AppModal
         open={driveImportOpen}
         onClose={() => {
           setDriveImportOpen(false);
@@ -746,9 +746,9 @@ export function StudioModals(): React.JSX.Element {
             void handleDriveSelection(files);
           }}
         />
-      </SharedModal>
+      </AppModal>
 
-      <SharedModal
+      <AppModal
         open={slotCreateOpen}
         onClose={() => setSlotCreateOpen(false)}
         title='New Card'
@@ -790,9 +790,9 @@ export function StudioModals(): React.JSX.Element {
             Create Card From Local Upload
           </Button>
         </div>
-      </SharedModal>
+      </AppModal>
 
-      <SharedModal
+      <AppModal
         open={slotInlineEditOpen}
         onClose={() => setSlotInlineEditOpen(false)}
         title='Edit Card'
@@ -890,9 +890,9 @@ export function StudioModals(): React.JSX.Element {
         ) : (
           <div className='text-sm text-gray-400'>Select a card first.</div>
         )}
-      </SharedModal>
+      </AppModal>
 
-      <SharedModal
+      <AppModal
         open={extractReviewOpen}
         onClose={() => setExtractReviewOpen(false)}
         title='Extract Prompt Params'
@@ -1141,7 +1141,7 @@ export function StudioModals(): React.JSX.Element {
             </div>
           )}
         </div>
-      </SharedModal>
+      </AppModal>
     </>
   );
 }

@@ -19,6 +19,7 @@ import type { Prisma } from '@prisma/client';
 
 
 export const runtime = 'nodejs';
+export const revalidate = 3600;
 
 const languageCreateSchema = z.object({
   code: z.string().trim().min(1),

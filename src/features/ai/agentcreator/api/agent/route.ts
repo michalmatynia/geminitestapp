@@ -12,6 +12,8 @@ import { apiHandler } from '@/shared/lib/api/api-handler';
 import prisma from '@/shared/lib/db/prisma';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
+export const dynamic = 'force-dynamic';
+
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
@@ -54,7 +56,11 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
       durationMs: Date.now() - requestStart,
     });
   }
-  return NextResponse.json({ runs });
+  return NextResponse.json({ runs }, {
+    headers: {
+      'Cache-Control': 'no-store',
+    },
+  });
 }
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

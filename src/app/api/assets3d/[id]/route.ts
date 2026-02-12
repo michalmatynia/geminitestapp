@@ -7,6 +7,8 @@ import type { Asset3DUpdateInput } from '@/features/viewer3d/server';
 import { notFoundError, badRequestError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
+export const revalidate = 60;
+
 async function GET_handler(_req: NextRequest, _ctx: unknown, params: { id: string }): Promise<Response> {
   const repository = getAsset3DRepository();
   const asset = await repository.getAsset3DById(params.id);

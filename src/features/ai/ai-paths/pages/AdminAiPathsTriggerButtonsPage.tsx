@@ -29,7 +29,7 @@ import {
   SelectItem, 
   SelectTrigger, 
   SelectValue, 
-  SharedModal, 
+  AppModal, 
   useToast 
 } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
@@ -254,7 +254,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         </div>
       </SectionPanel>
 
-      <SharedModal
+      <AppModal
         open={editorOpen}
         onClose={(): void => setEditorOpen(false)}
         title={draft.id ? 'Edit Trigger Button' : 'Create Trigger Button'}
@@ -373,7 +373,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
             </Button>
           </div>
         </div>
-      </SharedModal>
+      </AppModal>
     </div>
   );
 }

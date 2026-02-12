@@ -10,7 +10,7 @@ import { ProductListingsProvider, useProductListingsContext } from '@/features/i
 import type { ProductListingWithDetails } from '@/features/integrations/types/listings';
 import type { ProductWithImages } from '@/features/products/types';
 import {
-  SharedModal,
+  AppModal,
   ImageRetryDropdown,
   Alert,
 } from '@/shared/ui';
@@ -86,7 +86,7 @@ function ProductListingsModalContent(): React.JSX.Element {
   const canStartListing: boolean = Boolean(onStartListing) && !filterIntegrationSlug;
 
   return (
-    <SharedModal
+    <AppModal
       open={true}
       onClose={onClose}
       title={`Integrations - ${productName}`}
@@ -169,7 +169,7 @@ function ProductListingsModalContent(): React.JSX.Element {
           </div>
         )}
       </div>
-    </SharedModal>
+    </AppModal>
   );
 }
 

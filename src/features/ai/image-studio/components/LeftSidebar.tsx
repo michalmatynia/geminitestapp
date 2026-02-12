@@ -230,7 +230,7 @@ export function LeftSidebar(): React.JSX.Element {
       </SectionPanel>
 
       <FormModal
-        isOpen={folderCreateOpen}
+        open={folderCreateOpen}
         onClose={() => setFolderCreateOpen(false)}
         title='Create Folder'
         onSave={handleCreateFolder}

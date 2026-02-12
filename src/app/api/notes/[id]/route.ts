@@ -11,6 +11,8 @@ import type { ApiHandlerContext } from '@/shared/types/api/api';
 import type { NoteUpdateInput } from '@/shared/types/domain/notes';
 import { removeUndefined } from '@/shared/utils';
 
+export const revalidate = 10;
+
 /**
  * GET /api/notes/[id]
  * Fetches a single note by ID.

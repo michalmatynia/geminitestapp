@@ -358,7 +358,6 @@ const upsertMongoSetting = async (
   return { key, value };
 };
 
-const SETTINGS_CACHE_CONTROL = 'private, max-age=120, stale-while-revalidate=600';
 const shouldLogTiming = () => process.env['DEBUG_API_TIMING'] === 'true';
 
 const buildServerTiming = (entries: Record<string, number | null | undefined>): string => {
@@ -487,6 +486,10 @@ async function GET_handler(
     await ErrorSystem.logInfo('[settings] GET /api/settings', { service: 'api/settings' });
   }
   const scope = scopeOverride ?? normalizeScope(req.nextUrl.searchParams.get('scope'));
+  
+  // Use no-store for settings to ensure freshness
+  const SETTINGS_CACHE_CONTROL = 'no-store';
+
   if (req.nextUrl.searchParams.get('debug') === '1' && isSettingsCacheDebugEnabled()) {
     const response = NextResponse.json(getSettingsCacheStats(), {
       headers: { 'Cache-Control': 'no-store' },

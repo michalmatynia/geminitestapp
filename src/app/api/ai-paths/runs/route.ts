@@ -114,7 +114,11 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     ...(limit !== undefined ? { limit } : {}),
     ...(offset !== undefined ? { offset } : {}),
   });
-  return NextResponse.json(result);
+  return NextResponse.json(result, {
+    headers: {
+      'Cache-Control': 'no-store',
+    },
+  });
 }
 
 async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

@@ -8,7 +8,7 @@ import {
   Button,
   Input,
   Label,
-  SharedModal,
+  AppModal,
   Alert,
   SectionPanel,
   Checkbox,
@@ -97,7 +97,7 @@ export function Asset3DEditModal({
   };
 
   return (
-    <SharedModal
+    <AppModal
       open={open}
       onClose={onClose}
       title='Edit 3D Asset'
@@ -255,6 +255,6 @@ export function Asset3DEditModal({
           </Alert>
         )}
       </div>
-    </SharedModal>
+    </AppModal>
   );
 }

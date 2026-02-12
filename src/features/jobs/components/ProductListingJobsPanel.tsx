@@ -11,7 +11,7 @@ import { useMemo } from 'react';
 
 import { JobsProvider, useJobsContext } from '@/features/jobs/context/JobsContext';
 import type { ListingJob, ProductJob } from '@/shared/types/domain/listing-jobs';
-import { Button, SharedModal, ListPanel, SectionHeader, StatusBadge, Pagination, DynamicFilters, RefreshButton, type FilterField } from '@/shared/ui';
+import { Button, AppModal, ListPanel, SectionHeader, StatusBadge, Pagination, DynamicFilters, RefreshButton, type FilterField } from '@/shared/ui';
 
 import { JobTable, type JobRowData } from './JobTable';
 
@@ -210,7 +210,7 @@ function ProductListingJobsPanelContent({
         ) : null}
       </ListPanel>
       {selectedListing && (
-        <SharedModal
+        <AppModal
           open={true}
           onClose={(): void => setSelectedListing(null)}
           title='Export Job Details'
@@ -342,7 +342,7 @@ function ProductListingJobsPanelContent({
               </div>
             </div>
           </div>
-        </SharedModal>
+        </AppModal>
       )}
     </>
   );

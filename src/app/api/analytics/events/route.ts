@@ -1,4 +1,5 @@
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -163,6 +164,10 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     range,
     scope: scopeRaw,
     ...result,
+  }, {
+    headers: {
+      'Cache-Control': 'no-store',
+    },
   });
 }
 

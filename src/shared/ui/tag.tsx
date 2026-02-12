@@ -4,6 +4,8 @@ import React from 'react';
 
 import { cn } from '@/shared/utils';
 
+import { Badge } from './badge';
+
 interface TagProps {
   label: string;
   color?: string | null;
@@ -24,10 +26,11 @@ export function Tag({
   const isClickable = !!onClick;
   
   return (
-    <span
+    <Badge
+      variant='outline'
       onClick={onClick}
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors',
+        'gap-1.5 px-2.5 py-0.5 font-medium transition-colors border-none',
         color ? 'text-white' : 'bg-primary/10 text-primary',
         isClickable && 'cursor-pointer hover:brightness-110',
         className
@@ -64,6 +67,6 @@ export function Tag({
           </svg>
         </button>
       )}
-    </span>
+    </Badge>
   );
 }

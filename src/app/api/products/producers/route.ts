@@ -8,6 +8,8 @@ import { conflictError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
+export const revalidate = 300;
+
 const producerCreateSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   website: z.string().trim().nullable().optional(),

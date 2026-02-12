@@ -13,6 +13,7 @@ import type { ApiHandlerContext } from '@/shared/types/api/api';
 import type { ObjectId } from 'mongodb';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 type MongoUserDoc = {
   _id: ObjectId;
@@ -73,7 +74,11 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       status: 200,
       extra: { count: users.length },
     });
-    return NextResponse.json({ provider, users });
+    return NextResponse.json({ provider, users }, {
+      headers: {
+        'Cache-Control': 'no-store',
+      },
+    });
   }
 
   if (!process.env['MONGODB_URI']) {
@@ -108,7 +113,11 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     status: 200,
     extra: { count: users.length },
   });
-  return NextResponse.json({ provider: 'mongodb', users });
+  return NextResponse.json({ provider: 'mongodb', users }, {
+    headers: {
+      'Cache-Control': 'no-store',
+    },
+  });
 }
 
 export const GET = apiHandler(

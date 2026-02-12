@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react';
 import { logClientError } from '@/features/observability';
 import { useProducers, useSaveProducerMutation, useDeleteProducerMutation } from '@/features/products/hooks/useProductMetadata';
 import type { Producer } from '@/features/products/types';
-import { Button, ConfirmDialog, EmptyState, Input, Label, SharedModal, useToast } from '@/shared/ui';
+import { Button, ConfirmDialog, EmptyState, Input, Label, AppModal, useToast } from '@/shared/ui';
 
 type ProducerFormState = {
   name: string;
@@ -159,7 +159,7 @@ export function AdminProductProducersPage(): React.JSX.Element {
         )}
       </div>
 
-      <SharedModal
+      <AppModal
         open={open}
         onClose={() => setOpen(false)}
         title={editing ? 'Edit Producer' : 'Create Producer'}
@@ -204,7 +204,7 @@ export function AdminProductProducersPage(): React.JSX.Element {
             </Button>
           </div>
         </div>
-      </SharedModal>
+      </AppModal>
 
       <ConfirmDialog
         open={!!toDelete}

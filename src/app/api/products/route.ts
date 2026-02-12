@@ -21,6 +21,8 @@ import { apiHandler } from '@/shared/lib/api/api-handler';
 import { env } from '@/shared/lib/env';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
+export const revalidate = 60;
+
 /**
  * GET /api/products
  * Fetches a list of products with caching and performance monitoring.
@@ -87,9 +89,7 @@ async function GET_handler(
       });
     }
 
-    const response = NextResponse.json(products, {
-      headers: { 'Cache-Control': 'no-store' },
-    });
+    const response = NextResponse.json(products);
     attachTimingHeaders(response, timings);
     return response;
   } catch (error) {

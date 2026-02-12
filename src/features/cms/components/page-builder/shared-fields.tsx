@@ -8,7 +8,7 @@ import { Viewer3D } from '@/features/viewer3d';
 import { Asset3DPreviewModal } from '@/features/viewer3d';
 import { useAssets3D, useAsset3DCategories, useAsset3DTags, useAsset3DById } from '@/features/viewer3d/hooks/useAsset3dQueries';
 import type { Asset3DListFilters, Asset3DRecord } from '@/features/viewer3d/types';
-import { Input, Label, UnifiedSelect, Checkbox, Button, SharedModal, useToast, SectionPanel, FileUploadButton, type FileUploadHelpers } from '@/shared/ui';
+import { Input, Label, UnifiedSelect, Checkbox, Button, AppModal, useToast, SectionPanel, FileUploadButton, type FileUploadHelpers } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { MediaLibraryPanel } from './MediaLibraryPanel';
@@ -232,7 +232,7 @@ export function Asset3DPickerField({
         </Button>
       ) : null}
 
-      <SharedModal open={open} onClose={() => setOpen(false)} title='Select 3D asset' size='xl'>
+      <AppModal open={open} onClose={() => setOpen(false)} title='Select 3D asset' size='xl'>
         <div className='space-y-4 text-sm text-gray-200'>
           <div className='grid gap-2 md:grid-cols-[1fr_200px_200px]'>
             <Input
@@ -364,7 +364,7 @@ export function Asset3DPickerField({
             </SectionPanel>
           </div>
         </div>
-      </SharedModal>
+      </AppModal>
 
       {previewAsset ? (
         <Asset3DPreviewModal

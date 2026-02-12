@@ -7,7 +7,7 @@ import {
   Input,
   Textarea,
   Label,
-  SharedModal,
+  AppModal,
   Select,
   SelectContent,
   SelectItem,
@@ -35,7 +35,7 @@ export function CategoryForm(): React.JSX.Element | null {
   if (!open) return null;
 
   return (
-    <SharedModal
+    <AppModal
       open={open}
       onClose={onClose}
       title={isEditing ? 'Edit Category' : 'Create Category'}
@@ -179,6 +179,6 @@ export function CategoryForm(): React.JSX.Element | null {
           </Button>
         </div>
       </div>
-    </SharedModal>
+    </AppModal>
   );
 }

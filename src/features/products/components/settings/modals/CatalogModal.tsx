@@ -264,7 +264,7 @@ export function CatalogModal({
 
   return (
     <FormModal
-      isOpen={isOpen}
+      open={isOpen}
       onClose={onClose}
       title={catalog ? 'Edit Catalog' : 'Create Catalog'}
       onSave={() => {

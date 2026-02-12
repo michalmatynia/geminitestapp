@@ -1,20 +1,28 @@
 import { cn } from '@/shared/utils';
 
 import type { HTMLAttributes, ReactNode } from 'react';
+import { Card, type CardProps } from './card';
 
 type SectionPanelVariant = 'default' | 'compact' | 'subtle' | 'subtle-compact' | 'danger';
-
-const variantStyles: Record<SectionPanelVariant, string> = {
-  default: 'rounded-lg border bg-card p-4',
-  compact: 'rounded-lg border bg-card p-3',
-  subtle: 'rounded-lg border bg-card/60 p-4 backdrop-blur',
-  'subtle-compact': 'rounded-lg border bg-card/60 p-3 backdrop-blur',
-  danger: 'rounded-lg border border-red-500/50 bg-red-500/10 p-4',
-};
 
 type SectionPanelProps = HTMLAttributes<HTMLDivElement> & {
   children: ReactNode;
   variant?: SectionPanelVariant;
+};
+
+const variantToCardProps = (variant: SectionPanelVariant): Partial<CardProps> => {
+  switch (variant) {
+    case 'compact':
+      return { variant: 'compact', padding: 'sm' };
+    case 'subtle':
+      return { variant: 'subtle', padding: 'md' };
+    case 'subtle-compact':
+      return { variant: 'subtle-compact', padding: 'sm' };
+    case 'danger':
+      return { variant: 'danger', padding: 'md' };
+    default:
+      return { variant: 'default', padding: 'md' };
+  }
 };
 
 export function SectionPanel({
@@ -23,9 +31,16 @@ export function SectionPanel({
   variant = 'default',
   ...props
 }: SectionPanelProps) {
+  const cardProps = variantToCardProps(variant);
+  
   return (
-    <div className={cn(variantStyles[variant], className)} {...props}>
+    <Card
+      className={className}
+      variant={cardProps.variant}
+      padding={cardProps.padding}
+      {...props}
+    >
       {children}
-    </div>
+    </Card>
   );
 }

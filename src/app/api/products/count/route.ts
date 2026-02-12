@@ -1,5 +1,5 @@
 export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const revalidate = 30;
 
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -16,10 +16,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
   const filters = Object.fromEntries(searchParams.entries());
 
   const count = await productService.countProducts(filters);
-  return NextResponse.json(
-    { count },
-    { headers: { 'Cache-Control': 'no-store' } }
-  );
+  return NextResponse.json({ count });
 }
 
 export const GET = apiHandler(

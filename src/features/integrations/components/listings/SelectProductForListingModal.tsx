@@ -112,7 +112,7 @@ function SelectProductForListingModalContent({
 
   return (
     <FormModal
-      isOpen={true}
+      open={true}
       onClose={onClose}
       title='List Product on Marketplace'
       onSave={() => { void handleSubmit(); }}

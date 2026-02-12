@@ -13,6 +13,8 @@ import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 import type { z } from 'zod';
 
+export const revalidate = 300;
+
 const parseBody = async (
   req: NextRequest,
   ctx: ApiHandlerContext

@@ -20,7 +20,11 @@ const integrationSchema = z.object({
  */
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const integrations = await integrationService.listIntegrations();
-  return NextResponse.json(integrations);
+  return NextResponse.json(integrations, {
+    headers: {
+      'Cache-Control': 'no-store',
+    },
+  });
 }
 
 /**

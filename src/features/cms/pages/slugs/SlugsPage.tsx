@@ -26,7 +26,7 @@ import {
   ConfirmDialog,
   EmptyState,
   SearchInput,
-  SharedModal,
+  AppModal,
   PageLayout,
 } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -192,7 +192,7 @@ export default function SlugsPage(): React.JSX.Element {
           {zoningEnabled ? (
             <Button variant='secondary' onClick={() => setAttachOpen(true)}>Attach Existing</Button>
           ) : null}
-          <SharedModal
+          <AppModal
             open={attachOpen}
             onClose={(): void => {
               setAttachOpen(false);
@@ -287,7 +287,7 @@ export default function SlugsPage(): React.JSX.Element {
                 ) : null}
               </div>
             </div>
-          </SharedModal>
+          </AppModal>
           <Button asChild>
             <Link href={buildDomainHref('/admin/cms/slugs/create')}>Create Slug</Link>
           </Button>

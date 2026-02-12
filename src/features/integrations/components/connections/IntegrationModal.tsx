@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 import type { PlaywrightPersona } from '@/features/playwright';
 import { PlaywrightSettingsProvider } from '@/features/playwright/context/PlaywrightSettingsContext';
-import { Tabs, TabsContent, TabsList, TabsTrigger, Button, SharedModal, Label, UnifiedSelect, SectionPanel } from '@/shared/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger, Button, AppModal, Label, UnifiedSelect, SectionPanel } from '@/shared/ui';
 
 import { AllegroApiConsole } from './AllegroApiConsole';
 import { AllegroSettings } from './AllegroSettings';
@@ -130,7 +130,7 @@ export function IntegrationModal(): React.JSX.Element {
   );
 
   return (
-    <SharedModal
+    <AppModal
       open={true}
       onClose={onCloseModal}
       title={`${activeIntegration.name} Integration`}
@@ -331,6 +331,6 @@ export function IntegrationModal(): React.JSX.Element {
             Playwright settings saved
         </div>
       )}
-    </SharedModal>
+    </AppModal>
   );
 }

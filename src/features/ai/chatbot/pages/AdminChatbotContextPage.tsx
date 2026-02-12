@@ -8,7 +8,7 @@ import React, { Suspense, useEffect, useRef, useState } from 'react';
 
 import type { ChatbotContextSegmentDto } from '@/shared/dtos/chatbot';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { Button, Input, Textarea, SharedModal, useToast, Label, Checkbox, SectionHeader, SectionPanel, Tag, FileUploadTrigger, type FileUploadHelpers } from '@/shared/ui';
+import { Button, Input, Textarea, AppModal, useToast, Label, Checkbox, SectionHeader, SectionPanel, Tag, FileUploadTrigger, type FileUploadHelpers } from '@/shared/ui';
 
 import * as chatbotApi from '../api';
 
@@ -490,7 +490,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
         </div>
       </SectionPanel>
       {isModalOpen && modalDraft ? (
-        <SharedModal
+        <AppModal
           open={isModalOpen}
           onClose={closeModal}
           title={
@@ -628,7 +628,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
                   Active in global context
             </Label>
           </div>
-        </SharedModal>
+        </AppModal>
       ) : null}
     </div>
   );

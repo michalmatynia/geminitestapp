@@ -8,7 +8,7 @@ import type {
   AiNode,
 } from '@/features/ai/ai-paths/lib';
 import type { PathMeta } from '@/shared/types/domain/ai-paths';
-import { Button, Input, Label, SharedModal, UnifiedSelect, useToast } from '@/shared/ui';
+import { Button, Input, Label, AppModal, UnifiedSelect, useToast } from '@/shared/ui';
 
 import { useAiPathsSettingsOrchestrator } from './AiPathsSettingsOrchestratorContext';
 import { useAiPathsErrorReporting } from './useAiPathsErrorReporting';
@@ -519,7 +519,7 @@ export function AiPathsSettingsView({
             )
             : null}
 
-          <SharedModal
+          <AppModal
             open={renameOpen}
             onClose={() => setRenameOpen(false)}
             title='Rename Path'
@@ -568,7 +568,7 @@ export function AiPathsSettingsView({
                 />
               </div>
             </div>
-          </SharedModal>
+          </AppModal>
 
           <div
             className={`grid grid-cols-1 min-h-0 transition-[grid-template-columns] duration-300 ease-in-out ${

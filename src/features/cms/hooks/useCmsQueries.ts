@@ -108,7 +108,7 @@ export function useCmsSlugs(domainId?: string | null): UseQueryResult<Slug[], Er
 
 export function useCmsAllSlugs(enabled: boolean = true): UseQueryResult<Slug[], Error> {
   return useQuery({
-    queryKey: [...cmsKeys.slugs.all, 'all'],
+    queryKey: cmsKeys.slugs.allSlugs(),
     queryFn: fetchAllSlugs,
     enabled,
   });
@@ -116,7 +116,7 @@ export function useCmsAllSlugs(enabled: boolean = true): UseQueryResult<Slug[], 
 
 export function useCmsSlug(id?: string, domainId?: string): UseQueryResult<Slug, Error> {
   return useQuery({
-    queryKey: id ? [...cmsKeys.slugs.detail(id), domainId ?? 'current'] : cmsKeys.slugs.detail(''),
+    queryKey: id ? cmsKeys.slugs.detailWithDomain(id, domainId) : cmsKeys.slugs.detail(''),
     queryFn: () => fetchSlug(id as string, domainId),
     enabled: !!id,
   });
@@ -325,7 +325,8 @@ export function useUploadCmsMedia(): UseMutationResult<
       return result.data;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['files'] });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.files.all });
     },
   });
 }
+      

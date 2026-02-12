@@ -20,7 +20,7 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
         ? 'file-uploads'
         : requestedTab === 'image-studio'
           ? 'image-studio'
-        : 'paths';
+          : 'paths';
   const [activeTab, setActiveTab] = useState<'paths' | 'paths-external' | 'file-uploads' | 'image-studio'>(defaultTab);
 
   useEffect(() => {
@@ -45,7 +45,7 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
                     ? 'file-uploads'
                     : next === 'image-studio'
                       ? 'image-studio'
-                    : 'paths'
+                      : 'paths'
               )
             }
             className='space-y-6'

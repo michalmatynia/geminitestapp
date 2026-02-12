@@ -10,7 +10,7 @@ import {
   useState,
 } from 'react';
 
-import { classifyError, getSuggestedActions } from '@/features/observability/utils/error-classifier';
+import { classifyError, getSuggestedActions } from '@/shared/errors/error-classifier';
 import { Button } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

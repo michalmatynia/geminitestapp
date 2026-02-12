@@ -32,13 +32,12 @@ import { ParamRow } from './ParamRow';
 import { StudioCard } from './StudioCard';
 import { UIPresetsPanel } from './UIPresetsPanel';
 import { useGenerationState } from '../context/GenerationContext';
+import { useMaskingState } from '../context/MaskingContext';
 import { useProjectsState } from '../context/ProjectsContext';
 import { usePromptActions, usePromptState } from '../context/PromptContext';
-import { useMaskingState } from '../context/MaskingContext';
 import { useSettingsState, useSettingsActions } from '../context/SettingsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { useUiActions, useUiState } from '../context/UiContext';
-import { buildRunRequestPreview } from '../utils/run-request-preview';
 import {
   IMAGE_STUDIO_ACTIVE_PROJECT_KEY,
   type ImageStudioProjectSession,
@@ -46,6 +45,7 @@ import {
   serializeImageStudioActiveProject,
   serializeImageStudioProjectSession,
 } from '../utils/project-session';
+import { buildRunRequestPreview } from '../utils/run-request-preview';
 
 export function RightSidebar(): React.JSX.Element {
   const { isFocusMode, validatorEnabled, formatterEnabled } = useUiState();
@@ -253,126 +253,126 @@ export function RightSidebar(): React.JSX.Element {
         aria-hidden={isFocusMode}
       >
         <div className='flex flex-wrap items-center justify-end gap-2 px-4 py-2'>
-        <Button
-          variant='outline'
-          size='sm'
-          title='Extract functions and selectors from prompt'
-          aria-label='Extract functions and selectors from prompt'
-          disabled={!promptText.trim()}
-          onClick={handleExtractReviewOpen}
-        >
-          <Sparkles className='mr-2 size-4' />
+          <Button
+            variant='outline'
+            size='sm'
+            title='Extract functions and selectors from prompt'
+            aria-label='Extract functions and selectors from prompt'
+            disabled={!promptText.trim()}
+            onClick={handleExtractReviewOpen}
+          >
+            <Sparkles className='mr-2 size-4' />
           Extract
-        </Button>
-        <Button
-          variant='outline'
-          size='sm'
-          title='Preview generation request payload and input images'
-          aria-label='Preview generation request payload and input images'
-          onClick={() => setRequestPreviewOpen(true)}
-        >
-          <Eye className='mr-2 size-4' />
+          </Button>
+          <Button
+            variant='outline'
+            size='sm'
+            title='Preview generation request payload and input images'
+            aria-label='Preview generation request payload and input images'
+            onClick={() => setRequestPreviewOpen(true)}
+          >
+            <Eye className='mr-2 size-4' />
           Preview Request
-        </Button>
-        <ValidatorFormatterToggle
-          validatorLabel='Validate'
-          formatterLabel='Format'
-          validatorEnabled={validatorEnabled}
-          formatterEnabled={formatterEnabled}
-          onValidatorChange={setValidatorEnabled}
-          onFormatterChange={setFormatterEnabled}
-        />
-        <Button
-          variant='outline'
-          size='sm'
-          title='Save current Image Studio project state'
-          aria-label='Save current Image Studio project state'
-          disabled={projectSaveBusy || !projectId.trim()}
-          onClick={handleSaveProject}
-        >
-          {projectSaveBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : <Save className='mr-2 size-4' />}
+          </Button>
+          <ValidatorFormatterToggle
+            validatorLabel='Validate'
+            formatterLabel='Format'
+            validatorEnabled={validatorEnabled}
+            formatterEnabled={formatterEnabled}
+            onValidatorChange={setValidatorEnabled}
+            onFormatterChange={setFormatterEnabled}
+          />
+          <Button
+            variant='outline'
+            size='sm'
+            title='Save current Image Studio project state'
+            aria-label='Save current Image Studio project state'
+            disabled={projectSaveBusy || !projectId.trim()}
+            onClick={handleSaveProject}
+          >
+            {projectSaveBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : <Save className='mr-2 size-4' />}
           Save Project
-        </Button>
+          </Button>
         </div>
         <div className='relative flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4 pt-0'>
-        <Textarea
-          value={promptText}
-          onChange={(event) => setPromptText(event.target.value)}
-          className='h-40 font-mono text-[11px]'
-          placeholder='Paste prompt here...'
-        />
-
-        <UIPresetsPanel />
-
-        <StudioCard label='Composite References'>
-          <MultiSelect
-            options={compositeAssetOptions}
-            selected={compositeAssetIds}
-            onChange={setCompositeAssetIds}
-            placeholder='Select additional reference cards'
-            searchPlaceholder='Search cards...'
-            emptyMessage='No cards available.'
-            className='w-full'
+          <Textarea
+            value={promptText}
+            onChange={(event) => setPromptText(event.target.value)}
+            className='h-40 font-mono text-[11px]'
+            placeholder='Paste prompt here...'
           />
-          <div className='text-[10px] text-gray-500'>
-            Selected references are sent with the base image for multi-image generation.
-          </div>
-        </StudioCard>
 
-        <MaskControlsPanel />
+          <UIPresetsPanel />
 
-        {runOutputs.length > 0 ? (
-          <div className='space-y-1'>
-            <Label className='text-xs text-gray-400'>Outputs ({runOutputs.length})</Label>
-            <OutputImageGrid
-              outputs={runOutputs}
-              onSaveAsSlot={projectId ? (output: OutputImage) => {
-                createSlots([
-                  {
-                    name: output.filename ?? 'Generated',
-                    imageFileId: output.id,
-                    metadata: workingSlotId
-                      ? {
-                        role: 'generation',
-                        sourceSlotId: workingSlotId,
-                        relationType: 'generation:output',
-                        generationFileId: output.id,
-                      }
-                      : {
-                        role: 'generation',
-                      },
-                  },
-                ])
-                  .then(() => toast('Saved to card history.', { variant: 'success' }))
-                  .catch(() => toast('Failed to save card history item.', { variant: 'error' }));
-              } : undefined}
+          <StudioCard label='Composite References'>
+            <MultiSelect
+              options={compositeAssetOptions}
+              selected={compositeAssetIds}
+              onChange={setCompositeAssetIds}
+              placeholder='Select additional reference cards'
+              searchPlaceholder='Search cards...'
+              emptyMessage='No cards available.'
+              className='w-full'
             />
-          </div>
-        ) : null}
-
-        {generationHistory.length > 0 ? (
-          <StudioCard label='History' count={generationHistory.length}>
-            <GenerationHistoryPanel />
-          </StudioCard>
-        ) : null}
-
-        <div className='flex-1 overflow-auto'>
-          {paramsState ? (
-            <div className='space-y-3'>
-              {flattenedParams.length > 0 ? (
-                flattenedParams.map((leaf) => (
-                  <ParamRow key={leaf.path} leaf={leaf} />
-                ))
-              ) : (
-                <div className='text-xs text-gray-500'>
-                  No editable params were found in the extracted payload.
-                </div>
-              )}
+            <div className='text-[10px] text-gray-500'>
+            Selected references are sent with the base image for multi-image generation.
             </div>
-          ) : (
-            <div className='text-sm text-gray-400'>Extract params to edit.</div>
-          )}
-        </div>
+          </StudioCard>
+
+          <MaskControlsPanel />
+
+          {runOutputs.length > 0 ? (
+            <div className='space-y-1'>
+              <Label className='text-xs text-gray-400'>Outputs ({runOutputs.length})</Label>
+              <OutputImageGrid
+                outputs={runOutputs}
+                onSaveAsSlot={projectId ? (output: OutputImage) => {
+                  createSlots([
+                    {
+                      name: output.filename ?? 'Generated',
+                      imageFileId: output.id,
+                      metadata: workingSlotId
+                        ? {
+                          role: 'generation',
+                          sourceSlotId: workingSlotId,
+                          relationType: 'generation:output',
+                          generationFileId: output.id,
+                        }
+                        : {
+                          role: 'generation',
+                        },
+                    },
+                  ])
+                    .then(() => toast('Saved to card history.', { variant: 'success' }))
+                    .catch(() => toast('Failed to save card history item.', { variant: 'error' }));
+                } : undefined}
+              />
+            </div>
+          ) : null}
+
+          {generationHistory.length > 0 ? (
+            <StudioCard label='History' count={generationHistory.length}>
+              <GenerationHistoryPanel />
+            </StudioCard>
+          ) : null}
+
+          <div className='flex-1 overflow-auto'>
+            {paramsState ? (
+              <div className='space-y-3'>
+                {flattenedParams.length > 0 ? (
+                  flattenedParams.map((leaf) => (
+                    <ParamRow key={leaf.path} leaf={leaf} />
+                  ))
+                ) : (
+                  <div className='text-xs text-gray-500'>
+                  No editable params were found in the extracted payload.
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className='text-sm text-gray-400'>Extract params to edit.</div>
+            )}
+          </div>
         </div>
       </SectionPanel>
 

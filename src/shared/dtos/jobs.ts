@@ -28,3 +28,9 @@ export type CreateProductAiJobDto = CreateDto<ProductAiJobDto>;
 export type UpdateProductAiJobDto = UpdateDto<ProductAiJobDto>;
 
 export interface JobQueueStatsDto {
+  running: boolean;
+  healthy: boolean;
+  processing: boolean;
+  lastPollTime: number;
+  timeSinceLastPoll: number;
+}

@@ -27,11 +27,10 @@ export interface PaginationDto {
 export interface PaginatedResponseDto<T> {
   data: T[];
   pagination: PaginationDto;
+  // Legacy compatibility fields
+  total?: number;
+  page?: number;
+  limit?: number;
 }
 
-export interface LegacyPaginatedResponseDto<T> {
-  data: T[];
-  total: number;
-  page: number;
-  limit: number;
-}
+export type LegacyPaginatedResponseDto<T> = PaginatedResponseDto<T>;

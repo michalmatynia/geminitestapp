@@ -4,6 +4,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import React from 'react';
 
 import { dbApi } from '@/features/ai/ai-paths/lib/api';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
 import { useAiPathConfig } from '../AiPathConfigContext';
@@ -80,7 +81,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
   };
 
   const schemaQuery = useQuery({
-    queryKey: ['db-schema', schemaConfig.provider ?? 'auto'],
+    queryKey: QUERY_KEYS.system.databases.schema({ provider: schemaConfig.provider ?? 'auto' }),
     queryFn: async (): Promise<SchemaData> => {
       const result = await dbApi.schema({ provider: schemaConfig.provider });
       if (!result.ok) {
@@ -92,7 +93,12 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
   });
 
   const browseQueryResult = useQuery({
-    queryKey: ['db-browse', browseProvider, browseCollection, browseSkip, browseQuery],
+    queryKey: QUERY_KEYS.system.databases.preview({
+      provider: browseProvider,
+      collection: browseCollection,
+      skip: browseSkip,
+      query: browseQuery,
+    }),
     queryFn: async (): Promise<{ documents: Record<string, unknown>[]; total: number }> => {
       if (!browseCollection) {
         return { documents: [], total: 0 };

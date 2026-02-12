@@ -10,6 +10,7 @@ import {
   type AiPathRunRecord,
   type RuntimeHistoryEntry,
 } from '@/features/ai/ai-paths/lib';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import { buildHistoryNodeOptions, type HistoryNodeOption } from '../run-history-utils';
 
@@ -250,7 +251,7 @@ export function useAiPathsRunHistory({
       : [];
 
   const runsQuery = useQuery<{ ok: boolean; data: { runs: AiPathRunRecord[] } }, Error>({
-    queryKey: ['ai-paths-runs', activePathId],
+    queryKey: QUERY_KEYS.ai.aiPaths.runs({ pathId: activePathId }),
     queryFn: async () => {
       const res = await runsApi.list({ ...(activePathId ? { pathId: activePathId } : {}) });
       return res as unknown as { ok: boolean; data: { runs: AiPathRunRecord[] } };

@@ -89,7 +89,7 @@ async function POST_handler(
     const parentStart = performance.now();
     const parent = await repository.getCategoryById(targetParentId);
     timings['parent'] = performance.now() - parentStart;
-    if (!parent || parent.catalogId !== nextCatalogId) {
+    if (parent?.catalogId !== nextCatalogId) {
       throw badRequestError('Parent category must be in the same catalog.', {
         parentId: targetParentId,
         catalogId: nextCatalogId,

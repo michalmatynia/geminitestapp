@@ -30,11 +30,8 @@ export type {
   ProductValidationTarget,
   ProductValidationSeverity,
   ProductValidatorConfig,
+  ProductCategoryWithChildren,
 } from '@/shared/types/domain/products';
-
-export type ProductCategoryWithChildren = ProductCategoryDto & {
-  children: ProductCategoryWithChildren[];
-};
 
 export type {
   CatalogRecord,

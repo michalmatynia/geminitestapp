@@ -1,7 +1,7 @@
 // Use consolidated types
 import type { Status } from '@/shared/types/core/base-types';
 
-import { DtoBase, NamedDto } from '../types/base';
+import { DtoBase, NamedDto, CreateDto, UpdateDto } from '../types/base';
 
 // Data Import/Export DTOs
 export interface ImportJobDto extends DtoBase {
@@ -35,6 +35,15 @@ export interface ImportTemplateDto extends NamedDto {
   fieldMappings: Record<string, string>;
 }
 
+export type CreateImportTemplateDto = CreateDto<ImportTemplateDto>;
+export type UpdateImportTemplateDto = UpdateDto<ImportTemplateDto>;
+
+export type CreateImportJobDto_Base = CreateDto<ImportJobDto>;
+export type UpdateImportJobDto = UpdateDto<ImportJobDto>;
+
+export type CreateExportJobDto_Base = CreateDto<ExportJobDto>;
+export type UpdateExportJobDto = UpdateDto<ExportJobDto>;
+
 export interface CreateImportJobDto {
   type: string;
   file: File;
@@ -46,12 +55,4 @@ export interface CreateExportJobDto {
   type: string;
   config: Record<string, unknown>;
   filters?: Record<string, unknown>;
-}
-
-export interface CreateImportTemplateDto {
-  name: string;
-  description?: string;
-  type: string;
-  config: Record<string, unknown>;
-  fieldMappings: Record<string, string>;
 }

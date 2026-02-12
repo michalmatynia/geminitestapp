@@ -5,9 +5,18 @@ import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/r
 import type { ImageTransformOptions } from '@/features/data-import-export';
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import type { ProductListingWithDetails } from '@/features/integrations/types/listings';
+import { invalidateProducts } from '@/features/products/hooks/productCache';
 import { api, ApiError } from '@/shared/lib/api-client';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { ProductJob } from '@/shared/types/domain/listing-jobs';
+
+import {
+  cancelProductListingsAndJobs,
+  getProductListingsQueryKey,
+  integrationJobsQueryKey,
+  invalidateListingsBadgesAndQueues,
+  invalidateProductListingsAndBadges,
+  listingBadgesQueryKey,
+} from './listingCache';
 
 export type ExportToBaseVariables = {
   connectionId: string;
@@ -29,12 +38,6 @@ type ExportResponse = {
   skuExists?: boolean;
   runId?: string | null;
 };
-
-const listingKeys = QUERY_KEYS.integrations;
-const integrationJobsQueryKey = ['jobs', 'integrations'] as const;
-const aiPathsJobQueueQueryKey = ['ai-paths-job-queue'] as const;
-const aiPathsQueueStatusQueryKey = ['ai-paths-queue-status'] as const;
-const listingBadgesQueryKey = QUERY_KEYS.integrations.productListingsBadges();
 
 type ListingBadgesPayload = Record<string, string>;
 type GenericExportToBaseVariables = ExportToBaseVariables & {
@@ -117,18 +120,10 @@ export function useGenericExportToBaseMutation(): UseMutationResult<
     },
     onSuccess: (_: ExportResponse, vars: GenericExportToBaseVariables): void => {
       setListingBadgeStatus(queryClient, vars.productId, 'active');
-      void queryClient.invalidateQueries({ queryKey: listingKeys.listings(vars.productId) });
-      void queryClient.invalidateQueries({ queryKey: integrationJobsQueryKey });
-      void queryClient.invalidateQueries({ queryKey: aiPathsJobQueueQueryKey });
-      void queryClient.invalidateQueries({ queryKey: aiPathsQueueStatusQueryKey });
-      void queryClient.invalidateQueries({ queryKey: listingBadgesQueryKey });
+      invalidateListingsBadgesAndQueues(queryClient, vars.productId);
     },
     onSettled: (_data, _error, vars): void => {
-      void queryClient.invalidateQueries({ queryKey: listingKeys.listings(vars.productId) });
-      void queryClient.invalidateQueries({ queryKey: integrationJobsQueryKey });
-      void queryClient.invalidateQueries({ queryKey: aiPathsJobQueueQueryKey });
-      void queryClient.invalidateQueries({ queryKey: aiPathsQueueStatusQueryKey });
-      void queryClient.invalidateQueries({ queryKey: listingBadgesQueryKey });
+      invalidateListingsBadgesAndQueues(queryClient, vars.productId);
     }
   });
 }
@@ -147,8 +142,7 @@ export function useGenericCreateListingMutation(): UseMutationResult<
         connectionId,
       }),
     onSuccess: (_: Record<string, unknown>, vars: { productId: string; integrationId: string; connectionId: string }): void => {
-      void queryClient.invalidateQueries({ queryKey: listingKeys.listings(vars.productId) });
-      void queryClient.invalidateQueries({ queryKey: listingBadgesQueryKey });
+      invalidateProductListingsAndBadges(queryClient, vars.productId);
     },
   });
 }
@@ -159,7 +153,7 @@ export function useDeleteFromBaseMutation(productId: string): UseMutationResult<
   { listingId: string; inventoryId?: string }
 > {
   const queryClient = useQueryClient();
-  const listingQueryKey = listingKeys.listings(productId);
+  const listingQueryKey = getProductListingsQueryKey(productId);
 
   return useMutation<
     { status?: string; message?: string; runId?: string | null },
@@ -179,10 +173,7 @@ export function useDeleteFromBaseMutation(productId: string): UseMutationResult<
       previousListings: ProductListingWithDetails[] | undefined;
       previousIntegrationJobs: ProductJob[] | undefined;
     }> => {
-      await Promise.all([
-        queryClient.cancelQueries({ queryKey: listingQueryKey }),
-        queryClient.cancelQueries({ queryKey: integrationJobsQueryKey }),
-      ]);
+      await cancelProductListingsAndJobs(queryClient, productId);
 
       const previousListings = queryClient.getQueryData<ProductListingWithDetails[]>(
         listingQueryKey
@@ -229,18 +220,10 @@ export function useDeleteFromBaseMutation(productId: string): UseMutationResult<
       }
     },
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({ queryKey: listingQueryKey });
-      void queryClient.invalidateQueries({ queryKey: integrationJobsQueryKey });
-      void queryClient.invalidateQueries({ queryKey: aiPathsJobQueueQueryKey });
-      void queryClient.invalidateQueries({ queryKey: aiPathsQueueStatusQueryKey });
-      void queryClient.invalidateQueries({ queryKey: listingBadgesQueryKey });
+      invalidateListingsBadgesAndQueues(queryClient, productId);
     },
     onSettled: (): void => {
-      void queryClient.invalidateQueries({ queryKey: listingQueryKey });
-      void queryClient.invalidateQueries({ queryKey: integrationJobsQueryKey });
-      void queryClient.invalidateQueries({ queryKey: aiPathsJobQueueQueryKey });
-      void queryClient.invalidateQueries({ queryKey: aiPathsQueueStatusQueryKey });
-      void queryClient.invalidateQueries({ queryKey: listingBadgesQueryKey });
+      invalidateListingsBadgesAndQueues(queryClient, productId);
     }
   });
 }
@@ -256,8 +239,7 @@ export function usePurgeListingMutation(productId: string): UseMutationResult<
     mutationFn: ({ listingId }: { listingId: string }) => 
       api.delete<void>(`/api/integrations/products/${productId}/listings/${listingId}/purge`),
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({ queryKey: listingKeys.listings(productId) });
-      void queryClient.invalidateQueries({ queryKey: listingBadgesQueryKey });
+      invalidateProductListingsAndBadges(queryClient, productId);
     },
   });
 }
@@ -273,8 +255,7 @@ export function useUpdateListingInventoryIdMutation(productId: string): UseMutat
     mutationFn: ({ listingId, inventoryId }: { listingId: string; inventoryId: string }) => 
       api.patch<Record<string, unknown>>(`/api/integrations/products/${productId}/listings/${listingId}`, { inventoryId }),
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({ queryKey: listingKeys.listings(productId) });
-      void queryClient.invalidateQueries({ queryKey: listingBadgesQueryKey });
+      invalidateProductListingsAndBadges(queryClient, productId);
     },
   });
 }
@@ -296,9 +277,8 @@ export function useSyncBaseImagesMutation(productId: string): UseMutationResult<
       };
     },
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({ queryKey: listingKeys.listings(productId) });
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
-      void queryClient.invalidateQueries({ queryKey: listingBadgesQueryKey });
+      invalidateProductListingsAndBadges(queryClient, productId);
+      void invalidateProducts(queryClient);
     },
   });
 }
@@ -346,18 +326,10 @@ export function useExportToBaseMutation(productId: string): UseMutationResult<
     },
     onSuccess: (): void => {
       setListingBadgeStatus(queryClient, productId, 'active');
-      void queryClient.invalidateQueries({ queryKey: listingKeys.listings(productId) });
-      void queryClient.invalidateQueries({ queryKey: integrationJobsQueryKey });
-      void queryClient.invalidateQueries({ queryKey: aiPathsJobQueueQueryKey });
-      void queryClient.invalidateQueries({ queryKey: aiPathsQueueStatusQueryKey });
-      void queryClient.invalidateQueries({ queryKey: listingBadgesQueryKey });
+      invalidateListingsBadgesAndQueues(queryClient, productId);
     },
     onSettled: (): void => {
-      void queryClient.invalidateQueries({ queryKey: listingKeys.listings(productId) });
-      void queryClient.invalidateQueries({ queryKey: integrationJobsQueryKey });
-      void queryClient.invalidateQueries({ queryKey: aiPathsJobQueueQueryKey });
-      void queryClient.invalidateQueries({ queryKey: aiPathsQueueStatusQueryKey });
-      void queryClient.invalidateQueries({ queryKey: listingBadgesQueryKey });
+      invalidateListingsBadgesAndQueues(queryClient, productId);
     },
   });
 }
@@ -376,8 +348,7 @@ export function useCreateListingMutation(productId: string): UseMutationResult<
         connectionId,
       }),
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({ queryKey: listingKeys.listings(productId) });
-      void queryClient.invalidateQueries({ queryKey: listingBadgesQueryKey });
+      invalidateProductListingsAndBadges(queryClient, productId);
     },
   });
 }

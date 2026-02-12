@@ -5,8 +5,8 @@ import { Dispatch, SetStateAction } from 'react';
 
 import type { ProductWithImages } from '@/features/products';
 import { api } from '@/shared/lib/api-client';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
+import { listingBadgesQueryKey } from './listingCache';
 
 export function useIntegrationOperations(): {
   integrationsProduct: ProductWithImages | null;
@@ -23,7 +23,6 @@ export function useIntegrationOperations(): {
   handleListProductSuccess: () => void;
   } {
   const queryClient = useQueryClient();
-  const listingBadgesQueryKey = QUERY_KEYS.integrations.productListingsBadges();
   
   // Integrations state
   const [integrationsProduct, setIntegrationsProduct] = useState<ProductWithImages | null>(null);

@@ -1,4 +1,6 @@
-import { DtoBase } from '../base';
+import { DtoBase, NamedDto, Localized, CreateDto, UpdateDto } from '../base';
+
+export type { DtoBase, NamedDto, Localized, CreateDto, UpdateDto };
 
 import type { SettingRecordDto } from '../../dtos/settings';
 

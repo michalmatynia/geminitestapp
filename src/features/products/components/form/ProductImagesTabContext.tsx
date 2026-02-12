@@ -2,10 +2,10 @@
 
 import React, { createContext, useContext } from 'react';
 
+import type { ProductImageManagerController } from '@/features/products/components/ProductImageManager';
 import { internalError } from '@/shared/errors/app-error';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
 
-import type { ProductImageManagerController } from '@/features/products/components/ProductImageManager';
 
 export type ProductImagesTabContextValue = {
   showFileManager?: boolean;

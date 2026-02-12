@@ -11,6 +11,7 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getDatabaseEnginePolicy } from '@/shared/lib/db/database-engine-policy';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 import type { ProductAiJobType } from '@/shared/types/domain/jobs';
+import { logger } from '@/shared/utils/logger';
 
 export const runtime = 'nodejs';
 
@@ -64,8 +65,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     entityId: job.id,
     entityType: 'job',
     metadata: { direction, jobId: job.id }
-  }).catch((error) => {
-    const { logger } = require('@/shared/utils/logger');
+  }).catch((error: Error) => {
     logger.warn('Failed to log database sync activity', error);
   });
 

@@ -1,4 +1,4 @@
-import { DtoBase } from '../types/base';
+import { DtoBase, CreateDto, UpdateDto } from '../types/base';
 
 // Folder Tree DTOs
 export interface FolderTreeNodeDto extends DtoBase {
@@ -11,15 +11,8 @@ export interface FolderTreeNodeDto extends DtoBase {
   children: FolderTreeNodeDto[];
 }
 
-export interface CreateFolderDto {
-  name: string;
-  parentId?: string;
-}
-
-export interface UpdateFolderDto {
-  name?: string;
-  parentId?: string;
-}
+export type CreateFolderDto = CreateDto<FolderTreeNodeDto>;
+export type UpdateFolderDto = UpdateDto<FolderTreeNodeDto>;
 
 export interface MoveFolderDto {
   id: string;

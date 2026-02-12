@@ -20,7 +20,6 @@ import {
 } from '@/features/ai/ai-paths/lib/settings-store-client';
 import { logClientError } from '@/features/observability/utils/client-error-logger';
 import { api } from '@/shared/lib/api-client';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type {
   AiNode,
   PathConfig,
@@ -31,6 +30,10 @@ import type {
 } from '@/shared/types/domain/ai-paths';
 import { useToast } from '@/shared/ui';
 
+import {
+  getProductDetailQueryKey,
+  invalidateProductsCountsAndDetail,
+} from './productCache';
 import { fetchPathSettings, findTriggerPath } from './useAiPathSettings';
 
 const AI_PATHS_ENTITY_STALE_MS = 10_000;
@@ -337,7 +340,7 @@ export function useAiPathTrigger(): {
         fetchEntityByType: async (entityType: string, entityId: string): Promise<Record<string, unknown> | null> => {
           if (entityType !== 'product') return null;
           return await queryClient.fetchQuery({
-            queryKey: QUERY_KEYS.products.detail(entityId),
+            queryKey: getProductDetailQueryKey(entityId),
             queryFn: async (): Promise<Record<string, unknown> | null> => {
               try {
                 return await api.get<Record<string, unknown>>(
@@ -383,11 +386,7 @@ export function useAiPathTrigger(): {
         });
       }
 
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() });
-      void queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.products.detail(product.id),
-      });
+      await invalidateProductsCountsAndDetail(queryClient, product.id);
 
       try {
         await persistRunResults(

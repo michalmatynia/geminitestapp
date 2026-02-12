@@ -10,6 +10,7 @@ import {
   isAppError,
   type AppErrorCode,
 } from '@/shared/errors/app-error';
+import { classifyError, getSuggestedActions } from '@/shared/errors/error-classifier';
 import { mapErrorToAppError } from '@/shared/errors/error-mapper';
 import { ErrorCategory, type SuggestedAction } from '@/shared/types/observability';
 
@@ -40,7 +41,6 @@ export const resolveError = (
   error: unknown,
   options?: ResolveOptions
 ): ResolvedError => {
-  const { classifyError, getSuggestedActions } = require('@/features/observability/utils/error-classifier');
   const errorId = randomUUID();
   const category = classifyError(error);
   const suggestedActions = getSuggestedActions(category, error);

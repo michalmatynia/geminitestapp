@@ -79,7 +79,7 @@ async function PUT_handler(
 
   if (nextParentId) {
     const parent = await repository.getCategoryById(nextParentId);
-    if (!parent || parent.catalogId !== nextCatalogId) {
+    if (parent?.catalogId !== nextCatalogId) {
       throw badRequestError('Parent category must be in the same catalog.', {
         parentId: nextParentId,
         catalogId: nextCatalogId,

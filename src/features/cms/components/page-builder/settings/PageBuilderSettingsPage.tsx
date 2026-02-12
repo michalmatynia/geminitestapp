@@ -3,8 +3,8 @@
 import { Loader2 } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { logClientError } from '@/features/observability';
+import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Card, Checkbox, Label, Button, useToast } from '@/shared/ui';
 

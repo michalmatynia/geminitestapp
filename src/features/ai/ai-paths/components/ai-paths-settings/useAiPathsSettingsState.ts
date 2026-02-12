@@ -56,6 +56,7 @@ import {
 } from '@/features/ai/ai-paths/lib';
 import { deleteAiPathsSettings, updateAiPathsSetting } from '@/features/ai/ai-paths/lib/settings-store-client';
 import { logClientError } from '@/features/observability';
+import { getProductDetailQueryKey } from '@/features/products/hooks/productCache';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
@@ -517,7 +518,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       let sample: Record<string, unknown> | null = null;
       if (resolvedType === 'product') {
         sample = await queryClient.fetchQuery({
-          queryKey: QUERY_KEYS.products.detail(entityId),
+          queryKey: getProductDetailQueryKey(entityId),
           queryFn: async () => {
             const result = await entityApi.getProduct(entityId);
             return result.ok ? result.data : null;
@@ -647,7 +648,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
         const normalized = entityType.toLowerCase();
         if (normalized === 'product') {
           sample = await queryClient.fetchQuery({
-            queryKey: QUERY_KEYS.products.detail(entityId),
+            queryKey: getProductDetailQueryKey(entityId),
             queryFn: async () => {
               const result = await entityApi.getProduct(entityId);
               return result.ok ? result.data : null;
@@ -773,7 +774,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
   );
 
   const modelsQuery = useQuery<{ models?: string[] }>({
-    queryKey: ['ai-paths-models'],
+    queryKey: QUERY_KEYS.ai.chatbot.models(),
     queryFn: async (): Promise<{ models?: string[] }> => {
       try {
         return await api.get<{ models?: string[] }>('/api/chatbot', {

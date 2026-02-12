@@ -1,78 +1,60 @@
-export type InventoryOption = {
-  id: string;
-  name: string;
-};
-
-export type BaseInventory = InventoryOption;
-
-export type WarehouseOption = {
-  id: string;
-  name: string;
-  typedId?: string;
-};
-
-export type WarehouseDebugRaw = {
-  ok: boolean;
-  statusCode: number;
-  error?: string;
-  method: string;
-  parameters: Record<string, unknown>;
-  payload: Record<string, unknown> | null;
-};
-
-export type InventoryDebugRaw = WarehouseDebugRaw & {
-  inventories?: InventoryOption[];
-};
-
-export type CatalogOption = {
-  id: string;
-  name: string;
-  isDefault?: boolean;
-};
-
-export type ImportResponse = {
-  imported: number;
-  failed: number;
-  total: number;
-  errors?: string[];
-};
-
-export type ImportListItem = {
-  baseProductId: string;
-  name: string;
-  sku: string | null;
-  exists: boolean;
-  skuExists?: boolean;
-  description?: string;
-  price?: number;
-  stock?: number;
-  image?: string | null;
-};
-
-export type TemplateMapping = {
-  sourceKey: string;
-  targetField: string;
-};
-
 import type { 
   ImageBase64Mode, 
   ImageTransformOptions, 
-  ImageRetryPreset 
+  ImageRetryPreset,
+  BaseInventory,
+  Template as DomainTemplate,
+  TemplateMapping as DomainTemplateMapping
 } from '@/shared/types/domain/integrations';
 
 export type {
   ImageBase64Mode,
   ImageTransformOptions,
   ImageRetryPreset,
+  BaseInventory,
 };
 
-export type Template = {
+export type InventoryOption = {
   id: string;
   name: string;
+};
+
+export type WarehouseOption = {
+  id: string;
+  name: string;
+};
+
+export type CatalogOption = {
+  id: string;
+  name: string;
+  isDefault: boolean;
+};
+
+export type ImportListItem = {
+  baseProductId: string;
+  name: string;
+  sku: string;
+  exists: boolean;
+  skuExists: boolean;
+  image?: string | null;
+  price?: number;
+  stock?: number;
   description?: string;
-  mapping?: TemplateMapping[];
-  mappings?: TemplateMapping[];
-  exportImagesAsBase64?: boolean;
+};
+
+export type ImportResponse = {
+  total: number;
+  imported: number;
+  failed: number;
+  errors: Array<{ productId?: string; sku?: string; error: string }>;
+};
+
+export type TemplateMapping = DomainTemplateMapping & {
+  sourceKey?: string; // Compatibility field
+};
+
+export type Template = DomainTemplate & {
+  exportImagesAsBase64?: boolean; // Compatibility field
 };
 
 export type ExportParameterDoc = {
@@ -89,6 +71,22 @@ export type ImportListStats = {
   page?: number;
   pageSize?: number;
   totalPages?: number;
+};
+
+export type WarehouseDebugRaw = {
+  method: string;
+  statusCode: number;
+  ok: boolean;
+  error: string | null;
+  payload: unknown;
+};
+
+export type InventoryDebugRaw = {
+  method: string;
+  statusCode: number;
+  ok: boolean;
+  error: string | null;
+  payload: unknown;
 };
 
 export type DebugWarehouses = {

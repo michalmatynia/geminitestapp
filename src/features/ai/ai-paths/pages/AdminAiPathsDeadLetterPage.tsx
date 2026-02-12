@@ -5,6 +5,7 @@ import { Fragment, useEffect, useMemo, useState } from 'react';
 
 import { runsApi } from '@/features/ai/ai-paths/lib';
 import { logClientError } from '@/features/observability';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type {
   AiPathRunEventRecord,
   AiPathRunNodeRecord,
@@ -66,7 +67,13 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
   const offset = (page - 1) * pageSize;
 
   const runsQuery = useQuery<{ runs: AiPathRunRecord[]; total: number }>({
-    queryKey: ['ai-paths-dead-letter', normalizedPathId, normalizedQuery, page, pageSize],
+    queryKey: QUERY_KEYS.ai.aiPaths.deadLetter({
+      status: 'dead_lettered',
+      pathId: normalizedPathId,
+      query: normalizedQuery,
+      page,
+      pageSize,
+    }),
     queryFn: async (): Promise<{ runs: AiPathRunRecord[]; total: number }> => {
       const response = await runsApi.list({
         status: 'dead_lettered',

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 
+import { logClientError } from '@/features/observability';
 import { PlaywrightSettingsForm } from '@/features/playwright/components/PlaywrightSettingsForm';
 import { usePlaywrightPersonas, useSavePlaywrightPersonasMutation } from '@/features/playwright/hooks/usePlaywrightPersonas';
 import type {
@@ -9,7 +10,6 @@ import type {
   PlaywrightSettings,
 } from '@/features/playwright/types';
 import { buildPlaywrightSettings, createPlaywrightPersonaId } from '@/features/playwright/utils/personas';
-import { logClientError } from '@/features/observability';
 import { ItemLibrary, useToast } from '@/shared/ui';
 
 import type { SetStateAction } from 'react';

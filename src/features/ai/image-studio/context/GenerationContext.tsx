@@ -18,9 +18,9 @@ import { useProjectsState } from './ProjectsContext';
 import { usePromptState, usePromptActions } from './PromptContext';
 import { useSettingsState } from './SettingsContext';
 import { useSlotsState } from './SlotsContext';
+import { buildRunRequestPreview } from '../utils/run-request-preview';
 
 import type { UseMutationResult } from '@tanstack/react-query';
-import { buildRunRequestPreview } from '../utils/run-request-preview';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -284,10 +284,10 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
             sseConnected = true;
           };
 
-          source.onmessage = (event) => {
+          source.onmessage = (event: MessageEvent) => {
             if (token.cancelled || token.settled || pollTokenRef.current !== token) return;
             try {
-              const payload = JSON.parse(event.data) as { type?: string };
+              const payload = JSON.parse(event.data as string) as { type?: string };
               if (payload?.type === 'heartbeat') return;
             } catch {
               // Continue with status refresh for unknown event payloads.

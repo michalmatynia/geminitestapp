@@ -566,14 +566,10 @@ export function ExportTab(): React.JSX.Element {
                     ) : null}
                     {((): React.JSX.Element | null => {
                       const payload = debugWarehouses.inventoriesRaw
-                        ?.payload as Record<string, unknown> | null | undefined;
-                      const inventories = payload
-                        ? payload['inventories']
-                        : null;
+                        ?.payload as { inventories?: Array<Record<string, unknown>> } | null | undefined;
+                      const inventories = payload?.inventories;
                       if (!Array.isArray(inventories)) return null;
-                      const match = (
-                        inventories as Array<Record<string, unknown>>
-                      ).find((inv: Record<string, unknown>) => {
+                      const match = inventories.find((inv: Record<string, unknown>) => {
                         if (!inv || typeof inv !== 'object') return false;
                         const inventoryId = inv['inventory_id'];
                         return (

@@ -1,4 +1,4 @@
-import { NamedDto } from '../types/base';
+import { NamedDto, CreateDto, UpdateDto } from '../types/base';
 
 // 3D Viewer DTOs
 export interface Asset3dDto extends NamedDto {
@@ -11,15 +11,10 @@ export interface Asset3dDto extends NamedDto {
   metadata: Record<string, unknown>;
 }
 
-export interface Asset3dCategoryDto extends NamedDto {
-  parentId: string | null;
-}
+export type CreateAsset3dDto_Base = CreateDto<Asset3dDto>;
+export type UpdateAsset3dDto = UpdateDto<Asset3dDto>;
 
-export interface Asset3dTagDto extends NamedDto {
-  color: string | null;
-}
-
-export interface CreateAsset3dDto {
+export interface UploadAsset3dDto {
   name: string;
   description?: string;
   file: File;
@@ -28,13 +23,19 @@ export interface CreateAsset3dDto {
   metadata?: Record<string, unknown>;
 }
 
-export interface UpdateAsset3dDto {
-  name?: string;
-  description?: string;
-  categoryId?: string;
-  tags?: string[];
-  metadata?: Record<string, unknown>;
+export interface Asset3dCategoryDto extends NamedDto {
+  parentId: string | null;
 }
+
+export type CreateAsset3dCategoryDto = CreateDto<Asset3dCategoryDto>;
+export type UpdateAsset3dCategoryDto = UpdateDto<Asset3dCategoryDto>;
+
+export interface Asset3dTagDto extends NamedDto {
+  color: string | null;
+}
+
+export type CreateAsset3dTagDto = CreateDto<Asset3dTagDto>;
+export type UpdateAsset3dTagDto = UpdateDto<Asset3dTagDto>;
 
 export interface Asset3dViewerConfigDto {
   backgroundColor: string;

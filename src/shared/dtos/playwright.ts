@@ -42,33 +42,14 @@ export interface PlaywrightTestRunDto extends DtoBase {
   completedAt: string | null;
 }
 
-export interface CreatePlaywrightPersonaDto {
-  name: string;
-  description?: string;
-  settings: PlaywrightSettingsDto;
-}
+export type CreatePlaywrightPersonaDto = CreateDto<PlaywrightPersonaDto>;
+export type UpdatePlaywrightPersonaDto = UpdateDto<PlaywrightPersonaDto>;
 
-export interface UpdatePlaywrightPersonaDto {
-  name?: string;
-  description?: string;
-  settings?: Partial<PlaywrightSettingsDto>;
-}
+export type CreatePlaywrightTestDto = CreateDto<PlaywrightTestDto>;
+export type UpdatePlaywrightTestDto = UpdateDto<PlaywrightTestDto>;
 
-export interface CreatePlaywrightTestDto {
-  name: string;
-  description?: string;
-  script: string;
-  config?: Record<string, unknown>;
-  enabled?: boolean;
-}
-
-export interface UpdatePlaywrightTestDto {
-  name?: string;
-  description?: string;
-  script?: string;
-  config?: Record<string, unknown>;
-  enabled?: boolean;
-}
+export type CreatePlaywrightTestRunDto = CreateDto<PlaywrightTestRunDto>;
+export type UpdatePlaywrightTestRunDto = UpdateDto<PlaywrightTestRunDto>;
 
 export interface ExecutePlaywrightTestDto {
   testId: string;

@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react';
 import React from 'react';
 
 import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   Button,
   Label,
@@ -62,7 +63,7 @@ export function ImageStudioRunsQueuePanel(): React.JSX.Element {
   const [autoRefreshEnabled, setAutoRefreshEnabled] = React.useState(true);
 
   const runsQuery = useQuery<RunsResponse>({
-    queryKey: ['image-studio-run-queue', statusFilter],
+    queryKey: QUERY_KEYS.imageStudio.runs({ status: statusFilter }),
     queryFn: async () => {
       return await api.get<RunsResponse>('/api/image-studio/runs', {
         params: {

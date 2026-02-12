@@ -4,7 +4,6 @@ import { useRouter, useParams } from 'next/navigation';
 import React, { useState } from 'react';
 
 import { useCmsTheme, useUpdateTheme } from '@/features/cms/hooks/useCmsQueries';
-import { logClientError } from '@/features/observability';
 import type {
   CmsTheme,
   CmsThemeColors,
@@ -13,6 +12,7 @@ import type {
   CmsThemeUpdateInput,
 } from '@/features/cms/types';
 import { cmsThemeUpdateSchema } from '@/features/cms/validations/api';
+import { logClientError } from '@/features/observability';
 import { Button, Input, SectionHeader, FormSection, FormField } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 

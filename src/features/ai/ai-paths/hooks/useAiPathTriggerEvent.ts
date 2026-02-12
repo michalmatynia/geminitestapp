@@ -27,6 +27,10 @@ import {
 } from '@/features/ai/ai-paths/lib/settings-store-client';
 import { jobKeys } from '@/features/jobs/hooks/useJobQueries';
 import { logClientError } from '@/features/observability';
+import {
+  getProductDetailQueryKey,
+  invalidateProductsAndCounts,
+} from '@/features/products/hooks/productCache';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type {
@@ -522,11 +526,10 @@ export function useAiPathTriggerEvent(): {
           ? crypto.randomUUID()
           : `run_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
       const invalidateProductQueries = (productId?: string | null): void => {
-        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
-        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() });
+        void invalidateProductsAndCounts(queryClient);
         if (productId) {
           void queryClient.invalidateQueries({
-            queryKey: QUERY_KEYS.products.detail(productId),
+            queryKey: getProductDetailQueryKey(productId),
           });
         }
         void queryClient.invalidateQueries({ queryKey: jobKeys.productAi('all') });

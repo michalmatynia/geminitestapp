@@ -18,6 +18,13 @@ export const QUERY_KEYS = {
     count: (filters: unknown) => [...QUERY_KEYS.products.counts(), { filters }] as const,
     details: () => [...QUERY_KEYS.products.all, 'detail'] as const,
     detail: (id: string) => [...QUERY_KEYS.products.details(), id] as const,
+    detailEdit: (id: string) => [...QUERY_KEYS.products.detail(id), 'edit'] as const,
+    enhanced: () => [...QUERY_KEYS.products.all, 'enhanced'] as const,
+    enhancedCount: () => [...QUERY_KEYS.products.all, 'enhanced-count'] as const,
+    categoriesAll: () => [...QUERY_KEYS.products.all, 'categories'] as const,
+    tagsAll: () => [...QUERY_KEYS.products.all, 'tags'] as const,
+    validatorLatestProductSource: () =>
+      [...QUERY_KEYS.products.all, 'validator', 'latest-product-source'] as const,
     aiJobs: {
       all: ['products', 'ai-jobs'] as const,
       detail: (id: string) => [...QUERY_KEYS.products.aiJobs.all, id] as const,
@@ -55,6 +62,7 @@ export const QUERY_KEYS = {
   settings: {
     all: ['settings'] as const,
     scope: (scope: string) => [...QUERY_KEYS.settings.all, scope] as const,
+    composed: () => [...QUERY_KEYS.settings.all, 'composed'] as const,
   },
   notes: {
     all: ['notes'] as const,
@@ -64,8 +72,8 @@ export const QUERY_KEYS = {
     search: (query: string) => [...QUERY_KEYS.notes.all, 'search', { query }] as const,
     lookup: (ids: string[]) => [...QUERY_KEYS.notes.all, 'lookup', { ids }] as const,
     notebooks: ['notes', 'notebooks'] as const,
-    tags: ['notes', 'tags'] as const,
-    categories: ['notes', 'categories'] as const,
+    tags: (notebookId?: string) => [...QUERY_KEYS.notes.all, 'tags', notebookId] as const,
+    categories: (notebookId?: string | null) => [...QUERY_KEYS.notes.all, 'categories', notebookId] as const,
     folderTree: (notebookId?: string) => [...QUERY_KEYS.notes.all, 'folder-tree', notebookId] as const,
     themes: (notebookId?: string) => [...QUERY_KEYS.notes.all, 'themes', notebookId] as const,
   },
@@ -79,7 +87,9 @@ export const QUERY_KEYS = {
     slugs: {
       all: ['cms', 'slugs'] as const,
       list: (domainId?: string | null) => [...QUERY_KEYS.cms.slugs.all, domainId ?? 'all'] as const,
+      allSlugs: () => [...QUERY_KEYS.cms.slugs.all, 'all'] as const,
       detail: (id: string) => ['cms', 'slug', id] as const,
+      detailWithDomain: (id: string, domainId?: string) => [...QUERY_KEYS.cms.slugs.detail(id), domainId ?? 'current'] as const,
       domains: (id: string) => ['cms', 'slug-domains', id] as const,
     },
     domains: {
@@ -144,20 +154,27 @@ export const QUERY_KEYS = {
     chatbot: {
       all: ['chatbot'] as const,
       sessions: () => [...QUERY_KEYS.ai.chatbot.all, 'sessions'] as const,
+      sessionIds: (query?: string) => [...QUERY_KEYS.ai.chatbot.sessions(), 'ids', query ?? 'all'] as const,
       session: (id: string) => [...QUERY_KEYS.ai.chatbot.sessions(), id] as const,
       memory: (query?: string) => [...QUERY_KEYS.ai.chatbot.all, 'memory', query ?? 'all'] as const,
       context: () => [...QUERY_KEYS.ai.chatbot.all, 'context'] as const,
-      settings: (key?: string) => [...QUERY_KEYS.ai.chatbot.all, 'settings', key ?? 'default'] as const,
+      settings: {
+        all: (key?: string) => [...QUERY_KEYS.ai.chatbot.all, 'settings', key ?? 'default'] as const,
+        allSettings: (key?: string) => [...QUERY_KEYS.ai.chatbot.settings.all(key), 'all-settings'] as const,
+      },
       models: () => [...QUERY_KEYS.ai.chatbot.all, 'models'] as const,
+      ollamaModels: (baseUrl: string) => [...QUERY_KEYS.ai.chatbot.models(), 'ollama', baseUrl] as const,
     },
     aiPaths: {
       all: ['ai', 'ai-paths'] as const,
       settings: () => [...QUERY_KEYS.ai.aiPaths.all, 'settings'] as const,
       triggerButtons: () => [...QUERY_KEYS.ai.aiPaths.all, 'trigger-buttons'] as const,
-      runs: () => [...QUERY_KEYS.ai.aiPaths.all, 'runs'] as const,
-      run: (id: string) => [...QUERY_KEYS.ai.aiPaths.runs(), id] as const,
+      runs: (filters?: unknown) => [...QUERY_KEYS.ai.aiPaths.all, 'runs', filters ? { filters } : 'all'] as const,
+      run: (id: string) => [...QUERY_KEYS.ai.aiPaths.all, 'runs', 'detail', id] as const,
       deadLetter: (filters: unknown) => [...QUERY_KEYS.ai.aiPaths.all, 'dead-letter', filters] as const,
       runtimeAnalytics: (range: string) => [...QUERY_KEYS.ai.aiPaths.all, 'runtime-analytics', { range }] as const,
+      jobQueue: (filters: unknown) => [...QUERY_KEYS.ai.aiPaths.all, 'job-queue', { filters }] as const,
+      queueStatus: () => [...QUERY_KEYS.ai.aiPaths.all, 'queue-status'] as const,
     },
     insights: {
       all: ['ai', 'insights'] as const,
@@ -245,6 +262,8 @@ export const QUERY_KEYS = {
     projects: () => [...QUERY_KEYS.imageStudio.all, 'projects'] as const,
     slots: (projectId: string) => [...QUERY_KEYS.imageStudio.all, 'slots', projectId] as const,
     models: () => [...QUERY_KEYS.imageStudio.all, 'models'] as const,
+    runs: (filters: unknown) => [...QUERY_KEYS.imageStudio.all, 'runs', { filters }] as const,
+    run: (id: string) => [...QUERY_KEYS.imageStudio.all, 'runs', 'detail', id] as const,
   },
   agentRuns: {
     all: ['agent-runs'] as const,
@@ -281,8 +300,26 @@ export const QUERY_KEYS = {
     categories: ['assets3d', 'categories'] as const,
     tags: ['assets3d', 'tags'] as const,
   },
+  search: {
+    all: ['search'] as const,
+    term: (searchTerm: string) => [...QUERY_KEYS.search.all, searchTerm] as const,
+    paginated: (searchTerm: string, pageSize: number) => [...QUERY_KEYS.search.all, 'paginated', searchTerm, pageSize] as const,
+    suggestions: (searchTerm: string) => [...QUERY_KEYS.search.all, 'suggestions', searchTerm] as const,
+  },
   files: {
     all: ['files'] as const,
     list: (params: string) => [...QUERY_KEYS.files.all, 'list', params] as const,
+  },
+  navigation: {
+    all: ['navigation'] as const,
+    route: (path: string) => [...QUERY_KEYS.navigation.all, path] as const,
+  },
+  user: {
+    all: ['user'] as const,
+    preferences: (userId: string) => [...QUERY_KEYS.user.all, 'preferences', userId] as const,
+    settings: (userId: string) => [...QUERY_KEYS.user.all, 'settings', userId] as const,
+  },
+  health: {
+    status: ['health-status'] as const,
   }
 } as const;

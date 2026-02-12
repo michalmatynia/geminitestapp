@@ -132,9 +132,9 @@ export function useCreateNoteTag(): UseMutationResult<TagRecord, Error, TagCreat
     mutationFn: (payload: TagCreateInput) =>
       api.post<TagRecord>('/api/notes/tags', payload),
     onSuccess: (_data: TagRecord, variables: TagCreateInput): void => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.tags });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.tags() });
       if (variables.notebookId) {
-        void queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.notes.tags, variables.notebookId] });
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.tags(variables.notebookId) });
       }
     },
   });

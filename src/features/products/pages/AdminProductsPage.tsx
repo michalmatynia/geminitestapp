@@ -26,6 +26,12 @@ import {
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/features/products/constants';
 import { ProductListProvider } from '@/features/products/context/ProductListContext';
+import {
+  getProductDetailQueryKey,
+  getProductListQueryKey,
+  inactiveProductDetailQueryKey,
+  invalidateProductsAndCounts,
+} from '@/features/products/hooks/productCache';
 import { useCatalogSync } from '@/features/products/hooks/useCatalogSync';
 import {
   useProductData,
@@ -43,7 +49,6 @@ import type { ProductWithImages } from '@/features/products/types';
 import type { ProductDraft } from '@/features/products/types/drafts';
 import { useProductListSync } from '@/shared/hooks/sync/useBackgroundSync';
 import { api } from '@/shared/lib/api-client';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast, ConfirmDialog } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -196,8 +201,8 @@ export function AdminProductsPage(): React.JSX.Element {
   } = useProductOperations(setRefreshTrigger);
   const editingProductDetailQuery = useQuery({
     queryKey: editingProduct
-      ? QUERY_KEYS.products.detail(editingProduct.id)
-      : [...QUERY_KEYS.products.details(), 'inactive'],
+      ? getProductDetailQueryKey(editingProduct.id)
+      : inactiveProductDetailQueryKey,
     queryFn: () => api.get<ProductWithImages>(`/api/products/${editingProduct?.id}`),
     enabled: Boolean(editingProduct?.id),
     staleTime: 0,
@@ -245,7 +250,7 @@ export function AdminProductsPage(): React.JSX.Element {
       setActionError(null);
       try {
         const fullProduct = await queryClient.fetchQuery({
-          queryKey: QUERY_KEYS.products.detail(product.id),
+          queryKey: getProductDetailQueryKey(product.id),
           queryFn: () => api.get<ProductWithImages>(`/api/products/${product.id}`),
           staleTime: 0,
         });
@@ -426,7 +431,7 @@ export function AdminProductsPage(): React.JSX.Element {
       };
 
       const allProducts = await queryClient.fetchQuery({
-        queryKey: QUERY_KEYS.products.list({ scope: 'all', ...filters }),
+        queryKey: getProductListQueryKey({ scope: 'all', ...filters }),
         queryFn: () => getProducts(filters)
       });
 
@@ -490,8 +495,7 @@ export function AdminProductsPage(): React.JSX.Element {
   useEffect(() => {
     setIsMounted(true);
     // Force fresh product queries on mount to avoid showing stale persisted caches.
-    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
-    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() });
+    void invalidateProductsAndCounts(queryClient);
   }, [queryClient]);
 
   useEffect(() => {

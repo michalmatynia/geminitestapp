@@ -14,6 +14,7 @@ import { apiHandler } from '@/shared/lib/api/api-handler';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
+import { logger } from '@/shared/utils/logger';
 
 export const runtime = 'nodejs';
 
@@ -95,8 +96,7 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
       entityId: user.id,
       entityType: 'user',
       metadata: { email: user.email }
-    }).catch((error) => {
-      const { logger } = require('@/shared/utils/logger');
+    }).catch((error: Error) => {
       logger.warn('Failed to log registration activity', error);
     });
     return NextResponse.json(
@@ -140,15 +140,15 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
     userId: result.insertedId.toString(),
     entityId: result.insertedId.toString(),
     entityType: 'user',
-    metadata: { email: doc.email }
-  }).catch((error) => {
-    const { logger } = require('@/shared/utils/logger');
+    metadata: { email: doc.email },
+  }).catch((error: Error) => {
     logger.warn('Failed to log registration activity', error);
   });
   return NextResponse.json(
     { id: result.insertedId.toString(), email: doc.email, name: doc.name },
     { status: 201 }
-  );}
+  );
+}
 
 export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),

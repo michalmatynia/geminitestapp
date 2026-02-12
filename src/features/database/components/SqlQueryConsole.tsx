@@ -23,7 +23,8 @@ function loadHistory(): string[] {
   try {
     const raw = localStorage.getItem(HISTORY_KEY);
     return raw ? (JSON.parse(raw) as string[]) : [];
-  } catch {
+  } catch (error) {
+    logClientError(error, { context: { source: 'SqlQueryConsole', action: 'loadHistory' } });
     return [];
   }
 }

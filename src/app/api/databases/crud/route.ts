@@ -133,8 +133,6 @@ async function handlePostgresCrud(
       rowCount: result.rowCount ?? 0,
       returning: result.rows,
     });
-  } catch (error) {
-    throw error;
   } finally {
     await client.end().catch(() => {});
   }
@@ -158,53 +156,49 @@ async function handleMongoCrud(
   const db = mongoClient.db(dbName);
   const collection = db.collection(collectionName);
 
-  try {
-    if (operation === 'insert') {
-      if (!data || Object.keys(data).length === 0) {
-        throw badRequestError('Data is required for insert.');
-      }
-      const result = await collection.insertOne(data);
-      return NextResponse.json({
-        success: result.acknowledged,
-        rowCount: result.acknowledged ? 1 : 0,
-        returning: [{ _id: result.insertedId, ...data }],
-      });
+  if (operation === 'insert') {
+    if (!data || Object.keys(data).length === 0) {
+      throw badRequestError('Data is required for insert.');
     }
+    const result = await collection.insertOne(data);
+    return NextResponse.json({
+      success: result.acknowledged,
+      rowCount: result.acknowledged ? 1 : 0,
+      returning: [{ _id: result.insertedId, ...data }],
+    });
+  }
 
-    if (operation === 'update') {
-      if (!data || Object.keys(data).length === 0) {
-        throw badRequestError('Data is required for update.');
-      }
-      if (!primaryKey || Object.keys(primaryKey).length === 0) {
-        throw badRequestError('Primary key is required for update.');
-      }
-      const filter: Record<string, unknown> = {};
-      for (const [k, v] of Object.entries(primaryKey)) {
-        filter[k] = k === '_id' ? toObjectId(v) : v;
-      }
-      const result = await collection.updateOne(filter, { $set: data });
-      return NextResponse.json({
-        success: result.acknowledged,
-        rowCount: result.modifiedCount,
-      });
+  if (operation === 'update') {
+    if (!data || Object.keys(data).length === 0) {
+      throw badRequestError('Data is required for update.');
     }
-
-    // delete
     if (!primaryKey || Object.keys(primaryKey).length === 0) {
-      throw badRequestError('Primary key is required for delete.');
+      throw badRequestError('Primary key is required for update.');
     }
     const filter: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(primaryKey)) {
       filter[k] = k === '_id' ? toObjectId(v) : v;
     }
-    const result = await collection.deleteOne(filter);
+    const result = await collection.updateOne(filter, { $set: data });
     return NextResponse.json({
       success: result.acknowledged,
-      rowCount: result.deletedCount,
+      rowCount: result.modifiedCount,
     });
-  } catch (error) {
-    throw error;
   }
+
+  // delete
+  if (!primaryKey || Object.keys(primaryKey).length === 0) {
+    throw badRequestError('Primary key is required for delete.');
+  }
+  const filter: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(primaryKey)) {
+    filter[k] = k === '_id' ? toObjectId(v) : v;
+  }
+  const result = await collection.deleteOne(filter);
+  return NextResponse.json({
+    success: result.acknowledged,
+    rowCount: result.deletedCount,
+  });
 }
 
 export const POST = apiHandler(

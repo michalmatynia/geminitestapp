@@ -1,4 +1,4 @@
-import { DtoBase } from '../types/base';
+import { DtoBase, CreateDto, UpdateDto } from '../types/base';
 
 // Admin DTOs
 export interface AdminDashboardStatsDto {
@@ -32,7 +32,7 @@ export interface AdminLogDto extends DtoBase {
   metadata: Record<string, unknown> | null;
 }
 
-export interface AdminSettingsDto {
+export interface AdminSettingsDto extends DtoBase {
   siteName: string;
   siteDescription: string;
   maintenanceMode: boolean;
@@ -47,20 +47,8 @@ export interface AdminSettingsDto {
   };
 }
 
-export interface UpdateAdminSettingsDto {
-  siteName?: string;
-  siteDescription?: string;
-  maintenanceMode?: boolean;
-  allowRegistration?: boolean;
-  emailSettings?: {
-    provider: string;
-    config: Record<string, unknown>;
-  };
-  storageSettings?: {
-    provider: string;
-    config: Record<string, unknown>;
-  };
-}
+export type UpdateAdminSettingsDto = UpdateDto<AdminSettingsDto>;
+export type CreateAdminSettingsDto = CreateDto<AdminSettingsDto>;
 
 /**
  * Navigation item for the admin menu.

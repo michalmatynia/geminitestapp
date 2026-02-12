@@ -10,9 +10,14 @@ import { createProduct, updateProduct, deleteProduct } from '@/features/products
 import type { ProductWithImages } from '@/features/products/types';
 import { operationFailedError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { DeleteResponse } from '@/shared/types/api/api';
 import { delay } from '@/shared/utils';
+
+import {
+  invalidateProducts,
+  invalidateProductsAndCounts,
+  invalidateProductsAndDetail,
+} from './productCache';
 
 interface UpdateProductPayload {
   id: string;
@@ -32,10 +37,7 @@ export function useCreateProduct(): UseMutationResult<
     onSuccess: async (): Promise<void> => {
       // Small delay to ensure DB consistency before refetch
       await delay(500);
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all }),
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() }),
-      ]);
+      await invalidateProductsAndCounts(queryClient);
     },
   });
 }
@@ -51,10 +53,7 @@ export function useUpdateProduct(): UseMutationResult<
   return useMutation({
     mutationFn: ({ id, data }: UpdateProductPayload) => updateProduct(id, data),
     onSuccess: async (): Promise<void> => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all }),
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() }),
-      ]);
+      await invalidateProductsAndCounts(queryClient);
     },
   });
 }
@@ -70,10 +69,7 @@ export function useDeleteProduct(): UseMutationResult<
   return useMutation({
     mutationFn: (id: string) => deleteProduct(id),
     onSuccess: async (): Promise<void> => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all }),
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() }),
-      ]);
+      await invalidateProductsAndCounts(queryClient);
     },
   });
 }
@@ -92,10 +88,7 @@ export function useBulkDeleteProducts(): UseMutationResult<{ success: boolean },
       return { success: true };
     },
     onSuccess: async (): Promise<void> => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all }),
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() }),
-      ]);
+      await invalidateProductsAndCounts(queryClient);
     },
   });
 }
@@ -109,7 +102,7 @@ export function useConvertAllImagesToBase64(): UseMutationResult<{ ok: boolean }
       return { ok: true };
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
+      void invalidateProducts(queryClient);
     },
   });
 }
@@ -123,7 +116,7 @@ export function useBulkConvertImagesToBase64(): UseMutationResult<{ ok: boolean 
       return { ok: true };
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
+      void invalidateProducts(queryClient);
     },
   });
 }
@@ -134,9 +127,8 @@ export function useDuplicateProduct(): UseMutationResult<{ id: string }, Error, 
   return useMutation({
     mutationFn: async ({ id, sku }): Promise<{ id: string }> =>
       await api.post<{ id: string }>(`/api/products/${id}/duplicate`, { sku }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() });
+    onSuccess: async (): Promise<void> => {
+      await invalidateProductsAndCounts(queryClient);
     },
   });
 }
@@ -148,9 +140,8 @@ export function useUpdateProductField(): UseMutationResult<void, Error, { id: st
     mutationFn: async ({ id, field, value }): Promise<void> => {
       await api.patch<unknown>(`/api/products/${id}`, { [field]: value });
     },
-    onSuccess: (_, variables) => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.detail(variables.id) });
+    onSuccess: async (_, variables): Promise<void> => {
+      await invalidateProductsAndDetail(queryClient, variables.id);
     },
   });
 }

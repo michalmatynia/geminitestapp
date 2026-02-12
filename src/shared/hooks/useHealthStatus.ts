@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 interface HealthStatus {
   ok: boolean;
@@ -10,7 +11,7 @@ interface HealthStatus {
 
 export function useHealthStatus() {
   return useQuery<HealthStatus, Error>({
-    queryKey: ['health-status'],
+    queryKey: QUERY_KEYS.health.status,
     queryFn: async (): Promise<HealthStatus> =>
       await api.get<HealthStatus>('/api/health'),
     // Optional: add specific TanStack Query options for this hook

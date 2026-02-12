@@ -4,9 +4,9 @@ import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
 import { useCreateTheme } from '@/features/cms/hooks/useCmsQueries';
-import { logClientError } from '@/features/observability';
 import type { CmsThemeColors, CmsThemeTypography, CmsThemeSpacing } from '@/features/cms/types';
 import { cmsThemeCreateSchema } from '@/features/cms/validations/api';
+import { logClientError } from '@/features/observability';
 import { Button, Input, SectionHeader, FormSection, FormField } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 

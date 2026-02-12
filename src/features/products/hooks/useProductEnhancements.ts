@@ -1,4 +1,3 @@
- 
 'use client';
 
 import { getProductById, getProducts, updateProduct } from '@/features/products/api/products';
@@ -7,7 +6,13 @@ import type { ProductWithImages } from '@/features/products/types';
 import { useCacheWarmup, useSmartPrefetch } from '@/shared/hooks/query/useCacheWarmup';
 import { useOptimisticMutation } from '@/shared/hooks/useOptimisticMutation';
 import { useQuerySync } from '@/shared/hooks/useQuerySync';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
+
+import {
+  getProductDetailEditQueryKey,
+  getProductDetailQueryKey,
+  productsAllQueryKey,
+  productsCategoriesAllQueryKey,
+} from './productCache';
 
 import type { UseMutationResult } from '@tanstack/react-query';
 
@@ -28,7 +33,7 @@ export function useOptimisticProductUpdate(): UseMutationResult<
       return updateProduct(id, data);
     },
     {
-      queryKey: [...QUERY_KEYS.products.all],
+      queryKey: productsAllQueryKey,
       updateFn: (oldData: ProductWithImages[] | undefined, { id, data }: { id: string; data: Partial<ProductWithImages> }) => {
         if (!oldData) return [];
         return oldData.map((product: ProductWithImages) =>
@@ -54,12 +59,12 @@ export function useProductCacheWarmup(productId?: string): void {
 
   useCacheWarmup([
     {
-      queryKey: [...QUERY_KEYS.products.all],
+      queryKey: productsAllQueryKey,
       queryFn: () => getProducts({}),
       priority: 'high' as const,
     },
     {
-      queryKey: [...QUERY_KEYS.products.all, 'categories'],
+      queryKey: productsCategoriesAllQueryKey,
       queryFn: async (): Promise<unknown> => {
         const catalogId = await resolveWarmCatalogId();
         if (!catalogId) return [];
@@ -69,7 +74,7 @@ export function useProductCacheWarmup(productId?: string): void {
       priority: 'medium' as const,
     },
     ...(productId ? [{
-      queryKey: [...QUERY_KEYS.products.detail(productId)],
+      queryKey: getProductDetailQueryKey(productId),
       queryFn: () => getProductById(productId),
       priority: 'high' as const,
       conditions: (): boolean => !!productId,
@@ -86,13 +91,13 @@ export function useProductPrefetch(): {
 
   const prefetchProduct = (productId: string): { onMouseEnter: () => void; onMouseLeave: () => void } =>
     prefetchOnHover(
-      [...QUERY_KEYS.products.detail(productId)],
+      getProductDetailQueryKey(productId),
       () => getProductById(productId)
     );
 
   const prefetchProductEdit = (productId: string): { onFocus: () => void } =>
     prefetchOnFocus(
-      [...QUERY_KEYS.products.detail(productId), 'edit'],
+      getProductDetailEditQueryKey(productId),
       () => getProductById(productId)
     );
 
@@ -103,11 +108,11 @@ export function useProductPrefetch(): {
 export function useProductSync(): void {
   useQuerySync([
     {
-      queryKey: [...QUERY_KEYS.products.all],
+      queryKey: productsAllQueryKey,
       enabled: true,
     },
     {
-      queryKey: [...QUERY_KEYS.products.all, 'categories'],
+      queryKey: productsCategoriesAllQueryKey,
       enabled: true,
     },
   ]);

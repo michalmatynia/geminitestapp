@@ -204,7 +204,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
     [validatorPatterns]
   );
   const latestProductsQuery = useQuery({
-    queryKey: [...QUERY_KEYS.products.all, 'validator', 'latest-product-source'],
+    queryKey: QUERY_KEYS.products.validatorLatestProductSource(),
     queryFn: () => productsApi.getProducts({ page: 1, pageSize: 4 }),
     enabled: validatorEnabled && needsLatestProductSource,
     staleTime: 60_000,

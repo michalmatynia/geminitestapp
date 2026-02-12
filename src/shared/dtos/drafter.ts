@@ -1,4 +1,4 @@
-import { DtoBase } from '../types/base';
+import { DtoBase, CreateDto, UpdateDto } from '../types/base';
 
 // Drafter DTOs
 export interface DraftDto extends DtoBase {
@@ -10,18 +10,8 @@ export interface DraftDto extends DtoBase {
   publishedAt: string | null;
 }
 
-export interface CreateDraftDto {
-  title: string;
-  content: Record<string, unknown>;
-  type: string;
-  status?: 'draft' | 'published';
-}
-
-export interface UpdateDraftDto {
-  title?: string;
-  content?: Record<string, unknown>;
-  status?: 'draft' | 'published' | 'archived';
-}
+export type CreateDraftDto = CreateDto<DraftDto>;
+export type UpdateDraftDto = UpdateDto<DraftDto>;
 
 export interface PublishDraftDto {
   id: string;

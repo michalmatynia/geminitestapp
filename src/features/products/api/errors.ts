@@ -1,4 +1,4 @@
-
+import { classifyError, getSuggestedActions } from '@/shared/errors/error-classifier';
 import { ErrorCategory, type SuggestedAction } from '@/shared/types/observability';
 
 export type ErrorCode = 
@@ -46,7 +46,6 @@ export class ApiErrorBuilder {
   private meta: ApiError['meta'];
 
   constructor(code: ErrorCode, message: string) {
-    const { classifyError, getSuggestedActions } = require('@/features/observability/utils/error-classifier');
     const dummyError = new Error(message);
     const category = classifyError(dummyError);
     const suggestedActions = getSuggestedActions(category, dummyError);
@@ -61,7 +60,6 @@ export class ApiErrorBuilder {
   }
 
   withCategory(category: ErrorCategory): this {
-    const { getSuggestedActions } = require('@/features/observability/utils/error-classifier');
     this.error.category = category;
     this.error.suggestedActions = getSuggestedActions(category, new Error(this.error.message));
     return this;
@@ -228,7 +226,6 @@ export function createVersionedErrorResponse(
   }
 
   // Handle generic errors
-  const { classifyError } = require('@/features/observability/utils/error-classifier');
   const category = classifyError(error);
   const builder = new ApiErrorBuilder('SERVER_ERROR', error.message || 'An unexpected error occurred')
     .withCategory(category);

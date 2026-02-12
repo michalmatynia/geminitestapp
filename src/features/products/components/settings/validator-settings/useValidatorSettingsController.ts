@@ -7,6 +7,7 @@ import {
   useState,
 } from 'react';
 
+import { logClientError } from '@/features/observability';
 import type {
   CreateValidationPatternPayload,
   UpdateValidationPatternPayload,
@@ -512,6 +513,7 @@ export function useValidatorSettingsController(): ValidatorSettingsController {
       }
       setShowModal(false);
     } catch (error) {
+      logClientError(error, { context: { source: 'useValidatorSettingsController', action: 'savePattern', editingId: editingPattern?.id } });
       toast(error instanceof Error ? error.message : 'Failed to save pattern.', {
         variant: 'error',
       });
@@ -530,6 +532,7 @@ export function useValidatorSettingsController(): ValidatorSettingsController {
         variant: 'success',
       });
     } catch (error) {
+      logClientError(error, { context: { source: 'useValidatorSettingsController', action: 'togglePattern', patternId: pattern.id } });
       toast(error instanceof Error ? error.message : 'Failed to update pattern.', {
         variant: 'error',
       });
@@ -543,6 +546,7 @@ export function useValidatorSettingsController(): ValidatorSettingsController {
         variant: 'success',
       });
     } catch (error) {
+      logClientError(error, { context: { source: 'useValidatorSettingsController', action: 'toggleDefaultEnabled' } });
       toast(
         error instanceof Error
           ? error.message
@@ -566,6 +570,7 @@ export function useValidatorSettingsController(): ValidatorSettingsController {
         variant: 'success',
       });
     } catch (error) {
+      logClientError(error, { context: { source: 'useValidatorSettingsController', action: 'updateInstanceBehavior', scope, behavior } });
       toast(
         error instanceof Error
           ? error.message
@@ -581,6 +586,7 @@ export function useValidatorSettingsController(): ValidatorSettingsController {
       await deletePattern.mutateAsync(patternToDelete.id);
       toast('Pattern deleted.', { variant: 'success' });
     } catch (error) {
+      logClientError(error, { context: { source: 'useValidatorSettingsController', action: 'deletePattern', patternId: patternToDelete.id } });
       toast(error instanceof Error ? error.message : 'Failed to delete pattern.', {
         variant: 'error',
       });
@@ -652,6 +658,7 @@ export function useValidatorSettingsController(): ValidatorSettingsController {
       });
       toast('Pattern duplicated.', { variant: 'success' });
     } catch (error) {
+      logClientError(error, { context: { source: 'useValidatorSettingsController', action: 'duplicatePattern', originalId: pattern.id } });
       toast(
         error instanceof Error ? error.message : 'Failed to duplicate pattern.',
         { variant: 'error' }
@@ -771,6 +778,7 @@ export function useValidatorSettingsController(): ValidatorSettingsController {
       }));
       toast('Sequence group updated.', { variant: 'success' });
     } catch (error) {
+      logClientError(error, { context: { source: 'useValidatorSettingsController', action: 'dropPattern', targetId: targetPattern.id } });
       toast(
         error instanceof Error
           ? error.message
@@ -897,6 +905,7 @@ export function useValidatorSettingsController(): ValidatorSettingsController {
       }));
       toast('SKU auto-increment sequence created.', { variant: 'success' });
     } catch (error) {
+      logClientError(error, { context: { source: 'useValidatorSettingsController', action: 'createSkuAutoIncrementSequence' } });
       toast(
         error instanceof Error
           ? error.message
@@ -1033,6 +1042,7 @@ export function useValidatorSettingsController(): ValidatorSettingsController {
         variant: 'success',
       });
     } catch (error) {
+      logClientError(error, { context: { source: 'useValidatorSettingsController', action: 'createLatestPriceStockSequence' } });
       toast(
         error instanceof Error
           ? error.message
@@ -1197,6 +1207,7 @@ export function useValidatorSettingsController(): ValidatorSettingsController {
           variant: 'success',
         });
       } catch (fallbackError) {
+        logClientError(fallbackError, { context: { source: 'useValidatorSettingsController', action: 'createNameLengthMirrorPattern' } });
         toast(
           fallbackError instanceof Error
             ? fallbackError.message
@@ -1247,6 +1258,7 @@ export function useValidatorSettingsController(): ValidatorSettingsController {
         );
       }
     } catch (error) {
+      logClientError(error, { context: { source: 'useValidatorSettingsController', action: 'createNameCategoryMirrorPattern' } });
       toast(
         error instanceof Error
           ? error.message
@@ -1403,6 +1415,7 @@ export function useValidatorSettingsController(): ValidatorSettingsController {
       }));
       toast('Name EN -> PL mirror sequence created.', { variant: 'success' });
     } catch (error) {
+      logClientError(error, { context: { source: 'useValidatorSettingsController', action: 'createNameMirrorPolishSequence' } });
       toast(
         error instanceof Error
           ? error.message
@@ -1438,6 +1451,7 @@ export function useValidatorSettingsController(): ValidatorSettingsController {
       }));
       toast('Sequence group settings saved.', { variant: 'success' });
     } catch (error) {
+      logClientError(error, { context: { source: 'useValidatorSettingsController', action: 'saveSequenceGroup', groupId } });
       toast(
         error instanceof Error
           ? error.message
@@ -1468,6 +1482,7 @@ export function useValidatorSettingsController(): ValidatorSettingsController {
       });
       toast('Sequence group removed.', { variant: 'success' });
     } catch (error) {
+      logClientError(error, { context: { source: 'useValidatorSettingsController', action: 'ungroupSequence', groupId } });
       toast(error instanceof Error ? error.message : 'Failed to ungroup sequence.', {
         variant: 'error',
       });

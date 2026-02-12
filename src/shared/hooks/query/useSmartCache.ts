@@ -5,6 +5,7 @@ import { useQuery, useQueryClient, type Query } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import { fetchSettingsCached } from '@/shared/api/settings-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 // Predefined cache strategies
 export const cacheStrategies = {
@@ -138,11 +139,11 @@ export function useCacheWarming(): {
   const warmUserSpecificData = useCallback(async (userId: string): Promise<void> => {
     const userQueries = [
       {
-        queryKey: ['user', 'preferences', userId],
+        queryKey: QUERY_KEYS.user.preferences(userId),
         queryFn: async (): Promise<any> => await fetch(`/api/user/${userId}/preferences`).then((r: Response) => r.json()),
       },
       {
-        queryKey: ['user', 'settings', userId],
+        queryKey: QUERY_KEYS.user.settings(userId),
         queryFn: async (): Promise<any> => await fetch(`/api/user/${userId}/settings`).then((r: Response) => r.json()),
       },
     ];
@@ -156,7 +157,7 @@ export function useCacheWarming(): {
 
   const warmNavigationData = useCallback(async (routes: string[]): Promise<void> => {
     const navigationQueries = routes.map((route: string) => ({
-      queryKey: ['navigation', route],
+      queryKey: QUERY_KEYS.navigation.route(route),
       queryFn: async (): Promise<any> => await fetch(`/api${route}`).then((r: Response) => r.json()),
     }));
 
@@ -174,7 +175,7 @@ export function useCacheWarming(): {
   const warmFrequentlyAccessedData = useCallback(async (): Promise<void> => {
     const frequentQueries = [
       {
-        queryKey: ['settings', 'light'],
+        queryKey: QUERY_KEYS.settings.scope('light'),
         queryFn: async (): Promise<any> => await fetchSettingsCached({ scope: 'light' }),
       },
     ];

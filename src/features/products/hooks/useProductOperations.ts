@@ -5,10 +5,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { logClientError } from '@/features/observability';
+import { getProductListQueryKey } from '@/features/products/hooks/productCache';
 import type { ProductWithImages } from '@/features/products/types';
 import type { ProductDraft } from '@/features/products/types/drafts';
 import { api } from '@/shared/lib/api-client';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui';
 
 export function useProductOperations(
@@ -51,7 +51,7 @@ export function useProductOperations(
     }
     try {
       const products = await queryClient.fetchQuery({
-        queryKey: QUERY_KEYS.products.list({ sku }),
+        queryKey: getProductListQueryKey({ sku }),
         queryFn: async (): Promise<ProductWithImages[]> =>
           await api.get<ProductWithImages[]>(`/api/products?sku=${encodeURIComponent(sku)}`),
       });

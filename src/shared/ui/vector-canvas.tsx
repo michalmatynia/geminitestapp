@@ -1198,8 +1198,8 @@ export function VectorCanvas({
                     : isHoveringEditablePoint
                       ? 'cursor-pointer'
                       : spaceDownRef.current || tool === 'select'
-                    ? 'cursor-grab'
-                    : 'cursor-crosshair'
+                        ? 'cursor-grab'
+                        : 'cursor-crosshair'
               )}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
@@ -1307,8 +1307,8 @@ export function VectorCanvas({
                       : isHoveringEditablePoint
                         ? 'cursor-pointer'
                         : spaceDownRef.current || tool === 'select'
-                      ? 'cursor-grab'
-                      : 'cursor-crosshair'
+                          ? 'cursor-grab'
+                          : 'cursor-crosshair'
                 )}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}

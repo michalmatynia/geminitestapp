@@ -14,6 +14,7 @@ import {
   TRIGGER_EVENTS,
   entityApi,
 } from '@/features/ai/ai-paths/lib';
+import { getProductDetailQueryKey } from '@/features/products/hooks/productCache';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import {
@@ -44,7 +45,7 @@ export function useAiPathsSimulation(args: SimulationArgs) {
     async (productId: string): Promise<Record<string, unknown> | null> => {
       try {
         return await queryClient.fetchQuery({
-          queryKey: QUERY_KEYS.products.detail(productId),
+          queryKey: getProductDetailQueryKey(productId),
           queryFn: async (): Promise<Record<string, unknown> | null> => {
             const result = await entityApi.getProduct(productId);
             return result.ok ? result.data : null;

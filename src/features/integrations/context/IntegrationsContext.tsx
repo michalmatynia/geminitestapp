@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 
+import { invalidateIntegrationConnections } from '@/features/integrations/hooks/integrationCache';
 import {
   useCreateIntegration,
   useDeleteConnection,
@@ -31,7 +32,6 @@ import { logClientError } from '@/features/observability';
 import { defaultPlaywrightSettings } from '@/features/playwright';
 import type { PlaywrightPersona, PlaywrightSettings } from '@/features/playwright';
 import { internalError } from '@/shared/errors/app-error';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui';
 
 interface IntegrationsContextType {
@@ -295,9 +295,7 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
   }, [showPlaywrightSaved]);
 
   const refreshConnections = useCallback((integrationId: string): void => {
-    void queryClient.invalidateQueries({
-      queryKey: [...QUERY_KEYS.integrations.connections(), integrationId],
-    });
+    invalidateIntegrationConnections(queryClient, integrationId);
   }, [queryClient]);
 
   useEffect(() => {

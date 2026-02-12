@@ -474,16 +474,15 @@ export function JobQueuePanel({
   }, [normalizedPathFilter, normalizedQuery, statusFilter, pageSize]);
 
   const runsQuery = useQuery<{ runs: AiPathRunRecord[]; total: number }>({
-    queryKey: [
-      'ai-paths-job-queue',
-      normalizedPathFilter,
-      normalizedSourceFilter,
-      sourceMode ?? 'include',
-      normalizedQuery,
-      statusFilter,
+    queryKey: QUERY_KEYS.ai.aiPaths.jobQueue({
+      pathId: normalizedPathFilter,
+      source: normalizedSourceFilter,
+      sourceMode: sourceMode ?? 'include',
+      query: normalizedQuery,
+      status: statusFilter,
       page,
       pageSize,
-    ],
+    }),
     queryFn: async () => {
       const response = await runsApi.list({
         ...(normalizedPathFilter ? { pathId: normalizedPathFilter } : {}),
@@ -503,7 +502,7 @@ export function JobQueuePanel({
   });
 
   const queueStatusQuery = useQuery<{ status: QueueStatus }>({
-    queryKey: ['ai-paths-queue-status'],
+    queryKey: QUERY_KEYS.ai.aiPaths.queueStatus(),
     queryFn: async () => {
       const response = await runsApi.queueStatus();
       if (!response.ok) {

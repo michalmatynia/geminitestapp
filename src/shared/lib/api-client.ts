@@ -13,6 +13,7 @@ export class ApiError extends Error {
   errorId?: string | undefined;
   category?: ErrorCategory | string | undefined;
   suggestedActions?: SuggestedAction[] | undefined;
+  payload?: unknown | undefined;
 
   constructor(
     message: string,

@@ -196,7 +196,7 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
     let category = input.context?.['category'];
     if (!category && input.error) {
       try {
-        const { classifyError } = await import('../utils/error-classifier');
+        const { classifyError } = await import('@/shared/errors/error-classifier');
         category = classifyError(input.error);
       } catch {
         // Fallback if import fails

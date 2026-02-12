@@ -7,6 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import React, { Suspense, useEffect, useRef, useState } from 'react';
 
 import type { ChatbotContextSegmentDto } from '@/shared/dtos/chatbot';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { Button, Input, Textarea, SharedModal, useToast, Label, Checkbox, SectionHeader, SectionPanel, Tag, FileUploadTrigger, type FileUploadHelpers } from '@/shared/ui';
 
 import * as chatbotApi from '../api';
@@ -80,7 +81,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [modalDraft, setModalDraft] = useState<ContextDraft | null>(null);
   const contextSettingsQuery = useQuery({
-    queryKey: [...chatbotApi.chatbotQueryKeys.settings('global-context'), 'all-settings'],
+    queryKey: QUERY_KEYS.ai.chatbot.settings.allSettings('global-context'),
     queryFn: chatbotApi.fetchSettings,
     staleTime: 60_000,
   });
@@ -103,7 +104,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: [...chatbotApi.chatbotQueryKeys.settings('global-context'), 'all-settings'],
+        queryKey: QUERY_KEYS.ai.chatbot.settings.allSettings('global-context'),
       });
     },
   });

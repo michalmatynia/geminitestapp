@@ -3,6 +3,7 @@
 import { X, Plus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
+import { logClientError } from '@/features/observability';
 import {
   Button,
   Input,
@@ -12,7 +13,6 @@ import {
   SectionPanel,
   Checkbox,
 } from '@/shared/ui';
-import { logClientError } from '@/features/observability';
 
 import { updateAsset3D } from '../api';
 

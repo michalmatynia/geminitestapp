@@ -6,8 +6,8 @@ import { useState } from 'react';
 
 
 import { useCreateSlug } from '@/features/cms/hooks/useCmsQueries';
-import { logClientError } from '@/features/observability';
 import { SLUG_REGEX } from '@/features/cms/validations/slug';
+import { logClientError } from '@/features/observability';
 import { Button, Input, Label, SectionHeader } from '@/shared/ui';
 
 export default function CreateSlugPage(): React.JSX.Element {

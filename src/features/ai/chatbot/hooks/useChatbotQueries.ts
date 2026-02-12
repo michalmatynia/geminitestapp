@@ -35,7 +35,7 @@ export function useChatbotSessions(options?: { enabled?: boolean }): UseQueryRes
  */
 export function useChatbotSessionIds(query?: string, options?: { enabled?: boolean }): UseQueryResult<string[]> {
   return useQuery({
-    queryKey: [...chatbotQueryKeys.sessions(), 'ids', query ?? 'all'],
+    queryKey: chatbotQueryKeys.sessionIds(query),
     queryFn: async (): Promise<string[]> => {
       const data = await fetchChatbotSessions<ChatbotSessionListItem>({
         scope: 'ids',
@@ -52,7 +52,7 @@ export function useChatbotSessionIds(query?: string, options?: { enabled?: boole
  */
 export function useChatbotSession(sessionId: string | null, options?: { enabled?: boolean }): UseQueryResult<ChatSession | null> {
   return useQuery({
-    queryKey: sessionId ? chatbotQueryKeys.session(sessionId) : ['chatbot', 'session', 'none'],
+    queryKey: sessionId ? chatbotQueryKeys.session(sessionId) : [...chatbotQueryKeys.all, 'session', 'none'],
     queryFn: async () => {
       if (!sessionId) return null;
       return fetchChatbotSession(sessionId);
@@ -92,7 +92,7 @@ export function useChatbotModels(options?: { enabled?: boolean }): UseQueryResul
  */
 export function useOllamaModels(baseUrl: string, options?: { enabled?: boolean }): UseQueryResult<string[]> {
   return useQuery({
-    queryKey: [...chatbotQueryKeys.models(), 'ollama', baseUrl],
+    queryKey: chatbotQueryKeys.ollamaModels(baseUrl),
     queryFn: (): Promise<string[]> => fetchOllamaModels(baseUrl),
     enabled: (options?.enabled ?? true) && !!baseUrl,
     staleTime: 1000 * 60 * 5, // 5 minutes

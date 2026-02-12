@@ -107,8 +107,6 @@ async function handlePostgresQuery(sql: string | undefined): Promise<Response> {
       command: result.command ?? '',
       duration,
     });
-  } catch (error) {
-    throw error;
   } finally {
     await client.end().catch(() => {});
   }
@@ -139,77 +137,73 @@ async function handleMongoOperation(
   const collection = db.collection(collName);
   const startTime = Date.now();
 
-  try {
-    let result: unknown;
-    let rowCount = 0;
+  let result: unknown;
+  let rowCount = 0;
 
-    switch (operation) {
-      case 'find': {
-        const docs = await collection.find(filter ?? {}).limit(200).toArray();
-        result = docs;
-        rowCount = docs.length;
-        break;
-      }
-      case 'insertOne': {
-        if (!document) {
-          throw badRequestError('Document is required for insertOne.');
-        }
-        const insertResult = await collection.insertOne(document);
-        result = [{ insertedId: insertResult.insertedId }];
-        rowCount = insertResult.acknowledged ? 1 : 0;
-        break;
-      }
-      case 'updateOne': {
-        if (!update) {
-          throw badRequestError('Update object is required for updateOne.');
-        }
-        const updateResult = await collection.updateOne(filter ?? {}, update);
-        result = [{ matchedCount: updateResult.matchedCount, modifiedCount: updateResult.modifiedCount }];
-        rowCount = updateResult.modifiedCount;
-        break;
-      }
-      case 'deleteOne': {
-        const deleteResult = await collection.deleteOne(filter ?? {});
-        result = [{ deletedCount: deleteResult.deletedCount }];
-        rowCount = deleteResult.deletedCount;
-        break;
-      }
-      case 'deleteMany': {
-        const deleteManyResult = await collection.deleteMany(filter ?? {});
-        result = [{ deletedCount: deleteManyResult.deletedCount }];
-        rowCount = deleteManyResult.deletedCount;
-        break;
-      }
-      case 'countDocuments': {
-        const count = await collection.countDocuments(filter ?? {});
-        result = [{ count }];
-        rowCount = 1;
-        break;
-      }
-      case 'aggregate': {
-        if (!pipeline) {
-          throw badRequestError('Pipeline is required for aggregate.');
-        }
-        const aggDocs = await collection.aggregate(pipeline).toArray();
-        result = aggDocs;
-        rowCount = aggDocs.length;
-        break;
-      }
-      default:
-        throw badRequestError(`Unsupported operation: ${operation}`);
+  switch (operation) {
+    case 'find': {
+      const docs = await collection.find(filter ?? {}).limit(200).toArray();
+      result = docs;
+      rowCount = docs.length;
+      break;
     }
-
-    const duration = Date.now() - startTime;
-    return NextResponse.json({
-      rows: Array.isArray(result) ? result : [],
-      rowCount,
-      fields: [],
-      command: operation,
-      duration,
-    });
-  } catch (error) {
-    throw error;
+    case 'insertOne': {
+      if (!document) {
+        throw badRequestError('Document is required for insertOne.');
+      }
+      const insertResult = await collection.insertOne(document);
+      result = [{ insertedId: insertResult.insertedId }];
+      rowCount = insertResult.acknowledged ? 1 : 0;
+      break;
+    }
+    case 'updateOne': {
+      if (!update) {
+        throw badRequestError('Update object is required for updateOne.');
+      }
+      const updateResult = await collection.updateOne(filter ?? {}, update);
+      result = [{ matchedCount: updateResult.matchedCount, modifiedCount: updateResult.modifiedCount }];
+      rowCount = updateResult.modifiedCount;
+      break;
+    }
+    case 'deleteOne': {
+      const deleteResult = await collection.deleteOne(filter ?? {});
+      result = [{ deletedCount: deleteResult.deletedCount }];
+      rowCount = deleteResult.deletedCount;
+      break;
+    }
+    case 'deleteMany': {
+      const deleteManyResult = await collection.deleteMany(filter ?? {});
+      result = [{ deletedCount: deleteManyResult.deletedCount }];
+      rowCount = deleteManyResult.deletedCount;
+      break;
+    }
+    case 'countDocuments': {
+      const count = await collection.countDocuments(filter ?? {});
+      result = [{ count }];
+      rowCount = 1;
+      break;
+    }
+    case 'aggregate': {
+      if (!pipeline) {
+        throw badRequestError('Pipeline is required for aggregate.');
+      }
+      const aggDocs = await collection.aggregate(pipeline).toArray();
+      result = aggDocs;
+      rowCount = aggDocs.length;
+      break;
+    }
+    default:
+      throw badRequestError(`Unsupported operation: ${operation}`);
   }
+
+  const duration = Date.now() - startTime;
+  return NextResponse.json({
+    rows: Array.isArray(result) ? result : [],
+    rowCount,
+    fields: [],
+    command: operation,
+    duration,
+  });
 }
 
 export const POST = apiHandler(

@@ -2,11 +2,12 @@ import 'server-only';
 
 import { createRequire } from 'module';
 
+import { configurationError } from '@/shared/errors/app-error';
+
 import type { Db } from 'mongodb';
 import type { MongoClient } from 'mongodb';
 import type { MongoClientOptions } from 'mongodb';
 
-import { configurationError } from '@/shared/errors/app-error';
 
 
 type MongoClientCtor = new (uri: string, options?: MongoClientOptions) => MongoClient;

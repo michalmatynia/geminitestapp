@@ -361,8 +361,11 @@ export async function restorePrismaJsonBackup(
   try {
     const existingLog = await fs.readFile(restoreLogPath, 'utf-8');
     logData = JSON.parse(existingLog) as Record<string, { date: string; logFile: string }>;
-  } catch {
-    // No log yet
+  } catch (error) {
+    void ErrorSystem.logWarning('[database-json-backup] Failed to load restore-log.json', {
+      service: 'database-json-backup',
+      error,
+    });
   }
   logData[backupName] = {
     date: new Date().toISOString(),

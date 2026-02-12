@@ -12,10 +12,10 @@ import type {
   ProductParameterValue,
 } from '@/features/products/types';
 import type { ProductImageSlot } from '@/features/products/types/products-ui';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui';
 import { delay } from '@/shared/utils';
 
+import { invalidateProductsAndCounts } from './productCache';
 import { useCreateProductMutation, useUpdateProductMutation } from './useProductData';
 
 
@@ -202,10 +202,7 @@ export function useProductFormSubmit({
 
       await delay(500);
 
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all }),
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() }),
-      ]);
+      await invalidateProductsAndCounts(queryClient);
 
       if (!product) {
         onSuccess?.();

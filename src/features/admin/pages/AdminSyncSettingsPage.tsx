@@ -3,9 +3,9 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
+import { logClientError } from '@/features/observability';
 import { useOfflineQueueStatus, type OfflineQueueItem } from '@/shared/hooks/offline';
 import { useOfflineSync } from '@/shared/hooks/offline/useOfflineMutation';
-import { logClientError } from '@/features/observability';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useBackgroundSyncStatus } from '@/shared/providers/BackgroundSyncProvider';
 import {

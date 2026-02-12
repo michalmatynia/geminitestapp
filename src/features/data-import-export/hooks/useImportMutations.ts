@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { invalidateProductsAndCounts } from '@/features/products/hooks/productCache';
 
 export function useCsvImportMutation(): UseMutationResult<
   unknown,
@@ -25,8 +25,7 @@ export function useCsvImportMutation(): UseMutationResult<
     },
     onSuccess: () => {
       // Invalidate products as they might have been added/updated
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() });
+      void invalidateProductsAndCounts(queryClient);
     },
   });
 }

@@ -1,3 +1,7 @@
+import {
+  classifyError as classifySharedError,
+  getSuggestedActions as getSharedSuggestedActions,
+} from '@/shared/errors/error-classifier';
 import { ErrorCategory, type ErrorContext } from '@/shared/types/observability';
 
 export { ErrorCategory, type ErrorContext };
@@ -16,7 +20,7 @@ export const ErrorSystem = {
   captureException: async (error: unknown, context: ErrorContext = {}): Promise<void> => {
     try {
       const { logSystemEvent } = await import('@/features/observability/lib/system-logger');
-      const { classifyError } = await import('@/features/observability/utils/error-classifier');
+      const { classifyError } = await import('@/shared/errors/error-classifier');
       
       const message = error instanceof Error ? error.message : String(error);
       const service = context.service || 'unknown';
@@ -65,7 +69,7 @@ export const ErrorSystem = {
   logWarning: async (message: string, context: ErrorContext = {}): Promise<void> => {
     try {
       const { logSystemEvent } = await import('@/features/observability/lib/system-logger');
-      const { classifyError } = await import('@/features/observability/utils/error-classifier');
+      const { classifyError } = await import('@/shared/errors/error-classifier');
       const service = context.service || 'unknown';
       const category = context.category || classifyError(message);
       
@@ -123,7 +127,7 @@ export const ErrorSystem = {
   logInfo: async (message: string, context: ErrorContext = {}): Promise<void> => {
     try {
       const { logSystemEvent } = await import('@/features/observability/lib/system-logger');
-      const { classifyError } = await import('@/features/observability/utils/error-classifier');
+      const { classifyError } = await import('@/shared/errors/error-classifier');
       const service = context.service || 'unknown';
       const category = context.category || classifyError(message);
       
@@ -146,10 +150,9 @@ export const ErrorSystem = {
    * Generate a structured error report for debugging or display.
    */
   generateErrorReport: (error: unknown, context: ErrorContext = {}): Record<string, unknown> => {
-    const { classifyError, getSuggestedActions } = require('../utils/error-classifier');
     const message = error instanceof Error ? error.message : String(error);
     const stack = error instanceof Error ? error.stack : undefined;
-    const category = context.category || classifyError(error);
+    const category = context.category || classifySharedError(error);
     
     return {
       id: context.errorId || `err_${Date.now()}`,
@@ -158,7 +161,7 @@ export const ErrorSystem = {
       message,
       userMessage: context.userMessage || 'An unexpected error occurred. Please try again or contact support.',
       service: context.service || 'unknown',
-      suggestedActions: getSuggestedActions(category, error),
+      suggestedActions: getSharedSuggestedActions(category, error),
       context: {
         ...context,
         // Remove sensitive or redundant info

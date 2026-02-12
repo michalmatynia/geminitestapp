@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { logClientError } from '@/features/observability/utils/client-error-logger';
 import {
   Button,
   SectionHeader,
@@ -31,7 +32,6 @@ import {
   useToast,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
-import { logClientError } from '@/features/observability/utils/client-error-logger';
 
 import { Asset3DCard } from '../components/Asset3DCard';
 import { Asset3DEditModal } from '../components/Asset3DEditModal';

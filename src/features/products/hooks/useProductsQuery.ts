@@ -10,7 +10,12 @@ import { useCallback } from 'react';
 
 import { getProducts, countProducts } from '@/features/products/api/products';
 import type { ProductWithImages } from '@/features/products/types';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
+
+import {
+  getProductCountQueryKey,
+  getProductListQueryKey,
+  refetchProductsAndCounts,
+} from './productCache';
 
 export interface UseProductsFilters {
   search?: string | undefined;
@@ -38,7 +43,7 @@ export function useProducts(
   const { enabled = true } = options;
 
   return useQuery({
-    queryKey: QUERY_KEYS.products.list(filters),
+    queryKey: getProductListQueryKey(filters),
     queryFn: () => getProducts(filters),
     enabled,
     staleTime: PRODUCTS_STALE_MS,
@@ -55,7 +60,7 @@ export function useProductsCount(
   const { enabled = true } = options;
 
   return useQuery({
-    queryKey: QUERY_KEYS.products.count(filters),
+    queryKey: getProductCountQueryKey(filters),
     queryFn: () => countProducts(filters),
     enabled,
     staleTime: PRODUCTS_STALE_MS,
@@ -82,13 +87,13 @@ export function useProductsWithCount(
   const results = useQueries({
     queries: [
       {
-        queryKey: QUERY_KEYS.products.list(filters),
+        queryKey: getProductListQueryKey(filters),
         queryFn: (): Promise<ProductWithImages[]> => getProducts(filters),
         enabled,
         staleTime: PRODUCTS_STALE_MS,
       },
       {
-        queryKey: QUERY_KEYS.products.count(filters),
+        queryKey: getProductCountQueryKey(filters),
         queryFn: (): Promise<number> => countProducts(filters),
         enabled,
         staleTime: PRODUCTS_STALE_MS,
@@ -99,10 +104,7 @@ export function useProductsWithCount(
   const [productsQuery, countQuery] = results;
 
   const refetch = useCallback(async (): Promise<void> => {
-    await Promise.all([
-      queryClient.refetchQueries({ queryKey: QUERY_KEYS.products.lists() }),
-      queryClient.refetchQueries({ queryKey: QUERY_KEYS.products.counts() }),
-    ]);
+    await refetchProductsAndCounts(queryClient);
   }, [queryClient]);
 
   return {

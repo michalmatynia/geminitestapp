@@ -13,6 +13,8 @@ import { api, ApiError } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
+import { getIntegrationConnectionsQueryKey } from './integrationCache';
+
 export function useIntegrations(): UseQueryResult<Integration[]> {
   return useQuery({
     queryKey: QUERY_KEYS.integrations.all,
@@ -22,7 +24,7 @@ export function useIntegrations(): UseQueryResult<Integration[]> {
 
 export function useIntegrationConnections(integrationId?: string): UseQueryResult<IntegrationConnection[]> {
   return useQuery({
-    queryKey: [...QUERY_KEYS.integrations.connections(), integrationId],
+    queryKey: getIntegrationConnectionsQueryKey(integrationId),
     queryFn: () => 
       integrationId 
         ? api.get<IntegrationConnection[]>(`/api/integrations/${integrationId}/connections`)

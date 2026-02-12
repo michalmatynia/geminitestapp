@@ -1,5 +1,7 @@
 import { QueryClient, QueryCache, MutationCache, type Query } from '@tanstack/react-query';
+
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
 import { isOfflineQuery } from './offline-support';
 
 /**

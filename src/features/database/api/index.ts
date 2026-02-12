@@ -48,7 +48,10 @@ const fetchJsonResult = async <TPayload>(
     const payload = await apiClient<TPayload>(input, init);
     return { ok: true, payload };
   } catch (error) {
-    return { ok: false, payload: (error as any).payload ?? { error: (error as Error).message } as any };
+    if (error instanceof ApiError) {
+      return { ok: false, payload: error.payload as TPayload ?? { error: error.message } as TPayload };
+    }
+    return { ok: false, payload: { error: (error as Error).message } as TPayload };
   }
 };
 
@@ -71,7 +74,7 @@ const requireOk = <TPayload>(
   if (!result.ok) {
     const message = resolveApiErrorMessage(result.payload, fallbackErrorMessage);
     const error = new ApiError(message, 400);
-    (error as any).payload = result.payload;
+    error.payload = result.payload;
     throw error;
   }
   return result.payload;

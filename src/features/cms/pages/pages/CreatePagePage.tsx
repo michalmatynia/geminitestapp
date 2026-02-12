@@ -6,9 +6,9 @@ import { useMemo, useState } from 'react';
 import { CmsDomainSelector } from '@/features/cms';
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
 import { useCmsAllSlugs, useCmsSlugs, useCreatePage } from '@/features/cms/hooks/useCmsQueries';
-import { logClientError } from '@/features/observability';
 import type { Slug } from '@/features/cms/types';
 import { cmsPageCreateSchema } from '@/features/cms/validations/api';
+import { logClientError } from '@/features/observability';
 import { Button, Input, Label, SectionHeader, Checkbox, Switch } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 

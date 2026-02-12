@@ -59,7 +59,7 @@ export function useBackgroundSync({
 // Hook for real-time job status updates
 export function useJobStatusSync(jobId: string, enabled: boolean = true): { forceSync: () => Promise<void> } {
   return useBackgroundSync({
-    queryKey: ['job', jobId],
+    queryKey: QUERY_KEYS.jobs.status(jobId) as unknown[],
     interval: 5000, // 5 seconds for jobs
     enabled: enabled && !!jobId,
   });
@@ -68,7 +68,7 @@ export function useJobStatusSync(jobId: string, enabled: boolean = true): { forc
 // Hook for product list updates
 export function useProductListSync(filters: Record<string, unknown>, enabled: boolean = true): { forceSync: () => Promise<void> } {
   return useBackgroundSync({
-    queryKey: [...QUERY_KEYS.products.list(filters)],
+    queryKey: QUERY_KEYS.products.list(filters) as unknown[],
     interval: 60000, // 1 minute for products
     enabled,
   });

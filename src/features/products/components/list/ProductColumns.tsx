@@ -14,12 +14,12 @@ import { useGenericExportToBaseMutation } from '@/features/integrations/hooks/us
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
 import { EditableCell } from '@/features/products/components/EditableCell';
 import { useProductListActionsContext } from '@/features/products/context/ProductListContext';
+import { getProductDetailQueryKey, productsListsQueryKey } from '@/features/products/hooks/productCache';
 import { useDuplicateProduct } from '@/features/products/hooks/useProductsMutations';
 import type { ProductWithImages } from '@/features/products/types';
 import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
 import { calculatePriceForCurrency, normalizeCurrencyCode } from '@/features/products/utils/priceCalculation';
 import { api } from '@/shared/lib/api-client';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   Badge,
   Button,
@@ -38,6 +38,20 @@ import type { ColumnDef, Row, Table, Column } from '@tanstack/react-table';
 export type Product = ProductWithImages;
 
 type ProductNameKey = 'name_en' | 'name_pl' | 'name_de';
+
+const getProductNameValue = (
+  product: ProductWithImages,
+  key: ProductNameKey
+): string | undefined => {
+  const value = (product as Record<string, unknown>)[key];
+  return typeof value === 'string' && value.trim().length > 0 ? value : undefined;
+};
+
+const getProductDisplayName = (product: ProductWithImages): string =>
+  getProductNameValue(product, 'name_en') ??
+  getProductNameValue(product, 'name_pl') ??
+  getProductNameValue(product, 'name_de') ??
+  'Product';
 
 type CircleIconButtonProps = {
   onClick?: () => void;
@@ -406,7 +420,7 @@ export const getProductColumns = (
       return (
         <ProductImageCell
           imageUrl={imageUrl || null}
-          productName={product.name_en || product.name_pl || 'Product'}
+          productName={getProductDisplayName(product)}
         />
       );
     },
@@ -429,11 +443,11 @@ export const getProductColumns = (
       } = useProductListActionsContext();
 
       const nameKey: ProductNameKey = productNameKey ?? 'name_en';
-      const nameValue: string | null | undefined =
-        product[nameKey] ??
-        product.name_en ??
-        product.name_pl ??
-        product.name_de;
+      const nameValue =
+        getProductNameValue(product, nameKey) ??
+        getProductNameValue(product, 'name_en') ??
+        getProductNameValue(product, 'name_pl') ??
+        getProductNameValue(product, 'name_de');
 
       const isImported: boolean = !!product.baseProductId;
       const isQueued: boolean = queuedProductIds?.has(product.id) ?? false;
@@ -566,7 +580,7 @@ export const getProductColumns = (
             field='price'
             onUpdate={(nextValue: number): void => {
               queryClient.setQueriesData(
-                { queryKey: QUERY_KEYS.products.lists() },
+                { queryKey: productsListsQueryKey },
                 (old: ProductWithImages[] | undefined) => {
                   if (!Array.isArray(old)) return old;
                   let changed = false;
@@ -579,7 +593,7 @@ export const getProductColumns = (
                 }
               );
               queryClient.setQueriesData(
-                { queryKey: QUERY_KEYS.products.detail(product.id) },
+                { queryKey: getProductDetailQueryKey(product.id) },
                 (old: ProductWithImages | undefined) => (old ? { ...old, price: nextValue } : old)
               );
               setRefreshTrigger((prev: number): number => prev + 1);
@@ -619,7 +633,7 @@ export const getProductColumns = (
           field='stock'
           onUpdate={(nextValue: number): void => {
             queryClient.setQueriesData(
-              { queryKey: QUERY_KEYS.products.lists() },
+              { queryKey: productsListsQueryKey },
               (old: ProductWithImages[] | undefined) => {
                 if (!Array.isArray(old)) return old;
                 let changed = false;
@@ -632,7 +646,7 @@ export const getProductColumns = (
               }
             );
             queryClient.setQueriesData(
-              { queryKey: QUERY_KEYS.products.detail(product.id) },
+              { queryKey: getProductDetailQueryKey(product.id) },
               (old: ProductWithImages | undefined) => (old ? { ...old, stock: nextValue } : old)
             );
             setRefreshTrigger((prev: number): number => prev + 1);

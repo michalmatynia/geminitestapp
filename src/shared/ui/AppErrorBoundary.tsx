@@ -3,7 +3,7 @@
 import { AlertCircle, RefreshCcw, Info } from 'lucide-react';
 import { ErrorBoundary, type FallbackProps } from 'react-error-boundary';
 
-import { classifyError, getSuggestedActions } from '@/features/observability/utils/error-classifier';
+import { classifyError, getSuggestedActions } from '@/shared/errors/error-classifier';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { getLastUserAction } from '@/shared/utils/observability/user-action-tracker';
 

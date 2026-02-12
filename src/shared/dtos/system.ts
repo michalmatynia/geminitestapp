@@ -1,3 +1,5 @@
+import { DtoBase, CreateDto } from '../types/base';
+
 /**
  * DTOs for system-level diagnostics and configuration.
  */
@@ -39,25 +41,16 @@ export interface AppProviderDiagnosticsDto {
 /**
  * DTO for an activity log entry.
  */
-export interface ActivityLogDto {
-  id: string;
+export interface ActivityLogDto extends DtoBase {
   type: string;
   description: string;
   userId: string | null;
   entityId: string | null;
   entityType: string | null;
   metadata: Record<string, unknown> | null;
-  createdAt: string;
 }
 
 /**
  * Input for creating a new activity log.
  */
-export interface CreateActivityLogDto {
-  type: string;
-  description: string;
-  userId?: string | null;
-  entityId?: string | null;
-  entityType?: string | null;
-  metadata?: Record<string, unknown> | null;
-}
+export type CreateActivityLogDto = CreateDto<ActivityLogDto>;

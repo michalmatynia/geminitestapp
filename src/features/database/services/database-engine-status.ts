@@ -6,8 +6,8 @@ import path from 'node:path';
 import { getAuthDataProvider } from '@/features/auth/services/auth-provider';
 import { getCmsDataProvider } from '@/features/cms/services/cms-provider';
 import { getIntegrationDataProvider } from '@/features/integrations/services/integration-provider';
-import { getProductDataProvider } from '@/features/products/services/product-provider';
 import { ErrorSystem } from '@/features/observability/server';
+import { getProductDataProvider } from '@/features/products/services/product-provider';
 import type {
   DatabaseEngineCollectionStatusDto,
   DatabaseEnginePrimaryProviderDto,
@@ -58,7 +58,12 @@ const parsePrismaModelNamesFromSchema = (): string[] => {
       }
     }
     return Array.from(names).sort((a, b) => a.localeCompare(b));
-  } catch {
+  } catch (error) {
+    void ErrorSystem.logWarning('[database-engine-status] Failed to parse Prisma schema for model names', {
+      service: 'database-engine-status',
+      path: getPrismaSchemaPath(),
+      error,
+    });
     return [];
   }
 };
@@ -71,8 +76,11 @@ const getKnownPrismaCollections = (): string[] => {
     if (modelNames.length > 0) {
       return Array.from(new Set(modelNames)).sort((a, b) => a.localeCompare(b));
     }
-  } catch {
-    // best effort
+  } catch (error) {
+    void ErrorSystem.logWarning('[database-engine-status] Failed to extract models from prisma._dmmf', {
+      service: 'database-engine-status',
+      error,
+    });
   }
   return parsePrismaModelNamesFromSchema();
 };

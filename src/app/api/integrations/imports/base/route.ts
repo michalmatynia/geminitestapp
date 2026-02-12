@@ -535,9 +535,9 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
 
   const downloadImage = async (url: string, sku: string, index: number) => {
     const res = await fetch(url);
-          if (!res.ok) {
-            throw externalServiceError(`Failed to download image (${res.status})`, { url, status: res.status });
-          }    const contentType = res.headers.get('content-type') || guessMimeType(url);
+    if (!res.ok) {
+      throw externalServiceError(`Failed to download image (${res.status})`, { url, status: res.status });
+    }    const contentType = res.headers.get('content-type') || guessMimeType(url);
     const buffer = Buffer.from(await res.arrayBuffer());
     const folderName = sku ? sanitizeSku(sku) : 'temp';
     const filename = `${Date.now()}-${index}-${extractFilename(url, 'image.jpg')}`;

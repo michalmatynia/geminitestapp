@@ -1,4 +1,4 @@
-import { DtoBase, NamedDto } from '../types/base';
+import { DtoBase, NamedDto, CreateDto, UpdateDto } from '../types/base';
 
 // Observability DTOs
 export interface MetricDto extends DtoBase {
@@ -46,10 +46,5 @@ export interface AlertDto extends NamedDto {
   enabled: boolean;
 }
 
-export interface CreateAlertDto {
-  name: string;
-  description?: string;
-  condition: Record<string, unknown>;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  enabled?: boolean;
-}
+export type CreateAlertDto = CreateDto<AlertDto>;
+export type UpdateAlertDto = UpdateDto<AlertDto>;

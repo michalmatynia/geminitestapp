@@ -15,8 +15,8 @@ import {
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import type { ProductListingWithDetails } from '@/features/integrations/types/listings';
 import { logClientError } from '@/features/observability';
-import { badRequestError, internalError } from '@/shared/errors/app-error';
 import type { ProductWithImages } from '@/features/products/types';
+import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { useToast } from '@/shared/ui';
 
 interface ProductListingsContextType {

@@ -1,4 +1,4 @@
-import { DtoBase, NamedDto } from '../types/base';
+import { DtoBase, NamedDto, CreateDto, UpdateDto } from '../types/base';
 
 /**
  * Metadata for agent teaching documents
@@ -17,6 +17,9 @@ export interface AgentTeachingCollectionDto extends NamedDto {
   embeddingModel: string;
 }
 
+export type CreateAgentTeachingCollectionDto = CreateDto<AgentTeachingCollectionDto>;
+export type UpdateAgentTeachingCollectionDto = UpdateDto<AgentTeachingCollectionDto>;
+
 /**
  * DTO for a document chunk (from Python ChunkDTO)
  */
@@ -26,6 +29,9 @@ export interface AgentTeachingChunkDto extends DtoBase {
   embedding: number[] | null;
   metadata: Record<string, unknown>;
 }
+
+export type CreateAgentTeachingChunkDto = CreateDto<AgentTeachingChunkDto>;
+export type UpdateAgentTeachingChunkDto = UpdateDto<AgentTeachingChunkDto>;
 
 /**
  * DTO for a teaching document (from Python DocumentDTO)
@@ -38,6 +44,9 @@ export interface AgentTeachingDocumentDto extends NamedDto {
   embeddingModel: string;
   embeddingDimensions: number;
 }
+
+export type CreateAgentTeachingDocumentDto = CreateDto<AgentTeachingDocumentDto>;
+export type UpdateAgentTeachingDocumentDto = UpdateDto<AgentTeachingDocumentDto>;
 
 /**
  * DTO for a load operation (from Python LoadDTO)
@@ -56,6 +65,9 @@ export interface AgentTeachingGlobalBioDto extends NamedDto {
   metadata: Record<string, unknown>;
 }
 
+export type CreateAgentTeachingGlobalBioDto = CreateDto<AgentTeachingGlobalBioDto>;
+export type UpdateAgentTeachingGlobalBioDto = UpdateDto<AgentTeachingGlobalBioDto>;
+
 /**
  * DTO for teaching agent settings
  */
@@ -70,6 +82,9 @@ export interface AgentTeachingAgentDto extends NamedDto {
   retrievalMinScore: number;
   maxDocsPerCollection: number;
 }
+
+export type CreateAgentTeachingAgentDto = CreateDto<AgentTeachingAgentDto>;
+export type UpdateAgentTeachingAgentDto = UpdateDto<AgentTeachingAgentDto>;
 
 /**
  * DTO for a chat source / retrieval result

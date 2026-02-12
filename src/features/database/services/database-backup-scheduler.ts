@@ -156,7 +156,11 @@ const persistBackupSchedule = async (schedule: DatabaseEngineBackupSchedule): Pr
         create: { key: DATABASE_ENGINE_BACKUP_SCHEDULE_KEY, value },
       });
       wrotePrisma = true;
-    } catch {
+    } catch (error) {
+      void ErrorSystem.logWarning('[database-backup-scheduler] Failed to persist schedule to Prisma', {
+        service: 'database-backup-scheduler',
+        error,
+      });
       wrotePrisma = false;
     }
   }
@@ -174,7 +178,11 @@ const persistBackupSchedule = async (schedule: DatabaseEngineBackupSchedule): Pr
         { upsert: true },
       );
       wroteMongo = true;
-    } catch {
+    } catch (error) {
+      void ErrorSystem.logWarning('[database-backup-scheduler] Failed to persist schedule to MongoDB', {
+        service: 'database-backup-scheduler',
+        error,
+      });
       wroteMongo = false;
     }
   }

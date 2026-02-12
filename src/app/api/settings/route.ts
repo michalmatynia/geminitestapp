@@ -412,7 +412,7 @@ const fetchAndCacheSettings = async (
         prismaMissing = true;
         await ErrorSystem.logWarning('[settings] Prisma settings table missing; falling back to Mongo.', {
           service: 'api/settings',
-          code: (error as any).code,
+          code: error.code,
         });      } else {
         throw error;
       }
@@ -722,7 +722,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         prismaMissing = true;
         await ErrorSystem.logWarning('[settings] Prisma settings table missing; falling back to Mongo.', {
           service: 'api/settings',
-          code: (error as any).code,
+          code: error.code,
         });      } else {
         throw error;
       }

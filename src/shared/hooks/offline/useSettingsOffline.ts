@@ -6,6 +6,7 @@ import {
 } from '@/shared/api/settings-client';
 import type { SettingRecordDto } from '@/shared/dtos/settings';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
 type SettingRecord = SettingRecordDto;
@@ -20,7 +21,7 @@ export interface SettingsOfflineHookResult {
 
 export function useSettingsOffline(): SettingsOfflineHookResult {
   const settingsQuery: UseQueryResult<SettingRecord[], Error> = useQuery({
-    queryKey: ['settings', 'light'],
+    queryKey: QUERY_KEYS.settings.scope('light'),
     queryFn: async (): Promise<SettingRecord[]> => {
       try {
         return await fetchSettingsCached({ scope: 'light' });
@@ -46,7 +47,7 @@ export function useSettingsOffline(): SettingsOfflineHookResult {
       return (await res.json()) as SettingRecord;
     },
     {
-      queryKey: ['settings', 'light'],
+      queryKey: QUERY_KEYS.settings.scope('light'),
       optimisticUpdate: (oldData: SettingRecord[] | undefined, { key, value }: { key: string; value: string }): SettingRecord[] => {
         if (!Array.isArray(oldData)) return oldData || [];
         const updated = oldData.map((item: SettingRecord) => 

@@ -46,7 +46,7 @@ export function useNoteFolderTree(notebookId?: string, options?: QueryOptions): 
 
 export function useNoteTags(notebookId?: string, options?: QueryOptions): UseQueryResult<TagRecord[]> {
   return useQuery({
-    queryKey: [...QUERY_KEYS.notes.tags, notebookId],
+    queryKey: QUERY_KEYS.notes.tags(notebookId),
     queryFn: () =>
       api.get<TagRecord[]>('/api/notes/tags', {
         params: {
@@ -74,7 +74,7 @@ export function useNoteThemes(notebookId?: string, options?: QueryOptions): UseQ
 
 export function useNoteCategories(notebookId?: string | null, options?: QueryOptions): UseQueryResult<CategoryRecord[]> {
   return useQuery({
-    queryKey: [...QUERY_KEYS.notes.categories, notebookId],
+    queryKey: QUERY_KEYS.notes.categories(notebookId),
     queryFn: () =>
       notebookId
         ? api.get<CategoryRecord[]>('/api/notes/categories', { params: { notebookId } })

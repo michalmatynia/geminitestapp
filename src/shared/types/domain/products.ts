@@ -113,11 +113,8 @@ export type ProductWithImages = ProductRecord & {
 
 /**
  * Domain record for a product category.
- * Extends ProductCategoryDto.
  */
-export type ProductCategory = Entity & Omit<ProductCategoryDto, 'id' | 'createdAt' | 'updatedAt'> & {
-  description: string | null;
-};
+export type ProductCategory = ProductCategoryDto;
 
 export type ProductCategoryWithChildren = ProductCategory & {
   children: ProductCategoryWithChildren[];

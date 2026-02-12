@@ -27,7 +27,7 @@ export function BaseTagMapper(): React.JSX.Element {
   const { toast } = useToast();
   const catalogsQuery = useCatalogs();
   const internalTagsQuery = useQuery({
-    queryKey: [...QUERY_KEYS.products.all, 'tags', 'all'],
+    queryKey: QUERY_KEYS.products.metadata.tags('all'),
     queryFn: () => api.get<ProductTag[]>('/api/products/tags/all'),
   });
   const externalTagsQuery = useExternalTags(connectionId);

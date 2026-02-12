@@ -19,6 +19,7 @@ import {
   useCmsDomains,
   useCmsThemes,
 } from '@/features/cms/hooks/useCmsQueries';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 // Mock the API functions
 vi.mock('@/features/cms/api/pages', () => ({
@@ -128,7 +129,7 @@ describe('useCmsQueries Hooks', () => {
         await result.current.mutateAsync({ name: 'New Page', slugIds: [] });
 
         expect(pagesApi.createPage).toHaveBeenCalledWith({ name: 'New Page', slugIds: [] });
-        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['cms', 'pages'] });
+        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: QUERY_KEYS.cms.pages.all });
       });
 
       it('should throw error if create fails', async () => {
@@ -152,8 +153,8 @@ describe('useCmsQueries Hooks', () => {
         await result.current.mutateAsync({ id: '1', input: mockPage as any });
 
         expect(pagesApi.updatePage).toHaveBeenCalledWith('1', mockPage);
-        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['cms', 'pages'] });
-        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['cms', 'page', '1'] });
+        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: QUERY_KEYS.cms.pages.all });
+        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: QUERY_KEYS.cms.pages.detail('1') });
       });
     });
 
@@ -168,7 +169,7 @@ describe('useCmsQueries Hooks', () => {
         await result.current.mutateAsync('1');
 
         expect(pagesApi.deletePage).toHaveBeenCalledWith('1');
-        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['cms', 'pages'] });
+        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: QUERY_KEYS.cms.pages.all });
       });
     });
   });
@@ -196,7 +197,7 @@ describe('useCmsQueries Hooks', () => {
         await result.current.mutateAsync({ slug: 'new' });
 
         expect(slugsApi.createSlug).toHaveBeenCalledWith({ slug: 'new' });
-        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['cms', 'slugs'] });
+        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: QUERY_KEYS.cms.slugs.all });
       });
     });
   });

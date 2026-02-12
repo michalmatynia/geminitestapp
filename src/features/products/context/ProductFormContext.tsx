@@ -20,7 +20,6 @@ import {
 import { useProductFormSubmit } from '@/features/products/hooks/useProductFormSubmit';
 import { useProductImages } from '@/features/products/hooks/useProductImages';
 import { useProductMetadata } from '@/features/products/hooks/useProductMetadata';
-import { internalError } from '@/shared/errors/app-error';
 import type {
   CatalogRecord,
   ProductWithImages,
@@ -36,6 +35,7 @@ import {
   productCreateSchema,
   productUpdateSchema,
 } from '@/features/products/validations/schemas';
+import { internalError } from '@/shared/errors/app-error';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
 import type { Language } from '@/shared/types/domain/internationalization';
 

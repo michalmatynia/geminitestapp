@@ -11,6 +11,8 @@ import type { Integration, IntegrationConnection } from '@/features/integrations
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
+import { invalidateIntegrationConnections } from './integrationCache';
+
 export function useCreateIntegration(): UseMutationResult<Integration, Error, { name: string; slug: string }> {
   const queryClient = useQueryClient();
 
@@ -53,7 +55,7 @@ export function useUpsertConnection(): UseMutationResult<IntegrationConnection, 
       return connectionId ? api.put<IntegrationConnection>(url, payload) : api.post<IntegrationConnection>(url, payload);
     },
     onSuccess: (_data: IntegrationConnection, variables: UpsertConnectionVariables): void => {
-      void queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.integrations.connections(), variables.integrationId] });
+      invalidateIntegrationConnections(queryClient, variables.integrationId);
     },
   };
 
@@ -68,7 +70,7 @@ export function useDeleteConnection(): UseMutationResult<Record<string, unknown>
       connectionId 
     }: DeleteConnectionVariables) => api.delete<Record<string, unknown>>(`/api/integrations/connections/${connectionId}`),
     onSuccess: (_data: Record<string, unknown>, variables: DeleteConnectionVariables): void => {
-      void queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.integrations.connections(), variables.integrationId] });
+      invalidateIntegrationConnections(queryClient, variables.integrationId);
     },
   });
 }
@@ -94,7 +96,7 @@ export function useDisconnectAllegro(): UseMutationResult<Record<string, unknown
     mutationFn: ({ integrationId: _integrationId, connectionId }: { integrationId: string; connectionId: string }) => 
       api.post<Record<string, unknown>>(`/api/integrations/connections/${connectionId}/allegro/disconnect`, {}),
     onSuccess: (_: Record<string, unknown>, variables: { integrationId: string; connectionId: string }) => {
-      void queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.integrations.connections(), variables.integrationId] });
+      invalidateIntegrationConnections(queryClient, variables.integrationId);
     },
   });
 }

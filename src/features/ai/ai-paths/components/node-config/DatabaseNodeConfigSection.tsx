@@ -43,6 +43,7 @@ import {
 import { PRODUCT_DB_PROVIDER_SETTING_KEY } from '@/features/products/constants';
 import { PROMPT_ENGINE_SETTINGS_KEY, parsePromptEngineSettings, type PromptValidationRule } from '@/features/prompt-engine/settings';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { Button, Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Tabs, TabsContent, TabsList, TabsTrigger, Checkbox } from '@/shared/ui';
 
 type ActionResult = {
@@ -345,7 +346,7 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
   const schemaProvider = schemaConnection.schemaConfig?.provider ?? 'auto';
 
   const schemaQuery = useQuery({
-    queryKey: ['db-schema', schemaProvider],
+    queryKey: QUERY_KEYS.system.databases.schema({ provider: schemaProvider }),
     queryFn: async (): Promise<SchemaData> => {
       const result = await dbApi.schema({ provider: schemaProvider });
       if (!result.ok) {

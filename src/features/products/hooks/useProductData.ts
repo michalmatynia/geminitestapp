@@ -21,8 +21,14 @@ import type {
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { api } from '@/shared/lib/api-client';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { DeleteResponse } from '@/shared/types/api/api';
+
+import {
+  getProductDetailQueryKey,
+  invalidateProductsAndCounts,
+  productsAllQueryKey,
+  productsCountsQueryKey,
+} from './productCache';
 
 // --- Queries ---
 
@@ -48,8 +54,8 @@ export function useCreateProductMutation(): UseMutationResult<unknown, Error, Fo
   return useOfflineMutation(
     (formData: FormData) => createProduct(formData),
     {
-      queryKey: QUERY_KEYS.products.all,
-      extraInvalidateKeys: [QUERY_KEYS.products.counts()],
+      queryKey: productsAllQueryKey,
+      extraInvalidateKeys: [productsCountsQueryKey],
       queuedMessage: 'Product creation queued in runtime queue.',
       processedMessage: 'Queued product creation completed.',
       errorMessage: 'Failed to create product',
@@ -145,12 +151,12 @@ export function useUpdateProductMutation(): UseMutationResult<
       return updateProduct(id, data);
     },
     {
-      queryKey: QUERY_KEYS.products.all,
+      queryKey: productsAllQueryKey,
       extraInvalidateKeys: (variables: {
         id: string;
         data: Partial<ProductWithImages> | FormData;
         originalSku?: string | null;
-      }) => [QUERY_KEYS.products.detail(variables.id)],
+      }) => [getProductDetailQueryKey(variables.id)],
       queuedMessage: 'Product update queued in runtime queue.',
       processedMessage: 'Queued product update completed.',
       errorMessage: 'Failed to update product',
@@ -172,8 +178,8 @@ export function useDeleteProductMutation(): UseMutationResult<DeleteResponse | n
   return useOfflineMutation(
     (id: string) => deleteProduct(id) as Promise<DeleteResponse>,
     {
-      queryKey: QUERY_KEYS.products.all,
-      extraInvalidateKeys: [QUERY_KEYS.products.counts()],
+      queryKey: productsAllQueryKey,
+      extraInvalidateKeys: [productsCountsQueryKey],
       queuedMessage: 'Product deletion queued in runtime queue.',
       processedMessage: 'Queued product deletion completed.',
       errorMessage: 'Failed to delete product',
@@ -195,8 +201,8 @@ export function useBulkDeleteProductsMutation(): UseMutationResult<{ success: bo
       return { success: true };
     },
     {
-      queryKey: QUERY_KEYS.products.all,
-      extraInvalidateKeys: [QUERY_KEYS.products.counts()],
+      queryKey: productsAllQueryKey,
+      extraInvalidateKeys: [productsCountsQueryKey],
       queuedMessage: 'Product deletion queued in runtime queue.',
       processedMessage: 'Queued product deletion completed.',
       errorMessage: 'Failed to delete some products',
@@ -326,8 +332,7 @@ export function useProductData({
   }
 
   const refresh = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
-    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() });
+    void invalidateProductsAndCounts(queryClient);
   }, [queryClient]);
 
   // Invalidate when refreshTrigger changes

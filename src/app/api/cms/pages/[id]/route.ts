@@ -2,10 +2,10 @@ export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import { logCmsActivity } from '@/features/cms/services/cms-activity';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import { cmsPageUpdateSchema } from '@/features/cms/validations/api';
 import { parseJsonBody } from '@/features/products/server';
-import { logCmsActivity } from '@/features/cms/services/cms-activity';
 import { notFoundError, validationError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
@@ -95,7 +95,7 @@ async function PUT_handler(req: NextRequest, ctx: ApiHandlerContext, params: Par
     await cmsRepository.replacePageSlugs(id, slugIds);
   }
 
-  logCmsActivity({
+  void logCmsActivity({
     event: 'PAGE_UPDATED',
     description: `Updated CMS page: ${updatedPage.name}`,
     userId: ctx.userId ?? null,
@@ -122,7 +122,7 @@ async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext, params:
   await cmsRepository.deletePage(id);
 
   if (page) {
-    logCmsActivity({
+    void logCmsActivity({
       event: 'PAGE_DELETED',
       description: `Deleted CMS page: ${page.name}`,
       userId: ctx.userId ?? null,

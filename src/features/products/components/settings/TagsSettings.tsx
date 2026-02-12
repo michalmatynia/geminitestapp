@@ -3,9 +3,9 @@
 import { Plus, Trash2 } from 'lucide-react';
 import { useState, useCallback } from 'react';
 
+import { logClientError } from '@/features/observability';
 import { useSaveTagMutation, useDeleteTagMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { Catalog, ProductTag } from '@/features/products/types';
-import { logClientError } from '@/features/observability';
 import { useToast, Button, UnifiedSelect, Input, Label, SharedModal, EmptyState, ConfirmDialog, SectionPanel, Tag as UiTag } from '@/shared/ui';
 
 type TagsSettingsProps = {

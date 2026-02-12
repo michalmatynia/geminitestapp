@@ -10,7 +10,7 @@ const aiPathKeys = QUERY_KEYS.ai.aiPaths;
 
 export function useAiPathRuntimeAnalytics(range: string = '24h', enabled: boolean = true): UseQueryResult<AiPathRuntimeAnalyticsSummary, Error> {
   return useQuery({
-    queryKey: [...aiPathKeys.all, 'runtime-analytics', range],
+    queryKey: aiPathKeys.runtimeAnalytics(range),
     queryFn: async () => {
       const response = await analyticsApi.summary({ range });
       if (!response.ok) throw new Error(response.error || 'Failed to load runtime analytics');

@@ -13,6 +13,7 @@ import { ProductImagesTabProvider } from '@/features/products/components/form/Pr
 import type { ProductImageManagerController } from '@/features/products/components/ProductImageManager';
 import { useProductImages } from '@/features/products/hooks/useProductImages';
 import { useCatalogs, useProducers } from '@/features/products/hooks/useProductMetadata';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { AppModal, Tabs, TabsContent, TabsList, TabsTrigger, useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
@@ -110,21 +111,21 @@ export function DraftCreator({
   // Metadata queries based on selected catalogs
   const categoryQueries = useQueries({
     queries: selectedCatalogIds.map((id: string) => ({
-      queryKey: ['categories', id],
+      queryKey: QUERY_KEYS.products.metadata.categories(id),
       queryFn: () => getCategoriesFlat(id),
     }))
   });
 
   const tagQueries = useQueries({
     queries: selectedCatalogIds.map((id: string) => ({
-      queryKey: ['tags', id],
+      queryKey: QUERY_KEYS.products.metadata.tags(id),
       queryFn: () => getTags(id),
     }))
   });
 
   const parameterQueries = useQueries({
     queries: selectedCatalogIds.map((id: string) => ({
-      queryKey: ['parameters', id],
+      queryKey: QUERY_KEYS.products.metadata.parameters(id),
       queryFn: () => getParameters(id),
     }))
   });

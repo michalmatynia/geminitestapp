@@ -3,6 +3,8 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
+
 interface SearchConfig<T> {
   searchFn: (query: string) => Promise<T[]>;
   minLength?: number;
@@ -17,7 +19,7 @@ export function useSearchQuery<T>(
   const { searchFn, minLength = 2, cacheTime = 5 * 60 * 1000 } = config;
 
   return useQuery({
-    queryKey: ['search', searchTerm],
+    queryKey: QUERY_KEYS.search.term(searchTerm),
     queryFn: (): Promise<T[]> => searchFn(searchTerm),
     enabled: searchTerm.length >= minLength,
     staleTime: cacheTime,
@@ -89,7 +91,7 @@ export function usePaginatedSearch<T>(
   const enabled = options?.enabled !== false;
 
   return useQuery({
-    queryKey: ['search', 'paginated', searchTerm, pageSize],
+    queryKey: QUERY_KEYS.search.paginated(searchTerm, pageSize),
     queryFn: async (): Promise<{ data: T[]; total: number; hasMore: boolean }> => {
       const results: T[] = [];
       let page = 1;
@@ -119,7 +121,7 @@ export function useSearchSuggestions(
   getSuggestions: (query: string) => Promise<string[]>
 ): UseQueryResult<string[], Error> {
   return useQuery({
-    queryKey: ['search', 'suggestions', searchTerm],
+    queryKey: QUERY_KEYS.search.suggestions(searchTerm),
     queryFn: (): Promise<string[]> => getSuggestions(searchTerm),
     enabled: searchTerm.length >= 1,
     staleTime: 10 * 60 * 1000, // 10 minutes

@@ -4,13 +4,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
 import {
-  IMAGE_STUDIO_OPENAI_API_KEY_KEY,
-} from '@/features/ai/image-studio/utils/studio-settings';
-import {
   IMAGE_STUDIO_IMAGE_MODEL_FALLBACKS,
   toLikelyImageModelIds,
   uniqueSortedModelIds,
 } from '@/features/ai/image-studio/utils/image-models';
+import {
+  IMAGE_STUDIO_OPENAI_API_KEY_KEY,
+} from '@/features/ai/image-studio/utils/studio-settings';
 import { getSettingValue } from '@/features/products/services/aiDescriptionService';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -27,7 +27,7 @@ const readOpenAiKey = async (): Promise<string | null> => {
     (await getSettingValue('openai_api_key'))?.trim() ||
     process.env['OPENAI_API_KEY'] ||
     null;
-  return key && key.trim() ? key.trim() : null;
+  return key?.trim() ? key.trim() : null;
 };
 
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

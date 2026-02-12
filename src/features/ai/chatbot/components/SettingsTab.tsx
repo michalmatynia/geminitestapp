@@ -4,8 +4,8 @@ import React from 'react';
 
 import { useAgentCreatorSettings } from '@/features/ai/agentcreator';
 import { AgentCreatorSettingsSection } from '@/features/ai/agentcreator/components/AgentCreatorSettingsSection';
-import type { PlaywrightPersona } from '@/features/playwright/types';
 import { logClientError } from '@/features/observability';
+import type { PlaywrightPersona } from '@/features/playwright/types';
 import { Button, Label, UnifiedSelect, SectionPanel, Checkbox, useToast } from '@/shared/ui';
 
 import { useChatbot } from '../context/ChatbotContext';

@@ -3,9 +3,9 @@
 import { Plus, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { logClientError } from '@/features/observability';
 import { useProducers, useSaveProducerMutation, useDeleteProducerMutation } from '@/features/products/hooks/useProductMetadata';
 import type { Producer } from '@/features/products/types';
-import { logClientError } from '@/features/observability';
 import { Button, ConfirmDialog, EmptyState, Input, Label, SharedModal, useToast } from '@/shared/ui';
 
 type ProducerFormState = {

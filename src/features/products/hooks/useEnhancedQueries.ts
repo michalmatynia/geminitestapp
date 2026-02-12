@@ -24,7 +24,7 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
 
   // Normalized products query
   const productsQuery = useNormalizedQuery<ProductDto>(
-    [...QUERY_KEYS.products.all, 'enhanced'],
+    QUERY_KEYS.products.enhanced(),
     async (): Promise<ProductDto[]> => {
       return await api.get<ProductDto[]>('/api/products');
     }
@@ -33,7 +33,7 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
   // Composed query for product statistics
   const productStats = useComposedQuery(
     {
-      queryKey: [...QUERY_KEYS.products.all, 'enhanced'],
+      queryKey: QUERY_KEYS.products.enhanced(),
       queryFn: async (): Promise<ProductDto[]> => {
         return await api.get<ProductDto[]>('/api/products');
       },
@@ -50,7 +50,7 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
   useEffect((): void => {
     scheduler.scheduleQuery(
       'product-categories',
-      [...QUERY_KEYS.products.all, 'categories'],
+      QUERY_KEYS.products.categoriesAll(),
       async (): Promise<ProductCategoryDto[]> => {
         type Catalog = { id: string };
         const catalogs = await api.get<Catalog[]>('/api/catalogs');
@@ -65,7 +65,7 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
 
     scheduler.scheduleQuery(
       'product-tags',
-      [...QUERY_KEYS.products.all, 'tags'],
+      QUERY_KEYS.products.tagsAll(),
       async (): Promise<ProductTagDto[]> => {
         return await api.get<ProductTagDto[]>('/api/products/tags');
       },
@@ -76,7 +76,7 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
   // Background sync for critical data
   useBackgroundQueries([
     {
-      queryKey: [...QUERY_KEYS.products.all, 'enhanced-count'],
+      queryKey: QUERY_KEYS.products.enhancedCount(),
       queryFn: async (): Promise<{ count: number }> => {
         return await api.get<{ count: number }>('/api/products/count');
       },
@@ -96,21 +96,21 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
 export function useEnhancedUsers(): { users: ReturnType<typeof useAdaptiveQuery>; permissions: ReturnType<typeof useAdaptiveQuery>; activity: ReturnType<typeof useAdaptiveQuery>; } {
   // User list with long-term caching
   const users = useAdaptiveQuery(
-    ['users', 'list'],
+    [...QUERY_KEYS.auth.users.all, 'list'],
     async () => await api.get('/api/users'),
     { dataType: 'longTerm', priority: 'medium' }
   );
 
   // User permissions with standard caching
   const permissions = useAdaptiveQuery(
-    ['users', 'permissions'],
+    [...QUERY_KEYS.auth.users.all, 'permissions'],
     async () => await api.get('/api/users/permissions'),
     { dataType: 'standard', priority: 'high' }
   );
 
   // User activity with real-time updates
   const activity = useAdaptiveQuery(
-    ['users', 'activity'],
+    [...QUERY_KEYS.auth.users.all, 'activity'],
     async () => await api.get('/api/users/activity'),
     { dataType: 'realtime', priority: 'low' }
   );
@@ -136,7 +136,7 @@ export function useEnhancedSettings(): ReturnType<typeof useComposedQuery> {
     SettingsObject & { system: SettingsObject; theme: string | null; language: string | null }
   >(
     {
-      queryKey: ['settings', 'all'],
+      queryKey: QUERY_KEYS.settings.composed(),
       queryFn: async () => {
         const [app, user, system] = await Promise.all([
           api.get<AppSettingsObject>('/api/settings/app'),

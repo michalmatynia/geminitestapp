@@ -10,7 +10,7 @@ import type {
   ProductRepository,
   UpdateProductInput,
 } from '@/features/products/types/services/product-repository';
-import { conflictError } from '@/shared/errors/app-error';
+import { conflictError, internalError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
 import type { ImageFileRecord } from '@/shared/types/domain/files';
 
@@ -580,7 +580,7 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
   ): Promise<T> => {
     // This method should not be called directly on the transactional repository,
     // but only on the main repository. Throw an error if it is.
-    throw new Error('createProductInTransaction cannot be called within a transaction');
+    throw internalError('createProductInTransaction cannot be called within a transaction');
   },
 });
 

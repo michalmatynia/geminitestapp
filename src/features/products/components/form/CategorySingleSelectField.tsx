@@ -3,6 +3,7 @@
 import { useContext } from 'react';
 
 import { ProductFormContext } from '@/features/products/context/ProductFormContext';
+import { internalError } from '@/shared/errors/app-error';
 import { MultiSelect } from '@/shared/ui';
 
 type CategoryOption = {
@@ -34,7 +35,7 @@ export function CategorySingleSelectField({
   const resolvedLoading = categoriesProp ? loading : (formContext?.categoriesLoading ?? loading);
 
   if (!resolvedOnChange) {
-    throw new Error(
+    throw internalError(
       'CategorySingleSelectField requires `onChange` prop when used outside ProductFormContext.'
     );
   }

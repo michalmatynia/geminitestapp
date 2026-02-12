@@ -104,7 +104,7 @@ async function updateUserPreferences(
   }
   const validation = userPreferencesUpdateSchema.safeParse(rawPayload);
   if (!validation.success) {
-    throw new Error('Invalid user preferences update payload.');
+    throw new ApiError('Invalid user preferences update payload.', 400);
   }
   const payload = normalizeUserPreferencesUpdatePayload(validation.data);
   await api.patch('/api/user/preferences', payload);

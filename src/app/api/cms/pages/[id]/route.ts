@@ -4,7 +4,6 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import { cmsPageUpdateSchema } from '@/features/cms/validations/api';
-import { ActivityTypes, logActivity } from '@/features/observability/server';
 import { parseJsonBody } from '@/features/products/server';
 import { notFoundError, validationError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';

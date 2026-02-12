@@ -9,23 +9,33 @@ import {
 const MAX_CONTEXT_SIZE = 12000;
 const MAX_VALUE_LENGTH = 4000;
 
-type CreateSystemLogFn = (typeof import('./system-log-repository'))['createSystemLog'];
-type NotifyCriticalErrorFn = (typeof import('./critical-error-notifier'))['notifyCriticalError'];
+type CreateSystemLogFn = (input: {
+  level: SystemLogLevel;
+  message: string;
+  source?: string | null;
+  context?: Record<string, unknown> | null;
+  stack?: string | null;
+  path?: string | undefined;
+  method?: string | undefined;
+  statusCode?: number | null;
+  requestId?: string | null;
+  userId?: string | null;
+}) => Promise<SystemLogRecord>;
 
-const dynamicImport = new Function(
-  'specifier',
-  'return import(specifier)'
-) as (specifier: string) => Promise<unknown>;
+type NotifyCriticalErrorFn = (
+  record: SystemLogRecord,
+  shouldNotify: boolean,
+) => Promise<void>;
 
 const loadCreateSystemLog = async (): Promise<CreateSystemLogFn | null> => {
   if (typeof window !== 'undefined') return null;
-  const mod = await dynamicImport('./system-log-repository') as { createSystemLog?: CreateSystemLogFn };
+  const mod = await import('./system-log-repository') as { createSystemLog?: CreateSystemLogFn };
   return mod.createSystemLog ?? null;
 };
 
 const loadNotifyCriticalError = async (): Promise<NotifyCriticalErrorFn | null> => {
   if (typeof window !== 'undefined') return null;
-  const mod = await dynamicImport('./critical-error-notifier') as { notifyCriticalError?: NotifyCriticalErrorFn };
+  const mod = await import('./critical-error-notifier') as { notifyCriticalError?: NotifyCriticalErrorFn };
   return mod.notifyCriticalError ?? null;
 };
 

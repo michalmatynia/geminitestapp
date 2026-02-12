@@ -22,6 +22,7 @@ import { getAuthUserPageSettings } from '@/features/auth/services/auth-settings'
 import { hashRecoveryCode, verifyTotpToken } from '@/features/auth/services/totp';
 import { decryptAuthSecret } from '@/features/auth/utils/auth-encryption';
 import { ActivityTypes, ErrorSystem, logActivity } from '@/features/observability/server';
+import { configurationError } from '@/shared/errors/app-error';
 import { getDatabaseEnginePolicy } from '@/shared/lib/db/database-engine-policy';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
@@ -290,7 +291,7 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
         error,
       });
       if (!enginePolicy.allowAutomaticFallback) {
-        throw new Error(
+        throw configurationError(
           `[AUTH] Adapter initialization failed for "${provider}". Automatic fallback is disabled by Database Engine policy.`
         );
       }

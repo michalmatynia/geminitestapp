@@ -7,6 +7,14 @@ import { getRequestContext } from '@/shared/lib/observability/request-context';
 
 type LogLevel = 'info' | 'warn' | 'error' | 'log';
 
+export type LogHandler = (level: LogLevel, message: string, error?: unknown, context?: Record<string, unknown>) => void;
+
+const handlers: LogHandler[] = [];
+
+export const registerLogHandler = (handler: LogHandler): void => {
+  handlers.push(handler);
+};
+
 const formatMessage = (level: LogLevel, message: string, _context?: Record<string, unknown>): string => {
   const timestamp = new Date().toISOString();
   const requestContext = getRequestContext();
@@ -20,31 +28,11 @@ const formatMessage = (level: LogLevel, message: string, _context?: Record<strin
 export const logger = {
   info: (message: string, context?: Record<string, unknown>): void => {
     console.info(formatMessage('info', message, context), context || '');
-    if (typeof window === 'undefined') {
-      void (async (): Promise<void> => {
-        try {
-          const { ErrorSystem } = await import('@/features/observability/services/error-system');
-          await ErrorSystem.logInfo(message, {
-            service: (context?.['service'] as string) || 'shared-logger',
-            ...context,
-          });
-        } catch { /* ignore */ }
-      })();
-    }
+    handlers.forEach((h) => h('info', message, undefined, context));
   },
   warn: (message: string, context?: Record<string, unknown>): void => {
     console.warn(formatMessage('warn', message, context), context || '');
-    if (typeof window === 'undefined') {
-      void (async (): Promise<void> => {
-        try {
-          const { ErrorSystem } = await import('@/features/observability/services/error-system');
-          await ErrorSystem.logWarning(message, {
-            service: (context?.['service'] as string) || 'shared-logger',
-            ...context,
-          });
-        } catch { /* ignore */ }
-      })();
-    }
+    handlers.forEach((h) => h('warn', message, undefined, context));
   },
   error: (message: string, error?: unknown, context?: Record<string, unknown>): void => {
     const combinedContext = { 
@@ -53,8 +41,10 @@ export const logger = {
     };
     console.error(formatMessage('error', message, combinedContext), combinedContext);
     
-    // Integration with centralized observability
-    if (typeof window !== 'undefined') {
+    handlers.forEach((h) => h('error', message, error, context));
+
+    // Integration with centralized observability (Client-side fallback)
+    if (typeof window !== 'undefined' && handlers.length === 0) {
       void (async (): Promise<void> => {
         try {
           const err = error instanceof Error ? error : new Error(message);
@@ -64,34 +54,10 @@ export const logger = {
           // Fallback if logClientError fails or import fails
         }
       })();
-    } else {
-      // Server-side integration
-      void (async (): Promise<void> => {
-        try {
-          const { ErrorSystem } = await import('@/features/observability/services/error-system');
-          await ErrorSystem.captureException(error || message, {
-            service: (context?.['service'] as string) || 'shared-logger',
-            message,
-            ...context,
-          });
-        } catch {
-          // Fallback
-        }
-      })();
     }
   },
   log: (message: string, context?: Record<string, unknown>): void => {
     console.log(formatMessage('log', message, context), context || '');
-    if (typeof window === 'undefined') {
-      void (async (): Promise<void> => {
-        try {
-          const { ErrorSystem } = await import('@/features/observability/services/error-system');
-          await ErrorSystem.logInfo(message, {
-            service: (context?.['service'] as string) || 'shared-logger',
-            ...context,
-          });
-        } catch { /* ignore */ }
-      })();
-    }
+    handlers.forEach((h) => h('log', message, undefined, context));
   },
 };

@@ -4,6 +4,7 @@ import { useContext } from 'react';
 
 import { ProductFormContext } from '@/features/products/context/ProductFormContext';
 import type { Producer } from '@/features/products/types';
+import { internalError } from '@/shared/errors/app-error';
 import { MultiSelect } from '@/shared/ui';
 
 type ProducerMultiSelectFieldProps = {
@@ -43,7 +44,7 @@ export function ProducerMultiSelectField({
       : null);
 
   if (!resolvedOnChange) {
-    throw new Error(
+    throw internalError(
       'ProducerMultiSelectField requires `onChange` prop when used outside ProductFormContext.'
     );
   }

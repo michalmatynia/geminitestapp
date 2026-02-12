@@ -21,6 +21,7 @@ import {
 } from '@/features/auth/utils/auth-management';
 import { DEFAULT_AUTH_SECURITY_POLICY } from '@/features/auth/utils/auth-security';
 import { logClientError } from '@/features/observability';
+import { ApiError } from '@/shared/lib/api-client';
 import { Badge, Button, Checkbox, ConfirmDialog, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Input, Label, ListPanel, SectionHeader, SectionPanel, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -346,7 +347,7 @@ export default function AuthUsersPage(): React.JSX.Element {
         password: mockPassword,
       });
       if (!res.ok) {
-        throw new Error('Mock sign-in failed');
+        throw new ApiError('Mock sign-in failed', res.status);
       }
       const payload = res.payload as { ok?: boolean; message?: string };
       if (payload.ok) {

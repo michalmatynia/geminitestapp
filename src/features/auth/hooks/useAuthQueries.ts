@@ -14,6 +14,7 @@ import {
   type AuthUsersResponse,
   type AuthUserSecurityProfile,
 } from '@/features/auth/api/users';
+import { ApiError } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import type { AuthUserSummary } from '../types';
@@ -60,7 +61,7 @@ export function useUpdateAuthUser(): UseMutationResult<
       };
     }): Promise<AuthUserSummary> => {
       const result = await updateAuthUser(userId, input);
-      if (!result.ok) throw new Error('Failed to update user');
+      if (!result.ok) throw new ApiError('Failed to update user', 400);
       return result.payload;
     },
     onSuccess: (): void => {
@@ -89,7 +90,7 @@ export function useUpdateAuthUserSecurity(): UseMutationResult<
       };
     }): Promise<AuthUserSecurityProfile> => {
       const result = await updateAuthUserSecurity(userId, input);
-      if (!result.ok) throw new Error('Failed to update security settings');
+      if (!result.ok) throw new ApiError('Failed to update security settings', 400);
       return result.payload;
     },
     onSuccess: (_data: AuthUserSecurityProfile, variables: { userId: string; input: { disabled?: boolean; banned?: boolean; allowedIps?: string[]; disableMfa?: boolean } }): void => {

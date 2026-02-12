@@ -36,7 +36,7 @@ import {
 } from '@/features/notesapp/api/useNoteQueries';
 import type { UseNoteDataProps } from '@/features/notesapp/types/notes-hooks';
 import { useDebounce } from '@/shared/hooks/ui/use-debounce';
-import { api } from '@/shared/lib/api-client';
+import { api, ApiError } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { DeleteResponse } from '@/shared/types/api/api';
 import type {
@@ -216,7 +216,7 @@ export const useCreateNoteFileMutation = (
       file: File;
       onProgress?: (loaded: number, total?: number) => void;
     }): Promise<NoteFileRecord> => {
-      if (!noteId) throw new Error('Note ID is required for file upload');
+      if (!noteId) throw new ApiError('Note ID is required for file upload', 400);
       const formData = new FormData();
       formData.append('file', file);
       formData.append('slotIndex', slotIndex.toString());
@@ -231,7 +231,7 @@ export const useCreateNoteFileMutation = (
       );
       if (!result.ok) {
         const error = result.data as { error?: string };
-        throw new Error(error.error || 'Failed to upload note file');
+        throw new ApiError(error.error || 'Failed to upload note file', 400);
       }
       return result.data as NoteFileRecord;
     },
@@ -248,7 +248,7 @@ export const useDeleteNoteFileMutation = (noteId?: string): UseMutationResult<De
 
   return useMutation({
     mutationFn: (slotIndex: number) => {
-      if (!noteId) throw new Error('Note ID is required for file deletion');
+      if (!noteId) throw new ApiError('Note ID is required for file deletion', 400);
       return api.delete<DeleteResponse>(`/api/notes/${noteId}/files/${slotIndex}`);
     },
     onSuccess: () => {

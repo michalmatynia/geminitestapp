@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 
+import { logClientError } from '@/features/observability';
+import { ApiError } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
 
 // Why: Editor mode (markdown/wysiwyg) has complex migration logic:
@@ -91,16 +93,17 @@ export function useEditorMode(
       });
 
       if (!res.ok) {
-        throw new Error('Failed to migrate note');
+        throw new ApiError('Failed to migrate note', res.status);
       }
 
       setEditorMode('wysiwyg');
       toast('Note migrated to WYSIWYG format', { variant: 'success' });
       onSuccess?.();
       return htmlContent;
-    } catch {
+    } catch (error) {
+      logClientError(error, { context: { source: 'useEditorMode', action: 'migrateToWysiwyg', noteId: note.id } });
       toast('Failed to migrate note', { variant: 'error' });
-      throw new Error('Migration failed');
+      throw error;
     } finally {
       setIsMigrating(false);
     }
@@ -126,16 +129,17 @@ export function useEditorMode(
       });
 
       if (!res.ok) {
-        throw new Error('Failed to migrate note');
+        throw new ApiError('Failed to migrate note', res.status);
       }
 
       setEditorMode('markdown');
       toast('Note migrated to Markdown format', { variant: 'success' });
       onSuccess?.();
       return markdownContent;
-    } catch {
+    } catch (error) {
+      logClientError(error, { context: { source: 'useEditorMode', action: 'migrateToMarkdown', noteId: note.id } });
       toast('Failed to migrate note', { variant: 'error' });
-      throw new Error('Migration failed');
+      throw error;
     } finally {
       setIsMigrating(false);
     }

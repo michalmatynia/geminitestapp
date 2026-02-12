@@ -4,6 +4,7 @@ import { useContext } from 'react';
 
 import { ProductFormContext } from '@/features/products/context/ProductFormContext';
 import type { ProductTag } from '@/features/products/types';
+import { internalError } from '@/shared/errors/app-error';
 import { MultiSelect } from '@/shared/ui';
 
 type TagMultiSelectFieldProps = {
@@ -43,7 +44,7 @@ export function TagMultiSelectField({
       : null);
 
   if (!resolvedOnChange) {
-    throw new Error(
+    throw internalError(
       'TagMultiSelectField requires `onChange` prop when used outside ProductFormContext.'
     );
   }

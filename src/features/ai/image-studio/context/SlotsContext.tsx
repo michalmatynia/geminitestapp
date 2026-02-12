@@ -64,8 +64,13 @@ export interface SlotsState {
   // Slot UI
   slotCreateOpen: boolean;
   driveImportOpen: boolean;
-  driveImportMode: 'create' | 'replace';
+  driveImportMode: 'create' | 'replace' | 'temporary-object';
   driveImportTargetId: string | null;
+  temporaryObjectUpload: {
+    id: string;
+    filepath: string;
+    filename?: string;
+  } | null;
   slotUpdateBusy: boolean;
   slotInlineEditOpen: boolean;
   slotImageUrlDraft: string;
@@ -97,8 +102,13 @@ export interface SlotsActions {
   // Slot UI
   setSlotCreateOpen: (o: boolean) => void;
   setDriveImportOpen: (o: boolean) => void;
-  setDriveImportMode: (m: 'create' | 'replace') => void;
+  setDriveImportMode: (m: 'create' | 'replace' | 'temporary-object') => void;
   setDriveImportTargetId: (id: string | null) => void;
+  setTemporaryObjectUpload: React.Dispatch<React.SetStateAction<{
+    id: string;
+    filepath: string;
+    filename?: string;
+  } | null>>;
   setSlotUpdateBusy: (b: boolean) => void;
   setSlotInlineEditOpen: (o: boolean) => void;
   setSlotImageUrlDraft: (s: string) => void;
@@ -189,8 +199,13 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
   // ── Slot UI state ──
   const [slotCreateOpen, setSlotCreateOpen] = useState<boolean>(false);
   const [driveImportOpen, setDriveImportOpen] = useState<boolean>(false);
-  const [driveImportMode, setDriveImportMode] = useState<'create' | 'replace'>('create');
+  const [driveImportMode, setDriveImportMode] = useState<'create' | 'replace' | 'temporary-object'>('create');
   const [driveImportTargetId, setDriveImportTargetId] = useState<string | null>(null);
+  const [temporaryObjectUpload, setTemporaryObjectUpload] = useState<{
+    id: string;
+    filepath: string;
+    filename?: string;
+  } | null>(null);
   const [slotUpdateBusy, setSlotUpdateBusy] = useState<boolean>(false);
   const [slotInlineEditOpen, setSlotInlineEditOpen] = useState<boolean>(false);
   const [slotImageUrlDraft, setSlotImageUrlDraft] = useState<string>('');
@@ -229,6 +244,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     setSelectedFolderRaw('');
     setCompositeAssetIds([]);
     setPreviewMode('image');
+    setTemporaryObjectUpload(null);
     hydratedSessionSignatureRef.current = null;
   }, [projectId]);
 
@@ -479,14 +495,14 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     () => ({
       slots, slotsQuery, selectedSlotId, selectedSlot, workingSlotId, workingSlot,
       virtualFolders, selectedFolder,
-      slotCreateOpen, driveImportOpen, driveImportMode, driveImportTargetId,
+      slotCreateOpen, driveImportOpen, driveImportMode, driveImportTargetId, temporaryObjectUpload,
       slotUpdateBusy, slotInlineEditOpen, slotImageUrlDraft, slotBase64Draft, moveTargetFolder,
       compositeAssetIds, compositeAssets, compositeAssetOptions, previewMode, captureRef,
     }),
     [
       slots, slotsQuery, selectedSlotId, selectedSlot, workingSlotId, workingSlot,
       virtualFolders, selectedFolder,
-      slotCreateOpen, driveImportOpen, driveImportMode, driveImportTargetId,
+      slotCreateOpen, driveImportOpen, driveImportMode, driveImportTargetId, temporaryObjectUpload,
       slotUpdateBusy, slotInlineEditOpen, slotImageUrlDraft, slotBase64Draft, moveTargetFolder,
       compositeAssetIds, compositeAssets, compositeAssetOptions, previewMode,
     ]
@@ -498,7 +514,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
       setSelectedFolder: handleSelectFolder, createSlots,
       updateSlotMutation, deleteSlotMutation, moveSlotMutation, handleMoveFolder, handleRenameFolder, handleDeleteFolder,
       createFolderMutation, uploadMutation, importFromDriveMutation,
-      setSlotCreateOpen, setDriveImportOpen, setDriveImportMode, setDriveImportTargetId,
+      setSlotCreateOpen, setDriveImportOpen, setDriveImportMode, setDriveImportTargetId, setTemporaryObjectUpload,
       setSlotUpdateBusy, setSlotInlineEditOpen, setSlotImageUrlDraft, setSlotBase64Draft, setMoveTargetFolder,
       setCompositeAssetIds, setPreviewMode,
     }),
@@ -506,6 +522,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
       handleSelectFolder, createSlots,
       updateSlotMutation, deleteSlotMutation, moveSlotMutation, handleMoveFolder, handleRenameFolder, handleDeleteFolder,
       createFolderMutation, uploadMutation, importFromDriveMutation,
+      setTemporaryObjectUpload,
     ]
   );
 

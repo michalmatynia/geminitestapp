@@ -57,6 +57,7 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
   const {
     setSelectedFolder: onSelectFolder,
     setSelectedSlotId,
+    updateSlotMutation,
     moveSlotMutation,
     deleteSlotMutation,
     handleMoveFolder: onMoveFolder,
@@ -132,8 +133,10 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
       const confirmed = window.confirm(`Delete card "${cardLabel}"?`);
       if (!confirmed) return;
     }
-    void deleteSlotMutation.mutateAsync(slot.id);
-  }, [deleteSlotMutation]);
+    void deleteSlotMutation.mutateAsync(slot.id).catch((error: unknown) => {
+      toast(error instanceof Error ? error.message : 'Failed to delete card.', { variant: 'error' });
+    });
+  }, [deleteSlotMutation, toast]);
 
   const clearSelection = useCallback((): void => {
     onSelectFolder('');
@@ -224,6 +227,36 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
       toast(error instanceof Error ? error.message : 'Failed to rename folder.', { variant: 'error' });
     });
   }, [controller, onRenameFolder, toast]);
+
+  const startCardRename = useCallback((nodeId: MasterTreeId): void => {
+    const slotId = fromSlotMasterNodeId(nodeId);
+    if (!slotId) return;
+    const slot = slotById.get(slotId);
+    if (!slot) return;
+    controller.startRename(nodeId);
+  }, [controller, slotById]);
+
+  const commitCardRename = useCallback((slot: ImageStudioSlotRecord): void => {
+    const normalizedName = controller.renameDraft.replace(/[\\/]+/g, ' ').trim();
+    if (!normalizedName) {
+      toast('Card name cannot be empty.', { variant: 'info' });
+      return;
+    }
+
+    const currentName = slot.name?.trim() || slot.id;
+    if (normalizedName === currentName) {
+      controller.cancelRename();
+      return;
+    }
+
+    controller.cancelRename();
+    void updateSlotMutation.mutateAsync({
+      id: slot.id,
+      data: { name: normalizedName },
+    }).catch((error: unknown) => {
+      toast(error instanceof Error ? error.message : 'Failed to rename card.', { variant: 'error' });
+    });
+  }, [controller, toast, updateSlotMutation]);
 
   useEffect(() => {
     const handleDocumentPointerDown = (event: PointerEvent): void => {
@@ -371,15 +404,15 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
                     indent={12}
                     tone='subtle'
                     selected={isSelected}
-                    className='relative min-h-8 text-xs'
+                    className='relative h-8 text-xs'
                   >
                     <div
-                      className='flex w-full items-center gap-2'
+                      className='flex h-full w-full min-w-0 items-center gap-2'
                       onClick={(event: React.MouseEvent<HTMLDivElement>): void => {
                         event.stopPropagation();
                       }}
                     >
-                      <span className='size-3.5 shrink-0' />
+                      <span className='inline-flex size-4 shrink-0 items-center justify-center' />
                       <TreeCaret
                         isOpen={isExpanded}
                         hasChildren={hasChildren}
@@ -430,11 +463,11 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
                     selected={isSelected}
                     dragOver={showInlineDrop}
                     dragOverClassName='bg-transparent text-gray-100 ring-0'
-                    className='relative min-h-8 text-xs'
+                    className='relative h-8 text-xs'
                   >
                     <button
                       type='button'
-                      className='w-full text-left'
+                      className='flex h-full w-full min-w-0 items-center gap-2 text-left'
                       onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
                         event.stopPropagation();
                         select();
@@ -447,7 +480,7 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
                       title={folderPath || 'Project root'}
                       data-folder-path={folderPath}
                     >
-                      <span className='flex items-center justify-center opacity-0 group-hover:opacity-100'>
+                      <span className='inline-flex size-4 shrink-0 items-center justify-center opacity-0 transition-opacity group-hover:opacity-100'>
                         <DragHandleIcon className='size-3.5 shrink-0 cursor-grab text-gray-500' />
                       </span>
                       <div
@@ -514,6 +547,11 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
                     select();
                   },
                 },
+                {
+                  id: 'rename-card',
+                  label: 'Rename card',
+                  onSelect: (): void => startCardRename(node.id),
+                },
                 ...(card.folderPath && allowMoveCardToRoot
                   ? [
                     {
@@ -532,75 +570,133 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
                 },
               ]}
             >
-              <TreeRow
-                asChild
-                depth={depth}
-                baseIndent={20}
-                indent={12}
-                tone='subtle'
-                selected={isSelected}
-                className='min-h-8 text-xs'
-              >
-                <button
-                  type='button'
-                  className='w-full text-left'
-                  data-slot-id={card.id}
-                  onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
-                    event.stopPropagation();
-                    select();
-                    onSelectSlot(card);
-                  }}
-                  onDoubleClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
-                    event.stopPropagation();
-                    if (hasChildren) toggleExpand();
-                  }}
-                  title={card.name || card.id}
+              {isRenaming ? (
+                <TreeRow
+                  depth={depth}
+                  baseIndent={8}
+                  indent={12}
+                  tone='subtle'
+                  selected={isSelected}
+                  className='h-8 text-xs'
                 >
-                  <span className='flex items-center justify-center opacity-0 group-hover:opacity-100'>
-                    <DragHandleIcon className='size-3.5 shrink-0 cursor-grab text-gray-500' />
-                  </span>
-                  <TreeCaret
-                    isOpen={isExpanded}
-                    hasChildren={hasChildren}
-                    ariaLabel={isExpanded ? `Collapse ${node.name}` : `Expand ${node.name}`}
-                    onToggle={hasChildren ? toggleExpand : undefined}
-                    className='text-gray-400'
-                    buttonClassName='hover:bg-gray-700'
-                    placeholderClassName='w-4'
-                  />
-                  <FileIcon className='size-3.5 text-gray-400' />
-                  <span className='truncate'>{card.name || node.name}</span>
-                  {roleLabel ? (
-                    <span className='ml-auto max-w-[90px] truncate text-[10px] uppercase tracking-wide text-gray-500'>
-                      {roleLabel}
-                    </span>
-                  ) : null}
-                  <span
-                    className={cn(
-                      'ml-1 size-1 rounded-full bg-blue-300/55 transition-opacity duration-150',
-                      isSelected ? 'opacity-100' : 'opacity-0'
-                    )}
-                  />
-                  <span
-                    className={cn(
-                      'ml-1 inline-flex items-center justify-center rounded p-0.5 text-gray-400 transition',
-                      'opacity-0 group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-300',
-                      deleteSlotMutation.isPending ? 'pointer-events-none opacity-40' : 'cursor-pointer'
-                    )}
-                    onMouseDown={(event: React.MouseEvent<HTMLSpanElement>): void => {
+                  <div
+                    className='flex h-full w-full min-w-0 items-center gap-2'
+                    onClick={(event: React.MouseEvent<HTMLDivElement>): void => {
                       event.stopPropagation();
                     }}
-                    onClick={(event: React.MouseEvent<HTMLSpanElement>): void => {
-                      event.stopPropagation();
-                      onDeleteSlot(card);
-                    }}
-                    title='Delete card'
-                    aria-hidden='true'
                   >
-                    <Trash2 className='size-3' />
-                  </span>
-                </button>
-              </TreeRow>
+                    <span className='inline-flex size-4 shrink-0 items-center justify-center' />
+                    <TreeCaret
+                      isOpen={isExpanded}
+                      hasChildren={hasChildren}
+                      ariaLabel={isExpanded ? `Collapse ${node.name}` : `Expand ${node.name}`}
+                      onToggle={hasChildren ? toggleExpand : undefined}
+                      className='text-gray-400'
+                      buttonClassName='hover:bg-gray-700'
+                      placeholderClassName='w-4'
+                    />
+                    <FileIcon className='size-3.5 text-gray-400' />
+                    <input
+                      autoFocus
+                      value={controller.renameDraft}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                        controller.updateRenameDraft(event.target.value);
+                      }}
+                      onBlur={(): void => commitCardRename(card)}
+                      onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
+                        event.stopPropagation();
+                        if (event.key === 'Enter') {
+                          event.preventDefault();
+                          commitCardRename(card);
+                          return;
+                        }
+                        if (event.key === 'Escape') {
+                          event.preventDefault();
+                          controller.cancelRename();
+                        }
+                      }}
+                      onPointerDown={(event: React.PointerEvent<HTMLInputElement>): void => {
+                        event.stopPropagation();
+                      }}
+                      onClick={(event: React.MouseEvent<HTMLInputElement>): void => {
+                        event.stopPropagation();
+                      }}
+                      className='h-6 w-full rounded border border-border/70 bg-card/80 px-2 text-xs text-gray-100 outline-none ring-0 focus:border-sky-400'
+                      aria-label='Rename card'
+                    />
+                  </div>
+                </TreeRow>
+              ) : (
+                <TreeRow
+                  asChild
+                  depth={depth}
+                  baseIndent={8}
+                  indent={12}
+                  tone='subtle'
+                  selected={isSelected}
+                  className='h-8 text-xs'
+                >
+                  <button
+                    type='button'
+                    className='flex h-full w-full min-w-0 items-center gap-2 text-left'
+                    data-slot-id={card.id}
+                    onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                      event.stopPropagation();
+                      select();
+                      onSelectSlot(card);
+                    }}
+                    onDoubleClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                      event.stopPropagation();
+                      startCardRename(node.id);
+                    }}
+                    title={card.name || card.id}
+                  >
+                    <span className='inline-flex size-4 shrink-0 items-center justify-center opacity-0 transition-opacity group-hover:opacity-100'>
+                      <DragHandleIcon className='size-3.5 shrink-0 cursor-grab text-gray-500' />
+                    </span>
+                    <TreeCaret
+                      isOpen={isExpanded}
+                      hasChildren={hasChildren}
+                      ariaLabel={isExpanded ? `Collapse ${node.name}` : `Expand ${node.name}`}
+                      onToggle={hasChildren ? toggleExpand : undefined}
+                      className='text-gray-400'
+                      buttonClassName='hover:bg-gray-700'
+                      placeholderClassName='w-4'
+                    />
+                    <FileIcon className='size-3.5 text-gray-400' />
+                    <span className='truncate'>{card.name || node.name}</span>
+                    {roleLabel ? (
+                      <span className='ml-auto max-w-[90px] truncate text-[10px] uppercase tracking-wide text-gray-500'>
+                        {roleLabel}
+                      </span>
+                    ) : null}
+                    <span
+                      className={cn(
+                        'ml-1 size-1 rounded-full bg-blue-300/55 transition-opacity duration-150',
+                        isSelected ? 'opacity-100' : 'opacity-0'
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        'ml-1 inline-flex items-center justify-center rounded p-0.5 text-gray-400 transition',
+                        'opacity-0 group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-300',
+                        deleteSlotMutation.isPending ? 'pointer-events-none opacity-40' : 'cursor-pointer'
+                      )}
+                      onMouseDown={(event: React.MouseEvent<HTMLSpanElement>): void => {
+                        event.stopPropagation();
+                      }}
+                      onClick={(event: React.MouseEvent<HTMLSpanElement>): void => {
+                        event.stopPropagation();
+                        onDeleteSlot(card);
+                      }}
+                      title='Delete card'
+                      aria-hidden='true'
+                    >
+                      <Trash2 className='size-3' />
+                    </span>
+                  </button>
+                </TreeRow>
+              )}
             </TreeContextMenu>
           );
         }}

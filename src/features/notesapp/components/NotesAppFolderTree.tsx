@@ -94,9 +94,9 @@ export function NotesAppFolderTree(): React.JSX.Element {
         context: { nextNodes: MasterTreeNode[] }
       ): Promise<void> => {
         if (operation.type === 'move') {
-          const nodeId = String(operation.nodeId ?? '');
-          const targetParentId = operation.targetParentId
-            ? String(operation.targetParentId)
+          const nodeId = String(operation['nodeId'] ?? '');
+          const targetParentId = operation['targetParentId']
+            ? String(operation['targetParentId'])
             : null;
           const targetFolderId = resolveFolderTargetForNode(context.nextNodes, targetParentId);
 
@@ -113,9 +113,9 @@ export function NotesAppFolderTree(): React.JSX.Element {
         }
 
         if (operation.type === 'reorder') {
-          const nodeId = String(operation.nodeId ?? '');
-          const targetId = String(operation.targetId ?? '');
-          const position = operation.position === 'after' ? 'after' : 'before';
+          const nodeId = String(operation['nodeId'] ?? '');
+          const targetId = String(operation['targetId'] ?? '');
+          const position = operation['position'] === 'after' ? 'after' : 'before';
           const folderId = fromFolderMasterNodeId(nodeId);
           const targetFolderId = fromFolderMasterNodeId(targetId);
           if (folderId && targetFolderId) {
@@ -132,8 +132,8 @@ export function NotesAppFolderTree(): React.JSX.Element {
         }
 
         if (operation.type === 'rename') {
-          const nodeId = String(operation.nodeId ?? '');
-          const nextName = String(operation.name ?? '').trim();
+          const nodeId = String(operation['nodeId'] ?? '');
+          const nextName = String(operation['name'] ?? '').trim();
           if (!nextName) return;
           const noteId = fromNoteMasterNodeId(nodeId);
           if (noteId) {

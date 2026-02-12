@@ -6,7 +6,7 @@ import { useState, useCallback } from 'react';
 import { useSaveParameterMutation, useDeleteParameterMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { CatalogRecord } from '@/features/products/types';
 import type { ProductParameter } from '@/features/products/types';
-import { useToast, Button, Input, Label, UnifiedSelect, FormModal, EmptyState, ConfirmDialog, SectionPanel, Skeleton, FormSection, FormField } from '@/shared/ui';
+import { useToast, Button, Input, UnifiedSelect, FormModal, EmptyState, ConfirmDialog, Skeleton, FormSection, FormField } from '@/shared/ui';
 
 type ParametersSettingsProps = {
   loading: boolean;

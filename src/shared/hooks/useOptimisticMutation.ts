@@ -5,7 +5,7 @@ import { useMutation, useQueryClient, type UseMutationResult } from "@tanstack/r
 import { useCallback } from "react";
 
 interface OptimisticUpdateConfig<TData, TVariables> {
-  queryKey: unknown[];
+  queryKey: readonly unknown[];
   updateFn: (oldData: TData | undefined, variables: TVariables) => TData;
   revertOnError?: boolean;
 }

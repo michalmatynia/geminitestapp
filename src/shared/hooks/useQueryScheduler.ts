@@ -12,13 +12,13 @@ interface QuerySchedulerConfig {
 
 // Hook for query scheduling and prioritization
 export function useQueryScheduler(): {
-  scheduleQuery: (id: string, queryKey: unknown[], queryFn: () => Promise<unknown>, config: QuerySchedulerConfig) => void;
+  scheduleQuery: (id: string, queryKey: readonly unknown[], queryFn: () => Promise<unknown>, config: QuerySchedulerConfig) => void;
   cancelScheduledQuery: (id: string) => void;
   clearAllScheduled: () => void;
   } {
   const queryClient = useQueryClient();
   const scheduledQueries = useRef<Map<string, {
-    queryKey: unknown[];
+    queryKey: readonly unknown[];
     queryFn: () => Promise<unknown>;
     config: QuerySchedulerConfig;
     timeout?: NodeJS.Timeout;
@@ -26,7 +26,7 @@ export function useQueryScheduler(): {
 
   const scheduleQuery = useCallback((
     id: string,
-    queryKey: unknown[],
+    queryKey: readonly unknown[],
     queryFn: () => Promise<unknown>,
     config: QuerySchedulerConfig
   ): void => {
@@ -85,7 +85,7 @@ export function useQueryScheduler(): {
 // Hook for background query execution
 export function useBackgroundQueries(
   queries: Array<{
-    queryKey: unknown[];
+    queryKey: readonly unknown[];
     queryFn: () => Promise<unknown>;
     interval?: number;
     enabled?: boolean;

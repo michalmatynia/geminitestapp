@@ -111,8 +111,8 @@ const toThemeResponse = (doc: WithId<ThemeDocument>): ThemeRecord => ({
   relatedNoteBorderColor: doc.relatedNoteBorderColor,
   relatedNoteBackgroundColor: doc.relatedNoteBackgroundColor,
   relatedNoteTextColor: doc.relatedNoteTextColor,
-  createdAt: doc.createdAt ?? new Date(),
-  updatedAt: doc.updatedAt ?? new Date(),
+  createdAt: doc.createdAt ? new Date(doc.createdAt).toISOString() : new Date().toISOString(),
+  updatedAt: doc.updatedAt ? new Date(doc.updatedAt).toISOString() : null,
 });
 
 const toNoteFileResponse = (doc: WithId<NoteFileDocument>): NoteFileRecord => ({

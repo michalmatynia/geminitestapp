@@ -85,7 +85,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
             description={!isDefault('sortBy') ? 'Modified from default' : undefined}
           >
             <UnifiedSelect
-              options={sortByOptions}
+              options={[...sortByOptions]}
               value={settings.sortBy}
               onValueChange={(value: string): void =>
                 updateSettings({ sortBy: value as NoteSettings['sortBy'] })
@@ -99,7 +99,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
             description={!isDefault('sortOrder') ? 'Modified from default' : undefined}
           >
             <UnifiedSelect
-              options={sortOrderOptions}
+              options={[...sortOrderOptions]}
               value={settings.sortOrder}
               onValueChange={(value: string): void =>
                 updateSettings({ sortOrder: value as NoteSettings['sortOrder'] })
@@ -153,7 +153,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
             description={!isDefault('searchScope') ? 'Modified from default' : undefined}
           >
             <UnifiedSelect
-              options={searchScopeOptions}
+              options={[...searchScopeOptions]}
               value={settings.searchScope}
               onValueChange={(value: string): void =>
                 updateSettings({ searchScope: value as NoteSettings['searchScope'] })

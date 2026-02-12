@@ -59,6 +59,9 @@ export function useNoteOperations({
         name: folderName,
         parentId: parentId ?? null,
         notebookId: selectedNotebookId,
+        themeId: null,
+        color: null,
+        sortIndex: null,
       });
 
       if (created?.id) {
@@ -131,15 +134,22 @@ export function useNoteOperations({
         newTitle = `${baseTitle} (${maxNumber + 1})`;
       }
 
+      const normalizedEditorType: 'markdown' | 'wysiwyg' | 'code' =
+        note.editorType === 'wysiwyg' || note.editorType === 'code'
+          ? note.editorType
+          : 'markdown';
+
       await createNoteMutation.mutateAsync({
         title: newTitle,
         content: note.content,
+        editorType: normalizedEditorType,
         color: note.color,
         isPinned: note.isPinned,
         isArchived: note.isArchived,
         isFavorite: note.isFavorite,
         tagIds: note.tags.map((t: { tagId: string }) => t.tagId),
         categoryIds: note.categories.map((c: { categoryId: string }) => c.categoryId),
+        relatedNoteIds: (note.relations ?? []).map((related: { id: string }) => related.id),
         notebookId: note.notebookId ?? selectedNotebookId ?? null,
       });
 

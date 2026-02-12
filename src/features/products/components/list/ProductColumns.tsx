@@ -44,7 +44,7 @@ const getProductNameValue = (
   product: ProductWithImages,
   key: ProductNameKey
 ): string | undefined => {
-  const value = (product as Record<string, unknown>)[key];
+  const value = product[key];
   return typeof value === 'string' && value.trim().length > 0 ? value : undefined;
 };
 

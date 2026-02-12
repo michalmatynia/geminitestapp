@@ -15,6 +15,7 @@ interface ActivityLogDoc {
   entityType: string | null;
   metadata: Record<string, unknown> | null;
   createdAt: Date;
+  updatedAt?: Date | null;
 }
 
 const toActivityDto = (doc: ActivityLogDoc): ActivityLogDto => ({
@@ -26,6 +27,7 @@ const toActivityDto = (doc: ActivityLogDoc): ActivityLogDto => ({
   entityType: doc.entityType,
   metadata: doc.metadata,
   createdAt: doc.createdAt.toISOString(),
+  updatedAt: (doc.updatedAt ?? doc.createdAt).toISOString(),
 });
 
 export const mongoActivityRepository: ActivityRepository = {
@@ -78,6 +80,7 @@ export const mongoActivityRepository: ActivityRepository = {
       entityType: data.entityType ?? null,
       metadata: data.metadata ?? null,
       createdAt: now,
+      updatedAt: now,
     } as ActivityLogDoc;
     
     const result = await db.collection<ActivityLogDoc>(COLLECTION).insertOne(doc);

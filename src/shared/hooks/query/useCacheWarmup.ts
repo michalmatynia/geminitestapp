@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useCallback, useRef } from 'react';
 
 interface CacheWarmupConfig {
-  queryKey: unknown[];
+  queryKey: readonly unknown[];
   queryFn: () => Promise<unknown>;
   priority?: 'high' | 'medium' | 'low';
   conditions?: () => boolean;
@@ -54,13 +54,13 @@ export function useCacheWarmup(configs: CacheWarmupConfig[]): void {
 
 // Hook for smart prefetching based on user interactions
 export function useSmartPrefetch(): {
-  prefetchOnHover: (queryKey: unknown[], queryFn: () => Promise<unknown>, delay?: number) => { onMouseEnter: () => void; onMouseLeave: () => void };
-  prefetchOnFocus: (queryKey: unknown[], queryFn: () => Promise<unknown>) => { onFocus: () => void };
+  prefetchOnHover: (queryKey: readonly unknown[], queryFn: () => Promise<unknown>, delay?: number) => { onMouseEnter: () => void; onMouseLeave: () => void };
+  prefetchOnFocus: (queryKey: readonly unknown[], queryFn: () => Promise<unknown>) => { onFocus: () => void };
   } {
   const queryClient = useQueryClient();
 
   const prefetchOnHover = useCallback((
-    queryKey: unknown[],
+    queryKey: readonly unknown[],
     queryFn: () => Promise<unknown>,
     delay: number = 300
   ): { onMouseEnter: () => void; onMouseLeave: () => void } => {
@@ -83,7 +83,7 @@ export function useSmartPrefetch(): {
   }, [queryClient]);
 
   const prefetchOnFocus = useCallback((
-    queryKey: unknown[],
+    queryKey: readonly unknown[],
     queryFn: () => Promise<unknown>
   ): { onFocus: () => void } => {
     return {

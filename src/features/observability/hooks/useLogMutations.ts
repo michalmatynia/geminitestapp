@@ -7,7 +7,6 @@ import {
   invalidateSystemDiagnostics,
   invalidateSystemLogs,
 } from '@/shared/lib/query-invalidation';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { AiInsightRecord } from '@/shared/types';
 
 type ClearLogsResponse = {

@@ -30,7 +30,7 @@ async function fetchUserPreferences(): Promise<ProductListPreferences> {
     await api.get<unknown>('/api/user/preferences')
   );
   return {
-    nameLocale: data.productListNameLocale || 'name_en',
+    nameLocale: (data.productListNameLocale as 'name_en' | 'name_pl' | 'name_de' | null | undefined) || 'name_en',
     catalogFilter: data.productListCatalogFilter || 'all',
     currencyCode: data.productListCurrencyCode ?? 'PLN',
     pageSize: data.productListPageSize || 12,
@@ -98,125 +98,62 @@ function updateLocalStorage(
 async function updateUserPreferences(
   data: Partial<ProductListPreferences>,
 ): Promise<void> {
-  const rawPayload: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(data)) {
-    const apiKey = `productList${key.charAt(0).toUpperCase()}${key.slice(1)}`;
-    rawPayload[apiKey] = value;
+  const entries = Object.entries(data);
+  for (const [key, value] of entries) {
+    await updateUserPreference(key as keyof ProductListPreferences, value);
   }
-  const validation = userPreferencesUpdateSchema.safeParse(rawPayload);
-  if (!validation.success) {
-    throw new ApiError('Invalid user preferences update payload.', 400);
-  }
-  const payload = normalizeUserPreferencesUpdatePayload(validation.data);
-  await api.patch('/api/user/preferences', payload);
 }
 
 export function useUpdateUserPreferencesMutation(): UseMutationResult<void, Error, Partial<ProductListPreferences>> {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (data: Partial<ProductListPreferences>) => updateUserPreferences(data),
-    onSuccess: () => {
-      void invalidateUserPreferences(queryClient);
+  const offlineMutation = useOfflineMutation(
+    {
+      mutationFn: updateUserPreferences,
+      onSuccess: () => {
+        void invalidateUserPreferences(queryClient);
+      },
+      onError: (error) => {
+        logClientError(error, {
+          context: { source: 'useUpdateUserPreferencesMutation', action: 'updatePreferences' },
+        });
+      },
     },
+    {
+      cacheKey: 'productListPreferences',
+      retryDelay: 5000,
+    },
+  );
+
+  return useMutation({
+    mutationFn: offlineMutation.mutationFn as (data: Partial<ProductListPreferences>) => Promise<void>,
+    onSuccess: offlineMutation.options?.onSuccess,
+    onError: offlineMutation.options?.onError,
   });
 }
 
-export interface UserPreferencesHookResult {
-  preferences: ProductListPreferences;
-  loading: boolean;
-  error: string | null;
-  setNameLocale: (locale: 'name_en' | 'name_pl' | 'name_de') => void;
-  setCatalogFilter: (filter: string) => void;
-  setCurrencyCode: (code: string | null) => void;
-  setPageSize: (size: number) => void;
-  setThumbnailSource: (source: 'file' | 'link' | 'base64') => void;
+export interface UserPreferencesHookResult extends UseQueryResult<ProductListPreferences> {
+  updatePreference: (key: keyof ProductListPreferences, value: unknown) => Promise<void>;
 }
 
 export function useUserPreferences(): UserPreferencesHookResult {
-  const preferencesQuery: UseQueryResult<ProductListPreferences, Error> = useQuery({
-    queryKey: userPreferencesQueryKey,
-    queryFn: async (): Promise<ProductListPreferences> => {
-      try {
-        return await fetchUserPreferences();
-      } catch (error) {
-        logClientError(error, { context: { source: 'useUserPreferences', action: 'loadPreferences' } });
-        // Fall back to localStorage if database fails
-        const fallback = getLocalStorageFallback();
-        return { ...DEFAULT_PREFERENCES, ...fallback };
-      }
-    },
-    staleTime: 1000 * 60 * 30, // 30 minutes for offline support
-    networkMode: 'offlineFirst',
+  const query = useQuery({
+    queryKey: [userPreferencesQueryKey],
+    queryFn: fetchUserPreferences,
+    staleTime: 1000 * 60 * 60,
+    placeholderData: DEFAULT_PREFERENCES,
   });
 
-  const updatePreferenceMutation = useOfflineMutation<void, Error, { key: keyof ProductListPreferences; value: unknown }, ProductListPreferences>(
-    ({ key, value }: { key: keyof ProductListPreferences; value: unknown }) => 
-      updateUserPreference(key, value),
-    {
-      queryKey: userPreferencesQueryKey,
-      optimisticUpdate: (oldData: ProductListPreferences | undefined, { key, value }: { key: keyof ProductListPreferences; value: unknown }) => ({
-        ...DEFAULT_PREFERENCES,
-        ...(oldData || {}),
-        [key]: value,
-      } as ProductListPreferences),
-      successMessage: 'Preferences updated',
-      errorMessage: 'Failed to update preferences',
-    }
-  );
-
-  const preferences = preferencesQuery.data ?? DEFAULT_PREFERENCES;
-
-  const setPreference = useCallback(
-    (key: keyof ProductListPreferences, value: unknown): void => {
-      updatePreferenceMutation.mutate({ key, value });
+  const updatePreference = useCallback(
+    async (key: keyof ProductListPreferences, value: unknown) => {
+      await updateUserPreference(key, value);
       updateLocalStorage(key, value);
+      await invalidateUserPreferences(useQueryClient());
     },
-    [updatePreferenceMutation],
-  );
-
-  const setNameLocale = useCallback(
-    (locale: 'name_en' | 'name_pl' | 'name_de'): void => {
-      setPreference('nameLocale', locale);
-    },
-    [setPreference],
-  );
-
-  const setCatalogFilter = useCallback(
-    (filter: string): void => {
-      setPreference('catalogFilter', filter);
-    },
-    [setPreference],
-  );
-
-  const setCurrencyCode = useCallback(
-    (code: string | null): void => {
-      setPreference('currencyCode', code);
-    },
-    [setPreference],
-  );
-
-  const setPageSize = useCallback(
-    (size: number): void => {
-      setPreference('pageSize', size);
-    },
-    [setPreference],
-  );
-
-  const setThumbnailSource = useCallback(
-    (source: 'file' | 'link' | 'base64'): void => {
-      setPreference('thumbnailSource', source);
-    },
-    [setPreference],
+    [],
   );
 
   return {
-    preferences,
-    loading: preferencesQuery.isLoading,
-    error: preferencesQuery.error ? preferencesQuery.error.message : null,
-    setNameLocale,
-    setCatalogFilter,
-    setCurrencyCode,
-    setPageSize,
-    setThumbnailSource,
+    ...query,
+    updatePreference,
   };
 }

@@ -70,6 +70,7 @@ export function useNoteTags(
     try {
       const newTag = await createTagMutation.mutateAsync({
         name: tagInput.trim(),
+        color: null,
         notebookId: notebookId ?? noteNotebookId ?? null,
       });
       onTagCreated?.();

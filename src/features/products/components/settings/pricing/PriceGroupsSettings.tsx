@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { PriceGroup } from '@/features/products/types';
-import { Button, Label, UnifiedSelect, Badge, SectionHeader, SectionPanel, FormSection, FormField } from '@/shared/ui';
+import { Badge, Button, FormSection, UnifiedSelect } from '@/shared/ui';
 
 
 type PriceGroupsSettingsProps = {
@@ -129,4 +129,3 @@ export function PriceGroupsSettings({
     </div>
   );
 }
-

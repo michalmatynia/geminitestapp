@@ -1,6 +1,6 @@
 'use client';
 
-import { FolderPlus, ImageOff, ImagePlus, Locate, Plus, Settings2 } from 'lucide-react';
+import { Copy, FolderPlus, ImageOff, ImagePlus, Locate, Plus, Settings2 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
 import {
@@ -43,6 +43,7 @@ export function LeftSidebar(): React.JSX.Element {
     setSelectedSlotId,
     setWorkingSlotId,
     setPreviewMode,
+    createSlots,
     createFolderMutation,
   } = useSlotsActions();
   const {
@@ -125,6 +126,67 @@ export function LeftSidebar(): React.JSX.Element {
     });
   };
 
+  const handleCreateCardFromLoadedImage = (): void => {
+    void (async (): Promise<void> => {
+      const consumedTemporaryUpload =
+        (await singleSlotManagerRef.current?.consumeTemporaryObjectUpload({ loadToCanvas: true })) ?? false;
+      if (consumedTemporaryUpload) {
+        toast('Created card from loaded image.', { variant: 'success' });
+        return;
+      }
+
+      const sourceSlot = workingSlot ?? selectedSlot;
+      const sourceImageUrl = sourceSlot?.imageUrl?.trim() || sourceSlot?.imageFile?.filepath || null;
+      const sourceImageBase64 = sourceSlot?.imageBase64?.trim() || null;
+      const sourceImageFileId = sourceSlot?.imageFileId ?? null;
+      const hasSourceImage = Boolean(sourceImageFileId || sourceImageUrl || sourceImageBase64);
+
+      if (!sourceSlot || !hasSourceImage) {
+        toast('Load an image first, then create a card from it.', { variant: 'info' });
+        return;
+      }
+
+      const targetFolder = sourceSlot.folderPath?.trim() || selectedFolder.trim();
+      const created = await createSlots([
+        {
+          name: sourceSlot.name?.trim() ? `${sourceSlot.name.trim()} Copy` : `Card ${Date.now()}`,
+          ...(targetFolder ? { folderPath: targetFolder } : {}),
+          ...(sourceImageFileId ? { imageFileId: sourceImageFileId } : {}),
+          ...(sourceImageUrl ? { imageUrl: sourceImageUrl } : {}),
+          ...(sourceImageBase64 ? { imageBase64: sourceImageBase64 } : {}),
+        },
+      ]);
+
+      const nextCard = created[0] ?? null;
+      if (!nextCard) {
+        throw new Error('Failed to create card from loaded image.');
+      }
+      setSelectedSlotId(nextCard.id);
+      setPreviewMode('image');
+      setWorkingSlotId(nextCard.id);
+      toast('Created card from loaded image.', { variant: 'success' });
+    })().catch((error: unknown) => {
+      toast(error instanceof Error ? error.message : 'Failed to create card from loaded image.', { variant: 'error' });
+    });
+  };
+
+  const handleCopyActiveCardId = (): void => {
+    const slotId = selectedSlot?.id ?? null;
+    if (!slotId) {
+      toast('Select a card first.', { variant: 'info' });
+      return;
+    }
+    if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
+      toast('Clipboard is not available in this browser.', { variant: 'error' });
+      return;
+    }
+    void navigator.clipboard.writeText(slotId).then(() => {
+      toast('Card ID copied.', { variant: 'success' });
+    }).catch(() => {
+      toast('Failed to copy card ID.', { variant: 'error' });
+    });
+  };
+
   useEffect(() => {
     setRevealRequest(null);
   }, [projectId]);
@@ -140,10 +202,30 @@ export function LeftSidebar(): React.JSX.Element {
         aria-hidden={isFocusMode}
       >
         <div className='grid min-h-0 flex-1 grid-rows-[auto_auto_auto_clamp(240px,38vh,420px)_minmax(160px,1fr)] gap-3 overflow-hidden p-4'>
-          <div className='rounded border border-border/60 bg-card/60 px-2 py-1.5 text-[11px] text-gray-400'>
-            {selectedSlot
-              ? `Active card: ${selectedSlot.name || selectedSlot.id}`
-              : 'No active card selected. Pick a card from the tree.'}
+          <div
+            className='flex items-center gap-2 rounded border border-border/60 bg-card/60 px-2 py-1.5 text-[11px] text-gray-400'
+            data-preserve-slot-selection='true'
+          >
+            <span className='min-w-0 flex-1 truncate'>
+              {selectedSlot
+                ? `Active card: ${selectedSlot.name || selectedSlot.id}`
+                : 'No active card selected. Pick a card from the tree.'}
+            </span>
+            <Tooltip content={selectedSlot ? 'Copy active card ID' : 'Select a card first'}>
+              <Button
+                type='button'
+                size='icon'
+                variant='ghost'
+                className='size-5 shrink-0'
+                onClick={handleCopyActiveCardId}
+                disabled={!selectedSlot?.id}
+                title='Copy active card ID'
+                aria-label='Copy active card ID'
+                data-preserve-slot-selection='true'
+              >
+                <Copy className='size-3' />
+              </Button>
+            </Tooltip>
           </div>
 
           <ImageStudioSingleSlotManager ref={singleSlotManagerRef} />
@@ -188,22 +270,15 @@ export function LeftSidebar(): React.JSX.Element {
                 <Locate className='size-4' />
               </Button>
             </Tooltip>
-            <Tooltip content='New card'>
+            <Tooltip content='New Card'>
               <Button
                 type='button'
                 size='icon'
                 variant='outline'
-                title='New card'
-                onClick={() => {
-                  void (async (): Promise<void> => {
-                    const consumedTemporaryUpload =
-                      (await singleSlotManagerRef.current?.consumeTemporaryObjectUpload({ loadToCanvas: false })) ?? false;
-                    if (consumedTemporaryUpload) return;
-                    setSlotCreateOpen(true);
-                  })();
-                }}
+                title='New Card'
+                onClick={handleCreateCardFromLoadedImage}
                 disabled={!projectId}
-                aria-label='New card'
+                aria-label='New Card'
               >
                 <Plus className='size-4' />
               </Button>

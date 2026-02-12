@@ -8,7 +8,7 @@ import { useNotebooks, useNoteThemes } from '@/features/notesapp/api/useNoteQuer
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/features/observability';
 import type { ThemeRecord } from '@/shared/types/domain/notes';
-import { Button, useToast, Input, Label, SectionHeader, SectionPanel, FormSection, FormField } from '@/shared/ui';
+import { Button, useToast, Input, SectionHeader, FormSection, FormField, RefreshButton } from '@/shared/ui';
 
 
 
@@ -302,7 +302,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                       <div className='flex items-center gap-2'>
                         <div className='text-sm font-semibold text-white'>{theme.name}</div>
                         <div className='text-xs text-gray-500'>
-                          Updated {new Date(theme.updatedAt).toLocaleString()}
+                          Updated {theme.updatedAt ? new Date(theme.updatedAt).toLocaleString() : '—'}
                         </div>
                       </div>
                       <div className='flex items-center gap-2'>

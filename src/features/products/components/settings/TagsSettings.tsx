@@ -6,7 +6,7 @@ import { useState, useCallback } from 'react';
 import { logClientError } from '@/features/observability';
 import { useSaveTagMutation, useDeleteTagMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { Catalog, ProductTag } from '@/features/products/types';
-import { useToast, Button, UnifiedSelect, Input, Label, FormModal, EmptyState, ConfirmDialog, SectionPanel, Tag as UiTag, Skeleton, FormSection, FormField } from '@/shared/ui';
+import { useToast, Button, UnifiedSelect, Input, FormModal, EmptyState, ConfirmDialog, Tag as UiTag, Skeleton, FormSection, FormField } from '@/shared/ui';
 
 type TagsSettingsProps = {
   loading: boolean;

@@ -50,7 +50,7 @@ interface FormFieldProps {
   label?: string | undefined;
   description?: string | undefined;
   actions?: ReactNode | undefined;
-  children: ReactNode;
+  children?: ReactNode | undefined;
   error?: string | undefined;
   required?: boolean | undefined;
   className?: string | undefined;
@@ -84,7 +84,7 @@ export function FormField({
         ) : null}
         {description && <p className='text-[10px] text-gray-500 italic leading-relaxed'>{description}</p>}
       </div>
-      {children}
+      {children ?? null}
       {error && (
         <p className='text-[10px] font-medium text-red-400 mt-1' role='alert'>
           {error}

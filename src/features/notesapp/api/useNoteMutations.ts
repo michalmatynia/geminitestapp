@@ -10,7 +10,6 @@ import {
   invalidateNoteTags,
   invalidateNoteThemes,
 } from '@/shared/lib/query-invalidation';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { DeleteResponse } from '@/shared/types/api/api';
 import type {
   NoteWithRelations,
@@ -139,7 +138,7 @@ export function useCreateNoteTag(): UseMutationResult<TagRecord, Error, TagCreat
     mutationFn: (payload: TagCreateInput) =>
       api.post<TagRecord>('/api/notes/tags', payload),
     onSuccess: (_data: TagRecord, variables: TagCreateInput): void => {
-      void invalidateNoteTags(queryClient, variables.notebookId);
+      void invalidateNoteTags(queryClient, variables.notebookId ?? undefined);
     },
   });
 }
@@ -171,7 +170,7 @@ export function useCreateNoteTheme(): UseMutationResult<ThemeRecord, Error, Them
     mutationFn: (payload: ThemeCreateInput) =>
       api.post<ThemeRecord>('/api/notes/themes', payload),
     onSuccess: (_data: ThemeRecord, variables: ThemeCreateInput): void => {
-      void invalidateNoteThemes(queryClient, variables.notebookId);
+      void invalidateNoteThemes(queryClient, variables.notebookId ?? undefined);
     },
   });
 }

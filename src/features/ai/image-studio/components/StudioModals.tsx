@@ -151,6 +151,7 @@ export function StudioModals(): React.JSX.Element {
     driveImportOpen,
     driveImportMode,
     driveImportTargetId,
+    temporaryObjectUpload,
     slotInlineEditOpen,
     slotImageUrlDraft,
     slotBase64Draft,
@@ -164,6 +165,7 @@ export function StudioModals(): React.JSX.Element {
     setDriveImportOpen,
     setDriveImportMode,
     setDriveImportTargetId,
+    setTemporaryObjectUpload,
     importFromDriveMutation,
     uploadMutation,
     setSlotInlineEditOpen,
@@ -198,7 +200,7 @@ export function StudioModals(): React.JSX.Element {
   const [extractHistory, setExtractHistory] = useState<PromptExtractHistoryEntry[]>([]);
   const [selectedExtractHistoryId, setSelectedExtractHistoryId] = useState<string | null>(null);
   const localUploadInputRef = useRef<HTMLInputElement | null>(null);
-  const [localUploadMode, setLocalUploadMode] = useState<'create' | 'replace'>('create');
+  const [localUploadMode, setLocalUploadMode] = useState<'create' | 'replace' | 'temporary-object'>('create');
   const [localUploadTargetId, setLocalUploadTargetId] = useState<string | null>(null);
 
   const previewLeaves = useMemo(
@@ -253,11 +255,20 @@ export function StudioModals(): React.JSX.Element {
     setExtractPreviewUiOverrides({});
   }, [extractReviewOpen, setExtractPreviewUiOverrides]);
 
+  const deleteStagedAsset = async (asset: { id: string; filepath: string }): Promise<void> => {
+    if (!projectId) return;
+    await api.post(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets/delete`, {
+      id: asset.id,
+      filepath: asset.filepath,
+    });
+  };
+
   const handleDriveSelection = async (files: ImageFileSelection[]) => {
     setDriveImportOpen(false);
     if (files.length === 0) return;
 
     try {
+      const previousTemporary = temporaryObjectUpload;
       const result = await importFromDriveMutation.mutateAsync({
         files,
         folder: selectedFolder,
@@ -267,7 +278,20 @@ export function StudioModals(): React.JSX.Element {
         throw new Error(result.failures?.[0]?.error || 'No files imported.');
       }
 
-      if (driveImportMode === 'replace') {
+      if (driveImportMode === 'temporary-object') {
+        const primary = imported[0]!;
+        setTemporaryObjectUpload({
+          id: primary.id,
+          filepath: primary.filepath,
+          filename: primary.filename,
+        });
+        if (previousTemporary && previousTemporary.id !== primary.id) {
+          await deleteStagedAsset(previousTemporary).catch(() => {
+            // Best-effort cleanup for replaced temporary assets.
+          });
+        }
+        toast('Imported to temporary object slot. Load to canvas to create a card.', { variant: 'success' });
+      } else if (driveImportMode === 'replace') {
         const targetId = driveImportTargetId ?? selectedSlot?.id ?? null;
         if (!targetId) {
           throw new Error('No target card selected for replacement.');
@@ -324,7 +348,7 @@ export function StudioModals(): React.JSX.Element {
     }
   };
 
-  const triggerLocalUpload = (mode: 'create' | 'replace', targetId: string | null): void => {
+  const triggerLocalUpload = (mode: 'create' | 'replace' | 'temporary-object', targetId: string | null): void => {
     setLocalUploadMode(mode);
     setLocalUploadTargetId(targetId);
     window.setTimeout(() => localUploadInputRef.current?.click(), 0);
@@ -334,6 +358,7 @@ export function StudioModals(): React.JSX.Element {
     if (!filesList || filesList.length === 0) return;
     const files = Array.from(filesList);
     try {
+      const previousTemporary = temporaryObjectUpload;
       const result = await uploadMutation.mutateAsync({
         files,
         folder: selectedFolder,
@@ -343,7 +368,20 @@ export function StudioModals(): React.JSX.Element {
         throw new Error(result.failures?.[0]?.error || 'No files uploaded.');
       }
 
-      if (localUploadMode === 'replace') {
+      if (localUploadMode === 'temporary-object') {
+        const primary = uploaded[0]!;
+        setTemporaryObjectUpload({
+          id: primary.id,
+          filepath: primary.filepath,
+          filename: primary.filename,
+        });
+        if (previousTemporary && previousTemporary.id !== primary.id) {
+          await deleteStagedAsset(previousTemporary).catch(() => {
+            // Best-effort cleanup for replaced temporary assets.
+          });
+        }
+        toast('Uploaded to temporary object slot. Load to canvas to create a card.', { variant: 'success' });
+      } else if (localUploadMode === 'replace') {
         const targetId = localUploadTargetId ?? selectedSlot?.id ?? null;
         if (!targetId) {
           throw new Error('No target card selected for replacement.');
@@ -701,7 +739,11 @@ export function StudioModals(): React.JSX.Element {
   };
 
   const driveImportTitle =
-    driveImportMode === 'replace' ? 'Attach Image To Selected Card' : 'Import Images';
+    driveImportMode === 'replace'
+      ? 'Attach Image To Selected Card'
+      : driveImportMode === 'temporary-object'
+        ? 'Select Object Image'
+        : 'Import Images';
 
   return (
     <>
@@ -729,7 +771,13 @@ export function StudioModals(): React.JSX.Element {
           <Button
             type='button'
             variant='outline'
-            onClick={() => triggerLocalUpload(driveImportMode, driveImportMode === 'replace' ? (driveImportTargetId ?? selectedSlot?.id ?? null) : null)}
+            onClick={() => {
+              setLocalUploadMode(driveImportMode);
+              setLocalUploadTargetId(
+                driveImportMode === 'replace' ? (driveImportTargetId ?? selectedSlot?.id ?? null) : null
+              );
+              window.setTimeout(() => localUploadInputRef.current?.click(), 0);
+            }}
             disabled={uploadMutation.isPending}
           >
             {uploadMutation.isPending ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}

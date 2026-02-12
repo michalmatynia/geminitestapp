@@ -604,10 +604,9 @@ export function NoteFormProvider({
     if (!title || !content) return;
 
     try {
-      const data = {
+      const baseData = {
         title,
         content,
-        ...(note ? {} : { editorType: editorMode }),
         color: color.toLowerCase().trim(),
         isPinned,
         isArchived,
@@ -619,9 +618,12 @@ export function NoteFormProvider({
       };
 
       if (note) {
-        await updateNoteMutation.mutateAsync({ id: note.id, ...data });
+        await updateNoteMutation.mutateAsync({ id: note.id, ...baseData });
       } else {
-        await createNoteMutation.mutateAsync(data);
+        await createNoteMutation.mutateAsync({
+          ...baseData,
+          editorType: editorMode,
+        });
       }
 
       toast(note ? 'Note updated successfully' : 'Note created successfully');

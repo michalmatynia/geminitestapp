@@ -59,7 +59,7 @@ export interface ImageStudioSingleSlotManagerHandle {
 export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotManagerHandle>(
   function ImageStudioSingleSlotManager(_props, ref): React.JSX.Element {
     const { projectId } = useProjectsState();
-    const { slots, selectedFolder, selectedSlot, driveImportOpen } = useSlotsState();
+    const { slots, selectedFolder, selectedSlot, driveImportOpen, temporaryObjectUpload } = useSlotsState();
     const {
       setSelectedSlotId,
       setWorkingSlotId,
@@ -70,6 +70,7 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
       setDriveImportOpen,
       setDriveImportMode,
       setDriveImportTargetId,
+      setTemporaryObjectUpload,
     } = useSlotsActions();
 
     const [environmentSlotId, setEnvironmentSlotId] = useState<string | null>(null);
@@ -78,7 +79,6 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
     const [environmentImageBase64Draft, setEnvironmentImageBase64Draft] = useState<string>('');
     const [objectImageLinkDraft, setObjectImageLinkDraft] = useState<string>('');
     const [objectImageBase64Draft, setObjectImageBase64Draft] = useState<string>('');
-    const [temporaryObjectUpload, setTemporaryObjectUpload] = useState<UploadedAsset | null>(null);
 
     const environmentLinkSyncTimeoutRef = useRef<number | null>(null);
     const environmentBase64SyncTimeoutRef = useRef<number | null>(null);
@@ -119,6 +119,10 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
         setEnvironmentSlotId(null);
       }
     }, [environmentSlot, environmentSlotId]);
+
+    useEffect(() => {
+      setTemporaryObjectUpload(null);
+    }, [projectId, setTemporaryObjectUpload]);
 
     useEffect(() => {
       if (wasDriveImportOpenRef.current && !driveImportOpen && restoreObjectAfterImportRef.current) {
@@ -412,6 +416,14 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
         }
         setUploadError(null);
         void (async () => {
+          if (index === OBJECT_SLOT_INDEX) {
+            restoreObjectAfterImportRef.current = null;
+            setDriveImportMode('temporary-object');
+            setDriveImportTargetId(null);
+            setDriveImportOpen(true);
+            return;
+          }
+
           let targetSlot = getSlotForIndex(index);
           if (!targetSlot) {
             const created = await createSlots([

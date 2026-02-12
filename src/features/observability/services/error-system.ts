@@ -152,7 +152,12 @@ export const ErrorSystem = {
   generateErrorReport: (error: unknown, context: ErrorContext = {}): Record<string, unknown> => {
     const message = error instanceof Error ? error.message : String(error);
     const stack = error instanceof Error ? error.stack : undefined;
-    const category = context.category || classifySharedError(error);
+    const contextCategory = context.category;
+    const category: ErrorCategory =
+      typeof contextCategory === 'string' &&
+      (Object.values(ErrorCategory) as string[]).includes(contextCategory)
+        ? (contextCategory as ErrorCategory)
+        : classifySharedError(error);
     
     return {
       id: context.errorId || `err_${Date.now()}`,

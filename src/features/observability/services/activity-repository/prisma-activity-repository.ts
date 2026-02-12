@@ -30,6 +30,7 @@ const toActivityDto = (log: SystemLog): ActivityLogDto => {
     entityType: toNullableString(context['entityType']),
     metadata: rawMetadata,
     createdAt: log.createdAt.toISOString(),
+    updatedAt: log.createdAt.toISOString(),
   };
 };
 

@@ -12,7 +12,7 @@ import {
   type SystemLogFilterFormValues,
 } from '@/features/observability/lib/log-triage-presets';
 import type { SystemLogRecord, AiInsightRecord } from '@/shared/types';
-import { Button, DynamicFilters, ListPanel, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Pagination, StatusBadge, ConfirmDialog, PageLayout, RefreshButton, FormSection } from '@/shared/ui';
+import { Button, DynamicFilters, ListPanel, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Pagination, StatusBadge, ConfirmDialog, PageLayout, FormSection } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 const formatTimestamp = (value: Date | string): string => {
@@ -591,6 +591,10 @@ function SystemLogsContent(): React.JSX.Element {
     );
   };
 
+  const handleDynamicFilterChange = (key: string, value: string | string[]): void => {
+    handleFilterChange(key, Array.isArray(value) ? (value[0] ?? '') : value);
+  };
+
   const handleApplyPreset = (preset: LogTriagePreset): void => {
     const resolvedPresetValues = resolveSystemLogPresetFilters(preset);
     const nextValues: SystemLogFilterFormValues = {
@@ -704,7 +708,7 @@ function SystemLogsContent(): React.JSX.Element {
             <DynamicFilters
               fields={filterFields}
               values={currentFilterValues}
-              onChange={handleFilterChange}
+              onChange={handleDynamicFilterChange}
               onReset={handleResetFilters}
               hasActiveFilters={Boolean(
                 level !== 'all' ||

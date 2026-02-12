@@ -24,7 +24,6 @@ import {
   ProductTag,
 } from '../types';
 import {
-  productMetadataKeys,
   useCatalogs as useMetadataCatalogs,
   useParameters as useMetadataParameters,
   usePriceGroups as useMetadataPriceGroups,

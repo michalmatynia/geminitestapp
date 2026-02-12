@@ -5,7 +5,7 @@ import { ChangeEvent, ReactElement } from 'react';
 import { playwrightDeviceOptions } from '@/features/playwright/constants/playwright';
 import { usePlaywrightSettings, PlaywrightSettingsProvider } from '@/features/playwright/context/PlaywrightSettingsContext';
 import type { PlaywrightSettings } from '@/features/playwright/types';
-import { Button, Input, Label, Checkbox, SectionPanel, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
+import { Button, Input, Checkbox, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
 
 import type { Dispatch, SetStateAction } from 'react';
 

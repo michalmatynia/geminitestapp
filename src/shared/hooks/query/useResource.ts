@@ -1,15 +1,14 @@
 import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 
 import { api } from '@/shared/lib/api-client';
-import { DtoBase } from '@/shared/types/base';
 
 /**
  * A generic hook to handle standard CRUD operations for a resource
  * integrated with TanStack Query and the internal API client.
  */
-export function useResource<T extends DtoBase>(
+export function useResource<T extends { id: string }>(
   resourcePath: string,
-  queryKey: unknown[]
+  queryKey: readonly unknown[]
 ): {
   list: UseQueryResult<T[], Error>;
   create: UseMutationResult<T, Error, Partial<T>>;

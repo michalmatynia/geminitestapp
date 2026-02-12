@@ -13,7 +13,7 @@ import { useNotebooks } from '@/features/notesapp/api/useNoteQueries';
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/features/observability';
 import type { NotebookRecord } from '@/shared/types/domain/notes';
-import { Button, useToast, Input, Label, SectionPanel, SectionHeader, PageLayout, FormSection, FormField, RefreshButton } from '@/shared/ui';
+import { Button, useToast, Input, SectionPanel, PageLayout, FormSection, FormField, RefreshButton } from '@/shared/ui';
 
 export function AdminNotesNotebooksPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -45,7 +45,11 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
       return;
     }
     try {
-      await createNotebook.mutateAsync({ name: name.trim() });
+      await createNotebook.mutateAsync({
+        name: name.trim(),
+        color: null,
+        defaultThemeId: null,
+      });
       setName('');
       toast('Notebook created', { variant: 'success' });
     } catch (error: unknown) {
@@ -105,7 +109,11 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
     const nextNumber = existing.length > 0 ? Math.max(...existing) + 1 : 1;
     const newName = `${baseName} (${nextNumber})`;
     try {
-      await createNotebook.mutateAsync({ name: newName });
+      await createNotebook.mutateAsync({
+        name: newName,
+        color: notebook.color ?? null,
+        defaultThemeId: notebook.defaultThemeId ?? null,
+      });
       toast('Notebook duplicated', { variant: 'success' });
     } catch (error: unknown) {
       logClientError(error, { context: { source: 'AdminNotesNotebooksPage', action: 'duplicateNotebook', originalId: notebook.id } });

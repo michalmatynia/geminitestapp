@@ -6,7 +6,7 @@ import { useEffect, useCallback } from 'react';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 interface SyncConfig {
-  queryKey: unknown[];
+  queryKey: readonly unknown[];
   interval?: number;
   enabled?: boolean;
 }
@@ -54,8 +54,8 @@ export function useQuerySync(configs: SyncConfig[]): void {
 
 // Hook for query dependencies - refetch dependent queries when parent changes
 export function useQueryDependency(
-  parentQueryKey: unknown[],
-  dependentQueryKeys: unknown[][],
+  parentQueryKey: readonly unknown[],
+  dependentQueryKeys: readonly (readonly unknown[])[],
   options?: { enabled?: boolean }
 ): void {
   const queryClient = useQueryClient();
@@ -67,7 +67,7 @@ export function useQueryDependency(
 
   useEffect((): void => {
     if (options?.enabled !== false && parentQuery.data) {
-      dependentQueryKeys.forEach((queryKey: unknown[]) => {
+      dependentQueryKeys.forEach((queryKey: readonly unknown[]) => {
         void queryClient.invalidateQueries({ queryKey });
       });
     }

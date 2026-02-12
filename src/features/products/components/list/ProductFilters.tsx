@@ -37,13 +37,15 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
     { key: 'endDate', label: 'To Date', type: 'date' },
   ], []);
 
-  const handleFilterChange = useCallback((key: string, value: string): void => {
-    if (key === 'search') setSearch(value);
-    if (key === 'sku') setSku(value);
-    if (key === 'minPrice') setMinPrice(value ? parseInt(value, 10) : undefined);
-    if (key === 'maxPrice') setMaxPrice(value ? parseInt(value, 10) : undefined);
-    if (key === 'startDate') setStartDate(value);
-    if (key === 'endDate') setEndDate(value);
+  const handleFilterChange = useCallback((key: string, value: string | string[]): void => {
+    const normalized = Array.isArray(value) ? (value[0] ?? '') : value;
+
+    if (key === 'search') setSearch(normalized);
+    if (key === 'sku') setSku(normalized);
+    if (key === 'minPrice') setMinPrice(normalized ? parseInt(normalized, 10) : undefined);
+    if (key === 'maxPrice') setMaxPrice(normalized ? parseInt(normalized, 10) : undefined);
+    if (key === 'startDate') setStartDate(normalized);
+    if (key === 'endDate') setEndDate(normalized);
   }, [setSearch, setSku, setMinPrice, setMaxPrice, setStartDate, setEndDate]);
 
   const handleResetFilters = (): void => {

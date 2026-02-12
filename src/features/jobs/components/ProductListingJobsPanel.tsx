@@ -145,7 +145,7 @@ function ProductListingJobsPanelContent({
     <DynamicFilters
       fields={filterFields}
       values={{ query }}
-      onChange={(_, value) => setQuery(value)}
+      onChange={(_, value) => setQuery(Array.isArray(value) ? (value[0] ?? '') : value)}
       onReset={() => setQuery('')}
       hasActiveFilters={Boolean(query)}
     />

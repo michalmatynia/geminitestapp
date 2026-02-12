@@ -6,7 +6,7 @@ import { useCallback, useMemo } from "react";
 
 // Hook for query normalization and relationships
 export function useNormalizedQuery<T extends { id: string }>(
-  queryKey: unknown[],
+  queryKey: readonly unknown[],
   queryFn: () => Promise<T[]>
 ): any {
   const query = useQuery({
@@ -43,9 +43,9 @@ export function useNormalizedQuery<T extends { id: string }>(
 
 // Hook for query composition and data transformation
 export function useComposedQuery<T, R>(
-  baseQuery: { queryKey: unknown[]; queryFn: () => Promise<T> },
+  baseQuery: { queryKey: readonly unknown[]; queryFn: () => Promise<T> },
   transformer: (data: T) => R,
-  dependencies: unknown[] = []
+  dependencies: readonly unknown[] = []
 ): any {
   return useQuery({
     queryKey: [...baseQuery.queryKey, 'composed', ...dependencies],
@@ -56,7 +56,7 @@ export function useComposedQuery<T, R>(
 
 // Hook for query aggregation
 export function useAggregatedQuery<T>(
-  queries: Array<{ queryKey: unknown[]; queryFn: () => Promise<T> }>,
+  queries: Array<{ queryKey: readonly unknown[]; queryFn: () => Promise<T> }>,
   aggregator: (results: T[]) => any
 ): any {
   const queryResults = queries.map(({ queryKey, queryFn }) =>

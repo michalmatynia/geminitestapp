@@ -5,7 +5,6 @@
 
 import { 
   DatabaseEngineOperationJobDto,
-  DatabaseEngineBackupTargetStatusDto,
   DatabaseEngineBackupSchedulerStatusDto,
   DatabaseEngineBackupSchedulerTickResultDto
 } from '../contracts/database';

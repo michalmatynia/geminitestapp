@@ -3,9 +3,14 @@
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 
 import { api } from '@/shared/lib/api-client';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
-
-const marketplaceKeys = QUERY_KEYS.integrations.marketplace;
+import {
+  invalidateMarketplaceCategories,
+  invalidateMarketplaceMappings,
+  invalidateMarketplaceProducerMappings,
+  invalidateMarketplaceProducers,
+  invalidateMarketplaceTagMappings,
+  invalidateMarketplaceTags,
+} from '@/shared/lib/query-invalidation';
 
 export function useFetchExternalCategoriesMutation(): UseMutationResult<
   { fetched: number; message: string },
@@ -17,7 +22,7 @@ export function useFetchExternalCategoriesMutation(): UseMutationResult<
   return useMutation({
     mutationFn: (payload: { connectionId: string }) => api.post<{ fetched: number; message: string }>('/api/marketplace/categories/fetch', payload),
     onSuccess: (_: { fetched: number; message: string }, { connectionId }: { connectionId: string }) => {
-      void queryClient.invalidateQueries({ queryKey: marketplaceKeys.categories(connectionId) });
+      void invalidateMarketplaceCategories(queryClient, connectionId);
     },
   });
 }
@@ -33,7 +38,7 @@ export function useSaveMappingsMutation(): UseMutationResult<
     mutationFn: (payload: { connectionId: string; catalogId: string; mappings: { externalCategoryId: string; internalCategoryId: string | null }[] }) => 
       api.post<{ upserted: number; message: string }>('/api/marketplace/mappings/bulk', payload),
     onSuccess: (_: { upserted: number; message: string }, { connectionId, catalogId }: { connectionId: string; catalogId: string; mappings: { externalCategoryId: string; internalCategoryId: string | null }[] }) => {
-      void queryClient.invalidateQueries({ queryKey: marketplaceKeys.mappings(connectionId, catalogId) });
+      void invalidateMarketplaceMappings(queryClient, connectionId, catalogId);
     },
   });
 }
@@ -52,7 +57,7 @@ export function useFetchExternalProducersMutation(): UseMutationResult<
         payload
       ),
     onSuccess: (_: { fetched: number; message: string }, { connectionId }: { connectionId: string }) => {
-      void queryClient.invalidateQueries({ queryKey: marketplaceKeys.producers(connectionId) });
+      void invalidateMarketplaceProducers(queryClient, connectionId);
     },
   });
 }
@@ -77,9 +82,7 @@ export function useSaveProducerMappingsMutation(): UseMutationResult<
         payload
       ),
     onSuccess: (_: { upserted: number; message: string }, { connectionId }) => {
-      void queryClient.invalidateQueries({
-        queryKey: marketplaceKeys.producerMappings(connectionId),
-      });
+      void invalidateMarketplaceProducerMappings(queryClient, connectionId);
     },
   });
 }
@@ -98,7 +101,7 @@ export function useFetchExternalTagsMutation(): UseMutationResult<
         payload
       ),
     onSuccess: (_: { fetched: number; message: string }, { connectionId }: { connectionId: string }) => {
-      void queryClient.invalidateQueries({ queryKey: marketplaceKeys.tags(connectionId) });
+      void invalidateMarketplaceTags(queryClient, connectionId);
     },
   });
 }
@@ -123,9 +126,7 @@ export function useSaveTagMappingsMutation(): UseMutationResult<
         payload
       ),
     onSuccess: (_: { upserted: number; message: string }, { connectionId }) => {
-      void queryClient.invalidateQueries({
-        queryKey: marketplaceKeys.tagMappings(connectionId),
-      });
+      void invalidateMarketplaceTagMappings(queryClient, connectionId);
     },
   });
 }

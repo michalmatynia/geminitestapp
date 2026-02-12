@@ -168,3 +168,20 @@ export const baseCategorySchema = z.object({
 });
 
 export type BaseCategoryDto = z.infer<typeof baseCategorySchema>;
+
+export const fetchMarketplaceCategoriesRequestSchema = z.object({
+  connectionId: z.string(),
+});
+
+export type FetchMarketplaceCategoriesRequestDto = z.infer<typeof fetchMarketplaceCategoriesRequestSchema>;
+
+export const bulkCategoryMappingRequestSchema = z.object({
+  connectionId: z.string(),
+  catalogId: z.string(),
+  mappings: z.array(z.object({
+    externalCategoryId: z.string(),
+    internalCategoryId: z.string().nullable(),
+  })),
+});
+
+export type BulkCategoryMappingRequestDto = z.infer<typeof bulkCategoryMappingRequestSchema>;

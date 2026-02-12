@@ -23,7 +23,6 @@ import { DEFAULT_AUTH_SECURITY_POLICY } from '@/features/auth/utils/auth-securit
 import { logClientError } from '@/features/observability';
 import { ApiError } from '@/shared/lib/api-client';
 import { invalidateUsers } from '@/shared/lib/query-invalidation';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { Badge, Button, Checkbox, ConfirmDialog, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Input, Label, ListPanel, SectionHeader, SectionPanel, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 

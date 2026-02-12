@@ -1,5 +1,3 @@
-import type { ProductCategoryDto } from '@/shared/dtos';
-
 // DTO type exports
 export type {
   ProductDto,

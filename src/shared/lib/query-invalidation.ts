@@ -78,6 +78,10 @@ export const invalidateCmsThemes = (queryClient: QueryClient) => {
 
 // --- Notes ---
 
+export const invalidateNotes = (queryClient: QueryClient) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
+};
+
 export const invalidateNotebooks = (queryClient: QueryClient) => {
   return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.notebooks });
 };
@@ -88,8 +92,38 @@ export const invalidateNoteDetail = (queryClient: QueryClient, noteId: string) =
 
 // --- Integrations ---
 
+export const invalidateIntegrations = (queryClient: QueryClient) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.all });
+};
+
 export const invalidateIntegrationConnections = (queryClient: QueryClient) => {
   return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.connections() });
+};
+
+// --- Marketplace ---
+
+export const invalidateMarketplaceCategories = (queryClient: QueryClient, connectionId: string) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.marketplace.categories(connectionId) });
+};
+
+export const invalidateMarketplaceMappings = (queryClient: QueryClient, connectionId: string, catalogId: string) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.marketplace.mappings(connectionId, catalogId) });
+};
+
+export const invalidateMarketplaceProducers = (queryClient: QueryClient, connectionId: string) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.marketplace.producers(connectionId) });
+};
+
+export const invalidateMarketplaceProducerMappings = (queryClient: QueryClient, connectionId: string) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.marketplace.producerMappings(connectionId) });
+};
+
+export const invalidateMarketplaceTags = (queryClient: QueryClient, connectionId: string) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.marketplace.tags(connectionId) });
+};
+
+export const invalidateMarketplaceTagMappings = (queryClient: QueryClient, connectionId: string) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.marketplace.tagMappings(connectionId) });
 };
 
 // --- Settings ---
@@ -106,6 +140,10 @@ export const invalidateSettingsScope = (queryClient: QueryClient, scope: string)
 
 export const invalidateUsers = (queryClient: QueryClient) => {
   return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.auth.users.all });
+};
+
+export const invalidateAuthSecurity = (queryClient: QueryClient, userId: string) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.auth.users.security(userId) });
 };
 
 export const invalidateUserPreferences = (queryClient: QueryClient) => {
@@ -190,8 +228,20 @@ export const invalidateImageStudioSlots = (queryClient: QueryClient, projectId: 
 
 // --- AI Paths ---
 
+export const invalidateAiPathTriggerButtons = (queryClient: QueryClient) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons() });
+};
+
+export const invalidateAiPathSettings = (queryClient: QueryClient) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.aiPaths.settings() });
+};
+
 export const invalidateAiPathRuns = (queryClient: QueryClient) => {
   return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.aiPaths.runs() });
+};
+
+export const invalidateAiPathRunDetail = (queryClient: QueryClient, runId: string) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.aiPaths.run(runId) });
 };
 
 export const invalidateAiPathQueue = (queryClient: QueryClient) => {

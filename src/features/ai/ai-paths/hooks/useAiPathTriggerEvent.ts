@@ -27,11 +27,15 @@ import {
 } from '@/features/ai/ai-paths/lib/settings-store-client';
 import { jobKeys } from '@/features/jobs/hooks/useJobQueries';
 import { logClientError } from '@/features/observability';
+import { api } from '@/shared/lib/api-client';
 import {
   getProductDetailQueryKey,
+} from '@/shared/lib/product-query-keys';
+import {
+  invalidateAiPathSettings,
+  invalidateNotes,
   invalidateProductsAndCounts,
-} from '@/features/products/hooks/productCache';
-import { api } from '@/shared/lib/api-client';
+} from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type {
   AiNode,
@@ -510,9 +514,7 @@ export function useAiPathTriggerEvent(): {
             JSON.stringify(nextUiState)
           );
           invalidateAiPathsSettingsCache();
-          void queryClient.invalidateQueries({
-            queryKey: QUERY_KEYS.ai.aiPaths.settings(),
-          });
+          void invalidateAiPathSettings(queryClient);
         } catch (error) {
           logClientError(error, { context: { source: 'useAiPathTriggerEvent', action: 'persistRunSnapshot' } });
         }
@@ -599,7 +601,7 @@ export function useAiPathTriggerEvent(): {
             invalidateProductQueries(args.entityId);
           }
           if (args.entityType === 'note') {
-            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
+            void invalidateNotes(queryClient);
           }
           await persistRunSnapshot(runAt);
         } catch (error) {
@@ -658,7 +660,7 @@ export function useAiPathTriggerEvent(): {
         scheduleQueuedProductRefresh(args.entityId);
       }
       if (args.entityType === 'note') {
-        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
+        void invalidateNotes(queryClient);
       }
 
       await persistRunSnapshot(runAt);

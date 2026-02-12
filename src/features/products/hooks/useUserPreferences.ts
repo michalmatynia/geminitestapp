@@ -7,6 +7,7 @@ import { logClientError } from '@/features/observability';
 import type { ProductListPreferences } from '@/features/products/types/products-ui';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { api, ApiError } from '@/shared/lib/api-client';
+import { invalidateUserPreferences } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   normalizeUserPreferencesResponse,
@@ -115,7 +116,7 @@ export function useUpdateUserPreferencesMutation(): UseMutationResult<void, Erro
   return useMutation({
     mutationFn: (data: Partial<ProductListPreferences>) => updateUserPreferences(data),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: userPreferencesQueryKey });
+      void invalidateUserPreferences(queryClient);
     },
   });
 }

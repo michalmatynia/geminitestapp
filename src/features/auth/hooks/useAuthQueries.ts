@@ -15,6 +15,10 @@ import {
   type AuthUserSecurityProfile,
 } from '@/features/auth/api/users';
 import { ApiError } from '@/shared/lib/api-client';
+import {
+  invalidateAuthSecurity,
+  invalidateUsers,
+} from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import type { AuthUserSummary } from '../types';
@@ -65,7 +69,7 @@ export function useUpdateAuthUser(): UseMutationResult<
       return result.payload;
     },
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({ queryKey: authKeys.all });
+      void invalidateUsers(queryClient);
     },
   });
 }
@@ -94,8 +98,8 @@ export function useUpdateAuthUserSecurity(): UseMutationResult<
       return result.payload;
     },
     onSuccess: (_data: AuthUserSecurityProfile, variables: { userId: string; input: { disabled?: boolean; banned?: boolean; allowedIps?: string[]; disableMfa?: boolean } }): void => {
-      void queryClient.invalidateQueries({ queryKey: authKeys.all });
-      void queryClient.invalidateQueries({ queryKey: authKeys.security(variables.userId) });
+      void invalidateUsers(queryClient);
+      void invalidateAuthSecurity(queryClient, variables.userId);
     },
   });
 }
@@ -111,8 +115,8 @@ export function useDeleteAuthUser(): UseMutationResult<
       return deleteAuthUser(userId);
     },
     onSuccess: (_data: { id: string; deleted: boolean }, variables: { userId: string }): void => {
-      void queryClient.invalidateQueries({ queryKey: authKeys.all });
-      void queryClient.invalidateQueries({ queryKey: authKeys.security(variables.userId) });
+      void invalidateUsers(queryClient);
+      void invalidateAuthSecurity(queryClient, variables.userId);
     },
   });
 }
@@ -132,7 +136,7 @@ export function useRegisterUser(): UseMutationResult<
   return useMutation({
     mutationFn: registerUser,
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({ queryKey: authKeys.all });
+      void invalidateUsers(queryClient);
     },
   });
 }

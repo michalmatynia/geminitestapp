@@ -295,7 +295,7 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
   }, [showPlaywrightSaved]);
 
   const refreshConnections = useCallback((integrationId: string): void => {
-    invalidateIntegrationConnections(queryClient, integrationId);
+    void invalidateIntegrationConnections(queryClient, integrationId);
   }, [queryClient]);
 
   useEffect(() => {

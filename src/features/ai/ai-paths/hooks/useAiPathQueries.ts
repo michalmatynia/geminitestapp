@@ -2,9 +2,11 @@
 
 import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from '@tanstack/react-query';
 
-
-
 import { runsApi, analyticsApi, type AiPathRuntimeAnalyticsSummary } from '@/features/ai/ai-paths/lib';
+import {
+  invalidateAiPathRunDetail,
+  invalidateAiPathRuns,
+} from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { AiPathRunRecord, AiPathRunNodeRecord, AiPathRunEventRecord } from '@/shared/types/domain/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -149,13 +151,15 @@ export function useAiPathRequeueMutation(): UseMutationResult<unknown, Error, { 
 
     onSuccess: () => {
 
-      void queryClient.invalidateQueries({ queryKey: aiPathKeys.all });
+      void invalidateAiPathRuns(queryClient);
 
     },
 
   });
 
 }
+
+    
 
 
 
@@ -189,15 +193,17 @@ export function useAiPathResumeMutation(): UseMutationResult<unknown, Error, { r
 
     onSuccess: (_data: unknown, { runId }: { runId: string; mode: 'resume' | 'replay' }) => {
 
-      void queryClient.invalidateQueries({ queryKey: aiPathKeys.run(runId) });
+      void invalidateAiPathRunDetail(queryClient, runId);
 
-      void queryClient.invalidateQueries({ queryKey: aiPathKeys.all });
+      void invalidateAiPathRuns(queryClient);
 
     },
 
   });
 
 }
+
+    
 
 
 
@@ -231,12 +237,14 @@ export function useAiPathRetryNodeMutation(): UseMutationResult<unknown, Error, 
 
     onSuccess: (_data: unknown, { runId }: { runId: string; nodeId: string }) => {
 
-      void queryClient.invalidateQueries({ queryKey: aiPathKeys.run(runId) });
+      void invalidateAiPathRunDetail(queryClient, runId);
 
-      void queryClient.invalidateQueries({ queryKey: aiPathKeys.all });
+      void invalidateAiPathRuns(queryClient);
 
     },
 
   });
 
 }
+
+    

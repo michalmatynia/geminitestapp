@@ -1,4 +1,4 @@
-import { DtoBase, NamedDto } from '../types/base';
+import { DtoBase, NamedDto, CreateDto, UpdateDto } from '../types/base';
 
 // Internationalization DTOs
 export interface LanguageDto extends NamedDto {
@@ -28,29 +28,14 @@ export interface TranslationDto extends DtoBase {
   namespace: string;
 }
 
-export interface CreateLanguageDto {
-  code: string;
-  name: string;
-  nativeName?: string | null;
-  isDefault?: boolean;
-  enabled?: boolean;
-}
+export type CreateLanguageDto = CreateDto<LanguageDto>;
+export type UpdateLanguageDto = UpdateDto<LanguageDto>;
 
-export interface UpdateLanguageDto {
-  name?: string;
-  nativeName?: string | null;
-  isDefault?: boolean;
-  enabled?: boolean;
-}
+export type CreateCountryDto = CreateDto<CountryDto>;
+export type UpdateCountryDto = UpdateDto<CountryDto>;
 
-export interface CreateTranslationDto {
-  key: string;
-  languageId: string;
-  value: string;
-  namespace?: string;
-}
+export type CreateCurrencyDto = CreateDto<CurrencyDto>;
+export type UpdateCurrencyDto = UpdateDto<CurrencyDto>;
 
-export interface UpdateTranslationDto {
-  value?: string;
-  namespace?: string;
-}
+export type CreateTranslationDto = CreateDto<TranslationDto>;
+export type UpdateTranslationDto = UpdateDto<TranslationDto>;

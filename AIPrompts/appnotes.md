@@ -1,17 +1,20 @@
+
+Producer and Categories are not going through , long refresh on the button
+
  Use pre-prompts to incorporate different aspects
  Show Button should keep the toolbar and collapse admin menu
  * Dragging image in the image canvas stopped working again
  Dragging no longer works
  Save button above format and other buttons
 
-In Folder tree, draggin the bottom file into the top folder in the folder tree is not working.
+* In Folder tree, draggin the bottom file into the top folder in the folder tree is not working.
  Image Canvas has too much height
  OpenaAI, where do I put the API and which model do I choose, How does the final prompt willl look like
 
  when selecting AI model, fetch fresh list of models and divide paid vs ollama
 
  * Image uploads are still not working in Image Studio
-
+ * I want all of my Image studio to be moved from Brain into Image studio, that includes AI model settings and API key field.
 
 
 

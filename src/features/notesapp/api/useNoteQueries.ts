@@ -4,6 +4,9 @@ import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+
+export * from './useNotebookResource';
+
 import type { 
   NoteWithRelations, 
   TagRecord, 

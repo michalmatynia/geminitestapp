@@ -1,4 +1,4 @@
-import { DtoBase, NamedDto } from '../types/base';
+import { DtoBase, NamedDto, CreateDto, UpdateDto } from '../types/base';
 
 // Playwright DTOs
 export interface PlaywrightSettingsDto {

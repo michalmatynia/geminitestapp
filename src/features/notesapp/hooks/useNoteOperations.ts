@@ -67,7 +67,7 @@ export function useNoteOperations({
       toast('Folder created successfully');
     } catch (error: unknown) {
       logClientError(error, { context: { source: 'useNoteOperations.handleCreateFolder' } });
-      toast('An unexpected error occurred while creating the folder', { variant: 'error' });
+      toast('Failed to create folder', { variant: 'error' });
     }
   }, [selectedNotebookId, createCategoryMutation, setSelectedFolderId, toast]);
 
@@ -79,7 +79,7 @@ export function useNoteOperations({
       toast('Folder deleted successfully');
     } catch (error: unknown) {
       logClientError(error, { context: { source: 'useNoteOperations.handleDeleteFolder', folderId } });
-      toast('An unexpected error occurred while deleting the folder', { variant: 'error' });
+      toast('Failed to delete folder', { variant: 'error' });
     }
   }, [deleteCategoryMutation, toast]);
 
@@ -98,7 +98,7 @@ export function useNoteOperations({
       toast('Folder renamed successfully');
     } catch (error: unknown) {
       logClientError(error, { context: { source: 'useNoteOperations.handleRenameFolder', folderId, newName } });
-      toast('An unexpected error occurred while renaming the folder', { variant: 'error' });
+      toast('Failed to rename folder', { variant: 'error' });
     }
   }, [folderTreeRef, updateCategoryMutation, setUndoStack, toast]);
 
@@ -146,7 +146,7 @@ export function useNoteOperations({
       toast('Note duplicated successfully');
     } catch (error: unknown) {
       logClientError(error, { context: { source: 'useNoteOperations.handleDuplicateNote', noteId } });
-      toast('An unexpected error occurred while duplicating the note', { variant: 'error' });
+      toast('Failed to duplicate note', { variant: 'error' });
     }
   }, [selectedNotebookId, notesRef, createNoteMutation, toast, queryClient]);
 
@@ -161,7 +161,7 @@ export function useNoteOperations({
       toast('Note deleted successfully');
     } catch (error: unknown) {
       logClientError(error, { context: { source: 'useNoteOperations.handleDeleteNoteFromTree', noteId } });
-      toast('An unexpected error occurred while deleting the note', { variant: 'error' });
+      toast('Failed to delete note', { variant: 'error' });
     }
   }, [deleteNoteMutation, selectedNote, setSelectedNote, toast]);
 
@@ -184,7 +184,7 @@ export function useNoteOperations({
       toast('Note renamed successfully');
     } catch (error: unknown) {
       logClientError(error, { context: { source: 'useNoteOperations.handleRenameNote', noteId, newTitle } });
-      toast('An unexpected error occurred while renaming the note', { variant: 'error' });
+      toast('Failed to rename note', { variant: 'error' });
     }
   }, [notesRef, updateNoteMutation, setUndoStack, selectedNote, setSelectedNote, toast]);
 
@@ -206,7 +206,7 @@ export function useNoteOperations({
       toast('Note moved successfully');
     } catch (error: unknown) {
       logClientError(error, { context: { source: 'useNoteOperations.handleMoveNoteToFolder', noteId, folderId } });
-      toast('An unexpected error occurred while moving the note', { variant: 'error' });
+      toast('Failed to move note', { variant: 'error' });
     }
   }, [notesRef, updateNoteMutation, setUndoStack, toast]);
 
@@ -227,7 +227,7 @@ export function useNoteOperations({
       toast('Folder moved successfully');
     } catch (error: unknown) {
       logClientError(error, { context: { source: 'useNoteOperations.handleMoveFolderToFolder', folderId, targetParentId } });
-      toast('An unexpected error occurred while moving the folder', { variant: 'error' });
+      toast('Failed to move folder', { variant: 'error' });
     }
   }, [folderTreeRef, updateCategoryMutation, setUndoStack, toast]);
 

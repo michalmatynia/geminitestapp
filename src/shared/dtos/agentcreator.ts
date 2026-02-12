@@ -1,7 +1,7 @@
 // Use consolidated types
 import type { Status } from '@/shared/types/core/base-types';
 
-import { NamedDto, DtoBase } from '../types/base';
+import { NamedDto, DtoBase, CreateDto, UpdateDto } from '../types/base';
 
 // Agent Creator DTOs
 export interface AgentDto extends NamedDto {
@@ -35,29 +35,17 @@ export interface AgentPersonaDto extends NamedDto {
   settings: Record<string, unknown>;
 }
 
-export interface CreateAgentDto {
-  name: string;
-  description?: string;
-  model: string;
-  systemPrompt: string;
-  temperature?: number;
-  maxTokens?: number;
-  tools?: string[];
-  config?: Record<string, unknown>;
-  enabled?: boolean;
-}
+export type CreateAgentDto = CreateDto<AgentDto>;
+export type UpdateAgentDto = UpdateDto<AgentDto>;
 
-export interface UpdateAgentDto {
-  name?: string;
-  description?: string;
-  model?: string;
-  systemPrompt?: string;
-  temperature?: number;
-  maxTokens?: number;
-  tools?: string[];
-  config?: Record<string, unknown>;
-  enabled?: boolean;
-}
+export type CreateAgentRunDto = CreateDto<AgentRunDto>;
+export type UpdateAgentRunDto = UpdateDto<AgentRunDto>;
+
+export type CreateAgentLogDto = CreateDto<AgentLogDto>;
+export type UpdateAgentLogDto = UpdateDto<AgentLogDto>;
+
+export type CreateAgentPersonaDto = CreateDto<AgentPersonaDto>;
+export type UpdateAgentPersonaDto = UpdateDto<AgentPersonaDto>;
 
 export interface ExecuteAgentDto {
   agentId: string;

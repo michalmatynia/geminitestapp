@@ -244,23 +244,10 @@ export interface UpdateProductDraftInput extends Partial<UpdateProductDto> {
   sku?: string;
 }
 
-export type ProductAiJobType = 'description' | 'translation' | 'tags' | 'categories' | 'parameters';
+export { type ProductAiJobType } from './jobs';
+export { type UserPreferences } from './user-preferences';
 
 export type IntegrationDbProvider = 'prisma' | 'mongodb';
-
-export type SyncDirection = 'to_base' | 'from_base' | 'bidirectional' | 'none';
-
-export type UserPreferences = {
-  productListNameLocale: string | null;
-  productListCatalogFilter: string | null;
-  productListCurrencyCode: string | null;
-  productListPageSize: number | null;
-  productListThumbnailSource?: 'file' | 'link' | 'base64' | null;
-  productListDraftIconColorMode?: 'theme' | 'custom' | null;
-  productListDraftIconColor?: string | null;
-  aiPathsActivePathId?: string | null;
-  adminMenuCollapsed?: boolean | null;
-};
 
 export type ProductMigrationBatchResult = {
   direction: ProductMigrationDirection;

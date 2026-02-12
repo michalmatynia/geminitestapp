@@ -1,3 +1,5 @@
+import { DtoBase, CreateDto, UpdateDto } from '../types/base';
+
 // Database Schema Introspection DTOs
 export interface FieldInfoDto {
   name: string;
@@ -242,19 +244,20 @@ export type DatabaseEngineOperationJobStatusDto =
 
 export type DatabaseEngineOperationJobTypeDto = 'db_backup' | 'db_sync';
 
-export interface DatabaseEngineOperationJobDto {
-  id: string;
+export interface DatabaseEngineOperationJobDto extends DtoBase {
   type: DatabaseEngineOperationJobTypeDto;
   status: DatabaseEngineOperationJobStatusDto;
   dbType: 'mongodb' | 'postgresql' | null;
   direction: 'mongo_to_prisma' | 'prisma_to_mongo' | null;
   source: string | null;
-  createdAt: string;
   startedAt: string | null;
   finishedAt: string | null;
   errorMessage: string | null;
   resultSummary: string | null;
 }
+
+export type CreateDatabaseEngineOperationJobDto = CreateDto<DatabaseEngineOperationJobDto>;
+export type UpdateDatabaseEngineOperationJobDto = UpdateDto<DatabaseEngineOperationJobDto>;
 
 export interface DatabaseEngineOperationsJobsDto {
   timestamp: string;

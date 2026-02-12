@@ -1,4 +1,4 @@
-import { DtoBase, NamedDto } from '../types/base';
+import { DtoBase, NamedDto, CreateDto, UpdateDto } from '../types/base';
 
 import type { Status } from '../types/common';
 
@@ -132,27 +132,32 @@ export interface AiDbNodePresetDto extends NamedDto {
 /**
  * DTO for creating an AI Path
  */
-export interface CreateAiPathDto {
-  name: string;
-  description?: string | null;
-  nodes?: AiNodeDto[];
-  edges?: AiEdgeDto[];
-  config?: Record<string, unknown>;
-  enabled?: boolean;
-}
+export type CreateAiPathDto = CreateDto<AiPathDto>;
 
 /**
  * DTO for updating an AI Path
  */
-export interface UpdateAiPathDto {
-  name?: string;
-  description?: string | null;
-  nodes?: AiNodeDto[];
-  edges?: AiEdgeDto[];
-  config?: Record<string, unknown>;
-  enabled?: boolean;
-  version?: number;
-}
+export type UpdateAiPathDto = UpdateDto<AiPathDto>;
+
+/**
+ * DTO for creating an AI Node
+ */
+export type CreateAiNodeDto = CreateDto<AiNodeDto>;
+
+/**
+ * DTO for updating an AI Node
+ */
+export type UpdateAiNodeDto = UpdateDto<AiNodeDto>;
+
+/**
+ * DTO for creating an AI Edge
+ */
+export type CreateAiEdgeDto = CreateDto<AiEdgeDto>;
+
+/**
+ * DTO for updating an AI Edge
+ */
+export type UpdateAiEdgeDto = UpdateDto<AiEdgeDto>;
 
 /**
  * DTO for executing an AI Path

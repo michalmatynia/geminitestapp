@@ -6,10 +6,11 @@ import {
   getDefaultImageRetryPresets,
   normalizeImageRetryPresets,
 } from '@/features/data-import-export';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 export const useImageRetryPresets = (): ImageRetryPreset[] => {
   const { data: presets = getDefaultImageRetryPresets() } = useQuery({
-    queryKey: ['image-retry-presets'],
+    queryKey: QUERY_KEYS.integrations.imageRetryPresets(),
     queryFn: async (): Promise<ImageRetryPreset[]> => {
       const res = await fetch('/api/integrations/exports/base/image-retry-presets');
       if (!res.ok) return getDefaultImageRetryPresets();

@@ -1,11 +1,11 @@
 /* eslint-disable */
 "use client";
 
-import { QueryClient, QueryClientProvider, type Query } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import React, { useState, useEffect } from "react";
-import { setupOfflineSupport, isOfflineQuery } from "@/shared/lib/offline-support";
+import { setupOfflineSupport } from "@/shared/lib/offline-support";
+import { createQueryClient } from "@/shared/lib/query-client";
 import { useGlobalQueryErrorHandler } from "@/shared/hooks/query/useQueryErrorHandling";
-import { logClientError } from "@/shared/utils/observability/client-error-logger";
 import { usePerformanceMonitor } from "@/shared/hooks/useQueryAnalytics";
 import { useQueryPersistence } from "@/shared/hooks/query/useQueryPersistence";
 import { useQueryMiddleware, developmentMiddlewares, productionMiddlewares } from "@/shared/hooks/query/useQueryMiddleware";
@@ -82,59 +82,7 @@ function QueryProviderInner({ children }: QueryProviderProps): React.JSX.Element
 }
 
 export const QueryProvider = ({ children }: QueryProviderProps): React.JSX.Element => {
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            staleTime: (query: Query): number => {
-              // Longer stale time for offline-cached queries
-              return isOfflineQuery(query.queryKey) ? 1000 * 60 * 30 : 1000 * 60 * 5;
-            },
-            gcTime: 1000 * 60 * 60 * 24, // 24 hours for offline support
-            refetchOnWindowFocus: true,
-            refetchOnReconnect: true,
-            refetchInterval: false,
-            refetchIntervalInBackground: false,
-            retry: (failureCount: number, error: unknown): boolean => {
-              if (error instanceof Error && 'status' in error) {
-                const status: number = (error as { status: number }).status;
-                if (status >= 400 && status < 500) return false;
-              }
-              return failureCount < 2;
-            },
-            retryDelay: (attemptIndex: number): number => Math.min(1000 * 2 ** attemptIndex, 30000),
-            networkMode: 'offlineFirst', // Use cached data when offline
-          },
-          mutations: {
-            retry: (failureCount: number, error: unknown): boolean => {
-              if (error instanceof Error && 'status' in error) {
-                const status: number = (error as { status: number }).status;
-                if (status >= 400 && status < 500) return false;
-              }
-              return failureCount < 1;
-            },
-            networkMode: 'online', // Only run mutations when online
-            onError: (error: Error): void => {
-              logClientError(error, { context: { source: 'mutation' } });
-            },
-            onSuccess: (): void => {
-              // Trigger background sync for offline mutations
-              if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.ready.then((registration: ServiceWorkerRegistration) => {
-                  const sync = (registration as any).sync;
-                  if (sync && typeof sync.register === 'function') {
-                    void sync.register('background-sync');
-                  }
-                }).catch(() => {
-                  // Service worker not available
-                });
-              }
-            },
-          },
-        },
-      })
-  );
+  const [queryClient] = useState(() => createQueryClient());
 
   useEffect(() => {
     setupOfflineSupport(queryClient);

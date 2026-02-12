@@ -36,7 +36,7 @@ export function useConnectionSession(
   options?: { enabled?: boolean }
 ): UseQueryResult<Record<string, unknown> | null> {
   return useQuery({
-    queryKey: [...QUERY_KEYS.integrations.all, 'connection-session', connectionId],
+    queryKey: QUERY_KEYS.integrations.connectionSession(connectionId),
     queryFn: () => 
       connectionId 
         ? api.get<Record<string, unknown>>(`/api/integrations/connections/${connectionId}/session`)
@@ -48,14 +48,14 @@ export function useConnectionSession(
 
 export function useIntegrationsWithConnections(): UseQueryResult<IntegrationWithConnections[]> {
   return useQuery({
-    queryKey: [...QUERY_KEYS.integrations.all, 'with-connections'],
+    queryKey: QUERY_KEYS.integrations.withConnections(),
     queryFn: () => api.get<IntegrationWithConnections[]>('/api/integrations/with-connections'),
   });
 }
 
 export function usePlaywrightPersonas(): UseQueryResult<PlaywrightPersona[]> {
   return useQuery({
-    queryKey: [...QUERY_KEYS.settings.all, 'playwright-personas'],
+    queryKey: QUERY_KEYS.playwright.personas(),
     queryFn: async (): Promise<PlaywrightPersona[]> => {
       const data = await fetchSettingsCached();
       const map = new Map(data.map((item: { key: string; value: string }) => [item.key, item.value]));
@@ -70,28 +70,28 @@ export function usePlaywrightPersonas(): UseQueryResult<PlaywrightPersona[]> {
 
 export function useExportTemplates(): UseQueryResult<Template[]> {
   return useQuery({
-    queryKey: [...QUERY_KEYS.integrations.all, 'export-templates'],
+    queryKey: QUERY_KEYS.integrations.exportTemplates(),
     queryFn: () => api.get<Template[]>('/api/integrations/export-templates'),
   });
 }
 
 export function useActiveExportTemplate(): UseQueryResult<{ templateId?: string | null }> {
   return useQuery({
-    queryKey: [...QUERY_KEYS.integrations.all, 'active-export-template'],
+    queryKey: QUERY_KEYS.integrations.activeExportTemplate(),
     queryFn: () => api.get<{ templateId?: string | null }>('/api/integrations/exports/base/active-template'),
   });
 }
 
 export function useDefaultExportInventory(): UseQueryResult<{ inventoryId?: string | null }> {
   return useQuery({
-    queryKey: [...QUERY_KEYS.integrations.all, 'default-export-inventory'],
+    queryKey: QUERY_KEYS.integrations.defaultExportInventory(),
     queryFn: () => api.get<{ inventoryId?: string | null }>('/api/integrations/exports/base/default-inventory'),
   });
 }
 
 export function useBaseInventories(connectionId: string, enabled: boolean = true): UseQueryResult<BaseInventory[]> {
   return useQuery({
-    queryKey: [...QUERY_KEYS.integrations.all, 'base-inventories', connectionId],
+    queryKey: QUERY_KEYS.integrations.baseInventories(connectionId),
     queryFn: async (): Promise<BaseInventory[]> => {
       const data = await api.post<{ inventories?: BaseInventory[]; error?: string }>('/api/integrations/imports/base', {
         action: 'inventories',

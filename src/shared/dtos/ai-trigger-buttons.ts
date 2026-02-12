@@ -1,4 +1,4 @@
-import { NamedDto } from '../types/base';
+import { NamedDto, CreateDto, UpdateDto } from '../types/base';
 
 /**
  * Trigger button locations in the UI
@@ -32,21 +32,9 @@ export interface AiTriggerButtonDto extends NamedDto {
 /**
  * DTO for creating a new AI Trigger Button
  */
-export interface CreateAiTriggerButtonDto {
-  name: string;
-  iconId?: string | null;
-  locations: AiTriggerButtonLocation[];
-  mode?: AiTriggerButtonMode;
-  display?: AiTriggerButtonDisplay;
-}
+export type CreateAiTriggerButtonDto = CreateDto<AiTriggerButtonDto>;
 
 /**
  * DTO for updating an existing AI Trigger Button
  */
-export interface UpdateAiTriggerButtonDto {
-  name?: string;
-  iconId?: string | null;
-  locations?: AiTriggerButtonLocation[];
-  mode?: AiTriggerButtonMode;
-  display?: AiTriggerButtonDisplay;
-}
+export type UpdateAiTriggerButtonDto = UpdateDto<AiTriggerButtonDto>;

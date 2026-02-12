@@ -1,4 +1,4 @@
-import { DtoBase, NamedDto } from '../types/base';
+import { DtoBase, NamedDto, CreateDto, UpdateDto } from '../types/base';
 
 // Integrations DTOs
 export interface IntegrationDto extends NamedDto {
@@ -86,49 +86,11 @@ export interface FetchMarketplaceCategoriesRequestDto {
   connectionId: string;
 }
 
-export interface CreateIntegrationDto {
-  name: string;
-  slug: string;
-}
+export type CreateIntegrationDto = CreateDto<IntegrationDto>;
+export type UpdateIntegrationDto = UpdateDto<IntegrationDto>;
 
-export interface UpdateIntegrationDto extends Partial<CreateIntegrationDto> {}
-
-export interface CreateIntegrationConnectionDto {
-  integrationId: string;
-  name: string;
-  username: string;
-  password: string;
-}
-
-export interface UpdateIntegrationConnectionDto extends Partial<CreateIntegrationConnectionDto> {
-  playwrightStorageState?: string | null;
-  playwrightHeadless?: boolean;
-  playwrightSlowMo?: number;
-  playwrightTimeout?: number;
-  playwrightNavigationTimeout?: number;
-  playwrightHumanizeMouse?: boolean;
-  playwrightMouseJitter?: number;
-  playwrightClickDelayMin?: number;
-  playwrightClickDelayMax?: number;
-  playwrightInputDelayMin?: number;
-  playwrightInputDelayMax?: number;
-  playwrightActionDelayMin?: number;
-  playwrightActionDelayMax?: number;
-  playwrightProxyEnabled?: boolean;
-  playwrightProxyServer?: string | null;
-  playwrightProxyUsername?: string | null;
-  playwrightProxyPassword?: string | null;
-  playwrightEmulateDevice?: boolean;
-  playwrightDeviceName?: string | null;
-  allegroAccessToken?: string | null;
-  allegroRefreshToken?: string | null;
-  allegroTokenType?: string | null;
-  allegroScope?: string | null;
-  allegroExpiresAt?: string | null;
-  allegroUseSandbox?: boolean;
-  baseApiToken?: string | null;
-  baseLastInventoryId?: string | null;
-}
+export type CreateIntegrationConnectionDto = CreateDto<IntegrationConnectionDto>;
+export type UpdateIntegrationConnectionDto = UpdateDto<IntegrationConnectionDto>;
 
 /**
  * Field mapping for a data template.
@@ -148,6 +110,9 @@ export interface TemplateDto extends NamedDto {
   mapping: TemplateMappingDto[];
   config: Record<string, unknown>;
 }
+
+export type CreateTemplateDto = CreateDto<TemplateDto>;
+export type UpdateTemplateDto = UpdateDto<TemplateDto>;
 
 /**
  * Base.com Inventory metadata.

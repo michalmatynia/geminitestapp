@@ -7,7 +7,11 @@ export type ProductAiJobType =
   | 'db_sync'
   | 'db_backup'
   | 'base64_all'
-  | 'base_images_sync_all';
+  | 'base_images_sync_all'
+  | 'description'
+  | 'tags'
+  | 'categories'
+  | 'parameters';
 
 export type ProductAiJobResult = {
   visionModel?: string;

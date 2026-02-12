@@ -532,13 +532,6 @@ export async function copyCollection(
       collection: collectionName,
       direction,
     });
-    return {
-      name: collectionName,
-      status: 'failed',
-      sourceCount: 0,
-      targetDeleted: 0,
-      targetInserted: 0,
-      error: error instanceof Error ? error.message : 'Copy failed.',
-    };
+    throw error;
   }
 }

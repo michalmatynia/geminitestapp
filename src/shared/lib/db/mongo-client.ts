@@ -6,6 +6,8 @@ import type { Db } from 'mongodb';
 import type { MongoClient } from 'mongodb';
 import type { MongoClientOptions } from 'mongodb';
 
+import { configurationError } from '@/shared/errors/app-error';
+
 
 type MongoClientCtor = new (uri: string, options?: MongoClientOptions) => MongoClient;
 type MongoGlobalState = {
@@ -32,7 +34,7 @@ const getMongoClientCtor = (): { MongoClient: MongoClientCtor } => {
 const getMongoUri = (): string => {
   const uri = process.env['MONGODB_URI'];
   if (!uri) {
-    throw new Error('MONGODB_URI is not set.');
+    throw configurationError('MONGODB_URI is not set.');
   }
   return uri;
 };

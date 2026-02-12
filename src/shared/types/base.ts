@@ -42,3 +42,5 @@ export interface NamedDto extends DtoBase {
 
 export type PaginatedResponse<T> = LegacyPaginatedResponseDto<T>;
 export type ApiResponse<T = unknown> = ApiEnvelopeDto<T>;
+
+export * from './dto-utils';

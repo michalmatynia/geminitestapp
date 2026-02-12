@@ -34,7 +34,7 @@ const listingKeys = QUERY_KEYS.integrations;
 const integrationJobsQueryKey = ['jobs', 'integrations'] as const;
 const aiPathsJobQueueQueryKey = ['ai-paths-job-queue'] as const;
 const aiPathsQueueStatusQueryKey = ['ai-paths-queue-status'] as const;
-const listingBadgesQueryKey = ['integrations', 'product-listings-badges'] as const;
+const listingBadgesQueryKey = QUERY_KEYS.integrations.productListingsBadges();
 
 type ListingBadgesPayload = Record<string, string>;
 type GenericExportToBaseVariables = ExportToBaseVariables & {

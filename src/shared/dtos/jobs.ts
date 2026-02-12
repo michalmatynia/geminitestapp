@@ -1,6 +1,6 @@
 import type { Status } from '@/shared/types/core/base-types';
 
-import { DtoBase } from '../types/base';
+import { DtoBase, CreateDto, UpdateDto } from '../types/base';
 
 export interface JobDto extends DtoBase {
   type: string;
@@ -11,6 +11,7 @@ export interface JobDto extends DtoBase {
   error: string | null;
   startedAt: string | null;
   completedAt: string | null;
+  priority?: number;
 }
 
 export interface ProductAiJobDto extends JobDto {
@@ -20,30 +21,10 @@ export interface ProductAiJobDto extends JobDto {
   parameters?: Record<string, unknown>;
 }
 
-export interface CreateJobDto {
-  type: string;
-  data: Record<string, unknown>;
-  priority?: number;
-}
+export type CreateJobDto = CreateDto<JobDto>;
+export type UpdateJobDto = UpdateDto<JobDto>;
 
-export interface UpdateJobDto {
-  status?: Status;
-  progress?: number;
-  result?: Record<string, unknown>;
-  error?: string;
-}
+export type CreateProductAiJobDto = CreateDto<ProductAiJobDto>;
+export type UpdateProductAiJobDto = UpdateDto<ProductAiJobDto>;
 
 export interface JobQueueStatsDto {
-  pending: number;
-  running: number;
-  completed: number;
-  failed: number;
-  total: number;
-}
-
-export interface CreateProductAiJobDto {
-  productId: string;
-  operation: 'generate_description' | 'optimize_images' | 'categorize' | 'tag_generation';
-  aiModel?: string;
-  parameters?: Record<string, unknown>;
-}

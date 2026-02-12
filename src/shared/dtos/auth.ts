@@ -1,4 +1,4 @@
-import { DtoBase, NamedDto } from '../types/base';
+import { DtoBase, NamedDto, CreateDto, UpdateDto } from '../types/base';
 
 export interface AuthUserDto extends DtoBase {
   name: string | null;
@@ -6,6 +6,7 @@ export interface AuthUserDto extends DtoBase {
   image: string | null;
   emailVerified: string | null;
   provider: string;
+  password?: string; // Optional field for creation/internal use
 }
 
 export interface AuthUserAccessDto extends DtoBase {
@@ -37,17 +38,8 @@ export interface AuthRoleDto extends NamedDto {
   permissions: AuthPermissionDto[];
 }
 
-export interface CreateUserDto {
-  name: string;
-  email: string;
-  password: string;
-}
-
-export interface UpdateUserDto {
-  name?: string;
-  email?: string;
-  image?: string;
-}
+export type CreateUserDto = CreateDto<AuthUserDto> & { password: string };
+export type UpdateUserDto = UpdateDto<AuthUserDto>;
 
 export interface LoginDto {
   email: string;
@@ -70,7 +62,7 @@ export type JsonValue =
 
 export interface UserPreferencesDto extends DtoBase {
   userId: string;
-  productListNameLocale: 'name_en' | 'name_pl' | 'name_de';
+  productListNameLocale: 'name_en' | 'name_pl' | 'name_de' | string;
   productListCatalogFilter: string;
   productListCurrencyCode: string | null;
   productListPageSize: number;
@@ -92,25 +84,5 @@ export interface UserPreferencesDto extends DtoBase {
   cmsSlideshowPauseOnHoverInEditor: boolean | null;
 }
 
-export interface UpdateUserPreferencesDto {
-  productListNameLocale?: 'name_en' | 'name_pl' | 'name_de';
-  productListCatalogFilter?: string;
-  productListCurrencyCode?: string | null;
-  productListPageSize?: number;
-  productListThumbnailSource?: 'file' | 'link' | 'base64';
-  productListDraftIconColorMode?: 'theme' | 'custom';
-  productListDraftIconColor?: string | null;
-  aiPathsActivePathId?: string | null;
-  adminMenuCollapsed?: boolean;
-  adminMenuFavorites?: string[];
-  adminMenuSectionColors?: Record<string, string>;
-  adminMenuCustomEnabled?: boolean;
-  adminMenuCustomNav?: JsonValue | null;
-  cmsLastPageId?: string | null;
-  cmsActiveDomainId?: string | null;
-  cmsThemeOpenSections?: string[];
-  cmsThemeLogoWidth?: number | null;
-  cmsThemeLogoUrl?: string | null;
-  cmsPreviewEnabled?: boolean | null;
-  cmsSlideshowPauseOnHoverInEditor?: boolean | null;
-}
+export type UpdateUserPreferencesDto = UpdateDto<UserPreferencesDto>;
+export type CreateUserPreferencesDto = CreateDto<UserPreferencesDto>;

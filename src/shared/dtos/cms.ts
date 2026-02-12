@@ -1,4 +1,4 @@
-import { DtoBase, NamedDto } from '../types/base';
+import { DtoBase, NamedDto, CreateDto, UpdateDto } from '../types/base';
 
 // CMS DTOs
 export interface CmsThemeColors {
@@ -43,8 +43,8 @@ export interface CmsPageDto extends DtoBase {
   robotsMeta?: string;
   themeId: string | null;
   showMenu: boolean;
-  components: CmsPageComponentDto[];
-  slugs: CmsSlugDto[];
+  components: (Partial<CmsPageComponentDto> & { type: string; order: number })[];
+  slugs: string[] | CmsSlugDto[];
 }
 
 export interface CmsPageComponentDto extends DtoBase {
@@ -72,26 +72,18 @@ export interface CmsCssAiRequestDto {
   messages?: any[]; // Using any[] here to avoid circular dependency with ChatMessageDto if not careful, but typically these are ChatMessageDto
 }
 
-export interface CreateCmsPageDto {
-  name: string;
-  status?: 'draft' | 'published' | 'scheduled';
-  seoTitle?: string;
-  seoDescription?: string;
-  themeId?: string;
-  showMenu?: boolean;
-  components?: Partial<CmsPageComponentDto>[];
-  slugs?: string[];
-}
+export type CreateCmsPageDto = CreateDto<CmsPageDto>;
+export type UpdateCmsPageDto = UpdateDto<CmsPageDto>;
 
-export interface UpdateCmsPageDto extends Partial<CreateCmsPageDto> {}
+export type CreateCmsThemeDto = CreateDto<CmsThemeDto>;
+export type UpdateCmsThemeDto = UpdateDto<CmsThemeDto>;
 
-export interface CreateCmsThemeDto {
-  name: string;
-  colors: CmsThemeColors;
-  typography: CmsThemeTypography;
-  spacing: CmsThemeSpacing;
-  customCss?: string | undefined;
-  isDefault?: boolean;
-}
+export type CreateCmsPageComponentDto = CreateDto<CmsPageComponentDto>;
+export type UpdateCmsPageComponentDto = UpdateDto<CmsPageComponentDto>;
 
-export interface UpdateCmsThemeDto extends Partial<CreateCmsThemeDto> {}
+export type CreateCmsSlugDto = CreateDto<CmsSlugDto>;
+export type UpdateCmsSlugDto = UpdateDto<CmsSlugDto>;
+
+export type CreateCmsDomainDto = CreateDto<CmsDomainDto>;
+export type UpdateCmsDomainDto = UpdateDto<CmsDomainDto>;
+

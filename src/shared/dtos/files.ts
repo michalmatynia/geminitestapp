@@ -1,4 +1,4 @@
-import { DtoBase } from '../types/base';
+import { DtoBase, CreateDto, UpdateDto } from '../types/base';
 
 // Files DTOs
 export interface FileDto extends DtoBase {
@@ -18,14 +18,11 @@ export interface ImageFileDto extends FileDto {
   thumbnailUrl?: string;
 }
 
+export type UpdateFileDto = UpdateDto<FileDto>;
+export type UpdateImageFileDto = UpdateDto<ImageFileDto>;
+
 export interface UploadFileDto {
   file: File;
-  alt?: string;
-  metadata?: Record<string, unknown>;
-}
-
-export interface UpdateFileDto {
-  filename?: string;
   alt?: string;
   metadata?: Record<string, unknown>;
 }

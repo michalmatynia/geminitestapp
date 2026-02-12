@@ -1,4 +1,4 @@
-import { DtoBase, NamedDto } from '../types/base';
+import { DtoBase, NamedDto, CreateDto, UpdateDto } from '../types/base';
 
 // Notes App DTOs
 export type NoteEditorType = 'markdown' | 'wysiwyg' | 'code';
@@ -7,7 +7,7 @@ export interface NoteDto extends DtoBase {
   title: string;
   content: string;
   notebookId: string | null;
-  editorType: string;
+  editorType: NoteEditorType;
   color: string | null;
   isPinned: boolean;
   isArchived: boolean;
@@ -49,104 +49,17 @@ export interface NoteThemeDto extends NamedDto {
   relatedNoteTextColor: string;
 }
 
-export interface CreateNoteDto {
-  title: string;
-  content: string;
-  editorType?: NoteEditorType | undefined;
-  color?: string | null | undefined;
-  isPinned?: boolean | undefined;
-  isArchived?: boolean | undefined;
-  isFavorite?: boolean | undefined;
-  tagIds?: string[] | undefined;
-  categoryIds?: string[] | undefined;
-  relatedNoteIds?: string[] | undefined;
-  notebookId?: string | null | undefined;
-}
+export type CreateNoteDto = CreateDto<NoteDto>;
+export type UpdateNoteDto = UpdateDto<NoteDto>;
 
-export interface UpdateNoteDto {
-  title?: string | undefined;
-  content?: string | undefined;
-  editorType?: NoteEditorType | undefined;
-  color?: string | null | undefined;
-  isPinned?: boolean | undefined;
-  isArchived?: boolean | undefined;
-  isFavorite?: boolean | undefined;
-  tagIds?: string[] | undefined;
-  categoryIds?: string[] | undefined;
-  relatedNoteIds?: string[] | undefined;
-  notebookId?: string | null | undefined;
-}
+export type CreateNotebookDto = CreateDto<NotebookDto>;
+export type UpdateNotebookDto = UpdateDto<NotebookDto>;
 
-export interface CreateNotebookDto {
-  name: string;
-  color?: string | null | undefined;
-  defaultThemeId?: string | null | undefined;
-}
+export type CreateNoteCategoryDto = CreateDto<NoteCategoryDto>;
+export type UpdateNoteCategoryDto = UpdateDto<NoteCategoryDto>;
 
-export interface UpdateNotebookDto {
-  name?: string | undefined;
-  color?: string | null | undefined;
-  defaultThemeId?: string | null | undefined;
-}
+export type CreateNoteTagDto = CreateDto<NoteTagDto>;
+export type UpdateNoteTagDto = UpdateDto<NoteTagDto>;
 
-export interface CreateNoteCategoryDto {
-  name: string;
-  description?: string | null | undefined;
-  color?: string | null | undefined;
-  parentId?: string | null | undefined;
-  notebookId?: string | null | undefined;
-  themeId?: string | null | undefined;
-  sortIndex?: number | undefined;
-}
-
-export interface UpdateNoteCategoryDto {
-  name?: string | undefined;
-  description?: string | null | undefined;
-  color?: string | null | undefined;
-  parentId?: string | null | undefined;
-  notebookId?: string | null | undefined;
-  themeId?: string | null | undefined;
-  sortIndex?: number | undefined;
-}
-
-export interface CreateNoteTagDto {
-  name: string;
-  color?: string | null | undefined;
-  notebookId?: string | null | undefined;
-}
-
-export interface UpdateNoteTagDto {
-  name?: string | undefined;
-  color?: string | null | undefined;
-  notebookId?: string | null | undefined;
-}
-
-export interface CreateNoteThemeDto {
-  name: string;
-  notebookId?: string | null | undefined;
-  textColor?: string | undefined;
-  backgroundColor?: string | undefined;
-  markdownHeadingColor?: string | undefined;
-  markdownLinkColor?: string | undefined;
-  markdownCodeBackground?: string | undefined;
-  markdownCodeText?: string | undefined;
-  relatedNoteBorderWidth?: number | undefined;
-  relatedNoteBorderColor?: string | undefined;
-  relatedNoteBackgroundColor?: string | undefined;
-  relatedNoteTextColor?: string | undefined;
-}
-
-export interface UpdateNoteThemeDto {
-  name?: string | undefined;
-  notebookId?: string | null | undefined;
-  textColor?: string | undefined;
-  backgroundColor?: string | undefined;
-  markdownHeadingColor?: string | undefined;
-  markdownLinkColor?: string | undefined;
-  markdownCodeBackground?: string | undefined;
-  markdownCodeText?: string | undefined;
-  relatedNoteBorderWidth?: number | undefined;
-  relatedNoteBorderColor?: string | undefined;
-  relatedNoteBackgroundColor?: string | undefined;
-  relatedNoteTextColor?: string | undefined;
-}
+export type CreateNoteThemeDto = CreateDto<NoteThemeDto>;
+export type UpdateNoteThemeDto = UpdateDto<NoteThemeDto>;

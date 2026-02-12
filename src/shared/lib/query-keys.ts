@@ -94,8 +94,21 @@ export const QUERY_KEYS = {
   integrations: {
     all: ['integrations'] as const,
     connections: () => [...QUERY_KEYS.integrations.all, 'connections'] as const,
+    connectionSession: (connectionId?: string) =>
+      [...QUERY_KEYS.integrations.all, 'connection-session', connectionId ?? 'all'] as const,
     withConnections: () => [...QUERY_KEYS.integrations.all, 'with-connections'] as const,
     marketplaces: () => [...QUERY_KEYS.integrations.all, 'marketplaces'] as const,
+    exportTemplates: () => [...QUERY_KEYS.integrations.all, 'export-templates'] as const,
+    activeExportTemplate: () =>
+      [...QUERY_KEYS.integrations.all, 'active-export-template'] as const,
+    defaultExportInventory: () =>
+      [...QUERY_KEYS.integrations.all, 'default-export-inventory'] as const,
+    baseInventories: (connectionId?: string) =>
+      [...QUERY_KEYS.integrations.all, 'base-inventories', connectionId ?? 'all'] as const,
+    productListingsBadges: () =>
+      [...QUERY_KEYS.integrations.all, 'product-listings-badges'] as const,
+    imageRetryPresets: () =>
+      [...QUERY_KEYS.integrations.all, 'image-retry-presets'] as const,
     selection: {
       defaultConnection: () =>
         [...QUERY_KEYS.integrations.all, 'base', 'default-connection'] as const,

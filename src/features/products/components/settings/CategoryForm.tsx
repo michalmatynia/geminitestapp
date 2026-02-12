@@ -2,7 +2,6 @@
 
 import React from 'react';
 
-import type { Catalog } from '@/features/products/types';
 import {
   Button,
   Input,
@@ -16,43 +15,23 @@ import {
   SelectValue,
 } from '@/shared/ui';
 
-export type CategoryFormData = {
-  name: string;
-  description: string;
-  color: string;
-  parentId: string | null;
-  catalogId: string;
-};
+import { useCategoryFormContext } from './CategoryFormContext';
 
-type CategoryFormProps = {
-  open: boolean;
-  onClose: () => void;
-  isEditing: boolean;
-  formData: CategoryFormData;
-  onFormDataChange: (updater: (prev: CategoryFormData) => CategoryFormData) => void;
-  onSave: () => void;
-  saving: boolean;
-  catalogs: Catalog[];
-  onCatalogChange: (catalogId: string) => void;
-  parentOptions: { id: string; name: string; level: number }[];
-  loadingCategories: boolean;
-  modalCatalogName: string | undefined;
-};
-
-export function CategoryForm({
-  open,
-  onClose,
-  isEditing,
-  formData,
-  onFormDataChange,
-  onSave,
-  saving,
-  catalogs,
-  onCatalogChange,
-  parentOptions,
-  loadingCategories,
-  modalCatalogName,
-}: CategoryFormProps): React.JSX.Element | null {
+export function CategoryForm(): React.JSX.Element | null {
+  const {
+    open,
+    onClose,
+    isEditing,
+    formData,
+    onFormDataChange,
+    onSave,
+    saving,
+    catalogs,
+    onCatalogChange,
+    parentOptions,
+    loadingCategories,
+    modalCatalogName,
+  } = useCategoryFormContext();
   if (!open) return null;
 
   return (
@@ -109,7 +88,7 @@ export function CategoryForm({
                 <SelectValue placeholder='Select catalog' />
               </SelectTrigger>
               <SelectContent>
-                {catalogs.map((catalog: Catalog): React.JSX.Element => (
+                {catalogs.map((catalog): React.JSX.Element => (
                   <SelectItem key={catalog.id} value={catalog.id}>
                     {catalog.name}
                     {catalog.isDefault ? ' (Default)' : ''}

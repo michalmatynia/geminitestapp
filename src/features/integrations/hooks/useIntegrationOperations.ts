@@ -5,6 +5,7 @@ import { Dispatch, SetStateAction } from 'react';
 
 import type { ProductWithImages } from '@/features/products';
 import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 
 export function useIntegrationOperations(): {
@@ -22,6 +23,7 @@ export function useIntegrationOperations(): {
   handleListProductSuccess: () => void;
   } {
   const queryClient = useQueryClient();
+  const listingBadgesQueryKey = QUERY_KEYS.integrations.productListingsBadges();
   
   // Integrations state
   const [integrationsProduct, setIntegrationsProduct] = useState<ProductWithImages | null>(null);
@@ -33,7 +35,7 @@ export function useIntegrationOperations(): {
 
   // Load listing badges using useQuery
   const listingsBadgeQuery = useQuery({
-    queryKey: ['integrations', 'product-listings-badges'],
+    queryKey: listingBadgesQueryKey,
     queryFn: async (): Promise<Record<string, string>> => {
       try {
         return await api.get<Record<string, string>>(
@@ -55,8 +57,8 @@ export function useIntegrationOperations(): {
   const integrationBadgeIds = new Set(entries.map(([productId]: [string, string]) => productId));
 
   const refreshListingBadges = useCallback(async (): Promise<void> => {
-    await queryClient.invalidateQueries({ queryKey: ['integrations', 'product-listings-badges'] });
-  }, [queryClient]);
+    await queryClient.invalidateQueries({ queryKey: listingBadgesQueryKey });
+  }, [queryClient, listingBadgesQueryKey]);
 
   const handleListProductSuccess = (): void => {
     setShowListProductModal(false);

@@ -3,6 +3,7 @@
 import { Plus } from 'lucide-react';
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 
+import { logClientError } from '@/features/observability';
 import { useProductCategoryTree } from '@/features/products/hooks/useCategoryQueries';
 import {
   useSaveCategoryMutation,
@@ -10,7 +11,6 @@ import {
   useReorderCategoryMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
 import type { ProductCategoryWithChildren, Catalog, ProductCategory } from '@/features/products/types';
-import { logClientError } from '@/features/observability';
 import {
   Button,
   UnifiedSelect,
@@ -22,7 +22,8 @@ import {
 } from '@/shared/ui';
 import { DRAG_KEYS, getFirstDragValue } from '@/shared/utils/drag-drop';
 
-import { CategoryForm, type CategoryFormData } from './CategoryForm';
+import { CategoryForm } from './CategoryForm';
+import { CategoryFormProvider, type CategoryFormData } from './CategoryFormContext';
 import { CategoryTreeProvider, type CategoryDropTarget } from './CategoryTreeContext';
 import { CategoryTreeItem } from './CategoryTreeItem';
 
@@ -517,20 +518,24 @@ export function CategoriesSettings({
         variant='destructive'
       />
 
-      <CategoryForm
-        open={showModal}
-        onClose={(): void => setShowModal(false)}
-        isEditing={!!editingCategory}
-        formData={formData}
-        onFormDataChange={setFormData}
-        onSave={(): void => { void handleSave(); }}
-        saving={saveCategoryMutation.isPending}
-        catalogs={catalogs}
-        onCatalogChange={setModalCatalogId}
-        parentOptions={parentOptions}
-        loadingCategories={modalLoadingCategories}
-        modalCatalogName={modalCatalog?.name}
-      />
+      <CategoryFormProvider
+        value={{
+          open: showModal,
+          onClose: (): void => setShowModal(false),
+          isEditing: !!editingCategory,
+          formData,
+          onFormDataChange: setFormData,
+          onSave: (): void => { void handleSave(); },
+          saving: saveCategoryMutation.isPending,
+          catalogs,
+          onCatalogChange: setModalCatalogId,
+          parentOptions,
+          loadingCategories: modalLoadingCategories,
+          modalCatalogName: modalCatalog?.name,
+        }}
+      >
+        <CategoryForm />
+      </CategoryFormProvider>
     </div>
   );
 }

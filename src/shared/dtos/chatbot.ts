@@ -1,4 +1,4 @@
-import { DtoBase } from '../types/base';
+import { DtoBase, CreateDto, UpdateDto } from '../types/base';
 
 import type { Status } from '../types/common';
 
@@ -43,19 +43,8 @@ export interface ChatbotMemoryItemDto extends DtoBase {
   type: string;
 }
 
-/**
- * DTO for creating a chatbot memory item
- */
-export interface CreateChatbotMemoryItemDto {
-  key: string;
-  value: string;
-  type: string;
-}
-
-/**
- * DTO for updating a chatbot memory item
- */
-export interface UpdateChatbotMemoryItemDto extends Partial<CreateChatbotMemoryItemDto> {}
+export type CreateChatbotMemoryItemDto = CreateDto<ChatbotMemoryItemDto>;
+export type UpdateChatbotMemoryItemDto = UpdateDto<ChatbotMemoryItemDto>;
 
 /**
  * DTO for an agent audit log
@@ -87,7 +76,7 @@ export interface ChatbotContextSegmentDto extends DtoBase {
 /**
  * DTO for chatbot global settings
  */
-export interface ChatbotSettingsDto {
+export interface ChatbotSettingsDto extends DtoBase {
   model: string;
   temperature: number;
   maxTokens: number;
@@ -127,23 +116,18 @@ export interface ChatbotSettingsDto {
   loopBackoffMaxMs: number;
 }
 
+export type CreateChatbotSettingsDto = CreateDto<ChatbotSettingsDto>;
+export type UpdateChatbotSettingsDto = UpdateDto<ChatbotSettingsDto>;
+
 /**
  * DTO for creating a chat session
  */
-export interface CreateChatSessionDto {
-  title: string;
-  userId?: string;
-  settings?: ChatbotSessionSettingsDto;
-}
+export type CreateChatSessionDto = CreateDto<ChatbotSessionDto>;
 
 /**
  * DTO for updating a chat session
  */
-export interface UpdateChatSessionDto {
-  title?: string;
-  messages?: ChatMessageDto[];
-  settings?: ChatbotSessionSettingsDto;
-}
+export type UpdateChatSessionDto = UpdateDto<ChatbotSessionDto>;
 
 /**
  * DTO for sending a message
@@ -154,11 +138,6 @@ export interface SendMessageDto {
   role?: 'user' | 'system';
   images?: string[];
 }
-
-/**
- * DTO for updating chatbot settings
- */
-export type UpdateChatbotSettingsDto = Partial<ChatbotSettingsDto>;
 
 /**
  * DTO for chatbot debug state

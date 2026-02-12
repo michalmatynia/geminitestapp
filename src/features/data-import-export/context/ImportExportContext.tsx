@@ -417,8 +417,8 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     if (inventories.length > 0 && !hasInitializedInventories.current) {
       const firstInventory = inventories[0];
-      if (firstInventory?.id) {
-        const firstInventoryId = firstInventory.id;
+      if (firstInventory?.inventory_id) {
+        const firstInventoryId = firstInventory.inventory_id;
         const timer = setTimeout(() => {
           if (!inventoryId) {
             setInventoryId(firstInventoryId);
@@ -433,7 +433,6 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     }
     return undefined;
   }, [inventories, inventoryId, exportInventoryId]);
-
   const warehousesQuery = useWarehouses(exportInventoryId, selectedBaseConnectionId, includeAllWarehouses, isBaseConnected && !!exportInventoryId);
   const warehousesData = warehousesQuery.data;
   const isFetchingWarehouses = warehousesQuery.isFetching;

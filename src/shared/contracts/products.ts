@@ -1,20 +1,6 @@
 import { z } from 'zod';
 
-/**
- * Foundation schemas
- */
-export const localizedSchema = z.record(z.string(), z.string().nullable());
-
-export const dtoBaseSchema = z.object({
-  id: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-});
-
-export const namedDtoSchema = dtoBaseSchema.extend({
-  name: z.string(),
-  description: z.string().nullable().optional(),
-});
+import { localizedSchema, dtoBaseSchema, namedDtoSchema } from './base';
 
 /**
  * Product Category Contract

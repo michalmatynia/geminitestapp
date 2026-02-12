@@ -129,7 +129,6 @@ export function useSaveChatbotSettings(): UseMutationResult<
     mutationFn: ({ key, settings }: SaveChatbotSettingsVariables): Promise<{ settings?: { settings?: ChatbotSettingsPayload } }> =>
       saveChatbotSettings(key, settings),
     onSuccess: (_data: { settings?: { settings?: ChatbotSettingsPayload } }, { key }: SaveChatbotSettingsVariables): Promise<void> => {
-      return queryClient.invalidateQueries({ queryKey: chatbotQueryKeys.settings(key) });
-    },
-  });
+      return queryClient.invalidateQueries({ queryKey: chatbotQueryKeys.settings.all(key) });
+    },  });
 }

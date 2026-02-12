@@ -226,7 +226,7 @@ const clearExpiredExportRequestLocks = (): void => {
 async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const logCapture = new LogCapture();
   logCapture.start();
-  const runRepository = getPathRunRepository();
+  const runRepository = await getPathRunRepository();
   let runId: string | null = null;
   let requestLockKey: string | null = null;
   let runMeta: Record<string, unknown> = {

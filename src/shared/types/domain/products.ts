@@ -27,6 +27,7 @@ export type {
 
 export type ProductDbProvider = 'prisma' | 'mongodb';
 export type ProductMigrationDirection = 'prisma-to-mongo' | 'mongo-to-prisma';
+export type SyncDirection = 'to_base' | 'from_base' | 'bidirectional';
 
 export type PriceGroupType = 'standard' | 'dependent';
 
@@ -84,7 +85,13 @@ export type Catalog = CatalogRecord;
  * Domain record for a product.
  * Extends ProductDto with strict Entity base and extra domain-only fields.
  */
-export type ProductRecord = Entity & Omit<ProductDto, 'id' | 'createdAt' | 'updatedAt' | 'images' | 'tags' | 'catalogId' | 'published'> & {
+export type ProductRecord = Entity & Omit<ProductDto, 'id' | 'createdAt' | 'updatedAt' | 'images' | 'tags' | 'catalogId' | 'published' | 'name' | 'description'> & {
+  name_en: string | null;
+  name_pl: string | null;
+  name_de: string | null;
+  description_en: string | null;
+  description_pl: string | null;
+  description_de: string | null;
   parameters?: ProductParameterValue[];
   noteIds: string[];
 };

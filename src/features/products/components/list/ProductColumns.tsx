@@ -20,6 +20,7 @@ import type { ProductWithImages } from '@/features/products/types';
 import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
 import { calculatePriceForCurrency, normalizeCurrencyCode } from '@/features/products/utils/priceCalculation';
 import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   Badge,
   Button,
@@ -96,8 +97,8 @@ const CircleIconButton = ({
 
 const INTEGRATION_SELECTION_STALE_TIME_MS = 5 * 60 * 1000;
 const INTEGRATION_SELECTION_GC_TIME_MS = 30 * 60 * 1000;
-const defaultExportInventoryQueryKey = ['integrations', 'default-export-inventory'] as const;
-const activeExportTemplateQueryKey = ['integrations', 'active-export-template'] as const;
+const defaultExportInventoryQueryKey = QUERY_KEYS.integrations.defaultExportInventory();
+const activeExportTemplateQueryKey = QUERY_KEYS.integrations.activeExportTemplate();
 const oneClickExportInFlight = new Set<string>();
 
 const BaseQuickExportButton = ({

@@ -119,7 +119,7 @@ export type ProcessRunResult =
   | undefined;
 
 export const processRun = async (run: AiPathRunRecord): Promise<ProcessRunResult> => {
-  const repo = getPathRunRepository();
+  const repo = await getPathRunRepository();
   debugQueueLog(`Processing run ${run.id}`, { runId: run.id });
   try {
     await executePathRun(run);
@@ -238,7 +238,7 @@ export const processRun = async (run: AiPathRunRecord): Promise<ProcessRunResult
  */
 export const processStaleRunRecovery = async (): Promise<void> => {
   try {
-    const repo = getPathRunRepository();
+    const repo = await getPathRunRepository();
     const result = await repo.markStaleRunningRuns(STALE_RUNNING_THRESHOLD_MS);
     if (result.count > 0) {
       debugQueueLog(

@@ -80,7 +80,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
 
   const session = await auth().catch(() => null);
   const userId = session?.user?.id ?? null;
-  const runRepository = getPathRunRepository();
+  const runRepository = await getPathRunRepository();
   const baseRunMeta: Record<string, unknown> = {
     source: BASE_DELETE_SOURCE,
     sourceInfo: {

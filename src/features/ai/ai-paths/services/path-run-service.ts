@@ -61,7 +61,7 @@ const dispatchRun = async (
 
 export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunRecord> => {
   try {
-    const repo = getPathRunRepository();
+    const repo = await getPathRunRepository();
     const nodes = normalizeNodes(input.nodes ?? []);
     const edges = sanitizeEdges(nodes, input.edges ?? []);
     const meta = {
@@ -122,7 +122,7 @@ export const resumePathRun = async (
   mode: 'resume' | 'replay' = 'resume'
 ): Promise<AiPathRunRecord> => {
   try {
-    const repo = getPathRunRepository();
+    const repo = await getPathRunRepository();
     const run = await repo.findRunById(runId);
     if (!run) throw new Error(`Run ${runId} not found`);
     if (ACTIVE_RUN_STATUSES.has(run.status)) {
@@ -187,7 +187,7 @@ export const resumePathRun = async (
 
 export const retryPathRunNode = async (runId: string, nodeId: string): Promise<AiPathRunRecord> => {
   try {
-    const repo = getPathRunRepository();
+    const repo = await getPathRunRepository();
     const run = await repo.findRunById(runId);
     if (!run) throw new Error(`Run ${runId} not found`);
     if (ACTIVE_RUN_STATUSES.has(run.status)) {
@@ -267,7 +267,7 @@ export const retryPathRunNode = async (runId: string, nodeId: string): Promise<A
 };
 
 export const cancelPathRun = async (runId: string): Promise<AiPathRunRecord> => {
-  return cancelPathRunWithRepository(getPathRunRepository(), runId);
+  return cancelPathRunWithRepository(await getPathRunRepository(), runId);
 };
 
 export const cancelPathRunWithRepository = async (

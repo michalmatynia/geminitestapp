@@ -10,29 +10,31 @@ export async function registerNodeInstrumentation() {
   const { registerLogHandler } = await import('@/shared/utils/logger');
   const { ErrorSystem } = await import('@/features/observability/server');
 
-  registerLogHandler(async (level, message, error, context) => {
-    try {
-      const service = (context?.['service'] as string) || 'shared-logger';
-      if (level === 'error') {
-        await ErrorSystem.captureException(error || message, {
-          service,
-          message,
-          ...context,
-        });
-      } else if (level === 'warn') {
-        await ErrorSystem.logWarning(message, {
-          service,
-          ...context,
-        });
-      } else {
-        await ErrorSystem.logInfo(message, {
-          service,
-          ...context,
-        });
+  registerLogHandler((level, message, error, context) => {
+    void (async () => {
+      try {
+        const service = (context?.['service'] as string) || 'shared-logger';
+        if (level === 'error') {
+          await ErrorSystem.captureException(error || message, {
+            service,
+            message,
+            ...context,
+          });
+        } else if (level === 'warn') {
+          await ErrorSystem.logWarning(message, {
+            service,
+            ...context,
+          });
+        } else {
+          await ErrorSystem.logInfo(message, {
+            service,
+            ...context,
+          });
+        }
+      } catch {
+        // Prevent infinite loops if logging fails
       }
-    } catch {
-      // Prevent infinite loops if logging fails
-    }
+    })();
   });
 
   const { initializeQueues } = await import('@/features/jobs/lib/queue-init');

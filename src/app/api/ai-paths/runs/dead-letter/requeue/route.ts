@@ -37,7 +37,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const query = parsed.data?.query?.trim() || undefined;
   const limit = parsed.data?.limit ?? undefined;
 
-  const repo = getPathRunRepository();
+  const repo = await getPathRunRepository();
   let targetRunIds = runIds;
 
   if (targetRunIds.length === 0) {

@@ -83,7 +83,7 @@ async function sendCatchUp(
   lastNodeCursor: { ts: string; nodeId: string } | null;
   lastEventCursor: { createdAt: string; id: string } | null;
 }> {
-  const repo = getPathRunRepository();
+  const repo = await getPathRunRepository();
   const nextRun: AiPathRunRecord | null = await repo.findRunById(runId);
   let { lastRunUpdatedAt, lastNodeCursor, lastEventCursor } = cursors;
 
@@ -306,7 +306,7 @@ async function GET_handler(
 ): Promise<Response> {
   const { runId } = params;
   const access = await requireAiPathsAccess();
-  const repo = getPathRunRepository();
+  const repo = await getPathRunRepository();
   const initialRun = await repo.findRunById(runId);
   if (!initialRun) {
     throw notFoundError('Run not found', { runId });

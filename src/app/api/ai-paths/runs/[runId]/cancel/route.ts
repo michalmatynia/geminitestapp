@@ -41,7 +41,7 @@ async function POST_handler(
   const access = await requireAiPathsAccess();
   enforceAiPathsActionRateLimit(access, 'run-cancel');
   const runId: string = params.runId;
-  const repo = getPathRunRepository();
+  const repo = await getPathRunRepository();
   let repoForRun: AiPathRunRepository = repo;
   let existing: AiPathRunRecord | null = await repo.findRunById(runId);
   if (!existing) {

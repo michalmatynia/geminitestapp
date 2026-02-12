@@ -2,6 +2,8 @@ import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persist
 import { QueryClient, type Query } from '@tanstack/react-query';
 import { persistQueryClient, type PersistedClient } from '@tanstack/react-query-persist-client';
 
+import { QUERY_KEYS } from './query-keys';
+
 export function setupOfflineSupport(queryClient: QueryClient): void {
   if (typeof window === 'undefined') return;
 
@@ -57,7 +59,7 @@ export function setupOfflineSupport(queryClient: QueryClient): void {
 // Queries that should be cached offline
 export const offlineQueries: string[] = [
   'settings',
-  'user-preferences',
+  QUERY_KEYS.userPreferences[0],
   'products',
   'jobs',
 ];

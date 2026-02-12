@@ -20,7 +20,7 @@ async function GET_handler(
 ): Promise<Response> {
   const access = await requireAiPathsAccess();
   const runId = params.runId;
-  const repo = getPathRunRepository();
+  const repo = await getPathRunRepository();
   const run = await repo.findRunById(runId);
   if (run === null) {
     throw notFoundError('Run not found', { runId });
@@ -39,7 +39,7 @@ async function DELETE_handler(
   const access = await requireAiPathsAccess();
   enforceAiPathsActionRateLimit(access, 'run-delete');
   const runId = params.runId;
-  const repo = getPathRunRepository();
+  const repo = await getPathRunRepository();
   const run = await repo.findRunById(runId);
   if (run === null) {
     throw notFoundError('Run not found', { runId });

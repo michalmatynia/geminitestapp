@@ -70,11 +70,11 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
     let timer: NodeJS.Timeout | null = null;
     if (isBaseComIntegration && !selectedInventoryId && inventories.length > 0 && !inventoriesQuery.isLoading && !hasInitializedInventory.current) {
       timer = setTimeout(() => {
-        if (preferredInventoryId && inventories.some((inv: BaseInventory) => inv.id === preferredInventoryId)) {
+        if (preferredInventoryId && inventories.some((inv: BaseInventory) => inv.inventory_id === preferredInventoryId)) {
           setSelectedInventoryId(preferredInventoryId);
           hasInitializedInventory.current = true;
         } else {
-          setSelectedInventoryId(inventories[0]?.id ?? '');
+          setSelectedInventoryId(inventories[0]?.inventory_id ?? '');
           hasInitializedInventory.current = true;
         }
       }, 0);

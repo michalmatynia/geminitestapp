@@ -86,7 +86,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 500) : undefined;
   const offset =
     Number.isFinite(offsetRaw) && offsetRaw >= 0 ? offsetRaw : undefined;
-  const repo = getPathRunRepository();
+  const repo = await getPathRunRepository();
   const staleRunningMaxAgeMsRaw = Number.parseInt(
     process.env['AI_PATHS_STALE_RUNNING_MAX_AGE_MS'] ?? '',
     10
@@ -120,7 +120,7 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promis
   const sourceModeParam = url.searchParams.get('sourceMode')?.trim() || '';
   const sourceMode = sourceModeParam === 'exclude' ? 'exclude' : 'include';
 
-  const repo = getPathRunRepository();
+  const repo = await getPathRunRepository();
   const hasGlobalRunAccess = canAccessGlobalAiPathRuns(access);
   const listOptions: AiPathRunListOptions = {};
   if (!hasGlobalRunAccess) {

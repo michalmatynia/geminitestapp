@@ -1,6 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, useCallback } from 'react';
 
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
+
 import { useOfflineSync } from '../offline/useOfflineMutation';
 
 interface SystemSyncOptions {
@@ -74,7 +76,9 @@ export function useSystemSync({ enabled = true, interval = 60000 }: SystemSyncOp
       // Sync user preferences
       void queryClient.refetchQueries({
         predicate: (query: { queryKey: unknown; options?: { queryFn?: unknown }; isStale?: () => boolean }) =>
-          canRefetch(query) && Array.isArray(query.queryKey) && query.queryKey[0] === 'user-preferences',
+          canRefetch(query) &&
+          Array.isArray(query.queryKey) &&
+          query.queryKey[0] === QUERY_KEYS.userPreferences[0],
       });
       // Sync settings
       void queryClient.refetchQueries({

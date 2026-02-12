@@ -54,6 +54,7 @@ export type TemplateMapping = DomainTemplateMapping & {
 };
 
 export type Template = DomainTemplate & {
+  mappings?: TemplateMapping[]; // Compatibility field
   exportImagesAsBase64?: boolean; // Compatibility field
 };
 

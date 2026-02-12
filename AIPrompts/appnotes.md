@@ -1,6 +1,10 @@
 
 Producer and Categories are not going through , long refresh on the button
 
+shared validator button that applies globallu
+fastcomet connection and tradera connection, 
+image studio move forward
+
  Use pre-prompts to incorporate different aspects
  Show Button should keep the toolbar and collapse admin menu
  * Dragging image in the image canvas stopped working again

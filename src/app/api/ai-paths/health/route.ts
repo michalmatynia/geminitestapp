@@ -62,7 +62,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
   const aiPaths = await (async () => {
     try {
-      const repo = getPathRunRepository();
+      const repo = await getPathRunRepository();
       const byStatusEntries = await Promise.all(
         AI_PATH_STATUSES.map(async (status) => {
           const result = await repo.listRuns({ status, limit: 1, offset: 0 });

@@ -327,7 +327,7 @@ const queue = createManagedQueue<AiPathRunJobData>({
       return;
     }
 
-    const repo = getPathRunRepository();
+    const repo = await getPathRunRepository();
     const run = await repo.claimRunForProcessing(data.runId);
     if (!run) {
       const latest = await repo.findRunById(data.runId);
@@ -434,7 +434,7 @@ export const getAiPathRunQueueStatus = async (): Promise<AiPathRunQueueStatus> =
 
   queueStatusInFlight = (async (): Promise<AiPathRunQueueStatus> => {
     const health = await queue.getHealthStatus();
-    const repo = getPathRunRepository();
+    const repo = await getPathRunRepository();
     const [stats, insightsQueueHealth, runtimeAnalyticsSummary] = await Promise.all([
       repo.getQueueStats(),
       getAiInsightsQueueStatus(),
@@ -520,7 +520,7 @@ export const getAiPathRunQueueStatus = async (): Promise<AiPathRunQueueStatus> =
 
 export const processSingleRun = async (runId: string): Promise<void> => {
   try {
-    const repo = getPathRunRepository();
+    const repo = await getPathRunRepository();
     const run = await repo.claimRunForProcessing(runId);
     if (!run) {
       const latest = await repo.findRunById(runId);

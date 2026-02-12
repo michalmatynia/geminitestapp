@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient, type UseMutationResult, type Use
 
 
 import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { UserPreferences, UserPreferencesUpdate } from '@/shared/types/domain/user-preferences';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
@@ -12,7 +13,7 @@ import {
   userPreferencesUpdateSchema,
 } from '@/shared/validations/user-preferences';
 
-const userPreferencesQueryKey = ['user-preferences'] as const;
+const userPreferencesQueryKey = QUERY_KEYS.userPreferences;
 
 const hasPreferenceChanged = (
   current: UserPreferences | undefined,

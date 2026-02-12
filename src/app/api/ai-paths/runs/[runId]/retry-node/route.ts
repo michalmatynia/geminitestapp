@@ -33,7 +33,7 @@ async function POST_handler(
   if (!parsed.ok) return parsed.response;
 
   const runId: string = params.runId;
-  const repo = getPathRunRepository();
+  const repo = await getPathRunRepository();
   const existing = await repo.findRunById(runId);
   if (!existing) {
     throw notFoundError('Run not found', { runId });

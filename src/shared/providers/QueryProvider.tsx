@@ -5,6 +5,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import React, { useState, useEffect } from "react";
 import { setupOfflineSupport } from "@/shared/lib/offline-support";
 import { createQueryClient } from "@/shared/lib/query-client";
+import { QUERY_KEYS } from "@/shared/lib/query-keys";
 import { useGlobalQueryErrorHandler } from "@/shared/hooks/query/useQueryErrorHandling";
 import { usePerformanceMonitor } from "@/shared/hooks/useQueryAnalytics";
 import { useQueryPersistence } from "@/shared/hooks/query/useQueryPersistence";
@@ -71,7 +72,7 @@ function QueryProviderInner({ children }: QueryProviderProps): React.JSX.Element
   useQueryPersistence({
     key: 'app-queries',
     queryKeys: [
-      ['user-preferences'],
+      QUERY_KEYS.userPreferences,
       ['settings', 'light'],
       ['settings', 'lite'],
     ],

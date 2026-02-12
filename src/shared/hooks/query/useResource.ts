@@ -28,7 +28,7 @@ export function useResource<T extends DtoBase>(
   const create = useMutation({
     mutationFn: (data: Partial<T>) => api.post<T>(resourcePath, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey });
+      void queryClient.invalidateQueries({ queryKey });
     },
   });
 
@@ -42,7 +42,7 @@ export function useResource<T extends DtoBase>(
         old?.map((item) => (item.id === updated.id ? updated : item))
       );
       // Also invalidate to be sure
-      queryClient.invalidateQueries({ queryKey });
+      void queryClient.invalidateQueries({ queryKey });
     },
   });
 
@@ -53,7 +53,7 @@ export function useResource<T extends DtoBase>(
       queryClient.setQueryData(queryKey, (old: T[] | undefined) =>
         old?.filter((item) => item.id !== id)
       );
-      queryClient.invalidateQueries({ queryKey });
+      void queryClient.invalidateQueries({ queryKey });
     },
   });
 

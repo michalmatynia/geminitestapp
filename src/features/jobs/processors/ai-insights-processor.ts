@@ -30,7 +30,7 @@ const toErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
 
 export async function tick(): Promise<void> {
-  const runRepository = getPathRunRepository();
+  const runRepository = await getPathRunRepository();
   const baseMeta: Record<string, unknown> = {
     source: 'ai_insights',
     sourceInfo: {

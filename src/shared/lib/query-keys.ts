@@ -180,8 +180,10 @@ export const QUERY_KEYS = {
       all: ['ai', 'insights'] as const,
       analytics: () => [...QUERY_KEYS.ai.insights.all, 'analytics'] as const,
       logs: () => [...QUERY_KEYS.ai.insights.all, 'logs'] as const,
+      notifications: () => [...QUERY_KEYS.ai.insights.all, 'notifications'] as const,
     }
   },
+  userPreferences: ['user-preferences'] as const,
   auth: {
     user: ['auth', 'user'] as const,
     session: ['auth', 'session'] as const,

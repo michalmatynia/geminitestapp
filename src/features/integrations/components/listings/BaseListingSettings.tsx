@@ -30,9 +30,9 @@ export function BaseListingSettings(): React.JSX.Element {
           onValueChange={setSelectedInventoryId}
           disabled={loadingInventories || inventories.length === 0}
           options={inventories
-            .filter((inventory: BaseInventory): boolean => !!inventory.id)
+            .filter((inventory: BaseInventory): boolean => !!inventory.inventory_id)
             .map((inventory: BaseInventory) => ({
-              value: inventory.id,
+              value: inventory.inventory_id,
               label: inventory.name
             }))}
           placeholder='Select inventory...'

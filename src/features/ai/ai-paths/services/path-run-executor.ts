@@ -19,6 +19,7 @@ import type {
   AiNode,
   AiPathRunNodeRecord,
   AiPathRunRecord,
+  AiPathRunStatus,
   Edge,
   RuntimeHistoryEntry,
   RuntimePortValues,
@@ -26,6 +27,33 @@ import type {
 } from '@/shared/types/domain/ai-paths';
 
 const TERMINAL_RUN_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
+const UPDATE_ELIGIBLE_RUN_STATUSES: AiPathRunStatus[] = [
+  'queued',
+  'running',
+  'paused',
+  'completed',
+  'failed',
+  'canceled',
+  'dead_lettered',
+];
+
+const isMissingRunUpdateError = (error: unknown): boolean => {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code?: unknown }).code === 'P2025'
+  ) {
+    return true;
+  }
+  const message = error instanceof Error ? error.message : String(error ?? '');
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes('no record was found for an update') ||
+    normalized.includes('record to update not found') ||
+    normalized.includes('run not found')
+  );
+};
 
 const parseRuntimeState = (value: unknown): RuntimeState => {
   if (!value) return { inputs: {}, outputs: {} };
@@ -207,7 +235,7 @@ const fetchEntityByType = async (entityType: string, entityId: string): Promise<
 export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   let repo;
   try {
-    repo = getPathRunRepository();
+    repo = await getPathRunRepository();
   } catch (error) {
     void ErrorSystem.captureException(error, {
       service: 'ai-paths-executor',
@@ -216,6 +244,25 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     });
     throw new Error('Database repository not available');
   }
+  let dbRunMissing = false;
+  const updateRunSnapshot = async (
+    data: Parameters<typeof repo.updateRun>[1]
+  ): Promise<AiPathRunRecord | null> => {
+    if (dbRunMissing) return null;
+    try {
+      const updated = await repo.updateRunIfStatus(run.id, UPDATE_ELIGIBLE_RUN_STATUSES, data);
+      if (!updated) {
+        dbRunMissing = true;
+      }
+      return updated;
+    } catch (error) {
+      if (isMissingRunUpdateError(error)) {
+        dbRunMissing = true;
+        return null;
+      }
+      throw error;
+    }
+  };
 
   const runStartedAt =
     typeof run.startedAt === 'string'
@@ -228,17 +275,19 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   if (!graph || !Array.isArray(graph.nodes) || !Array.isArray(graph.edges)) {
     try {
       const errorMsg = 'Run graph is missing or invalid. This usually indicates a corrupted path configuration or a breaking change in node definitions.';
-      await repo.updateRun(run.id, {
+      await updateRunSnapshot({
         status: 'failed',
         errorMessage: errorMsg,
         finishedAt: new Date(),
       });
-      await repo.createRunEvent({
-        runId: run.id,
-        level: 'error',
-        message: errorMsg,
-        metadata: { runStartedAt, graphPresent: !!graph },
-      });
+      if (!dbRunMissing) {
+        await repo.createRunEvent({
+          runId: run.id,
+          level: 'error',
+          message: errorMsg,
+          metadata: { runStartedAt, graphPresent: !!graph },
+        });
+      }
     } catch (dbError) {
       void ErrorSystem.logWarning('Failed to update failed status for invalid graph', {
         service: 'ai-paths-executor',
@@ -271,7 +320,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
 
   const saveIntermediateState = async (): Promise<void> => {
     try {
-      await repo.updateRun(run.id, {
+      await updateRunSnapshot({
         runtimeState: sanitizeRuntimeState({
           runId: resolvedRunId,
           runStartedAt: resolvedRunStartedAt,
@@ -651,7 +700,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           resolvedRunId = cbRunId;
           resolvedRunStartedAt = cbRunStartedAt;
 
-          await repo.updateRun(run.id, {
+          await updateRunSnapshot({
             runtimeState: sanitizeRuntimeState({
               runId: cbRunId,
               runStartedAt: cbRunStartedAt,
@@ -681,11 +730,11 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     try {
       const latestRun = await repo.findRunById(run.id);
       if (latestRun?.status === 'canceled') {
-        await repo.updateRun(run.id, {
+        await updateRunSnapshot({
           runtimeState: sanitizeRuntimeState(resultState),
         });
       } else if (!latestRun || !TERMINAL_RUN_STATUSES.has(latestRun.status)) {
-        await repo.updateRun(run.id, {
+        const updated = await updateRunSnapshot({
           status: 'completed',
           runtimeState: sanitizeRuntimeState(resultState),
           finishedAt,
@@ -696,13 +745,15 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             retryNodeIds: [],
           },
         });
-        await repo.createRunEvent({
-          runId: run.id,
-          level: 'info',
-          message: 'Run completed successfully.',
-          metadata: { runStartedAt },
-        });
-        finalizedAsCompleted = true;
+        if (updated) {
+          await repo.createRunEvent({
+            runId: run.id,
+            level: 'info',
+            message: 'Run completed successfully.',
+            metadata: { runStartedAt },
+          });
+          finalizedAsCompleted = true;
+        }
       }
     } catch (finalDbError) {
       void ErrorSystem.logWarning('Failed to record run completion in DB', {
@@ -753,7 +804,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     }
     
     try {
-      await repo.updateRun(run.id, {
+      await updateRunSnapshot({
         status: 'failed',
         finishedAt,
         errorMessage,
@@ -766,22 +817,24 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       });
     }
 
-    try {
-      await repo.createRunEvent({
-        runId: run.id,
-        level: 'error',
-        message: `Run failed: ${errorMessage}`,
-        metadata: {
-          error: errorMessage,
-          runStartedAt,
-        },
-      });
-    } catch (eventError) {
-      void ErrorSystem.logWarning('Failed to create error event for run failure', {
-        service: 'ai-paths-executor',
-        error: eventError,
-        runId: run.id,
-      });
+    if (!dbRunMissing) {
+      try {
+        await repo.createRunEvent({
+          runId: run.id,
+          level: 'error',
+          message: `Run failed: ${errorMessage}`,
+          metadata: {
+            error: errorMessage,
+            runStartedAt,
+          },
+        });
+      } catch (eventError) {
+        void ErrorSystem.logWarning('Failed to create error event for run failure', {
+          service: 'ai-paths-executor',
+          error: eventError,
+          runId: run.id,
+        });
+      }
     }
 
     publishRunUpdate(run.id, 'error', { error: errorMessage });

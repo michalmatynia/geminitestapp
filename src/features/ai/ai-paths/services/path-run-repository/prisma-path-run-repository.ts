@@ -254,10 +254,19 @@ export const prismaPathRunRepository: AiPathRunRepository = {
 
   async updateRun(runId: string, data: AiPathRunUpdate): Promise<AiPathRunRecord> {
     ensureModels();
-    const run = await prismaAny.aiPathRun!.update({
+    const updated = await prismaAny.aiPathRun!.updateMany({
       where: { id: runId },
       data: data as Record<string, unknown>,
     });
+    if (!updated.count) {
+      throw new Error(`Run not found: ${runId}`);
+    }
+    const run = await prismaAny.aiPathRun!.findUnique({
+      where: { id: runId },
+    });
+    if (!run) {
+      throw new Error(`Run not found after update: ${runId}`);
+    }
     return mapRun(run);
   },
 

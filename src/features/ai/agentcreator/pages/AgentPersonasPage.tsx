@@ -6,6 +6,7 @@ import { AgentPersonaSettingsForm } from '@/features/ai/agentcreator/components/
 import { useAgentPersonas, useSaveAgentPersonasMutation } from '@/features/ai/agentcreator/hooks/useAgentPersonas';
 import type { AgentPersona } from '@/features/ai/agentcreator/types';
 import { buildAgentPersonaSettings, createAgentPersonaId } from '@/features/ai/agentcreator/utils/personas';
+import { logClientError } from '@/features/observability';
 import { ItemLibrary, useToast } from '@/shared/ui';
 
 export function AgentPersonasPage(): React.JSX.Element {
@@ -42,7 +43,6 @@ export function AgentPersonasPage(): React.JSX.Element {
       await savePersonas({ personas: next });
       toast(existing ? 'Persona updated.' : 'Persona created.', { variant: 'success' });
     } catch (error) {
-      const { logClientError } = require('@/shared/utils/observability/client-error-logger');
       logClientError(error, { context: { source: 'AgentPersonasPage', action: 'savePersona', personaId: draft.id } });
       const errorMessage =
         error instanceof Error ? error.message : 'Failed to save personas.';
@@ -56,7 +56,6 @@ export function AgentPersonasPage(): React.JSX.Element {
       await savePersonas({ personas: next });
       toast('Persona deleted.', { variant: 'success' });
     } catch (error) {
-      const { logClientError } = require('@/shared/utils/observability/client-error-logger');
       logClientError(error, { context: { source: 'AgentPersonasPage', action: 'deletePersona', personaId: persona.id } });
       const errorMessage =
         error instanceof Error ? error.message : 'Failed to delete persona.';

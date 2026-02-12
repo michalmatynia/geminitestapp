@@ -14,6 +14,7 @@ import { useNoteOperations } from '@/features/notesapp/hooks/useNoteOperations';
 import { useNoteTheme } from '@/features/notesapp/hooks/useNoteTheme';
 import type { UndoAction } from '@/features/notesapp/types/notes-hooks';
 import type { NoteSettings } from '@/features/notesapp/types/notes-settings';
+import { internalError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
 import type { NoteWithRelations, TagRecord, ThemeRecord, CategoryWithChildren, NoteTagRecord } from '@/shared/types/domain/notes';
 import { useToast } from '@/shared/ui';
@@ -446,7 +447,7 @@ export function NotesAppProvider({
 export function useNotesAppContext(): NotesAppContextValue {
   const context = useContext(NotesAppContext);
   if (!context) {
-    throw new Error('useNotesAppContext must be used within NotesAppProvider');
+    throw internalError('useNotesAppContext must be used within NotesAppProvider');
   }
   return context;
 }

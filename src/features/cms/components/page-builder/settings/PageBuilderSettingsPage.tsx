@@ -4,6 +4,7 @@ import { Loader2 } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
+import { logClientError } from '@/features/observability';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Card, Checkbox, Label, Button, useToast } from '@/shared/ui';
 
@@ -48,7 +49,6 @@ export function PageBuilderSettingsPage(): React.JSX.Element {
       setLocalSectionDropPlaceholder(null);
       toast('Settings saved successfully.', { variant: 'success' });
     } catch (error) {
-      const { logClientError } = require('@/features/observability');
       logClientError(error, { context: { source: 'PageBuilderSettingsPage', action: 'saveSettings' } });
       const message = error instanceof Error ? error.message : 'Failed to save settings';
       toast(message, { variant: 'error' });

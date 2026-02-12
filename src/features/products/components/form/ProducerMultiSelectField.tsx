@@ -7,6 +7,8 @@ import type { Producer } from '@/features/products/types';
 import { internalError } from '@/shared/errors/app-error';
 import { MultiSelect } from '@/shared/ui';
 
+import { useOptionalProductMetadataFieldContext } from './ProductMetadataFieldContext';
+
 type ProducerMultiSelectFieldProps = {
   producers?: Producer[] | undefined;
   selectedProducerIds?: string[] | undefined;
@@ -25,11 +27,19 @@ export function ProducerMultiSelectField({
   placeholder = 'Select producers',
 }: ProducerMultiSelectFieldProps): React.JSX.Element {
   const formContext = useContext(ProductFormContext);
-  const producers = producersProp ?? formContext?.producers ?? [];
-  const selectedProducerIds = selectedProducerIdsProp ?? formContext?.selectedProducerIds ?? [];
-  const resolvedLoading = producersProp ? loading : (formContext?.producersLoading ?? loading);
+  const metadataContext = useOptionalProductMetadataFieldContext();
+  const producers = producersProp ?? metadataContext?.producers ?? formContext?.producers ?? [];
+  const selectedProducerIds =
+    selectedProducerIdsProp ??
+    metadataContext?.selectedProducerIds ??
+    formContext?.selectedProducerIds ??
+    [];
+  const resolvedLoading = producersProp
+    ? loading
+    : (metadataContext?.producersLoading ?? formContext?.producersLoading ?? loading);
   const resolvedOnChange =
     onChangeProp ??
+    metadataContext?.onProducersChange ??
     (formContext
       ? (nextIds: string[]): void => {
         const previous = new Set(formContext.selectedProducerIds);

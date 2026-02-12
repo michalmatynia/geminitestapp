@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useState, ReactNode } from 'react';
 
+import { internalError } from '@/shared/errors/app-error';
+
 interface AdminLayoutContextType {
   isMenuCollapsed: boolean;
   setIsMenuCollapsed: (isCollapsed: boolean) => void;
@@ -45,7 +47,7 @@ export function AdminLayoutProvider({
 export function useAdminLayout(): AdminLayoutContextType {
   const context = useContext(AdminLayoutContext);
   if (context === undefined) {
-    throw new Error('useAdminLayout must be used within an AdminLayoutProvider');
+    throw internalError('useAdminLayout must be used within an AdminLayoutProvider');
   }
   return context;
 }

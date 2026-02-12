@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect, useRef, ReactNode } fro
 
 import type { NoteSettings } from '@/features/notesapp/types/notes-settings';
 import { logClientError } from '@/features/observability';
+import { internalError } from '@/shared/errors/app-error';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 
 export const DEFAULT_NOTE_SETTINGS: NoteSettings = {
@@ -186,7 +187,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
 export function useNoteSettings(): NoteSettingsContextType {
   const context = useContext(NoteSettingsContext);
   if (context === undefined) {
-    throw new Error('useNoteSettings must be used within a NoteSettingsProvider');
+    throw internalError('useNoteSettings must be used within a NoteSettingsProvider');
   }
   return context;
 }

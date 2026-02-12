@@ -7,6 +7,8 @@ import type { ProductTag } from '@/features/products/types';
 import { internalError } from '@/shared/errors/app-error';
 import { MultiSelect } from '@/shared/ui';
 
+import { useOptionalProductMetadataFieldContext } from './ProductMetadataFieldContext';
+
 type TagMultiSelectFieldProps = {
   tags?: ProductTag[] | undefined;
   selectedTagIds?: string[] | undefined;
@@ -25,11 +27,19 @@ export function TagMultiSelectField({
   placeholder = 'Select tags',
 }: TagMultiSelectFieldProps): React.JSX.Element {
   const formContext = useContext(ProductFormContext);
-  const tags = tagsProp ?? formContext?.tags ?? [];
-  const selectedTagIds = selectedTagIdsProp ?? formContext?.selectedTagIds ?? [];
-  const resolvedLoading = tagsProp ? loading : (formContext?.tagsLoading ?? loading);
+  const metadataContext = useOptionalProductMetadataFieldContext();
+  const tags = tagsProp ?? metadataContext?.tags ?? formContext?.tags ?? [];
+  const selectedTagIds =
+    selectedTagIdsProp ??
+    metadataContext?.selectedTagIds ??
+    formContext?.selectedTagIds ??
+    [];
+  const resolvedLoading = tagsProp
+    ? loading
+    : (metadataContext?.tagsLoading ?? formContext?.tagsLoading ?? loading);
   const resolvedOnChange =
     onChangeProp ??
+    metadataContext?.onTagsChange ??
     (formContext
       ? (nextIds: string[]): void => {
         const previous = new Set(formContext.selectedTagIds);

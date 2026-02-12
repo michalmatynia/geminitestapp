@@ -5,6 +5,7 @@ import { useState, useCallback } from 'react';
 
 import { useSaveTagMutation, useDeleteTagMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { Catalog, ProductTag } from '@/features/products/types';
+import { logClientError } from '@/features/observability';
 import { useToast, Button, UnifiedSelect, Input, Label, SharedModal, EmptyState, ConfirmDialog, SectionPanel, Tag as UiTag } from '@/shared/ui';
 
 type TagsSettingsProps = {
@@ -95,7 +96,6 @@ export function TagsSettings({
       setShowModal(false);
       onRefresh();
     } catch (error) {
-      const { logClientError } = await import('@/shared/utils/observability/client-error-logger');
       logClientError(error, { context: { source: 'TagsSettings', action: 'saveTag', tagId: editingTag?.id } });
       const message =
         error instanceof Error ? error.message : 'Failed to save tag.';
@@ -114,7 +114,6 @@ export function TagsSettings({
       toast('Tag deleted.', { variant: 'success' });
       onRefresh();
     } catch (error) {
-      const { logClientError } = await import('@/shared/utils/observability/client-error-logger');
       logClientError(error, { context: { source: 'TagsSettings', action: 'deleteTag', tagId: tagToDelete.id } });
       const message =
         error instanceof Error ? error.message : 'Failed to delete tag.';

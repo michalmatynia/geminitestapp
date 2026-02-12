@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import { findFolderParentId, findFolderById } from '@/features/foldertree';
 import type { UseNoteOperationsProps } from '@/features/notesapp/types/notes-hooks';
 import type { UndoAction } from '@/features/notesapp/types/notes-hooks';
-import { api, ApiError } from '@/shared/lib/api-client';
+import { ApiError } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { NoteWithRelations, CategoryWithChildren } from '@/shared/types/domain/notes';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -284,7 +284,7 @@ export function useNoteOperations({
           queryKey: QUERY_KEYS.notes.detail(sourceNoteId),
           queryFn: async (): Promise<NoteWithRelations> => {
             const res = await fetch(`/api/notes/${sourceNoteId}`);
-            if (!res.ok) throw new ApiError('Failed to fetch source note', res.status);
+            if (!res.ok) throw new ApiError('Failed to fetch source note', 400);
             return res.json() as Promise<NoteWithRelations>;
           },
           staleTime: NOTES_STALE_MS,
@@ -293,7 +293,7 @@ export function useNoteOperations({
           queryKey: QUERY_KEYS.notes.detail(targetNoteId),
           queryFn: async (): Promise<NoteWithRelations> => {
             const res = await fetch(`/api/notes/${targetNoteId}`);
-            if (!res.ok) throw new ApiError('Failed to fetch target note', res.status);
+            if (!res.ok) throw new ApiError('Failed to fetch target note', 400);
             return res.json() as Promise<NoteWithRelations>;
           },
           staleTime: NOTES_STALE_MS,

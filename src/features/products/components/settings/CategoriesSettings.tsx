@@ -10,6 +10,7 @@ import {
   useReorderCategoryMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
 import type { ProductCategoryWithChildren, Catalog, ProductCategory } from '@/features/products/types';
+import { logClientError } from '@/features/observability';
 import {
   Button,
   UnifiedSelect,
@@ -229,7 +230,6 @@ export function CategoriesSettings({
       toast('Category deleted successfully', { variant: 'success' });
       onRefresh();
     } catch (error: unknown) {
-      const { logClientError } = await import('@/shared/utils/observability/client-error-logger');
       logClientError(error, { context: { source: 'CategoriesSettings', action: 'deleteCategory', categoryId: categoryToDelete.id } });
       const message: string =
         error instanceof Error ? error.message : 'Failed to delete category';
@@ -274,7 +274,6 @@ export function CategoriesSettings({
       setShowModal(false);
       onRefresh();
     } catch (error) {
-      const { logClientError } = await import('@/shared/utils/observability/client-error-logger');
       logClientError(error, { context: { source: 'CategoriesSettings', action: 'saveCategory', categoryId: editingCategory?.id } });
       const message: string =
         error instanceof Error ? error.message : 'Failed to save category';
@@ -306,7 +305,6 @@ export function CategoriesSettings({
       onRefresh();
     } catch (error) {
       setTreeData(previousTree);
-      const { logClientError } = await import('@/shared/utils/observability/client-error-logger');
       logClientError(error, { context: { source: 'CategoriesSettings', action: 'reorderCategory', categoryId: draggedCatId, target } });
       const message: string =
         error instanceof Error ? error.message : 'Failed to move category';

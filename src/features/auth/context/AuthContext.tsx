@@ -21,6 +21,7 @@ import {
   DEFAULT_AUTH_USER_PAGE_SETTINGS,
   type AuthUserPageSettings,
 } from '@/features/auth/utils/auth-user-pages';
+import { internalError } from '@/shared/errors/app-error';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
@@ -162,7 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
 export function useAuth(): AuthContextValue {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw internalError('useAuth must be used within an AuthProvider');
   }
   return context;
 }

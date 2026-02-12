@@ -108,14 +108,7 @@ async function handlePostgresQuery(sql: string | undefined): Promise<Response> {
       duration,
     });
   } catch (error) {
-    return NextResponse.json({
-      rows: [],
-      rowCount: 0,
-      fields: [],
-      command: 'query',
-      duration: Date.now() - startTime,
-      error: error instanceof Error ? error.message : 'Unknown database error',
-    });
+    throw error;
   } finally {
     await client.end().catch(() => {});
   }
@@ -215,14 +208,7 @@ async function handleMongoOperation(
       duration,
     });
   } catch (error) {
-    return NextResponse.json({
-      rows: [],
-      rowCount: 0,
-      fields: [],
-      command: operation || 'unknown',
-      duration: Date.now() - startTime,
-      error: error instanceof Error ? error.message : 'Unknown MongoDB error',
-    });
+    throw error;
   }
 }
 

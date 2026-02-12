@@ -134,11 +134,7 @@ async function handlePostgresCrud(
       returning: result.rows,
     });
   } catch (error) {
-    return NextResponse.json({
-      success: false,
-      rowCount: 0,
-      error: error instanceof Error ? error.message : 'Unknown database error',
-    });
+    throw error;
   } finally {
     await client.end().catch(() => {});
   }
@@ -207,11 +203,7 @@ async function handleMongoCrud(
       rowCount: result.deletedCount,
     });
   } catch (error) {
-    return NextResponse.json({
-      success: false,
-      rowCount: 0,
-      error: error instanceof Error ? error.message : 'Unknown MongoDB error',
-    });
+    throw error;
   }
 }
 

@@ -5,6 +5,7 @@ import { useState, useCallback } from 'react';
 
 import { Button, Input, Label, FileUploadTrigger } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+import { logClientError } from '@/features/observability';
 
 import { uploadAsset3DFile } from '../api';
 import { validate3DFileAsync, SUPPORTED_3D_FORMATS } from '../utils/validateAsset3d';

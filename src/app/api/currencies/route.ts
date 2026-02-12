@@ -23,7 +23,7 @@ const currencySchema = z.object({
  * GET /api/currencies
  * Fetches all currencies (and ensures defaults exist).
  */
-async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const readCurrencies = async (
     provider: InternationalizationProvider
   ): Promise<unknown[]> => {

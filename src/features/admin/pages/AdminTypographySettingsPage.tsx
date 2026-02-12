@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
 import { APP_FONT_SET_SETTING_KEY, APP_FONT_SETS, getAppFontSet, type AppFontSetId } from '@/shared/constants/typography';
+import { logClientError } from '@/features/observability';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { Button, Label, SectionHeader, SectionPanel, UnifiedSelect, useToast } from '@/shared/ui';
 
@@ -32,7 +33,6 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
       {
         onSuccess: (): void => toast('Typography settings saved', { variant: 'success' }),
         onError: (error: Error): void => {
-          const { logClientError } = require('@/features/observability');
           logClientError(error, { context: { source: 'AdminTypographySettingsPage', action: 'save' } });
           toast(error.message || 'Failed to save typography settings', { variant: 'error' });
         },

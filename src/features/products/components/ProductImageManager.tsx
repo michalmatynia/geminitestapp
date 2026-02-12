@@ -30,6 +30,8 @@ import {
 } from '@/shared/ui';
 import { DRAG_KEYS, getFirstDragValue, parseDragIndex, setDragData } from '@/shared/utils/drag-drop';
 
+import { useOptionalProductImageManagerController } from './ProductImageManagerControllerContext';
+
 type SlotViewMode = 'upload' | 'link' | 'base64';
 
 export type ProductImageManagerController = Pick<
@@ -60,7 +62,8 @@ export default function ProductImageManager({
   minimalUi = false,
 }: ProductImageManagerProps = {}): React.JSX.Element {
   const formContext = React.useContext(ProductFormContext);
-  const resolvedController = controller ?? formContext;
+  const controllerContext = useOptionalProductImageManagerController();
+  const resolvedController = controller ?? controllerContext ?? formContext;
   if (!resolvedController) {
     throw internalError(
       'ProductImageManager requires ProductFormContext or an explicit controller prop.'

@@ -5,7 +5,7 @@ import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/r
 import type { ImageTransformOptions } from '@/features/data-import-export';
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import type { ProductListingWithDetails } from '@/features/integrations/types/listings';
-import { api } from '@/shared/lib/api-client';
+import { api, ApiError } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { ProductJob } from '@/shared/types/domain/listing-jobs';
 
@@ -94,7 +94,7 @@ export function useGenericExportToBaseMutation(): UseMutationResult<
         if (error && typeof error === 'object' && 'data' in error) {
           const payloadRes = (error as { data: ExportResponse }).data;
           if (payloadRes?.skuExists) {
-            throw new Error(payloadRes.error || 'SKU already exists in Base.com');
+            throw new ApiError(payloadRes.error || 'SKU already exists in Base.com', 409);
           }
         }
         throw error;
@@ -323,7 +323,7 @@ export function useExportToBaseMutation(productId: string): UseMutationResult<
         if (error && typeof error === 'object' && 'data' in error) {
           const payloadRes = (error as { data: ExportResponse }).data;
           if (payloadRes?.skuExists) {
-            throw new Error(payloadRes.error || 'SKU already exists in Base.com');
+            throw new ApiError(payloadRes.error || 'SKU already exists in Base.com', 409);
           }
         }
         throw error;

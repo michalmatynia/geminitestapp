@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
 import { useCreateTheme } from '@/features/cms/hooks/useCmsQueries';
+import { logClientError } from '@/features/observability';
 import type { CmsThemeColors, CmsThemeTypography, CmsThemeSpacing } from '@/features/cms/types';
 import { cmsThemeCreateSchema } from '@/features/cms/validations/api';
 import { Button, Input, SectionHeader, FormSection, FormField } from '@/shared/ui';
@@ -59,7 +60,6 @@ export default function CreateThemePage(): React.ReactNode {
       await createTheme.mutateAsync(validation.data);
       router.push('/admin/cms/themes');
     } catch (submitError: unknown) {
-      const { logClientError } = require('@/features/observability');
       logClientError(submitError, { context: { source: 'CreateThemePage', action: 'createTheme', name } });
       setError(submitError instanceof Error ? submitError.message : 'Failed to create theme.');
     }

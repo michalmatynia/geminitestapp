@@ -9,6 +9,7 @@ import type {
   CategoryMappingCreateInput,
   CategoryMappingUpdateInput,
 } from '@/features/integrations/types/category-mapping';
+import { notFoundError } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
@@ -408,12 +409,12 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
 
         const result = await collection.updateOne(filter, { $set: updatePayload });
         if (result.matchedCount === 0) {
-          throw new Error('Category mapping not found');
+          throw notFoundError('Category mapping not found', { mappingId: id });
         }
 
         const record = await collection.findOne(filter);
         if (!record) {
-          throw new Error('Category mapping not found');
+          throw notFoundError('Category mapping not found', { mappingId: id });
         }
         if (record.isActive) {
           await deactivateCompetingMongoMappings(collection, {

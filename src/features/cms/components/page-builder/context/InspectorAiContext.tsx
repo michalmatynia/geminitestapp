@@ -5,6 +5,8 @@ import React, { createContext, useContext, useState, useRef, useCallback, useEff
 import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeaching';
 import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
 import { logClientError } from '@/features/observability';
+import { internalError } from '@/shared/errors/app-error';
+import { ApiError } from '@/shared/lib/api-client';
 import type { AgentTeachingAgentRecord } from '@/shared/types/domain/agent-teaching';
 import type { ChatMessage } from '@/shared/types/domain/chatbot';
 import { useToast } from '@/shared/ui';
@@ -85,7 +87,7 @@ const InspectorAiContext = createContext<InspectorAiContextValue | null>(null);
 export function useInspectorAi(): InspectorAiContextValue {
   const context = useContext(InspectorAiContext);
   if (!context) {
-    throw new Error('useInspectorAi must be used within an InspectorAiProvider');
+    throw internalError('useInspectorAi must be used within an InspectorAiProvider');
   }
   return context;
 }
@@ -377,7 +379,7 @@ export function InspectorAiProvider({
     try {
       const prompt = buildCssAiPrompt();
       if (!prompt.trim()) {
-        throw new Error('Prompt is empty.');
+        throw new ApiError('Prompt is empty.', 400);
       }
 
       const messages: ChatMessage[] = [
@@ -395,10 +397,10 @@ export function InspectorAiProvider({
       const modelId = (customCssAiConfig.modelId ?? '').trim() || modelOptions[0] || '';
       const agentId = (customCssAiConfig.agentId ?? '').trim();
       if (provider === 'model' && !modelId) {
-        throw new Error('Select an AI model first.');
+        throw new ApiError('Select an AI model first.', 400);
       }
       if (provider === 'agent' && !agentId) {
-        throw new Error('Select a Deepthinking agent first.');
+        throw new ApiError('Select a Deepthinking agent first.', 400);
       }
 
       const res = await fetch('/api/cms/css-ai/stream', {
@@ -409,7 +411,7 @@ export function InspectorAiProvider({
       });
       if (!res.ok || !res.body) {
         const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error || 'Streaming request failed.');
+        throw new ApiError(data?.error || 'Streaming request failed.', res.status);
       }
 
       const reader = res.body.getReader();
@@ -428,7 +430,7 @@ export function InspectorAiProvider({
           error?: string;
         };
         if (payload.error) {
-          throw new Error(payload.error);
+          throw new ApiError(payload.error, 400);
         }
         if (payload.delta) {
           accumulated += payload.delta;
@@ -463,7 +465,7 @@ export function InspectorAiProvider({
       }
 
       const finalCss = extractCssFromResponse(accumulated);
-      if (!finalCss) throw new Error('No CSS returned.');
+      if (!finalCss) throw new ApiError('No CSS returned.', 400);
       setCssAiOutput(finalCss);
       if (cssAiAutoApply) {
         const nextCss = cssAiAppend
@@ -562,17 +564,17 @@ export function InspectorAiProvider({
     try {
       const prompt = buildContentAiPrompt();
       if (!prompt.trim()) {
-        throw new Error('Prompt is empty.');
+        throw new ApiError('Prompt is empty.', 400);
       }
 
       const provider = contentAiProvider;
       const modelId = provider === 'model' ? (contentAiModelId.trim() || modelOptions[0] || '') : '';
       const agentId = provider === 'agent' ? contentAiAgentId.trim() : '';
       if (provider === 'model' && !modelId) {
-        throw new Error('Select an AI model first.');
+        throw new ApiError('Select an AI model first.', 400);
       }
       if (provider === 'agent' && !agentId) {
-        throw new Error('Select a Deepthinking agent first.');
+        throw new ApiError('Select a Deepthinking agent first.', 400);
       }
 
       const messages: ChatMessage[] = [
@@ -595,7 +597,7 @@ export function InspectorAiProvider({
       });
       if (!res.ok || !res.body) {
         const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error || 'Streaming request failed.');
+        throw new ApiError(data?.error || 'Streaming request failed.', res.status);
       }
 
       const reader = res.body.getReader();
@@ -614,7 +616,7 @@ export function InspectorAiProvider({
           error?: string;
         };
         if (payload.error) {
-          throw new Error(payload.error);
+          throw new ApiError(payload.error, 400);
         }
         if (payload.delta) {
           accumulated += payload.delta;
@@ -649,7 +651,7 @@ export function InspectorAiProvider({
       }
 
       const parsed = extractJsonFromResponse(accumulated);
-      if (!parsed) throw new Error('AI response did not include JSON.');
+      if (!parsed) throw new ApiError('AI response did not include JSON.', 400);
       setContentAiOutput(JSON.stringify(parsed, null, 2));
       toast(`AI output ready (${provider}).`, { variant: 'success' });
     } catch (error) {

@@ -49,6 +49,8 @@ describe('ProductListHeader Component', () => {
         updatedAt: '2024-01-01T00:00:00.000Z',
         languageIds: ['en'],
         priceGroupIds: ['pg-1'],
+        defaultLanguageId: null,
+        defaultPriceGroupId: null,
       },
       {
         id: 'cat-2',
@@ -59,6 +61,8 @@ describe('ProductListHeader Component', () => {
         updatedAt: '2024-01-01T00:00:00.000Z',
         languageIds: ['en'],
         priceGroupIds: ['pg-1'],
+        defaultLanguageId: null,
+        defaultPriceGroupId: null,
       },
     ],
     // Stubs for fields not tested by this component

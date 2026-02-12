@@ -12,6 +12,7 @@ import {
   SectionPanel,
   Checkbox,
 } from '@/shared/ui';
+import { logClientError } from '@/features/observability';
 
 import { updateAsset3D } from '../api';
 

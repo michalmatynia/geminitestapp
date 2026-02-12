@@ -6,6 +6,8 @@ import { ProductFormContext } from '@/features/products/context/ProductFormConte
 import { internalError } from '@/shared/errors/app-error';
 import { MultiSelect } from '@/shared/ui';
 
+import { useOptionalProductMetadataFieldContext } from './ProductMetadataFieldContext';
+
 type CategoryOption = {
   id: string;
   name: string;
@@ -29,10 +31,18 @@ export function CategorySingleSelectField({
   placeholder = 'Select category',
 }: CategorySingleSelectFieldProps): React.JSX.Element {
   const formContext = useContext(ProductFormContext);
-  const categories = categoriesProp ?? formContext?.categories ?? [];
-  const selectedCategoryId = selectedCategoryIdProp ?? formContext?.selectedCategoryId ?? null;
-  const resolvedOnChange = onChangeProp ?? formContext?.setCategoryId ?? null;
-  const resolvedLoading = categoriesProp ? loading : (formContext?.categoriesLoading ?? loading);
+  const metadataContext = useOptionalProductMetadataFieldContext();
+  const categories = categoriesProp ?? metadataContext?.categories ?? formContext?.categories ?? [];
+  const selectedCategoryId =
+    selectedCategoryIdProp ??
+    metadataContext?.selectedCategoryId ??
+    formContext?.selectedCategoryId ??
+    null;
+  const resolvedOnChange =
+    onChangeProp ?? metadataContext?.onCategoryChange ?? formContext?.setCategoryId ?? null;
+  const resolvedLoading = categoriesProp
+    ? loading
+    : (metadataContext?.categoriesLoading ?? formContext?.categoriesLoading ?? loading);
 
   if (!resolvedOnChange) {
     throw internalError(

@@ -10,6 +10,7 @@ import type {
   ProducerMappingWithDetails,
 } from '@/features/integrations/types/producer-mapping';
 import { getProducerRepository } from '@/features/products/services/producer-repository';
+import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
@@ -679,7 +680,7 @@ export function getProducerMappingRepository(): ProducerMappingRepository {
           internalProducerId: input.internalProducerId,
         });
         if (!record) {
-          throw new Error('Failed to create producer mapping');
+          throw internalError('Failed to create producer mapping');
         }
         return mapMongoProducerMappingToRecord(record);
       }
@@ -715,7 +716,7 @@ export function getProducerMappingRepository(): ProducerMappingRepository {
         const filter = buildMongoIdFilter(id);
         const current = await collection.findOne(filter);
         if (!current) {
-          throw new Error('Producer mapping not found');
+          throw notFoundError('Producer mapping not found', { mappingId: id });
         }
 
         const updatePayload: Partial<MongoProducerMappingDoc> = {
@@ -735,7 +736,7 @@ export function getProducerMappingRepository(): ProducerMappingRepository {
         await collection.updateOne(filter, { $set: updatePayload });
         const updated = await collection.findOne(filter);
         if (!updated) {
-          throw new Error('Producer mapping not found');
+          throw notFoundError('Producer mapping not found', { mappingId: id });
         }
         return mapMongoProducerMappingToRecord(updated);
       }
@@ -746,7 +747,7 @@ export function getProducerMappingRepository(): ProducerMappingRepository {
           select: { connectionId: true },
         });
         if (!current) {
-          throw new Error('Producer mapping not found');
+          throw notFoundError('Producer mapping not found', { mappingId: id });
         }
 
         const resolvedExternalProducerId =

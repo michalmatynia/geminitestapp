@@ -28,8 +28,10 @@ import {
   UnifiedSelect,
   SearchInput,
   Alert,
+  useToast,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+import { logClientError } from '@/features/observability/utils/client-error-logger';
 
 import { Asset3DCard } from '../components/Asset3DCard';
 import { Asset3DEditModal } from '../components/Asset3DEditModal';
@@ -50,6 +52,7 @@ type ViewMode = 'grid' | 'list';
 
 export function Admin3DAssetsPage(): React.JSX.Element {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [showUploader, setShowUploader] = useState(false);
   const [previewAsset, setPreviewAsset] = useState<Asset3DRecord | null>(null);
   const [editAsset, setEditAsset] = useState<Asset3DRecord | null>(null);

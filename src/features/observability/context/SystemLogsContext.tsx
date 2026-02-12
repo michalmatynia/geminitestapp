@@ -7,6 +7,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import { useClearLogsMutation, useRebuildIndexesMutation, useRunLogInsight, useInterpretLog } from '@/features/observability/hooks/useLogMutations';
 import { useSystemLogs, useSystemLogMetrics, useMongoDiagnostics, useLogInsights } from '@/features/observability/hooks/useLogQueries';
 import { logClientError } from '@/features/observability/utils/client-error-logger';
+import { internalError } from '@/shared/errors/app-error';
 import type { SystemLogMetrics, SystemLogRecord, SystemLogLevel, AiInsightRecord } from '@/shared/types';
 import { useToast, type FilterField } from '@/shared/ui';
 
@@ -102,7 +103,7 @@ const SystemLogsContext = createContext<SystemLogsContextValue | null>(null);
 export const useSystemLogsContext = (): SystemLogsContextValue => {
   const context = useContext(SystemLogsContext);
   if (!context) {
-    throw new Error('useSystemLogsContext must be used within SystemLogsProvider');
+    throw internalError('useSystemLogsContext must be used within SystemLogsProvider');
   }
   return context;
 };

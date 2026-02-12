@@ -149,7 +149,7 @@ const parseRuntimeConfigObject = (
   try {
     const parsed = JSON.parse(runtimeConfig) as unknown;
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      throw new Error('Runtime config must be a JSON object.');
+      throw badRequestError('Runtime config must be a JSON object.');
     }
     return parsed as Record<string, unknown>;
   } catch (error) {

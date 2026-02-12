@@ -25,6 +25,7 @@ import {
   parseAdminMenuBoolean,
   parseAdminMenuJson,
 } from '@/features/admin/constants/admin-menu-settings';
+import { logClientError } from '@/features/observability';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { Button, Checkbox, Input, Label, SearchInput, SectionHeader, SectionPanel, Switch, useToast, UnifiedSelect } from '@/shared/ui';
 import { cn, DRAG_KEYS, getFirstDragValue, setDragData } from '@/shared/utils';
@@ -492,7 +493,6 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
       ]);
       toast('Admin menu settings saved.', { variant: 'success' });
     } catch (error) {
-      const { logClientError } = require('@/features/observability');
       logClientError(error, { context: { source: 'AdminMenuSettingsPage', action: 'save' } });
       toast(error instanceof Error ? error.message : 'Failed to save admin menu settings.', { variant: 'error' });
     }

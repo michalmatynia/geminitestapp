@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useOfflineQueueStatus, type OfflineQueueItem } from '@/shared/hooks/offline';
 import { useOfflineSync } from '@/shared/hooks/offline/useOfflineMutation';
+import { logClientError } from '@/features/observability';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useBackgroundSyncStatus } from '@/shared/providers/BackgroundSyncProvider';
 import {
@@ -77,7 +78,6 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
           toast('Background sync settings saved', { variant: 'success' });
         },
         onError: (error: Error): void => {
-          const { logClientError } = require('@/features/observability');
           logClientError(error, { context: { source: 'AdminSyncSettingsPage', action: 'save' } });
           toast(error.message || 'Failed to save settings', { variant: 'error' });
         },
@@ -96,7 +96,6 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
       offlineQueue.refresh();
       toast('Offline queue processed', { variant: 'success' });
     } catch (error) {
-      const { logClientError } = require('@/features/observability');
       logClientError(error, { context: { source: 'AdminSyncSettingsPage', action: 'processQueue' } });
       toast(error instanceof Error ? error.message : 'Failed to process queue', { variant: 'error' });
     }

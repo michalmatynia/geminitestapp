@@ -2,6 +2,8 @@
 
 import React from 'react';
 
+import { internalError } from '@/shared/errors/app-error';
+
 import type { ValidatorSettingsController } from './useValidatorSettingsController';
 
 const ValidatorSettingsContext = React.createContext<ValidatorSettingsController | null>(null);
@@ -23,7 +25,7 @@ export function ValidatorSettingsProvider({
 export function useValidatorSettingsContext(): ValidatorSettingsController {
   const context = React.useContext(ValidatorSettingsContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useValidatorSettingsContext must be used within ValidatorSettingsProvider'
     );
   }

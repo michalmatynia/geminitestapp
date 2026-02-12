@@ -9,6 +9,7 @@ import {
   useUpdateCmsDomain,
 } from '@/features/cms/hooks/useCmsQueries';
 import type { CmsDomain } from '@/features/cms/types';
+import { logClientError } from '@/features/observability';
 import {
   Button,
   Input,
@@ -20,6 +21,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  useToast,
 } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
@@ -30,6 +32,7 @@ export default function ZonesPage(): React.JSX.Element {
   const createDomain = useCreateCmsDomain();
   const deleteDomain = useDeleteCmsDomain();
   const updateDomain = useUpdateCmsDomain();
+  const { toast } = useToast();
   const domains = useMemo((): CmsDomain[] => domainsQuery.data ?? [], [domainsQuery.data]);
   const [domain, setDomain] = useState('');
   const [error, setError] = useState('');
@@ -51,7 +54,6 @@ export default function ZonesPage(): React.JSX.Element {
       await createDomain.mutateAsync(validation.data);
       setDomain('');
     } catch (err: unknown) {
-      const { logClientError } = require('@/features/observability');
       logClientError(err, { context: { source: 'ZonesPage', action: 'createDomain', domain } });
       setError(err instanceof Error ? err.message : 'Failed to create domain.');
     }
@@ -62,7 +64,7 @@ export default function ZonesPage(): React.JSX.Element {
     try {
       await deleteDomain.mutateAsync(id);
     } catch (err: unknown) {
-      const { logClientError } = require('@/features/observability');
+      logClientError(err, { context: { source: 'ZonesPage', action: 'deleteDomain', domainId: id } });
       logClientError(err, { context: { source: 'ZonesPage', action: 'deleteDomain', domainId: id } });
       toast(err instanceof Error ? err.message : 'Failed to delete domain.', { variant: 'error' });
     }
@@ -84,7 +86,7 @@ export default function ZonesPage(): React.JSX.Element {
       const input = validation.data.aliasOf === undefined ? {} : { aliasOf: validation.data.aliasOf };
       await updateDomain.mutateAsync({ id, input });
     } catch (err: unknown) {
-      const { logClientError } = require('@/features/observability');
+      logClientError(err, { context: { source: 'ZonesPage', action: 'updateAlias', domainId: id, aliasOf } });
       logClientError(err, { context: { source: 'ZonesPage', action: 'updateAlias', domainId: id, aliasOf } });
       toast(err instanceof Error ? err.message : 'Failed to update alias.', { variant: 'error' });
     }

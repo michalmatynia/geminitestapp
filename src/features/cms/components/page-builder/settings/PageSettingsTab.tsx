@@ -7,8 +7,10 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeaching';
 import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
+import { logClientError } from '@/features/observability';
 import type { AgentTeachingAgentRecord } from '@/shared/types/domain/agent-teaching';
 import type { ChatMessage } from '@/shared/types/domain/chatbot';
+import { ApiError } from '@/shared/lib/api-client';
 import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Switch, Textarea, UnifiedSelect, useToast } from '@/shared/ui';
 
 import { useCmsDomainSelection } from '../../../hooks/useCmsDomainSelection';
@@ -288,7 +290,7 @@ function PageSettingsTab(): React.ReactNode {
       });
       if (!res.ok || !res.body) {
         const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error || 'Streaming request failed.');
+        throw new ApiError(data?.error || 'Streaming request failed.', res.status);
       }
 
       const reader = res.body.getReader();
@@ -307,7 +309,7 @@ function PageSettingsTab(): React.ReactNode {
           error?: string;
         };
         if (responsePayload.error) {
-          throw new Error(responsePayload.error);
+          throw new ApiError(responsePayload.error, 400);
         }
         if (responsePayload.delta) {
           accumulated += responsePayload.delta;
@@ -352,13 +354,13 @@ function PageSettingsTab(): React.ReactNode {
     setPageAiOutput('');
     try {
       const prompt = buildPageAiPrompt();
-      if (!prompt.trim()) throw new Error('Prompt is empty.');
+      if (!prompt.trim()) throw new ApiError('Prompt is empty.', 400);
 
       const provider = pageAiProvider;
       const modelId = provider === 'model' ? (pageAiModelId.trim() || modelOptions[0] || '') : '';
       const agentId = provider === 'agent' ? pageAiAgentId.trim() : '';
-      if (provider === 'model' && !modelId) throw new Error('Select an AI model first.');
-      if (provider === 'agent' && !agentId) throw new Error('Select a Deepthinking agent first.');
+      if (provider === 'model' && !modelId) throw new ApiError('Select an AI model first.', 400);
+      if (provider === 'agent' && !agentId) throw new ApiError('Select a Deepthinking agent first.', 400);
 
       const messages: ChatMessage[] = [
         {
@@ -377,7 +379,7 @@ function PageSettingsTab(): React.ReactNode {
       });
 
       const parsed = extractPageAiJson(accumulated);
-      if (!parsed) throw new Error('AI response did not include JSON.');
+      if (!parsed) throw new ApiError('AI response did not include JSON.', 400);
       setPageAiOutput(JSON.stringify(parsed, null, 2));
       toast(`AI output ready (${provider}).`, { variant: 'success' });
     } catch (error) {
@@ -385,7 +387,6 @@ function PageSettingsTab(): React.ReactNode {
         setPageAiError('Generation cancelled.');
         toast('Generation cancelled.', { variant: 'info' });
       } else {
-        const { logClientError } = require('@/features/observability');
         logClientError(error, { context: { source: 'PageSettingsTab', action: 'generatePageAi', task: pageAiTask, provider: pageAiProvider } });
         const message = error instanceof Error ? error.message : 'Failed to generate AI output.';
         setPageAiError(message);

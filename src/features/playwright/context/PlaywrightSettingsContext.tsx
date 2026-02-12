@@ -1,25 +1,30 @@
 'use client';
 
-import React, { createContext, useContext, ReactNode, Dispatch, SetStateAction } from 'react';
+import React, { createContext, useContext } from 'react';
 
 import type { PlaywrightSettings } from '@/features/playwright/types';
+import { internalError } from '@/shared/errors/app-error';
 
-interface PlaywrightSettingsContextType {
+import type { Dispatch, ReactNode, SetStateAction } from 'react';
+
+export type PlaywrightSettingsContextType = {
   settings: PlaywrightSettings;
   setSettings: Dispatch<SetStateAction<PlaywrightSettings>>;
-}
+};
 
-const PlaywrightSettingsContext = createContext<PlaywrightSettingsContextType | undefined>(undefined);
+const PlaywrightSettingsContext = createContext<PlaywrightSettingsContextType | null>(null);
+
+export type PlaywrightSettingsProviderProps = {
+  settings: PlaywrightSettings;
+  setSettings: Dispatch<SetStateAction<PlaywrightSettings>>;
+  children: ReactNode;
+};
 
 export function PlaywrightSettingsProvider({
-  children,
   settings,
   setSettings,
-}: {
-  children: ReactNode;
-  settings: PlaywrightSettings;
-  setSettings: Dispatch<SetStateAction<PlaywrightSettings>>;
-}): React.JSX.Element {
+  children,
+}: PlaywrightSettingsProviderProps): React.JSX.Element {
   return (
     <PlaywrightSettingsContext.Provider value={{ settings, setSettings }}>
       {children}
@@ -30,7 +35,7 @@ export function PlaywrightSettingsProvider({
 export function usePlaywrightSettings(): PlaywrightSettingsContextType {
   const context = useContext(PlaywrightSettingsContext);
   if (!context) {
-    throw new Error('usePlaywrightSettings must be used within a PlaywrightSettingsProvider');
+    throw internalError('usePlaywrightSettings must be used within a PlaywrightSettingsProvider');
   }
   return context;
 }

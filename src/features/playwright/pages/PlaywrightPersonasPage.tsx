@@ -9,6 +9,7 @@ import type {
   PlaywrightSettings,
 } from '@/features/playwright/types';
 import { buildPlaywrightSettings, createPlaywrightPersonaId } from '@/features/playwright/utils/personas';
+import { logClientError } from '@/features/observability';
 import { ItemLibrary, useToast } from '@/shared/ui';
 
 import type { SetStateAction } from 'react';
@@ -47,7 +48,6 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
       await savePersonas({ personas: next });
       toast(existing ? 'Persona updated.' : 'Persona created.', { variant: 'success' });
     } catch (error) {
-      const { logClientError } = require('@/shared/utils/observability/client-error-logger');
       logClientError(error, { context: { source: 'PlaywrightPersonasPage', action: 'savePersona', personaId: draft.id } });
       const errorMessage =
         error instanceof Error ? error.message : 'Failed to save personas.';
@@ -61,7 +61,6 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
       await savePersonas({ personas: next });
       toast('Persona deleted.', { variant: 'success' });
     } catch (error) {
-      const { logClientError } = require('@/shared/utils/observability/client-error-logger');
       logClientError(error, { context: { source: 'PlaywrightPersonasPage', action: 'deletePersona', personaId: persona.id } });
       const errorMessage =
         error instanceof Error ? error.message : 'Failed to save personas.';

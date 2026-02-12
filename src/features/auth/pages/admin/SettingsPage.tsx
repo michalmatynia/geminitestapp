@@ -126,7 +126,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
       setMfaOtpAuth(null);
       setRecoveryCodes([]);
       const res = await mfaSetupMutation.mutateAsync();
-      if (!res.ok) throw new ApiError('Failed to start MFA setup.', res.status);
+      if (!res.ok) throw new ApiError('Failed to start MFA setup.', 400);
       const payload = res.payload;
       setMfaSecret(payload.secret ?? null);
       setMfaOtpAuth(payload.otpauthUrl ?? null);
@@ -151,7 +151,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
       const res = await mfaVerifyMutation.mutateAsync(mfaToken.trim());
       const payload = res.payload;
       if (!res.ok) {
-        throw new ApiError(payload.message ?? 'Failed to verify MFA.', res.status);
+        throw new ApiError(payload.message ?? 'Failed to verify MFA.', 400);
       }
       setRecoveryCodes(payload.recoveryCodes ?? []);
       setMfaEnabled(true);
@@ -177,7 +177,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
       });
       const payload = res.payload;
       if (!res.ok) {
-        throw new ApiError(payload.message ?? 'Failed to disable MFA.', res.status);
+        throw new ApiError(payload.message ?? 'Failed to disable MFA.', 400);
       }
       setMfaEnabled(false);
       setMfaSecret(null);

@@ -3,6 +3,7 @@ import dynamic from 'next/dynamic';
 import React from 'react';
 
 import type { ImageFileRecord, ImageFileSelection } from '@/shared/types/domain/files';
+import { logClientError } from '@/features/observability';
 import { Button, Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, useToast, FileUploadButton, type FileUploadHelpers } from '@/shared/ui';
 
 import { useUploadCmsMedia } from '../../hooks/useCmsQueries';
@@ -75,7 +76,6 @@ export function MediaLibraryPanel({
         }
       }
     } catch (error) {
-      const { logClientError } = require('@/features/observability');
       logClientError(error, { context: { source: 'MediaLibraryPanel', action: 'handleUpload' } });
       const message = error instanceof Error ? error.message : 'Upload failed';
       toast(message, { variant: 'error' });

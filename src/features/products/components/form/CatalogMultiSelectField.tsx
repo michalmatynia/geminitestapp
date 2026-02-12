@@ -7,6 +7,8 @@ import type { CatalogRecord } from '@/features/products/types';
 import { internalError } from '@/shared/errors/app-error';
 import { MultiSelect } from '@/shared/ui';
 
+import { useOptionalProductMetadataFieldContext } from './ProductMetadataFieldContext';
+
 type CatalogMultiSelectFieldProps = {
   catalogs?: CatalogRecord[] | undefined;
   selectedCatalogIds?: string[] | undefined;
@@ -25,11 +27,19 @@ export function CatalogMultiSelectField({
   emptyMessage = 'No catalogs found',
 }: CatalogMultiSelectFieldProps): React.JSX.Element {
   const formContext = useContext(ProductFormContext);
-  const catalogs = catalogsProp ?? formContext?.catalogs ?? [];
-  const selectedCatalogIds = selectedCatalogIdsProp ?? formContext?.selectedCatalogIds ?? [];
-  const resolvedLoading = catalogsProp ? loading : (formContext?.catalogsLoading ?? loading);
+  const metadataContext = useOptionalProductMetadataFieldContext();
+  const catalogs = catalogsProp ?? metadataContext?.catalogs ?? formContext?.catalogs ?? [];
+  const selectedCatalogIds =
+    selectedCatalogIdsProp ??
+    metadataContext?.selectedCatalogIds ??
+    formContext?.selectedCatalogIds ??
+    [];
+  const resolvedLoading = catalogsProp
+    ? loading
+    : (metadataContext?.catalogsLoading ?? formContext?.catalogsLoading ?? loading);
   const resolvedOnChange =
     onChangeProp ??
+    metadataContext?.onCatalogsChange ??
     (formContext
       ? (nextIds: string[]): void => {
         const previous = new Set(formContext.selectedCatalogIds);

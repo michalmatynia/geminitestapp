@@ -5,6 +5,7 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRe
 import ProductImageManager, {
   type ProductImageManagerController,
 } from '@/features/products/components/ProductImageManager';
+import { ProductImageManagerControllerProvider } from '@/features/products/components/ProductImageManagerControllerContext';
 import type { ProductImageSlot } from '@/features/products/types/products-ui';
 import { api } from '@/shared/lib/api-client';
 
@@ -501,11 +502,12 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
     );
 
     return (
-      <ProductImageManager
-        key={`env:${environmentSlot?.id ?? 'none'}|obj:${objectSlot?.id ?? temporaryObjectUpload?.id ?? 'none'}`}
-        controller={controller}
-        minimalUi
-      />
+      <ProductImageManagerControllerProvider value={controller}>
+        <ProductImageManager
+          key={`env:${environmentSlot?.id ?? 'none'}|obj:${objectSlot?.id ?? temporaryObjectUpload?.id ?? 'none'}`}
+          minimalUi
+        />
+      </ProductImageManagerControllerProvider>
     );
   }
 );

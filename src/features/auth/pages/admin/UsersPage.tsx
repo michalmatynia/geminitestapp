@@ -347,7 +347,7 @@ export default function AuthUsersPage(): React.JSX.Element {
         password: mockPassword,
       });
       if (!res.ok) {
-        throw new ApiError('Mock sign-in failed', res.status);
+        throw new ApiError('Mock sign-in failed', 400);
       }
       const payload = res.payload as { ok?: boolean; message?: string };
       if (payload.ok) {

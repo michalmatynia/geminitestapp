@@ -6,7 +6,7 @@ import { ICON_LIBRARY_MAP } from '@/features/icons';
 import { CatalogMultiSelectField } from '@/features/products/components/form/CatalogMultiSelectField';
 import { CategorySingleSelectField } from '@/features/products/components/form/CategorySingleSelectField';
 import { ProducerMultiSelectField } from '@/features/products/components/form/ProducerMultiSelectField';
-import { ProductImagesTabContent } from '@/features/products/components/form/ProductImagesTabContent';
+import { ProductMetadataFieldProvider } from '@/features/products/components/form/ProductMetadataFieldContext';
 import { TagMultiSelectField } from '@/features/products/components/form/TagMultiSelectField';
 import type { ProductParameter, ProductParameterValue } from '@/features/products/types';
 import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea } from '@/shared/ui';
@@ -501,144 +501,100 @@ export function DraftCreatorImportInfoSection(): React.JSX.Element {
 }
 
 export function DraftCreatorDetailsTab(): React.JSX.Element {
-  const { categories, tags, selectedCatalogIds } = useDraftCreatorFormContext();
-
-  return (
-    <div className='space-y-6'>
-      <DraftCreatorDraftInfoSection />
-      <DraftCreatorProductDefaultsSection />
-      <DraftCreatorPricingSupplierSection />
-
-      <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
-        <h3 className='text-sm font-semibold text-white'>Catalogs</h3>
-        <DraftCreatorCatalogsField />
-      </div>
-
-      {categories.length > 0 ? (
-        <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
-          <h3 className='text-sm font-semibold text-white'>Categories</h3>
-          <DraftCreatorCategoryField />
-        </div>
-      ) : null}
-
-      {tags.length > 0 ? (
-        <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
-          <h3 className='text-sm font-semibold text-white'>Tags</h3>
-          <DraftCreatorTagsField />
-        </div>
-      ) : null}
-
-      <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
-        <DraftCreatorProducersField />
-      </div>
-
-      {selectedCatalogIds.length > 0 ? (
-        <div className='rounded-lg border border-blue-900/50 bg-blue-950/20 p-4'>
-          <h3 className='mb-2 text-sm font-semibold text-blue-400'>Price Group Information</h3>
-          <p className='text-sm text-blue-300/70'>
-            Products created from this draft will automatically use the default price group from
-            the selected catalog(s). Price groups are configured per catalog and cannot be manually
-            overridden in drafts.
-          </p>
-        </div>
-      ) : null}
-
-      <DraftCreatorImportInfoSection />
-    </div>
-  );
-}
-
-export function DraftCreatorCatalogsField(): React.JSX.Element {
-  const { catalogs, selectedCatalogIds, setSelectedCatalogIds } = useDraftCreatorFormContext();
-  return (
-    <CatalogMultiSelectField
-      catalogs={catalogs}
-      selectedCatalogIds={selectedCatalogIds}
-      onChange={setSelectedCatalogIds}
-    />
-  );
-}
-
-export function DraftCreatorCategoryField(): React.JSX.Element {
   const {
+    catalogs,
+    selectedCatalogIds,
+    setSelectedCatalogIds,
     categories,
+    categoryLoading,
     selectedCategoryId,
     setSelectedCategoryId,
-    categoryLoading,
-    selectedCatalogIds,
-  } = useDraftCreatorFormContext();
-  return (
-    <CategorySingleSelectField
-      categories={categories}
-      selectedCategoryId={selectedCategoryId}
-      onChange={setSelectedCategoryId}
-      loading={categoryLoading}
-      disabled={selectedCatalogIds.length === 0}
-      placeholder={
-        selectedCatalogIds.length > 0
-          ? 'Select category'
-          : 'Select a catalog first'
-      }
-    />
-  );
-}
-
-export function DraftCreatorTagsField(): React.JSX.Element {
-  const {
     tags,
+    tagLoading,
     selectedTagIds,
     setSelectedTagIds,
-    tagLoading,
-    selectedCatalogIds,
-  } = useDraftCreatorFormContext();
-  return (
-    <TagMultiSelectField
-      tags={tags}
-      selectedTagIds={selectedTagIds}
-      onChange={setSelectedTagIds}
-      loading={tagLoading}
-      disabled={selectedCatalogIds.length === 0}
-      placeholder={
-        selectedCatalogIds.length > 0
-          ? 'Select tags'
-          : 'Select a catalog first'
-      }
-    />
-  );
-}
-
-export function DraftCreatorProducersField(): React.JSX.Element {
-  const {
     producers,
+    producersLoading,
     selectedProducerIds,
     setSelectedProducerIds,
-    producersLoading,
   } = useDraftCreatorFormContext();
-  return (
-    <ProducerMultiSelectField
-      producers={producers}
-      selectedProducerIds={selectedProducerIds}
-      onChange={setSelectedProducerIds}
-      loading={producersLoading}
-    />
-  );
-}
 
-export function DraftCreatorImagesTab(): React.JSX.Element {
-  const {
-    showFileManager,
-    setShowFileManager,
-    handleMultiFileSelect,
-    imageManagerController,
-  } = useDraftCreatorFormContext();
   return (
-    <ProductImagesTabContent
-      showFileManager={showFileManager}
-      onShowFileManager={setShowFileManager}
-      onSelectFiles={handleMultiFileSelect}
-      inlineFileManager
-      imageManagerController={imageManagerController}
-    />
+    <ProductMetadataFieldProvider
+      value={{
+        catalogs,
+        selectedCatalogIds,
+        onCatalogsChange: setSelectedCatalogIds,
+        categories,
+        selectedCategoryId,
+        onCategoryChange: setSelectedCategoryId,
+        categoriesLoading: categoryLoading,
+        tags,
+        selectedTagIds,
+        onTagsChange: setSelectedTagIds,
+        tagsLoading: tagLoading,
+        producers,
+        selectedProducerIds,
+        onProducersChange: setSelectedProducerIds,
+        producersLoading,
+      }}
+    >
+      <div className='space-y-6'>
+        <DraftCreatorDraftInfoSection />
+        <DraftCreatorProductDefaultsSection />
+        <DraftCreatorPricingSupplierSection />
+
+        <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
+          <h3 className='text-sm font-semibold text-white'>Catalogs</h3>
+          <CatalogMultiSelectField />
+        </div>
+
+        {categories.length > 0 ? (
+          <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
+            <h3 className='text-sm font-semibold text-white'>Categories</h3>
+            <CategorySingleSelectField
+              disabled={selectedCatalogIds.length === 0}
+              placeholder={
+                selectedCatalogIds.length > 0
+                  ? 'Select category'
+                  : 'Select a catalog first'
+              }
+            />
+          </div>
+        ) : null}
+
+        {tags.length > 0 ? (
+          <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
+            <h3 className='text-sm font-semibold text-white'>Tags</h3>
+            <TagMultiSelectField
+              disabled={selectedCatalogIds.length === 0}
+              placeholder={
+                selectedCatalogIds.length > 0
+                  ? 'Select tags'
+                  : 'Select a catalog first'
+              }
+            />
+          </div>
+        ) : null}
+
+        <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
+          <ProducerMultiSelectField />
+        </div>
+
+        {selectedCatalogIds.length > 0 ? (
+          <div className='rounded-lg border border-blue-900/50 bg-blue-950/20 p-4'>
+            <h3 className='mb-2 text-sm font-semibold text-blue-400'>Price Group Information</h3>
+            <p className='text-sm text-blue-300/70'>
+              Products created from this draft will automatically use the default price group from
+              the selected catalog(s). Price groups are configured per catalog and cannot be manually
+              overridden in drafts.
+            </p>
+          </div>
+        ) : null}
+
+        <DraftCreatorImportInfoSection />
+      </div>
+    </ProductMetadataFieldProvider>
   );
 }
 

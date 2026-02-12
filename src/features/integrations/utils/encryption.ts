@@ -2,16 +2,18 @@ import 'server-only';
 
 import crypto from 'crypto';
 
+import { badRequestError, configurationError } from '@/shared/errors/app-error';
+
 const KEY_ENV = 'INTEGRATION_ENCRYPTION_KEY';
 
 function getKey(): Buffer {
   const raw = process.env[KEY_ENV];
   if (!raw) {
-    throw new Error(`${KEY_ENV} is required`);
+    throw configurationError(`${KEY_ENV} is required`);
   }
   const key = Buffer.from(raw, 'base64');
   if (key.length !== 32) {
-    throw new Error(`${KEY_ENV} must be a base64-encoded 32-byte key`);
+    throw configurationError(`${KEY_ENV} must be a base64-encoded 32-byte key`);
   }
   return key;
 }
@@ -33,7 +35,7 @@ export function decryptSecret(payload: string): string {
   const key = getKey();
   const [ivB64, tagB64, dataB64] = payload.split(':');
   if (!ivB64 || !tagB64 || !dataB64) {
-    throw new Error('Invalid encrypted payload');
+    throw badRequestError('Invalid encrypted payload');
   }
   const iv = Buffer.from(ivB64, 'base64');
   const tag = Buffer.from(tagB64, 'base64');

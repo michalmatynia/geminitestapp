@@ -13,7 +13,7 @@ import type {
   RedisOverviewDto as RedisOverviewResponse,
 } from '@/shared/dtos/database';
 import type { AppProviderDiagnosticsDto as ProviderDiagnosticsResponse } from '@/shared/dtos/system';
-import { api, apiClient, ApiError } from '@/shared/lib/api-client';
+import { apiClient, ApiError } from '@/shared/lib/api-client';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
 import type {
@@ -69,7 +69,8 @@ const requireOk = <TPayload>(
   fallbackErrorMessage: string
 ): TPayload => {
   if (!result.ok) {
-    const error = new Error(resolveApiErrorMessage(result.payload, fallbackErrorMessage));
+    const message = resolveApiErrorMessage(result.payload, fallbackErrorMessage);
+    const error = new ApiError(message, 400);
     (error as any).payload = result.payload;
     throw error;
   }
@@ -389,9 +390,8 @@ export const updateCollectionProviderMap = async (
     }),
   });
   if (!result.ok) {
-    throw new Error(
-      resolveApiErrorMessage(result.payload, 'Failed to update collection provider map')
-    );
+    const message = resolveApiErrorMessage(result.payload, 'Failed to update collection provider map');
+    throw new ApiError(message, 400);
   }
 };
 
@@ -409,9 +409,8 @@ export const syncDatabase = async (
     }
   );
   if (!result.ok) {
-    throw new Error(
-      resolveApiErrorMessage(result.payload, 'Failed to enqueue database sync.')
-    );
+    const message = resolveApiErrorMessage(result.payload, 'Failed to enqueue database sync.');
+    throw new ApiError(message, 400);
   }
   return result.payload ?? {};
 };

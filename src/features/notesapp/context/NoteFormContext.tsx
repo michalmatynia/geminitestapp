@@ -3,6 +3,7 @@
 import { useQueries, useQuery, type UseQueryResult } from '@tanstack/react-query';
 import React, { createContext, useContext, useState, useMemo, useEffect, useRef, useCallback } from 'react';
 
+import { internalError } from '@/shared/errors/app-error';
 import { useUndo } from '@/shared/hooks/ui/use-undo';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -160,7 +161,7 @@ const NoteFormContext = createContext<NoteFormContextValue | null>(null);
 export function useNoteFormContext(): NoteFormContextValue {
   const context = useContext(NoteFormContext);
   if (!context) {
-    throw new Error('useNoteFormContext must be used within NoteFormProvider');
+    throw internalError('useNoteFormContext must be used within NoteFormProvider');
   }
   return context;
 }

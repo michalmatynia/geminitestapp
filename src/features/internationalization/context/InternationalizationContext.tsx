@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useMemo, ReactNode } from '
 
 import { useDeleteCountryMutation, useDeleteCurrencyMutation, useDeleteLanguageMutation } from '@/features/internationalization/hooks/useInternationalizationMutations';
 import { useCountries, useCurrencies, useLanguages } from '@/features/internationalization/hooks/useInternationalizationQueries';
+import { logClientError } from '@/features/observability';
 import { internalError } from '@/shared/errors/app-error';
 import type { CurrencyOption, CountryOption, Language } from '@/shared/types/domain/internationalization';
 import { useToast } from '@/shared/ui';
@@ -99,7 +100,6 @@ export function InternationalizationProvider({ children }: { children: ReactNode
         await deleteLanguageMutation.mutateAsync(l.id);
         toast(`Language ${l.name} deleted.`, { variant: 'success' });
       } catch (error) {
-        const { logClientError } = require('@/shared/utils/observability/client-error-logger');
         logClientError(error, { context: { source: 'InternationalizationContext', action: 'deleteLanguage', languageId: l.id } });
         toast('Failed to delete language.', { variant: 'error' });
       }
@@ -117,7 +117,6 @@ export function InternationalizationProvider({ children }: { children: ReactNode
         await deleteCurrencyMutation.mutateAsync(c.id);
         toast(`Currency ${c.code} deleted.`, { variant: 'success' });
       } catch (error) {
-        const { logClientError } = require('@/shared/utils/observability/client-error-logger');
         logClientError(error, { context: { source: 'InternationalizationContext', action: 'deleteCurrency', currencyId: c.id } });
         toast('Failed to delete currency.', { variant: 'error' });
       }
@@ -135,7 +134,6 @@ export function InternationalizationProvider({ children }: { children: ReactNode
         await deleteCountryMutation.mutateAsync(c.id);
         toast(`Country ${c.name} deleted.`, { variant: 'success' });
       } catch (error) {
-        const { logClientError } = require('@/shared/utils/observability/client-error-logger');
         logClientError(error, { context: { source: 'InternationalizationContext', action: 'deleteCountry', countryId: c.id } });
         toast('Failed to delete country.', { variant: 'error' });
       }

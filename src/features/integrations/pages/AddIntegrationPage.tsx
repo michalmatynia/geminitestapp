@@ -7,6 +7,7 @@ import { useEffect, useMemo } from 'react';
 import { useCreateIntegration } from '@/features/integrations/hooks/useIntegrationMutations';
 import { useIntegrations } from '@/features/integrations/hooks/useIntegrationQueries';
 import type { Integration } from '@/features/integrations/types/integrations-ui';
+import { logClientError } from '@/features/observability';
 import { useToast, Button, SectionHeader, SectionPanel } from '@/shared/ui';
 
 const AVAILABLE_INTEGRATIONS = [
@@ -41,7 +42,6 @@ export default function AddIntegrationPage(): React.JSX.Element {
 
   useEffect(() => {
     if (!integrationsQuery.isError) return;
-    const { logClientError } = require('@/shared/utils/observability/client-error-logger');
     logClientError(integrationsQuery.error, { context: { source: 'AddIntegrationPage', action: 'loadIntegrations' } });
     const message =
       integrationsQuery.error instanceof Error
@@ -58,7 +58,6 @@ export default function AddIntegrationPage(): React.JSX.Element {
       });
       router.push('/admin/integrations');
     } catch (error: unknown) {
-      const { logClientError } = await import('@/shared/utils/observability/client-error-logger');
       logClientError(error, { context: { source: 'AddIntegrationPage', action: 'addIntegration', slug: integration.slug } });
       const message =
         error instanceof Error ? error.message : 'Failed to add integration.';

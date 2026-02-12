@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useRegisterUser } from '@/features/auth/hooks/useAuthQueries';
 import { DEFAULT_AUTH_SECURITY_POLICY } from '@/features/auth/utils/auth-security';
+import { logClientError } from '@/features/observability';
 import { Button, Input, Label, Alert } from '@/shared/ui';
 
 export default function RegisterPage(): React.JSX.Element {

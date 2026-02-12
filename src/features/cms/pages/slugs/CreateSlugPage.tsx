@@ -6,6 +6,7 @@ import { useState } from 'react';
 
 
 import { useCreateSlug } from '@/features/cms/hooks/useCmsQueries';
+import { logClientError } from '@/features/observability';
 import { SLUG_REGEX } from '@/features/cms/validations/slug';
 import { Button, Input, Label, SectionHeader } from '@/shared/ui';
 
@@ -35,7 +36,6 @@ export default function CreateSlugPage(): React.JSX.Element {
       const next = domainId ? `/admin/cms/slugs?domainId=${encodeURIComponent(domainId)}` : '/admin/cms/slugs';
       router.push(next);
     } catch (err: unknown) {
-      const { logClientError } = require('@/features/observability');
       logClientError(err, { context: { source: 'CreateSlugPage', action: 'createSlug', slug, domainId } });
       setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
     }

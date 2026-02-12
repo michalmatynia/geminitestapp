@@ -4,6 +4,7 @@ import React, { createContext, useContext, ReactNode } from 'react';
 
 import type { BaseInventory, Template } from '@/features/data-import-export/types/imports';
 import type { IntegrationWithConnections } from '@/features/integrations/types/listings';
+import { internalError } from '@/shared/errors/app-error';
 
 import { useBaseComSettings } from '../components/listings/hooks/useBaseComSettings';
 import { useIntegrationSelection } from '../components/listings/hooks/useIntegrationSelection';
@@ -36,7 +37,7 @@ const ListingSettingsContext = createContext<ListingSettingsContextType | null>(
 export function useListingSettingsContext(): ListingSettingsContextType {
   const context = useContext(ListingSettingsContext);
   if (!context) {
-    throw new Error('useListingSettingsContext must be used within a ListingSettingsProvider');
+    throw internalError('useListingSettingsContext must be used within a ListingSettingsProvider');
   }
   return context;
 }

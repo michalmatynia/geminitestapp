@@ -8,6 +8,8 @@ import { IconSelector } from '@/features/icons';
 import { CreateProductDraftInput, UpdateProductDraftInput } from '@/features/products';
 import type { ProductCategoryDto, ProductTag, ProductParameter, ProductParameterValue } from '@/features/products';
 import { getCategoriesFlat, getTags, getParameters } from '@/features/products/api/settings';
+import { ProductImagesTabContent } from '@/features/products/components/form/ProductImagesTabContent';
+import { ProductImagesTabProvider } from '@/features/products/components/form/ProductImagesTabContext';
 import type { ProductImageManagerController } from '@/features/products/components/ProductImageManager';
 import { useProductImages } from '@/features/products/hooks/useProductImages';
 import { useCatalogs, useProducers } from '@/features/products/hooks/useProductMetadata';
@@ -18,7 +20,6 @@ import { validateFormData } from '@/shared/validations/form-validation';
 import { DraftCreatorFormProvider } from './DraftCreatorFormContext';
 import {
   DraftCreatorDetailsTab,
-  DraftCreatorImagesTab,
   DraftCreatorParametersTab,
 } from './DraftCreatorFormFields';
 import { useOptionalDrafterContext } from '../context/DrafterContext';
@@ -603,7 +604,17 @@ export function DraftCreator({
                 <DraftCreatorDetailsTab />
               </TabsContent>
               <TabsContent value='images' className='mt-0 space-y-4'>
-                <DraftCreatorImagesTab />
+                <ProductImagesTabProvider
+                  value={{
+                    showFileManager,
+                    onShowFileManager: setShowFileManager,
+                    onSelectFiles: handleMultiFileSelect,
+                    inlineFileManager: true,
+                    imageManagerController,
+                  }}
+                >
+                  <ProductImagesTabContent />
+                </ProductImagesTabProvider>
               </TabsContent>
               <TabsContent value='parameters' className='mt-0 space-y-4'>
                 <DraftCreatorParametersTab />

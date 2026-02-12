@@ -30,6 +30,7 @@ import { normalizeSteps } from '@/features/integrations/utils/connections';
 import { logClientError } from '@/features/observability';
 import { defaultPlaywrightSettings } from '@/features/playwright';
 import type { PlaywrightPersona, PlaywrightSettings } from '@/features/playwright';
+import { internalError } from '@/shared/errors/app-error';
 import { useToast } from '@/shared/ui';
 
 interface IntegrationsContextType {
@@ -149,7 +150,7 @@ const IntegrationsContext = createContext<IntegrationsContextType | null>(null);
 export function useIntegrationsContext(): IntegrationsContextType {
   const context = useContext(IntegrationsContext);
   if (!context) {
-    throw new Error('useIntegrationsContext must be used within an IntegrationsProvider');
+    throw internalError('useIntegrationsContext must be used within an IntegrationsProvider');
   }
   return context;
 }

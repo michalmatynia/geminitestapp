@@ -82,7 +82,11 @@ export function ThemeColorsProvider({ children }: { children: React.ReactNode })
   const teachingAgentsQuery = useTeachingAgents({ enabled: schemeView === 'edit' && schemeAiProvider === 'agent' });
   
   const modelOptions = useMemo((): string[] => {
-    const fromApi = (modelsQuery.data ?? []).filter((value: string) => value.trim().length > 0);
+    // Defensive: query cache may contain legacy non-array payloads.
+    const models = Array.isArray(modelsQuery.data) ? modelsQuery.data : [];
+    const fromApi = models
+      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+      .map((value) => value.trim());
     return Array.from(new Set(fromApi));
   }, [modelsQuery.data]);
 

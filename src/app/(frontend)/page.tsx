@@ -49,7 +49,7 @@ const canPreviewDrafts = async (
   }
 };
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600; // Hourly revalidation for CMS home page content
 
 const notNull = <T,>(value: T | null | undefined): value is T => value != null;
 const FRONT_PAGE_SETTING_KEY = 'front_page_app';

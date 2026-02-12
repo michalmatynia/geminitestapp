@@ -1,4 +1,5 @@
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 import { readFileSync } from 'node:fs';
 import path from 'node:path';

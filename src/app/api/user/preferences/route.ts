@@ -14,6 +14,7 @@ import type { ApiHandlerContext } from '@/shared/types/api/api';
 import { parseUserPreferencesUpdatePayload } from '@/shared/validations/user-preferences';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 // For now, we'll use a hardcoded user ID
 // In a real app, this would come from the session

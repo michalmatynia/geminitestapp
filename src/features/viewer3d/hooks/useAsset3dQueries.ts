@@ -76,11 +76,11 @@ export function useReindexAssets3DMutation(): UseMutationResult<
   void
   > {
   const queryClient = useQueryClient();
-    return useMutation({
-      mutationFn: () => reindexAssets3DFromDisk(),
-      onSuccess: () => {
-        void invalidateAsset3d(queryClient);
-      },
-    });
-  }
+  return useMutation({
+    mutationFn: () => reindexAssets3DFromDisk(),
+    onSuccess: () => {
+      void invalidateAsset3d(queryClient);
+    },
+  });
+}
   

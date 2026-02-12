@@ -12,6 +12,7 @@ import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 export const runtime = 'nodejs';
+export const revalidate = 86400; 
 
 const currencySchema = z.object({
   code: z.enum(['USD', 'EUR', 'PLN', 'GBP', 'SEK']),

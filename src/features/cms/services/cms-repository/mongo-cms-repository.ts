@@ -343,34 +343,34 @@ export const mongoCmsRepository: CmsRepository = {
   async getThemes(): Promise<CmsTheme[]> {
     const db = await getMongoDb();
     const docs = await db.collection<ThemeDocument>(themesCollection).find().sort({ createdAt: -1 }).toArray();
-          return docs.map((doc: ThemeDocument) => ({
-            id: doc.id,
-            name: doc.name,
-            colors: doc.colors as CmsThemeColors,
-            typography: doc.typography as CmsThemeTypography,
-            spacing: doc.spacing as CmsThemeSpacing,
-            isDefault: doc.isDefault || false,      ...(doc.customCss && { customCss: doc.customCss }),
+    return docs.map((doc: ThemeDocument) => ({
+      id: doc.id,
+      name: doc.name,
+      colors: doc.colors,
+      typography: doc.typography,
+      spacing: doc.spacing,
+      isDefault: doc.isDefault || false,      ...(doc.customCss && { customCss: doc.customCss }),
       createdAt: doc.createdAt.toISOString(),
       updatedAt: doc.updatedAt.toISOString(),
     }));
   },
 
-      async getThemeById(id: string): Promise<CmsTheme | null> {
-        const db = await getMongoDb();
-        const doc = await db.collection<ThemeDocument>(themesCollection).findOne(buildIdFilter<ThemeDocument>(id));
-        if (!doc) return null;
-        return {
-          id: doc.id,
-          name: doc.name,
-          colors: doc.colors as CmsThemeColors,
-          typography: doc.typography as CmsThemeTypography,
-          spacing: doc.spacing as CmsThemeSpacing,
-          isDefault: doc.isDefault || false,
-          ...(doc.customCss && { customCss: doc.customCss }),
-          createdAt: doc.createdAt.toISOString(),
-          updatedAt: doc.updatedAt.toISOString(),
-        };
-      },
+  async getThemeById(id: string): Promise<CmsTheme | null> {
+    const db = await getMongoDb();
+    const doc = await db.collection<ThemeDocument>(themesCollection).findOne(buildIdFilter<ThemeDocument>(id));
+    if (!doc) return null;
+    return {
+      id: doc.id,
+      name: doc.name,
+      colors: doc.colors,
+      typography: doc.typography,
+      spacing: doc.spacing,
+      isDefault: doc.isDefault || false,
+      ...(doc.customCss && { customCss: doc.customCss }),
+      createdAt: doc.createdAt.toISOString(),
+      updatedAt: doc.updatedAt.toISOString(),
+    };
+  },
   async createTheme(data: CmsThemeCreateInput): Promise<CmsTheme> {
     const db = await getMongoDb();
     const id = randomUUID();
@@ -385,19 +385,19 @@ export const mongoCmsRepository: CmsRepository = {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-          await db.collection<ThemeDocument>(themesCollection).insertOne(doc);
-          return {
-            id,
-            name: doc.name,
-            colors: doc.colors as CmsThemeColors,
-            typography: doc.typography as CmsThemeTypography,
-            spacing: doc.spacing as CmsThemeSpacing,
-            isDefault: doc.isDefault || false,
-            ...(doc.customCss && { customCss: doc.customCss }),
-            createdAt: doc.createdAt.toISOString(),
-            updatedAt: doc.updatedAt.toISOString(),
-          };
-        },
+    await db.collection<ThemeDocument>(themesCollection).insertOne(doc);
+    return {
+      id,
+      name: doc.name,
+      colors: doc.colors,
+      typography: doc.typography,
+      spacing: doc.spacing,
+      isDefault: doc.isDefault || false,
+      ...(doc.customCss && { customCss: doc.customCss }),
+      createdAt: doc.createdAt.toISOString(),
+      updatedAt: doc.updatedAt.toISOString(),
+    };
+  },
   async updateTheme(id: string, data: CmsThemeUpdateInput): Promise<CmsTheme | null> {
     const db = await getMongoDb();
     const update = removeUndefined({
@@ -415,32 +415,32 @@ export const mongoCmsRepository: CmsRepository = {
       { $set: update },
       { returnDocument: 'after' }
     );
-          if (!result) return null;
-          return {
-            id: result.id,
-            name: result.name,
-            colors: result.colors as CmsThemeColors,
-            typography: result.typography as CmsThemeTypography,
-            spacing: result.spacing as CmsThemeSpacing,
-            isDefault: result.isDefault || false,
-            ...(result.customCss && { customCss: result.customCss }),
-            createdAt: result.createdAt.toISOString(),
-            updatedAt: result.updatedAt.toISOString(),
-          };
-        },
+    if (!result) return null;
+    return {
+      id: result.id,
+      name: result.name,
+      colors: result.colors,
+      typography: result.typography,
+      spacing: result.spacing,
+      isDefault: result.isDefault || false,
+      ...(result.customCss && { customCss: result.customCss }),
+      createdAt: result.createdAt.toISOString(),
+      updatedAt: result.updatedAt.toISOString(),
+    };
+  },
   async deleteTheme(id: string): Promise<CmsTheme | null> {
     const db = await getMongoDb();
     const doc = await db.collection<ThemeDocument>(themesCollection).findOneAndDelete(buildIdFilter<ThemeDocument>(id));
-          if (!doc) return null;
-          return {
-            id: doc.id,
-            name: doc.name,
-            colors: doc.colors as CmsThemeColors,
-            typography: doc.typography as CmsThemeTypography,
-            spacing: doc.spacing as CmsThemeSpacing,
-            isDefault: doc.isDefault || false,
-            ...(doc.customCss && { customCss: doc.customCss }),
-            createdAt: doc.createdAt.toISOString(),
-            updatedAt: doc.updatedAt.toISOString(),
-          };
-        },};
+    if (!doc) return null;
+    return {
+      id: doc.id,
+      name: doc.name,
+      colors: doc.colors,
+      typography: doc.typography,
+      spacing: doc.spacing,
+      isDefault: doc.isDefault || false,
+      ...(doc.customCss && { customCss: doc.customCss }),
+      createdAt: doc.createdAt.toISOString(),
+      updatedAt: doc.updatedAt.toISOString(),
+    };
+  },};

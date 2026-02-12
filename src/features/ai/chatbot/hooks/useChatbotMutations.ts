@@ -2,12 +2,12 @@
 
 import { useMutation, useQueryClient, UseMutationResult } from '@tanstack/react-query';
 
-import type { ChatMessage, ChatbotSettingsPayload, ChatSession } from '@/shared/types/domain/chatbot';
 import {
   invalidateChatbotSession,
   invalidateChatbotSessions,
   invalidateSettingsScope,
 } from '@/shared/lib/query-invalidation';
+import type { ChatMessage, ChatbotSettingsPayload, ChatSession } from '@/shared/types/domain/chatbot';
 
 import {
   chatbotQueryKeys,

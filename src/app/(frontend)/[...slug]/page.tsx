@@ -41,7 +41,7 @@ const canPreviewDrafts = async (
   }
 };
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600; // Hourly revalidation for CMS slug pages
 
 // ---------------------------------------------------------------------------
 // Resolve slug → published page

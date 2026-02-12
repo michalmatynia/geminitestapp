@@ -1,4 +1,5 @@
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 import { Prisma } from '@prisma/client';
 import { WithId } from 'mongodb';

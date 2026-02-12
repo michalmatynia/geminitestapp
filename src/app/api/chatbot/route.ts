@@ -16,6 +16,7 @@ import type { ApiHandlerContext } from '@/shared/types/api/api';
 import type { ChatMessage } from '@/shared/types/domain/chatbot';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] || 'http://localhost:11434';
 const OLLAMA_MODEL = process.env['OLLAMA_MODEL'];

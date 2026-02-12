@@ -97,7 +97,7 @@ const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema
   if (schema.provider === 'multi') return schema.collections;
   return schema.collections.map((collection: CollectionSchema) => ({
     ...collection,
-    provider: schema.provider as 'mongodb' | 'prisma',
+    provider: schema.provider,
   }));
 };
 

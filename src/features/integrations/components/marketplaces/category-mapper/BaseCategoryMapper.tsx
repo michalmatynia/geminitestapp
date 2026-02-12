@@ -3,6 +3,7 @@
 import React from 'react';
 
 import { CategoryMapperProvider } from '@/features/integrations/context/CategoryMapperContext';
+import { useCategoryMapperPageContext } from '@/features/integrations/context/CategoryMapperPageContext';
 
 import { BaseProducerMapper } from './BaseProducerMapper';
 import { BaseTagMapper } from './BaseTagMapper';
@@ -11,14 +12,17 @@ import { CategoryMapperHeader } from './CategoryMapperHeader';
 import { CategoryMapperStats } from './CategoryMapperStats';
 import { CategoryMapperTable } from './CategoryMapperTable';
 
-type BaseCategoryMapperProps = {
-  connectionId: string;
-  connectionName: string;
-};
+export function BaseCategoryMapper(): React.JSX.Element {
+  const { selectedConnection } = useCategoryMapperPageContext();
+  if (!selectedConnection) {
+    return <></>;
+  }
 
-export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategoryMapperProps): React.JSX.Element {
   return (
-    <CategoryMapperProvider connectionId={connectionId} connectionName={connectionName}>
+    <CategoryMapperProvider
+      connectionId={selectedConnection.id}
+      connectionName={selectedConnection.name}
+    >
       <div className='space-y-6'>
         <CategoryMapperHeader />
         <CategoryMapperCatalogSelector />

@@ -3,23 +3,19 @@
 import { Store } from 'lucide-react';
 import Link from 'next/link';
 
-import type { IntegrationWithConnections, IntegrationConnectionBasic } from '@/shared/types';
+import { useCategoryMapperPageContext } from '@/features/integrations/context/CategoryMapperPageContext';
+import type { IntegrationConnectionBasic, IntegrationWithConnections } from '@/features/integrations/types/listings';
 import { Button } from '@/shared/ui';
 
 
-export interface MarketplaceSelectorProps {
-  integrations: IntegrationWithConnections[];
-  loading: boolean;
-  selectedConnectionId: string | null;
-  onSelectConnection: (connectionId: string) => void;
-}
+export function MarketplaceSelector(): React.JSX.Element {
+  const {
+    integrations,
+    loading,
+    selectedConnectionId,
+    setSelectedConnectionId,
+  } = useCategoryMapperPageContext();
 
-export function MarketplaceSelector({
-  integrations,
-  loading,
-  selectedConnectionId,
-  onSelectConnection,
-}: MarketplaceSelectorProps): React.JSX.Element {
   if (loading) {
     return (
       <div className='space-y-2'>
@@ -65,7 +61,7 @@ export function MarketplaceSelector({
               integration.connections.map((connection: IntegrationConnectionBasic) => (
                 <Button
                   key={connection.id}
-                  onClick={(): void => onSelectConnection(connection.id)}
+                  onClick={(): void => setSelectedConnectionId(connection.id)}
                   className={`w-full rounded px-3 py-2 text-left text-sm transition ${
                     selectedConnectionId === connection.id
                       ? 'bg-gray-800 text-white'

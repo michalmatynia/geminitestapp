@@ -40,11 +40,12 @@ function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.
 
     setError(null);
     try {
+      const data = validation.data as CmsThemeUpdateInput;
       const input: CmsThemeUpdateInput = {
-        name: validation.data.name,
-        ...(validation.data.colors ? { colors: validation.data.colors } : {}),
-        ...(validation.data.typography ? { typography: validation.data.typography } : {}),
-        ...(validation.data.spacing ? { spacing: validation.data.spacing } : {}),
+        name: data.name,
+        ...(data.colors ? { colors: data.colors } : {}),
+        ...(data.typography ? { typography: data.typography } : {}),
+        ...(data.spacing ? { spacing: data.spacing } : {}),
       };
       await updateTheme.mutateAsync({ id, input });
       router.push('/admin/cms/themes');
@@ -57,6 +58,8 @@ function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.
   const updateColor = (key: keyof CmsThemeColors, value: string): void => {
     setColors((prev: CmsThemeColors) => ({ ...prev, [key]: value }));
   };
+
+  const colorKeys = Object.keys(colors) as Array<keyof CmsThemeColors>;
 
   return (
     <div className='container mx-auto max-w-2xl py-10'>
@@ -80,7 +83,7 @@ function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.
         </FormSection>
 
         <FormSection title='Colors' description='Brand and semantic colors for the theme.' gridClassName='grid-cols-2'>
-          {(Object.keys(colors) as Array<keyof CmsThemeColors>).map((key: keyof CmsThemeColors) => (
+          {colorKeys.map((key) => (
             <FormField key={key} label={key} className='capitalize'>
               <div className='flex items-center gap-2'>
                 <input

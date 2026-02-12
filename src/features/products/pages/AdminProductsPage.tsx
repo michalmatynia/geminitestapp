@@ -1,6 +1,5 @@
 'use client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import { ProfilerOnRenderCallback, useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -54,11 +53,6 @@ import { useToast, ConfirmDialog } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type RowSelectionState = Record<string, boolean>;
-
-const SelectIntegrationModal = dynamic<import('@/features/integrations/components/listings/SelectIntegrationModal').SelectIntegrationModalProps>(
-  () => import('@/features/integrations/components/listings/SelectIntegrationModal'),
-{ ssr: false }
-);
 
 export function AdminProductsPage(): React.JSX.Element {
   const searchParams = useSearchParams();
@@ -650,19 +644,14 @@ export function AdminProductsPage(): React.JSX.Element {
           massListProductIds,
           onCloseMassList: handleCloseMassList,
           onMassListSuccess: handleMassListSuccess,
+          showIntegrationModal,
+          onCloseIntegrationModal: handleCloseIntegrationModal,
+          onSelectIntegrationFromModal: handleSelectIntegrationFromModal,
         }}
       >
         <ProductListPanel />
         <ProductModals />
       </ProductListProvider>
-      
-
-      {showIntegrationModal && (
-        <SelectIntegrationModal
-          onClose={handleCloseIntegrationModal}
-          onSelect={handleSelectIntegrationFromModal}
-        />
-      )}
     </>
   );
 }

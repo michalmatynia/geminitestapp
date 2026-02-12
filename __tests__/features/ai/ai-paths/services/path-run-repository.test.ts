@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, vi, afterAll } from 'vitest';
 
 vi.unmock('@/shared/lib/db/prisma');
 
@@ -7,7 +7,11 @@ import prisma from '@/shared/lib/db/prisma';
 import type { AiNode } from '@/shared/types/domain/ai-paths';
 
 describe('AiPathRunRepository', () => {
-  const repo = getPathRunRepository();
+  let repo: Awaited<ReturnType<typeof getPathRunRepository>>;
+
+  beforeAll(async () => {
+    repo = await getPathRunRepository();
+  });
 
   beforeEach(async () => {
     // Clear data before each test

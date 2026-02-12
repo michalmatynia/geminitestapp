@@ -33,6 +33,13 @@ import {
   updateTheme,
 } from '@/features/cms/api/themes';
 import type { Page, PageSummary, Slug, CmsDomain, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from '@/features/cms/types';
+import {
+  invalidateCmsPages,
+  invalidateCmsSlugs,
+  invalidateCmsDomains,
+  invalidateCmsThemes,
+  invalidateFiles,
+} from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { ImageFileRecord } from '@/shared/types/domain/files';
 
@@ -62,7 +69,7 @@ export function useCreatePage(): UseMutationResult<Page, Error, { name: string; 
         return payload;
       }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: cmsKeys.pages.all });
+      void invalidateCmsPages(queryClient);
     },
   });
 }
@@ -79,7 +86,7 @@ export function useUpdatePage(): UseMutationResult<Page, Error, { id: string; in
         return payload;
       }),
     onSuccess: (_data: Page, variables: { id: string; input: Page & { slugIds?: string[] } }) => {
-      void queryClient.invalidateQueries({ queryKey: cmsKeys.pages.all });
+      void invalidateCmsPages(queryClient);
       void queryClient.invalidateQueries({ queryKey: cmsKeys.pages.detail(variables.id) });
     },
   });
@@ -94,7 +101,7 @@ export function useDeletePage(): UseMutationResult<string, Error, string> {
         return id;
       }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: cmsKeys.pages.all });
+      void invalidateCmsPages(queryClient);
     },
   });
 }
@@ -139,7 +146,7 @@ export function useCreateSlug(): UseMutationResult<Slug, Error, { slug: string; 
         return payload;
       }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: cmsKeys.slugs.all });
+      void invalidateCmsSlugs(queryClient);
     },
   });
 }
@@ -153,7 +160,7 @@ export function useUpdateSlug(): UseMutationResult<Slug, Error, { id: string; in
         return payload;
       }),
     onSuccess: (_data: Slug, variables: { id: string; input: Partial<Slug>; domainId?: string | null }) => {
-      void queryClient.invalidateQueries({ queryKey: cmsKeys.slugs.all });
+      void invalidateCmsSlugs(queryClient);
       void queryClient.invalidateQueries({ queryKey: cmsKeys.slugs.detail(variables.id) });
     },
   });
@@ -169,7 +176,7 @@ export function useUpdateSlugDomains(): UseMutationResult<
     mutationFn: ({ id, domainIds }: { id: string; domainIds: string[] }) => updateSlugDomains(id, domainIds),
     onSuccess: (_data: { domainIds: string[] }, variables: { id: string; domainIds: string[] }) => {
       void queryClient.invalidateQueries({ queryKey: cmsKeys.slugs.domains(variables.id) });
-      void queryClient.invalidateQueries({ queryKey: cmsKeys.slugs.all });
+      void invalidateCmsSlugs(queryClient);
     },
   });
 }
@@ -183,7 +190,7 @@ export function useDeleteSlug(): UseMutationResult<string, Error, { id: string; 
         return id;
       }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: cmsKeys.slugs.all });
+      void invalidateCmsSlugs(queryClient);
     },
   });
 }
@@ -208,7 +215,7 @@ export function useCreateCmsDomain(): UseMutationResult<CmsDomain, Error, { doma
         return payload;
       }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: cmsKeys.domains.all });
+      void invalidateCmsDomains(queryClient);
     },
   });
 }
@@ -222,7 +229,7 @@ export function useDeleteCmsDomain(): UseMutationResult<string, Error, string> {
         return id;
       }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: cmsKeys.domains.all });
+      void invalidateCmsDomains(queryClient);
     },
   });
 }
@@ -236,7 +243,7 @@ export function useUpdateCmsDomain(): UseMutationResult<CmsDomain, Error, { id: 
         return payload;
       }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: cmsKeys.domains.all });
+      void invalidateCmsDomains(queryClient);
     },
   });
 }
@@ -269,7 +276,7 @@ export function useCreateTheme(): UseMutationResult<CmsTheme, Error, CmsThemeCre
         return payload;
       }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: cmsKeys.themes.all });
+      void invalidateCmsThemes(queryClient);
     },
   });
 }
@@ -283,7 +290,7 @@ export function useUpdateTheme(): UseMutationResult<CmsTheme, Error, { id: strin
         return payload;
       }),
     onSuccess: (_data: CmsTheme, variables: { id: string; input: CmsThemeUpdateInput }) => {
-      void queryClient.invalidateQueries({ queryKey: cmsKeys.themes.all });
+      void invalidateCmsThemes(queryClient);
       void queryClient.invalidateQueries({ queryKey: cmsKeys.themes.detail(variables.id) });
     },
   });
@@ -298,7 +305,7 @@ export function useDeleteTheme(): UseMutationResult<string, Error, string> {
         return id;
       }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: cmsKeys.themes.all });
+      void invalidateCmsThemes(queryClient);
     },
   });
 }
@@ -325,7 +332,7 @@ export function useUploadCmsMedia(): UseMutationResult<
       return result.data;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.files.all });
+      void invalidateFiles(queryClient);
     },
   });
 }

@@ -39,7 +39,7 @@ async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext): Prom
   }
 
   // Check if this is a Base.com connection
-  const integrationSlug = integration.slug?.toLowerCase();
+  const integrationSlug = (integration.slug || '').toLowerCase();
   if (!integrationSlug || !BASE_MARKETPLACE_SLUGS.has(integrationSlug)) {
     throw badRequestError('Only Base.com connections are supported for category fetch');
   }
@@ -47,7 +47,7 @@ async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext): Prom
   const tokenResolution = resolveBaseConnectionToken(connection);
   if (!tokenResolution.token) {
     throw badRequestError(
-      tokenResolution.error ?? 'Base.com API token not configured for this connection'
+      tokenResolution.error || 'Base.com API token not configured for this connection'
     );
   }
 

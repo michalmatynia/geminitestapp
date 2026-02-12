@@ -2,6 +2,8 @@
 
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
+
 export type FileUploadEventRecord = {
   id: string;
   status: 'success' | 'error';
@@ -54,7 +56,7 @@ const buildQueryParams = (filters: FileUploadEventsFilters): string => {
 export function useFileUploadEvents(
   filters: FileUploadEventsFilters,
 ): UseQueryResult<FileUploadEventsResponse, Error> {
-  const queryKey = ['system', 'upload-events', filters];
+  const queryKey = QUERY_KEYS.system.uploadEvents.list(filters);
   return useQuery({
     queryKey,
     queryFn: async (): Promise<FileUploadEventsResponse> => {

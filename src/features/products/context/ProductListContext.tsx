@@ -111,6 +111,9 @@ export interface ProductListContextType {
   massListProductIds: string[];
   onCloseMassList: () => void;
   onMassListSuccess: () => void;
+  showIntegrationModal: boolean;
+  onCloseIntegrationModal: () => void;
+  onSelectIntegrationFromModal: (integrationId: string, connectionId: string) => void;
 }
 
 export const ProductListContext = createContext<ProductListContextType | null>(null);
@@ -211,6 +214,9 @@ export interface ProductListModalsContextType {
   massListProductIds: string[];
   onCloseMassList: () => void;
   onMassListSuccess: () => void;
+  showIntegrationModal: boolean;
+  onCloseIntegrationModal: () => void;
+  onSelectIntegrationFromModal: (integrationId: string, connectionId: string) => void;
 }
 
 const ProductListFiltersContext =
@@ -399,6 +405,9 @@ export function ProductListProvider({
       massListProductIds: value.massListProductIds,
       onCloseMassList: value.onCloseMassList,
       onMassListSuccess: value.onMassListSuccess,
+      showIntegrationModal: value.showIntegrationModal,
+      onCloseIntegrationModal: value.onCloseIntegrationModal,
+      onSelectIntegrationFromModal: value.onSelectIntegrationFromModal,
     }),
     [value]
   );

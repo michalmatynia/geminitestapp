@@ -71,7 +71,9 @@ export function useSystemSync({ enabled = true, interval = 60000 }: SystemSyncOp
       // Sync job statuses
       void queryClient.refetchQueries({
         predicate: (query: { queryKey: unknown; options?: { queryFn?: unknown }; isStale?: () => boolean }) =>
-          canRefetch(query) && Array.isArray(query.queryKey) && query.queryKey[0] === 'jobs',
+          canRefetch(query) &&
+          Array.isArray(query.queryKey) &&
+          query.queryKey[0] === QUERY_KEYS.jobs.all[0],
       });
       // Sync user preferences
       void queryClient.refetchQueries({
@@ -83,7 +85,9 @@ export function useSystemSync({ enabled = true, interval = 60000 }: SystemSyncOp
       // Sync settings
       void queryClient.refetchQueries({
         predicate: (query: { queryKey: unknown; options?: { queryFn?: unknown }; isStale?: () => boolean }) =>
-          canRefetch(query) && Array.isArray(query.queryKey) && query.queryKey[0] === 'settings',
+          canRefetch(query) &&
+          Array.isArray(query.queryKey) &&
+          query.queryKey[0] === QUERY_KEYS.settings.all[0],
       });
       
       setLastSync(new Date());

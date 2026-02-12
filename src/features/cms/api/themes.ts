@@ -14,8 +14,8 @@ export const createTheme = async (input: CmsThemeCreateInput): Promise<{ ok: boo
   try {
     const payload = await api.post<CmsTheme>('/api/cms/themes', input);
     return { ok: true, payload };
-  } catch (_error) {
-    return { ok: false, payload: {} as CmsTheme };
+  } catch (error) {
+    return { ok: false, payload: { error: error instanceof Error ? error.message : 'Unknown error' } as unknown as CmsTheme };
   }
 };
 
@@ -23,8 +23,8 @@ export const updateTheme = async (id: string, input: CmsThemeUpdateInput): Promi
   try {
     const payload = await api.put<CmsTheme>(`/api/cms/themes/${id}`, input);
     return { ok: true, payload };
-  } catch (_error) {
-    return { ok: false, payload: {} as CmsTheme };
+  } catch (error) {
+    return { ok: false, payload: { error: error instanceof Error ? error.message : 'Unknown error' } as unknown as CmsTheme };
   }
 };
 

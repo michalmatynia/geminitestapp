@@ -42,7 +42,8 @@ async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext): Prom
   }
 
   const repo = getCategoryMappingRepository();
-  const upsertedCount = await repo.bulkUpsert(connectionId, catalogId, mappings);
+  const typedMappings = mappings as { externalCategoryId: string; internalCategoryId: string | null }[];
+  const upsertedCount = await repo.bulkUpsert(connectionId, catalogId, typedMappings);
 
   return NextResponse.json({
     success: true,

@@ -22,6 +22,7 @@ import {
 import { DEFAULT_AUTH_SECURITY_POLICY } from '@/features/auth/utils/auth-security';
 import { logClientError } from '@/features/observability';
 import { ApiError } from '@/shared/lib/api-client';
+import { invalidateUsers } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { Badge, Button, Checkbox, ConfirmDialog, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Input, Label, ListPanel, SectionHeader, SectionPanel, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -200,7 +201,7 @@ export default function AuthUsersPage(): React.JSX.Element {
           input: securityPayload,
         });
       }
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.auth.users.all });
+      await invalidateUsers(queryClient);
       toast('User updated', { variant: 'success' });
       setEditingUser(null);
     } catch (error) {
@@ -232,7 +233,7 @@ export default function AuthUsersPage(): React.JSX.Element {
     }
     try {
       await deleteAuthUserMutation.mutateAsync({ userId: userToDelete.id });
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.auth.users.all });
+      await invalidateUsers(queryClient);
       if (localUserRoles[userToDelete.id]) {
         const nextRoles: AuthUserRoleMap = { ...localUserRoles };
         delete nextRoles[userToDelete.id];

@@ -4,6 +4,10 @@ import { useMutation, useQuery, useQueryClient, type UseQueryResult, type UseMut
 
 import type { ProductDraft, CreateProductDraftInput, UpdateProductDraftInput } from '@/features/products/types/drafts';
 import { api } from '@/shared/lib/api-client';
+import {
+  invalidateDraftDetail,
+  invalidateDrafts,
+} from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 export const draftKeys = QUERY_KEYS.drafts;
@@ -41,7 +45,7 @@ export function useCreateDraft(): UseMutationResult<ProductDraft, Error, CreateP
         return [created, ...current];
       });
       queryClient.setQueryData<ProductDraft>(draftKeys.detail(created.id), created);
-      void queryClient.invalidateQueries({ queryKey: draftKeys.all, refetchType: 'all' });
+      void invalidateDrafts(queryClient);
     },
   });
 }
@@ -63,8 +67,8 @@ export function useUpdateDraft(): UseMutationResult<ProductDraft, Error, { id: s
         return [data, ...next];
       });
       queryClient.setQueryData<ProductDraft>(draftKeys.detail(data.id), data);
-      void queryClient.invalidateQueries({ queryKey: draftKeys.all, refetchType: 'all' });
-      void queryClient.invalidateQueries({ queryKey: draftKeys.detail(data.id), refetchType: 'all' });
+      void invalidateDrafts(queryClient);
+      void invalidateDraftDetail(queryClient, data.id);
     },
   });
 }
@@ -81,7 +85,7 @@ export function useDeleteDraft(): UseMutationResult<string, Error, string> {
         if (!current) return current;
         return current.filter((draft: ProductDraft) => draft.id !== deletedId);
       });
-      void queryClient.invalidateQueries({ queryKey: draftKeys.all, refetchType: 'all' });
+      void invalidateDrafts(queryClient);
       queryClient.removeQueries({ queryKey: draftKeys.detail(deletedId) });
     },
   });

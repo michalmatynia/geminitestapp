@@ -58,10 +58,10 @@ export function setupOfflineSupport(queryClient: QueryClient): void {
 
 // Queries that should be cached offline
 export const offlineQueries: string[] = [
-  'settings',
+  QUERY_KEYS.settings.all[0],
   QUERY_KEYS.userPreferences[0],
-  'products',
-  'jobs',
+  QUERY_KEYS.products.all[0],
+  QUERY_KEYS.jobs.all[0],
 ];
 
 export function isOfflineQuery(queryKey: readonly unknown[]): boolean {

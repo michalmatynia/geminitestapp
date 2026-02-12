@@ -15,6 +15,12 @@ import { AppModal, Button } from '@/shared/ui';
 const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
   ssr: false,
 });
+const SelectIntegrationModal = dynamic(
+  () => import('@/features/integrations/components/listings/SelectIntegrationModal'),
+  {
+    ssr: false,
+  }
+);
 
 export function ProductModals(): React.JSX.Element {
   const {
@@ -42,6 +48,9 @@ export function ProductModals(): React.JSX.Element {
     massListProductIds,
     onCloseMassList,
     onMassListSuccess,
+    showIntegrationModal,
+    onCloseIntegrationModal,
+    onSelectIntegrationFromModal,
   } = useProductListModalsContext();
 
   return (
@@ -148,6 +157,13 @@ export function ProductModals(): React.JSX.Element {
           />
         )}
       </AppModal>
+
+      {showIntegrationModal && (
+        <SelectIntegrationModal
+          onClose={onCloseIntegrationModal}
+          onSelect={onSelectIntegrationFromModal}
+        />
+      )}
     </>
   );
 }

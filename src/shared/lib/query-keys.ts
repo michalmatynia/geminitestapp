@@ -204,6 +204,10 @@ export const QUERY_KEYS = {
       metrics: (filters: unknown) => [...QUERY_KEYS.system.logs.all, 'metrics', filters] as const,
       insights: (limit?: number) => [...QUERY_KEYS.system.logs.all, 'insights', { limit }] as const,
     },
+    uploadEvents: {
+      all: ['system', 'upload-events'] as const,
+      list: (filters: unknown) => [...QUERY_KEYS.system.uploadEvents.all, filters] as const,
+    },
     diagnostics: {
       all: ['system', 'diagnostics'] as const,
       mongo: ['system', 'diagnostics', 'mongo'] as const,

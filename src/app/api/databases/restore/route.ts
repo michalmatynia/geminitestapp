@@ -129,7 +129,9 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         string,
         { date: string; logFile: string }
       >;
-    } catch {
+    } catch (error) {
+      const { ErrorSystem } = await import('@/features/observability/server');
+      void ErrorSystem.logWarning('Failed to load restore-log.json', { error, stage, backupName });
       // No log yet.
     }
 
@@ -249,7 +251,9 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
           END LOOP;
         END $$;
       `);
-    } catch {
+    } catch (error) {
+      const { ErrorSystem } = await import('@/features/observability/server');
+      void ErrorSystem.logWarning('Sequence reset failed after restore', { error, stage, backupName });
       // Sequence reset is best-effort; log but don't fail the restore
       stderr += '\n[WARNING] Sequence reset failed. Auto-increment columns may need manual adjustment.';
     }
@@ -267,7 +271,9 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         string,
         { date: string; logFile: string }
       >;
-    } catch {
+    } catch (error) {
+      const { ErrorSystem } = await import('@/features/observability/server');
+      void ErrorSystem.logWarning('Failed to load restore-log.json', { error, stage, backupName });
       // No log yet.
     }
 

@@ -1,62 +1,15 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-
 import { BaseCategoryMapper } from '@/features/integrations/components/marketplaces/category-mapper/BaseCategoryMapper';
 import { MarketplaceSelector } from '@/features/integrations/components/marketplaces/category-mapper/MarketplaceSelector';
-import { useIntegrationsWithConnections } from '@/features/integrations/hooks/useIntegrationQueries';
-import type { IntegrationWithConnections } from '@/features/integrations/types/listings';
-import { useToast, SectionHeader, SectionPanel } from '@/shared/ui';
+import {
+  CategoryMapperPageProvider,
+  useCategoryMapperPageContext,
+} from '@/features/integrations/context/CategoryMapperPageContext';
+import { SectionHeader, SectionPanel } from '@/shared/ui';
 
-const BASE_MARKETPLACE_SLUGS = new Set(['baselinker', 'base', 'base-com']);
-
-export default function CategoryMapperPage(): React.JSX.Element {
-  const [selectedConnectionIdOverride, setSelectedConnectionIdOverride] = useState<string | null>(null);
-  const { toast } = useToast();
-  const integrationsQuery = useIntegrationsWithConnections();
-
-  useEffect(() => {
-    if (!integrationsQuery.isError) return;
-    const message =
-      integrationsQuery.error instanceof Error
-        ? integrationsQuery.error.message
-        : 'Failed to load integrations.';
-    toast(message, { variant: 'error' });
-  }, [integrationsQuery.error, integrationsQuery.isError, toast]);
-
-  const integrations = useMemo<IntegrationWithConnections[]>((): IntegrationWithConnections[] => {
-    const data = integrationsQuery.data ?? [];
-    return data.filter(
-      (i: IntegrationWithConnections) => BASE_MARKETPLACE_SLUGS.has(i.slug.toLowerCase())
-    );
-  }, [integrationsQuery.data]);
-
-  const selectedConnectionId = useMemo((): string | null => {
-    if (selectedConnectionIdOverride) {
-      const exists = integrations.some((i: IntegrationWithConnections) =>
-        i.connections.some((c: { id: string }) => c.id === selectedConnectionIdOverride)
-      );
-      if (exists) return selectedConnectionIdOverride;
-    }
-    const firstConnection = integrations
-      .flatMap((i: IntegrationWithConnections) => i.connections)
-      .find((c: { id: string }) => c);
-    return firstConnection?.id ?? null;
-  }, [integrations, selectedConnectionIdOverride]);
-
-  const selectedConnection = ((): { name: string; id: string; integration: IntegrationWithConnections } | null => {
-    if (!selectedConnectionId) return null;
-    const allConnections = integrations.flatMap((i: IntegrationWithConnections) =>
-      i.connections.map((c: { id: string; name: string }) => ({ ...c, integration: i }))
-    );
-    return allConnections.find((c: { id: string }) => c.id === selectedConnectionId) ?? null;
-  })();
-
-  const isBaseConnection = ((): boolean => {
-    if (!selectedConnection) return false;
-    const slug = selectedConnection.integration.slug.toLowerCase();
-    return BASE_MARKETPLACE_SLUGS.has(slug);
-  })();
+function CategoryMapperPageContent(): React.JSX.Element {
+  const { selectedConnectionId, isBaseConnection } = useCategoryMapperPageContext();
 
   return (
     <div className='container mx-auto py-10'>
@@ -70,12 +23,7 @@ export default function CategoryMapperPage(): React.JSX.Element {
         <div className='grid gap-6 md:grid-cols-[280px_1fr]'>
           {/* Sidebar */}
           <SectionPanel className='p-4'>
-            <MarketplaceSelector
-              integrations={integrations}
-              loading={integrationsQuery.isLoading}
-              selectedConnectionId={selectedConnectionId}
-              onSelectConnection={setSelectedConnectionIdOverride}
-            />
+            <MarketplaceSelector />
           </SectionPanel>
 
           {/* Main Content */}
@@ -85,10 +33,7 @@ export default function CategoryMapperPage(): React.JSX.Element {
                 <p>Select a marketplace connection to start mapping categories.</p>
               </div>
             ) : isBaseConnection ? (
-              <BaseCategoryMapper
-                connectionId={selectedConnectionId}
-                connectionName={selectedConnection?.name ?? ''}
-              />
+              <BaseCategoryMapper />
             ) : (
               <div className='flex h-64 items-center justify-center text-gray-500'>
                 <p>Category mapping is not yet supported for this marketplace.</p>
@@ -98,5 +43,13 @@ export default function CategoryMapperPage(): React.JSX.Element {
         </div>
       </SectionPanel>
     </div>
+  );
+}
+
+export default function CategoryMapperPage(): React.JSX.Element {
+  return (
+    <CategoryMapperPageProvider>
+      <CategoryMapperPageContent />
+    </CategoryMapperPageProvider>
   );
 }

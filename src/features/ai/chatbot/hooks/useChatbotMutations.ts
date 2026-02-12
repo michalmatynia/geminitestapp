@@ -3,6 +3,11 @@
 import { useMutation, useQueryClient, UseMutationResult } from '@tanstack/react-query';
 
 import type { ChatMessage, ChatbotSettingsPayload, ChatSession } from '@/shared/types/domain/chatbot';
+import {
+  invalidateChatbotSession,
+  invalidateChatbotSessions,
+  invalidateSettingsScope,
+} from '@/shared/lib/query-invalidation';
 
 import {
   chatbotQueryKeys,
@@ -26,7 +31,7 @@ export function useCreateChatbotSession(): UseMutationResult<{ sessionId: string
   return useMutation({
     mutationFn: createChatbotSession,
     onSuccess: (): Promise<void> => {
-      return queryClient.invalidateQueries({ queryKey: chatbotQueryKeys.sessions() });
+      return invalidateChatbotSessions(queryClient);
     },
   });
 }
@@ -41,8 +46,8 @@ export function useUpdateSessionTitle(): UseMutationResult<ChatbotSessionListIte
     mutationFn: ({ sessionId, title }: { sessionId: string; title: string }) =>
       updateChatbotSessionTitle(sessionId, title),
     onSuccess: (_data: ChatbotSessionListItem, { sessionId }: { sessionId: string; title: string }): Promise<void> => {
-      void queryClient.invalidateQueries({ queryKey: chatbotQueryKeys.sessions() });
-      return queryClient.invalidateQueries({ queryKey: chatbotQueryKeys.session(sessionId) });
+      void invalidateChatbotSessions(queryClient);
+      return invalidateChatbotSession(queryClient, sessionId);
     },
   });
 }
@@ -56,7 +61,7 @@ export function useDeleteChatbotSession(): UseMutationResult<unknown, Error, str
   return useMutation({
     mutationFn: deleteChatbotSession,
     onSuccess: (_data: unknown, sessionId: string): void => {
-      void queryClient.invalidateQueries({ queryKey: chatbotQueryKeys.sessions() });
+      void invalidateChatbotSessions(queryClient);
       queryClient.removeQueries({ queryKey: chatbotQueryKeys.session(sessionId) });
     },
   });
@@ -71,7 +76,7 @@ export function useDeleteChatbotSessions(): UseMutationResult<unknown, Error, st
   return useMutation({
     mutationFn: deleteChatbotSessions,
     onSuccess: (_data: unknown, sessionIds: string[]): Promise<void> => {
-      void queryClient.invalidateQueries({ queryKey: chatbotQueryKeys.sessions() });
+      void invalidateChatbotSessions(queryClient);
       sessionIds.forEach((id: string): void => {
         queryClient.removeQueries({ queryKey: chatbotQueryKeys.session(id) });
       });
@@ -101,7 +106,7 @@ export function usePersistSessionMessage(): UseMutationResult<void, Error, Persi
     mutationFn: ({ sessionId, role, content }: PersistSessionMessageVariables): Promise<void> =>
       persistSessionMessage(sessionId, role, content),
     onSuccess: (_data: void, { sessionId }: PersistSessionMessageVariables): Promise<void> => {
-      return queryClient.invalidateQueries({ queryKey: chatbotQueryKeys.session(sessionId) });
+      return invalidateChatbotSession(queryClient, sessionId);
     },
   });
 }
@@ -129,6 +134,6 @@ export function useSaveChatbotSettings(): UseMutationResult<
     mutationFn: ({ key, settings }: SaveChatbotSettingsVariables): Promise<{ settings?: { settings?: ChatbotSettingsPayload } }> =>
       saveChatbotSettings(key, settings),
     onSuccess: (_data: { settings?: { settings?: ChatbotSettingsPayload } }, { key }: SaveChatbotSettingsVariables): Promise<void> => {
-      return queryClient.invalidateQueries({ queryKey: chatbotQueryKeys.settings.all(key) });
+      return invalidateSettingsScope(queryClient, key);
     },  });
 }

@@ -13,6 +13,39 @@ export const invalidateProductMetadata = (queryClient: QueryClient) => {
   return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
 };
 
+export const invalidateProducts = (queryClient: QueryClient) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
+};
+
+export const invalidateProductsAndCounts = (queryClient: QueryClient) => {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() }),
+  ]);
+};
+
+export const invalidateProductsAndDetail = (queryClient: QueryClient, productId: string) => {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.detail(productId) }),
+  ]);
+};
+
+export const invalidateProductsCountsAndDetail = (queryClient: QueryClient, productId: string) => {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.detail(productId) }),
+  ]);
+};
+
+export const refetchProductsAndCounts = (queryClient: QueryClient) => {
+  return Promise.all([
+    queryClient.refetchQueries({ queryKey: QUERY_KEYS.products.lists() }),
+    queryClient.refetchQueries({ queryKey: QUERY_KEYS.products.counts() }),
+  ]);
+};
+
 export const invalidateCatalogs = (queryClient: QueryClient) => {
   return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.catalogs });
 };
@@ -35,6 +68,14 @@ export const invalidateCmsSlugs = (queryClient: QueryClient) => {
   return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cms.slugs.all });
 };
 
+export const invalidateCmsDomains = (queryClient: QueryClient) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cms.domains.all });
+};
+
+export const invalidateCmsThemes = (queryClient: QueryClient) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cms.themes.all });
+};
+
 // --- Notes ---
 
 export const invalidateNotebooks = (queryClient: QueryClient) => {
@@ -49,6 +90,102 @@ export const invalidateNoteDetail = (queryClient: QueryClient, noteId: string) =
 
 export const invalidateIntegrationConnections = (queryClient: QueryClient) => {
   return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.connections() });
+};
+
+// --- Settings ---
+
+export const invalidateAllSettings = (queryClient: QueryClient) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.settings.all });
+};
+
+export const invalidateSettingsScope = (queryClient: QueryClient, scope: string) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.settings.scope(scope) });
+};
+
+// --- Users & Preferences ---
+
+export const invalidateUsers = (queryClient: QueryClient) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.auth.users.all });
+};
+
+export const invalidateUserPreferences = (queryClient: QueryClient) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.auth.preferences.all });
+};
+
+// --- Files ---
+
+export const invalidateFiles = (queryClient: QueryClient) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.files.all });
+};
+
+// --- Chatbot ---
+
+export const invalidateChatbotSessions = (queryClient: QueryClient) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.chatbot.sessions() });
+};
+
+export const invalidateChatbotSession = (queryClient: QueryClient, sessionId: string) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.chatbot.session(sessionId) });
+};
+
+export const invalidateChatbotMemory = (queryClient: QueryClient) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.chatbot.memory() });
+};
+
+// --- Viewer 3D ---
+
+export const invalidateAsset3d = (queryClient: QueryClient) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.viewer3d.all });
+};
+
+export const invalidateAsset3dDetail = (queryClient: QueryClient, id: string) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.viewer3d.detail(id) });
+};
+
+// --- Analytics ---
+
+export const invalidateAnalytics = (queryClient: QueryClient) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.analytics.all });
+};
+
+// --- Jobs ---
+
+export const invalidateJobs = (queryClient: QueryClient) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.jobs.all });
+};
+
+export const invalidateIntegrationJobs = (queryClient: QueryClient) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.jobs.integrations() });
+};
+
+// --- Drafter ---
+
+export const invalidateDrafts = (queryClient: QueryClient) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.drafts.all });
+};
+
+export const invalidateDraftDetail = (queryClient: QueryClient, id: string) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.drafts.detail(id) });
+};
+
+// --- Agent Creator ---
+
+export const invalidateAgentRuns = (queryClient: QueryClient) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.agentRuns.all });
+};
+
+export const invalidateAgentPersonas = (queryClient: QueryClient) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.agentPersonas.all });
+};
+
+// --- Image Studio ---
+
+export const invalidateImageStudioProjects = (queryClient: QueryClient) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.imageStudio.projects() });
+};
+
+export const invalidateImageStudioSlots = (queryClient: QueryClient, projectId: string) => {
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.imageStudio.slots(projectId) });
 };
 
 // --- AI Paths ---

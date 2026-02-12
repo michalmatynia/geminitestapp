@@ -21,7 +21,7 @@ describe('PathRunExecutor', () => {
   let repo: any;
 
   beforeEach(async () => {
-    repo = getPathRunRepository();
+    repo = await getPathRunRepository();
     await prisma.aiPathRunEvent.deleteMany();
     await prisma.aiPathRunNode.deleteMany();
     await prisma.aiPathRun.deleteMany();

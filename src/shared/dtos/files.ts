@@ -1,35 +1,6 @@
-import { DtoBase, CreateDto, UpdateDto } from '../types/base';
+/**
+ * Compatibility layer for File DTOs.
+ * Types are now defined in src/shared/contracts/files.ts using Zod.
+ */
 
-// Files DTOs
-export interface FileDto extends DtoBase {
-  filename: string;
-  originalName: string;
-  mimeType: string;
-  size: number;
-  path: string;
-  url: string;
-  metadata?: Record<string, unknown>;
-}
-
-export interface ImageFileDto extends FileDto {
-  width: number;
-  height: number;
-  alt?: string;
-  thumbnailUrl?: string;
-}
-
-export type UpdateFileDto = UpdateDto<FileDto>;
-export type UpdateImageFileDto = UpdateDto<ImageFileDto>;
-
-export interface UploadFileDto {
-  file: File;
-  alt?: string;
-  metadata?: Record<string, unknown>;
-}
-
-export interface FileUploadResponseDto {
-  id: string;
-  url: string;
-  filename: string;
-  size: number;
-}
+export * from '../contracts/files';

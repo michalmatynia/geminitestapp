@@ -43,12 +43,12 @@ export const logger = {
     
     handlers.forEach((h) => h('error', message, error, context));
 
-    // Integration with centralized observability (Client-side fallback)
-    if (typeof window !== 'undefined' && handlers.length === 0) {
+    // Integration with centralized observability (Client-side)
+    if (typeof window !== 'undefined') {
       void (async (): Promise<void> => {
         try {
-          const err = error instanceof Error ? error : new Error(message);
           const { logClientError } = await import('@/shared/utils/observability/client-error-logger');
+          const err = error instanceof Error ? error : new Error(message);
           logClientError(err, { context: { source: 'shared-logger', message, ...combinedContext } });
         } catch {
           // Fallback if logClientError fails or import fails

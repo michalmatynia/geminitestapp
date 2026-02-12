@@ -16,6 +16,29 @@ import {
 
 import type { ChatbotSessionListItem } from '../types';
 
+const normalizeModelList = (payload: unknown): string[] => {
+  if (Array.isArray(payload)) {
+    return payload
+      .filter((item): item is string => typeof item === 'string')
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+  }
+
+  if (!payload || typeof payload !== 'object') {
+    return [];
+  }
+
+  const record = payload as Record<string, unknown>;
+  if ('models' in record) {
+    return normalizeModelList(record['models']);
+  }
+  if ('data' in record) {
+    return normalizeModelList(record['data']);
+  }
+
+  return [];
+};
+
 /**
  * Query hook for fetching all chatbot sessions
  */
@@ -76,12 +99,12 @@ export function useChatbotSettings(key?: string, options?: { enabled?: boolean }
  * Query hook for fetching available models from the chatbot API
  */
 export function useChatbotModels(options?: { enabled?: boolean }): UseQueryResult<string[]> {
-  return useQuery({
+  return useQuery<unknown, Error, string[]>({
     queryKey: chatbotQueryKeys.models(),
-    queryFn: async (): Promise<string[]> => {
-      const data = await api.get<{ models?: string[] }>('/api/chatbot');
-      return data.models ?? [];
+    queryFn: async (): Promise<unknown> => {
+      return api.get<unknown>('/api/chatbot');
     },
+    select: (raw: unknown): string[] => normalizeModelList(raw),
     staleTime: 1000 * 60 * 5, // 5 minutes
     enabled: options?.enabled ?? true,
   });

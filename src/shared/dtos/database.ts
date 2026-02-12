@@ -1,120 +1,20 @@
-import { DtoBase, CreateDto, UpdateDto } from '../types/base';
+/**
+ * Compatibility layer for Database DTOs.
+ * Types are now defined in src/shared/contracts/database.ts using Zod.
+ */
 
-// Database Schema Introspection DTOs
-export interface FieldInfoDto {
-  name: string;
-  type: string;
-  isRequired?: boolean | null;
-  isId?: boolean | null;
-  isUnique?: boolean | null;
-  hasDefault?: boolean | null;
-  relationTo?: string | null;
-}
+import { 
+  DatabaseEngineOperationJobDto,
+  DatabaseEngineBackupTargetStatusDto,
+  DatabaseEngineBackupSchedulerStatusDto,
+  DatabaseEngineBackupSchedulerTickResultDto
+} from '../contracts/database';
+import { CreateDto, UpdateDto } from '../types/base';
 
-export interface CollectionSchemaDto {
-  name: string;
-  fields: FieldInfoDto[];
-  relations?: string[];
-  documentCount?: number | undefined;
-}
+export * from '../contracts/database';
 
-export interface UnifiedCollectionDto {
-  name: string;
-  mongoFieldCount: number | null;
-  prismaFieldCount: number | null;
-  mongoDocumentCount: number | null;
-  prismaRowCount: number | null;
-  existsInMongo: boolean;
-  existsInPrisma: boolean;
-  assignedProvider: SchemaProviderDto | 'auto';
-}
-
-export type SchemaProviderDto = 'mongodb' | 'prisma';
-
-export interface SchemaResponseDto {
-  provider: SchemaProviderDto;
-  collections: CollectionSchemaDto[];
-}
-
-export interface MultiSchemaResponseDto {
-  provider: 'multi';
-  collections: Array<CollectionSchemaDto & { provider: SchemaProviderDto }>;
-  sources: Partial<Record<SchemaProviderDto, SchemaResponseDto>>;
-}
-
-export type SchemaResponsePayloadDto = SchemaResponseDto | MultiSchemaResponseDto;
-
-export interface DatabaseBrowseParamsDto {
-  collection: string;
-  limit?: number;
-  skip?: number;
-  query?: string;
-  provider?: SchemaProviderDto;
-}
-
-export interface DatabaseBrowseDto {
-  provider: SchemaProviderDto;
-  collection: string;
-  documents: Record<string, unknown>[];
-  total: number;
-  limit: number;
-  skip: number;
-}
-
-export interface BrowseResponseDto {
-  total: number;
-  items: Record<string, unknown>[];
-  fields: string[];
-}
-
-// Database backup/restore DTOs used by API routes and client features.
-export interface DatabaseBackupFileDto {
-  name: string;
-  size: string;
-  created: string;
-  createdAt: string;
-  lastModified: string;
-  lastModifiedAt: string;
-  lastRestored?: string | undefined;
-}
-
-export interface DatabaseBackupOperationResponseDto {
-  success?: boolean;
-  jobId?: string;
-  message?: string;
-  backupName?: string;
-  log?: string;
-  warning?: string;
-  error?: string;
-  errorId?: string;
-  stage?: string;
-}
-
-export interface DatabaseRestoreOperationResponseDto {
-  message?: string;
-  log?: string;
-  error?: string;
-  errorId?: string;
-  stage?: string;
-  backupName?: string;
-}
-
-export interface RedisNamespaceStatsDto {
-  namespace: string;
-  keyCount: number;
-  sampleKeys: string[];
-}
-
-export interface RedisOverviewDto {
-  enabled: boolean;
-  connected: boolean;
-  urlConfigured: boolean;
-  dbSize: number;
-  usedMemory: string | null;
-  maxMemory: string | null;
-  namespaces: RedisNamespaceStatsDto[];
-  sampleKeys: string[];
-}
+export type CreateDatabaseEngineOperationJobDto = CreateDto<DatabaseEngineOperationJobDto>;
+export type UpdateDatabaseEngineOperationJobDto = UpdateDto<DatabaseEngineOperationJobDto>;
 
 export type DatabaseEngineServiceDto = 'app' | 'auth' | 'product' | 'integrations' | 'cms';
 export type DatabaseEngineProviderDto = 'mongodb' | 'prisma' | 'redis';
@@ -196,81 +96,6 @@ export type DatabaseEngineBackupStatusDto =
   | 'success'
   | 'failed';
 
-export interface DatabaseEngineBackupTargetStatusDto {
-  enabled: boolean;
-  cadence: DatabaseEngineBackupCadenceDto;
-  intervalDays: number;
-  weekday: number;
-  timeUtc: string;
-  lastQueuedAt: string | null;
-  lastRunAt: string | null;
-  lastStatus: DatabaseEngineBackupStatusDto;
-  lastJobId: string | null;
-  lastError: string | null;
-  nextDueAt: string | null;
-  dueNow: boolean;
-}
-
-export interface DatabaseEngineBackupSchedulerQueueStatusDto {
-  running: boolean;
-  healthy: boolean;
-  processing: boolean;
-  activeJobs: number;
-  waitingJobs: number;
-  failedJobs: number;
-  completedJobs: number;
-  lastPollTime: number;
-  timeSinceLastPoll: number;
-}
-
-export interface DatabaseEngineBackupSchedulerStatusDto {
-  timestamp: string;
-  schedulerEnabled: boolean;
-  lastCheckedAt: string | null;
-  repeatEveryMs: number;
-  queue: DatabaseEngineBackupSchedulerQueueStatusDto;
-  targets: {
-    mongodb: DatabaseEngineBackupTargetStatusDto;
-    postgresql: DatabaseEngineBackupTargetStatusDto;
-  };
-}
-
-export type DatabaseEngineOperationJobStatusDto =
-  | 'pending'
-  | 'running'
-  | 'completed'
-  | 'failed'
-  | 'cancelled';
-
-export type DatabaseEngineOperationJobTypeDto = 'db_backup' | 'db_sync';
-
-export interface DatabaseEngineOperationJobDto extends DtoBase {
-  type: DatabaseEngineOperationJobTypeDto;
-  status: DatabaseEngineOperationJobStatusDto;
-  dbType: 'mongodb' | 'postgresql' | null;
-  direction: 'mongo_to_prisma' | 'prisma_to_mongo' | null;
-  source: string | null;
-  startedAt: string | null;
-  finishedAt: string | null;
-  errorMessage: string | null;
-  resultSummary: string | null;
-}
-
-export type CreateDatabaseEngineOperationJobDto = CreateDto<DatabaseEngineOperationJobDto>;
-export type UpdateDatabaseEngineOperationJobDto = UpdateDto<DatabaseEngineOperationJobDto>;
-
-export interface DatabaseEngineOperationsJobsDto {
-  timestamp: string;
-  queueStatus: {
-    running: boolean;
-    healthy: boolean;
-    processing: boolean;
-    lastPollTime: number;
-    timeSinceLastPoll: number;
-  };
-  jobs: DatabaseEngineOperationJobDto[];
-}
-
 export interface DatabaseCollectionCopyResultDto {
   name: string;
   status: 'completed' | 'skipped' | 'failed';
@@ -279,13 +104,6 @@ export interface DatabaseCollectionCopyResultDto {
   targetInserted: number;
   warnings?: string[];
   error?: string;
-}
-
-export interface DatabaseEngineBackupSchedulerTickResultDto {
-  checkedAt: string;
-  schedulerEnabled: boolean;
-  triggered: Array<{ dbType: 'mongodb' | 'postgresql'; jobId: string }>;
-  skipped: Array<{ dbType: 'mongodb' | 'postgresql'; reason: string }>;
 }
 
 export interface DatabaseEngineBackupSchedulerTickResponseDto {

@@ -29,7 +29,9 @@ async function getBackups(type: 'postgresql' | 'mongodb'): Promise<DatabaseInfo[
   try {
     const logFile = await fs.readFile(logPath, 'utf-8');
     logData = JSON.parse(logFile) as Record<string, string>;
-  } catch (_error) {
+  } catch (error) {
+    const { ErrorSystem } = await import('@/features/observability/server');
+    void ErrorSystem.logWarning('Failed to load restore-log.json in getBackups', { error, type });
     // No log yet.
   }
 

@@ -5,6 +5,10 @@ import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMut
 import { fetchAssets3D, fetchCategories, fetchTags, reindexAssets3DFromDisk } from '@/features/viewer3d/api';
 import type { Asset3DListFilters, Asset3DRecord } from '@/features/viewer3d/types';
 import { api } from '@/shared/lib/api-client';
+import {
+  invalidateAsset3d,
+  invalidateAsset3dDetail,
+} from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 export const asset3dKeys = QUERY_KEYS.viewer3d;
@@ -43,7 +47,7 @@ export function useDeleteAsset3DMutation(): UseMutationResult<void, Error, strin
   return useMutation({
     mutationFn: (id: string) => api.delete<void>(`/api/assets3d/${id}`),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: asset3dKeys.all });
+      void invalidateAsset3d(queryClient);
     },
   });
 }
@@ -53,8 +57,8 @@ export function useUpdateAsset3DMutation(): UseMutationResult<Asset3DRecord, Err
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<Asset3DRecord> }) => api.patch<Asset3DRecord>(`/api/assets3d/${id}`, data),
     onSuccess: (data: Asset3DRecord) => {
-      void queryClient.invalidateQueries({ queryKey: asset3dKeys.all });
-      void queryClient.invalidateQueries({ queryKey: asset3dKeys.detail(data.id) });
+      void invalidateAsset3d(queryClient);
+      void invalidateAsset3dDetail(queryClient, data.id);
     },
   });
 }
@@ -72,10 +76,11 @@ export function useReindexAssets3DMutation(): UseMutationResult<
   void
   > {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: () => reindexAssets3DFromDisk(),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: asset3dKeys.all });
-    },
-  });
-}
+    return useMutation({
+      mutationFn: () => reindexAssets3DFromDisk(),
+      onSuccess: () => {
+        void invalidateAsset3d(queryClient);
+      },
+    });
+  }
+  

@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 
 import { api } from '@/shared/lib/api-client';
+import { invalidateChatbotMemory } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import type { ChatbotMemoryItem } from '../types';
@@ -37,7 +38,7 @@ export function useDeleteMemoryItem(): UseMutationResult<void, Error, string> {
       await api.delete(`/api/chatbot/memory/${id}`);
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: memoryKeys.all });
+      void invalidateChatbotMemory(queryClient);
     },
   });
 }

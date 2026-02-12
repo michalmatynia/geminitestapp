@@ -5,17 +5,14 @@ import { Suspense } from 'react';
 import { IntegrationList } from '@/features/integrations/components/connections/IntegrationList';
 import { IntegrationModal } from '@/features/integrations/components/connections/IntegrationModal';
 import { IntegrationsProvider, useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
-import { integrationDefinitions } from '@/features/integrations/types/integrations-ui';
 import { ConfirmDialog } from '@/shared/ui';
 
 function IntegrationsContent(): React.JSX.Element {
   const {
-    integrations,
     activeIntegration,
     isModalOpen,
     connectionToDelete,
     setConnectionToDelete,
-    handleIntegrationClick,
     handleConfirmDeleteConnection,
   } = useIntegrationsContext();
 
@@ -30,10 +27,7 @@ function IntegrationsContent(): React.JSX.Element {
         confirmText='Delete'
         variant='destructive'
       />
-      <IntegrationList
-        integrations={integrations}
-        onIntegrationClick={(def: (typeof integrationDefinitions)[number]): void => { void handleIntegrationClick(def); }}
-      />
+      <IntegrationList />
 
       {isModalOpen && activeIntegration && (
         <IntegrationModal />

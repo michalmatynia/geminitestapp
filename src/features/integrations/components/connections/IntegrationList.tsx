@@ -3,21 +3,13 @@
 import { PlusIcon, SettingsIcon } from 'lucide-react';
 import Link from 'next/link';
 
+import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 import { Integration, integrationDefinitions } from '@/features/integrations/types/integrations-ui';
 import { Button, ListPanel, SectionHeader, SectionPanel } from '@/shared/ui';
 
 
-
-
-type IntegrationListProps = {
-  integrations: Integration[];
-  onIntegrationClick: (definition: (typeof integrationDefinitions)[number]) => void;
-};
-
-export function IntegrationList({
-  integrations,
-  onIntegrationClick,
-}: IntegrationListProps): React.JSX.Element {
+export function IntegrationList(): React.JSX.Element {
+  const { integrations, handleIntegrationClick } = useIntegrationsContext();
   const integrationSlugs = integrations.map((integration: Integration) => integration.slug);
   const hasIntegrations = integrations.length > 0;
 
@@ -60,7 +52,7 @@ export function IntegrationList({
                   Tradera
                   <Button
                     type='button'
-                    onClick={() => onIntegrationClick(integrationDefinitions[0])}
+                    onClick={() => void handleIntegrationClick(integrationDefinitions[0])}
                     className='rounded-full border border-white/20 bg-white/10 p-1 text-white hover:bg-white/20'
                     aria-label='Manage Tradera settings'
                   >
@@ -76,7 +68,7 @@ export function IntegrationList({
                   Allegro
                   <Button
                     type='button'
-                    onClick={() => onIntegrationClick(integrationDefinitions[1])}
+                    onClick={() => void handleIntegrationClick(integrationDefinitions[1])}
                     className='rounded-full border border-white/20 bg-white/10 p-1 text-white hover:bg-white/20'
                     aria-label='Manage Allegro settings'
                   >
@@ -92,7 +84,7 @@ export function IntegrationList({
                   Baselinker
                   <Button
                     type='button'
-                    onClick={() => onIntegrationClick(integrationDefinitions[2])}
+                    onClick={() => void handleIntegrationClick(integrationDefinitions[2])}
                     className='rounded-full border border-white/20 bg-white/10 p-1 text-white hover:bg-white/20'
                     aria-label='Manage Baselinker settings'
                   >

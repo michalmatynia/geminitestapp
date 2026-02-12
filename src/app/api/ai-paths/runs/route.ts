@@ -31,22 +31,29 @@ const staleRunningCleanupIntervalMs = parseEnvNumber(
 );
 
 const scheduleStaleRunningCleanup = (
-  repo: ReturnType<typeof getPathRunRepository>,
+  repo: Awaited<ReturnType<typeof getPathRunRepository>>,
   staleRunningMaxAgeMs: number
 ): void => {
   const now = Date.now();
   if (staleRunningCleanupPromise) return;
   if (now - lastStaleRunningCleanupAt < staleRunningCleanupIntervalMs) return;
   lastStaleRunningCleanupAt = now;
-  staleRunningCleanupPromise = repo
-    .markStaleRunningRuns(staleRunningMaxAgeMs)
-    .then(() => undefined)
-    .catch(() => {
-      // Non-fatal cleanup best effort.
-    })
-    .finally(() => {
+
+  const runCleanup = async (): Promise<void> => {
+    try {
+      await repo.markStaleRunningRuns(staleRunningMaxAgeMs);
+    } catch (error) {
+      const { ErrorSystem } = await import('@/features/observability/server');
+      void ErrorSystem.logWarning('[ai-paths.runs.list] Failed to cleanup stale running runs.', {
+        service: 'ai-paths',
+        error,
+      });
+    } finally {
       staleRunningCleanupPromise = null;
-    });
+    }
+  };
+
+  staleRunningCleanupPromise = runCleanup();
 };
 
 const RUN_STATUSES: AiPathRunStatus[] = [

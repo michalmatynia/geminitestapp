@@ -3,6 +3,10 @@
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 
 import { api } from '@/shared/lib/api-client';
+import {
+  invalidateNoteDetail,
+  invalidateNotebooks,
+} from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { DeleteResponse } from '@/shared/types/api/api';
 import type {
@@ -42,7 +46,7 @@ export function useUpdateNote(): UseMutationResult<NoteWithRelations, Error, Not
       api.patch<NoteWithRelations>(`/api/notes/${id}`, data),
     onSuccess: (_data: NoteWithRelations, variables): void => {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.detail(variables.id) });
+      void invalidateNoteDetail(queryClient, variables.id);
     },
   });
 }
@@ -99,7 +103,7 @@ export function useCreateNotebook(): UseMutationResult<NotebookRecord, Error, No
   return useMutation({
     mutationFn: (payload: NotebookCreateInput) => api.post<NotebookRecord>('/api/notes/notebooks', payload),
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.notebooks });
+      void invalidateNotebooks(queryClient);
     },
   });
 }
@@ -110,8 +114,8 @@ export function useUpdateNotebook(): UseMutationResult<NotebookRecord, Error, No
     mutationFn: ({ id, ...data }: NotebookUpdateInput & { id: string }) =>
       api.patch<NotebookRecord>(`/api/notes/notebooks/${id}`, data),
     onSuccess: (_data, variables): void => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.notebooks });
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.detail(variables.id) });
+      void invalidateNotebooks(queryClient);
+      void invalidateNoteDetail(queryClient, variables.id);
     },
   });
 }
@@ -146,7 +150,7 @@ export function useUpdateNoteTag(): UseMutationResult<TagRecord, Error, TagUpdat
     mutationFn: ({ id, ...data }: TagUpdateInput & { id: string }) =>
       api.patch<TagRecord>(`/api/notes/tags/${id}`, data),
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.tags });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.tags() });
     },
   });
 }
@@ -156,7 +160,7 @@ export function useDeleteNoteTag(): UseMutationResult<DeleteResponse, Error, str
   return useMutation({
     mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/tags/${id}`),
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.tags });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.tags() });
     },
   });
 }

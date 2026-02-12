@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient, type UseQueryResult, type UseMut
 
 import type { ExpandedImageFile } from '@/features/products';
 import { api } from '@/shared/lib/api-client';
+import { invalidateFiles } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 const fileKeys = QUERY_KEYS.files;
@@ -23,7 +24,7 @@ export function useDeleteFile(): UseMutationResult<string, Error, string> {
       return fileId;
     },
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({ queryKey: fileKeys.all });
+      void invalidateFiles(queryClient);
     },
   });
 }
@@ -33,7 +34,8 @@ export function useUpdateFileTags(): UseMutationResult<ExpandedImageFile, Error,
   return useMutation({
     mutationFn: ({ id, tags }: { id: string; tags: string[] }) => api.patch<ExpandedImageFile>(`/api/files/${id}`, { tags }),
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({ queryKey: fileKeys.all });
+      void invalidateFiles(queryClient);
     },
   });
 }
+  

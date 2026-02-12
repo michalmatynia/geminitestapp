@@ -16,6 +16,7 @@ import {
   type SettingsScope,
 } from '@/shared/api/settings-client';
 import { api } from '@/shared/lib/api-client';
+import { invalidateAllSettings } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { SystemSetting } from '@/shared/types/domain/settings';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -109,9 +110,7 @@ export function useUpdateSetting(): UseMutationResult<
       return res;
     },
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({
-        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'settings',
-      });
+      void invalidateAllSettings(queryClient);
     },
   });
 }
@@ -134,9 +133,7 @@ export function useUpdateSettingsBulk(): UseMutationResult<
       return responses;
     },
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({
-        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'settings',
-      });
+      void invalidateAllSettings(queryClient);
     },
   });
 }

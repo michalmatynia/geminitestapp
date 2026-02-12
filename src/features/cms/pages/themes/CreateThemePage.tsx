@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
 import { useCreateTheme } from '@/features/cms/hooks/useCmsQueries';
-import type { CmsThemeColors, CmsThemeTypography, CmsThemeSpacing } from '@/features/cms/types';
+import type { CmsThemeColors, CmsThemeTypography, CmsThemeSpacing, CmsThemeCreateInput } from '@/features/cms/types';
 import { cmsThemeCreateSchema } from '@/features/cms/validations/api';
 import { logClientError } from '@/features/observability';
 import { Button, Input, SectionHeader, FormSection, FormField } from '@/shared/ui';
@@ -57,7 +57,8 @@ export default function CreateThemePage(): React.ReactNode {
 
     setError(null);
     try {
-      await createTheme.mutateAsync(validation.data);
+      const data = validation.data as CmsThemeCreateInput;
+      await createTheme.mutateAsync(data);
       router.push('/admin/cms/themes');
     } catch (submitError: unknown) {
       logClientError(submitError, { context: { source: 'CreateThemePage', action: 'createTheme', name } });
@@ -68,6 +69,8 @@ export default function CreateThemePage(): React.ReactNode {
   const updateColor = (key: keyof CmsThemeColors, value: string): void => {
     setColors((prev: CmsThemeColors) => ({ ...prev, [key]: value }));
   };
+
+  const colorKeys = Object.keys(colors) as Array<keyof CmsThemeColors>;
 
   return (
     <div className='container mx-auto max-w-2xl py-10'>
@@ -91,7 +94,7 @@ export default function CreateThemePage(): React.ReactNode {
         </FormSection>
 
         <FormSection title='Colors' description='Brand and semantic colors for the theme.' gridClassName='grid-cols-2'>
-          {(Object.keys(colors) as Array<keyof CmsThemeColors>).map((key: keyof CmsThemeColors) => (
+          {colorKeys.map((key) => (
             <FormField key={key} label={key} className='capitalize'>
               <div className='flex items-center gap-2'>
                 <input

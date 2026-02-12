@@ -3,11 +3,11 @@
 import React from 'react';
 
 import type { AiInsightRecord } from '@/shared/types';
-import { StatusBadge } from '@/shared/ui';
+import { StatusBadge, Card } from '@/shared/ui';
 
 export function InsightCard({ insight }: { insight: AiInsightRecord }): React.JSX.Element {
   return (
-    <div className='rounded-md border border-border/60 bg-gray-950/40 p-3 text-xs text-gray-300'>
+    <Card variant='glass' padding='sm' className='text-xs text-gray-300'>
       <div className='flex items-center justify-between gap-2'>
         <span className='text-[10px] uppercase text-gray-500'>
           {new Date(insight.createdAt).toLocaleString()}
@@ -22,6 +22,6 @@ export function InsightCard({ insight }: { insight: AiInsightRecord }): React.JS
           ))}
         </ul>
       ) : null}
-    </div>
+    </Card>
   );
 }

@@ -3,10 +3,10 @@
 import { useMemo } from 'react';
 
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import type { FolderTreeInstance } from '@/shared/utils/folder-tree-profiles';
 import {
   FOLDER_TREE_PROFILES_V2_SETTING_KEY,
   parseFolderTreeProfilesV2,
+  type FolderTreeInstance,
   type FolderTreeProfileV2,
   type FolderTreeProfilesV2Map,
 } from '@/shared/utils/folder-tree-profiles-v2';

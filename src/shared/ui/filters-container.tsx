@@ -6,8 +6,8 @@ import { ReactNode } from 'react';
 import { cn } from '@/shared/utils';
 
 import { Button } from './button';
+import { SectionHeader } from './section-header';
 import { SectionPanel } from './section-panel';
-
 
 interface FiltersContainerProps {
   title?: string;
@@ -28,22 +28,23 @@ export function FiltersContainer({
 }: FiltersContainerProps) {
   return (
     <SectionPanel className={cn('mb-4 space-y-3', className)}>
-      <div className='flex items-center justify-between'>
-        <h3 className='text-sm font-semibold text-foreground'>
-          {title}
-        </h3>
-        {hasActiveFilters && onReset && (
-          <Button
-            variant='ghost'
-            size='sm'
-            onClick={onReset}
-            className='h-8 gap-2'
-          >
-            <X className='h-3 w-3' />
-            Reset filters
-          </Button>
-        )}
-      </div>
+      <SectionHeader
+        title={title}
+        size='xs'
+        actions={
+          hasActiveFilters && onReset ? (
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={onReset}
+              className='h-8 gap-2'
+            >
+              <X className='h-3 w-3' />
+              Reset filters
+            </Button>
+          ) : undefined
+        }
+      />
 
       <div className={cn('grid grid-cols-1 gap-3', gridClassName)}>
         {children}

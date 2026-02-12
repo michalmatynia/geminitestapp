@@ -5,7 +5,7 @@ import React from 'react';
 
 import { APP_EMBED_OPTIONS, type AppEmbedId } from '@/features/app-embeds/lib/constants';
 import { AppEmbedsProvider, useAppEmbeds } from '@/features/app-embeds/providers/AppEmbedsProvider';
-import { Button, Checkbox, PanelHeader, SectionPanel } from '@/shared/ui';
+import { Button, Checkbox, SectionHeader, SectionPanel } from '@/shared/ui';
 
 export function AppEmbedsPanel({ showHeader = true }: { showHeader?: boolean } = {}): React.ReactNode {
   return (
@@ -29,9 +29,11 @@ function AppEmbedsPanelContent({ showHeader }: { showHeader: boolean }): React.R
   return (
     <div className='flex min-h-0 flex-1 flex-col'>
       {showHeader && (
-        <PanelHeader
+        <SectionHeader
           title='App embeds'
           subtitle='Enable apps you can embed into CMS layouts.'
+          size='xs'
+          className='p-3 border-b border-border'
         />
       )}
       <div className='flex-1 overflow-y-auto p-3'>

@@ -1,12 +1,9 @@
 import { z } from 'zod';
 
 import {
-  createDefaultFolderTreeProfiles,
   folderTreeInstanceValues,
   folderTreePlaceholderPresetValues,
-  type FolderTreeInstance,
   type FolderTreePlaceholderPreset,
-  type FolderTreeProfile,
 } from './folder-tree-profiles';
 import {
   normalizeMasterTreeKind,
@@ -59,6 +56,7 @@ export type FolderTreeProfileV2 = {
   };
 };
 
+export type FolderTreeInstance = (typeof folderTreeInstanceValues)[number];
 export type FolderTreeProfilesV2Map = Record<FolderTreeInstance, FolderTreeProfileV2>;
 
 export type CanNestTreeNodeV2Input = {
@@ -177,88 +175,223 @@ const cloneProfileV2 = (profile: FolderTreeProfileV2): FolderTreeProfileV2 => ({
   },
 });
 
-const iconSlotsFromV1 = (
-  icons: FolderTreeProfile['icons']
-): Record<FolderTreeIconSlot, string | null> => ({
-  folderClosed: icons.folderClosed,
-  folderOpen: icons.folderOpen,
-  file: icons.file,
-  root: icons.root,
-  dragHandle: icons.dragHandle,
-});
-
-const createNestingRulesFromV1 = (profile: FolderTreeProfile): FolderTreeNestingRuleV2[] => [
-  {
-    childType: 'folder',
-    childKinds: normalizeKindList(profile.nesting.folderKindsAllowedAsChildren, ['*']),
-    targetType: 'folder',
-    targetKinds: ['*'],
-    allow: profile.nesting.allowFolderToFolder,
-  },
-  {
-    childType: 'file',
-    childKinds: normalizeKindList(profile.nesting.fileKindsAllowedAsChildren, ['*']),
-    targetType: 'folder',
-    targetKinds: ['*'],
-    allow: profile.nesting.allowFileToFolder,
-  },
-  {
-    childType: 'folder',
-    childKinds: normalizeKindList(profile.nesting.folderKindsAllowedAsChildren, ['*']),
-    targetType: 'root',
-    targetKinds: ['root'],
-    allow: profile.nesting.allowRootFolderDrop,
-  },
-  {
-    childType: 'file',
-    childKinds: normalizeKindList(profile.nesting.fileKindsAllowedAsChildren, ['*']),
-    targetType: 'root',
-    targetKinds: ['root'],
-    allow: profile.nesting.allowRootFileDrop,
-  },
-];
-
-const styleFromPreset = (preset: FolderTreePlaceholderPreset): FolderTreePlaceholderStyle => {
-  if (preset === 'vivid') return 'pill';
-  if (preset === 'classic') return 'line';
-  return 'ghost';
-};
-
-const emphasisFromPreset = (
-  preset: FolderTreePlaceholderPreset
-): FolderTreePlaceholderEmphasis => {
-  if (preset === 'vivid') return 'bold';
-  if (preset === 'classic') return 'balanced';
-  return 'subtle';
-};
-
-export const upgradeFolderTreeProfileV1ToV2 = (profile: FolderTreeProfile): FolderTreeProfileV2 => ({
-  version: 2,
-  placeholders: {
-    preset: profile.placeholders.preset,
-    style: styleFromPreset(profile.placeholders.preset),
-    emphasis: emphasisFromPreset(profile.placeholders.preset),
-    rootDropLabel: profile.placeholders.rootDropLabel,
-    inlineDropLabel: profile.placeholders.inlineDropLabel,
-  },
-  icons: {
-    slots: iconSlotsFromV1(profile.icons),
-    byKind: {},
-  },
-  nesting: {
-    defaultAllow: false,
-    blockedTargetKinds: normalizeKindList(profile.nesting.blockedTargetFolderKinds, []),
-    rules: createNestingRulesFromV1(profile),
-  },
-});
-
-const defaultProfilesV1 = createDefaultFolderTreeProfiles();
-
 export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
-  notes: upgradeFolderTreeProfileV1ToV2(defaultProfilesV1.notes),
-  image_studio: upgradeFolderTreeProfileV1ToV2(defaultProfilesV1.image_studio),
-  product_categories: upgradeFolderTreeProfileV1ToV2(defaultProfilesV1.product_categories),
-  cms_page_builder: upgradeFolderTreeProfileV1ToV2(defaultProfilesV1.cms_page_builder),
+  notes: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Drop to Root',
+      inlineDropLabel: 'Drop to folder',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'Folder',
+        folderOpen: 'FolderOpen',
+        file: 'FileText',
+        root: 'Folder',
+        dragHandle: 'GripVertical',
+      },
+      byKind: {},
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [
+        {
+          childType: 'folder',
+          childKinds: ['folder'],
+          targetType: 'folder',
+          targetKinds: ['*'],
+          allow: true,
+        },
+        {
+          childType: 'file',
+          childKinds: ['note'],
+          targetType: 'folder',
+          targetKinds: ['*'],
+          allow: true,
+        },
+        {
+          childType: 'folder',
+          childKinds: ['folder'],
+          targetType: 'root',
+          targetKinds: ['root'],
+          allow: true,
+        },
+        {
+          childType: 'file',
+          childKinds: ['note'],
+          targetType: 'root',
+          targetKinds: ['root'],
+          allow: true,
+        },
+      ],
+    },
+  },
+  image_studio: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Drop to Root',
+      inlineDropLabel: 'Drop card',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'Folder',
+        folderOpen: 'FolderOpen',
+        file: 'Image',
+        root: 'Folder',
+        dragHandle: 'GripVertical',
+      },
+      byKind: {},
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [
+        {
+          childType: 'folder',
+          childKinds: ['folder'],
+          targetType: 'folder',
+          targetKinds: ['*'],
+          allow: true,
+        },
+        {
+          childType: 'file',
+          childKinds: ['card', 'generation', 'mask', 'variant', 'part', 'version', 'derived'],
+          targetType: 'folder',
+          targetKinds: ['*'],
+          allow: true,
+        },
+        {
+          childType: 'folder',
+          childKinds: ['folder'],
+          targetType: 'root',
+          targetKinds: ['root'],
+          allow: true,
+        },
+        {
+          childType: 'file',
+          childKinds: ['card', 'generation', 'mask', 'variant', 'part', 'version', 'derived'],
+          targetType: 'root',
+          targetKinds: ['root'],
+          allow: true,
+        },
+      ],
+    },
+  },
+  product_categories: {
+    version: 2,
+    placeholders: {
+      preset: 'classic',
+      style: 'line',
+      emphasis: 'balanced',
+      rootDropLabel: 'Move to root category',
+      inlineDropLabel: 'Drop category',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'Folder',
+        folderOpen: 'FolderOpen',
+        file: null,
+        root: 'Folder',
+        dragHandle: 'GripVertical',
+      },
+      byKind: {},
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [
+        {
+          childType: 'folder',
+          childKinds: ['category'],
+          targetType: 'folder',
+          targetKinds: ['*'],
+          allow: true,
+        },
+        {
+          childType: 'file',
+          childKinds: ['*'],
+          targetType: 'folder',
+          targetKinds: ['*'],
+          allow: false,
+        },
+        {
+          childType: 'folder',
+          childKinds: ['category'],
+          targetType: 'root',
+          targetKinds: ['root'],
+          allow: true,
+        },
+        {
+          childType: 'file',
+          childKinds: ['*'],
+          targetType: 'root',
+          targetKinds: ['root'],
+          allow: false,
+        },
+      ],
+    },
+  },
+  cms_page_builder: {
+    version: 2,
+    placeholders: {
+      preset: 'classic',
+      style: 'line',
+      emphasis: 'balanced',
+      rootDropLabel: 'Drop section',
+      inlineDropLabel: 'Drop here',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'Folder',
+        folderOpen: 'FolderOpen',
+        file: 'Box',
+        root: 'LayoutGrid',
+        dragHandle: 'GripVertical',
+      },
+      byKind: {},
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [
+        {
+          childType: 'folder',
+          childKinds: ['zone', 'section'],
+          targetType: 'folder',
+          targetKinds: ['*'],
+          allow: true,
+        },
+        {
+          childType: 'file',
+          childKinds: ['section', 'block'],
+          targetType: 'folder',
+          targetKinds: ['*'],
+          allow: true,
+        },
+        {
+          childType: 'folder',
+          childKinds: ['zone', 'section'],
+          targetType: 'root',
+          targetKinds: ['root'],
+          allow: true,
+        },
+        {
+          childType: 'file',
+          childKinds: ['section', 'block'],
+          targetType: 'root',
+          targetKinds: ['root'],
+          allow: true,
+        },
+      ],
+    },
+  },
 };
 
 export const createDefaultFolderTreeProfilesV2 = (): FolderTreeProfilesV2Map => ({

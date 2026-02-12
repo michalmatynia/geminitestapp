@@ -96,7 +96,6 @@ export function AppModal({
                     type='button'
                     onClick={() => handleOpenChange(false)}
                     variant='outline'
-                    className='border border-white/20 bg-transparent text-white hover:border-white/40 hover:bg-white/5'
                   >
                     Close
                   </Button>

@@ -19,11 +19,11 @@ import {
 } from '@/shared/ui';
 import {
   folderTreePlaceholderPresetOptions,
-  type FolderTreeInstance,
 } from '@/shared/utils/folder-tree-profiles';
 import {
   createDefaultFolderTreeProfilesV2,
   FOLDER_TREE_PROFILES_V2_SETTING_KEY,
+  type FolderTreeInstance,
   folderTreePlaceholderEmphasisValues,
   folderTreePlaceholderStyleValues,
   parseFolderTreeProfilesV2,
@@ -69,10 +69,10 @@ const INSTANCE_META: Array<{
   },
 ];
 
-type LegacyRuleKey = 'folder_to_folder' | 'file_to_folder' | 'folder_to_root' | 'file_to_root';
+type NestingRuleKey = 'folder_to_folder' | 'file_to_folder' | 'folder_to_root' | 'file_to_root';
 
-const LEGACY_RULE_CONFIG: Record<
-  LegacyRuleKey,
+const NESTING_RULE_CONFIG: Record<
+  NestingRuleKey,
   {
     childType: 'folder' | 'file';
     targetType: 'folder' | 'root';
@@ -127,8 +127,8 @@ const normalizeKindList = (values: string[] | null | undefined, fallback: string
 
 const toTitleLabel = (value: string): string => `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
 
-const findRuleIndex = (profile: FolderTreeProfileV2, key: LegacyRuleKey): number => {
-  const config = LEGACY_RULE_CONFIG[key];
+const findRuleIndex = (profile: FolderTreeProfileV2, key: NestingRuleKey): number => {
+  const config = NESTING_RULE_CONFIG[key];
   for (let index = profile.nesting.rules.length - 1; index >= 0; index -= 1) {
     const rule = profile.nesting.rules[index];
     if (rule.childType !== config.childType) continue;
@@ -142,28 +142,28 @@ const findRuleIndex = (profile: FolderTreeProfileV2, key: LegacyRuleKey): number
   return -1;
 };
 
-const getRule = (profile: FolderTreeProfileV2, key: LegacyRuleKey): FolderTreeNestingRuleV2 | null => {
+const getRule = (profile: FolderTreeProfileV2, key: NestingRuleKey): FolderTreeNestingRuleV2 | null => {
   const index = findRuleIndex(profile, key);
   return index >= 0 ? profile.nesting.rules[index] ?? null : null;
 };
 
-const getRuleAllow = (profile: FolderTreeProfileV2, key: LegacyRuleKey): boolean => {
+const getRuleAllow = (profile: FolderTreeProfileV2, key: NestingRuleKey): boolean => {
   const rule = getRule(profile, key);
   return rule ? rule.allow : profile.nesting.defaultAllow;
 };
 
-const getRuleKinds = (profile: FolderTreeProfileV2, key: LegacyRuleKey): string[] => {
-  const config = LEGACY_RULE_CONFIG[key];
+const getRuleKinds = (profile: FolderTreeProfileV2, key: NestingRuleKey): string[] => {
+  const config = NESTING_RULE_CONFIG[key];
   const rule = getRule(profile, key);
   return normalizeKindList(rule?.childKinds, config.defaultKinds);
 };
 
 const upsertRule = (
   profile: FolderTreeProfileV2,
-  key: LegacyRuleKey,
+  key: NestingRuleKey,
   update: Partial<Pick<FolderTreeNestingRuleV2, 'allow' | 'childKinds'>>
 ): FolderTreeProfileV2 => {
-  const config = LEGACY_RULE_CONFIG[key];
+  const config = NESTING_RULE_CONFIG[key];
   const rules = [...profile.nesting.rules];
   const ruleIndex = findRuleIndex(profile, key);
   const existing = ruleIndex >= 0 ? rules[ruleIndex] : null;

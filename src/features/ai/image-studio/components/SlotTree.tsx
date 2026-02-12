@@ -3,15 +3,13 @@
 import { Folder, FolderOpen, GripVertical, Image as ImageIcon, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
+import { useMasterFolderTreeAppearance } from '@/features/foldertree/hooks/useMasterFolderTreeAppearance';
 import { MasterFolderTree, useMasterFolderTree } from '@/features/foldertree/master';
-import { ICON_LIBRARY_MAP } from '@/features/icons';
 import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
 import { TreeCaret, TreeContextMenu, TreeRow, useToast } from '@/shared/ui';
 import {
   canNestTreeNodeV2,
   cn,
-  getFolderTreePlaceholderClasses,
-  resolveFolderTreeIconV2,
   type MasterTreeId,
   type MasterTreeNode,
 } from '@/shared/utils';
@@ -64,28 +62,37 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
     handleRenameFolder: onRenameFolder,
   } = useSlotsActions();
   const profile = useFolderTreeProfile('image_studio');
+  const { placeholderClasses, rootDropUi, resolveIcon } = useMasterFolderTreeAppearance(profile);
   const { toast } = useToast();
 
-  const placeholderClasses = useMemo(
-    () => getFolderTreePlaceholderClasses(profile.placeholders.preset),
-    [profile.placeholders.preset]
+  const { FolderClosedIcon, FolderOpenIcon, FileIcon, DragHandleIcon } = useMemo(
+    () => ({
+      FolderClosedIcon: resolveIcon({
+        slot: 'folderClosed',
+        kind: 'folder',
+        fallback: Folder,
+        fallbackId: 'Folder',
+      }),
+      FolderOpenIcon: resolveIcon({
+        slot: 'folderOpen',
+        kind: 'folder',
+        fallback: FolderOpen,
+        fallbackId: 'FolderOpen',
+      }),
+      FileIcon: resolveIcon({
+        slot: 'file',
+        kind: 'card',
+        fallback: ImageIcon,
+        fallbackId: 'Image',
+      }),
+      DragHandleIcon: resolveIcon({
+        slot: 'dragHandle',
+        fallback: GripVertical,
+        fallbackId: 'GripVertical',
+      }),
+    }),
+    [resolveIcon]
   );
-  const FolderClosedIcon = useMemo(() => {
-    const iconId = resolveFolderTreeIconV2(profile, 'folderClosed', 'folder') ?? 'Folder';
-    return ICON_LIBRARY_MAP[iconId] ?? Folder;
-  }, [profile]);
-  const FolderOpenIcon = useMemo(() => {
-    const iconId = resolveFolderTreeIconV2(profile, 'folderOpen', 'folder') ?? 'FolderOpen';
-    return ICON_LIBRARY_MAP[iconId] ?? FolderOpen;
-  }, [profile]);
-  const FileIcon = useMemo(() => {
-    const iconId = resolveFolderTreeIconV2(profile, 'file', 'card') ?? 'Image';
-    return ICON_LIBRARY_MAP[iconId] ?? ImageIcon;
-  }, [profile]);
-  const DragHandleIcon = useMemo(() => {
-    const iconId = resolveFolderTreeIconV2(profile, 'dragHandle') ?? 'GripVertical';
-    return ICON_LIBRARY_MAP[iconId] ?? GripVertical;
-  }, [profile]);
 
   const masterNodes = useMemo(
     () => buildMasterNodesFromStudioTree(slots, folders),
@@ -282,11 +289,7 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
         controller={controller}
         className='space-y-0.5'
         emptyLabel='No folders yet. Create a folder or add cards here.'
-        rootDropUi={{
-          label: profile.placeholders.rootDropLabel,
-          idleClassName: placeholderClasses.rootIdle,
-          activeClassName: placeholderClasses.rootActive,
-        }}
+        rootDropUi={rootDropUi}
         resolveDropPosition={(): 'inside' => 'inside'}
         resolveDraggedNodeId={(event: React.DragEvent<HTMLElement>): MasterTreeId | null =>
           resolveExternalDraggedNodeId(event.dataTransfer)

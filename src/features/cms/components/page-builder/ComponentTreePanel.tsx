@@ -3,6 +3,7 @@
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
+import { useMasterFolderTreeAppearance } from '@/features/foldertree/hooks/useMasterFolderTreeAppearance';
 import { MasterFolderTree, useMasterFolderTree } from '@/features/foldertree/master';
 import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -10,9 +11,9 @@ import { FolderTreePanel, TreeHeader } from '@/shared/ui';
 import {
   canNestTreeNodeV2,
   cn,
-  getFolderTreePlaceholderClasses,
   type MasterTreeNode,
 } from '@/shared/utils';
+import type { FolderTreePlaceholderClassSet } from '@/shared/utils/folder-tree-profiles';
 
 import { SectionPicker } from './SectionPicker';
 import {
@@ -59,7 +60,7 @@ type ComponentTreePanelContextValue = {
   showSectionDropPlaceholder: boolean;
   canDropSectionsAtRoot: boolean;
   canDropBlocksAtRoot: boolean;
-  treePlaceholderClasses: ReturnType<typeof getFolderTreePlaceholderClasses>;
+  treePlaceholderClasses: FolderTreePlaceholderClassSet;
   treeInlineDropLabel: string;
   treeRootDropLabel: string;
 };
@@ -156,11 +157,9 @@ export function ComponentTreePanel(): React.ReactNode {
   const { state } = usePageBuilder();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const treeProfile = useFolderTreeProfile('cms_page_builder');
+  const { placeholderClasses: treePlaceholderClasses, rootDropUi: treeRootDropUi } =
+    useMasterFolderTreeAppearance(treeProfile);
   const settingsStore = useSettingsStore();
-  const treePlaceholderClasses = useMemo(
-    () => getFolderTreePlaceholderClasses(treeProfile.placeholders.preset),
-    [treeProfile.placeholders.preset]
-  );
   const canDropSectionsAtRoot = useMemo(
     () =>
       canNestTreeNodeV2({
@@ -268,7 +267,7 @@ export function ComponentTreePanel(): React.ReactNode {
       canDropBlocksAtRoot,
       treePlaceholderClasses,
       treeInlineDropLabel: treeProfile.placeholders.inlineDropLabel,
-      treeRootDropLabel: treeProfile.placeholders.rootDropLabel,
+      treeRootDropLabel: treeRootDropUi.label,
     }),
     [
       state.currentPage,
@@ -279,7 +278,7 @@ export function ComponentTreePanel(): React.ReactNode {
       canDropBlocksAtRoot,
       treePlaceholderClasses,
       treeProfile.placeholders.inlineDropLabel,
-      treeProfile.placeholders.rootDropLabel,
+      treeRootDropUi.label,
     ]
   );
 

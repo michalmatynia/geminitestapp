@@ -25,6 +25,8 @@ import {
   Button,
   PanelHeader,
   SectionPanel,
+  FormSection,
+  FormField,
 } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
@@ -100,9 +102,8 @@ function ColorField({
   onChange: (v: string) => void;
 }): React.JSX.Element {
   return (
-    <div className='space-y-1'>
-      <Label className='text-[10px] uppercase tracking-wider text-gray-500'>{label}</Label>
-      <div className='flex items-center gap-2'>
+    <FormField label={label}>
+      <div className='flex items-center gap-2 mt-1'>
         <label className='relative flex size-7 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded border border-border/50'>
           <input
             type='color'
@@ -118,7 +119,7 @@ function ColorField({
           className='h-7 flex-1 bg-gray-800/40 text-xs font-mono'
         />
       </div>
-    </div>
+    </FormField>
   );
 }
 
@@ -138,9 +139,8 @@ function NumberField({
   max?: number;
 }): React.JSX.Element {
   return (
-    <div className='space-y-1'>
-      <Label className='text-[10px] uppercase tracking-wider text-gray-500'>{label}</Label>
-      <div className='flex items-center gap-1.5'>
+    <FormField label={label}>
+      <div className='flex items-center gap-1.5 mt-1'>
         <Input
           type='number'
           value={value}
@@ -151,7 +151,7 @@ function NumberField({
         />
         {suffix && <span className='text-[10px] text-gray-500'>{suffix}</span>}
       </div>
-    </div>
+    </FormField>
   );
 }
 
@@ -171,23 +171,16 @@ function RangeField({
   suffix?: string;
 }): React.JSX.Element {
   return (
-    <div className='space-y-1'>
-      <div className='flex items-center justify-between'>
-        <Label className='text-[10px] uppercase tracking-wider text-gray-500'>{label}</Label>
-        <span className='text-[11px] text-gray-300'>
-          {value}
-          {suffix}
-        </span>
-      </div>
+    <FormField label={label} actions={<span className='text-[11px] text-gray-300'>{value}{suffix}</span>}>
       <input
         type='range'
         min={min}
         max={max}
         value={value}
         onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(Number(e.target.value))}
-        className='w-full accent-blue-500'
+        className='w-full accent-blue-500 mt-1'
       />
-    </div>
+    </FormField>
   );
 }
 
@@ -203,15 +196,14 @@ function SelectField({
   options: { label: string; value: string }[];
 }): React.JSX.Element {
   return (
-    <div className='space-y-1'>
-      <Label className='text-[10px] uppercase tracking-wider text-gray-500'>{label}</Label>
+    <FormField label={label}>
       <UnifiedSelect
         value={value}
         onValueChange={onChange}
         options={options}
-        triggerClassName='h-7 bg-gray-800/40 text-xs'
+        triggerClassName='h-7 bg-gray-800/40 text-xs mt-1'
       />
-    </div>
+    </FormField>
   );
 }
 
@@ -898,10 +890,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
       )}
       <div className='flex-1 overflow-y-auto p-3'>
         <div className='space-y-3'>
-          <SectionPanel variant='subtle' className='p-3'>
-            <Label className='text-[10px] uppercase tracking-wider text-gray-500'>
-              Menu scope
-            </Label>
+          <FormSection title='Menu scope' variant='subtle' className='p-3'>
             {zoningEnabled ? (
               <div className='mt-2 space-y-2'>
                 <UnifiedSelect
@@ -931,29 +920,31 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                 Simple routing enabled. This menu applies globally.
               </p>
             )}
-          </SectionPanel>
+          </FormSection>
           <div className='space-y-2'>
             {MENU_SECTIONS.map((section: string) => {
               const isOpen = openSections.has(section);
               return (
-                <SectionPanel
+                <FormSection
                   key={section}
+                  title={section}
                   variant='subtle'
                   className='p-0 overflow-hidden'
+                  actions={
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={(): void => toggleSection(section)}
+                      className='h-8 w-8 p-0'
+                    >
+                      <ChevronDown className={`size-4 text-gray-500 transition ${isOpen ? 'rotate-180' : ''}`} />
+                    </Button>
+                  }
                 >
-                  <button
-                    type='button'
-                    onClick={(): void => toggleSection(section)}
-                    className='flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-gray-200 hover:bg-muted/40'
-                    aria-expanded={isOpen}
-                  >
-                    <span>{section}</span>
-                    <ChevronDown className={`size-4 text-gray-500 transition ${isOpen ? 'rotate-180' : ''}`} />
-                  </button>
                   {isOpen && (
-                    <div className='px-3 pb-3'>{renderSectionBody(section)}</div>
+                    <div className='px-3 pb-3 border-t border-border/40 pt-3'>{renderSectionBody(section)}</div>
                   )}
-                </SectionPanel>
+                </FormSection>
               );
             })}
           </div>

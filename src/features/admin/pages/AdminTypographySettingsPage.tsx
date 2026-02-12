@@ -88,25 +88,23 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
         </div>
 
         <div>
-          <SectionPanel className='sticky top-6 p-6 space-y-4'>
-            <h2 className='text-sm font-semibold text-white'>Preview</h2>
-
-            <SectionPanel variant='subtle-compact' className='p-4'>
+          <FormSection title='Preview' className='sticky top-6 p-6 space-y-4'>
+            <FormSection variant='subtle-compact' className='p-4'>
               <div className='text-xs text-gray-400'>Headings</div>
               <div className='mt-2 space-y-2'>
                 <h3 className='text-xl font-semibold text-white'>Edit Product</h3>
                 <h4 className='text-base font-semibold text-white'>Product Settings</h4>
               </div>
-            </SectionPanel>
+            </FormSection>
 
-            <SectionPanel variant='subtle-compact' className='p-4'>
+            <FormSection variant='subtle-compact' className='p-4'>
               <div className='text-xs text-gray-400'>Body</div>
               <p className='mt-2 text-sm text-gray-200'>
                 The quick brown fox jumps over the lazy dog. 0123456789.
               </p>
-            </SectionPanel>
+            </FormSection>
 
-            <SectionPanel variant='subtle-compact' className='p-4 text-xs text-gray-300'>
+            <FormSection variant='subtle-compact' className='p-4 text-xs text-gray-300'>
               <div className='flex justify-between'>
                 <span>Selected</span>
                 <span className='font-mono text-gray-200'>{current.id}</span>
@@ -121,14 +119,14 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
                   <span className='truncate font-mono text-[10px] text-gray-200'>{current.body}</span>
                 </div>
               </div>
-            </SectionPanel>
+            </FormSection>
 
-            <SectionPanel variant='subtle-compact' className='border-blue-500/20 bg-blue-500/5 p-3'>
+            <div className='rounded-md border border-blue-500/20 bg-blue-500/5 p-3'>
               <p className='text-xs text-blue-200'>
                 Tip: If a font file is missing, the app silently falls back to system fonts.
               </p>
-            </SectionPanel>
-          </SectionPanel>
+            </div>
+          </FormSection>
         </div>
       </div>
     </div>

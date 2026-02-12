@@ -16,14 +16,12 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useMemo } from 'react';
 
+import { useMasterFolderTreeAppearance } from '@/features/foldertree/hooks/useMasterFolderTreeAppearance';
 import { MasterFolderTree, useMasterFolderTree } from '@/features/foldertree/master';
-import { ICON_LIBRARY_MAP } from '@/features/icons';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
 import { Button, FolderTreePanel, TreeHeader } from '@/shared/ui';
 import {
-  getFolderTreePlaceholderClasses,
-  resolveFolderTreeIconV2,
   type MasterTreeId,
   type MasterTreeNode,
 } from '@/shared/utils';
@@ -53,10 +51,7 @@ const resolveFolderTargetForNode = (
 
 export function NotesAppFolderTree(): React.JSX.Element {
   const profile = useFolderTreeProfile('notes');
-  const placeholderClasses = useMemo(
-    () => getFolderTreePlaceholderClasses(profile.placeholders.preset),
-    [profile.placeholders.preset]
-  );
+  const { rootDropUi, resolveIcon } = useMasterFolderTreeAppearance(profile);
   const {
     settings,
     filters,
@@ -179,26 +174,41 @@ export function NotesAppFolderTree(): React.JSX.Element {
   );
 
   const isAllNotesActive = !settings.selectedFolderId && !selectedNote;
-  const RootIcon = useMemo(() => {
-    const iconId = resolveFolderTreeIconV2(profile, 'root') ?? 'Folder';
-    return ICON_LIBRARY_MAP[iconId] ?? Folder;
-  }, [profile]);
-  const FolderClosedIcon = useMemo(() => {
-    const iconId = resolveFolderTreeIconV2(profile, 'folderClosed', 'folder') ?? 'Folder';
-    return ICON_LIBRARY_MAP[iconId] ?? Folder;
-  }, [profile]);
-  const FolderOpenIcon = useMemo(() => {
-    const iconId = resolveFolderTreeIconV2(profile, 'folderOpen', 'folder') ?? 'FolderOpen';
-    return ICON_LIBRARY_MAP[iconId] ?? FolderOpen;
-  }, [profile]);
-  const FileIcon = useMemo(() => {
-    const iconId = resolveFolderTreeIconV2(profile, 'file', 'note') ?? 'FileText';
-    return ICON_LIBRARY_MAP[iconId] ?? FileText;
-  }, [profile]);
-  const DragHandleIcon = useMemo(() => {
-    const iconId = resolveFolderTreeIconV2(profile, 'dragHandle') ?? 'GripVertical';
-    return ICON_LIBRARY_MAP[iconId] ?? GripVertical;
-  }, [profile]);
+  const {
+    RootIcon,
+    FolderClosedIcon,
+    FolderOpenIcon,
+    FileIcon,
+    DragHandleIcon,
+  } = useMemo(
+    () => ({
+      RootIcon: resolveIcon({ slot: 'root', fallback: Folder, fallbackId: 'Folder' }),
+      FolderClosedIcon: resolveIcon({
+        slot: 'folderClosed',
+        kind: 'folder',
+        fallback: Folder,
+        fallbackId: 'Folder',
+      }),
+      FolderOpenIcon: resolveIcon({
+        slot: 'folderOpen',
+        kind: 'folder',
+        fallback: FolderOpen,
+        fallbackId: 'FolderOpen',
+      }),
+      FileIcon: resolveIcon({
+        slot: 'file',
+        kind: 'note',
+        fallback: FileText,
+        fallbackId: 'FileText',
+      }),
+      DragHandleIcon: resolveIcon({
+        slot: 'dragHandle',
+        fallback: GripVertical,
+        fallbackId: 'GripVertical',
+      }),
+    }),
+    [resolveIcon]
+  );
 
   return (
     <FolderTreePanel
@@ -314,11 +324,7 @@ export function NotesAppFolderTree(): React.JSX.Element {
       <div className='min-h-0 flex-1 overflow-auto p-2'>
         <MasterFolderTree
           controller={controller}
-          rootDropUi={{
-            label: profile.placeholders.rootDropLabel,
-            idleClassName: placeholderClasses.rootIdle,
-            activeClassName: placeholderClasses.rootActive,
-          }}
+          rootDropUi={rootDropUi}
           resolveDraggedNodeId={(event: React.DragEvent<HTMLElement>): string | null => {
             const noteId = getNoteDragId(event.dataTransfer, draggedNoteId);
             if (noteId) return toNoteMasterNodeId(noteId);

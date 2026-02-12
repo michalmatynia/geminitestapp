@@ -1,12 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { createDefaultFolderTreeProfiles } from '@/shared/utils/folder-tree-profiles';
 import {
   canNestTreeNodeV2,
   createDefaultFolderTreeProfilesV2,
+  defaultFolderTreeProfilesV2,
   parseFolderTreeProfilesV2,
   resolveFolderTreeIconV2,
-  upgradeFolderTreeProfileV1ToV2,
 } from '@/shared/utils/folder-tree-profiles-v2';
 
 describe('folder-tree-profiles-v2', () => {
@@ -18,15 +17,15 @@ describe('folder-tree-profiles-v2', () => {
     expect(parsed.image_studio.nesting.rules.length).toBeGreaterThan(0);
   });
 
-  it('upgrades v1 profile into v2 matrix and visual fields', () => {
-    const v1 = createDefaultFolderTreeProfiles().notes;
-    const upgraded = upgradeFolderTreeProfileV1ToV2(v1);
-
-    expect(upgraded.version).toBe(2);
-    expect(upgraded.placeholders.preset).toBe(v1.placeholders.preset);
-    expect(upgraded.placeholders.rootDropLabel).toBe(v1.placeholders.rootDropLabel);
-    expect(upgraded.icons.slots.folderClosed).toBe(v1.icons.folderClosed);
-    expect(upgraded.nesting.rules.some((rule) => rule.targetType === 'root')).toBe(true);
+  it('ships native v2 defaults for every tree instance', () => {
+    expect(defaultFolderTreeProfilesV2.notes.version).toBe(2);
+    expect(defaultFolderTreeProfilesV2.notes.placeholders.style).toBe('ghost');
+    expect(defaultFolderTreeProfilesV2.product_categories.placeholders.preset).toBe('classic');
+    expect(defaultFolderTreeProfilesV2.product_categories.icons.slots.file).toBeNull();
+    expect(defaultFolderTreeProfilesV2.cms_page_builder.icons.slots.root).toBe('LayoutGrid');
+    expect(
+      defaultFolderTreeProfilesV2.image_studio.nesting.rules.some((rule) => rule.targetType === 'root')
+    ).toBe(true);
   });
 
   it('merges partial v2 payload with defaults and normalizes kind icon keys', () => {

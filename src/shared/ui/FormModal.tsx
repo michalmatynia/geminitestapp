@@ -64,69 +64,40 @@ export function FormModal({
 
 
   const saveButton = formRef ? (
-
     <Button
-
       type='button' // Use type="button" as we'll use onClick to trigger submit
-
       onClick={() => formRef.current?.requestSubmit()} // Use ref to trigger form submission
-
       disabled={isSaving}
-
-      className='min-w-[100px] border border-white/20 hover:border-white/40'
-
+      variant='primary'
+      className='min-w-[100px]'
     >
-
       {isSaving ? 'Saving...' : saveText}
-
     </Button>
-
   ) : (
-
     <Button
-
       onClick={onSave}
-
       disabled={isSaving}
-
-      className='min-w-[100px] border border-white/20 hover:border-white/40'
-
+      variant='primary'
+      className='min-w-[100px]'
     >
-
       {isSaving ? 'Saving...' : saveText}
-
     </Button>
-
   );
 
-
-
   // Combine save button, original actions, and cancel button for AppModal's headerActions
-
   const headerActions = (
-
     <>
-
       {saveButton}
-
       {actions} {/* Include any additional actions passed */}
-
       <Button
-
         type='button'
-
         onClick={onClose}
-
-        className='min-w-[100px] border border-white/20 hover:border-white/40'
-
+        variant='outline'
+        className='min-w-[100px]'
       >
-
         {cancelText}
-
       </Button>
-
     </>
-
   );
 
 

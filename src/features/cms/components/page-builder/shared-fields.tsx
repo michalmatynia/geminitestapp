@@ -8,7 +8,7 @@ import { Viewer3D } from '@/features/viewer3d';
 import { Asset3DPreviewModal } from '@/features/viewer3d';
 import { useAssets3D, useAsset3DCategories, useAsset3DTags, useAsset3DById } from '@/features/viewer3d/hooks/useAsset3dQueries';
 import type { Asset3DListFilters, Asset3DRecord } from '@/features/viewer3d/types';
-import { Input, Label, UnifiedSelect, Checkbox, Button, AppModal, useToast, SectionPanel, FileUploadButton, type FileUploadHelpers } from '@/shared/ui';
+import { Input, Label, UnifiedSelect, Checkbox, Button, AppModal, useToast, SectionPanel, FileUploadButton, FormSection, FormField, type FileUploadHelpers } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { MediaLibraryPanel } from './MediaLibraryPanel';
@@ -57,79 +57,76 @@ export function ImagePickerField({
   const isUploading = uploadMutation.isPending;
 
   return (
-    <div className='space-y-2'>
-      {label && (
-        <Label className='text-[10px] uppercase tracking-wider text-gray-500'>
-          {label}
-        </Label>
-      )}
-      <div className='relative flex h-28 items-center justify-center overflow-hidden rounded border border-dashed border-border/50 bg-gray-800/30'>
+    <FormField label={label}>
+      <div className='space-y-2 mt-1'>
+        <div className='relative flex h-28 items-center justify-center overflow-hidden rounded border border-dashed border-border/50 bg-gray-800/30'>
+          {value ? (
+            <NextImage
+              src={value}
+              alt='Selected'
+              fill
+              sizes='320px'
+              className='object-cover'
+              unoptimized
+            />
+          ) : (
+            <span className='text-xs text-gray-500'>No image</span>
+          )}
+          {isUploading && (
+            <div className='absolute inset-0 flex items-center justify-center bg-black/50'>
+              <Loader2 className='size-6 animate-spin text-white' />
+            </div>
+          )}
+        </div>
+        <div className='grid grid-cols-2 gap-2'>
+          <FileUploadButton
+            size='sm'
+            variant='outline'
+            className='text-xs'
+            accept='image/*'
+            disabled={disabled || isUploading}
+            onFilesSelected={(files: File[], helpers?: FileUploadHelpers) => handleFileUpload(files, helpers)}
+          >
+            <Upload className='mr-1.5 size-3' />
+            {value ? 'Replace' : 'Upload'}
+          </FileUploadButton>
+          <Button
+            type='button'
+            size='sm'
+            variant='outline'
+            className='text-xs'
+            onClick={(): void => setOpen(true)}
+            disabled={disabled || isUploading}
+          >
+            <FolderOpen className='mr-1.5 size-3' />
+            Browse
+          </Button>
+        </div>
         {value ? (
-          <NextImage
-            src={value}
-            alt='Selected'
-            fill
-            sizes='320px'
-            className='object-cover'
-            unoptimized
-          />
-        ) : (
-          <span className='text-xs text-gray-500'>No image</span>
-        )}
-        {isUploading && (
-          <div className='absolute inset-0 flex items-center justify-center bg-black/50'>
-            <Loader2 className='size-6 animate-spin text-white' />
-          </div>
-        )}
+          <Button
+            type='button'
+            size='sm'
+            variant='ghost'
+            className='w-full text-xs text-gray-400 hover:text-gray-200'
+            onClick={(): void => onChange('')}
+            disabled={disabled || isUploading}
+          >
+            Clear image
+          </Button>
+        ) : null}
+        <MediaLibraryPanel
+          open={open}
+          onOpenChange={setOpen}
+          selectionMode='single'
+          onSelect={(filepaths: string[]): void => onChange(filepaths[0] ?? '')}
+          {...(handleFileUpload && {
+            onFilesSelected: async (files: File[], helpers?: FileUploadHelpers): Promise<void> => {
+              if (files.length > 0) await handleFileUpload(files, helpers);
+            },
+          })}
+        />
       </div>
-      <div className='grid grid-cols-2 gap-2'>
-        <FileUploadButton
-          size='sm'
-          variant='outline'
-          className='text-xs'
-          accept='image/*'
-          disabled={disabled || isUploading}
-          onFilesSelected={(files: File[], helpers?: FileUploadHelpers) => handleFileUpload(files, helpers)}
-        >
-          <Upload className='mr-1.5 size-3' />
-          {value ? 'Replace' : 'Upload'}
-        </FileUploadButton>
-        <Button
-          type='button'
-          size='sm'
-          variant='outline'
-          className='text-xs'
-          onClick={(): void => setOpen(true)}
-          disabled={disabled || isUploading}
-        >
-          <FolderOpen className='mr-1.5 size-3' />
-          Browse
-        </Button>
-      </div>
-      {value ? (
-        <Button
-          type='button'
-          size='sm'
-          variant='ghost'
-          className='w-full text-xs text-gray-400 hover:text-gray-200'
-          onClick={(): void => onChange('')}
-          disabled={disabled || isUploading}
-        >
-          Clear image
-        </Button>
-      ) : null}
-      <MediaLibraryPanel
-        open={open}
-        onOpenChange={setOpen}
-        selectionMode='single'
-        onSelect={(filepaths: string[]): void => onChange(filepaths[0] ?? '')}
-        {...(handleFileUpload && {
-          onFilesSelected: async (files: File[], helpers?: FileUploadHelpers): Promise<void> => {
-            if (files.length > 0) await handleFileUpload(files, helpers);
-          },
-        })}
-      />
-    </div>
+    </FormField>
   );
 }
 
@@ -164,73 +161,70 @@ export function Asset3DPickerField({
   const modelUrl = selectedAsset ? `/api/assets3d/${selectedAsset.id}/file` : null;
 
   return (
-    <div className='space-y-2'>
-      {label && (
-        <Label className='text-[10px] uppercase tracking-wider text-gray-500'>
-          {label}
-        </Label>
-      )}
-      <div className='relative flex h-40 items-center justify-center overflow-hidden rounded border border-dashed border-border/50 bg-gray-800/30'>
-        {selectedAsset && modelUrl ? (
-          <Viewer3D
-            modelUrl={modelUrl}
-            backgroundColor='#111827'
-            autoRotate
-            autoRotateSpeed={2}
-            environment='studio'
-            lighting='studio'
-            lightIntensity={1}
-            enableShadows
-            enableBloom={false}
-            bloomIntensity={0.5}
-            exposure={1}
-            showGround={false}
-            enableContactShadows
-            enableVignette={false}
-            autoFit
-            presentationMode={false}
-            className='h-full w-full'
-          />
-        ) : (
-          <span className='text-xs text-gray-500'>No 3D asset selected</span>
-        )}
+    <FormField label={label}>
+      <div className='space-y-2 mt-1'>
+        <div className='relative flex h-40 items-center justify-center overflow-hidden rounded border border-dashed border-border/50 bg-gray-800/30'>
+          {selectedAsset && modelUrl ? (
+            <Viewer3D
+              modelUrl={modelUrl}
+              backgroundColor='#111827'
+              autoRotate
+              autoRotateSpeed={2}
+              environment='studio'
+              lighting='studio'
+              lightIntensity={1}
+              enableShadows
+              enableBloom={false}
+              bloomIntensity={0.5}
+              exposure={1}
+              showGround={false}
+              enableContactShadows
+              enableVignette={false}
+              autoFit
+              presentationMode={false}
+              className='h-full w-full'
+            />
+          ) : (
+            <span className='text-xs text-gray-500'>No 3D asset selected</span>
+          )}
+        </div>
+        <div className='grid grid-cols-2 gap-2'>
+          <Button
+            type='button'
+            size='sm'
+            variant='outline'
+            className='text-xs'
+            onClick={(): void => setOpen(true)}
+            disabled={disabled}
+          >
+            Browse 3D assets
+          </Button>
+          <Button
+            type='button'
+            size='sm'
+            variant='outline'
+            className='text-xs'
+            onClick={(): void => {
+              if (selectedAsset) setPreviewAsset(selectedAsset);
+            }}
+            disabled={disabled || !selectedAsset}
+          >
+            Preview
+          </Button>
+        </div>
+        {value ? (
+          <Button
+            type='button'
+            size='sm'
+            variant='ghost'
+            className='w-full text-xs text-gray-400 hover:text-gray-200'
+            onClick={(): void => onChange('')}
+            disabled={disabled}
+          >
+            Clear asset
+          </Button>
+        ) : null}
       </div>
-      <div className='grid grid-cols-2 gap-2'>
-        <Button
-          type='button'
-          size='sm'
-          variant='outline'
-          className='text-xs'
-          onClick={(): void => setOpen(true)}
-          disabled={disabled}
-        >
-          Browse 3D assets
-        </Button>
-        <Button
-          type='button'
-          size='sm'
-          variant='outline'
-          className='text-xs'
-          onClick={(): void => {
-            if (selectedAsset) setPreviewAsset(selectedAsset);
-          }}
-          disabled={disabled || !selectedAsset}
-        >
-          Preview
-        </Button>
-      </div>
-      {value ? (
-        <Button
-          type='button'
-          size='sm'
-          variant='ghost'
-          className='w-full text-xs text-gray-400 hover:text-gray-200'
-          onClick={(): void => onChange('')}
-          disabled={disabled}
-        >
-          Clear asset
-        </Button>
-      ) : null}
 
       <AppModal open={open} onClose={() => setOpen(false)} title='Select 3D asset' size='xl'>
         <div className='space-y-4 text-sm text-gray-200'>
@@ -251,18 +245,17 @@ export function Asset3DPickerField({
               placeholder='Category'
               triggerClassName='h-9'
             />
-            <label className='flex items-center gap-2 text-xs text-gray-300'>
+            <div className='flex items-center gap-2'>
               <Checkbox
                 checked={isPublicOnly}
-                onCheckedChange={(value: boolean): void => setIsPublicOnly(Boolean(value))}
+                onCheckedChange={(value: boolean | 'indeterminate'): void => setIsPublicOnly(Boolean(value))}
               />
-              Public only
-            </label>
+              <span className='text-xs text-gray-300'>Public only</span>
+            </div>
           </div>
 
           {tags.length > 0 ? (
-            <SectionPanel variant='subtle' className='p-2'>
-              <div className='text-[11px] text-gray-400'>Tags</div>
+            <FormSection title='Tags' variant='subtle' className='p-2'>
               <div className='mt-2 flex flex-wrap gap-2'>
                 {tags.map((tag: string) => {
                   const active = selectedTags.includes(tag);
@@ -287,7 +280,7 @@ export function Asset3DPickerField({
                   );
                 })}
               </div>
-            </SectionPanel>
+            </FormSection>
           ) : null}
 
           <div className='grid gap-3 md:grid-cols-[1fr_320px]'>
@@ -299,7 +292,7 @@ export function Asset3DPickerField({
               ) : (
                 <div className='space-y-2'>
                   {assets.map((asset: Asset3DRecord) => (
-                    <SectionPanel key={asset.id} variant='subtle' className='p-2'>
+                    <FormSection key={asset.id} variant='subtle' className='p-2'>
                       <div className='flex items-center justify-between gap-2'>
                         <div className='min-w-0'>
                           <div className='truncate text-sm text-gray-100'>{asset.name || asset.filename}</div>
@@ -329,13 +322,12 @@ export function Asset3DPickerField({
                           </Button>
                         </div>
                       </div>
-                    </SectionPanel>
+                    </FormSection>
                   ))}
                 </div>
               )}
             </div>
-            <SectionPanel variant='subtle' className='p-2'>
-              <div className='text-[11px] text-gray-400'>Preview</div>
+            <FormSection title='Preview' variant='subtle' className='p-2'>
               {previewAsset ? (
                 <div className='mt-2 h-56'>
                   <Viewer3D
@@ -361,7 +353,7 @@ export function Asset3DPickerField({
               ) : (
                 <div className='mt-2 text-xs text-gray-500'>Pick an asset to preview.</div>
               )}
-            </SectionPanel>
+            </FormSection>
           </div>
         </div>
       </AppModal>
@@ -385,13 +377,8 @@ export function ColorField({
   disabled,
 }: FieldProps<string>): React.JSX.Element {
   return (
-    <div className={cn('space-y-1', className)}>
-      {label && (
-        <Label className='text-[10px] uppercase tracking-wider text-gray-500'>
-          {label}
-        </Label>
-      )}
-      <div className='flex items-center gap-2'>
+    <FormField label={label} className={className}>
+      <div className='flex items-center gap-2 mt-1'>
         <label className={cn(
           'relative flex size-7 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded border border-border/50',
           disabled && 'cursor-not-allowed opacity-50'
@@ -416,7 +403,7 @@ export function ColorField({
           disabled={disabled}
         />
       </div>
-    </div>
+    </FormField>
   );
 }
 
@@ -432,13 +419,8 @@ export function NumberField({
   step,
 }: FieldProps<number> & { suffix?: string; min?: number; max?: number; step?: number }): React.JSX.Element {
   return (
-    <div className={cn('space-y-1', className)}>
-      {label && (
-        <Label className='text-[10px] uppercase tracking-wider text-gray-500'>
-          {label}
-        </Label>
-      )}
-      <div className='flex items-center gap-1.5'>
+    <FormField label={label} className={className}>
+      <div className='flex items-center gap-1.5 mt-1'>
         <Input
           type='number'
           value={value ?? 0}
@@ -451,7 +433,7 @@ export function NumberField({
         />
         {suffix && <span className='text-[10px] text-gray-500'>{suffix}</span>}
       </div>
-    </div>
+    </FormField>
   );
 }
 
@@ -468,18 +450,7 @@ export function RangeField({
 }: FieldProps<number> & { min: number; max: number; step?: number; suffix?: string }): React.JSX.Element {
   const safeValue = Number.isFinite(value) ? value : min;
   return (
-    <div className={cn('space-y-1', className)}>
-      <div className='flex items-center justify-between'>
-        {label && (
-          <Label className='text-[10px] uppercase tracking-wider text-gray-500'>
-            {label}
-          </Label>
-        )}
-        <span className='text-[11px] text-gray-300'>
-          {safeValue}
-          {suffix}
-        </span>
-      </div>
+    <FormField label={label} className={className} actions={<span className='text-[11px] text-gray-300'>{safeValue}{suffix}</span>}>
       <input
         type='range'
         min={min}
@@ -487,10 +458,10 @@ export function RangeField({
         step={step}
         value={safeValue}
         onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(Number(e.target.value))}
-        className={cn('w-full accent-blue-500', disabled && 'opacity-50 cursor-not-allowed')}
+        className={cn('w-full accent-blue-500 mt-1', disabled && 'opacity-50 cursor-not-allowed')}
         disabled={disabled}
       />
-    </div>
+    </FormField>
   );
 }
 
@@ -504,21 +475,16 @@ export function SelectField({
   placeholder,
 }: FieldProps<string> & { options: { label: string; value: string }[]; placeholder?: string }): React.JSX.Element {
   return (
-    <div className={cn('space-y-1', className)}>
-      {label && (
-        <Label className='text-[10px] uppercase tracking-wider text-gray-500'>
-          {label}
-        </Label>
-      )}
+    <FormField label={label} className={className}>
       <UnifiedSelect
         value={value}
         onValueChange={onChange}
         disabled={disabled || false}
         options={options}
         placeholder={placeholder}
-        triggerClassName='h-7 bg-gray-800/40 text-xs'
+        triggerClassName='h-7 bg-gray-800/40 text-xs mt-1'
       />
-    </div>
+    </FormField>
   );
 }
 
@@ -556,19 +522,14 @@ export function TextField({
   placeholder,
 }: FieldProps<string> & { placeholder?: string }): React.JSX.Element {
   return (
-    <div className={cn('space-y-1', className)}>
-      {label && (
-        <Label className='text-[10px] uppercase tracking-wider text-gray-500'>
-          {label}
-        </Label>
-      )}
+    <FormField label={label} className={className}>
       <Input
         value={value || ''}
         onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)}
         placeholder={placeholder}
-        className='h-7 bg-gray-800/40 text-xs'
+        className='h-7 bg-gray-800/40 text-xs mt-1'
         disabled={disabled}
       />
-    </div>
+    </FormField>
   );
 }

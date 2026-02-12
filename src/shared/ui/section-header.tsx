@@ -2,12 +2,13 @@ import { cn } from '@/shared/utils';
 
 import type { ReactNode } from 'react';
 
-type SectionHeaderSize = 'lg' | 'md' | 'sm';
+type SectionHeaderSize = 'lg' | 'md' | 'sm' | 'xs';
 
 const titleSizes: Record<SectionHeaderSize, string> = {
   lg: 'text-3xl',
   md: 'text-2xl',
   sm: 'text-xl',
+  xs: 'text-sm font-semibold',
 };
 
 type SectionHeaderProps = {

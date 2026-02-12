@@ -4,7 +4,7 @@ import { Card, type CardProps } from './card';
 
 import type { HTMLAttributes, ReactNode } from 'react';
 
-type SectionPanelVariant = 'default' | 'compact' | 'subtle' | 'subtle-compact' | 'danger';
+type SectionPanelVariant = 'default' | 'compact' | 'subtle' | 'subtle-compact' | 'danger' | 'glass';
 
 type SectionPanelProps = HTMLAttributes<HTMLDivElement> & {
   children: ReactNode;
@@ -21,6 +21,8 @@ const variantToCardProps = (variant: SectionPanelVariant): Partial<CardProps> =>
       return { variant: 'subtle-compact', padding: 'sm' };
     case 'danger':
       return { variant: 'danger', padding: 'md' };
+    case 'glass':
+      return { variant: 'glass', padding: 'md' };
     default:
       return { variant: 'default', padding: 'md' };
   }

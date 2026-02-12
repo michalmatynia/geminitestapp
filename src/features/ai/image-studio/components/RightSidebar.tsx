@@ -19,6 +19,9 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   Button,
   AppModal,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
   Label,
   MultiSelect,
   SectionPanel,
@@ -80,8 +83,6 @@ export function RightSidebar(): React.JSX.Element {
   const [requestPreviewOpen, setRequestPreviewOpen] = useState(false);
   const [promptControlOpen, setPromptControlOpen] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
-  const [toolsOpen, setToolsOpen] = useState(false);
-  const [activeToolsPanel, setActiveToolsPanel] = useState<'shape-selector'>('shape-selector');
 
   const promptValidationSettings = useMemo(
     () => parsePromptEngineSettings(settingsStore.get(PROMPT_ENGINE_SETTINGS_KEY)).promptValidation,
@@ -261,62 +262,81 @@ export function RightSidebar(): React.JSX.Element {
         variant='subtle'
         aria-hidden={isFocusMode}
       >
-        <div className='flex flex-wrap items-center justify-end gap-2 px-4 py-2'>
-          <Button
-            variant='outline'
-            size='sm'
-            title='Open prompt controls'
-            aria-label='Open prompt controls'
-            onClick={() => setPromptControlOpen(true)}
-          >
-            <Sparkles className='mr-2 size-4' />
-          Control Prompt
-          </Button>
-          <Button
-            variant='outline'
-            size='sm'
-            title='Preview generation request payload and input images'
-            aria-label='Preview generation request payload and input images'
-            onClick={() => setRequestPreviewOpen(true)}
-          >
-            <Eye className='mr-2 size-4' />
-          Preview Request
-          </Button>
-          <Button
-            variant='outline'
-            size='sm'
-            title={hasExtractedControls ? 'Open extracted controls' : 'Extract controls first'}
-            aria-label='Open extracted controls'
-            disabled={!hasExtractedControls}
-            onClick={() => setControlsOpen(true)}
-          >
-            <SlidersHorizontal className='mr-2 size-4' />
-            Controls
-          </Button>
-          <Button
-            variant='outline'
-            size='sm'
-            title='Save current Image Studio project state'
-            aria-label='Save current Image Studio project state'
-            disabled={projectSaveBusy || !projectId.trim()}
-            onClick={handleSaveProject}
-          >
-            {projectSaveBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : <Save className='mr-2 size-4' />}
-          Save Project
-          </Button>
-          <Button
-            variant='outline'
-            size='sm'
-            title='Open tools toolbar'
-            aria-label='Open tools toolbar'
-            onClick={() => {
-              setActiveToolsPanel('shape-selector');
-              setToolsOpen(true);
-            }}
-          >
-            <Pentagon className='mr-2 size-4' />
-            Tools
-          </Button>
+        <div className='space-y-2 px-4 py-2'>
+          <div className='flex flex-wrap items-center justify-end gap-2'>
+            <Button
+              variant='outline'
+              size='sm'
+              title='Open prompt controls'
+              aria-label='Open prompt controls'
+              onClick={() => setPromptControlOpen(true)}
+            >
+              <Sparkles className='mr-2 size-4' />
+            Control Prompt
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
+              title='Preview generation request payload and input images'
+              aria-label='Preview generation request payload and input images'
+              onClick={() => setRequestPreviewOpen(true)}
+            >
+              <Eye className='mr-2 size-4' />
+            Preview Request
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
+              title={hasExtractedControls ? 'Open extracted controls' : 'Extract controls first'}
+              aria-label='Open extracted controls'
+              disabled={!hasExtractedControls}
+              onClick={() => setControlsOpen(true)}
+            >
+              <SlidersHorizontal className='mr-2 size-4' />
+              Controls
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
+              title='Save current Image Studio project state'
+              aria-label='Save current Image Studio project state'
+              disabled={projectSaveBusy || !projectId.trim()}
+              onClick={handleSaveProject}
+            >
+              {projectSaveBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : <Save className='mr-2 size-4' />}
+            Save Project
+            </Button>
+          </div>
+
+          <div className='rounded border border-border/60 bg-card/30 px-2 py-2'>
+            <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Toolbar</div>
+            <div className='flex justify-end'>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    title='Open tools popup'
+                    aria-label='Open tools popup'
+                  >
+                    <Pentagon className='mr-2 size-4' />
+                    Tools
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align='end'
+                  className='w-auto p-2'
+                  sideOffset={8}
+                >
+                  <VectorDrawingToolbar
+                    tool={tool}
+                    onSelectTool={setTool}
+                    className='w-full justify-start rounded-xl border-border/60 bg-card/40'
+                  />
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
         </div>
         <div className='relative flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4 pt-0'>
           <StudioCard label='Composite References'>
@@ -451,46 +471,6 @@ export function RightSidebar(): React.JSX.Element {
               No extracted controls available yet.
             </div>
           )}
-        </div>
-      </AppModal>
-
-      <AppModal
-        open={toolsOpen}
-        onClose={() => setToolsOpen(false)}
-        title='Tools'
-        size='md'
-      >
-        <div className='space-y-4 text-sm text-gray-200'>
-          <div className='rounded border border-border/60 bg-card/30 p-2'>
-            <div className='mb-2 text-xs text-gray-400'>Toolbar</div>
-            <div className='flex items-center gap-2'>
-              <Button
-                type='button'
-                variant={activeToolsPanel === 'shape-selector' ? 'secondary' : 'outline'}
-                size='icon'
-                title='Shape selector'
-                aria-label='Shape selector'
-                onClick={() => setActiveToolsPanel('shape-selector')}
-              >
-                <Pentagon className='size-4' />
-              </Button>
-              <span className='text-xs text-gray-300'>Shape Selector</span>
-            </div>
-          </div>
-
-          {activeToolsPanel === 'shape-selector' ? (
-            <div className='rounded border border-border/60 bg-card/30 p-3'>
-              <div className='mb-2 text-xs text-gray-400'>Shape Selection</div>
-              <VectorDrawingToolbar
-                tool={tool}
-                onSelectTool={setTool}
-                className='w-full justify-start rounded-xl border-border/60 bg-card/40'
-              />
-              <div className='mt-2 text-[11px] text-gray-500'>
-                Shape tools were moved here from the preview canvas.
-              </div>
-            </div>
-          ) : null}
         </div>
       </AppModal>
 

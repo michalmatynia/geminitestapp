@@ -5,10 +5,11 @@ import React from 'react';
 import { FiltersContainer } from './filters-container';
 import { Input } from './input';
 import { Label } from './label';
+import { MultiSelect } from './multi-select';
 import { SearchInput } from './search-input';
 import { UnifiedSelect } from './unified-select';
 
-export type FilterFieldType = 'text' | 'search' | 'select' | 'date' | 'number';
+export type FilterFieldType = 'text' | 'search' | 'select' | 'multi-select' | 'date' | 'number';
 
 export interface FilterField {
   key: string;
@@ -22,8 +23,8 @@ export interface FilterField {
 
 interface DynamicFiltersProps {
   fields: FilterField[];
-  values: Record<string, string | number | boolean | null | undefined>;
-  onChange: (key: string, value: string) => void;
+  values: Record<string, string | string[] | number | boolean | null | undefined>;
+  onChange: (key: string, value: string | string[]) => void;
   onReset?: () => void;
   hasActiveFilters?: boolean;
   title?: string;
@@ -62,7 +63,15 @@ export function DynamicFilters({
             {field.label}
           </Label>
           
-          {field.type === 'select' ? (
+          {field.type === 'multi-select' ? (
+            <MultiSelect
+              options={field.options ?? []}
+              selected={Array.isArray(values[field.key]) ? (values[field.key] as string[]) : []}
+              onChange={(vals) => onChange(field.key, vals)}
+              placeholder={field.placeholder ?? `Filter by ${field.label.toLowerCase()}...`}
+              className='w-full'
+            />
+          ) : field.type === 'select' ? (
             <UnifiedSelect
               value={String(values[field.key] ?? '')}
               onValueChange={(value) => onChange(field.key, value)}

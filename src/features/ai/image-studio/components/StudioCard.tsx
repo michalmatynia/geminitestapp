@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Label } from '@/shared/ui';
+import { Label, Card } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 interface StudioCardProps {
@@ -19,9 +19,11 @@ export function StudioCard({
   className,
 }: StudioCardProps): React.JSX.Element {
   return (
-    <div
+    <Card
+      variant='glass'
+      padding='sm'
       className={cn(
-        'grid grid-cols-1 gap-2 rounded border border-border/60 bg-card/40 p-2',
+        'grid grid-cols-1 gap-2',
         className
       )}
     >
@@ -32,6 +34,6 @@ export function StudioCard({
         </Label>
       )}
       {children}
-    </div>
+    </Card>
   );
 }

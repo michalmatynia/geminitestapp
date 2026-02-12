@@ -873,80 +873,70 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
       </FormSection>
 
       {/* Velocity-based FX */}
-      <SectionPanel variant='subtle-compact' className='space-y-2'>
-        <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-          Velocity FX
-        </Label>
-        <UnifiedSelect
-          value={velocityEffectValue}
-          onValueChange={handleVelocityEffectChange}
-          options={VELOCITY_EFFECTS}
-        />
+      <FormSection title='Velocity FX' variant='subtle-compact' className='p-3 space-y-4'>
+        <FormField label='Effect'>
+          <UnifiedSelect
+            value={velocityEffectValue}
+            onValueChange={handleVelocityEffectChange}
+            options={VELOCITY_EFFECTS}
+          />
+        </FormField>
         {velocityEffectValue !== 'none' && (
-          <>
-            <div className='grid gap-3 sm:grid-cols-2'>
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Strength</Label>
-                <Input
-                  type='number'
-                  min={0.01}
-                  max={2}
-                  step={0.01}
-                  value={velocityStrengthValue}
-                  onChange={handleVelocityStrengthChange}
-                  className='text-sm'
-                />
-              </div>
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Max limit</Label>
-                <Input
-                  type='number'
-                  min={1}
-                  max={60}
-                  step={1}
-                  value={velocityMaxValue}
-                  onChange={handleVelocityMaxChange}
-                  className='text-sm'
-                />
-              </div>
-            </div>
-          </>
+          <div className='grid gap-3 sm:grid-cols-2 mt-4'>
+            <FormField label='Strength'>
+              <Input
+                type='number'
+                min={0.01}
+                max={2}
+                step={0.01}
+                value={velocityStrengthValue}
+                onChange={handleVelocityStrengthChange}
+                className='h-9'
+              />
+            </FormField>
+            <FormField label='Max limit'>
+              <Input
+                type='number'
+                min={1}
+                max={60}
+                step={1}
+                value={velocityMaxValue}
+                onChange={handleVelocityMaxChange}
+                className='h-9'
+              />
+            </FormField>
+          </div>
         )}
-      </SectionPanel>
+      </FormSection>
 
       {/* Draggable */}
-      <SectionPanel variant='subtle-compact' className='space-y-2'>
-        <div className='flex items-center justify-between'>
-          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-            Draggable
-          </Label>
-          <Checkbox checked={draggableEnabledValue} onCheckedChange={handleDraggableEnabledChange} />
-        </div>
-
+      <FormSection
+        title='Draggable'
+        variant='subtle-compact'
+        actions={<Checkbox checked={draggableEnabledValue} onCheckedChange={handleDraggableEnabledChange} />}
+        className='p-3 space-y-4'
+      >
         {draggableEnabledValue && (
-          <div className='space-y-3'>
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Axis</Label>
+          <div className='mt-4 space-y-4'>
+            <FormField label='Axis'>
               <UnifiedSelect
                 value={draggableTypeValue}
                 onValueChange={handleDraggableTypeChange}
                 options={DRAG_AXES}
               />
-            </div>
+            </FormField>
 
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Bounds selector</Label>
+            <FormField label='Bounds selector'>
               <Input
                 value={draggableBoundsValue}
                 onChange={handleDraggableBoundsChange}
                 placeholder='e.g. .container'
-                className='text-sm'
+                className='h-9'
               />
-            </div>
+            </FormField>
 
             <div className='grid gap-3 sm:grid-cols-2'>
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Snap (px)</Label>
+              <FormField label='Snap (px)'>
                 <Input
                   type='number'
                   min={0}
@@ -954,11 +944,10 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
                   step={1}
                   value={draggableSnapValue}
                   onChange={handleDraggableSnapChange}
-                  className='text-sm'
+                  className='h-9'
                 />
-              </div>
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Momentum factor</Label>
+              </FormField>
+              <FormField label='Momentum factor'>
                 <Input
                   type='number'
                   min={0.1}
@@ -966,97 +955,93 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
                   step={0.05}
                   value={draggableMomentumFactorValue}
                   onChange={handleDraggableMomentumFactorChange}
-                  className='text-sm'
+                  className='h-9'
                 />
-              </div>
+              </FormField>
             </div>
 
             <div className='flex flex-wrap items-center gap-4'>
-              <label className='flex items-center gap-2 text-xs text-gray-300'>
+              <div className='flex items-center gap-2'>
                 <Checkbox checked={draggableMomentumValue} onCheckedChange={handleDraggableMomentumChange} />
-                Enable momentum
-              </label>
-              <label className='flex items-center gap-2 text-xs text-gray-300'>
+                <span className='text-xs text-gray-300'>Enable momentum</span>
+              </div>
+              <div className='flex items-center gap-2'>
                 <Checkbox checked={draggableCarouselValue} onCheckedChange={handleDraggableCarouselChange} />
-                Carousel mode
-              </label>
+                <span className='text-xs text-gray-300'>Carousel mode</span>
+              </div>
             </div>
 
             {draggableCarouselValue && (
-              <div className='space-y-3 pl-2 border-l border-border/40'>
-                <div className='space-y-1.5'>
-                  <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Track selector</Label>
+              <div className='space-y-4 pl-2 border-l border-border/40'>
+                <FormField label='Track selector'>
                   <Input
                     value={draggableCarouselSelectorValue}
                     onChange={handleDraggableCarouselSelectorChange}
                     placeholder='e.g. .track'
-                    className='text-sm'
+                    className='h-9'
                   />
-                </div>
-                <label className='flex items-center gap-2 text-xs text-gray-300'>
+                </FormField>
+                <div className='flex items-center gap-2'>
                   <Checkbox checked={draggableCarouselSnapValue} onCheckedChange={handleDraggableCarouselSnapChange} />
-                  Snap to items
-                </label>
+                  <span className='text-xs text-gray-300'>Snap to items</span>
+                </div>
               </div>
             )}
           </div>
         )}
-      </SectionPanel>
+      </FormSection>
 
       {/* Observer */}
-      <SectionPanel variant='subtle-compact' className='space-y-2'>
-        <div className='flex items-center justify-between'>
-          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-            Observer (Events)
-          </Label>
-          <Checkbox checked={observerEnabledValue} onCheckedChange={handleObserverEnabledChange} />
-        </div>
-
+      <FormSection
+        title='Observer (Events)'
+        variant='subtle-compact'
+        actions={<Checkbox checked={observerEnabledValue} onCheckedChange={handleObserverEnabledChange} />}
+        className='p-3 space-y-4'
+      >
         {observerEnabledValue && (
-          <div className='space-y-3'>
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Event types</Label>
-              <Input
-                value={observerTypeValue}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange({ ...config, observerType: e.target.value as ObserverType })}
-                placeholder='wheel,touch,pointer'
-                className='text-sm'
-              />
-              <div className='flex flex-wrap gap-1.5'>
-                {OBSERVER_TYPES.map((option: { label: string; value: string }) => (
-                  <Tooltip key={option.label} content={option.label}>
-                    <Button
-                      type='button'
-                      size='sm'
-                      variant={observerTypeValue.includes(option.value) ? 'secondary' : 'outline'}
-                      onClick={(): void => {
-                        const types = observerTypeValue.split(',').map((t: string) => t.trim()).filter(Boolean);
-                        const next = types.includes(option.value)
-                          ? types.filter((t: string) => t !== option.value)
-                          : [...types, option.value];
-                        onChange({ ...config, observerType: next.join(',') as ObserverType });
-                      }}
-                      className='h-7 w-9 p-0'
-                      aria-label={option.label}
-                    >
-                      {observerTypeIcons[option.value] ?? <MousePointer2 className='size-3.5' />}
-                    </Button>
-                  </Tooltip>
-                ))}
+          <div className='mt-4 space-y-4'>
+            <FormField label='Event types'>
+              <div className='space-y-2'>
+                <Input
+                  value={observerTypeValue}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange({ ...config, observerType: e.target.value as ObserverType })}
+                  placeholder='wheel,touch,pointer'
+                  className='h-9'
+                />
+                <div className='flex flex-wrap gap-1.5'>
+                  {OBSERVER_TYPES.map((option: { label: string; value: string }) => (
+                    <Tooltip key={option.label} content={option.label}>
+                      <Button
+                        type='button'
+                        size='sm'
+                        variant={observerTypeValue.includes(option.value) ? 'secondary' : 'outline'}
+                        onClick={(): void => {
+                          const types = observerTypeValue.split(',').map((t: string) => t.trim()).filter(Boolean);
+                          const next = types.includes(option.value)
+                            ? types.filter((t: string) => t !== option.value)
+                            : [...types, option.value];
+                          onChange({ ...config, observerType: next.join(',') as ObserverType });
+                        }}
+                        className='h-7 w-9 p-0'
+                        aria-label={option.label}
+                      >
+                        {observerTypeIcons[option.value] ?? <MousePointer2 className='size-3.5' />}
+                      </Button>
+                    </Tooltip>
+                  ))}
+                </div>
               </div>
-            </div>
+            </FormField>
 
             <div className='grid gap-3 sm:grid-cols-2'>
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Axis</Label>
+              <FormField label='Axis'>
                 <UnifiedSelect
                   value={observerAxisValue}
                   onValueChange={handleObserverAxisChange}
                   options={DRAG_AXES}
                 />
-              </div>
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Speed</Label>
+              </FormField>
+              <FormField label='Speed'>
                 <Input
                   type='number'
                   min={0.1}
@@ -1064,28 +1049,25 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
                   step={0.1}
                   value={observerSpeedValue}
                   onChange={handleObserverSpeedChange}
-                  className='text-sm'
+                  className='h-9'
                 />
-              </div>
+              </FormField>
             </div>
           </div>
         )}
-      </SectionPanel>
+      </FormSection>
 
       {/* Magnet effect */}
-      <SectionPanel variant='subtle-compact' className='space-y-2'>
-        <div className='flex items-center justify-between'>
-          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-            Magnet
-          </Label>
-          <Checkbox checked={magnetEnabledValue} onCheckedChange={handleMagnetEnabledChange} />
-        </div>
-
+      <FormSection
+        title='Magnet'
+        variant='subtle-compact'
+        actions={<Checkbox checked={magnetEnabledValue} onCheckedChange={handleMagnetEnabledChange} />}
+        className='p-3 space-y-4'
+      >
         {magnetEnabledValue && (
-          <div className='space-y-3'>
+          <div className='mt-4 space-y-4'>
             <div className='grid gap-3 sm:grid-cols-2'>
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Strength</Label>
+              <FormField label='Strength'>
                 <Input
                   type='number'
                   min={0.05}
@@ -1093,11 +1075,10 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
                   step={0.05}
                   value={magnetStrengthValue}
                   onChange={handleMagnetStrengthChange}
-                  className='text-sm'
+                  className='h-9'
                 />
-              </div>
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Radius (px)</Label>
+              </FormField>
+              <FormField label='Radius (px)'>
                 <Input
                   type='number'
                   min={40}
@@ -1105,22 +1086,20 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
                   step={10}
                   value={magnetRadiusValue}
                   onChange={handleMagnetRadiusChange}
-                  className='text-sm'
+                  className='h-9'
                 />
-              </div>
+              </FormField>
             </div>
 
             <div className='grid gap-3 sm:grid-cols-2'>
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Axis</Label>
+              <FormField label='Axis'>
                 <UnifiedSelect
                   value={magnetAxisValue}
                   onValueChange={handleMagnetAxisChange}
                   options={DRAG_AXES}
                 />
-              </div>
-              <div className='space-y-1.5'>
-                <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>Return speed</Label>
+              </FormField>
+              <FormField label='Return speed'>
                 <Input
                   type='number'
                   min={0.05}
@@ -1128,13 +1107,13 @@ export function AdvancedSection({ config, onChange, openVectorOverlay }: Advance
                   step={0.05}
                   value={magnetReturnValue}
                   onChange={handleMagnetReturnChange}
-                  className='text-sm'
+                  className='h-9'
                 />
-              </div>
+              </FormField>
             </div>
           </div>
         )}
-      </SectionPanel>
+      </FormSection>
     </>
   );
 }

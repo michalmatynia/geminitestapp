@@ -8,8 +8,8 @@ import {
 } from 'lucide-react';
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 
+import { useMasterFolderTreeAppearance } from '@/features/foldertree/hooks/useMasterFolderTreeAppearance';
 import { MasterFolderTree, useMasterFolderTree } from '@/features/foldertree/master';
-import { ICON_LIBRARY_MAP } from '@/features/icons';
 import { logClientError } from '@/features/observability';
 import { useProductCategoryTree } from '@/features/products/hooks/useCategoryQueries';
 import {
@@ -34,8 +34,6 @@ import {
 } from '@/shared/ui';
 import {
   cn,
-  getFolderTreePlaceholderClasses,
-  resolveFolderTreeIconV2,
   type MasterTreeDropPosition,
   type MasterTreeNode,
 } from '@/shared/utils';
@@ -145,10 +143,7 @@ export function CategoriesSettings({
 }: CategoriesSettingsProps): React.JSX.Element {
   const { toast } = useToast();
   const treeProfile = useFolderTreeProfile('product_categories');
-  const placeholderClasses = useMemo(
-    () => getFolderTreePlaceholderClasses(treeProfile.placeholders.preset),
-    [treeProfile.placeholders.preset]
-  );
+  const { placeholderClasses, rootDropUi, resolveIcon } = useMasterFolderTreeAppearance(treeProfile);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [editingCategory, setEditingCategory] =
     useState<ProductCategoryWithChildren | null>(null);
@@ -450,18 +445,28 @@ export function CategoriesSettings({
     }
   }, [showModal, parentOptions, formData.parentId]);
 
-  const FolderClosedIcon = useMemo(() => {
-    const iconId = resolveFolderTreeIconV2(treeProfile, 'folderClosed', 'category') ?? 'Folder';
-    return ICON_LIBRARY_MAP[iconId] ?? Folder;
-  }, [treeProfile]);
-  const FolderOpenIcon = useMemo(() => {
-    const iconId = resolveFolderTreeIconV2(treeProfile, 'folderOpen', 'category') ?? 'FolderOpen';
-    return ICON_LIBRARY_MAP[iconId] ?? FolderOpen;
-  }, [treeProfile]);
-  const DragHandleIcon = useMemo(() => {
-    const iconId = resolveFolderTreeIconV2(treeProfile, 'dragHandle') ?? 'GripVertical';
-    return ICON_LIBRARY_MAP[iconId] ?? GripVertical;
-  }, [treeProfile]);
+  const { FolderClosedIcon, FolderOpenIcon, DragHandleIcon } = useMemo(
+    () => ({
+      FolderClosedIcon: resolveIcon({
+        slot: 'folderClosed',
+        kind: 'category',
+        fallback: Folder,
+        fallbackId: 'Folder',
+      }),
+      FolderOpenIcon: resolveIcon({
+        slot: 'folderOpen',
+        kind: 'category',
+        fallback: FolderOpen,
+        fallbackId: 'FolderOpen',
+      }),
+      DragHandleIcon: resolveIcon({
+        slot: 'dragHandle',
+        fallback: GripVertical,
+        fallbackId: 'GripVertical',
+      }),
+    }),
+    [resolveIcon]
+  );
 
   return (
     <div className='space-y-5'>
@@ -527,11 +532,7 @@ export function CategoriesSettings({
                 <MasterFolderTree
                   controller={controller}
                   className='space-y-0.5'
-                  rootDropUi={{
-                    label: treeProfile.placeholders.rootDropLabel,
-                    idleClassName: placeholderClasses.rootIdle,
-                    activeClassName: placeholderClasses.rootActive,
-                  }}
+                  rootDropUi={rootDropUi}
                   onNodeDrop={async ({ draggedNodeId, targetId, position, rootDropZone }): Promise<void> => {
                     const draggedCategoryId = fromCategoryMasterNodeId(draggedNodeId);
                     if (!draggedCategoryId) return;

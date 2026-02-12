@@ -12,6 +12,7 @@ const cardVariants = cva(
         compact: 'bg-card',
         subtle: 'bg-card/60 backdrop-blur',
         'subtle-compact': 'bg-card/60 backdrop-blur',
+        glass: 'bg-card/40 backdrop-blur border-border/60',
         danger: 'border-red-500/50 bg-red-500/10',
         outline: 'bg-transparent',
       },

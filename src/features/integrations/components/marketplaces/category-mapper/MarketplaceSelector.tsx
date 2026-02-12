@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 import { useCategoryMapperPageContext } from '@/features/integrations/context/CategoryMapperPageContext';
 import type { IntegrationConnectionBasic, IntegrationWithConnections } from '@/features/integrations/types/listings';
-import { Button } from '@/shared/ui';
+import { Button, EmptyState, Skeleton } from '@/shared/ui';
 
 
 export function MarketplaceSelector(): React.JSX.Element {
@@ -18,11 +18,11 @@ export function MarketplaceSelector(): React.JSX.Element {
 
   if (loading) {
     return (
-      <div className='space-y-2'>
+      <div className='space-y-4'>
         <h2 className='mb-4 text-sm font-semibold text-gray-300'>Connections</h2>
-        <div className='animate-pulse space-y-2'>
-          <div className='h-8 rounded bg-gray-800' />
-          <div className='h-8 rounded bg-gray-800' />
+        <div className='space-y-2'>
+          <Skeleton className='h-8 w-full' />
+          <Skeleton className='h-8 w-full' />
         </div>
       </div>
     );
@@ -30,15 +30,18 @@ export function MarketplaceSelector(): React.JSX.Element {
 
   if (integrations.length === 0) {
     return (
-      <div className='space-y-2'>
+      <div className='space-y-4'>
         <h2 className='mb-4 text-sm font-semibold text-gray-300'>Connections</h2>
-        <p className='text-sm text-gray-500'>
-          No marketplace connections found. Configure a Base.com connection in{' '}
-          <Link href='/admin/integrations' className='text-blue-400 hover:underline'>
-            Integrations
-          </Link>{' '}
-          first.
-        </p>
+        <EmptyState
+          title='No connections found'
+          description='Configure a Base.com connection in Integrations first.'
+          className='p-6'
+          action={
+            <Link href='/admin/integrations' className='text-blue-400 hover:underline text-sm'>
+              Go to Integrations
+            </Link>
+          }
+        />
       </div>
     );
   }

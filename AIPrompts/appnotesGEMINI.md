@@ -37,6 +37,9 @@ Add Error Boundary components to catch uncaught UI errors and forward them to yo
 
 ---
 
+VALIDATION
+- expand mutation-invalidation matrix QUERY KEYS. 
+
 STATE MANAGEMENT
 -Scan the application for potential areas of props-drilling and apply useContext as a refactor
 -Reduce prop drilling by leveraging React Context or other state-management. Where many nested components receive the same prop, create a Context provider so children can consume values directly

@@ -96,8 +96,20 @@ export const invalidateIntegrations = (queryClient: QueryClient) => {
   return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.all });
 };
 
-export const invalidateIntegrationConnections = (queryClient: QueryClient) => {
-  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.connections() });
+export const invalidateIntegrationConnections = (
+  queryClient: QueryClient,
+  integrationId?: string
+) => {
+  if (!integrationId) {
+    return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.connections() });
+  }
+
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.connections() }),
+    queryClient.invalidateQueries({
+      queryKey: [...QUERY_KEYS.integrations.connections(), integrationId] as const,
+    }),
+  ]);
 };
 
 // --- Marketplace ---

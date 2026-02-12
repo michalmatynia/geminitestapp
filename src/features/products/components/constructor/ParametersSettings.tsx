@@ -6,7 +6,7 @@ import { useState, useCallback } from 'react';
 import { useSaveParameterMutation, useDeleteParameterMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { CatalogRecord } from '@/features/products/types';
 import type { ProductParameter } from '@/features/products/types';
-import { useToast, Button, Input, Label, UnifiedSelect, AppModal, EmptyState, ConfirmDialog, SectionPanel } from '@/shared/ui';
+import { useToast, Button, Input, Label, UnifiedSelect, FormModal, EmptyState, ConfirmDialog, SectionPanel, Skeleton } from '@/shared/ui';
 
 type ParametersSettingsProps = {
   loading: boolean;
@@ -161,8 +161,10 @@ export function ParametersSettings({
             </p>
 
             {loading ? (
-              <div className='rounded-md border border-dashed border p-4 text-center text-sm text-gray-400'>
-                Loading parameters...
+              <div className='space-y-2 p-4'>
+                <Skeleton className='h-8 w-full' />
+                <Skeleton className='h-8 w-full' />
+                <Skeleton className='h-8 w-full' />
               </div>
             ) : parameters.length === 0 ? (
               <EmptyState
@@ -239,10 +241,12 @@ export function ParametersSettings({
       />
 
       {showModal && (
-        <AppModal
+        <FormModal
           open={showModal}
           onClose={(): void => setShowModal(false)}
           title={editingParameter ? 'Edit Parameter' : 'Create Parameter'}
+          onSave={(): void => { void handleSave(); }}
+          isSaving={saveParameterMutation.isPending}
           size='md'
         >
           <div className='space-y-3'>
@@ -286,16 +290,7 @@ export function ParametersSettings({
               />
             </div>
           </div>
-
-          <div className='mt-6 flex justify-end gap-2'>
-            <Button variant='outline' onClick={(): void => setShowModal(false)}>
-              Cancel
-            </Button>
-            <Button onClick={(): void => { void handleSave(); }} disabled={saveParameterMutation.isPending}>
-              {saveParameterMutation.isPending ? 'Saving...' : 'Save'}
-            </Button>
-          </div>
-        </AppModal>
+        </FormModal>
       )}
     </div>
   );

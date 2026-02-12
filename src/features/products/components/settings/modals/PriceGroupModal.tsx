@@ -82,7 +82,7 @@ export function PriceGroupModal({
 
   return (
     <FormModal
-      isOpen={isOpen}
+      open={isOpen}
       onClose={onClose}
       title={priceGroup ? 'Edit Price Group' : 'Create Price Group'}
       onSave={(): void => {

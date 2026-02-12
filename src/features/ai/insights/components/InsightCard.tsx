@@ -3,12 +3,7 @@
 import React from 'react';
 
 import type { AiInsightRecord } from '@/shared/types';
-
-const statusClass = (status: AiInsightRecord['status']): string => {
-  if (status === 'ok') return 'border-emerald-500/40 text-emerald-200';
-  if (status === 'warning') return 'border-amber-500/40 text-amber-200';
-  return 'border-rose-500/40 text-rose-200';
-};
+import { StatusBadge } from '@/shared/ui';
 
 export function InsightCard({ insight }: { insight: AiInsightRecord }): React.JSX.Element {
   return (
@@ -17,9 +12,7 @@ export function InsightCard({ insight }: { insight: AiInsightRecord }): React.JS
         <span className='text-[10px] uppercase text-gray-500'>
           {new Date(insight.createdAt).toLocaleString()}
         </span>
-        <span className={`rounded border px-2 py-0.5 text-[10px] ${statusClass(insight.status)}`}>
-          {insight.status}
-        </span>
+        <StatusBadge status={insight.status} />
       </div>
       <div className='mt-2 text-sm text-white'>{insight.summary}</div>
       {insight.warnings.length > 0 ? (

@@ -6,11 +6,7 @@ import {
   Input,
   Label,
   SectionPanel,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  UnifiedSelect,
 } from '@/shared/ui';
 
 import { usePromptEngine, type SeverityFilter } from '../context/PromptEngineContext';
@@ -31,17 +27,17 @@ export function PromptEngineFilters(): React.JSX.Element {
         </div>
         <div className='w-[180px]'>
           <Label className='text-xs text-gray-400'>Severity</Label>
-          <Select value={severity} onValueChange={(value: string) => setSeverity(value as SeverityFilter)}>
-            <SelectTrigger className='h-9'>
-              <SelectValue placeholder='All' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='all'>All</SelectItem>
-              <SelectItem value='error'>Error</SelectItem>
-              <SelectItem value='warning'>Warning</SelectItem>
-              <SelectItem value='info'>Info</SelectItem>
-            </SelectContent>
-          </Select>
+          <UnifiedSelect
+            value={severity}
+            onValueChange={(value: string) => setSeverity(value as SeverityFilter)}
+            options={[
+              { value: 'all', label: 'All' },
+              { value: 'error', label: 'Error' },
+              { value: 'warning', label: 'Warning' },
+              { value: 'info', label: 'Info' },
+            ]}
+            triggerClassName='h-9'
+          />
         </div>
         <div className='flex items-end gap-2'>
           <label className='flex items-center gap-2 text-[11px] text-gray-400'>

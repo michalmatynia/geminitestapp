@@ -1,13 +1,12 @@
 'use client';
 
 import {
-  Input,
-  Label,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Textarea,
   UnifiedSelect,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -40,11 +39,9 @@ export function AssignmentEditor({
       aria-disabled={!!readOnly}
     >
       <label className='flex items-center gap-2 text-xs text-gray-300'>
-        <input
-          type='checkbox'
-          className='h-3 w-3 rounded border-gray-600'
+        <Checkbox
           checked={assignment.enabled}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField({ enabled: e.target.checked })}
+          onCheckedChange={(checked: boolean | 'indeterminate') => updateField({ enabled: Boolean(checked) })}
           disabled={!!readOnly}
         />
         Enabled
@@ -140,8 +137,7 @@ export function AssignmentEditor({
 
       <div className='space-y-1'>
         <Label className='text-xs text-gray-400'>Notes</Label>
-        <textarea
-          className='flex min-h-[72px] w-full rounded-md border border-input bg-background px-3 py-2 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
+        <Textarea
           value={assignment.notes ?? ''}
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => updateField({ notes: e.target.value })}
           placeholder='Optional notes for this assignment'

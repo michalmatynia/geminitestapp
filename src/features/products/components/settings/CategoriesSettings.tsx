@@ -19,6 +19,7 @@ import {
   ConfirmDialog,
   SectionPanel,
   FolderTreePanel,
+  Skeleton,
 } from '@/shared/ui';
 import { DRAG_KEYS, getFirstDragValue } from '@/shared/utils/drag-drop';
 
@@ -432,8 +433,10 @@ export function CategoriesSettings({
             </p>
 
             {loading && treeData.length === 0 ? (
-              <div className='rounded-md border border-dashed border p-4 text-center text-sm text-gray-400'>
-                Loading categories...
+              <div className='space-y-2 p-4'>
+                <Skeleton className='h-8 w-full' />
+                <Skeleton className='h-8 w-full' />
+                <Skeleton className='h-8 w-full' />
               </div>
             ) : treeData.length === 0 ? (
               <EmptyState

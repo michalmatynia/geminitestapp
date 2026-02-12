@@ -1,6 +1,6 @@
 'use client';
 
-import { SectionPanel } from '@/shared/ui';
+import { Checkbox, SectionPanel } from '@/shared/ui';
 
 import { useBrain } from '../context/BrainContext';
 import { type AiBrainFeature, type AiBrainAssignment } from '../settings';
@@ -73,11 +73,9 @@ export function RoutingTab(): React.JSX.Element {
                   <div className='text-xs text-gray-400'>{feature.description}</div>
                 </div>
                 <label className='flex items-center gap-2 text-[11px] text-gray-400'>
-                  <input
-                    type='checkbox'
-                    className='h-3 w-3 rounded border-gray-600'
+                  <Checkbox
                     checked={overrideEnabled}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => toggleOverride(feature.key, e.target.checked)}
+                    onCheckedChange={(checked: boolean | 'indeterminate') => toggleOverride(feature.key, Boolean(checked))}
                   />
                   Override
                 </label>

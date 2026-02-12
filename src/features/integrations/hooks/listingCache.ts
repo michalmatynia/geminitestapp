@@ -7,7 +7,7 @@ import type { QueryClient } from '@tanstack/react-query';
 
 export const listingBadgesQueryKey = QUERY_KEYS.integrations.productListingsBadges();
 export const integrationJobsQueryKey = QUERY_KEYS.jobs.integrations();
-export const aiPathsJobQueueQueryKey = QUERY_KEYS.ai.aiPaths.jobQueue();
+export const aiPathsJobQueueQueryKey = QUERY_KEYS.ai.aiPaths.jobQueue({});
 export const aiPathsQueueStatusQueryKey = QUERY_KEYS.ai.aiPaths.queueStatus();
 
 export const getProductListingsQueryKey = (productId: string): readonly unknown[] =>

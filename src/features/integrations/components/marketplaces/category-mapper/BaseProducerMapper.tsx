@@ -15,7 +15,8 @@ import {
 import { logClientError } from '@/features/observability';
 import { useProducers } from '@/features/products/hooks/useProductMetadataQueries';
 import type { Producer } from '@/features/products/types';
-import { Button, SectionHeader, UnifiedSelect, useToast } from '@/shared/ui';
+import { Button, SectionHeader, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, UnifiedSelect, useToast } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 import { usePendingExternalMappings } from './usePendingExternalMappings';
 
@@ -164,43 +165,41 @@ export function BaseProducerMapper(): React.JSX.Element {
       </div>
 
       <div className='overflow-hidden rounded-md border border-border'>
-        <table className='w-full'>
-          <thead>
-            <tr className='border-b border-border bg-card/50'>
-              <th className='px-4 py-3 text-left text-xs font-medium uppercase text-gray-400'>
+        <Table>
+          <TableHeader>
+            <TableRow className='border-b border-border bg-card/50'>
+              <TableHead className='px-4 py-3 text-left text-xs font-medium uppercase text-gray-400'>
                 Internal Producer
-              </th>
-              <th className='px-4 py-3 text-left text-xs font-medium uppercase text-gray-400'>
+              </TableHead>
+              <TableHead className='px-4 py-3 text-left text-xs font-medium uppercase text-gray-400'>
                 Base.com Producer
-              </th>
-            </tr>
-          </thead>
-          <tbody>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {loading ? (
-              <tr>
-                <td colSpan={2} className='px-4 py-8 text-center text-gray-500'>
+              <TableRow>
+                <TableCell colSpan={2} className='px-4 py-8 text-center text-gray-500'>
                   Loading producers...
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : internalProducers.length === 0 ? (
-              <tr>
-                <td colSpan={2} className='px-4 py-8 text-center text-gray-500'>
+              <TableRow>
+                <TableCell colSpan={2} className='px-4 py-8 text-center text-gray-500'>
                   No internal producers found. Create producers first.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : (
               internalProducers.map((producer: Producer) => {
                 const currentMapping = getCurrentMapping(producer.id);
                 const hasPendingChange = pendingMappings.has(producer.id);
                 return (
-                  <tr
+                  <TableRow
                     key={producer.id}
-                    className={`border-b border-border ${
-                      hasPendingChange ? 'bg-yellow-500/5' : ''
-                    }`}
+                    className={cn(hasPendingChange && 'bg-yellow-500/5')}
                   >
-                    <td className='px-4 py-2 text-sm text-gray-200'>{producer.name}</td>
-                    <td className='px-4 py-2'>
+                    <TableCell className='px-4 py-2 text-sm text-gray-200'>{producer.name}</TableCell>
+                    <TableCell className='px-4 py-2'>
                       <UnifiedSelect
                         value={currentMapping ?? '__unmapped__'}
                         onValueChange={(value: string): void =>
@@ -213,13 +212,13 @@ export function BaseProducerMapper(): React.JSX.Element {
                         options={externalProducerOptions}
                         triggerClassName='h-8 w-full border-border bg-gray-800 text-sm text-white'
                       />
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 );
               })
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

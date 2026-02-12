@@ -25,10 +25,10 @@ import {
   AppModal,
   Textarea,
   UnifiedSelect,
+  StatusToggle,
 } from '@/shared/ui';
 
 import { PATTERN_SCOPE_OPTIONS } from './constants';
-import { ToggleButton } from './ToggleButton';
 import { useValidatorSettingsContext } from './ValidatorSettingsContext';
 
 import type { PatternFormData, ReplacementMode } from './types';
@@ -288,9 +288,9 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
           <div className='flex items-end'>
             <div className='flex w-full items-center justify-between rounded-md border border-border bg-gray-900/70 px-3 py-2'>
               <span className='text-xs text-gray-300'>Pass Output To Next</span>
-              <ToggleButton
+              <StatusToggle
                 enabled={formData.passOutputToNext}
-                onClick={() =>
+                onToggle={() =>
                   setFormData((prev: PatternFormData) => ({
                     ...prev,
                     passOutputToNext: !prev.passOutputToNext,
@@ -309,9 +309,9 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                 Run this pattern only when the condition is satisfied.
               </p>
             </div>
-            <ToggleButton
+            <StatusToggle
               enabled={formData.launchEnabled}
-              onClick={() =>
+              onToggle={() =>
                 setFormData((prev: PatternFormData) => ({
                   ...prev,
                   launchEnabled: !prev.launchEnabled,
@@ -487,9 +487,9 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                 Execute DB or AI runtime checks before showing validation advice.
               </p>
             </div>
-            <ToggleButton
+            <StatusToggle
               enabled={formData.runtimeEnabled}
-              onClick={() =>
+              onToggle={() =>
                 setFormData((prev: PatternFormData) => {
                   const nextEnabled = !prev.runtimeEnabled;
                   return {
@@ -1032,9 +1032,9 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
 
         <div className='flex items-center justify-between rounded-md border border-border bg-gray-900/70 px-3 py-2'>
           <span className='text-xs text-gray-300'>Pattern enabled</span>
-          <ToggleButton
+          <StatusToggle
             enabled={formData.enabled}
-            onClick={() =>
+            onToggle={() =>
               setFormData((prev: PatternFormData) => ({
                 ...prev,
                 enabled: !prev.enabled,
@@ -1045,9 +1045,9 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
 
         <div className='flex items-center justify-between rounded-md border border-border bg-gray-900/70 px-3 py-2'>
           <span className='text-xs text-gray-300'>Replacer enabled</span>
-          <ToggleButton
+          <StatusToggle
             enabled={formData.replacementEnabled}
-            onClick={() =>
+            onToggle={() =>
               setFormData((prev: PatternFormData) => {
                 const nextReplacementEnabled = !prev.replacementEnabled;
                 return {
@@ -1067,10 +1067,10 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
               OFF keeps it as a proposal only.
             </p>
           </div>
-          <ToggleButton
+          <StatusToggle
             enabled={formData.replacementAutoApply}
             disabled={!formData.replacementEnabled}
-            onClick={() =>
+            onToggle={() =>
               setFormData((prev: PatternFormData) => ({
                 ...prev,
                 replacementAutoApply: !prev.replacementAutoApply,
@@ -1086,10 +1086,10 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
               Hide replacement proposals when replacement equals current value.
             </p>
           </div>
-          <ToggleButton
+          <StatusToggle
             enabled={formData.skipNoopReplacementProposal}
             disabled={!formData.replacementEnabled}
-            onClick={() =>
+            onToggle={() =>
               setFormData((prev: PatternFormData) => ({
                 ...prev,
                 skipNoopReplacementProposal: !prev.skipNoopReplacementProposal,

@@ -110,7 +110,7 @@ export const createQueryClient = (): QueryClient =>
       },
     }),
     mutationCache: new MutationCache({
-      onError: (error, _variables, _context, mutation) => {
+      onError: (error, _variables, _onMutateResult, mutation, _context) => {
         safeLogCacheError(
           'MutationCache',
           mutation.options.mutationKey,

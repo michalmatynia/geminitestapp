@@ -39,7 +39,7 @@ export type UserPreferencesData = {
   cmsSlideshowPauseOnHoverInEditor?: boolean | null;
 };
 
-export type UserPreferences = {
+type UserPreferencesRecord = {
   id: string;
   userId: string;
   productListNameLocale: string | null;
@@ -107,12 +107,12 @@ const IMMUTABLE_PREFERENCE_FIELDS = new Set([
 ]);
 
 type CachedUserPreferences = {
-  value: UserPreferences;
+  value: UserPreferencesRecord;
   fetchedAt: number;
 };
 
 const userPreferencesCache = new Map<string, CachedUserPreferences>();
-const userPreferencesInflight = new Map<string, Promise<UserPreferences>>();
+const userPreferencesInflight = new Map<string, Promise<UserPreferencesRecord>>();
 
 const getCanonicalPreferencesId = (userId: string): ObjectId | string =>
   toMongoId(userId);
@@ -120,7 +120,7 @@ const getCanonicalPreferencesId = (userId: string): ObjectId | string =>
 const getUserPreferencesCacheKey = (userId: string): string =>
   String(getCanonicalPreferencesId(userId));
 
-const getCachedUserPreferences = (cacheKey: string): UserPreferences | null => {
+const getCachedUserPreferences = (cacheKey: string): UserPreferencesRecord | null => {
   const cached = userPreferencesCache.get(cacheKey);
   if (!cached) return null;
   if (Date.now() - cached.fetchedAt > USER_PREFERENCES_CACHE_TTL_MS) {
@@ -130,7 +130,7 @@ const getCachedUserPreferences = (cacheKey: string): UserPreferences | null => {
   return cached.value;
 };
 
-const setCachedUserPreferences = (cacheKey: string, value: UserPreferences): void => {
+const setCachedUserPreferences = (cacheKey: string, value: UserPreferencesRecord): void => {
   userPreferencesCache.set(cacheKey, {
     value,
     fetchedAt: Date.now(),
@@ -140,7 +140,7 @@ const setCachedUserPreferences = (cacheKey: string, value: UserPreferences): voi
 export const peekUserPreferencesCache = (
   userId: string,
   options?: { allowStale?: boolean }
-): UserPreferences | null => {
+): UserPreferencesRecord | null => {
   const cacheKey = getUserPreferencesCacheKey(userId);
   if (options?.allowStale) {
     return userPreferencesCache.get(cacheKey)?.value ?? null;
@@ -165,7 +165,7 @@ export const invalidateUserPreferencesCache = (userId?: string): void => {
   userPreferencesInflight.clear();
 };
 
-const toUserPreferences = (doc: UserPreferencesDocument): UserPreferences => ({
+const toUserPreferences = (doc: UserPreferencesDocument): UserPreferencesRecord => ({
   id: String(doc._id),
   userId: doc.userId,
   productListNameLocale: doc.productListNameLocale,
@@ -192,7 +192,9 @@ const toUserPreferences = (doc: UserPreferencesDocument): UserPreferences => ({
   updatedAt: doc.updatedAt,
 });
 
-const defaultPreferences = (userId: string): Omit<UserPreferences, 'id' | 'createdAt' | 'updatedAt'> => ({
+const defaultPreferences = (
+  userId: string
+): Omit<UserPreferencesRecord, 'id' | 'createdAt' | 'updatedAt'> => ({
   userId,
   productListNameLocale: 'name_en',
   productListCatalogFilter: 'all',
@@ -232,7 +234,7 @@ const sanitizeUserPreferencesUpdateData = (
  * Get user preferences by user ID
  * Creates default preferences if they don't exist
  */
-export async function getUserPreferences(userId: string): Promise<UserPreferences> {
+export async function getUserPreferences(userId: string): Promise<UserPreferencesRecord> {
   if (!process.env['MONGODB_URI']) {
     throw operationFailedError('MongoDB is not configured.');
   }
@@ -244,7 +246,7 @@ export async function getUserPreferences(userId: string): Promise<UserPreference
   const inflight = userPreferencesInflight.get(cacheKey);
   if (inflight) return inflight;
 
-  const loadPromise = (async (): Promise<UserPreferences> => {
+  const loadPromise = (async (): Promise<UserPreferencesRecord> => {
     const db = await getMongoDb();
     const collection = db.collection<UserPreferencesDocument>(USER_PREFERENCES_COLLECTION);
     const doc = await collection.findOne({ _id: canonicalId });
@@ -280,7 +282,7 @@ export async function getUserPreferences(userId: string): Promise<UserPreference
 export async function updateUserPreferences(
   userId: string,
   data: Partial<UserPreferencesData>
-): Promise<UserPreferences> {
+): Promise<UserPreferencesRecord> {
   if (!process.env['MONGODB_URI']) {
     throw operationFailedError('MongoDB is not configured.');
   }
@@ -345,6 +347,8 @@ export async function updateUserPreferences(
 /**
  * Get or create preferences for user
  */
-export async function getOrCreatePreferences(userId: string): Promise<UserPreferences> {
+export async function getOrCreatePreferences(
+  userId: string
+): Promise<UserPreferencesRecord> {
   return getUserPreferences(userId);
 }

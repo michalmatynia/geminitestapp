@@ -24,11 +24,7 @@ import {
   Label, 
   SectionHeader, 
   SectionPanel, 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue, 
+  UnifiedSelect, 
   AppModal, 
   useToast 
 } from '@/shared/ui';
@@ -289,23 +285,14 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
 
           <div className='space-y-2'>
             <Label>Display</Label>
-            <Select
+            <UnifiedSelect
               value={draft.display}
               onValueChange={(value: string): void =>
                 setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => ({ ...prev, display: value as AiTriggerButtonDisplay }))
               }
-            >
-              <SelectTrigger className='w-full'>
-                <SelectValue placeholder='Select display' />
-              </SelectTrigger>
-              <SelectContent>
-                {DISPLAY_OPTIONS.map((option: { value: AiTriggerButtonDisplay; label: string }): React.JSX.Element => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={DISPLAY_OPTIONS}
+              placeholder='Select display'
+            />
             <div className='text-[11px] text-gray-400'>
               Icon only is useful for tight spaces (modal headers). Icon + label is clearer in lists.
             </div>
@@ -342,23 +329,14 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
 
           <div className='space-y-2'>
             <Label>Trigger condition</Label>
-            <Select
+            <UnifiedSelect
               value={draft.mode}
               onValueChange={(value: string): void =>
                 setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => ({ ...prev, mode: value as AiTriggerButtonMode }))
               }
-            >
-              <SelectTrigger className='w-full'>
-                <SelectValue placeholder='Select mode' />
-              </SelectTrigger>
-              <SelectContent>
-                {MODE_OPTIONS.map((option: { value: AiTriggerButtonMode; label: string }): React.JSX.Element => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={MODE_OPTIONS}
+              placeholder='Select mode'
+            />
             <div className='text-[11px] text-gray-400'>
               Click triggers fire immediately. Toggle triggers render as an On/Off switch in the UI and fire when changed.
             </div>

@@ -19,7 +19,7 @@ export const RestoreModal = ({
 
   return (
     <FormModal
-      isOpen={true}
+      open={true}
       onClose={onClose}
       title='Restore Database'
       onSave={(): void => onConfirm(truncate)}

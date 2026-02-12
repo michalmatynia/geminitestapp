@@ -18,10 +18,9 @@ import type {
   ProductValidationInstanceScope,
   ProductValidationPattern,
 } from '@/shared/types/domain/products';
-import { Button, EmptyState, Input, Label, SectionPanel } from '@/shared/ui';
+import { Button, EmptyState, Input, Label, SectionPanel, StatusToggle } from '@/shared/ui';
 
 import { INSTANCE_SCOPE_LABELS } from './constants';
-import { ToggleButton } from './ToggleButton';
 import { useValidatorSettingsContext } from './ValidatorSettingsContext';
 
 import type { SequenceGroupDraft } from './types';
@@ -424,10 +423,10 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
                       </div>
 
                       <div className='flex items-center gap-2'>
-                        <ToggleButton
+                        <StatusToggle
                           enabled={pattern.enabled}
                           disabled={updatePatternPending || reorderPending}
-                          onClick={() => onTogglePattern(pattern)}
+                          onToggle={() => onTogglePattern(pattern)}
                         />
                         <Button
                           type='button'

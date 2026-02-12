@@ -71,7 +71,7 @@ export function CurrencyModal(): React.JSX.Element {
 
   return (
     <FormModal
-      isOpen={isOpen}
+      open={isOpen}
       onClose={onClose}
       title={currency ? 'Edit Currency' : 'Add Currency'}
       onSave={(): void => {

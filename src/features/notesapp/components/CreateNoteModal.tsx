@@ -17,7 +17,7 @@ export function CreateNoteModal(): React.JSX.Element | null {
 
   return (
     <FormModal
-      isOpen={isCreating}
+      open={isCreating}
       onClose={(): void => setIsCreating(false)}
       title='Create Note'
       formRef={formRef} // Pass the ref here

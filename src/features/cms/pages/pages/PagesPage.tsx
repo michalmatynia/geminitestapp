@@ -170,24 +170,16 @@ export default function PagesPage(): React.ReactNode {
                     </span>
                   )}
                   {zoneSlugs.length > 1 ? (
-                    <Select
+                    <UnifiedSelect
                       value={previewSlug ?? ''}
                       onValueChange={(value: string): void =>
                         setPreviewSelections((prev: Record<string, string>): Record<string, string> => ({ ...prev, [page.id]: value }))
                       }
+                      options={zoneSlugs.map((slug: string) => ({ value: slug, label: `/${slug}` }))}
                       disabled={slugsQuery.isLoading}
-                    >
-                      <SelectTrigger className='h-8 w-[170px] text-xs'>
-                        <SelectValue placeholder='Preview slug' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {zoneSlugs.map((slug: string) => (
-                          <SelectItem key={slug} value={slug}>
-                            /{slug}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      triggerClassName='h-8 w-[170px] text-xs'
+                      placeholder='Preview slug'
+                    />
                   ) : zoneSlugs.length === 1 ? (
                     <div className='rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-[10px] text-blue-200'>
                       Preview: {activeDomain?.domain ?? 'current'}/{zoneSlugs[0]}

@@ -24,6 +24,7 @@ import {
   UnifiedSelect,
   SearchInput,
   Alert,
+  EmptyState,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -193,31 +194,31 @@ export function Asset3DListPage(): React.JSX.Element {
       )}
 
       {!loading && assets.length === 0 && (
-        <div className='flex flex-col items-center justify-center rounded-md border border-dashed border-border bg-card/50 py-16 text-muted-foreground'>
-          <Box className='mb-4 h-12 w-12 opacity-60' />
-          <p className='text-base font-medium text-foreground'>No assets found</p>
-          <p className='text-sm text-muted-foreground'>
-            {searchQuery || selectedCategory || selectedTags.length > 0
+        <EmptyState
+          title='No assets found'
+          description={
+            searchQuery || selectedCategory || selectedTags.length > 0
               ? 'Try adjusting your filters'
-              : 'No 3D assets available'}
-          </p>
-
-          {!searchQuery && !selectedCategory && selectedTags.length === 0 ? (
-            <Button
-              variant='outline'
-              className='mt-6'
-              disabled={reindexMutation.isPending}
-              onClick={() =>
-                void reindexMutation
-                  .mutateAsync()
-                  .then(() => assetsQuery.refetch())
-                  .catch(() => {})
-              }
-            >
-              {reindexMutation.isPending ? 'Reindexing...' : 'Reindex local uploads'}
-            </Button>
-          ) : null}
-        </div>
+              : 'No 3D assets available'
+          }
+          icon={<Box className='h-12 w-12 opacity-60' />}
+          action={
+            !searchQuery && !selectedCategory && selectedTags.length === 0 ? (
+              <Button
+                variant='outline'
+                disabled={reindexMutation.isPending}
+                onClick={() =>
+                  void reindexMutation
+                    .mutateAsync()
+                    .then(() => assetsQuery.refetch())
+                    .catch(() => {})
+                }
+              >
+                {reindexMutation.isPending ? 'Reindexing...' : 'Reindex local uploads'}
+              </Button>
+            ) : undefined
+          }
+        />
       )}
 
       {!loading && assets.length > 0 && viewMode === 'grid' && (

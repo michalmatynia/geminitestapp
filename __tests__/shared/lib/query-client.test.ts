@@ -19,9 +19,9 @@ describe('createQueryClient', () => {
     expect(typeof retry).toBe('function');
     if (typeof retry !== 'function') return;
 
-    expect(retry(0, { status: 404 })).toBe(false);
-    expect(retry(0, { status: 500 })).toBe(true);
-    expect(retry(2, { status: 500 })).toBe(false);
+    expect(retry(0, { status: 404 } as unknown as Error)).toBe(false);
+    expect(retry(0, { status: 500 } as unknown as Error)).toBe(true);
+    expect(retry(2, { status: 500 } as unknown as Error)).toBe(false);
     expect(retry(0, new Error('Request timeout after 5000ms'))).toBe(true);
     expect(retry(2, new Error('Network error'))).toBe(false);
   });
@@ -33,9 +33,9 @@ describe('createQueryClient', () => {
     expect(typeof retry).toBe('function');
     if (typeof retry !== 'function') return;
 
-    expect(retry(0, { status: 422 })).toBe(false);
-    expect(retry(0, { status: 503 })).toBe(true);
-    expect(retry(1, { status: 503 })).toBe(false);
+    expect(retry(0, { status: 422 } as unknown as Error)).toBe(false);
+    expect(retry(0, { status: 503 } as unknown as Error)).toBe(true);
+    expect(retry(1, { status: 503 } as unknown as Error)).toBe(false);
     expect(retry(0, new Error('Failed to fetch'))).toBe(true);
     expect(retry(1, new Error('Failed to fetch'))).toBe(false);
   });
@@ -83,7 +83,8 @@ describe('createQueryClient', () => {
       {
         options: { mutationKey: ['products', 'settings', 'save'] },
         state: { failureCount: 2 },
-      } as unknown as Parameters<NonNullable<typeof onError>>[3]
+      } as unknown as Parameters<NonNullable<typeof onError>>[3],
+      undefined as unknown as Parameters<NonNullable<typeof onError>>[4]
     );
 
     expect(logClientError).toHaveBeenCalledWith(
@@ -111,7 +112,8 @@ describe('createQueryClient', () => {
         {
           options: { mutationKey: ['x'] },
           state: { failureCount: 1 },
-        } as unknown as Parameters<NonNullable<typeof onError>>[3]
+        } as unknown as Parameters<NonNullable<typeof onError>>[3],
+        undefined as unknown as Parameters<NonNullable<typeof onError>>[4]
       )
     ).not.toThrow();
   });

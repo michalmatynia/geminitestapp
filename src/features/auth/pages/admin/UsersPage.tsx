@@ -23,7 +23,7 @@ import { DEFAULT_AUTH_SECURITY_POLICY } from '@/features/auth/utils/auth-securit
 import { logClientError } from '@/features/observability';
 import { ApiError } from '@/shared/lib/api-client';
 import { invalidateUsers } from '@/shared/lib/query-invalidation';
-import { Badge, Button, Checkbox, ConfirmDialog, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Input, Label, ListPanel, SectionHeader, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, UnifiedSelect, useToast } from '@/shared/ui';
+import { Badge, Button, Checkbox, ConfirmDialog, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, EmptyState, Input, Label, ListPanel, SectionHeader, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, UnifiedSelect, useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 type CreateUserForm = typeof EMPTY_CREATE;
@@ -447,8 +447,12 @@ export default function AuthUsersPage(): React.JSX.Element {
             <TableBody>
               {filteredUsers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className='text-center text-gray-500'>
-                    No users found.
+                  <TableCell colSpan={5} className='p-0'>
+                    <EmptyState
+                      title='No users found'
+                      description='Create your first user to get started!'
+                      className='border-none'
+                    />
                   </TableCell>
                 </TableRow>
               ) : (

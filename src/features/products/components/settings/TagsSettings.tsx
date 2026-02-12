@@ -6,7 +6,7 @@ import { useState, useCallback } from 'react';
 import { logClientError } from '@/features/observability';
 import { useSaveTagMutation, useDeleteTagMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { Catalog, ProductTag } from '@/features/products/types';
-import { useToast, Button, UnifiedSelect, Input, Label, AppModal, EmptyState, ConfirmDialog, SectionPanel, Tag as UiTag } from '@/shared/ui';
+import { useToast, Button, UnifiedSelect, Input, Label, FormModal, EmptyState, ConfirmDialog, SectionPanel, Tag as UiTag, Skeleton } from '@/shared/ui';
 
 type TagsSettingsProps = {
   loading: boolean;
@@ -163,8 +163,10 @@ export function TagsSettings({
             </p>
 
             {loading ? (
-              <div className='rounded-md border border-dashed border p-4 text-center text-sm text-gray-400'>
-                Loading tags...
+              <div className='space-y-2 p-4'>
+                <Skeleton className='h-8 w-full' />
+                <Skeleton className='h-8 w-full' />
+                <Skeleton className='h-8 w-full' />
               </div>
             ) : tags.length === 0 ? (
               <EmptyState
@@ -235,10 +237,12 @@ export function TagsSettings({
       />
 
       {showModal && (
-        <AppModal
+        <FormModal
           open={showModal}
           onClose={(): void => setShowModal(false)}
           title={editingTag ? 'Edit Tag' : 'Create Tag'}
+          onSave={(): void => { void handleSave(); }}
+          isSaving={saveTagMutation.isPending}
           size='md'
         >
           <div className='space-y-4'>
@@ -296,27 +300,9 @@ export function TagsSettings({
                 />
               </div>
             </div>
-
-            <div className='flex items-center justify-end gap-3 pt-4'>
-              <Button
-                className='rounded-md border border-border px-3 py-2 text-sm text-gray-300 hover:bg-muted/50'
-                type='button'
-                onClick={(): void => setShowModal(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                className='rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200'
-                type='button'
-                onClick={(): void => { void handleSave(); }}
-                disabled={saveTagMutation.isPending}
-              >
-                {saveTagMutation.isPending ? 'Saving...' : 'Save'}
-              </Button>
-                        </div>
-                      </div>
-                    </AppModal>
-                  )}
+          </div>
+        </FormModal>
+      )}
                 </div>
               );
             }

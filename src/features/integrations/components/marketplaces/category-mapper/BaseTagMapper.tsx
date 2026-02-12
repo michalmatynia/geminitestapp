@@ -18,7 +18,8 @@ import { useCatalogs } from '@/features/products/hooks/useProductMetadataQueries
 import type { CatalogRecord, ProductTag } from '@/features/products/types';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { Button, SectionHeader, UnifiedSelect, useToast } from '@/shared/ui';
+import { Button, SectionHeader, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, UnifiedSelect, useToast } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 import { usePendingExternalMappings } from './usePendingExternalMappings';
 
@@ -182,49 +183,47 @@ export function BaseTagMapper(): React.JSX.Element {
       </div>
 
       <div className='overflow-hidden rounded-md border border-border'>
-        <table className='w-full'>
-          <thead>
-            <tr className='border-b border-border bg-card/50'>
-              <th className='px-4 py-3 text-left text-xs font-medium uppercase text-gray-400'>
+        <Table>
+          <TableHeader>
+            <TableRow className='bg-card/50'>
+              <TableHead className='px-4 py-3 text-left text-xs font-medium uppercase text-gray-400'>
                 Internal Tag
-              </th>
-              <th className='px-4 py-3 text-left text-xs font-medium uppercase text-gray-400'>
+              </TableHead>
+              <TableHead className='px-4 py-3 text-left text-xs font-medium uppercase text-gray-400'>
                 Catalog
-              </th>
-              <th className='px-4 py-3 text-left text-xs font-medium uppercase text-gray-400'>
+              </TableHead>
+              <TableHead className='px-4 py-3 text-left text-xs font-medium uppercase text-gray-400'>
                 Base.com Tag
-              </th>
-            </tr>
-          </thead>
-          <tbody>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {loading ? (
-              <tr>
-                <td colSpan={3} className='px-4 py-8 text-center text-gray-500'>
+              <TableRow>
+                <TableCell colSpan={3} className='px-4 py-8 text-center text-gray-500'>
                   Loading tags...
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : internalTags.length === 0 ? (
-              <tr>
-                <td colSpan={3} className='px-4 py-8 text-center text-gray-500'>
+              <TableRow>
+                <TableCell colSpan={3} className='px-4 py-8 text-center text-gray-500'>
                   No internal tags found. Create tags first.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : (
               internalTags.map((tag: ProductTag) => {
                 const currentMapping = getCurrentMapping(tag.id);
                 const hasPendingChange = pendingMappings.has(tag.id);
                 return (
-                  <tr
+                  <TableRow
                     key={tag.id}
-                    className={`border-b border-border ${
-                      hasPendingChange ? 'bg-yellow-500/5' : ''
-                    }`}
+                    className={cn(hasPendingChange && 'bg-yellow-500/5')}
                   >
-                    <td className='px-4 py-2 text-sm text-gray-200'>{tag.name}</td>
-                    <td className='px-4 py-2 text-sm text-gray-400'>
+                    <TableCell className='px-4 py-2 text-sm text-gray-200'>{tag.name}</TableCell>
+                    <TableCell className='px-4 py-2 text-sm text-gray-400'>
                       {catalogsById.get(tag.catalogId) ?? tag.catalogId}
-                    </td>
-                    <td className='px-4 py-2'>
+                    </TableCell>
+                    <TableCell className='px-4 py-2'>
                       <UnifiedSelect
                         value={currentMapping ?? '__unmapped__'}
                         onValueChange={(value: string): void =>
@@ -234,13 +233,13 @@ export function BaseTagMapper(): React.JSX.Element {
                         options={externalTagOptions}
                         triggerClassName='h-8 w-full border-border bg-gray-800 text-sm text-white'
                       />
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 );
               })
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

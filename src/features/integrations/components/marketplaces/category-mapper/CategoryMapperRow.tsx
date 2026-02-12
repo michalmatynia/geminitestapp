@@ -5,7 +5,8 @@ import React from 'react';
 
 import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
 import type { ExternalCategory } from '@/features/integrations/types/category-mapping';
-import { Button, UnifiedSelect } from '@/shared/ui';
+import { Button, TableCell, TableRow, UnifiedSelect } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 interface CategoryMapperRowProps {
   category: ExternalCategory;
@@ -44,8 +45,8 @@ export function CategoryMapperRow({ category, depth = 0 }: CategoryMapperRowProp
 
   return (
     <React.Fragment>
-      <tr className={`border-b border-border ${hasPendingChange ? 'bg-yellow-500/5' : ''}`}>
-        <td className='px-4 py-2'>
+      <TableRow className={cn(hasPendingChange && 'bg-yellow-500/5')}>
+        <TableCell className='px-4 py-2'>
           <div className='flex items-center' style={{ paddingLeft: `${depth * 20}px` }}>
             {hasChildren ? (
               <Button
@@ -66,8 +67,8 @@ export function CategoryMapperRow({ category, depth = 0 }: CategoryMapperRowProp
               <Check className='ml-2 h-3 w-3 text-emerald-400' />
             )}
           </div>
-        </td>
-        <td className='px-4 py-2'>
+        </TableCell>
+        <TableCell className='px-4 py-2'>
           <UnifiedSelect
             value={currentMapping ?? '__unmapped__'}
             onValueChange={(v: string): void =>
@@ -80,8 +81,8 @@ export function CategoryMapperRow({ category, depth = 0 }: CategoryMapperRowProp
             ]}
             triggerClassName='w-full bg-gray-800 border-border text-white text-sm h-8'
           />
-        </td>
-      </tr>
+        </TableCell>
+      </TableRow>
       {hasChildren && isExpanded && (
         <React.Fragment>
           {children

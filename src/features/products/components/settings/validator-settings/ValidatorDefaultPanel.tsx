@@ -1,8 +1,7 @@
 'use client';
 
-import { SectionPanel } from '@/shared/ui';
+import { SectionPanel, StatusToggle } from '@/shared/ui';
 
-import { ToggleButton } from './ToggleButton';
 import { useValidatorSettingsContext } from './ValidatorSettingsContext';
 
 export function ValidatorDefaultPanel(): React.JSX.Element {
@@ -16,10 +15,10 @@ export function ValidatorDefaultPanel(): React.JSX.Element {
             Controls whether validator checks are ON by default in Product Create/Edit forms.
           </p>
         </div>
-        <ToggleButton
+        <StatusToggle
           enabled={enabledByDefault}
           disabled={settingsBusy}
-          onClick={() => {
+          onToggle={() => {
             void handleToggleDefault();
           }}
         />

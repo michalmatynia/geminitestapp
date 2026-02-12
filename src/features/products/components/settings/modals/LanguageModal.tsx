@@ -82,7 +82,7 @@ export function LanguageModal(): React.JSX.Element {
 
   return (
     <FormModal
-      isOpen={isOpen}
+      open={isOpen}
       onClose={onClose}
       title={language ? 'Edit Language' : 'Add Language'}
       onSave={() => {

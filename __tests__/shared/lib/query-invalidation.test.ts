@@ -3,6 +3,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import {
   invalidateCatalogScopedData,
   invalidateCatalogs,
+  invalidateIntegrationConnections,
   invalidateProductMetadata,
   invalidateUserPreferences,
 } from '@/shared/lib/query-invalidation';
@@ -61,6 +62,27 @@ describe('query invalidation helpers', () => {
     });
     expect(invalidateQueries).toHaveBeenNthCalledWith(2, {
       queryKey: QUERY_KEYS.userPreferences,
+    });
+  });
+
+  it('invalidates integration connections root key when no integration id is provided', async () => {
+    await invalidateIntegrationConnections(queryClient as never);
+
+    expect(invalidateQueries).toHaveBeenCalledTimes(1);
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: QUERY_KEYS.integrations.connections(),
+    });
+  });
+
+  it('invalidates both integration connections root and scoped keys', async () => {
+    await invalidateIntegrationConnections(queryClient as never, 'int-1');
+
+    expect(invalidateQueries).toHaveBeenCalledTimes(2);
+    expect(invalidateQueries).toHaveBeenNthCalledWith(1, {
+      queryKey: QUERY_KEYS.integrations.connections(),
+    });
+    expect(invalidateQueries).toHaveBeenNthCalledWith(2, {
+      queryKey: [...QUERY_KEYS.integrations.connections(), 'int-1'],
     });
   });
 });

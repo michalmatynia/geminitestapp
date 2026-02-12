@@ -1,7 +1,7 @@
 'use client';
 
 import { useAgentCreatorSettings } from '@/features/ai/agentcreator/hooks/useAgentCreatorSettings';
-import { Input, Label, Checkbox, UnifiedSelect, SectionPanel } from '@/shared/ui';
+import { Input, Checkbox, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
 
 export function AgentCreatorSettingsSection(): React.ReactElement {
   const {
@@ -20,73 +20,139 @@ export function AgentCreatorSettingsSection(): React.ReactElement {
   } = useAgentCreatorSettings();
 
   return (
-    <div className='space-y-4'>
-      <h3 className='text-lg font-medium text-white'>Agent Settings</h3>
-      <div className='flex items-center gap-4'>
-        <Label className='flex items-center gap-2 text-sm text-gray-300'>
+
+    <FormSection title='Agent Settings' variant='subtle' className='p-4'>
+
+      <div className='flex items-center gap-4 mt-4'>
+
+        <label className='flex items-center gap-2 text-sm text-gray-300 cursor-pointer'>
+
           <Checkbox
+
             checked={agentModeEnabled}
+
             onCheckedChange={(checked: boolean) => setAgentModeEnabled(Boolean(checked))}
+
           />
-          Enable Agent Mode
-        </Label>
+
+            Enable Agent Mode
+
+        </label>
+
       </div>
+
       {agentModeEnabled && (
-        <SectionPanel variant='subtle' className='space-y-4 p-4'>
+
+        <div className='space-y-4 mt-4'>
+
           <div className='grid gap-4 md:grid-cols-2'>
-            <div className='space-y-2'>
-              <Label>Browser</Label>
+
+            <FormField label='Browser'>
+
               <UnifiedSelect
+
                 value={agentBrowser}
+
                 onValueChange={setAgentBrowser}
+
                 options={[
+
                   { value: 'chromium', label: 'Chromium' },
+
                   { value: 'firefox', label: 'Firefox' },
+
                   { value: 'webkit', label: 'WebKit' },
+
                 ]}
+
               />
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='agent-max-steps'>Max Steps</Label>
+
+            </FormField>
+
+            <FormField label='Max Steps'>
+
               <Input
+
                 id='agent-max-steps'
+
                 type='number'
+
                 value={agentMaxSteps}
+
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAgentMaxSteps(Number(e.target.value))}
+
               />
-            </div>
+
+            </FormField>
+
           </div>
+
           <div className='flex flex-wrap items-center gap-4'>
-            <Label className='flex items-center gap-2 text-sm text-gray-300'>
+
+            <label className='flex items-center gap-2 text-sm text-gray-300 cursor-pointer'>
+
               <Checkbox
+
                 checked={agentRunHeadless}
+
                 onCheckedChange={(checked: boolean) =>
+
                   setAgentRunHeadless(Boolean(checked))
+
                 }
+
               />
-              Run Headless
-            </Label>
-            <Label className='flex items-center gap-2 text-sm text-gray-300'>
+
+                Run Headless
+
+            </label>
+
+            <label className='flex items-center gap-2 text-sm text-gray-300 cursor-pointer'>
+
               <Checkbox
+
                 checked={agentIgnoreRobotsTxt}
+
                 onCheckedChange={(checked: boolean) =>
+
                   setAgentIgnoreRobotsTxt(Boolean(checked))
+
                 }
+
               />
-              Ignore robots.txt
-            </Label>
-            <Label className='flex items-center gap-2 text-sm text-gray-300'>
+
+                Ignore robots.txt
+
+            </label>
+
+            <label className='flex items-center gap-2 text-sm text-gray-300 cursor-pointer'>
+
               <Checkbox
+
                 checked={agentRequireHumanApproval}
+
                 onCheckedChange={(checked: boolean) =>
+
                   setAgentRequireHumanApproval(Boolean(checked))
+
                 }
+
               />
-              Require Approval
-            </Label>
+
+                Require Approval
+
+            </label>
+
           </div>
-        </SectionPanel>
+
+        </div>
+
       )}
-    </div>
+
+    </FormSection>
+
   );
+
 }
+
+  

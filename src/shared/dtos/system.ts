@@ -1,4 +1,4 @@
-import { DtoBase, CreateDto } from '../types/base';
+import { DtoBase } from '../types/base';
 
 /**
  * DTOs for system-level diagnostics and configuration.
@@ -53,4 +53,11 @@ export interface ActivityLogDto extends DtoBase {
 /**
  * Input for creating a new activity log.
  */
-export type CreateActivityLogDto = CreateDto<ActivityLogDto>;
+export interface CreateActivityLogDto {
+  type: string;
+  description: string;
+  userId?: string | null;
+  entityId?: string | null;
+  entityType?: string | null;
+  metadata?: Record<string, unknown> | null;
+}

@@ -23,7 +23,7 @@ import {
   UnifiedSelect,
   Checkbox,
   Button,
-  PanelHeader,
+  SectionHeader,
   SectionPanel,
   FormSection,
   FormField,
@@ -883,9 +883,11 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
   return (
     <div className='flex min-h-0 flex-1 flex-col'>
       {showHeader && (
-        <PanelHeader
+        <SectionHeader
           title='Menu settings'
           subtitle='Configure the look and behaviour of your page navigation.'
+          size='xs'
+          className='p-3 border-b border-border'
         />
       )}
       <div className='flex-1 overflow-y-auto p-3'>

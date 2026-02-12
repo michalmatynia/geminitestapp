@@ -10,7 +10,7 @@ import {
 } from '@/features/auth/utils/auth-user-pages';
 import { logClientError } from '@/features/observability';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Label, Switch, useToast, SectionHeader, SectionPanel, FormSection } from '@/shared/ui';
+import { Button, Label, Switch, useToast, SectionPanel, FormSection } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 export default function AuthUserPagesPage(): React.JSX.Element {
@@ -82,7 +82,11 @@ function AuthUserPagesForm({
         title='User Pages'
         description='Configure which authentication flows are available in the public UI.'
         className='p-6'
-      />
+      >
+        <div className='mt-4 text-sm text-gray-400'>
+          Control which auth flows are visible to end users.
+        </div>
+      </FormSection>
 
       <FormSection
         title='Authentication Flows'

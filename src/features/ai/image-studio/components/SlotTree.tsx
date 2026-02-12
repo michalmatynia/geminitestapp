@@ -3,9 +3,10 @@
 import { Folder, FolderOpen, GripVertical, Image as ImageIcon, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { useMasterFolderTreeAppearance } from '@/features/foldertree/hooks/useMasterFolderTreeAppearance';
-import { MasterFolderTree, useMasterFolderTree } from '@/features/foldertree/master';
-import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
+import {
+  MasterFolderTree,
+  useMasterFolderTreeInstance,
+} from '@/features/foldertree';
 import { TreeCaret, TreeContextMenu, TreeRow, useToast } from '@/shared/ui';
 import {
   canNestTreeNodeV2,
@@ -61,9 +62,27 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
     handleMoveFolder: onMoveFolder,
     handleRenameFolder: onRenameFolder,
   } = useSlotsActions();
-  const profile = useFolderTreeProfile('image_studio');
-  const { placeholderClasses, rootDropUi, resolveIcon } = useMasterFolderTreeAppearance(profile);
+  const masterNodes = useMemo(
+    () => buildMasterNodesFromStudioTree(slots, folders),
+    [slots, folders]
+  );
+  const selectedMasterNodeId = useMemo((): MasterTreeId | null => {
+    if (selectedSlotId) return toSlotMasterNodeId(selectedSlotId);
+    const normalizedSelectedFolder = normalizeTreePath(selectedFolder);
+    if (!normalizedSelectedFolder) return null;
+    return toFolderMasterNodeId(normalizedSelectedFolder);
+  }, [selectedFolder, selectedSlotId]);
+  const {
+    profile,
+    appearance: { placeholderClasses, rootDropUi, resolveIcon },
+    controller,
+  } = useMasterFolderTreeInstance({
+    instance: 'image_studio',
+    nodes: masterNodes,
+    selectedNodeId: selectedMasterNodeId,
+  });
   const { toast } = useToast();
+  const { selectNode, expandNode } = controller;
 
   const { FolderClosedIcon, FolderOpenIcon, FileIcon, DragHandleIcon } = useMemo(
     () => ({
@@ -93,32 +112,6 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
     }),
     [resolveIcon]
   );
-
-  const masterNodes = useMemo(
-    () => buildMasterNodesFromStudioTree(slots, folders),
-    [slots, folders]
-  );
-  const selectedMasterNodeId = useMemo((): MasterTreeId | null => {
-    if (selectedSlotId) return toSlotMasterNodeId(selectedSlotId);
-    const normalizedSelectedFolder = normalizeTreePath(selectedFolder);
-    if (!normalizedSelectedFolder) return null;
-    return toFolderMasterNodeId(normalizedSelectedFolder);
-  }, [selectedFolder, selectedSlotId]);
-
-  const controller = useMasterFolderTree({
-    initialNodes: masterNodes,
-    initialSelectedNodeId: selectedMasterNodeId,
-    profile,
-  });
-  const { replaceNodes, selectNode, expandNode } = controller;
-
-  useEffect(() => {
-    void replaceNodes(masterNodes, 'external_sync');
-  }, [masterNodes, replaceNodes]);
-
-  useEffect(() => {
-    selectNode(selectedMasterNodeId);
-  }, [selectedMasterNodeId, selectNode]);
 
   const slotById = useMemo(
     () => new Map<string, ImageStudioSlotRecord>(slots.map((slot: ImageStudioSlotRecord) => [slot.id, slot])),

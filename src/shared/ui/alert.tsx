@@ -9,7 +9,7 @@ interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const variantStyles: Record<AlertVariant, string> = {
-  default: 'bg-background text-foreground border-border',
+  default: 'bg-card text-foreground border-border',
   error: 'border-red-500/40 bg-red-500/10 text-red-200',
   warning: 'border-amber-500/40 bg-amber-500/10 text-amber-100',
   success: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-100',

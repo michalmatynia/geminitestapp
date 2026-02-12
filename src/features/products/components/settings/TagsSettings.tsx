@@ -6,7 +6,7 @@ import { useState, useCallback } from 'react';
 import { logClientError } from '@/features/observability';
 import { useSaveTagMutation, useDeleteTagMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { Catalog, ProductTag } from '@/features/products/types';
-import { useToast, Button, UnifiedSelect, Input, Label, FormModal, EmptyState, ConfirmDialog, SectionPanel, Tag as UiTag, Skeleton } from '@/shared/ui';
+import { useToast, Button, UnifiedSelect, Input, Label, FormModal, EmptyState, ConfirmDialog, SectionPanel, Tag as UiTag, Skeleton, FormSection, FormField } from '@/shared/ui';
 
 type TagsSettingsProps = {
   loading: boolean;
@@ -127,12 +127,12 @@ export function TagsSettings({
 
   return (
     <div className='space-y-5'>
-      <SectionPanel variant='subtle' className='p-4'>
-        <p className='text-sm font-semibold text-white mb-3'>Select Catalog</p>
-        <p className='text-xs text-gray-400 mb-3'>
-          Tags are managed per catalog.
-        </p>
-        <div className='w-full max-w-xs'>
+      <FormSection
+        title='Select Catalog'
+        description='Tags are managed per catalog.'
+        className='p-4'
+      >
+        <div className='w-full max-w-xs mt-4'>
           <UnifiedSelect
             value={selectedCatalogId || ''}
             onValueChange={onCatalogChange}
@@ -143,7 +143,7 @@ export function TagsSettings({
             placeholder='Select a catalog...'
           />
         </div>
-      </SectionPanel>
+      </FormSection>
 
       {selectedCatalogId && (
         <>
@@ -157,65 +157,65 @@ export function TagsSettings({
             </Button>
           </div>
 
-          <SectionPanel variant='subtle' className='p-4'>
-            <p className='text-sm font-semibold text-white mb-4'>
-              Tags for &quot;{selectedCatalog?.name}&quot;
-            </p>
-
-            {loading ? (
-              <div className='space-y-2 p-4'>
-                <Skeleton className='h-8 w-full' />
-                <Skeleton className='h-8 w-full' />
-                <Skeleton className='h-8 w-full' />
-              </div>
-            ) : tags.length === 0 ? (
-              <EmptyState
-                title='No tags yet'
-                description='Tags help you categorize products within a catalog.'
-                action={
-                  <Button onClick={openCreateModal} variant='outline'>
-                    <Plus className='size-4 mr-2' />
-                    Create Your First Tag
-                  </Button>
-                }
-              />
-            ) : (
-              <div className='space-y-2'>
-                {tags.map((tag: ProductTag) => (
-                  <SectionPanel
-                    key={tag.id}
-                    variant='subtle-compact'
-                    className='flex items-center justify-between gap-3 bg-gray-900'
-                  >
-                    <div className='flex items-center gap-3 min-w-0'>
-                      <UiTag
-                        label={tag.name}
-                        color={tag.color || '#38bdf8'}
-                        dot
-                      />
+          <FormSection
+            title={`Tags for "${selectedCatalog?.name}"`}
+            className='p-4'
+          >
+            <div className='mt-4'>
+              {loading ? (
+                <div className='space-y-2 p-4'>
+                  <Skeleton className='h-8 w-full' />
+                  <Skeleton className='h-8 w-full' />
+                  <Skeleton className='h-8 w-full' />
+                </div>
+              ) : tags.length === 0 ? (
+                <EmptyState
+                  title='No tags yet'
+                  description='Tags help you categorize products within a catalog.'
+                  action={
+                    <Button onClick={openCreateModal} variant='outline'>
+                      <Plus className='size-4 mr-2' />
+                      Create Your First Tag
+                    </Button>
+                  }
+                />
+              ) : (
+                <div className='space-y-2'>
+                  {tags.map((tag: ProductTag) => (
+                    <div
+                      key={tag.id}
+                      className='flex items-center justify-between gap-3 rounded-md border border-border/40 bg-gray-900/40 p-3'
+                    >
+                      <div className='flex items-center gap-3 min-w-0'>
+                        <UiTag
+                          label={tag.name}
+                          color={tag.color || '#38bdf8'}
+                          dot
+                        />
+                      </div>
+                      <div className='flex items-center gap-2'>
+                        <Button
+                          type='button'
+                          onClick={(): void => openEditModal(tag)}
+                          className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-100 hover:bg-gray-700'
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          type='button'
+                          onClick={(): void => handleDelete(tag)}
+                          className='rounded bg-red-600/80 px-2 py-1 text-xs text-white hover:bg-red-600'
+                          title='Delete tag'
+                        >
+                          <Trash2 className='size-3' />
+                        </Button>
+                      </div>
                     </div>
-                    <div className='flex items-center gap-2'>
-                      <Button
-                        type='button'
-                        onClick={(): void => openEditModal(tag)}
-                        className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-100 hover:bg-gray-700'
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        type='button'
-                        onClick={(): void => handleDelete(tag)}
-                        className='rounded bg-red-600/80 px-2 py-1 text-xs text-white hover:bg-red-600'
-                        title='Delete tag'
-                      >
-                        <Trash2 className='size-3' />
-                      </Button>
-                    </div>
-                  </SectionPanel>
-                ))}
-              </div>
-            )}
-          </SectionPanel>
+                  ))}
+                </div>
+              )}
+            </div>
+          </FormSection>
         </>
       )}
 
@@ -246,41 +246,36 @@ export function TagsSettings({
           size='md'
         >
           <div className='space-y-4'>
-            <div>
-              <Label className='text-xs text-gray-400'>Name</Label>
+            <FormField label='Name'>
               <Input
-                className='mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white'
+                className='h-9'
                 value={formData.name}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                   setFormData((prev: TagFormData) => ({ ...prev, name: e.target.value }))
                 }
                 placeholder='Tag name'
               />
-            </div>
+            </FormField>
 
-            <div>
-              <Label className='text-xs text-gray-400'>Catalog</Label>
-              <div className='mt-2'>
-                <UnifiedSelect
-                  value={formData.catalogId}
-                  onValueChange={(value: string): void =>
-                    setFormData((prev: TagFormData) => ({
-                      ...prev,
-                      catalogId: value,
-                    }))
-                  }
-                  options={catalogs.map((catalog: Catalog) => ({
-                    value: catalog.id,
-                    label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`
-                  }))}
-                  placeholder='Select catalog'
-                />
-              </div>
-            </div>
+            <FormField label='Catalog'>
+              <UnifiedSelect
+                value={formData.catalogId}
+                onValueChange={(value: string): void =>
+                  setFormData((prev: TagFormData) => ({
+                    ...prev,
+                    catalogId: value,
+                  }))
+                }
+                options={catalogs.map((catalog: Catalog) => ({
+                  value: catalog.id,
+                  label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`
+                }))}
+                placeholder='Select catalog'
+              />
+            </FormField>
 
-            <div>
-              <Label className='text-xs text-gray-400'>Color</Label>
-              <div className='mt-2 flex items-center gap-3'>
+            <FormField label='Color'>
+              <div className='flex items-center gap-3 mt-1'>
                 <Input
                   type='color'
                   className='h-10 w-20 cursor-pointer rounded border border-border bg-gray-900'
@@ -291,7 +286,7 @@ export function TagsSettings({
                 />
                 <Input
                   type='text'
-                  className='flex-1 rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white'
+                  className='flex-1 h-10 font-mono'
                   value={formData.color}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                     setFormData((prev: TagFormData) => ({ ...prev, color: e.target.value }))
@@ -299,7 +294,7 @@ export function TagsSettings({
                   placeholder='#38bdf8'
                 />
               </div>
-            </div>
+            </FormField>
           </div>
         </FormModal>
       )}

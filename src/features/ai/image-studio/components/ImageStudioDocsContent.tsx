@@ -5,7 +5,7 @@ import React, { useMemo, useState } from 'react';
 import { PROMPT_ENGINE_SETTINGS_KEY, parsePromptEngineSettings } from '@/features/prompt-engine/settings';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { CopyButton, Input, SectionPanel } from '@/shared/ui';
+import { CopyButton, Input, SectionPanel, FormSection } from '@/shared/ui';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import { useGenerationState } from '../context/GenerationContext';
@@ -600,23 +600,19 @@ export function ImageStudioDocsContent(): React.JSX.Element {
 
   return (
     <div className='space-y-4 text-sm text-gray-300'>
-      <SectionPanel variant='subtle' className='p-5'>
-        <div className='flex flex-wrap items-start justify-between gap-3'>
-          <div className='space-y-1'>
-            <h2 className='text-lg font-semibold text-white'>Image Studio Docs</h2>
-            <p className='max-w-4xl text-sm text-gray-400'>
-              Live documentation of the current Image Studio runtime state and every persisted setting used by
-              generation, extraction, validation, presets, and folder-tree behavior.
-            </p>
-          </div>
+      <FormSection
+        title='Image Studio Docs'
+        description='Live documentation of the current Image Studio runtime state and every persisted setting used by generation, extraction, validation, presets, and folder-tree behavior.'
+        className='p-5'
+        actions={(
           <Input
             value={docsQuery}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => setDocsQuery(event.target.value)}
             placeholder='Search state, setting path, value...'
             className='h-9 w-full max-w-[360px] bg-card/70'
           />
-        </div>
-      </SectionPanel>
+        )}
+      />
 
       {includeByQuery(['runtime state', 'project', 'slot', 'prompt', 'mask', 'generation']) ? (
         <SectionPanel variant='subtle' className='space-y-3 p-5'>

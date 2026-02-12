@@ -1,72 +1,49 @@
 'use client';
 
 import { AppModal } from './app-modal';
-import { Button } from './button'; // Assuming Button is available
+import { Button } from './button';
 
 import type { ReactNode } from 'react';
 
 interface FormModalProps {
-
   open: boolean;
-
   onClose: () => void;
-
   title: string;
-
+  subtitle?: string;
   children: ReactNode;
-
   onSave: () => void;
-
   isSaving?: boolean;
-
   saveText?: string;
-
   cancelText?: string;
-
   formRef?: React.RefObject<HTMLFormElement | null>;
-
   size?: 'sm' | 'md' | 'lg' | 'xl';
-
-  actions?: ReactNode; // Additional actions for the header
-
+  variant?: 'default' | 'glass';
+  padding?: 'default' | 'none';
+  actions?: ReactNode;
 }
 
-
-
 export function FormModal({
-
   open,
-
   onClose,
-
   title,
-
+  subtitle,
   children,
-
   onSave,
-
   isSaving = false,
-
   saveText = 'Save',
-
   cancelText = 'Cancel',
-
   formRef,
-
   size = 'md',
-
+  variant = 'default',
+  padding = 'default',
   actions,
-
 }: FormModalProps): React.JSX.Element | null {
-
   if (!open) return null;
-
-
 
   const saveButton = formRef ? (
     <Button
-      type='button' // Use type="button" as we'll use onClick to trigger submit
-      onClick={() => formRef.current?.requestSubmit()} // Use ref to trigger form submission
+      type='button'
+      onClick={() => formRef.current?.requestSubmit()}
       disabled={isSaving}
       variant='primary'
       className='min-w-[100px]'
@@ -84,11 +61,10 @@ export function FormModal({
     </Button>
   );
 
-  // Combine save button, original actions, and cancel button for AppModal's headerActions
   const headerActions = (
     <>
       {saveButton}
-      {actions} {/* Include any additional actions passed */}
+      {actions}
       <Button
         type='button'
         onClick={onClose}
@@ -100,28 +76,18 @@ export function FormModal({
     </>
   );
 
-
-
   return (
-
     <AppModal
-
       open={open}
-
-      onOpenChange={onClose} // Pass onClose directly to AppModal's onOpenChange
-
-      title={title} // Pass title to AppModal
-
+      onOpenChange={onClose}
+      title={title}
+      subtitle={subtitle}
       size={size}
-
-      headerActions={headerActions} // Pass the constructed actions to AppModal
-
+      variant={variant}
+      padding={padding}
+      headerActions={headerActions}
     >
-
       {children}
-
     </AppModal>
-
   );
-
 }

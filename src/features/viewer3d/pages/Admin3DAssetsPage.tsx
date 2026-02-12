@@ -142,21 +142,50 @@ export function Admin3DAssetsPage(): React.JSX.Element {
 
   return (
     <ListPanel
-      header={
-        <SectionHeader
-          title='3D Assets'
-          description='Upload and manage 3D models with dithering preview'
-          actions={
-            <>
-              <RefreshButton
-                onRefresh={() => void assetsQuery.refetch()}
-                isRefreshing={assetsQuery.isFetching}
-              />
-              <Button size='sm' onClick={() => setShowUploader(true)}>
-                <Upload className='mr-2 h-4 w-4' />
-                Upload Asset
-              </Button>
-            </>
+      title='3D Assets'
+      description='Upload and manage 3D models with dithering preview'
+      refresh={{
+        onRefresh: () => void assetsQuery.refetch(),
+        isRefreshing: assetsQuery.isFetching,
+      }}
+      headerActions={
+        <Button size='sm' onClick={() => setShowUploader(true)}>
+          <Upload className='mr-2 h-4 w-4' />
+          Upload Asset
+        </Button>
+      }
+      isLoading={loading}
+      loadingMessage='Loading 3D assets...'
+      emptyState={
+        <EmptyState
+          title={hasActiveFilters ? 'No matching assets' : 'No 3D assets yet'}
+          description={hasActiveFilters ? 'Try adjusting your filters' : 'Upload your first .glb or .gltf file'}
+          icon={<Box className='h-12 w-12 opacity-60' />}
+          action={
+            !hasActiveFilters ? (
+              <div className='mt-4 flex flex-wrap items-center justify-center gap-2'>
+                <Button onClick={() => setShowUploader(true)}>
+                  <Upload className='mr-2 h-4 w-4' />
+                  Upload Asset
+                </Button>
+                <RefreshButton
+                  onRefresh={(): void => {
+                    void reindexMutation
+                      .mutateAsync()
+                      .then((): void => { 
+                        toast('Assets reindexed successfully.', { variant: 'success' });
+                        void assetsQuery.refetch(); 
+                      })
+                      .catch((err: unknown): void => {
+                        logClientError(err, { context: { source: 'Admin3DAssetsPage', action: 'reindexAssets' } });
+                        toast(err instanceof Error ? err.message : 'Failed to reindex assets', { variant: 'error' });
+                      });
+                  }}
+                  isRefreshing={reindexMutation.isPending}
+                  label={reindexMutation.isPending ? 'Reindexing...' : 'Reindex local uploads'}
+                />
+              </div>
+            ) : undefined
           }
         />
       }
@@ -289,51 +318,7 @@ export function Admin3DAssetsPage(): React.JSX.Element {
         </FormSection>
       )}
 
-      {loading && (
-        <div className='flex items-center justify-center rounded-md border border-dashed border-border py-16 text-muted-foreground'>
-          <Loader2 className='h-7 w-7 animate-spin text-blue-400' />
-        </div>
-      )}
-
-      {!loading && assets.length === 0 && (
-        <div className='flex flex-col items-center justify-center rounded-md border border-dashed border-border bg-card/50 py-12 text-muted-foreground'>
-          <Box className='mb-4 h-12 w-12 opacity-60' />
-          <p className='text-base font-medium text-foreground'>
-            {hasActiveFilters ? 'No matching assets' : 'No 3D assets yet'}
-          </p>
-          <p className='text-sm text-muted-foreground'>
-            {hasActiveFilters
-              ? 'Try adjusting your filters'
-              : 'Upload your first .glb or .gltf file'}
-          </p>
-          {!hasActiveFilters && (
-            <div className='mt-4 flex flex-wrap items-center justify-center gap-2'>
-              <Button onClick={() => setShowUploader(true)}>
-                <Upload className='mr-2 h-4 w-4' />
-                Upload Asset
-              </Button>
-              <RefreshButton
-                onRefresh={(): void => {
-                  void reindexMutation
-                    .mutateAsync()
-                    .then((): void => { 
-                      toast('Assets reindexed successfully.', { variant: 'success' });
-                      void assetsQuery.refetch(); 
-                    })
-                    .catch((err: unknown): void => {
-                      logClientError(err, { context: { source: 'Admin3DAssetsPage', action: 'reindexAssets' } });
-                      toast(err instanceof Error ? err.message : 'Failed to reindex assets', { variant: 'error' });
-                    });
-                }}
-                isRefreshing={reindexMutation.isPending}
-                label={reindexMutation.isPending ? 'Reindexing...' : 'Reindex local uploads'}
-              />
-            </div>
-          )}
-        </div>
-      )}
-
-      {!loading && assets.length > 0 && viewMode === 'grid' && (
+      {assets.length > 0 && viewMode === 'grid' && (
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
           {assets.map((asset: Asset3DRecord) => (
             <Asset3DCard
@@ -348,7 +333,7 @@ export function Admin3DAssetsPage(): React.JSX.Element {
         </div>
       )}
 
-      {!loading && assets.length > 0 && viewMode === 'list' && (
+      {assets.length > 0 && viewMode === 'list' && (
         <Table className='text-sm text-foreground'>
           <TableHeader>
             <TableRow>

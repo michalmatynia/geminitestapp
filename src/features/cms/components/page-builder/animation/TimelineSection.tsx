@@ -16,10 +16,8 @@ import {
 } from '@/features/gsap';
 import {
   Checkbox,
-  Label,
   Input,
   UnifiedSelect,
-  SectionPanel,
   FormSection,
   FormField,
 } from '@/shared/ui';

@@ -5,7 +5,8 @@ import React from 'react';
 
 import { buildModelProfile } from '@/features/ai/chatbot/utils';
 import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/domain/agent-teaching';
-import { Input, ItemLibrary, Label, UnifiedSelect, Textarea, useToast, Checkbox, FormField } from '@/shared/ui';
+import { Input, ItemLibrary, UnifiedSelect, Textarea, useToast, Checkbox, FormField } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 import { useAgentTeachingContext } from '../context/AgentTeachingContext';
 import { useDeleteTeachingAgentMutation, useUpsertTeachingAgentMutation } from '../hooks/useAgentTeaching';

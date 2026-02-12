@@ -601,7 +601,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
               />
             </FormField>
 
-            <Label className='flex items-center gap-2 text-sm text-gray-300'>
+            <FormField label='Active in global context'>
               <Checkbox
                 checked={modalDraft.active} onCheckedChange={(checked: boolean | 'indeterminate'): void =>
                   setModalDraft((prev: ContextDraft | null): ContextDraft | null =>
@@ -609,8 +609,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
                   )
                 }
               />
-                  Active in global context
-            </Label>
+            </FormField>
           </div>
         </FormModal>
       ) : null}

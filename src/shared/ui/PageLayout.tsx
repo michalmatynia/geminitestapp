@@ -2,6 +2,8 @@
 
 import { ReactNode } from 'react';
 
+import { cn } from '@/shared/utils';
+
 import { Button } from './button';
 import { SectionHeader } from './section-header';
 import { SectionPanel } from './section-panel';
@@ -12,6 +14,10 @@ interface PageLayoutProps {
   description: string | undefined;
   eyebrow?: ReactNode;
   headerActions?: ReactNode;
+  refresh?: {
+    onRefresh: () => void;
+    isRefreshing: boolean;
+  } | undefined;
   children: ReactNode;
   
   // Tabs configuration (optional)
@@ -29,6 +35,7 @@ interface PageLayoutProps {
   onSave?: () => Promise<void> | void;
   isSaving?: boolean;
   saveText?: string;
+  stickyFooter?: boolean;
   
   containerClassName?: string;
 }
@@ -38,6 +45,7 @@ export function PageLayout({
   description,
   eyebrow,
   headerActions,
+  refresh,
   children,
   tabs,
   wrapInPanel = false,
@@ -45,17 +53,21 @@ export function PageLayout({
   onSave,
   isSaving = false,
   saveText = 'Save Configuration',
+  stickyFooter = false,
   containerClassName = 'container mx-auto py-10',
 }: PageLayoutProps): React.JSX.Element {
   return (
-    <div className={containerClassName}>
+    <div className={cn(containerClassName, stickyFooter && 'pb-32')}>
       {tabs && (
         <Tabs
           value={tabs.activeTab}
           onValueChange={tabs.onTabChange}
           className='mb-6'
         >
-          <TabsList className='grid w-full max-w-md grid-cols-2'>
+          <TabsList 
+            className='grid w-full max-w-md'
+            style={{ gridTemplateColumns: `repeat(${tabs.tabsList.length}, minmax(0, 1fr))` }}
+          >
             {tabs.tabsList.map((tab) => (
               <TabsTrigger key={tab.value} value={tab.value}>
                 {tab.label}
@@ -71,6 +83,7 @@ export function PageLayout({
         description={description}
         eyebrow={eyebrow}
         actions={headerActions}
+        refresh={refresh}
       />
 
       {wrapInPanel ? (
@@ -82,15 +95,20 @@ export function PageLayout({
       )}
 
       {onSave && (
-        <div className='flex justify-end mt-6'>
-          <Button 
-            onClick={() => void onSave()} 
-            disabled={isSaving} 
-            variant='primary'
-            className='min-w-[140px]'
-          >
-            {isSaving ? 'Saving...' : saveText}
-          </Button>
+        <div className={cn(
+          'flex justify-end mt-6',
+          stickyFooter && 'fixed bottom-0 left-0 right-0 z-50 border-t border-white/5 bg-background/80 p-6 backdrop-blur-md'
+        )}>
+          <div className={cn(stickyFooter && 'container mx-auto flex justify-end')}>
+            <Button 
+              onClick={() => void onSave()} 
+              disabled={isSaving} 
+              variant='primary'
+              className='min-w-[140px]'
+            >
+              {isSaving ? 'Saving...' : saveText}
+            </Button>
+          </div>
         </div>
       )}
     </div>

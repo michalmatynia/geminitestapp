@@ -120,10 +120,10 @@ export function useGenericExportToBaseMutation(): UseMutationResult<
     },
     onSuccess: (_: ExportResponse, vars: GenericExportToBaseVariables): void => {
       setListingBadgeStatus(queryClient, vars.productId, 'active');
-      invalidateListingsBadgesAndQueues(queryClient, vars.productId);
+      void invalidateListingsBadgesAndQueues(queryClient, vars.productId);
     },
     onSettled: (_data, _error, vars): void => {
-      invalidateListingsBadgesAndQueues(queryClient, vars.productId);
+      void invalidateListingsBadgesAndQueues(queryClient, vars.productId);
     }
   });
 }
@@ -142,7 +142,7 @@ export function useGenericCreateListingMutation(): UseMutationResult<
         connectionId,
       }),
     onSuccess: (_: Record<string, unknown>, vars: { productId: string; integrationId: string; connectionId: string }): void => {
-      invalidateProductListingsAndBadges(queryClient, vars.productId);
+      void invalidateProductListingsAndBadges(queryClient, vars.productId);
     },
   });
 }
@@ -220,10 +220,10 @@ export function useDeleteFromBaseMutation(productId: string): UseMutationResult<
       }
     },
     onSuccess: (): void => {
-      invalidateListingsBadgesAndQueues(queryClient, productId);
+      void invalidateListingsBadgesAndQueues(queryClient, productId);
     },
     onSettled: (): void => {
-      invalidateListingsBadgesAndQueues(queryClient, productId);
+      void invalidateListingsBadgesAndQueues(queryClient, productId);
     }
   });
 }
@@ -239,7 +239,7 @@ export function usePurgeListingMutation(productId: string): UseMutationResult<
     mutationFn: ({ listingId }: { listingId: string }) => 
       api.delete<void>(`/api/integrations/products/${productId}/listings/${listingId}/purge`),
     onSuccess: (): void => {
-      invalidateProductListingsAndBadges(queryClient, productId);
+      void invalidateProductListingsAndBadges(queryClient, productId);
     },
   });
 }
@@ -255,7 +255,7 @@ export function useUpdateListingInventoryIdMutation(productId: string): UseMutat
     mutationFn: ({ listingId, inventoryId }: { listingId: string; inventoryId: string }) => 
       api.patch<Record<string, unknown>>(`/api/integrations/products/${productId}/listings/${listingId}`, { inventoryId }),
     onSuccess: (): void => {
-      invalidateProductListingsAndBadges(queryClient, productId);
+      void invalidateProductListingsAndBadges(queryClient, productId);
     },
   });
 }
@@ -277,7 +277,7 @@ export function useSyncBaseImagesMutation(productId: string): UseMutationResult<
       };
     },
     onSuccess: (): void => {
-      invalidateProductListingsAndBadges(queryClient, productId);
+      void invalidateProductListingsAndBadges(queryClient, productId);
       void invalidateProducts(queryClient);
     },
   });
@@ -326,10 +326,10 @@ export function useExportToBaseMutation(productId: string): UseMutationResult<
     },
     onSuccess: (): void => {
       setListingBadgeStatus(queryClient, productId, 'active');
-      invalidateListingsBadgesAndQueues(queryClient, productId);
+      void invalidateListingsBadgesAndQueues(queryClient, productId);
     },
     onSettled: (): void => {
-      invalidateListingsBadgesAndQueues(queryClient, productId);
+      void invalidateListingsBadgesAndQueues(queryClient, productId);
     },
   });
 }
@@ -348,7 +348,7 @@ export function useCreateListingMutation(productId: string): UseMutationResult<
         connectionId,
       }),
     onSuccess: (): void => {
-      invalidateProductListingsAndBadges(queryClient, productId);
+      void invalidateProductListingsAndBadges(queryClient, productId);
     },
   });
 }

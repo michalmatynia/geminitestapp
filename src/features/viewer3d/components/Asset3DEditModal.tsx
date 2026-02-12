@@ -1,19 +1,19 @@
 'use client';
 
-import { X, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 import { logClientError } from '@/features/observability';
 import {
   Button,
   Input,
-  Label,
-  AppModal,
+  FormModal,
   Alert,
-  SectionPanel,
+  FormSection,
   Checkbox,
   Textarea,
   Tag,
+  FormField,
 } from '@/shared/ui';
 
 import { updateAsset3D } from '../api';
@@ -99,71 +99,51 @@ export function Asset3DEditModal({
   };
 
   return (
-    <AppModal
+    <FormModal
       open={open}
       onClose={onClose}
       title='Edit 3D Asset'
-      footer={
-        <div className='flex items-center justify-end gap-2'>
-          <Button variant='ghost' onClick={onClose} disabled={isSaving}>
-            Cancel
-          </Button>
-          <Button
-            onClick={() => { void handleSave(); }}
-            loading={isSaving}
-            loadingText='Saving...'
-          >
-            Save Changes
-          </Button>
-        </div>
-      }
+      onSave={(): void => { void handleSave(); }}
+      isSaving={isSaving}
+      size='md'
     >
       <div className='space-y-4 max-h-[60vh] overflow-y-auto pr-1'>
         {/* File Info (read-only) */}
-        <SectionPanel variant='subtle-compact' className='p-3 text-sm'>
+        <FormSection variant='subtle-compact' className='p-3 text-sm'>
           <p className='text-gray-400'>
             <span className='text-gray-500'>File:</span>{' '}
-            <span className='text-white'>{asset.filename}</span>
+            <span className='text-white font-mono text-xs'>{asset.filename}</span>
           </p>
           <p className='text-gray-400 mt-1'>
             <span className='text-gray-500'>Size:</span>{' '}
             {formatFileSize(asset.size)}
           </p>
-        </SectionPanel>
+        </FormSection>
 
         {/* Name */}
-        <div className='space-y-1'>
-          <Label htmlFor='name' className='text-sm text-gray-300'>
-            Name
-          </Label>
+        <FormField label='Name'>
           <Input
             id='name'
             value={name}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setName(e.target.value)}
             placeholder='Enter asset name...'
-            className='bg-gray-800 border-gray-700'
+            className='bg-gray-800 border-gray-700 h-9'
           />
-        </div>
+        </FormField>
 
         {/* Description */}
-        <div className='space-y-1'>
-          <Label htmlFor='description' className='text-sm text-gray-300'>
-            Description
-          </Label>
+        <FormField label='Description'>
           <Textarea
             id='description'
             value={description}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setDescription(e.target.value)}
             placeholder='Enter description...'
-            className='bg-gray-800 border-gray-700 min-h-[80px]'
+            className='bg-gray-800 border-gray-700 min-h-[80px] text-sm'
           />
-        </div>
+        </FormField>
 
         {/* Category */}
-        <div className='space-y-1'>
-          <Label htmlFor='category' className='text-sm text-gray-300'>
-            Category
-          </Label>
+        <FormField label='Category'>
           <div className='flex gap-2'>
             <Input
               id='category'
@@ -171,7 +151,7 @@ export function Asset3DEditModal({
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setCategory(e.target.value)}
               placeholder='Enter category...'
               list='categories-list'
-              className='bg-gray-800 border-gray-700 flex-1'
+              className='bg-gray-800 border-gray-700 flex-1 h-9'
             />
             <datalist id='categories-list'>
               {existingCategories.map((cat: string) => (
@@ -179,76 +159,79 @@ export function Asset3DEditModal({
               ))}
             </datalist>
           </div>
-        </div>
+        </FormField>
 
         {/* Tags */}
-        <div className='space-y-1'>
-          <Label className='text-sm text-gray-300'>Tags</Label>
-          <div className='flex gap-2'>
-            <Input
-              value={newTag}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNewTag(e.target.value)}
-              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>): void => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleAddTag();
-                }
-              }}
-              placeholder='Add tag...'
-              list='tags-list'
-              className='bg-gray-800 border-gray-700 flex-1'
-            />
-            <datalist id='tags-list'>
-              {existingTags
-                .filter((t: string) => !tags.includes(t))
-                .map((tag: string) => (
-                  <option key={tag} value={tag} />
-                ))}
-            </datalist>
-            <Button
-              type='button'
-              variant='secondary'
-              size='icon'
-              onClick={handleAddTag}
-            >
-              <Plus className='h-4 w-4' />
-            </Button>
-          </div>
-          {tags.length > 0 && (
-            <div className='flex flex-wrap gap-1 mt-2'>
-              {tags.map((tag: string) => (
-                <Tag
-                  key={tag}
-                  label={tag}
-                  onRemove={() => handleRemoveTag(tag)}
-                  className='bg-gray-700 text-gray-300 border-none'
-                />
-              ))}
+        <FormField label='Tags'>
+          <div className='space-y-2 mt-1'>
+            <div className='flex gap-2'>
+              <Input
+                value={newTag}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNewTag(e.target.value)}
+                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>): void => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddTag();
+                  }
+                }}
+                placeholder='Add tag...'
+                list='tags-list'
+                className='bg-gray-800 border-gray-700 flex-1 h-9'
+              />
+              <datalist id='tags-list'>
+                {existingTags
+                  .filter((t: string) => !tags.includes(t))
+                  .map((tag: string) => (
+                    <option key={tag} value={tag} />
+                  ))}
+              </datalist>
+              <Button
+                type='button'
+                variant='secondary'
+                size='icon'
+                onClick={handleAddTag}
+                className='h-9 w-9'
+              >
+                <Plus className='h-4 w-4' />
+              </Button>
             </div>
-          )}
-        </div>
+            {tags.length > 0 && (
+              <div className='flex flex-wrap gap-1 mt-2'>
+                {tags.map((tag: string) => (
+                  <Tag
+                    key={tag}
+                    label={tag}
+                    onRemove={() => handleRemoveTag(tag)}
+                    className='bg-gray-700 text-gray-300 border-none'
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </FormField>
 
         {/* Visibility */}
-        <label className='flex items-center gap-3 cursor-pointer'>
+        <div className='flex items-center gap-3 p-3 rounded-md border border-border/40 bg-gray-900/40'>
           <Checkbox
+            id='is-public'
             checked={isPublic}
             onCheckedChange={(v: boolean | 'indeterminate'): void => setIsPublic(v === true)}
           />
-          <div>
+          <label htmlFor='is-public' className='cursor-pointer flex-1'>
             <span className='text-sm text-white font-medium'>Public visibility</span>
             <p className='text-[11px] text-gray-500'>
               Make this asset accessible publicly
             </p>
-          </div>
-        </label>
+          </label>
+        </div>
 
         {/* Error */}
         {error && (
-          <Alert variant='error'>
+          <Alert variant='error' className='mt-2'>
             {error}
           </Alert>
         )}
       </div>
-    </AppModal>
+    </FormModal>
   );
 }

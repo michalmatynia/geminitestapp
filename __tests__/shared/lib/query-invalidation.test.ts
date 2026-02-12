@@ -15,7 +15,7 @@ describe('query-invalidation helpers', () => {
 
   describe('Product Metadata', () => {
     it('invalidateProductMetadata should invalidate metadata all key', () => {
-      helpers.invalidateProductMetadata(queryClient);
+      void helpers.invalidateProductMetadata(queryClient);
       expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
         queryKey: QUERY_KEYS.products.metadata.all,
       });
@@ -23,7 +23,7 @@ describe('query-invalidation helpers', () => {
 
     it('invalidateCatalogScopedData should invalidate all catalog scoped keys', () => {
       const catalogId = 'cat-123';
-      helpers.invalidateCatalogScopedData(queryClient, catalogId);
+      void helpers.invalidateCatalogScopedData(queryClient, catalogId);
       
       expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
         queryKey: QUERY_KEYS.products.metadata.categories(catalogId),
@@ -40,7 +40,7 @@ describe('query-invalidation helpers', () => {
   describe('Notes', () => {
     it('invalidateNoteThemes should invalidate note themes', () => {
       const notebookId = 'nb-123';
-      helpers.invalidateNoteThemes(queryClient, notebookId);
+      void helpers.invalidateNoteThemes(queryClient, notebookId);
       expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
         queryKey: QUERY_KEYS.notes.themes(),
       });
@@ -51,7 +51,7 @@ describe('query-invalidation helpers', () => {
 
     it('invalidateNoteTags should invalidate note tags', () => {
       const notebookId = 'nb-123';
-      helpers.invalidateNoteTags(queryClient, notebookId);
+      void helpers.invalidateNoteTags(queryClient, notebookId);
       expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
         queryKey: QUERY_KEYS.notes.tags(),
       });
@@ -63,7 +63,7 @@ describe('query-invalidation helpers', () => {
 
   describe('Chatbot', () => {
     it('invalidateChatbotSessions should invalidate chatbot sessions list', () => {
-      helpers.invalidateChatbotSessions(queryClient);
+      void helpers.invalidateChatbotSessions(queryClient);
       expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
         queryKey: QUERY_KEYS.ai.chatbot.sessions(),
       });
@@ -71,7 +71,7 @@ describe('query-invalidation helpers', () => {
 
     it('invalidateChatbotSession should invalidate specific session', () => {
       const sessionId = 'sess-123';
-      helpers.invalidateChatbotSession(queryClient, sessionId);
+      void helpers.invalidateChatbotSession(queryClient, sessionId);
       expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
         queryKey: QUERY_KEYS.ai.chatbot.session(sessionId),
       });
@@ -80,7 +80,7 @@ describe('query-invalidation helpers', () => {
 
   describe('Integrations', () => {
     it('invalidateIntegrations should invalidate integrations all key', () => {
-      helpers.invalidateIntegrations(queryClient);
+      void helpers.invalidateIntegrations(queryClient);
       expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
         queryKey: QUERY_KEYS.integrations.all,
       });
@@ -88,7 +88,7 @@ describe('query-invalidation helpers', () => {
 
     it('invalidateIntegrationConnections should invalidate connections list and specific integration if provided', () => {
       const integrationId = 'int-123';
-      helpers.invalidateIntegrationConnections(queryClient, integrationId);
+      void helpers.invalidateIntegrationConnections(queryClient, integrationId);
       
       expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
         queryKey: QUERY_KEYS.integrations.connections(),
@@ -101,7 +101,7 @@ describe('query-invalidation helpers', () => {
 
   describe('CMS', () => {
     it('invalidateCmsPages should invalidate cms pages all key', () => {
-      helpers.invalidateCmsPages(queryClient);
+      void helpers.invalidateCmsPages(queryClient);
       expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
         queryKey: QUERY_KEYS.cms.pages.all,
       });

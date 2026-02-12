@@ -52,17 +52,12 @@ export function DraftList(): React.JSX.Element {
 
   return (
     <ListPanel
-      header={
-        <SectionHeader
-          title='Your Product Drafts'
-          size='sm'
-          actions={
-            <Button onClick={() => openCreator()} className='flex items-center gap-2'>
-              <PlusIcon className='h-4 w-4' />
-              Create New Draft
-            </Button>
-          }
-        />
+      title='Your Product Drafts'
+      headerActions={
+        <Button onClick={() => openCreator()} className='flex items-center gap-2'>
+          <PlusIcon className='h-4 w-4' />
+          Create New Draft
+        </Button>
       }
     >
       <ConfirmDialog

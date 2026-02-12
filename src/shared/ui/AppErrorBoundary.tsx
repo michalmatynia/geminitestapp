@@ -17,26 +17,26 @@ function AppErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
 
   return (
     <div className='flex min-h-[400px] w-full flex-col items-center justify-center p-6 text-center'>
-      <div className='mb-4 rounded-full bg-red-100 p-3 text-red-600'>
+      <div className='mb-4 rounded-full bg-red-500/10 p-3 text-red-500'>
         <AlertCircle className='h-10 w-10' />
       </div>
-      <h2 className='mb-2 text-2xl font-bold tracking-tight text-slate-900'>
+      <h2 className='mb-2 text-2xl font-bold tracking-tight text-white'>
         Something went wrong
       </h2>
-      <p className='mb-6 max-w-md text-slate-600'>
+      <p className='mb-6 max-w-md text-gray-400'>
         {errorMessage}
       </p>
 
       {actions.length > 0 && (
-        <div className='mb-8 max-w-lg rounded-lg border border-slate-200 bg-slate-50 p-4 text-left'>
-          <div className='mb-2 flex items-center gap-2 font-semibold text-slate-800'>
-            <Info className='h-4 w-4' />
+        <div className='mb-8 max-w-lg rounded-lg border border-white/10 bg-white/5 p-4 text-left'>
+          <div className='mb-2 flex items-center gap-2 font-semibold text-white'>
+            <Info className='h-4 w-4 text-blue-400' />
             Suggested Actions
           </div>
           <ul className='space-y-3'>
             {actions.map((action, idx) => (
-              <li key={idx} className='text-sm text-slate-600'>
-                <span className='font-medium text-slate-700'>{action.label}:</span> {action.description}
+              <li key={idx} className='text-sm text-gray-300'>
+                <span className='font-medium text-white'>{action.label}:</span> {action.description}
               </li>
             ))}
           </ul>

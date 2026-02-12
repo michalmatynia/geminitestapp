@@ -86,6 +86,7 @@ export function DynamicFilters({
               value={String(values[field.key] ?? '')}
               onChange={(e) => onChange(field.key, e.target.value)}
               onClear={() => onChange(field.key, '')}
+              variant='subtle'
               className='h-9'
             />
           ) : (
@@ -95,6 +96,7 @@ export function DynamicFilters({
               placeholder={field.placeholder ?? field.label}
               value={String(values[field.key] ?? '')}
               onChange={(e) => onChange(field.key, e.target.value)}
+              variant='subtle'
               className='h-9'
             />
           )}

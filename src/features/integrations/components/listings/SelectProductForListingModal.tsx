@@ -18,10 +18,11 @@ import { useProductsWithCount } from '@/features/products/hooks/useProductsQuery
 import type { ProductWithImages } from '@/features/products/types';
 import {
   UnifiedSelect,
-  Label,
   SectionPanel,
   FormModal,
   SearchInput,
+  FormSection,
+  FormField,
 } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
@@ -122,8 +123,7 @@ function SelectProductForListingModalContent({
     >
       <div className='grid gap-6 md:grid-cols-2'>
         <div className='space-y-4'>
-          <SectionPanel variant='subtle' className='p-4 space-y-4'>
-            <h3 className='text-sm font-semibold text-white'>1. Select Product</h3>
+          <FormSection title='1. Select Product' variant='subtle' className='p-4 space-y-4'>
             <SearchInput
               placeholder='Search products...'
               value={productSearch}
@@ -131,7 +131,7 @@ function SelectProductForListingModalContent({
               onClear={() => setProductSearch('')}
             />
             
-            <div className='space-y-2 max-h-[400px] overflow-y-auto rounded-md border border-border'>
+            <div className='space-y-2 max-h-[400px] overflow-y-auto rounded-md border border-border mt-4'>
               {productsQuery.isLoading ? (
                 <p className='p-4 text-center text-xs text-gray-500'>Loading products...</p>
               ) : (productsQuery.products || []).length === 0 ? (
@@ -161,7 +161,7 @@ function SelectProductForListingModalContent({
                 ))
               )}
             </div>
-          </SectionPanel>
+          </FormSection>
         </div>
 
         <div className='space-y-4'>

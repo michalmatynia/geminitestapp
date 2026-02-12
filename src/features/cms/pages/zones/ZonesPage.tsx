@@ -15,8 +15,9 @@ import {
   Input,
   Label,
   ListPanel,
-  SectionHeader,
+  EmptyState,
   useToast,
+  UnifiedSelect,
 } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
@@ -90,10 +91,13 @@ export default function ZonesPage(): React.JSX.Element {
   return (
     <div className='container mx-auto py-10'>
       <ListPanel
-        header={
-          <SectionHeader
-            title='Zones (Domains)'
-            description='Zones scope CMS slugs per hostname. Domains are auto-created on first request; add here to pre-provision or share slug sets.'
+        title='Zones (Domains)'
+        description='Zones scope CMS slugs per hostname. Domains are auto-created on first request; add here to pre-provision or share slug sets.'
+        isLoading={domainsQuery.isLoading}
+        emptyState={
+          <EmptyState
+            title='No zones yet'
+            description='Create one or visit a domain to auto-register it.'
           />
         }
       >
@@ -117,52 +121,46 @@ export default function ZonesPage(): React.JSX.Element {
           </Button>
         </form>
 
-        {domains.length === 0 ? (
-          <p className='py-8 text-center text-sm text-gray-500'>
-            No zones yet. Create one or visit a domain to auto-register it.
-          </p>
-        ) : (
-          <ul className='divide-y divide-border'>
-            {domains.map((item: CmsDomain) => (
-              <li key={item.id} className='flex items-center justify-between px-4 py-3'>
-                <div className='flex flex-col gap-1'>
-                  <span className='text-sm font-medium'>{item.domain}</span>
-                  {item.aliasOf ? (
-                    <span className='text-xs text-muted-foreground'>
-                      Shares slugs with {domains.find((d: CmsDomain) => d.id === item.aliasOf)?.domain ?? 'another zone'}
-                    </span>
-                  ) : (
-                    <span className='text-xs text-muted-foreground'>Independent zone</span>
-                  )}
-                </div>
-                <div className='flex items-center gap-2'>
-                  <UnifiedSelect
-                    value={item.aliasOf ?? 'none'}
-                    onValueChange={(value: string): void => { void handleAliasChange(item.id, value); }}
-                    options={[
-                      { value: 'none', label: 'Independent zone' },
-                      ...domains
-                        .filter((domainOption: CmsDomain) => domainOption.id !== item.id)
-                        .map((domainOption: CmsDomain) => ({
-                          value: domainOption.id,
-                          label: `Share with ${domainOption.domain}`,
-                        })),
-                    ]}
-                    triggerClassName='h-8 w-[220px]'
-                    placeholder='Independent zone'
-                  />
-                  <Button
-                    size='sm'
-                    variant='destructive'
-                    onClick={() => { void handleDelete(item.id); }}
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+        <ul className='divide-y divide-border'>
+          {domains.map((item: CmsDomain) => (
+            <li key={item.id} className='flex items-center justify-between px-4 py-3'>
+              <div className='flex flex-col gap-1'>
+                <span className='text-sm font-medium'>{item.domain}</span>
+                {item.aliasOf ? (
+                  <span className='text-xs text-muted-foreground'>
+                    Shares slugs with {domains.find((d: CmsDomain) => d.id === item.aliasOf)?.domain ?? 'another zone'}
+                  </span>
+                ) : (
+                  <span className='text-xs text-muted-foreground'>Independent zone</span>
+                )}
+              </div>
+              <div className='flex items-center gap-2'>
+                <UnifiedSelect
+                  value={item.aliasOf ?? 'none'}
+                  onValueChange={(value: string): void => { void handleAliasChange(item.id, value); }}
+                  options={[
+                    { value: 'none', label: 'Independent zone' },
+                    ...domains
+                      .filter((domainOption: CmsDomain) => domainOption.id !== item.id)
+                      .map((domainOption: CmsDomain) => ({
+                        value: domainOption.id,
+                        label: `Share with ${domainOption.domain}`,
+                      })),
+                  ]}
+                  triggerClassName='h-8 w-[220px]'
+                  placeholder='Independent zone'
+                />
+                <Button
+                  size='sm'
+                  variant='destructive'
+                  onClick={() => { void handleDelete(item.id); }}
+                >
+                  Delete
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ul>
       </ListPanel>
     </div>
   );

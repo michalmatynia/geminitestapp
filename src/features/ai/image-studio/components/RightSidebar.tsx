@@ -1,7 +1,7 @@
 'use client';
 
-import { Eye, Loader2, Pentagon, Save, SlidersHorizontal, Sparkles } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import { Eye, Filter, GitBranch, Loader2, Pentagon, Play, Save, SlidersHorizontal, Sparkles } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
 import { formatProgrammaticPrompt } from '@/features/prompt-engine/prompt-formatter';
@@ -32,11 +32,13 @@ import {
 import { cn } from '@/shared/utils';
 
 import { GenerationHistoryPanel } from './GenerationHistoryPanel';
-import { MaskControlsPanel } from './MaskControlsPanel';
+import { GenerationToolbar } from './GenerationToolbar';
+import { LabeledSlider } from './LabeledSlider';
 import { OutputImageGrid, type OutputImage } from './OutputImageGrid';
 import { ParamRow } from './ParamRow';
 import { StudioCard } from './StudioCard';
 import { UIPresetsPanel } from './UIPresetsPanel';
+import { VersionNodeMapPanel } from './VersionNodeMapPanel';
 import { useGenerationState } from '../context/GenerationContext';
 import { useMaskingActions, useMaskingState } from '../context/MaskingContext';
 import { useProjectsState } from '../context/ProjectsContext';
@@ -57,8 +59,22 @@ export function RightSidebar(): React.JSX.Element {
   const { isFocusMode, validatorEnabled, formatterEnabled } = useUiState();
   const { setValidatorEnabled, setFormatterEnabled } = useUiActions();
   const { projectId } = useProjectsState();
-  const { tool, maskShapes, maskInvert, maskFeather } = useMaskingState();
-  const { setTool } = useMaskingActions();
+  const {
+    tool,
+    maskShapes,
+    maskInvert,
+    maskFeather,
+    brushRadius,
+    maskThresholdSensitivity,
+    maskEdgeSensitivity,
+  } = useMaskingState();
+  const {
+    setTool,
+    setMaskFeather,
+    setBrushRadius,
+    setMaskThresholdSensitivity,
+    setMaskEdgeSensitivity,
+  } = useMaskingActions();
   const {
     workingSlot,
     slots,
@@ -83,6 +99,8 @@ export function RightSidebar(): React.JSX.Element {
   const [requestPreviewOpen, setRequestPreviewOpen] = useState(false);
   const [promptControlOpen, setPromptControlOpen] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
+  const [sidebarTab, setSidebarTab] = useState<'controls' | 'graph'>('controls');
+  const switchToControls = useCallback(() => setSidebarTab('controls'), []);
 
   const promptValidationSettings = useMemo(
     () => parsePromptEngineSettings(settingsStore.get(PROMPT_ENGINE_SETTINGS_KEY)).promptValidation,
@@ -262,135 +280,269 @@ export function RightSidebar(): React.JSX.Element {
         variant='subtle'
         aria-hidden={isFocusMode}
       >
-        <div className='space-y-2 px-4 py-2'>
-          <div className='flex flex-wrap items-center justify-end gap-2'>
-            <Button
-              variant='outline'
-              size='sm'
-              title='Open prompt controls'
-              aria-label='Open prompt controls'
-              onClick={() => setPromptControlOpen(true)}
-            >
-              <Sparkles className='mr-2 size-4' />
-            Control Prompt
-            </Button>
-            <Button
-              variant='outline'
-              size='sm'
-              title='Preview generation request payload and input images'
-              aria-label='Preview generation request payload and input images'
-              onClick={() => setRequestPreviewOpen(true)}
-            >
-              <Eye className='mr-2 size-4' />
-            Preview Request
-            </Button>
-            <Button
-              variant='outline'
-              size='sm'
-              title={hasExtractedControls ? 'Open extracted controls' : 'Extract controls first'}
-              aria-label='Open extracted controls'
-              disabled={!hasExtractedControls}
-              onClick={() => setControlsOpen(true)}
-            >
-              <SlidersHorizontal className='mr-2 size-4' />
-              Controls
-            </Button>
-            <Button
-              variant='outline'
-              size='sm'
-              title='Save current Image Studio project state'
-              aria-label='Save current Image Studio project state'
-              disabled={projectSaveBusy || !projectId.trim()}
-              onClick={handleSaveProject}
-            >
-              {projectSaveBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : <Save className='mr-2 size-4' />}
-            Save Project
-            </Button>
-          </div>
+        {/* Tab toggle */}
+        <div className='flex border-b border-border/40'>
+          <button
+            type='button'
+            className={cn(
+              'flex-1 px-3 py-1.5 text-[11px] font-medium transition-colors',
+              sidebarTab === 'controls'
+                ? 'border-b-2 border-blue-400 text-gray-200'
+                : 'text-gray-500 hover:text-gray-300'
+            )}
+            onClick={() => setSidebarTab('controls')}
+          >
+            Controls
+          </button>
+          <button
+            type='button'
+            className={cn(
+              'flex-1 px-3 py-1.5 text-[11px] font-medium transition-colors',
+              sidebarTab === 'graph'
+                ? 'border-b-2 border-blue-400 text-gray-200'
+                : 'text-gray-500 hover:text-gray-300'
+            )}
+            onClick={() => setSidebarTab('graph')}
+          >
+            <GitBranch className='mr-1 inline size-3' />
+            Version Graph
+          </button>
+        </div>
 
-          <div className='rounded border border-border/60 bg-card/30 px-2 py-2'>
-            <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Toolbar</div>
-            <div className='flex justify-end'>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    title='Open tools popup'
-                    aria-label='Open tools popup'
-                  >
-                    <Pentagon className='mr-2 size-4' />
-                    Tools
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align='end'
-                  className='w-auto p-2'
-                  sideOffset={8}
+        {sidebarTab === 'graph' ? (
+          <VersionNodeMapPanel onSwitchToControls={switchToControls} />
+        ) : (
+          <>
+            <div className='space-y-2 px-4 py-2'>
+              <div className='flex flex-wrap items-center justify-end gap-2'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  title='Open prompt controls'
+                  aria-label='Open prompt controls'
+                  onClick={() => setPromptControlOpen(true)}
                 >
-                  <VectorDrawingToolbar
-                    tool={tool}
-                    onSelectTool={setTool}
-                    className='w-full justify-start rounded-xl border-border/60 bg-card/40'
-                  />
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  <Sparkles className='mr-2 size-4' />
+            Control Prompt
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  title='Preview generation request payload and input images'
+                  aria-label='Preview generation request payload and input images'
+                  onClick={() => setRequestPreviewOpen(true)}
+                >
+                  <Eye className='mr-2 size-4' />
+            Preview Request
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  title={hasExtractedControls ? 'Open extracted controls' : 'Extract controls first'}
+                  aria-label='Open extracted controls'
+                  disabled={!hasExtractedControls}
+                  onClick={() => setControlsOpen(true)}
+                >
+                  <SlidersHorizontal className='mr-2 size-4' />
+              Controls
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  title='Save current Image Studio project state'
+                  aria-label='Save current Image Studio project state'
+                  disabled={projectSaveBusy || !projectId.trim()}
+                  onClick={handleSaveProject}
+                >
+                  {projectSaveBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : <Save className='mr-2 size-4' />}
+            Save Project
+                </Button>
+              </div>
+
+              <div className='rounded border border-border/60 bg-card/30 px-2 py-2'>
+                <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Toolbar</div>
+                <div className='flex flex-wrap justify-end gap-2'>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        title='Open tools popup'
+                        aria-label='Open tools popup'
+                      >
+                        <Pentagon className='mr-2 size-4' />
+                    Tools
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align='end'
+                      className='w-[min(92vw,460px)] min-h-[230px] !overflow-visible space-y-3 p-3 pb-4'
+                      sideOffset={8}
+                    >
+                      <VectorDrawingToolbar
+                        tool={tool}
+                        onSelectTool={setTool}
+                        className='w-full flex-wrap justify-start rounded-xl border-border/60 bg-card/40'
+                      />
+                      {tool !== 'select' ? (
+                        <div className='rounded border border-border/60 bg-card/30 p-3'>
+                          <div className='grid grid-cols-[auto_1fr] gap-x-2 gap-y-2'>
+                            <LabeledSlider
+                              label='Mask Feather'
+                              value={maskFeather}
+                              onChange={setMaskFeather}
+                            />
+                            {tool === 'brush' ? (
+                              <LabeledSlider
+                                label='Brush Radius'
+                                value={brushRadius}
+                                onChange={setBrushRadius}
+                                min={1}
+                                max={64}
+                                fallbackValue={8}
+                              />
+                            ) : null}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className='text-[11px] text-gray-500'>
+                      Select a drawing tool to see contextual settings.
+                        </div>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        title='Open mask generation popup'
+                        aria-label='Open mask generation popup'
+                      >
+                        <Play className='mr-2 size-4' />
+                    Mask Generation
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align='end'
+                      className='w-[min(96vw,720px)] space-y-3 p-3'
+                      sideOffset={8}
+                    >
+                      <GenerationToolbar />
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        title='Open masking tools popup'
+                        aria-label='Open masking tools popup'
+                      >
+                        <Filter className='mr-2 size-4' />
+                    Masking Tools
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align='end'
+                      className='w-[min(92vw,420px)] space-y-3 p-3'
+                      sideOffset={8}
+                    >
+                      <div className='rounded border border-border/60 bg-card/30 p-3'>
+                        <div className='grid grid-cols-[auto_1fr] gap-x-2 gap-y-2'>
+                          <LabeledSlider
+                            label='Mask Feather'
+                            value={maskFeather}
+                            onChange={setMaskFeather}
+                          />
+                          <LabeledSlider
+                            label='Threshold Sensitivity'
+                            value={maskThresholdSensitivity}
+                            onChange={setMaskThresholdSensitivity}
+                            fallbackValue={55}
+                            disabled={!workingSlot}
+                          />
+                          <LabeledSlider
+                            label='Edge Sensitivity'
+                            value={maskEdgeSensitivity}
+                            onChange={setMaskEdgeSensitivity}
+                            fallbackValue={55}
+                            disabled={!workingSlot}
+                          />
+                        </div>
+                      </div>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-        <div className='relative flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4 pt-0'>
-          <StudioCard label='Composite References'>
-            <MultiSelect
-              options={compositeAssetOptions}
-              selected={compositeAssetIds}
-              onChange={setCompositeAssetIds}
-              placeholder='Select additional reference cards'
-              searchPlaceholder='Search cards...'
-              emptyMessage='No cards available.'
-              className='w-full'
-            />
-            <div className='text-[10px] text-gray-500'>
+            <div className='relative flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4 pt-0'>
+              <StudioCard label='Composite References'>
+                <MultiSelect
+                  options={compositeAssetOptions}
+                  selected={compositeAssetIds}
+                  onChange={setCompositeAssetIds}
+                  placeholder='Select additional reference cards'
+                  searchPlaceholder='Search cards...'
+                  emptyMessage='No cards available.'
+                  className='w-full'
+                />
+                <div className='text-[10px] text-gray-500'>
             Selected references are sent with the base image for multi-image generation.
-            </div>
-          </StudioCard>
+                </div>
+              </StudioCard>
 
-          <MaskControlsPanel />
-
-          {runOutputs.length > 0 ? (
-            <div className='space-y-1'>
-              <Label className='text-xs text-gray-400'>Outputs ({runOutputs.length})</Label>
-              <OutputImageGrid
-                outputs={runOutputs}
-                onSaveAsSlot={projectId ? (output: OutputImage) => {
-                  createSlots([
-                    {
-                      name: output.filename ?? 'Generated',
-                      imageFileId: output.id,
-                      metadata: workingSlotId
-                        ? {
-                          role: 'generation',
-                          sourceSlotId: workingSlotId,
-                          relationType: 'generation:output',
-                          generationFileId: output.id,
-                        }
-                        : {
-                          role: 'generation',
+              {runOutputs.length > 0 ? (
+                <div className='space-y-1'>
+                  <Label className='text-xs text-gray-400'>Outputs ({runOutputs.length})</Label>
+                  <OutputImageGrid
+                    outputs={runOutputs}
+                    onSaveAsSlot={projectId ? (output: OutputImage) => {
+                      const eligibleMasks = maskShapes.filter((s) => s.visible && s.closed);
+                      const baseMeta: Record<string, unknown> = { role: 'generation' };
+                      if (workingSlotId) {
+                        baseMeta['sourceSlotId'] = workingSlotId;
+                        baseMeta['relationType'] = 'generation:output';
+                        baseMeta['generationFileId'] = output.id;
+                      }
+                      if (eligibleMasks.length > 0) {
+                        baseMeta['maskData'] = {
+                          shapes: eligibleMasks.map((s) => ({ type: s.type, points: s.points, closed: s.closed })),
+                          invert: maskInvert,
+                          feather: maskFeather,
+                          attachedAt: new Date().toISOString(),
+                        };
+                      }
+                      if (promptText.trim()) {
+                        baseMeta['generationParams'] = {
+                          prompt: promptText,
+                          timestamp: new Date().toISOString(),
+                        };
+                      }
+                      createSlots([
+                        {
+                          name: output.filename ?? 'Generated',
+                          imageFileId: output.id,
+                          metadata: baseMeta,
                         },
-                    },
-                  ])
-                    .then(() => toast('Saved to card history.', { variant: 'success' }))
-                    .catch(() => toast('Failed to save card history item.', { variant: 'error' }));
-                } : undefined}
-              />
-            </div>
-          ) : null}
+                      ])
+                        .then(() => toast('Saved to card history.', { variant: 'success' }))
+                        .catch(() => toast('Failed to save card history item.', { variant: 'error' }));
+                    } : undefined}
+                  />
+                </div>
+              ) : null}
 
-          {generationHistory.length > 0 ? (
-            <StudioCard label='History' count={generationHistory.length}>
-              <GenerationHistoryPanel />
-            </StudioCard>
-          ) : null}
-        </div>
+              {generationHistory.length > 0 ? (
+                <StudioCard label='History' count={generationHistory.length}>
+                  <GenerationHistoryPanel />
+                </StudioCard>
+              ) : null}
+            </div>
+          </>
+        )}
       </SectionPanel>
 
       <AppModal

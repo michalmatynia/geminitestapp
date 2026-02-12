@@ -11,6 +11,11 @@ import type {
 
 const COLLECTION_NAME = 'chatbot_jobs';
 
+type ChatbotJobCreateInput = Omit<ChatbotJob, 'id' | 'createdAt' | 'status'>;
+type ChatbotJobUpdateInput = Partial<
+  Pick<ChatbotJobDocument, 'status' | 'model' | 'payload' | 'resultText' | 'errorMessage' | 'startedAt' | 'finishedAt'>
+>;
+
 function documentToJob(doc: ChatbotJobDocument): ChatbotJob {
   return {
     id: doc._id.toString(),
@@ -30,8 +35,8 @@ export interface ChatbotJobRepository {
   findAll(limit?: number): Promise<ChatbotJob[]>;
   findById(id: string): Promise<ChatbotJob | null>;
   findNextPending(): Promise<ChatbotJob | null>;
-  create(input: Omit<ChatbotJob, 'id' | 'createdAt' | 'status'>): Promise<ChatbotJob>;
-  update(id: string, update: Partial<Omit<ChatbotJob, 'id' | 'sessionId' | 'createdAt'>>): Promise<ChatbotJob | null>;
+  create(input: ChatbotJobCreateInput): Promise<ChatbotJob>;
+  update(id: string, update: ChatbotJobUpdateInput): Promise<ChatbotJob | null>;
   deleteMany(statusIn: ChatbotJobStatus[]): Promise<number>;
   delete(id: string): Promise<boolean>;
 }
@@ -65,7 +70,7 @@ export const chatbotJobRepository: ChatbotJobRepository = {
     return doc ? documentToJob(doc) : null;
   },
 
-  async create(input: Omit<ChatbotJob, 'id' | 'createdAt' | 'status'>): Promise<ChatbotJob> {
+  async create(input: ChatbotJobCreateInput): Promise<ChatbotJob> {
     const db = await getMongoDb();
     const now = new Date();
     const doc: Omit<ChatbotJobDocument, '_id'> = {
@@ -100,16 +105,29 @@ export const chatbotJobRepository: ChatbotJobRepository = {
 
   async update(
     id: string,
-    update: Partial<Omit<ChatbotJob, 'id' | 'sessionId' | 'createdAt'>>
+    update: ChatbotJobUpdateInput
   ): Promise<ChatbotJob | null> {
     if (!ObjectId.isValid(id)) return null;
     const db = await getMongoDb();
-    
+    const updateDoc: ChatbotJobUpdateInput = {};
+
+    if (update.status !== undefined) updateDoc.status = update.status;
+    if (update.model !== undefined) updateDoc.model = update.model;
+    if (update.payload !== undefined) updateDoc.payload = update.payload;
+    if (update.resultText !== undefined) updateDoc.resultText = update.resultText;
+    if (update.errorMessage !== undefined) updateDoc.errorMessage = update.errorMessage;
+    if (update.startedAt !== undefined) updateDoc.startedAt = update.startedAt;
+    if (update.finishedAt !== undefined) updateDoc.finishedAt = update.finishedAt;
+
+    if (Object.keys(updateDoc).length === 0) {
+      return this.findById(id);
+    }
+
     const result = await db
       .collection<ChatbotJobDocument>(COLLECTION_NAME)
       .findOneAndUpdate(
         { _id: new ObjectId(id) },
-        { $set: update },
+        { $set: updateDoc },
         { returnDocument: 'after' }
       );
 

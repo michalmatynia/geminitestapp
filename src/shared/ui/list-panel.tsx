@@ -1,11 +1,22 @@
+import { Loader2 } from 'lucide-react';
+
 import { cn } from '@/shared/utils';
+
+import { SectionHeader } from './section-header';
 
 import type { ReactNode } from 'react';
 
 type ListPanelVariant = 'default' | 'flat';
 
 type ListPanelProps = {
-  header?: ReactNode;
+  title?: string;
+  description?: string;
+  headerActions?: ReactNode;
+  header?: ReactNode; // Legacy or custom header
+  refresh?: {
+    onRefresh: () => void;
+    isRefreshing: boolean;
+  } | undefined;
   alerts?: ReactNode;
   filters?: ReactNode;
   actions?: ReactNode;
@@ -19,6 +30,9 @@ type ListPanelProps = {
   actionsClassName?: string;
   footerClassName?: string;
   variant?: ListPanelVariant;
+  isLoading?: boolean;
+  loadingMessage?: string;
+  emptyState?: ReactNode;
 };
 
 const variantStyles: Record<ListPanelVariant, string> = {
@@ -27,7 +41,11 @@ const variantStyles: Record<ListPanelVariant, string> = {
 };
 
 export function ListPanel({
+  title,
+  description,
+  headerActions,
   header,
+  refresh,
   alerts,
   filters,
   actions,
@@ -41,24 +59,52 @@ export function ListPanel({
   actionsClassName,
   footerClassName,
   variant = 'default',
+  isLoading = false,
+  loadingMessage = 'Loading...',
+  emptyState,
 }: ListPanelProps) {
   return (
     <section className={cn(variantStyles[variant], className)}>
-      {header ? (
-        <div className={cn('mb-6', headerClassName)}>{header}</div>
+      {header || title ? (
+        <div className={cn('mb-6', headerClassName)}>
+          {header || (
+            <SectionHeader
+              title={title ?? ''}
+              description={description}
+              actions={headerActions}
+              refresh={refresh}
+            />
+          )}
+        </div>
       ) : null}
+      
       {alerts ? (
         <div className={cn('mb-4 space-y-3', alertsClassName)}>
           {alerts}
         </div>
       ) : null}
+
       {filters ? (
         <div className={cn('mb-4', filtersClassName)}>{filters}</div>
       ) : null}
+
       {actions ? (
         <div className={cn('mb-4', actionsClassName)}>{actions}</div>
       ) : null}
-      <div className={cn('min-h-0', contentClassName)}>{children}</div>
+
+      <div className={cn('min-h-0', contentClassName)}>
+        {isLoading ? (
+          <div className='flex flex-col items-center justify-center py-16 text-sm text-muted-foreground'>
+            <Loader2 className='mb-4 h-8 w-8 animate-spin text-blue-500' />
+            {loadingMessage}
+          </div>
+        ) : children ? (
+          children
+        ) : emptyState ? (
+          emptyState
+        ) : null}
+      </div>
+
       {footer ? (
         <div className={cn('mt-4', footerClassName)}>{footer}</div>
       ) : null}

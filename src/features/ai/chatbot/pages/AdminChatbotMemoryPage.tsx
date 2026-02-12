@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
-import { Button, Input, Label, SectionHeader, SectionPanel } from '@/shared/ui';
+import { Button, Input, SectionHeader, SectionPanel, FormSection, FormField } from '@/shared/ui';
 
 import { useChatbotMemory } from '../hooks/useChatbotMemory';
 
@@ -56,53 +56,49 @@ export default function AgentMemoryPage(): React.JSX.Element {
           }
           className='mb-4'
         />
-        <SectionPanel className='p-4'>
+        <FormSection title='Filters' className='p-4'>
           <div className='grid gap-3 md:grid-cols-4'>
-            <div>
-              <Label className='text-xs text-gray-400'>Memory key</Label>
+            <FormField label='Memory key'>
               <Input
                 value={memoryKey}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setMemoryKey(event.target.value)}
                 placeholder='run-id or tenant key'
-                className='mt-1'
+                className='h-9'
               />
-            </div>
-            <div>
-              <Label className='text-xs text-gray-400'>Tag</Label>
+            </FormField>
+            <FormField label='Tag'>
               <Input
                 value={tag}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setTag(event.target.value)}
                 placeholder='problem-solution'
-                className='mt-1'
+                className='h-9'
               />
-            </div>
-            <div>
-              <Label className='text-xs text-gray-400'>Search</Label>
+            </FormField>
+            <FormField label='Search'>
               <Input
                 value={query}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setQuery(event.target.value)}
                 placeholder='query text'
-                className='mt-1'
+                className='h-9'
               />
-            </div>
-            <div>
-              <Label className='text-xs text-gray-400'>Limit</Label>
+            </FormField>
+            <FormField label='Limit'>
               <Input
                 type='number'
                 min={1}
                 max={100}
                 value={limit}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setLimit(Number(event.target.value))}
-                className='mt-1'
+                className='h-9'
               />
-            </div>
+            </FormField>
           </div>
-        </SectionPanel>
+        </FormSection>
         <div className='mt-4 rounded-md border border-border bg-gray-900 p-4 text-sm text-gray-300'>
           {loading ? (
             <p className='text-gray-400'>Loading memory…</p>
           ) : error ? (
-            <p className='text-rose-300'>{error.message || String(error)}</p>
+            <p className='text-rose-300'>{error instanceof Error ? error.message : String(error)}</p>
           ) : items.length === 0 ? (
             <p className='text-gray-400'>No memory entries found.</p>
           ) : (

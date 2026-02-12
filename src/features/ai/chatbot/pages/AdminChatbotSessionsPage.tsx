@@ -4,7 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
-import { Button, Input, useToast, Label, Checkbox, ListPanel, SectionHeader, SectionPanel, ConfirmDialog, EmptyState, SearchInput } from '@/shared/ui';
+import { Button, Input, useToast, Label, Checkbox, ListPanel, SectionHeader, ConfirmDialog, EmptyState, SearchInput, FormSection, FormField } from '@/shared/ui';
 
 import * as chatbotApi from '../api';
 import {
@@ -185,17 +185,17 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
         }
         filters={
           showList ? (
-            <SectionPanel>
-              <div className='max-w-sm'>
+            <FormSection className='p-4'>
+              <FormField label='Search sessions...'>
                 <SearchInput
                   placeholder='Search sessions...'
                   value={searchQuery}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(event.target.value)}
                   onClear={() => setSearchQuery('')}
-                  className='h-8 text-sm'
+                  className='h-8 text-sm max-w-sm'
                 />
-              </div>
-            </SectionPanel>
+              </FormField>
+            </FormSection>
           ) : null
         }
         actions={

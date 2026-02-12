@@ -18,5 +18,25 @@ export type ImageStudioSlotRecord = {
   asset3d?: Asset3DRecord | null;
 };
 
+/** Typed overlay for the slot `metadata` field for generation lineage tracking. */
+export interface SlotGenerationMetadata {
+  role?: 'generation' | 'merge' | 'base' | 'import' | undefined;
+  sourceSlotId?: string | undefined;
+  relationType?: 'generation:output' | 'merge:output' | undefined;
+  generationFileId?: string | undefined;
+  sourceSlotIds?: string[] | undefined;
+  maskData?: {
+    shapes: Array<{ type: string; points: Array<{ x: number; y: number }>; closed: boolean }>;
+    invert: boolean;
+    feather: number;
+    attachedAt: string;
+  } | undefined;
+  generationParams?: {
+    prompt?: string | undefined;
+    model?: string | undefined;
+    timestamp?: string | undefined;
+  } | undefined;
+}
+
 export type StudioProjectsResponse = { projects: string[] };
 export type StudioSlotsResponse = { slots: ImageStudioSlotRecord[] };

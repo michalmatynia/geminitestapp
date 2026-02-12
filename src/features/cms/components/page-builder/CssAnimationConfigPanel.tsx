@@ -15,7 +15,7 @@ import {
   type CssAnimationDirection,
   type CssAnimationFillMode,
 } from '@/features/cms/types/css-animations';
-import { Checkbox, Input, Label, SectionPanel, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
+import { Checkbox, Input, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
 
 interface CssAnimationConfigPanelProps {
   value?: CssAnimationConfig;

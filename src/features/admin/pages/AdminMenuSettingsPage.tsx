@@ -27,7 +27,7 @@ import {
 } from '@/features/admin/constants/admin-menu-settings';
 import { logClientError } from '@/features/observability';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import { Button, Checkbox, Input, Label, SearchInput, SectionHeader, SectionPanel, Switch, useToast, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
+import { Button, Checkbox, Input, Label, SearchInput, SectionHeader, Switch, useToast, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
 import { cn, DRAG_KEYS, getFirstDragValue, setDragData } from '@/shared/utils';
 
 const normalize = (value: string): string =>
@@ -527,13 +527,13 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
         >
           <div className='mt-4 space-y-3'>
             {favoritesList.length === 0 ? (
-              <SectionPanel variant='subtle' className='p-3 text-xs text-gray-400'>
+              <div className='rounded-md border border-border/40 bg-gray-900/20 p-3 text-xs text-gray-400'>
                 No favorites yet. Select items below to pin them here.
-              </SectionPanel>
+              </div>
             ) : (
               <div className='space-y-2'>
                 {favoritesList.map((entry: AdminNavLeaf | undefined, index: number) => (
-                  <SectionPanel key={entry?.id} variant='subtle' className='flex items-center justify-between px-3 py-2'>
+                  <div key={entry?.id} className='flex items-center justify-between gap-3 rounded-md border border-border/40 bg-gray-900/40 p-3'>
                     <div className='min-w-0'>
                       <div className='truncate text-sm text-white'>{entry?.label}</div>
                       {entry?.parents?.length ? (
@@ -573,7 +573,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
                         Remove
                       </Button>
                     </div>
-                  </SectionPanel>
+                  </div>
                 ))}
               </div>
             )}
@@ -627,7 +627,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
               const current = sectionColors[section.id] ?? 'none';
               const colorStyle = current !== 'none' ? ADMIN_MENU_COLOR_MAP[current] : null;
               return (
-                <SectionPanel key={section.id} variant='subtle' className='flex items-center justify-between gap-3 px-3 py-2'>
+                <div key={section.id} className='flex items-center justify-between gap-3 rounded-md border border-border/40 bg-gray-900/40 p-3'>
                   <div className='flex items-center gap-2'>
                     {colorStyle ? (
                       <span className={cn('h-2.5 w-2.5 rounded-full', colorStyle.dot)} />
@@ -649,7 +649,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
                     className='w-[160px]'
                     triggerClassName='h-8 text-xs'
                   />
-                </SectionPanel>
+                </div>
               );
             })}
           </div>

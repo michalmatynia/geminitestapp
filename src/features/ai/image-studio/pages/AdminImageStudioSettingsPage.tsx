@@ -30,6 +30,7 @@ import {
   TabsList,
   TabsTrigger,
   Textarea,
+  UnifiedSelect,
   useToast,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -41,6 +42,7 @@ import {
   defaultImageStudioSettings,
   IMAGE_STUDIO_OPENAI_API_KEY_KEY,
   IMAGE_STUDIO_SETTINGS_KEY,
+  normalizeImageStudioModelPresets,
   parseImageStudioSettings,
   type ImageStudioSettings,
 } from '../utils/studio-settings';
@@ -102,6 +104,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
   const [backfillIncludeHeuristicGenerationLinks, setBackfillIncludeHeuristicGenerationLinks] = useState<boolean>(true);
   const [backfillRunning, setBackfillRunning] = useState<boolean>(false);
   const [backfillResultText, setBackfillResultText] = useState<string>('');
+  const [modelToAdd, setModelToAdd] = useState<string>('');
 
   // Derived state for settings initialization
   const [prevSettingsData, setPrevSettingsData] = useState<unknown>(null);
@@ -134,6 +137,10 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
             openai: {
               ...stored.targetAi.openai,
               model: openaiModelFallback,
+              modelPresets: normalizeImageStudioModelPresets(
+                stored.targetAi.openai.modelPresets,
+                openaiModelFallback,
+              ),
             },
           },
         }
@@ -145,6 +152,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
     setPromptValidationEnabled(promptEngineStored.promptValidation.enabled);
     setPromptValidationRulesText(JSON.stringify(promptEngineStored.promptValidation.rules, null, 2));
     setPromptValidationRulesError(null);
+    setModelToAdd('');
     setSettingsLoaded(true);
   }, [heavySettings.data, prevSettingsData, settingsLoaded, settingsStore]);
 
@@ -219,10 +227,16 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
       return;
     }
 
-    if (!studioSettings.targetAi.openai.model.trim()) {
+    const activeGenerationModel = studioSettings.targetAi.openai.model.trim();
+    if (!activeGenerationModel) {
       toast('Target AI model is required.', { variant: 'error' });
       return;
     }
+
+    const normalizedModelPresets = normalizeImageStudioModelPresets(
+      studioSettings.targetAi.openai.modelPresets,
+      activeGenerationModel,
+    );
 
     const nextStudioSettings: ImageStudioSettings = {
       ...studioSettings,
@@ -231,6 +245,8 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
         openai: {
           ...studioSettings.targetAi.openai,
           api: 'images',
+          model: activeGenerationModel,
+          modelPresets: normalizedModelPresets,
         },
       },
     };
@@ -283,6 +299,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
     setPromptValidationEnabled(defaultPromptEngineSettings.promptValidation.enabled);
     setPromptValidationRulesText(JSON.stringify(defaultPromptEngineSettings.promptValidation.rules, null, 2));
     setPromptValidationRulesError(null);
+    setModelToAdd('');
   }, []);
 
   const runCardBackfill = useCallback(async (): Promise<void> => {
@@ -350,20 +367,47 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
     return studioSettingsRaw ? 'saved settings' : 'defaults';
   }, [studioSettingsRaw]);
 
+  const quickSwitchModels = useMemo(() => {
+    return normalizeImageStudioModelPresets(
+      studioSettings.targetAi.openai.modelPresets,
+      studioSettings.targetAi.openai.model,
+    );
+  }, [studioSettings.targetAi.openai.modelPresets, studioSettings.targetAi.openai.model]);
+
   const generationModelOptions = useMemo(() => {
     const discovered = Array.isArray(imageModelsQuery.data?.models) ? imageModelsQuery.data.models : [];
     const currentModel = studioSettings.targetAi.openai.model?.trim() || '';
     return uniqueSortedModelIds([
       ...discovered,
+      ...quickSwitchModels,
       ...(currentModel ? [currentModel] : []),
     ]);
-  }, [imageModelsQuery.data?.models, studioSettings.targetAi.openai.model]);
+  }, [imageModelsQuery.data?.models, quickSwitchModels, studioSettings.targetAi.openai.model]);
 
   const selectedGenerationModel = useMemo(() => {
     const currentModel = studioSettings.targetAi.openai.model?.trim() || '';
-    if (currentModel && generationModelOptions.includes(currentModel)) return currentModel;
-    return '__custom__';
-  }, [generationModelOptions, studioSettings.targetAi.openai.model]);
+    if (currentModel && quickSwitchModels.includes(currentModel)) return currentModel;
+    return quickSwitchModels[0] ?? '';
+  }, [quickSwitchModels, studioSettings.targetAi.openai.model]);
+
+  const addableGenerationModelOptions = useMemo(() => {
+    return generationModelOptions.filter((modelId) => !quickSwitchModels.includes(modelId));
+  }, [generationModelOptions, quickSwitchModels]);
+
+  const quickSwitchModelSelectOptions = useMemo(
+    () => quickSwitchModels.map((modelId) => ({ value: modelId, label: modelId })),
+    [quickSwitchModels]
+  );
+
+  const addableModelSelectOptions = useMemo(
+    () => addableGenerationModelOptions.map((modelId) => ({ value: modelId, label: modelId })),
+    [addableGenerationModelOptions]
+  );
+
+  useEffect(() => {
+    if (modelToAdd && addableGenerationModelOptions.includes(modelToAdd)) return;
+    setModelToAdd(addableGenerationModelOptions[0] ?? '');
+  }, [addableGenerationModelOptions, modelToAdd]);
 
   const modelCapabilities = useMemo(
     () => getImageModelCapabilities(studioSettings.targetAi.openai.model),
@@ -781,10 +825,9 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
                 Generation runs with the Images API (image-in, image-out).
               </div>
               <div className='grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]'>
-                <Select
+                <UnifiedSelect
                   value={selectedGenerationModel}
                   onValueChange={(value: string) => {
-                    if (value === '__custom__') return;
                     setStudioSettings((prev: ImageStudioSettings) => ({
                       ...prev,
                       targetAi: {
@@ -797,19 +840,11 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
                       },
                     }));
                   }}
-                >
-                  <SelectTrigger className='h-8'>
-                    <SelectValue placeholder={imageModelsQuery.isFetching ? 'Loading models...' : 'Select model'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='__custom__'>Custom model (manual input)</SelectItem>
-                    {generationModelOptions.map((modelId) => (
-                      <SelectItem key={modelId} value={modelId}>
-                        {modelId}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={quickSwitchModelSelectOptions}
+                  placeholder={imageModelsQuery.isFetching ? 'Loading models...' : 'Select model'}
+                  triggerClassName='h-8 text-xs'
+                  ariaLabel='Generation model'
+                />
                 <Button
                   type='button'
                   variant='outline'
@@ -820,24 +855,112 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
                   {imageModelsQuery.isFetching ? 'Refreshing…' : 'Refresh Models'}
                 </Button>
               </div>
-              <Input
-                value={studioSettings.targetAi.openai.model}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setStudioSettings((prev: ImageStudioSettings) => ({
-                    ...prev,
-                    targetAi: {
-                      ...prev.targetAi,
-                      openai: {
-                        ...prev.targetAi.openai,
-                        api: 'images',
-                        model: e.target.value,
-                      },
-                    },
-                  }))
-                }
-                className='h-8'
-                placeholder='e.g. gpt-5.2 or gpt-image-1'
-              />
+              <div className='rounded border border-border/60 bg-card/40 p-2'>
+                <div className='mb-2 text-[11px] text-gray-500'>Quick-switch model list</div>
+                <div className='grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]'>
+                  <UnifiedSelect
+                    value={modelToAdd || ''}
+                    onValueChange={(value: string) => {
+                      setModelToAdd(value);
+                    }}
+                    options={addableModelSelectOptions}
+                    placeholder={addableGenerationModelOptions.length === 0 ? 'No additional models available' : 'Select model to add'}
+                    triggerClassName='h-8 text-xs'
+                    disabled={addableGenerationModelOptions.length === 0}
+                    ariaLabel='Add model to quick-switch list'
+                  />
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    disabled={!modelToAdd}
+                    onClick={() => {
+                      if (!modelToAdd) return;
+                      setStudioSettings((prev: ImageStudioSettings) => ({
+                        ...prev,
+                        targetAi: {
+                          ...prev.targetAi,
+                          openai: {
+                            ...prev.targetAi.openai,
+                            modelPresets: normalizeImageStudioModelPresets(
+                              [...prev.targetAi.openai.modelPresets, modelToAdd],
+                              prev.targetAi.openai.model,
+                            ),
+                          },
+                        },
+                      }));
+                      setModelToAdd('');
+                    }}
+                  >
+                    Add Model
+                  </Button>
+                </div>
+                <div className='mt-2 flex flex-wrap gap-2'>
+                  {quickSwitchModels.map((modelId) => {
+                    const isActive = modelId === studioSettings.targetAi.openai.model;
+                    return (
+                      <div
+                        key={modelId}
+                        className={cn(
+                          'inline-flex items-center gap-2 rounded border px-2 py-1 text-[11px]',
+                          isActive
+                            ? 'border-blue-400/50 bg-blue-500/10 text-blue-100'
+                            : 'border-border/60 bg-card/30 text-gray-300'
+                        )}
+                      >
+                        <button
+                          type='button'
+                          className='hover:underline'
+                          onClick={() =>
+                            setStudioSettings((prev: ImageStudioSettings) => ({
+                              ...prev,
+                              targetAi: {
+                                ...prev.targetAi,
+                                openai: {
+                                  ...prev.targetAi.openai,
+                                  api: 'images',
+                                  model: modelId,
+                                },
+                              },
+                            }))
+                          }
+                        >
+                          {modelId}
+                        </button>
+                        <button
+                          type='button'
+                          className='text-gray-400 hover:text-red-300'
+                          title='Remove from quick-switch list'
+                          onClick={() =>
+                            setStudioSettings((prev: ImageStudioSettings) => {
+                              const nextModel = prev.targetAi.openai.model === modelId
+                                ? prev.targetAi.openai.modelPresets.find((entry) => entry !== modelId) ?? prev.targetAi.openai.model
+                                : prev.targetAi.openai.model;
+                              const nextPresets = normalizeImageStudioModelPresets(
+                                prev.targetAi.openai.modelPresets.filter((entry) => entry !== modelId),
+                                nextModel,
+                              );
+                              return {
+                                ...prev,
+                                targetAi: {
+                                  ...prev.targetAi,
+                                  openai: {
+                                    ...prev.targetAi.openai,
+                                    model: nextModel,
+                                    modelPresets: nextPresets,
+                                  },
+                                },
+                              };
+                            })
+                          }
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
               <div className='text-[11px] text-gray-500'>
                 Source: {imageModelsQuery.data?.source === 'openai' ? 'OpenAI discovery' : 'fallback list'}
               </div>

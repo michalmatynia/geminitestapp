@@ -6,17 +6,21 @@ import { cn } from '@/shared/utils';
 
 import { Button } from './button';
 import { Dialog, DialogContent, DialogTitle } from './dialog';
+import { SectionHeader } from './section-header';
 
 type AppModalProps = {
   open: boolean;
   onOpenChange?: (open: boolean) => void | undefined;
   onClose?: (() => void) | undefined;
-  title: string;
+  title: React.ReactNode;
+  subtitle?: React.ReactNode | undefined;
   titleHidden?: boolean | undefined;
   header?: React.ReactNode | undefined;
-  headerActions?: React.ReactNode | undefined; // Added headerActions prop
+  headerActions?: React.ReactNode | undefined;
   footer?: React.ReactNode | undefined;
   size?: 'sm' | 'md' | 'lg' | 'xl' | undefined;
+  variant?: 'default' | 'glass' | undefined;
+  padding?: 'default' | 'none' | undefined;
   showClose?: boolean | undefined;
   closeOnOutside?: boolean | undefined;
   closeOnEscape?: boolean | undefined;
@@ -38,11 +42,14 @@ export function AppModal({
   onOpenChange,
   onClose,
   title,
+  subtitle,
   titleHidden = false,
   header,
-  headerActions, // Destructure headerActions
+  headerActions,
   footer,
   size = 'md',
+  variant = 'default',
+  padding = 'default',
   showClose = true,
   closeOnOutside = true,
   closeOnEscape = true,
@@ -69,44 +76,72 @@ export function AppModal({
   };
 
   const bodyHeightClass = size === 'sm' ? 'max-h-[50vh]' : 'h-[80vh]';
+  const isGlass = variant === 'glass';
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         className={cn(
-          'max-w-none w-auto p-0 border-none bg-transparent shadow-none', // Removed pointer-events-none
+          'max-w-none w-auto p-0 border-none bg-transparent shadow-none',
           contentClassName ?? ''
         )}
         onInteractOutside={handleInteractOutside}
         onEscapeKeyDown={handleEscapeKeyDown}
       >
         <DialogTitle className='sr-only'>{title}</DialogTitle>
-        <div className={cn('pointer-events-auto w-full rounded-lg border bg-card p-6', sizeClasses[size], className)}>
-          {header ? (
-            <div className='mb-4'>{header}</div>
-          ) : (
-            <div className='mb-4 flex items-center justify-between'>
-              <h2 className={cn('text-2xl font-bold text-white', titleHidden && 'sr-only')}>
-                {title}
-              </h2>
-              <div className='flex items-center gap-2'> {/* Container for close button and header actions */}
-                {headerActions} {/* Render header actions here */}
-                {showClose ? (
-                  <Button
-                    type='button'
-                    onClick={() => handleOpenChange(false)}
-                    variant='outline'
-                  >
-                    Close
-                  </Button>
-                ) : null}
-              </div>
-            </div>
+        <div
+          className={cn(
+            'pointer-events-auto w-full rounded-lg border flex flex-col',
+            isGlass ? 'bg-card/40 backdrop-blur-md border-white/10' : 'bg-card border-border',
+            sizeClasses[size],
+            className
           )}
-          <div className={cn(bodyHeightClass, 'overflow-y-auto pr-2', bodyClassName ?? '')}>
+        >
+          {/* Header */}
+          <div className='p-6 pb-4 border-b border-white/5'>
+            {header ? (
+              header
+            ) : (
+              <SectionHeader
+                title={title}
+                subtitle={subtitle}
+                size='md'
+                titleClassName={cn(titleHidden && 'sr-only')}
+                actions={
+                  <div className='flex items-center gap-2'>
+                    {headerActions}
+                    {showClose ? (
+                      <Button
+                        type='button'
+                        onClick={() => handleOpenChange(false)}
+                        variant='outline'
+                        size='sm'
+                      >
+                        Close
+                      </Button>
+                    ) : null}
+                  </div>
+                }
+              />
+            )}
+          </div>
+
+          {/* Body */}
+          <div className={cn(
+            bodyHeightClass, 
+            'overflow-y-auto', 
+            padding === 'default' && 'p-6',
+            bodyClassName ?? ''
+          )}>
             {children}
           </div>
-          {footer ? <div className='mt-6 flex justify-end gap-2'>{footer}</div> : null}
+
+          {/* Footer */}
+          {footer ? (
+            <div className='p-6 pt-4 border-t border-white/5 flex justify-end gap-2'>
+              {footer}
+            </div>
+          ) : null}
         </div>
       </DialogContent>
     </Dialog>

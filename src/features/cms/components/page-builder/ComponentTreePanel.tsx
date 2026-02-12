@@ -1,11 +1,12 @@
 'use client';
 
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useMemo, useState } from 'react';
 
-import { useMasterFolderTreeAppearance } from '@/features/foldertree/hooks/useMasterFolderTreeAppearance';
-import { MasterFolderTree, useMasterFolderTree } from '@/features/foldertree/master';
-import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
+import {
+  MasterFolderTree,
+  useMasterFolderTreeInstance,
+} from '@/features/foldertree';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { FolderTreePanel, TreeHeader } from '@/shared/ui';
 import {
@@ -156,30 +157,7 @@ const buildCmsMasterNodes = (sections: SectionInstance[]): MasterTreeNode[] => {
 export function ComponentTreePanel(): React.ReactNode {
   const { state } = usePageBuilder();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const treeProfile = useFolderTreeProfile('cms_page_builder');
-  const { placeholderClasses: treePlaceholderClasses, rootDropUi: treeRootDropUi } =
-    useMasterFolderTreeAppearance(treeProfile);
   const settingsStore = useSettingsStore();
-  const canDropSectionsAtRoot = useMemo(
-    () =>
-      canNestTreeNodeV2({
-        profile: treeProfile,
-        nodeType: 'file',
-        nodeKind: 'section',
-        targetType: 'root',
-      }),
-    [treeProfile]
-  );
-  const canDropBlocksAtRoot = useMemo(
-    () =>
-      canNestTreeNodeV2({
-        profile: treeProfile,
-        nodeType: 'file',
-        nodeKind: 'block',
-        targetType: 'root',
-      }),
-    [treeProfile]
-  );
 
   const extractPlaceholderValue = settingsStore.get(PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY);
   const sectionDropPlaceholderValue = settingsStore.get(PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY);
@@ -239,22 +217,37 @@ export function ComponentTreePanel(): React.ReactNode {
     []
   );
 
-  const structureController = useMasterFolderTree({
-    initialNodes: masterNodes,
-    initialSelectedNodeId: selectedMasterNodeId,
-    initiallyExpandedNodeIds: initiallyExpandedZoneNodeIds,
+  const {
     profile: treeProfile,
+    appearance: { placeholderClasses: treePlaceholderClasses, rootDropUi: treeRootDropUi },
+    controller: structureController,
+  } = useMasterFolderTreeInstance({
+    instance: 'cms_page_builder',
+    nodes: masterNodes,
+    selectedNodeId: selectedMasterNodeId,
+    initiallyExpandedNodeIds: initiallyExpandedZoneNodeIds,
     externalRevision: structureRevision,
   });
-  const { replaceNodes, selectNode } = structureController;
-
-  useEffect(() => {
-    void replaceNodes(masterNodes, 'external_sync');
-  }, [masterNodes, replaceNodes]);
-
-  useEffect(() => {
-    selectNode(selectedMasterNodeId);
-  }, [selectedMasterNodeId, selectNode]);
+  const canDropSectionsAtRoot = useMemo(
+    () =>
+      canNestTreeNodeV2({
+        profile: treeProfile,
+        nodeType: 'file',
+        nodeKind: 'section',
+        targetType: 'root',
+      }),
+    [treeProfile]
+  );
+  const canDropBlocksAtRoot = useMemo(
+    () =>
+      canNestTreeNodeV2({
+        profile: treeProfile,
+        nodeType: 'file',
+        nodeKind: 'block',
+        targetType: 'root',
+      }),
+    [treeProfile]
+  );
 
   const sectionCount = state.sections.length;
   const panelContextValue = useMemo<ComponentTreePanelContextValue>(

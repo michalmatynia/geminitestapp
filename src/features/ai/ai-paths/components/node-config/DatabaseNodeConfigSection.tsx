@@ -44,6 +44,7 @@ import { PRODUCT_DB_PROVIDER_SETTING_KEY } from '@/features/products/constants';
 import { PROMPT_ENGINE_SETTINGS_KEY, parsePromptEngineSettings, type PromptValidationRule } from '@/features/prompt-engine/settings';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import type { DbSchemaSnapshot } from '@/shared/types/domain/ai-paths';
 import { Button, Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Tabs, TabsContent, TabsList, TabsTrigger, Checkbox } from '@/shared/ui';
 
 type ActionResult = {
@@ -180,6 +181,64 @@ const applySchemaSelection = (
     }));
   }
   return { ...schema, collections };
+};
+
+const toDbSchemaSnapshotCollection = (
+  collection: CollectionSchema
+): DbSchemaSnapshot['collections'][number] => ({
+  name: collection.name,
+  fields: (collection.fields ?? []).map((field: { name: string; type: string }) => ({
+    name: field.name,
+    type: field.type,
+  })),
+  ...(collection.relations ? { relations: collection.relations } : {}),
+  ...(collection.provider ? { provider: collection.provider } : {}),
+});
+
+const toDbSchemaSnapshotSourceCollection = (
+  collection: CollectionSchema
+): {
+  name: string;
+  fields: Array<{ name: string; type: string }>;
+  relations?: string[];
+} => ({
+  name: collection.name,
+  fields: (collection.fields ?? []).map((field: { name: string; type: string }) => ({
+    name: field.name,
+    type: field.type,
+  })),
+  ...(collection.relations ? { relations: collection.relations } : {}),
+});
+
+const toDbSchemaSnapshot = (
+  schema: SchemaData,
+  syncedAt: string
+): DbSchemaSnapshot => {
+  if (schema.provider === 'multi') {
+    const sources = schema.sources
+      ? Object.entries(schema.sources).reduce((acc, [provider, source]) => {
+        if (!source) return acc;
+        acc[provider as 'mongodb' | 'prisma'] = {
+          provider: source.provider,
+          collections: source.collections.map(toDbSchemaSnapshotSourceCollection),
+        };
+        return acc;
+      }, {} as NonNullable<DbSchemaSnapshot['sources']>)
+      : undefined;
+
+    return {
+      provider: 'multi',
+      collections: schema.collections.map(toDbSchemaSnapshotCollection),
+      ...(sources ? { sources } : {}),
+      syncedAt,
+    };
+  }
+
+  return {
+    provider: schema.provider,
+    collections: schema.collections.map(toDbSchemaSnapshotCollection),
+    syncedAt,
+  };
 };
 
 const normalizeCollectionKey = (value: string): string => value.trim().toLowerCase();
@@ -657,10 +716,7 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
       updateSelectedNodeConfig({
         database: {
           ...databaseConfig,
-          schemaSnapshot: {
-            ...filtered,
-            syncedAt: new Date().toISOString(),
-          },
+          schemaSnapshot: toDbSchemaSnapshot(filtered, new Date().toISOString()),
         },
       });
       toast('Schema collections synced.', { variant: 'success' });

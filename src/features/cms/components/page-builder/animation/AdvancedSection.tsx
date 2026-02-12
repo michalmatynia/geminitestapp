@@ -27,11 +27,9 @@ import {
 import {
   Button,
   Checkbox,
-  Label,
   Input,
   Tooltip,
   UnifiedSelect,
-  SectionPanel,
   FormSection,
   FormField,
   type VectorShape,

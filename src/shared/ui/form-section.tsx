@@ -3,6 +3,7 @@
 import { cn } from '@/shared/utils';
 
 import { Label } from './label';
+import { SectionHeader } from './section-header';
 import { SectionPanel } from './section-panel';
 
 import type { ReactNode } from 'react';
@@ -10,15 +11,17 @@ import type { ReactNode } from 'react';
 interface FormSectionProps {
   title?: string | undefined;
   description?: string | undefined;
-  children: ReactNode;
+  actions?: ReactNode | undefined;
+  children?: ReactNode | undefined;
   className?: string | undefined;
   gridClassName?: string | undefined;
-  variant?: 'default' | 'compact' | 'subtle' | 'subtle-compact' | undefined;
+  variant?: 'default' | 'compact' | 'subtle' | 'subtle-compact' | 'glass' | undefined;
 }
 
 export function FormSection({
   title,
   description,
+  actions,
   children,
   className,
   gridClassName,
@@ -26,15 +29,19 @@ export function FormSection({
 }: FormSectionProps): React.JSX.Element {
   return (
     <SectionPanel variant={variant} className={cn('space-y-4', className)}>
-      {(title || description) && (
-        <div className='space-y-1'>
-          {title && <h3 className='text-sm font-semibold text-foreground'>{title}</h3>}
-          {description && <p className='text-xs text-muted-foreground'>{description}</p>}
-        </div>
+      {(title || description || actions) && (
+        <SectionHeader
+          title={title ?? ''}
+          description={description}
+          actions={actions}
+          size='xs'
+        />
       )}
-      <div className={cn('grid grid-cols-1 gap-4', gridClassName)}>
-        {children}
-      </div>
+      {children ? (
+        <div className={cn('grid grid-cols-1 gap-4', gridClassName)}>
+          {children}
+        </div>
+      ) : null}
     </SectionPanel>
   );
 }

@@ -15,19 +15,15 @@ export function IntegrationList(): React.JSX.Element {
 
   return (
     <ListPanel
-      header={
-        <SectionHeader
-          title='Integrations'
-          description='Visualize and manage marketplace and platform connections.'
-          actions={
-            <Button asChild className='gap-2'>
-              <Link href='/admin/integrations/add'>
-                <PlusIcon className='size-4' />
-                Add Integration
-              </Link>
-            </Button>
-          }
-        />
+      title='Integrations'
+      description='Visualize and manage marketplace and platform connections.'
+      headerActions={
+        <Button asChild className='gap-2'>
+          <Link href='/admin/integrations/add'>
+            <PlusIcon className='size-4' />
+            Add Integration
+          </Link>
+        </Button>
       }
     >
       <SectionPanel variant='subtle' className='relative overflow-hidden rounded-xl p-6'>

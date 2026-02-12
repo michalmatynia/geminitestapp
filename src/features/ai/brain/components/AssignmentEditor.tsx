@@ -1,6 +1,9 @@
 'use client';
 
 import {
+  Checkbox,
+  Input,
+  Label,
   Select,
   SelectContent,
   SelectItem,

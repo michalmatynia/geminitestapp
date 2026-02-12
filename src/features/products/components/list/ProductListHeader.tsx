@@ -81,6 +81,15 @@ export const ProductListHeader = memo(function ProductListHeader({
           title='Products'
           actions={
             <div className='flex items-center gap-3'>
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                onClick={() => setShowBase64AllConfirm(true)}
+                disabled={isConvertingAll}
+              >
+                {isConvertingAll ? 'Converting...' : 'Convert all products'}
+              </Button>
               <TriggerButtonBar location='product_list' entityType='product' />
             </div>
           }
@@ -88,7 +97,8 @@ export const ProductListHeader = memo(function ProductListHeader({
             <div className='flex flex-wrap items-center gap-2 mb-2'>
               <Button
                 onClick={onCreateProduct}
-                className='h-14 w-14 rounded-full border border-white/20 p-0 hover:border-white/40'
+                size='icon-lg'
+                variant='outline'
                 aria-label='Create new product'
               >
                 <PlusIcon className='h-6 w-6' />
@@ -165,17 +175,6 @@ export const ProductListHeader = memo(function ProductListHeader({
             triggerClassName='w-full sm:w-52'
             ariaLabel='Filter by catalog'
           />
-        </div>
-
-        <div className='flex items-center gap-2'>
-          <Button
-            type='button'
-            variant='outline'
-            onClick={() => setShowBase64AllConfirm(true)}
-            disabled={isConvertingAll}
-          >
-            {isConvertingAll ? 'Converting...' : 'Convert all products'}
-          </Button>
         </div>
       </SectionPanel>
 

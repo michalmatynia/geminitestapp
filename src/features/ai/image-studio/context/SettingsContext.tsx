@@ -7,7 +7,13 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
-import { IMAGE_STUDIO_SETTINGS_KEY, parseImageStudioSettings, type ImageStudioSettings, defaultImageStudioSettings } from '../utils/studio-settings';
+import {
+  IMAGE_STUDIO_SETTINGS_KEY,
+  parseImageStudioSettings,
+  type ImageStudioSettings,
+  defaultImageStudioSettings,
+  normalizeImageStudioModelPresets,
+} from '../utils/studio-settings';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -58,6 +64,10 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
             openai: {
               ...stored.targetAi.openai,
               model: openaiModelFallback,
+              modelPresets: normalizeImageStudioModelPresets(
+                stored.targetAi.openai.modelPresets,
+                openaiModelFallback,
+              ),
             },
           },
         }

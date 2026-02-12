@@ -5,11 +5,11 @@ import React, { useMemo, useState } from 'react';
 
 import { AppModal } from './app-modal';
 import { Button } from './button';
-import { Card } from './card';
 import { ConfirmDialog } from './confirm-dialog';
 import { EmptyState } from './empty-state';
 import { Input } from './input';
 import { Label } from './label';
+import { ResourceCard } from './ResourceCard';
 import { SectionHeader } from './section-header';
 import { SectionPanel } from './section-panel';
 import { Textarea } from './textarea';
@@ -142,54 +142,57 @@ export function ItemLibrary<T extends LibraryItem>({
       ) : (
         <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
           {sortedItems.map((item) => (
-            <Card key={item.id} className='border-border bg-card/70 p-4'>
-              <div className='flex items-start justify-between gap-3'>
-                <div className='min-w-0'>
-                  <p className='text-sm font-semibold text-white'>{item.name}</p>
-                  <p className='mt-1 text-xs text-gray-400 line-clamp-2'>
-                    {item.description || 'No description provided.'}
-                  </p>
-                </div>
-                <div className='flex flex-wrap gap-2'>
+            <ResourceCard
+              key={item.id}
+              title={item.name}
+              description={item.description || 'No description provided.'}
+              className='h-auto'
+              actions={
+                <div className='flex gap-1'>
                   <Button
                     type='button'
-                    variant='outline'
-                    size='sm'
+                    variant='ghost'
+                    size='icon'
                     onClick={() => openEdit(item)}
                     disabled={isSaving}
+                    title='Edit'
                   >
-                    <Pencil className='mr-1 size-3' />
-                    Edit
+                    <Pencil className='size-3.5' />
                   </Button>
                   <Button
                     type='button'
-                    variant='outline'
-                    size='sm'
+                    variant='ghost'
+                    size='icon'
                     onClick={() => setItemToDelete(item)}
                     disabled={isSaving}
+                    title='Delete'
+                    className='text-destructive hover:text-destructive'
                   >
-                    <Trash2 className='mr-1 size-3' />
-                    Delete
+                    <Trash2 className='size-3.5' />
                   </Button>
                 </div>
-              </div>
-              {renderItemTags && (
-                <div className='mt-3 flex flex-wrap gap-2'>
-                  {renderItemTags(item).map((tag) => (
-                    <span
-                      key={tag}
-                      className='rounded-full border px-2 py-1 text-[11px] text-gray-300'
-                    >
-                      {tag}
-                    </span>
-                  ))}
+              }
+              footer={
+                <div className='flex flex-col gap-1.5'>
+                  {renderItemTags && (
+                    <div className='flex flex-wrap gap-2'>
+                      {renderItemTags(item).map((tag) => (
+                        <span
+                          key={tag}
+                          className='rounded-full border border-border/60 px-2 py-0.5 text-[10px] text-gray-400'
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <div className='flex flex-wrap items-center gap-3 text-[10px] text-gray-500'>
+                    <span>Updated: {formatTime(item.updatedAt)}</span>
+                    <span>Created: {formatTime(item.createdAt)}</span>
+                  </div>
                 </div>
-              )}
-              <div className='mt-4 flex flex-wrap items-center gap-3 text-[11px] text-gray-500'>
-                <span>Updated: {formatTime(item.updatedAt)}</span>
-                <span>Created: {formatTime(item.createdAt)}</span>
-              </div>
-            </Card>
+              }
+            />
           ))}
         </div>
       )}
@@ -221,7 +224,13 @@ export function ItemLibrary<T extends LibraryItem>({
             <Button type='button' variant='outline' onClick={closeModal} disabled={isSaving}>
               Cancel
             </Button>
-            <Button type='button' onClick={handleSave} disabled={isSaving || !draft.name?.trim()}>
+            <Button 
+              type='button' 
+              variant='primary'
+              onClick={handleSave} 
+              disabled={isSaving || !draft.name?.trim()}
+              className='min-w-[120px]'
+            >
               {isSaving ? 'Saving...' : `Save ${entityName.toLowerCase()}`}
             </Button>
           </>

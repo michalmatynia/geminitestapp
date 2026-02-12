@@ -8,8 +8,10 @@ import {
 } from 'lucide-react';
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 
-import { useMasterFolderTreeAppearance } from '@/features/foldertree/hooks/useMasterFolderTreeAppearance';
-import { MasterFolderTree, useMasterFolderTree } from '@/features/foldertree/master';
+import {
+  MasterFolderTree,
+  useMasterFolderTreeInstance,
+} from '@/features/foldertree';
 import { logClientError } from '@/features/observability';
 import { useProductCategoryTree } from '@/features/products/hooks/useCategoryQueries';
 import {
@@ -18,7 +20,6 @@ import {
   useReorderCategoryMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
 import type { ProductCategoryWithChildren, Catalog, ProductCategory } from '@/features/products/types';
-import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
 import {
   Button,
   ConfirmDialog,
@@ -142,8 +143,6 @@ export function CategoriesSettings({
   onRefresh,
 }: CategoriesSettingsProps): React.JSX.Element {
   const { toast } = useToast();
-  const treeProfile = useFolderTreeProfile('product_categories');
-  const { placeholderClasses, rootDropUi, resolveIcon } = useMasterFolderTreeAppearance(treeProfile);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [editingCategory, setEditingCategory] =
     useState<ProductCategoryWithChildren | null>(null);
@@ -189,17 +188,16 @@ export function CategoriesSettings({
         .join('|'),
     [masterNodes]
   );
-  const controller = useMasterFolderTree({
-    initialNodes: masterNodes,
+  const {
+    appearance: { placeholderClasses, rootDropUi, resolveIcon },
+    controller,
+  } = useMasterFolderTreeInstance({
+    instance: 'product_categories',
+    nodes: masterNodes,
     initiallyExpandedNodeIds: initialExpandedNodeIds,
-    profile: treeProfile,
     externalRevision: masterRevision,
   });
-  const { replaceNodes, expandAll } = controller;
-
-  useEffect((): void => {
-    void replaceNodes(masterNodes, 'external_sync');
-  }, [masterNodes, replaceNodes]);
+  const { expandAll } = controller;
 
   useEffect((): void => {
     if (!selectedCatalogId) return;

@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react';
 
 import type { CustomCssAiProvider } from '@/features/cms/types/custom-css-ai';
-import { Button, Label, Switch, Textarea, SectionPanel, Tabs, TabsList, TabsTrigger, TabsContent, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
+import { Button, Switch, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
 
 import { useInspectorAi } from '../context/InspectorAiContext';
 import { buildDiffLines } from '../utils/ai-helpers';
@@ -354,8 +354,6 @@ function CssAiSection(): React.JSX.Element {
         )}
       </div>
     </FormSection>
-  );
-}
   );
 }
 

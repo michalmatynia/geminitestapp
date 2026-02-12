@@ -5,7 +5,7 @@ import {
   DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT,
   DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
 } from '@/features/ai/insights/settings';
-import { Input, Label, SectionPanel, Switch, Textarea } from '@/shared/ui';
+import { Checkbox, Input, Switch, Textarea, FormSection, FormField } from '@/shared/ui';
 
 import { useBrain } from '../context/BrainContext';
 import { type AiBrainFeature, type AiBrainAssignment } from '../settings';
@@ -71,10 +71,9 @@ export function ReportsTab(): React.JSX.Element {
 
   return (
     <div className='space-y-4'>
-      <SectionPanel>
-        <div className='text-sm font-semibold text-white'>Schedules</div>
+      <FormSection title='Schedules' className='p-4'>
         <div className='mt-3 grid gap-4 md:grid-cols-3'>
-          <SectionPanel variant='subtle-compact' className='space-y-3'>
+          <FormSection variant='subtle-compact' className='p-3 space-y-3'>
             <div className='flex items-center justify-between'>
               <div>
                 <div className='text-xs text-gray-200'>Analytics insights schedule</div>
@@ -82,15 +81,17 @@ export function ReportsTab(): React.JSX.Element {
               </div>
               <Switch checked={analyticsScheduleEnabled} onCheckedChange={setAnalyticsScheduleEnabled} />
             </div>
-            <Input
-              type='number'
-              min={5}
-              value={analyticsScheduleMinutes}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAnalyticsScheduleMinutes(Number(e.target.value))}
-            />
-          </SectionPanel>
+            <FormField label='Minutes'>
+              <Input
+                type='number'
+                min={5}
+                value={analyticsScheduleMinutes}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAnalyticsScheduleMinutes(Number(e.target.value))}
+              />
+            </FormField>
+          </FormSection>
 
-          <SectionPanel variant='subtle-compact' className='space-y-3'>
+          <FormSection variant='subtle-compact' className='p-3 space-y-3'>
             <div className='flex items-center justify-between'>
               <div>
                 <div className='text-xs text-gray-200'>Runtime analytics schedule</div>
@@ -98,15 +99,17 @@ export function ReportsTab(): React.JSX.Element {
               </div>
               <Switch checked={runtimeAnalyticsScheduleEnabled} onCheckedChange={setRuntimeAnalyticsScheduleEnabled} />
             </div>
-            <Input
-              type='number'
-              min={5}
-              value={runtimeAnalyticsScheduleMinutes}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRuntimeAnalyticsScheduleMinutes(Number(e.target.value))}
-            />
-          </SectionPanel>
+            <FormField label='Minutes'>
+              <Input
+                type='number'
+                min={5}
+                value={runtimeAnalyticsScheduleMinutes}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRuntimeAnalyticsScheduleMinutes(Number(e.target.value))}
+              />
+            </FormField>
+          </FormSection>
 
-          <SectionPanel variant='subtle-compact' className='space-y-3'>
+          <FormSection variant='subtle-compact' className='p-3 space-y-3'>
             <div className='flex items-center justify-between'>
               <div>
                 <div className='text-xs text-gray-200'>System log insights schedule</div>
@@ -114,55 +117,53 @@ export function ReportsTab(): React.JSX.Element {
               </div>
               <Switch checked={logsScheduleEnabled} onCheckedChange={setLogsScheduleEnabled} />
             </div>
-            <Input
-              type='number'
-              min={5}
-              value={logsScheduleMinutes}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLogsScheduleMinutes(Number(e.target.value))}
-            />
+            <FormField label='Minutes'>
+              <Input
+                type='number'
+                min={5}
+                value={logsScheduleMinutes}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLogsScheduleMinutes(Number(e.target.value))}
+              />
+            </FormField>
             <label className='flex items-center justify-between gap-2 text-xs text-gray-300'>
               Auto-run on new errors
               <Switch checked={logsAutoOnError} onCheckedChange={setLogsAutoOnError} />
             </label>
-          </SectionPanel>
+          </FormSection>
         </div>
-      </SectionPanel>
+      </FormSection>
 
-      <SectionPanel>
-        <div className='text-sm font-semibold text-white'>Prompt steering</div>
-        <div className='mt-1 text-xs text-gray-400'>
-          Edit the system prompt used by report generation models. JSON output requirements are enforced automatically.
-        </div>
+      <FormSection
+        title='Prompt steering'
+        description='Edit the system prompt used by report generation models. JSON output requirements are enforced automatically.'
+        className='p-4'
+      >
         <div className='mt-3 grid gap-4 md:grid-cols-3'>
-          <div className='space-y-1'>
-            <Label className='text-xs text-gray-300'>Analytics prompt</Label>
+          <FormField label='Analytics prompt'>
             <Textarea
               className='min-h-[160px] text-xs'
               value={analyticsPromptSystem}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setAnalyticsPromptSystem(e.target.value)}
             />
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-xs text-gray-300'>Runtime analytics prompt</Label>
+          </FormField>
+          <FormField label='Runtime analytics prompt'>
             <Textarea
               className='min-h-[160px] text-xs'
               value={runtimeAnalyticsPromptSystem}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setRuntimeAnalyticsPromptSystem(e.target.value)}
             />
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-xs text-gray-300'>Logs prompt</Label>
+          </FormField>
+          <FormField label='Logs prompt'>
             <Textarea
               className='min-h-[160px] text-xs'
               value={logsPromptSystem}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setLogsPromptSystem(e.target.value)}
             />
-          </div>
+          </FormField>
         </div>
-      </SectionPanel>
+      </FormSection>
 
-      <SectionPanel variant='subtle'>
-        <div className='text-sm font-semibold text-white'>Default prompts</div>
+      <FormSection title='Default prompts' variant='subtle' className='p-4'>
         <details className='mt-2'>
           <summary className='cursor-pointer text-xs text-gray-400'>Show defaults</summary>
           <div className='mt-3 grid gap-3 md:grid-cols-3'>
@@ -177,7 +178,7 @@ export function ReportsTab(): React.JSX.Element {
             </pre>
           </div>
         </details>
-      </SectionPanel>
+      </FormSection>
 
       <div className='grid gap-4 md:grid-cols-2'>
         {REPORT_FEATURES.map((feature: FeatureConfig) => {
@@ -187,23 +188,21 @@ export function ReportsTab(): React.JSX.Element {
             : effectiveAssignments[feature.key];
 
           return (
-            <SectionPanel key={feature.key}>
-              <div className='flex items-start justify-between gap-2'>
-                <div>
-                  <div className='text-sm font-semibold text-gray-100'>{feature.label}</div>
-                  <div className='text-xs text-gray-400'>{feature.description}</div>
-                </div>
-                <label className='flex items-center gap-2 text-[11px] text-gray-400'>
-                  <input
-                    type='checkbox'
-                    className='h-3 w-3 rounded border-gray-600'
+            <FormSection
+              key={feature.key}
+              title={feature.label}
+              description={feature.description}
+              className='p-4'
+              actions={
+                <label className='flex items-center gap-2 text-[11px] text-gray-400 cursor-pointer'>
+                  <Checkbox
                     checked={overrideEnabled}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => toggleOverride(feature.key, e.target.checked)}
+                    onCheckedChange={(checked: boolean) => toggleOverride(feature.key, Boolean(checked))}
                   />
                   Override
                 </label>
-              </div>
-
+              }
+            >
               <div className='mt-3'>
                 <AssignmentEditor
                   assignment={assignment}
@@ -215,7 +214,7 @@ export function ReportsTab(): React.JSX.Element {
               {!overrideEnabled ? (
                 <div className='mt-2 text-[11px] text-gray-500'>Using global defaults.</div>
               ) : null}
-            </SectionPanel>
+            </FormSection>
           );
         })}
       </div>

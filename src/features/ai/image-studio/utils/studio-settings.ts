@@ -3,6 +3,29 @@ import { z } from 'zod';
 export const IMAGE_STUDIO_SETTINGS_KEY = 'image_studio_settings';
 export const IMAGE_STUDIO_OPENAI_API_KEY_KEY = 'image_studio_openai_api_key';
 
+export function normalizeImageStudioModelPresets(
+  presets: string[] | null | undefined,
+  fallbackModel: string | null | undefined,
+): string[] {
+  const normalized: string[] = [];
+  if (Array.isArray(presets)) {
+    for (const entry of presets) {
+      if (typeof entry !== 'string') continue;
+      const modelId = entry.trim();
+      if (!modelId) continue;
+      if (normalized.includes(modelId)) continue;
+      normalized.push(modelId);
+    }
+  }
+
+  const fallback = typeof fallbackModel === 'string' ? fallbackModel.trim() : '';
+  if (fallback && !normalized.includes(fallback)) {
+    normalized.unshift(fallback);
+  }
+
+  return normalized;
+}
+
 export type ImageStudioSettings = {
   version: 1;
   promptExtraction: {
@@ -28,6 +51,7 @@ export type ImageStudioSettings = {
     openai: {
       api: 'responses' | 'images';
       model: string;
+      modelPresets: string[];
       temperature: number | null;
       top_p: number | null;
       max_output_tokens: number | null;
@@ -79,6 +103,7 @@ export const defaultImageStudioSettings: ImageStudioSettings = {
     openai: {
       api: 'images',
       model: 'gpt-image-1',
+      modelPresets: ['gpt-image-1'],
       temperature: null,
       top_p: null,
       max_output_tokens: null,
@@ -146,6 +171,7 @@ const imageStudioSettingsSchema: z.ZodType<ImageStudioSettings> = z
           .object({
             api: z.enum(['responses', 'images']).optional().default(defaultImageStudioSettings.targetAi.openai.api),
             model: z.string().trim().min(1).optional().default(defaultImageStudioSettings.targetAi.openai.model),
+            modelPresets: z.array(z.string().trim().min(1)).optional().default(defaultImageStudioSettings.targetAi.openai.modelPresets),
             temperature: finiteNumberOrNull,
             top_p: finiteNumberOrNull,
             max_output_tokens: intOrNull,
@@ -206,11 +232,29 @@ export function parseImageStudioSettings(raw: string | null | undefined): ImageS
           openai: {
             ...defaultImageStudioSettings.targetAi.openai,
             model: modelFallback,
+            modelPresets: normalizeImageStudioModelPresets(
+              defaultImageStudioSettings.targetAi.openai.modelPresets,
+              modelFallback,
+            ),
           },
         },
       };
     }
-    return result.data;
+    const parsedSettings = result.data;
+    const modelPresets = normalizeImageStudioModelPresets(
+      parsedSettings.targetAi.openai.modelPresets,
+      parsedSettings.targetAi.openai.model,
+    );
+    return {
+      ...parsedSettings,
+      targetAi: {
+        ...parsedSettings.targetAi,
+        openai: {
+          ...parsedSettings.targetAi.openai,
+          modelPresets,
+        },
+      },
+    };
   } catch {
     return defaultImageStudioSettings;
   }

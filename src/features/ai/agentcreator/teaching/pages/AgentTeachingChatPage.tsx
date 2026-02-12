@@ -5,7 +5,7 @@ import React from 'react';
 
 import type { AgentTeachingAgentRecord, AgentTeachingChatSource, AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/domain/agent-teaching';
 import type { ChatMessage } from '@/shared/types/domain/chatbot';
-import { Button, Label, SectionHeader, SectionPanel, Textarea, useToast } from '@/shared/ui';
+import { Button, SectionHeader, Textarea, useToast, FormSection, FormField } from '@/shared/ui';
 
 import { useAgentTeachingContext } from '../context/AgentTeachingContext';
 import { useTeachingChatMutation } from '../hooks/useAgentTeaching';
@@ -68,8 +68,7 @@ export function AgentTeachingChatPage(): React.JSX.Element {
       />
 
       <div className='grid gap-6 lg:grid-cols-3'>
-        <SectionPanel className='p-4 lg:col-span-1 space-y-4'>
-          <div className='text-sm font-semibold text-white'>Learner Agents</div>
+        <FormSection title='Learner Agents' className='p-4 lg:col-span-1 space-y-4'>
           {loadingAgents ? (
             <div className='text-sm text-gray-400'>Loading agents…</div>
           ) : agents.length === 0 ? (
@@ -104,16 +103,11 @@ export function AgentTeachingChatPage(): React.JSX.Element {
               ))}
             </div>
           )}
-        </SectionPanel>
+        </FormSection>
 
-        <SectionPanel className='p-4 lg:col-span-2 space-y-4'>
+        <FormSection title='Chat' description={selectedAgent ? `Agent: ${selectedAgent.name}` : 'Select an agent to start'} className='p-4 lg:col-span-2 space-y-4'>
           <div className='flex items-center justify-between gap-3'>
-            <div>
-              <div className='text-sm font-semibold text-white'>Chat</div>
-              <div className='text-[11px] text-gray-500'>
-                {selectedAgent ? `Agent: ${selectedAgent.name}` : 'Select an agent to start'}
-              </div>
-            </div>
+            <div className='text-sm font-semibold text-white'>Chat</div>
             <Button
               type='button'
               variant='outline'
@@ -127,7 +121,7 @@ export function AgentTeachingChatPage(): React.JSX.Element {
             </Button>
           </div>
 
-          <div className='h-[360px] overflow-auto rounded-md border border-border bg-card/30 p-3'>
+          <div className='h-[360px] overflow-auto rounded-md border border-border bg-card/30 p-3 mt-4'>
             {messages.length === 0 ? (
               <div className='text-sm text-gray-400'>
                 Start chatting. The server will embed your question, retrieve top sources, and answer with citations.
@@ -144,8 +138,7 @@ export function AgentTeachingChatPage(): React.JSX.Element {
             )}
           </div>
 
-          <div className='space-y-2'>
-            <Label>Message</Label>
+          <FormField label='Message'>
             <Textarea
               value={input}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setInput(e.target.value)}
@@ -153,15 +146,14 @@ export function AgentTeachingChatPage(): React.JSX.Element {
               className='min-h-[90px]'
               disabled={sending || !selectedAgentId}
             />
-            <div className='flex justify-end gap-2'>
+            <div className='flex justify-end gap-2 mt-2'>
               <Button type='button' onClick={() => void handleSend()} disabled={sending || !selectedAgentId || !input.trim()}>
                 {sending ? 'Thinking…' : 'Send'}
               </Button>
             </div>
-          </div>
+          </FormField>
 
-          <div className='rounded-md border border-border bg-card/40 p-3'>
-            <div className='text-sm font-semibold text-white'>Retrieved sources</div>
+          <FormSection title='Retrieved sources' variant='subtle' className='p-3'>
             {lastSources.length === 0 ? (
               <div className='mt-2 text-sm text-gray-400'>
                 No sources retrieved yet (or below min score).
@@ -186,8 +178,8 @@ export function AgentTeachingChatPage(): React.JSX.Element {
                 ))}
               </div>
             )}
-          </div>
-        </SectionPanel>
+          </FormSection>
+        </FormSection>
       </div>
     </div>
   );

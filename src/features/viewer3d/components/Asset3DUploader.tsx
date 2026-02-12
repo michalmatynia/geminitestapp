@@ -4,7 +4,7 @@ import { Upload, Loader2, Plus, X } from 'lucide-react';
 import { useState, useCallback } from 'react';
 
 import { logClientError } from '@/features/observability';
-import { Button, Input, Label, FileUploadTrigger, Textarea, Checkbox, Tag } from '@/shared/ui';
+import { Button, Input, Label, FileUploadTrigger, Textarea, Checkbox, Tag, FormField, FormSection } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { uploadAsset3DFile } from '../api';
@@ -178,47 +178,38 @@ export function Asset3DUploader({
           </div>
 
           {/* Name */}
-          <div>
-            <Label htmlFor='upload-name' className='text-sm text-gray-300'>
-              Name
-            </Label>
+          <FormField label='Name'>
             <Input
               id='upload-name'
               value={name}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setName(e.target.value)}
               placeholder='Enter asset name...'
-              className='mt-1 bg-gray-800 border-gray-700'
+              className='bg-gray-800 border-gray-700 h-9'
               disabled={isUploading}
             />
-          </div>
+          </FormField>
 
           {/* Description */}
-          <div>
-            <Label htmlFor='upload-description' className='text-sm text-gray-300'>
-              Description
-            </Label>
+          <FormField label='Description'>
             <Textarea
               id='upload-description'
               value={description}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setDescription(e.target.value)}
               placeholder='Enter description...'
-              className='mt-1 bg-gray-800 border-gray-700 min-h-[60px]'
+              className='bg-gray-800 border-gray-700 min-h-[60px] text-sm'
               disabled={isUploading}
             />
-          </div>
+          </FormField>
 
           {/* Category */}
-          <div>
-            <Label htmlFor='upload-category' className='text-sm text-gray-300'>
-              Category
-            </Label>
+          <FormField label='Category'>
             <Input
               id='upload-category'
               value={category}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setCategory(e.target.value)}
               placeholder='Enter category...'
               list='upload-categories-list'
-              className='mt-1 bg-gray-800 border-gray-700'
+              className='bg-gray-800 border-gray-700 h-9'
               disabled={isUploading}
             />
             <datalist id='upload-categories-list'>
@@ -226,67 +217,72 @@ export function Asset3DUploader({
                 <option key={cat} value={cat} />
               ))}
             </datalist>
-          </div>
+          </FormField>
 
           {/* Tags */}
-          <div>
-            <Label className='text-sm text-gray-300'>Tags</Label>
-            <div className='mt-1 flex gap-2'>
-              <Input
-                value={newTag}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNewTag(e.target.value)}
-                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>): void => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddTag();
-                  }
-                }}
-                placeholder='Add tag...'
-                list='upload-tags-list'
-                className='bg-gray-800 border-gray-700 flex-1'
-                disabled={isUploading}
-              />
-              <datalist id='upload-tags-list'>
-                {existingTags
-                  .filter((t: string) => !tags.includes(t))
-                  .map((tag: string) => (
-                    <option key={tag} value={tag} />
-                  ))}
-              </datalist>
-              <Button
-                type='button'
-                variant='secondary'
-                size='icon'
-                onClick={handleAddTag}
-                disabled={isUploading}
-              >
-                <Plus className='h-4 w-4' />
-              </Button>
-            </div>
-            {tags.length > 0 && (
-              <div className='flex flex-wrap gap-1 mt-2'>
-                {tags.map((tag: string) => (
-                  <Tag
-                    key={tag}
-                    label={tag}
-                    onRemove={() => handleRemoveTag(tag)}
-                    className='bg-gray-700 text-gray-300 border-none'
-                    disabled={isUploading}
-                  />
-                ))}
+          <FormField label='Tags'>
+            <div className='space-y-2 mt-1'>
+              <div className='flex gap-2'>
+                <Input
+                  value={newTag}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNewTag(e.target.value)}
+                  onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>): void => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddTag();
+                    }
+                  }}
+                  placeholder='Add tag...'
+                  list='upload-tags-list'
+                  className='bg-gray-800 border-gray-700 flex-1 h-9'
+                  disabled={isUploading}
+                />
+                <datalist id='upload-tags-list'>
+                  {existingTags
+                    .filter((t: string) => !tags.includes(t))
+                    .map((tag: string) => (
+                      <option key={tag} value={tag} />
+                    ))}
+                </datalist>
+                <Button
+                  type='button'
+                  variant='secondary'
+                  size='icon'
+                  onClick={handleAddTag}
+                  disabled={isUploading}
+                  className='h-9 w-9'
+                >
+                  <Plus className='h-4 w-4' />
+                </Button>
               </div>
-            )}
-          </div>
+              {tags.length > 0 && (
+                <div className='flex flex-wrap gap-1 mt-2'>
+                  {tags.map((tag: string) => (
+                    <Tag
+                      key={tag}
+                      label={tag}
+                      onRemove={() => handleRemoveTag(tag)}
+                      className='bg-gray-700 text-gray-300 border-none'
+                      disabled={isUploading}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </FormField>
 
           {/* Visibility */}
-          <label className='flex items-center gap-3 cursor-pointer'>
+          <div className='flex items-center gap-3 p-3 rounded-md border border-border/40 bg-gray-900/40'>
             <Checkbox
+              id='upload-is-public'
               checked={isPublic}
               onCheckedChange={(checked: boolean | 'indeterminate') => setIsPublic(Boolean(checked))}
               disabled={isUploading}
             />
-            <span className='text-sm text-gray-300'>Make publicly visible</span>
-          </label>
+            <label htmlFor='upload-is-public' className='cursor-pointer flex-1'>
+              <span className='text-sm text-gray-300'>Make publicly visible</span>
+            </label>
+          </div>
         </div>
       )}
 

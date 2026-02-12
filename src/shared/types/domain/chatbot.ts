@@ -7,6 +7,7 @@ import type {
   ChatbotJobPayloadDto,
   ChatbotDebugStateDto,
   ChatbotSettingsDto,
+  CreateChatbotSettingsDto,
   AgentSnapshotDto,
   AgentPlanStepDto,
   CreateChatSessionDto,
@@ -26,6 +27,7 @@ export type {
   ChatbotJobPayloadDto,
   ChatbotDebugStateDto,
   ChatbotSettingsDto,
+  CreateChatbotSettingsDto,
   AgentSnapshotDto,
   AgentPlanStepDto,
   CreateChatSessionDto,
@@ -81,7 +83,7 @@ export interface ChatbotJobDocument {
 }
 
 export type ChatbotDebugState = ChatbotDebugStateDto;
-export type ChatbotSettingsPayload = ChatbotSettingsDto;
+export type ChatbotSettingsPayload = CreateChatbotSettingsDto;
 export type AgentSnapshot = AgentSnapshotDto;
 export type AgentPlanStep = AgentPlanStepDto;
 

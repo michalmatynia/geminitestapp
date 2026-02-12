@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { Button, Label, UnifiedSelect, Input, SectionPanel } from '@/shared/ui';
+import { Button, Label, UnifiedSelect, Input, SectionPanel, FormSection, FormField, Checkbox } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useViewer3D, orderedDitheringPresets, type OrderedDitheringPresetKey } from '../context/Viewer3DContext';
@@ -126,22 +126,20 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
       <div className='p-4 space-y-4 overflow-y-auto flex-1'>
         {/* Environment Tab */}
         {activeTab === 'environment' && (
-          <>
+          <div className='space-y-4'>
             {/* Environment Preset */}
-            <div>
-              <Label className='text-sm text-gray-300 mb-2 block'>HDR Environment</Label>
+            <FormField label='HDR Environment'>
               <UnifiedSelect
                 value={environment}
                 onValueChange={(v: string): void => setEnvironment(v as EnvironmentPreset)}
                 options={environmentPresets}
                 triggerClassName='w-full bg-gray-800 border-gray-700 text-white text-sm h-10'
               />
-            </div>
+            </FormField>
 
             {/* Lighting Preset */}
-            <div>
-              <Label className='text-sm text-gray-300 mb-2 block'>Lighting</Label>
-              <div className='grid grid-cols-2 gap-2'>
+            <FormField label='Lighting'>
+              <div className='grid grid-cols-2 gap-2 mt-2'>
                 {lightingPresets.map((preset) => (
                   <Button
                     key={preset.value}
@@ -159,13 +157,10 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                   </Button>
                 ))}
               </div>
-            </div>
+            </FormField>
 
             {/* Light Intensity */}
-            <div>
-              <Label className='text-sm text-gray-300 mb-2 block'>
-                Light Intensity: {lightIntensity.toFixed(1)}
-              </Label>
+            <FormField label={`Light Intensity: ${lightIntensity.toFixed(1)}`}>
               <Input
                 type='range'
                 min='0.1'
@@ -173,14 +168,13 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                 step='0.1'
                 value={lightIntensity}
                 onChange={(e) => setLightIntensity(parseFloat(e.target.value))}
-                className='w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer p-0 border-none'
+                className='w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer p-0 border-none mt-2'
               />
-            </div>
+            </FormField>
 
             {/* Background Color */}
-            <div>
-              <Label className='text-sm text-gray-300 mb-2 block'>Background</Label>
-              <div className='flex gap-2'>
+            <FormField label='Background'>
+              <div className='flex gap-2 mt-2'>
                 {['#1a1a2e', '#0a0a0f', '#1f1f1f', '#2d2d3a', '#111827'].map((color) => (
                   <Button
                     key={color}
@@ -201,163 +195,130 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                   className='w-8 h-8 rounded-md cursor-pointer p-0 border-none'
                 />
               </div>
-            </div>
+            </FormField>
 
             {/* Shadows */}
-            <div className='space-y-2'>
-              <label className='flex items-center gap-3 cursor-pointer'>
-                <Input
-                  type='checkbox'
-                  checked={enableShadows}
-                  onChange={(e) => setEnableShadows(e.target.checked)}
-                  className='size-4 rounded border-gray-600 bg-gray-800 text-blue-500 w-auto'
-                />
-                <span className='text-sm text-gray-300'>Enable Shadows</span>
-              </label>
-              <label className='flex items-center gap-3 cursor-pointer'>
-                <Input
-                  type='checkbox'
-                  checked={enableContactShadows}
-                  onChange={(e) => setEnableContactShadows(e.target.checked)}
-                  className='size-4 rounded border-gray-600 bg-gray-800 text-blue-500 w-auto'
-                />
-                <span className='text-sm text-gray-300'>Contact Shadows</span>
-              </label>
-              <label className='flex items-center gap-3 cursor-pointer'>
-                <Input
-                  type='checkbox'
-                  checked={showGround}
-                  onChange={(e) => setShowGround(e.target.checked)}
-                  className='size-4 rounded border-gray-600 bg-gray-800 text-blue-500 w-auto'
-                />
-                <span className='text-sm text-gray-300'>Show Ground</span>
-              </label>
-            </div>
-          </>
+            <FormSection title='Environment Options' variant='subtle' className='p-3 space-y-3'>
+              <div className='space-y-2 mt-2'>
+                <label className='flex items-center gap-3 cursor-pointer'>
+                  <Checkbox
+                    checked={enableShadows}
+                    onCheckedChange={(checked: boolean | 'indeterminate') => setEnableShadows(Boolean(checked))}
+                  />
+                  <span className='text-sm text-gray-300'>Enable Shadows</span>
+                </label>
+                <label className='flex items-center gap-3 cursor-pointer'>
+                  <Checkbox
+                    checked={enableContactShadows}
+                    onCheckedChange={(checked: boolean | 'indeterminate') => setEnableContactShadows(Boolean(checked))}
+                  />
+                  <span className='text-sm text-gray-300'>Contact Shadows</span>
+                </label>
+                <label className='flex items-center gap-3 cursor-pointer'>
+                  <Checkbox
+                    checked={showGround}
+                    onCheckedChange={(checked: boolean | 'indeterminate') => setShowGround(Boolean(checked))}
+                  />
+                  <span className='text-sm text-gray-300'>Show Ground</span>
+                </label>
+              </div>
+            </FormSection>
+          </div>
         )}
 
         {/* Effects Tab */}
         {activeTab === 'effects' && (
-          <>
+          <div className='space-y-4'>
             {/* Tone Mapping */}
-            <div className='space-y-2'>
-              <label className='flex items-center gap-3 cursor-pointer'>
-                <Input
-                  type='checkbox'
-                  checked={enableToneMapping}
-                  onChange={(e) => setEnableToneMapping(e.target.checked)}
-                  className='size-4 rounded border-gray-600 bg-gray-800 text-blue-500 w-auto'
-                />
-                <span className='text-sm text-gray-300'>ACES Tone Mapping</span>
-              </label>
+            <FormSection
+              title='ACES Tone Mapping'
+              variant='subtle'
+              className='p-3 space-y-3'
+              actions={<Checkbox checked={enableToneMapping} onCheckedChange={(v) => setEnableToneMapping(Boolean(v))} />}
+            >
               {enableToneMapping && (
-                <div className='pl-6'>
-                  <Label className='text-xs text-gray-400 mb-1 block'>
-                    Exposure: {exposure.toFixed(1)}
-                  </Label>
-                  <Input
-                    type='range'
-                    min='0.1'
-                    max='3'
-                    step='0.1'
-                    value={exposure}
-                    onChange={(e) => setExposure(parseFloat(e.target.value))}
-                    className='w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer p-0 border-none'
-                  />
+                <div className='mt-2'>
+                  <FormField label={`Exposure: ${exposure.toFixed(1)}`}>
+                    <Input
+                      type='range'
+                      min='0.1'
+                      max='3'
+                      step='0.1'
+                      value={exposure}
+                      onChange={(e) => setExposure(parseFloat(e.target.value))}
+                      className='w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer p-0 border-none mt-2'
+                    />
+                  </FormField>
                 </div>
               )}
-            </div>
+            </FormSection>
 
             {/* Bloom */}
-            <div className='space-y-2'>
-              <label className='flex items-center gap-3 cursor-pointer'>
-                <Input
-                  type='checkbox'
-                  checked={enableBloom}
-                  onChange={(e) => setEnableBloom(e.target.checked)}
-                  className='size-4 rounded border-gray-600 bg-gray-800 text-blue-500 w-auto'
-                />
-                <span className='text-sm text-gray-300'>Bloom Effect</span>
-              </label>
+            <FormSection
+              title='Bloom Effect'
+              variant='subtle'
+              className='p-3 space-y-3'
+              actions={<Checkbox checked={enableBloom} onCheckedChange={(v) => setEnableBloom(Boolean(v))} />}
+            >
               {enableBloom && (
-                <div className='pl-6'>
-                  <Label className='text-xs text-gray-400 mb-1 block'>
-                    Intensity: {bloomIntensity.toFixed(1)}
-                  </Label>
-                  <Input
-                    type='range'
-                    min='0'
-                    max='2'
-                    step='0.1'
-                    value={bloomIntensity}
-                    onChange={(e) => setBloomIntensity(parseFloat(e.target.value))}
-                    className='w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer p-0 border-none'
-                  />
+                <div className='mt-2'>
+                  <FormField label={`Intensity: ${bloomIntensity.toFixed(1)}`}>
+                    <Input
+                      type='range'
+                      min='0'
+                      max='2'
+                      step='0.1'
+                      value={bloomIntensity}
+                      onChange={(e) => setBloomIntensity(parseFloat(e.target.value))}
+                      className='w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer p-0 border-none mt-2'
+                    />
+                  </FormField>
                 </div>
               )}
-            </div>
+            </FormSection>
 
             {/* Vignette */}
-            <label className='flex items-center gap-3 cursor-pointer'>
-              <Input
-                type='checkbox'
-                checked={enableVignette}
-                onChange={(e) => setEnableVignette(e.target.checked)}
-                className='size-4 rounded border-gray-600 bg-gray-800 text-blue-500 w-auto'
-              />
+            <div className='flex items-center justify-between p-3 rounded-md border border-border/40 bg-gray-900/40'>
               <span className='text-sm text-gray-300'>Vignette</span>
-            </label>
-
-            {/* Pixelation */}
-            <div className='space-y-2 pt-4 border-t border-gray-700'>
-              <label className='flex items-center gap-3 cursor-pointer'>
-                <Input
-                  type='checkbox'
-                  checked={enablePixelation}
-                  onChange={(e) => setEnablePixelation(e.target.checked)}
-                  className='size-4 rounded border-gray-600 bg-gray-800 text-blue-500 w-auto'
-                />
-                <div>
-                  <span className='text-sm text-gray-300'>Pixel Art</span>
-                  <p className='text-xs text-gray-500'>Chunky pixelated rendering</p>
-                </div>
-              </label>
-              {enablePixelation && (
-                <div className='pl-6'>
-                  <Label className='text-xs text-gray-400 mb-1 block'>
-                    Pixel Size: {pixelSize}px
-                  </Label>
-                  <Input
-                    type='range'
-                    min='2'
-                    max='24'
-                    step='1'
-                    value={pixelSize}
-                    onChange={(e) => setPixelSize(parseInt(e.target.value, 10))}
-                    className='w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer p-0 border-none'
-                  />
-                </div>
-              )}
+              <Checkbox checked={enableVignette} onCheckedChange={(v) => setEnableVignette(Boolean(v))} />
             </div>
 
-            {/* Ordered Dithering */}
-            <div className='space-y-2 pt-4 border-t border-gray-700'>
-              <label className='flex items-center gap-3 cursor-pointer'>
-                <Input
-                  type='checkbox'
-                  checked={enableOrderedDithering}
-                  onChange={(e) => setEnableOrderedDithering(e.target.checked)}
-                  className='size-4 rounded border-gray-600 bg-gray-800 text-blue-500 w-auto'
-                />
-                <div>
-                  <span className='text-sm text-gray-300'>Ordered Dithering</span>
-                  <p className='text-xs text-gray-500'>Shader-based dither with pixel grid</p>
+            {/* Pixelation */}
+            <FormSection
+              title='Pixel Art'
+              description='Chunky pixelated rendering'
+              variant='subtle'
+              className='p-3 space-y-3'
+              actions={<Checkbox checked={enablePixelation} onCheckedChange={(v) => setEnablePixelation(Boolean(v))} />}
+            >
+              {enablePixelation && (
+                <div className='mt-2'>
+                  <FormField label={`Pixel Size: ${pixelSize}px`}>
+                    <Input
+                      type='range'
+                      min='2'
+                      max='24'
+                      step='1'
+                      value={pixelSize}
+                      onChange={(e) => setPixelSize(parseInt(e.target.value, 10))}
+                      className='w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer p-0 border-none mt-2'
+                    />
+                  </FormField>
                 </div>
-              </label>
+              )}
+            </FormSection>
+
+            {/* Ordered Dithering */}
+            <FormSection
+              title='Ordered Dithering'
+              description='Shader-based dither with pixel grid'
+              variant='subtle'
+              className='p-3 space-y-3'
+              actions={<Checkbox checked={enableOrderedDithering} onCheckedChange={(v) => setEnableOrderedDithering(Boolean(v))} />}
+            >
               {enableOrderedDithering && (
-                <div className='pl-6 space-y-3'>
-                  <div>
-                    <Label className='text-xs text-gray-400 mb-1 block'>Preset</Label>
+                <div className='mt-4 space-y-4'>
+                  <FormField label='Preset'>
                     <UnifiedSelect
                       value={orderedDitheringPreset}
                       onValueChange={(v: string): void => {
@@ -377,11 +338,8 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                       ]}
                       triggerClassName='w-full bg-gray-800 border-gray-700 text-xs text-gray-200 h-8'
                     />
-                  </div>
-                  <div>
-                    <Label className='text-xs text-gray-400 mb-1 block'>
-                      Grid Size: {orderedDitheringGridSize.toFixed(1)}
-                    </Label>
+                  </FormField>
+                  <FormField label={`Grid Size: ${orderedDitheringGridSize.toFixed(1)}`}>
                     <Input
                       type='range'
                       min='2'
@@ -392,13 +350,10 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                         setOrderedDitheringGridSize(parseFloat(e.target.value));
                         setOrderedDitheringPreset('custom');
                       }}
-                      className='w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer p-0 border-none'
+                      className='w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer p-0 border-none mt-2'
                     />
-                  </div>
-                  <div>
-                    <Label className='text-xs text-gray-400 mb-1 block'>
-                      Pixel Ratio: {orderedDitheringPixelSizeRatio.toFixed(1)}
-                    </Label>
+                  </FormField>
+                  <FormField label={`Pixel Ratio: ${orderedDitheringPixelSizeRatio.toFixed(1)}`}>
                     <Input
                       type='range'
                       min='0.5'
@@ -409,11 +364,10 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                         setOrderedDitheringPixelSizeRatio(parseFloat(e.target.value));
                         setOrderedDitheringPreset('custom');
                       }}
-                      className='w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer p-0 border-none'
+                      className='w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer p-0 border-none mt-2'
                     />
-                  </div>
-                  <div>
-                    <Label className='text-xs text-gray-400 mb-1 block'>Luminance</Label>
+                  </FormField>
+                  <FormField label='Luminance'>
                     <UnifiedSelect
                       value={String(orderedDitheringLuminanceMethod)}
                       onValueChange={(v: string): void => {
@@ -423,109 +377,96 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                       options={orderedDitheringLuminanceOptions.map((opt) => ({ value: String(opt.value), label: opt.label }))}
                       triggerClassName='w-full bg-gray-800 border-gray-700 text-xs text-gray-200 h-8'
                     />
+                  </FormField>
+                  <div className='space-y-2'>
+                    <div className='flex items-center gap-3'>
+                      <Checkbox
+                        checked={orderedDitheringGrayscaleOnly}
+                        onCheckedChange={(v) => {
+                          setOrderedDitheringGrayscaleOnly(Boolean(v));
+                          setOrderedDitheringPreset('custom');
+                        }}
+                      />
+                      <span className='text-xs text-gray-300'>Grayscale only</span>
+                    </div>
+                    <div className='flex items-center gap-3'>
+                      <Checkbox
+                        checked={orderedDitheringInvertColor}
+                        onCheckedChange={(v) => {
+                          setOrderedDitheringInvertColor(Boolean(v));
+                          setOrderedDitheringPreset('custom');
+                        }}
+                      />
+                      <span className='text-xs text-gray-300'>Invert colors</span>
+                    </div>
                   </div>
-                  <label className='flex items-center gap-3 cursor-pointer'>
-                    <Input
-                      type='checkbox'
-                      checked={orderedDitheringGrayscaleOnly}
-                      onChange={(e) => {
-                        setOrderedDitheringGrayscaleOnly(e.target.checked);
-                        setOrderedDitheringPreset('custom');
-                      }}
-                      className='size-4 rounded border-gray-600 bg-gray-800 text-blue-500 w-auto'
-                    />
-                    <span className='text-xs text-gray-300'>Grayscale only</span>
-                  </label>
-                  <label className='flex items-center gap-3 cursor-pointer'>
-                    <Input
-                      type='checkbox'
-                      checked={orderedDitheringInvertColor}
-                      onChange={(e) => {
-                        setOrderedDitheringInvertColor(e.target.checked);
-                        setOrderedDitheringPreset('custom');
-                      }}
-                      className='size-4 rounded border-gray-600 bg-gray-800 text-blue-500 w-auto'
-                    />
-                    <span className='text-xs text-gray-300'>Invert colors</span>
-                  </label>
                 </div>
               )}
-            </div>
+            </FormSection>
 
             {/* Dithering */}
-            <div className='space-y-2 pt-4 border-t border-gray-700'>
-              <label className='flex items-center gap-3 cursor-pointer'>
-                <Input
-                  type='checkbox'
-                  checked={enableDithering}
-                  onChange={(e) => setEnableDithering(e.target.checked)}
-                  className='size-4 rounded border-gray-600 bg-gray-800 text-blue-500 w-auto'
-                />
-                <div>
-                  <span className='text-sm text-gray-300'>B&W Dithering</span>
-                  <p className='text-xs text-gray-500'>Artistic retro effect</p>
-                </div>
-              </label>
+            <FormSection
+              title='B&W Dithering'
+              description='Artistic retro effect'
+              variant='subtle'
+              className='p-3 space-y-3'
+              actions={<Checkbox checked={enableDithering} onCheckedChange={(v) => setEnableDithering(Boolean(v))} />}
+            >
               {enableDithering && (
-                <div className='pl-6'>
-                  <Label className='text-xs text-gray-400 mb-1 block'>
-                    Intensity: {ditheringIntensity.toFixed(1)}
-                  </Label>
-                  <Input
-                    type='range'
-                    min='0.1'
-                    max='2'
-                    step='0.1'
-                    value={ditheringIntensity}
-                    onChange={(e) => setDitheringIntensity(parseFloat(e.target.value))}
-                    className='w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer p-0 border-none'
-                  />
+                <div className='mt-2'>
+                  <FormField label={`Intensity: ${ditheringIntensity.toFixed(1)}`}>
+                    <Input
+                      type='range'
+                      min='0.1'
+                      max='2'
+                      step='0.1'
+                      value={ditheringIntensity}
+                      onChange={(e) => setDitheringIntensity(parseFloat(e.target.value))}
+                      className='w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer p-0 border-none mt-2'
+                    />
+                  </FormField>
                 </div>
               )}
-            </div>
-          </>
+            </FormSection>
+          </div>
         )}
 
         {/* View Tab */}
         {activeTab === 'view' && (
-          <>
+          <div className='space-y-4'>
             {/* Auto Rotate */}
-            <div className='space-y-2'>
-              <label className='flex items-center gap-3 cursor-pointer'>
-                <Input
-                  type='checkbox'
-                  checked={autoRotate}
-                  onChange={(e) => setAutoRotate(e.target.checked)}
-                  className='size-4 rounded border-gray-600 bg-gray-800 text-blue-500 w-auto'
-                />
-                <span className='text-sm text-gray-300'>Auto-rotate</span>
-              </label>
+            <FormSection
+              title='Auto-rotate'
+              variant='subtle'
+              className='p-3 space-y-3'
+              actions={<Checkbox checked={autoRotate} onCheckedChange={(v) => setAutoRotate(Boolean(v))} />}
+            >
               {autoRotate && (
-                <div className='pl-6'>
-                  <Label className='text-xs text-gray-400 mb-1 block'>
-                    Speed: {autoRotateSpeed.toFixed(1)}
-                  </Label>
-                  <Input
-                    type='range'
-                    min='0.5'
-                    max='10'
-                    step='0.5'
-                    value={autoRotateSpeed}
-                    onChange={(e) => setAutoRotateSpeed(parseFloat(e.target.value))}
-                    className='w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer p-0 border-none'
-                  />
+                <div className='mt-2'>
+                  <FormField label={`Speed: ${autoRotateSpeed.toFixed(1)}`}>
+                    <Input
+                      type='range'
+                      min='0.5'
+                      max='10'
+                      step='0.5'
+                      value={autoRotateSpeed}
+                      onChange={(e) => setAutoRotateSpeed(parseFloat(e.target.value))}
+                      className='w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer p-0 border-none mt-2'
+                    />
+                  </FormField>
                 </div>
               )}
-            </div>
+            </FormSection>
 
             {/* Controls Help */}
-            <SectionPanel variant='subtle-compact' className='p-3 text-xs text-gray-400 space-y-1'>
-              <p className='font-medium text-gray-300 mb-2'>Controls:</p>
-              <p>• Left click + drag to rotate</p>
-              <p>• Right click + drag to pan</p>
-              <p>• Scroll to zoom</p>
-            </SectionPanel>
-          </>
+            <FormSection title='Controls' variant='subtle-compact' className='p-3 text-xs text-gray-400 space-y-1'>
+              <div className='mt-2 space-y-1'>
+                <p>• Left click + drag to rotate</p>
+                <p>• Right click + drag to pan</p>
+                <p>• Scroll to zoom</p>
+              </div>
+            </FormSection>
+          </div>
         )}
       </div>
     </div>

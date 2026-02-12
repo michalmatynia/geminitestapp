@@ -14,12 +14,13 @@ import {
   Star,
   Trash2,
 } from 'lucide-react';
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
-import { useMasterFolderTreeAppearance } from '@/features/foldertree/hooks/useMasterFolderTreeAppearance';
-import { MasterFolderTree, useMasterFolderTree } from '@/features/foldertree/master';
+import {
+  MasterFolderTree,
+  useMasterFolderTreeInstance,
+} from '@/features/foldertree';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
-import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
 import { Button, FolderTreePanel, TreeHeader } from '@/shared/ui';
 import {
   type MasterTreeId,
@@ -50,8 +51,6 @@ const resolveFolderTargetForNode = (
 };
 
 export function NotesAppFolderTree(): React.JSX.Element {
-  const profile = useFolderTreeProfile('notes');
-  const { rootDropUi, resolveIcon } = useMasterFolderTreeAppearance(profile);
   const {
     settings,
     filters,
@@ -150,23 +149,14 @@ export function NotesAppFolderTree(): React.JSX.Element {
     }),
     [operations]
   );
-
-  const controller = useMasterFolderTree({
-    initialNodes: masterNodes,
-    initialSelectedNodeId: selectedMasterNodeId,
+  const { appearance: { rootDropUi, resolveIcon }, controller } = useMasterFolderTreeInstance({
+    instance: 'notes',
+    nodes: masterNodes,
+    selectedNodeId: selectedMasterNodeId,
     initiallyExpandedNodeIds: initialExpandedFolderNodeIds,
-    profile,
     adapter: notesAdapter,
   });
-  const { replaceNodes, selectNode } = controller;
 
-  useEffect(() => {
-    void replaceNodes(masterNodes, 'external_sync');
-  }, [masterNodes, replaceNodes]);
-
-  useEffect(() => {
-    selectNode(selectedMasterNodeId);
-  }, [selectedMasterNodeId, selectNode]);
 
   const selectedFolderForCreate = useMemo(
     (): string | null => resolveFolderTargetForNode(controller.nodes, controller.selectedNodeId),

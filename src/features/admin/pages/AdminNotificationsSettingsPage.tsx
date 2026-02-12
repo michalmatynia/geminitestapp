@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import React, { useState } from 'react';
 
-import { Button, UnifiedSelect, useToast, useToastSettings, SectionHeader, SectionPanel, FormSection, FormField } from '@/shared/ui';
+import { Button, UnifiedSelect, useToast, useToastSettings, SectionHeader, FormSection, FormField } from '@/shared/ui';
 
 const positionOptions = [
   { value: 'top-right', label: 'Top Right', description: 'Corner top right' },
@@ -156,9 +156,8 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
 
         {/* Preview Panel */}
         <div>
-          <SectionPanel className='sticky top-6 p-6'>
-            <h2 className='mb-4 text-sm font-semibold text-white'>Position Preview</h2>
-            <SectionPanel variant='subtle' className='relative aspect-video w-full bg-gray-900'>
+          <FormSection title='Position Preview' className='sticky top-6 p-6'>
+            <FormSection variant='subtle' className='relative aspect-video w-full bg-gray-900'>
               {/* Position indicator */}
               <div
                 className={`absolute size-10 rounded-lg border-2 border-dashed border-emerald-400/50 bg-emerald-400/10 ${preview.x}-3 ${preview.y}-3 flex items-center justify-center`}
@@ -171,9 +170,9 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
               <div className='absolute right-2 top-2 text-xs text-gray-500'>TR</div>
               <div className='absolute bottom-2 left-2 text-xs text-gray-500'>BL</div>
               <div className='absolute bottom-2 right-2 text-xs text-gray-500'>BR</div>
-            </SectionPanel>
+            </FormSection>
 
-            <SectionPanel variant='subtle-compact' className='mt-4 space-y-2 bg-gray-900 p-3'>
+            <FormSection variant='subtle-compact' className='mt-4 space-y-2 bg-gray-900 p-3'>
               <p className='text-xs font-medium text-gray-300'>Current Settings:</p>
               <div className='space-y-1'>
                 <p className='flex items-center justify-between text-xs text-gray-400'>
@@ -188,14 +187,14 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
                   </span>
                 </div>
               </div>
-            </SectionPanel>
+            </FormSection>
 
-            <SectionPanel variant='subtle-compact' className='mt-4 border-blue-500/20 bg-blue-500/5 p-3'>
+            <div className='mt-4 rounded-md border border-blue-500/20 bg-blue-500/5 p-3'>
               <p className='text-xs text-blue-200'>
                 💡 Click the preview buttons to see how notifications appear with your settings.
               </p>
-            </SectionPanel>
-          </SectionPanel>
+            </div>
+          </FormSection>
         </div>
       </div>
     </div>

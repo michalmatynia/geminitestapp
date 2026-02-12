@@ -56,23 +56,28 @@ export function UnifiedSelect({
         onValueChange={onValueChange}
         disabled={disabled}
       >
-        <SelectTrigger 
-          className={cn('w-full', triggerClassName)}
+        <SelectTrigger
+          className={cn(
+            'w-full [&>span]:max-w-[calc(100%-1.5rem)] [&>span]:truncate [&>span]:text-left',
+            triggerClassName
+          )}
           aria-label={ariaLabel}
         >
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        <SelectContent className={contentClassName}>
+        <SelectContent className={cn('max-w-[min(34rem,calc(100vw-2rem))]', contentClassName)}>
           {normalizedOptions.map((option) => (
-            <SelectItem 
-              key={option.value} 
+            <SelectItem
+              key={option.value}
               value={option.value}
               {...(option.disabled !== undefined ? { disabled: option.disabled } : {})}
             >
-              <div className='flex flex-col'>
-                <span>{option.label}</span>
+              <div className='flex min-w-0 flex-col'>
+                <span className='break-words leading-tight'>{option.label}</span>
                 {option.description && (
-                  <span className='text-[10px] text-gray-500'>{option.description}</span>
+                  <span className='mt-0.5 break-words text-[10px] leading-tight text-gray-500'>
+                    {option.description}
+                  </span>
                 )}
               </div>
             </SelectItem>

@@ -140,9 +140,9 @@ async function postHandlerInternal(_req: NextRequest, ctx: ApiHandlerContext): P
   const category = await repository.createCategory({
     name: normalizedName,
     catalogId,
+    color: data.color ?? null,
+    parentId: data.parentId ?? null,
     ...(data.description !== undefined ? { description: data.description } : {}),
-    ...(data.color !== undefined ? { color: data.color } : {}),
-    ...(data.parentId !== undefined ? { parentId: data.parentId } : {}),
     ...(data.sortIndex !== undefined ? { sortIndex: data.sortIndex } : {}),
   });
 

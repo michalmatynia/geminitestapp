@@ -1,0 +1,495 @@
+'use client';
+
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+
+import { useToast } from '@/shared/ui';
+
+import { useSlotsState, useSlotsActions } from './SlotsContext';
+import {
+  computeVersionGraph,
+  computeTimelineLayout,
+  type VersionNode,
+  type VersionEdge,
+  type LayoutMode,
+} from '../utils/version-graph';
+
+import type { SlotGenerationMetadata } from '../types';
+
+// ── Types ────────────────────────────────────────────────────────────────────
+
+export type { VersionNode, VersionEdge, LayoutMode };
+
+export interface VersionGraphState {
+  /** Visible nodes (after collapse filtering) */
+  nodes: VersionNode[];
+  /** Visible edges (after collapse filtering) */
+  edges: VersionEdge[];
+  /** All nodes before collapse filtering */
+  allNodes: VersionNode[];
+  rootNodes: VersionNode[];
+  selectedNodeId: string | null;
+  hoveredNodeId: string | null;
+  mergeMode: boolean;
+  mergeSelectedIds: string[];
+  /** Collapse */
+  collapsedNodeIds: Set<string>;
+  /** Filter */
+  filterQuery: string;
+  filterTypes: Set<'base' | 'generation' | 'merge'>;
+  filterHasMask: boolean | null;
+  filteredNodeIds: Set<string> | null;
+  /** Layout */
+  layoutMode: LayoutMode;
+}
+
+export interface VersionGraphActions {
+  selectNode: (slotId: string | null) => void;
+  hoverNode: (slotId: string | null) => void;
+  activateNode: (slotId: string) => void;
+  toggleMergeMode: () => void;
+  toggleMergeSelection: (slotId: string) => void;
+  clearMergeSelection: () => void;
+  executeMerge: () => Promise<void>;
+  /** Collapse */
+  toggleCollapse: (nodeId: string) => void;
+  expandAll: () => void;
+  collapseAll: () => void;
+  /** Filter */
+  setFilterQuery: (q: string) => void;
+  toggleFilterType: (t: 'base' | 'generation' | 'merge') => void;
+  setFilterHasMask: (v: boolean | null) => void;
+  clearFilters: () => void;
+  /** Layout */
+  setLayoutMode: (mode: LayoutMode) => void;
+}
+
+// ── Contexts ─────────────────────────────────────────────────────────────────
+
+const VersionGraphStateContext = createContext<VersionGraphState | null>(null);
+const VersionGraphActionsContext = createContext<VersionGraphActions | null>(null);
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function readMeta(slot: { metadata?: Record<string, unknown> | null }): SlotGenerationMetadata {
+  if (!slot.metadata || typeof slot.metadata !== 'object') return {};
+  return slot.metadata as SlotGenerationMetadata;
+}
+
+function resolveSourceIds(
+  meta: SlotGenerationMetadata,
+  slotById: Map<string, { id: string }>,
+): string[] {
+  const ordered: string[] = [];
+
+  if (Array.isArray(meta.sourceSlotIds)) {
+    for (const id of meta.sourceSlotIds) {
+      if (typeof id !== 'string') continue;
+      if (!slotById.has(id)) continue;
+      if (ordered.includes(id)) continue;
+      ordered.push(id);
+    }
+  }
+
+  if (typeof meta.sourceSlotId === 'string' && slotById.has(meta.sourceSlotId) && !ordered.includes(meta.sourceSlotId)) {
+    ordered.push(meta.sourceSlotId);
+  }
+
+  return ordered;
+}
+
+/** Collect all recursive descendant IDs for a set of collapsed nodes. */
+function collectHiddenIds(
+  collapsedIds: Set<string>,
+  allNodes: VersionNode[],
+): Set<string> {
+  const nodeById = new Map(allNodes.map((n) => [n.id, n]));
+  const hidden = new Set<string>();
+
+  function walkDown(nodeId: string): void {
+    const node = nodeById.get(nodeId);
+    if (!node) return;
+    for (const childId of node.childIds) {
+      if (hidden.has(childId)) continue;
+      hidden.add(childId);
+      // If the child is also collapsed, still hide its descendants
+      walkDown(childId);
+    }
+  }
+
+  for (const cid of collapsedIds) {
+    walkDown(cid);
+  }
+
+  return hidden;
+}
+
+/** Check if a node matches the filter criteria. */
+function matchesFilter(
+  node: VersionNode,
+  query: string,
+  types: Set<'base' | 'generation' | 'merge'>,
+  hasMask: boolean | null,
+): boolean {
+  // Type filter
+  if (types.size > 0 && !types.has(node.type)) return false;
+
+  // Mask filter
+  if (hasMask === true && !node.hasMask) return false;
+  if (hasMask === false && node.hasMask) return false;
+
+  // Text query
+  if (query) {
+    const q = query.toLowerCase();
+    const labelMatch = node.label.toLowerCase().includes(q);
+    const meta = readMeta(node.slot);
+    const promptMatch = meta.generationParams?.prompt?.toLowerCase().includes(q) ?? false;
+    if (!labelMatch && !promptMatch) return false;
+  }
+
+  return true;
+}
+
+// ── Provider ─────────────────────────────────────────────────────────────────
+
+export function VersionGraphProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
+  const { slots, selectedSlotId, workingSlotId } = useSlotsState();
+  const { setSelectedSlotId, setWorkingSlotId, createSlots } = useSlotsActions();
+  const { toast } = useToast();
+
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const [mergeMode, setMergeMode] = useState(false);
+  const [mergeSelectedIds, setMergeSelectedIds] = useState<string[]>([]);
+
+  // Collapse state
+  const [collapsedNodeIds, setCollapsedNodeIds] = useState<Set<string>>(new Set());
+
+  // Filter state
+  const [filterQuery, setFilterQuery] = useState('');
+  const [filterTypes, setFilterTypes] = useState<Set<'base' | 'generation' | 'merge'>>(new Set());
+  const [filterHasMask, setFilterHasMask] = useState<boolean | null>(null);
+
+  // Layout state
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>('dag');
+
+  const activeSlotId = useMemo(
+    () => workingSlotId ?? selectedSlotId ?? null,
+    [workingSlotId, selectedSlotId],
+  );
+
+  const scopedSlots = useMemo(() => {
+    if (!activeSlotId) return [];
+
+    const slotById = new Map(slots.map((slot) => [slot.id, slot]));
+    const activeSlot = slotById.get(activeSlotId);
+    if (!activeSlot) return [];
+
+    const childrenBySource = new Map<string, string[]>();
+    for (const slot of slots) {
+      const sourceIds = resolveSourceIds(readMeta(slot), slotById);
+      for (const sourceId of sourceIds) {
+        const existing = childrenBySource.get(sourceId);
+        if (existing) {
+          existing.push(slot.id);
+        } else {
+          childrenBySource.set(sourceId, [slot.id]);
+        }
+      }
+    }
+
+    const rootIds = resolveSourceIds(readMeta(activeSlot), slotById);
+    if (rootIds.length === 0) {
+      rootIds.push(activeSlot.id);
+    }
+
+    // Scope to the current card branch: source image(s) + current card + descendants.
+    const includedIds = new Set<string>([activeSlot.id, ...rootIds]);
+    const queue: string[] = [activeSlot.id];
+
+    while (queue.length > 0) {
+      const current = queue.shift();
+      if (!current) break;
+      const children = childrenBySource.get(current) ?? [];
+      for (const childId of children) {
+        if (includedIds.has(childId)) continue;
+        includedIds.add(childId);
+        queue.push(childId);
+      }
+    }
+
+    return slots.filter((slot) => includedIds.has(slot.id));
+  }, [slots, activeSlotId]);
+
+  // Compute base graph only for the scoped card subset.
+  const baseGraph = useMemo(() => computeVersionGraph(scopedSlots), [scopedSlots]);
+
+  useEffect(() => {
+    setSelectedNodeId(activeSlotId);
+    setHoveredNodeId(null);
+    setMergeMode(false);
+    setMergeSelectedIds([]);
+    setCollapsedNodeIds(new Set());
+  }, [activeSlotId]);
+
+  // Apply layout mode
+  const layoutGraph = useMemo(() => {
+    if (layoutMode === 'dag') return baseGraph;
+    const orientation = layoutMode === 'timeline-h' ? 'horizontal' : 'vertical';
+    const result = computeTimelineLayout(baseGraph.nodes, baseGraph.edges, orientation);
+    return { ...baseGraph, nodes: result.nodes, edges: result.edges };
+  }, [baseGraph, layoutMode]);
+
+  // Compute hidden IDs from collapse
+  const hiddenIds = useMemo(
+    () => collectHiddenIds(collapsedNodeIds, layoutGraph.nodes),
+    [collapsedNodeIds, layoutGraph.nodes],
+  );
+
+  // Filter out collapsed descendants
+  const visibleNodes = useMemo(
+    () => layoutGraph.nodes.filter((n) => !hiddenIds.has(n.id)),
+    [layoutGraph.nodes, hiddenIds],
+  );
+  const visibleEdges = useMemo(
+    () => layoutGraph.edges.filter((e) => !hiddenIds.has(e.source) && !hiddenIds.has(e.target)),
+    [layoutGraph.edges, hiddenIds],
+  );
+
+  // Compute filtered node IDs (for dimming, not hiding)
+  const filteredNodeIds = useMemo<Set<string> | null>(() => {
+    const hasFilter = filterQuery || filterTypes.size > 0 || filterHasMask !== null;
+    if (!hasFilter) return null;
+
+    const matched = new Set<string>();
+    for (const node of visibleNodes) {
+      if (matchesFilter(node, filterQuery, filterTypes, filterHasMask)) {
+        matched.add(node.id);
+      }
+    }
+    return matched;
+  }, [visibleNodes, filterQuery, filterTypes, filterHasMask]);
+
+  // ── Actions ──
+
+  const selectNode = useCallback(
+    (slotId: string | null) => {
+      setSelectedNodeId(slotId);
+      setSelectedSlotId(slotId);
+    },
+    [setSelectedSlotId],
+  );
+
+  const hoverNode = useCallback((slotId: string | null) => {
+    setHoveredNodeId(slotId);
+  }, []);
+
+  const activateNode = useCallback(
+    (slotId: string) => {
+      setWorkingSlotId(slotId);
+      setSelectedNodeId(slotId);
+      setSelectedSlotId(slotId);
+    },
+    [setWorkingSlotId, setSelectedSlotId],
+  );
+
+  const toggleMergeMode = useCallback(() => {
+    setMergeMode((prev) => {
+      if (prev) {
+        setMergeSelectedIds([]);
+      }
+      return !prev;
+    });
+  }, []);
+
+  const toggleMergeSelection = useCallback((slotId: string) => {
+    setMergeSelectedIds((prev) =>
+      prev.includes(slotId)
+        ? prev.filter((id) => id !== slotId)
+        : [...prev, slotId],
+    );
+  }, []);
+
+  const clearMergeSelection = useCallback(() => {
+    setMergeSelectedIds([]);
+  }, []);
+
+  const executeMerge = useCallback(async () => {
+    if (mergeSelectedIds.length < 2) {
+      toast('Select at least 2 nodes to merge.', { variant: 'info' });
+      return;
+    }
+
+    const selectedSlots = mergeSelectedIds
+      .map((id) => slots.find((s) => s.id === id))
+      .filter(Boolean);
+
+    if (selectedSlots.length < 2) {
+      toast('Selected nodes no longer exist.', { variant: 'error' });
+      return;
+    }
+
+    try {
+      const created = await createSlots([
+        {
+          name: `Merge (${mergeSelectedIds.length})`,
+          folderPath: selectedSlots[0]!.folderPath,
+          metadata: {
+            role: 'merge',
+            sourceSlotIds: mergeSelectedIds,
+            relationType: 'merge:output',
+          },
+        },
+      ]);
+
+      const newSlot = created[0];
+      if (newSlot) {
+        setSelectedNodeId(newSlot.id);
+        setSelectedSlotId(newSlot.id);
+      }
+
+      setMergeMode(false);
+      setMergeSelectedIds([]);
+      toast('Merge node created.', { variant: 'success' });
+    } catch {
+      toast('Failed to create merge node.', { variant: 'error' });
+    }
+  }, [mergeSelectedIds, slots, createSlots, setSelectedSlotId, toast]);
+
+  // Collapse actions
+  const toggleCollapse = useCallback((nodeId: string) => {
+    setCollapsedNodeIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(nodeId)) {
+        next.delete(nodeId);
+      } else {
+        next.add(nodeId);
+      }
+      return next;
+    });
+  }, []);
+
+  const expandAll = useCallback(() => {
+    setCollapsedNodeIds(new Set());
+  }, []);
+
+  const collapseAll = useCallback(() => {
+    // Collapse all nodes that have children
+    const withChildren = new Set<string>();
+    for (const node of layoutGraph.nodes) {
+      if (node.childIds.length > 0) {
+        withChildren.add(node.id);
+      }
+    }
+    setCollapsedNodeIds(withChildren);
+  }, [layoutGraph.nodes]);
+
+  // Filter actions
+  const setFilterQueryAction = useCallback((q: string) => {
+    setFilterQuery(q);
+  }, []);
+
+  const toggleFilterType = useCallback((t: 'base' | 'generation' | 'merge') => {
+    setFilterTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(t)) {
+        next.delete(t);
+      } else {
+        next.add(t);
+      }
+      return next;
+    });
+  }, []);
+
+  const setFilterHasMaskAction = useCallback((v: boolean | null) => {
+    setFilterHasMask(v);
+  }, []);
+
+  const clearFilters = useCallback(() => {
+    setFilterQuery('');
+    setFilterTypes(new Set());
+    setFilterHasMask(null);
+  }, []);
+
+  // Layout action
+  const setLayoutModeAction = useCallback((mode: LayoutMode) => {
+    setLayoutMode(mode);
+  }, []);
+
+  const state = useMemo<VersionGraphState>(
+    () => ({
+      nodes: visibleNodes,
+      edges: visibleEdges,
+      allNodes: layoutGraph.nodes,
+      rootNodes: layoutGraph.rootNodes,
+      selectedNodeId,
+      hoveredNodeId,
+      mergeMode,
+      mergeSelectedIds,
+      collapsedNodeIds,
+      filterQuery,
+      filterTypes,
+      filterHasMask,
+      filteredNodeIds,
+      layoutMode,
+    }),
+    [
+      visibleNodes, visibleEdges, layoutGraph.nodes, layoutGraph.rootNodes,
+      selectedNodeId, hoveredNodeId, mergeMode, mergeSelectedIds,
+      collapsedNodeIds, filterQuery, filterTypes, filterHasMask, filteredNodeIds,
+      layoutMode,
+    ],
+  );
+
+  const actions = useMemo<VersionGraphActions>(
+    () => ({
+      selectNode,
+      hoverNode,
+      activateNode,
+      toggleMergeMode,
+      toggleMergeSelection,
+      clearMergeSelection,
+      executeMerge,
+      toggleCollapse,
+      expandAll,
+      collapseAll,
+      setFilterQuery: setFilterQueryAction,
+      toggleFilterType,
+      setFilterHasMask: setFilterHasMaskAction,
+      clearFilters,
+      setLayoutMode: setLayoutModeAction,
+    }),
+    [
+      selectNode, hoverNode, activateNode,
+      toggleMergeMode, toggleMergeSelection, clearMergeSelection, executeMerge,
+      toggleCollapse, expandAll, collapseAll,
+      setFilterQueryAction, toggleFilterType, setFilterHasMaskAction, clearFilters,
+      setLayoutModeAction,
+    ],
+  );
+
+  return (
+    <VersionGraphActionsContext.Provider value={actions}>
+      <VersionGraphStateContext.Provider value={state}>
+        {children}
+      </VersionGraphStateContext.Provider>
+    </VersionGraphActionsContext.Provider>
+  );
+}
+
+// ── Hooks ────────────────────────────────────────────────────────────────────
+
+export function useVersionGraphState(): VersionGraphState {
+  const ctx = useContext(VersionGraphStateContext);
+  if (!ctx) throw new Error('useVersionGraphState must be used within a VersionGraphProvider');
+  return ctx;
+}
+
+export function useVersionGraphActions(): VersionGraphActions {
+  const ctx = useContext(VersionGraphActionsContext);
+  if (!ctx) throw new Error('useVersionGraphActions must be used within a VersionGraphProvider');
+  return ctx;
+}
+
+export function useVersionGraph(): VersionGraphState & VersionGraphActions {
+  return { ...useVersionGraphState(), ...useVersionGraphActions() };
+}

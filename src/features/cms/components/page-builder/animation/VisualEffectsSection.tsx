@@ -5,8 +5,8 @@ import React, { useCallback } from 'react';
 import type { GsapAnimationConfig } from '@/features/gsap';
 import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap';
 import {
-  Label,
-  SectionPanel,
+  FormSection,
+  FormField,
 } from '@/shared/ui';
 
 import { RangeField, SelectField } from '../shared-fields';
@@ -181,18 +181,17 @@ export function VisualEffectsSection({ config, onChange }: VisualEffectsSectionP
   );
 
   return (
-    <SectionPanel variant='subtle-compact' className='space-y-2'>
-      <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-        Visual FX
-      </Label>
-      <div className='space-y-3'>
+    <FormSection title='Visual FX' variant='subtle-compact' className='p-3 space-y-4'>
+      <div className='space-y-3 mt-4'>
         <div className='rounded-lg border border-border/40 bg-gray-900/30 p-3 space-y-3'>
-          <SelectField
-            label='Filter type'
-            value={filterTypeValue}
-            onChange={handleVisualFilterTypeChange}
-            options={FILTER_OPTIONS}
-          />
+          <FormField label='Filter type'>
+            <SelectField
+              label='Filter type'
+              value={filterTypeValue}
+              onChange={handleVisualFilterTypeChange}
+              options={FILTER_OPTIONS}
+            />
+          </FormField>
           {filterTypeValue !== 'none' && (
             <div className='grid gap-3 sm:grid-cols-2'>
               <RangeField
@@ -218,12 +217,14 @@ export function VisualEffectsSection({ config, onChange }: VisualEffectsSectionP
         </div>
 
         <div className='rounded-lg border border-border/40 bg-gray-900/30 p-3 space-y-3'>
-          <SelectField
-            label='Clip path'
-            value={clipTypeValue}
-            onChange={handleVisualClipTypeChange}
-            options={CLIP_OPTIONS}
-          />
+          <FormField label='Clip path'>
+            <SelectField
+              label='Clip path'
+              value={clipTypeValue}
+              onChange={handleVisualClipTypeChange}
+              options={CLIP_OPTIONS}
+            />
+          </FormField>
           {clipTypeValue !== 'none' && (
             <div className='grid gap-3 sm:grid-cols-2'>
               <RangeField
@@ -272,119 +273,122 @@ export function VisualEffectsSection({ config, onChange }: VisualEffectsSectionP
         </div>
 
         <div className='rounded-lg border border-border/40 bg-gray-900/30 p-3 space-y-3'>
-          <div className='text-[10px] uppercase tracking-wider text-gray-500'>Shadow</div>
-          <div className='grid gap-4 lg:grid-cols-2'>
-            <div className='space-y-3'>
-              <div className='text-[10px] uppercase tracking-wider text-gray-500'>From</div>
-              <div className='grid gap-3 sm:grid-cols-2'>
-                <RangeField
-                  label='Offset X'
-                  value={shadowFromValues.x}
-                  onChange={(value: number) => updateShadowValue('from', { x: value })}
-                  min={-60}
-                  max={60}
-                  step={1}
-                  suffix='px'
-                />
-                <RangeField
-                  label='Offset Y'
-                  value={shadowFromValues.y}
-                  onChange={(value: number) => updateShadowValue('from', { y: value })}
-                  min={-60}
-                  max={60}
-                  step={1}
-                  suffix='px'
-                />
-                <RangeField
-                  label='Blur'
-                  value={shadowFromValues.blur}
-                  onChange={(value: number) => updateShadowValue('from', { blur: value })}
-                  min={0}
-                  max={120}
-                  step={1}
-                  suffix='px'
-                />
-                <RangeField
-                  label='Spread'
-                  value={shadowFromValues.spread}
-                  onChange={(value: number) => updateShadowValue('from', { spread: value })}
-                  min={-40}
-                  max={40}
-                  step={1}
-                  suffix='px'
-                />
-                <RangeField
-                  label='Opacity'
-                  value={shadowFromValues.opacity}
-                  onChange={(value: number) => updateShadowValue('from', { opacity: value })}
-                  min={0}
-                  max={100}
-                  step={1}
-                  suffix='%'
-                />
+          <FormSection title='Shadow' variant='subtle-compact' className='p-0'>
+            <div className='grid gap-4 lg:grid-cols-2 mt-2'>
+              <div className='space-y-3'>
+                <FormSection title='From' variant='subtle-compact' className='p-0'>
+                  <div className='grid gap-3 sm:grid-cols-2 mt-2'>
+                    <RangeField
+                      label='Offset X'
+                      value={shadowFromValues.x}
+                      onChange={(value: number) => updateShadowValue('from', { x: value })}
+                      min={-60}
+                      max={60}
+                      step={1}
+                      suffix='px'
+                    />
+                    <RangeField
+                      label='Offset Y'
+                      value={shadowFromValues.y}
+                      onChange={(value: number) => updateShadowValue('from', { y: value })}
+                      min={-60}
+                      max={60}
+                      step={1}
+                      suffix='px'
+                    />
+                    <RangeField
+                      label='Blur'
+                      value={shadowFromValues.blur}
+                      onChange={(value: number) => updateShadowValue('from', { blur: value })}
+                      min={0}
+                      max={120}
+                      step={1}
+                      suffix='px'
+                    />
+                    <RangeField
+                      label='Spread'
+                      value={shadowFromValues.spread}
+                      onChange={(value: number) => updateShadowValue('from', { spread: value })}
+                      min={-40}
+                      max={40}
+                      step={1}
+                      suffix='px'
+                    />
+                    <RangeField
+                      label='Opacity'
+                      value={shadowFromValues.opacity}
+                      onChange={(value: number) => updateShadowValue('from', { opacity: value })}
+                      min={0}
+                      max={100}
+                      step={1}
+                      suffix='%'
+                    />
+                  </div>
+                  <ColorPickerField
+                    label='Color'
+                    value={shadowFromValues.color}
+                    onChange={(value: string) => updateShadowValue('from', { color: value })}
+                  />
+                </FormSection>
               </div>
-              <ColorPickerField
-                label='Color'
-                value={shadowFromValues.color}
-                onChange={(value: string) => updateShadowValue('from', { color: value })}
-              />
-            </div>
-            <div className='space-y-3'>
-              <div className='text-[10px] uppercase tracking-wider text-gray-500'>To</div>
-              <div className='grid gap-3 sm:grid-cols-2'>
-                <RangeField
-                  label='Offset X'
-                  value={shadowToValues.x}
-                  onChange={(value: number) => updateShadowValue('to', { x: value })}
-                  min={-60}
-                  max={60}
-                  step={1}
-                  suffix='px'
-                />
-                <RangeField
-                  label='Offset Y'
-                  value={shadowToValues.y}
-                  onChange={(value: number) => updateShadowValue('to', { y: value })}
-                  min={-60}
-                  max={60}
-                  step={1}
-                  suffix='px'
-                />
-                <RangeField
-                  label='Blur'
-                  value={shadowToValues.blur}
-                  onChange={(value: number) => updateShadowValue('to', { blur: value })}
-                  min={0}
-                  max={120}
-                  step={1}
-                  suffix='px'
-                />
-                <RangeField
-                  label='Spread'
-                  value={shadowToValues.spread}
-                  onChange={(value: number) => updateShadowValue('to', { spread: value })}
-                  min={-40}
-                  max={40}
-                  step={1}
-                  suffix='px'
-                />
-                <RangeField
-                  label='Opacity'
-                  value={shadowToValues.opacity}
-                  onChange={(value: number) => updateShadowValue('to', { opacity: value })}
-                  min={0}
-                  max={100}
-                  step={1}
-                  suffix='%'
-                />
+              <div className='space-y-3'>
+                <FormSection title='To' variant='subtle-compact' className='p-0'>
+                  <div className='grid gap-3 sm:grid-cols-2 mt-2'>
+                    <RangeField
+                      label='Offset X'
+                      value={shadowToValues.x}
+                      onChange={(value: number) => updateShadowValue('to', { x: value })}
+                      min={-60}
+                      max={60}
+                      step={1}
+                      suffix='px'
+                    />
+                    <RangeField
+                      label='Offset Y'
+                      value={shadowToValues.y}
+                      onChange={(value: number) => updateShadowValue('to', { y: value })}
+                      min={-60}
+                      max={60}
+                      step={1}
+                      suffix='px'
+                    />
+                    <RangeField
+                      label='Blur'
+                      value={shadowToValues.blur}
+                      onChange={(value: number) => updateShadowValue('to', { blur: value })}
+                      min={0}
+                      max={120}
+                      step={1}
+                      suffix='px'
+                    />
+                    <RangeField
+                      label='Spread'
+                      value={shadowToValues.spread}
+                      onChange={(value: number) => updateShadowValue('to', { spread: value })}
+                      min={-40}
+                      max={40}
+                      step={1}
+                      suffix='px'
+                    />
+                    <RangeField
+                      label='Opacity'
+                      value={shadowToValues.opacity}
+                      onChange={(value: number) => updateShadowValue('to', { opacity: value })}
+                      min={0}
+                      max={100}
+                      step={1}
+                      suffix='%'
+                    />
+                  </div>
+                  <ColorPickerField
+                    label='Color'
+                    value={shadowToValues.color}
+                    onChange={(value: string) => updateShadowValue('to', { color: value })}
+                  />
+                </FormSection>
               </div>
-              <ColorPickerField
-                label='Color'
-                value={shadowToValues.color}
-                onChange={(value: string) => updateShadowValue('to', { color: value })}
-              />
             </div>
-          </div>
+          </FormSection>
         </div>
 
         <div className='rounded-lg border border-border/40 bg-gray-900/30 p-3 space-y-3'>
@@ -402,6 +406,6 @@ export function VisualEffectsSection({ config, onChange }: VisualEffectsSectionP
           </div>
         </div>
       </div>
-    </SectionPanel>
+    </FormSection>
   );
 }

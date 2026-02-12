@@ -21,7 +21,7 @@ import {
   SelectValue,
   FileUploadButton,
   FileUploadTrigger,
-  PanelHeader,
+  SectionHeader,
   Textarea,
 } from '@/shared/ui';
 
@@ -994,9 +994,11 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
   return (
     <div className='flex min-h-0 flex-1 flex-col'>
       {showHeader && (
-        <PanelHeader
+        <SectionHeader
           title='Theme settings'
           subtitle='Configure global styles and storefront components.'
+          size='xs'
+          className='p-3 border-b border-border'
         />
       )}
       <div className='flex-1 overflow-y-auto p-3'>

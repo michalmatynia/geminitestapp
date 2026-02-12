@@ -89,7 +89,7 @@ export function useChatbotSession(sessionId: string | null, options?: { enabled?
  */
 export function useChatbotSettings(key?: string, options?: { enabled?: boolean }): UseQueryResult<{ settings?: { settings?: unknown } | null }> {
   return useQuery({
-    queryKey: chatbotQueryKeys.settings(key),
+    queryKey: chatbotQueryKeys.settings.all(key),
     queryFn: (): Promise<{ settings?: { settings?: unknown } | null }> => key ? fetchChatbotSettings(key) : Promise.resolve({ settings: null }),
     enabled: (options?.enabled ?? true) && !!key,
   });

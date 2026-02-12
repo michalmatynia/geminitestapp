@@ -89,18 +89,12 @@ export function IntegrationModal(): React.JSX.Element {
     playwrightPersonas.find((persona: PlaywrightPersona) => persona.id === playwrightPersonaId) ??
     null;
 
-  const header = (
-    <div className='flex items-center justify-between'>
-      <div className='flex items-center gap-4'>
-        {activeTab === 'playwright' && (
-          <Button
-            onClick={() => { void handleSavePlaywrightSettings(); }}
-            className='min-w-[100px] border border-white/20 hover:border-white/40'
-          >
-            Save
-          </Button>
-        )}
-        <h2 className='text-2xl font-bold text-white'>
+  return (
+    <AppModal
+      open={true}
+      onClose={onCloseModal}
+      title={
+        <div className='flex items-center'>
           {activeIntegration.name} Integration
           {isTradera && (
             <span className='ml-2 rounded bg-orange-500/30 px-1.5 py-0.5 text-xs font-normal uppercase tracking-wider text-orange-200'>
@@ -117,35 +111,27 @@ export function IntegrationModal(): React.JSX.Element {
               Platform
             </span>
           )}
-        </h2>
-      </div>
-      <Button
-        type='button'
-        onClick={onCloseModal}
-        className='min-w-[100px] border border-white/20 hover:border-white/40'
-      >
-        Close
-      </Button>
-    </div>
-  );
-
-  return (
-    <AppModal
-      open={true}
-      onClose={onCloseModal}
-      title={`${activeIntegration.name} Integration`}
-      header={header}
+        </div>
+      }
+      subtitle={
+        isBaselinker
+          ? 'Manage connections and warehouse sync settings.'
+          : isTradera
+            ? 'Manage connections via browser automation (Playwright).'
+            : 'Manage connections and marketplace API settings.'
+      }
+      headerActions={
+        activeTab === 'playwright' && (
+          <Button
+            variant='primary'
+            onClick={() => { void handleSavePlaywrightSettings(); }}
+            className='min-w-[100px]'
+          >
+            Save
+          </Button>
+        )
+      }
     >
-      <div className='mb-4'>
-        <p className='text-sm text-gray-400'>
-          {isBaselinker
-            ? 'Manage connections and warehouse sync settings.'
-            : isTradera
-              ? 'Manage connections via browser automation (Playwright).'
-              : 'Manage connections and marketplace API settings.'}
-        </p>
-      </div>
-
       <Tabs defaultValue='connections' value={activeTab} onValueChange={setActiveTab}>
         <TabsList
           className={`grid w-full ${

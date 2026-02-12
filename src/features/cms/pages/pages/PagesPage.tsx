@@ -89,14 +89,27 @@ export default function PagesPage(): React.ReactNode {
   return (
     <div className='container mx-auto py-10'>
       <ListPanel
-        header={
-          <SectionHeader
-            title='Pages'
-            actions={
-              <>
-                <CmsDomainSelector />
-                <Button onClick={handleCreatePage}>Create Page</Button>
-              </>
+        title='Pages'
+        headerActions={
+          <>
+            <CmsDomainSelector />
+            <Button onClick={handleCreatePage}>Create Page</Button>
+          </>
+        }
+        isLoading={pagesQuery.isLoading}
+        loadingMessage='Loading pages...'
+        emptyState={
+          <EmptyState
+            variant='compact'
+            title='No pages match this filter'
+            description={statusFilter === 'all' ? 'Create your first page to get started with CMS.' : 'Try changing the status filter or create a new page.'}
+            action={
+              statusFilter === 'all' && (
+                <Button onClick={handleCreatePage} variant='outline'>
+                  <Plus className='mr-2 h-4 w-4' />
+                  Create Page
+                </Button>
+              )
             }
           />
         }
@@ -141,10 +154,10 @@ export default function PagesPage(): React.ReactNode {
                 ? `Preview ${activeDomain?.domain ?? 'current'}${previewPath}`
                 : 'No slug in current zone';
             return (
-              <li key={page.id} className='flex justify-between items-center py-2 border-b border'>
+              <li key={page.id} className='flex justify-between items-center py-2 border-b border-border/40 last:border-0'>
                 <div className='flex items-center gap-3'>
                   <Link href={`/admin/cms/builder?pageId=${page.id}`}>
-                    <span className='hover:underline'>{page.name}</span>
+                    <span className='hover:underline text-sm font-medium'>{page.name}</span>
                   </Link>
                   <StatusBadge status={status} />
                   {page.slugs.length > 0 && (
@@ -199,22 +212,6 @@ export default function PagesPage(): React.ReactNode {
               </li>
             );
           })}
-          {filteredPages.length === 0 && (
-            <li className='py-10'>
-              <EmptyState
-                title='No pages match this filter'
-                description={statusFilter === 'all' ? 'Create your first page to get started with CMS.' : 'Try changing the status filter or create a new page.'}
-                action={
-                  statusFilter === 'all' && (
-                    <Button onClick={handleCreatePage} variant='outline'>
-                      <Plus className='mr-2 h-4 w-4' />
-                      Create Page
-                    </Button>
-                  )
-                }
-              />
-            </li>
-          )}
         </ul>
       </ListPanel>
 

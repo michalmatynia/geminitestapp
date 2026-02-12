@@ -43,7 +43,6 @@ export * from './search-input';
 export * from './pagination';
 export * from './RefreshButton';
 export * from './list-panel';
-export * from './panel-header';
 export * from './copy-button';
 export * from './breadcrumb-scroller';
 export * from './item-library';

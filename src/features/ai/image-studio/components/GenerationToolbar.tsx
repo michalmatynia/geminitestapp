@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
   Switch,
+  UnifiedSelect,
   vectorShapeToPathWithBounds,
   useToast,
 } from '@/shared/ui';
@@ -31,6 +32,7 @@ import { useSettingsState, useSettingsActions } from '../context/SettingsContext
 import { useSlotsState } from '../context/SlotsContext';
 import { useUiActions, useUiState } from '../context/UiContext';
 import { getImageStudioSlotImageSrc } from '../utils/image-src';
+import { normalizeImageStudioModelPresets } from '../utils/studio-settings';
 
 export function GenerationToolbar(): React.JSX.Element {
   const { maskPreviewEnabled } = useUiState();
@@ -230,8 +232,42 @@ ${filterBlock}
       : 'Generating...'
     : `Generate ${(studioSettings.targetAi.openai.image.n ?? 1) > 1 ? `(${studioSettings.targetAi.openai.image.n})` : ''}`;
 
+  const quickSwitchModels = useMemo(
+    () =>
+      normalizeImageStudioModelPresets(
+        studioSettings.targetAi.openai.modelPresets,
+        studioSettings.targetAi.openai.model,
+      ),
+    [studioSettings.targetAi.openai.modelPresets, studioSettings.targetAi.openai.model]
+  );
+  const modelOptions = useMemo(
+    () => quickSwitchModels.map((modelId) => ({ value: modelId, label: modelId })),
+    [quickSwitchModels]
+  );
+
   return (
     <div className='flex flex-wrap items-center gap-2'>
+      <UnifiedSelect
+        className='w-auto'
+        value={studioSettings.targetAi.openai.model}
+        onValueChange={(value: string) => {
+          setStudioSettings((prev) => ({
+            ...prev,
+            targetAi: {
+              ...prev.targetAi,
+              openai: {
+                ...prev.targetAi.openai,
+                api: 'images',
+                model: value,
+              },
+            },
+          }));
+        }}
+        options={modelOptions}
+        placeholder='Model'
+        triggerClassName='h-8 w-[280px] sm:w-[320px] text-xs'
+        ariaLabel='Generation model'
+      />
       <Select
         value={String(studioSettings.targetAi.openai.image.n ?? 1)}
         onValueChange={(v: string) => {

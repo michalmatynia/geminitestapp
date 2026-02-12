@@ -13,6 +13,7 @@ import {
   OnChangeFn,
   RowData,
 } from '@tanstack/react-table';
+import { Loader2 } from 'lucide-react';
 import React, { JSX, memo, useEffect, useMemo, useState } from 'react';
 
 import { EmptyState } from './empty-state';
@@ -138,9 +139,12 @@ export const DataTable = memo(function DataTable<TData>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className='h-24 text-center text-muted-foreground'
+                  className='h-24'
                 >
-                  Loading...
+                  <div className='flex flex-col items-center justify-center gap-2 text-muted-foreground'>
+                    <Loader2 className='h-6 w-6 animate-spin text-blue-500' />
+                    <span className='text-xs'>Loading data...</span>
+                  </div>
                 </TableCell>
               </TableRow>
             )

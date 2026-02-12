@@ -2,8 +2,8 @@ import { renderHook } from '@testing-library/react';
 import { Folder } from 'lucide-react';
 import { describe, expect, it } from 'vitest';
 
-import { ICON_LIBRARY_MAP } from '@/features/icons';
 import { useMasterFolderTreeAppearance } from '@/features/foldertree/hooks/useMasterFolderTreeAppearance';
+import { ICON_LIBRARY_MAP } from '@/features/icons';
 import { createDefaultFolderTreeProfilesV2 } from '@/shared/utils/folder-tree-profiles-v2';
 
 describe('useMasterFolderTreeAppearance', () => {
@@ -27,13 +27,14 @@ describe('useMasterFolderTreeAppearance', () => {
 
   it('resolves icons from profile overrides and falls back safely', () => {
     const defaults = createDefaultFolderTreeProfilesV2();
+    const knownIconId = Object.keys(ICON_LIBRARY_MAP)[0] ?? null;
     const profile = {
       ...defaults.notes,
       icons: {
         ...defaults.notes.icons,
         byKind: {
           ...defaults.notes.icons.byKind,
-          note: 'FileCode',
+          ...(knownIconId ? { note: knownIconId } : {}),
         },
       },
     };
@@ -46,7 +47,7 @@ describe('useMasterFolderTreeAppearance', () => {
       fallback: Folder,
       fallbackId: 'Folder',
     });
-    expect(noteIcon).toBe(ICON_LIBRARY_MAP['FileCode']);
+    expect(noteIcon).toBe(knownIconId ? ICON_LIBRARY_MAP[knownIconId] : Folder);
 
     const fallbackIcon = result.current.resolveIcon({
       slot: 'file',

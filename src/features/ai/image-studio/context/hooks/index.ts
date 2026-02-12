@@ -54,6 +54,17 @@ export {
   type GenerationRecord,
 } from './useGeneration';
 
+// Version Graph
+export {
+  useVersionGraph,
+  useVersionGraphState,
+  useVersionGraphActions,
+  type VersionGraphState,
+  type VersionGraphActions,
+  type VersionNode,
+  type VersionEdge,
+} from './useVersionGraph';
+
 // UI
 export {
   useUi,

@@ -6,7 +6,7 @@ import { useState, useCallback } from 'react';
 import { useSaveParameterMutation, useDeleteParameterMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { CatalogRecord } from '@/features/products/types';
 import type { ProductParameter } from '@/features/products/types';
-import { useToast, Button, Input, Label, UnifiedSelect, FormModal, EmptyState, ConfirmDialog, SectionPanel, Skeleton } from '@/shared/ui';
+import { useToast, Button, Input, Label, UnifiedSelect, FormModal, EmptyState, ConfirmDialog, SectionPanel, Skeleton, FormSection, FormField } from '@/shared/ui';
 
 type ParametersSettingsProps = {
   loading: boolean;
@@ -125,12 +125,12 @@ export function ParametersSettings({
 
   return (
     <div className='space-y-5'>
-      <SectionPanel variant='subtle' className='p-4'>
-        <p className='text-sm font-semibold text-white mb-3'>Select Catalog</p>
-        <p className='text-xs text-gray-400 mb-3'>
-          Parameters are managed per catalog.
-        </p>
-        <div className='w-full max-w-xs'>
+      <FormSection
+        title='Select Catalog'
+        description='Parameters are managed per catalog.'
+        className='p-4'
+      >
+        <div className='w-full max-w-xs mt-4'>
           <UnifiedSelect
             value={selectedCatalogId || ''}
             onValueChange={onCatalogChange}
@@ -141,7 +141,7 @@ export function ParametersSettings({
             placeholder='Select a catalog...'
           />
         </div>
-      </SectionPanel>
+      </FormSection>
 
       {selectedCatalogId && (
         <>
@@ -155,71 +155,71 @@ export function ParametersSettings({
             </Button>
           </div>
 
-          <SectionPanel variant='subtle' className='p-4'>
-            <p className='text-sm font-semibold text-white mb-4'>
-              Parameters for &quot;{selectedCatalog?.name}&quot;
-            </p>
-
-            {loading ? (
-              <div className='space-y-2 p-4'>
-                <Skeleton className='h-8 w-full' />
-                <Skeleton className='h-8 w-full' />
-                <Skeleton className='h-8 w-full' />
-              </div>
-            ) : parameters.length === 0 ? (
-              <EmptyState
-                title='No parameters yet'
-                description='Parameters allow you to define custom fields for products in this catalog.'
-                action={
-                  <Button onClick={openCreateModal} variant='outline'>
-                    <Plus className='size-4 mr-2' />
-                    Create Your First Parameter
-                  </Button>
-                }
-              />
-            ) : (
-              <div className='space-y-2'>
-                {parameters.map((parameter: ProductParameter) => (
-                  <SectionPanel
-                    key={parameter.id}
-                    variant='subtle-compact'
-                    className='flex items-center justify-between gap-3 p-3'
-                  >
-                    <div className='min-w-0'>
-                      <p className='text-sm text-gray-100 truncate'>
-                        {parameter.name_en}
-                      </p>
-                      <div className='text-xs text-gray-400 space-x-2'>
-                        {parameter.name_pl && (
-                          <span>PL: {parameter.name_pl}</span>
-                        )}
-                        {parameter.name_de && (
-                          <span>DE: {parameter.name_de}</span>
-                        )}
+          <FormSection
+            title={`Parameters for "${selectedCatalog?.name}"`}
+            className='p-4'
+          >
+            <div className='mt-4'>
+              {loading ? (
+                <div className='space-y-2 p-4'>
+                  <Skeleton className='h-8 w-full' />
+                  <Skeleton className='h-8 w-full' />
+                  <Skeleton className='h-8 w-full' />
+                </div>
+              ) : parameters.length === 0 ? (
+                <EmptyState
+                  title='No parameters yet'
+                  description='Parameters allow you to define custom fields for products in this catalog.'
+                  action={
+                    <Button onClick={openCreateModal} variant='outline'>
+                      <Plus className='size-4 mr-2' />
+                      Create Your First Parameter
+                    </Button>
+                  }
+                />
+              ) : (
+                <div className='space-y-2'>
+                  {parameters.map((parameter: ProductParameter) => (
+                    <div
+                      key={parameter.id}
+                      className='flex items-center justify-between gap-3 rounded-md border border-border/40 bg-gray-900/40 p-3'
+                    >
+                      <div className='min-w-0'>
+                        <p className='text-sm text-gray-100 truncate'>
+                          {parameter.name_en}
+                        </p>
+                        <div className='text-xs text-gray-400 space-x-2'>
+                          {parameter.name_pl && (
+                            <span>PL: {parameter.name_pl}</span>
+                          )}
+                          {parameter.name_de && (
+                            <span>DE: {parameter.name_de}</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className='flex items-center gap-2'>
+                        <Button
+                          type='button'
+                          onClick={(): void => openEditModal(parameter)}
+                          className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-100 hover:bg-gray-700'
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          type='button'
+                          onClick={(): void => { handleDelete(parameter); }}
+                          className='rounded bg-red-600/80 px-2 py-1 text-xs text-white hover:bg-red-600'
+                          title='Delete parameter'
+                        >
+                          <Trash2 className='size-3' />
+                        </Button>
                       </div>
                     </div>
-                    <div className='flex items-center gap-2'>
-                      <Button
-                        type='button'
-                        onClick={(): void => openEditModal(parameter)}
-                        className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-100 hover:bg-gray-700'
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        type='button'
-                        onClick={(): void => { handleDelete(parameter); }}
-                        className='rounded bg-red-600/80 px-2 py-1 text-xs text-white hover:bg-red-600'
-                        title='Delete parameter'
-                      >
-                        <Trash2 className='size-3' />
-                      </Button>
-                    </div>
-                  </SectionPanel>
-                ))}
-              </div>
-            )}
-          </SectionPanel>
+                  ))}
+                </div>
+              )}
+            </div>
+          </FormSection>
         </>
       )}
 
@@ -249,9 +249,8 @@ export function ParametersSettings({
           isSaving={saveParameterMutation.isPending}
           size='md'
         >
-          <div className='space-y-3'>
-            <div>
-              <Label className='text-sm'>Name (EN)</Label>
+          <div className='space-y-4'>
+            <FormField label='Name (EN)'>
               <Input
                 value={formData.name_en}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
@@ -261,10 +260,10 @@ export function ParametersSettings({
                   }))
                 }
                 placeholder='Parameter name in English'
+                className='h-9'
               />
-            </div>
-            <div>
-              <Label className='text-sm'>Name (PL)</Label>
+            </FormField>
+            <FormField label='Name (PL)'>
               <Input
                 value={formData.name_pl}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
@@ -274,10 +273,10 @@ export function ParametersSettings({
                   }))
                 }
                 placeholder='Optional'
+                className='h-9'
               />
-            </div>
-            <div>
-              <Label className='text-sm'>Name (DE)</Label>
+            </FormField>
+            <FormField label='Name (DE)'>
               <Input
                 value={formData.name_de}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
@@ -287,8 +286,9 @@ export function ParametersSettings({
                   }))
                 }
                 placeholder='Optional'
+                className='h-9'
               />
-            </div>
+            </FormField>
           </div>
         </FormModal>
       )}

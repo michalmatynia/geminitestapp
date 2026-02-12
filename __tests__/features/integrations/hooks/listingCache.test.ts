@@ -31,7 +31,7 @@ describe('listingCache helpers', () => {
   });
 
   it('invalidates listings and badges keys for a product', () => {
-    invalidateProductListingsAndBadges(queryClient as never, 'prod-1');
+    void invalidateProductListingsAndBadges(queryClient as never, 'prod-1');
 
     expect(invalidateQueries).toHaveBeenCalledTimes(2);
     expect(invalidateQueries).toHaveBeenNthCalledWith(1, {
@@ -43,7 +43,7 @@ describe('listingCache helpers', () => {
   });
 
   it('invalidates runtime queue keys', () => {
-    invalidateListingRuntimeQueues(queryClient as never);
+    void invalidateListingRuntimeQueues(queryClient as never);
 
     expect(invalidateQueries).toHaveBeenCalledTimes(3);
     expect(invalidateQueries).toHaveBeenNthCalledWith(1, {

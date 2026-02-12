@@ -11,7 +11,7 @@ import type { GsapAnimationConfig } from '@/features/gsap';
 import { logClientError } from '@/features/observability';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, PanelHeader, Tabs, TabsList, TabsTrigger, TabsContent, Input, Checkbox, Textarea, useToast } from '@/shared/ui';
+import { Button, SectionHeader, Tabs, TabsList, TabsTrigger, TabsContent, Input, Checkbox, Textarea, useToast } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 import { AnimationConfigPanel } from './AnimationConfigPanel';
@@ -261,8 +261,12 @@ export function ComponentSettingsPanel(): React.ReactNode {
       aiQueriesEnabled={activeTab === 'ai' || activeTab === 'customCss'}
     >
       <aside className='flex w-80 min-h-0 flex-col border-l border-border bg-gray-900'>
-        <PanelHeader
-          title={selectedTitle} className='flex-row-reverse' titleClassName='text-right' actionsClassName='justify-start'
+        <SectionHeader
+          title={selectedTitle} 
+          size='xs'
+          className='p-3 border-b border-border flex-row-reverse' 
+          titleClassName='text-right' 
+          actionsClassName='justify-start'
           actions={(
             <div className='flex items-center gap-1'>
               <Button type='button' size='icon' variant='ghost' onClick={() => dispatch({ type: 'TOGGLE_RIGHT_PANEL' })} className='h-6 w-6 p-0 text-gray-500 hover:text-gray-300' title='Hide right panel' aria-label='Hide right panel'><PanelRightClose className='size-3.5' /></Button>

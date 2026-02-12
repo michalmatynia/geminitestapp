@@ -63,10 +63,13 @@ export const activityLogSchema = dtoBaseSchema.extend({
 
 export type ActivityLogDto = z.infer<typeof activityLogSchema>;
 
-export const createActivityLogSchema = activityLogSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const createActivityLogSchema = z.object({
+  type: z.string(),
+  description: z.string(),
+  userId: z.string().nullable().optional(),
+  entityId: z.string().nullable().optional(),
+  entityType: z.string().nullable().optional(),
+  metadata: z.record(z.string(), z.unknown()).nullable().optional(),
 });
 
 export type CreateActivityLogDto = z.infer<typeof createActivityLogSchema>;

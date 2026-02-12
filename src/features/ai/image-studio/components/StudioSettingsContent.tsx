@@ -7,7 +7,7 @@ import {
   Button,
   Input,
   Label,
-  PanelHeader,
+  SectionHeader,
   Select,
   SelectContent,
   SelectItem,
@@ -64,8 +64,10 @@ export function StudioSettingsContent(): React.JSX.Element {
 
   return (
     <div className='rounded border border-border bg-card/40 overflow-hidden'>
-      <PanelHeader
+      <SectionHeader
         title='Studio Settings'
+        size='xs'
+        className='p-3 border-b border-border'
         actions={(
           <div className='flex items-center gap-2'>
             <Button
@@ -86,8 +88,10 @@ export function StudioSettingsContent(): React.JSX.Element {
             </Button>
             <Button
               size='sm'
+              variant='primary'
               onClick={() => void saveStudioSettings()}
               disabled={Boolean(advancedOverridesError)}
+              className='min-w-[80px]'
             >
               Save
             </Button>

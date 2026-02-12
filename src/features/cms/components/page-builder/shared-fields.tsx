@@ -8,7 +8,7 @@ import { Viewer3D } from '@/features/viewer3d';
 import { Asset3DPreviewModal } from '@/features/viewer3d';
 import { useAssets3D, useAsset3DCategories, useAsset3DTags, useAsset3DById } from '@/features/viewer3d/hooks/useAsset3dQueries';
 import type { Asset3DListFilters, Asset3DRecord } from '@/features/viewer3d/types';
-import { Input, Label, UnifiedSelect, Checkbox, Button, AppModal, useToast, SectionPanel, FileUploadButton, FormSection, FormField, type FileUploadHelpers } from '@/shared/ui';
+import { Input, UnifiedSelect, Checkbox, Button, AppModal, useToast, FileUploadButton, FormSection, FormField, type FileUploadHelpers } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { MediaLibraryPanel } from './MediaLibraryPanel';
@@ -365,7 +365,7 @@ export function Asset3DPickerField({
           asset={previewAsset}
         />
       ) : null}
-    </div>
+    </FormField>
   );
 }
 

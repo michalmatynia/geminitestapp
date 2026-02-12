@@ -12,16 +12,18 @@ interface SearchInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   value: string;
   onClear?: () => void;
   containerClassName?: string;
+  variant?: 'default' | 'subtle';
 }
 
 export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
-  ({ value, onClear, containerClassName, className, ...props }, ref) => {
+  ({ value, onClear, containerClassName, className, variant = 'default', ...props }, ref) => {
     return (
       <div className={cn('relative flex items-center', containerClassName)}>
         <Search className='absolute left-3 size-4 text-gray-500' />
         <Input
           ref={ref}
           value={value}
+          variant={variant}
           className={cn('pl-9 pr-9', className)}
           {...props}
         />

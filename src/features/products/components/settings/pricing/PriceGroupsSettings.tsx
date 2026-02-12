@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { PriceGroup } from '@/features/products/types';
-import { Button, Label, UnifiedSelect, Badge, SectionHeader, SectionPanel } from '@/shared/ui';
+import { Button, Label, UnifiedSelect, Badge, SectionHeader, SectionPanel, FormSection, FormField } from '@/shared/ui';
 
 
 type PriceGroupsSettingsProps = {
@@ -27,83 +27,90 @@ export function PriceGroupsSettings({
 }: PriceGroupsSettingsProps): React.JSX.Element {
   return (
     <div className='space-y-4'>
-      <SectionHeader
+      <FormSection
         title='Price Groups'
         description='Configure pricing tiers and group rules for products.'
         actions={
           <Button
-            className='min-w-[100px] border border-white/20 hover:border-white/40'
+            className='min-w-[100px]'
             type='button'
             onClick={handleOpenCreate}
           >
             Add Price Group
           </Button>
         }
-        size='md'
-      />
-      {loadingGroups ? (
-        <div className='rounded-md border border-dashed border p-6 text-center text-gray-400'>
-          Loading price groups...
-        </div>
-      ) : priceGroups.length === 0 ? (
-        <div className='rounded-md border border-dashed border p-6 text-center text-gray-400'>
-          At least one price group is required. Add a price group to continue.
-        </div>
-      ) : (
-        <div className='space-y-3'>
-          {priceGroups.map((group: PriceGroup) => (
-            <SectionPanel
-              key={group.id}
-              variant='subtle-compact'
-              className='flex items-center justify-between'
-            >
-              <div>
-                <div className='flex items-center gap-2 text-white'>
-                  <span className='font-semibold'>{group.name}</span>
-                  {group.isDefault && (
-                    <Badge variant='success'>
-                      Default
-                    </Badge>
-                  )}
-                  <Badge variant='neutral'>
-                    {group.groupId}
-                  </Badge>
+        className='p-6'
+      >
+        <div className='mt-4'>
+          {loadingGroups ? (
+            <div className='rounded-md border border-dashed border p-6 text-center text-gray-400'>
+              Loading price groups...
+            </div>
+          ) : priceGroups.length === 0 ? (
+            <div className='rounded-md border border-dashed border p-6 text-center text-gray-400'>
+              At least one price group is required. Add a price group to continue.
+            </div>
+          ) : (
+            <div className='space-y-3'>
+              {priceGroups.map((group: PriceGroup) => (
+                <div
+                  key={group.id}
+                  className='flex items-center justify-between rounded-md border border-border/40 bg-gray-900/40 p-4'
+                >
+                  <div>
+                    <div className='flex items-center gap-2 text-white'>
+                      <span className='font-semibold'>{group.name}</span>
+                      {group.isDefault && (
+                        <Badge variant='success'>
+                          Default
+                        </Badge>
+                      )}
+                      <Badge variant='neutral'>
+                        {group.groupId}
+                      </Badge>
+                    </div>
+                    <p className='text-sm text-gray-400 mt-1'>
+                      {group.currencyCode} · {group.groupType}
+                    </p>
+                  </div>
+                  <div className='flex items-center gap-3'>
+                    <span className='text-sm text-gray-500 hidden sm:inline'>
+                      {group.description || 'No description'}
+                    </span>
+                    <div className='flex gap-2'>
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        type='button'
+                        onClick={() => handleEditGroup(group)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        className='text-red-400 border-red-500/20 hover:bg-red-500/10'
+                        type='button'
+                        onClick={() => handleDeleteGroup(group)}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-                <p className='text-sm text-gray-400'>
-                  {group.currencyCode} · {group.groupType}
-                </p>
-              </div>
-              <div className='flex items-center gap-3'>
-                <span className='text-sm text-gray-500'>
-                  {group.description || 'No description'}
-                </span>
-                <Button
-                  className='border border-white/20 hover:border-white/40'
-                  type='button'
-                  onClick={() => handleEditGroup(group)}
-                >
-                  Edit
-                </Button>
-                <Button
-                  className='border border-red-500/20 hover:border-red-500/40 text-red-400'
-                  type='button'
-                  onClick={() => handleDeleteGroup(group)}
-                >
-                  Delete
-                </Button>
-              </div>
-            </SectionPanel>
-          ))}
+              ))}
+            </div>
+          )}
         </div>
-      )}
-      <SectionPanel variant='subtle' className='p-4'>
-        <Label className='text-sm font-semibold text-white'>
-          Default price group
-        </Label>
-        <p className='mt-1 text-xs text-gray-400'>
-          Required. Select one of the available price groups.
-        </p>
-        <div className='mt-3'>
+      </FormSection>
+
+      <FormSection
+        title='Default price group'
+        description='Required. Select one of the available price groups.'
+        variant='subtle'
+        className='p-4'
+      >
+        <div className='mt-4'>
           <UnifiedSelect
             value={defaultGroupId}
             onValueChange={onDefaultGroupChange}
@@ -114,11 +121,11 @@ export function PriceGroupsSettings({
             }))}
             placeholder='Select default price group'
           />
+          {defaultGroupSaving ? (
+            <p className='mt-2 text-xs text-gray-500'>Saving default...</p>
+          ) : null}
         </div>
-        {defaultGroupSaving ? (
-          <p className='mt-2 text-xs text-gray-500'>Saving default...</p>
-        ) : null}
-      </SectionPanel>
+      </FormSection>
     </div>
   );
 }

@@ -66,7 +66,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     entityType: 'job',
     metadata: { direction, jobId: job.id }
   }).catch((error: Error) => {
-    logger.warn('Failed to log database sync activity', error);
+    logger.warn('Failed to log database sync activity', { error });
   });
 
   const { env } = await import('@/shared/lib/env');

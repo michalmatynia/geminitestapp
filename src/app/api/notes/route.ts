@@ -78,9 +78,21 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
   const resolvedNotebookId =
     parsed.data.notebookId ?? (await noteService.getOrCreateDefaultNotebook()).id;
-  const { color, tagIds, editorType, isPinned, isArchived, isFavorite, categoryIds, ...rest } = parsed.data;
+  const {
+    title,
+    content,
+    color,
+    tagIds,
+    editorType,
+    isPinned,
+    isArchived,
+    isFavorite,
+    categoryIds,
+    relatedNoteIds,
+  } = parsed.data;
   const note = await noteService.create({
-    ...rest,
+    title,
+    content,
     color: color ?? null,
     tagIds: tagIds ?? [],
     editorType: editorType ?? 'markdown',
@@ -88,6 +100,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     isArchived: isArchived ?? false,
     isFavorite: isFavorite ?? false,
     categoryIds: categoryIds ?? [],
+    relatedNoteIds: relatedNoteIds ?? [],
     notebookId: resolvedNotebookId,
   });
   return NextResponse.json(note, { status: 201 });

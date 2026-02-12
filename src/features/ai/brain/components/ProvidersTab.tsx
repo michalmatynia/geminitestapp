@@ -2,7 +2,7 @@
 
 import { KeyRound } from 'lucide-react';
 
-import { Button, Input, Label, SectionPanel } from '@/shared/ui';
+import { Button, Input, Label, SectionPanel, FormSection } from '@/shared/ui';
 
 import { useBrain } from '../context/BrainContext';
 import { type AiBrainProviderCatalog } from '../settings';
@@ -25,23 +25,11 @@ export function ProvidersTab(): React.JSX.Element {
 
   return (
     <div className='space-y-4'>
-      <SectionPanel variant='subtle'>
-        <div className='flex flex-wrap items-center justify-between gap-3'>
-          <div>
-            <div className='text-xs uppercase tracking-wide text-cyan-300'>Live Ollama discovery</div>
-            <div className='mt-1 text-xs text-gray-300'>
-              {ollamaModelsQuery.isLoading
-                ? 'Loading live models from Ollama...'
-                : ollamaModelsQuery.error
-                  ? ((ollamaModelsQuery.error).message || 'Failed to load Ollama models.')
-                  : `${liveOllamaModels.length} live model(s) available for report routing.`}
-            </div>
-            {ollamaModelsQuery.data?.warning?.message ? (
-              <div className='mt-1 text-[11px] text-amber-300'>
-                {ollamaModelsQuery.data.warning.message}
-              </div>
-            ) : null}
-          </div>
+      <FormSection
+        title='Live Ollama discovery'
+        description='Load live models from Ollama to see what is available.'
+        variant='subtle'
+        actions={
           <div className='flex gap-2'>
             <Button
               variant='outline'
@@ -65,8 +53,21 @@ export function ProvidersTab(): React.JSX.Element {
               Add Live to Catalog
             </Button>
           </div>
+        }
+      >
+        <div className='mt-2 text-xs text-gray-300'>
+          {ollamaModelsQuery.isLoading
+            ? 'Loading live models from Ollama...'
+            : ollamaModelsQuery.error
+              ? (ollamaModelsQuery.error instanceof Error ? ollamaModelsQuery.error.message : 'Failed to load Ollama models.')
+              : `${liveOllamaModels.length} live model(s) available for report routing.`}
         </div>
-      </SectionPanel>
+        {ollamaModelsQuery.data?.warning?.message ? (
+          <div className='mt-1 text-[11px] text-amber-300'>
+            {ollamaModelsQuery.data.warning.message}
+          </div>
+        ) : null}
+      </FormSection>
 
       <SectionPanel>
         <div className='flex items-center gap-2 text-sm font-semibold text-white'>

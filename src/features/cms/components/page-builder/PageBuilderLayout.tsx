@@ -4,7 +4,7 @@ import { ArrowLeft, PanelLeftClose, PanelRightClose, Settings, Menu, AppWindow }
 import React, { useEffect, useRef, useState } from 'react';
 
 import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
-import { Button, PanelHeader } from '@/shared/ui';
+import { Button, SectionHeader } from '@/shared/ui';
 
 import { AppEmbedsPanel } from './AppEmbedsPanel';
 import { ComponentSettingsPanel } from './ComponentSettingsPanel';
@@ -118,8 +118,10 @@ function PageBuilderInner(): React.ReactNode {
           }`}
         >
           <div className='flex w-72 min-h-0 flex-col border-r border-border bg-gray-900'>
-            <PanelHeader
+            <SectionHeader
               title={leftPanelLabel}
+              size='xs'
+              className='p-3 border-b border-border'
               actions={(
                 <div className='flex items-center gap-1'>
                   <Button

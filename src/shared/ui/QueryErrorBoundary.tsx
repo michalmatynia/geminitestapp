@@ -13,8 +13,8 @@ function QueryErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   return (
     <div className='flex min-h-[400px] flex-col items-center justify-center space-y-4 p-8'>
       <div className='text-center'>
-        <h2 className='text-lg font-semibold text-red-600'>Something went wrong</h2>
-        <p className='mt-2 text-sm text-gray-600'>
+        <h2 className='text-lg font-semibold text-red-500'>Something went wrong</h2>
+        <p className='mt-2 text-sm text-gray-400'>
           {(error as Error)?.message || 'An unexpected error occurred while loading data.'}
         </p>
       </div>

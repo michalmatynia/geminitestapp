@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import React from 'react';
 
 import type { AgentTeachingChatSource, AgentTeachingEmbeddingCollectionRecord, AgentTeachingEmbeddingDocumentListItem } from '@/shared/types/domain/agent-teaching';
-import { Button, ConfirmDialog, Input, Label, SectionHeader, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast, FormSection, FormField } from '@/shared/ui';
+import { Button, ConfirmDialog, Input, SectionHeader, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast, FormSection, FormField } from '@/shared/ui';
 
 import { useAgentTeachingContext } from '../context/AgentTeachingContext';
 import { useAddEmbeddingDocumentMutation, useDeleteEmbeddingDocumentMutation, useEmbeddingDocuments, useSearchEmbeddingCollectionMutation } from '../hooks/useAgentTeaching';

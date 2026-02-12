@@ -1,7 +1,6 @@
 import 'server-only';
 
 import { randomUUID } from 'crypto';
-import { createReadStream } from 'fs';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -40,8 +39,16 @@ const OPENAI_MAX_RETRIES = Math.min(
   parsePositiveInteger(process.env['IMAGE_STUDIO_OPENAI_MAX_RETRIES'], DEFAULT_OPENAI_MAX_RETRIES)
 );
 const IMAGE_STUDIO_ENABLE_OUTPUT_FORMAT = process.env['IMAGE_STUDIO_ENABLE_OUTPUT_FORMAT'] === 'true';
+const DALLE2_PROMPT_MAX_CHARS = 1000;
 const UNKNOWN_PARAMETER_REGEX = /Unknown parameter:\s*['"]([^'"]+)['"]/i;
+const MODEL_MUST_BE_DALLE2_REGEX = /Value must be ['"]dall-e-2['"]/i;
 const MAX_UNKNOWN_PARAMETER_RETRIES = 6;
+const IMAGE_MIME_BY_EXTENSION: Record<string, string> = {
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+};
 
 const pointSchema = z.object({
   x: z.number().min(0).max(1),
@@ -151,6 +158,73 @@ const extractUnknownParameterName = (error: unknown): string | null => {
   const match = UNKNOWN_PARAMETER_REGEX.exec(message);
   return match?.[1]?.trim() || null;
 };
+
+const extractErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    return String((error as { message?: unknown }).message ?? '');
+  }
+  return '';
+};
+
+const resolveDalle2SquareSize = (width: number, height: number): 256 | 512 | 1024 => {
+  const maxSide = Math.max(width, height, 1);
+  if (maxSide <= 256) return 256;
+  if (maxSide <= 512) return 512;
+  return 1024;
+};
+
+const toDalle2SizeLabel = (size: 256 | 512 | 1024): '256x256' | '512x512' | '1024x1024' => {
+  if (size === 256) return '256x256';
+  if (size === 512) return '512x512';
+  return '1024x1024';
+};
+
+const clampPromptForDalle2 = (prompt: string): string => {
+  if (prompt.length <= DALLE2_PROMPT_MAX_CHARS) return prompt;
+  return `${prompt.slice(0, DALLE2_PROMPT_MAX_CHARS - 3)}...`;
+};
+
+async function toUploadableImageFile(params: {
+  diskPath: string;
+  fileNameBase: string;
+}): Promise<Awaited<ReturnType<typeof toFile>>> {
+  const ext = path.extname(params.diskPath).toLowerCase();
+  const mimeType = IMAGE_MIME_BY_EXTENSION[ext];
+  if (mimeType) {
+    const buffer = await fs.readFile(params.diskPath);
+    return toFile(buffer, `${params.fileNameBase}${ext}`, { type: mimeType });
+  }
+
+  const pngBuffer = await sharp(params.diskPath).png().toBuffer();
+  return toFile(pngBuffer, `${params.fileNameBase}.png`, { type: 'image/png' });
+}
+
+async function toDalle2UploadableImageFile(
+  diskPath: string,
+): Promise<{
+  file: Awaited<ReturnType<typeof toFile>>;
+  size: '256x256' | '512x512' | '1024x1024';
+}> {
+  const metadata = await sharp(diskPath).metadata();
+  const width = metadata.width ?? 1;
+  const height = metadata.height ?? 1;
+  const squareSize = resolveDalle2SquareSize(width, height);
+  const squarePng = await sharp(diskPath)
+    .ensureAlpha()
+    .resize(squareSize, squareSize, {
+      fit: 'contain',
+      position: 'center',
+      background: { r: 255, g: 255, b: 255, alpha: 0 },
+    })
+    .png()
+    .toBuffer();
+
+  return {
+    file: await toFile(squarePng, 'image.png', { type: 'image/png' }),
+    size: toDalle2SizeLabel(squareSize),
+  };
+}
 
 async function buildMaskBuffer(params: {
   imagePath: string;
@@ -335,12 +409,33 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
     ? requestedFormat
     : (modelCapabilities.formatOptions[0] ?? 'png');
 
-  const inputImages = [createReadStream(diskPath), ...referencePaths.map((ref) => createReadStream(ref))];
-  const imagePayload = inputImages.length === 1 ? inputImages[0]! : inputImages;
+  let dalle2BaseSize: '256x256' | '512x512' | '1024x1024' | null = null;
+  let imageFiles: Array<Awaited<ReturnType<typeof toFile>>>;
+  if (modelName.includes('dall-e-2')) {
+    const dalle2Base = await toDalle2UploadableImageFile(diskPath);
+    imageFiles = [dalle2Base.file];
+    dalle2BaseSize = dalle2Base.size;
+  } else {
+    const baseName = path.basename(diskPath, path.extname(diskPath)) || 'image';
+    const baseImage = await toUploadableImageFile({
+      diskPath,
+      fileNameBase: baseName,
+    });
+    const referenceImages = await Promise.all(
+      referencePaths.map((refPath: string, index: number) =>
+        toUploadableImageFile({
+          diskPath: refPath,
+          fileNameBase: `reference-${index + 1}`,
+        })
+      )
+    );
+    imageFiles = [baseImage, ...referenceImages];
+  }
+  const imagePayload = imageFiles.length === 1 ? imageFiles[0]! : imageFiles;
 
   const payload: OpenAI.Images.ImageEditParamsNonStreaming = {
     model: resolvedModel,
-    prompt: request.prompt,
+    prompt: modelName.includes('dall-e-2') ? clampPromptForDalle2(request.prompt) : request.prompt,
     image: imagePayload as unknown as OpenAI.Images.ImageEditParamsNonStreaming['image'],
   };
   const payloadRecord = payload as unknown as Record<string, unknown>;
@@ -358,7 +453,9 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
     payloadRecord['n'] = settings.targetAi.openai.image.n;
   }
   const size = coerceImageSize(settings.targetAi.openai.image.size ?? null);
-  if (size && modelCapabilities.sizeOptions.includes(size)) {
+  if (modelName.includes('dall-e-2') && dalle2BaseSize) {
+    payloadRecord['size'] = dalle2BaseSize;
+  } else if (size && modelCapabilities.sizeOptions.includes(size)) {
     payloadRecord['size'] = size;
   }
   if (
@@ -399,7 +496,7 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
   }
 
   if (mask) {
-    payloadRecord['mask'] = await toFile(mask, 'mask.png');
+    payloadRecord['mask'] = await toFile(mask, 'mask.png', { type: 'image/png' });
   }
 
   if (overrides) {
@@ -439,11 +536,38 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
   }
 
   let response: Awaited<ReturnType<typeof client.images.edit>> | null = null;
+  let dalle2ModelFallbackApplied = false;
   for (let attempt = 0; attempt < MAX_UNKNOWN_PARAMETER_RETRIES; attempt += 1) {
     try {
       response = await client.images.edit(payload);
       break;
     } catch (error) {
+      const message = extractErrorMessage(error);
+      const activeModel = String(payloadRecord['model'] ?? '').toLowerCase();
+      if (
+        !dalle2ModelFallbackApplied &&
+        activeModel !== 'dall-e-2' &&
+        MODEL_MUST_BE_DALLE2_REGEX.test(message)
+      ) {
+        const fallbackImage = await toDalle2UploadableImageFile(diskPath);
+        payloadRecord['model'] = 'dall-e-2';
+        payloadRecord['prompt'] = clampPromptForDalle2(String(payloadRecord['prompt'] ?? request.prompt));
+        payloadRecord['image'] = fallbackImage.file;
+        payloadRecord['size'] = fallbackImage.size;
+        payloadRecord['quality'] = 'standard';
+        payloadRecord['response_format'] = 'b64_json';
+        delete payloadRecord['output_format'];
+        delete payloadRecord['background'];
+        delete payloadRecord['mask'];
+        delete payloadRecord['moderation'];
+        delete payloadRecord['output_compression'];
+        delete payloadRecord['partial_images'];
+        delete payloadRecord['stream'];
+        effectiveFormat = 'png';
+        dalle2ModelFallbackApplied = true;
+        continue;
+      }
+
       const unknownParameter = extractUnknownParameterName(error);
       if (!unknownParameter) {
         throw error;

@@ -15,6 +15,7 @@ import {
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import type { ProductListingWithDetails } from '@/features/integrations/types/listings';
 import { logClientError } from '@/features/observability';
+import { badRequestError, internalError } from '@/shared/errors/app-error';
 import type { ProductWithImages } from '@/features/products/types';
 import { useToast } from '@/shared/ui';
 
@@ -215,7 +216,7 @@ export function ProductListingsProvider({
     const listing = listings.find(item => item.id === listingId);
     if (!listing) return;
     const inventoryId = (inventoryOverrides[listingId] || listing.inventoryId || '').trim();
-    if (!inventoryId) throw new Error('Inventory ID is required.');
+    if (!inventoryId) throw badRequestError('Inventory ID is required.');
     
     const templateId = getLatestTemplateId(listing) ?? undefined;
     const exportData: ExportToBaseVariables = {
@@ -371,7 +372,7 @@ export function ProductListingsProvider({
 export function useProductListingsContext(): ProductListingsContextType {
   const context = useContext(ProductListingsContext);
   if (context === undefined) {
-    throw new Error('useProductListingsContext must be used within a ProductListingsProvider');
+    throw internalError('useProductListingsContext must be used within a ProductListingsProvider');
   }
   return context;
 }

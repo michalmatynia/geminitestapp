@@ -16,6 +16,7 @@ import {
 } from '@/features/products/context/ProductFormContext';
 import { DebugInfo, ProductImageSlot } from '@/features/products/types/products-ui';
 import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
+import { internalError } from '@/shared/errors/app-error';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   Button,
@@ -61,7 +62,7 @@ export default function ProductImageManager({
   const formContext = React.useContext(ProductFormContext);
   const resolvedController = controller ?? formContext;
   if (!resolvedController) {
-    throw new Error(
+    throw internalError(
       'ProductImageManager requires ProductFormContext or an explicit controller prop.'
     );
   }

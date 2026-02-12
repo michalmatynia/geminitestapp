@@ -13,7 +13,6 @@ import type {
 import type { AiQuery, DatabasePresetOption, SchemaData } from './types';
 
 export type DatabaseConstructorContextValue = {
-  queryInputControls: React.ReactNode;
   pendingAiQuery: string;
   setPendingAiQuery: React.Dispatch<React.SetStateAction<string>>;
   aiQueries: AiQuery[];

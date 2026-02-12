@@ -2,6 +2,8 @@ import crypto from 'crypto';
 
 import { NextRequest } from 'next/server';
 
+import { badRequestError } from '@/shared/errors/app-error';
+
 type FileValidationResult = {
   isValid: boolean;
   errors: string[];
@@ -209,7 +211,7 @@ export class SecureFileUpload {
     
     // PNG dimensions
     if (bytes[0] === 0x89 && bytes[1] === 0x50) {
-      if (bytes.length < 24) throw new Error('Invalid PNG buffer');
+      if (bytes.length < 24) throw badRequestError('Invalid PNG buffer');
       const width = (bytes[16]! << 24) | (bytes[17]! << 16) | (bytes[18]! << 8) | bytes[19]!;
       const height = (bytes[20]! << 24) | (bytes[21]! << 16) | (bytes[22]! << 8) | bytes[23]!;
       return { width, height };
@@ -221,7 +223,7 @@ export class SecureFileUpload {
       return { width: 1920, height: 1080 }; // Placeholder
     }
     
-    throw new Error('Unsupported image format for dimension reading');
+    throw badRequestError('Unsupported image format for dimension reading');
   }
 }
 

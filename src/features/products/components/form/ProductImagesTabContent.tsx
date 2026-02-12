@@ -7,6 +7,7 @@ import ProductImageManager, {
   type ProductImageManagerController,
 } from '@/features/products/components/ProductImageManager';
 import { ProductFormContext } from '@/features/products/context/ProductFormContext';
+import { internalError } from '@/shared/errors/app-error';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
 import { Button, FormSection } from '@/shared/ui';
 
@@ -42,7 +43,7 @@ export function ProductImagesTabContent({
   const onShowFileManager = onShowFileManagerProp ?? formContext?.setShowFileManager ?? null;
 
   if (!onShowFileManager) {
-    throw new Error(
+    throw internalError(
       'ProductImagesTabContent requires `onShowFileManager` prop when used outside ProductFormContext.'
     );
   }

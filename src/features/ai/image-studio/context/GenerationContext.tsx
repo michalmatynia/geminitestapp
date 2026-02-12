@@ -94,6 +94,42 @@ const buildPendingLandingSlots = (runId: string, expectedOutputs: number): Gener
   }));
 };
 
+type PersistedImageStudioRunRecord = ImageStudioRunRecord & {
+  request?: {
+    prompt?: string;
+    asset?: {
+      id?: string;
+      filepath?: string;
+    };
+    mask?: {
+      type?: string;
+      invert?: boolean;
+      feather?: number;
+      polygons?: Array<Array<{ x: number; y: number }>>;
+      points?: Array<{ x: number; y: number }>;
+    } | null;
+  };
+};
+
+const buildLandingSlotsFromRun = (run: PersistedImageStudioRunRecord): GenerationLandingSlot[] => {
+  const outputs = Array.isArray(run.outputs) ? run.outputs : [];
+  const slotCount = Math.max(normalizeExpectedOutputs(run.expectedOutputs, 1), outputs.length);
+  return Array.from({ length: slotCount }, (_value, index) => {
+    const output = outputs[index] ?? null;
+    const status: GenerationLandingSlot['status'] = output
+      ? 'completed'
+      : run.status === 'failed' || run.status === 'completed'
+        ? 'failed'
+        : 'pending';
+    return {
+      id: `${run.id}:${index + 1}`,
+      index: index + 1,
+      status,
+      output,
+    };
+  });
+};
+
 // ── Provider ─────────────────────────────────────────────────────────────────
 
 export function GenerationProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
@@ -190,20 +226,12 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
         const expectedOutputs = normalizeExpectedOutputs(run.expectedOutputs, params.expectedOutputs);
         if (run.status === 'completed') {
           const outputs = Array.isArray(run.outputs) ? run.outputs : [];
-          const slotCount = Math.max(expectedOutputs, outputs.length);
 
           setRunOutputs(outputs);
-          setLandingSlots(
-            Array.from({ length: slotCount }, (_value, index) => {
-              const output = outputs[index] ?? null;
-              return {
-                id: `${run.id}:${index + 1}`,
-                index: index + 1,
-                status: output ? 'completed' : 'failed',
-                output,
-              } satisfies GenerationLandingSlot;
-            })
-          );
+          setLandingSlots(buildLandingSlotsFromRun({
+            ...run,
+            expectedOutputs,
+          }));
 
           const record: GenerationRecord = {
             id: `gen_${Date.now().toString(36)}`,
@@ -314,6 +342,92 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
     },
     [cancelCurrentPoll, toast]
   );
+
+  const pollRunUntilFinishedRef = useRef(pollRunUntilFinished);
+  useEffect(() => {
+    pollRunUntilFinishedRef.current = pollRunUntilFinished;
+  }, [pollRunUntilFinished]);
+
+  useEffect(() => {
+    cancelCurrentPoll();
+
+    if (!projectId) {
+      setRunOutputs([]);
+      setLandingSlots([]);
+      setActiveRunId(null);
+      setActiveRunStatus(null);
+      setActiveRunError(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const hydrateLatestRun = async (): Promise<void> => {
+      try {
+        const response = await api.get<{ runs?: PersistedImageStudioRunRecord[] }>(
+          `/api/image-studio/runs?projectId=${encodeURIComponent(projectId)}&limit=1`
+        );
+        if (cancelled) return;
+
+        const latestRun = Array.isArray(response.runs) ? response.runs[0] ?? null : null;
+        if (!latestRun) {
+          setRunOutputs([]);
+          setLandingSlots([]);
+          setActiveRunId(null);
+          setActiveRunStatus(null);
+          setActiveRunError(null);
+          return;
+        }
+
+        setRunOutputs(Array.isArray(latestRun.outputs) ? latestRun.outputs : []);
+        setLandingSlots(buildLandingSlotsFromRun(latestRun));
+        setActiveRunId(latestRun.id);
+        setActiveRunStatus(latestRun.status);
+        setActiveRunError(latestRun.errorMessage ?? null);
+
+        if (latestRun.status !== 'queued' && latestRun.status !== 'running') {
+          return;
+        }
+
+        const requestMask = latestRun.request?.mask;
+        const maskShapeCount = requestMask?.type === 'polygons'
+          ? (Array.isArray(requestMask.polygons) ? requestMask.polygons.length : 0)
+          : requestMask?.type === 'polygon'
+            ? (Array.isArray(requestMask.points) && requestMask.points.length >= 3 ? 1 : 0)
+            : 0;
+
+        const submittedMaskInvert = requestMask?.type === 'polygons'
+          ? Boolean(requestMask.invert)
+          : false;
+        const submittedMaskFeather = requestMask?.type === 'polygons'
+          ? Number(requestMask.feather ?? 0) || 0
+          : 0;
+
+        void pollRunUntilFinishedRef.current({
+          runId: latestRun.id,
+          resolvedPrompt: latestRun.request?.prompt ?? '',
+          maskShapeCount,
+          submittedMaskInvert,
+          submittedMaskFeather,
+          submittedSlotId: latestRun.request?.asset?.id ?? '',
+          submittedSlotName:
+            latestRun.request?.asset?.id ??
+            latestRun.request?.asset?.filepath ??
+            latestRun.id,
+          expectedOutputs: normalizeExpectedOutputs(latestRun.expectedOutputs, 1),
+        });
+      } catch {
+        // Keep current UI state on hydration failures.
+      }
+    };
+
+    void hydrateLatestRun();
+
+    return () => {
+      cancelled = true;
+      cancelCurrentPoll();
+    };
+  }, [projectId, cancelCurrentPoll]);
 
   const handleRunGeneration = useCallback(() => {
     if (!projectId || !workingSlot) {

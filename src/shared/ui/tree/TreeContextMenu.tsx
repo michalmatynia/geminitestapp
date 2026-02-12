@@ -32,6 +32,7 @@ export function TreeContextMenu({
 }: TreeContextMenuProps): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const anchorRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [mounted, setMounted] = useState(false);
   const hasItems = useMemo(
@@ -78,22 +79,23 @@ export function TreeContextMenu({
     if (!open || !menuRef.current) return;
     const menu = menuRef.current;
     const rect = menu.getBoundingClientRect();
-    let nextX = position.x + (align === 'center' ? -rect.width / 2 : align === 'end' ? -rect.width : 0);
-    let nextY = position.y + sideOffset;
+    const anchor = anchorRef.current;
+    let nextX = anchor.x + (align === 'center' ? -rect.width / 2 : align === 'end' ? -rect.width : 0);
+    let nextY = anchor.y + sideOffset;
 
     if (nextX + rect.width > window.innerWidth) {
       nextX = Math.max(8, window.innerWidth - rect.width - 8);
     }
     if (nextX < 8) nextX = 8;
     if (nextY + rect.height > window.innerHeight) {
-      nextY = Math.max(8, position.y - rect.height - sideOffset);
+      nextY = Math.max(8, anchor.y - rect.height - sideOffset);
     }
     if (nextY < 8) nextY = 8;
 
     if (nextX !== position.x || nextY !== position.y) {
       setPosition({ x: nextX, y: nextY });
     }
-  }, [open, align, sideOffset, position.x, position.y]);
+  }, [open, align, sideOffset]);
 
   if (!hasItems) {
     return <>{children}</>;
@@ -142,7 +144,9 @@ export function TreeContextMenu({
         className={cn('contents', className)}
         onContextMenu={(event: React.MouseEvent): void => {
           event.preventDefault();
-          setPosition({ x: event.clientX, y: event.clientY });
+          const nextAnchor = { x: event.clientX, y: event.clientY };
+          anchorRef.current = nextAnchor;
+          setPosition(nextAnchor);
           setOpen(true);
         }}
       >

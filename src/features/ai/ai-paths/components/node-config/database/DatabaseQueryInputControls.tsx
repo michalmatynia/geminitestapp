@@ -2,70 +2,41 @@
 
 import React from 'react';
 
-import type { DatabaseAction, DatabaseActionCategory, DbQueryConfig } from '@/features/ai/ai-paths/lib';
+import type { DatabaseAction, DatabaseActionCategory } from '@/features/ai/ai-paths/lib';
 import { Button, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
-import type { QueryValidationResult } from './query-utils';
+import { useDatabaseQueryInputControlsContext } from './DatabaseQueryInputControlsContext';
 
-export type DatabaseQueryInputControlsProps = {
-  provider: DbQueryConfig['provider'];
-  actionCategory: DatabaseActionCategory;
-  action: DatabaseAction;
-  actionCategoryOptions: Array<{ value: DatabaseActionCategory; label: string }>;
-  actionOptions: Array<{ value: DatabaseAction; label: string }>;
-  queryTemplateValue: string;
-  queryPlaceholder: string;
-  showFilterInput?: boolean;
-  filterTemplateValue?: string;
-  filterPlaceholder?: string;
-  onFilterChange?: (value: string) => void;
-  runDry?: boolean;
-  onToggleRunDry?: () => void;
-  queryValidation: QueryValidationResult | null;
-  queryFormatterEnabled: boolean;
-  queryValidatorEnabled: boolean;
-  testQueryLoading: boolean;
-  queryTemplateRef?: React.RefObject<HTMLTextAreaElement | null>;
-  onActionCategoryChange: (value: DatabaseActionCategory) => void;
-  onActionChange: (value: DatabaseAction) => void;
-  onFormatClick: () => void;
-  onFormatContextMenu: (event: React.MouseEvent<HTMLButtonElement>) => void;
-  onToggleValidator: () => void;
-  onRunQuery: () => void;
-  onQueryChange: (value: string) => void;
-  onQueryFocus?: () => void;
-  onFilterFocus?: () => void;
-};
-
-export function DatabaseQueryInputControls({
-  provider,
-  actionCategory,
-  action,
-  actionCategoryOptions,
-  actionOptions,
-  queryTemplateValue,
-  queryPlaceholder,
-  showFilterInput,
-  filterTemplateValue,
-  filterPlaceholder,
-  onFilterChange,
-  runDry,
-  onToggleRunDry,
-  queryValidation,
-  queryFormatterEnabled,
-  queryValidatorEnabled,
-  testQueryLoading,
-  queryTemplateRef,
-  onActionCategoryChange,
-  onActionChange,
-  onFormatClick,
-  onFormatContextMenu,
-  onToggleValidator,
-  onRunQuery,
-  onQueryChange,
-  onQueryFocus,
-  onFilterFocus,
-}: DatabaseQueryInputControlsProps): React.JSX.Element {
+export function DatabaseQueryInputControls(): React.JSX.Element {
+  const {
+    provider,
+    actionCategory,
+    action,
+    actionCategoryOptions,
+    actionOptions,
+    queryTemplateValue,
+    queryPlaceholder,
+    showFilterInput,
+    filterTemplateValue,
+    filterPlaceholder,
+    onFilterChange,
+    runDry,
+    onToggleRunDry,
+    queryValidation,
+    queryFormatterEnabled,
+    queryValidatorEnabled,
+    testQueryLoading,
+    queryTemplateRef,
+    onActionCategoryChange,
+    onActionChange,
+    onFormatClick,
+    onFormatContextMenu,
+    onToggleValidator,
+    onRunQuery,
+    onQueryChange,
+    onQueryFocus,
+    onFilterFocus,
+  } = useDatabaseQueryInputControlsContext();
   const isPrismaProvider = provider === 'prisma';
   const filterLabel = isPrismaProvider ? 'Where' : 'Filter';
   const filterHint = isPrismaProvider ? 'Matches records' : 'Matches documents';

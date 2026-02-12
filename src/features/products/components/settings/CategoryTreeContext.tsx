@@ -3,6 +3,7 @@
 import { createContext, useContext } from 'react';
 
 import type { ProductCategoryWithChildren } from '@/features/products/types';
+import { internalError } from '@/shared/errors/app-error';
 
 export type CategoryDropTarget = {
   parentId: string | null;
@@ -40,7 +41,7 @@ export const CategoryTreeProvider = ({
 export const useCategoryTreeContext = (): CategoryTreeContextValue => {
   const context = useContext(CategoryTreeContext);
   if (!context) {
-    throw new Error('useCategoryTreeContext must be used within CategoryTreeProvider');
+    throw internalError('useCategoryTreeContext must be used within CategoryTreeProvider');
   }
   return context;
 };

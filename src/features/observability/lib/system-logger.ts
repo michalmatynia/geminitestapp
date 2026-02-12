@@ -25,7 +25,7 @@ type CreateSystemLogFn = (input: {
 type NotifyCriticalErrorFn = (
   record: SystemLogRecord,
   shouldNotify: boolean,
-) => Promise<void>;
+) => Promise<unknown>;
 
 const loadCreateSystemLog = async (): Promise<CreateSystemLogFn | null> => {
   if (typeof window !== 'undefined') return null;

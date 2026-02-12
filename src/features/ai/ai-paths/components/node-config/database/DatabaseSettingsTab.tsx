@@ -5,20 +5,19 @@ import { DB_COLLECTION_OPTIONS } from '@/features/ai/ai-paths/lib';
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
-import { useDatabaseSettingsTabContext } from './DatabaseSettingsTabContext';
+import { useDatabaseConstructorContext } from './DatabaseConstructorContext';
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
-export function DatabaseSettingsTab(): React.JSX.Element {
-  const { queryEditor, availablePorts, bundleKeys, operation } = useDatabaseSettingsTabContext();
+export function DatabaseSettingsTab(): React.JSX.Element | null {
+  const { availablePorts, bundleKeys, operation } = useDatabaseConstructorContext();
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
   if (!selectedNode) return null;
-  const databaseConfig: DatabaseConfig = selectedNode.config?.database ?? {};
+  const databaseConfig: DatabaseConfig =
+    (selectedNode.config?.database as DatabaseConfig) ?? { operation: 'query' };
   const writeSource = databaseConfig.writeSource ?? 'bundle';
 
   return (
     <div className='space-y-4'>
-      {queryEditor}
-
       {operation === 'update' && !databaseConfig.useMongoActions && (
         <div className='space-y-4'>
           <div>

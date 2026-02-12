@@ -1,28 +1,19 @@
 'use client';
 
 import type {
-  ProductValidationDenyBehavior,
-  ProductValidationInstanceDenyBehaviorMap,
   ProductValidationInstanceScope,
 } from '@/shared/types/domain/products';
 import { SectionPanel, UnifiedSelect } from '@/shared/ui';
 
 import { INSTANCE_SCOPE_LABELS } from './constants';
+import { useValidatorSettingsContext } from './ValidatorSettingsContext';
 
-type ValidatorInstanceBehaviorPanelProps = {
-  instanceDenyBehavior: ProductValidationInstanceDenyBehaviorMap;
-  disabled: boolean;
-  onScopeChange: (
-    scope: ProductValidationInstanceScope,
-    value: ProductValidationDenyBehavior
-  ) => void;
-};
-
-export function ValidatorInstanceBehaviorPanel({
-  instanceDenyBehavior,
-  disabled,
-  onScopeChange,
-}: ValidatorInstanceBehaviorPanelProps): React.JSX.Element {
+export function ValidatorInstanceBehaviorPanel(): React.JSX.Element {
+  const {
+    instanceDenyBehavior,
+    settingsBusy,
+    handleInstanceBehaviorChange,
+  } = useValidatorSettingsContext();
   return (
     <SectionPanel variant='subtle' className='p-4'>
       <div className='space-y-1'>
@@ -41,13 +32,16 @@ export function ValidatorInstanceBehaviorPanel({
                 <UnifiedSelect
                   value={instanceDenyBehavior[scope]}
                   onValueChange={(value: string): void => {
-                    onScopeChange(scope, value === 'ask_again' ? 'ask_again' : 'mute_session');
+                    void handleInstanceBehaviorChange(
+                      scope,
+                      value === 'ask_again' ? 'ask_again' : 'mute_session'
+                    );
                   }}
                   options={[
                     { value: 'mute_session', label: 'Stop For This Session' },
                     { value: 'ask_again', label: 'Ask Again Next Validation' },
                   ]}
-                  disabled={disabled}
+                  disabled={settingsBusy}
                 />
               </div>
             </div>

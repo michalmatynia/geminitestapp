@@ -3,18 +3,10 @@
 import { SectionPanel } from '@/shared/ui';
 
 import { ToggleButton } from './ToggleButton';
+import { useValidatorSettingsContext } from './ValidatorSettingsContext';
 
-type ValidatorDefaultPanelProps = {
-  enabledByDefault: boolean;
-  disabled: boolean;
-  onToggle: () => void;
-};
-
-export function ValidatorDefaultPanel({
-  enabledByDefault,
-  disabled,
-  onToggle,
-}: ValidatorDefaultPanelProps): React.JSX.Element {
+export function ValidatorDefaultPanel(): React.JSX.Element {
+  const { enabledByDefault, settingsBusy, handleToggleDefault } = useValidatorSettingsContext();
   return (
     <SectionPanel variant='subtle' className='p-4'>
       <div className='flex flex-wrap items-center justify-between gap-3'>
@@ -24,7 +16,13 @@ export function ValidatorDefaultPanel({
             Controls whether validator checks are ON by default in Product Create/Edit forms.
           </p>
         </div>
-        <ToggleButton enabled={enabledByDefault} disabled={disabled} onClick={onToggle} />
+        <ToggleButton
+          enabled={enabledByDefault}
+          disabled={settingsBusy}
+          onClick={() => {
+            void handleToggleDefault();
+          }}
+        />
       </div>
     </SectionPanel>
   );

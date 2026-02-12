@@ -59,17 +59,20 @@ type ActionResult = {
 };
 
 import { useAiPathConfig } from '../AiPathConfigContext';
-import { DatabaseConstructorContextProvider } from './database/DatabaseConstructorContext';
+import {
+  DatabaseConstructorContextProvider,
+  type DatabaseConstructorContextValue,
+} from './database/DatabaseConstructorContext';
 import { DatabaseConstructorTab } from './database/DatabaseConstructorTab';
 import { DatabasePresetsTab } from './database/DatabasePresetsTab';
 import { DatabasePresetsTabContextProvider } from './database/DatabasePresetsTabContext';
 import { DatabaseQueryInputControls } from './database/DatabaseQueryInputControls';
+import { DatabaseQueryInputControlsContextProvider, type DatabaseQueryInputControlsContextValue } from './database/DatabaseQueryInputControlsContext';
 import { DatabaseQueryValidatorPanel } from './database/DatabaseQueryValidatorPanel';
 import { DatabaseQueryValidatorPanelContextProvider } from './database/DatabaseQueryValidatorPanelContext';
 import { DatabaseSaveQueryPresetDialog } from './database/DatabaseSaveQueryPresetDialog';
 import { DatabaseSaveQueryPresetDialogContextProvider } from './database/DatabaseSaveQueryPresetDialogContext';
 import { DatabaseSettingsTab } from './database/DatabaseSettingsTab';
-import { DatabaseSettingsTabContextProvider } from './database/DatabaseSettingsTabContext';
 import {
   buildJsonQueryValidation,
   buildMongoQueryValidation,
@@ -2008,42 +2011,39 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
     }
   };
   // Shared query input controls (used in both Query and Constructor tabs)
-  const queryInputControls = (
-    <DatabaseQueryInputControls
-      provider={resolvedProvider}
-      actionCategory={actionCategory}
-      action={action}
-      actionCategoryOptions={[...actionCategoryOptions]}
-      actionOptions={[...actionOptions]}
-      queryTemplateValue={activeQueryValue}
-      queryPlaceholder={activeQueryPlaceholder}
-      showFilterInput={isUpdateAction}
-      filterTemplateValue={queryTemplateValue}
-      filterPlaceholder={queryPlaceholder}
-      onFilterChange={handleFilterChange}
-      runDry={runDry}
-      onToggleRunDry={() =>
-        updateSelectedNodeConfig({
-          database: {
-            ...databaseConfig,
-            dryRun: !runDry,
-          },
-        })
-      }
-      queryValidation={queryValidation}
-      queryFormatterEnabled={queryFormatterEnabled}
-      queryValidatorEnabled={queryValidatorEnabled}
-      testQueryLoading={testQueryLoading}
-      queryTemplateRef={queryTemplateRef}
-      onActionCategoryChange={(value: DatabaseActionCategory) => handleActionCategoryChange(value)}
-      onActionChange={(value: DatabaseAction) => handleActionChange(value)}
-      onFormatClick={handleFormatClick}
-      onFormatContextMenu={handleFormatContextMenu}
-      onToggleValidator={handleToggleValidator}
-      onRunQuery={() => void handleRunQuery()}
-      onQueryChange={handleQueryChange}
-    />
-  );
+  const queryInputControlsContextValue: DatabaseQueryInputControlsContextValue = {
+    provider: resolvedProvider,
+    actionCategory,
+    action,
+    actionCategoryOptions: [...actionCategoryOptions],
+    actionOptions: [...actionOptions],
+    queryTemplateValue: activeQueryValue,
+    queryPlaceholder: activeQueryPlaceholder,
+    showFilterInput: isUpdateAction,
+    filterTemplateValue: queryTemplateValue,
+    filterPlaceholder: queryPlaceholder,
+    onFilterChange: handleFilterChange,
+    runDry,
+    onToggleRunDry: () =>
+      updateSelectedNodeConfig({
+        database: {
+          ...databaseConfig,
+          dryRun: !runDry,
+        },
+      }),
+    queryValidation,
+    queryFormatterEnabled,
+    queryValidatorEnabled,
+    testQueryLoading,
+    queryTemplateRef,
+    onActionCategoryChange: (value: DatabaseActionCategory) => handleActionCategoryChange(value),
+    onActionChange: (value: DatabaseAction) => handleActionChange(value),
+    onFormatClick: handleFormatClick,
+    onFormatContextMenu: handleFormatContextMenu,
+    onToggleValidator: handleToggleValidator,
+    onRunQuery: () => void handleRunQuery(),
+    onQueryChange: handleQueryChange,
+  };
   const liveDebugPayload = (runtimeState.outputs[selectedNode.id] as
                   | { debugPayload?: unknown }
                   | undefined)?.debugPayload;
@@ -2060,7 +2060,7 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
   const queryEditor = (
     <div className='space-y-4 rounded-md border border-border bg-card/40 p-3'>
       <div>
-        {queryInputControls}
+        <DatabaseQueryInputControls />
         {/* Query Result Display */}
         {testQueryResult && (
           <div className='mt-3 space-y-2'>
@@ -2507,156 +2507,151 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
     </div>
   );
 
+  const constructorContextValue: DatabaseConstructorContextValue = {
+    pendingAiQuery,
+    setPendingAiQuery,
+    aiQueries,
+    setAiQueries,
+    selectedAiQueryId,
+    setSelectedAiQueryId,
+    presetOptions,
+    applyDatabasePreset,
+    openSaveQueryPresetModal,
+    databaseConfig,
+    queryConfig,
+    operation,
+    queryTemplateValue: activeQueryValue,
+    queryTemplateRef,
+    sampleState,
+    parsedSampleError: parsedSample.error,
+    updateQueryConfig,
+    connectedPlaceholders,
+    hasSchemaConnection:
+      schemaConnection.hasSchemaConnection ||
+      Boolean(schemaSnapshot?.collections?.length),
+    fetchedDbSchema: effectiveSchema,
+    schemaMatrix,
+    onSyncSchema: handleSyncSchema,
+    schemaSyncing,
+    schemaLoading,
+    mapInputsToTargets,
+    bundleKeys,
+    aiPromptRef,
+    mappings,
+    updateMapping,
+    removeMapping,
+    addMapping,
+    availablePorts,
+    uniqueTargetPathOptions,
+  };
+
   return (
-    <>
-      <Tabs
-        value={databaseTab}
-        onValueChange={(value: string) => setDatabaseTab(value as 'settings' | 'constructor' | 'presets')}
-        className='space-y-4'
-      >
-        <div className='flex flex-wrap items-center justify-between gap-2'>
-          <TabsList className='justify-start border border-border bg-card/60'>
-            <TabsTrigger value='settings'>Query</TabsTrigger>
-            <TabsTrigger value='constructor'>Constructor</TabsTrigger>
-            <TabsTrigger value='presets'>Presets</TabsTrigger>
-          </TabsList>
-          <div
-            className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-wide ${
-              databaseConfig.useMongoActions
-                ? 'border-emerald-700/60 bg-emerald-500/10 text-emerald-200'
-                : 'border-amber-700/60 bg-amber-500/10 text-amber-200'
-            }`}
-            title={
-              databaseConfig.useMongoActions
-                ? `${resolvedProvider.toUpperCase()} action mode enabled`
-                : 'Mappings mode (manual field mappings)'
-            }
+    <DatabaseQueryInputControlsContextProvider value={queryInputControlsContextValue}>
+      <DatabaseConstructorContextProvider value={constructorContextValue}>
+        <>
+          <Tabs
+            value={databaseTab}
+            onValueChange={(value: string) => setDatabaseTab(value as 'settings' | 'constructor' | 'presets')}
+            className='space-y-4'
           >
-                        Action Mode: {databaseConfig.useMongoActions ? 'On' : 'Off'}
-          </div>
-        </div>
-        <div className='rounded-md border border-border bg-card/50 p-3'>
-          <div className='flex items-center justify-between'>
-            <Label className='text-xs text-gray-400'>
-                          Last Runtime Debug
-              {debugRunAt
-                ? ` • Saved ${new Date(debugRunAt).toLocaleString()}`
-                : ''}
-            </Label>
-            <Button
-              type='button'
-              className='h-6 rounded-md border px-2 text-[10px] text-gray-400 hover:bg-muted/50 disabled:opacity-50'
-              disabled={!hasDebugPayload}
-              onClick={() => {
-                if (!hasDebugPayload) return;
-                try {
-                  const payload = JSON.stringify(debugPayload, null, 2);
-                  void navigator.clipboard.writeText(payload);
-                  toast('Debug payload copied.', { variant: 'success' });
-                } catch {
-                  toast('Failed to copy debug payload.', { variant: 'error' });
+            <div className='flex flex-wrap items-center justify-between gap-2'>
+              <TabsList className='justify-start border border-border bg-card/60'>
+                <TabsTrigger value='settings'>Query</TabsTrigger>
+                <TabsTrigger value='constructor'>Constructor</TabsTrigger>
+                <TabsTrigger value='presets'>Presets</TabsTrigger>
+              </TabsList>
+              <div
+                className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-wide ${
+                  databaseConfig.useMongoActions
+                    ? 'border-emerald-700/60 bg-emerald-500/10 text-emerald-200'
+                    : 'border-amber-700/60 bg-amber-500/10 text-amber-200'
+                }`}
+                title={
+                  databaseConfig.useMongoActions
+                    ? `${resolvedProvider.toUpperCase()} action mode enabled`
+                    : 'Mappings mode (manual field mappings)'
                 }
-              }}
-            >
-                          Copy
-            </Button>
-          </div>
-          <Textarea
-            className='mt-2 min-h-[110px] w-full rounded-md border border-amber-800/50 bg-card/70 font-mono text-xs text-amber-100'
-            value={hasDebugPayload ? JSON.stringify(debugPayload, null, 2) : ''}
-            readOnly
-            placeholder='Run the path trigger to capture debug output...'
-          />
-        </div>
-        <TabsContent value='settings'>
-          <DatabaseSettingsTabContextProvider
+              >
+                            Action Mode: {databaseConfig.useMongoActions ? 'On' : 'Off'}
+              </div>
+            </div>
+            <div className='rounded-md border border-border bg-card/50 p-3'>
+              <div className='flex items-center justify-between'>
+                <Label className='text-xs text-gray-400'>
+                              Last Runtime Debug
+                  {debugRunAt
+                    ? ` • Saved ${new Date(debugRunAt).toLocaleString()}`
+                    : ''}
+                </Label>
+                <Button
+                  type='button'
+                  className='h-6 rounded-md border px-2 text-[10px] text-gray-400 hover:bg-muted/50 disabled:opacity-50'
+                  disabled={!hasDebugPayload}
+                  onClick={() => {
+                    if (!hasDebugPayload) return;
+                    try {
+                      const payload = JSON.stringify(debugPayload, null, 2);
+                      void navigator.clipboard.writeText(payload);
+                      toast('Debug payload copied.', { variant: 'success' });
+                    } catch {
+                      toast('Failed to copy debug payload.', { variant: 'error' });
+                    }
+                  }}
+                >
+                              Copy
+                </Button>
+              </div>
+              <Textarea
+                className='mt-2 min-h-[110px] w-full rounded-md border border-amber-800/50 bg-card/70 font-mono text-xs text-amber-100'
+                value={hasDebugPayload ? JSON.stringify(debugPayload, null, 2) : ''}
+                readOnly
+                placeholder='Run the path trigger to capture debug output...'
+              />
+            </div>
+            <TabsContent value='settings'>
+              <div className='space-y-4'>
+                {queryEditor}
+                <DatabaseSettingsTab />
+              </div>
+            </TabsContent>
+            <TabsContent value='constructor'>
+              <DatabaseConstructorTab />
+            </TabsContent>
+            <TabsContent value='presets'>
+              <DatabasePresetsTabContextProvider
+                value={{
+                  builtInPresets: presetOptions,
+                  onApplyBuiltInPreset: applyDatabasePreset,
+                  onRenameQueryPreset: handleRenameQueryPreset,
+                  onDeleteQueryPreset: handleDeleteQueryPresetById,
+                }}
+              >
+                <DatabasePresetsTab />
+              </DatabasePresetsTabContextProvider>
+            </TabsContent>
+          </Tabs>
+          <DatabaseSaveQueryPresetDialogContextProvider
             value={{
-              queryEditor,
-              availablePorts,
-              bundleKeys,
-              operation,
+              open: saveQueryPresetModalOpen,
+              onOpenChange: (open: boolean) => {
+                if (!open) {
+                  closeSaveQueryPresetModal();
+                  return;
+                }
+                setSaveQueryPresetModalOpen(true);
+              },
+              newQueryPresetName,
+              setNewQueryPresetName,
+              queryTemplateValue,
+              onCancel: closeSaveQueryPresetModal,
+              onSave: () => void handleSaveQueryPresetFromModal(),
             }}
           >
-            <DatabaseSettingsTab />
-          </DatabaseSettingsTabContextProvider>
-        </TabsContent>
-        <TabsContent value='constructor'>
-          <DatabaseConstructorContextProvider
-            value={{
-              queryInputControls,
-              pendingAiQuery,
-              setPendingAiQuery,
-              aiQueries,
-              setAiQueries,
-              selectedAiQueryId,
-              setSelectedAiQueryId,
-              presetOptions,
-              applyDatabasePreset,
-              openSaveQueryPresetModal,
-              databaseConfig,
-              queryConfig,
-              operation,
-              queryTemplateValue: activeQueryValue,
-              queryTemplateRef,
-              sampleState,
-              parsedSampleError: parsedSample.error,
-              updateQueryConfig,
-              connectedPlaceholders,
-              hasSchemaConnection:
-                schemaConnection.hasSchemaConnection ||
-                Boolean(schemaSnapshot?.collections?.length),
-              fetchedDbSchema: effectiveSchema,
-              schemaMatrix,
-              onSyncSchema: handleSyncSchema,
-              schemaSyncing,
-              schemaLoading,
-              mapInputsToTargets,
-              bundleKeys,
-              aiPromptRef,
-              mappings,
-              updateMapping,
-              removeMapping,
-              addMapping,
-              availablePorts,
-              uniqueTargetPathOptions,
-            }}
-          >
-            <DatabaseConstructorTab />
-          </DatabaseConstructorContextProvider>
-        </TabsContent>
-        <TabsContent value='presets'>
-          <DatabasePresetsTabContextProvider
-            value={{
-              builtInPresets: presetOptions,
-              onApplyBuiltInPreset: applyDatabasePreset,
-              onRenameQueryPreset: handleRenameQueryPreset,
-              onDeleteQueryPreset: handleDeleteQueryPresetById,
-            }}
-          >
-            <DatabasePresetsTab />
-          </DatabasePresetsTabContextProvider>
-        </TabsContent>
-      </Tabs>
-      <DatabaseSaveQueryPresetDialogContextProvider
-        value={{
-          open: saveQueryPresetModalOpen,
-          onOpenChange: (open: boolean) => {
-            if (!open) {
-              closeSaveQueryPresetModal();
-              return;
-            }
-            setSaveQueryPresetModalOpen(true);
-          },
-          newQueryPresetName,
-          setNewQueryPresetName,
-          queryTemplateValue,
-          onCancel: closeSaveQueryPresetModal,
-          onSave: () => void handleSaveQueryPresetFromModal(),
-        }}
-      >
-        <DatabaseSaveQueryPresetDialog />
-      </DatabaseSaveQueryPresetDialogContextProvider>
-    </>
+            <DatabaseSaveQueryPresetDialog />
+          </DatabaseSaveQueryPresetDialogContextProvider>
+        </>
+      </DatabaseConstructorContextProvider>
+    </DatabaseQueryInputControlsContextProvider>
   );
             
 }

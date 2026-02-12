@@ -30,6 +30,7 @@ import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import { Button, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Input, Dialog, DialogContent, DialogHeader, DialogTitle, Tooltip } from '@/shared/ui';
 
 import { useDatabaseConstructorContext } from './DatabaseConstructorContext';
+import { DatabaseQueryInputControls } from './DatabaseQueryInputControls';
 import { PlaceholderMatrixDialog, type PlaceholderGroup, type PlaceholderTarget } from './PlaceholderMatrixDialog';
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -106,9 +107,8 @@ const formatCollectionLabel = (
 ): string =>
   isMulti && collection.provider ? `${collection.name} (${collection.provider})` : collection.name;
 
-export function DatabaseConstructorTab(): React.JSX.Element {
+export function DatabaseConstructorTab(): React.JSX.Element | null {
   const {
-    queryInputControls,
     pendingAiQuery,
     setPendingAiQuery,
     aiQueries,
@@ -556,7 +556,7 @@ export function DatabaseConstructorTab(): React.JSX.Element {
   return (
     <div className='space-y-4 rounded-md border border-border bg-card/40 p-3'>
       <div onFocusCapture={(): void => setPlaceholderTarget('query')}>
-        {queryInputControls}
+        <DatabaseQueryInputControls />
       </div>
 
       {pendingAiQuerySection}

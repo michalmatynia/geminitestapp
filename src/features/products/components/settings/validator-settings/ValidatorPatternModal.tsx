@@ -16,7 +16,6 @@ import type {
   ProductValidationDenyBehavior,
   ProductValidationLaunchOperator,
   ProductValidationRuntimeType,
-  ProductValidationPattern,
 } from '@/shared/types/domain/products';
 import {
   Button,
@@ -30,50 +29,33 @@ import {
 
 import { PATTERN_SCOPE_OPTIONS } from './constants';
 import { ToggleButton } from './ToggleButton';
+import { useValidatorSettingsContext } from './ValidatorSettingsContext';
 
 import type { PatternFormData, ReplacementMode } from './types';
 
-type ValidatorPatternModalProps = {
-  showModal: boolean;
-  editingPattern: ProductValidationPattern | null;
-  formData: PatternFormData;
-  setFormData: React.Dispatch<React.SetStateAction<PatternFormData>>;
-  replacementFieldOptions: Array<{ value: string; label: string }>;
-  sourceFieldOptions: Array<{ value: string; label: string }>;
-  createPatternPending: boolean;
-  updatePatternPending: boolean;
-  onClose: () => void;
-  onSave: () => void;
-  isLocaleTarget: (target: PatternFormData['target']) => boolean;
-  getReplacementFieldsForTarget: (target: PatternFormData['target']) => string[];
-  getSourceFieldOptionsForTarget: (
-    target: PatternFormData['target']
-  ) => Array<{ value: string; label: string }>;
-  normalizeReplacementFields: (fields: string[] | null | undefined) => string[];
-};
-
-export function ValidatorPatternModal({
-  showModal,
-  editingPattern,
-  formData,
-  setFormData,
-  replacementFieldOptions,
-  sourceFieldOptions,
-  createPatternPending,
-  updatePatternPending,
-  onClose,
-  onSave,
-  isLocaleTarget,
-  getReplacementFieldsForTarget,
-  getSourceFieldOptionsForTarget,
-  normalizeReplacementFields,
-}: ValidatorPatternModalProps): React.JSX.Element | null {
+export function ValidatorPatternModal(): React.JSX.Element | null {
+  const {
+    showModal,
+    editingPattern,
+    formData,
+    setFormData,
+    replacementFieldOptions,
+    sourceFieldOptions,
+    createPatternPending,
+    updatePatternPending,
+    closeModal,
+    handleSave,
+    isLocaleTarget,
+    getReplacementFieldsForTarget,
+    getSourceFieldOptionsForTarget,
+    normalizeReplacementFields,
+  } = useValidatorSettingsContext();
   if (!showModal) return null;
 
   return (
     <SharedModal
       open={showModal}
-      onClose={onClose}
+      onClose={closeModal}
       title={editingPattern ? 'Edit Validator Pattern' : 'Create Validator Pattern'}
       size='lg'
     >
@@ -1120,14 +1102,16 @@ export function ValidatorPatternModal({
           <Button
             type='button'
             className='rounded-md border border-border px-3 py-2 text-sm text-gray-300 hover:bg-muted/50'
-            onClick={onClose}
+            onClick={closeModal}
           >
             Cancel
           </Button>
           <Button
             type='button'
             className='rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200'
-            onClick={onSave}
+            onClick={() => {
+              void handleSave();
+            }}
             disabled={createPatternPending || updatePatternPending}
           >
             {createPatternPending || updatePatternPending ? 'Saving...' : 'Save'}

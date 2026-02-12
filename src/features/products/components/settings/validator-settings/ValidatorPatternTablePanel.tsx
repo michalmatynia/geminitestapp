@@ -22,79 +22,85 @@ import { Button, EmptyState, Input, Label, SectionPanel } from '@/shared/ui';
 
 import { INSTANCE_SCOPE_LABELS } from './constants';
 import { ToggleButton } from './ToggleButton';
+import { useValidatorSettingsContext } from './ValidatorSettingsContext';
 
-import type { SequenceGroupDraft, SequenceGroupView } from './types';
+import type { SequenceGroupDraft } from './types';
 
-type ValidatorPatternTablePanelProps = {
-  summary: { total: number; enabled: number };
-  loading: boolean;
-  patterns: ProductValidationPattern[];
-  orderedPatterns: ProductValidationPattern[];
-  patternActionsPending: boolean;
-  reorderPending: boolean;
-  createPatternPending: boolean;
-  updatePatternPending: boolean;
-  draggedPatternId: string | null;
-  dragOverPatternId: string | null;
-  setDraggedPatternId: (value: string | null) => void;
-  setDragOverPatternId: (value: string | null) => void;
-  sequenceGroups: Map<string, SequenceGroupView>;
-  firstPatternIdByGroup: Map<string, string>;
-  getGroupDraft: (groupId: string) => SequenceGroupDraft;
-  setGroupDrafts: React.Dispatch<React.SetStateAction<Record<string, SequenceGroupDraft>>>;
-  getSequenceGroupId: (pattern: ProductValidationPattern) => string | null;
-  formatReplacementFields: (fields: string[] | null | undefined) => string;
-  openCreate: () => void;
-  onCreateSkuAutoIncrementSequence: () => void;
-  onCreateLatestPriceStockSequence: () => void;
-  onCreateNameLengthMirrorPattern: () => void;
-  onCreateNameCategoryMirrorPattern: () => void;
-  onCreateNameMirrorPolishSequence: () => void;
-  onSaveSequenceGroup: (groupId: string) => void;
-  onUngroup: (groupId: string) => void;
-  onPatternDrop: (
+export function ValidatorPatternTablePanel(): React.JSX.Element {
+  const {
+    summary,
+    loading,
+    patterns,
+    orderedPatterns,
+    patternActionsPending,
+    reorderPending,
+    createPatternPending,
+    updatePatternPending,
+    draggedPatternId,
+    dragOverPatternId,
+    setDraggedPatternId,
+    setDragOverPatternId,
+    sequenceGroups,
+    firstPatternIdByGroup,
+    getGroupDraft,
+    setGroupDrafts,
+    getSequenceGroupId,
+    formatReplacementFields,
+    openCreate,
+    handleCreateSkuAutoIncrementSequence,
+    handleCreateLatestPriceStockSequence,
+    handleCreateNameLengthMirrorPattern,
+    handleCreateNameCategoryMirrorPattern,
+    handleCreateNameMirrorPolishSequence,
+    handleSaveSequenceGroup,
+    handleUngroup,
+    handlePatternDrop,
+    handleTogglePattern,
+    handleDuplicatePattern,
+    openEdit,
+    setPatternToDelete,
+  } = useValidatorSettingsContext();
+
+  const onCreateSkuAutoIncrementSequence = (): void => {
+    void handleCreateSkuAutoIncrementSequence();
+  };
+  const onCreateLatestPriceStockSequence = (): void => {
+    void handleCreateLatestPriceStockSequence();
+  };
+  const onCreateNameLengthMirrorPattern = (): void => {
+    void handleCreateNameLengthMirrorPattern();
+  };
+  const onCreateNameCategoryMirrorPattern = (): void => {
+    void handleCreateNameCategoryMirrorPattern();
+  };
+  const onCreateNameMirrorPolishSequence = (): void => {
+    void handleCreateNameMirrorPolishSequence();
+  };
+  const onSaveSequenceGroup = (groupId: string): void => {
+    void handleSaveSequenceGroup(groupId);
+  };
+  const onUngroup = (groupId: string): void => {
+    void handleUngroup(groupId);
+  };
+  const onPatternDrop = (
     pattern: ProductValidationPattern,
     event: React.DragEvent<HTMLDivElement>
-  ) => void;
-  onTogglePattern: (pattern: ProductValidationPattern) => void;
-  onDuplicatePattern: (pattern: ProductValidationPattern) => void;
-  onEditPattern: (pattern: ProductValidationPattern) => void;
-  onDeletePattern: (pattern: ProductValidationPattern) => void;
-};
+  ): void => {
+    void handlePatternDrop(pattern, event);
+  };
+  const onTogglePattern = (pattern: ProductValidationPattern): void => {
+    void handleTogglePattern(pattern);
+  };
+  const onDuplicatePattern = (pattern: ProductValidationPattern): void => {
+    void handleDuplicatePattern(pattern);
+  };
+  const onEditPattern = (pattern: ProductValidationPattern): void => {
+    openEdit(pattern);
+  };
+  const onDeletePattern = (pattern: ProductValidationPattern): void => {
+    setPatternToDelete(pattern);
+  };
 
-export function ValidatorPatternTablePanel({
-  summary,
-  loading,
-  patterns,
-  orderedPatterns,
-  patternActionsPending,
-  reorderPending,
-  createPatternPending,
-  updatePatternPending,
-  draggedPatternId,
-  dragOverPatternId,
-  setDraggedPatternId,
-  setDragOverPatternId,
-  sequenceGroups,
-  firstPatternIdByGroup,
-  getGroupDraft,
-  setGroupDrafts,
-  getSequenceGroupId,
-  formatReplacementFields,
-  openCreate,
-  onCreateSkuAutoIncrementSequence,
-  onCreateLatestPriceStockSequence,
-  onCreateNameLengthMirrorPattern,
-  onCreateNameCategoryMirrorPattern,
-  onCreateNameMirrorPolishSequence,
-  onSaveSequenceGroup,
-  onUngroup,
-  onPatternDrop,
-  onTogglePattern,
-  onDuplicatePattern,
-  onEditPattern,
-  onDeletePattern,
-}: ValidatorPatternTablePanelProps): React.JSX.Element {
   return (
     <SectionPanel variant='subtle' className='p-4'>
       <div className='mb-4 flex flex-wrap items-center justify-between gap-3'>

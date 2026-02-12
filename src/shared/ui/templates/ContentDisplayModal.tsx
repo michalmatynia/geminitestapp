@@ -11,8 +11,11 @@ export interface ContentDisplayModalProps {
   onOpenChange?: (open: boolean) => void;
   onClose?: () => void;
   title: string;
+  subtitle?: string;
   children: ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl';
+  variant?: 'default' | 'glass';
+  padding?: 'default' | 'none';
   showClose?: boolean;
   className?: string;
 }
@@ -20,25 +23,17 @@ export interface ContentDisplayModalProps {
 /**
  * Reusable modal template for displaying read-only content.
  * Used for logs, previews, results, and other non-interactive modals.
- *
- * Usage:
- * ```tsx
- * <ContentDisplayModal
- *   open={isOpen}
- *   onClose={handleClose}
- *   title="View Log"
- * >
- *   <LogContent />
- * </ContentDisplayModal>
- * ```
  */
 export function ContentDisplayModal({
   open,
   onOpenChange,
   onClose,
   title,
+  subtitle,
   children,
   size = 'md',
+  variant = 'default',
+  padding = 'default',
   showClose = true,
   className,
 }: ContentDisplayModalProps): React.JSX.Element {
@@ -54,8 +49,11 @@ export function ContentDisplayModal({
       open={open}
       onOpenChange={handleOpenChange}
       title={title}
+      subtitle={subtitle}
       showClose={showClose}
       size={size}
+      variant={variant}
+      padding={padding}
       className={className}
     >
       <div className='max-h-[60vh] overflow-y-auto'>{children}</div>

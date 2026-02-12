@@ -47,8 +47,9 @@ export function FormSection({
 }
 
 interface FormFieldProps {
-  label: string;
+  label?: string | undefined;
   description?: string | undefined;
+  actions?: ReactNode | undefined;
   children: ReactNode;
   error?: string | undefined;
   required?: boolean | undefined;
@@ -59,6 +60,7 @@ interface FormFieldProps {
 export function FormField({
   label,
   description,
+  actions,
   children,
   error,
   required,
@@ -68,9 +70,18 @@ export function FormField({
   return (
     <div className={cn('space-y-2', className)}>
       <div className='space-y-1'>
-        <Label htmlFor={id} className={cn('text-[11px] font-medium uppercase tracking-wider text-gray-400', required && 'after:content-[\'*\'] after:ml-0.5 after:text-red-500')}>
-          {label}
-        </Label>
+        {label || actions ? (
+          <div className='flex items-center justify-between gap-2'>
+            {label ? (
+              <Label htmlFor={id} className={cn('text-[11px] font-medium uppercase tracking-wider text-gray-400', required && 'after:content-[\'*\'] after:ml-0.5 after:text-red-500')}>
+                {label}
+              </Label>
+            ) : (
+              <span />
+            )}
+            {actions ? <div className='shrink-0'>{actions}</div> : null}
+          </div>
+        ) : null}
         {description && <p className='text-[10px] text-gray-500 italic leading-relaxed'>{description}</p>}
       </div>
       {children}

@@ -33,14 +33,15 @@ export function FileUploadEventsFilters(): React.JSX.Element {
     { key: 'toDate', label: 'To', type: 'date' },
   ];
 
-  const handleFilterChange = (key: string, value: string): void => {
+  const handleFilterChange = (key: string, value: string | string[]): void => {
+    const normalizedValue = Array.isArray(value) ? (value[0] ?? '') : value;
     setPage(1);
-    if (key === 'status') setStatus(value as 'all' | 'success' | 'error');
-    if (key === 'category') setCategory(value);
-    if (key === 'projectId') setProjectId(value);
-    if (key === 'query') setQuery(value);
-    if (key === 'fromDate') setFromDate(value);
-    if (key === 'toDate') setToDate(value);
+    if (key === 'status') setStatus(normalizedValue as 'all' | 'success' | 'error');
+    if (key === 'category') setCategory(normalizedValue);
+    if (key === 'projectId') setProjectId(normalizedValue);
+    if (key === 'query') setQuery(normalizedValue);
+    if (key === 'fromDate') setFromDate(normalizedValue);
+    if (key === 'toDate') setToDate(normalizedValue);
   };
 
   return (

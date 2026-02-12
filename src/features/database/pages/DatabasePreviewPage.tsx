@@ -16,7 +16,6 @@ import {
   SettingsIcon,
   ShieldCheckIcon,
   TableIcon,
-  TerminalIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';

@@ -29,7 +29,7 @@ import {
   type DatabaseEngineServiceRoute,
 } from '@/shared/lib/db/database-engine-constants';
 import { normalizeDatabaseEngineOperationControls } from '@/shared/lib/db/database-engine-operation-controls';
-import { PageLayout, Button, ConfirmDialog, SectionPanel, RefreshButton, useToast, FormSection, FormField, Label, Input, Table, TableHeader, TableRow, TableHead, TableBody, TableCell, Badge, UnifiedSelect, Checkbox, Switch } from '@/shared/ui';
+import { PageLayout, Button, ConfirmDialog, SectionPanel, RefreshButton, useToast, FormSection, FormField, Input, Table, TableHeader, TableRow, TableHead, TableBody, TableCell, Badge, UnifiedSelect, Checkbox, Switch } from '@/shared/ui';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import { DatabaseBackupsPanel } from '../components/DatabaseBackupsPanel';

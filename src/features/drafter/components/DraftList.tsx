@@ -12,7 +12,7 @@ import { useDrafts, useDeleteDraft } from '@/features/drafter/hooks/useDrafts';
 import { ICON_LIBRARY_MAP } from '@/features/icons';
 import { logClientError } from '@/features/observability';
 import type { ProductDraft } from '@/features/products/types/drafts';
-import { Button, ListPanel, useToast, SectionHeader, EmptyState } from '@/shared/ui';
+import { Button, ListPanel, useToast, EmptyState } from '@/shared/ui';
 import { ConfirmDialog } from '@/shared/ui';
 
 import { useDrafterContext } from '../context/DrafterContext';

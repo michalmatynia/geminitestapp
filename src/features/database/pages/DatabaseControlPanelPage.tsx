@@ -8,7 +8,6 @@ import {
   PageLayout,
   Button,
   DataTable,
-  SectionPanel,
   ConfirmDialog,
   useToast,
   FormSection,

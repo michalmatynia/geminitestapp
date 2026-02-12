@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import {
   useCreateStudioProject,
@@ -8,6 +8,8 @@ import {
 } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
+import { ApiError } from '@/shared/lib/api-client';
+import { useToast } from '@/shared/ui';
 
 import { IMAGE_STUDIO_ACTIVE_PROJECT_KEY, parseImageStudioActiveProject } from '../utils/project-session';
 
@@ -37,6 +39,7 @@ const ProjectsActionsContext = createContext<ProjectsActions | null>(null);
 // ── Provider ─────────────────────────────────────────────────────────────────
 
 export function ProjectsProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
+  const { toast } = useToast();
   const [projectId, setProjectId] = useState<string>('');
   const [projectSearch, setProjectSearch] = useState<string>('');
 
@@ -69,10 +72,27 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
     }
   }, [projectId, projectsQuery.data, activeProjectId, heavySettings.isLoading]);
 
-  const handleDeleteProject = async (id: string) => {
+  const handleDeleteProject = useCallback(async (id: string): Promise<void> => {
     if (!window.confirm(`Delete project "${id}" and all its slots?`)) return;
-    await deleteProjectMutation.mutateAsync(id);
-  };
+    try {
+      await deleteProjectMutation.mutateAsync(id);
+      if (projectId === id) {
+        setProjectId('');
+      }
+      toast(`Project "${id}" deleted.`, { variant: 'success' });
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) {
+        // Treat stale-project deletion as a successful no-op.
+        if (projectId === id) {
+          setProjectId('');
+        }
+        toast(`Project "${id}" no longer exists.`, { variant: 'info' });
+        return;
+      }
+      toast(error instanceof Error ? error.message : 'Failed to delete project.', { variant: 'error' });
+      throw error;
+    }
+  }, [deleteProjectMutation, projectId, toast]);
 
   const state = useMemo<ProjectsState>(
     () => ({ projectId, projectsQuery, projectSearch }),
@@ -87,7 +107,7 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
       handleDeleteProject,
       setProjectSearch,
     }),
-    [createProjectMutation, deleteProjectMutation]
+    [createProjectMutation, deleteProjectMutation, handleDeleteProject]
   );
 
   return (

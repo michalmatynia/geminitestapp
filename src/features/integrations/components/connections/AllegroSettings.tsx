@@ -1,7 +1,7 @@
 'use client';
 
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
-import { Button, Label, Checkbox, SectionPanel, StatusBadge, FormSection, FormField } from '@/shared/ui';
+import { Button, Checkbox, StatusBadge, FormSection } from '@/shared/ui';
 
 export function AllegroSettings(): React.JSX.Element {
   const {

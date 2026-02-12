@@ -268,18 +268,24 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
           if (!uploaded) {
             throw new Error(result.failures?.[0]?.error || 'Upload failed');
           }
-          const upsertedSlot = await upsertFromUploadedFile(uploaded, index);
-
-          if (index === OBJECT_SLOT_INDEX && upsertedSlot?.id) {
-            setTemporaryObjectUpload(null);
-            setSelectedSlotId(upsertedSlot.id);
-            setPreviewMode('image');
-            setWorkingSlotId(upsertedSlot.id);
+          if (index === OBJECT_SLOT_INDEX) {
+            setTemporaryObjectUpload({
+              id: uploaded.id,
+              filepath: uploaded.filepath,
+              filename: uploaded.filename,
+            });
+            setObjectImageLinkDraft(uploaded.filepath);
+            setObjectImageBase64Draft('');
+          } else {
+            await upsertFromUploadedFile(uploaded, index);
           }
           if (previousTemp && previousTemp.id !== uploaded.id) {
             await deleteUploadedAsset(previousTemp).catch(() => {
               // Best effort cleanup of replaced temporary upload.
             });
+          }
+          if (index === OBJECT_SLOT_INDEX) {
+            setPreviewMode('image');
           }
         } catch (error: unknown) {
           setUploadError(error instanceof Error ? error.message : 'Failed to upload image');

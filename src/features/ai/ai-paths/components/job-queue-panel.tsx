@@ -1031,7 +1031,7 @@ export function JobQueuePanel({
           <div className='mt-1 text-[11px] text-gray-400'>
             Lag: {formatDurationMs(queueStatus?.queueLagMs ?? null)}
           </div>
-          <div className='mt-2 h-10 w-full rounded bg-slate-900/50 px-1 py-1'>
+          <div className='mt-2 h-10 w-full rounded bg-foreground/5 px-1 py-1'>
             <div className='flex h-full items-end gap-[2px]'>
               {queueHistory.length === 0 ? (
                 <div className='text-[10px] text-gray-500'>No samples</div>
@@ -1136,7 +1136,7 @@ export function JobQueuePanel({
         </div>
         {showMetricsPanel ? (
           <div className='mt-3 space-y-3'>
-            <div className='h-24 w-full rounded bg-slate-900/60 px-2 py-2'>
+            <div className='h-24 w-full rounded bg-foreground/5 px-2 py-2'>
               <div className='flex h-full items-end gap-[2px]'>
                 {queueHistory.length === 0 ? (
                   <div className='text-[10px] text-gray-500'>No samples</div>

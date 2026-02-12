@@ -72,7 +72,7 @@ export default function CreateThemePage(): React.ReactNode {
     setColors((prev: CmsThemeColors) => ({ ...prev, [key]: value }));
   };
 
-  const colorKeys = Object.keys(colors) as Array<keyof CmsThemeColors>;
+  const colorKeys = Object.keys(colors) as Array<Extract<keyof CmsThemeColors, string>>;
 
   return (
     <div className='container mx-auto max-w-2xl py-10'>

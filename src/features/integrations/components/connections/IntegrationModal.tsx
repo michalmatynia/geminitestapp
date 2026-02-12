@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 import type { PlaywrightPersona } from '@/features/playwright';
 import { PlaywrightSettingsProvider } from '@/features/playwright/context/PlaywrightSettingsContext';
-import { Tabs, TabsContent, TabsList, TabsTrigger, Button, AppModal, Label, UnifiedSelect, SectionPanel, FormSection, FormField } from '@/shared/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger, Button, AppModal, UnifiedSelect, SectionPanel, FormSection, FormField } from '@/shared/ui';
 
 import { AllegroApiConsole } from './AllegroApiConsole';
 import { AllegroSettings } from './AllegroSettings';

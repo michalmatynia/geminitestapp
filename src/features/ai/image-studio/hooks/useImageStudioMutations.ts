@@ -68,11 +68,15 @@ export function useDeleteStudioProject(): UseMutationResult<string, Error, strin
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string): Promise<string> => {
-      await api.delete(`/api/image-studio/projects/${encodeURIComponent(id)}`);
+      await api.delete(`/api/image-studio/projects/${encodeURIComponent(id)}`, {
+        // Recursive folder deletion can take longer for large projects.
+        timeout: 120_000,
+      });
       return id;
     },
-    onSuccess: () => {
+    onSuccess: (id: string) => {
       void queryClient.invalidateQueries({ queryKey: studioKeys.projects() });
+      void queryClient.invalidateQueries({ queryKey: studioKeys.slots(id) });
     },
   });
 }

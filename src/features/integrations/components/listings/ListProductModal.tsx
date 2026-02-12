@@ -20,7 +20,7 @@ import type { IntegrationWithConnections, IntegrationConnectionBasic } from '@/f
 import { listProductFormSchema } from '@/features/integrations/validations/listing-forms';
 import { logClientError } from '@/features/observability';
 import { ProductWithImages } from '@/features/products/types';
-import { Button, UnifiedSelect, Label, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, SectionPanel, FormModal, FormSection, FormField } from '@/shared/ui';
+import { Button, UnifiedSelect, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, SectionPanel, FormModal, FormSection, FormField } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 import { BaseListingSettings } from './BaseListingSettings';

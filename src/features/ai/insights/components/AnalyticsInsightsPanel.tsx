@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { AiInsightRecord } from '@/shared/types';
-import { Button, SectionPanel, FormSection } from '@/shared/ui';
+import { Button, FormSection } from '@/shared/ui';
 
 import { InsightCard } from './InsightCard';
 import { useInsights } from '../context/InsightsContext';

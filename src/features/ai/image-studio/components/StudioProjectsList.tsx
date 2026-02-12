@@ -92,7 +92,7 @@ export function StudioProjectsList(): React.JSX.Element {
                     className='size-6 text-gray-500 hover:text-red-400'
                     onClick={(e) => {
                       e.stopPropagation();
-                      void handleDeleteProject(id);
+                      void handleDeleteProject(id).catch(() => {});
                     }}
                   >
                     <X className='size-3' />

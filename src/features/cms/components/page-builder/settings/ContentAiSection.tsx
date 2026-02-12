@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Button, Label, Textarea, SectionPanel, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
+import { Button, Textarea, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
 
 import { useComponentSettings } from '../context/ComponentSettingsContext';
 import { useInspectorAi } from '../context/InspectorAiContext';

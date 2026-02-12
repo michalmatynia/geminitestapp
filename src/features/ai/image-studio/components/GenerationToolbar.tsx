@@ -248,7 +248,7 @@ ${filterBlock}
   return (
     <div className='flex flex-wrap items-center gap-2'>
       <UnifiedSelect
-        className='w-auto'
+        className='w-full min-w-0 sm:w-[min(100%,20rem)]'
         value={studioSettings.targetAi.openai.model}
         onValueChange={(value: string) => {
           setStudioSettings((prev) => ({
@@ -265,7 +265,7 @@ ${filterBlock}
         }}
         options={modelOptions}
         placeholder='Model'
-        triggerClassName='h-8 w-[280px] sm:w-[320px] text-xs'
+        triggerClassName='h-8 w-full text-xs'
         ariaLabel='Generation model'
       />
       <Select

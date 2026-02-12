@@ -10,7 +10,9 @@ import type { VersionEdge, VersionNode } from '../context/VersionGraphContext';
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 3;
-const ZOOM_STEP = 0.1;
+const WHEEL_ZOOM_SENSITIVITY = 0.00065;
+const MAX_WHEEL_ZOOM_DELTA = 0.1;
+const MIN_WHEEL_ZOOM_DELTA = 0.002;
 const THUMB_SIZE = 48;
 const LABEL_OFFSET_Y = 14;
 
@@ -141,6 +143,8 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
   ) {
     const svgRef = useRef<SVGSVGElement>(null);
     const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+    const panRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+    const zoomRef = useRef<number>(zoom);
     const dragRef = useRef<{ startX: number; startY: number; panX: number; panY: number } | null>(null);
 
     // Expose SVG ref for PNG export
@@ -206,6 +210,14 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
       dragRef.current = null;
     }, []);
 
+    useEffect(() => {
+      panRef.current = pan;
+    }, [pan]);
+
+    useEffect(() => {
+      zoomRef.current = zoom;
+    }, [zoom]);
+
     // ── Zoom handler ──
     // Use a native wheel listener with passive: false so browser/page scrolling
     // is suppressed while zooming over the graph canvas.
@@ -216,15 +228,46 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
       const handleNativeWheel = (event: WheelEvent): void => {
         event.preventDefault();
         event.stopPropagation();
-        const delta = event.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
-        onZoomChange(Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom + delta)));
+
+        // Normalize wheel movement across mouse wheel and trackpad sources.
+        const normalizedDeltaY = event.deltaMode === 1
+          ? event.deltaY * 16
+          : event.deltaMode === 2
+            ? event.deltaY * 240
+            : event.deltaY;
+        const rawZoomDelta = -normalizedDeltaY * WHEEL_ZOOM_SENSITIVITY;
+        const zoomDelta = Math.max(
+          -MAX_WHEEL_ZOOM_DELTA,
+          Math.min(MAX_WHEEL_ZOOM_DELTA, rawZoomDelta),
+        );
+        if (Math.abs(zoomDelta) < MIN_WHEEL_ZOOM_DELTA) return;
+
+        const currentZoom = zoomRef.current;
+        const currentPan = panRef.current;
+        const nextZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, currentZoom + zoomDelta));
+        if (nextZoom === currentZoom) return;
+
+        const rect = element.getBoundingClientRect();
+        const pointerX = event.clientX - rect.left;
+        const pointerY = event.clientY - rect.top;
+        const worldX = (pointerX - currentPan.x) / currentZoom;
+        const worldY = (pointerY - currentPan.y) / currentZoom;
+        const nextPan = {
+          x: pointerX - worldX * nextZoom,
+          y: pointerY - worldY * nextZoom,
+        };
+
+        panRef.current = nextPan;
+        zoomRef.current = nextZoom;
+        setPan(nextPan);
+        onZoomChange(nextZoom);
       };
 
       element.addEventListener('wheel', handleNativeWheel, { passive: false });
       return () => {
         element.removeEventListener('wheel', handleNativeWheel);
       };
-    }, [zoom, onZoomChange]);
+    }, [onZoomChange]);
 
     // ── Click handlers ──
 

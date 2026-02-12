@@ -466,8 +466,11 @@ export function ImportTab(): React.JSX.Element {
           ) : null}
           {lastResult.errors?.length ? (
             <div className='mt-3 space-y-1 text-xs text-gray-400'>
-              {lastResult.errors.map((error: string, index: number) => (
-                <p key={`${error}-${index}`}>• {error}</p>
+              {lastResult.errors.map((entry: { productId?: string; sku?: string; error: string }, index: number) => (
+                <p key={`${entry.productId ?? entry.sku ?? entry.error}-${index}`}>
+                  • {entry.error}
+                  {entry.sku ? ` (SKU: ${entry.sku})` : ''}
+                </p>
               ))}
             </div>
           ) : null}

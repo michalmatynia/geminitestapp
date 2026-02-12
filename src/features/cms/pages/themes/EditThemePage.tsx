@@ -44,7 +44,7 @@ function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.
     try {
       const data = validation.data as CmsThemeUpdateInput;
       const input: CmsThemeUpdateInput = {
-        name: data.name,
+        ...(data.name !== undefined ? { name: data.name } : {}),
         ...(data.colors ? { colors: data.colors } : {}),
         ...(data.typography ? { typography: data.typography } : {}),
         ...(data.spacing ? { spacing: data.spacing } : {}),
@@ -61,7 +61,7 @@ function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.
     setColors((prev: CmsThemeColors) => ({ ...prev, [key]: value }));
   };
 
-  const colorKeys = Object.keys(colors) as Array<keyof CmsThemeColors>;
+  const colorKeys = Object.keys(colors) as Array<Extract<keyof CmsThemeColors, string>>;
 
   return (
     <div className='container mx-auto max-w-2xl py-10'>

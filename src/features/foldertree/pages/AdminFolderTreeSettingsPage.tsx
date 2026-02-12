@@ -131,6 +131,7 @@ const findRuleIndex = (profile: FolderTreeProfileV2, key: NestingRuleKey): numbe
   const config = NESTING_RULE_CONFIG[key];
   for (let index = profile.nesting.rules.length - 1; index >= 0; index -= 1) {
     const rule = profile.nesting.rules[index];
+    if (!rule) continue;
     if (rule.childType !== config.childType) continue;
     if (rule.targetType !== config.targetType) continue;
     if (config.targetType === 'root') {

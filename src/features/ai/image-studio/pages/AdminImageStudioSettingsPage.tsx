@@ -669,7 +669,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
               </div>
 
               <div className='grid grid-cols-1 gap-2 sm:grid-cols-3'>
-                <label className='flex items-center gap-2 rounded border border-slate-700/60 bg-slate-900/40 px-3 py-2 text-[11px] text-slate-200'>
+                <label className='flex items-center gap-2 rounded border border-border/40 bg-foreground/5 px-3 py-2 text-[11px] text-gray-300'>
                   <input
                     type='checkbox'
                     className='h-3.5 w-3.5'
@@ -686,7 +686,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
                   />
                   Apply formatter before extract
                 </label>
-                <label className='flex items-center gap-2 rounded border border-slate-700/60 bg-slate-900/40 px-3 py-2 text-[11px] text-slate-200'>
+                <label className='flex items-center gap-2 rounded border border-border/40 bg-foreground/5 px-3 py-2 text-[11px] text-gray-300'>
                   <input
                     type='checkbox'
                     className='h-3.5 w-3.5'
@@ -703,7 +703,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
                   />
                   Auto-apply formatted prompt
                 </label>
-                <label className='flex items-center gap-2 rounded border border-slate-700/60 bg-slate-900/40 px-3 py-2 text-[11px] text-slate-200'>
+                <label className='flex items-center gap-2 rounded border border-border/40 bg-foreground/5 px-3 py-2 text-[11px] text-gray-300'>
                   <input
                     type='checkbox'
                     className='h-3.5 w-3.5'
@@ -1295,7 +1295,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
               ) : null}
 
               {modelCapabilities.supportsStream ? (
-                <label className='flex items-center gap-2 rounded border border-slate-700/60 bg-slate-900/40 px-3 py-2 text-[11px] text-slate-200'>
+                <label className='flex items-center gap-2 rounded border border-border/40 bg-foreground/5 px-3 py-2 text-[11px] text-gray-300'>
                   <input
                     type='checkbox'
                     className='h-3.5 w-3.5'
@@ -1405,7 +1405,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
               </div>
             </div>
 
-            <label className='flex items-center gap-2 rounded border border-slate-700/60 bg-slate-900/40 px-3 py-2 text-[11px] text-slate-200'>
+            <label className='flex items-center gap-2 rounded border border-border/40 bg-foreground/5 px-3 py-2 text-[11px] text-gray-300'>
               <input
                 type='checkbox'
                 className='h-3.5 w-3.5'

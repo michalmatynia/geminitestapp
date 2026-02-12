@@ -199,7 +199,7 @@ export function RuleItem({
             <div className='text-xs text-red-300'>Regex error: {regexStatus.error}</div>
           ) : null}
           {rule ? (
-            <div className='grid gap-2 rounded border border-slate-700/60 bg-slate-900/45 p-3 md:grid-cols-4'>
+            <div className='grid gap-2 rounded border border-border/40 bg-foreground/5 p-3 md:grid-cols-4'>
               <div className='space-y-1'>
                 <Label className='text-[11px] text-slate-300'>Sequence</Label>
                 <Input

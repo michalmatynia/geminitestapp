@@ -26,6 +26,7 @@ import {
   MultiSelect,
   SectionPanel,
   Textarea,
+  UnifiedSelect,
   ValidatorFormatterToggle,
   useToast,
 } from '@/shared/ui';
@@ -39,7 +40,7 @@ import { ParamRow } from './ParamRow';
 import { StudioCard } from './StudioCard';
 import { UIPresetsPanel } from './UIPresetsPanel';
 import { VersionNodeMapPanel } from './VersionNodeMapPanel';
-import { useGenerationState } from '../context/GenerationContext';
+import { useGenerationState, useGenerationActions } from '../context/GenerationContext';
 import { useMaskingActions, useMaskingState } from '../context/MaskingContext';
 import { useProjectsState } from '../context/ProjectsContext';
 import { usePromptActions, usePromptState } from '../context/PromptContext';
@@ -54,6 +55,45 @@ import {
   serializeImageStudioProjectSession,
 } from '../utils/project-session';
 import { buildRunRequestPreview } from '../utils/run-request-preview';
+import { normalizeImageStudioModelPresets } from '../utils/studio-settings';
+
+const CHARS_PER_TOKEN_ESTIMATE = 4;
+type ModelCostProfile = {
+  imageUsdPerImage: number;
+  inputUsdPer1KTokens: number;
+};
+
+const DEFAULT_MODEL_COST_PROFILE: ModelCostProfile = {
+  imageUsdPerImage: 0.03,
+  inputUsdPer1KTokens: 0.004,
+};
+
+const MODEL_COST_PROFILES: Array<{ prefix: string; profile: ModelCostProfile }> = [
+  { prefix: 'gpt-image-1', profile: { imageUsdPerImage: 0.04, inputUsdPer1KTokens: 0.006 } },
+  { prefix: 'gpt-5.2', profile: { imageUsdPerImage: 0.05, inputUsdPer1KTokens: 0.01 } },
+  { prefix: 'gpt-5', profile: { imageUsdPerImage: 0.045, inputUsdPer1KTokens: 0.009 } },
+  { prefix: 'gpt-4.1-mini', profile: { imageUsdPerImage: 0.02, inputUsdPer1KTokens: 0.003 } },
+  { prefix: 'gpt-4.1', profile: { imageUsdPerImage: 0.028, inputUsdPer1KTokens: 0.005 } },
+  { prefix: 'gpt-4o-mini', profile: { imageUsdPerImage: 0.018, inputUsdPer1KTokens: 0.0025 } },
+  { prefix: 'gpt-4o', profile: { imageUsdPerImage: 0.026, inputUsdPer1KTokens: 0.0045 } },
+  { prefix: 'dall-e-3', profile: { imageUsdPerImage: 0.08, inputUsdPer1KTokens: 0.0 } },
+  { prefix: 'dall-e-2', profile: { imageUsdPerImage: 0.02, inputUsdPer1KTokens: 0.0 } },
+];
+
+const estimatePromptTokens = (prompt: string): number => {
+  const trimmed = prompt.trim();
+  if (!trimmed) return 0;
+  return Math.max(1, Math.ceil(trimmed.length / CHARS_PER_TOKEN_ESTIMATE));
+};
+
+const resolveModelCostProfile = (model: string): ModelCostProfile => {
+  const normalizedModel = model.trim().toLowerCase();
+  if (!normalizedModel) return DEFAULT_MODEL_COST_PROFILE;
+  const matched = MODEL_COST_PROFILES.find(({ prefix }) =>
+    normalizedModel.startsWith(prefix)
+  );
+  return matched ? matched.profile : DEFAULT_MODEL_COST_PROFILE;
+};
 
 export function RightSidebar(): React.JSX.Element {
   const { isFocusMode, validatorEnabled, formatterEnabled } = useUiState();
@@ -89,8 +129,9 @@ export function RightSidebar(): React.JSX.Element {
   const { promptText, paramsState, paramSpecs, paramUiOverrides } = usePromptState();
   const { setPromptText, setExtractReviewOpen, setExtractDraftPrompt } = usePromptActions();
   const { studioSettings } = useSettingsState();
-  const { runOutputs, generationHistory } = useGenerationState();
-  const { saveStudioSettings } = useSettingsActions();
+  const { runMutation, isRunInFlight, activeRunStatus, runOutputs, generationHistory } = useGenerationState();
+  const { handleRunGeneration } = useGenerationActions();
+  const { saveStudioSettings, setStudioSettings } = useSettingsActions();
   const updateSettingsBulk = useUpdateSettingsBulk();
 
   const { toast } = useToast();
@@ -112,6 +153,40 @@ export function RightSidebar(): React.JSX.Element {
     [paramsState]
   );
   const hasExtractedControls = flattenedParams.length > 0;
+
+  const quickSwitchModels = useMemo(
+    () =>
+      normalizeImageStudioModelPresets(
+        studioSettings.targetAi.openai.modelPresets,
+        studioSettings.targetAi.openai.model,
+      ),
+    [studioSettings.targetAi.openai.modelPresets, studioSettings.targetAi.openai.model]
+  );
+  const quickModelOptions = useMemo(
+    () => quickSwitchModels.map((modelId) => ({ value: modelId, label: modelId })),
+    [quickSwitchModels]
+  );
+  const estimatedPromptTokens = useMemo(
+    () => estimatePromptTokens(promptText),
+    [promptText]
+  );
+  const selectedModelId = useMemo(
+    () => studioSettings.targetAi.openai.model.trim() || 'unknown-model',
+    [studioSettings.targetAi.openai.model]
+  );
+  const estimatedGenerationCost = useMemo(() => {
+    const profile = resolveModelCostProfile(studioSettings.targetAi.openai.model);
+    const count = Math.max(1, Number(studioSettings.targetAi.openai.image.n ?? 1));
+    const imageCost = profile.imageUsdPerImage * count;
+    const promptCost = (estimatedPromptTokens / 1000) * profile.inputUsdPer1KTokens;
+    return imageCost + promptCost;
+  }, [estimatedPromptTokens, studioSettings.targetAi.openai.image.n, studioSettings.targetAi.openai.model]);
+  const generationBusy = runMutation.isPending || isRunInFlight;
+  const generationLabel = generationBusy
+    ? activeRunStatus === 'queued'
+      ? 'Queued...'
+      : 'Generating...'
+    : `Generate ${(studioSettings.targetAi.openai.image.n ?? 1) > 1 ? `(${studioSettings.targetAi.openai.image.n})` : ''}`;
 
   const requestPreview = useMemo(
     () =>
@@ -314,6 +389,55 @@ export function RightSidebar(): React.JSX.Element {
         ) : (
           <>
             <div className='space-y-2 px-4 py-2'>
+              <div className='rounded border border-border/60 bg-card/30 p-2'>
+                <div className='grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center'>
+                  <UnifiedSelect
+                    value={studioSettings.targetAi.openai.model}
+                    onValueChange={(value: string) => {
+                      setStudioSettings((prev) => ({
+                        ...prev,
+                        targetAi: {
+                          ...prev.targetAi,
+                          openai: {
+                            ...prev.targetAi.openai,
+                            api: 'images',
+                            model: value,
+                          },
+                        },
+                      }));
+                    }}
+                    options={quickModelOptions}
+                    placeholder='Select model'
+                    triggerClassName='h-8 text-xs'
+                    ariaLabel='Quick generation model'
+                  />
+                  <Button
+                    onClick={handleRunGeneration}
+                    disabled={!workingSlot || !promptText.trim() || generationBusy}
+                    size='sm'
+                    className='sm:min-w-[140px]'
+                  >
+                    {generationBusy ? (
+                      <Loader2 className='mr-2 size-4 animate-spin' />
+                    ) : (
+                      <Play className='mr-2 size-4' />
+                    )}
+                    {generationLabel}
+                  </Button>
+                </div>
+                <div className='mt-2 flex flex-wrap items-center gap-2 text-[11px]'>
+                  <span className='rounded border border-border/50 bg-card/40 px-2 py-1 text-gray-300'>
+                    Tokens ~{estimatedPromptTokens.toLocaleString()}
+                  </span>
+                  <span
+                    className='max-w-full truncate rounded border border-border/50 bg-card/40 px-2 py-1 text-gray-300'
+                    title={`Estimated generation cost for ${selectedModelId}`}
+                  >
+                    Est. Cost ({selectedModelId}) ${estimatedGenerationCost.toFixed(3)}
+                  </span>
+                </div>
+              </div>
+
               <div className='flex flex-wrap items-center justify-end gap-2'>
                 <Button
                   variant='outline'

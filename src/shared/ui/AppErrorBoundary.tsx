@@ -8,6 +8,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import { getLastUserAction } from '@/shared/utils/observability/user-action-tracker';
 
 import { Button } from './button';
+import { SectionPanel } from './section-panel';
 
 function AppErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   const category = classifyError(error);
@@ -16,48 +17,51 @@ function AppErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
     error instanceof Error ? error.message : 'An unexpected error occurred. Our team has been notified.';
 
   return (
-    <div className='flex min-h-[400px] w-full flex-col items-center justify-center p-6 text-center'>
-      <div className='mb-4 rounded-full bg-red-500/10 p-3 text-red-500'>
-        <AlertCircle className='h-10 w-10' />
-      </div>
-      <h2 className='mb-2 text-2xl font-bold tracking-tight text-white'>
-        Something went wrong
-      </h2>
-      <p className='mb-6 max-w-md text-gray-400'>
-        {errorMessage}
-      </p>
-
-      {actions.length > 0 && (
-        <div className='mb-8 max-w-lg rounded-lg border border-white/10 bg-white/5 p-4 text-left'>
-          <div className='mb-2 flex items-center gap-2 font-semibold text-white'>
-            <Info className='h-4 w-4 text-blue-400' />
-            Suggested Actions
-          </div>
-          <ul className='space-y-3'>
-            {actions.map((action, idx) => (
-              <li key={idx} className='text-sm text-gray-300'>
-                <span className='font-medium text-white'>{action.label}:</span> {action.description}
-              </li>
-            ))}
-          </ul>
+    <div className='flex min-h-[400px] w-full items-center justify-center p-6'>
+      <SectionPanel variant='subtle' className='flex max-w-2xl flex-col items-center p-12 text-center'>
+        <div className='mb-4 rounded-full bg-red-500/10 p-3 text-red-500'>
+          <AlertCircle className='h-10 w-10' />
         </div>
-      )}
+        <h2 className='mb-2 text-2xl font-bold tracking-tight text-white'>
+          Something went wrong
+        </h2>
+        <p className='mb-6 max-w-md text-gray-400'>
+          {errorMessage}
+        </p>
 
-      <div className='flex flex-col gap-3 sm:flex-row'>
-        <Button
-          onClick={resetErrorBoundary}
-          className='flex items-center gap-2'
-        >
-          <RefreshCcw className='h-4 w-4' />
-          Try again
-        </Button>
-        <Button
-          variant='outline'
-          onClick={() => window.location.reload()}
-        >
-          Reload page
-        </Button>
-      </div>
+        {actions.length > 0 && (
+          <div className='mb-8 w-full max-w-lg rounded-lg border border-white/10 bg-white/5 p-4 text-left'>
+            <div className='mb-2 flex items-center gap-2 font-semibold text-white'>
+              <Info className='h-4 w-4 text-blue-400' />
+              Suggested Actions
+            </div>
+            <ul className='space-y-3'>
+              {actions.map((action, idx) => (
+                <li key={idx} className='text-sm text-gray-300'>
+                  <span className='font-medium text-white'>{action.label}:</span> {action.description}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div className='flex flex-col gap-3 sm:flex-row'>
+          <Button
+            onClick={resetErrorBoundary}
+            variant='primary'
+            className='flex items-center gap-2'
+          >
+            <RefreshCcw className='h-4 w-4' />
+            Try again
+          </Button>
+          <Button
+            variant='outline'
+            onClick={() => window.location.reload()}
+          >
+            Reload page
+          </Button>
+        </div>
+      </SectionPanel>
     </div>
   );
 }

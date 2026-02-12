@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 import { Integration, integrationDefinitions } from '@/features/integrations/types/integrations-ui';
-import { Button, ListPanel, SectionHeader, SectionPanel } from '@/shared/ui';
+import { Button, ListPanel, SectionPanel } from '@/shared/ui';
 
 
 export function IntegrationList(): React.JSX.Element {

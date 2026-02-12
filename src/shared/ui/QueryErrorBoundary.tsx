@@ -1,31 +1,32 @@
 'use client';
 
 import { useQueryErrorResetBoundary } from '@tanstack/react-query';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCcw } from 'lucide-react';
 import { ErrorBoundary, type FallbackProps } from 'react-error-boundary';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { getLastUserAction } from '@/shared/utils/observability/user-action-tracker';
 
 import { Button } from './button';
+import { SectionPanel } from './section-panel';
 
 function QueryErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   return (
-    <div className='flex min-h-[400px] flex-col items-center justify-center space-y-4 p-8'>
-      <div className='text-center'>
-        <h2 className='text-lg font-semibold text-red-500'>Something went wrong</h2>
-        <p className='mt-2 text-sm text-gray-400'>
+    <div className='flex min-h-[400px] w-full items-center justify-center p-8'>
+      <SectionPanel variant='subtle' className='flex max-w-lg flex-col items-center p-12 text-center'>
+        <h2 className='text-xl font-bold text-red-500'>Something went wrong</h2>
+        <p className='mt-2 mb-6 text-sm text-gray-400'>
           {(error as Error)?.message || 'An unexpected error occurred while loading data.'}
         </p>
-      </div>
-      <Button
-        onClick={resetErrorBoundary}
-        variant='outline'
-        className='flex items-center gap-2'
-      >
-        <RefreshCw className='h-4 w-4' />
-        Try again
-      </Button>
+        <Button
+          onClick={resetErrorBoundary}
+          variant='primary'
+          className='flex items-center gap-2'
+        >
+          <RefreshCcw className='h-4 w-4' />
+          Try again
+        </Button>
+      </SectionPanel>
     </div>
   );
 }

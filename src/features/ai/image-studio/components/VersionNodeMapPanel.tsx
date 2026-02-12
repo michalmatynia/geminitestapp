@@ -45,6 +45,7 @@ const LAYOUT_MODES: { mode: LayoutMode; label: string; Icon: typeof Network }[] 
   { mode: 'timeline-h', label: 'H', Icon: ArrowRight },
   { mode: 'timeline-v', label: 'V', Icon: ArrowDown },
 ];
+const ZOOM_BUTTON_STEP = 0.07;
 
 // ── Component ────────────────────────────────────────────────────────────────
 
@@ -238,7 +239,7 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
             size='icon'
             className='size-6'
             title='Zoom out'
-            onClick={() => setZoom((z) => Math.max(0.25, z - 0.1))}
+            onClick={() => setZoom((z) => Math.max(0.25, z - ZOOM_BUTTON_STEP))}
           >
             <Minus className='size-3' />
           </Button>
@@ -250,7 +251,7 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
             size='icon'
             className='size-6'
             title='Zoom in'
-            onClick={() => setZoom((z) => Math.min(3, z + 0.1))}
+            onClick={() => setZoom((z) => Math.min(3, z + ZOOM_BUTTON_STEP))}
           >
             <Plus className='size-3' />
           </Button>

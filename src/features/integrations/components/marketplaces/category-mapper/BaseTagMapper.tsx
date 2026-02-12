@@ -14,7 +14,7 @@ import {
   useTagMappings,
 } from '@/features/integrations/hooks/useMarketplaceQueries';
 import { logClientError } from '@/features/observability';
-import { useCatalogs } from '@/features/products/hooks/useProductMetadata';
+import { useCatalogs } from '@/features/products/hooks/useProductMetadataQueries';
 import type { CatalogRecord, ProductTag } from '@/features/products/types';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';

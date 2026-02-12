@@ -129,23 +129,11 @@ const fetchLiteSettings = async (): Promise<SettingRecord[]> => {
   return prismaSettings;
 };
 
-const getCachedLiteSettings = (): SettingRecord[] | null => {
-  if (!liteCache) return null;
-  if (Date.now() - liteCache.fetchedAt > LITE_CACHE_TTL_MS) return null;
-  return liteCache.data;
-};
-
 const GET_handler = async (_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> => {
-  const cached = getCachedLiteSettings();
-  if (cached) {
-    return NextResponse.json(cached, {
-      headers: { 'Cache-Control': CACHE_CONTROL, 'X-Cache': 'hit' },
-    });
-  }
   if (liteInflight) {
     const data = await liteInflight;
     return NextResponse.json(data, {
-      headers: { 'Cache-Control': CACHE_CONTROL, 'X-Cache': 'wait' },
+      headers: { 'Cache-Control': 'no-store', 'X-Cache': 'wait' },
     });
   }
 
@@ -153,9 +141,8 @@ const GET_handler = async (_req: NextRequest, _ctx: ApiHandlerContext): Promise<
     liteInflight = null;
   });
   const data = await liteInflight;
-  liteCache = { data, fetchedAt: Date.now() };
   return NextResponse.json(data, {
-    headers: { 'Cache-Control': CACHE_CONTROL, 'X-Cache': 'miss' },
+    headers: { 'Cache-Control': 'no-store', 'X-Cache': 'miss' },
   });
 };
 

@@ -2,6 +2,8 @@ export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
 
+export const revalidate = 60;
+
 import { buildImageBase64Slots } from '@/features/products/services/image-base64';
 import { getProductRepository } from '@/features/products/services/product-repository';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';

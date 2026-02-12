@@ -4,7 +4,11 @@ import { Plus, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
-import { useProducers, useSaveProducerMutation, useDeleteProducerMutation } from '@/features/products/hooks/useProductMetadata';
+import {
+  useDeleteProducerMutation,
+  useProducers,
+  useSaveProducerMutation,
+} from '@/features/products/hooks/useProductMetadataQueries';
 import type { Producer } from '@/features/products/types';
 import { Button, ConfirmDialog, EmptyState, Input, Label, AppModal, useToast } from '@/shared/ui';
 

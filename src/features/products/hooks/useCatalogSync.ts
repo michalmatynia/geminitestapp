@@ -57,19 +57,19 @@ export function useCatalogSync(catalogFilter: string): UseCatalogSyncResult {
 
   // Parallel queries for all data sources
   const catalogsQuery = useQuery({
-    queryKey: QUERY_KEYS.products.catalogs,
+    queryKey: QUERY_KEYS.products.metadata.catalogs,
     queryFn: fetchCatalogs,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const priceGroupsQuery = useQuery({
-    queryKey: QUERY_KEYS.internationalization.currencies, // Using common price-groups/currencies key
+    queryKey: QUERY_KEYS.products.metadata.priceGroups,
     queryFn: fetchPriceGroups,
     staleTime: 1000 * 60 * 5,
   });
 
   const languagesQuery = useQuery({
-    queryKey: QUERY_KEYS.internationalization.languages,
+    queryKey: QUERY_KEYS.products.metadata.languages,
     queryFn: fetchLanguages,
     staleTime: 1000 * 60 * 5,
   });

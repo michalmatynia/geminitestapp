@@ -173,6 +173,18 @@ export const productSchema = dtoBaseSchema.extend({
 
 export type ProductDto = z.infer<typeof productSchema>;
 
+export const createProductSchema = productSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type CreateProductDto = z.infer<typeof createProductSchema>;
+
+export const updateProductSchema = createProductSchema.partial();
+
+export type UpdateProductDto = z.infer<typeof updateProductSchema>;
+
 /**
  * Validation Contracts
  */

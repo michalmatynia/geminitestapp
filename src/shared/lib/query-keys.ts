@@ -29,18 +29,18 @@ export const QUERY_KEYS = {
       all: ['products', 'ai-jobs'] as const,
       detail: (id: string) => [...QUERY_KEYS.products.aiJobs.all, id] as const,
     },
-    catalogs: ['catalogs'] as const,
     metadata: {
-      catalogs: ['catalogs'] as const,
-      categories: (catalogId: string) => ['categories', catalogId] as const,
-      tags: (catalogId: string) => ['tags', catalogId] as const,
-      producers: ['producers'] as const,
-      parameters: (catalogId: string) => ['parameters', catalogId] as const,
-      languages: ['languages'] as const,
-      priceGroups: ['price-groups'] as const,
+      all: ['products', 'metadata'] as const,
+      catalogs: ['products', 'metadata', 'catalogs'] as const,
+      categories: (catalogId: string | null) => ['products', 'metadata', 'categories', catalogId] as const,
+      tags: (catalogId: string | null) => ['products', 'metadata', 'tags', catalogId] as const,
+      producers: ['products', 'metadata', 'producers'] as const,
+      parameters: (catalogId: string | null) => ['products', 'metadata', 'parameters', catalogId] as const,
+      languages: ['products', 'metadata', 'languages'] as const,
+      priceGroups: ['products', 'metadata', 'price-groups'] as const,
     },
     settings: {
-      all: ['product-settings'] as const,
+      all: ['products', 'settings'] as const,
       priceGroups: () => [...QUERY_KEYS.products.settings.all, 'price-groups'] as const,
       catalogs: () => [...QUERY_KEYS.products.settings.all, 'catalogs'] as const,
       categories: (catalogId: string | null) =>
@@ -55,8 +55,8 @@ export const QUERY_KEYS = {
         [...QUERY_KEYS.products.settings.all, 'validator-patterns'] as const,
       validatorConfig: (includeDisabled: boolean) =>
         [...QUERY_KEYS.products.settings.all, 'validator-config', includeDisabled] as const,
-      categoryTree: (catalogId?: string) =>
-        ['product-categories', 'tree', catalogId] as const,
+      categoryTree: (catalogId?: string | null) =>
+        [...QUERY_KEYS.products.settings.all, 'category-tree', catalogId ?? null] as const,
     },
   },
   settings: {

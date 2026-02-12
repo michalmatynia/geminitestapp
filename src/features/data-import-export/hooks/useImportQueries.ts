@@ -22,7 +22,7 @@ export function useIntegrationConnections(): UseQueryResult<IntegrationWithConne
 
 export function useCatalogs(): UseQueryResult<CatalogRecord[], Error> {
   return useQuery({
-    queryKey: QUERY_KEYS.products.catalogs,
+    queryKey: QUERY_KEYS.products.metadata.catalogs,
     queryFn: () => api.get<CatalogRecord[]>('/api/catalogs'),
   });
 }

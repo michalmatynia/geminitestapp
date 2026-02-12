@@ -1,3 +1,5 @@
+import type { TemplateMappingDto } from '@/shared/dtos';
+
 // DTO type exports
 export type {
   IntegrationDto,
@@ -118,11 +120,7 @@ export type ImageUrlDiagnostic = {
   error?: string;
 };
 
-export type TemplateMapping = {
-  sourceField: string;
-  targetField: string;
-  transform?: string;
-};
+export type TemplateMapping = TemplateMappingDto;
 
 export type ImportParameterCache = {
   key: string;

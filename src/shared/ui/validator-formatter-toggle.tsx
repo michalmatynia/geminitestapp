@@ -4,7 +4,7 @@ import React from 'react';
 
 import { cn } from '@/shared/utils';
 
-import { Button } from './button';
+import { StatusToggle } from './status-toggle';
 
 export interface ValidatorFormatterToggleProps {
   validatorEnabled: boolean;
@@ -27,35 +27,29 @@ export function ValidatorFormatterToggle({
 }: ValidatorFormatterToggleProps): React.JSX.Element {
   return (
     <div className={cn('flex flex-wrap items-center gap-2', className)}>
-      <Button
-        type='button'
-        onClick={(): void => {
-          const next = !validatorEnabled;
+      <StatusToggle
+        enabled={validatorEnabled}
+        onToggle={(next: boolean): void => {
           onValidatorChange(next);
           if (!next && formatterEnabled) {
             onFormatterChange(false);
           }
         }}
-        className={`h-8 rounded border px-2.5 text-[10px] font-semibold tracking-wide ${
-          validatorEnabled
-            ? 'border-cyan-500/60 bg-cyan-500/15 text-cyan-100 hover:bg-cyan-500/25'
-            : 'border-slate-500/40 bg-slate-500/10 text-slate-300 hover:bg-slate-500/20'
-        }`}
-      >
-        {validatorLabel} {validatorEnabled ? 'ON' : 'OFF'}
-      </Button>
+        enabledLabel={`${validatorLabel} ON`}
+        disabledLabel={`${validatorLabel} OFF`}
+        enabledVariant='cyan'
+        disabledVariant='slate'
+      />
       {validatorEnabled ? (
-        <Button
-          type='button'
-          onClick={(): void => onFormatterChange(!formatterEnabled)}
-          className={`h-7 rounded border px-2 text-[10px] font-semibold tracking-wide ${
-            formatterEnabled
-              ? 'border-emerald-500/60 bg-emerald-500/15 text-emerald-100 hover:bg-emerald-500/25'
-              : 'border-slate-500/40 bg-slate-500/10 text-slate-300 hover:bg-slate-500/20'
-          }`}
-        >
-          {formatterLabel} {formatterEnabled ? 'ON' : 'OFF'}
-        </Button>
+        <StatusToggle
+          enabled={formatterEnabled}
+          onToggle={(next: boolean): void => onFormatterChange(next)}
+          enabledLabel={`${formatterLabel} ON`}
+          disabledLabel={`${formatterLabel} OFF`}
+          enabledVariant='emerald'
+          disabledVariant='slate'
+          size='sm'
+        />
       ) : null}
     </div>
   );

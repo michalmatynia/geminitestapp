@@ -259,6 +259,25 @@ module.exports = tseslint.config(
     }
   },
   {
+    files: [
+      'src/features/products/**/*.{ts,tsx}',
+      'src/features/integrations/**/*.{ts,tsx}',
+    ],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "Property[key.name='queryKey'] > ArrayExpression",
+          message: 'Use QUERY_KEYS key factories instead of inline query key arrays.',
+        },
+        {
+          selector: "Property[key.name='mutationKey'] > ArrayExpression",
+          message: 'Use QUERY_KEYS key factories instead of inline mutation key arrays.',
+        },
+      ],
+    },
+  },
+  {
     // General rules for .cjs files (like this config file)
     files: ['*.cjs'],
     languageOptions: {

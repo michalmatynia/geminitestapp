@@ -1,5 +1,6 @@
 import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
 import type { ProductCreateInput } from '@/features/products/validations/schemas';
+import type { ImportExportTemplateMapping as TemplateMapping } from '@/shared/types/domain/integrations';
 
 const toTrimmedString = (value: unknown): string | null => {
   if (typeof value === 'string') {
@@ -215,11 +216,6 @@ export function extractBaseImageUrls(record: BaseProductRecord): string[] {
   collectUrls(record, urls);
   return Array.from(new Set(urls));
 }
-
-type TemplateMapping = {
-  sourceKey: string;
-  targetField: string;
-};
 
 const NUMBER_FIELDS = new Set([
   'price',

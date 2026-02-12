@@ -43,6 +43,29 @@ export const importTemplateSchema = namedDtoSchema.extend({
 
 export type ImportTemplateDto = z.infer<typeof importTemplateSchema>;
 
+export const importExportTemplateMappingSchema = z.object({
+  sourceKey: z.string(),
+  targetField: z.string(),
+});
+
+export type ImportExportTemplateMappingDto = z.infer<typeof importExportTemplateMappingSchema>;
+
+export const importExportTemplateSchema = namedDtoSchema.extend({
+  mappings: z.array(importExportTemplateMappingSchema),
+  exportImagesAsBase64: z.boolean().optional(),
+});
+
+export type ImportExportTemplateDto = z.infer<typeof importExportTemplateSchema>;
+
+export const createImportExportTemplateSchema = importExportTemplateSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type CreateImportExportTemplateDto = z.infer<typeof createImportExportTemplateSchema>;
+export type UpdateImportExportTemplateDto = Partial<CreateImportExportTemplateDto>;
+
 export const createImportTemplateSchema = importTemplateSchema.omit({
   id: true,
   createdAt: true,

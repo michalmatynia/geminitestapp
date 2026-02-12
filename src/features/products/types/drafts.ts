@@ -62,7 +62,8 @@ export type ProductDraft = {
   updatedAt: Date | string;
 };
 
-export interface CreateProductDraftInput extends Omit<CreateProductDto, 'sku' | 'name' | 'description'> {
+export interface CreateProductDraftInput
+  extends Partial<Omit<CreateProductDto, 'sku' | 'name' | 'description'>> {
   name: string; // Draft internal name
   description?: string | null; // Draft internal description
   sku?: string | null; // Drafts might not have SKU yet or it might be optional

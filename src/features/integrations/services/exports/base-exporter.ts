@@ -10,11 +10,7 @@ import { callBaseApi } from '@/features/integrations/services/imports/base-clien
 import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
 import { ErrorSystem } from '@/features/observability/server';
 import type { ProductWithImages } from '@/features/products';
-
-type ExportTemplateMapping = {
-  sourceKey: string;  // Internal product field
-  targetField: string;  // Base.com API parameter name
-};
+import type { ImportExportTemplateMapping as ExportTemplateMapping } from '@/shared/types/domain/integrations';
 
 const IMAGE_BASE_URL =
   process.env['NEXT_PUBLIC_APP_URL'] ||

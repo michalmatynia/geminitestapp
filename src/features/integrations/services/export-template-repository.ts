@@ -13,6 +13,10 @@ import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
 import { getProductDataProvider } from '@/features/products/server';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import type {
+  ImportExportTemplate as DomainImportExportTemplate,
+  ImportExportTemplateMapping as DomainImportExportTemplateMapping,
+} from '@/shared/types/domain/integrations';
 
 type SettingDoc = { _id: string | ObjectId; key?: string; value?: string; updatedAt?: Date; createdAt?: Date };
 
@@ -35,20 +39,8 @@ const getExportTemplateProvider = async (): Promise<ExportTemplateProvider> => {
   return provider as ExportTemplateProvider;
 };
 
-export type TemplateMapping = {
-  sourceKey: string;
-  targetField: string;
-};
-
-export type Template = {
-  id: string;
-  name: string;
-  description?: string | null;
-  mappings: TemplateMapping[];
-  exportImagesAsBase64?: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
+export type Template = DomainImportExportTemplate;
+export type TemplateMapping = DomainImportExportTemplateMapping;
 
 const SETTINGS_KEY = 'base_export_templates';
 const ACTIVE_TEMPLATE_KEY = 'base_export_active_template_id';

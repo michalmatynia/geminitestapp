@@ -7,8 +7,8 @@ import { useFetchExternalCategoriesMutation, useSaveMappingsMutation } from '@/f
 import { useExternalCategories, useCategoryMappings } from '@/features/integrations/hooks/useMarketplaceQueries';
 import type { ExternalCategory, CategoryMappingWithDetails } from '@/features/integrations/types/category-mapping';
 import { logClientError } from '@/features/observability';
-import { useCatalogs } from '@/features/products/hooks/useCatalogQueries';
 import { useProductCategories } from '@/features/products/hooks/useCategoryQueries';
+import { useCatalogs } from '@/features/products/hooks/useProductMetadataQueries';
 import type { Catalog, ProductCategoryDto } from '@/features/products/types';
 import { useToast } from '@/shared/ui';
 

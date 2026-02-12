@@ -3,8 +3,8 @@ import type {
   ImageTransformOptions, 
   ImageRetryPreset,
   BaseInventory,
-  Template as DomainTemplate,
-  TemplateMapping as DomainTemplateMapping
+  ImportExportTemplate as DomainImportExportTemplate,
+  ImportExportTemplateMapping as DomainImportExportTemplateMapping
 } from '@/shared/types/domain/integrations';
 
 export type {
@@ -49,14 +49,9 @@ export type ImportResponse = {
   errors: Array<{ productId?: string; sku?: string; error: string }>;
 };
 
-export type TemplateMapping = DomainTemplateMapping & {
-  sourceKey?: string; // Compatibility field
-};
+export type TemplateMapping = DomainImportExportTemplateMapping;
 
-export type Template = DomainTemplate & {
-  mappings?: TemplateMapping[]; // Compatibility field
-  exportImagesAsBase64?: boolean; // Compatibility field
-};
+export type Template = DomainImportExportTemplate;
 
 export type ExportParameterDoc = {
   key: string;

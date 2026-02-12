@@ -12,7 +12,7 @@ import { ProductImagesTabContent } from '@/features/products/components/form/Pro
 import { ProductImagesTabProvider } from '@/features/products/components/form/ProductImagesTabContext';
 import type { ProductImageManagerController } from '@/features/products/components/ProductImageManager';
 import { useProductImages } from '@/features/products/hooks/useProductImages';
-import { useCatalogs, useProducers } from '@/features/products/hooks/useProductMetadata';
+import { useCatalogs, useProducers } from '@/features/products/hooks/useProductMetadataQueries';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { AppModal, Tabs, TabsContent, TabsList, TabsTrigger, useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

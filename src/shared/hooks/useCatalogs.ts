@@ -13,7 +13,7 @@ interface CatalogOption {
 
 export function useCatalogs(): ReturnType<typeof useQuery<CatalogOption[]>> {
   return useQuery({
-    queryKey: QUERY_KEYS.products.catalogs,
+    queryKey: QUERY_KEYS.products.metadata.catalogs,
     queryFn: async () => await api.get<CatalogOption[]>('/api/catalogs'),
   });
 }

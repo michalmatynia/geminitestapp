@@ -4,14 +4,7 @@ import { ObjectId } from 'mongodb';
 
 import { operationFailedError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-
-export type JsonValue =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: JsonValue }
-  | JsonValue[];
+import type { JsonValue } from '@/shared/types/domain/user-preferences';
 
 const toMongoId = (id: string): ObjectId | string => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);

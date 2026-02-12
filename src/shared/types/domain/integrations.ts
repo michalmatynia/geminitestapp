@@ -4,6 +4,8 @@ import type {
   ProductListingDto,
   TemplateDto,
   TemplateMappingDto,
+  ImportExportTemplateDto,
+  ImportExportTemplateMappingDto,
   BaseInventoryDto,
   BaseWarehouseDto,
   BaseCategoryDto
@@ -67,3 +69,6 @@ export type ImageRetryPreset = {
   imageBase64Mode: ImageBase64Mode;
   transform: ImageTransformOptions;
 };
+
+export type ImportExportTemplateMapping = ImportExportTemplateMappingDto;
+export type ImportExportTemplate = ImportExportTemplateDto;

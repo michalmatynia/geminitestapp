@@ -36,6 +36,7 @@ export * from './section-header';
 export * from './section-panel';
 export * from './selection-bar';
 export * from './status-badge';
+export * from './status-toggle';
 export * from './unified-select';
 export * from './tag';
 export * from './search-input';

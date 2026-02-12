@@ -6,6 +6,10 @@ import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
 import { getProductDataProvider } from '@/features/products/server';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import type {
+  ImportExportTemplate as DomainImportExportTemplate,
+  ImportExportTemplateMapping as DomainImportExportTemplateMapping,
+} from '@/shared/types/domain/integrations';
 
 import type { Document, Filter } from 'mongodb';
 
@@ -23,19 +27,8 @@ const getImportTemplateProvider = async (): Promise<ImportTemplateProvider> => {
   return provider as ImportTemplateProvider;
 };
 
-export type TemplateMapping = {
-  sourceKey: string;
-  targetField: string;
-};
-
-export type Template = {
-  id: string;
-  name: string;
-  description?: string | null;
-  mappings: TemplateMapping[];
-  createdAt: string;
-  updatedAt: string;
-};
+export type Template = DomainImportExportTemplate;
+export type TemplateMapping = DomainImportExportTemplateMapping;
 
 const SETTINGS_KEY = 'base_import_templates';
 const SAMPLE_PRODUCT_KEY = 'base_import_sample_product_id';

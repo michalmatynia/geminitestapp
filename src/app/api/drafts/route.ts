@@ -1,6 +1,6 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 10;
 
 import { NextRequest, NextResponse } from 'next/server';
 

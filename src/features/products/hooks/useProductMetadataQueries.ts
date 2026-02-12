@@ -33,7 +33,7 @@ export function useCatalogs(): UseQueryResult<CatalogRecord[]> {
 
 export function useCategories(catalogId?: string): UseQueryResult<ProductCategory[]> {
   return useQuery({
-    queryKey: productMetadataKeys.categories(catalogId ?? ''),
+    queryKey: productMetadataKeys.categories(catalogId ?? null),
     queryFn: async (): Promise<ProductCategory[]> => {
       if (!catalogId) return [];
       return await api.get<ProductCategory[]>(
@@ -58,7 +58,7 @@ export function useMultiCategories(catalogIds: string[]): UseQueryResult<Product
 
 export function useTags(catalogId?: string): UseQueryResult<ProductTag[]> {
   return useQuery({
-    queryKey: productMetadataKeys.tags(catalogId ?? ''),
+    queryKey: productMetadataKeys.tags(catalogId ?? null),
     queryFn: async (): Promise<ProductTag[]> => {
       if (!catalogId) return [];
       return await api.get<ProductTag[]>(
@@ -115,7 +115,7 @@ export function useDeleteProducerMutation(): UseMutationResult<void, Error, stri
 
 export function useParameters(catalogId?: string): UseQueryResult<ProductParameter[]> {
   return useQuery({
-    queryKey: productMetadataKeys.parameters(catalogId ?? ''),
+    queryKey: productMetadataKeys.parameters(catalogId ?? null),
     queryFn: async (): Promise<ProductParameter[]> => {
       if (!catalogId) return [];
       return await api.get<ProductParameter[]>(

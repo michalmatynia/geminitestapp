@@ -13,7 +13,7 @@ import {
   useProducerMappings,
 } from '@/features/integrations/hooks/useMarketplaceQueries';
 import { logClientError } from '@/features/observability';
-import { useProducers } from '@/features/products/hooks/useProductMetadata';
+import { useProducers } from '@/features/products/hooks/useProductMetadataQueries';
 import type { Producer } from '@/features/products/types';
 import { Button, SectionHeader, UnifiedSelect, useToast } from '@/shared/ui';
 

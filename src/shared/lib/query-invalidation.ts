@@ -10,7 +10,7 @@ import { QUERY_KEYS } from './query-keys';
 // --- Product Metadata ---
 
 export const invalidateProductMetadata = (queryClient: QueryClient) => {
-  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.all });
 };
 
 export const invalidateProducts = (queryClient: QueryClient) => {
@@ -47,7 +47,7 @@ export const refetchProductsAndCounts = (queryClient: QueryClient) => {
 };
 
 export const invalidateCatalogs = (queryClient: QueryClient) => {
-  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.catalogs });
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.catalogs });
 };
 
 export const invalidateCatalogScopedData = (queryClient: QueryClient, catalogId: string) => {
@@ -147,7 +147,10 @@ export const invalidateAuthSecurity = (queryClient: QueryClient, userId: string)
 };
 
 export const invalidateUserPreferences = (queryClient: QueryClient) => {
-  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.auth.preferences.all });
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.auth.preferences.all }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.userPreferences }),
+  ]);
 };
 
 // --- Files ---

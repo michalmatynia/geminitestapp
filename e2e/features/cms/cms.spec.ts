@@ -1,4 +1,26 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+const E2E_ADMIN_EMAIL =
+  process.env['PLAYWRIGHT_E2E_ADMIN_EMAIL'] ??
+  process.env['E2E_ADMIN_EMAIL'] ??
+  'e2e.admin@example.com';
+const E2E_ADMIN_PASSWORD =
+  process.env['PLAYWRIGHT_E2E_ADMIN_PASSWORD'] ??
+  process.env['E2E_ADMIN_PASSWORD'] ??
+  'E2eAdmin!123';
+
+async function ensureAdminSession(page: Page): Promise<void> {
+  await page.goto('/auth/signin?callbackUrl=%2Fadmin', { waitUntil: 'networkidle' });
+  const signInHeading = page.getByRole('heading', { name: 'Sign in' });
+  if (!(await signInHeading.isVisible().catch(() => false))) {
+    return;
+  }
+
+  await page.getByRole('textbox', { name: 'Email' }).fill(E2E_ADMIN_EMAIL);
+  await page.getByRole('textbox', { name: 'Password' }).fill(E2E_ADMIN_PASSWORD);
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.waitForURL(/\/admin(\/.*)?(\?.*)?$/);
+}
 
 test.describe('CMS and Page Builder', () => {
   // Global timeout for this suite
@@ -9,6 +31,8 @@ test.describe('CMS and Page Builder', () => {
   const testPageName = `Playwright Test Page ${timestamp}`;
 
   test('should complete the full CMS lifecycle', async ({ page }) => {
+    await ensureAdminSession(page);
+
     // 1. Create a Slug
     await page.goto('/admin/cms/slugs/create');
     
@@ -27,11 +51,29 @@ test.describe('CMS and Page Builder', () => {
     await nameInput.waitFor({ state: 'visible' });
     await nameInput.fill(testPageName);
     
-    // Select the slug from dropdown
-    await page.click('button:has-text("Select a slug")');
-    // Wait for popover items
-    await page.waitForSelector('div[role="option"], [role="option"]', { timeout: 15000 });
-    await page.getByRole('option', { name: new RegExp(`/${testSlug}`) }).click();
+    // Select slug (supports both legacy dropdown and current checklist UI).
+    const slugSelectButton = page.locator('button:has-text("Select a slug")').first();
+    const hasLegacySlugPicker = await slugSelectButton.isVisible().catch(() => false);
+    if (hasLegacySlugPicker) {
+      await slugSelectButton.click();
+      await page.waitForSelector('div[role="option"], [role="option"]', { timeout: 15000 });
+      await page.getByRole('option', { name: new RegExp(`/${testSlug}`) }).click();
+    } else {
+      const slugCheckboxByRole = page
+        .getByRole('checkbox', { name: new RegExp(`/${testSlug}`) })
+        .first();
+      const hasRoleCheckbox = await slugCheckboxByRole.isVisible().catch(() => false);
+      if (hasRoleCheckbox) {
+        await slugCheckboxByRole.check();
+      } else {
+        const slugCheckboxByRow = page
+          .locator(
+            `xpath=//input[@type='checkbox' and (following-sibling::*[contains(normalize-space(.), '/${testSlug}')] or following-sibling::text()[contains(normalize-space(.), '/${testSlug}')])]`
+          )
+          .first();
+        await slugCheckboxByRow.check();
+      }
+    }
     
     await page.click('button:has-text("Create")');
     
@@ -97,6 +139,8 @@ test.describe('CMS and Page Builder', () => {
   });
 
   test('should update front page destination setting', async ({ page }) => {
+    await ensureAdminSession(page);
+
     await page.goto('/admin/front-manage');
     await page.waitForLoadState('networkidle');
     

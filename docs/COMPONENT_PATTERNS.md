@@ -1597,3 +1597,116 @@ Consolidate picker/dropdown components (BlockPicker, SectionPicker, CategoryPick
 
 ---
 
+
+#### Example 3: FileManagerFilters Migration (Complex Multi-Search)
+
+**Before** (140 LOC - excerpt):
+```typescript
+export function FileManagerFilters() {
+  const context = useFileManagerContext();
+  const { filenameSearch, productNameSearch, tagSearch, folderFilter } = context.filters;
+
+  return (
+    <div className="space-y-3">
+      <Input
+        placeholder="Search by filename..."
+        value={filenameSearch}
+        onChange={(e) => context.setFilters({ ...context.filters, filenameSearch: e.target.value })}
+      />
+      <Input
+        placeholder="Search by product..."
+        value={productNameSearch}
+        onChange={(e) => context.setFilters({ ...context.filters, productNameSearch: e.target.value })}
+      />
+      <Input
+        placeholder="Search by tags..."
+        value={tagSearch}
+        onChange={(e) => context.setFilters({ ...context.filters, tagSearch: e.target.value })}
+      />
+      <Select value={folderFilter} onValueChange={(v) => context.setFilters({ ...context.filters, folderFilter: v })}>
+        {/* ... options ... */}
+      </Select>
+      {/* Reset logic, etc. */}
+    </div>
+  );
+}
+```
+
+**After** (45 LOC):
+```typescript
+export function FileManagerFilters() {
+  const context = useFileManagerContext();
+  const { filenameSearch, productNameSearch, tagSearch, folderFilter } = context.filters;
+  
+  // Combine all search fields into single "search" for unified filtering
+  const combinedSearch = `${filenameSearch} ${productNameSearch} ${tagSearch}`.trim();
+
+  const handleSearchChange = (search: string) => {
+    // Split search into individual fields (or implement smarter parsing)
+    context.setFilters({ filenameSearch: search, productNameSearch: search, tagSearch: search });
+  };
+
+  return (
+    <FilterPanel
+      filters={[
+        {
+          key: 'folderFilter',
+          label: 'Folder',
+          type: 'select',
+          options: [{ label: 'All', value: '' }, /* ... more folders ... */]
+        }
+      ]}
+      values={{ folderFilter }}
+      search={combinedSearch}
+      searchPlaceholder="Search files, products, or tags..."
+      onSearchChange={handleSearchChange}
+      onFilterChange={(key, value) => context.setFilters({ ...context.filters, [key]: value })}
+      onReset={() => context.resetFilters()}
+    />
+  );
+}
+```
+
+**Reduction: 68% code decrease (95 LOC saved)**
+
+**Note:** For more granular filtering (separate fields), keep the multi-input approach but use PanelFilters directly instead of FilterPanel.
+
+---
+
+### Consolidation Checklist
+
+Before migrating a filter component to FilterPanel, verify:
+
+- ✅ Filter has 3-6 field inputs
+- ✅ State is managed in a context or hook
+- ✅ No complex custom rendering per field
+- ✅ Filter logic is independent (not tightly coupled to table/list)
+- ✅ Reset functionality clears all filter state
+- ✅ Search input is independent of other filters (or can be)
+
+**Red flags** (don't migrate yet):
+- ❌ Custom rendering in filter fields
+- ❌ Filter changes trigger complex async operations
+- ❌ Filters are tightly coupled to sorting/grouping logic
+- ❌ Filter state is distributed across multiple contexts
+- ❌ Complex interdependencies between filters
+
+---
+
+### Performance & Accessibility
+
+**Performance:**
+- All filter components are stateless (parent manages state)
+- No unnecessary re-renders via proper dependency arrays
+- Filter changes don't cause list re-render until parent triggers
+- Supports debouncing/throttling at parent level
+
+**Accessibility:**
+- All form inputs have proper labels
+- Filter controls use semantic HTML
+- Keyboard navigation supported (native Select/Input)
+- Screen reader friendly (label associations)
+- ARIA attributes on interactive elements
+
+---
+

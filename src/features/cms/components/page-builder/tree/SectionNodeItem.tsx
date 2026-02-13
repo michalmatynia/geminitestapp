@@ -6,7 +6,6 @@ import React, { useMemo, useState } from 'react';
 import { TreeRow, TreeCaret, TreeActionButton, TreeActionSlot, TreeContextMenu, type TreeContextMenuItem } from '@/shared/ui';
 import { DRAG_KEYS, hasDragType, resolveVerticalDropPosition } from '@/shared/utils/drag-drop';
 
-import { useDragStateExtract } from '../../../hooks/useDragStateExtract';
 import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
 import { useTreeActions } from '../../../hooks/useTreeActionsContext';
 import { readBlockDragData, readSectionDragData, setSectionDragData } from '../../../utils/page-builder-dnd';
@@ -22,6 +21,11 @@ import {
   resolveNodeLabel,
 } from './tree-constants';
 import { TreeSectionProvider } from './TreeSectionContext';
+import { useDragStateExtract } from '../../../hooks/useDragStateExtract';
+import {
+  isCmsSectionSamePositionDrop,
+  resolveCmsSectionTargetIndex,
+} from '../utils/cms-tree-external-drop';
 
 import type { SectionNodeItemProps } from './tree-types';
 import type { BlockInstance, PageZone } from '../../../types/page-builder';
@@ -153,17 +157,20 @@ export function SectionNodeItem({
                 const dragIndex = sectionDrag.index;
                 if (
                   nextDrop &&
-              dragZone === section.zone &&
-              dragIndex !== null
+                  isCmsSectionSamePositionDrop({
+                    draggedZone: dragZone,
+                    draggedIndex: dragIndex,
+                    targetZone: section.zone,
+                    targetIndex: resolveCmsSectionTargetIndex({
+                      sectionIndex,
+                      dropPosition: nextDrop,
+                    }),
+                  })
                 ) {
-                  const targetIndex =
-                nextDrop === 'below' ? sectionIndex + 1 : sectionIndex;
-                  if (targetIndex === dragIndex) {
-                    setSectionDropPosition(null);
-                    setIsSectionDragOver(true);
-                    setIsDragOver(false);
-                    return;
-                  }
+                  setSectionDropPosition(null);
+                  setIsSectionDragOver(true);
+                  setIsDragOver(false);
+                  return;
                 }
                 setSectionDropPosition(nextDrop);
                 setIsSectionDragOver(true);
@@ -236,15 +243,24 @@ export function SectionNodeItem({
                       return;
                     }
                   } else {
-                    const targetIndex = dropPosition === 'below' ? sectionIndex + 1 : sectionIndex;
+                    const targetIndex = resolveCmsSectionTargetIndex({
+                      sectionIndex,
+                      dropPosition,
+                    });
                     moveSection(section.zone, targetIndex);
                     return;
                   }
-                  const targetIndex = dropPosition === 'below' ? sectionIndex + 1 : sectionIndex;
+                  const targetIndex = resolveCmsSectionTargetIndex({
+                    sectionIndex,
+                    dropPosition,
+                  });
                   moveSection(section.zone, targetIndex);
                   return;
                 } else {
-                  const targetIndex = dropPosition === 'below' ? sectionIndex + 1 : sectionIndex;
+                  const targetIndex = resolveCmsSectionTargetIndex({
+                    sectionIndex,
+                    dropPosition,
+                  });
                   moveSection(section.zone, targetIndex);
                   return;
                 }

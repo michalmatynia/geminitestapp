@@ -66,3 +66,6 @@ export * from './form-section';
 export * from './ResourceCard';
 export * from './DynamicFilters';
 export * from './templates/SettingsFormModal';
+export * from './templates/FilterPanel';
+export { PanelHeader, PanelFilters, PanelPagination, PanelStats, PanelAlerts, usePanelState } from './templates/panels';
+export type { PanelStat, PanelAction, ColumnDef, PanelState, PanelCallbacks, PanelAlert, PanelConfig, UsePanelStateOptions, UsePanelStateReturn } from './templates/panels';

@@ -33,6 +33,7 @@ import {
   toCmsZoneNodeId,
 } from './utils/cms-master-tree';
 import { createCmsMasterTreeAdapter } from './utils/cms-master-tree-adapter';
+import { isCmsSectionSamePositionDrop } from './utils/cms-tree-external-drop';
 import { useDragState } from '../../hooks/useDragStateContext';
 import { usePageBuilder } from '../../hooks/usePageBuilderContext';
 import { TreeActionsProvider, useTreeActions } from '../../hooks/useTreeActionsContext';
@@ -479,10 +480,12 @@ function SectionDropTarget({
           if (!dragSectionId) return;
           const dragZone = (sectionDrag.zone as PageZone | null) ?? null;
           const dragIndex = sectionDrag.index;
-          const isSamePosition =
-            dragZone === zone &&
-            dragIndex !== null &&
-            (toIndex === dragIndex || toIndex === dragIndex + 1);
+          const isSamePosition = isCmsSectionSamePositionDrop({
+            draggedZone: dragZone,
+            draggedIndex: dragIndex,
+            targetZone: zone,
+            targetIndex: toIndex,
+          });
           if (isSamePosition) return;
         }
         event.preventDefault();
@@ -508,10 +511,12 @@ function SectionDropTarget({
           if (!dragSectionId) return;
           const dragZone = (sectionDrag.zone as PageZone | null) ?? null;
           const dragIndex = sectionDrag.index;
-          const isSamePosition =
-            dragZone === zone &&
-            dragIndex !== null &&
-            (toIndex === dragIndex || toIndex === dragIndex + 1);
+          const isSamePosition = isCmsSectionSamePositionDrop({
+            draggedZone: dragZone,
+            draggedIndex: dragIndex,
+            targetZone: zone,
+            targetIndex: toIndex,
+          });
           if (isSamePosition) return;
           void moveSectionByMaster(dragSectionId, zone, toIndex).finally(() => {
             endSectionDrag();
